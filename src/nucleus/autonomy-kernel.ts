@@ -3,6 +3,7 @@
  * Config: features.json → multi_agent_orchestration (lead_dev_mode), NOT a separate surface.
  */
 
+import { randomUUID } from 'node:crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 import { featuresConfigLoader } from '../core/features-config.js';
@@ -69,6 +70,8 @@ export interface LeadDevPlan {
   mandatoryConsults: string[];
   phases: LeadDevPhase[];
   testProtocol: { perSuiteFirst: boolean; fullSuiteGate: boolean; hint: string };
+  /** New id each synthesis plan. Receipts from an older id cannot complete s.1–s.3. */
+  consultCycleId?: string;
 }
 
 const TASK_TYPE_ROUTES: Record<string, SubagentRoute> = {
@@ -82,6 +85,23 @@ const TASK_TYPE_ROUTES: Record<string, SubagentRoute> = {
   security: 'security-audit',
   governance: 'enforcer',
 };
+
+function conferExplicitlyEnabled(projectRoot: string): boolean {
+  const featuresPath = path.join(projectRoot, '.xray', 'features.json');
+  if (!fs.existsSync(featuresPath)) return false;
+  try {
+    const data = JSON.parse(fs.readFileSync(featuresPath, 'utf8')) as {
+      multi_agent_orchestration?: {
+        confer?: { enabled?: boolean };
+        confer_on_synthesis?: boolean;
+      };
+    };
+    const orch = data.multi_agent_orchestration ?? {};
+    return orch.confer?.enabled === true || orch.confer_on_synthesis === true;
+  } catch {
+    return false;
+  }
+}
 
 function orchestrationConfig(): MultiAgentOrchestrationConfig {
   try {
@@ -136,12 +156,15 @@ function buildImplementationTodos(
 }
 
 /** Mandatory-consult plan for synthesis checkpoint realignment (no implementation phase). */
-export function buildSynthesisCheckpointPlan(dueReason: string | null): LeadDevPlan | null {
+export function buildSynthesisCheckpointPlan(
+  dueReason: string | null,
+  projectRoot = process.cwd(),
+): LeadDevPlan | null {
   if (!isLeadDevModeActive()) return null;
 
   const cfg = orchestrationConfig();
-  const mandatoryConsults =
-    cfg.auto_consult_major_work !== false ? [...MANDATORY_MAJOR_CONSULTS] : [];
+  const autoConsult = conferExplicitlyEnabled(projectRoot);
+  const mandatoryConsults = autoConsult ? [...MANDATORY_MAJOR_CONSULTS] : [];
 
   if (mandatoryConsults.length === 0) return null;
 
@@ -176,6 +199,7 @@ export function buildSynthesisCheckpointPlan(dueReason: string | null): LeadDevP
       fullSuiteGate: false,
       hint: 'Synthesis checkpoint — consult mandatory agents before resuming gated work',
     },
+    consultCycleId: randomUUID(),
   };
 }
 
@@ -184,6 +208,7 @@ export function buildLeadDevPlan(
   taskTypes: string[] = ['implement'],
   taskInputs: LeadDevPlanTaskInput[] = [],
   mcpOverallComplexity?: number,
+  projectRoot = process.cwd(),
 ): LeadDevPlan | null {
   if (!isLeadDevModeActive()) return null;
 
@@ -197,10 +222,9 @@ export function buildLeadDevPlan(
   const complexity = Math.max(score.score, mcpScore);
   const requiresPhasedPlan = complexity > threshold || taskInputs.length > 1;
 
+  const autoConsult = conferExplicitlyEnabled(projectRoot);
   const mandatoryConsults =
-    cfg.auto_consult_major_work !== false && requiresPhasedPlan
-      ? [...MANDATORY_MAJOR_CONSULTS]
-      : [];
+    autoConsult && requiresPhasedPlan ? [...MANDATORY_MAJOR_CONSULTS] : [];
 
   const phases: LeadDevPhase[] = requiresPhasedPlan
     ? [

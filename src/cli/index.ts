@@ -7,15 +7,18 @@
  */
 
 import { Command } from "commander";
-import { execSync, spawn } from "child_process";
+import { execSync, spawn, spawnSync } from "child_process";
 import { join, resolve } from "path";
+import { fileURLToPath } from "node:url";
 
 import { readFileSync, existsSync } from "fs";
-import { getConfigDir } from "../core/config-paths.js";
-import { frameworkLogger } from "../core/framework-logger.js";
+async function loadFrameworkLogger() {
+  const { frameworkLogger } = await import("../core/framework-logger.js");
+  return frameworkLogger;
+}
 
 // Get package root relative to this script location
-const packageRoot = resolve(join(new URL(".", import.meta.url).pathname, "..", ".."));
+const packageRoot = resolve(fileURLToPath(new URL("../..", import.meta.url)));
 
 // Read version dynamically from package.json
 const packageJsonPath = join(packageRoot, "package.json");
@@ -57,56 +60,128 @@ program
   )
   .version(version);
 
-function runSetup() {
-  const setupScript = join(packageRoot, "scripts", "node", "setup.cjs");
-  validateScriptPath(setupScript, "setup script");
-  execSync(`node "${setupScript}"`, { stdio: "inherit", cwd: process.cwd() });
+function runNodeScript(scriptName: string, args: string[] = []): void {
+  const script = join(packageRoot, "scripts", "node", scriptName);
+  validateScriptPath(script, scriptName);
+  const quoted = [script, ...args].map((part) => `"${part}"`).join(" ");
+  execSync(`node ${quoted}`, { stdio: "inherit", cwd: process.cwd() });
 }
 
 program
   .command("install")
   .description("Install xray framework in the current project")
   .action(async () => {
-    frameworkLogger.log('cli', 'install-start', 'info', { message: 'Installing xray framework...' });
+    const frameworkLogger = await loadFrameworkLogger();
+    frameworkLogger.log('cli', 'install', 'info', { message: 'nothing written' });
+    process.stdout.write("nothing written\n");
+  });
+
+program
+  .command("setup")
+  .description("Set up .mcp.json and the OpenCode, Grok, Hermes, and OpenClaw bridges")
+  .option("--git-hooks", "also install git hooks")
+  .action(async (opts: { gitHooks?: boolean }) => {
+    const args = ["setup"];
+    if (opts.gitHooks) args.push("--git-hooks");
     try {
-      const postinstallScript = join(packageRoot, "scripts", "node", "postinstall.cjs");
-      validateScriptPath(postinstallScript, "postinstall script");
-      execSync(`node "${postinstallScript}"`, { stdio: "inherit", cwd: process.cwd() });
-      frameworkLogger.log('cli', 'install-success', 'info', { message: 'xray framework installed' });
-      // UX banner kept for user visibility post-install (non-removable per exception)
-      console.log("✅ xray framework installed!");
-      console.log("💡 Run 'npx xray setup' for full configuration (hooks, Hermes, symlinks)");
+      runNodeScript("install-bridges.cjs", args);
     } catch (error) {
-      frameworkLogger.log('cli', 'install-error', 'error', { error: error instanceof Error ? error.message : String(error) });
-      console.error("❌ Installation failed:", error instanceof Error ? error.message : String(error));
+      const frameworkLogger = await loadFrameworkLogger();
+      frameworkLogger.log("cli", "setup-error", "error", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      process.exit(1);
+    }
+  });
+
+const LOOK_HELP =
+  "Kind 0 is quiet on a match. One outer is a reading. digest and triage return a card.";
+
+function gogglesScript(): string {
+  const built = join(packageRoot, "dist", "integrations", "hooks", "goggles-pipeline.mjs");
+  const source = join(packageRoot, "src", "integrations", "hooks", "goggles-pipeline.mjs");
+  return existsSync(built) ? built : source;
+}
+
+function runGoggles(args: string[]): void {
+  const script = gogglesScript();
+  if (!existsSync(script)) {
+    process.stderr.write("Goggles: not found\n");
+    process.exit(1);
+  }
+  if (process.stdout.isTTY) {
+    const result = spawnSync(process.execPath, [script, ...(args ?? [])], { stdio: "inherit" });
+    process.exit(result.status ?? 1);
+  }
+  const result = spawnSync(process.execPath, [script, ...(args ?? [])], { encoding: "utf8" });
+  if (result.stdout) process.stdout.write(result.stdout);
+  if (result.stderr) process.stderr.write(result.stderr);
+  process.exit(result.status ?? 1);
+}
+
+program
+  .command("look")
+  .argument("[args...]", "kind 0, one outer, or digest/triage and one card plane")
+  .description(LOOK_HELP)
+  .action((args: string[]) => {
+    runGoggles(args);
+  });
+
+program
+  .command("goggles")
+  .argument("[args...]", "same words as look")
+  .description(`Same organ as look. ${LOOK_HELP}`)
+  .action((args: string[]) => {
+    runGoggles(args);
+  });
+
+program
+  .command("confer")
+  .argument("<state>", "on or off")
+  .description("Turn confer on or off in .xray/features.json. A missing key stays off until this runs.")
+  .action((state: string) => {
+    try {
+      runNodeScript("confer-switch.cjs", [state]);
+    } catch {
       process.exit(1);
     }
   });
 
 program
-  .command("setup")
-  .description("Full framework setup: hooks, Hermes integration, symlinks, MCP paths")
-  .action(runSetup);
+  .command("wear")
+  .description("Wear the 0xray suit in this git checkout")
+  .action(async () => {
+    try {
+      runNodeScript("wear-cursor-hooks.cjs");
+    } catch (error) {
+      const frameworkLogger = await loadFrameworkLogger();
+      frameworkLogger.log('cli', 'wear-error', 'error', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      process.exit(1);
+    }
+  });
+
+program
+  .command("unwear")
+  .description("Remove the 0xray suit and restore the pre-wear hooks file")
+  .action(async () => {
+    try {
+      runNodeScript("unwear-cursor-hooks.cjs");
+    } catch (error) {
+      const frameworkLogger = await loadFrameworkLogger();
+      frameworkLogger.log('cli', 'unwear-error', 'error', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      process.exit(1);
+    }
+  });
 
 program
   .command("init")
   .description("Initialize xray configuration in the current project")
-  .action(async () => {
-    console.log("🚀 xray CLI: Initializing configuration...");
-    try {
-      const postinstallScript = join(packageRoot, "scripts", "node", "postinstall.cjs");
-      validateScriptPath(postinstallScript, "postinstall script");
-      execSync(`node "${postinstallScript}"`, { stdio: "inherit", cwd: process.cwd() });
-      runSetup();
-
-      console.log("✅ xray configuration initialized!");
-    } catch (error) {
-      console.error(
-        "❌ Initialization failed:",
-        error instanceof Error ? error.message : String(error),
-      );
-      process.exit(1);
-    }
+  .action(() => {
+    process.stdout.write("nothing written\n");
   });
 
 program
@@ -114,35 +189,32 @@ program
   .description("Show comprehensive xray framework status")
   .action(async () => {
     const { statusCommand } = await import("./commands/status.js");
-    await statusCommand();
+    await statusCommand(packageRoot);
+  });
+
+program
+  .command("monitor")
+  .description("Current picture of the worn suit (activity, inference state, repertoire, version)")
+  .option("-n, --lines <count>", "Activity lines to show", "8")
+  .action(async (options: { lines?: string }) => {
+    const { printSuitMonitor } = await import("./commands/suit-monitor.js");
+    const parsed = Number(options.lines);
+    const lines = Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 8;
+    await printSuitMonitor(process.cwd(), packageRoot, lines);
   });
 
 program
   .command("validate")
-  .description("Validate xray framework installation")
+  .description("Validate consumer wear (pack paths, Cursor hooks, mill plant) — not leftover init.sh")
   .action(async () => {
     console.log("🔬 xray CLI: Validating installation...");
 
     try {
-      // Run the init.sh script to validate
-      const initScript = join(packageRoot, ".opencode", "init.sh");
-      const fs = await import("fs");
-
-      if (!fs.existsSync(initScript)) {
-        console.error(
-          "❌ Validation failed: init script not found:",
-          initScript,
-        );
+      const { validateCommand } = await import("./commands/validate.js");
+      const report = await validateCommand(process.cwd());
+      if (!report.ok) {
         process.exit(1);
       }
-
-      // SECURITY: Validate script path before execution
-      validateScriptPath(initScript, "init script");
-
-      execSync(`bash "${initScript}"`, {
-        stdio: "inherit",
-        cwd: process.cwd(),
-      });
     } catch (error) {
       console.error(
         "❌ Validation failed:",
@@ -301,6 +373,9 @@ program
 
       console.log("");
 
+      const { probeGoggles, formatGogglesStatus } = await import("./goggles-status.js");
+      process.stdout.write(`${formatGogglesStatus(probeGoggles(packageRoot, process.cwd())).join("\n")}\n\n`);
+
       if (allHealthy) {
         console.log("🎉 Framework is healthy and ready to use!");
         console.log("");
@@ -322,6 +397,21 @@ console.log("  • @security-auditor scan this project");
     }
   });
 
+type CliReportType = "orchestration" | "agent-usage" | "context-awareness" | "performance" | "full-analysis";
+
+function cliReportType(value: string | undefined): CliReportType {
+  if (
+    value === "orchestration" ||
+    value === "agent-usage" ||
+    value === "context-awareness" ||
+    value === "performance" ||
+    value === "full-analysis"
+  ) {
+    return value;
+  }
+  return "full-analysis";
+}
+
 program
   .command("report")
   .description("Generate framework activity and health reports")
@@ -338,7 +428,7 @@ program
   .option("--ci", "CI-friendly JSON output for pipelines")
   .action(async (options) => {
     // Resolve convenience flags to report type
-    const typeMap: Record<string, string> = {
+    const typeMap: Record<string, CliReportType> = {
       daily: "full-analysis",
       performance: "performance",
       compliance: "full-analysis",
@@ -346,7 +436,7 @@ program
       ci: "full-analysis",
     };
 
-    let reportType = options.type;
+    let reportType = cliReportType(typeof options.type === "string" ? options.type : undefined);
     let outputFormat: "json" | "markdown" = "json";
 
     // Convenience flags override --type
@@ -385,7 +475,7 @@ program
       const reportingSystem = new FrameworkReportingSystem();
 
       const report = await reportingSystem.generateReport({
-        type: reportType as any,
+        type: reportType,
         outputFormat,
       });
 
@@ -413,6 +503,14 @@ program
   });
 
 program
+  .command("pulse")
+  .description("Print one line: worn CLI, repertoire, inference age, activity, lens, plant")
+  .action(async () => {
+    const { readSuitPulse } = await import("./suit-pulse.js");
+    process.stdout.write(`${readSuitPulse(process.cwd()).line}\n`);
+  });
+
+program
   .command("fix")
   .description(
     "Automatically fix common framework issues by running the postinstall setup",
@@ -423,31 +521,7 @@ program
     console.log("");
 
     try {
-      console.log("Running postinstall setup to restore configuration...");
-
-      // Run the postinstaller script (same as install command)
-      const postinstallScript = join(
-        packageRoot,
-        "scripts",
-        "node",
-        "postinstall.cjs",
-      );
-
-      // SECURITY: Validate script path before execution
-      validateScriptPath(postinstallScript, "postinstall script");
-
-      execSync(`node "${postinstallScript}"`, {
-        stdio: "inherit",
-        cwd: process.cwd(),
-      });
-
-      console.log("");
-      console.log("🎉 Framework configuration restored successfully!");
-      console.log("");
-      console.log("💡 Next steps:");
-      console.log("  • Restart OpenCode to load the restored configuration");
-      console.log("  • Run: npx xray health (to verify everything works)");
-      console.log("  • Try: @security-auditor scan this project");
+      process.stdout.write("nothing written\n");
     } catch (error) {
       console.error(
         "❌ Fix command failed:",
@@ -462,13 +536,10 @@ program
     }
   });
 
-// Analytics command - pattern analysis, insights, and consent management
+// Analytics command - pattern analysis from recent task completions
 program
   .command("analytics")
-  .description("xray Central Analytics - Pattern analysis, insights, and consent management\n" +
-               "  In v1.7.2+: Includes consent management with granular control\n" +
-               "  Use 'npx xray analytics enable' to opt-in to data sharing\n" +
-               "  Core classes: ConsentManager, AnonymizationEngine available programmatically")
+  .description("Pattern analysis from recent task completions")
   .option("-l, --limit <number>", "Limit analysis to last N task completions")
   .option("-o, --output <file>", "Save report to file")
   .action(async (opts) => {
@@ -564,7 +635,12 @@ program
 
       // Check configuration - check for opencode.json or .xray/ (min compat .xray/ fallback for prior 0xRay consumer runtime per Scope Rule; plain xray primary)
       const cwd = process.cwd();
+      const wearMeta = path.join(cwd, ".xray", "state", "cursor-hook-wear", "meta.json");
+      if (!fs.existsSync(wearMeta)) {
+        process.stdout.write("not worn\n");
+      }
       const opencodeConfigPath = path.join(cwd, "opencode.json");
+      const { getConfigDir } = await import("../core/config-paths.js");
       const xrayDir = getConfigDir(cwd);
       const opencodeExists = fs.existsSync(opencodeConfigPath);
       const configDirExists = fs.existsSync(xrayDir);
@@ -785,6 +861,12 @@ program
     console.log('  --status    Show tuner status');
   });
 
+function exitWhenFlushed(code: number): void {
+  process.stdout.write("", () => {
+    process.exit(code);
+  });
+}
+
 // Inference cycle run command
 program
   .command('inference:run')
@@ -795,6 +877,8 @@ program
   .option('--no-researcher-review', 'Skip downstream researcher review of PRs')
   .option('--json', 'Output raw JSON result')
    .action(async (options) => {
+     let code = 0;
+     try {
      const { InferenceCycle } = await import('../inference/inference-cycle.js');
      const { shouldTriggerCycle } = await import('../inference/inference-accumulator.js');
      const { accumulateCorpus } = await import('../inference/inference-accumulator.js');
@@ -822,13 +906,13 @@ program
      }
 
      const features = featuresConfigLoader.loadConfig();
-     const inferenceConfig = (features as any)?.inference;
-    if (!inferenceConfig?.enabled) {
+    const { inferenceRunMayEnter } = await import('../inference/inference-run-gate.js');
+    if (!inferenceRunMayEnter(features.inference, options.force === true)) {
       if (options.json) {
         console.log(JSON.stringify({ triggered: false, reason: 'Inference feature disabled in features.json' }));
       } else {
         console.log('Inference feature is disabled in features.json.');
-        console.log('Enable it by setting inference.enabled = true in .opencode/plugins/features.json (min compat .xray/ fallback for prior 0xRay consumer runtime per Scope Rule)');
+        console.log('Set inference.enabled to true in xray/features.json, or pass --force.');
       }
       return;
     }
@@ -869,7 +953,7 @@ program
     }
 
     // Initialize external governance integration for two-oscillator governance
-    const govConfig = (features as any)?.inference_governance;
+    const govConfig = features.inference_governance;
     if (govConfig?.enabled) {
       await shutdownGovernanceIntegration();
       await initializeGovernanceIntegration();
@@ -909,13 +993,24 @@ program
 
     if (result.deployVerification) {
       console.log(`\nDeploy verification: ${result.deployVerification.success ? 'PASSED' : 'FAILED'}`);
-      const failedChecks = result.deployVerification.checks.filter((c: any) => !c.passed);
+      const failedChecks = result.deployVerification.checks.filter((check) => !check.passed);
       if (failedChecks.length > 0) {
         for (const c of failedChecks) {
           console.log(`  Failed: ${c.name} — ${c.output?.substring(0, 200)}`);
         }
       }
     }
+  } catch (error) {
+    code = 1;
+    const message = error instanceof Error ? error.message : String(error);
+    if (options.json) {
+      console.log(JSON.stringify({ triggered: false, reason: message }));
+    } else {
+      console.log(message);
+    }
+  } finally {
+    exitWhenFlushed(code);
+  }
   });
 
 // Publish agent command
@@ -1058,25 +1153,37 @@ program
     child.on('exit', (code) => process.exit(code ?? 0));
   });
 
+function argvSelects(name: string): boolean {
+  return process.argv.slice(2).includes(name);
+}
+
 // Grok CLI integration
 const grokCmd = program.command('grok').description('Grok CLI integration commands');
-const { registerGrokCommands } = await import('./commands/grok-install.js');
-registerGrokCommands(grokCmd);
+if (argvSelects('grok')) {
+  const { registerGrokCommands } = await import('./commands/grok-install.js');
+  registerGrokCommands(grokCmd);
+}
 
 // Hermes Agent integration
 const hermesCmd = program.command('hermes').description('Hermes Agent integration commands');
-const { registerHermesCommands } = await import('./commands/hermes-install.js');
-registerHermesCommands(hermesCmd);
+if (argvSelects('hermes')) {
+  const { registerHermesCommands } = await import('./commands/hermes-install.js');
+  registerHermesCommands(hermesCmd);
+}
 
 // OpenClaw integration
 const openclawCmd = program.command('openclaw').description('OpenClaw integration commands');
-const { registerOpenClawCommands } = await import('./commands/openclaw-install.js');
-registerOpenClawCommands(openclawCmd);
+if (argvSelects('openclaw')) {
+  const { registerOpenClawCommands } = await import('./commands/openclaw-install.js');
+  registerOpenClawCommands(openclawCmd);
+}
 
 // OpenCode integration
 const opencodeCmd = program.command('opencode').description('OpenCode integration commands');
-const { registerOpencodeCommands } = await import('./commands/opencode-install.js');
-registerOpencodeCommands(opencodeCmd);
+if (argvSelects('opencode')) {
+  const { registerOpencodeCommands } = await import('./commands/opencode-install.js');
+  registerOpencodeCommands(opencodeCmd);
+}
 
 // Analytics enable command
 
@@ -1145,6 +1252,8 @@ Examples:
     $ npx 0xray capabilities  # Show all available capabilities
     $ npx 0xray health        # Check framework health and status
     $ npx 0xray report        # Generate activity and health reports
+    $ npx 0xray monitor       # Current picture of the worn suit
+    $ npx 0xray pulse         # One line: worn, repertoire, inference, activity, lens, plant
     $ npx 0xray fix           # Automatically restore missing config files
     $ npx 0xray doctor        # Diagnose issues (does not fix them)
     $ npx 0xray analytics     # Pattern analytics and insights
@@ -1170,4 +1279,12 @@ For more information, visit: https://github.com/0xRayAI/xray
 
 // Parse command line arguments
 program.exitOverride();
-program.parse();
+try {
+  program.parse();
+} catch (err) {
+  const code = err && typeof err === 'object' && 'code' in err ? String((err as { code: string }).code) : '';
+  if (code === 'commander.helpDisplayed' || code === 'commander.help' || code === 'commander.version') {
+    process.exit(0);
+  }
+  throw err;
+}

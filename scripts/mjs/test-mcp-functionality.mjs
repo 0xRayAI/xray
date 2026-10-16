@@ -14,10 +14,15 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+function isInstalledPackagePath(value) {
+  const normalized = String(value).replace(/\\/g, "/");
+  return normalized.includes("node_modules/0xray") || normalized.includes("node_modules/xray");
+}
+
 class MCPFunctionalityTest {
   constructor() {
     this.results = { passed: [], failed: [] };
-    this.isConsumerEnvironment = __dirname.includes("node_modules/xray");
+    this.isConsumerEnvironment = isInstalledPackagePath(__dirname);
   }
 
   async testMCPFunctionality() {
@@ -95,9 +100,9 @@ class MCPFunctionalityTest {
       // Determine environment: dev vs consumer vs CI
       // - Dev: running from project root with src/ directory
       // - CI: running from project root but building first (has dist/)
-      // - Consumer: running from node_modules/xray/
+      // - Consumer: running from node_modules/0xray/ (legacy node_modules/xray/)
       const cwd = process.cwd();
-      const isConsumerEnv = cwd.includes("node_modules/xray");
+      const isConsumerEnv = isInstalledPackagePath(cwd);
       const hasPackageJson = fs.existsSync(path.join(cwd, "package.json"));
       const hasDistDir = fs.existsSync(path.join(cwd, "dist"));
       
@@ -155,16 +160,16 @@ class MCPFunctionalityTest {
         if (serverPath) {
           // Handle various path formats:
           // - ./dist/mcps/xxx.js (local dev)
-          // - node_modules/xray/dist/mcps/xxx.js (consumer)
+          // - node_modules/0xray/dist/mcps/xxx.js (consumer; legacy node_modules/xray/)
           // - dist/mcps/xxx.js (after stripping ./)
           let normalizedPath = serverPath.startsWith("./") 
             ? serverPath.slice(2) 
             : serverPath;
             
-          // If path contains node_modules/xray/, extract just the relative part
-          if (normalizedPath.includes("node_modules/xray/")) {
-            normalizedPath = normalizedPath.replace("node_modules/xray/", "");
-          }
+          normalizedPath = normalizedPath
+            .replace(/\\/g, "/")
+            .replace("node_modules/0xray/", "")
+            .replace("node_modules/xray/", "");
             
           // In CI/build environment, files are in cwd/dist/, not in node_modules
           // Try local paths first, then fall back to node_modules
@@ -249,7 +254,7 @@ class MCPFunctionalityTest {
     try {
       // Determine environment - reuse same logic
       const cwd = process.cwd();
-      const isConsumerEnv = cwd.includes("node_modules/xray");
+      const isConsumerEnv = isInstalledPackagePath(cwd);
       const hasPackageJson = fs.existsSync(path.join(cwd, "package.json"));
       const isDevOrCi = hasPackageJson && !isConsumerEnv;
       

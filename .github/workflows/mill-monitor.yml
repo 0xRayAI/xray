@@ -1,0 +1,59 @@
+name: Foundry mill (CI report)
+
+# Fresh file so GitHub registers workflow_run after inactivity disable
+# (same trap as ci.yml → mill-ci.yml). Report only. No auto-push.
+on:
+  workflow_run:
+    workflows:
+      - "0xRay CI/CD"
+      - "Foundry mill (version + docs)"
+      - "Enforce AGENTS.md"
+      - "Deploy Docs"
+    types:
+      - completed
+  schedule:
+    - cron: "0 8 * * *"
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  mill-ci-report:
+    # Replay pushes already ran Deploy Docs. Skip the npm report on that branch.
+    if: >-
+      github.event_name != 'workflow_run' ||
+      github.event.workflow_run.head_branch != 'live-wire'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Mill CI monitor
+        run: node scripts/foundry/ci-monitor.mjs --report --commit ${{ github.event.workflow_run.head_sha || github.sha }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        continue-on-error: true
+      - name: Upload monitoring report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mill-ci-health-report
+          path: .opencode/logs/ci-cd-monitor-report.json
+          if-no-files-found: ignore
+      - name: Health summary
+        if: always()
+        run: |
+          if [ -f .opencode/logs/ci-cd-monitor-report.json ]; then
+            echo "## Mill CI health" >> "$GITHUB_STEP_SUMMARY"
+            echo '```json' >> "$GITHUB_STEP_SUMMARY"
+            cat .opencode/logs/ci-cd-monitor-report.json >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "No mill CI report" >> "$GITHUB_STEP_SUMMARY"
+          fi

@@ -1,0 +1,133 @@
+import { readFileSync, appendFileSync, existsSync, mkdirSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
+import { CuratedSignalsManager, DEFAULT_PROMOTION_MIN_CONFIDENCE, isFieldPrimitiveName, slugFieldPrimitiveName, } from '../registry/CuratedSignalsManager.js';
+import { defaultWritablePaths } from '../paths.js';
+export class XraySessionIngester {
+    sourceDir;
+    targetDir;
+    signalsManager;
+    stateManager;
+    repoPrimitive;
+    constructor(options) {
+        this.sourceDir = options.sourceDir;
+        this.targetDir = options.targetDir ?? defaultWritablePaths().logDir;
+        this.signalsManager = options.signalsManager ?? new CuratedSignalsManager();
+        this.stateManager = options.stateManager;
+        this.repoPrimitive = options.repoPrimitive;
+    }
+    ingest() {
+        if (!existsSync(this.sourceDir)) {
+            return { imported: 0, skipped: 0, promoted: [] };
+        }
+        if (!existsSync(this.targetDir)) {
+            mkdirSync(this.targetDir, { recursive: true });
+        }
+        const existingIds = this.loadExistingSessionIds();
+        let imported = 0;
+        let skipped = 0;
+        const files = readdirSync(this.sourceDir).filter((f) => f.startsWith('session-') && f.endsWith('.json'));
+        for (const file of files) {
+            try {
+                const session = JSON.parse(readFileSync(join(this.sourceDir, file), 'utf8'));
+                if (!session.sessionId || existingIds.has(session.sessionId)) {
+                    skipped++;
+                    continue;
+                }
+                const entry = this.sessionToInferenceEntry(session);
+                const targetFile = join(this.targetDir, `${session.timestamp.split('T')[0]}.jsonl`);
+                appendFileSync(targetFile, JSON.stringify(entry) + '\n');
+                this.recordObservations(session);
+                if (this.stateManager && session.sessionId) {
+                    this.stateManager.markProcessed([session.sessionId], 'session');
+                }
+                existingIds.add(session.sessionId);
+                imported++;
+            }
+            catch {
+                skipped++;
+            }
+        }
+        const promoted = imported > 0 ? this.signalsManager.promoteQualifiedSignals() : [];
+        return { imported, skipped, promoted };
+    }
+    recordObservations(session) {
+        const matches = this.extractMatches(session);
+        if (matches.length === 0)
+            return;
+        this.signalsManager.recordPrimitiveObservations(matches);
+    }
+    extractMatches(session) {
+        const matches = [];
+        const seen = new Set();
+        const add = (name, confidence) => {
+            if (seen.has(name) || !isFieldPrimitiveName(name))
+                return;
+            if (confidence < DEFAULT_PROMOTION_MIN_CONFIDENCE)
+                return;
+            seen.add(name);
+            matches.push({ name, confidence });
+        };
+        for (const pattern of session.patterns ?? []) {
+            const raw = pattern.name || pattern.type || '';
+            const slug = slugFieldPrimitiveName(raw);
+            if (!slug || typeof pattern.confidence !== 'number')
+                continue;
+            add(slug, pattern.confidence);
+        }
+        for (const name of session.matched_primitives ?? []) {
+            const confidence = session.match_confidence?.[name];
+            if (typeof confidence !== 'number')
+                continue;
+            add(name, confidence);
+        }
+        if (this.repoPrimitive) {
+            add(this.repoPrimitive, DEFAULT_PROMOTION_MIN_CONFIDENCE);
+        }
+        return matches;
+    }
+    sessionToInferenceEntry(session) {
+        const inferenceParts = [
+            `Session: ${session.sessionId}`,
+            session.problems?.length ? `Problems: ${session.problems.join('; ')}` : '',
+            session.approaches?.length ? `Approaches: ${session.approaches.join('; ')}` : '',
+            session.wrongTurns?.length ? `Wrong turns: ${session.wrongTurns.join('; ')}` : '',
+            session.solutions?.length ? `Solutions: ${session.solutions.join('; ')}` : '',
+            session.patterns?.length
+                ? `Patterns: ${session.patterns
+                    .map((p) => `${p.name || p.type || 'pattern'}: ${p.description ?? ''}`)
+                    .join('; ')}`
+                : '',
+        ].filter(Boolean);
+        const inference = inferenceParts.join('\n');
+        return {
+            timestamp: session.timestamp,
+            source: 'xray',
+            session_id: session.sessionId,
+            inference,
+            matched_primitives: session.matched_primitives,
+            match_confidence: session.match_confidence,
+        };
+    }
+    loadExistingSessionIds() {
+        const ids = new Set();
+        if (!existsSync(this.targetDir))
+            return ids;
+        for (const file of readdirSync(this.targetDir).filter((f) => f.endsWith('.jsonl'))) {
+            const lines = readFileSync(join(this.targetDir, file), 'utf8').trim().split('\n');
+            for (const line of lines) {
+                if (!line)
+                    continue;
+                try {
+                    const e = JSON.parse(line);
+                    if (e.session_id)
+                        ids.add(e.session_id);
+                }
+                catch {
+                    // skip
+                }
+            }
+        }
+        return ids;
+    }
+}
+//# sourceMappingURL=xray-session-ingester.js.map

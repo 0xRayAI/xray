@@ -1,0 +1,64 @@
+# Memory wake — METAVERSE-BRAIN-003
+
+Station stays a ticket. This page is the join. Not a new organ.
+
+Chat dies. Bookmark, index, and mind already exist. They meet on wake: the station card carries the cascade count and `Sleeve: on` when the previous ticket came back, the worn plate already matched the package, the previous ticket already matched the working record, and inspect has passed for the skills on disk. Session start and compact run that mill. A later prompt and a look read the report. When the line is on, the next session keeps that ticket. When the plate or the mill is the miss, that miss is the plan until the line is on again. A change to the worn skills drops the pass until the next session start or compact. The card keeps the named plane. Judgement is continue, retry N, stop, or start. A miss on the same job counts another retry. Payments is on only when the ticket is a payment.
+
+## Thesis
+
+`applyStationHeat` is the hippocampus. It already runs on every floor that boots. Vendor ships `@0xray/repertoire@0.2.9` (seed + stack). Heat copies factory + stack laws onto the project list. Subject `repo-*` stay off dest. Turn Repertoire off and Station stays the memory. No new MCP. No new `SKILL.md`.
+
+## Three areas → pieces that already exist
+
+| Area | Job | Already there | Broken join |
+|---|---|---|---|
+| **Bookmark** | Survive as a role | `STATION.md` ← `session-boot.json` ← `applyStationHeat` | Intent stays a ship receipt. Match first-wins on the same Intent. |
+| **Index** | Named long-term store | dest + factory/stack laws + `MemoryRoutingProvider` + `ingestFeedback` | Dest is a judgment index, not a hangar keyword store. `repo-*` and git slugs prune. `readOpProcNames` is factory ∪ stack. |
+| **Mind** | This-wake thought + traces | NOTES pickup · `session-*.json` · `heatKernelDiary` · `XraySessionIngester` · survive-compact Reads | Capture is Cursor HEAD-move only. Ingest runs when `RepertoireService` constructs — hooks do not construct it. `repertoire-working.json` goes stale. Bodies stop at Station. |
+
+Groover is not the producer. Do not pin 0.1.8. Do not dump 145. Do not paste OP-PROC onto Station.
+
+## The integration
+
+Rewire `applyStationHeat` (and only that). Existing call sites stay:
+
+- Cursor `preToolUse` / `afterFileEdit` / `preCompact`. A counted host `preCompact` needs a generation id and a numeric usage percent, and that hook line and receipt are mirrored onto nested consumer wear roots.
+- Grok `session-start` / `pre-tool-use`
+- Hermes `session-start` (via `buildSessionBootPayload`)
+- OpenClaw first `preToolUse`
+- OpenCode injects Station after heat has written it
+
+```
+applyStationHeat(root, host, extra, existing)
+ 1. hydrateWritableSignals(dest) index present on THIS mill
+ changed stack definition refreshes; observation stats stay
+ 2. maybeCaptureSession(root) lift off Cursor-only into this runtime
+ 3. maybeIngestWake(root) existing match/ingest helpers; debounce
+ 4. pickup = readNotesPickup(root) first **Pickup line:** in NOTES, ≤240
+ 5. matchText = intent + pickup + latest session approaches
+ 6. matchedSignals = getTaskConfidence(matchText)
+ 7. opProcNames = reloadOpProc() factory ∪ stack only
+ 8. persist repertoire-working { pickup, subjectHits, opProcNames, destCount }
+ 9. Station projection stays thin Intent / Working ≤4 / Cascade count / Sleeve on / Plane / Judgement / Payments / Unfinished path
+ 10. A memory-recall look reads the same current index, the matched law names, and the four stitches: the returned wake, the plate, the readback, and the mill report
+```
+
+`cursorBootNeedsRefresh` already refreshes when `repertoireResume` count changes. Hydrate first, then the count moves, then heat rewrites. Do not add a hook.
+
+Hold without thickening the Grok exo: do not inject dest into the system prompt. survive-compact already Reads Station → NOTES → working. One line on the existing hot-swap paragraph: unfinished path is the second Read; working json is the third if dest is on. That is a rewire of `AGENTS-consumer.md` / `LEAD-CADENCE.md` / `survive-compact/SKILL.md`, not a new skill.
+
+## Hot-swap
+
+Compaction and a host change are the same cut. The station card survives it: Read `.xray/state/STATION.md` and continue the ticket. Lessons stay bounded at 20 hot lines, 20 retained task ids, and 24 learned proposed signals. Speech that names no stored signal mints one proposed signal tagged `learned`. Recall carries one plate.
+
+## Done when
+
+- After compact on Cursor: Station Read → NOTES pickup equals `working.pickup`; dest stays laws (no `repo-*`); compact `hookEvent` holds across later preToolUse
+- After Grok session-start: same working file; a `session-*.json` can appear without Cursor
+- `reloadOpProc` names ≠ all dest names
+- Dummy / same critic: wake without a command novel and state the pickup from disk
+- Tests cover hydrate-on-heat, pickup attach, opProc filter
+
+## Not this
+
+A live npm version stays live. Once a version is live, the stamper strips every present-tense patch pin from shipped guides and shipped OP-PROC, or reconcile advances the next cut. The stamper does not edit Station, NOTES, dest, or node_modules. It does not publish. Do not freeze the live cut. Hangars stay hangars. Railway ask-first. Patch number lives in `package.json` + CHANGELOG.

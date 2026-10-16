@@ -1,0 +1,1 @@
+ts=2026-09-24T20:39:48.500Z session_id=bc-9893bcfe-a184-5028-a277-0eb943c6c6cf context_tokens=187858 context_usage_percent=93.929 context_window_size=200000 generation_id=d32499d0-b576-458e-a24c-2e20344e6419

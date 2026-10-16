@@ -1,0 +1,234 @@
+---
+sidebar_label: Station vs Repertoire 0.1
+---
+
+# Station vs Repertoire 0.1
+
+**Station is survive-the-cut. Repertoire is preferred for judgment + growing named laws.** They are not the same job. Wear Repertoire. Do not pin `@0xray/repertoire@0.1.8` to remember a ticket, a cloud id, or a wiped chat.
+
+If Repertoire is **explicitly off**, `STATION.md` is the compact ticket. Heat it this wake. NOTES hold the deep cut. Compact survival does not wait for dest.
+
+The three pieces already exist (bookmark · index · mind). They do not meet on wake. That join is [Memory wake](./memory-wake.md) — `applyStationHeat`, not a new organ.
+
+## Three organs
+
+| Organ | Job | Not |
+|---|---|---|
+| **Station** | After compact or host change, Read `.xray/state/STATION.md`. Ticket, cloud id, Durable/Seed, “never relaunch.” | A diary of PRs, logs, or Bedrock |
+| **Repertoire 0.1** | Named invariants → trap detect, complexity boost, agent pick, `MEMORY_ROUTING:` | Session continuity |
+| **Groover 0.1** | Agent registry (PoA, DID, mint) plus a **field** that consults and feeds Repertoire | The brain, and not the session card |
+
+Groover 0.1 is a producer/consumer of the judgment loop. It is not a second copy of Repertoire 0.1.
+
+## Versions (Repertoire)
+
+Same organ from **0.1.0** through **0.1.8**. 0.1.8 is not a different product.
+
+| Tag | What it is |
+|---|---|
+| **0.1.0** (2026-06-18) | Judgment engine already shipped: ingest, pipeline, meta-inference, feedback, MCP, `MemoryRoutingProvider`. Tarball seed: **8** trap primitives (`attestation-as-map` already at hundreds of observations). |
+| **0.1.8** (2026-06-20) | Same loop. **145-signal** prod brain in the package (0.1.7), plus `enrich` / dryRun / prune / health, synthesis checkpoint, suit verify. |
+| **0.2.0** (2026-09-01) | Factory seed cut to **8** names. No Groover/Bedrock dump in the npm seed. Hydrate a **project-local** copy under `.xray/state/repertoire/`. Routing hooks remain; the living 145-signal brain does not ship in the tarball. |
+
+Do not put the 145/188 dump back in the factory seed. Do not paste it onto `STATION.md`.
+
+## What 4.0 wears
+
+- **Continuity:** Station. Grok **Reads** the card (does not inject). Compact heat rewrites stock fields and keeps unknown keys + `## Durable` / `## Seed`.
+- **Routing seed:** vendored `@0xray/repertoire@0.2.9` (factory seed plus overlays). Worn mill reads `.xray/state/repertoire/curated_signals.json`, not the tarball. **Repertoire is preferred.** Explicit opt-out only (`enabled: false`, `provider: repertoire`). Station is the compact ticket when it is off — not a substitute.
+- **Session notes:** laws stay in `curated_signals.json`. The one real gap is memory. Heat copies `NOTES.md` into `.xray/state/repertoire/session-notes.json`, a short index of session notes beside the laws. A replaced line stays in the file, marked superseded, and the short index returns the current line. Cleanup drops a lone note only after 90 days without being seen again. A superseded line is kept. That is not a vector store, and it does not mint a law. Station and the notes page belong to the station module. Goggles is the lens, and the wake names plane `record-map`. Heat writes `Cascade: record-map · notes N current` on the card. A memory-recall look returns that plane, the matched law names, and the current lines from the index. Heat writes `Sleeve: on` when the intent already on the card is still the working intent, the worn plate body is that work, the card reads back the same intent and host, and `inspect --skip-live` has passed in this process's home. Session start and compact run that mill and refresh a worn plate whose body no longer matches the package. A prompt and a look read the report. The look lists those four. The card names a stitch only when it is missing.
+- **Lessons:** a passing grade appends one line on the named law. `LESSON_LINE_CAP` is 20. `RETAINED_LESSON_ID_CAP` is 20 in insertion order. Speech that names nothing mints one `proposed` + `learned` signal. `LEARNED_SIGNAL_CAP` is 24 and evicts only those mints. Factory signals stay.
+- **Plates:** one schematic per pipeline under [Plates](../plates/index.md). The npm package ships `docs-site/docs/plates/`. Station stays the short table and adds one pointer line, `Plate: <id> — .xray/state/plates/<id>.md`, when intent names a pipeline. Pre-compact and the `MEMORY_ROUTING` inject carry that one plate. A lesson is what happened. A plate is the machine.
+- **Do not pin 0.1.8** for a normal mill install. The 0.1 *job* (judgment) is still real when a field emits enriched JSONL (`matched_primitives` + `match_confidence`) **and** 0xRay actually routes (`analyze-complexity` / thinDispatch / researcher). Then grow the **project-local** copy. That is not Station.
+
+Frontier hosts often skip intake (spawn **warns**, does not deny). Then the judgment loop stays idle even if Repertoire is fastened. That is expected, not a missing Station plant.
+
+## Do not
+
+- Treat Repertoire as the successor card.
+- Stuff Bedrock names or activity-log FILL into the factory seed.
+- Thicken `STATION.md` with synthesis reports or JSONL.
+- Put session notes into the law file. A note stored as a signal is eligible for prune. The index beside the laws is the copy that survives a wiped notes page.
+- Confuse Groover’s in-memory challenge sessions with Station (they die on registry restart).
+- Treat same-bc plus a re-fed summary as proof the conversation survived as a mind. Chat may lose early turns. Disk must not lose the ticket. Mill-absence (host did not invent `STATION.md`) is still PASS for mill-control. Killer-dual: `examples/killer-dual/HOST-VS-MILL.md`.
+
+## Memory pipelines (one system)
+
+Four layers, one job: survive the cut and grow intelligence. Chat is not a store.
+
+```
+MEMORY OS
+├── Station.md ALWAYS. Pickup ticket. Compact ticket if dest is off.
+├── NOTES.md Deep cut Station is too thin to hold.
+├── OP-PROC How we work. Hooks + dest names. Not pasted on Station.
+├── Repertoire dest PREFERRED. Named laws when worn.
+└── Kernel diary GATHER. session-*.json, activity.log, workflows.
+```
+
+### Gather / store / retrieve
+
+```
+GATHER STORE RETRIEVE
+────── ───── ────────
+preToolUse / afterFileEdit → session-boot.json → Read STATION.md
+preCompact (Cloud: Yes) → STATION.md + receipt ids → same bc / Task id, resume only
+lead heat (this wake) → repertoire-working.json → opProcNames if dest on
+storyteller / commits → docs/inference/session-* → XraySessionIngester
+kernel patterns / routing → logs/framework/* → health / ingest
+analyze-complexity → dest curated_signals.json → getTaskConfidence
+task done → ingestFeedback → enrichTasks
+spoken twice → LEAD-CADENCE / skill → wear, do not re-ask
+deep cut this job → NOTES.md → second Read after compact
+```
+
+### Active wake (intelligence is live)
+
+```
+USER / TOOL
+ │
+ ├─[t0] preToolUse ──► ensureCursorSessionBoot
+ │ ├─ cursorBootNeedsRefresh? (HEAD / dest count / Hold npm)
+ │ ├─ applyStationHeat
+ │ │ ├─ clip Intent (≤240)
+ │ │ ├─ Git branch@head
+ │ │ ├─ Repertoire: on — N | explicit off
+ │ │ └─ Working ≤4 matched names
+ │ ├─ session-boot.json (SSOT)
+ │ ├─ STATION.md (projection)
+ │ └─ repertoire-working.json (opProcNames if dest)
+ │
+ ├─[t0b] capture then grow (dest ON) ──► dest.lock ──► RepertoireService
+ │ ├─ session-*.json from THIS wake's git (observe existing laws only)
+ │ ├─ syncXrayMemory (session-*.json)
+ │ ├─ heatKernelDiary + NOTES / CLEANSE list (then prune keywords)
+ │ ├─ Cursor / Grok / Hermes / OpenClaw + asides share one dest
+ │ └─ Groover field stays off — no sibling repo-* mint
+ │
+ ├─[t1] work ──► kernel gather (best-effort, often COLD)
+ │ ├─ session-capture → docs/inference/session-*.json
+ │ ├─ activity.log / routing-outcomes / pattern-metrics
+ │ └─ .xray/inference/workflow-*.json
+ │
+ ├─[t2] afterFileEdit ──► same heat if metal moved
+ │
+ ├─[t3] intake (frontier: optional) ──► analyze-complexity
+ │ ├─ enrichTasks / getTaskConfidence (dest ON)
+ │ └─ skip if dest OFF — Station still holds the ticket
+ │
+ └─[t4] task close ──► ingestFeedback → dest observations (dest ON only)
+```
+
+### Compact moment (timing)
+
+```
+CONTEXT WINDOW ████████████████░░░░ filling
+ │
+ ├─ DOES fire preCompact ──► write Station + receipt ids
+ │ (Cloud support matrix: Yes. Bind hooks first.)
+ │
+ ▼
+ COMPACT (chat dies)
+ │
+ ▼
+ POST Read disk. Do not reconstruct from summary.
+```
+
+`preCompact` is observational. It cannot block or spawn. Official stdout is only `user_message`. The spawn token is the id the host already returned: stdin `conversation_id` (same Cloud `bc-`) and any Task agent id. Resume that id. Do not print an id from the hook and expect a new agent. Survival is still heat **during** the wake (t0/t2/lead) plus the receipt when the host does compact.
+
+### Post compact (retrieve)
+
+```
+NEW WINDOW
+ │
+ ├─1─ Read STATION.md
+ │ ├─ Repertoire: explicit off ──► Station + NOTES ARE the mind. STOP looking for dest.
+ │ └─ Repertoire: on — N ──► ticket first, then dest.
+ │
+ ├─2─ Read NOTES (unfinished path on the card)
+ │
+ ├─3─ Read COMPACT-SURVIVAL (who / seats)
+ │
+ ├─4─ IF dest ON
+ │ ├─ reloadOpProc() factory ∪ overlay names
+ │ ├─ repertoire-working.opProcNames
+ │ └─ getTaskConfidence(compact language)
+ │
+ └─5─ Resume same bc / same critic. Do not cold-start.
+```
+
+### Opt-out (Station is the compact ticket)
+
+```
+npm install 0xray (Repertoire vendored, memory_routing ON)
+ │
+ ▼
+explicit opt-out only
+ "memory_routing": { "enabled": false, "provider": "repertoire" }
+ │
+ ▼
+postinstall → installAllBridges
+ ├─ AGENTS.md / .xray / .mcp.json / four bridges + Cursor hooks
+ └─ seed + grow skipped — Station holds the ticket
+ │
+ ▼
+WAKE
+ ├─ heat STATION.md every material move
+ ├─ write NOTES if the cut is deeper than 240 chars
+ └─ dest path is not the brain — do not invent keywords
+ │
+ ▼
+COMPACT
+ └─ Read Station → NOTES → continue. That is enough.
+```
+
+### Onboarding (collection starts here)
+
+```
+FRESH CLONE / FRESH INSTALL
+ │
+ ├─ npm i 0xray
+ │ └─ postinstall.cjs → installAllBridges
+ │ ├─ deploy .xray (codex, features, config)
+ │ ├─ .mcp.json (7 servers)
+ │ ├─ OpenCode / Grok / Hermes / OpenClaw
+ │ └─ Cursor last-mile (.cursor/hooks.json → dist hooks)
+ │
+ ├─ Repertoire vendored on (preferred)
+ │ └─ hydrateWritableSignals
+ │ ├─ copy factory 8 → .xray/state/repertoire/curated_signals.json
+ │ ├─ merge stack-overlay (OP-PROC names)
+ │ └─ features.json memory_routing.signalsPath → dest
+ │
+ └─ first preToolUse
+ ├─ mill-absence? write Station from empty
+ ├─ Intent often "(none yet)" — Cursor stdin has no prompt
+ └─ lead / second heat must write the real Intent
+
+UPGRADE of an existing mill
+ │
+ ├─ npm i 0xray@latest (do not redeploy hangar tarball)
+ ├─ dest already there (hydrate merges overlay, does not wipe)
+ └─ cursorBootNeedsRefresh if HEAD / dest count / Durable Hold npm diverged
+```
+
+### Kernel collection (what actually writes)
+
+```
+KERNEL DIARY WHO WRITES DEST READS?
+docs/inference/session-*.json Cursor heat on HEAD move + capture YES (XraySessionIngester)
+.xray/inference/workflow-*.json inference workflow discover dir; needs session-*
+logs/framework/activity.log frameworkLogger not dest (diary only)
+logs/framework/routing-outcomes.json orchestrator not dest
+logs/framework/pattern-metrics.json kernel-patterns / adaptive not dest
+session-boot.json / STATION.md hooks + lead heat pickup, not dest
+```
+
+Session ingest is **cold** until `session-*.json` exists. Overlay names are OP-PROC, not product-domain memory. Groover JSONL is not the producer.
+
+## Related
+
+- [Repertoire](./repertoire.md) — 0.2 wear, MCP, provider contract
+- [Memory routing](./memory-routing.md) — orchestrator wiring
+- [4.0 now](../architecture/v4-now.md) — Station handoff
+- [Grok guide](../architecture/GROK_GUIDE.md) — Read the card
+

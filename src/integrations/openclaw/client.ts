@@ -1,7 +1,7 @@
 /**
  * OpenClaw WebSocket Client
  *
- * Implements OpenClaw Gateway Protocol v3 with proper request/response handling,
+ * Implements OpenClaw Gateway Protocol v3–v4 with proper request/response handling,
  * reconnection logic, and event management.
  *
  * @since 2026-03-14
@@ -26,6 +26,16 @@ import {
   OpenClawConnectionError,
   OpenClawErrorCode,
 } from './types.js';
+
+export function isUsableOpenClawDeviceIdentity(
+  deviceId: string | undefined,
+  keyPair: { publicKey?: string; privateKey?: string } | undefined,
+): boolean {
+  if (!deviceId || deviceId === 'your-device-id') {
+    return false;
+  }
+  return Boolean(keyPair?.publicKey && keyPair?.privateKey);
+}
 
 /**
  * OpenClaw WebSocket Client
@@ -308,9 +318,9 @@ export class OpenClawClient {
   private sendHandshake(): void {
     const params: OpenClawConnectParams = {
       minProtocol: 3,
-      maxProtocol: 3,
+      maxProtocol: 4,
       client: {
-        id: 'openclaw-tui',
+        id: 'gateway-client',
         version: '1.0.0',
         platform: process.platform,
         mode: 'cli',
@@ -319,7 +329,7 @@ export class OpenClawClient {
       scopes: ['operator.read', 'operator.write', 'operator.admin'],
       caps: [],
       commands: [],
-      userAgent: `OpenClaw-TUI/2026.4.25`,
+      userAgent: `OpenClaw-TUI/2026.7.1`,
     };
 
     // Add auth if provided
@@ -327,12 +337,14 @@ export class OpenClawClient {
       params.auth = { token: this.config.authToken };
     }
 
-    // Add device if provided
-    if (this.config.deviceId && this.config.deviceKeyPair) {
+    // Never send a placeholder device — gateway treats stub identity as NOT_PAIRED.
+    const deviceId = this.config.deviceId;
+    const keyPair = this.config.deviceKeyPair;
+    if (isUsableOpenClawDeviceIdentity(deviceId, keyPair) && deviceId && keyPair) {
       params.device = {
-        id: this.config.deviceId,
-        publicKey: this.config.deviceKeyPair.publicKey,
-        signature: this.signDeviceChallenge(this.config.deviceId),
+        id: deviceId,
+        publicKey: keyPair.publicKey,
+        signature: this.signDeviceChallenge(deviceId),
         signedAt: Date.now(),
         nonce: this.generateNonce(),
       };

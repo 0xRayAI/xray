@@ -34,6 +34,22 @@ export interface MemoryTaskConfidence {
   recommendedAgent: string | null;
 }
 
+/** Characters kept on one graded lesson line. lessonTrace stores with this cap. */
+export const LESSON_TEXT_CAP = 400;
+
+export interface MemoryLessonLine {
+  taskId: string;
+  decision: 'success' | 'failure';
+  text: string;
+  at: string;
+}
+
+export interface MemorySignalLessons {
+  name: string;
+  definition: string;
+  lines: MemoryLessonLine[];
+}
+
 export interface MemoryRoutingContext {
   providerId: string;
   matchedSignals: string[];
@@ -42,6 +58,8 @@ export interface MemoryRoutingContext {
   synthesisAvailable: boolean;
   signalConfidences?: Record<string, number>;
   avgMatchConfidence?: number;
+  /** Laws above the floor, with the graded lines a wake reads. */
+  lessons?: MemorySignalLessons[];
 }
 
 export interface MemoryInheritedContext {
@@ -67,6 +85,8 @@ export interface OrchestratorFeedbackEntry {
   success: boolean;
   durationMs: number;
   dynamoResult?: Record<string, unknown>;
+  /** Approaches, solutions, or the wrong turn from the sessions that named the law. */
+  lesson?: string;
 }
 
 export interface MemoryRoutingProviderConfig {

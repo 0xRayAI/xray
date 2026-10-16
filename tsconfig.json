@@ -36,8 +36,6 @@
     "src/__tests__/**/*",
 
     "src/postprocessor/validation/**/*",
-    "src/integrations/cross-language-bridge.ts",
-    "src/integrations/base/ExampleIntegration.ts",
     "src/integrations/hermes-agent/**/*",
     "src/integrations/grok/**/*"
   ]

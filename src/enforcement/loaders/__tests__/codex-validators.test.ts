@@ -83,6 +83,23 @@ describe("CodexLoader Validators - Real Tests", () => {
       });
       expect(result.passed).toBe(true);
     });
+
+    it("should still flag a later long function after short ones", async () => {
+      const loader = new CodexLoader();
+      const rules = await loader.load();
+      const rule = rules.find(r => r.id === "codex-19");
+      expect(rule).toBeDefined();
+      const shortFns = Array.from({ length: 12 }, (_, i) => `function s${i}() { return ${i}; }`).join("\n");
+      const longFn = "function large() {\n" + "  const x = 1;\n".repeat(35) + "}";
+
+      const result = await rule!.validator({
+        newCode: `${shortFns}\n${longFn}`,
+        operation: "write",
+        files: []
+      });
+      expect(result.passed).toBe(false);
+      expect(result.message).toContain("lines");
+    });
   });
 
   describe("Term 16: DRY - Don't Repeat Yourself", () => {

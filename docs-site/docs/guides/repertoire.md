@@ -1,6 +1,8 @@
 # Repertoire Integration (v3.3+)
 
-[Repertoire](https://github.com/0xRayAI/repertoire) (`@0xray/repertoire`) is the default **memory routing provider** for the 0xRay framework repo. It ingests enriched Groover inference logs, maintains `curated_signals.json`, and enriches orchestrator routing through the `MemoryRoutingProvider` contract.
+**Repertoire is preferred.** [Repertoire](https://github.com/0xRayAI/repertoire) (`@0xray/repertoire@0.2.9` vendored) is the long-term judgment organ. It matches named laws and enriches orchestrator routing through the `MemoryRoutingProvider` contract. Wear it. Do not treat Station as a substitute.
+
+**Not the successor card.** Survive compact / host change is [Station](../architecture/v4-now.md) (Read `.xray/state/STATION.md`). 0.1.0–0.1.8 were the same **judgment** organ; 0.2 cut the factory seed to 8 names. Do not pin 0.1.8. Split: [Station vs Repertoire 0.1](./station-vs-repertoire.md).
 
 ## When to use Repertoire
 
@@ -10,34 +12,33 @@
 | External LLM host (Hermes, Grok, OpenCode MCP) | `repertoire-mcp` stdio server |
 | Ad-hoc signal queries / ingest pipeline | Repertoire CLI (`npm run query`, `pipeline`) |
 
-## Setup (framework monorepo)
+## Setup
 
-```bash
-# Sibling layout (default in 0xRay repo)
-git clone https://github.com/0xRayAI/repertoire ../repertoire
-cd ../repertoire && npm install && npm run build
+`0xray` vendors `@0xray/repertoire@0.2.9`. Fresh `npm install 0xray` ships `memory_routing.enabled: true`. **Preferred on.** Explicit opt-out only: `enabled: false` with `provider: "repertoire"`. Station then holds the compact ticket — that is fallback, not the preferred brain. This is not an 8th 0xRay MCP.
 
-# 0xRay xray/features.json already ships:
-```
+Shipped `xray/features.json`:
 
 ```json
 "memory_routing": {
-  "enabled": true,
-  "provider": "repertoire",
-  "module_path": "../repertoire/dist/provider/memory-routing-provider.js",
-  "config": {
-    "dataDir": "../repertoire/data",
-    "signalsPath": "../repertoire/data/curated_signals.json",
-    "logDir": "../repertoire/logs/groover-inference"
-  }
+ "enabled": true,
+ "provider": "repertoire",
+ "module_path": "node_modules/@0xray/repertoire/dist/provider/memory-routing-provider.js",
+ "config": {
+ "signalsPath": ".xray/state/repertoire/curated_signals.json",
+ "statePath": ".xray/state/repertoire/inference-state.json",
+ "feedbackDir": ".xray/state/repertoire/feedback"
+ }
 }
 ```
 
-Consumer projects without Repertoire checked out:
+Optional sibling (framework monorepo only):
 
-```json
-"memory_routing": { "enabled": false, "provider": "null" }
+```bash
+git clone https://github.com/0xRayAI/repertoire ../repertoire
+cd ../repertoire && npm install && npm run build
 ```
+
+Grok session-start writes a one-line `repertoireResume` into `.xray/state/session-boot.json` (signal count when the registry is readable). Leftover default-off also **resolves at runtime** in `loadMemoryRoutingProvider` / `getMemoryRoutingConfig` when the module is on disk — ExecutionPlanner and thinDispatch then use Repertoire without a features rewrite. Station heat persists **working state** (not Bedrock primitives) to `.xray/state/repertoire-working.json` and a `Working:` line on `STATION.md`. Compact may `ingestFeedback` for non-Bedrock matches. Explicit opt-out remains `enabled: false` + `provider: "repertoire"`.
 
 ## `features.json` fields (`memory_routing`)
 
@@ -54,8 +55,8 @@ Validated by `xray/features.schema.json` at load time:
 
 | Key | Default | Description |
 |-----|---------|-------------|
-| `dataDir` | `../repertoire/data` | Registry + inference state root |
-| `signalsPath` | `data/curated_signals.json` | Primitive registry file |
+| `dataDir` | package `data/` (vendored 0.2) | Registry + inference state root |
+| `signalsPath` | `.xray/state/repertoire/curated_signals.json` | Project-local registry (factory + stack laws). Dest is named invariants, not hangar `repo-*` or git slugs. |
 | `statePath` | `data/inference-state.json` | Idempotent ingest cursor |
 | `logDir` | `logs/groover-inference` | Enriched JSONL log directory |
 
@@ -108,48 +109,39 @@ See `src/memory-routing/types.ts` and Repertoire's `docs/MEMORY-ROUTING-PROVIDER
 
 ## Repertoire MCP server (external hosts)
 
-Add alongside 0xRay's 7 MCP servers in `.mcp.json`:
+Not an 8th 0xRay server. Wear adds a `repertoire` extra when the module resolves (Hermes / OpenCode / OpenClaw / project `.mcp.json` / Grok `.grok/config.toml`).
+
+Server tools are **unprefixed** so Grok TUI can register them (`server__tool` → `repertoire__get_task_confidence`). Hermes/OpenCode see the unprefixed names.
 
 ```json
 "repertoire": {
-  "command": "npx",
-  "args": ["-y", "@0xray/repertoire", "mcp"]
+ "command": "node",
+ "args": ["node_modules/@0xray/repertoire/dist/mcp/server.js"]
 }
 ```
 
-Or after local build:
-
-```json
-"repertoire": {
-  "command": "node",
-  "args": ["../repertoire/dist/mcp/server.js"],
-  "env": {
-    "REPERTOIRE_DATA_DIR": "../repertoire/data",
-    "CURATED_SIGNALS_PATH": "../repertoire/data/curated_signals.json"
-  }
-}
-```
+In-repo launcher (cwd-proof): `scripts/mjs/run-repertoire-mcp.mjs`.
 
 ### MCP tools
 
-| Tool | Purpose |
-|------|---------|
-| `repertoire__get_high_confidence_signals` | List signals above threshold |
-| `repertoire__get_task_confidence` | Full confidence context for a task |
-| `repertoire__search_primitives` | Text search against registry |
-| `repertoire__ingest_feedback` | Record orchestrator outcome |
+| Server name | Grok TUI name | Purpose |
+|-------------|---------------|---------|
+| `get_high_confidence_signals` | `repertoire__get_high_confidence_signals` | List signals above threshold |
+| `get_task_confidence` | `repertoire__get_task_confidence` | Full confidence context for a task |
+| `search_primitives` | `repertoire__search_primitives` | Text search against registry |
+| `ingest_feedback` | `repertoire__ingest_feedback` | Record orchestrator outcome |
 
-Hermes/OpenCode agents should call `repertoire__get_task_confidence` directly; in-process orchestrator code uses `getMemoryRoutingProviderSync()`.
+In-process orchestrator code uses `getMemoryRoutingProviderSync()`.
 
 ## Repertoire CLI
 
 ```bash
 cd repertoire
 npm run ingest -- --source /path/to/groover/logs
-npm run pipeline          # ingest + meta-inference
-npm run query             # ad-hoc confidence query
-npm run test:e2e          # enriched loop regression
-npm run test:mcp          # stdio MCP smoke
+npm run pipeline # ingest + meta-inference
+npm run query # ad-hoc confidence query
+npm run test:e2e # enriched loop regression
+npm run test:mcp # stdio MCP smoke
 ```
 
 ## Data model (summary)
@@ -161,6 +153,20 @@ npm run test:mcp          # stdio MCP smoke
 | `logs/groover-inference/*.jsonl` | Enriched entries (strict enriched-only ingest) |
 
 Confidence values come from `observation_stats` or explicit task metadata — no text-score fallbacks.
+
+## Lessons, mint, and caps
+
+A passing grade appends one lesson on the named law and stores that line beside the average. The same task id does not step again.
+
+| Cap | Value | What leaves |
+|-----|-------|-------------|
+| `LESSON_LINE_CAP` | 20 | Oldest lesson text, only after its task id is in the ledger |
+| `RETAINED_LESSON_ID_CAP` | 20 | Oldest id, insertion order (not alphabetical) |
+| `LEARNED_SIGNAL_CAP` | 24 | Only `proposed` signals tagged `learned` (lowest confidence, then oldest `last_seen`) |
+
+Speech that names no stored signal mints one proposed signal tagged `learned`. The same speech does not mint twice. Factory signals are not eviction candidates.
+
+A plate is the machine schematic ([Plates](../plates/index.md)). The npm package ships `docs-site/docs/plates/`. Station keeps one pointer line for the plate intent names. Pre-compact and `MEMORY_ROUTING` inject that one schematic.
 
 ## Testing
 

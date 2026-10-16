@@ -137,6 +137,53 @@ describe("Inference Accumulator", () => {
     expect(sessions).toEqual([]);
   });
 
+  it("should ignore session notes that have no metrics", () => {
+    writeSession("a", 4);
+    fs.writeFileSync(
+      path.join(inferenceDir, "session-notes.json"),
+      JSON.stringify({
+        sessionId: "notes",
+        timestamp: new Date().toISOString(),
+        problems: ["a note"],
+        approaches: [],
+        wrongTurns: [],
+        solutions: [],
+        patterns: [],
+      }),
+    );
+
+    const corpus = accumulateCorpus(inferenceDir);
+    expect(corpus.sessions.map((s) => s.sessionId)).toEqual(["a"]);
+    expect(corpus.totalCommits).toBe(4);
+    expect(shouldTriggerCycle(inferenceDir, path.join(stateDir, "cycle.json")).trigger).toBe(true);
+  });
+
+  it("should treat a pattern with no evidence array as empty evidence", () => {
+    const session = makeSession("a", 6, ["Bare Pattern"]);
+    const bare = session.patterns[0] as { evidence?: string[] };
+    delete bare.evidence;
+    fs.writeFileSync(path.join(inferenceDir, "session-a.json"), JSON.stringify(session));
+
+    const corpus = accumulateCorpus(inferenceDir);
+    expect(corpus.sessions).toHaveLength(1);
+    expect(corpus.totalCommits).toBe(6);
+    expect(corpus.recurringPatterns).toEqual([]);
+  });
+
+  it("keeps matched_primitives from the session file", () => {
+    const session = makeSession("named", 6, ["test-expansion"]);
+    const raw = {
+      ...session,
+      matched_primitives: ["wake-cascade", "wake-cascade", ""],
+    };
+    fs.writeFileSync(path.join(inferenceDir, "session-named.json"), JSON.stringify(raw));
+
+    const loaded = loadSessionInferences(inferenceDir);
+    expect(loaded).toHaveLength(1);
+    expect(loaded[0]?.matched_primitives).toEqual(["wake-cascade"]);
+    expect(loaded[0]?.matchedPrimitives).toEqual(["wake-cascade"]);
+  });
+
   it("should handle malformed session files gracefully", () => {
     writeSession("a", 10);
     fs.writeFileSync(path.join(inferenceDir, "session-bad.json"), "not json {{{");

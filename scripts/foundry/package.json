@@ -1,0 +1,72 @@
+{
+  "name": "@0xray/foundry",
+  "version": "0.1.12",
+  "private": false,
+  "type": "module",
+  "description": "0xRay mill: mint their suit params, stamp, gate, publish, CI report, git hooks. Not the worn exo.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/0xRayAI/xray.git",
+    "directory": "scripts/foundry"
+  },
+  "homepage": "https://github.com/0xRayAI/xray/tree/main/scripts/foundry",
+  "bugs": {
+    "url": "https://github.com/0xRayAI/xray/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "bin": {
+    "0xray-foundry": "cli.js"
+  },
+  "files": [
+    "*.mjs",
+    "*.cjs",
+    "cli.js",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md",
+    "plant"
+  ],
+  "exports": {
+    "./version-manager": "./version-manager.mjs",
+    "./validate-release-docs": "./validate-release-docs.mjs",
+    "./reconcile-version": "./reconcile-version.mjs",
+    "./release": "./release.mjs",
+    "./release-gate": "./release-gate.mjs",
+    "./mill-root": "./mill-root.mjs",
+    "./mint-suit": "./mint-suit.cjs",
+    "./mill-plant": "./mill-plant.cjs",
+    "./inspect": "./inspect.mjs",
+    "./sound": "./sound.mjs",
+    "./sound-bed": "./sound-bed.cjs",
+    "./sound-mixer": "./sound-mixer.cjs",
+    "./blip": "./blip.mjs",
+    "./blip-render": "./blip-render.cjs",
+    "./blip-vibe": "./blip-vibe.cjs",
+    "./blip-looker": "./blip-looker.cjs",
+    "./blip-scene": "./blip-scene.cjs",
+    "./sound-taste": "./sound-taste.cjs",
+    "./sound-voice": "./sound-voice.cjs",
+    "./blip-stroke": "./blip-stroke.cjs",
+    "./ci-monitor": "./ci-monitor.mjs",
+    "./hooks": "./hooks.mjs",
+    "./docs-build": "./docs-build.mjs"
+  },
+  "dependencies": {
+    "@0xray/blip": "^0.1.3"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "0xray",
+    "foundry",
+    "mill",
+    "sound",
+    "blip",
+    "release",
+    "changelog"
+  ]
+}

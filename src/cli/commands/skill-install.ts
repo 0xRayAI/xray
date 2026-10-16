@@ -1,6 +1,7 @@
 import { existsSync, readdirSync, readFileSync, mkdirSync, writeFileSync, cpSync, rmSync, statSync, unlinkSync, copyFileSync } from "fs";
 import { join, basename, dirname } from "path";
 import { fileURLToPath } from "url";
+import { createRequire } from "module";
 import { execSync } from "child_process";
 import { getConfigDir } from "../../core/config-paths.js";
 
@@ -543,6 +544,10 @@ export async function skillRegistryCommand(
 // Each platform's install command calls this to copy framework skills.
 export function syncBuiltinSkills(targetSkillsDir: string, packageRoot?: string): number {
   const root = packageRoot ?? join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
+  const millSuit = createRequire(import.meta.url)(join(root, "scripts/foundry/mint-suit.cjs")) as {
+    wantsCostume: (dir: string) => boolean;
+  };
+  if (!millSuit.wantsCostume(process.cwd())) return 0;
   const candidateDirs = [
     join(root, "dist", "skills"),
     join(root, "src", "skills"),

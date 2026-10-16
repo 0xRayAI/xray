@@ -47,9 +47,108 @@ export class TaskHandler {
       sessionId?: string;
       executionMode?: string;
       timeout?: number;
+      confer?: boolean;
+      conferFixture?: boolean;
+      collocatedText?: string;
+      userAsideId?: string;
+      setActiveAside?: boolean;
+      clearActiveAside?: boolean;
     },
     deps: TaskHandlerDeps
   ): Promise<{ content: Array<{ type: string; text: string }> }> {
+    if (args.clearActiveAside === true) {
+      const projectRoot = process.cwd();
+      const { clearActiveAside, getActiveAsideId } = await import(
+        '../../../nucleus/user-aside.js',
+      );
+      const prior = getActiveAsideId(projectRoot, args.sessionId ?? null);
+      clearActiveAside(projectRoot);
+      return {
+        content: [
+          {
+            type: 'text',
+            text: prior
+              ? `✅ Cleared active aside \`${prior}\` — spawns resume main lead-dev plan.`
+              : 'ℹ️ No active aside was set.',
+          },
+        ],
+      };
+    }
+
+    if (args.userAsideId?.trim()) {
+      const projectRoot = process.cwd();
+      const {
+        setActiveAsideId,
+        loadUserAside,
+        formatUserAsideSummary,
+        isUserAsidesEnabled,
+        UserAsideValidationError,
+      } = await import('../../../nucleus/user-aside.js');
+      const { clearPendingDelegations } = await import(
+        '../../../nucleus/pending-delegations.js',
+      );
+      if (!isUserAsidesEnabled(projectRoot)) {
+        return {
+          content: [{ type: 'text', text: '❌ User asides disabled in features.json' }],
+        };
+      }
+      const asideId = args.userAsideId.trim();
+      const aside = loadUserAside(asideId, projectRoot);
+      if (!aside) {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `❌ User aside \`${asideId}\` not found — run analyze-complexity with userAsideId first.`,
+            },
+          ],
+        };
+      }
+      if (args.setActiveAside !== false) {
+        try {
+          clearPendingDelegations(projectRoot);
+          setActiveAsideId(asideId, projectRoot, args.sessionId ?? null);
+        } catch (err) {
+          const message = err instanceof UserAsideValidationError ? err.message : String(err);
+          return { content: [{ type: 'text', text: `❌ ${message}` }] };
+        }
+      }
+      return {
+        content: [
+          {
+            type: 'text',
+            text:
+              `✅ Active aside: \`${asideId}\`\n\n${formatUserAsideSummary(aside)}`,
+          },
+        ],
+      };
+    }
+
+    if (args.confer === true) {
+      const { runConferQuorum, formatConferQuorumReport, isConferEnabled } = await import(
+        '../../../nucleus/confer.js',
+      );
+      const sid = args.sessionId ?? `confer_${Date.now()}`;
+      if (!isConferEnabled()) {
+        return {
+          content: [{ type: 'text', text: '❌ Confer disabled in features.json' }],
+        };
+      }
+      const conferOpts: {
+        dueReason?: string | null;
+        fixture?: boolean;
+        collocatedText?: string;
+      } = {
+        dueReason: args.description,
+        fixture: args.conferFixture === true,
+      };
+      if (args.collocatedText) conferOpts.collocatedText = args.collocatedText;
+      const result = await runConferQuorum(process.cwd(), sid, conferOpts);
+      return {
+        content: [{ type: 'text', text: formatConferQuorumReport(result) }],
+      };
+    }
+
     const { description, tasks = [], sessionId = `session_${Date.now()}`, executionMode = 'optimized', timeout = 300000 } = args;
 
     await frameworkLogger.log(

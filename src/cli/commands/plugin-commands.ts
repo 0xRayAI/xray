@@ -179,26 +179,27 @@ export async function pluginStatusCommand(pluginName: string): Promise<void> {
   console.log(`  Description: ${m.description}`);
   console.log(`  License:     ${m.license || "N/A"}`);
 
-  if (m.capabilities) {
+  if (Array.isArray(m.capabilities)) {
     console.log("\n  Capabilities:");
-    for (const cap of m.capabilities as string[]) {
-      console.log(`    - ${cap}`);
+    for (const cap of m.capabilities) {
+      console.log(`    - ${String(cap)}`);
     }
   }
 
-  if (m.tools) {
+  if (Array.isArray(m.tools)) {
     console.log("\n  Tools:");
-    for (const tool of m.tools as Array<Record<string, unknown>>) {
-      console.log(`    - ${tool.name}: ${tool.description}`);
+    for (const tool of m.tools) {
+      const row = tool as Record<string, unknown>;
+      console.log(`    - ${String(row.name)}: ${String(row.description)}`);
     }
   }
 
-  if (m.runtime) {
+  if (m.runtime && typeof m.runtime === "object" && !Array.isArray(m.runtime)) {
     const runtime = m.runtime as Record<string, unknown>;
     console.log("\n  Runtime:");
-    console.log(`    Command: ${runtime.command}`);
-    if (runtime.args) {
-      console.log(`    Args:    ${(runtime.args as string[]).join(" ")}`);
+    console.log(`    Command: ${String(runtime.command)}`);
+    if (Array.isArray(runtime.args)) {
+      console.log(`    Args:    ${runtime.args.map((arg) => String(arg)).join(" ")}`);
     }
   }
 
@@ -231,57 +232,97 @@ function validateManifest(manifest: Record<string, unknown>): void {
   }
 }
 
-function parseYaml(content: string): Record<string, unknown> {
-  const lines = content.split("\n");
-  const result: Record<string, unknown> = {};
-  let currentKey = "";
-  const stack: { indent: number; obj: Record<string, unknown> }[] = [
-    { indent: -1, obj: result },
-  ];
+type YamlMap = Record<string, unknown>;
+type YamlFrame = { indent: number; container: YamlMap | unknown[]; key?: string };
 
-  for (const line of lines) {
+function parseScalar(raw: string): unknown {
+  const value = raw.trim();
+  if (
+    (value.startsWith('"') && value.endsWith('"')) ||
+    (value.startsWith("'") && value.endsWith("'"))
+  ) {
+    return value.slice(1, -1);
+  }
+  if (value.startsWith("[") && value.endsWith("]")) {
+    const inner = value.slice(1, -1).trim();
+    if (!inner) return [];
+    return inner.split(",").map((part) => parseScalar(part));
+  }
+  if (value === "true") return true;
+  if (value === "false") return false;
+  if (/^-?\d+$/.test(value)) return Number(value);
+  return value;
+}
+
+/** Subset of YAML used by plugin.yaml: maps, scalar lists, and lists of maps. */
+export function parseYaml(content: string): YamlMap {
+  const root: YamlMap = {};
+  const stack: YamlFrame[] = [{ indent: -1, container: root }];
+
+  for (const line of content.split("\n")) {
     const trimmed = line.trim();
     if (!trimmed || trimmed.startsWith("#")) continue;
-
     const indent = line.search(/\S/);
-    const isListItem = trimmed.startsWith("- ");
 
-    if (isListItem) {
-      const value = trimmed.slice(2).trim();
+    while (stack.length > 1) {
       const top = stack[stack.length - 1];
-      if (top && currentKey && !Array.isArray(top.obj[currentKey])) {
-        top.obj[currentKey] = [];
+      if (!top || indent > top.indent) break;
+      stack.pop();
+    }
+
+    if (trimmed.startsWith("- ")) {
+      let owner = stack[stack.length - 1];
+      if (
+        owner &&
+        !Array.isArray(owner.container) &&
+        Object.keys(owner.container).length === 0 &&
+        stack.length > 1
+      ) {
+        const holder = stack[stack.length - 2];
+        const emptyIndent = owner.indent;
+        stack.pop();
+        if (holder && !Array.isArray(holder.container) && holder.key) {
+          const list: unknown[] = [];
+          holder.container[holder.key] = list;
+          stack.push({ indent: emptyIndent, container: list });
+        }
+        owner = stack[stack.length - 1];
       }
-      if (top && currentKey) {
-        (top.obj[currentKey] as unknown[]).push(value);
+      if (!owner || !Array.isArray(owner.container)) continue;
+
+      const rest = trimmed.slice(2).trim();
+      const colon = rest.indexOf(":");
+      const quoted = rest.startsWith('"') || rest.startsWith("'");
+      if (!quoted && colon > 0) {
+        const item: YamlMap = {};
+        const key = rest.slice(0, colon).trim();
+        const value = rest.slice(colon + 1).trim();
+        item[key] = value ? parseScalar(value) : {};
+        owner.container.push(item);
+        stack.push({ indent, container: item, key });
+      } else {
+        owner.container.push(parseScalar(rest));
       }
       continue;
     }
 
     const colonIndex = trimmed.indexOf(":");
-    if (colonIndex > 0) {
-      const key = trimmed.slice(0, colonIndex).trim();
-      const value = trimmed.slice(colonIndex + 1).trim();
+    if (colonIndex <= 0) continue;
+    const key = trimmed.slice(0, colonIndex).trim();
+    const value = trimmed.slice(colonIndex + 1).trim();
+    const current = stack[stack.length - 1];
+    if (!current || Array.isArray(current.container)) continue;
 
-      const top = stack[stack.length - 1];
-      while (top && stack.length > 1 && indent <= top.indent) {
-        stack.pop();
-      }
-
-      const current = stack[stack.length - 1];
-      if (!current) continue;
-
-      const parent = current.obj;
-
-      if (value) {
-        parent[key] = value;
-      } else {
-        parent[key] = {};
-        stack.push({ indent, obj: parent[key] as Record<string, unknown> });
-      }
-      currentKey = key;
+    if (value) {
+      current.container[key] = parseScalar(value);
+      current.key = key;
+    } else {
+      const child: YamlMap = {};
+      current.container[key] = child;
+      current.key = key;
+      stack.push({ indent, container: child });
     }
   }
 
-  return result;
+  return root;
 }

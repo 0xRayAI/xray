@@ -1,7 +1,14 @@
 import { execFileSync } from "node:child_process";
 import { frameworkLogger } from "../core/framework-logger.js";
 
-export type GovernanceRole = "code-review" | "security-audit" | "researcher";
+export type GovernanceRole = "code-review" | "security-audit" | "researcher" | "architect";
+
+export type GovernanceMiss = "not-configured" | "error" | "timeout" | "empty" | "unparseable";
+
+export interface GovernanceAttempt {
+  vote: GovernanceVote | null;
+  miss: GovernanceMiss | null;
+}
 
 export interface GovernanceVote {
   decision: "approve" | "reject" | "abstain";
@@ -12,6 +19,7 @@ export interface GovernanceVote {
 const DEFAULT_HERMES_PROVIDER = "xai-oauth";
 const DEFAULT_HERMES_MODEL = "grok-4.3";
 const DEFAULT_HERMES_TIMEOUT_MS = 120_000;
+const UNIT_TEST_HERMES_TIMEOUT_MS = 2_000;
 
 const ROLE_PROMPTS: Record<GovernanceRole, string> = {
   "code-review": `You are a senior code reviewer on a governance committee for a software project. Analyze the following proposal from a code quality, maintainability, readability, and engineering best practices perspective.
@@ -52,6 +60,20 @@ Respond with a structured vote in exactly this format:
 DECISION: approve|reject|abstain
 CONFIDENCE: <0.0-1.0>
 REASONING: <2-4 sentence analysis of the proposal's broader project impact>`,
+
+  architect: `You are a senior architect on a governance committee for a software project. Analyze the following proposal and architecture assessment.
+
+Consider:
+- Does the change fit the existing architecture?
+- Does it raise coupling, complexity, or scaling risk?
+- Should the work stop until a structural problem is fixed?
+
+Respond with a structured vote in exactly this format:
+DECISION: approve|reject|abstain
+CONFIDENCE: <0.0-1.0>
+REASONING: <2-4 sentence analysis>
+
+reject means the architecture should not proceed.`,
 };
 
 type DirectLlmConfig = {
@@ -78,11 +100,24 @@ function resolveHermesModel(): string {
   return process.env.HERMES_MODEL?.trim() || DEFAULT_HERMES_MODEL;
 }
 
+function inUnitTestContext(): boolean {
+  return process.env.NODE_ENV === "test" || Boolean(process.env.VITEST);
+}
+
+/** Dead xai-oauth (invalid_grant) hangs hermes -z until DEFAULT_HERMES_TIMEOUT_MS. Unit/Vitest must not wait. */
+function unitTestBlocksLiveHermes(): boolean {
+  if (process.env.XRAY_GOVERNANCE_ALLOW_HERMES === "true") return false;
+  return inUnitTestContext();
+}
+
 function resolveHermesTimeoutMs(): number {
   const raw = process.env.HERMES_TIMEOUT_MS?.trim();
-  if (!raw) return DEFAULT_HERMES_TIMEOUT_MS;
-  const parsed = Number(raw);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_HERMES_TIMEOUT_MS;
+  if (raw) {
+    const parsed = Number(raw);
+    if (Number.isFinite(parsed) && parsed > 0) return parsed;
+  }
+  if (inUnitTestContext()) return UNIT_TEST_HERMES_TIMEOUT_MS;
+  return DEFAULT_HERMES_TIMEOUT_MS;
 }
 
 export function resolveHermesBin(): string {
@@ -122,6 +157,7 @@ function getDirectLlmConfig(): DirectLlmConfig | null {
 function getConfig(): GovernanceLlmConfig | null {
   const direct = getDirectLlmConfig();
   if (direct) return direct;
+  if (unitTestBlocksLiveHermes()) return null;
 
   if (hermesCliAvailable()) {
     return {
@@ -133,6 +169,10 @@ function getConfig(): GovernanceLlmConfig | null {
   }
 
   return null;
+}
+
+export function isGovernanceLlmConfigured(): boolean {
+  return getConfig() !== null;
 }
 
 export function hermesCliAvailable(): boolean {
@@ -190,20 +230,48 @@ function runHermesGovernanceInference(
   ).trim();
 }
 
+function sanitizeVoteReasoning(reasoning: string): string {
+  return reasoning
+    .split("\n")
+    .map((line) =>
+      /^\s*(?:[-*•]\s*)?(?:Verdict:|DECISION:)/i.test(line) ? `> ${line.trim()}` : line,
+    )
+    .join("\n")
+    .trim();
+}
+
 function parseVote(text: string): GovernanceVote | null {
-  const decisionMatch = text.match(/DECISION:\s*(approve|reject|abstain)/i);
-  const confidenceMatch = text.match(/CONFIDENCE:\s*([0-9.]+)/i);
-  const reasoningMatch = text.match(/REASONING:\s*(.+)/is);
+  // First exact token before REASONING. The prompt menu and anything the model
+  // writes inside the reasoning body are not a second vote.
+  const lines = text.split("\n");
+  const reasoningIdx = lines.findIndex((line) => /^REASONING:/i.test(line.trim()));
+  const headerLines = reasoningIdx < 0 ? lines : lines.slice(0, reasoningIdx);
+  let decisionWord: string | undefined;
+  for (const line of headerLines) {
+    const match = line.trim().match(/^DECISION:\s*(approve|reject|abstain)\s*$/i);
+    if (match?.[1]) {
+      decisionWord = match[1];
+      break;
+    }
+  }
+  if (!decisionWord) return null;
 
-  if (!decisionMatch || !decisionMatch[1]) return null;
-
+  const header = headerLines.join("\n");
+  const confidenceMatch = header.match(/CONFIDENCE:\s*([0-9.]+)/i);
   const rawConfidence = confidenceMatch?.[1];
   const confidence = rawConfidence ? parseFloat(rawConfidence) : 0.5;
+  const reasoningBody =
+    reasoningIdx < 0
+      ? ""
+      : lines
+          .slice(reasoningIdx)
+          .join("\n")
+          .replace(/^REASONING:\s*/i, "");
 
   return {
-    decision: decisionMatch[1].toLowerCase() as "approve" | "reject" | "abstain",
-    confidence: isNaN(confidence) ? 0.5 : Math.min(1, Math.max(0, confidence)),
-    reasoning: reasoningMatch?.[1]?.trim() || "No reasoning provided",
+    decision: decisionWord.toLowerCase() as "approve" | "reject" | "abstain",
+    confidence: Number.isNaN(confidence) ? 0.5 : Math.min(1, Math.max(0, confidence)),
+    reasoning: sanitizeVoteReasoning(reasoningBody) || "No reasoning provided",
   };
 }
 
@@ -262,18 +330,38 @@ Please provide your structured vote.`;
   return (message?.content as string | undefined) ?? null;
 }
 
-export async function tryLLMGovernance(
+function missFromThrown(error: unknown): GovernanceMiss {
+  const message = error instanceof Error ? error.message : String(error);
+  const code =
+    typeof error === "object" && error !== null && "code" in error
+      ? String((error as { code?: unknown }).code ?? "")
+      : "";
+  const killed =
+    typeof error === "object" &&
+    error !== null &&
+    "killed" in error &&
+    (error as { killed?: boolean }).killed === true;
+  if (code === "ETIMEDOUT" || killed || /ETIMEDOUT|timed out/i.test(message)) {
+    return "timeout";
+  }
+  if (/invalid_grant|not configured|unauthorized|no credentials|authentication/i.test(message)) {
+    return "not-configured";
+  }
+  return "error";
+}
+
+export async function attemptLLMGovernance(
   role: GovernanceRole,
   proposalTitle: string,
   proposalDescription: string,
   evidence: string[],
   proposalType: string,
-): Promise<GovernanceVote | null> {
+): Promise<GovernanceAttempt> {
   const config = getConfig();
 
   if (!config) {
     process.stderr.write(`[llm] no config for role=${role}\n`);
-    return null;
+    return { vote: null, miss: "not-configured" };
   }
 
   if (config.mode === "hermes") {
@@ -313,12 +401,12 @@ export async function tryLLMGovernance(
             proposalType,
           );
 
-    if (!content) {
+    if (!content?.trim()) {
       frameworkLogger.log("llm-governance", "parse", "warning", {
         issue: "missing content in response",
         role,
       });
-      return null;
+      return { vote: null, miss: "empty" };
     }
 
     const vote = parseVote(content);
@@ -328,7 +416,7 @@ export async function tryLLMGovernance(
         snippet: content.slice(0, 200),
         role,
       });
-      return null;
+      return { vote: null, miss: "unparseable" };
     }
 
     frameworkLogger.log("llm-governance", "vote", "success", {
@@ -337,14 +425,24 @@ export async function tryLLMGovernance(
       confidence: vote.confidence,
     });
 
-    return vote;
+    return { vote, miss: null };
   } catch (error) {
     frameworkLogger.log("llm-governance", "error", "error", {
       error: String(error),
       role,
     });
-    return null;
+    return { vote: null, miss: missFromThrown(error) };
   }
+}
+
+export async function tryLLMGovernance(
+  role: GovernanceRole,
+  proposalTitle: string,
+  proposalDescription: string,
+  evidence: string[],
+  proposalType: string,
+): Promise<GovernanceVote | null> {
+  return (await attemptLLMGovernance(role, proposalTitle, proposalDescription, evidence, proposalType)).vote;
 }
 
 export function checkHermesOAuthStatus(): {

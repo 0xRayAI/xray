@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-06-18T00:38:08.088Z",
+  "timestamp": "2026-06-20T20:54:37.049Z",
   "dataLocations": {
     "reflections": [
       "/Users/blaze/dev/xray/docs/reflections/aside-context-integration-analysis.md",
@@ -9,6 +9,8 @@
       "/Users/blaze/dev/xray/docs/reflections/mcp-skill-server-inference-gap.md",
       "/Users/blaze/dev/xray/docs/reflections/reflection-pattern-suggestions.md",
       "/Users/blaze/dev/xray/docs/reflections/subtract-simplify-phase-reflection.md",
+      "/Users/blaze/dev/xray/docs/reflections/user-asides-review-quorum-2026-06-20.md",
+      "/Users/blaze/dev/xray/docs/reflections/user-asides-roadmap-quorum-2026-06-20.md",
       "/Users/blaze/dev/xray/docs/reflections/v3-architecture-plan.md",
       "/Users/blaze/dev/xray/docs/reflections/v3-completion-reflection.md",
       "/Users/blaze/dev/xray/docs/reflections/v3-deep-reflection.md",
@@ -22,7 +24,6 @@
     ],
     "logs": [
       "/Users/blaze/dev/xray/logs/framework/activity-report.json",
-      "/Users/blaze/dev/xray/logs/framework/activity.log",
       "/Users/blaze/dev/xray/logs/framework/activity.log.orig",
       "/Users/blaze/dev/xray/logs/framework/routing-outcomes.json",
       "/Users/blaze/dev/xray/logs/framework/session-routing.json"

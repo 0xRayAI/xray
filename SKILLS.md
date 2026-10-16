@@ -1,10 +1,14 @@
 # 0xray Skills
 
-**v3.5.4** — **45 skills** · invoked via `xray-skills` MCP · synced on postinstall
+**4.1** — a suit that survives the context window
 
-xray ships 45 knowledge skills (`src/skills/<name>/SKILL.md`) across the full software lifecycle. Lead-dev operating model lives in **`orchestrator`** skill + `multi_agent_orchestration.lead_dev_mode` in features.json. Skills load on demand via the **xray-skills** MCP server (`npx -y 0xray mcp skills`), agent `@mentions`, or platform skill directories after postinstall.
+Confer votes. Burst runs the swarm.
 
-Consumer `npm install 0xray` syncs all 45 skills to Grok, Hermes, and OpenClaw skill dirs. Framework repo also ships this file to consumers (3.1.1+).
+0xRay is a three-subsystem autonomous engine. The suit is the wear. This file is the catalog.
+
+**45 skills** in this exo catalog. Default consumer plant is **`mill` + `inspect`**, not this dump. `npm install 0xray` does **not** sync 45 skills unless `foundry.json` `"costume": true`. Factory shop plant (`shop-extract`, `shop-witness`, `shop-pin`) coexists with mill plant when a hangar wears those shops. Extra shops: `foundry.json` `shopPlant`. Fasten is **foundry-plant/0**: builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill package declares — organs (looker, vibe, mixer) live in the mill, not this catalog. Nested mill `@0xray/foundry@0.1.12`. CLI shims `foundry blip|sound` still exist on foundry 0.1.11+. Agent map: [llms.txt](llms.txt).
+
+xray ships 45 knowledge skills (`src/skills/<name>/SKILL.md`) as the **costume / self-plant catalog**. Lead-dev operating model lives in **`orchestrator`** skill + `multi_agent_orchestration.lead_dev_mode` in features.json. **Repertoire is preferred** for long-term judgment (vendored 0.2.9, dest = named laws). Station is the compact ticket, not a skill and not a keyword store. Skills load on demand via the **xray-skills** MCP server (`npx -y 0xray mcp skills`) or when you plant them. This file is the exo catalog — mill does **not** write it to the consumer root.
 
 ---
 
@@ -76,7 +80,7 @@ Consumer `npm install 0xray` syncs all 45 skills to Grok, Hermes, and OpenClaw s
 
 | Skill | Agent | Description |
 |-------|-------|-------------|
-| `orchestrator` | @orchestrator | Multi-agent coordination + **lead-dev mode** (codex 67–68) |
+| `orchestrator` | @orchestrator | Multi-agent coordination + **lead-dev mode** (codex 67–68) + lead cadence (dispatch four lines; critic Reads `grok-bot/OP-PROC.md`; ship matrix A–D in `grok-bot/OP-PROC.md`; team specifics live in `house/`) |
 | `xray-orchestrator` | — | xray orchestration skill (MCP orchestrator surface) |
 | `processor-pipeline` | — | Data processing pipeline management |
 | `boot-orchestrator` | — | Framework boot orchestration |
@@ -129,7 +133,7 @@ Consumer `npm install 0xray` syncs all 45 skills to Grok, Hermes, and OpenClaw s
 Configured in project `.mcp.json` on postinstall:
 
 ```bash
-npx -y 0xray mcp skills    # stdio server
+npx -y 0xray mcp skills # stdio server
 ```
 
 MCP tools include: `invoke-skill`, `list-skills`, `skill-code-review`, `skill-security-audit`, `skill-api-design`, `skill-testing-strategy`, and more.
@@ -148,16 +152,17 @@ npx 0xray skill:install <source>
 | Source (framework) | `src/skills/<name>/SKILL.md` |
 | Published package | `node_modules/0xray/dist/skills/<name>/SKILL.md` |
 | OpenCode (after setup) | `.opencode/skills/<name>/SKILL.md` |
-| Grok | `~/.grok/skills/<name>/SKILL.md` + plugin dir |
+| Grok | project `.grok/plugins/0xray/skills/<name>/SKILL.md` (machine `~/.grok/plugins/0xray` is not last-wins) |
 | Hermes / OpenClaw | Platform skill dirs (postinstall sync) |
+| Cursor | Project `.cursor/hooks.json` (PPE + Station heat). Not a skill dump. |
 
 ## Related features (since 3.1)
 
 | Feature | Skill connection |
 |---------|------------------|
-| **Memory routing** (v3.3) | Researcher uses Repertoire signals; optional `@0xray/repertoire` MCP |
+| **Memory routing** (v3.3) | **Repertoire preferred** — researcher + thinDispatch + planner use dest laws. Extra MCP `npx @0xray/repertoire mcp` (not an 8th `xray-*`). Dest is named invariants, not `repo-*` slugs. |
 | **AsideContext** (v3.2) | Orchestrator subcontexts during skill dispatch |
-| **7 MCP servers** (v3.4.1) | `xray-skills` is the primary skill invocation surface |
+| **7 MCP servers** (v4.0) | `xray-skills` is the primary skill invocation surface |
 
 Docs: [AGENTS.md](AGENTS.md) · [README.md](README.md) · [Docusaurus guides](docs-site/docs/guides/)
 

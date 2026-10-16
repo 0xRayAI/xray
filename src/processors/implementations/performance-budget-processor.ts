@@ -55,9 +55,9 @@ export const DEFAULT_PERFORMANCE_BUDGET: PerformanceBudgetConfig = {
 interface ExtractedFunction {
   name: string;
   startLine: number;
-  body: string;
   bodyLineCount: number;
   paramCount: number;
+  nestingDepth: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -91,8 +91,9 @@ export class PerformanceBudgetProcessor {
 
     // --- function-level checks ---
     const funcViolations = this.checkFunctionComplexity(content);
-    for (const v of funcViolations) {
-      violations.push({ ...v, filePath });
+    for (const violation of funcViolations) {
+      violation.filePath = filePath;
+      violations.push(violation);
     }
 
     return violations;
@@ -119,7 +120,7 @@ export class PerformanceBudgetProcessor {
       }
 
       // nesting depth
-      const depth = this.measureMaxNesting(fn.body);
+      const depth = fn.nestingDepth;
       if (depth > this.config.maxNestingDepth) {
         violations.push({
           type: "nestingTooDeep",
@@ -184,72 +185,57 @@ export class PerformanceBudgetProcessor {
         ? params.split(",").filter((p) => p.trim().length > 0).length
         : 0;
 
-      // Collect body lines until brace depth returns to 0
+      // Walk the body once: brace span, line count, and nesting share the same lines.
+      // Blank lines are skipped, matching the previous join-then-split of kept lines.
       let depth = 0;
       let started = false;
-      const bodyLines: string[] = [];
+      let bodyLineCount = 0;
+      let maxDepth = 0;
+      let currentDepth = 0;
 
       for (let j = i; j < lines.length; j++) {
         const l = lines[j];
         if (!l) continue;
-        for (const ch of l) {
-          if (ch === "{") {
+        bodyLineCount++;
+        for (let k = 0; k < l.length; k++) {
+          const ch = l.charCodeAt(k);
+          if (ch === 123) {
             depth++;
             started = true;
-          } else if (ch === "}") {
+          } else if (ch === 125) {
             depth--;
           }
         }
-        bodyLines.push(l);
+
+        const trimmed = l.trim();
+        const openingMatches = trimmed.match(
+          /\b(if|for|while|switch|try|catch|else)\b/g,
+        );
+        if (openingMatches) {
+          // 'else' and 'catch' partially close+reopen, so net +0 for those
+          const netOpen =
+            openingMatches.length -
+            (trimmed.includes("else") ? 1 : 0) -
+            (trimmed.includes("catch") ? 1 : 0);
+          currentDepth += Math.max(0, netOpen);
+          if (currentDepth > maxDepth) maxDepth = currentDepth;
+        }
+        const closeBraces = (trimmed.match(/}/g) || []).length;
+        currentDepth = Math.max(0, currentDepth - closeBraces);
+
         if (started && depth <= 0) break;
       }
 
-      const body = bodyLines.join("\n");
       results.push({
         name,
         startLine: i + 1,
-        body,
-        bodyLineCount: bodyLines.length,
+        bodyLineCount,
         paramCount,
+        nestingDepth: maxDepth,
       });
     }
 
     return results;
-  }
-
-  /**
-   * Measure the maximum nesting depth by tracking control-flow keywords
-   * (if / for / while / switch / try) inside the function body.
-   */
-  private measureMaxNesting(body: string): number {
-    let maxDepth = 0;
-    let currentDepth = 0;
-    const lines = body.split("\n");
-
-    for (const line of lines) {
-      const trimmed = line.trim();
-
-      // Count opening structures that increase nesting
-      const openingMatches = trimmed.match(
-        /\b(if|for|while|switch|try|catch|else)\b/g,
-      );
-
-      if (openingMatches) {
-        // 'else' and 'catch' partially close+reopen, so net +0 for those
-        const netOpen =
-          openingMatches.length -
-          (trimmed.includes("else") ? 1 : 0) -
-          (trimmed.includes("catch") ? 1 : 0);
-        currentDepth += Math.max(0, netOpen);
-        maxDepth = Math.max(maxDepth, currentDepth);
-      }
-
-      // Simple heuristic: decrease depth when line closes braces
-      const closeBraces = (trimmed.match(/}/g) || []).length;
-      currentDepth = Math.max(0, currentDepth - closeBraces);
-    }
-
-    return maxDepth;
   }
 }
 

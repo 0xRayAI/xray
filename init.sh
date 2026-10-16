@@ -44,7 +44,13 @@ fi
 # Uses a TTL lockfile (10s window) since OpenCode may trigger config hook
 # from multiple plugin copies in quick succession
 # Key by PROJECT_ROOT (md5) so all invocations in the same project share one lock
-LOCK_KEY=$(echo -n "$PROJECT_ROOT" | md5 | cut -c1-16)
+if command -v md5 >/dev/null 2>&1; then
+    LOCK_KEY=$(echo -n "$PROJECT_ROOT" | md5 | cut -c1-16)
+elif command -v md5sum >/dev/null 2>&1; then
+    LOCK_KEY=$(echo -n "$PROJECT_ROOT" | md5sum | awk '{print $1}' | cut -c1-16)
+else
+    LOCK_KEY=$(echo -n "$PROJECT_ROOT" | cksum | awk '{print $1}')
+fi
 LOCK_FILE="/tmp/xray-init-${LOCK_KEY}.lock"
 LOCK_TTL=10
 if [ -f "$LOCK_FILE" ]; then
@@ -125,8 +131,11 @@ else
     PLUGIN_STATUS="❌"
 fi
 
-# Framework config check
-if [ ! -f "$PROJECT_ROOT/.opencode/enforcer-config.json" ]; then
+# Framework config check — consumer wear is .xray/codex.json, not leftover enforcer-config.json
+if [ ! -f "$PROJECT_ROOT/.opencode/enforcer-config.json" ] \
+    && [ ! -f "$PROJECT_ROOT/.xray/codex.json" ] \
+    && [ ! -f "$PROJECT_ROOT/node_modules/0xray/.xray/codex.json" ] \
+    && [ ! -f "$PROJECT_ROOT/.mcp.json" ]; then
     echo -e "${PURPLE}//   ❌ Framework configuration not found                     //${NC}"
     exit 1
 fi

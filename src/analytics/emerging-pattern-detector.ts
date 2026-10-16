@@ -47,10 +47,26 @@ export class EmergingPatternDetector {
     const words = text.toLowerCase()
       .replace(/[^\w\s]/g, ' ')
       .split(/\s+/)
-      .filter(word => word.length > 2)
-      .filter(word => !this.stopWords.has(word));
+      .filter(word => word.length > 2 && !this.stopWords.has(word));
 
     return [...new Set(words)];
+  }
+
+  /**
+   * Jaccard |A ∩ B| / |A ∪ B| without copying either set.
+   */
+  private jaccard(left: Set<string>, right: Set<string>): number {
+    if (left.size === 0 || right.size === 0) return 0;
+
+    let intersection = 0;
+    const small = left.size <= right.size ? left : right;
+    const large = small === left ? right : left;
+    for (const word of small) {
+      if (large.has(word)) intersection++;
+    }
+
+    const union = left.size + right.size - intersection;
+    return union === 0 ? 0 : intersection / union;
   }
 
   /**
@@ -58,13 +74,7 @@ export class EmergingPatternDetector {
    */
   private calculateSimilarity(keywords1: string[], keywords2: string[]): number {
     if (keywords1.length === 0 || keywords2.length === 0) return 0;
-
-    const set1 = new Set(keywords1);
-    const set2 = new Set(keywords2);
-    const intersection = new Set([...set1].filter(x => set2.has(x)));
-    const union = new Set([...set1, ...set2]);
-
-    return intersection.size / union.size;
+    return this.jaccard(new Set(keywords1), new Set(keywords2));
   }
 
   /**
@@ -73,6 +83,10 @@ export class EmergingPatternDetector {
   private clusterTasks(tasks: Array<{ id: string; keywords: string[]; description: string }>): ClusterResult[] {
     const clusters: ClusterResult[] = [];
     const assigned = new Set<string>();
+    const keywordSets = new Map<(typeof tasks)[number], Set<string>>();
+    for (const task of tasks) {
+      keywordSets.set(task, new Set(task.keywords));
+    }
 
     // Sort by frequency (most frequent first)
     const sortedTasks = [...tasks].sort((a, b) => b.keywords.length - a.keywords.length);
@@ -90,9 +104,9 @@ export class EmergingPatternDetector {
       for (const otherTask of sortedTasks) {
         if (assigned.has(otherTask.id) || otherTask.id === task.id) continue;
 
-        const similarity = this.calculateSimilarity(
-          [...clusterKeywords],
-          otherTask.keywords
+        const similarity = this.jaccard(
+          clusterKeywords,
+          keywordSets.get(otherTask) ?? new Set(otherTask.keywords),
         );
 
         if (similarity >= this.clusterSimilarityThreshold) {
@@ -131,7 +145,14 @@ export class EmergingPatternDetector {
   /**
    * Detect emergent patterns from recent routing outcomes
    */
-  detectEmergingPatterns(outcomes: RoutingOutcome[]): PatternDiscoveryResult {
+  detectEmergingPatterns(outcomes: ReadonlyArray<{
+    taskId: string;
+    taskDescription?: string;
+    routedAgent: string;
+    routedSkill: string;
+    success?: boolean;
+    confidence: number;
+  }>): PatternDiscoveryResult {
     if (outcomes.length < this.minFrequencyThreshold) {
       return {
         emergentPatterns: [],
@@ -165,14 +186,20 @@ export class EmergingPatternDetector {
       if (cluster.frequency < this.minFrequencyThreshold) continue;
       if (cluster.confidence < this.minConfidenceThreshold) continue;
 
-      // Get success metrics for this cluster
-      const clusterOutcomes = taskData.filter(t =>
-        cluster.patterns.includes(t.description)
-      );
-      const successCount = clusterOutcomes.filter(t => t.success).length;
+      // Same membership as description includes, in taskData order.
+      const patternDescriptions = new Set(cluster.patterns);
+      const clusterOutcomes: Array<(typeof taskData)[number]> = [];
+      let successCount = 0;
+      let confidenceSum = 0;
+      for (const task of taskData) {
+        if (!patternDescriptions.has(task.description)) continue;
+        clusterOutcomes.push(task);
+        if (task.success) successCount++;
+        confidenceSum += task.confidence;
+      }
       const successRate = clusterOutcomes.length > 0 ? successCount / clusterOutcomes.length : 0;
       const avgConfidence = clusterOutcomes.length > 0
-        ? clusterOutcomes.reduce((sum, t) => sum + t.confidence, 0) / clusterOutcomes.length
+        ? confidenceSum / clusterOutcomes.length
         : 0;
 
       // Determine suggested agent/skill based on most common

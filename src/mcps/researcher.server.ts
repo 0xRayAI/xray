@@ -12,13 +12,17 @@ import { type CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import * as fs from "fs";
 import * as path from "path";
 import { frameworkLogger } from "../core/framework-logger.js";
-import { tryLLMGovernance } from "../governance/llm-governance-provider.js";
+import {
+  attemptLLMGovernance,
+} from "../governance/llm-governance-provider.js";
+import { formatGovernanceVoteText, localConferVote } from "../governance/local-confer.js";
 import { initializeMemoryRouting } from "../memory-routing/index.js";
 import {
   buildMemoryRoutingEvidence,
   formatMemoryRoutingBlock,
   resolveResearcherMemoryContext,
 } from "./researcher-confidence.js";
+import { buildHostConferEvidence } from "../nucleus/confer-host.js";
 import { XrayKnowledgeSkillBase } from "./shared/knowledge-skill-base.js";
 
 interface SearchResult {
@@ -461,6 +465,13 @@ class XrayLibrarianServer extends XrayKnowledgeSkillBase {
   async analyzeProposal(args: AnalyzeProposalArgs): Promise<CallToolResult> {
     const { proposalTitle = "", proposalDescription = "", evidence = [], proposalType = "" } = args || {};
 
+    if (proposalType === "synthesis-confer") {
+      const packet = [proposalTitle, proposalDescription, ...(evidence || [])].filter(Boolean).join("\n\n");
+      return {
+        content: [{ type: "text", text: buildHostConferEvidence("researcher", packet) }],
+      };
+    }
+
     const memoryContext = await resolveResearcherMemoryContext({
       proposalTitle,
       proposalDescription,
@@ -468,43 +479,36 @@ class XrayLibrarianServer extends XrayKnowledgeSkillBase {
     });
 
     const enrichedEvidence = [...(evidence || [])];
-    if (memoryContext?.confidence.highConfidenceTrapPresent) {
+    if (memoryContext) {
       enrichedEvidence.push(...buildMemoryRoutingEvidence(memoryContext));
     }
 
-    const vote = await tryLLMGovernance(
+    const attempt = await attemptLLMGovernance(
       "researcher",
       proposalTitle || "",
       proposalDescription || "",
       enrichedEvidence,
       proposalType || "",
     );
+    const vote =
+      attempt.vote ??
+      localConferVote({
+        role: "researcher",
+        llmConfigured: attempt.miss !== "not-configured",
+        highConfidenceTrapPresent: memoryContext?.confidence.highConfidenceTrapPresent,
+        recommendedAgent: memoryContext?.recommendedAgent,
+        ...(attempt.miss ? { miss: attempt.miss } : {}),
+      });
 
-    const memoryRoutingBlock =
-      memoryContext?.confidence.highConfidenceTrapPresent
-        ? `\n${formatMemoryRoutingBlock(memoryContext)}`
-        : "";
-
-    if (!vote) {
-      const abstainReason = memoryContext?.confidence.highConfidenceTrapPresent
-        ? "No LLM governance provider configured. Repertoire detected a high-confidence ontological trap — route to the recommended agent before proceeding."
-        : "No LLM governance provider configured. Install Hermes on PATH (hermes -z) with xai-oauth, or set XRAY_GOVERNANCE_LLM_ENABLED=true + XRAY_LLM_ENDPOINT.";
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: `DECISION: abstain\nCONFIDENCE: 0.50\nREASONING: ${abstainReason}${memoryRoutingBlock}`,
-          },
-        ],
-      };
-    }
+    const memoryRoutingBlock = memoryContext
+      ? `\n${formatMemoryRoutingBlock(memoryContext)}`
+      : "";
 
     return {
       content: [
         {
           type: "text",
-          text: `DECISION: ${vote.decision}\nCONFIDENCE: ${vote.confidence.toFixed(2)}\nREASONING: ${vote.reasoning}${memoryRoutingBlock}`,
+          text: formatGovernanceVoteText(vote, memoryRoutingBlock),
         },
       ],
     };

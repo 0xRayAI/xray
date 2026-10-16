@@ -4,8 +4,8 @@ import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
   title: 'xray',
-  tagline: '42 agents · 45 skills · 7 MCP servers · 68 codex terms — MCP-centric AI Governance OS',
-  favicon: 'img/favicon.ico',
+  tagline: '0xRay 4.0 — a suit that survives the context window. Three-subsystem autonomous engine. The suit is the wear.',
+  favicon: 'img/favicon.png',
   url: 'https://0xrayai.github.io',
   baseUrl: '/xray/',
   organizationName: '0xRayAI',
@@ -18,7 +18,7 @@ const config: Config = {
       {
         docs: {
           sidebarPath: './sidebars.ts',
-          editUrl: 'https://github.com/0xRayAI/xray/tree/main/',
+          editUrl: 'https://github.com/0xRayAI/xray/tree/main/docs-site/',
           routeBasePath: 'docs',
           exclude: [
             'archive/**',
@@ -48,7 +48,7 @@ const config: Config = {
       title: 'xray',
       logo: {
         alt: 'xray Logo',
-        src: 'img/logo.svg',
+        src: 'img/logo.jpg',
       },
       items: [
         {

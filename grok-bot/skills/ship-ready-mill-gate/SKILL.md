@@ -1,0 +1,86 @@
+---
+name: Ship-ready mill gate
+description: >-
+ use this when deciding if a mill/factory product may merge or release;
+ Strict full gate — Light/Normal skip long reviews; plain language
+---
+# Ship-ready mill gate
+
+## Review level first
+| Level | When | Gate |
+|-------|------|------|
+| Light | Docs/chore, no runtime | Implementer + CI |
+| Normal | Small fix, ops/docs mirrors | Implementer + CI; **no Reviewer card** |
+| Strict | Ship / live / security / identity only | Tasks below + reviewer short proof |
+
+## Strict tasks
+**A — PR + CI** worktree + PR · CI updated · green 
+**B — Pack proof** when releasing a package: pack · temp install · tests pass 
+**C — Docs** core first: README · CHANGELOG · llms.txt · AGENTS.md · SKILLS.md · package.json · docs site — then project-specific. Friend test. Patch stamps: `package.json` + CHANGELOG + stamped JSON only. Guides and Station do not pin a cut. `release:docs-check` runs `reconcile-version.mjs --check` then `validate-release-docs.mjs`. 
+**C2 — Live agent docs** when agents must read them: HTTP 200 real content (not error page / banner). Paste curls. 
+**D — Release** reviewer PASS · merge · `foundry gate` + `gate --verify-only` · implementer deploy/publish · live verify. Exact ship script: `npx @0xray/foundry release [patch|minor|major] --i-mean-it` (`scripts/foundry/release.mjs`). Already-bumped `package.json`: `--publish-only`. Green CI is gate A only. **Subject review. Fix n ship.** After PASS, review dest/domain, close leftovers, then D. PASS is not ship. A pushed tag alone is FAIL for D. D also needs the annotated tag on the published commit and a GitHub Release so Latest flips. The ship receipt includes that release URL. `foundry gate` and `gate --verify-only` do not prove D. `foundry gate --prove-published` is the receipt: npm lists the version, the annotated tag points at HEAD, and the GitHub Release page exists. `--skip-docs` fails the gate. Gate C runs on every gate.
+
+### Publish OTP (lead only — not a subagent)
+
+The lead runs the CLI. A browser subagent is the wrong seat.
+
+1. Stay logged in. Do **not** `npm logout`.
+2. Every time run `npm publish --access public` in the live TTY — **no** `--auth-type=web`, **no** `--otp=` from chat, no `tee`.
+3. Give the human the clickable `https://www.npmjs.com/auth/cli/<id>` URL. Do not press Enter. Do not open a VM browser. Do not ask for a 6-digit authenticator code in chat.
+4. Wait on the same CLI for `+ <name>@<version>`.
+5. Poll `npm view <name> version` until it equals the published version. The plus-line can precede the registry by minutes. Deploy Railway only after npm is live.
+6. Push an annotated tag `v<version>` on the exact published commit if it is missing. A pushed tag alone is not done. Do not start the next cut on a stale `npm view`.
+7. Create or update the GitHub Release for that tag so Latest flips. Forge drafts the notes from CHANGELOG in the same pass as npm. Critic friend-tests them (plain words a builder would hear). Blaze publishes the Release (or an explicit GO). Title: `vX.Y.Z — <short friend line>`. The body is a real Release, not a tag annotation. Required pattern:
+
+```markdown
+## What's new
+- 3–7 plain bullets from CHANGELOG (shipped user/builder value only)
+## Who it helps
+- one short line (builders / suit wearers / …)
+## How to get it
+- npm + tag + link to full CHANGELOG
+## Breaking / notes
+- only if real; omit section if empty
+```
+
+Banned: one-liners / stub bodies ("wear-gated tarball only", "see CHANGELOG", empty); gate jargon (Kind 0, calling, organ, worn, OP-PROC internals); Dist/X voice, hype, emojis-as-substance; inventing features not in CHANGELOG. The ship receipt includes the release URL.
+8. **Registry install — both paths:** `npm view` is not an install.
+ - Fresh: empty temp dir → `npm init -y` → `npm install <name>@<version>` from the registry.
+ - Upgrade: existing consumer on the prior live version → `npm install <name>@<version>`. Hooks leave; wear stays.
+9. Assert version, `_resolved` is `registry.npmjs.org`, `REQUIRED_PACK_PATHS`, then `npx <name> status`, `health`, and `validate`. `validate` is the wear check — not leftover `init.sh`. Do not move on until both paths are proven.
+10. After the version is live, clean the `/loop` prompt this cycle (unsubscribe then resubscribe). Do not leave a tick waiting on the auth URL. 
+
+Do not rebuild old processor-manager loops as bot gates.
+
+## Who
+Implementer builds · reviewer Strict only · coordinator routes · human for capital
+
+Reviewer card: a short proof. Lead dispatches ticket + PR URLs only. The reviewer reads the station, verifies the diff, posts a COMMENT (not a self-approve), proof card ≤15 lines + friend-test line. Does not merge or publish.
+
+A new reviewer or any new subagent that does not already have this thread gets the latest commit SHA on the branch under review (fetch it; do not reuse an earlier SHA from a previous pass) and the Station card (`.xray/state/STATION.md`: intent, plan, git). If the card is missing, give branch + HEAD + what just changed. If the branch moves after you brief them, send the new SHA before they verdict.
+
+The lead keeps control. Do not assume the subagent has the context. Give the duty, the latest SHA, the Station card, and the laws that apply. The subagent wears the applicable 0xRay suit before it works: the tree under review, built and installed. An older published package is not that suit. The lead checks the result.
+
+Chat is not the brain. A cascade that must survive compaction is a named repertoire signal on the stack overlay, hydrated onto the project law list. NOTES holds the same cascade for the second Read. Station stays the ticket. A reflection is not this capture. Memory scoring: [docs/memory-scoring.md](https://github.com/0xRayAI/xray/blob/main/docs/memory-scoring.md).
+
+## Fail closed
+Red CI, missing proof, docs lag, a guide pinning a patch, local version ≤ npm, live docs fail, gate fail, Strict without reviewer, friend-test fail on public/OS docs, or a pushed tag with no GitHub Release.
+
+Jargon is not the job. Review and cadence ask whether the change works. Do not spend the loop reciting dest names, mill liturgy, or host mantras.
+
+Feat rebase: when the mandated work turns into mantra, or the job has split across planes that no longer share one present, stop. Go up a level and answer the original message again from this seat. Do not continue the side thread and call that the job.
+
+### Engine cadence
+
+This suite is the engine that builds the engine. When a seat sees OP-PROC, write it onto these existing surfaces in the same wake. Do not open a new skill.
+
+1. Change the engine with precision.
+2. Ship it local: build and install the tree. A live npm version stays live. Once a version is live, the stamper strips every present-tense patch pin from shipped guides and shipped OP-PROC, or reconcile advances the next cut. The stamper does not edit Station, NOTES, dest, or node_modules. It does not publish.
+3. Test the change.
+4. Run another deep review of the diff you just made.
+5. Monitor long-term memory (dest name count and whether observations are the only growth) and short-term memory (Station: intent, plan, git).
+6. Ship the PR.
+
+### Planes
+
+Operating planes: code, OP-PROC, model, suit, mill, host, and test/ship. Test/ship is the critical OP-PROC plane. Test then ship is the hero. Ship without that proof is the catastrophe. Long-term memory is the project law list. Each wake refreshes a changed stack definition and keeps observation stats. Heat writes the matched names onto Station, the short-term card that survives compaction. Reactive decisions move out of TypeScript into OP-PROC as the model improves. That move is why the mill and the suit exist. It is not fully proved. Once a version is live, the stamper strips every present-tense patch pin from shipped guides and shipped OP-PROC, or reconcile advances the next cut. The stamper does not edit Station, NOTES, dest, or node_modules. It does not publish. Do not freeze the live cut.

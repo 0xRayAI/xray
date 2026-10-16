@@ -1,0 +1,36 @@
+{
+  "ok": true,
+  "protocol": "real-work-ab",
+  "timestamp": "2026-09-15T15:35:27.131Z",
+  "sessionId": "bc-cd19bb4e-a4bc-57da-8979-754bb0c202fe",
+  "compact": {
+    "hostFired": true,
+    "preCompactCount": 7,
+    "preToolUseCount": 1235,
+    "afterFileEditCount": 154,
+    "eventClass": "cursor-host-precompact",
+    "probeLogExists": true
+  },
+  "usage": {
+    "ok": true,
+    "forbidden": false,
+    "miss": false,
+    "reason": null,
+    "method": "host-field",
+    "source": "precompact-stdin",
+    "context_tokens": 251144,
+    "context_usage_percent": 98.103125,
+    "context_window_size": 256000,
+    "windowCite": null,
+    "model": "cursor-grok-4.6-high",
+    "bcId": null
+  },
+  "repertoire": {
+    "fastened": true,
+    "resume": "Repertoire: on — 8 signals",
+    "name": "@0xray/repertoire",
+    "version": "0.2.0"
+  },
+  "hooksAtBoot": null,
+  "note": "Compact 7 on Arm S Claim C cut. Window 256000, tokens 251144. Conversation memory not proven: C1/C2 were in the injected summary (working notes, not a labeled table). Canary values are not in this file."
+}

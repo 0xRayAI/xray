@@ -8,10 +8,19 @@ export function calculateTimeRange(
     return { start: new Date(), end: new Date() };
   }
 
-  const timestamps = logs.map((log) => log.timestamp);
+  let min = Infinity;
+  let max = -Infinity;
+  for (const log of logs) {
+    const ts = log.timestamp;
+    if (Number.isNaN(ts)) {
+      return { start: new Date(NaN), end: new Date(NaN) };
+    }
+    if (ts < min) min = ts;
+    if (ts > max) max = ts;
+  }
   return {
-    start: new Date(Math.min(...timestamps)),
-    end: new Date(Math.max(...timestamps)),
+    start: new Date(min),
+    end: new Date(max),
   };
 }
 
@@ -32,9 +41,12 @@ export function calculateMetrics(logs: ParsedLogEntry[]): OrchestrationMetrics {
   let terminalOperations = 0;
   let analysisOperations = 0;
   let orchestrationOperations = 0;
+  let successCount = 0;
   const responseTimes: number[] = [];
 
   for (const log of logs) {
+    if (log.status === "success") successCount++;
+
     if (log.agent) {
       agentUsage.set(log.agent, (agentUsage.get(log.agent) || 0) + 1);
     }
@@ -68,8 +80,6 @@ export function calculateMetrics(logs: ParsedLogEntry[]): OrchestrationMetrics {
       if (log.status === "success") {
         toolStats.success++;
       }
-      toolStats.rate =
-        toolStats.total > 0 ? (toolStats.success / toolStats.total) * 100 : 0;
 
       if (["write", "edit", "read"].includes(toolName)) {
         fileOperations++;
@@ -92,10 +102,8 @@ export function calculateMetrics(logs: ParsedLogEntry[]): OrchestrationMetrics {
     stats.rate = stats.total > 0 ? (stats.success / stats.total) * 100 : 0;
   });
 
-  const successLogs = logs.filter((log) => log.status === "success");
-  const errorLogs = logs.filter((log) => log.status === "error");
   const successRate =
-    logs.length > 0 ? (successLogs.length / logs.length) * 100 : 100;
+    logs.length > 0 ? (successCount / logs.length) * 100 : 100;
 
   const enhancementSuccessRate =
     enhancementSuccesses + enhancementFailures > 0
@@ -148,32 +156,41 @@ export function calculatePeakActivity(logs: ParsedLogEntry[]): {
   timestamp: Date;
   eventsPerMinute: number;
 } {
-  const minuteGroups = new Map<string, number>();
+  const minuteGroups = new Map<number, number>();
 
   for (const log of logs) {
-    const minute = new Date(log.timestamp).toISOString().slice(0, 16);
+    const ts = log.timestamp;
+    const minute = Number.isFinite(ts)
+      ? Math.floor(ts / 60000) * 60000
+      : new Date(new Date(ts).toISOString().slice(0, 16) + ":00Z").getTime();
     minuteGroups.set(minute, (minuteGroups.get(minute) || 0) + 1);
   }
 
-  let peakMinute = "";
+  let peakMinute = 0;
   let peakCount = 0;
+  let found = false;
 
   for (const [minute, count] of minuteGroups) {
     if (count > peakCount) {
       peakCount = count;
       peakMinute = minute;
+      found = true;
     }
   }
 
   return {
-    timestamp: peakMinute ? new Date(peakMinute + ":00Z") : new Date(),
+    timestamp: found ? new Date(peakMinute) : new Date(),
     eventsPerMinute: peakCount,
   };
 }
 
 export function calculateHealthScore(logs: ParsedLogEntry[]): number {
-  const successCount = logs.filter((log) => log.status === "success").length;
-  const errorCount = logs.filter((log) => log.status === "error").length;
+  let successCount = 0;
+  let errorCount = 0;
+  for (const log of logs) {
+    if (log.status === "success") successCount++;
+    else if (log.status === "error") errorCount++;
+  }
 
   if (successCount + errorCount === 0) return 100;
 
@@ -249,12 +266,12 @@ export function generateRecommendations(metrics: OrchestrationMetrics): string[]
 
 export function generateAlerts(logs: ParsedLogEntry[]): string[] {
   const alerts: string[] = [];
-  const recentErrors = logs
-    .filter((log) => log.status === "error")
-    .slice(0, 3);
-
-  for (const error of recentErrors) {
-    alerts.push(`${error.component}:${error.action} failed`);
+  let errorsKept = 0;
+  for (const log of logs) {
+    if (log.status !== "error") continue;
+    alerts.push(`${log.component}:${log.action} failed`);
+    errorsKept++;
+    if (errorsKept === 3) break;
   }
 
   const highFrequencyComponents = getHighFrequencyComponents(logs);

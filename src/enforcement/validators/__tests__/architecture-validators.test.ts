@@ -540,6 +540,48 @@ describe("Architecture Validators", () => {
       expect(result.message).toContain("unsafe recursion");
     });
 
+    it("should count suffix function names separately", async () => {
+      const context = createContext({
+        newCode: `
+          function foo() { return foo(); }
+          function myfoo() { return myfoo(); }
+          function f1() { return f1(); }
+          function f10() { return f10(); }
+        `,
+      });
+      const result = await validator.validate(context);
+
+      expect(result.passed).toBe(false);
+      expect(result.message).toContain("detected in foo");
+      expect(result.message).toContain("detected in myfoo");
+      expect(result.message).toMatch(/detected in f1(?!\d)/);
+      expect(result.message).toContain("detected in f10");
+    });
+
+    it("should count suffix names the same way in a large file", async () => {
+      const fillers = Array.from(
+        { length: 50 },
+        (_, i) => `function fn${i}() { return ${i}; }`,
+      ).join("\n");
+      const context = createContext({
+        newCode: `
+          function foo() { return foo(); }
+          function myfoo() { return myfoo(); }
+          function f1() { return f1(); }
+          function f10() { return f10(); }
+          ${fillers}
+        `,
+      });
+      const result = await validator.validate(context);
+
+      expect(result.passed).toBe(false);
+      expect(result.message).toContain("detected in foo");
+      expect(result.message).toContain("detected in myfoo");
+      expect(result.message).toMatch(/detected in f1(?!\d)/);
+      expect(result.message).toContain("detected in f10");
+      expect(result.message).not.toContain("detected in fn0");
+    });
+
     it("should pass with safe loops", async () => {
       const context = createContext({
         newCode: `

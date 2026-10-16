@@ -2,7 +2,9 @@
 
 **Audience**: Plugin authors, bridge maintainers (Hermes, OpenClaw, Grok Build, OpenCode), and projects that consume `0xray` directly.
 
-**Version**: 3.4.1
+## Temperament on upgrade (v4.0)
+
+Existing `.xray/features.json` **without** `suit_temperament` stays **guided** (full spawn-plan deny). Postinstall merge will not silently frontier a Grok consumer. New installs copy shipped `profile: "auto"` (Grok → frontier, Hermes/OpenCode → guided). See [Suit temperament](./v3-temperament.md).
 
 ## Quick Start for v3 Consumers
 
@@ -18,9 +20,9 @@ Postinstall **automatically** runs `install-bridges.cjs` (consumer projects only
 | 2 | `.gitignore.default` → `.gitignore` (if absent) |
 | 3 | Deploy `.xray/` (`codex.json`, `features.json`, `config.json`) |
 | 4 | Write project `.mcp.json` with **7 MCP servers** |
-| 5 | Install **4 bridges**: OpenCode, Grok, Hermes, OpenClaw |
-| 6 | Sync **45 skills** to platform skill directories |
-| 7 | Optional git pre-commit hook |
+| 5 | Install **4 chat bridges**: OpenCode, Grok, Hermes, OpenClaw, plus **Cursor** `.cursor/hooks.json` |
+| 6 | Fasten mill plant (`mill` + `inspect`). Fasten is foundry-plant/0. `"plant": "@0xray/blip"` (aliases blip/sound) fastens whatever that mill declares. Nested mill `@0xray/foundry@0.1.12`. Not a 45-skill costume dump unless `foundry.json` `"costume": true` |
+| 7 | Optional git pre-commit hook. Factory hangar shops coexist via `shopPlant` |
 
 Manual install (idempotent, same outcome):
 
@@ -29,7 +31,7 @@ npx 0xray opencode install
 npx 0xray grok install
 npx 0xray hermes install
 npx 0xray openclaw install
-npx 0xray setup    # optional extras
+npx 0xray setup # optional extras
 ```
 
 ## Seven MCP Servers (v3.4.1)
@@ -64,8 +66,9 @@ Grok plugin MCP config shares the same `XRAY_MCP_SERVERS` constant as `install-b
 
 ### v3.3 — Memory routing + Repertoire
 
+- **Repertoire is preferred.** Vendored 0.2.9 ships **on**. Dest is named laws, not hangar `repo-*`.
 - Pluggable `memory_routing` block in `features.json` (validated by `features.schema.json`).
-- Repertoire (`@0xray/repertoire`) is the default provider in the framework repo.
+- Repertoire (`@0xray/repertoire`) is the default provider. Station is the compact ticket, not a substitute.
 - `MemoryRoutingProvider` contract: `enrichTasks`, `getTaskConfidence`, `resolveThinDispatch`, `ingestFeedback`.
 - External hosts: add `repertoire-mcp` to `.mcp.json` (`repertoire__get_task_confidence`, etc.).
 - See [Memory Routing](./memory-routing.md) and [Repertoire Integration](./repertoire.md).
@@ -93,6 +96,7 @@ Grok plugin MCP config shares the same `XRAY_MCP_SERVERS` constant as `install-b
 - Walk from `node_modules` to consumer project root.
 - Legacy `xray` package name tolerance.
 - Hooks and MCPs placed correctly for node_modules and copy-to-root layouts.
+- **Mill target:** do not mill npm global prefix or npx `_npx` cache. Parent of `node_modules` is the mill target only when it is a real project (`package.json`). `npm i -g` mill-skips dogfood (mills the 0xray package itself, not Homebrew `lib`). Isolated HOME never writes passwd `~/.grok`.
 
 ## Verify gate (term 76)
 
@@ -108,6 +112,7 @@ Every release passes `npm run release:gate` (or CI equivalent):
 
 ```bash
 npm run release:gate
+npm run release:npm # gate first, then npm publish — do not use a scripts.publish lifecycle
 ```
 
 ## 0xray (framework) vs consumer project
@@ -133,7 +138,7 @@ Automatic in `inference-cycle.ts` + `governance-service.ts`.
 | StringRay / strray-ai branding | Retired (3.1.1) |
 | `hermes bridge` CLI | Removed — use `hermes install` |
 | `.opencode/xray/` fallback | Removed (3.1.1) |
-| `advanced-features/` on boot path | Decoupled — not consumer install |
+| `advanced-features/` | Removed |
 | PostProcessor default | Soft-deprecated (`enablePostProcessor: false`) |
 
 ## No breaking changes for basic users
@@ -146,4 +151,4 @@ If you only use `@agent` invocations, the CLI/TUI, or default plugin hook inject
 - [Memory Routing](./memory-routing.md)
 - [MCP Servers](../mcp/README.md)
 - [Full Reference](../full-reference.md)
-- Architecture: `PIPELINE_INVENTORY`, `V3-ENFORCEMENT-PIPELINES`, `PIPELINE_ARCHITECTURES`
+- [4.0 vision](../architecture/v4-vision.md) · [Trim list](../architecture/v3-museum.md)

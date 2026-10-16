@@ -1,4 +1,26 @@
+import { chmodSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+function installHangingHermes(): string {
+  const dir = mkdtempSync(join(tmpdir(), 'xray-hermes-hang-'));
+  const bin = join(dir, 'hermes');
+  writeFileSync(
+    bin,
+    [
+      '#!/bin/sh',
+      'if [ "$1" = "--version" ]; then echo "hermes 0.7.0"; exit 0; fi',
+      '# dead xai-oauth: invalid_grant retry hang (Blaze 2026-09-12)',
+      'sleep 120',
+      'echo "invalid_grant" >&2',
+      'exit 1',
+      '',
+    ].join('\n'),
+  );
+  chmodSync(bin, 0o755);
+  return bin;
+}
 
 const capturedHandlers = new Map<any, Function>();
 const ListSchemaKey = {};
@@ -54,15 +76,29 @@ describe('MCP Server Smoke Tests', () => {
     });
 
     it('registers analyze_proposal tool via CallToolRequestSchema', async () => {
-      const { XrayLibrarianServer } = await import('../../mcps/researcher.server.js');
-      new (XrayLibrarianServer as any)();
+      const previousHermesBin = process.env.HERMES_BIN;
+      const previousAllowHermes = process.env.XRAY_GOVERNANCE_ALLOW_HERMES;
+      process.env.HERMES_BIN = installHangingHermes();
+      delete process.env.XRAY_GOVERNANCE_ALLOW_HERMES;
 
-      const handler = getCallToolHandler();
-      expect(handler).not.toBeNull();
+      try {
+        const { XrayLibrarianServer } = await import('../../mcps/researcher.server.js');
+        new (XrayLibrarianServer as any)();
 
-      const result = await handler({ params: { name: 'analyze_proposal', arguments: { proposalTitle: 'Test', proposalDescription: 'Desc' } } });
-      expect(result.content).toBeDefined();
-      expect(result.content[0].text).toContain('DECISION:');
+        const handler = getCallToolHandler();
+        expect(handler).not.toBeNull();
+
+        const started = Date.now();
+        const result = await handler({ params: { name: 'analyze_proposal', arguments: { proposalTitle: 'Test', proposalDescription: 'Desc' } } });
+        expect(Date.now() - started).toBeLessThan(10_000);
+        expect(result.content).toBeDefined();
+        expect(result.content[0].text).toContain('DECISION:');
+      } finally {
+        if (previousHermesBin === undefined) delete process.env.HERMES_BIN;
+        else process.env.HERMES_BIN = previousHermesBin;
+        if (previousAllowHermes === undefined) delete process.env.XRAY_GOVERNANCE_ALLOW_HERMES;
+        else process.env.XRAY_GOVERNANCE_ALLOW_HERMES = previousAllowHermes;
+      }
     });
   });
 

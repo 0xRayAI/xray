@@ -1,45 +1,59 @@
-# Platform Integrations (v3.4.1)
+# Platform Integrations (v4.0)
 
-0xRay integrates with four AI coding platforms. Consumer `npm install 0xray` runs **`install-bridges.cjs`** automatically — manual commands below are idempotent re-runs of the same steps.
+Temperament: **Grok** defaults to **frontier** when `suit_temperament.profile` is `auto` (new installs). **Hermes / OpenCode / OpenClaw** stay **guided** (full engine ceremony). Existing consumers without the key stay guided on upgrade. See [Suit temperament](./v3-temperament.md).
+
+0xRay integrates with four chat platforms plus Cursor project hooks. Consumer `npm install 0xray` runs **`install-bridges.cjs`** automatically — manual commands below are idempotent re-runs of the same steps.
+
+**Repertoire is preferred** on every floor (vendored 0.2.9, dest = laws). Full 4-chat-bridge wear matrix:
+
+```bash
+npm run install:bridges # all four chat bridges
+npm run verify:suit:all # verify Grok + OpenCode + OpenClaw + Hermes
+npm run confirm:suit:all # install + verify + Grok harness + trap-routing e2e
+```
 
 ## Overview
 
 | Platform | Command | Install location | MCP servers |
 |----------|---------|------------------|-------------|
 | **OpenCode** | `npx 0xray opencode install` | Project `opencode.json` + `.opencode/agents/` | Via project `.mcp.json` |
-| **Grok CLI / Build** | `npx 0xray grok install` | `~/.grok/plugins/0xray` + `~/.grok/skills/` | 7 servers in plugin MCP config |
+| **Grok CLI / Build** | `npx 0xray grok install` | project `.grok/plugins/0xray` (shared HOME does not clobber machine plugin) | 7 servers in plugin MCP config |
 | **Hermes Agent** | `npx 0xray hermes install` | `~/.hermes/plugins/xray-hermes` | Via plugin `.mcp.json` |
 | **OpenClaw** | `npx 0xray openclaw install` | `.xray/config/openclaw.json` + `~/.openclaw/skills/` | Via project `.mcp.json` |
+| **Cursor** | postinstall (`installCursorBridge`) | Project `.cursor/hooks.json` (preToolUse / preCompact / afterFileEdit) | Via project `.mcp.json` |
 
 ## Postinstall sequence
 
 `scripts/node/postinstall.cjs` → `installAllBridges()`:
 
-1. Deploy `.xray/` (`codex.json`, `features.json`, `config.json`)
+1. Deploy `.xray/` (`codex.json`, `features.json`, `config.json`) then overlay their plant
 2. Write project `.mcp.json` (7 servers)
-3. Merge `opencode.json`, copy 42 YML agent surfaces
-4. Install Grok plugin + global skill sync
+3. Fasten mill plant (`mill` + `inspect`) on OpenCode. Not a 42-YML / 45-skill costume dump unless `foundry.json` `"costume": true`
+4. Install Grok plugin + PPE hooks (mill plant, not costume skill dump)
 5. Install Hermes plugin + `xray-consumer-root.txt` marker
-6. Create OpenClaw config + skill sync
-7. Copy `AGENTS-consumer.md` → `AGENTS.md`, seed `.gitignore`
+6. Create OpenClaw config (mill plant)
+7. Fasten Cursor `.cursor/hooks.json` + relative `.cursor/hooks/*.sh`; rewrite leftover env-assignment commands
+8. Copy `AGENTS-consumer.md` → `AGENTS.md`, seed `.gitignore`. Factory hangar shops coexist via `shopPlant`
+
+**Mill target:** the consumer project, not npm global prefix or `_npx`. Isolated HOME skips machine `~/.grok`. Shared HOME Grok last-mile is project `.grok/plugins/0xray` (two seats do not last-wins clobber the machine plugin). `npm i -g 0xray` dogfood-skips.
 
 ## Seven MCP servers (all platforms)
 
 ```json
 {
-  "mcpServers": {
-    "xray-governance": { "command": "npx", "args": ["-y", "0xray", "mcp", "governance"] },
-    "xray-skills":       { "command": "npx", "args": ["-y", "0xray", "mcp", "skills"] },
-    "xray-orchestrator": { "command": "npx", "args": ["-y", "0xray", "mcp", "orchestrator"] },
-    "xray-enforcer":     { "command": "npx", "args": ["-y", "0xray", "mcp", "enforcer"] },
-    "xray-researcher":   { "command": "npx", "args": ["-y", "0xray", "mcp", "researcher"] },
-    "xray-code-review":  { "command": "npx", "args": ["-y", "0xray", "mcp", "code-review"] },
-    "xray-architect-tools": { "command": "npx", "args": ["-y", "0xray", "mcp", "architect-tools"] }
-  }
+ "mcpServers": {
+ "xray-governance": { "command": "npx", "args": ["-y", "0xray", "mcp", "governance"] },
+ "xray-skills": { "command": "npx", "args": ["-y", "0xray", "mcp", "skills"] },
+ "xray-orchestrator": { "command": "npx", "args": ["-y", "0xray", "mcp", "orchestrator"] },
+ "xray-enforcer": { "command": "npx", "args": ["-y", "0xray", "mcp", "enforcer"] },
+ "xray-researcher": { "command": "npx", "args": ["-y", "0xray", "mcp", "researcher"] },
+ "xray-code-review": { "command": "npx", "args": ["-y", "0xray", "mcp", "code-review"] },
+ "xray-architect-tools": { "command": "npx", "args": ["-y", "0xray", "mcp", "architect-tools"] }
+ }
 }
 ```
 
-Shared constant: `XRAY_MCP_SERVERS` in `install-bridges.cjs` and `grok-cli.ts`.
+Shared constant: `XRAY_MCP_SERVERS` in `scripts/node/bridge-mcp-wiring.cjs` (SSOT), consumed by `install-bridges.cjs`, platform install commands, and Repertoire `scripts/suit-bridge-shared.mjs`.
 
 ## OpenCode
 
@@ -53,14 +67,16 @@ npx 0xray opencode install
 
 ## Grok CLI / Grok Build (Cursor)
 
-- Copies plugin to `~/.grok/plugins/0xray` and project `.grok/plugins/0xray`
-- Syncs skills to **both** plugin dir and `~/.grok/skills/` (Grok Build agent_skills path)
-- Registers 7 MCP servers in plugin config
+- Copies plugin to project `.grok/plugins/0xray` (Grok discovers at project+user)
+- Shared HOME does **not** write machine `~/.grok/plugins/0xray` (last-wins XRAY_ROOT clobber)
+- Isolated HOME may wear `$HOME/.grok/plugins/0xray` and must not write the passwd machine plugin
+- Mill+inspect plant; costume skill dump only when `foundry.json` `"costume": true`
+- Registers 7 MCP servers in the project plugin config
 - Marketplace: `.grok-plugin/plugin.json` + root `.mcp.json`
 
 ```bash
-npm install 0xray          # postinstall handles Grok if consumer project
-npx 0xray grok install    # explicit re-run / force sync
+npm install 0xray # postinstall handles Grok if consumer project
+npx 0xray grok install # explicit re-run / force sync
 ```
 
 See [Grok Guide](../architecture/GROK_GUIDE.md).
@@ -69,11 +85,14 @@ See [Grok Guide](../architecture/GROK_GUIDE.md).
 
 - Plugin at `~/.hermes/plugins/xray-hermes`
 - `xray-consumer-root.txt` marker resolves consumer project root on hook invocation
+- `find-project-root.mjs` copied into plugin on install (bridge resolves consumer `node_modules/0xray` dynamically)
 - Honors `XRAY_ROOT` environment variable
 
 ```bash
 npx 0xray hermes install
 ```
+
+Verify: `npm run verify:hermes` (Repertoire consumer) or `node bridge.mjs health --cwd <project>` after install.
 
 :::warning
 `npx 0xray hermes bridge` was **removed** in 3.1.1. Use `hermes install`.
@@ -88,17 +107,39 @@ npx 0xray hermes install
 npx 0xray openclaw install
 ```
 
-## Memory routing (optional, v3.3+)
+## Cursor (fifth wear)
 
-Configure in `.xray/features.json` when using Repertoire or another provider. See [Memory Routing](./memory-routing.md).
+- Fastens project `.cursor/hooks.json` plus relative `.cursor/hooks/*.sh` (Cloud execs argv[0] without a shell)
+- Hooks: `preToolUse` (Codex gate + Station heat), `preCompact` (Station merge), `afterFileEdit` (Station boot), `beforeShellExecution` / `beforeReadFile` (same gate)
+- Rewrites leftover `XRAY_AI_PATH=` / invoke-probe one-liners. Keeps already-relative events.
+- Not a fifth chat TUI. No new MCP/skill surface (Codex 69)
+- Cursor host does not inject the Station file. The preCompact hook can leave one line in the next message. Read `.xray/state/STATION.md` after compact. The six chats: [What each chat can do](./host-truth.md)
+
+Exo adapter notes: `src/integrations/cursor/README.md`.
+
+## Memory routing
+
+Shipped **on** (`memory_routing.enabled: true`, vendored `@0xray/repertoire@0.2.9`). **Repertoire is preferred.** Explicit opt-out only: `"enabled": false, "provider": "repertoire"`. Station is the compact ticket when it is off. See [Memory Routing](./memory-routing.md).
 
 ## Verify installation
 
 ```bash
 npx 0xray status
+npx 0xray health
 npx 0xray validate
-npm run release:gate    # framework repo only — full consumer smoke
+npm run release:gate # framework repo only — full consumer smoke
 ```
+
+**Repertoire consumer** (`@0xray/repertoire`):
+
+| Script | Checks |
+|--------|--------|
+| `verify:suit` | Grok Build (30 checks + live hooks) |
+| `verify:hermes` | Hermes plugin, bridge health, MCP wiring |
+| `verify:opencode` | OpenCode plugin + `opencode mcp list` (auto-install preflight) |
+| `verify:openclaw` | OpenClaw config + `openclaw mcp list` |
+| `verify:suit:all` | All four bridges in one matrix |
+| `confirm:suit:all` | Install all + Grok harness + trap-routing e2e |
 
 ## Related
 

@@ -524,10 +524,16 @@ fi
       (async () => {
         try {
           // Use dynamic import that works in both dev and consumer
-          const basePath = process.env.XRAY_BASE_PATH || '.';
-          const distPath = process.env.XRAY_DIST_PATH || 'dist';
-          // First archive logs (compress and rotate) before cleanup
-          const { archiveLogFiles } = await import(basePath + '/' + distPath + '/postprocessor/triggers/GitHookTrigger.js');
+          const { pathToFileURL } = await import('url');
+          const { existsSync } = await import('fs');
+          const { join } = await import('path');
+          const candidates = [
+            join(process.cwd(), 'node_modules/0xray/dist/postprocessor/triggers/GitHookTrigger.js'),
+            join(process.cwd(), 'dist/postprocessor/triggers/GitHookTrigger.js'),
+          ];
+          const triggerPath = candidates.find((p) => existsSync(p));
+          if (!triggerPath) return;
+          const { archiveLogFiles } = await import(pathToFileURL(triggerPath).href);
           const archiveResult = await archiveLogFiles({
             archiveDirectory: 'logs/framework',
             maxFileSizeMB: 10,  // Archive if > 10MB
@@ -542,7 +548,7 @@ fi
           }
 
           // Then cleanup old files
-          const { cleanupLogFiles } = await import(basePath + '/' + distPath + '/postprocessor/triggers/GitHookTrigger.js');
+          const { cleanupLogFiles } = await import(pathToFileURL(triggerPath).href);
           const result = await cleanupLogFiles({
             maxAgeHours: 24,
             excludePatterns: [

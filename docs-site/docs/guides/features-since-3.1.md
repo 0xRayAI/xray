@@ -1,6 +1,141 @@
 # Features Since 3.1
 
-Complete reference of capabilities shipped from **3.1.0** through **3.5.4**.
+Complete reference of capabilities through **0xRay 4.1**. 0xRay is a three-subsystem autonomous engine. The suit is the wear. Patch notes live here; kernel headers stay era `4.1`. 3.x development tags (3.1–3.5.x) remain below as history.
+
+## 4.1.0 — Bifrost board, goggles, wake
+
+Bifrost is the collector board. Goggles reads one named plane. 4.0.43 below is the earlier confer and hook cut. It was stamped and not published.
+
+- **Board.** `house/live/feed/live_mesh.py` runs the collector and the board every `LIVE_WATCH_S` seconds (default 45). Reviews, merges, pushes, and CI land on the card. CI is not board traffic. `merged_by` is the GitHub merger, filled from `GET /pulls/:n` when the list payload omits it or only has the author. A cloud agent is a board row (`cloud_agents`): `bcId`, owning seat, linked card, and state `running`, `finished`, or `failed`.
+- **Nudge.** `evalNudges` sends a stuck card's L1 to the next owner or the card owner, L2 to the CoS role, and L3 back to the L1 seat, with the CoS role woken once to reassign. An unacked inbox line and a missing handoff stay on that seat for L1, L2, and L3. The CoS role is woken at L3 on those two ladders.
+- **Wake.** `grok-bot/templates/house/fleet/WAKE-ROUTINE.md` posts `live-inbox <seat> --turn start` on every turn and `--turn end` on every exit. Compaction is a wake. Notes are appended after every beat. One cloud agent per card.
+- **live-inbox.** `LIVE_URL`, `SEAT_KEYS_DIR`, and `LIVE_CURSORS` are required. A missing or empty one exits 2 and names it. The tool does not guess. Handoff requires `--sha` (7 to 64 hex digits).
+- **Lexicon.** `grok-bot/LEXICON.md` adds the handoff `--sha` row and the practice **button up**.
+- **Goggles.** A read names one plane. Recall opens that plate.
+
+## 4.0.43 — confer PASS, hooks fail closed
+
+Confer completes only on a real PASS. Cursor gate events fail closed.
+
+- **Confer.** It stays off unless it is explicitly enabled. Only a real approve completes it, ambiguous text counts as UNREVIEWED, and receipts are bound to one synthesis cycle. The vendored complete-todo command cannot mint a PASS.
+- **Hooks.** Cursor gate events (preToolUse, beforeShellExecution, beforeReadFile) fail closed: a crashed gate, bad input, or a missing node or hook file denies the tool. The one exception is EACCES when a cloud wrapper cannot write dest, which still allows it. Hermes, OpenCode, OpenClaw and Cursor run the lens and the repertoire route on the pre-tool allow path.
+- **Release.** Gate C cannot be skipped. Gate D is proven only when npm lists the version, the annotated tag points at that commit, and the GitHub Release page exists.
+
+## 4.0.42 — confer, the worn suit, Burst
+
+Confer votes. Burst runs the swarm.
+
+- **Confer.** The wearing chat's own MCP servers vote. Only a real PASS completes the consult. A PASS from another session is asked again.
+- **Suit.** Wear pins Grok at the installed CLI, Hermes rejects a console call, and OpenClaw stays on the installed plugin. Cursor hooks stay on a git checkout.
+- **Burst.** Runs the swarm live. The board shows one seat state and an honest LIVE pill. The box posts one delta while it holds the lock. A 409 is retried once. The ingest secret stays in the header. A SENT prompt holds the seat for 10 minutes, and a posted seat must match the installation token.
+
+## 4.0.30 — wear and setup work outside git again
+
+- **Non-git.** `npx 0xray wear` and `npx 0xray setup` write the 4.0.28 consumer project setup and skip only Cursor hooks. They print one line: `cursor-wear: hooks skipped because this folder is not a git checkout`.
+- **Git checkout.** `wear` and `setup` restore the 4.0.28 project setup that 4.0.29 dropped (`AGENTS.md`, `.gitignore`, `.xray` config, repertoire link, mill/inspect plant, bridges, `.opencode/skills`, `dist` / `scripts` links). `wear` adds Cursor hooks and the `.xray/state/cursor-hook-wear/` snapshot for `unwear`.
+- **Postinstall.** Unchanged: links the vendored repertoire and prints `npx 0xray wear`.
+
+## 4.0.29 — install links repertoire, wear sets up the suit
+
+- **Postinstall.** `npm install` only creates the relative `node_modules/@0xray/repertoire` link to the vendored repertoire and prints `npx 0xray wear`. It does not write the suit.
+- **Wear.** Run `npx 0xray wear` after install. It writes only the consumer project's `.cursor/hooks.json`, pointing at `node_modules/0xray/dist/integrations/cursor/hooks/<event>.sh`, beside existing user entries. The pre-wear copy is `.xray/state/cursor-hook-wear/`. `npx 0xray unwear` restores it.
+- **Setup.** `npx 0xray setup` writes `.mcp.json` and the OpenCode, Grok, Hermes, and OpenClaw bridges.
+
+## 4.0.28 — suit edits survive install, MCP env is names only
+
+- **MCP launch.** Servers start through `scripts/node/mcp-launch.cjs`. They see PATH, HOME, and XRAY_ROOT, plus the names on their keep list. Tokens such as NPM_TOKEN are not inherited. User env values stay in the env block and out of argv.
+- **Postinstall keeps user edits** to AGENTS.md, `.mcp.json`, and `opencode.json`.
+- **House.** `house init` no longer copies EXAMPLE.md. Doctor FAILs while `house/EXAMPLE.md` exists.
+- **Inspect** has a machinePlugin check. It fails when a machine `~/.grok/plugins` directory is named `0xray` or starts with `0xray`.
+- **Cursor hook.** XRAY_ROOT defaults to the suit directory.
+- **@0xray/grok-bot 0.1.7** records the same house init and doctor change. `house init` copies HOUSE.md, WAVEBOARD.md, and ATTENTION_STATE.md only.
+
+## 4.0.27 — compact proof, memory scoring, grok-bot house
+
+- **Nested preCompact wear.** A counted host compact needs a non-empty `generation_id` and a numeric `context_usage_percent`. The same hook line and per-session receipt are written on the suit mill and on nested consumer wear roots (a bench with local `node_modules/0xray`). `preCompact` has no Read paths, so those roots are discovered from the mill at compact time. See [Cursor hooks](../../../src/integrations/cursor/README.md).
+- **Memory scoring** is one doc: [memory-scoring](../../../docs/memory-scoring.md). The orchestrator skill links it and does not copy the rules.
+- **@0xray/grok-bot 0.1.6** is the companion package, not this tarball. The general operating page is the same for every team ([OP-PROC](../../../grok-bot/OP-PROC.md)). `house/` is the team overlay and is not in that npm pack. `templates/house/` ships. `grok-bot house init` copies the template and refuses to overwrite. Doctor reads `GROK_BOT_HOUSE` when it is set (a missing path warns and does not walk). Otherwise it walks up from the working directory for `house/HOUSE.md`.
+
+## 4.0.25 — plates travel in the package
+
+- **Plates travel in the package.** `docs-site/docs/plates/` is on the npm `files` list (`memory-recall`, `processor`, and the rest of the stamp set). The worn reader at `dist/integrations/hooks/plates.cjs` walks up to that directory and resolves `memory-recall` and `processor`.
+
+## 4.0.24 — hot-swap, memory organ, plates
+
+- **Hot-swappable compaction.** Compaction and host change are the same cut. The station card (`.xray/state/STATION.md`) is the handoff. The next turn continues the card.
+- **Memory organ.** Finished speech and reflections become lessons on signals. Kernel and activity logs are heat (`last_seen`) only. Unnamed speech mints a signal. Caps: 20 hot lesson lines, 20 retained ids (insertion order), 24 learned proposed signals. Factory laws stay.
+- **Plates** are one INPUT/PROCESSING/OUTPUT schematic per pipeline in [Plates](../plates/index.md) (routing, governance, boot, orchestration, processor, reporting, memory-recall). Station keeps one pointer line, `Plate: <id> — .xray/state/plates/<id>.md`. Recall injects that one schematic. A lesson is an episode. A plate is the machine.
+- **Repertoire 0.2.8** is the organ package, vendored in 4.0.24 (`@0xray/repertoire@0.2.8`).
+
+## 4.0.21 — dest is laws
+
+- **Repertoire is preferred.** Dest is a judgment index of named invariants. Wake hydrate is factory + stack only. `patternsFromGit` observes existing laws; it does not mint commit slugs. Grow skips sibling `repo-*`. `pruneKeywordDest` runs after organ match remints subject overlay.
+- Compact `hookEvent` / `event_class` / spawn ids hold across later preToolUse, including a HEAD move. Grok session-boot keeps one trailing `hook`/`source` after `compactHold`.
+- Cloud `preCompact` is supported. Persist `conversation_id` + `generation_id` and resume that id. Wrapper heat is mill-only.
+- Guides: [memory-wake](./memory-wake.md) · [station-vs-repertoire](./station-vs-repertoire.md).
+
+## 4.0.20 — Wear + live memory
+
+- Vendored Repertoire 0.2.5 worn on install. Cursor fifth wear. Heat grows the project copy.
+
+## 4.0.18 — Memory wake
+
+- `applyStationHeat` hydrates dest from seed + stack, attaches NOTES pickup, captures sessions on every floor that heats
+- `opProcNames` is factory ∪ stack; `repo-*` and git slugs stay off dest. Fresh intent rematches; law hits pin into the short list
+- Guide: [memory-wake](./memory-wake.md). Station stays a ticket. Do not pin 0.1.8.
+
+## 4.0.15 — foundry-plant/0 fasten protocol
+
+- **foundry-plant/0** — fasten is a protocol any mill implements, not a 0xray-owned catalog of plant kinds. Builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill package declares. Organs (looker, vibe, mixer) live in the mill; adding one is a mill publish, not an xray catalog PR. Nested mill **`@0xray/foundry@0.1.12`**. CLI shims `foundry blip` / `foundry sound` still exist on foundry 0.1.11+.
+- Factory-blip mill (`@0xray/blip`): sibling to mill + sound (not a mill copy). Hangar shop pair later. Alias `"plant": "blip"` fastens what `@0xray/blip` declares (`blip` + `blip-inspect` + `blip-vibe` + `blip-looker` today). `blip vibe` scores stamp density; `blip look` is the friend hitting replay (ship bar 8). Dynamic registry (not a frozen Rippel enum). v0: still + Rippel five. `kapow` is a design opt (two-tier stamp on the stanza). Rippel v2: converter motions at ≥720p with seed-selected looks (`focus` disc-satellites | `cage` Wu+field) + tempo/frequency animation on all five + mandatory 4.44s bed that syncopates to the motion grid. Receipt `visualConfig.lookKind` + `visualConfig.mesh` + `visualConfig.field` are the NFT fingerprints. `still` is the Power Plant ident (plate dissolves over 4.44s at ≥720p, not a frozen poster) (`#08090B` `#F5F7FA` `#3DE0E8` `#F5C518` `#4A7FD4`). Unknown id FAIL.
+- Factory-sound mill (`@0xray/blip`): alias `"plant": "sound"` fastens what the mill declares (`sound` + `sound-inspect` + `sound-mixer` today; mill off). Brief → seed → genre → wav → metrics receipt. `sound mix` levels every genre × tempo × motif. Inspect reports last bed PASS/FAIL. Not costume.
+- Sound render is a crystal-clear mill of Rippel SSOT topology (membrane kick / metal hat / duo bass / mixer). Prototype is lineage, not the quality bar. Tone.Offline blocked in Node. `phonk` first-class.
+
+- Inspect / mint plant-vs-worn allow factory shop plant (`shop-extract`, `shop-witness`, `shop-pin`) alongside mill plant
+- `foundry.json` `shopPlant` names more shops (array / dir / `{ skills, dir }`). Not `"costume": true`
+- Field is `shopPlant` (mill plant copy cannot say hangar). Costume dump of leftovers still fails
+- Default consumer plant is mill+inspect, not 45-skill sync. Root `llms.txt` is the exo agent map
+- `npm run pack:tmp-proof` — pack tgz → tmp install → `foundry mint --skip-live` → hangar factory shops → inspect (no costume dump). Playwright n/a (CLI)
+- Nested mill **0.1.12** (foundry-plant/0). Inspect dest matches `resolveGrokPluginDests` (project path on shared HOME). Blip/sound mill is `@0xray/blip`. CLI shims remain from 0.1.11.
+- **Station vs Repertoire 0.1** — Station is survive-the-cut; 0.1.0–0.1.8 are the same judgment organ; do not pin 0.1.8. Guide: [station-vs-repertoire](./station-vs-repertoire.md)
+
+## 4.0.9 — Mill target (global prefix / npx cache)
+
+- Postinstall does **not** mill npm global prefix (Homebrew `lib`, `/usr/local/lib`) or `_npx` cache as a consumer
+- Prefix without `package.json` → mill `INIT_CWD` if it is a project, else mill the 0xray package (dogfood skip)
+- Isolated HOME still skips machine `~/.grok` / Hermes / OpenClaw
+- Mill plant stays `mill` + `inspect`. Not 45/42 costume. Nested mill stays **0.1.9**
+
+## 4.0.1 — Patch (CLI, host e2e, release gate, docs)
+
+- CLI `-V` / `--version` no longer dumps a Commander stack (`exitOverride` caught)
+- Hermes: `[nudge]` post-processor + e2e `session-start`
+- OpenClaw e2e reads `plugins.entries` (2026.8.2)
+- Release gate: organ-on smoke; no `scripts.publish` after registry PUT
+- Docs: catalog/enterprise boiler archived; version-manager stamps live Docusaurus headers
+
+## 4.0.0 — Suit temperament (first ship)
+
+- **On npm** as `0xray@4.0.0` (2026-09-02). Tag `v4.0.0` on `0xRayAI/xray`.
+- **Keep v2 bone:** Inference · External Governance · Autonomous Engine — not a redesign
+- **Temper ceremony** on that engine: Codex / no_new_surface always on; spawn-plan **deny** vs **warn** by profile
+- **Frontier:** missing/stale/**todo-mismatch** spawn **warns**; confer off unless `confer.enabled: true`; pending/synthesis skip
+- **Constitution SSOT:** Codex 11/29/69 + destructive shell in `evaluatePreToolGate` (Grok, Hermes, OpenCode). Grok extra 2/7 only.
+- **Codex 69** is in `codex.json` (blocking). **strict** cannot opt out of `no_new_surface`.
+- **Dual-host boot:** Hermes / OpenCode / OpenClaw write `session-boot.json` with `host` + `suit_profile`; leftover Grok boot does not frontier a Hermes session
+- **Profiles:** `frontier` (Grok 4.6 class) · `guided` (OpenCode / Hermes; OpenClaw host-agent PreToolUse still pending platform API) · `strict` (lock) · `auto`
+- **Upgrade safety:** missing `suit_temperament` stays **guided**
+- **Trim later:** duplicate orchestrators, extra MCP files — [trim list](../architecture/v3-museum.md)
+- Docs: [v3 from v2](../architecture/v3-from-v2.md) · [Suit temperament](./v3-temperament.md)
+
+## 3.5.5 — User-asides P0 + pipeline P3
+
+- PreToolUse **denies** aside spawns without worktree cwd; `aside-worktree.ts` SSOT
+- Worktree auto-provision on `analyze-complexity` when `auto_provision_worktree: true`
+- `verify:pipeline-facets` script; consumer `confirm:suit:full --pipeline-audit`
+- Worktree cwd enforce with `auto_chain_delegations: false`; synthesis-gate parity
+- `isAutoProvisionWorktreeEnabled` requires `user_asides.enabled`; macOS realpath worktree fix
+- `verify:pipeline-facets --package-only` in release-gate
 
 ## 3.5.4 — Synthesis consult receipt gate
 

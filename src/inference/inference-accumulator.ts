@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
-import { SessionInference } from "./session-capture.js";
+import { captureReflectionInference, SessionInference } from "./session-capture.js";
 import type { StructuralPattern } from "./semantic-patterns.js";
 
 export interface InferenceCorpus {
@@ -29,7 +29,7 @@ export interface RecurringProblem {
 }
 
 export function shouldTriggerCycle(inferenceDir: string, lastCycleFile: string): { trigger: boolean; reason: string } {
-  const sessions = loadSessionInferences(inferenceDir);
+  const sessions = loadCorpusSessions(inferenceDir);
   if (sessions.length < 1) {
     return { trigger: false, reason: `no session files collected` };
   }
@@ -53,7 +53,7 @@ export function shouldTriggerCycle(inferenceDir: string, lastCycleFile: string):
 }
 
 export function accumulateCorpus(inferenceDir: string): InferenceCorpus {
-  const sessions = loadSessionInferences(inferenceDir);
+  const sessions = loadCorpusSessions(inferenceDir);
 
   const totalCommits = sessions.reduce((sum, s) => sum + s.metrics.commits, 0);
 
@@ -61,11 +61,12 @@ export function accumulateCorpus(inferenceDir: string): InferenceCorpus {
   for (const session of sessions) {
     for (const p of session.patterns) {
       const existing = patternMap.get(p.name);
+      const evidence = patternEvidence(p);
       if (existing) {
         existing.count++;
         existing.confidence.push(p.confidence);
         existing.sessions.push(session.sessionId);
-        for (const e of p.evidence) {
+        for (const e of evidence) {
           if (!existing.evidence.includes(e)) existing.evidence.push(e);
         }
       } else {
@@ -73,7 +74,7 @@ export function accumulateCorpus(inferenceDir: string): InferenceCorpus {
           count: 1,
           confidence: [p.confidence],
           sessions: [session.sessionId],
-          evidence: [...p.evidence],
+          evidence: [...evidence],
           description: p.description,
         });
       }
@@ -125,6 +126,70 @@ export function accumulateCorpus(inferenceDir: string): InferenceCorpus {
   };
 }
 
+function loadCorpusSessions(inferenceDir: string): SessionInference[] {
+  return [...loadSessionInferences(inferenceDir), ...loadReflectionInferences(inferenceDir)];
+}
+
+/** Reflection files are graded in memory. They are not copied into session-*.json. */
+export function loadReflectionInferences(inferenceDir: string): SessionInference[] {
+  const projectRoot = path.resolve(inferenceDir, "..", "..");
+  const signalNames = readDestSignalNames(projectRoot);
+  const root = path.join(projectRoot, "docs", "reflections");
+  const sessions: SessionInference[] = [];
+  for (const file of listMarkdown(root)) {
+    const relativePath = path.relative(root, file);
+    if (/template/i.test(path.basename(file))) continue;
+    let text = "";
+    try {
+      text = fs.readFileSync(file, "utf-8");
+    } catch {
+      continue;
+    }
+    const modifiedAt = fs.statSync(file).mtime;
+    const session = captureReflectionInference({ relativePath, text, modifiedAt, signalNames });
+    if (session) sessions.push(session);
+  }
+  return sessions;
+}
+
+function listMarkdown(dir: string): string[] {
+  if (!fs.existsSync(dir)) return [];
+  const found: string[] = [];
+  for (const name of fs.readdirSync(dir)) {
+    const full = path.join(dir, name);
+    let stat: fs.Stats;
+    try {
+      stat = fs.statSync(full);
+    } catch {
+      continue;
+    }
+    if (stat.isDirectory()) {
+      found.push(...listMarkdown(full));
+      continue;
+    }
+    if (name.endsWith(".md")) found.push(full);
+  }
+  return found;
+}
+
+function readDestSignalNames(projectRoot: string): string[] {
+  const dest = path.join(projectRoot, ".xray", "state", "repertoire", "curated_signals.json");
+  if (!fs.existsSync(dest)) return [];
+  try {
+    const parsed = JSON.parse(fs.readFileSync(dest, "utf-8")) as { signals?: unknown };
+    if (!Array.isArray(parsed.signals)) return [];
+    const names: string[] = [];
+    for (const signal of parsed.signals) {
+      if (!signal || typeof signal !== "object") continue;
+      const name = (signal as { name?: unknown }).name;
+      if (typeof name === "string" && name.trim().length > 0) names.push(name.trim());
+    }
+    return names;
+  } catch {
+    return [];
+  }
+}
+
 export function loadSessionInferences(dir: string): SessionInference[] {
   if (!fs.existsSync(dir)) return [];
 
@@ -132,12 +197,42 @@ export function loadSessionInferences(dir: string): SessionInference[] {
     .filter((f) => f.startsWith("session-") && f.endsWith(".json"))
     .map((f) => {
       try {
-        return JSON.parse(fs.readFileSync(path.join(dir, f), "utf-8")) as SessionInference;
+        const parsed = JSON.parse(fs.readFileSync(path.join(dir, f), "utf-8")) as SessionInference;
+        const named = readMatchedPrimitives(parsed);
+        parsed.matched_primitives = named;
+        parsed.matchedPrimitives = named;
+        return parsed;
       } catch {
         return null;
       }
     })
-    .filter((s): s is SessionInference => s !== null);
+    .filter((s): s is SessionInference => isSessionInference(s));
+}
+
+/** Captured patterns sometimes omit evidence. That is an empty list, not a throw. */
+function readMatchedPrimitives(value: unknown): string[] {
+  if (!value || typeof value !== "object") return [];
+  const raw = (value as { matched_primitives?: unknown }).matched_primitives
+    ?? (value as { matchedPrimitives?: unknown }).matchedPrimitives;
+  if (!Array.isArray(raw)) return [];
+  return [...new Set(raw.filter((item): item is string => typeof item === "string" && item.length > 0))];
+}
+
+function patternEvidence(pattern: { evidence?: unknown }): string[] {
+  if (!Array.isArray(pattern.evidence)) return [];
+  return pattern.evidence.filter((item): item is string => typeof item === "string");
+}
+
+/** Notes and partial JSON under docs/inference are not sessions. */
+function isSessionInference(value: unknown): value is SessionInference {
+  if (!value || typeof value !== "object") return false;
+  const session = value as SessionInference;
+  return typeof session.sessionId === "string"
+    && Array.isArray(session.patterns)
+    && Array.isArray(session.problems)
+    && Array.isArray(session.approaches)
+    && Array.isArray(session.wrongTurns)
+    && typeof session.metrics?.commits === "number";
 }
 
 function loadLastCycleDate(filePath: string): string | null {

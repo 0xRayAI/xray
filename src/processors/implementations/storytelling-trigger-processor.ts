@@ -4,16 +4,11 @@ import { execSync } from "child_process";
 import { PostProcessor } from "../processor-interfaces.js";
 import { ProcessorContext } from "../processor-types.js";
 import { frameworkLogger } from "../../core/framework-logger.js";
-import { featuresConfigLoader } from "../../core/features-config.js";
+import { featuresConfigLoader, type StorytellingConfig } from "../../core/features-config.js";
 import {
   analyzeStructuralPatterns,
   StructuralPattern,
 } from "../../inference/semantic-patterns.js";
-import {
-  captureSessionInference,
-  saveSessionInference,
-  SessionInference,
-} from "../../inference/session-capture.js";
 import { InferenceCycle } from "../../inference/inference-cycle.js";
 
 interface CommitInfo {
@@ -41,34 +36,6 @@ interface DiffSummary {
 
 type ReflectionCadence = "commit" | "release";
 
-interface StorytellingTriggerConfig {
-  enabled: boolean;
-  threshold?: number;
-  story_type: string;
-  file_count_threshold?: number;
-  duration_minutes_threshold?: number;
-}
-
-interface StorytellingConfig {
-  enabled: boolean;
-  reflection_triggers: {
-    commit_count: StorytellingTriggerConfig;
-    publish: StorytellingTriggerConfig;
-    complex_changes: StorytellingTriggerConfig;
-    session_duration: StorytellingTriggerConfig;
-  };
-  story_types: Record<string, {
-    location: string;
-    min_words: number;
-    ideal_words: number;
-    framework: string;
-  }>;
-  quality_requirements: {
-    require_frontmatter: boolean;
-    require_key_takeaways: boolean;
-  };
-}
-
 export class StorytellingTriggerProcessor extends PostProcessor {
   readonly name = "storytelling-trigger";
   readonly priority = 5;
@@ -79,7 +46,7 @@ export class StorytellingTriggerProcessor extends PostProcessor {
   constructor() {
     super();
     const features = featuresConfigLoader.loadConfig();
-    this.config = (features.storytelling as any) ?? null;
+    this.config = features.storytelling ?? null;
   }
 
   protected async run(context: ProcessorContext): Promise<unknown> {
@@ -246,8 +213,12 @@ export class StorytellingTriggerProcessor extends PostProcessor {
     if (diff.uniqueDirs.length > 0) {
       lines.push("## Areas Touched");
       lines.push("");
+      const touched = diff.filesAdded.concat(diff.filesModified);
       for (const dir of diff.uniqueDirs.slice(0, 15)) {
-        const count = [...diff.filesAdded, ...diff.filesModified].filter(f => f.startsWith(dir)).length;
+        let count = 0;
+        for (const fileName of touched) {
+          if (fileName.startsWith(dir)) count++;
+        }
         lines.push(`- \`${dir}\` (${count} files)`);
       }
       lines.push("");
@@ -429,15 +400,9 @@ export class StorytellingTriggerProcessor extends PostProcessor {
       }
 
       if (semanticPatterns.length > 0) {
-        try {
-          const session = captureSessionInference(sinceRef, untilRef);
-          if (session) {
-            const savedPath = saveSessionInference(session);
-            inferences.push(`Structured inference captured → ${path.basename(savedPath)}`);
-          }
-        } catch {
-          // session capture is best-effort
-        }
+        inferences.push(
+          "Semantic patterns stay on the reflection. A graded session comes from finished operation speech, not from commit subjects.",
+        );
       }
     }
 
@@ -493,14 +458,18 @@ export class StorytellingTriggerProcessor extends PostProcessor {
     return inferences;
   }
 
-  private getCommitsBetween(from: string, to: string): CommitInfo[] {
+  private getCommitsBetween(from: string, to: string, limit?: number): CommitInfo[] {
     try {
+      // Newest-first, so -n matches slice(0, limit). %x1e starts every commit, including
+      // one with no shortstat — a blank-line split would glue that header to the next.
+      const limitArg = typeof limit === "number" && limit > 0 ? `-n ${Math.floor(limit)} ` : "";
       const log = this.git(
-        `git log ${from}..${to} --format="%H||%s||%an||%aI" --shortstat --no-merges`,
+        `git log ${limitArg}${from}..${to} --format="%x1e%H||%s||%an||%aI" --shortstat --no-merges`,
       );
       if (!log) return [];
 
-      const commitBlocks = log.split(/\n{2,}/).filter((b) => b.trim().length > 0 && b.includes("||"));
+      const namesByHash = this.fileNamesByCommit(from, to, limit);
+      const commitBlocks = log.split("\x1e").filter((b) => b.includes("||"));
 
       return commitBlocks.map((block) => {
         const lines = block.trim().split("\n");
@@ -511,15 +480,20 @@ export class StorytellingTriggerProcessor extends PostProcessor {
         const insertions = parseInt(statsLine.match(/(\d+) insertion/)?.[1] || "0", 10);
         const deletions = parseInt(statsLine.match(/(\d+) deletion/)?.[1] || "0", 10);
 
+        const fullHash = (hash || "").trim();
         let fileNames: string[] = [];
-        try {
-          const shortHash = (hash || "").slice(0, 7);
-          const namesOutput = this.git(`git diff --name-only ${shortHash}~1 ${shortHash} 2>/dev/null`);
-          fileNames = namesOutput ? namesOutput.split("\n").filter(Boolean) : [];
-        } catch { /* empty */ }
+        if (namesByHash?.has(fullHash)) {
+          fileNames = namesByHash.get(fullHash) ?? [];
+        } else {
+          try {
+            const shortHash = fullHash.slice(0, 7);
+            const namesOutput = this.git(`git diff --name-only ${shortHash}~1 ${shortHash} 2>/dev/null`);
+            fileNames = namesOutput ? namesOutput.split("\n").filter(Boolean) : [];
+          } catch { /* empty */ }
+        }
 
         return {
-          hash: (hash || "").slice(0, 7),
+          hash: fullHash.slice(0, 7),
           message: message || "",
           author: author || "",
           date: date || "",
@@ -534,12 +508,41 @@ export class StorytellingTriggerProcessor extends PostProcessor {
     }
   }
 
+  /**
+   * One `git log --name-only` for the range. Same paths as `git diff --name-only HASH~1 HASH`
+   * for non-merge commits. Null means the caller should fall back per commit.
+   */
+  private fileNamesByCommit(from: string, to: string, limit?: number): Map<string, string[]> | null {
+    const limitArg = typeof limit === "number" && limit > 0 ? `-n ${Math.floor(limit)} ` : "";
+    const out = this.git(
+      `git log ${limitArg}${from}..${to} --no-merges --name-only --pretty=format:%x1e%H`,
+    );
+    if (!out) return null;
+
+    const names = new Map<string, string[]>();
+    for (const chunk of out.split("\x1e")) {
+      if (chunk.trim().length === 0) continue;
+      let hash = "";
+      const files: string[] = [];
+      for (const line of chunk.split("\n")) {
+        if (!hash) {
+          if (/^[0-9a-f]{40}$/.test(line)) hash = line;
+          continue;
+        }
+        if (line.length > 0) files.push(line);
+      }
+      if (hash) names.set(hash, files);
+    }
+    return names;
+  }
+
   private getRecentCommits(count: number): CommitInfo[] {
     try {
+      if (!(count > 0)) return [];
       const hash = this.git("git rev-list --max-parents=0 HEAD");
       if (!hash) return [];
       const firstCommit = hash.split("\n")[0]!.trim();
-      return this.getCommitsBetween(firstCommit, "HEAD").slice(0, count);
+      return this.getCommitsBetween(firstCommit, "HEAD", count);
     } catch {
       return [];
     }
@@ -578,13 +581,15 @@ export class StorytellingTriggerProcessor extends PostProcessor {
       }
     }
 
-    const uniqueDirs = [...new Set(
-      [...filesAdded, ...filesModified, ...filesDeleted]
-        .map((f) => {
-          const parts = f.split("/");
-          return parts.length > 1 ? parts.slice(0, -1).join("/") : ".";
-        })
-    )].sort();
+    const dirSet = new Set<string>();
+    const addDir = (fileName: string): void => {
+      const slash = fileName.lastIndexOf("/");
+      dirSet.add(slash >= 0 ? fileName.slice(0, slash) : ".");
+    };
+    for (const fileName of filesAdded) addDir(fileName);
+    for (const fileName of filesModified) addDir(fileName);
+    for (const fileName of filesDeleted) addDir(fileName);
+    const uniqueDirs = [...dirSet].sort();
 
     return {
       totalCommits: commits.length,

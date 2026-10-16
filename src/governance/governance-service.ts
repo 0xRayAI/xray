@@ -32,8 +32,14 @@ import {
   GovernanceRequest,
   GovernanceResponse,
 } from './governance-types.js';
-import { mergeVotes } from './governance-core.js';
+import {
+  applyDecisionMatrix,
+  calculateMetamorphosisScore,
+  mergeVotes,
+} from './governance-core.js';
 import { frameworkLogger } from '../core/framework-logger.js';
+import { featuresConfigLoader } from '../core/features-config.js';
+import { lensPlane } from '../integrations/hooks/goggles-pipeline.mjs';
 
 export class GovernanceService {
   constructor() {
@@ -55,7 +61,7 @@ export class GovernanceService {
    */
   async govern(request: GovernanceRequest): Promise<GovernanceResponse> {
     const { proposals, context, options } = request;
-    const requireExternal = options?.requireExternalDynamo ?? true;
+    const requireExternal = this.resolveRequireExternalDynamo(options?.requireExternalDynamo);
     const timeoutMs = options?.timeoutMs ?? 90000;
     const maxAbstentionThreshold = options?.maxAbstentionThreshold ?? 1.0;
 
@@ -81,7 +87,11 @@ export class GovernanceService {
 
     // Run governance with end-to-end timeout
     const result = await this.runGovernanceWithTimeout(
-      proposals, context, requireExternal, timeoutMs,
+      proposals,
+      context,
+      requireExternal,
+      timeoutMs,
+      options?.metamorphosisThreshold,
     );
 
     // Check abstention threshold
@@ -121,11 +131,30 @@ export class GovernanceService {
     };
   }
 
+  private resolveRequireExternalDynamo(explicit?: boolean): boolean {
+    if (explicit !== undefined) return explicit;
+    if (process.env.XRAY_LOCAL_MODE === '1' || process.env.XRAY_LOCAL_MODE === 'true') {
+      return false;
+    }
+    try {
+      const config = featuresConfigLoader.loadConfig() as {
+        inference_governance?: { local_mode?: boolean; require_external_dynamo?: boolean };
+      };
+      const ig = config.inference_governance;
+      if (ig?.require_external_dynamo === false) return false;
+      if (ig?.local_mode === true) return false;
+    } catch {
+      /* default strict */
+    }
+    return true;
+  }
+
   private async runGovernanceWithTimeout(
     proposals: GovernanceProposal[],
     context: GovernanceContext | undefined,
     requireExternal: boolean,
     timeoutMs: number,
+    metamorphosisThreshold = 0.7,
   ): Promise<{ results: GovernanceResult[] }> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
@@ -151,13 +180,85 @@ export class GovernanceService {
         ];
 
         const merged = mergeVotes(votes);
+        const externalVote = votes.find((v) => v.server === 'external-dynamo');
 
+        let finalDecision = merged.finalDecision;
+        let averageConfidence = merged.averageConfidence;
+        let moralOverride: GovernanceResult['moralOverride'] = 'none';
+
+        if (
+          externalVote &&
+          (externalVote.moralTension ||
+            externalVote.moralScore != null ||
+            externalVote.moralFusion != null)
+        ) {
+          const matrixInput: Parameters<typeof applyDecisionMatrix>[0] = {
+            resonance: averageConfidence,
+          };
+          const fusion = externalVote.moralFusion;
+          if (typeof fusion === 'number' && Number.isFinite(fusion)) {
+            matrixInput.isotopicRatio = fusion;
+            matrixInput.moralFusion = fusion;
+          }
+          if (externalVote.moralTension != null) {
+            matrixInput.moralTension = externalVote.moralTension;
+          }
+          if (externalVote.moralScore != null) {
+            matrixInput.moralScore = externalVote.moralScore;
+          }
+          const matrix = applyDecisionMatrix(matrixInput);
+          moralOverride = matrix.moralOverride ?? 'none';
+          if (matrix.recommendation === 'REJECT') {
+            finalDecision = 'reject';
+          } else if (matrix.recommendation === 'NEEDS_REVISION' && finalDecision === 'approve') {
+            finalDecision = 'needs_revision';
+          } else if (matrix.recommendation === 'PASS' && finalDecision !== 'reject') {
+            finalDecision = 'approve';
+          }
+          averageConfidence = matrix.confidence;
+        }
+
+        let metamorphosisScore: number | undefined;
+        if (proposal.type === 'metamorphosis' || proposal.source === 'metamorphosis') {
+          const proposalType =
+            proposal.type === 'compliance'
+              ? 'compliance'
+              : proposal.type === 'automate' || proposal.type === 'codify'
+                ? proposal.type
+                : 'fix';
+          const metamorphosisInput: Parameters<typeof calculateMetamorphosisScore>[0] = {
+            averageConfidence,
+            proposalType,
+            resonanceScore: averageConfidence,
+          };
+          if (externalVote?.moralFusion != null) {
+            metamorphosisInput.historicalCoherence = externalVote.moralFusion;
+          }
+          metamorphosisScore = calculateMetamorphosisScore(metamorphosisInput);
+          if (metamorphosisScore < metamorphosisThreshold) {
+            finalDecision = 'needs_revision';
+          }
+        }
+
+        const plane = lensPlane(`${proposal.title} ${proposal.description}`);
+        const about = [proposal.title, proposal.description, ...(proposal.evidence ?? [])].join('\n');
+        let reasoningSummary = merged.reasoningSummary;
+        if (
+          plane.files.length > 0 &&
+          finalDecision === 'approve' &&
+          !plane.files.some((file) => about.includes(file))
+        ) {
+          finalDecision = 'needs_revision';
+          reasoningSummary = `${reasoningSummary} Not about ${plane.files[0]}.`.trim();
+        }
         return {
           proposalId: proposal.id,
-          finalDecision: merged.finalDecision,
-          averageConfidence: merged.averageConfidence,
+          finalDecision,
+          averageConfidence,
           votes,
-          reasoningSummary: merged.reasoningSummary,
+          reasoningSummary,
+          moralOverride,
+          ...(metamorphosisScore != null ? { metamorphosisScore } : {}),
         };
       });
 
@@ -287,7 +388,7 @@ export class GovernanceService {
           decision: result.vote === 'YES' ? 'approve' : result.vote === 'NO' ? 'reject' : 'needs_revision',
           confidence: result.governanceResponse?.confidence ?? 0.85,
           reasoning: result.reason || 'Dynamo Solar SSOT filter decision',
-          weight: 1.1,
+          weight: typeof result.weight === 'number' ? result.weight : 1.1,
           moralTension: result.moralTension,
           moralScore: result.moralScore,
           moralFusion: result.moralFusion,

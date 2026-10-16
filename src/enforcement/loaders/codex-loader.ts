@@ -376,21 +376,24 @@ export class CodexLoader extends BaseLoader {
 
       // Term 19: Small, Focused Functions - check function size
       if (termNum === 19) {
-        // Match actual function declarations and arrow functions (not variable declarations)
+        // Match actual function declarations and arrow functions (not variable declarations).
+        // exec indexes the first hit of each match text; indexOf(text) is that same span,
+        // and a repeated text rechecks it. Do not copy the tail on every hit.
         const functionRegex = /(?:^|\n)(?:function\s+\w+|async\s+function\s+\w+|(?:\([^)]*\)|[^=])=>\s*\{)/g;
-        const matches = newCode.match(functionRegex);
-        if (matches) {
-          for (const match of matches) {
-            const startIdx = newCode.indexOf(match);
-            const afterMatch = newCode.substring(startIdx + match.length);
-            const closingIdx = afterMatch.indexOf('}');
-            if (closingIdx > 0) {
-              const functionBody = afterMatch.substring(0, closingIdx);
-              const lines = functionBody.split('\n').filter(l => l.trim().length > 0);
-              if (lines.length > 30) {
-                violations.push(`Function with ${lines.length} lines - consider splitting into smaller functions (max 30)`);
-                break;
-              }
+        const seen = new Set<string>();
+        let match: RegExpExecArray | null;
+        while ((match = functionRegex.exec(newCode)) !== null) {
+          const text = match[0];
+          if (seen.has(text)) continue;
+          seen.add(text);
+          const bodyStart = match.index + text.length;
+          const closingIdx = newCode.indexOf('}', bodyStart);
+          if (closingIdx > bodyStart) {
+            const functionBody = newCode.substring(bodyStart, closingIdx);
+            const lines = functionBody.split('\n').filter(l => l.trim().length > 0);
+            if (lines.length > 30) {
+              violations.push(`Function with ${lines.length} lines - consider splitting into smaller functions (max 30)`);
+              break;
             }
           }
         }

@@ -55,14 +55,16 @@ function keywordOverlapScore(description: string, historicalDescriptions: string
 
   let totalScore = 0;
   let matchCount = 0;
+  const histWords = new Set<string>();
 
   for (const hist of historicalDescriptions) {
-    const histWords = new Set(
-      hist.toLowerCase().split(/\W+/).filter(w => w.length > 2)
-    );
+    histWords.clear();
+    for (const word of hist.toLowerCase().split(/\W+/)) {
+      if (word.length > 2) histWords.add(word);
+    }
     let overlap = 0;
-    for (const w of descWords) {
-      if (histWords.has(w)) overlap++;
+    for (const word of descWords) {
+      if (histWords.has(word)) overlap++;
     }
     if (overlap > 0) {
       totalScore += overlap / Math.max(descWords.size, histWords.size);
@@ -110,47 +112,48 @@ function estimateTaskDuration(agentOutcomes: RoutingOutcome[]): number {
  */
 function buildAgentMetrics(agentOutcomes: RoutingOutcome[]): AgentPerformanceSummary {
   const totalTasks = agentOutcomes.length;
-  const successfulTasks = agentOutcomes.filter(o => o.success).length;
-  const failedTasks = totalTasks - successfulTasks;
-  
-  // Calculate average execution time
-  const durations = agentOutcomes
-    .filter(o => o.executionTimeMs !== undefined)
-    .map(o => o.executionTimeMs as number);
-  const averageExecutionTime = durations.length > 0 
-    ? durations.reduce((a, b) => a + b, 0) / durations.length 
-    : 0;
-  
-  // Recent performance (last 20 tasks)
-  const recentPerformance = agentOutcomes
-    .slice(-20)
-    .map(o => o.success ? 1 : 0);
-  
-  // Task type breakdown
-  const taskTypeBreakdown: Record<string, { count: number; successRate: number }> = {};
-  for (const outcome of agentOutcomes) {
+  let successfulTasks = 0;
+  let durationSum = 0;
+  let durationCount = 0;
+  const recentStart = Math.max(0, totalTasks - 20);
+  const recentPerformance: number[] = [];
+  const taskCounts = new Map<string, { count: number; successes: number }>();
+
+  for (let i = 0; i < agentOutcomes.length; i++) {
+    const outcome = agentOutcomes[i];
+    if (!outcome) continue;
+    if (outcome.success) successfulTasks++;
+    if (outcome.executionTimeMs !== undefined) {
+      durationSum += outcome.executionTimeMs;
+      durationCount++;
+    }
     const taskType = outcome.taskType || "unknown";
-    if (!taskTypeBreakdown[taskType]) {
-      taskTypeBreakdown[taskType] = { count: 0, successRate: 0 };
+    const bucket = taskCounts.get(taskType);
+    if (bucket) {
+      bucket.count++;
+      if (outcome.success) bucket.successes++;
+    } else {
+      taskCounts.set(taskType, {
+        count: 1,
+        successes: outcome.success ? 1 : 0,
+      });
     }
-    taskTypeBreakdown[taskType].count++;
+    if (i >= recentStart) recentPerformance.push(outcome.success ? 1 : 0);
   }
-  
-  // Calculate per-task-type success rates
-  for (const taskType of Object.keys(taskTypeBreakdown)) {
-    const taskOutcomes = agentOutcomes.filter(o => (o.taskType || "unknown") === taskType);
-    const successes = taskOutcomes.filter(o => o.success).length;
-    const entry = taskTypeBreakdown[taskType];
-    if (entry) {
-      entry.successRate = successes / taskOutcomes.length;
-    }
+
+  const taskTypeBreakdown: Record<string, { count: number; successRate: number }> = {};
+  for (const [taskType, bucket] of taskCounts) {
+    taskTypeBreakdown[taskType] = {
+      count: bucket.count,
+      successRate: bucket.count > 0 ? bucket.successes / bucket.count : 0,
+    };
   }
-  
+
   return {
     totalTasks,
     successfulTasks,
-    failedTasks,
-    averageExecutionTime,
+    failedTasks: totalTasks - successfulTasks,
+    averageExecutionTime: durationCount > 0 ? durationSum / durationCount : 0,
     successRate: totalTasks > 0 ? successfulTasks / totalTasks : 0,
     recentPerformance,
     taskTypeBreakdown,
@@ -266,6 +269,11 @@ export const predictiveAnalytics: PredictiveAnalytics = {
     const outcomes = routingOutcomeTracker.getOutcomes();
     if (stats.length === 0 || outcomes.length === 0) return null;
 
+    const statByAgent = new Map<string, AgentStats>();
+    for (const stat of stats) {
+      if (!statByAgent.has(stat.agent)) statByAgent.set(stat.agent, stat);
+    }
+
     // Group outcomes by agent
     const byAgent = new Map<string, RoutingOutcome[]>();
     for (const o of outcomes) {
@@ -283,7 +291,7 @@ export const predictiveAnalytics: PredictiveAnalytics = {
     for (const [agent, agentOutcomes] of byAgent) {
       const descriptions = agentOutcomes.map(o => o.taskDescription);
       const overlap = keywordOverlapScore(taskDescription, descriptions);
-      const agentStat = stats.find(s => s.agent === agent);
+      const agentStat = statByAgent.get(agent);
       const successRate = agentStat?.successRate ?? 0;
       const total = agentStat?.total ?? 0;
 

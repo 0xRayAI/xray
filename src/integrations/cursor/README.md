@@ -1,0 +1,85 @@
+# Cursor cloud hooks (0xRay)
+
+Thin adapter. Repo `.cursor/hooks.json` (schema **version 1**) calls 0xRay gates and the Station PreCompact writer. **sessionStart is not used** — managed Cursor cloud does not fire it.
+
+Repertoire is preferred (vendored, dest = named laws). Station + Codex gates still run if memory-routing is explicitly off — that is fallback, not the preferred brain.
+
+## How cloud picks up project hooks
+
+1. Commit `.cursor/hooks.json` at the **project root** (this file, not `~/.cursor/hooks.json`).
+2. Cursor Cloud Agent clones the repo and loads **project** hooks. Desktop Agent Chat does the same when the folder is the workspace.
+3. Hook names are camelCase: `preToolUse`, `preCompact`, `afterFileEdit`, plus Cloud `beforeShellExecution` / `beforeReadFile`. Command is a **relative** `.cursor/hooks/*.sh` — Cloud execs argv[0] without a shell. Do not put `XRAY_AI_PATH=` in `hooks.json`. Stdin is JSON; stdout is JSON.
+4. First `preToolUse` or `afterFileEdit` writes `.xray/state/session-boot.json` + `.xray/state/STATION.md`. After a compact, **Read STATION.md**. The host does not inject it. A multi-repo Cloud wrapper (`/agent` with `repos/xray`) is not a dest heat root, even if a leftover wrapper card exists. Heat the mill under `repos/` and the Read path. Dest `EACCES` fail-opens — a wired hook must not deny every tool.
+5. When the package has no dist hook scripts yet, `install-bridges` fastens the daemon workspace root if it can see `repos/xray` above the checkout. A consumer install that already has dist scripts writes only that consumer project directory. `ReloadAgentSkills` still runs so a mid-session wear can bind this daemon. Dogfood commands stay a relative `.cursor/hooks/*.sh`.
+6. `preCompact` is observational (cannot block). Cloud **does** fire it ([hooks.md](https://cursor.com/docs/hooks.md) support matrix: Yes) once hooks are bound and the host actually compacts. Stdout is only `{ "user_message": "…" }` — that is a notice, not a spawn. The spawn id is stdin `conversation_id` (same `bc-`) plus Task's returned agent id. Resume that id. Do not cold-start a twin. Station merge keeps ticket / seed / Durable / unfinished keys.
+
+Copy the consumer template from `src/integrations/cursor/hooks/hooks.json` and the sibling `.sh` runners. This exo repo's own `.cursor/hooks.json` stays on `.cursor/hooks/*.sh` so dogfood can run `src/integrations/cursor/hooks/*.js` before `npm run build`.
+
+Consumer wear (`installCursorBridge` / `wearCursorHooks`, including `npm run wear` in a suited bench) writes only that consumer project's `.cursor/hooks.json`. It does not rewrite a parent checkout's committed hooks, `CURSOR_PROJECT_DIR`, or a `repos/xray` directory above the project. Those outer paths are written only when `wearCursorHooks` is called with `{ outerRoots: true }`, and each one is printed as `cursor-wear: wrote outer hooks at <path>`. The five shipped events (`preToolUse`, `preCompact`, `afterFileEdit`, `beforeShellExecution`, `beforeReadFile`) are added beside existing user entries, unless that event already runs `xray-cloud-hook.sh` (the committed `.cursor/hooks/*.sh` runners). A suited bench that already commits those runners is left byte for byte. The new command, when one is added, is a relative path to the installed package:
+
+`node_modules/0xray/dist/integrations/cursor/hooks/<event>.sh`
+
+Wear does not copy scripts into `.cursor/hooks/`. A user's `.cursor/hooks/<name>.sh` stays as it is, including when the name matches a shipped script, and wear adds the dist command beside it. A `hooks.json` that contains `//` comments is merged in place. A duplicate `hooks` key, or any other file that cannot be parsed safely, makes wear stop and write nothing.
+
+Install the package first (`npm install`), then `npx 0xray wear`. Postinstall writes nothing. Wearing again writes the same bytes and takes a fresh snapshot every time. The pre-wear copy is `<project>/.xray/state/cursor-hook-wear/` (gitignored, and left out of the npm package), so removing `node_modules` does not delete it. When wear creates that folder and the path is not already ignored, it appends the path to `$GIT_DIR/info/exclude`. Wear stores the user bytes, never an already-worn `hooks.json`. Restore with `npx 0xray unwear` (or `node node_modules/0xray/scripts/node/unwear-cursor-hooks.cjs`). Unwear prints `restored` only when the file bytes match that snapshot exactly. If the file changed or cannot be parsed, unwear exits non-zero, says what differs, and leaves the snapshot in place. Wear refuses, and writes nothing, when git is missing, the directory is not a work tree, `GIT_DIR` is bare, or `hooks.json` cannot be parsed.
+
+`xray-cloud-hook.sh` resolution order (first file that exists wins). Each run appends one `cursor-hook-invoke.log` line with `js=` set to the absolute path it executes:
+
+1. Consumer `node_modules/0xray/dist/integrations/cursor/hooks/${JS}`, walking upward from the script directory, then from cwd. A directory whose `package.json` name is `0xray` is skipped, so a factory checkout does not prefer its own `node_modules` or a nested example over `src/`.
+2. Sibling `${JS}` when the runner itself lives under `node_modules/0xray`.
+3. `$XRAY_AI_PATH` `src/` then `dist/` (explicit mill).
+4. Dogfood `src/` at cwd, `../xray`, `repos/xray`, and `$CURSOR_PROJECT_DIR/repos/xray`, then dist at cwd, then `cwd/node_modules/0xray`.
+
+## Contracts
+
+| Hook | Stdin | Stdout |
+|------|--------|--------|
+| `preToolUse` | Cursor tool event (`tool_name`, `tool_input`, `cwd`, `workspace_roots`, `conversation_id`) | `{ "permission": "allow" \| "deny" }` plus `user_message` / `agent_message` on deny |
+| `preCompact` | `{ trigger, context_tokens, conversation_id, generation_id, … }` | `{ "user_message": "…" }` after Station write. Receipt keeps `conversation_id` + `generation_id`. That id is enough to resume. |
+| `afterFileEdit` | file event | `{}` — boots Station only |
+
+`preCompact` labels `event_class`:
+
+- `cursor-host-precompact` — Cursor actually fired the hook. The event must carry a non-empty `generation_id` and a numeric `context_usage_percent`, plus the hook name or trigger. A token count or `trigger: auto` alone stays synthetic and does not write `cursor-hook.log` or `cursor-receipts/<sessionId>.json`.
+- `cursor-precompact-synthetic` — script invoked with `--event-class=cursor-precompact-synthetic` (Path C fallback)
+- `cursor-host-precompact-FAIL` — HOST-FIRE fill ran; host did not spawn `preCompact` (see `RECEIPT-HOST-PRECOMPACT.md`, `-2.md`, `-3.md`)
+- First live host fire (Arm S): `examples/killer-dual/RECEIPT-HOST-PRECOMPACT.md`
+
+## Real usage (replace FILL)
+
+Do **not** prove window pressure with UTF-8 chars÷4. `src/integrations/cursor/hooks/cursor-usage-receipt.js` (`writeCursorUsageReceipt`) writes `.xray/state/cursor-usage-receipt.json` + Station `Compact:` / `Usage:` rows. Station `window=` prints host `context_window_size` when stdin sent it; ticket `windowCite` is fallback only. No `dist` required (unlike the constitution gate).
+
+| Cite | Valid? |
+|------|--------|
+| `preCompact` stdin `context_tokens` / `context_usage_percent` / `context_window_size` | yes |
+| `cursor-cloud` `run-info` / `get-events` / dashboard (model, bc-id, window) | yes — token MISS is honest |
+| chars÷4, fill-only, `fillBytes` | **forbidden** (`ok: false`) |
+
+Host `preCompact` fire is counted from `.xray/state/cursor-hook-invoke.log` (`event=preCompact`). Do not hand-invoke `pre-compact.js` to mint that Y. That invoke log has no session id.
+
+A cut counts only when `.xray/state/cursor-receipts/<sessionId>.json` exists **and** `.xray/state/cursor-hook.log` contains a line with that same session id (timestamp, `context_tokens`, `context_usage_percent`, `context_window_size`, `generation_id`). `probeLogExists` is true only when that append succeeded. `.xray/state/cursor-usage-receipt.json` and `cursor-precompact.json` keep only the newest event. That single latest json is not enough — the next arm overwrites it.
+
+Nested consumer benches under `examples/` (e.g. `examples/ben-proof/suited` with local `node_modules/0xray`) receive the same hook log line and per-session receipt as the mill — `preCompact` has no Read paths, so those wear roots are discovered from the suit mill at compact time.
+
+Arm S landscape + receipt: `examples/killer-dual/`.
+
+## Friend test
+
+From the repo root, after `npm run build` (or from `src/` on this exo):
+
+```bash
+echo '{"tool_name":"Read","tool_input":{"path":"README.md"},"cwd":"'"$PWD"'"}' \
+  | node src/integrations/cursor/hooks/pre-tool-use.js
+# → {"permission":"allow"}
+
+echo '{"hook_event_name":"preCompact","trigger":"auto","context_tokens":1}' \
+  | node src/integrations/cursor/hooks/pre-compact.js --event-class=cursor-precompact-synthetic
+# → user_message includes event_class=cursor-precompact-synthetic
+# → Read .xray/state/STATION.md
+```
+
+Path C seed + receipt: `examples/cursor-cloud-compact/`. Suited Arm S (real usage, no FILL): `examples/killer-dual/`.
+
+## Known limits
+
+`findLocalExecDaemon` reads the local exec-daemon auth token from `/proc/<pid>/cmdline` (`scripts/node/install-bridges.cjs:927`–`:935`). That read needs a separate security review. Wear does not change it.

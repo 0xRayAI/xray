@@ -2,14 +2,14 @@
  * Session Summary Post-Processor
  *
  * Generates emoji-formatted session summaries after tool execution.
- * Uses features.json -> auto_reporting config for control.
+ * Uses features.json -> autonomous_reporting config for control.
  *
  * @since 2026-04-04
  */
 
 import { PostProcessor, ProcessorContext } from "../processor-interfaces.js";
 import { frameworkLogger } from "../../core/framework-logger.js";
-import { featuresConfigLoader } from "../../core/features-config.js";
+import { featuresConfigLoader, type FeaturesConfig } from "../../core/features-config.js";
 
 interface SessionSummaryConfig {
   enabled: boolean;
@@ -41,14 +41,20 @@ export class SessionSummaryProcessor extends PostProcessor {
 
   private loadConfig(): void {
     try {
-      const configData = featuresConfigLoader.loadConfig() as any;
-      const autoReporting = configData.auto_reporting;
-      
+      const configData = featuresConfigLoader.loadConfig() as FeaturesConfig & {
+        auto_reporting?: FeaturesConfig['autonomous_reporting'];
+      };
+      const autoReporting =
+        configData.autonomous_reporting ?? configData.auto_reporting;
+
       if (autoReporting) {
-        this.config.enabled = autoReporting.mode !== "off";
-        this.config.include_emojis = autoReporting.display?.indicators?.emojis !== false;
-        this.config.include_recommendations = autoReporting.report_types?.session_summary?.include_recommendations !== false;
-        this.config.include_agent_activities = autoReporting.report_types?.session_summary?.include_agent_activities !== false;
+        this.config.enabled = autoReporting.enabled !== false;
+        this.config.include_emojis =
+          autoReporting.include_agent_activities !== false;
+        this.config.include_recommendations =
+          autoReporting.include_recommendations !== false;
+        this.config.include_agent_activities =
+          autoReporting.include_agent_activities !== false;
       }
     } catch (error) {
       // Silent fail - use defaults

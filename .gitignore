@@ -4,6 +4,7 @@ docs-site/.docusaurus/
 docs-site/node_modules/
 
 # Generated runtime files
+.ci-reports/
 performance-reports/
 logs/performance-reports/
 logs/framework/activity-report.json
@@ -19,9 +20,37 @@ xray/inference/
 .opencode/xray/
 
 # Temp files
+__pycache__/
+*.pyc
+fleet/activity.jsonl
+fleet/inbox/
 *.log
+*.out
+rerun-*/
+rerun_*/
 0xray-*.tgz
 *.tmp
+
+# Machine-local Grok wear (absolute paths from `0xray grok install`). Template: src/integrations/grok/plugin/0xray
+.grok/
+
+# Station card is a projection of session-boot.json — disk contract, not git
+.xray/state/STATION.md
+.xray/state/goggles-views.json
+.xray/state/session-boot.json
+.xray/state/repertoire-working.json
+.xray/state/repertoire/
+.xray/state/cursor-precompact.json
+.xray/state/cursor-usage-receipt.json
+.xray/state/cursor-hook-invoke.log
+.xray/state/cursor-hook-wear/
+.xray/state/cursor-hook.log
+.xray/state/cursor-receipts/
+.xray/state/session-capture-stamp.json
+.xray/state/MEMORY-SEAL.md
+.xray/state/WATCHER.md
+.xray/state/WATCHER-HEARTBEAT.md
+.xray/state/CLEANSE-LIST.md
 
 # 0xRay runtime artifacts
 .opencode/**/*.d.ts
@@ -30,6 +59,7 @@ xray/inference/
 # Generated config files (source in src/opencode/)
 .opencode/agents/*.yml
 .xray/*.json
+.xray/blip/
 .xray/agents_template.md
 .opencode/commands/*.md
 .opencode/commands/*.sh
@@ -45,6 +75,12 @@ xray/inference/
 .opencode/package.json
 .opencode/package-lock.json
 .opencode/bun.lock
+
+# Nested lockfiles. Root, grok-bot, and foundry are the published packages.
+**/package-lock.json
+!/package-lock.json
+!/grok-bot/package-lock.json
+!/scripts/foundry/package-lock.json
 
 # Compiled TypeScript output in .opencode/
 .opencode/core/
@@ -69,6 +105,12 @@ node_modules/
 
 # Build artifacts
 dist/
+!grok-bot/ops/dist/
+!grok-bot/ops/dist/**
+!house/dist/
+!house/dist/POSTED.md
+!vendor/@0xray/repertoire/dist/
+!vendor/@0xray/repertoire/dist/**
 tsconfig.tsbuildinfo
 
 # Docs inference (generated at runtime)
@@ -87,3 +129,14 @@ backups/
 .env.*
 *.local
 **/auth.json
+
+# Playwright / coverage artifacts
+coverage/
+test-results/
+playwright-report/
+tests/config/coverage/
+tests/config/test-results/
+house/live/**/__pycache__/
+# house/live/app/collector is assembled by assemble-collector.sh; only its README is committed (#292)
+house/live/app/collector/*
+!house/live/app/collector/README.md

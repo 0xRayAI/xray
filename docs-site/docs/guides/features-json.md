@@ -10,6 +10,22 @@
 | Framework repo | `xray/features.json` |
 | Schema | `xray/features.schema.json` |
 
+## suit_temperament (v3)
+
+See [Suit temperament](./v3-temperament.md). Missing key = **guided** (existing consumers unchanged).
+
+```json
+"suit_temperament": {
+  "profile": "auto",
+  "host_defaults": {
+    "grok": "frontier",
+    "hermes": "guided",
+    "opencode": "guided",
+    "openclaw": "guided"
+  }
+}
+```
+
 ## memory_routing (v3.3+)
 
 ```json
@@ -18,12 +34,11 @@
   "memory_routing": {
     "enabled": true,
     "provider": "repertoire",
-    "module_path": "../repertoire/dist/provider/memory-routing-provider.js",
+    "module_path": "node_modules/@0xray/repertoire/dist/provider/memory-routing-provider.js",
     "config": {
-      "dataDir": "../repertoire/data",
-      "signalsPath": "../repertoire/data/curated_signals.json",
-      "statePath": "../repertoire/data/inference-state.json",
-      "logDir": "../repertoire/logs/groover-inference"
+      "signalsPath": ".xray/state/repertoire/curated_signals.json",
+      "statePath": ".xray/state/repertoire/inference-state.json",
+      "feedbackDir": ".xray/state/repertoire/feedback"
     }
   }
 }
@@ -32,7 +47,7 @@
 | `provider` | Behavior |
 |------------|----------|
 | `"null"` | NullMemoryRoutingProvider — no enrichment |
-| `"repertoire"` | Load Repertoire via `module_path` |
+| `"repertoire"` | **Preferred.** Load Repertoire via `module_path` (ships on) |
 | `"custom"` | Load any module exporting `createMemoryRoutingProvider()` |
 
 When `enabled: true` and provider is `repertoire` or `custom`, `module_path` is **required**.
@@ -69,6 +84,8 @@ Framework repo (`0xray` package) uses `source: 'system'`, `onChain: true` automa
 
 Works with memory routing confidence signals and thinDispatch tiers.
 
+Frontier profile does **not** turn this off — it only stops **denying** spawn when no lead-dev plan exists.
+
 ## complexity_thresholds
 
 ```json
@@ -80,7 +97,7 @@ Works with memory routing confidence signals and thinDispatch tiers.
 }
 ```
 
-Maps to thinDispatch routing: single agent → tools → multi-agent → orchestrator-led.
+Maps to thinDispatch routing: ≤15 single-agent, ≤25 multi-agent, ≤50 orchestrator-led, and above that orchestrator-led.
 
 ## multi_agent_orchestration
 

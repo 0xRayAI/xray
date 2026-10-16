@@ -1,0 +1,79 @@
+# 0xray
+
+> A three-subsystem autonomous engine. The suit is the wear. The next session wakes with the job.
+
+**4.1** — mill+inspect plant, 7 MCPs, Codex 69. Constitution always on.
+
+Confer votes. Burst runs the swarm.
+
+**4.1** — a suit that survives the context window
+
+0xRay is a three-subsystem autonomous engine. The suit is the wear. Inference remembers. External Governance judges. The Autonomous Engine runs the work. The host you already run wears it: Grok, OpenCode, Hermes, OpenClaw, or Cursor. Memory, judgement, and payments come on with the suit. When the window closes, the next session wakes with the job, the page, and the laws. Confer votes: the agents on a decision vote, and only a real yes carries the work. Burst runs the swarm, so the agents are in the work as it happens. A foundry is built from mills and hangars.
+
+Default consumer wear is **mill plant** (`mill` + `inspect`), not a 45-skill / 42-agent costume dump. `foundry.json` `"costume": true` is the opt-in dump. Do not use costume to land hangar shops. Fasten is **foundry-plant/0**: builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill package declares. Organs (looker, vibe, mixer) live in the mill — adding an organ is a mill publish, not an xray catalog PR. CLI shims `foundry blip|sound` still exist on foundry 0.1.11+; fasten is the new cut. Inspect reports the last bed or blip receipt the mill exported. Nested mill `@0xray/foundry` 0.1.12. Not costume.
+
+## Wear (what a stranger gets)
+
+- `npm install 0xray` links vendored `@0xray/repertoire` and prints `npx 0xray wear`. It does not write `.mcp.json` or the chat bridges. `npx 0xray wear` writes the consumer suit: managed `AGENTS.md`, `.xray` config, seven MCP servers, and the OpenCode, Grok, Hermes, and OpenClaw bridges. Inside a git checkout, wear also fastens Cursor project hooks. Grok last-mile dest is project `.grok/plugins/0xray`. Shared HOME does not last-wins clobber machine `~/.grok/plugins/0xray`. Isolated HOME must not write the machine plugin. Does **not** write consumer-root `SKILLS.md`. Lead cadence: `grok-bot/OP-PROC.md` (team specifics live in `house/`) — a peer continues from Station + Repertoire; dummy tests `SKILLS.md`; same-sess wear; branch/PR; OTP then poll; loop until Station; live ticks, not idle pacers.
+- Memory scoring rules: [docs/memory-scoring.md](docs/memory-scoring.md). The orchestrator links that file. It does not copy the rules.
+- Host `preCompact` writes the hook line and per-session receipt on the suit mill and on nested consumer wear roots (a bench with local `node_modules/0xray`). A counted cut needs a non-empty generation id and a numeric usage percent.
+- `@0xray/grok-bot`: the general page is `grok-bot/OP-PROC.md`. The team overlay is `house/` and is not in that npm pack. `templates/house/` ships. `grok-bot house init` copies the template and refuses to overwrite. Doctor uses `GROK_BOT_HOUSE` when set, otherwise walks up from the working directory for `house/HOUSE.md`.
+- MCP servers start through `scripts/node/mcp-launch.cjs`. They see PATH, HOME, and XRAY_ROOT, plus the names on their keep list. Tokens such as NPM_TOKEN are not inherited. User env values stay out of argv. Postinstall keeps user edits to AGENTS.md, `.mcp.json`, and `opencode.json`. `house init` does not copy EXAMPLE.md. Doctor FAILs while `house/EXAMPLE.md` exists. Inspect has a machinePlugin check. The Cursor hook defaults XRAY_ROOT to the suit directory.
+- `npx 0xray unwear` restores the pre-wear snapshot. Outside a git checkout, wear still writes the suit and skips only the Cursor hooks, with one warning.
+- 4.0.30: `npx 0xray wear` and `setup` also work outside a git checkout. They write the 4.0.28 project setup and skip only Cursor hooks, with one warning. In a git checkout they write the 4.0.28 project setup plus Cursor hooks.
+
+- `npx @0xray/foundry mint --skip-live` — re-fasten mill plant, then inspect.
+- `npx @0xray/foundry inspect --skip-live` — plant-vs-worn, receipt, CI. Chat is not a receipt.
+
+## Shop plant (hangar coexistence)
+
+Factory shop plant is first-class with mill plant: `shop-extract`, `shop-witness`, `shop-pin` (groover-hangar). Worn shops are **not** a costume dump.
+
+- Extra shop names: `foundry.json` `"shopPlant"` (string[] / plant dir / `{ skills, dir }`).
+- Field is `shopPlant`, not `hangarPlant` (mill plant copy cannot say hangar).
+- Undeclared leftovers (including undeclared `shop-*`, leftover `enforcer`) still fail plant-vs-worn.
+
+## Seven MCP servers
+
+Registered in `.mcp.json` as `npx -y 0xray mcp <cmd>`:
+
+| Server | Role |
+|--------|------|
+| `xray-governance` | Proposal governance, Codex snapshot |
+| `xray-skills` | Skill invoke (catalog exists; default plant is still mill+inspect) |
+| `xray-orchestrator` | thinDispatch, AsideContext, confidence gate |
+| `xray-enforcer` | Codex compliance |
+| `xray-researcher` | Codebase exploration |
+| `xray-code-review` | Proposal quality |
+| `xray-architect-tools` | System design |
+
+Not an 8th `xray-*` server. **Repertoire is preferred** — vendored 0.2.9 ships on (`npx @0xray/repertoire mcp`). Dest is named laws, not hangar `repo-*` or git slugs. The wake ticket is **Station** (Read `.xray/state/STATION.md`). Station is the ticket, not a substitute for Repertoire. Do not pin 0.1.8.
+
+## Codex 69 (always on)
+
+`.xray/codex.json` — 69 terms. PPE (`evaluatePreToolGate`) denies Codex 11 / 29 / 69. No new MCP / skill / handler surface. No `any`. No `eval`. Temperament scales ceremony (guided vs frontier), not whether governance exists.
+
+## Agent map (exo, not dump)
+
+- **Mill** — fasten their plant; factory discipline. Nested mill `@0xray/foundry` 0.1.12 (foundry-plant/0). Builtin plant is mill+inspect. CLI shims `foundry blip|sound` remain (0.1.11+).
+- **Inspect** — diffs, plant-vs-worn, mill receipt, CI, live tarball GET. Fastened mill inspect is “did we wear what the mill declared” plus mill-exported inspect. Sound seat: last bed PASS/FAIL. Blip seat: last 4.44s PASS/FAIL.
+- **Sound** — factory-sound mill (`@0xray/blip`). Brief → seed → genre → crystal mill wav (Rippel membrane/metal/mixer) → metrics gate. Mixer organ lives in the mill. Not a mill copy. Not a 3-sine toy.
+- **Blip** — factory-blip mill (`@0xray/blip`). Brief → seed → still|motion:<id> → 4.44s mp4 + audio bed. Motions are Rippel v2 VisualConfig at ≥720p (sharp look + tempo/frequency animation on all five). Sparse seed mesh plus field accents (stars, grids, gradients, blinkers) are the NFT fingerprints. v0: still + Rippel five. `kapow` is a design opt (two-tier stamp on the stanza). `still` is the Power Plant ident (plate dissolves, not a frozen poster). Organs (inspect / vibe / mixer / looker) are declared by the mill, not a foundry catalog. Hangar shop pair later.
+- **Hangar** — plants factory shops on the four floors. Coexists with mill plant via shop plant allowlist.
+- **42 YML / 45 SKILL.md** — exo catalog in this repo. Not default consumer wear.
+
+## Live board (Bifrost)
+
+The board seats see is the collector board. `house/live/feed/live_mesh.py` runs the collector and the board every `LIVE_WATCH_S` seconds (default 45). A cloud agent is a board row (`bcId`, owning seat, linked card, state `running`, `finished`, or `failed`). `live-inbox` requires `LIVE_URL`, `SEAT_KEYS_DIR`, and `LIVE_CURSORS`, and exits 2 when one is missing. The seat wake is `grok-bot/templates/house/fleet/WAKE-ROUTINE.md`: turn start on every turn, turn end on every exit. A stuck card sends L1 to the next owner or the card owner, and L2 to the CoS role. Plate: `docs-site/docs/plates/bifrost.md`. Lexicon: `grok-bot/LEXICON.md`, including **button up**.
+
+## Docs
+
+- [README.md](README.md) — exo landing
+- [AGENTS.md](AGENTS.md) — suit card
+- [AGENTS-consumer.md](AGENTS-consumer.md) — consumer card (copied to `AGENTS.md` on install)
+- [SKILLS.md](SKILLS.md) — catalog (costume / self-plant, not default sync)
+- [Foundry](docs-site/docs/architecture/v4-foundry.md) — mill vs exo, foundry-plant/0, shopPlant
+- [Features since 3.1](docs-site/docs/guides/features-since-3.1.md)
+- [Memory scoring](docs/memory-scoring.md)
+
+Playwright / UI: n/a. This mill is CLI.

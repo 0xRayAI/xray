@@ -1,5 +1,11 @@
 // Global test setup for 0xRay Framework tests
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { beforeAll, afterAll, beforeEach, afterEach, expect } from "vitest";
+
+// A worn machine plugin must not fail seat inspect. Production still uses the passwd home.
+process.env.FOUNDRY_MACHINE_HOME = mkdtempSync(path.join(tmpdir(), "xray-test-machine-"));
 
 // Global type declarations
 declare global {

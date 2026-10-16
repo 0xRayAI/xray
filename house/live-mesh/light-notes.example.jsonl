@@ -1,0 +1,4 @@
+# One in-room critic Light per line. Copy to feed/light-notes.jsonl (or pass --light-notes PATH).
+# Fields: t (ISO time, any offset), repo, number, verdict PASS|FAIL, to (seat that gets the Light), note.
+# The example below is illustrative only; it is not a record of a real Light.
+{"t": "2026-10-05T07:00:00-05:00", "repo": "0xRayAI/xray", "number": 999, "verdict": "PASS", "to": "mill", "note": "example: honesty + CI ok"}

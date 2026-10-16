@@ -8,6 +8,7 @@
  */
 
 import { frameworkLogger } from "../core/framework-logger.js";
+import { lensPlane } from "../integrations/hooks/goggles-pipeline.mjs";
 import {
   ComplexityMetrics,
   ComplexityScore,
@@ -16,13 +17,16 @@ import {
   DEFAULT_THRESHOLDS,
   getLevelFromScore,
   getAgentForTier,
+  getAgentCountForLevel,
+  getStrategyForLevel,
   levelToTier,
 } from "../delegation/complexity-core.js";
 import { ComplexityAnalyzer } from "../delegation/complexity-analyzer.js";
 import {
-  getMemoryRoutingProviderSync,
+  ensureMemoryRoutingProviderSync,
   initializeMemoryRouting,
 } from "../memory-routing/index.js";
+import type { MemorySignalLessons } from "../memory-routing/types.js";
 
 initializeMemoryRouting();
 
@@ -40,6 +44,9 @@ export function scoreComplexity(
   thresholds?: ComplexityThresholds
 ): ComplexityScore {
   const analyzer = new ComplexityAnalyzer();
+  if (thresholds) {
+    analyzer.setThresholds(thresholds);
+  }
   const metrics = analyzer.analyzeComplexity(operation, context);
   const score = analyzer.calculateComplexityScore(metrics);
 
@@ -79,17 +86,24 @@ export function routeToAgent(
 
 /**
  * Convenience: score first, then route — one call.
+ * One named plane: the route is that file, and the agent is not the researcher.
+ * A look that names no plane stops. Repertoire may still change the agent when a law matches.
  */
 export function scoreAndRoute(
   operation: string,
   context: unknown,
   thresholds?: ComplexityThresholds
-): { score: ComplexityScore; agent: string; memoryRouting?: { providerId: string; adjustedScore: number; signals: string[] } } {
+): { score: ComplexityScore; agent: string; file?: string; lens?: string; memoryRouting?: { providerId: string; adjustedScore: number; signals: string[]; overridden: boolean; lessons?: MemorySignalLessons[] } } {
   const score = scoreComplexity(operation, context, thresholds);
-  let agent = routeToAgent(score);
+  const plane = lensPlane(operation);
+  if (plane.stop) {
+    return { score, agent: "", lens: "Name one plane." };
+  }
+  const baseAgent = routeToAgent(score);
+  let agent = baseAgent;
 
-  const provider = getMemoryRoutingProviderSync();
-  let memoryRouting: { providerId: string; adjustedScore: number; signals: string[] } | undefined;
+  const provider = ensureMemoryRoutingProviderSync();
+  let memoryRouting: { providerId: string; adjustedScore: number; signals: string[]; overridden: boolean } | undefined;
 
   if (provider.id !== "null") {
     const resolved = provider.resolveThinDispatch(agent, operation, score.score);
@@ -98,12 +112,14 @@ export function scoreAndRoute(
       providerId: resolved.context.providerId,
       adjustedScore: resolved.adjustedScore,
       signals: resolved.context.matchedSignals,
+      overridden: agent !== baseAgent,
+      ...(resolved.context.lessons ? { lessons: resolved.context.lessons } : {}),
     };
 
     const adjustedLevel = getLevelFromScore(resolved.adjustedScore, thresholds);
     frameworkLogger.log("nucleus-thin-dispatch", "memory-routing", "info", {
       providerId: resolved.context.providerId,
-      baseAgent: routeToAgent(score),
+      baseAgent,
       resolvedAgent: agent,
       baseScore: score.score,
       adjustedScore: resolved.adjustedScore,
@@ -112,11 +128,18 @@ export function scoreAndRoute(
     });
 
     return {
-      score: { ...score, score: resolved.adjustedScore, level: adjustedLevel },
+      score: {
+        ...score,
+        score: resolved.adjustedScore,
+        level: adjustedLevel,
+        recommendedStrategy: getStrategyForLevel(adjustedLevel),
+        estimatedAgents: getAgentCountForLevel(adjustedLevel),
+      },
       agent,
+      ...(plane.files[0] ? { file: plane.files[0] } : {}),
       memoryRouting,
     };
   }
 
-  return { score, agent };
+  return { score, agent, ...(plane.files[0] ? { file: plane.files[0] } : {}) };
 }

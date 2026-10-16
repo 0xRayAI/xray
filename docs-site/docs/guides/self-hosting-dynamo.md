@@ -1,6 +1,6 @@
 # Self-Hosting Dynamo Governance
 
-Dynamo is the **external governance service** (Solar SSOT) that provides the required external filter layer in the 0xRay three-subsystem model. It evaluates proposals against a 68-term Codex, applies solar-context-weighted voting, and returns pass/revision/reject decisions.
+Dynamo is the **external governance service** (Solar SSOT) that provides the required external filter layer in the 0xRay three-subsystem model. It evaluates proposals against a 69-term Codex, applies solar-context-weighted voting, and returns pass/revision/reject decisions.
 
 The Dynamo server lives in the **[chrono-warp-drive](https://github.com/htafolla/chrono-warp-drive)** repository. You can fork it, deploy your own instance, and point your 0xRay client to it.
 
@@ -102,4 +102,4 @@ Dynamo runs as the middle layer of the three-subsystem architecture:
 └─────────────────────────────────┘
 ```
 
-See the [Governance Model](../../architecture/governance-model.md) doc for the full architecture description.
+See [Governance Model](https://github.com/0xRayAI/xray/blob/main/docs/architecture/governance-model.md) for the Dynamo SSOT.

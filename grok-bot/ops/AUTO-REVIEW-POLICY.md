@@ -1,0 +1,64 @@
+# Auto Review policy (Blaze Strategic Consulting)
+
+> 0xRay house example — not the general procedure. Your team’s rules live in `house/` after `grok-bot house init`.
+
+**LOCKED draft 2026-09-16** — paste into [Auto-review rules](grokbot://app/v1/settings?id=auto-review-rules). Critic L2 on the capital-exception section in `OPS-SPEC.md`.
+
+**A friend would hear:** Auto Review can’t tell forge from herald. So we **Ask first** on money/deploy/publish, and only **Allow** Dist posts + read-only checks + git push to known eng repos.
+
+## Why
+Product: all Bots share one computer — not a security fence.  
+House: Blaze = capital; Dist @0xRayAI posts are the known bot-owned exception; forge ships after critic PASS.
+
+## Ask first (replace / add these)
+Paste as **Ask first** rules:
+
+1. Publish any package to the npm registry
+2. Deploy with the Railway CLI or change a production Railway service
+3. Pay hangar shops, send USDC/crypto, or call eip3009 / x402 pay endpoints
+4. Create a public gist that contains tokens, keys, registration secrets, or wallet material
+5. Send peer notes or messages to external A2A / agent-network endpoints
+6. Delete production data, revoke credentials, or rotate publish tokens
+7. Spend money or change billing
+
+## Allow automatically (keep / add these only)
+Paste as **Allow automatically** rules:
+
+1. Use `npm view` / `npm` read commands and `curl` to check npm registry status (no publish)
+2. Run `git push` for `0xRayAI/xray`, `htafolla/blips`, `htafolla/clearing`, `htafolla/groover`, `0xRayAI/0xray-moltbook` when forge owns the ship track
+3. Download SSOT archives from `gist.githubusercontent.com` into the workspace when requested
+4. Post or reply on X as `@0xRayAI` when Dist execute path is active (house Dist exception)
+5. Create public gists for **non-secret** auxiliary files / tarballs only (no tokens)
+6. For 0xRayAI/0xray-moltbook only, merge to main after critic PASS is the deploy (Railway auto-deploys). No other repo.
+
+## Seat App credentials (#291)
+The old Always-allow ban on App PEM use, App token minting and App reviews is **revoked** (#291). A seat may Always-allow
+reading its own App PEM to mint a short-lived installation token, and posting App reviews as its App. Still in force:
+PEM text and tokens are never printed, logged, pasted or stored (mint in memory, use, drop); never mint for another
+seat's App; no personal-token fallback; rotating or revoking credentials stays Blaze only.
+
+## Remove from current Always-allow
+These are live today and clash with capital law — **delete** them from Allow:
+
+- Use npm to publish packages… (both variants)
+- Pay hangar pin shop and complete payments using crypto or eip3009…
+- Deploy services using railway CLI…
+- Create public gists … for registration tokens and cards
+- Send peer notes to external A2A endpoints…
+
+## Seat process (not Auto Review)
+Auto Review is account-wide. Seat law still applies:
+
+| Action | Who | Gate |
+|--------|-----|------|
+| git push / merge after critic PASS | forge | critic Strict + CI |
+| npm publish | forge | critic PASS + tag; **Ask first** card (Blaze Allow once / Always if desired) |
+| Railway deploy | forge | critic when Strict; **Ask first** card |
+| @0xRayAI Dist | herald | CoS EXECUTE packet + friend-test; Auto Review **Allow** |
+| Hangar / Blips pay | forge/magnet dogfood | **Ask first** — capital |
+| Seat App PEM use, App installation-token minting, App PR reviews | the seat that owns the App (forge0x1, critic0x) | Always-allow OK since #291; PEM text and tokens never printed or stored |
+| Credentials / token rotate | Blaze only | never Always-allow |
+
+## Verify
+After paste: open [Auto-review](grokbot://app/v1/settings?id=auto-review) — enabled.  
+Test: forge `npm publish` should card; herald Dist post should not stop for Auto Review (still needs CoS packet).

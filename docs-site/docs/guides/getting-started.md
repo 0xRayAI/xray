@@ -1,39 +1,45 @@
 # Getting Started with 0xRay
 
-**v3.5.4** — 42 agents · 45 skills · 7 MCP servers · 68 codex terms · 3,226 tests
+**4.1** — a suit that survives the context window
+Confer votes. Burst runs the swarm.
 
-Welcome to 0xRay — the self-healing AI governance OS that prevents coding mistakes before they ship.
 
-## Quick Start (zero-config)
+Wear the suit. Constitution on every stroke. Temperament by host. When the window closes, the next session wakes with the job.
+
+## Quick Start
 
 ```bash
 npm install 0xray
+npx 0xray wear
 ```
 
-Postinstall **automatically** (via `install-bridges.cjs`):
+`npm install 0xray` links vendored `@0xray/repertoire` and prints `npx 0xray wear`. It does not write `.mcp.json` or the chat bridges. Wear writes the consumer suit (via `install-bridges.cjs`):
 
-- Copies **`AGENTS.md`** (from `AGENTS-consumer.md`)
+- Copies **`AGENTS.md`** (from `AGENTS-consumer.md`). Does **not** write consumer-root **`SKILLS.md`**
+- Fastens **mill plant** (`mill` + `inspect`). Fasten is **foundry-plant/0**: builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill package declares (looker, vibe, mixer live in the mill). Nested mill `@0xray/foundry@0.1.12`. CLI shims `foundry blip|sound` still exist on foundry 0.1.11+. Not a 45-skill costume dump unless `foundry.json` `"costume": true`
 - Seeds **`.gitignore`** (if absent)
-- Deploys **`.xray/`** config (`codex.json`, `features.json`, `config.json`)
+- Deploys **`.xray/`** config (`codex.json`, `features.json`, `config.json`) then overlays **their** plant
 - Writes **`.mcp.json`** with **7 MCP servers** (`npx -y 0xray mcp …`)
-- Installs **4 bridges**: OpenCode, Grok, Hermes, OpenClaw
-- Syncs **46 framework skills** to platform skill directories (includes **`autonomy-command`**)
+- Installs **4 chat bridges**: OpenCode, Grok, Hermes, OpenClaw (PPE + wiring), plus **Cursor** `.cursor/hooks.json`
+- Factory shop plant (`shop-extract`, `shop-witness`, `shop-pin`) may coexist when worn. Extra shops: `foundry.json` `shopPlant`. Not costume
+- **`autonomy-command`** is the default operating model (orchestrator skill + `lead_dev_mode`)
+- **Mill target:** mills the consumer project, not npm global prefix or `_npx`. Isolated HOME skips machine `~/.grok`
 
 ```bash
-npx 0xray status           # verify install
-npx 0xray setup            # optional: symlinks, hook extras
+npx 0xray status # verify install
+npx 0xray setup # optional: symlinks, hook extras
 ```
 
 ## Manual per-platform install
 
-Same result as postinstall — safe to re-run:
+Same bridges wear writes — safe to re-run:
 
 ```bash
-npx 0xray opencode install      # OpenCode agents + opencode.json
-npx 0xray grok install          # Grok plugin + ~/.grok/skills + 7 MCP
-npx 0xray hermes install        # ~/.hermes/plugins/xray-hermes
-npx 0xray openclaw install      # .xray/config/openclaw.json + skills
-npx 0xray skill:install         # starter skills
+npx 0xray opencode install # OpenCode agents + opencode.json
+npx 0xray grok install # Grok plugin + ~/.grok/skills + 7 MCP
+npx 0xray hermes install # ~/.hermes/plugins/xray-hermes
+npx 0xray openclaw install # .xray/config/openclaw.json + skills
+npx 0xray skill:install # starter skills
 ```
 
 :::note
@@ -46,13 +52,14 @@ After `npx 0xray grok install`, agents run under **[Autonomy Command](./autonomy
 
 ## What is 0xRay?
 
-0xRay provides intelligent multi-agent orchestration with automatic governance:
+0xRay is a three-subsystem autonomous engine. The suit is the wear. Inference remembers. External Governance judges. The Autonomous Engine runs the work. Memory, judgement, and payments come on with the suit.
 
-- **42 YML agent surfaces** for development tasks
-- **68 Codex terms** for systematic error prevention
-- **7 MCP servers** on the consumer surface (all via `npx`)
-- **46 framework skills** for common operations ( **`autonomy-command`** = default suit mode)
-- **4 platform bridges** installed on postinstall
+- **42 YML agent surfaces** (organs, not the product)
+- **69 Codex terms** — constitution always on
+- **7 MCP servers** on the consumer surface (`npx -y 0xray mcp`)
+- **Mill plant** `mill` + `inspect` (default). 45-skill catalog is costume / self-plant. **`autonomy-command`** is the default operating model
+- **4 platform bridges** written by `npx 0xray wear`
+- **Repertoire is preferred** (vendored 0.2.9 ships on; dest = named laws)
 
 Every code change can be reviewed by 3 specialized AI servers before it executes. Bad proposals are blocked automatically.
 
@@ -79,28 +86,19 @@ See [MCP Servers](../mcp/README.md) for details.
 | Agents | 42 YML surfaces in `src/opencode/agents/` |
 | Skills | 45 reusable capability modules (`SKILL.md`) |
 | MCP Servers | 7 consumer servers via `npx -y 0xray mcp` |
-| Codex | 68-term error prevention rules |
+| Codex | 69-term error prevention rules |
 | Governance | 3-layer deliberation pipeline (Dynamo SSOT) |
-| Memory Routing | Optional provider enrichment (v3.3) |
+| Memory Routing | **Repertoire preferred** — vendored 0.2.9 ships **on**. Dest is named laws, not `repo-*`. Station is the compact ticket. Explicit opt-out only: `"enabled": false, "provider": "repertoire"` |
 
-## Memory Routing (optional)
+## Memory Routing
 
-If you use Repertoire or another provider, configure `.xray/features.json`:
-
-```json
-"memory_routing": {
-  "enabled": true,
-  "provider": "repertoire",
-  "module_path": "<path-to-provider>"
-}
-```
-
-See [Memory Routing](./memory-routing.md).
+**Wear Repertoire.** Shipped **on**. See [Memory Routing](./memory-routing.md) and [Repertoire](./repertoire.md).
 
 ## Next Steps
 
-- [Architecture Overview](../architecture/) — System design
-- [Agent Documentation](../agents/) — All 42 agents
-- [MCP Servers](../mcp/) — 7-server consumer surface
-- [Consumer Migration](./consumer-migration.md) — v3.4+ integrators
-- [Full Reference](../full-reference) — Complete documentation
+- [4.0 vision](../architecture/v4-vision.md) — exo, not catalog
+- [Grok floor](../architecture/GROK_GUIDE.md)
+- [Agents](../agents/README.md) — YML surfaces
+- [MCP Servers](../mcp/README.md) — 7-server consumer surface
+- [Consumer Migration](./consumer-migration.md)
+- [Full Reference](../full-reference.md)

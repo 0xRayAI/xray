@@ -11,16 +11,20 @@ import {
 import {
   checkCodexPatterns,
   checkFullTestSuite,
-  checkSurfaceArea,
   ensureSessionBoot,
   isShellTool,
   isWriteTool,
   loadFeatures,
+  normalizeWorkspaceRoot,
   readStdinJson,
   resolveSessionId,
   workspaceRoot,
 } from './grok-hook-utils.js';
 import { appendHookActivity } from './grok-hook-activity.js';
+import { cardStop, lensBeforeResearch } from '../../hooks/goggles-pipeline.mjs';
+import { repertoireDecisionFields, repertoireRoute } from '../../hooks/pre-tool-speak.mjs';
+
+export { repertoireDecisionFields };
 
 function finish(root, decision, reason, hint, toolName, extra = {}) {
   const out = { decision, ...extra };
@@ -31,6 +35,7 @@ function finish(root, decision, reason, hint, toolName, extra = {}) {
     tool: toolName,
     reason: reason || hint || null,
     gate: extra.gate || null,
+    agent: extra.agent || null,
     livePath: true,
   });
   process.exit(0);
@@ -42,14 +47,14 @@ async function main() {
 
   try {
     const event = await readStdinJson();
-    const eventRoot = event.workspaceRoot || event.cwd || root;
+    const eventRoot = normalizeWorkspaceRoot(event.workspaceRoot || event.cwd || root);
     ensureSessionBoot(eventRoot, '0xray/grok-pre-tool-use-boot');
 
     const features = loadFeatures(eventRoot);
-    const gateFeatures = loadDelegationGateFeatures(eventRoot);
+    const gateFeatures = loadDelegationGateFeatures(eventRoot, 'grok');
     const ctx = extractFromEvent(event);
     toolName = ctx.toolName;
-    const { paths, content, cmd, toolInput } = ctx;
+    const { content, cmd, toolInput } = ctx;
     const sessionId = resolveSessionId(event);
 
     const gateBlock = evaluatePreToolGate(toolName, toolInput, {
@@ -69,26 +74,55 @@ async function main() {
       );
     }
 
-    if (features.no_new_surface && isWriteTool(toolName) && paths.length) {
-      const surfaceBlock = checkSurfaceArea(paths, eventRoot);
-      if (surfaceBlock) finish(eventRoot, 'deny', surfaceBlock, null, toolName);
+    // Constitution (11/29/69 + destructive shell) is in evaluatePreToolGate.
+    // Grok extra: Codex 2/7 (TODO/FIXME/STUB, console.log).
+    if (isWriteTool(toolName) && content) {
+      const extraBlock = checkCodexPatterns(content, { terms: [2, 7] });
+      if (extraBlock) finish(eventRoot, 'deny', extraBlock, null, toolName);
     }
 
-    if (isWriteTool(toolName) && content) {
-      const codexBlock = checkCodexPatterns(content);
-      if (codexBlock) finish(eventRoot, 'deny', codexBlock, null, toolName);
+    const stop = cardStop(
+      eventRoot,
+      toolName,
+      [cmd, content, toolInput.pattern, toolInput.query, ...(ctx.paths || [])].filter(Boolean).join('\n'),
+      ctx.paths || [],
+      toolInput,
+    );
+    if (stop?.decision === 'deny') {
+      finish(eventRoot, 'deny', stop.reason, null, toolName, { gate: stop.gate });
     }
+    if (stop?.decision === 'allow') {
+      finish(eventRoot, 'allow', null, null, toolName, {
+        gate: stop.gate,
+        hookSpecificOutput: stop.hookSpecificOutput,
+      });
+    }
+
+    const spoken = [cmd, content, toolInput.pattern, toolInput.query, ...(ctx.paths || [])].filter(Boolean).join('\n');
+    const lensStop = lensBeforeResearch(eventRoot, toolName, spoken);
+    if (lensStop?.decision === 'deny') {
+      finish(eventRoot, 'deny', lensStop.reason, null, toolName, { gate: lensStop.gate });
+    }
+
+    const route = repertoireRoute([toolName, cmd, content].filter(Boolean).join(' '));
 
     if (isShellTool(toolName) && cmd) {
-      const destructive =
-        /\brm\s+-rf\s+\/\b|\bmkfs\b|\bdd\s+if=|:()\s*\{\s*:\|&\s*\}\s*;:/i.test(cmd);
-      if (destructive) finish(eventRoot, 'deny', 'Blocked destructive shell command', null, toolName);
-
       const testHint = checkFullTestSuite(cmd, features);
-      if (testHint) finish(eventRoot, 'allow', null, testHint, toolName);
+      if (testHint) finish(eventRoot, 'allow', null, testHint, toolName, route || {});
     }
 
-    finish(eventRoot, 'allow', null, null, toolName);
+    if (gateBlock.reason) {
+      finish(
+        eventRoot,
+        'allow',
+        gateBlock.reason,
+        gateBlock.hint,
+        toolName,
+        { gate: gateBlock.gate, warn: true, ...(route || {}) },
+      );
+    }
+
+    finish(eventRoot, 'allow', null, null, toolName, route || {});
   } catch (err) {
     appendHookActivity(root, 'grok-pre-tool-use', 'hook-error', 'error', {
       tool: toolName,
@@ -113,6 +147,7 @@ function extractFromEvent(event) {
 
   if (toolInput.path) paths.push(String(toolInput.path));
   if (toolInput.file_path) paths.push(String(toolInput.file_path));
+  if (toolInput.target_file) paths.push(String(toolInput.target_file));
   if (toolInput.target_notebook) paths.push(String(toolInput.target_notebook));
   if (Array.isArray(toolInput.paths)) paths.push(...toolInput.paths.map(String));
 
@@ -130,4 +165,7 @@ function extractFromEvent(event) {
   };
 }
 
-main();
+const launchedAsCli = Boolean(process.argv[1] && process.argv[1].endsWith('pre-tool-use.js'));
+if (launchedAsCli) {
+  main();
+}

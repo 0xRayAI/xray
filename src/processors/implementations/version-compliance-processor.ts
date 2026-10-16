@@ -5,10 +5,9 @@
  * commits or publishes. Integrates with 0xRay's processor pipeline.
  *
  * Rules Enforced:
- * 1. Universal Version Manager MUST be 1 ahead of NPM published version
- * 2. package.json SHOULD match UVM (warning if not)
- * 3. Source files MUST be synchronized to UVM version
- * 4. README SHOULD reference current version
+ * 1. package.json version is the SSOT (semver)
+ * 2. Mill SSOT is package.json via scripts/foundry/reconcile-version.mjs
+ * 3. Do not bump or publish from this processor (foundry mill ships)
  *
  * @processor_type pre
  * @priority 25 (high - runs early, after preValidate, before errorBoundary)
@@ -19,7 +18,7 @@
 
 import * as fs from "fs";
 import * as path from "path";
-import { spawn, exec as execSync } from "child_process";
+import { exec as execSync } from "child_process";
 import { promisify } from "util";
 import { frameworkLogger } from "../../core/framework-logger.js";
 
@@ -40,13 +39,6 @@ export interface VersionFix {
   description: string;
   command: string;
   autoFixable: boolean;
-}
-
-export interface VersionInfo {
-  major: number;
-  minor: number;
-  patch: number;
-  raw: string;
 }
 
 export class VersionComplianceProcessor {
@@ -166,69 +158,17 @@ export class VersionComplianceProcessor {
     this.warnings = [];
     this.fixes = [];
 
-    // Get all versions
     const npmVersion = await this.getNpmVersion();
-    const uvmVersion = this.getUvmVersion();
     const pkgVersion = this.getPackageVersion();
+    const uvmVersion = "FROZEN";
 
-    // Rule 1: UVM MUST be 1 ahead of NPM
-    if (npmVersion !== "NOT_PUBLISHED" && npmVersion !== "ERROR") {
-      const npmParsed = this.parseVersion(npmVersion);
-      const uvmParsed = this.parseVersion(uvmVersion);
-
-      const expectedUvm = this.incrementPatch(npmParsed);
-
-      if (uvmVersion !== this.formatVersion(expectedUvm)) {
-        this.errors.push(
-          `Version manager not 1 ahead of npm (NPM: ${npmVersion}, UVM: ${uvmVersion}, Expected: ${this.formatVersion(expectedUvm)})`,
-        );
-        this.fixes.push({
-          type: "update-uvm",
-          description: `Update UVM to ${this.formatVersion(expectedUvm)}`,
-          command: "node scripts/node/universal-version-manager.js",
-          autoFixable: false, // Requires manual edit
-        });
-      }
+    if (!/^\d+\.\d+\.\d+/.test(pkgVersion)) {
+      this.errors.push(`package.json version is not semver (${pkgVersion})`);
     }
 
-    // Rule 2: package.json SHOULD match UVM
-    if (pkgVersion !== uvmVersion) {
-      this.warnings.push(
-        `package.json version (${pkgVersion}) doesn't match UVM (${uvmVersion}) - run "npm version [patch|minor|major]" to sync`,
-      );
-    }
-
-    // Rule 3: Source files MUST be synchronized
-    const sourceVersion = this.getSourceVersion();
-    if (sourceVersion && sourceVersion !== uvmVersion) {
-      this.errors.push(
-        `Source files not synchronized to UVM version (${sourceVersion} vs ${uvmVersion})`,
-      );
-      this.fixes.push({
-        type: "sync-source",
-        description: "Synchronize source files to UVM version",
-        command: "node scripts/node/universal-version-manager.js",
-        autoFixable: true,
-      });
-    }
-
-    // Rule 4: README SHOULD reference current version
-    const readmeVersion = this.getReadmeVersion();
-    if (
-      readmeVersion &&
-      readmeVersion !== uvmVersion &&
-      readmeVersion !== pkgVersion
-    ) {
-      this.warnings.push(
-        `README version (${readmeVersion}) may be outdated (UVM: ${uvmVersion}, package: ${pkgVersion})`,
-      );
-      this.fixes.push({
-        type: "update-readme",
-        description: "Update README version references",
-        command: "node scripts/node/universal-version-manager.js",
-        autoFixable: true,
-      });
-    }
+    this.warnings.push(
+      "SSOT is package.json via scripts/foundry/reconcile-version.mjs",
+    );
 
     return {
       compliant: this.errors.length === 0,
@@ -260,39 +200,6 @@ export class VersionComplianceProcessor {
   }
 
   /**
-   * Get Universal Version Manager version
-   */
-  private getUvmVersion(): string {
-    try {
-      const uvmPath = path.join(
-        this.projectRoot,
-        "scripts",
-        "node",
-        "universal-version-manager.js",
-      );
-      if (!fs.existsSync(uvmPath)) {
-        return "NOT_FOUND";
-      }
-
-      const content = fs.readFileSync(uvmPath, "utf-8");
-
-      // Match version in OFFICIAL_VERSIONS.framework.version format
-      const match = content.match(
-        /OFFICIAL_VERSIONS\s*=\s*\{[\s\S]*?framework:\s*\{[\s\S]*?version:\s*["']([^"']+)["']/,
-      );
-      if (match && match[1]) {
-        return match[1];
-      }
-
-      // Fallback: grep for version pattern
-      const fallbackMatch = content.match(/version:\s*["'](\d+\.\d+\.\d+)["']/);
-      return fallbackMatch && fallbackMatch[1] ? fallbackMatch[1] : "NOT_FOUND";
-    } catch {
-      return "ERROR";
-    }
-  }
-
-  /**
    * Get package.json version
    */
   private getPackageVersion(): string {
@@ -307,75 +214,6 @@ export class VersionComplianceProcessor {
     } catch {
       return "ERROR";
     }
-  }
-
-  /**
-   * Get version from source files
-   */
-  private getSourceVersion(): string | null {
-    try {
-      const cliPath = path.join(this.projectRoot, "src", "cli", "index.ts");
-      if (!fs.existsSync(cliPath)) {
-        return null;
-      }
-
-      const content = fs.readFileSync(cliPath, "utf-8");
-      const match = content.match(/\.version\(["']([^"']+)["']\)/);
-      return match && match[1] ? match[1] : null;
-    } catch {
-      return null;
-    }
-  }
-
-  /**
-   * Get version from README
-   */
-  private getReadmeVersion(): string | null {
-    try {
-      const readmePath = path.join(this.projectRoot, "README.md");
-      if (!fs.existsSync(readmePath)) {
-        return null;
-      }
-
-      const content = fs.readFileSync(readmePath, "utf-8");
-
-      // Match vX.Y.Z or X.Y.Z patterns - but exclude IP addresses (127.x.x)
-      // Look for version in badges, headers, or specific patterns
-      const match = content.match(/v?(1\.\d+\.\d+)/);
-      return match && match[1] ? match[1] : null;
-    } catch {
-      return null;
-    }
-  }
-
-  /**
-   * Parse version string into components
-   */
-  private parseVersion(version: string): VersionInfo {
-    const parts = version.split(".");
-    return {
-      major: parseInt(parts[0] || "0", 10),
-      minor: parseInt(parts[1] || "0", 10),
-      patch: parseInt(parts[2] || "0", 10),
-      raw: version,
-    };
-  }
-
-  /**
-   * Format version components back to string
-   */
-  private formatVersion(version: VersionInfo): string {
-    return `${version.major}.${version.minor}.${version.patch}`;
-  }
-
-  /**
-   * Increment patch version
-   */
-  private incrementPatch(version: VersionInfo): VersionInfo {
-    return {
-      ...version,
-      patch: version.patch + 1,
-    };
   }
 
   /**
@@ -429,7 +267,7 @@ export class VersionComplianceProcessor {
       "============================",
       "",
       `NPM Published: ${result.npmVersion}`,
-      `Version Manager: ${result.uvmVersion}`,
+      `UVM: ${result.uvmVersion}`,
       `package.json: ${result.pkgVersion}`,
       "",
       result.compliant ? "✅ COMPLIANT" : "❌ NON-COMPLIANT",

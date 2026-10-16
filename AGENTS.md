@@ -1,18 +1,30 @@
 # xray Agents
 
-Quick reference for the xray AI orchestration framework (**v3.5.4**).
+Quick reference for the 0xRay suit (**4.1**).
 
-**42 agents** · **45 skills** · **7 consumer MCP servers** · **68 codex terms** · **3,226 tests**
+**4.1** — a suit that survives the context window.
+
+Confer votes. Burst runs the swarm.
+
+**The suit is the wear.** Three-subsystem autonomous engine (Inference · External Governance · Autonomous Engine) · constitution always on · temperament by host · 4 floors · **Repertoire preferred** (vendored 0.2.9, dest = laws).
+
+**Temperament:** ceremony (analyze-complexity before spawn, confer) is **guided** by default so free-model OpenCode/Hermes stay in check. Frontier hosts (Grok 4.6 class) with `suit_temperament.profile: auto` **warn** on spawn-without-plan; Codex 11/29/69 still **deny**. Missing `suit_temperament` stays guided. See `docs-site/docs/architecture/v3-from-v2.md`.
+
+## Hot-swap
+
+Before other work, Read `.xray/state/STATION.md`. Compaction and host change are the same cut. Continue the card. Do not restart the job. Grok does not inject the card (OpenCode does) — this Read is the Grok contract. Do not thicken the Grok exo.
+
+**Lead cadence:** a peer wearing this file + Station + Repertoire continues without a command stream. Dummy bodies test `SKILLS.md`. Same-sess bodies wear the suit and keep a Station card. Always branch + worktree + PR. Ship when mill-gate D + `foundry gate` PASS (`grok-bot/OP-PROC.md` Decision matrix) — green CI is not ship. npm OTP in a browser, then poll the new version before moving on. Loop until Station is done. Live ticks and moving workstreams — not idle pacers. Same critic (resume only). Disk SSOT: `grok-bot/OP-PROC.md` (team specifics live in `house/`). Playbook: `orchestrator` skill.
 
 ## What is xray?
 
-xray provides intelligent multi-agent orchestration with automatic delegation and Codex compliance validation under the pure v2 three-subsystem model:
+0xRay is a three-subsystem autonomous engine. The suit is the wear. The host you already run wears it. When the window closes, the next session wakes with the job.
 
-- **Inference** — proposals, reflection, memory routing (optional)
-- **External Governance** — Dynamo Solar SSOT, 68-term Codex
+- **Inference** — proposals, reflection, memory routing (Repertoire organ on in 4.0)
+- **External Governance** — Dynamo Solar SSOT, 69-term Codex. Judgement stays on.
 - **Autonomous Engine** — thinDispatch 7-flow, AsideContext, confidence gate
 
-Agents are declared in `src/opencode/agents/*.yml` — the YML SSOT. Skills live in `src/skills/*/SKILL.md` — see [SKILLS.md](SKILLS.md). Consumer projects receive slimmed copies via postinstall (`AGENTS-consumer.md` → `AGENTS.md`, skills synced to platform dirs).
+Agents are declared in `src/opencode/agents/*.yml` — the YML SSOT. Skills live in `src/skills/*/SKILL.md` — see [SKILLS.md](SKILLS.md) for the exo catalog. Consumer default plant is **mill + inspect**, not a 45-skill sync (`AGENTS-consumer.md` → `AGENTS.md`). Factory hangar shops coexist via shop plant. See [llms.txt](llms.txt).
 
 ## Consumer MCP surface (7 servers)
 
@@ -30,32 +42,43 @@ Registered in `.mcp.json`, invoked via `npx -y 0xray mcp <cmd>`:
 
 Governance deliberation: **code-review**, **security-audit**, **researcher** within the 7-server set.
 
-## Postinstall (v3.4.1)
+## Postinstall
 
-`postinstall.cjs` → `installAllBridges()`:
+`postinstall.cjs` links vendored `@0xray/repertoire` and prints `npx 0xray wear`. It does not write `.mcp.json` or the chat bridges.
 
-1. `AGENTS-consumer.md` → `AGENTS.md`
-2. `SKILLS.md` + 46 skills → platform skill directories
+`npx 0xray wear` runs `installAllBridges()` from `install-bridges.cjs`:
+
+1. `AGENTS-consumer.md` → `AGENTS.md` (does **not** write consumer-root `SKILLS.md`)
+2. Fasten mill plant (`mill` + `inspect`). Fasten is **foundry-plant/0**: builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill package declares (looker, vibe, mixer, blip-inspect, blip-vibe, blip-looker, sound-inspect, sound-mixer live in the mill). Not a 45-skill costume dump unless `foundry.json` `"costume": true`
 3. `.gitignore.default` → `.gitignore` (if absent)
-4. `.xray/` config (`codex.json`, `features.json`, `config.json`)
+4. `.xray/` config (`codex.json`, `features.json`, `config.json`) then overlay their plant
 5. `.mcp.json` (7 servers)
-6. Four bridges: OpenCode, Grok, Hermes, OpenClaw
-7. Optional git hooks
+6. Four chat bridges: OpenCode, Grok, Hermes, OpenClaw. Grok last-mile dest is project `.grok/plugins/0xray` (shared HOME does not last-wins clobber machine `~/.grok/plugins/0xray`)
+7. Cursor fifth wear: fasten `.cursor/hooks.json` + relative `.cursor/hooks/*.sh`. Rewrite leftover `XRAY_AI_PATH=` one-liners. Not a fifth chat TUI.
+8. Optional git hooks
 
-## Memory routing + Repertoire (v3.3+)
+**Shop plant:** `shop-extract`, `shop-witness`, `shop-pin` (groover-hangar) are first-class with mill plant. Extra shops: `foundry.json` `shopPlant`. Not `"costume": true`. `npx @0xray/foundry inspect --skip-live` is the receipt.
+
+**Sound plant:** Dist audio beds are a mill (`@0xray/blip`), not a foundry organ catalog. Alias `"plant": "sound"` + `npx @0xray/foundry sound render` writes a crystal-clear wav (Rippel membrane/metal/mixer, not a sine toy) and a bed receipt. `sound-mixer` (`npx @0xray/foundry sound mix`) lives in the mill and levels every genre × tempo × motif — hats, plate, glue — not just the last bed. CLI shim `foundry sound` remains (0.1.11+). Inspect is mill-exported — not fake code-mill skills on a sound seat.
+
+**Blip plant:** Product mill `@0xray/blip` (not a mill copy). Hangar shop pair later. Alias `"plant": "blip"` + `npx @0xray/foundry blip render --brief "..." --mode still|motion:orb` writes a 4.44s mp4 **with an audio bed**. Registry v0: still + Rippel five (`orb` `swirl` `snap` `waves` `spark`). Motions are Rippel v2 `VisualConfig.circles` at ≥720p — sharp look + tempo/frequency animation on all five (wireframe is `--engine wireframe` only). Auto bed syncopates to the motion grid. Each mint wears a sparse seed mesh plus field accents (stars, grids, gradients, blinkers); receipt `visualConfig.mesh` + `visualConfig.field` are the fingerprints. `kapow` is a design opt (`motion:kapow`) — two-tier comic stamp on the same stanza. Organs live in the mill: `blip-vibe` (`npx @0xray/foundry blip vibe`) scores stamp density; `blip-looker` (`npx @0xray/foundry blip look`) is the friend hitting replay; appeal 0–10; ship bar is **8**. `still` is the Power Plant ident — plate dissolves over 4.44s at ≥720p (`#08090B` `#F5F7FA` `#3DE0E8` `#F5C518` `#4A7FD4`), not a frozen poster. Adding an organ is a mill publish, not an xray catalog PR. CLI shim `foundry blip` remains (0.1.11+). Inspect checks duration / mode id / file / audio.
+
+## Memory routing + Repertoire (preferred, v3.3+)
+
+**Wear Repertoire.** It is the long-term judgment organ. Dest is named invariants (factory + stack laws), not hangar `repo-*` or git slugs. **Station is the wake ticket** (Read `.xray/state/STATION.md`) — not a substitute for Repertoire. The worn mill reads the **project copy** under `.xray/state/repertoire/`. 0.1.0–0.1.8 were the same judgment organ; do not pin 0.1.8. Split: `docs-site/docs/guides/station-vs-repertoire.md`.
 
 `xray/features.json` → `memory_routing` (schema: `features.schema.json`):
 
 ```json
 "memory_routing": {
-  "enabled": true,
-  "provider": "repertoire",
-  "module_path": "../repertoire/dist/provider/memory-routing-provider.js",
-  "config": {
-    "dataDir": "../repertoire/data",
-    "signalsPath": "../repertoire/data/curated_signals.json",
-    "logDir": "../repertoire/logs/groover-inference"
-  }
+ "enabled": true,
+ "provider": "repertoire",
+ "module_path": "node_modules/@0xray/repertoire/dist/provider/memory-routing-provider.js",
+ "config": {
+ "signalsPath": ".xray/state/repertoire/curated_signals.json",
+ "statePath": ".xray/state/repertoire/inference-state.json",
+ "feedbackDir": ".xray/state/repertoire/feedback"
+ }
 }
 ```
 
@@ -77,6 +100,16 @@ Governance deliberation: **code-review**, **security-audit**, **researcher** wit
 - Observation extractors: governance, orchestration, complexity
 - Repertoire context flows via `ExecutionPlan.memoryContext`
 
+## User asides (parallel work tracks)
+
+**Not** AsideContext — user-declared parallel tracks (worktree-like):
+
+- SSOT: `.xray/state/asides/{id}.json` + `_active.json`; todos use `{asideId}.a.*` (namespaced)
+- Intake: `analyze-complexity` with `userAsideId` (+ optional `worktree`, `branch`)
+- Activate / resume main: `orchestrate-task` with `userAsideId` or `clearActiveAside: true`
+- Spawn gate routes to active aside plan; session-boot exposes `activeAside`
+- Config: `features.json` → `multi_agent_orchestration.user_asides.enabled`
+
 ## Confidence gate (v3.3.1)
 
 `ExecutionPlanner.calculateTaskComplexity()` + `getTaskConfidence()` — complexity boost and ontological-trap routing.
@@ -96,7 +129,7 @@ Governance deliberation: **code-review**, **security-audit**, **researcher** wit
 | **3.2.0** | AsideContext wired, SelfProposalEngine, pre-tool-use hook |
 | **3.1.1** | 0xRay rename, marketplace, AGENTS/SKILLS consumer seeding |
 
-**Removed:** `hermes bridge`, `.opencode/xray/` fallback, `advanced-features/` on consumer boot.
+**Removed:** `hermes bridge`, `.opencode/xray/` fallback, `advanced-features/`.
 
 ## Default operating mode: autonomy-command
 
@@ -123,7 +156,7 @@ Docs: [guides/autonomy-command](docs-site/docs/guides/autonomy-command.md) · Sk
 | Source | `src/` |
 | Config | `.xray/` or `config/` |
 
-**Root essentials only:** `README.md`, `CHANGELOG.md`, `package.json`, `AGENTS.md`, `SKILLS.md`, `tsconfig.json`.
+**Root essentials only:** `README.md`, `CHANGELOG.md`, `package.json`, `AGENTS.md`, `SKILLS.md`, `llms.txt`, `tsconfig.json`.
 
 ## Available agents (42 YML surfaces)
 
@@ -180,24 +213,34 @@ Full skill mapping: [SKILLS.md](SKILLS.md).
 
 ## thinDispatch routing
 
-- Simple (≤15): Single agent
-- Moderate (≤25): Single agent with tools
-- Complex (≤50): Multi-agent coordination
-- Enterprise (>50): Orchestrator-led team
+- Simple (≤15): single-agent
+- Moderate (≤25): multi-agent
+- Complex (≤50): orchestrator-led
+- Enterprise (>50): orchestrator-led
 
 ## Documentation
 
 | Topic | Path |
 |-------|------|
+| Agent map (`llms.txt`) | `llms.txt` |
+| Foundry / mill plant | `docs-site/docs/architecture/v4-foundry.md` |
 | Features since 3.1 | `docs-site/docs/guides/features-since-3.1.md` |
 | features.json | `docs-site/docs/guides/features-json.md` |
 | Platform integrations | `docs-site/docs/guides/integrations.md` |
 | Memory routing | `docs-site/docs/guides/memory-routing.md` |
 | Repertoire | `docs-site/docs/guides/repertoire.md` |
+| Station vs Repertoire 0.1 | `docs-site/docs/guides/station-vs-repertoire.md` |
 | AsideContext | `docs-site/docs/guides/aside-context.md` |
 | Consumer migration | `docs-site/docs/guides/consumer-migration.md` |
+| Bifrost board | `docs-site/docs/plates/bifrost.md` |
+| Seat wake | `grok-bot/templates/house/fleet/WAKE-ROUTINE.md` |
+| Fleet lexicon | `grok-bot/LEXICON.md` |
 | Docusaurus site | https://0xrayai.github.io/xray/ |
+
+## Live board
+
+The board seats see is the collector board (`house/live/feed/live_mesh.py`). A cloud agent is a board row (`bcId`, owning seat, linked card, state `running`, `finished`, or `failed`). The seat wake is `grok-bot/templates/house/fleet/WAKE-ROUTINE.md`: `live-inbox <seat> --turn start` on every turn, and `--turn end` on every exit. `live-inbox` requires `LIVE_URL`, `SEAT_KEYS_DIR`, and `LIVE_CURSORS`. A missing or empty one exits 2 and names it. A stuck card sends L1 to the next owner or the card owner, and L2 to the CoS role. An unacked line and a missing handoff stay on that seat through L3, and the CoS role is woken at L3.
 
 ## Release artifacts
 
-`npm run release:patch` updates: `package.json`, `CHANGELOG.md`, `README.md`, `AGENTS.md`, `AGENTS-consumer.md`, `SKILLS.md`, Docusaurus guides.
+`npm run release:patch` updates: `package.json`, `CHANGELOG.md`, `README.md`, `AGENTS.md`, `AGENTS-consumer.md`, `SKILLS.md`, `llms.txt`, Docusaurus guides.

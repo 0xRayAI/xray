@@ -65,6 +65,15 @@ class RoutingPerformanceAnalyzer {
   private readonly mediumConfidenceThreshold = 0.8;
   private readonly minSamplesForMetrics = 5;
 
+  /** First row for each taskId, matching Array.find. */
+  private firstByTaskId<T extends { taskId: string }>(rows: readonly T[]): Map<string, T> {
+    const indexed = new Map<string, T>();
+    for (const row of rows) {
+      if (!indexed.has(row.taskId)) indexed.set(row.taskId, row);
+    }
+    return indexed;
+  }
+
   /**
    * Generate comprehensive routing performance report
    */
@@ -82,7 +91,7 @@ class RoutingPerformanceAnalyzer {
 
     const agentMetrics = this.calculateAgentMetrics(outcomes, promptData);
     const keywordEffectiveness = this.analyzeKeywordEffectiveness(decisions, outcomes);
-    const confidenceMetrics = this.analyzeConfidenceThresholds(outcomes);
+    const confidenceMetrics = this.analyzeConfidenceThresholds(outcomes, promptData);
     const timeRange = this.calculateTimeRange(outcomes);
 
     const overallStats = this.calculateOverallStats(outcomes);
@@ -120,7 +129,7 @@ class RoutingPerformanceAnalyzer {
         failures: number;
         escalated: number;
         confidenceSum: number;
-        executionTimes: number[];
+        executionSum: number;
         highConfidence: number;
         mediumConfidence: number;
         lowConfidence: number;
@@ -128,9 +137,11 @@ class RoutingPerformanceAnalyzer {
       }
     >();
 
+    const promptByTask = this.firstByTaskId(promptData);
+
     for (const outcome of outcomes) {
       const agent = outcome.routedAgent;
-      const prompt = promptData.find((p) => p.taskId === outcome.taskId);
+      const prompt = promptByTask.get(outcome.taskId);
       const confidence = prompt?.confidence ?? 0;
       const executionTime = prompt?.usageMetadata?.retryCount ?? 0;
 
@@ -142,7 +153,7 @@ class RoutingPerformanceAnalyzer {
           failures: 0,
           escalated: 0,
           confidenceSum: 0,
-          executionTimes: [],
+          executionSum: 0,
           highConfidence: 0,
           mediumConfidence: 0,
           lowConfidence: 0,
@@ -177,17 +188,14 @@ class RoutingPerformanceAnalyzer {
         metrics.escalated++;
       }
 
-      metrics.executionTimes.push(executionTime);
+      metrics.executionSum += executionTime;
     }
 
     return Array.from(agentMap.entries())
       .filter(([, metrics]) => metrics.total >= this.minSamplesForMetrics)
       .map(([agent, metrics]) => {
         const avgExecutionTime =
-          metrics.executionTimes.length > 0
-            ? metrics.executionTimes.reduce((sum, time) => sum + time, 0) /
-              metrics.executionTimes.length
-            : 0;
+          metrics.total > 0 ? metrics.executionSum / metrics.total : 0;
 
         const timestamps = metrics.timestamps.sort(
           (a, b) => a.getTime() - b.getTime(),
@@ -237,11 +245,13 @@ class RoutingPerformanceAnalyzer {
       }
     >();
 
+    const outcomeByTask = this.firstByTaskId(outcomes);
+
     for (const decision of decisions) {
       const keyword = decision.keywordMatched;
       if (!keyword) continue;
 
-      const outcome = outcomes.find((o) => o.taskId === decision.taskId);
+      const outcome = outcomeByTask.get(decision.taskId);
       if (!outcome) continue;
 
       if (!keywordMap.has(keyword)) {
@@ -288,36 +298,44 @@ class RoutingPerformanceAnalyzer {
    */
   private analyzeConfidenceThresholds(
     outcomes: RoutingOutcome[],
+    promptData: PromptDataPoint[],
   ): ConfidenceThresholdMetrics[] {
-    const promptData = routingOutcomeTracker.getPromptData();
     const thresholds = [0.5, 0.6, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95];
+    const promptByTask = this.firstByTaskId(promptData);
+    const totalRoutings = thresholds.map(() => 0);
+    const successfulRoutings = thresholds.map(() => 0);
 
-    return thresholds.map((threshold) => {
-      const belowThresholdOutcomes = outcomes.filter((outcome) => {
-        const prompt = promptData.find((p) => p.taskId === outcome.taskId);
-        const confidence = prompt?.confidence ?? 1;
-        return confidence < threshold;
-      });
+    for (const outcome of outcomes) {
+      const prompt = promptByTask.get(outcome.taskId);
+      const confidence = prompt?.confidence ?? 1;
+      for (let i = 0; i < thresholds.length; i++) {
+        const threshold = thresholds[i];
+        if (threshold === undefined || !(confidence < threshold)) continue;
+        const total = totalRoutings[i];
+        const successful = successfulRoutings[i];
+        if (total === undefined || successful === undefined) continue;
+        totalRoutings[i] = total + 1;
+        if (outcome.success === true) successfulRoutings[i] = successful + 1;
+      }
+    }
 
-      const totalRoutings = belowThresholdOutcomes.length;
-      const successfulRoutings = belowThresholdOutcomes.filter(
-        (o) => o.success === true,
-      ).length;
-      const successRate =
-        totalRoutings > 0 ? successfulRoutings / totalRoutings : 0;
-      const escalatedCount = belowThresholdOutcomes.length;
+    return thresholds.map((threshold, i) => {
+      const total = totalRoutings[i] ?? 0;
+      const successful = successfulRoutings[i] ?? 0;
+      const successRate = total > 0 ? successful / total : 0;
+      const escalatedCount = total;
 
       let recommendation = "Threshold is optimal";
-      if (successRate < 0.6 && escalatedCount > totalRoutings * 0.5) {
+      if (successRate < 0.6 && escalatedCount > total * 0.5) {
         recommendation = "Consider lowering threshold to reduce escalations";
-      } else if (successRate > 0.9 && escalatedCount < totalRoutings * 0.2) {
+      } else if (successRate > 0.9 && escalatedCount < total * 0.2) {
         recommendation = "Consider raising threshold to improve routing precision";
       }
 
       return {
         threshold,
-        totalRoutings,
-        successfulRoutings,
+        totalRoutings: total,
+        successfulRoutings: successful,
         successRate,
         escalatedCount,
         recommendation,
@@ -332,14 +350,14 @@ class RoutingPerformanceAnalyzer {
     successRate: number;
     avgConfidence: number;
   } {
-    const successful = outcomes.filter((o) => o.success === true).length;
-    const successRate =
-      outcomes.length > 0 ? successful / outcomes.length : 0;
-
-    // Confidence is in outcomes, not promptData
-    const totalConfidence = outcomes.reduce((sum, o) => sum + (o.confidence || 0), 0);
-    const avgConfidence =
-      outcomes.length > 0 ? totalConfidence / outcomes.length : 0;
+    let successful = 0;
+    let totalConfidence = 0;
+    for (const outcome of outcomes) {
+      if (outcome.success === true) successful++;
+      totalConfidence += outcome.confidence || 0;
+    }
+    const successRate = outcomes.length > 0 ? successful / outcomes.length : 0;
+    const avgConfidence = outcomes.length > 0 ? totalConfidence / outcomes.length : 0;
 
     return { successRate, avgConfidence };
   }
@@ -361,21 +379,45 @@ class RoutingPerformanceAnalyzer {
       return d.getTime();
     };
 
+    const asRange = (firstTs: Date | string | undefined, lastTs: Date | string | undefined) => {
+      const now = new Date();
+      return {
+        start: firstTs instanceof Date ? firstTs : (firstTs ? new Date(firstTs as string) : now),
+        end: lastTs instanceof Date ? lastTs : (lastTs ? new Date(lastTs as string) : now),
+      };
+    };
+
+    const firstOutcome = outcomes[0];
+    if (firstOutcome) {
+      let startTs: Date | string = firstOutcome.timestamp;
+      let endTs: Date | string = startTs;
+      let startTime = getTime(startTs);
+      let endTime = startTime;
+      let finite = !Number.isNaN(startTime);
+      for (let i = 1; finite && i < outcomes.length; i++) {
+        const outcome = outcomes[i];
+        if (!outcome) continue;
+        const time = getTime(outcome.timestamp);
+        if (Number.isNaN(time)) {
+          finite = false;
+          break;
+        }
+        if (time < startTime) {
+          startTime = time;
+          startTs = outcome.timestamp;
+        }
+        if (time >= endTime) {
+          endTime = time;
+          endTs = outcome.timestamp;
+        }
+      }
+      if (finite) return asRange(startTs, endTs);
+    }
+
     const sorted = [...outcomes].sort(
       (a, b) => getTime(a.timestamp) - getTime(b.timestamp),
     );
-
-    const now = new Date();
-    const firstOutcome = sorted[0];
-    const lastOutcome = sorted[sorted.length - 1];
-    
-    const firstTs = firstOutcome?.timestamp;
-    const lastTs = lastOutcome?.timestamp;
-    
-    return {
-      start: firstTs instanceof Date ? firstTs : (firstTs ? new Date(firstTs as string) : now),
-      end: lastTs instanceof Date ? lastTs : (lastTs ? new Date(lastTs as string) : now),
-    };
+    return asRange(sorted[0]?.timestamp, sorted[sorted.length - 1]?.timestamp);
   }
 
   /**

@@ -2,71 +2,119 @@
 
 const fs = require("fs");
 const path = require("path");
+const { resolveConsumerTargetDir } = require("./install-bridges.cjs");
+const { linkVendoredRepertoire } = require("./wear-vendored-repertoire.cjs");
 const {
-  installAllBridges,
-  resolveConsumerTargetDir,
-  isConsumerInstall,
-} = require("./install-bridges.cjs");
-const { applyConsumerGitignore } = require("./consumer-gitignore.cjs");
-
-function structuredLog(component, action, status, details) {
-  const ts = new Date().toISOString();
-  const detailsPart = details ? ` | ${JSON.stringify(details)}` : "";
-  console.log(`${ts} [${component}] ${action} - ${String(status).toUpperCase()}${detailsPart}`);
-}
-
-const packageRoot = path.join(__dirname, "..", "..");
-const targetDir = resolveConsumerTargetDir(packageRoot, process.env.PWD || process.cwd());
-const resolvedPackage = path.resolve(packageRoot);
-const resolvedTarget = path.resolve(targetDir);
+  overlayConsumerTree,
+  mintConsumerFromSsot,
+  mintConsumerSuit,
+  listConsumerSkillNames,
+  listConsumerAgentFiles,
+  loadFoundryParams,
+  readPackageIdentity,
+} = require("../foundry/mint-suit.cjs");
 
 const XRAY_MANAGED_AGENTS_MARKER = "<!-- 0xray-managed -->";
+const XRAY_MANAGED_AGENTS_BEGIN = "<!-- 0xray-managed:begin -->";
+const XRAY_MANAGED_AGENTS_END = "<!-- 0xray-managed:end -->";
 
-// Copy AGENTS-consumer.md → AGENTS.md (only if absent or still 0xray-managed)
-const agentsConsumer = path.join(packageRoot, "AGENTS-consumer.md");
-const agentsDest = path.join(targetDir, "AGENTS.md");
-if (fs.existsSync(agentsConsumer) && isConsumerInstall(resolvedPackage, resolvedTarget)) {
-  const shouldDeployAgents =
-    !fs.existsSync(agentsDest) ||
-    fs.readFileSync(agentsDest, "utf8").includes(XRAY_MANAGED_AGENTS_MARKER);
-  if (shouldDeployAgents) {
-    let content = fs.readFileSync(agentsConsumer, "utf8");
-    if (!content.includes(XRAY_MANAGED_AGENTS_MARKER)) {
-      content = `${content.trimEnd()}\n\n${XRAY_MANAGED_AGENTS_MARKER}\n`;
-    }
-    fs.writeFileSync(agentsDest, content);
-  } else {
-    structuredLog("postinstall", "Skipped AGENTS.md (consumer-customized)", "info");
-  }
+function fillConsumerPlaceholders(content, consumer) {
+  const name = consumer.name || "this project";
+  const versionParen = consumer.version ? ` (${consumer.version})` : "";
+  return content
+    .split("{{CONSUMER_NAME}}")
+    .join(name)
+    .split("{{CONSUMER_VERSION_PAREN}}")
+    .join(versionParen);
 }
 
-// .gitignore: full template when absent; merge suit block when existing
-if (isConsumerInstall(resolvedPackage, resolvedTarget)) {
-  const gitignoreResult = applyConsumerGitignore(targetDir, packageRoot);
-  if (gitignoreResult === "created") {
-    structuredLog("postinstall", "Created .gitignore from template", "info");
-  } else if (gitignoreResult === "merged") {
-    structuredLog("postinstall", "Merged 0xray suit entries into .gitignore", "info");
+function renderManagedAgents(packageRoot, targetDir) {
+  let content = fs.readFileSync(path.join(packageRoot, "AGENTS-consumer.md"), "utf8");
+  const consumer = readPackageIdentity(path.join(targetDir, "package.json"));
+  content = fillConsumerPlaceholders(content, consumer).trim();
+  if (!content.includes(XRAY_MANAGED_AGENTS_MARKER)) {
+    content = `${content}\n\n${XRAY_MANAGED_AGENTS_MARKER}`;
   }
+  return `${XRAY_MANAGED_AGENTS_BEGIN}\n${content}\n${XRAY_MANAGED_AGENTS_END}\n`;
 }
 
-// Unified 4-platform bridge install (OpenCode, Grok, Hermes, OpenClaw)
-if (isConsumerInstall(resolvedPackage, resolvedTarget)) {
+function managedRegion(text) {
+  const beginAt = text.indexOf(XRAY_MANAGED_AGENTS_BEGIN);
+  const endAt = text.indexOf(XRAY_MANAGED_AGENTS_END);
+  if (beginAt === -1 || endAt === -1 || endAt < beginAt) return null;
+  return {
+    before: text.slice(0, beginAt),
+    after: text.slice(endAt + XRAY_MANAGED_AGENTS_END.length),
+  };
+}
+
+function outsideRegionEdited(parts) {
+  return parts.before.trim() !== "" || parts.after.trim() !== "";
+}
+
+function writeTextIfChanged(filePath, body) {
   try {
-    installAllBridges({
-      targetDir,
-      packageRoot,
-      log: structuredLog,
-    });
-  } catch (e) {
-    structuredLog("postinstall", "Bridge install failed", "error", { error: e.message });
+    if (fs.readFileSync(filePath, "utf8") === body) return false;
+  } catch {
+    /* absent */
+  }
+  fs.writeFileSync(filePath, body);
+  return true;
+}
+
+function deployManagedAgents(packageRoot, targetDir, log) {
+  const agentsConsumer = path.join(packageRoot, "AGENTS-consumer.md");
+  const agentsDest = path.join(targetDir, "AGENTS.md");
+  if (!fs.existsSync(agentsConsumer)) return;
+  const next = renderManagedAgents(packageRoot, targetDir);
+  if (!fs.existsSync(agentsDest)) {
+    writeTextIfChanged(agentsDest, next);
+    return;
+  }
+  const current = fs.readFileSync(agentsDest, "utf8");
+  const parts = managedRegion(current);
+  if (!parts || outsideRegionEdited(parts)) {
+    const side = path.join(targetDir, "AGENTS.md.0xray-new");
+    writeTextIfChanged(side, next);
+    log("postinstall", "AGENTS.md left in place; wrote AGENTS.md.0xray-new", "info");
+    return;
+  }
+  const beginAt = next.indexOf(XRAY_MANAGED_AGENTS_BEGIN);
+  const endAt = next.indexOf(XRAY_MANAGED_AGENTS_END);
+  const interior = next.slice(beginAt, endAt + XRAY_MANAGED_AGENTS_END.length);
+  const updated = `${parts.before}${interior}${parts.after}`;
+  writeTextIfChanged(agentsDest, updated);
+}
+
+/** npm install links vendored @0xray/repertoire and does not write `.mcp.json`. `npx 0xray wear` rewrites a checkout `dist/cli` launch to `node_modules/0xray`. */
+function runPostinstall(packageRoot, targetDir, _log) {
+  linkVendoredRepertoire(packageRoot, targetDir);
+  console.log("Run `npx 0xray wear`");
+}
+
+module.exports = {
+  runPostinstall,
+  mintConsumerFromSsot,
+  mintConsumerSuit,
+  overlayConsumerTree,
+  listConsumerSkillNames,
+  listConsumerAgentFiles,
+  loadFoundryParams,
+  fillConsumerPlaceholders,
+  readPackageIdentity,
+  deployManagedAgents,
+};
+
+if (require.main === module) {
+  const packageRoot = path.join(__dirname, "..", "..");
+  const targetDir = resolveConsumerTargetDir(
+    packageRoot,
+    process.env.INIT_CWD || process.env.PWD || process.cwd(),
+  );
+  try {
+    runPostinstall(packageRoot, targetDir);
+  } catch {
     console.error("\n❌ 0xRay postinstall failed — bridge wiring did not complete.\n");
     process.exit(1);
   }
-
-  structuredLog(
-    "postinstall",
-    "0xRay framework installed (4 bridges). Run `npx 0xray setup` for symlinks/Hermes skill extras.",
-    "success"
-  );
 }

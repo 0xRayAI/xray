@@ -1,0 +1,97 @@
+{
+  "schema_version": "1",
+  "signals": {
+    "attestation-as-map": {
+      "avg_confidence": 1,
+      "evidence_count": 1,
+      "updated_at": "2026-09-24T19:40:03.957Z",
+      "lessons": [
+        {
+          "taskId": "wear:roundtrip-1790276988184",
+          "decision": "success",
+          "text": "The bench token for this run is bench-adec29f1",
+          "at": "2026-09-24T19:09:48.253Z"
+        },
+        {
+          "taskId": "wear:debug",
+          "decision": "success",
+          "text": "The bench token for this run is bench-f97a0dd2",
+          "at": "2026-09-24T19:09:52.592Z"
+        },
+        {
+          "taskId": "wear:x",
+          "decision": "success",
+          "text": "The bench token for this run is bench-5886e443",
+          "at": "2026-09-24T19:09:55.850Z"
+        },
+        {
+          "taskId": "wear:roundtrip-1790277004171",
+          "decision": "success",
+          "text": "The bench token for this run is bench-e2aa3085",
+          "at": "2026-09-24T19:10:04.238Z"
+        },
+        {
+          "taskId": "wear:t1",
+          "decision": "success",
+          "text": "The bench token for this run is bench-12c7690d",
+          "at": "2026-09-24T19:10:16.519Z"
+        },
+        {
+          "taskId": "wear:roundtrip-1790277019797",
+          "decision": "success",
+          "text": "The bench token for this run is bench-196d317e",
+          "at": "2026-09-24T19:10:19.865Z"
+        },
+        {
+          "taskId": "wear:roundtrip-1790277063000",
+          "decision": "success",
+          "text": "The bench token for this run is bench-e19a98a9",
+          "at": "2026-09-24T19:11:03.067Z"
+        },
+        {
+          "taskId": "wear:roundtrip-1790277273699",
+          "decision": "success",
+          "text": "The bench token for this run is bench-3d2650b7",
+          "at": "2026-09-24T19:14:33.778Z"
+        },
+        {
+          "taskId": "wear:roundtrip-1790278803891",
+          "decision": "success",
+          "text": "The bench token for this run is bench-f70a3c2f",
+          "at": "2026-09-24T19:40:03.957Z"
+        }
+      ]
+    },
+    "compaction-memory-bench-suited-arm": {
+      "avg_confidence": 0.95,
+      "evidence_count": 1,
+      "updated_at": "2026-09-24T20:34:29.210Z",
+      "lessons": [
+        {
+          "taskId": "wear:bench-wear-1790278796443",
+          "decision": "success",
+          "text": "The bench token for this run is bench-a9b5384b",
+          "at": "2026-09-24T19:39:56.459Z"
+        },
+        {
+          "taskId": "wear:bench-wear-1790278803720",
+          "decision": "success",
+          "text": "The bench token for this run is bench-b471080a",
+          "at": "2026-09-24T19:40:03.738Z"
+        },
+        {
+          "taskId": "wear:bench-wear-1790279209402",
+          "decision": "success",
+          "text": "The bench token for this run is bench-af152405",
+          "at": "2026-09-24T19:46:49.421Z"
+        },
+        {
+          "taskId": "wear:bench-wear-1790282069191",
+          "decision": "success",
+          "text": "The bench token for this run is bench-5679e6fb",
+          "at": "2026-09-24T20:34:29.210Z"
+        }
+      ]
+    }
+  }
+}

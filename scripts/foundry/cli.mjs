@@ -1,0 +1,61 @@
+#!/usr/bin/env node
+/**
+ * @0xray/foundry CLI — mill, not exo. No fifth MCP.
+ *
+ *   npx @0xray/foundry <reconcile|stamp|gate|release|docs-check|docs-build|mint|inspect|sound|blip|ci|hooks> [...args]
+ */
+
+import { spawnSync } from "node:child_process";
+import { millScript, resolveMillRoot } from "./mill-root.mjs";
+
+const COMMANDS = {
+  reconcile: { script: "reconcile-version.mjs", preset: [] },
+  stamp: { script: "version-manager.mjs", preset: ["--artifacts-only"] },
+  gate: { script: "release-gate.mjs", preset: [] },
+  release: { script: "release.mjs", preset: [] },
+  "docs-check": { script: "validate-release-docs.mjs", preset: [] },
+  "docs-build": { script: "docs-build.mjs", preset: [] },
+  mint: { script: "mint.mjs", preset: [] },
+  inspect: { script: "inspect.mjs", preset: [] },
+  sound: { script: "sound.mjs", preset: [] },
+  blip: { script: "blip.mjs", preset: [] },
+  ci: { script: "ci-monitor.mjs", preset: [] },
+  hooks: { script: "hooks.mjs", preset: [] },
+};
+
+const HELP =
+  "Usage: npx @0xray/foundry <reconcile|stamp|gate|release|docs-check|docs-build|mint|inspect|sound|blip|ci|hooks> [...args]\n" +
+  "\n" +
+  "Mill, not exo. FOUNDRY_ROOT overrides cwd (the repo being milled).\n" +
+  "release bumps/commits/pushes/publishes the milled cwd — pass --dry-run or --i-mean-it (or FOUNDRY_RELEASE=1).\n" +
+  "Mint fastens the requested factory plant (default mill; foundry.json plant: sound|blip turns mill off), then inspect.\n" +
+  "inspect runs mill checks plus, on a sound seat, last bed receipt PASS/FAIL; on a blip seat, last blip receipt. Observational harness (hooks / Repertoire / Station). --go emits a forge GO receipt. Not an 8th MCP.\n" +
+  "sound render|inspect|mix is the factory-sound plant (brief → seed → genre → wav → metrics; mix levels every variation). Sibling to mill, not a mill copy.\n" +
+  "blip render|inspect|vibe|look is the factory-blip plant (brief → seed → still|motion:<id> → 4.44s mp4; vibe is stamp density, look is the friend hitting replay, ship bar 8). Sibling to mill + sound.\n" +
+  "gate is build+test. docs-build is Docusaurus on the 0xray exo. ci reports GitHub Actions (no auto-push). hooks installs git pre/post hooks.\n";
+
+const cmd = process.argv[2];
+const rest = process.argv.slice(3);
+
+if (cmd === "--help" || cmd === "-h" || cmd === "help") {
+  process.stdout.write(HELP);
+  process.exit(0);
+}
+
+if (!cmd || !COMMANDS[cmd]) {
+  process.stderr.write(HELP);
+  process.exit(1);
+}
+
+const spec = COMMANDS[cmd];
+const root = resolveMillRoot();
+const result = spawnSync(
+  process.execPath,
+  [millScript(spec.script), ...spec.preset, ...rest],
+  {
+    stdio: "inherit",
+    cwd: root,
+    env: { ...process.env, FOUNDRY_ROOT: root },
+  },
+);
+process.exit(result.status === null ? 1 : result.status);

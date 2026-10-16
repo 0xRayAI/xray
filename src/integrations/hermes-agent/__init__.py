@@ -206,6 +206,10 @@ def _delegation_gate_block(tool_name: str, args: dict, task_id: str, **kwargs):
         },
         timeout=10,
     )
+    if bridge_result.get("error") and bridge_result.get("allow") is not False:
+        err = bridge_result.get("error", "delegation-gate bridge error")
+        _log_to_file("activity.log", f"[delegation-gate] bridge-error tool={tool_name} {err}")
+        return {"action": "block", "message": err}
     if bridge_result.get("allow") is False:
         reason = bridge_result.get("reason", "Delegation gate blocked this tool")
         gate = bridge_result.get("gate", "delegation-gate")
@@ -376,6 +380,8 @@ def _on_post_tool_call(tool_name: str, args: dict, result, task_id: str, **kwarg
                 "args": args or {},
                 "sessionId": session_id,
                 "host": "hermes",
+                "toolOutput": result,
+                "result": result,
             },
             timeout=10,
         )
@@ -452,6 +458,10 @@ def _on_session_start(session_id: str, platform: str, **kwargs):
     _ensure_log_dir()
     _log_to_file("activity.log",
         f"[session-start] session={session_id} platform={platform}")
+    try:
+        _call_bridge({"command": "session-start", "sessionId": session_id}, timeout=10)
+    except Exception as e:
+        logger.debug("[xray] session-start bridge skipped: %s", e)
     logger.info("[xray] Session %s started on %s", session_id, platform)
 
 
@@ -771,7 +781,7 @@ def register(ctx):
 
     # Log session-start since on_session_start may not fire in oneshot mode
     _log_to_file("activity.log",
-        f"[session-start] session={session_id}")
+        "[session-start] session=bootstrap source=plugin-load")
 
     logger.info(
         "[xray] Plugin v2.2 loaded: 6 tools, 2 hooks, "

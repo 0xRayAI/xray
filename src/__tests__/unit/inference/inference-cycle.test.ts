@@ -119,8 +119,7 @@ describe("Inference Cycle", () => {
 
     expect(result.votes.length).toBeGreaterThan(0);
     for (const vote of result.votes) {
-      // With strict Dynamo Solar SSOT, 'abstain' is valid in test environments.
-      expect(["approve", "reject", "abstain"]).toContain(vote.decision);
+      expect(["approve", "reject", "needs_revision", "abstain"]).toContain(vote.decision);
       expect(vote.confidence).toBeGreaterThanOrEqual(0);
       expect(vote.confidence).toBeLessThanOrEqual(1);
     }
@@ -224,4 +223,104 @@ describe("Inference Cycle", () => {
     expect(parsed.proposals).toBeInstanceOf(Array);
     expect(parsed.votes).toBeInstanceOf(Array);
   }, 15000);
+
+  it("keeps a graded lesson id after empty cycles fill the history window", async () => {
+    const inferenceDir = path.join(tmpDir, "docs", "inference");
+    fs.mkdirSync(inferenceDir, { recursive: true });
+    const session = makeSession("aged", 10, "unused");
+    session.problems = [];
+    session.patterns = [];
+    session.wrongTurns = [];
+    session.matched_primitives = ["wake-cascade"];
+    fs.writeFileSync(path.join(inferenceDir, "session-aged.json"), JSON.stringify(session));
+
+    const stateDir = path.join(tmpDir, ".xray", "inference");
+    fs.mkdirSync(stateDir, { recursive: true });
+    const lessonId = "named:wake-cascade:session-aged";
+    const history = Array.from({ length: 50 }, (_, index) => ({
+      cycleId: `old-${index}`,
+      triggered: true,
+      triggerReason: "seed",
+      corpusSummary: { sessions: 0, totalCommits: 0, recurringPatterns: 0, recurringProblems: 0 },
+      proposals: index === 0
+        ? [{
+          id: lessonId,
+          type: "codify",
+          title: "Grade named signal wake-cascade",
+          description: "already graded",
+          evidence: [],
+          confidence: 0.85,
+          source: "recurring_pattern",
+          status: "approved",
+        }]
+        : [],
+      votes: [],
+      phase: "complete",
+      completedAt: "2026-09-01T00:00:00.000Z",
+      duration: 1,
+    }));
+    fs.writeFileSync(path.join(stateDir, "inference-cycle-history.json"), JSON.stringify(history));
+
+    const cycle = new InferenceCycle(tmpDir, mockAgentInvoker, {
+      force: true,
+      skipApply: true,
+      skipDeployVerify: true,
+    });
+    const first = await cycle.maybeRunCycle();
+    expect(first.proposals).toEqual([]);
+
+    const kept = JSON.parse(fs.readFileSync(path.join(stateDir, "inference-cycle-history.json"), "utf-8")) as Array<{
+      proposals: Array<{ id: string }>;
+    }>;
+    expect(kept).toHaveLength(50);
+    expect(kept.some((entry) => entry.proposals.some((proposal) => proposal.id === lessonId))).toBe(false);
+    const retained = JSON.parse(fs.readFileSync(path.join(stateDir, "inference-cycle-graded-ids.json"), "utf-8")) as string[];
+    expect(retained).toContain(lessonId);
+
+    const again = await cycle.maybeRunCycle();
+    expect(again.proposals).toEqual([]);
+  });
+
+  it("writes cycle state when a triggered run has no proposals", async () => {
+    const inferenceDir = path.join(tmpDir, "docs", "inference");
+    fs.mkdirSync(inferenceDir, { recursive: true });
+    const session = makeSession("empty", 10, "unused");
+    session.problems = [];
+    session.patterns = [];
+    session.wrongTurns = [];
+    session.approaches = [];
+    session.solutions = [];
+    fs.writeFileSync(path.join(inferenceDir, "session-empty.json"), JSON.stringify(session));
+
+    const cycle = new InferenceCycle(tmpDir, mockAgentInvoker);
+    const result = await cycle.maybeRunCycle();
+
+    expect(result.triggered).toBe(true);
+    expect(result.phase).toBe("complete");
+    expect(result.proposals).toEqual([]);
+
+    const statePath = path.join(tmpDir, ".xray", "inference", "inference-cycle-state.json");
+    expect(fs.existsSync(statePath)).toBe(true);
+    const state = JSON.parse(fs.readFileSync(statePath, "utf-8")) as { cycleId: string; phase: string };
+    expect(state.cycleId).toBe(result.cycleId);
+    expect(state.phase).toBe("complete");
+
+    const historyPath = path.join(tmpDir, ".xray", "inference", "inference-cycle-history.json");
+    const history = JSON.parse(fs.readFileSync(historyPath, "utf-8")) as Array<{ cycleId: string }>;
+    expect(history.at(-1)?.cycleId).toBe(result.cycleId);
+
+    const again = await cycle.maybeRunCycle();
+    expect(again.triggered).toBe(false);
+  });
+
+  it("applies later getInstance options on the existing instance", () => {
+    InferenceCycle.resetInstance();
+    const first = InferenceCycle.getInstance(tmpDir, { skipApply: true });
+    const second = InferenceCycle.getInstance(tmpDir, { force: true });
+    expect(second).toBe(first);
+    const options = (second as unknown as { options: { force?: boolean; skipApply?: boolean } }).options;
+    expect(options.force).toBe(true);
+    expect(options.skipApply).toBe(true);
+    InferenceCycle.resetInstance();
+  });
 });

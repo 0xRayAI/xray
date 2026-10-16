@@ -513,6 +513,18 @@ export class EnhancedMultiAgentOrchestrator {
   }
 
   /**
+   * Lookup one monitored agent without copying every spawn map.
+   * Precedence matches getMonitoringInterface: failed, then completed, then active.
+   */
+  getMonitoredAgent(agentId: string): SpawnedAgent | undefined {
+    return (
+      this.state.failedAgents.get(agentId) ??
+      this.state.completedAgents.get(agentId) ??
+      this.state.activeAgents.get(agentId)
+    );
+  }
+
+  /**
    * Get clickable agent monitoring interface
    */
   getMonitoringInterface(): Record<string, SpawnedAgent> {

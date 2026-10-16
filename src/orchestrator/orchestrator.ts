@@ -715,9 +715,9 @@ export class XrayOrchestrator {
     // Wait for agent completion with monitoring
     return new Promise((resolve, reject) => {
       const checkCompletion = () => {
-        const monitoringData =
-          enhancedMultiAgentOrchestrator.getMonitoringInterface();
-        const agent = monitoringData[spawnedAgent.id];
+        const agent = enhancedMultiAgentOrchestrator.getMonitoredAgent(
+          spawnedAgent.id,
+        );
 
         if (!agent) {
           reject(

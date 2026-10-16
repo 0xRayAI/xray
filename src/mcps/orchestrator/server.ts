@@ -13,12 +13,10 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import * as fs from 'fs';
 import { frameworkLogger } from '../../core/framework-logger.js';
-import { XrayStateManager } from '../../state/state-manager.js';
-import { MultiAgentOrchestrationCoordinator } from '../../orchestrator/multi-agent-orchestration-coordinator.js';
 
-import { TaskHandler } from './handlers/task-handler.js';
-import { ComplexityHandler } from './handlers/complexity-handler.js';
 import { StatusHandler } from './handlers/status-handler.js';
+import type { TaskHandler } from './handlers/task-handler.js';
+import type { ComplexityHandler } from './handlers/complexity-handler.js';
 import type { OrchestrationTask, OrchestrationResult } from './types.js';
 import {
   spawnAside,
@@ -46,22 +44,12 @@ export class OrchestratorServer {
     timestamp: string;
   }> = [];
   
-  // Handlers
-  private taskHandler: TaskHandler;
-  private complexityHandler: ComplexityHandler;
+  // Task and complexity handlers import the planner and nucleus. Load on tool call.
+  private taskHandlerPromise: Promise<TaskHandler> | null = null;
+  private complexityHandlerPromise: Promise<ComplexityHandler> | null = null;
   private statusHandler: StatusHandler;
-  
-  // Actual orchestration coordinator
-  private coordinator: MultiAgentOrchestrationCoordinator;
 
   constructor() {
-    // Initialize actual coordinator
-    const stateManager = new XrayStateManager();
-    this.coordinator = new MultiAgentOrchestrationCoordinator(stateManager);
-    
-    // Initialize handlers
-    this.taskHandler = new TaskHandler();
-    this.complexityHandler = new ComplexityHandler();
     this.statusHandler = new StatusHandler();
 
     // Create MCP server
@@ -83,6 +71,30 @@ export class OrchestratorServer {
     frameworkLogger.log('orchestrator.server', 'initialize', 'info', {
       message: '0xRay Orchestrator MCP Server initialized',
     });
+  }
+
+  private loadTaskHandler(): Promise<TaskHandler> {
+    if (!this.taskHandlerPromise) {
+      this.taskHandlerPromise = import('./handlers/task-handler.js')
+        .then(({ TaskHandler }) => new TaskHandler())
+        .catch((error: unknown) => {
+          this.taskHandlerPromise = null;
+          throw error;
+        });
+    }
+    return this.taskHandlerPromise;
+  }
+
+  private loadComplexityHandler(): Promise<ComplexityHandler> {
+    if (!this.complexityHandlerPromise) {
+      this.complexityHandlerPromise = import('./handlers/complexity-handler.js')
+        .then(({ ComplexityHandler }) => new ComplexityHandler())
+        .catch((error: unknown) => {
+          this.complexityHandlerPromise = null;
+          throw error;
+        });
+    }
+    return this.complexityHandlerPromise;
   }
 
   /**
@@ -133,14 +145,39 @@ export class OrchestratorServer {
                   default: 'optimized',
                 },
                 timeout: { type: 'number', default: 300000 },
+                confer: {
+                  type: 'boolean',
+                  description:
+                    'Run mandatory 3-agent confer quorum (researcher, architect-tools, code-review) instead of task execution',
+                },
+                conferFixture: {
+                  type: 'boolean',
+                  description: 'Use fixture confer receipts (CI/verify)',
+                },
+                collocatedText: {
+                  type: 'string',
+                  description: 'Collocated synthesis context for confer prompts',
+                },
+                userAsideId: {
+                  type: 'string',
+                  description: 'Activate an existing user aside for spawn routing',
+                },
+                setActiveAside: {
+                  type: 'boolean',
+                  description: 'Set userAsideId as the active aside (default true)',
+                },
+                clearActiveAside: {
+                  type: 'boolean',
+                  description: 'Clear active aside — resume main lead-dev plan spawns',
+                },
               },
-              required: ['description', 'tasks'],
+              required: ['description'],
             },
           },
           {
             name: 'analyze-complexity',
             description:
-              'Analyze task complexity and recommend orchestration strategy. When lead_dev_mode is on (features.json), includes phased plan + todos + subagent routes. During synthesis checkpoint, returns collocated context and mandatory-consult realignment plan — pass sessionId from the active session.',
+              'Analyze task complexity and recommend orchestration strategy. When lead_dev_mode is on (features.json), includes phased plan + todos + subagent routes. Pass userAsideId to intake a parallel user aside ({asideId}.a.* namespaced todos, worktree-like). During synthesis checkpoint, returns collocated context and mandatory-consult realignment plan — pass sessionId from the active session.',
             inputSchema: {
               type: 'object',
               properties: {
@@ -148,6 +185,27 @@ export class OrchestratorServer {
                   type: 'string',
                   description:
                     'Active session id (required to clear synthesis checkpoint; inferred from checkpoint state when omitted)',
+                },
+                userAsideId: {
+                  type: 'string',
+                  description:
+                    'User aside id — persists .xray/state/asides/{id}.json with {asideId}.a.* todos (parallel track)',
+                },
+                userAsideTitle: {
+                  type: 'string',
+                  description: 'Display title for the user aside (defaults to userAsideId)',
+                },
+                worktree: {
+                  type: 'string',
+                  description: 'Optional worktree path for aside isolation',
+                },
+                branch: {
+                  type: 'string',
+                  description: 'Optional git branch for the aside',
+                },
+                setActiveAside: {
+                  type: 'boolean',
+                  description: 'Activate aside for spawn routing (default true when userAsideId set)',
                 },
                 tasks: {
                   type: 'array',
@@ -271,7 +329,8 @@ export class OrchestratorServer {
               inheritedContext: { taskCount: orchArgs.tasks?.length ?? 0, executionMode: orchArgs.executionMode ?? 'optimized' },
             });
             try {
-              const result = await this.taskHandler.handleOrchestrateTask(
+              const taskHandler = await this.loadTaskHandler();
+              const result = await taskHandler.handleOrchestrateTask(
                 orchArgs,
                 { taskHistory: this.taskHistory, activeTasks: this.activeTasks, asideId: aside.asideId },
               );
@@ -386,12 +445,18 @@ export class OrchestratorServer {
               inheritedContext,
             });
             try {
-              const result = await this.complexityHandler.handleAnalyzeComplexity(
+              const complexityHandler = await this.loadComplexityHandler();
+              const result = await complexityHandler.handleAnalyzeComplexity(
                 {
                   ...complexityArgs,
                   ...(sessionId ? { sessionId } : {}),
                   ...(synthesisDue
-                    ? { synthesisCheckpoint: true, synthesisDueReason: dueReason }
+                    ? {
+                        synthesisCheckpoint: true,
+                        synthesisDueReason: dueReason,
+                        collocatedText: collocated?.collatedText ?? null,
+                        conferFixture: process.env.XRAY_CONFER_FIXTURE === '1',
+                      }
                     : {}),
                 },
                 aside.asideId,
@@ -402,13 +467,13 @@ export class OrchestratorServer {
                 content = appendSynthesisContextToResponse(content, collocated.collatedText);
               }
 
-              if (synthesisDue && result.ok) {
+              if (synthesisDue && result.ok && !result.content[0]?.text?.includes('Confer quorum')) {
                 content = content.map((block, index) =>
                   index === 0
                     ? {
                         ...block,
                         text:
-                          `${block.text}\n\n**Synthesis checkpoint remains active** until mandatory consult todos (s.1–s.3) are completed via Task spawns.`,
+                          `${block.text}\n\n**Confer** runs automatically at synthesis checkpoint (researcher → architect-tools → code-review). Checkpoint clears when all consult todos complete.`,
                       }
                     : block,
                 );

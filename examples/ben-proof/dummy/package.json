@@ -1,0 +1,16 @@
+{
+  "name": "recall-bench-dummy-app",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Plain Node governance lesson recall bench (no 0xray dependency)",
+  "scripts": {
+    "intake": "node src/cli/intake.js",
+    "recall": "node src/cli/recall.js",
+    "smoke": "node scripts/smoke.mjs",
+    "check-sources": "node scripts/check-no-baked-token.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

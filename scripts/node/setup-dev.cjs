@@ -23,32 +23,24 @@ function updatePathsInFile(filePath) {
     let content = fs.readFileSync(filePath, 'utf-8');
     let updated = false;
 
-    // Transform MCP server paths (specific first)
-    if (content.includes('node_modules/xray/dist/plugin/mcps/')) {
-      content = content.replace(
-        /node_modules\/xray\/dist\/plugin\/mcps\//g,
-        'dist/plugin/mcps/'
-      );
-      updated = true;
-    }
-
-    // Transform plugin paths (go up 3 directories from .opencode to project root)
-    if (content.includes('node_modules/xray/dist/plugin/plugins/')) {
-      content = content.replace(
-        /node_modules\/xray\/dist\/plugin\/plugins\//g,
-        '../../../dist/plugin/plugins/'
-      );
-      updated = true;
-    }
-
-    // Transform any remaining node_modules paths (but not plugin-specific ones we already handled)
-    if (content.includes('node_modules/xray/dist/') &&
-        !content.includes('dist/plugin/')) {  // Avoid double transformation
-      content = content.replace(
-        /node_modules\/xray\/dist\//g,
-        'dist/'
-      );
-      updated = true;
+    // npm installs at node_modules/0xray. node_modules/xray is the pre-rename folder.
+    // Specific plugin paths first so the general dist/ strip does not flatten them.
+    for (const dirName of ['0xray', 'xray']) {
+      const plugins = `node_modules/${dirName}/dist/plugin/plugins/`;
+      if (content.includes(plugins)) {
+        content = content.replaceAll(plugins, '../../../dist/plugin/plugins/');
+        updated = true;
+      }
+      const mcps = `node_modules/${dirName}/dist/plugin/mcps/`;
+      if (content.includes(mcps)) {
+        content = content.replaceAll(mcps, 'dist/plugin/mcps/');
+        updated = true;
+      }
+      const prefix = `node_modules/${dirName}/dist/`;
+      if (content.includes(prefix)) {
+        content = content.replaceAll(prefix, 'dist/');
+        updated = true;
+      }
     }
 
     if (updated) {

@@ -1,8 +1,10 @@
 # Governance Model (Dynamo Solar SSOT)
 
+**4.0 wear:** this is still the External Governance page (Dynamo Solar SSOT). Consumer surface is 7 MCP servers. Mill+inspect. Codex 69. Do not read this as a 2.0 product pin.
+
 ## Overview
 
-xray 2.0 governance system operates as the External Governance subsystem within the pure v2 three-subsystem model (Inference + External Governance via Dynamo + Autonomous Engine via thinDispatch 7-flow in the MCP orchestrator). YML SSOT. It provides a strict required filter layer for reliability and separation of concerns, with internal deliberation hosted under Inference.
+xray governance operates as the External Governance subsystem within the three-subsystem model (Inference + External Governance via Dynamo + Autonomous Engine via thinDispatch 7-flow in the MCP orchestrator). YML SSOT. It provides a strict required filter layer for reliability and separation of concerns, with internal deliberation hosted under Inference.
 
 ### 1. Internal Deliberation Layer
 - Performed by three specialized skill MCP servers:

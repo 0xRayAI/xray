@@ -1,0 +1,178 @@
+---
+sidebar_label: 4.0 foundry
+---
+
+# 4.0 foundry — mill vs exo
+
+The suit is what an agent **wears**. The foundry is how a team **gets** a suit.
+
+4.0 shipped **wear**. The mill that **fashions** the mill plant (bridges, reconcile, gate, stamps) lives in `scripts/foundry/`. This page is the inventory. It is not a new MCP, skill, or handler.
+
+Vision: [4.0 vision](./v4-vision.md). Handoff: [4.0 now](./v4-now.md). Open list: [4.0 left](./v4-left.md).
+
+## Law
+
+| | **Exo (worn)** | **Foundry (mill)** |
+|---|---|---|
+| When | Every tool call, compact, host swap | Install, mint, stamp, gate, publish, attest |
+| What | Constitution, temperament, 7 MCP, station, thinDispatch, Repertoire muscle | Bridges, templates, version, changelog, docs facts, pack, smoke |
+| Who | The model on the job | The team that wants an engine on a repo |
+| Failure if confused | Thick exo, agents nuke README, ceremony fights the host | Magic stays internal; strangers get a copy of *our* suit |
+
+**Do not extract constitution with the mill.** `evaluatePreToolGate` is PPE. `install-bridges.cjs` fastens the worn dirs.
+
+**Codex 69.** Naming the mill is not a new surface. A fifth CLI (`0xray foundry`, `0xray grokbot install`) would be.
+
+## What a stranger actually gets
+
+`npm install 0xray` links vendored `@0xray/repertoire` and prints `npx 0xray wear`. It does not fasten the plant or write the bridges. `npx 0xray wear` fastens mill plant (`mill` + `inspect`), generates host wiring, then overlays their plant: constitution (`xray/codex.json`), features, temperament, and config.
+
+```
+npm i 0xray
+  → postinstall.cjs
+      → link vendored @0xray/repertoire
+      → print npx 0xray wear
+
+npx 0xray wear
+  → installAllBridges() from install-bridges.cjs
+      → AGENTS-consumer.md → AGENTS.md (if managed)
+      → .gitignore merge
+      → .xray/ from xray/ templates (merge; leftover temperament stays guided)
+      → generated .mcp.json (7 × npx 0xray mcp)
+      → four floors: OpenCode, Grok, Hermes, OpenClaw
+      → Cursor project hooks inside a git checkout
+```
+
+Wear copies **factory** (PPE hooks, **Repertoire preferred** / vendored on, 7 MCP). Mill **fastens** mill plant: `mill` + `inspect` (inspect AI work). Overlay mints their plant on top. Not empty. Not 45/42 unless `foundry.json` `"costume": true`. Nested mill lives at `scripts/foundry/` inside the **0xray tarball**. `npx @0xray/foundry mint` reapplies overlay.
+
+**Mill target:** `resolveConsumerTargetDir` does not mill npm global prefix or `_npx`. Isolated HOME skips machine `~/.grok`. Global `npm i -g 0xray` dogfood-skips. A consumer `npm i 0xray` links repertoire and prints wear. `npx 0xray wear` fastens mill+inspect.
+
+## Mills (inventory)
+
+### 1. Release / version / docs stamp
+
+Canonical path: `reconcile-version --apply` → `version-manager --artifacts-only` → `release-gate` → commit → `--verify-only` → PUT → tag.
+
+| Piece | Role |
+|---|---|
+| `scripts/foundry/reconcile-version.mjs` | **One bumper.** npm + tag vs `package.json` |
+| `scripts/foundry/version-manager.mjs` | Stamper. `--artifacts-only` only (JSON + CHANGELOG). Bump/`--tag` refused |
+| `scripts/foundry/release.mjs` | Canonical conductor; `--publish-only` is the old `release:npm`. Live run needs `--i-mean-it` or `FOUNDRY_RELEASE=1` |
+| `scripts/foundry/release-gate.mjs` | Build, test, **docs**, smoke. `--verify-only` is the post-push path |
+| `scripts/foundry/validate-release-docs.mjs` | Read-only freshness (kernel header, CHANGELOG top, counts) |
+| `scripts/foundry/ci-monitor.mjs` | GitHub Actions report (`npx @0xray/foundry ci`). No auto-push |
+| `scripts/foundry/hooks.mjs` | Install git pre/post hooks (`npx @0xray/foundry hooks`). Dogfood `scripts/hooks`; published mill uses `node_modules/0xray/scripts/hooks` |
+| `scripts/foundry/docs-build.mjs` | Docusaurus build on the 0xray exo (`npx @0xray/foundry docs-build`) |
+| `.github/workflows/mill-ci.yml` | Mill gate on `main`: typecheck, lint, mill tests, build, curated tests, consumer smoke, Docusaurus |
+| `.github/workflows/deploy-docs.yml` | Mill Pages put |
+| `scripts/node/pre-publish-guard.js` | Git + reconcile |
+| `scripts/node/prepare-consumer.cjs` | Tarball path rewrite (not version) |
+
+**Mill home:** `scripts/foundry/` (`@0xray/foundry`, publishable). Old `scripts/node/*.mjs` paths are shims. Mill root is `FOUNDRY_ROOT` or cwd.
+
+**Museum:**
+
+- `sync-versions.mjs`, `release.js` — deleted
+- `publish.yml` — extra GHA door; docs mill runs before PUT
+
+**Live vs archive docs:** Docusaurus `docs-site/docs/` is live; `docs-site/docs/archive/**` is excluded from the build. Kernel headers are era (`**4.1** — a suit that survives the context window`). Patch lives in CHANGELOG + `package.json`.
+
+### 2. Consumer mint / four-floor wear
+
+| Piece | Role |
+|---|---|
+| `scripts/node/postinstall.cjs` | Entry. Consumer vs dogfood |
+| `scripts/node/install-bridges.cjs` | Unified 4-floor copy + hook patch |
+| `scripts/node/bridge-mcp-wiring.cjs` | Generated MCP / Hermes yaml / OpenClaw hooks |
+| `src/cli/commands/{grok,hermes,opencode,openclaw}-install.ts` | Idempotent re-wear |
+| `src/cli/commands/skill-install.ts` `syncBuiltinSkills` | Copy 45 `SKILL.md` into host skill dirs |
+| `AGENTS-consumer.md` | Slim card copied to consumer `AGENTS.md` |
+| `xray/{codex,features,config}.json` | Plant templates → consumer `.xray/` |
+
+**Costume (opt-in):** YML agents, skills, Codex, features, Grok `hooks.json` template, Hermes plugin tree, OpenClaw pre-tool plugin. Default is mill plant, not this dump.
+
+**Generated wiring:** `.mcp.json`, hook command strings with `XRAY_AI_PATH`, consumer-root markers, Repertoire preferred (explicit opt-out only).
+
+**Minted from their tree (overlay).** Default SSOT: `xray/codex.json`, `xray/features.json`, `xray/config.json`, `src/skills/<name>/SKILL.md`, `src/opencode/agents/*.yml`. Postinstall copies those onto `.xray/` and project skill dirs (`.opencode/skills`, project `.grok/plugins/0xray/skills` if present). JSON facets always merge (mill-fill). YML agents are the OpenCode wear dir. Mill-managed `AGENTS.md` overlays from `xray/AGENTS.md`. `foundry.json` remaps mill SSOT paths and may declare `shopPlant`. CLI re-wear mints once after mill copies. `SKILLS.md` is still **not** written to the consumer root. Inventory `suit` is `overlay` when any facet came from their tree, `fastened` when only mill plant, `costume` when `"costume": true`. Dogfood writes no inventory.
+
+**Shop plant (not costume).** Plant-vs-worn allowlists mill plant (`mill` + `inspect`), their `src/skills`, prior inventory, and factory shop plant worn from groover-hangar. Hangar **catalog** is Clearing `GET /v1/catalog` — listed hangars (Groover DID + pin, plus Dynamo solar + a live shop), not a hardcoded `/v1/extract` `/v1/witness` `/v1/pin` route table. Groover MCP `list_hangars` reads that catalog. Worn shop skills are first-class; inspect does not require `"costume": true`. Extra shop names or a plant dir go in `foundry.json` `"shopPlant"` (array, path string, or `{ skills, dir }`). The field is `shopPlant`, not `hangarPlant`: mill plant copy forbids the word hangar. Unknown leftovers (including undeclared `shop-*`) still fail as costume dump.
+
+**Sound plant (not costume).** Mill `@0xray/blip`. Alias `foundry.json` `"plant": "sound"` fastens whatever that mill declares (`sound` + `sound-inspect` + `sound-mixer` today) and turns mill off. Inspect allowlists the mill-declared worn names. Last bed receipt (`.xray/sound-bed-receipt.json`) is PASS/FAIL with chop / levels / peak / hum. `sound mix` levels every genre × tempo × motif (hats / plate / glue). Render is a crystal mill of Rippel membrane/metal/mixer chains (prototype lineage, not a 3-sine toy). Mixer organ lives in the mill. CLI shim `foundry sound` remains (0.1.11+). Not a copy of mill inspect. Not 45/42.
+
+**Blip plant (not costume).** Product mill `@0xray/blip` — sibling to mill + sound (not a mill copy). Hangar shop pair later. `foundry.json` `"plant": "@0xray/blip"` (alias `"plant": "blip"`) fastens whatever that mill declares (`blip` + `blip-inspect` + `blip-vibe` + `blip-looker` today) and turns mill off. `blip vibe` scores stamp density; `blip look` is the friend hitting replay (ship bar 8). Motions live in a dynamic registry. v0: still + Rippel five. `kapow` is a design opt (two-tier stamp on the stanza). Rippel v2 motions are Rippel `VisualConfig.circles` at ≥720p — seed-selected `focus` (solid disc + satellites) or `cage` (Wu hairline + field) + tempo/frequency animation on all five — with a mandatory 4.44s audio bed that syncopates to the motion grid. Receipt `visualConfig.lookKind` + mesh + field are the fingerprints. `still` is the Power Plant ident (plate dissolves, not a frozen poster). Last blip receipt (`.xray/blip/receipt.json`) is PASS/FAIL with duration 4.44s, mode id, audio stream, file present. Organs live in `@0xray/blip`; adding one is a mill publish, not an xray catalog PR. Nested mill `@0xray/foundry@0.1.12` (foundry-plant/0). CLI shims `foundry blip|sound` remain (0.1.11+). Not 45/42.
+
+### 3. Pre / post processors (two stacks)
+
+**Constitution is not a processor.** Live deny is `evaluatePreToolGate` (`src/nucleus/delegation-gate.ts`).
+
+| Stack | Where it runs | Foundry or exo |
+|---|---|---|
+| Grok PreToolUse / PostToolUse / SessionStart / compact | `src/integrations/grok/hooks/*.js` | **EXO** |
+| Station heat | `station-hook-runtime.cjs` | **EXO** |
+| `grok_postprocessor_light` | Grok PostToolUse write tools | **EXO light** (not constitution) |
+| ProcessorManager (25 implementations) | OpenCode plugin + Hermes `pre-process`/`post-process` | **Worn mill catalog** on those floors; Grok live hooks do **not** run this loop |
+| Git pre-commit / post-commit | `scripts/hooks/` | **EXO git**, installed by mill |
+| `inference/session-capture.ts` | post-commit | **EXO git** |
+| `hooks.json` template + `patchGrokHooks` | postinstall | **FOUNDRY** |
+
+If you extract the mill and leave exo: already-worn machines keep denying `any`. New `npm i` stops pinning `.grok/hooks/0xray.json`.
+
+If you extract exo with the mill: mill still copies a costume; the host fail-opens.
+
+### 4. Inference plant, organ, attest
+
+| Surface | Mill | Exo |
+|---|---|---|
+| Inference engine | `src/inference`, `inference:run` (0xRay package only) | `.xray/inference/*` heat (**gitignored**) |
+| Organ | `vendor/@0xray/repertoire`, postinstall enable, MCP launcher | `memory_routing` + `.xray/state/repertoire/` |
+| Suit attest | `vendor/.../verify-*-suit.mjs`, `scripts/mjs/verify-*`, `release-gate` | worn `.xray` + 7 MCP + 4 bridges |
+| Agents/skills SSOT | `src/opencode/agents/*.yml` (42), `src/skills/*/SKILL.md` (45) | `.opencode/`, host skill dirs |
+| Config | `xray/*.json` | `.xray/*.json` (runtime reads only this) |
+
+TS `AGENT_REGISTRY` is a parallel mill muscle. It is **not** checked against YML. Drift risk.
+
+## Split (surgical — not a rebuild)
+
+Do not add a mill MCP. Name, then cut conductors that cross the line. `@0xray/foundry` is the mill package (independent version, not 0xray's).
+
+1. **Name (this page).** Exo stays thin. Mill stays scripts + templates.
+2. **One bumper — landed.** `reconcile-version` only. `version-manager` refuses bump/`--tag`. UVM writes stay short-circuited. `executeReleaseWorkflow` is blocked.
+3. **Docs mill — landed.** CI **verifies**; it does not rewrite prose. Kernel slogan is era (`4.0`). CHANGELOG is the only patch-versioned prose (`[Unreleased]` allowed above current).
+4. **Mint-from-their-SSOT — overlay (landed).** Consumer postinstall writes `.xray/foundry-inventory.json` from **their** `package.json`, fills `{{CONSUMER_NAME}}` on the managed AGENTS card, then overlays constitution, features, skills, and agents from their plant (or `foundry.json` paths). Mill-fill is law. Live `npx @0xray/foundry release` is opt-in. Packed mill tarball mint is executed in tests.
+5. **Processors.** Do not move ProcessorManager into the Grok exo. Do not call it the OS. Optional later: slim OpenCode/Hermes so constitution is the only pre-tool path on every floor.
+6. **Museum.** UVM file is gone. CI mill workflow is on `main`. Wrappers `sync-versions.mjs` / `release.js` deleted. `features-since-3.1` no longer requires the patch string.
+7. **Product mill off the OS (landed 0.1.11).** Blip/sound drawers (render, kapow, vibe, wow-pass listen/cel, mixer, looker) live in `@0xray/blip`. Foundry keeps fasten + inspect + CLI shims. Do not merge mill-drawer PRs into xray after the shims.
+8. **foundry-plant/0 (0.1.12).** Fasten is a protocol, not a foundry catalog of plant kinds. Builtin plant is mill+inspect only. `"plant": "@0xray/blip"` (alias `"blip"`) fastens what that mill declares. Adding looker/vibe/mixer is a mill publish, not an xray catalog PR. CLI shims `foundry blip|sound` remain (0.1.11+).
+
+Order: (2) and (3) make 4.0.x ships cheap. (4) is the foundry product. (5)–(6) are trim. (8) is the fasten cut.
+
+## GitHub pipelines — mill vs exo
+
+The mill **plants and gates**. The exo **wears**. GitHub Actions is mill-time.
+
+| Workflow | Owner | Keep? |
+|---|---|---|
+| `0xRay CI/CD` (`mill-ci.yml`) | **Mill** — typecheck, lint, mill tests, build, curated tests, smoke, Docusaurus | Yes |
+| `Foundry mill (version + docs)` | **Mill** — kernel headers + mill tests | Yes |
+| `Deploy Docs` | **Mill** — Docusaurus → GitHub Pages | Yes |
+| `Foundry mill (CI report)` (`mill-monitor.yml`) | **Mill** — report only, no auto-push | Yes |
+| `Enforce AGENTS.md` | **Mill** — consumer card | Yes |
+| `Processor Tests` | **Mill CI** of exo processors | Yes |
+| `Hermes Plugin Tests` | **Mill CI** of the Hermes floor, path-gated | Yes |
+| `Publish to NPM` / `Release` | **Mill** ship doors (`workflow_dispatch`, live `release` opt-in) | Yes |
+| `CodeQL` | Mill skip stub (not a scan) | Yes, skip |
+| `Code Quality` (`lint.yml`) | Folded into `0xRay CI/CD` | Dispatch-only |
+| `Security Audit` (`security-audit.yml`) | Optional weekly mill | Optional |
+| `Security Audit` (`security.yml`) | Duplicate | Stay disabled |
+| `Security Monitoring Dashboard` | Not mill | Stay disabled |
+| `Auto-Report Generation` | Exo inference reports, not mill | Stay disabled |
+
+**Stay exo (not mill, not a fifth CLI):** PPE (`evaluatePreToolGate`), station card, 7 MCP, four-floor live hooks, ProcessorManager, Repertoire routing, inference heat.
+
+## Not this mill
+
+- Grok Bot as a fifth floor (no PreToolUse deny — not wear).
+- An agent that “updates all the docs.”
+- An 8th `xray-*` server.
+- `release:major` (that is 5.0.0).
+- Copying a static 3.x landing over the Docusaurus homepage.

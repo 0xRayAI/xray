@@ -15,20 +15,11 @@ import os from "os";
 import path from "path";
 import { fileURLToPath } from "url";
 import { createRequire } from "module";
+import { proveSuitAfterInstall } from "./pack-tmp-suit-proof.mjs";
 
 const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, "../..");
-
-const XRAY_MCP_NAMES = [
-  "xray-governance",
-  "xray-skills",
-  "xray-orchestrator",
-  "xray-enforcer",
-  "xray-researcher",
-  "xray-code-review",
-  "xray-architect-tools",
-];
 
 function run(cmd, cwd, { inherit = false } = {}) {
   const result = execSync(cmd, {
@@ -37,6 +28,90 @@ function run(cmd, cwd, { inherit = false } = {}) {
     stdio: inherit ? "inherit" : "pipe",
   });
   return inherit ? "" : String(result).trim();
+}
+
+function assertPackedPackageHasNoFileDeps(tarballPath) {
+  const packedJson = run(`tar -xOf ${JSON.stringify(tarballPath)} package/package.json`);
+  const packed = JSON.parse(packedJson);
+  const buckets = ["dependencies", "optionalDependencies", "peerDependencies"];
+  for (const bucket of buckets) {
+    const entries = packed[bucket] || {};
+    for (const [name, spec] of Object.entries(entries)) {
+      if (String(spec).startsWith("file:")) {
+        throw new Error(
+          `packed package.json must not ship file: ${bucket} ${name}=${spec} (consumers resolve file: from their root)`,
+        );
+      }
+    }
+  }
+  if (!String(packedJson).includes("vendor/@0xray/repertoire/")) {
+    const listing = run(`tar -tzf ${JSON.stringify(tarballPath)}`);
+    if (!listing.includes("package/vendor/@0xray/repertoire/package.json")) {
+      throw new Error("packed tarball missing vendor/@0xray/repertoire/package.json");
+    }
+  }
+  process.stdout.write("  ✅ packed package.json has no file: deps; vendor organ is in the tarball\n");
+}
+
+const REQUIRED_TARBALL_DIST = [
+  "package/dist/cli/index.js",
+  "package/dist/mcps/orchestrator.server.js",
+  "package/dist/integrations/grok/hooks/session-start.js",
+  "package/dist/integrations/hooks/plates.cjs",
+  "package/docs-site/docs/plates/memory-recall.md",
+  "package/docs-site/docs/plates/processor.md",
+  "package/docs-site/docs/plates/goggles.md",
+  "package/docs-site/docs/plates/suit.md",
+  "package/docs-site/docs/plates/kits.md",
+  "package/docs-site/docs/plates/host-pack.md",
+  "package/docs-site/docs/plates/glossary.md",
+];
+
+function assertPackedDistCliInTarball(tarballPath) {
+  const listing = run(`tar -tzf ${JSON.stringify(tarballPath)}`);
+  const lines = new Set(listing.split("\n").map((l) => l.trim()).filter(Boolean));
+  const missing = REQUIRED_TARBALL_DIST.filter((p) => !lines.has(p));
+  if (missing.length > 0) {
+    throw new Error(
+      `packed tarball missing ${missing.join(", ")} (0xray@4.0.13 shipped 0 dist files)`,
+    );
+  }
+  process.stdout.write("  ✅ packed tarball includes dist/cli + MCP + Grok hooks + plate stamps\n");
+}
+
+function assertOrganRequire(tmpRoot) {
+  const consumerRequire = createRequire(path.join(tmpRoot, "package.json"));
+  let organPkg;
+  try {
+    organPkg = consumerRequire("@0xray/repertoire/package.json");
+  } catch (err) {
+    throw new Error(`require('@0xray/repertoire') failed: ${err.message}`);
+  }
+  if (organPkg.name !== "@0xray/repertoire") {
+    throw new Error(`required organ name ${organPkg.name}`);
+  }
+  if (organPkg.version !== "0.2.9") {
+    throw new Error(`required organ version ${organPkg.version}`);
+  }
+  if (fs.existsSync(path.join(tmpRoot, "vendor"))) {
+    throw new Error("consumer install must not create or require a consumer-root vendor/ tree");
+  }
+  console.log("  ✅ require('@0xray/repertoire') from consumer cwd (no consumer vendor/)");
+}
+
+function writeBareConsumerManifest(tmpRoot) {
+  fs.writeFileSync(
+    path.join(tmpRoot, "package.json"),
+    `${JSON.stringify(
+      {
+        name: "xray-consumer-test",
+        version: "0.0.1",
+        private: true,
+      },
+      null,
+      2,
+    )}\n`,
+  );
 }
 
 function assertFreshInstallDefaults(tmpRoot, version) {
@@ -48,9 +123,14 @@ function assertFreshInstallDefaults(tmpRoot, version) {
   if (!features.memory_routing) {
     throw new Error("Deployed features.json missing memory_routing block");
   }
-  if (features.memory_routing.enabled !== false) {
+  if (features.memory_routing.enabled !== true) {
     throw new Error(
-      `Fresh install must default memory_routing.enabled=false (got ${features.memory_routing.enabled})`,
+      `Fresh 4.0 install must ship memory_routing.enabled=true with the vendored organ (got ${features.memory_routing.enabled})`,
+    );
+  }
+  if (features.memory_routing.provider !== "repertoire") {
+    throw new Error(
+      `Fresh install memory_routing.provider must be repertoire (got ${features.memory_routing.provider})`,
     );
   }
   if (!features.inference_governance) {
@@ -58,6 +138,33 @@ function assertFreshInstallDefaults(tmpRoot, version) {
   }
   if (features.inference_governance.enabled !== false) {
     throw new Error("Fresh install must default inference_governance.enabled=false");
+  }
+  const organHoisted = path.join(tmpRoot, "node_modules", "@0xray", "repertoire", "package.json");
+  const organNested = path.join(
+    tmpRoot,
+    "node_modules",
+    "0xray",
+    "node_modules",
+    "@0xray",
+    "repertoire",
+    "package.json",
+  );
+  const organVendor = path.join(
+    tmpRoot,
+    "node_modules",
+    "0xray",
+    "vendor",
+    "@0xray",
+    "repertoire",
+    "package.json",
+  );
+  const organPkg = [organNested, organHoisted, organVendor].find((p) => fs.existsSync(p));
+  if (!organPkg) {
+    throw new Error("vendored @0xray/repertoire missing from fresh tarball install");
+  }
+  const organ = JSON.parse(fs.readFileSync(organPkg, "utf-8"));
+  if (organ.version !== "0.2.9") {
+    throw new Error(`expected organ 0.2.9, got ${organ.version}`);
   }
   console.log("  ✅ .xray/features.json fresh-install defaults (opt-in off)");
   return { consumerFeaturesPath, features };
@@ -114,6 +221,27 @@ function runUpgradeMergeSmoke(tmpRoot, nmRoot, version) {
   if (shippedMarker && !merged[shippedMarker]) {
     throw new Error(`Upgrade merge missing shipped template key: ${shippedMarker}`);
   }
+  fs.writeFileSync(
+    consumerFeaturesPath,
+    `${JSON.stringify(
+      {
+        version: "3.5.5",
+        memory_routing: { enabled: false, provider: "repertoire" },
+      },
+      null,
+      2,
+    )}\n`,
+  );
+  deployXrayConfig(tmpRoot, nmRoot, () => {});
+  const optedOut = JSON.parse(fs.readFileSync(consumerFeaturesPath, "utf-8"));
+  if (optedOut.memory_routing?.enabled !== false) {
+    throw new Error(
+      `Upgrade merge must keep explicit memory_routing opt-out (got ${optedOut.memory_routing?.enabled})`,
+    );
+  }
+  if (optedOut.memory_routing?.provider !== "repertoire") {
+    throw new Error("Upgrade merge dropped memory_routing.provider on opt-out");
+  }
 
   console.log("  ✅ upgrade merge preserves opt-ins + bumps features.version");
 }
@@ -135,26 +263,35 @@ function main() {
       throw new Error(`Tarball not found: ${tarballPath}`);
     }
 
-    const consumerPkg = {
-      name: "0xray-smoke-consumer",
-      private: true,
-      version: "1.0.0",
-      dependencies: {
-        "0xray": `file:${tarballPath}`,
-      },
-    };
-    fs.writeFileSync(
-      path.join(tmpRoot, "package.json"),
-      JSON.stringify(consumerPkg, null, 2) + "\n",
-    );
+    assertPackedPackageHasNoFileDeps(tarballPath);
+    assertPackedDistCliInTarball(tarballPath);
 
-    console.log("📥 npm install (runs postinstall)...");
-    run("npm install", tmpRoot, { inherit: true });
+    writeBareConsumerManifest(tmpRoot);
+
+    console.log("📥 npm install tarball into bare consumer (exact ENOENT repro)...");
+    run(`npm install ${JSON.stringify(tarballPath)}`, tmpRoot, { inherit: true });
+
+    const installLinksRoot = fs.mkdtempSync(path.join(os.tmpdir(), "0xray-smoke-links-"));
+    writeBareConsumerManifest(installLinksRoot);
+    console.log("📥 npm install tarball --install-links (file: ENOENT path)...");
+    run(`npm install ${JSON.stringify(tarballPath)} --install-links`, installLinksRoot, {
+      inherit: true,
+    });
+    assertOrganRequire(installLinksRoot);
+    try {
+      fs.rmSync(installLinksRoot, { recursive: true, force: true });
+    } catch {
+      /* best-effort */
+    }
 
     const nmRoot = path.join(tmpRoot, "node_modules", "0xray");
     const requiredFiles = [
       "scripts/node/install-bridges.cjs",
+      "scripts/node/wear-vendored-repertoire.cjs",
       "scripts/node/postinstall.cjs",
+      "scripts/foundry/mint-suit.cjs",
+      "scripts/foundry/hooks.mjs",
+      "scripts/foundry/plant/skills/mill/SKILL.md",
       "package.json",
       "xray/features.json",
       "xray/features.schema.json",
@@ -168,6 +305,13 @@ function main() {
       console.log(`  ✅ ${rel}`);
     }
 
+    const millSkillHanger = path.join(tmpRoot, ".opencode", "skills", "mill", "SKILL.md");
+    if (fs.existsSync(millSkillHanger)) {
+      throw new Error("postinstall must not fasten mill skills into the project");
+    }
+    if (fs.existsSync(path.join(tmpRoot, ".mcp.json"))) {
+      throw new Error("postinstall must not write .mcp.json");
+    }
     const installedPkg = JSON.parse(fs.readFileSync(path.join(nmRoot, "package.json"), "utf-8"));
     if (installedPkg.version !== version) {
       throw new Error(`Installed version ${installedPkg.version} != packed ${version}`);
@@ -186,24 +330,13 @@ function main() {
     }
     console.log("  ✅ consumer target resolution");
 
-    const mcpPath = path.join(tmpRoot, ".mcp.json");
-    if (!fs.existsSync(mcpPath)) {
-      throw new Error(".mcp.json not created by postinstall");
-    }
-    const mcp = JSON.parse(fs.readFileSync(mcpPath, "utf-8"));
-    const servers = Object.keys(mcp.mcpServers || {});
-    for (const name of XRAY_MCP_NAMES) {
-      if (!servers.includes(name)) {
-        throw new Error(`Missing MCP server in .mcp.json: ${name}`);
-      }
-      const entry = mcp.mcpServers[name];
-      if (entry.command !== "npx") {
-        throw new Error(`${name} should use npx, got ${entry.command}`);
-      }
-    }
-    console.log(`  ✅ .mcp.json has ${XRAY_MCP_NAMES.length} npx MCP servers`);
-
+    fs.mkdirSync(path.join(tmpRoot, ".xray"), { recursive: true });
+    fs.copyFileSync(
+      path.join(nmRoot, "xray", "features.json"),
+      path.join(tmpRoot, ".xray", "features.json"),
+    );
     assertFreshInstallDefaults(tmpRoot, version);
+    assertOrganRequire(tmpRoot);
 
     const schemaInPackage = path.join(nmRoot, "xray", "features.schema.json");
     if (!fs.existsSync(schemaInPackage)) {
@@ -212,6 +345,9 @@ function main() {
     console.log("  ✅ xray/features.schema.json in package");
 
     runUpgradeMergeSmoke(tmpRoot, nmRoot, version);
+
+    console.log("\n📋 Pack → tmp mill fasten + hangar shop plant (not costume)...");
+    proveSuitAfterInstall(tmpRoot, path.join(nmRoot, "scripts", "foundry"));
 
     console.log("\n✅ Consumer install smoke passed\n");
   } catch (err) {

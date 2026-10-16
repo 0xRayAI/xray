@@ -82,6 +82,13 @@ export class SessionMonitor {
   private interactionHistory = new Map<string, InteractionRecord[]>();
   private sessionResponseTimes = new Map<string, number[]>();
   private sessionErrors = new Map<string, number>();
+  /** Stable store records. A field write patches one session instead of cloning the map. */
+  private healthRecord: Record<string, SessionHealth> = {};
+  private metricsRecord: Record<string, SessionMetrics[]> = {};
+  private alertRecord: Record<string, Alert> = {};
+  private interactionRecord: Record<string, InteractionRecord[]> = {};
+  private responseTotals = new Map<string, { sum: number; count: number }>();
+  private outcomeTotals = new Map<string, { success: number; failed: number }>();
 
   constructor(
     stateManager: XrayStateManager,
@@ -134,7 +141,7 @@ export class SessionMonitor {
 
     this.healthChecks.set(sessionId, health);
     this.metricsHistory.set(sessionId, []);
-    this.persistHealthData();
+    this.persistHealth(sessionId);
 
     frameworkLogger.log("session-monitor", "session-registered", "info", {
       sessionId,
@@ -152,7 +159,7 @@ export class SessionMonitor {
       }
     }
 
-    this.persistHealthData();
+    this.persistHealth(sessionId);
     frameworkLogger.log("session-monitor", "session-unregistered", "info", {
       sessionId,
     });
@@ -161,11 +168,17 @@ export class SessionMonitor {
   async performHealthCheck(sessionId: string): Promise<SessionHealth> {
     const jobId = `session-health-check-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
     const startTime = Date.now();
-    const health = this.healthChecks.get(sessionId);
+    const current = this.healthChecks.get(sessionId);
 
-    if (!health) {
+    if (!current) {
       throw new Error(`Session ${sessionId} not registered for monitoring`);
     }
+
+    // Readers keep the last published session until every field is ready.
+    const health: SessionHealth = {
+      ...current,
+      issues: [...current.issues],
+    };
 
     const issues: string[] = [];
     let status: SessionHealth["status"] = "healthy";
@@ -195,7 +208,8 @@ export class SessionMonitor {
       } else {
         health.activeAgents = sessionStatus.agentCount;
 
-        this.performComprehensiveHealthChecks(sessionId, health, issues, sessionStatus);
+        const checked = this.performComprehensiveHealthChecks(sessionId, issues, sessionStatus);
+        if (status === "healthy") status = checked;
 
         if (health.errorCount > 10) {
           issues.push(`High error count: ${health.errorCount} errors detected`);
@@ -207,8 +221,7 @@ export class SessionMonitor {
           status = "critical";
         }
 
-        const recentInteractions = this.interactionHistory.get(sessionId) || [];
-        const failedRatio = this.calculateFailureRatio(recentInteractions);
+        const failedRatio = this.calculateFailureRatio(sessionId);
         if (failedRatio > this.config.alertThresholds.maxErrorRate) {
           issues.push(`High failure rate: ${(failedRatio * 100).toFixed(1)}% failed interactions`);
           status = status === "healthy" ? "degraded" : status;
@@ -265,13 +278,14 @@ export class SessionMonitor {
     health.responseTime = responseTime;
     health.issues = issues;
 
-    this.persistHealthData();
+    this.healthChecks.set(sessionId, health);
+    this.persistHealth(sessionId);
 
     if (issues.length > 0 && this.config.enableAlerts) {
       this.generateAlerts(sessionId, issues, status);
     }
 
-    return { ...health };
+    return health;
   }
 
   collectMetrics(sessionId: string): SessionMetrics | null {
@@ -280,19 +294,13 @@ export class SessionMonitor {
 
     const metadata = this.cleanupManager?.getSessionMetadata(sessionId);
     const interactions = this.interactionHistory.get(sessionId) || [];
-    const responseTimes = this.sessionResponseTimes.get(sessionId) || [];
-    const errorCount = this.sessionErrors.get(sessionId) || 0;
+    const { success: successfulInteractions, failed: failedInteractions, total: totalInteractions } =
+      this.outcomeOf(sessionId);
 
-    const successfulInteractions = interactions.filter(i => i.success).length;
-    const failedInteractions = interactions.filter(i => !i.success).length;
-    const totalInteractions = interactions.length;
+    const avgResponseTime = this.responseAverage(sessionId);
 
-    const avgResponseTime = responseTimes.length > 0
-      ? responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length
-      : 0;
-
-    const conflictResolutionRate = this.calculateConflictResolutionRate(sessionId, interactions);
-    const coordinationEfficiency = this.calculateCoordinationEfficiency(sessionId, interactions);
+    const conflictResolutionRate = this.calculateConflictResolutionRate(sessionId);
+    const coordinationEfficiency = this.calculateCoordinationEfficiency(sessionId, interactions ?? []);
 
     const metrics: SessionMetrics = {
       timestamp: Date.now(),
@@ -307,15 +315,22 @@ export class SessionMonitor {
       agentCount: sessionStatus.agentCount,
     };
 
-    const history = this.metricsHistory.get(sessionId) || [];
+    let history = this.metricsHistory.get(sessionId);
+    if (!history) {
+      history = [];
+      this.metricsHistory.set(sessionId, history);
+    }
     history.push(metrics);
 
     if (history.length > 100) {
       history.shift();
     }
 
-    this.metricsHistory.set(sessionId, history);
-    this.persistMetricsData();
+    this.metricsRecord[sessionId] = history;
+    for (const key of Object.keys(this.metricsRecord)) {
+      if (!this.metricsHistory.has(key)) delete this.metricsRecord[key];
+    }
+    this.stateManager.set("monitor:metrics", this.metricsRecord);
 
     return metrics;
   }
@@ -330,11 +345,12 @@ export class SessionMonitor {
   }
 
   getActiveAlerts(sessionId?: string): Alert[] {
-    const alerts = Array.from(this.activeAlerts.values());
-    if (sessionId) {
-      return alerts.filter((alert) => alert.sessionId === sessionId);
+    if (!sessionId) return Array.from(this.activeAlerts.values());
+    const matched: Alert[] = [];
+    for (const alert of this.activeAlerts.values()) {
+      if (alert.sessionId === sessionId) matched.push(alert);
     }
-    return alerts;
+    return matched;
   }
 
   resolveAlert(alertId: string): boolean {
@@ -343,7 +359,8 @@ export class SessionMonitor {
       alert.resolved = true;
       alert.resolvedAt = Date.now();
       this.activeAlerts.delete(alertId);
-      this.persistAlertData();
+      delete this.alertRecord[alertId];
+      this.stateManager.set("monitor:alerts", this.alertRecord);
       frameworkLogger.log("session-monitor", "alert-resolved", "info", {
         alertId,
       });
@@ -454,19 +471,21 @@ export class SessionMonitor {
       };
 
       this.activeAlerts.set(alert.id, alert);
+      this.alertRecord[alert.id] = alert;
       frameworkLogger.log("session-monitor", "alert-generated", "info", {
         sessionId,
         issue,
       });
     }
 
-    this.persistAlertData();
+    this.stateManager.set("monitor:alerts", this.alertRecord);
   }
 
   private loadPersistedData(): void {
     const healthData =
       this.stateManager.get<Record<string, SessionHealth>>("monitor:health");
-    if (healthData) {
+    if (healthData && typeof healthData === "object" && !Array.isArray(healthData)) {
+      this.healthRecord = healthData;
       for (const [sessionId, health] of Object.entries(healthData)) {
         this.healthChecks.set(sessionId, health);
       }
@@ -476,7 +495,8 @@ export class SessionMonitor {
       this.stateManager.get<Record<string, SessionMetrics[]>>(
         "monitor:metrics",
       );
-    if (metricsData) {
+    if (metricsData && typeof metricsData === "object" && !Array.isArray(metricsData)) {
+      this.metricsRecord = metricsData;
       for (const [sessionId, history] of Object.entries(metricsData)) {
         this.metricsHistory.set(sessionId, history);
       }
@@ -484,26 +504,34 @@ export class SessionMonitor {
 
     const alertData =
       this.stateManager.get<Record<string, Alert>>("monitor:alerts");
-    if (alertData) {
+    if (alertData && typeof alertData === "object" && !Array.isArray(alertData)) {
+      this.alertRecord = alertData;
       for (const [alertId, alert] of Object.entries(alertData)) {
         this.activeAlerts.set(alertId, alert);
       }
     }
+
+    const interactionData =
+      this.stateManager.get<Record<string, InteractionRecord[]>>("monitor:interactions");
+    if (
+      interactionData &&
+      typeof interactionData === "object" &&
+      !Array.isArray(interactionData)
+    ) {
+      this.interactionRecord = interactionData;
+      for (const [sessionId, history] of Object.entries(interactionData)) {
+        if (!Array.isArray(history)) continue;
+        this.interactionHistory.set(sessionId, history);
+        this.seedInteractionTotals(sessionId, history);
+      }
+    }
   }
 
-  private persistHealthData(): void {
-    const healthData = Object.fromEntries(this.healthChecks);
-    this.stateManager.set("monitor:health", healthData);
-  }
-
-  private persistMetricsData(): void {
-    const metricsData = Object.fromEntries(this.metricsHistory);
-    this.stateManager.set("monitor:metrics", metricsData);
-  }
-
-  private persistAlertData(): void {
-    const alertData = Object.fromEntries(this.activeAlerts);
-    this.stateManager.set("monitor:alerts", alertData);
+  private persistHealth(sessionId: string): void {
+    const health = this.healthChecks.get(sessionId);
+    if (health) this.healthRecord[sessionId] = health;
+    else delete this.healthRecord[sessionId];
+    this.stateManager.set("monitor:health", this.healthRecord);
   }
 
   shutdown(): void {
@@ -527,28 +555,87 @@ export class SessionMonitor {
     sessionId: string,
     interaction: InteractionRecord,
   ): void {
-    if (!this.interactionHistory.has(sessionId)) {
-      this.interactionHistory.set(sessionId, []);
+    let interactions = this.interactionHistory.get(sessionId);
+    if (!interactions) {
+      interactions = [];
+      this.interactionHistory.set(sessionId, interactions);
     }
-
-    const interactions = this.interactionHistory.get(sessionId)!;
+    this.interactionRecord[sessionId] = interactions;
     interactions.push(interaction);
 
+    let outcomes = this.outcomeTotals.get(sessionId);
+    if (!outcomes) {
+      outcomes = { success: 0, failed: 0 };
+      this.outcomeTotals.set(sessionId, outcomes);
+    }
+    if (interaction.success) outcomes.success += 1;
+    else outcomes.failed += 1;
+
     if (interactions.length > 100) {
-      interactions.shift();
+      const removed = interactions.shift();
+      if (removed) {
+        if (removed.success) outcomes.success -= 1;
+        else outcomes.failed -= 1;
+      }
     }
 
-    if (!this.sessionResponseTimes.has(sessionId)) {
-      this.sessionResponseTimes.set(sessionId, []);
+    let responseTimes = this.sessionResponseTimes.get(sessionId);
+    if (!responseTimes) {
+      responseTimes = [];
+      this.sessionResponseTimes.set(sessionId, responseTimes);
     }
-    this.sessionResponseTimes.get(sessionId)!.push(interaction.duration);
+    responseTimes.push(interaction.duration);
+    const totals = this.responseTotals.get(sessionId) ?? { sum: 0, count: 0 };
+    totals.sum += interaction.duration;
+    totals.count += 1;
+    this.responseTotals.set(sessionId, totals);
 
     if (!interaction.success) {
       const currentErrors = this.sessionErrors.get(sessionId) || 0;
       this.sessionErrors.set(sessionId, currentErrors + 1);
     }
 
-    this.persistInteractionData();
+    this.persistInteractions();
+  }
+
+  private persistInteractions(): void {
+    this.interactionRecord = this.adoptStoreRecord(
+      "monitor:interactions",
+      this.interactionRecord,
+    );
+    this.stateManager.set("monitor:interactions", this.interactionRecord);
+  }
+
+  private seedInteractionTotals(sessionId: string, history: InteractionRecord[]): void {
+    let success = 0;
+    let failed = 0;
+    let sum = 0;
+    for (const item of history) {
+      if (item.success) success += 1;
+      else failed += 1;
+      sum += item.duration;
+    }
+    this.outcomeTotals.set(sessionId, { success, failed });
+    this.responseTotals.set(sessionId, { sum, count: history.length });
+  }
+
+  private adoptStoreRecord<T>(
+    key: string,
+    record: Record<string, T>,
+  ): Record<string, T> {
+    const existing = this.stateManager.get<Record<string, T>>(key);
+    if (
+      !existing ||
+      typeof existing !== "object" ||
+      Array.isArray(existing) ||
+      existing === record
+    ) {
+      return record;
+    }
+    for (const [id, value] of Object.entries(record)) {
+      existing[id] = value;
+    }
+    return existing;
   }
 
   /**
@@ -564,66 +651,85 @@ export class SessionMonitor {
    */
   private performComprehensiveHealthChecks(
     sessionId: string,
-    health: SessionHealth,
     issues: string[],
     sessionStatus: { active: boolean; agentCount: number },
-  ): void {
+  ): SessionHealth["status"] {
+    let status: SessionHealth["status"] = "healthy";
     if (!sessionStatus.active) {
       issues.push("Session is not active");
-      health.status = "degraded";
+      status = "degraded";
     }
 
-    const interactions = this.interactionHistory.get(sessionId) || [];
-    const recentWindow = interactions.slice(-20);
+    const interactions = this.interactionHistory.get(sessionId);
+    const lastInteraction = interactions && interactions.length > 0
+      ? interactions[interactions.length - 1]
+      : undefined;
     const staleThreshold = 5 * 60 * 1000;
 
-    if (recentWindow.length > 0) {
-      const lastInteraction = recentWindow[recentWindow.length - 1];
-      if (lastInteraction) {
-        const timeSinceLastInteraction = Date.now() - lastInteraction.timestamp;
+    if (lastInteraction) {
+      const timeSinceLastInteraction = Date.now() - lastInteraction.timestamp;
 
-        if (timeSinceLastInteraction > staleThreshold) {
-          issues.push(`Stale session: no activity for ${Math.round(timeSinceLastInteraction / 1000)}s`);
-          health.status = "degraded";
-        }
+      if (timeSinceLastInteraction > staleThreshold) {
+        issues.push(`Stale session: no activity for ${Math.round(timeSinceLastInteraction / 1000)}s`);
+        status = "degraded";
       }
     }
 
-    const responseTimes = this.sessionResponseTimes.get(sessionId) || [];
-    if (responseTimes.length > 0) {
-      const avgResponseTime = responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length;
-      if (avgResponseTime > this.config.alertThresholds.maxResponseTime * 1.5) {
-        issues.push(`Elevated response time: ${avgResponseTime.toFixed(0)}ms average`);
-      }
+    const avgResponseTime = this.responseAverage(sessionId);
+    if (avgResponseTime > this.config.alertThresholds.maxResponseTime * 1.5) {
+      issues.push(`Elevated response time: ${avgResponseTime.toFixed(0)}ms average`);
     }
 
-    const coordinationEfficiency = this.calculateCoordinationEfficiency(sessionId, interactions);
+    const coordinationEfficiency = this.calculateCoordinationEfficiency(sessionId, interactions ?? []);
     if (coordinationEfficiency < this.config.alertThresholds.minCoordinationEfficiency) {
       issues.push(`Low coordination efficiency: ${(coordinationEfficiency * 100).toFixed(0)}%`);
-      health.status = "degraded";
+      status = "degraded";
     }
+
+    return status;
   }
 
   /**
    * Calculate failure ratio from interactions
    */
-  private calculateFailureRatio(interactions: InteractionRecord[]): number {
-    if (interactions.length === 0) return 0;
-    const failures = interactions.filter(i => !i.success).length;
-    return failures / interactions.length;
+  private outcomeOf(sessionId: string): { success: number; failed: number; total: number } {
+    const outcomes = this.outcomeTotals.get(sessionId);
+    const success = outcomes?.success ?? 0;
+    const failed = outcomes?.failed ?? 0;
+    return { success, failed, total: success + failed };
+  }
+
+  private responseAverage(sessionId: string): number {
+    const totals = this.responseTotals.get(sessionId);
+    if (!totals || totals.count === 0) return 0;
+    return totals.sum / totals.count;
+  }
+
+  private hasDiverseRecentAgents(interactions: InteractionRecord[]): boolean {
+    const start = Math.max(0, interactions.length - 10);
+    let first: string | undefined;
+    for (let index = start; index < interactions.length; index += 1) {
+      const agentId = interactions[index]?.agentId;
+      if (!agentId) continue;
+      if (first === undefined) first = agentId;
+      else if (agentId !== first) return true;
+    }
+    return false;
+  }
+
+  private calculateFailureRatio(sessionId: string): number {
+    const { failed, total } = this.outcomeOf(sessionId);
+    if (total === 0) return 0;
+    return failed / total;
   }
 
   /**
    * Calculate conflict resolution rate from interactions
    */
-  private calculateConflictResolutionRate(
-    sessionId: string,
-    interactions: InteractionRecord[],
-  ): number {
-    if (interactions.length === 0) return 1.0;
-
-    const successfulInteractions = interactions.filter(i => i.success).length;
-    return successfulInteractions / interactions.length;
+  private calculateConflictResolutionRate(sessionId: string): number {
+    const { success, total } = this.outcomeOf(sessionId);
+    if (total === 0) return 1.0;
+    return success / total;
   }
 
   /**
@@ -633,24 +739,13 @@ export class SessionMonitor {
     sessionId: string,
     interactions: InteractionRecord[],
   ): number {
-    if (interactions.length === 0) return 1.0;
+    const { success, total } = this.outcomeOf(sessionId);
+    if (total === 0) return 1.0;
 
-    const successfulInteractions = interactions.filter(i => i.success).length;
-    const baseEfficiency = successfulInteractions / interactions.length;
-
-    const recentInteractions = interactions.slice(-10);
-    const hasMultipleAgents = new Set(recentInteractions.map(i => i.agentId).filter(Boolean)).size > 1;
-    const agentDiversityBonus = hasMultipleAgents ? 0.1 : 0;
+    const baseEfficiency = success / total;
+    const agentDiversityBonus = this.hasDiverseRecentAgents(interactions) ? 0.1 : 0;
 
     return Math.min(1.0, baseEfficiency + agentDiversityBonus);
-  }
-
-  private persistInteractionData(): void {
-    const interactionData: Record<string, InteractionRecord[]> = {};
-    for (const [sessionId, history] of this.interactionHistory) {
-      interactionData[sessionId] = history;
-    }
-    this.stateManager.set("monitor:interactions", interactionData);
   }
 
   private calculateSessionMemoryUsage(sessionId: string): number {
@@ -666,31 +761,28 @@ export class SessionMonitor {
   }
 
   private countSessionConflicts(sessionId: string): number {
-    // Estimate conflicts based on failed interactions
-    const interactions = this.interactionHistory.get(sessionId) || [];
-    const failedInteractions = interactions.filter(i => !i.success).length;
-
     // Conflicts are estimated as failed interactions that might indicate coordination issues
-    return Math.floor(failedInteractions * 0.1); // Assume 10% of failures are conflicts
+    return Math.floor(this.outcomeOf(sessionId).failed * 0.1);
   }
 
   private calculateAverageResponseTime(sessionId: string): number {
-    // Calculate average response time from recent metrics
-    const history = this.getMetricsHistory(sessionId, 10); // Last 10 metrics
-    if (history.length === 0) return 0;
+    const history = this.metricsHistory.get(sessionId);
+    if (!history || history.length === 0) return 0;
 
-    const totalResponseTime = history.reduce((sum, metric) => {
-      // Estimate response time based on coordination efficiency
-      // This is a simplified calculation
-      return (
-        sum +
-        (metric.successfulInteractions > 0
+    const start = Math.max(0, history.length - 10);
+    let totalResponseTime = 0;
+    let counted = 0;
+    for (let index = start; index < history.length; index += 1) {
+      const metric = history[index];
+      if (!metric) continue;
+      totalResponseTime +=
+        metric.successfulInteractions > 0
           ? 1000 / metric.successfulInteractions
-          : 1000)
-      );
-    }, 0);
+          : 1000;
+      counted += 1;
+    }
 
-    return totalResponseTime / history.length;
+    return counted === 0 ? 0 : totalResponseTime / counted;
   }
 }
 

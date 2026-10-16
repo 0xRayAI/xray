@@ -3,7 +3,28 @@ import { frameworkLogger } from "../core/framework-logger.js";
 import { ProcessorRegistration, ProcessorHook, PreValidateContext, PostValidateContext, ProcessorExecutionResult, ProcessorContext } from "./processor-types.js";
 import { IProcessor, BaseProcessor } from "./processor-interfaces.js";
 import { readdir } from "fs/promises";
-import { join, basename } from "path";
+import { join, basename, dirname } from "path";
+import { fileURLToPath } from "url";
+
+const moduleDir = dirname(fileURLToPath(import.meta.url));
+
+function asProcessorContext(ctx: Record<string, unknown>): ProcessorContext {
+  return ctx as ProcessorContext;
+}
+
+function readContextString(
+  ctx: Record<string, unknown>,
+  key: "filePath" | "operation" | "directory" | "tool",
+): string | undefined {
+  const direct = ctx[key];
+  if (typeof direct === "string" && direct.length > 0) return direct;
+  const toolInput = ctx.toolInput;
+  if (!toolInput || typeof toolInput !== "object") return undefined;
+  const args = (toolInput as { args?: unknown }).args;
+  if (!args || typeof args !== "object") return undefined;
+  const value = (args as Record<string, unknown>)[key];
+  return typeof value === "string" && value.length > 0 ? value : undefined;
+}
 
 export interface StaggerPolicy {
   minIntervalMs: number;
@@ -63,30 +84,39 @@ export class ProcessorManager {
     this.stateManager = stateManager;
     this.registerBuiltInFactories();
   }
-
   registerProcessorInstance(processor: IProcessor): boolean {
-    if (this.factories.has(processor.name)) {
-      return false;
+    const factoryExisted = this.factories.has(processor.name);
+    if (!factoryExisted) {
+      this.factories.set(processor.name, {
+        execute: async (ctx) => {
+          const result = await processor.execute(asProcessorContext(ctx));
+          return result.data;
+        },
+      });
     }
 
-    this.factories.set(processor.name, {
-      execute: async (ctx) => {
-        const result = await processor.execute(ctx as ProcessorContext);
-        return result.data;
-      },
-    });
+    const processorExisted = this.processors.has(processor.name);
+    if (!processorExisted) {
+      this.registerProcessor({
+        name: processor.name,
+        type: processor.type,
+        priority: processor.priority,
+        enabled: processor.enabled,
+      });
+    }
 
     frameworkLogger.log("processor-manager", "auto-discovered-processor", "info", {
       name: processor.name,
       type: processor.type,
       priority: processor.priority,
+      registered: !processorExisted,
     });
 
-    return true;
+    return !factoryExisted || !processorExisted;
   }
 
   async discoverProcessors(directory?: string): Promise<string[]> {
-    const dir = directory || join(__dirname, "implementations");
+    const dir = directory || join(moduleDir, "implementations");
     const discovered: string[] = [];
 
     let files: string[];
@@ -199,8 +229,8 @@ export class ProcessorManager {
       execute: async (ctx) => {
         const { LogProtectionProcessor } = await import("./implementations/log-protection-processor.js");
         const p = new LogProtectionProcessor();
-        const filePath = (ctx as any).filePath || (ctx as any).toolInput?.args?.filePath;
-        const operation = (ctx as any).operation || (ctx as any).toolInput?.args?.operation;
+        const filePath = readContextString(ctx, "filePath");
+        const operation = readContextString(ctx, "operation");
         const result = await p.execute({ filePath, operation } as ProcessorContext);
         return result.data;
       },
@@ -303,7 +333,7 @@ export class ProcessorManager {
     f.set("testAutoCreation", {
       execute: async (ctx) => {
         const { testAutoCreationProcessor } = await import("./implementations/test-auto-creation-processor.js");
-        const result = await testAutoCreationProcessor.execute(ctx as any);
+        const result = await testAutoCreationProcessor.execute(asProcessorContext(ctx));
         return { success: result.success, message: result.message, data: result.data };
       },
       init: async () => {
@@ -325,8 +355,8 @@ export class ProcessorManager {
         const { AgentsMdValidationProcessor } = await import("./implementations/agents-md-validation-processor.js");
         const p = new AgentsMdValidationProcessor(process.cwd());
         const result = await p.execute({
-          tool: (ctx as any).tool || "validate",
-          operation: (ctx as any).operation || "pre-commit",
+          tool: readContextString(ctx, "tool") ?? "validate",
+          operation: readContextString(ctx, "operation") ?? "pre-commit",
         });
         return {
           success: result.success,
@@ -359,7 +389,7 @@ export class ProcessorManager {
     f.set("typescriptCompilation", {
       execute: async (ctx) => {
         const { runTypeScriptCompilation } = await import("./implementations/typescript-compilation-processor.js");
-        const cwd = (ctx as any).directory || process.cwd();
+        const cwd = readContextString(ctx, "directory") ?? process.cwd();
         return runTypeScriptCompilation(cwd) as unknown as Record<string, unknown>;
       },
       init: async () => {
@@ -751,7 +781,7 @@ export class ProcessorManager {
 
   async executePostProcessors(
     operation: string,
-    data: any,
+    data: unknown,
     preResults: ProcessorResult[],
   ): Promise<ProcessorResult[]> {
     const jobId = `execute-post-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
@@ -904,7 +934,7 @@ export class ProcessorManager {
 
   private validateProcessorContext(
     processorName: string,
-    context: any,
+    context: unknown,
   ): { valid: boolean; errors: string[] } {
     const errors: string[] = [];
 
@@ -915,10 +945,15 @@ export class ProcessorManager {
       return { valid: true, errors: [] };
     }
 
-    const contextData = context.data;
+    const record = context as Record<string, unknown>;
+    const contextData = record.data;
     if (contextData && typeof contextData !== "object") {
       return { valid: true, errors: [] };
     }
+    const dataRecord: Record<string, unknown> =
+      contextData && typeof contextData === "object"
+        ? (contextData as Record<string, unknown>)
+        : {};
 
     const requiredFields: Record<string, string[]> = {
       preValidate: ["operation"],
@@ -935,7 +970,7 @@ export class ProcessorManager {
     const required = requiredFields[processorName] || [];
 
     for (const field of required) {
-      if (!(field in context) && !(field in (context.data || {}))) {
+      if (!(field in record) && !(field in dataRecord)) {
         errors.push(`Missing required field: ${field}`);
       }
     }
@@ -944,7 +979,7 @@ export class ProcessorManager {
       frameworkLogger.log("processor-manager", "context-validation-warnings", "info", {
         processor: processorName,
         errors,
-        contextKeys: Object.keys(context),
+        contextKeys: Object.keys(record),
       });
     }
 

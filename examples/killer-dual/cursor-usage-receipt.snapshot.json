@@ -1,0 +1,39 @@
+{
+  "ok": true,
+  "protocol": "real-work-ab",
+  "timestamp": "2026-09-15T09:25:57.442Z",
+  "sessionId": "bc-cd19bb4e-a4bc-57da-8979-754bb0c202fe",
+  "compact": {
+    "hostFired": false,
+    "preCompactCount": 0,
+    "preToolUseCount": 179,
+    "afterFileEditCount": 28,
+    "eventClass": "cursor-host-precompact-FAIL",
+    "probeLogExists": true
+  },
+  "usage": {
+    "ok": true,
+    "forbidden": false,
+    "miss": true,
+    "reason": "MCP/dashboard identity present; token counts MISS (do not fill)",
+    "method": "mcp",
+    "source": "cursor-cloud-run-info",
+    "context_tokens": null,
+    "context_usage_percent": null,
+    "context_window_size": null,
+    "windowCite": "Grok 500k locked (ticket). Host context_window_size MISS. cursor-cloud get-events count=0.",
+    "model": "cursor-grok-4.6-high",
+    "bcId": "bc-cd19bb4e-a4bc-57da-8979-754bb0c202fe"
+  },
+  "repertoire": {
+    "fastened": true,
+    "resume": "Repertoire: on — 8 signals",
+    "name": "@0xray/repertoire",
+    "version": "0.2.0",
+    "npmPath": "/workspace/node_modules/@0xray/repertoire",
+    "vendorPath": "/workspace/vendor/@0xray/repertoire",
+    "providerExists": true,
+    "signalsExists": true
+  },
+  "hooksAtBoot": true
+}

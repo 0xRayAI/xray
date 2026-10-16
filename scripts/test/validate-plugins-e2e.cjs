@@ -257,8 +257,10 @@ async function main() {
     // Verify .opencode/ was created
     const opencodeDir = path.join(opencodeInstallDir, '.opencode');
     result('.opencode/ directory created', fs.existsSync(opencodeDir), 'not found');
+    const pluginJs = path.join(opencodeDir, 'plugin', 'xray-codex-injection.js');
+    result('.opencode/plugin/xray-codex-injection.js present', fs.existsSync(pluginJs), 'not found');
     const initSh = path.join(opencodeDir, 'init.sh');
-    result('.opencode/init.sh present', fs.existsSync(initSh), 'not found');
+    result('mill install leaves leftover init.sh uncopied', !fs.existsSync(initSh), 'init.sh was copied');
 
     // Verify node_modules/0xray still intact after opencode install's npm install
     result('node_modules/0xray still resolves after install', fs.existsSync(xrayPkgPath), 'unresolved');

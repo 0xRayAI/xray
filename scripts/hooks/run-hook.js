@@ -20,8 +20,9 @@
  */
 
 import { existsSync, readFileSync, writeFileSync, mkdirSync, appendFileSync } from "fs";
-import { join, dirname } from "path";
+import { join, dirname, resolve } from "path";
 import { execSync, exec, execFileSync } from "child_process";
+import { fileURLToPath, pathToFileURL } from "url";
 
 // ── Parse arguments ──────────────────────────────────────────
 
@@ -203,82 +204,152 @@ function runTypeScriptCheck(files) {
   }
 }
 
-// ── Codex validation ─────────────────────────────────────────
+// ── Codex validation (diff-hunk scoped) ──────────────────────
 
-async function runCodexValidation(files) {
+/** Parse + lines from a unified diff (staged or commit-range). */
+export function parseAddedLinesFromDiff(diff) {
+  const addedLines = [];
+  for (const line of diff.split("\n")) {
+    if (
+      line.startsWith("+++") ||
+      line.startsWith("---") ||
+      line.startsWith("@@") ||
+      line.startsWith("diff ") ||
+      line.startsWith("index ")
+    ) {
+      continue;
+    }
+    if (line.startsWith("+")) {
+      addedLines.push(line.slice(1));
+    }
+  }
+  return addedLines;
+}
+
+/**
+ * Collect added lines per file from git diff.
+ * scope `staged` → --cached (pre-commit); scope `range` → COMMIT_RANGE (pre-push).
+ */
+export function getAddedLinesByFile(
+  files,
+  { scope = "staged", range = null, root = projectRoot } = {},
+) {
+  const addedByFile = new Map();
+
+  for (const file of files) {
+    if (!/\.(ts|tsx|js|jsx|mjs)$/.test(file)) continue;
+    try {
+      const gitArgs =
+        scope === "range" && range
+          ? ["diff", range, "-U0", "--", file]
+          : ["diff", "--cached", "-U0", "--", file];
+      const diff = execFileSync("git", gitArgs, {
+        cwd: root,
+        encoding: "utf-8",
+        stdio: ["pipe", "pipe", "pipe"],
+      });
+      const addedLines = parseAddedLinesFromDiff(diff);
+      if (addedLines.length > 0) {
+        addedByFile.set(file, addedLines);
+      }
+    } catch {
+      // Deletions-only or unreadable diff — skip codex for this file
+    }
+  }
+
+  return addedByFile;
+}
+
+/** Pre-commit: staged diff hunks only. */
+export function getStagedAddedLinesByFile(files, root = projectRoot) {
+  return getAddedLinesByFile(files, { scope: "staged", root });
+}
+
+/** Pre-push: added lines in commit range (e.g. remote..local). */
+export function getRangeAddedLinesByFile(files, range, root = projectRoot) {
+  return getAddedLinesByFile(files, { scope: "range", range, root });
+}
+
+export function scanAddedLinesForCodex(file, addedLines) {
+  const errors = [];
+  const warnings = [];
+  const content = addedLines.join("\n");
+  const lines = addedLines;
+
+  const consoleLogLines = lines.reduce((acc, line, i) => {
+    if (/\bconsole\.(log|warn|error)\b/.test(line) && !line.includes("NOSONAR")) {
+      acc.push(i + 1);
+    }
+    return acc;
+  }, []);
+  if (consoleLogLines.length > 0) {
+    errors.push(
+      `${file}: console.log/warn/error in staged diff at hunk line(s) ${consoleLogLines.slice(0, 3).join(", ")}`,
+    );
+  }
+
+  const todoLines = lines.reduce((acc, line, i) => {
+    if (/\/\/\s*(TODO|FIXME|HACK|XXX)\b/i.test(line)) {
+      acc.push(i + 1);
+    }
+    return acc;
+  }, []);
+  if (todoLines.length > 0) {
+    warnings.push(`${file}: ${todoLines.length} TODO/FIXME in staged diff`);
+  }
+
+  const tsIgnoreLines = lines.reduce((acc, line, i) => {
+    if (/@ts-ignore|@ts-nocheck|@ts-expect-error/.test(line)) {
+      acc.push(i + 1);
+    }
+    return acc;
+  }, []);
+  if (tsIgnoreLines.length > 0) {
+    warnings.push(`${file}: ${tsIgnoreLines.length} @ts-ignore/@ts-nocheck in staged diff`);
+  }
+
+  if (/\bany\b/.test(content)) {
+    const anyLines = lines.reduce((acc, line, i) => {
+      if (/\bany\b/.test(line) && !line.includes("//") && !line.includes("*")) {
+        acc.push(i + 1);
+      }
+      return acc;
+    }, []);
+    if (anyLines.length > 0) {
+      warnings.push(`${file}: ${anyLines.length} use(s) of 'any' in staged diff`);
+    }
+  }
+
+  return { errors, warnings };
+}
+
+async function runCodexValidation(files, options = {}) {
   /**
-   * Run lightweight codex validation on files.
-   * Uses dynamic import of framework modules when available.
+   * Run lightweight codex validation on diff hunks only (staged or commit range).
    */
-  log("Running Codex validation...");
+  const scope = options.scope || "staged";
+  const range = options.range || null;
+  const scopeLabel = scope === "range" && range ? `range ${range}` : "staged";
+  log(`Running Codex validation (diff-hunk scope: ${scopeLabel})...`);
 
-  const tsFiles = files.filter((f) => /\.(ts|tsx)$/.test(f));
-  const jsFiles = files.filter((f) => /\.(js|jsx|mjs)$/.test(f));
-
-  if (tsFiles.length === 0 && jsFiles.length === 0) {
+  const codexFiles = files.filter((f) => /\.(ts|tsx|js|jsx|mjs)$/.test(f));
+  if (codexFiles.length === 0) {
     return { passed: true, warnings: [], errors: [] };
   }
 
-  // Quick static checks without framework dependency
+  const addedByFile =
+    scope === "range" && range
+      ? getRangeAddedLinesByFile(codexFiles, range)
+      : getStagedAddedLinesByFile(codexFiles);
   const errors = [];
   const warnings = [];
 
-  for (const file of [...tsFiles, ...jsFiles]) {
-    const filePath = join(projectRoot, file);
-    if (!existsSync(filePath)) continue;
-
-    try {
-      const content = readFileSync(filePath, "utf-8");
-      const lines = content.split("\n");
-
-      // Check for console.log (codex violation)
-      const consoleLogLines = lines.reduce((acc, line, i) => {
-        if (/\bconsole\.(log|warn|error)\b/.test(line) && !line.includes("NOSONAR")) {
-          acc.push(i + 1);
-        }
-        return acc;
-      }, []);
-      if (consoleLogLines.length > 0) {
-        errors.push(`${file}: console.log/warn/error found at lines ${consoleLogLines.slice(0, 3).join(", ")}`);
-      }
-
-      // Check for TODO/FIXME
-      const todoLines = lines.reduce((acc, line, i) => {
-        if (/\/\/\s*(TODO|FIXME|HACK|XXX)\b/i.test(line)) {
-          acc.push(i + 1);
-        }
-        return acc;
-      }, []);
-      if (todoLines.length > 0) {
-        warnings.push(`${file}: ${todoLines.length} TODO/FIXME comment(s) found`);
-      }
-
-      // Check for @ts-ignore
-      const tsIgnoreLines = lines.reduce((acc, line, i) => {
-        if (/@ts-ignore|@ts-nocheck|@ts-expect-error/.test(line)) {
-          acc.push(i + 1);
-        }
-        return acc;
-      }, []);
-      if (tsIgnoreLines.length > 0) {
-        warnings.push(`${file}: ${tsIgnoreLines.length} @ts-ignore/@ts-nocheck found`);
-      }
-
-      // Check for any type
-      if (/\bany\b/.test(content)) {
-        const anyLines = lines.reduce((acc, line, i) => {
-          if (/\bany\b/.test(line) && !line.includes("//") && !line.includes("*")) {
-            acc.push(i + 1);
-          }
-          return acc;
-        }, []);
-        if (anyLines.length > 3) {
-          warnings.push(`${file}: ${anyLines.length} uses of 'any' type`);
-        }
-      }
-    } catch {
-      // Skip unreadable files
-    }
+  for (const file of codexFiles) {
+    const addedLines = addedByFile.get(file);
+    if (!addedLines || addedLines.length === 0) continue;
+    const scan = scanAddedLinesForCodex(file, addedLines);
+    errors.push(...scan.errors);
+    warnings.push(...scan.warnings);
   }
 
   const passed = errors.length === 0;
@@ -301,8 +372,9 @@ async function runLogMaintenance() {
 
   try {
     const distDirs = [
-      join(projectRoot, "dist"),
+      join(projectRoot, "node_modules", "0xray", "dist"),
       join(projectRoot, "node_modules", "xray", "dist"),
+      join(projectRoot, "dist"),
     ];
 
     for (const distDir of distDirs) {
@@ -310,7 +382,9 @@ async function runLogMaintenance() {
       if (!existsSync(triggerPath)) continue;
 
       try {
-        const { archiveLogFiles, cleanupLogFiles } = await import(triggerPath);
+        const { archiveLogFiles, cleanupLogFiles } = await import(
+          pathToFileURL(triggerPath).href
+        );
 
         // Archive logs
         try {
@@ -375,7 +449,7 @@ async function runLogMaintenance() {
 
 // ── Comprehensive validation (pre-push) ──────────────────────
 
-async function runFullValidation(files) {
+async function runFullValidation(files, commitRange = null) {
   /**
    * Full validation suite for pre-push.
    * Includes TypeScript check, codex validation, and test hints.
@@ -385,8 +459,11 @@ async function runFullValidation(files) {
   // TypeScript check
   const tsResult = runTypeScriptCheck(files);
 
-  // Codex validation
-  const codexResult = await runCodexValidation(files);
+  // Codex validation — commit range diff (not --cached)
+  const codexResult = await runCodexValidation(files, {
+    scope: commitRange ? "range" : "staged",
+    range: commitRange,
+  });
 
   // Check for test files
   const sourceFiles = files.filter((f) =>
@@ -466,6 +543,67 @@ async function handlePreCommit() {
   process.exit(0);
 }
 
+function loadFeaturesJson() {
+  const featuresPath = join(projectRoot, ".xray", "features.json");
+  if (!existsSync(featuresPath)) return {};
+  try {
+    return JSON.parse(readFileSync(featuresPath, "utf-8"));
+  } catch {
+    return {};
+  }
+}
+
+function resolveXrayDistModule(relPath) {
+  const candidates = [
+    join(projectRoot, "node_modules", "0xray", "dist", relPath),
+    join(projectRoot, "node_modules", "xray", "dist", relPath),
+    join(projectRoot, "dist", relPath),
+  ];
+  return candidates.find((p) => existsSync(p)) || null;
+}
+
+async function runSessionInferenceCapture() {
+  const features = loadFeaturesJson();
+  const cfg = features.inference_session_capture ?? {};
+  if (cfg.enabled !== true) {
+    log("Session inference capture disabled");
+    return;
+  }
+
+  const modulePath = resolveXrayDistModule("inference/session-capture.js");
+  if (!modulePath) {
+    log("Session capture module missing (node_modules/0xray/dist or dist)");
+    return;
+  }
+
+  const minCommits = typeof cfg.min_commits === "number" && cfg.min_commits > 0
+    ? cfg.min_commits
+    : 3;
+  const lookback = typeof cfg.lookback_commits === "number" && cfg.lookback_commits > 0
+    ? cfg.lookback_commits
+    : 20;
+
+  try {
+    const mod = await import(pathToFileURL(modulePath).href);
+    const inference = mod.captureSessionInference(`HEAD~${lookback}`, "HEAD");
+    if (!inference) {
+      log("Session capture: no commits in span");
+      return;
+    }
+    if ((inference.metrics?.commits ?? 0) < minCommits) {
+      log(
+        `Session capture: ${inference.metrics?.commits ?? 0} commits < min ${minCommits}`,
+      );
+      return;
+    }
+    const outDir = join(projectRoot, "docs", "inference");
+    const saved = mod.saveSessionInference(inference, outDir);
+    log(`Session capture saved ${saved}`);
+  } catch (err) {
+    logError(`Session capture failed: ${err.message}`);
+  }
+}
+
 async function handlePostCommit() {
   const commitSha = process.env.COMMIT_SHA || "unknown";
   const branch = process.env.BRANCH || "unknown";
@@ -474,6 +612,7 @@ async function handlePostCommit() {
 
   // Run log maintenance
   await runLogMaintenance();
+  await runSessionInferenceCapture();
 
   // Record metrics
   recordMetrics(0, 0);
@@ -487,15 +626,20 @@ async function handlePrePush() {
     .split("\n")
     .map((f) => f.trim())
     .filter(Boolean);
+  const commitRange = (process.env.COMMIT_RANGE || "").trim() || null;
 
   if (changedFiles.length === 0) {
     log("No changed files to validate");
     process.exit(0);
   }
 
-  log(`Validating ${changedFiles.length} changed file(s) for push...`);
+  log(
+    `Validating ${changedFiles.length} changed file(s) for push` +
+      (commitRange ? ` (range ${commitRange})` : "") +
+      "...",
+  );
 
-  const result = await runFullValidation(changedFiles);
+  const result = await runFullValidation(changedFiles, commitRange);
 
   if (!result.passed) {
     console.error("\n❌ Pre-push validation failed:\n");
@@ -586,22 +730,27 @@ const handlers = {
   "pre-command": handlePreCommand,
 };
 
-const handler = handlers[hookType];
-if (!handler) {
-  console.error(`Unknown hook type: ${hookType}`);
-  console.error(`Valid types: ${Object.keys(handlers).join(", ")}`);
-  process.exit(1);
-}
+const isDirectRun =
+  process.argv[1] &&
+  resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url));
 
-// Run with timing
-const startTime = Date.now();
-handler()
-  .then(() => {
-    const duration = Date.now() - startTime;
-    log(`Hook completed in ${duration}ms`);
-  })
-  .catch((err) => {
-    logError(`Hook crashed: ${err.message}`);
-    console.error(`0xRay hook error: ${err.message}`);
+if (isDirectRun) {
+  const handler = handlers[hookType];
+  if (!handler) {
+    console.error(`Unknown hook type: ${hookType}`);
+    console.error(`Valid types: ${Object.keys(handlers).join(", ")}`);
     process.exit(1);
-  });
+  }
+
+  const startTime = Date.now();
+  handler()
+    .then(() => {
+      const duration = Date.now() - startTime;
+      log(`Hook completed in ${duration}ms`);
+    })
+    .catch((err) => {
+      logError(`Hook crashed: ${err.message}`);
+      console.error(`0xRay hook error: ${err.message}`);
+      process.exit(1);
+    });
+}

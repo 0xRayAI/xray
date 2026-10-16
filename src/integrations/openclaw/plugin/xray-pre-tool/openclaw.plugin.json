@@ -1,0 +1,10 @@
+{
+  "id": "xray-pre-tool",
+  "name": "0xRay PreToolUse",
+  "description": "Constitution and temperament gate for OpenClaw tool calls (Codex 11/29/69, spawn plan).",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {}
+  }
+}

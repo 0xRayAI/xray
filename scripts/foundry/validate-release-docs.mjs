@@ -1,0 +1,431 @@
+#!/usr/bin/env node
+/**
+ * validate-release-docs.mjs — Blocking guard for release doc freshness.
+ *
+ * Ensures README, AGENTS, SKILLS, llms.txt, CHANGELOG, Docusaurus headers, and
+ * required guides match package.json version and mill law before tag/publish.
+ *
+ * Usage:
+ *   npx @0xray/foundry docs-check
+ *   npx @0xray/foundry docs-check --json
+ */
+
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import {
+  buildDocsHeader,
+  DOCS_SITE_HEADER_FILES,
+  getFrameworkCounts,
+  getReleaseArtifactPaths,
+  patchRefStripRelPaths,
+} from './version-manager.mjs';
+import { isXrayExoRepo, resolveMillRoot } from './mill-root.mjs';
+
+const STANDARD_HEADER_RE =
+  /\*{0,2}\d+\.\d+\*{0,2}\s*—\s*a suit that survives the context window/;
+
+/** Patch stamps belong in CHANGELOG, not kernel headers. */
+function kernelLineHasPatchStamp(content) {
+  return /^\*\*v?\d+\.\d+\.\d+\*\*/m.test(content);
+}
+
+/**
+ * Present-tense cut pins. Keep: package.json, CHANGELOG, stamped JSON,
+ * features-since headings. The check set is the stamper set: shipped guides
+ * and shipped OP-PROC, including the mill-gate skill. Seat memory is not in it.
+ */
+const PRESENT_TENSE_PATCH_RE =
+  /This cut is|Do not republish \d+\.\d+\.\d+|0xray@\d+\.\d+\.\d+|npm is \*\*\d+\.\d+\.\d+\*\*|Product \*\*\d+\.\d+\.\d+\*\* is on npm/;
+
+const NO_PRESENT_TENSE_PATCH = patchRefStripRelPaths();
+
+function presentTensePatchPinErrors(content) {
+  if (PRESENT_TENSE_PATCH_RE.test(content)) {
+    return ['present-tense patch pin — keep versions in package.json + CHANGELOG + stamped JSON only'];
+  }
+  return [];
+}
+
+/** Guides that must exist and reference the current release (body or header). */
+const REQUIRED_GUIDES = [
+  'docs-site/docs/guides/features-since-3.1.md',
+  'docs-site/docs/guides/features-json.md',
+  'docs-site/docs/guides/memory-routing.md',
+  'docs-site/docs/guides/aside-context.md',
+  'docs-site/docs/guides/repertoire.md',
+  'docs-site/docs/guides/station-vs-repertoire.md',
+  'docs-site/docs/guides/integrations.md',
+  'docs-site/docs/guides/consumer-migration.md',
+  'docs-site/docs/mcp/README.md',
+  'docs-site/docs/agents/README.md',
+];
+
+function millLawLagErrors(content) {
+  const errors = [];
+  if (/Syncs \*\*45 framework skills\*\*/.test(content) || /syncs all 45 skills/i.test(content)) {
+    errors.push('lags mill law: default plant is mill+inspect, not 45-skill sync');
+  }
+  if (/SKILLS\.md \+ 45 skills → platform skill directories/.test(content)) {
+    errors.push('lags mill law: postinstall must not sync 45 skills as default plant');
+  }
+  return errors;
+}
+
+/** Opt-out is features.json, not package-absence. */
+function repertoireOptOutErrors(content) {
+  const errors = [];
+  if (/\(no @0xray\/repertoire\)/.test(content)) {
+    errors.push('opt-out must not teach package-absence (no @0xray/repertoire)');
+  }
+  if (/memory_routing stays off/.test(content)) {
+    errors.push('opt-out must not teach memory_routing stays off on npm install');
+  }
+  return errors;
+}
+
+function millPlantMentionErrors(content) {
+  if (!content.includes('mill') || !content.includes('inspect')) {
+    return ['missing mill+inspect plant'];
+  }
+  return [];
+}
+
+const ROOT_DOC_CHECKS = [
+  {
+    rel: 'README.md',
+    validate: (content, _version, _counts, header) => {
+      const errors = [];
+      if (!content.includes(header) && !STANDARD_HEADER_RE.test(content)) {
+        errors.push(`missing kernel header (expected substring: ${header})`);
+      }
+      if (kernelLineHasPatchStamp(content)) {
+        errors.push('kernel header must be era (major.minor), not a patch stamp');
+      }
+      if (!content.includes('survive the context window') && !content.includes('survives the context window')) {
+        errors.push('missing context-window / exo kernel copy');
+      }
+      if (!content.includes('SKILLS.md')) {
+        errors.push('missing SKILLS.md reference in postinstall/docs section');
+      }
+      if (!content.includes('install-bridges') && !content.includes('installAllBridges')) {
+        errors.push('missing install-bridges / installAllBridges reference');
+      }
+      if (!content.includes('llms.txt')) {
+        errors.push('missing llms.txt agent-map reference');
+      }
+      if (!content.includes('shopPlant') && !content.includes('shop-extract')) {
+        errors.push('missing shop plant / shopPlant');
+      }
+      errors.push(...millPlantMentionErrors(content));
+      errors.push(...millLawLagErrors(content));
+      return errors;
+    },
+  },
+  {
+    rel: 'AGENTS.md',
+    validate: (content, _version) => {
+      const errors = [];
+      if (kernelLineHasPatchStamp(content)) {
+        errors.push('kernel header must be era (major.minor), not a patch stamp');
+      }
+      if (!content.includes('survive the context window') && !content.includes('survives the context window') && !content.includes('Exo, not catalog')) {
+        errors.push('missing exo / context-window kernel copy');
+      }
+      if (!content.includes('aside-context.md') && !content.includes('AsideContext')) {
+        errors.push('missing AsideContext documentation reference');
+      }
+      if (!content.includes('SKILLS.md')) {
+        errors.push('missing SKILLS.md link');
+      }
+      if (!content.includes('llms.txt')) {
+        errors.push('missing llms.txt agent-map reference');
+      }
+      errors.push(...millPlantMentionErrors(content));
+      errors.push(...millLawLagErrors(content));
+      return errors;
+    },
+  },
+  {
+    rel: 'AGENTS-consumer.md',
+    validate: (content) => {
+      const errors = [];
+      if (kernelLineHasPatchStamp(content)) {
+        errors.push('kernel header must be era (major.minor), not a patch stamp');
+      }
+      if (!content.includes('survive the context window') && !content.includes('survives the context window')) {
+        errors.push('consumer header missing context-window kernel copy');
+      }
+      if (!content.includes('SKILLS.md')) {
+        errors.push('missing SKILLS.md in postinstall section');
+      }
+      if (!content.includes('AsideContext')) {
+        errors.push('missing AsideContext section');
+      }
+      if (!content.includes('shopPlant') && !content.includes('shop-extract')) {
+        errors.push('missing shop plant / shopPlant');
+      }
+      errors.push(...millPlantMentionErrors(content));
+      errors.push(...millLawLagErrors(content));
+      return errors;
+    },
+  },
+  {
+    rel: 'SKILLS.md',
+    validate: (content, _version, counts) => {
+      const errors = [];
+      if (kernelLineHasPatchStamp(content)) {
+        errors.push('kernel header must be era (major.minor), not a patch stamp');
+      }
+      if (!content.includes(`**${counts.skills} skills**`)) {
+        errors.push(`skill count stale (expected **${counts.skills} skills**)`);
+      }
+      errors.push(...millPlantMentionErrors(content));
+      errors.push(...millLawLagErrors(content));
+      return errors;
+    },
+  },
+  {
+    rel: 'llms.txt',
+    validate: (content) => {
+      const errors = [];
+      if (kernelLineHasPatchStamp(content)) {
+        errors.push('kernel header must be era (major.minor), not a patch stamp');
+      }
+      if (!content.includes('mill') || !content.includes('inspect')) {
+        errors.push('missing mill+inspect plant');
+      }
+      if (!content.includes('shopPlant') && !content.includes('shop-extract')) {
+        errors.push('missing hangar / shopPlant coexistence');
+      }
+      if (!content.includes('69')) {
+        errors.push('missing Codex 69');
+      }
+      if (!content.includes('xray-governance') || !content.includes('xray-orchestrator')) {
+        errors.push('missing 7 MCP agent map');
+      }
+      if (!content.toLowerCase().includes('costume')) {
+        errors.push('missing no-costume-dump law');
+      }
+      if (/^## Complete catalog/m.test(content) || content.includes('`api-design` · `architect-tools`')) {
+        errors.push('llms.txt must not costume-dump the 45-skill catalog');
+      }
+      errors.push(...millLawLagErrors(content));
+      return errors;
+    },
+  },
+];
+
+function readFile(rootDir, rel) {
+  const full = path.join(rootDir, rel);
+  if (!fs.existsSync(full)) return null;
+  return fs.readFileSync(full, 'utf-8');
+}
+
+function getPackageVersion(rootDir) {
+  const pkg = JSON.parse(fs.readFileSync(path.join(rootDir, 'package.json'), 'utf-8'));
+  return pkg.version;
+}
+
+function getCodexTermCount(rootDir) {
+  const codexPath = path.join(rootDir, '.xray/codex.json');
+  if (!fs.existsSync(codexPath)) return null;
+  const codex = JSON.parse(fs.readFileSync(codexPath, 'utf-8'));
+  return Object.keys(codex.terms || {}).length;
+}
+
+function validateChangelog(content, version) {
+  const errors = [];
+  const headings = [...content.matchAll(/^## \[([^\]]+)\]/gm)].map((m) => m[1]);
+  if (headings.length === 0) {
+    errors.push('no version sections found');
+    return errors;
+  }
+  if (headings[0] === 'Unreleased') {
+    if (headings[1] !== version) {
+      errors.push(`after [Unreleased], expected [${version}], found [${headings[1] || 'none'}]`);
+    }
+  } else if (headings[0] !== version) {
+    errors.push(`top CHANGELOG entry is [${headings[0]}], expected [${version}] or [Unreleased]`);
+  }
+  if (!content.includes(`## [${version}]`)) {
+    errors.push(`missing ## [${version}] section`);
+  }
+  return errors;
+}
+
+function validateStandardHeader(content, expectedHeader, label) {
+  if (!content.includes(expectedHeader) && !STANDARD_HEADER_RE.test(content)) {
+    return [`${label}: missing kernel header (expected substring: ${expectedHeader})`];
+  }
+  return [];
+}
+
+function validateDocusaurusTagline(content) {
+  const errors = [];
+  if (!content.includes('survive the context window') && !content.includes('survives the context window')) {
+    errors.push('docusaurus.config.ts tagline missing context-window kernel copy');
+  }
+  return errors;
+}
+
+/**
+ * @param {string} [rootDir]
+ * @returns {{ ok: boolean; version: string; counts: object; errors: string[]; warnings: string[]; mode?: 'full'|'light' }}
+ */
+export function validateReleaseDocs(rootDir = resolveMillRoot()) {
+  const errors = [];
+  const warnings = [];
+  const version = getPackageVersion(rootDir);
+  const counts = getFrameworkCounts(rootDir);
+  const expectedHeader = buildDocsHeader(counts, version);
+  const codexTerms = getCodexTermCount(rootDir);
+  const full = isXrayExoRepo(rootDir);
+
+  if (codexTerms !== null && counts.codexTerms && codexTerms !== counts.codexTerms) {
+    warnings.push(`codex.json has ${codexTerms} terms (counts.codexTerms is ${counts.codexTerms})`);
+  }
+
+  const changelog = readFile(rootDir, 'CHANGELOG.md');
+  if (!changelog) {
+    if (full) {
+      errors.push('CHANGELOG.md missing');
+    } else {
+      warnings.push('CHANGELOG.md missing (light mill)');
+    }
+  } else {
+    errors.push(...validateChangelog(changelog, version).map((e) => `CHANGELOG.md: ${e}`));
+  }
+
+  if (!full) {
+    return {
+      ok: errors.length === 0,
+      version,
+      counts,
+      errors,
+      warnings,
+      mode: 'light',
+    };
+  }
+
+  for (const check of ROOT_DOC_CHECKS) {
+    const content = readFile(rootDir, check.rel);
+    if (!content) {
+      errors.push(`${check.rel}: file missing`);
+      continue;
+    }
+    const relErrors = check.validate(content, version, counts, expectedHeader);
+    for (const e of relErrors) {
+      errors.push(`${check.rel}: ${e}`);
+    }
+  }
+
+  for (const rel of DOCS_SITE_HEADER_FILES) {
+    const content = readFile(rootDir, rel);
+    if (!content) {
+      errors.push(`${rel}: file missing`);
+      continue;
+    }
+    errors.push(...validateStandardHeader(content, expectedHeader, rel));
+    if (kernelLineHasPatchStamp(content)) {
+      errors.push(`${rel}: kernel header must be era (major.minor), not a patch stamp`);
+    }
+  }
+
+  for (const rel of REQUIRED_GUIDES) {
+    const content = readFile(rootDir, rel);
+    if (!content) {
+      errors.push(`${rel}: required guide missing`);
+      continue;
+    }
+    if (content.trim().length < 200) {
+      errors.push(`${rel}: guide too short — likely stub`);
+    }
+  }
+
+  for (const rel of NO_PRESENT_TENSE_PATCH) {
+    const content = readFile(rootDir, rel);
+    if (!content) {
+      errors.push(`${rel}: file missing`);
+      continue;
+    }
+    for (const e of presentTensePatchPinErrors(content)) {
+      errors.push(`${rel}: ${e}`);
+    }
+  }
+
+  const stationVs = readFile(rootDir, 'docs-site/docs/guides/station-vs-repertoire.md');
+  if (stationVs) {
+    for (const e of repertoireOptOutErrors(stationVs)) {
+      errors.push(`docs-site/docs/guides/station-vs-repertoire.md: ${e}`);
+    }
+  }
+
+  const docusaurus = readFile(rootDir, 'docs-site/docusaurus.config.ts');
+  if (!docusaurus) {
+    errors.push('docs-site/docusaurus.config.ts: missing');
+  } else {
+    errors.push(...validateDocusaurusTagline(docusaurus));
+  }
+
+  for (const rel of getReleaseArtifactPaths(rootDir)) {
+    if (!fs.existsSync(path.join(rootDir, rel))) {
+      errors.push(`release artifact path missing: ${rel}`);
+    }
+  }
+
+  return {
+    ok: errors.length === 0,
+    version,
+    counts,
+    errors,
+    warnings,
+    mode: 'full',
+  };
+}
+
+function main() {
+  const jsonOut = process.argv.includes('--json');
+  const result = validateReleaseDocs();
+
+  if (!jsonOut) {
+    console.log('\n╔════════════════════════════════════════════════════════╗');
+    console.log('║        📚 Release Docs Validation                      ║');
+    console.log('╚════════════════════════════════════════════════════════╝');
+    console.log(`\n📌 package.json version: v${result.version}`);
+    console.log(
+      `📊 counts: ${result.counts.agents} agents · ${result.counts.skills} skills · ${result.counts.mcps} MCP servers\n`,
+    );
+  }
+
+  if (result.warnings.length > 0 && !jsonOut) {
+    console.log('⚠️  Warnings:');
+    for (const w of result.warnings) console.log(`   - ${w}`);
+    console.log();
+  }
+
+  if (!result.ok) {
+    if (jsonOut) {
+      console.log(JSON.stringify(result, null, 2));
+    } else {
+      console.error('❌ Release docs validation FAILED:\n');
+      for (const e of result.errors) console.error(`   • ${e}`);
+      console.error('\nFix docs then run: npm run version:sync');
+      console.error('Or: npx @0xray/foundry docs-check\n');
+    }
+    process.exit(1);
+  }
+
+  if (jsonOut) {
+    console.log(JSON.stringify(result, null, 2));
+  } else {
+    console.log('✅ Release docs validation passed\n');
+  }
+}
+
+const isMain =
+  process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+
+if (isMain) {
+  main();
+}

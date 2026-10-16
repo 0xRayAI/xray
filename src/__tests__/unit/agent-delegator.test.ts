@@ -7,6 +7,9 @@
  */
 
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
+import * as fs from "fs";
+import * as os from "os";
+import * as path from "path";
 import {
   AgentDelegator,
   DelegationRequest,
@@ -1192,6 +1195,48 @@ describe("AgentDelegator", () => {
 
       const result = await agentDelegator.analyzeDelegation(request);
       expect(result.agentDetails.some((a: any) => a.name === 'testing-lead')).toBe(true);
+    });
+  });
+
+  describe("routing mappings cache", () => {
+    it("returns the new confidence when a same-size rewrite keeps the 1-second mtime", () => {
+      const dir = fs.mkdtempSync(path.join(os.tmpdir(), "routing-mtime-"));
+      const previous = process.cwd();
+      const file = path.join(dir, ".xray", "routing-mappings.json");
+      const mapping = (confidence: "0.8" | "0.9"): string =>
+        `[{"keywords":["tuner"],"skill":"design","agent":"architect","confidence":${confidence}}]`;
+      const firstBody = mapping("0.8");
+      const secondBody = mapping("0.9");
+      const load = (): number | undefined =>
+        (
+          agentDelegator as unknown as {
+            loadRoutingMappings(): Array<{ confidence: number }>;
+          }
+        ).loadRoutingMappings()[0]?.confidence;
+
+      expect(Buffer.byteLength(firstBody)).toBe(Buffer.byteLength(secondBody));
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      fs.writeFileSync(file, firstBody);
+      const stamp = new Date(1_700_000_000_000);
+      fs.utimesSync(file, stamp, stamp);
+
+      process.chdir(dir);
+      try {
+        expect(load()).toBe(0.8);
+        const before = fs.statSync(file);
+
+        fs.writeFileSync(file, secondBody);
+        fs.utimesSync(file, stamp, stamp);
+        const after = fs.statSync(file);
+        expect(after.size).toBe(before.size);
+        expect(after.mtimeMs).toBe(before.mtimeMs);
+        expect(after.mtimeMs % 1000).toBe(0);
+
+        expect(load()).toBe(0.9);
+      } finally {
+        process.chdir(previous);
+        fs.rmSync(dir, { recursive: true, force: true });
+      }
     });
   });
 });

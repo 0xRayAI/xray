@@ -15,6 +15,8 @@ import { readdirSync, existsSync, readFileSync } from "fs";
 import { join } from "path";
 import { getConfigDir } from "../../core/config-paths.js";
 import { featuresConfigLoader } from "../../core/features-config.js";
+import { formatGogglesStatus, probeGoggles } from "../goggles-status.js";
+import type { GogglesStatus } from "../goggles-status.js";
 
 interface StatusReport {
   opencode: {
@@ -40,6 +42,7 @@ interface StatusReport {
     outcomesCount: number;
     patternsCount: number;
   };
+  goggles: GogglesStatus;
 }
 
 function getSkillsList(cwd: string): { count: number; names: string[] } {
@@ -176,7 +179,7 @@ function getInferenceStatus(cwd: string): {
   return { active, lastTuning, outcomesCount, patternsCount };
 }
 
-export function getStatusReport(cwd: string = process.cwd()): StatusReport {
+export function getStatusReport(cwd: string = process.cwd(), packageRoot: string = cwd): StatusReport {
   const opencodeConfigPath = join(cwd, "opencode.json");
   const cwdSkills = getSkillsList(cwd);
   const agents = getAgentsList(cwd);
@@ -192,6 +195,7 @@ export function getStatusReport(cwd: string = process.cwd()): StatusReport {
     agents,
     health,
     inference,
+    goggles: probeGoggles(packageRoot, cwd),
   };
 }
 
@@ -229,6 +233,8 @@ export function printStatus(report: StatusReport): void {
   console.log(`📊 Health:  ${healthStatus}`);
   console.log("");
 
+  process.stdout.write(`${formatGogglesStatus(report.goggles).join("\n")}\n`);
+
   if (report.skills.names.length > 0) {
     console.log("Installed Skills:");
     const cols = 4;
@@ -257,9 +263,9 @@ export function printStatus(report: StatusReport): void {
   }
 }
 
-export async function statusCommand(): Promise<void> {
+export async function statusCommand(packageRoot: string = process.cwd()): Promise<void> {
   const cwd = process.cwd();
-  const report = getStatusReport(cwd);
+  const report = getStatusReport(cwd, packageRoot);
   printStatus(report);
 }
 

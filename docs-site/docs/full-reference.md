@@ -1,28 +1,26 @@
-# 0xRay — Self-Healing AI Governance OS
+# 0xRay 4.0 — reference
 
-**v3.5.4** — 42 agents · 45 skills · 7 MCP servers · 68 codex terms · 3,226 tests
+**4.1** — a suit that survives the context window
+Confer votes. Burst runs the swarm.
 
-[![Docs](https://img.shields.io/badge/docs-0xRayAI.github.io/xray-10b981?style=flat-square)](https://0xrayai.github.io/xray/)
 
-0xRay prevents AI coding mistakes before they happen. It's an intelligent governance layer that sits between you and your AI coding tools — intercepting bad proposals, enforcing code quality rules, and orchestrating multi-agent workflows automatically.
+Exo, not catalog. Constitution always on. Temperament by host. Four floors. Repertoire organ on.
 
-Every code change is checked against a **68-term Codex** (coding constitution), deliberated by specialized AI agents, and either approved, revised, or blocked before it ever touches your codebase.
-
-Think of it as an **AI supervisor for your AI coders**: catch hallucinations, prevent slop, enforce standards — automatically.
+CLI, bridges, seven MCP servers, Codex. Product thesis: [4.0 vision](./architecture/v4-vision.md). Wear: [getting started](./guides/getting-started.md).
 
 ---
 
 ## Quick Start
 
 ```bash
-npm install 0xray          # postinstall: 4 bridges + 7 MCP servers + AGENTS.md + .mcp.json
+npm install 0xray # postinstall: 4 chat bridges + Cursor hooks + 7 MCP servers + AGENTS.md + .mcp.json
 
-npx 0xray status           # verify
-npx 0xray setup            # optional extras
+npx 0xray status # verify
+npx 0xray setup # optional extras
 
 # Per-platform (idempotent — same as postinstall)
 npx 0xray opencode install
-npx 0xray grok install     # 7 MCP servers + dual skill sync
+npx 0xray grok install # 7 MCP servers + dual skill sync
 npx 0xray hermes install
 npx 0xray openclaw install
 npx 0xray skill:install
@@ -34,36 +32,22 @@ npx 0xray --help
 
 ---
 
-## What Problem Does 0xRay Solve?
-
-AI coding assistants are powerful but unreliable. They hallucinate APIs, introduce security vulnerabilities, violate project conventions, and make conflicting changes across files. 0xRay solves this by:
-
-| Problem | How 0xRay Fixes It |
-|---------|-------------------|
-| AI hallucinates bad code | **Governance gate** blocks non-compliant proposals before execution |
-| No code quality enforcement | **v3 Enforcement**: gate for OpenCode/Hermes/Grok/OpenClaw hooks + CI enforce-validators (all 29, no filter) + governance MCP pipeline (governance-service.ts + Dynamo) + codex matrix (3.2.1) |
-| Single-agent blindspots | **3 specialized reviewers** (code, security, research) debate each proposal |
-| Scattered, conflicting edits | **Multi-agent orchestrator** coordinates work across specialists |
-| Repeating the same mistakes | **Inference engine** learns patterns and prevents regressions |
-
----
-
 ## How It Works
 
 0xRay uses a three-layer architecture that operates **before any code change is made**:
 
 ```
 ┌─────────────────────────────────────────────────┐
-│                  Inference                       │
-│  Reasoning · Pattern learning · Execution       │
+│ Inference │
+│ Reasoning · Pattern learning · Execution │
 ├─────────────────────────────────────────────────┤
-│           External Governance (Dynamo)           │
-│  Codex enforcement · Multi-agent review · SSOT  │
-│  3 MCP skill servers deliberate proposals       │
+│ External Governance (Dynamo) │
+│ Codex enforcement · Multi-agent review · SSOT │
+│ 3 MCP skill servers deliberate proposals │
 ├─────────────────────────────────────────────────┤
-│          Autonomous Engine (thinDispatch)        │
-│  Task routing · Multi-agent coordination        │
-│  Complexity-based delegation (7-flow MCP)       │
+│ Autonomous Engine (thinDispatch) │
+│ Task routing · Multi-agent coordination │
+│ Complexity-based delegation (7-flow MCP) │
 └─────────────────────────────────────────────────┘
 ```
 
@@ -80,7 +64,7 @@ Routes tasks to the right agents based on complexity (simple tasks go to a singl
 
 ## Platform Installation
 
-`npm install 0xray` runs **`install-bridges.cjs`** on postinstall (consumer projects only):
+`npm install 0xray` runs **`install-bridges.cjs`** on postinstall (consumer projects only). **4.0.9:** does not mill npm global prefix or npx `_npx` as a consumer; isolated HOME skips machine `~/.grok`.
 
 1. `AGENTS-consumer.md` → `AGENTS.md`
 2. `.gitignore.default` → `.gitignore` (if absent)
@@ -107,16 +91,25 @@ Routes tasks to the right agents based on complexity (simple tasks go to a singl
 
 | Command | Description |
 |---------|-------------|
-| `install` | Install & configure (auto-detects opencode, Grok, Hermes, git) |
-| `setup` | Re-run full configuration if needed |
-| `init` | Alias for install |
-| `status` | Show framework health and configuration |
-| `health` / `check` | Run health checks on all subsystems |
-| `validate` | Verify installation is complete |
-| `report` | Generate activity and health reports |
-| `fix` | Auto-repair common issues |
-| `doctor` | Diagnose issues (read-only) |
-| `debug` | Print all framework paths |
+| `install` | Install xray framework in the current project |
+| `setup` | Set up `.mcp.json` and the OpenCode, Grok, Hermes, and OpenClaw bridges |
+| `init` | Initialize xray configuration in the current project |
+| `wear` | Wear the 0xray suit in this git checkout |
+| `unwear` | Remove the 0xray suit and restore the pre-wear hooks file |
+| `look` | Kind 0 is quiet on a match. One outer is a reading. digest and triage return a card |
+| `goggles` | Same organ as `look` |
+| `confer` | Turn confer on or off in `.xray/features.json`. A missing key stays off until this runs |
+| `status` | Show comprehensive xray framework status |
+| `monitor` | Current picture of the worn suit (activity, inference state, repertoire, version) |
+| `validate` | Validate consumer wear (pack paths, Cursor hooks, mill plant) |
+| `health` | Check framework health and system status. Alias: `check` |
+| `pulse` | Print one line: worn CLI, repertoire, inference age, activity, lens, plant |
+| `report` | Generate framework activity and health reports |
+| `fix` | Run the postinstall setup for common framework issues |
+| `doctor` | Diagnose framework issues (does not fix them) |
+| `debug` | Print package root and current directory |
+| `capabilities` | Show framework capabilities. Alias: `caps` |
+| `archive-logs` | Archive log files without framework boot (for git hooks) |
 
 ### Skills
 
@@ -139,10 +132,10 @@ Routes tasks to the right agents based on complexity (simple tasks go to a singl
 | `mcp researcher` | Codebase exploration |
 | `mcp code-review` | Code review deliberation |
 | `mcp architect-tools` | Architecture decisions |
-| `mcp:list` | Browse available community MCP servers |
-| `mcp:status` | Show installed MCP servers |
-| `mcp:install <name>` | Install an MCP server from the registry |
-| `mcp:remove <name>` | Remove an installed MCP server |
+| `mcp-list` | List available community MCP servers. Alias: `mcp:list` |
+| `mcp-status` | Show installed MCP servers. Alias: `mcp:status` |
+| `mcp-install <name>` | Install an MCP server from the registry. Alias: `mcp:install` |
+| `mcp-remove <name>` | Remove an installed MCP server. Alias: `mcp:remove` |
 
 ### Platform Integration
 
@@ -157,11 +150,12 @@ Routes tasks to the right agents based on complexity (simple tasks go to a singl
 
 | Command | Description |
 |---------|-------------|
-| `plugin list` | List all installed plugins |
-| `plugin install <name>` | Install a new plugin |
-| `plugin enable <name>` | Enable a disabled plugin |
-| `plugin disable <name>` | Disable a plugin without uninstalling |
-| `plugin uninstall <name>` | Remove a plugin completely |
+| `plugin list` | List installed plugins |
+| `plugin install <name>` | Install a plugin from npm, a local path, or `examples/plugins/<name>` |
+| `plugin enable <name>` | Enable a plugin |
+| `plugin disable <name>` | Disable a plugin |
+| `plugin status <name>` | Show plugin details |
+| `plugin uninstall <name>` | Remove a plugin |
 
 ### Inference & Self-Improvement
 
@@ -191,20 +185,21 @@ Every subsystem is configurable via `features.json` (located at `xray/features.j
 
 ```json
 {
-  "memory_routing": {
-    "enabled": false
-  },
-  "token_optimization": {
-    "enabled": true,
-    "max_context_tokens": 20000,
-    "context_compression": { "enabled": true, "threshold_tokens": 15000, "compression_ratio": 0.4 }
-  },
-  "multi_agent_orchestration": { "enabled": true, "max_concurrent_agents": 3 },
-  "autonomous_reporting": { "enabled": true, "interval_minutes": 60 },
-  "security": { "enabled": true, "vulnerability_scanning": true },
-  "analytics": { "enabled": true, "default_limit": 100 },
-  "pattern_learning": { "enabled": true, "learning_interval_ms": 3600000 },
-  "complexity_thresholds": { "simple": 15, "moderate": 25, "complex": 50, "enterprise": 100 }
+ "memory_routing": {
+ "enabled": true,
+ "provider": "repertoire"
+ },
+ "token_optimization": {
+ "enabled": true,
+ "max_context_tokens": 20000,
+ "context_compression": { "enabled": true, "threshold_tokens": 15000, "compression_ratio": 0.4 }
+ },
+ "multi_agent_orchestration": { "enabled": true, "max_concurrent_agents": 3 },
+ "autonomous_reporting": { "enabled": false, "auto_schedule": false, "interval_minutes": 60 },
+ "security": { "enabled": true, "vulnerability_scanning": true },
+ "analytics": { "enabled": true, "default_limit": 100 },
+ "pattern_learning": { "enabled": true, "learning_interval_ms": 3600000 },
+ "complexity_thresholds": { "simple": 15, "moderate": 25, "complex": 50, "enterprise": 100 }
 }
 ```
 
@@ -216,75 +211,41 @@ Governance is your quality gate. Configure it under `inference_governance` in `f
 
 ```json
 {
-  "inference_governance": {
-    "enabled": true,
-    "endpoint_url": "https://your-governance-endpoint/governance",
-    "request_timeout_ms": 10000,
-    "min_confidence_threshold": 0.5,
-    "decision_logic": {
-      "pass_confidence_min": 0.9,
-      "revision_confidence_max": 0.89
-    }
-  }
+ "inference_governance": {
+ "enabled": true,
+ "endpoint_url": "https://your-governance-endpoint/governance",
+ "request_timeout_ms": 10000,
+ "min_confidence_threshold": 0.5,
+ "decision_logic": {
+ "pass_confidence_min": 0.9,
+ "revision_confidence_max": 0.89
+ }
+ }
 }
 ```
 
 The governance pipeline works in three stages:
 1. **3 AI reviewers** (`code-review`, `security-audit`, `researcher`) analyze each proposal independently
-2. **Dynamo** cross-checks against the 68-term Codex for compliance, security, and coherence
+2. **Dynamo** cross-checks against the 69-term Codex for compliance, security, and coherence
 3. **Weighted voting** (PHI/TAU matrix) produces a final decision: approve, revise, or reject
 
 > ⚠️ **Privacy Notice**: All proposals submitted to the governance endpoint are **public by default**. They are **not persisted on-chain** unless the `onChain: true` flag is set. 0xRay framework self-governance proposals (tagged `0xray`) save on-chain by default; project proposals do not. Set `onChain: false` or omit the field for non-public governance checks.
 
 ---
 
-## Included Agents (42)
+## Agents (organs)
 
-0xRay ships with **42 YML agent surfaces** in `src/opencode/agents/`. Core governance agents:
-
-| Agent | Role |
-|-------|------|
-| **Architect** | System design, technical decisions, architecture reviews |
-| **Bug Triage Specialist** | Error investigation, root cause analysis |
-| **Code Reviewer** | Code quality, best practices, style compliance |
-| **Security Auditor** | Vulnerability detection, threat modeling |
-| **Researcher** | Codebase exploration, pattern discovery |
-| **Testing Lead** | Test strategy, coverage planning |
-| **Refactorer** | Technical debt elimination, code simplification |
-| **Frontend Engineer** | React, CSS, responsive design |
-| **Backend Engineer** | APIs, microservices, server architecture |
-| **DevOps Engineer** | CI/CD, infrastructure, deployment automation |
-| **Database Engineer** | SQL/NoSQL, query optimization, data modeling |
-| **Performance Engineer** | Profiling, benchmarking, optimization |
-| **Mobile Developer** | iOS, Android, React Native, Flutter |
-| **Content Creator** | Technical writing, docs, marketing copy |
-| **Growth Strategist** | Analytics, user acquisition, conversion |
-| **SEO Consultant** | Search optimization, keyword strategy |
-| **Strategy Analyst** | System design, technical roadmaps |
-| **Multimodal Looker** | Image, diagram, visual content analysis |
-| **Code Analyzer** | Code metrics, complexity analysis |
-| **Log Monitor** | Diagnostics, error pattern detection |
-
-Plus 22 domain-specialist subagents. All agents are declared declaratively in `src/opencode/agents/*.yml` — add or customize without touching code.
-
----
+**42 YML surfaces** in `src/opencode/agents/*.yml`. They are organs. The product is the exo. Core governance: `@enforcer` `@orchestrator` `@architect` `@security-auditor` `@code-reviewer` `@refactorer` `@testing-lead` `@bug-triage-specialist` `@researcher`. Full list: [Agents](./agents/README.md).
 
 ## MCP Servers
 
-0xRay ships two MCP servers you can use directly:
-
-- **xray-skills** (public, 13 tools) — `npx -y 0xray mcp skills`
-- **xray-governance** (advanced) — `npx -y 0xray mcp governance`
-
-Plus 15 internal framework MCP servers (`dist/mcps/*.server.js`) loaded at runtime.
-
-See [MCP Servers docs](./mcp/) for details.
+**Seven** consumer servers via `npx -y 0xray mcp <cmd>`. Extra `*.server.ts` files in the repo are not an 8th consumer MCP (Codex 69). See [MCP](./mcp/README.md).
 
 ## Skills (45)
 
-Knowledge skills (SKILL.md files) loaded at runtime by the xray-skills MCP server:
+Knowledge skills (`src/skills/*/SKILL.md`) loaded by `xray-skills`. Includes `xray-orchestrator`. `autonomy-command` is the default operating model (orchestrator skill + `lead_dev_mode`), not a 46th skill dir.
 
-api-design, architect-tools, architecture-patterns, auto-format, backend-engineer, boot-orchestrator, bug-triage, code-analyzer, code-review, content-creator, database-engineer, devops-engineer, enforcer, framework-compliance-audit, frontend-engineer, frontend-ui-ux-engineer, git-workflow, growth-strategist, hermes-agent, inference-improve, lint, log-monitor, mobile-developer, model-health-check, multimodal-looker, orchestrator, performance-analysis, performance-engineer, performance-optimization, processor-pipeline, project-analysis, refactoring-strategies, researcher, security-audit, security-scan, seo-consultant, session-management, state-manager, storyteller, strategist, tech-writer, testing-best-practices, testing-strategy, ui-ux-design
+api-design, architect-tools, architecture-patterns, auto-format, backend-engineer, boot-orchestrator, bug-triage, code-analyzer, code-review, content-creator, database-engineer, devops-engineer, enforcer, framework-compliance-audit, frontend-engineer, frontend-ui-ux-engineer, git-workflow, growth-strategist, hermes-agent, inference-improve, lint, log-monitor, mobile-developer, model-health-check, multimodal-looker, orchestrator, performance-analysis, performance-engineer, performance-optimization, processor-pipeline, project-analysis, refactoring-strategies, researcher, security-audit, security-scan, seo-consultant, session-management, state-manager, storyteller, strategist, tech-writer, testing-best-practices, testing-strategy, ui-ux-design, xray-orchestrator
 
 Install more skills: `npx 0xray skill:install`
 
@@ -292,17 +253,15 @@ Install more skills: `npx 0xray skill:install`
 
 ## Testing & Reliability
 
-0xRay is battle-tested with **3,226 tests** (185 files, v3.4.1):
+Four-floor consumer e2e against the **4.0** line:
 
 | Suite | Status |
 |-------|--------|
-| Unit & Integration | 3,226 passed, 36 skipped |
-| OpenCode E2E | 42/42 solo, 34/34 orchestrator |
-| Grok CLI E2E | 62/0 failures (v3.2.0 verified) |
-| OpenClaw E2E | 9/9 (v3.2.0 verified) |
-| Hermes E2E | 44/0/0 (v3.2.0 verified) |
-| Consumer smoke | `release-gate.mjs` — pack → install → 7 MCP + 4 bridges |
-| Memory routing | 24 integration tests (v3.3.0) |
+| OpenCode E2E | 34/0 |
+| Grok CLI E2E | 63/0 |
+| Hermes E2E | 39/0/2 (npm 4.0.0 pack) |
+| OpenClaw E2E | 96/0/1 (npm 4.0.0 pack) |
+| Consumer smoke | `release-gate.mjs` — pack → install → 7 MCP + 4 chat bridges + Cursor hooks + organ on |
 
 ---
 
@@ -315,11 +274,11 @@ npx 0xray status
 # 2. Install skill packs (adds agent expertise)
 npx 0xray skill:install
 
-# 3. Configure governance (optional)
-# Edit xray/features.json
+# 3. Read the station card after compact / host-swap
+# .xray/state/STATION.md
 
-# 4. View full agent documentation
-less AGENTS.md
+# 4. Agent surfaces
+# AGENTS.md (copied on postinstall)
 
 # 5. Run a health check
 npx 0xray health
@@ -330,7 +289,7 @@ npx 0xray health
 ## Resources
 
 - **[Docs](https://0xrayai.github.io/xray/)** — Full documentation site
-- **[Self-Hosting Dynamo Governance](guides/self-hosting-dynamo)** — External governance service (fork, deploy, and configure your own instance)
+- **[Self-Hosting Dynamo](./guides/self-hosting-dynamo.md)** — External governance service
 - **[GitHub](https://github.com/0xRayAI/xray)** — Source code, issues, discussions
 - **[npm](https://www.npmjs.com/package/0xray)** — Package registry
 

@@ -411,6 +411,115 @@ export class ErrorResolutionValidator extends BaseValidator {
   }
 }
 
+/** Code points matched by a non-unicode `\s` in this Node. */
+function isCallWhitespace(ch: string): boolean {
+  const c = ch.charCodeAt(0);
+  if (c <= 32) {
+    return c === 9 || c === 10 || c === 11 || c === 12 || c === 13 || c === 32;
+  }
+  if (c >= 0x2000 && c <= 0x200a) return true;
+  return (
+    c === 0xa0 ||
+    c === 0x1680 ||
+    c === 0x2028 ||
+    c === 0x2029 ||
+    c === 0x202f ||
+    c === 0x205f ||
+    c === 0x3000 ||
+    c === 0xfeff
+  );
+}
+
+interface CallScanNode {
+  next: Map<string, number>;
+  fail: number;
+  out: number[];
+}
+
+/** Per-name scans are cheaper below this; one automaton wins above it. */
+const CALL_SCAN_NAME_THRESHOLD = 48;
+
+/**
+ * Counts `name\\s*\\(` for every name.
+ * Suffix hits count (`foo` inside `myfoo(`), matching a separate global regex per name.
+ */
+function countNameCallSites(code: string, names: string[]): number[] {
+  if (names.length < CALL_SCAN_NAME_THRESHOLD) {
+    return names.map(
+      (funcName) => (code.match(new RegExp(`${funcName}\\s*\\(`, "g")) || []).length,
+    );
+  }
+
+  const counts = new Array<number>(names.length).fill(0);
+  if (code.length === 0) return counts;
+
+  const nodes: CallScanNode[] = [{ next: new Map(), fail: 0, out: [] }];
+  for (let nameIndex = 0; nameIndex < names.length; nameIndex++) {
+    const name = names[nameIndex] ?? "";
+    let state = 0;
+    for (let i = 0; i < name.length; i++) {
+      const ch = name.charAt(i);
+      const current = nodes[state];
+      if (!current) break;
+      let next = current.next.get(ch);
+      if (next === undefined) {
+        next = nodes.length;
+        nodes.push({ next: new Map(), fail: 0, out: [] });
+        current.next.set(ch, next);
+      }
+      state = next;
+    }
+    nodes[state]?.out.push(nameIndex);
+  }
+
+  const queue: number[] = [];
+  const root = nodes[0];
+  if (!root) return counts;
+  for (const next of root.next.values()) queue.push(next);
+  let head = 0;
+  while (head < queue.length) {
+    const currentIndex = queue[head++];
+    const current = currentIndex === undefined ? undefined : nodes[currentIndex];
+    if (!current) continue;
+    for (const [ch, childIndex] of current.next) {
+      queue.push(childIndex);
+      let fail = current.fail;
+      while (fail !== 0 && !nodes[fail]?.next.has(ch)) {
+        fail = nodes[fail]?.fail ?? 0;
+      }
+      const down = nodes[fail]?.next.get(ch);
+      const child = nodes[childIndex];
+      if (!child) continue;
+      child.fail = down !== undefined && down !== childIndex ? down : 0;
+      const failOut = nodes[child.fail]?.out;
+      if (failOut && failOut.length > 0) {
+        child.out = child.out.concat(failOut);
+      }
+    }
+  }
+
+  let state = 0;
+  for (let i = 0; i < code.length; i++) {
+    const ch = code.charAt(i);
+    while (state !== 0 && !nodes[state]?.next.has(ch)) {
+      state = nodes[state]?.fail ?? 0;
+    }
+    const down = nodes[state]?.next.get(ch);
+    state = down === undefined ? 0 : down;
+    const outs = nodes[state]?.out;
+    if (!outs || outs.length === 0) continue;
+    let k = i + 1;
+    while (k < code.length && isCallWhitespace(code.charAt(k))) k++;
+    if (code.charAt(k) !== "(") continue;
+    for (const nameIndex of outs) {
+      const current = counts[nameIndex];
+      if (current !== undefined) counts[nameIndex] = current + 1;
+    }
+  }
+
+  return counts;
+}
+
 /**
  * Validates loop safety (Codex Term #8).
  * Prevents infinite loops by checking for proper termination conditions.
@@ -465,18 +574,18 @@ export class LoopSafetyValidator extends BaseValidator {
     // Check for recursion without base case detection (basic)
     const functionMatches = newCode.match(/function\s+\w+\s*\([^)]*\)/g);
     if (functionMatches) {
-      const functionNames = functionMatches
-        .map((match) => {
-          const nameMatch = match.match(/function\s+(\w+)/);
-          return nameMatch ? nameMatch[1] : null;
-        })
-        .filter(Boolean);
+      const functionNames: string[] = [];
+      for (const match of functionMatches) {
+        const name = match.match(/function\s+(\w+)/)?.[1];
+        if (name) functionNames.push(name);
+      }
 
-      for (const funcName of functionNames) {
-        // Check if function calls itself (basic recursion detection)
-        const selfCalls = (
-          newCode.match(new RegExp(`${funcName}\\s*\\(`, "g")) || []
-        ).length;
+      const callCounts = countNameCallSites(newCode, functionNames);
+      for (let i = 0; i < functionNames.length; i++) {
+        const funcName = functionNames[i];
+        if (!funcName) continue;
+        // Same count a per-name /name\s*\(/g scan would return, including suffix hits.
+        const selfCalls = callCounts[i] ?? 0;
         if (selfCalls > 1) {
           // More than just the function definition
           // Allow recursive functions with proper base cases (edge case)

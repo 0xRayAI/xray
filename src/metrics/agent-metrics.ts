@@ -135,6 +135,48 @@ const DEFAULT_RETENTION_CONFIG: MetricsRetentionConfig = {
 
 const INVOCATION_STORE_KEY = "agent_invocations";
 
+interface AgentAcc {
+  count: number;
+  success: number;
+  duration: number;
+  complexity: number;
+  minTs: number;
+  maxTs: number;
+  operations: Set<string>;
+}
+
+interface CountAcc {
+  count: number;
+  success: number;
+  duration: number;
+  agents: Record<string, number>;
+}
+
+interface HourParts {
+  hour: string;
+  day: string;
+  month: string;
+}
+
+interface PeriodKeys {
+  timestamp: number;
+  hour: string;
+  day: string;
+  week: string;
+  month: string;
+}
+
+interface PeriodCursor {
+  hourCache: Map<number, HourParts>;
+  weekCache: Map<number, string>;
+  dayStart: number;
+  dayEnd: number;
+  week: string;
+}
+
+const periodKeyCache = new WeakMap<AgentInvocation, PeriodKeys>();
+
+
 export class AgentMetricsSystem {
   private stateManager: XrayStateManager;
   private retentionConfig: MetricsRetentionConfig;
@@ -194,6 +236,72 @@ export class AgentMetricsSystem {
 
   private generateId(): string {
     return `inv-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+  }
+
+  private newAgentAcc(): AgentAcc {
+    return {
+      count: 0,
+      success: 0,
+      duration: 0,
+      complexity: 0,
+      minTs: Number.POSITIVE_INFINITY,
+      maxTs: Number.NEGATIVE_INFINITY,
+      operations: new Set<string>(),
+    };
+  }
+
+  private addAgent(acc: AgentAcc, inv: AgentInvocation): void {
+    acc.count += 1;
+    if (inv.success) acc.success += 1;
+    acc.duration += inv.duration;
+    acc.complexity += inv.complexityScore;
+    acc.minTs = Math.min(acc.minTs, inv.timestamp);
+    acc.maxTs = Math.max(acc.maxTs, inv.timestamp);
+    acc.operations.add(inv.operation);
+  }
+
+  private finishAgent(agentName: string, acc: AgentAcc): AgentInvocationSummary {
+    return {
+      agentName,
+      totalInvocations: acc.count,
+      successfulInvocations: acc.success,
+      failedInvocations: acc.count - acc.success,
+      successRate: (acc.success / acc.count) * 100,
+      averageDuration: acc.duration / acc.count,
+      averageComplexity: acc.complexity / acc.count,
+      lastInvoked: acc.maxTs,
+      firstInvoked: acc.minTs,
+      operations: [...acc.operations],
+    };
+  }
+
+  private newCountAcc(): CountAcc {
+    return { count: 0, success: 0, duration: 0, agents: {} };
+  }
+
+  private addCount(acc: CountAcc, inv: AgentInvocation): void {
+    acc.count += 1;
+    if (inv.success) acc.success += 1;
+    acc.duration += inv.duration;
+    acc.agents[inv.agentName] = (acc.agents[inv.agentName] || 0) + 1;
+  }
+
+  private finishCount(acc: CountAcc): {
+    totalInvocations: number;
+    successfulInvocations: number;
+    failedInvocations: number;
+    successRate: number;
+    averageDuration: number;
+    agents: Record<string, number>;
+  } {
+    return {
+      totalInvocations: acc.count,
+      successfulInvocations: acc.success,
+      failedInvocations: acc.count - acc.success,
+      successRate: (acc.success / acc.count) * 100,
+      averageDuration: acc.duration / acc.count,
+      agents: acc.agents,
+    };
   }
 
   trackInvocation(params: {
@@ -280,52 +388,51 @@ export class AgentMetricsSystem {
   }
 
   filterInvocations(filter: AgentMetricsFilter): AgentInvocation[] {
-    let invocations = this.getInvocations();
+    const invocations = this.getInvocations();
+    const names = filter.agentNames;
+    const types = filter.agentTypes;
+    const levels = filter.complexityLevels;
+    const range = filter.timeRange;
+    const sessionId = filter.sessionId;
+    const hasNames = !!names && names.length > 0;
+    const hasTypes = !!types && types.length > 0;
+    const hasLevels = !!levels && levels.length > 0;
+    const successOnly = !!filter.successOnly;
+    const failureOnly = !!filter.failureOnly;
+    const hasSession = !!sessionId;
 
-    if (filter.agentNames?.length) {
-      invocations = invocations.filter((inv) =>
-        filter.agentNames!.includes(inv.agentName),
-      );
+    if (
+      !hasNames &&
+      !hasTypes &&
+      !hasLevels &&
+      !range &&
+      !successOnly &&
+      !failureOnly &&
+      !hasSession
+    ) {
+      return invocations;
     }
 
-    if (filter.agentTypes?.length) {
-      invocations = invocations.filter((inv) =>
-        filter.agentTypes!.includes(inv.agentType),
-      );
+    const matched: AgentInvocation[] = [];
+    for (const inv of invocations) {
+      if (hasNames && names && !names.includes(inv.agentName)) continue;
+      if (hasTypes && types && !types.includes(inv.agentType)) continue;
+      if (range && (inv.timestamp < range.start || inv.timestamp > range.end)) continue;
+      if (hasLevels && levels && !levels.includes(inv.complexityLevel)) continue;
+      if (successOnly && !inv.success) continue;
+      if (failureOnly && inv.success) continue;
+      if (hasSession && inv.sessionId !== sessionId) continue;
+      matched.push(inv);
     }
-
-    if (filter.timeRange) {
-      invocations = invocations.filter(
-        (inv) =>
-          inv.timestamp >= filter.timeRange!.start &&
-          inv.timestamp <= filter.timeRange!.end,
-      );
-    }
-
-    if (filter.complexityLevels?.length) {
-      invocations = invocations.filter((inv) =>
-        filter.complexityLevels!.includes(inv.complexityLevel),
-      );
-    }
-
-    if (filter.successOnly) {
-      invocations = invocations.filter((inv) => inv.success);
-    }
-
-    if (filter.failureOnly) {
-      invocations = invocations.filter((inv) => !inv.success);
-    }
-
-    if (filter.sessionId) {
-      invocations = invocations.filter((inv) => inv.sessionId === filter.sessionId);
-    }
-
-    return invocations;
+    return matched;
   }
 
   aggregateMetrics(filter?: AgentMetricsFilter): AggregatedAgentMetrics {
     const invocations = filter ? this.filterInvocations(filter) : this.getInvocations();
+    return this.aggregateInvocations(invocations);
+  }
 
+  private aggregateInvocations(invocations: AgentInvocation[]): AggregatedAgentMetrics {
     if (invocations.length === 0) {
       return {
         summary: {
@@ -341,165 +448,150 @@ export class AgentMetricsSystem {
       };
     }
 
-    const timestamps = invocations.map((inv) => inv.timestamp);
-    const totalDuration = invocations.reduce((sum, inv) => sum + inv.duration, 0);
-    const successfulCount = invocations.filter((inv) => inv.success).length;
+    let totalDuration = 0;
+    let successfulCount = 0;
+    let minTs = Number.POSITIVE_INFINITY;
+    let maxTs = Number.NEGATIVE_INFINITY;
+    const byAgent = new Map<string, AgentAcc>();
+    const byTimePeriod = new Map<string, CountAcc>();
+    const byComplexity = new Map<string, CountAcc>();
+    const cursor = this.freshPeriodCursor();
 
-    const aggregated: AggregatedAgentMetrics = {
+    for (const inv of invocations) {
+      totalDuration += inv.duration;
+      if (inv.success) successfulCount += 1;
+      minTs = Math.min(minTs, inv.timestamp);
+      maxTs = Math.max(maxTs, inv.timestamp);
+
+      let agentAcc = byAgent.get(inv.agentName);
+      if (!agentAcc) {
+        agentAcc = this.newAgentAcc();
+        byAgent.set(inv.agentName, agentAcc);
+      }
+      this.addAgent(agentAcc, inv);
+
+      const keys = this.periodKeys(inv, cursor);
+      this.addPeriod(byTimePeriod, keys.hour, inv);
+      this.addPeriod(byTimePeriod, keys.day, inv);
+      this.addPeriod(byTimePeriod, keys.week, inv);
+      this.addPeriod(byTimePeriod, keys.month, inv);
+
+      this.addPeriod(byComplexity, inv.complexityLevel, inv);
+    }
+
+    const byAgentSummary: Record<string, AgentInvocationSummary> = {};
+    for (const [agentName, acc] of byAgent) {
+      byAgentSummary[agentName] = this.finishAgent(agentName, acc);
+    }
+
+    const byTimeSummary: Record<string, TimePeriodSummary> = {};
+    for (const [period, acc] of byTimePeriod) {
+      byTimeSummary[period] = {
+        period,
+        periodType: this.getPeriodType(period),
+        ...this.finishCount(acc),
+      };
+    }
+
+    const byComplexitySummary: Record<string, ComplexitySummary> = {};
+    for (const [level, acc] of byComplexity) {
+      byComplexitySummary[level] = {
+        level: level as ComplexityLevel,
+        ...this.finishCount(acc),
+      };
+    }
+
+    return {
       summary: {
         totalInvocations: invocations.length,
-        totalAgents: new Set(invocations.map((inv) => inv.agentName)).size,
-        timeRange: {
-          start: Math.min(...timestamps),
-          end: Math.max(...timestamps),
-        },
+        totalAgents: byAgent.size,
+        timeRange: { start: minTs, end: maxTs },
         overallSuccessRate: (successfulCount / invocations.length) * 100,
         averageDuration: totalDuration / invocations.length,
       },
-      byAgent: {},
-      byTimePeriod: {},
-      byComplexity: {},
+      byAgent: byAgentSummary,
+      byTimePeriod: byTimeSummary,
+      byComplexity: byComplexitySummary,
     };
+  }
 
-    const byAgent = new Map<string, AgentInvocation[]>();
-    const byTimePeriod = new Map<string, AgentInvocation[]>();
-    const byComplexity = new Map<string, AgentInvocation[]>();
-
-    for (const inv of invocations) {
-      // Group by agent
-      const agentInvs = byAgent.get(inv.agentName) || [];
-      agentInvs.push(inv);
-      byAgent.set(inv.agentName, agentInvs);
-
-      // Group by time period (hour)
-      const hourKey = this.getHourKey(inv.timestamp);
-      const hourInvs = byTimePeriod.get(hourKey) || [];
-      hourInvs.push(inv);
-      byTimePeriod.set(hourKey, hourInvs);
-
-      // Group by day
-      const dayKey = this.getDayKey(inv.timestamp);
-      const dayInvs = byTimePeriod.get(dayKey) || [];
-      dayInvs.push(inv);
-      byTimePeriod.set(dayKey, dayInvs);
-
-      // Group by week
-      const weekKey = this.getWeekKey(inv.timestamp);
-      const weekInvs = byTimePeriod.get(weekKey) || [];
-      weekInvs.push(inv);
-      byTimePeriod.set(weekKey, weekInvs);
-
-      // Group by month
-      const monthKey = this.getMonthKey(inv.timestamp);
-      const monthInvs = byTimePeriod.get(monthKey) || [];
-      monthInvs.push(inv);
-      byTimePeriod.set(monthKey, monthInvs);
-
-      // Group by complexity
-      const complexityKey = inv.complexityLevel;
-      const complexityInvs = byComplexity.get(complexityKey) || [];
-      complexityInvs.push(inv);
-      byComplexity.set(complexityKey, complexityInvs);
+  private addPeriod(map: Map<string, CountAcc>, key: string, inv: AgentInvocation): void {
+    let acc = map.get(key);
+    if (!acc) {
+      acc = this.newCountAcc();
+      map.set(key, acc);
     }
+    this.addCount(acc, inv);
+  }
 
-    // Build agent summaries
-    for (const [agentName, agentInvs] of byAgent) {
-      const successful = agentInvs.filter((inv) => inv.success);
-      const timestamps = agentInvs.map((inv) => inv.timestamp);
-      const durations = agentInvs.map((inv) => inv.duration);
-      const complexityScores = agentInvs.map((inv) => inv.complexityScore);
+  private freshPeriodCursor(): PeriodCursor {
+    return {
+      hourCache: new Map(),
+      weekCache: new Map(),
+      dayStart: Number.NaN,
+      dayEnd: Number.NaN,
+      week: "",
+    };
+  }
 
-      aggregated.byAgent[agentName] = {
-        agentName,
-        totalInvocations: agentInvs.length,
-        successfulInvocations: successful.length,
-        failedInvocations: agentInvs.length - successful.length,
-        successRate: (successful.length / agentInvs.length) * 100,
-        averageDuration:
-          durations.reduce((a, b) => a + b, 0) / durations.length,
-        averageComplexity:
-          complexityScores.reduce((a, b) => a + b, 0) / complexityScores.length,
-        lastInvoked: Math.max(...timestamps),
-        firstInvoked: Math.min(...timestamps),
-        operations: [...new Set(agentInvs.map((inv) => inv.operation))],
+  // Hour, day, and month stay on UTC ISO. Week keeps the old local Y-M-D label.
+  private periodKeys(inv: AgentInvocation, cursor: PeriodCursor): PeriodKeys {
+    const cached = periodKeyCache.get(inv);
+    if (cached && cached.timestamp === inv.timestamp) return cached;
+
+    const hourId = Math.floor(inv.timestamp / 3600000);
+    let parts = cursor.hourCache.get(hourId);
+    if (!parts) {
+      const iso = new Date(inv.timestamp).toISOString();
+      parts = {
+        hour: `${iso.slice(0, 13)}:00`,
+        day: iso.slice(0, 10),
+        month: iso.slice(0, 7),
       };
+      cursor.hourCache.set(hourId, parts);
     }
 
-    // Build time period summaries
-    for (const [period, periodInvs] of byTimePeriod) {
-      const successful = periodInvs.filter((inv) => inv.success);
-      const durations = periodInvs.map((inv) => inv.duration);
-      const agents: Record<string, number> = {};
-      const periodType = this.getPeriodType(period);
-
-      for (const inv of periodInvs) {
-        agents[inv.agentName] = (agents[inv.agentName] || 0) + 1;
+    let week = cursor.week;
+    if (!(inv.timestamp >= cursor.dayStart && inv.timestamp < cursor.dayEnd)) {
+      const date = new Date(inv.timestamp);
+      const year = date.getFullYear();
+      const monthIndex = date.getMonth();
+      const day = date.getDate();
+      const localId = year * 512 + monthIndex * 40 + day;
+      const cachedWeek = cursor.weekCache.get(localId);
+      if (cachedWeek !== undefined) {
+        week = cachedWeek;
+      } else {
+        const weekNumber = this.weekNumber(year, monthIndex, day);
+        week = `${year}-W${weekNumber.toString().padStart(2, "0")}`;
+        cursor.weekCache.set(localId, week);
       }
-
-      aggregated.byTimePeriod[period] = {
-        period,
-        periodType,
-        totalInvocations: periodInvs.length,
-        successfulInvocations: successful.length,
-        failedInvocations: periodInvs.length - successful.length,
-        successRate: (successful.length / periodInvs.length) * 100,
-        averageDuration:
-          durations.length > 0 ? durations.reduce((a, b) => a + b, 0) / durations.length : 0,
-        agents,
-      };
+      cursor.week = week;
+      cursor.dayStart = new Date(year, monthIndex, day).getTime();
+      cursor.dayEnd = new Date(year, monthIndex, day + 1).getTime();
     }
 
-    // Build complexity summaries
-    for (const [level, levelInvs] of byComplexity) {
-      const successful = levelInvs.filter((inv) => inv.success);
-      const durations = levelInvs.map((inv) => inv.duration);
-      const agents: Record<string, number> = {};
-
-      for (const inv of levelInvs) {
-        agents[inv.agentName] = (agents[inv.agentName] || 0) + 1;
-      }
-
-      aggregated.byComplexity[level] = {
-        level: level as ComplexityLevel,
-        totalInvocations: levelInvs.length,
-        successfulInvocations: successful.length,
-        failedInvocations: levelInvs.length - successful.length,
-        successRate: (successful.length / levelInvs.length) * 100,
-        averageDuration:
-          durations.length > 0 ? durations.reduce((a, b) => a + b, 0) / durations.length : 0,
-        agents,
-      };
-    }
-
-    return aggregated;
+    const stamp: PeriodKeys = {
+      timestamp: inv.timestamp,
+      hour: parts.hour,
+      day: parts.day,
+      week,
+      month: parts.month,
+    };
+    periodKeyCache.set(inv, stamp);
+    return stamp;
   }
 
-  private getHourKey(timestamp: number): string {
-    const date = new Date(timestamp);
-    return `${date.toISOString().slice(0, 13)}:00`;
-  }
-
-  private getDayKey(timestamp: number): string {
-    return new Date(timestamp).toISOString().slice(0, 10);
-  }
-
-  private getWeekKey(timestamp: number): string {
-    const date = new Date(timestamp);
-    const year = date.getFullYear();
-    const week = this.getWeekNumber(date);
-    return `${year}-W${week.toString().padStart(2, "0")}`;
-  }
-
-  private getMonthKey(timestamp: number): string {
-    return new Date(timestamp).toISOString().slice(0, 7);
-  }
-
-  private getWeekNumber(date: Date): number {
-    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-    const dayNum = d.getUTCDay() || 7;
-    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-    return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+  // Same Thursday-week count as the previous Date.UTC(local Y-M-D) helper.
+  private weekNumber(year: number, monthIndex: number, day: number): number {
+    const utcMidnight = Date.UTC(year, monthIndex, day);
+    const days = Math.floor(utcMidnight / 86400000);
+    const dow = (((days + 4) % 7) + 7) % 7;
+    const dayNum = dow === 0 ? 7 : dow;
+    const shifted = utcMidnight + (4 - dayNum) * 86400000;
+    const shiftedYear = new Date(shifted).getUTCFullYear();
+    const yearStart = Date.UTC(shiftedYear, 0, 1);
+    return Math.ceil(((shifted - yearStart) / 86400000 + 1) / 7);
   }
 
   private getPeriodType(period: string): "hour" | "day" | "week" | "month" {
@@ -509,102 +601,118 @@ export class AgentMetricsSystem {
     return "hour";
   }
 
+  private utcStamp(year: number, monthIndex: number, day: number, hour: number): number | null {
+    if (monthIndex < 0 || monthIndex > 11 || day < 1 || hour < 0 || hour > 23) return null;
+    const stamp = Date.UTC(year, monthIndex, day, hour, 0, 0, 0);
+    const date = new Date(stamp);
+    if (
+      date.getUTCFullYear() !== year ||
+      date.getUTCMonth() !== monthIndex ||
+      date.getUTCDate() !== day ||
+      date.getUTCHours() !== hour
+    ) {
+      return null;
+    }
+    return stamp;
+  }
+
+  private utcPeriodRange(
+    period: string,
+    periodType: "hour" | "day" | "month",
+  ): { start: number; end: number } | null {
+    if (periodType === "hour") {
+      const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):00$/.exec(period);
+      const year = this.groupNumber(match, 1);
+      const month = this.groupNumber(match, 2);
+      const day = this.groupNumber(match, 3);
+      const hour = this.groupNumber(match, 4);
+      if (year === null || month === null || day === null || hour === null) return null;
+      const start = this.utcStamp(year, month - 1, day, hour);
+      if (start === null) return null;
+      return { start, end: start + 3600000 };
+    }
+
+    if (periodType === "day") {
+      const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(period);
+      const year = this.groupNumber(match, 1);
+      const month = this.groupNumber(match, 2);
+      const day = this.groupNumber(match, 3);
+      if (year === null || month === null || day === null) return null;
+      const start = this.utcStamp(year, month - 1, day, 0);
+      if (start === null) return null;
+      return { start, end: start + 86400000 };
+    }
+
+    const match = /^(\d{4})-(\d{2})$/.exec(period);
+    const year = this.groupNumber(match, 1);
+    const month = this.groupNumber(match, 2);
+    if (year === null || month === null) return null;
+    const start = this.utcStamp(year, month - 1, 1, 0);
+    if (start === null) return null;
+    return { start, end: Date.UTC(year, month, 1, 0, 0, 0, 0) };
+  }
+
+  private groupNumber(match: RegExpExecArray | null, index: number): number | null {
+    if (!match) return null;
+    const part = match[index];
+    if (part === undefined) return null;
+    const value = Number(part);
+    if (Number.isNaN(value)) return null;
+    return value;
+  }
+
   getAgentSummary(agentName: string): AgentInvocationSummary | null {
-    const invocations = this.getInvocationsByAgent(agentName);
-    if (invocations.length === 0) return null;
-
-    const successful = invocations.filter((inv) => inv.success);
-    const timestamps = invocations.map((inv) => inv.timestamp);
-    const durations = invocations.map((inv) => inv.duration);
-    const complexityScores = invocations.map((inv) => inv.complexityScore);
-
-    return {
-      agentName,
-      totalInvocations: invocations.length,
-      successfulInvocations: successful.length,
-      failedInvocations: invocations.length - successful.length,
-      successRate: (successful.length / invocations.length) * 100,
-      averageDuration:
-        durations.reduce((a, b) => a + b, 0) / durations.length,
-      averageComplexity:
-        complexityScores.reduce((a, b) => a + b, 0) / complexityScores.length,
-      lastInvoked: Math.max(...timestamps),
-      firstInvoked: Math.min(...timestamps),
-      operations: [...new Set(invocations.map((inv) => inv.operation))],
-    };
+    const acc = this.newAgentAcc();
+    for (const inv of this.getInvocations()) {
+      if (inv.agentName !== agentName) continue;
+      this.addAgent(acc, inv);
+    }
+    if (acc.count === 0) return null;
+    return this.finishAgent(agentName, acc);
   }
 
   getTimePeriodSummary(
     period: string,
     periodType: "hour" | "day" | "week" | "month",
   ): TimePeriodSummary | null {
-    const allInvocations = this.getInvocations();
-    let filtered: AgentInvocation[];
+    const invocations = this.getInvocations();
+    const acc = this.newCountAcc();
 
-    switch (periodType) {
-      case "hour":
-        filtered = allInvocations.filter((inv) => this.getHourKey(inv.timestamp) === period);
-        break;
-      case "day":
-        filtered = allInvocations.filter((inv) => this.getDayKey(inv.timestamp) === period);
-        break;
-      case "week":
-        filtered = allInvocations.filter((inv) => this.getWeekKey(inv.timestamp) === period);
-        break;
-      case "month":
-        filtered = allInvocations.filter((inv) => this.getMonthKey(inv.timestamp) === period);
-        break;
-      default:
-        return null;
+    if (periodType === "week") {
+      const cursor = this.freshPeriodCursor();
+      for (const inv of invocations) {
+        if (this.periodKeys(inv, cursor).week !== period) continue;
+        this.addCount(acc, inv);
+      }
+    } else if (periodType === "hour" || periodType === "day" || periodType === "month") {
+      const range = this.utcPeriodRange(period, periodType);
+      if (!range) return null;
+      for (const inv of invocations) {
+        if (inv.timestamp < range.start || inv.timestamp >= range.end) continue;
+        this.addCount(acc, inv);
+      }
+    } else {
+      return null;
     }
 
-    if (filtered.length === 0) return null;
-
-    const successful = filtered.filter((inv) => inv.success);
-    const durations = filtered.map((inv) => inv.duration);
-    const agents: Record<string, number> = {};
-
-    for (const inv of filtered) {
-      agents[inv.agentName] = (agents[inv.agentName] || 0) + 1;
-    }
-
+    if (acc.count === 0) return null;
     return {
       period,
       periodType,
-      totalInvocations: filtered.length,
-      successfulInvocations: successful.length,
-      failedInvocations: filtered.length - successful.length,
-      successRate: (successful.length / filtered.length) * 100,
-      averageDuration:
-        durations.length > 0 ? durations.reduce((a, b) => a + b, 0) / durations.length : 0,
-      agents,
+      ...this.finishCount(acc),
     };
   }
 
   getComplexitySummary(level: ComplexityLevel): ComplexitySummary | null {
-    const invocations = this.getInvocations().filter(
-      (inv) => inv.complexityLevel === level,
-    );
-
-    if (invocations.length === 0) return null;
-
-    const successful = invocations.filter((inv) => inv.success);
-    const durations = invocations.map((inv) => inv.duration);
-    const agents: Record<string, number> = {};
-
-    for (const inv of invocations) {
-      agents[inv.agentName] = (agents[inv.agentName] || 0) + 1;
+    const acc = this.newCountAcc();
+    for (const inv of this.getInvocations()) {
+      if (inv.complexityLevel !== level) continue;
+      this.addCount(acc, inv);
     }
-
+    if (acc.count === 0) return null;
     return {
       level,
-      totalInvocations: invocations.length,
-      successfulInvocations: successful.length,
-      failedInvocations: invocations.length - successful.length,
-      successRate: (successful.length / invocations.length) * 100,
-      averageDuration:
-        durations.length > 0 ? durations.reduce((a, b) => a + b, 0) / durations.length : 0,
-      agents,
+      ...this.finishCount(acc),
     };
   }
 
@@ -615,36 +723,50 @@ export class AgentMetricsSystem {
   } {
     const cutoff = olderThanMs ? Date.now() - olderThanMs : 0;
     const limit = maxEntries || this.retentionConfig.maxEntries;
-    let invocations = this.getInvocations();
-
+    const invocations = this.getInvocations();
     const byAgent: Record<string, number> = {};
-
     const beforeCount = invocations.length;
+    let next = invocations;
 
     // Filter by age
     if (cutoff > 0) {
-      const filtered = invocations.filter((inv) => inv.timestamp >= cutoff);
-      const removed = invocations.filter((inv) => inv.timestamp < cutoff);
-      for (const inv of removed) {
-        byAgent[inv.agentName] = (byAgent[inv.agentName] || 0) + 1;
+      let removedAny = false;
+      for (const inv of invocations) {
+        if (inv.timestamp < cutoff) {
+          removedAny = true;
+          break;
+        }
       }
-      invocations = filtered;
+      if (removedAny) {
+        const kept: AgentInvocation[] = [];
+        for (const inv of invocations) {
+          if (inv.timestamp >= cutoff) {
+            kept.push(inv);
+          } else {
+            byAgent[inv.agentName] = (byAgent[inv.agentName] || 0) + 1;
+          }
+        }
+        next = kept;
+      }
     }
 
     // Limit by count
-    if (invocations.length > limit) {
-      const removed = invocations.slice(0, invocations.length - limit);
-      for (const inv of removed) {
+    if (next.length > limit) {
+      const drop = next.length - limit;
+      let index = 0;
+      for (const inv of next) {
+        if (index >= drop) break;
         byAgent[inv.agentName] = (byAgent[inv.agentName] || 0) + 1;
+        index += 1;
       }
-      invocations = invocations.slice(invocations.length - limit);
+      next = next.slice(drop);
     }
 
-    this.saveInvocations(invocations);
+    this.saveInvocations(next);
 
     return {
-      removed: beforeCount - invocations.length,
-      total: invocations.length,
+      removed: beforeCount - next.length,
+      total: next.length,
       byAgent,
     };
   }
@@ -689,7 +811,7 @@ export class AgentMetricsSystem {
       case "summary":
         return {
           format: "summary",
-          data: this.aggregateMetrics(filter),
+          data: this.aggregateInvocations(invocations),
           exportedAt,
           entryCount: invocations.length,
           metadata,
@@ -700,7 +822,7 @@ export class AgentMetricsSystem {
           format: "detailed",
           data: {
             invocations,
-            aggregated: this.aggregateMetrics(filter),
+            aggregated: this.aggregateInvocations(invocations),
           },
           exportedAt,
           entryCount: invocations.length,
@@ -787,12 +909,19 @@ export class AgentMetricsSystem {
       };
     }
 
-    const timestamps = invocations.map((inv) => inv.timestamp);
-    const durations = invocations.map((inv) => inv.duration);
-    const successful = invocations.filter((inv) => inv.success);
-
+    let successful = 0;
+    let totalDuration = 0;
+    let oldest = Number.POSITIVE_INFINITY;
+    let newest = Number.NEGATIVE_INFINITY;
+    const unique = new Set<string>();
     const agentCounts: Record<string, number> = {};
+
     for (const inv of invocations) {
+      totalDuration += inv.duration;
+      if (inv.success) successful += 1;
+      oldest = Math.min(oldest, inv.timestamp);
+      newest = Math.max(newest, inv.timestamp);
+      unique.add(inv.agentName);
       agentCounts[inv.agentName] = (agentCounts[inv.agentName] || 0) + 1;
     }
 
@@ -803,11 +932,11 @@ export class AgentMetricsSystem {
 
     return {
       totalInvocations: invocations.length,
-      uniqueAgents: new Set(invocations.map((inv) => inv.agentName)).size,
-      oldestInvocation: Math.min(...timestamps),
-      newestInvocation: Math.max(...timestamps),
-      successRate: (successful.length / invocations.length) * 100,
-      averageDuration: durations.reduce((a, b) => a + b, 0) / durations.length,
+      uniqueAgents: unique.size,
+      oldestInvocation: oldest,
+      newestInvocation: newest,
+      successRate: (successful / invocations.length) * 100,
+      averageDuration: totalDuration / invocations.length,
       topAgents,
     };
   }

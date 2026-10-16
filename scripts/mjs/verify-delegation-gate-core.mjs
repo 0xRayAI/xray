@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
- * Shared 4/4 delegation gate fixture against nucleus SSOT (any host adapter).
+ * Shared 6/6 delegation gate fixture against nucleus SSOT (any host adapter).
  * Usage: node scripts/mjs/verify-delegation-gate-core.mjs [--host=grok|hermes|opencode]
  */
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -21,6 +21,9 @@ const host = hostArg?.split('=')[1] || 'generic';
 
 const { evaluatePreToolGate, loadDelegationGateFeatures } = await import(
   join(packageRoot, 'dist/integrations/hooks/delegation-gate-runtime.mjs')
+);
+const { archiveStaleLeadDevPlan } = await import(
+  join(packageRoot, 'dist/nucleus/lead-dev-plan-persistence.js')
 );
 
 const WRITE_TOOL =
@@ -85,6 +88,76 @@ try {
   } else {
     fail('spawn todo persistence', JSON.stringify(denyWrongTodo));
   }
+
+  const staleTmp = mkdtempSync(join(tmpdir(), 'xray-gate-stale-'));
+  const staleAt = new Date(Date.now() - 9 * 60 * 60 * 1000).toISOString();
+  mkdirSync(join(staleTmp, '.xray', 'state'), { recursive: true });
+  writeFileSync(
+    join(staleTmp, '.xray', 'features.json'),
+    JSON.stringify({
+      multi_agent_orchestration: { enabled: true, lead_dev_mode: true },
+    }),
+  );
+  writeFileSync(
+    join(staleTmp, '.xray', 'state', 'lead-dev-plan.json'),
+    JSON.stringify({
+      active: true,
+      persistedAt: staleAt,
+      phases: [
+        {
+          id: 'phase-1',
+          todos: [
+            {
+              id: '1.1',
+              task: 'stale unstarted todo',
+              subagent: 'researcher',
+              status: 'pending',
+            },
+          ],
+        },
+      ],
+    }),
+  );
+  const denyStale = evaluatePreToolGate(
+    SPAWN_TOOL,
+    { prompt: 'plan todo 1.1 consult', subagent_type: 'researcher' },
+    {
+      projectRoot: staleTmp,
+      sessionId: FIXTURE_SESSION_ID,
+      features: loadDelegationGateFeatures(staleTmp),
+      host,
+    },
+  );
+  if (!denyStale.allow && denyStale.gate === 'spawn-plan-stale') {
+    pass('denies spawn when lead-dev plan is stale');
+  } else {
+    fail('spawn plan stale', JSON.stringify(denyStale));
+  }
+
+  const archived = archiveStaleLeadDevPlan(staleTmp);
+  const denyAfterArchive = evaluatePreToolGate(
+    SPAWN_TOOL,
+    { prompt: 'plan todo 1.1 consult', subagent_type: 'researcher' },
+    {
+      projectRoot: staleTmp,
+      sessionId: FIXTURE_SESSION_ID,
+      features: loadDelegationGateFeatures(staleTmp),
+      host,
+    },
+  );
+  if (
+    archived.archived &&
+    !denyAfterArchive.allow &&
+    denyAfterArchive.gate === 'spawn-plan-stale'
+  ) {
+    pass('denies spawn after stale plan archival (marker)');
+  } else {
+    fail(
+      'spawn plan stale after archive',
+      JSON.stringify({ archived, denyAfterArchive }),
+    );
+  }
+  rmSync(staleTmp, { recursive: true, force: true });
 } finally {
   rmSync(tmp, { recursive: true, force: true });
 }
@@ -93,7 +166,7 @@ const label = host === 'generic' ? 'core' : host;
 console.log(
   '\n' +
     (failed === 0
-      ? `🎉 Delegation gate verify passed (4/4) [${label}].`
+      ? `🎉 Delegation gate verify passed (6/6) [${label}].`
       : `⚠️  ${failed} gate check(s) failed [${label}].`),
 );
 process.exit(failed === 0 ? 0 : 1);

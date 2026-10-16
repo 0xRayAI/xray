@@ -1,0 +1,34 @@
+{
+  "timestamp": "2026-09-25T20:27:41.279Z",
+  "span": {
+    "from": "2a2f0411d",
+    "to": "23b370d1e"
+  },
+  "approaches": [
+    "docs: core audit fixes and a readable memory-scoring doc (#126)",
+    "docs: point 0xray at grok-bot/OP-PROC.md (#125)",
+    "docs(grok-bot): OP-PROC amendment (Blaze 10:31) + moltbook push allow (#123)",
+    "docs(grok-bot): OP-PROC one-page front door + WAVEBOARD/ATTENTION_STATE mirror (#122)",
+    "release: v4.0.26",
+    "fix: store a lesson when the task matches no signal",
+    "fix: prove a Cursor compact cut with a session log and per-session receipt",
+    "fix: mill check accepts a published version; mcp:status runs",
+    "release: v4.0.25",
+    "fix: ship plate schematics in the npm package",
+    "docs: announce 4.0.24 — hot-swap, memory organ, plates",
+    "docs: state hot-swap bounds on guides the stamper skips.",
+    "release: v4.0.24",
+    "Keep suit stack laws on the vendored 0.2.8 overlay.",
+    "Vendor repertoire 0.2.8 with lesson caps and speech mint.",
+    "Document plates, lesson caps, and speech mint.",
+    "Stamp pipeline plates as Docusaurus schematics.",
+    "Stop a red pipeline from retrying, and make routing name real agents.",
+    "Show matched lesson speech on a normal turn and mint a signal from unnamed speech.",
+    "fix: put matched lesson speech on the MEMORY_ROUTING block"
+  ],
+  "patterns": [],
+  "matched_primitives": [],
+  "metrics": {
+    "commits": 20
+  }
+}

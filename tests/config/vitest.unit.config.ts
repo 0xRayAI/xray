@@ -7,7 +7,7 @@ export default defineConfig({
     environment: "node",
     setupFiles: ["./src/__tests__/setup.ts"],
     include: ["src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
-    exclude: ["node_modules", "dist", "coverage", "src/__tests__/integration/"],
+    exclude: ["node_modules", "dist", "coverage", "src/__tests__/integration/", "src/__tests__/playwright/**"],
     coverage: {
       enabled: false, // Disable coverage for unit tests to speed them up
     },

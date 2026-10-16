@@ -60,8 +60,9 @@ vi.mock("../../../core/config-paths.js", () => ({
   resolveStateFilePath: vi.fn().mockReturnValue("/tmp/state.json"),
 }));
 
-vi.mock("../../../monitoring/nudge-watchdog.js", () => ({
-  nudgeWatchdog: {
+vi.mock("../../../monitoring/nudge-monitor.js", () => ({
+  resolveNudgeConfig: vi.fn((f: Record<string, unknown> | undefined) => f?.nudge_monitor ?? f?.nudge_watchdog),
+  nudgeMonitor: {
     getStats: vi.fn().mockReturnValue({
       thinkTags: 0,
       codeChanges: 0,
@@ -1000,8 +1001,8 @@ describe("NudgeProcessor", () => {
   });
 
   it("should return {success, nudgeDetected: true, pattern, suggestion} when patterns active", async () => {
-    const { nudgeWatchdog } = await import("../../../monitoring/nudge-watchdog.js");
-    vi.mocked(nudgeWatchdog.getStats).mockReturnValueOnce({
+    const { nudgeMonitor } = await import("../../../monitoring/nudge-monitor.js");
+    vi.mocked(nudgeMonitor.getStats).mockReturnValueOnce({
       thinkTags: 5,
       codeChanges: 0,
       explanations: 0,
@@ -1019,7 +1020,7 @@ describe("NudgeProcessor", () => {
   });
 
   it("should record tool calls from toolInput", async () => {
-    const { recordToolCall } = await import("../../../monitoring/nudge-watchdog.js");
+    const { recordToolCall } = await import("../../../monitoring/nudge-monitor.js");
     await processor.execute({
       operation: "commit",
       toolInput: { tool: "edit", args: { filePath: "test.ts" } },
@@ -1028,7 +1029,7 @@ describe("NudgeProcessor", () => {
   });
 
   it("should record code changes for edit/write tools", async () => {
-    const { recordCodeChange } = await import("../../../monitoring/nudge-watchdog.js");
+    const { recordCodeChange } = await import("../../../monitoring/nudge-monitor.js");
     await processor.execute({ tool: "edit", operation: "edit" });
     expect(recordCodeChange).toHaveBeenCalled();
   });
@@ -1090,6 +1091,25 @@ describe("SessionSummaryProcessor", () => {
     await processor.execute({ operation: "test", agentName: "@architect" });
     const agentActivities = (processor as any).agentActivities as Map<string, number>;
     expect(agentActivities.get("@architect")).toBe(1);
+  });
+
+  it("reads autonomous_reporting config key (legacy auto_reporting fallback)", async () => {
+    const { featuresConfigLoader } = await import("../../../core/features-config.js");
+    (featuresConfigLoader.loadConfig as ReturnType<typeof vi.fn>).mockReturnValue({
+      autonomous_reporting: { enabled: false, include_recommendations: true },
+    });
+    const disabled = new SessionSummaryProcessor();
+    const off = await disabled.execute({ operation: "read", success: true });
+    expect((off.data as Record<string, unknown>).summaryGenerated).toBe(false);
+    expect((off.data as Record<string, unknown>).reason).toBe("disabled in features.json");
+
+    (featuresConfigLoader.loadConfig as ReturnType<typeof vi.fn>).mockReturnValue({
+      auto_reporting: { enabled: true, include_recommendations: false },
+    });
+    const legacy = new SessionSummaryProcessor();
+    const cfg = (legacy as { config: { enabled: boolean; include_recommendations: boolean } }).config;
+    expect(cfg.enabled).toBe(true);
+    expect(cfg.include_recommendations).toBe(false);
   });
 });
 

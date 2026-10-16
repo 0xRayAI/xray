@@ -11,6 +11,11 @@ import * as fs from "fs";
 import * as path from "path";
 import { getConfigDir, resolveConfigPath } from "./config-paths.js";
 import type { MemoryRoutingConfig } from "../memory-routing/types.js";
+import type {
+  SuitHost,
+  SuitProfile,
+  SuitTemperamentConfig,
+} from "../nucleus/suit-temperament.js";
 
 export type { MemoryRoutingConfig };
 
@@ -80,9 +85,21 @@ export interface MultiAgentOrchestrationConfig {
   auto_consult_major_work?: boolean;
   /** Codex 69 — block new MCP/skill/handler files via PreToolUse (default true) */
   no_new_surface?: boolean;
-  /** 3.5.0 — PreToolUse gate after delegate-deferred (default true when lead_dev_mode) */
+  /** PreToolUse gate after delegate-deferred (default true when lead_dev_mode) */
   auto_chain_delegations?: boolean;
+  /** Hours before unstarted lead-dev plan is archived (default 8) */
+  plan_stale_hours?: number;
+  /** Hours spawn-plan-stale persists after archival (default 24) */
+  plan_archive_marker_hours?: number;
+  /** Sibling workspace roots for multi-repo session boot metadata */
+  sibling_repos?: Array<string | { path: string; label?: string }>;
+  /** Auto-run 3-agent confer at synthesis checkpoint */
+  confer_on_synthesis?: boolean;
+  confer?: { enabled?: boolean; on_synthesis?: boolean };
 }
+
+/** 0xRay 4.0 — nucleus SSOT. See docs-site/docs/guides/v3-temperament.md */
+export type { SuitHost, SuitProfile, SuitTemperamentConfig };
 
 /** Reflection triggers merged from legacy auto_reflection when synthesis is configured */
 export interface SynthesisReflectionConfig {
@@ -91,7 +108,7 @@ export interface SynthesisReflectionConfig {
   thresholds?: AutoReflectionConfig['thresholds'];
 }
 
-/** 3.6.0 — periodic reflect & realign checkpoint (Synthesis PR1) */
+/** Periodic reflect & realign checkpoint (Synthesis) */
 export interface SynthesisConfig {
   enabled: boolean;
   every_n_gates: number;
@@ -392,11 +409,25 @@ export interface FeaturesConfig {
   storytelling?: StorytellingConfig;
   auto_reflection?: AutoReflectionConfig;
   inference?: InferenceConfig;
+  /** External Dynamo pass. Off uses the local decision matrix. */
+  inference_governance?: {
+    enabled?: boolean;
+  };
   memory_routing?: MemoryRoutingConfig;
+  /** Marker is opt-in and the shipped default is off. */
+  grok_postprocessor_light?: boolean;
+  /** P2 — git post-commit session inference capture */
+  inference_session_capture?: {
+    enabled?: boolean;
+    min_commits?: number;
+    lookback_commits?: number;
+  };
   synthesis: SynthesisConfig;
   kernel?: KernelConfig;
   processors?: ProcessorsConfig;
   enforcement?: EnforcementConfig;
+  /** v3 temperament — missing key means guided (existing consumers unchanged) */
+  suit_temperament?: SuitTemperamentConfig;
 }
 
 // ============================================================================
@@ -826,9 +857,9 @@ this.featuresPath = featuresPath || resolveConfigPath("features.json") || path.j
       },
 
       autonomous_reporting: {
-        enabled: true,
+        enabled: false,
         interval_minutes: 60,
-        auto_schedule: true,
+        auto_schedule: false,
         include_health_assessment: true,
         include_agent_activities: true,
         include_pipeline_operations: true,
@@ -898,6 +929,17 @@ this.featuresPath = featuresPath || resolveConfigPath("features.json") || path.j
         search_result_cache: true,
         cache_ttl_seconds: 300,
         max_cache_size_mb: 50,
+      },
+
+      inference: {
+        description: "The cycle runs from the CLI command inference:run and the session wake does not start it.",
+        enabled: true,
+        workflow_dir: ".xray/inference",
+        reports_dir: ".xray/reports",
+        pattern_matching: {
+          enabled: true,
+          confidence_threshold: 0.7,
+        },
       },
 
       synthesis: {

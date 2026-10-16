@@ -7,7 +7,7 @@
  * and that nucleus files use frameworkLogger exclusively.
  */
 
-import { describe, test, expect } from "vitest";
+import { describe, test, expect, vi } from "vitest";
 import * as fs from "fs";
 import * as path from "path";
 import { fileURLToPath } from "url";
@@ -15,6 +15,10 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PROJECT_ROOT = path.resolve(__dirname, "..", "..", "..");
+
+vi.mock("../../memory-routing/record-lesson.js", () => ({
+  recordLesson: () => [],
+}));
 
 function readSource(relativePath: string): string {
   return fs.readFileSync(path.join(PROJECT_ROOT, relativePath), "utf-8");

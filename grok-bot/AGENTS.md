@@ -1,0 +1,65 @@
+# AGENTS.md — @0xray/grok-bot
+
+**Read first:** [`OP-PROC.md`](OP-PROC.md) — the one-page operating procedure.
+
+You are setting up **Grok Bot agents** on the 0xRay factory OS.
+
+## Goal
+For **each key agent** (coordinator, implementer, reviewer, publisher, …):
+
+1. Fasten its **own suit** (mill + inspect) 
+2. Register / mint / pin identity (Groover) when it needs a DID 
+3. Set up **OWS pay** if it will call paid shops 
+4. Plant **hangar** shops if it uses the hangar economy 
+
+Do **not** share one suit across all agents on a machine if you can avoid it. Multiplicity is the point.
+
+## Prove this seat
+From the agent project root: `npx @0xray/grok-bot doctor` (alias `ready`). PASS means mill + inspect are fastened. House lookup uses `GROK_BOT_HOUSE` when set, otherwise a walk-up for `house/HOUSE.md`. It warns when that file is missing and fails when example lines are still unfilled. The same printout lists hangar (`npx groover-hangar`) and Clearing next steps (402, `~/.ows`, ZigZag), unless HOUSE.md has a line that is exactly `wallet off`. Do not mill-plant Clearing into 0xRay.
+
+## Order (complete path)
+Follow `SKILLS.md` in this order **per agent**:
+
+| Step | Skill | What |
+|------|-------|------|
+| A | `fasten-suit-per-agent` | Project root + mint + inspect proof |
+| B | `groover-factory-parity` | Register → Dynamo citation → mint → ERC-8004 → pin (when identity needed) |
+| C | `setup-ows-pay` | Local OWS wallet + fund USDC on Base + how to settle 402s |
+| D | `plant-hangar-shops` | `npx groover-hangar` + catalog (`GET /v1/catalog` / `list_hangars`) + call a shop |
+
+Humans: same path; start at `README.md`.
+
+## Rules
+- Chat “done” is not proof — keep inventory, inspect `ok`, txs, curls.
+- Friend test any public copy ([GIBBERISH-CHECK.md](https://github.com/0xRayAI/xray/blob/main/grok-bot/ops/GIBBERISH-CHECK.md)).
+- Coordinator routes; implementer executes; do not ask the coordinator to mint/deploy for you.
+- This package **orchestrates**. It does not replace `0xray` or Groover.
+
+## Adjust from plant (monitor)
+Current verified pins (change if live plant moves):
+- Suit: `0xray` (current npm) · mill nested in the tarball (`npx @0xray/foundry`)
+- Registry MCP + website URLs — see `llms.txt`
+- Hangar: `npx groover-hangar` · catalog is Clearing `GET /v1/catalog` (Groover DID + pin, plus solar + live shop). Groover MCP `list_hangars` reads it. Settle USDC on Base.
+- OWS: keys in `~/.ows` · see Open Wallet docs
+
+If a URL or version fails, update this kit — do not invent a parallel stack.
+
+## PreToolUse on Grok Bot (observe)
+Cold-seat proof: [GROK-HOOK-PROOF.md](https://github.com/0xRayAI/xray/blob/main/grok-bot/ops/GROK-HOOK-PROOF.md).
+
+- Fasten **does** plant Grok plugin `PreToolUse` / `PostToolUse` hooks and the gate script runs.
+- Grok Bot **chat** is not that plugin host — do not invent a fake PreToolUse floor in the assistant.
+- Where the Grok CLI plugin loads `hooks.json`, A-hooks are live; elsewhere rely on skills + Strict review + mill gates.
+
+**Wearing a suit in Grok Bot chat.** A seat wears its suit when its profile names its suit folder and DNA. Each time it wakes, or after its chat history is compacted, it reads the suit's `.xray/state/STATION.md`, then `house/WAVEBOARD.md`. Before it says ship or live work is done, it runs `npx @0xray/foundry inspect` from the suit folder and quotes `ok: true`. A doctor PASS alone doesn't prove the suit is worn.
+
+## Survive compaction (Grok Bot chat)
+The host may summarize or trim a long thread. 0xRay compact hooks (PreCompact) and Repertoire do **not** run in this chat — do not wait for them.
+
+Use skill `survive-compact`: read on-disk notes (station, then `house/WAVEBOARD.md` / `house/ATTENTION_STATE.md`, else `templates/house/`, then stored memory), name the live track, **resume** the existing cloud, and do not rebuild what disk already shows done. Chat may lose early turns; disk must not lose the ticket. Do not treat a re-fed summary as proof the old context window survived.
+
+Repertoire is preferred on a worn 0xray seat. Do not bolt full Repertoire MCP onto every Grok Bot chat as theater — this chat does not fire 0xRay hooks.
+
+## Op proc index
+
+Start at [`OP-PROC.md`](OP-PROC.md). Board: `house/` first, else `templates/house/`. Longer notes under `ops/` stay in the git repo and are not in the npm package.

@@ -2,20 +2,35 @@
 
 <!-- 0xray-managed -->
 
-Quick reference for the 0xRay AI orchestration framework (shipped to your project on `npm install 0xray`).
+Quick reference for the 0xRay suit worn on **{{CONSUMER_NAME}}**{{CONSUMER_VERSION_PAREN}}.
 
-**v3.5.4** — 7 MCP servers · 45 skills · 68 codex terms · 4 platform bridges
+**4.1** — a suit that survives the context window
+
+Confer votes. Burst runs the swarm.
+
+0xRay is a three-subsystem autonomous engine (Inference · External Governance · Autonomous Engine). The suit is the wear. Constitution always on. Temperament scales ceremony. Four chat bridges plus Cursor project hooks. **Repertoire is preferred** — vendored 0.2.9 ships **on**. Dest is named laws, not keywords. Station is the wake ticket, not a substitute. Explicit opt-out only: `"enabled": false, "provider": "repertoire"`.
+
+**Governance always on** (Codex PreToolUse, no new surface, no `eval`). **Engine ceremony** (analyze-complexity before spawn, confer) is **guided** by default so free-model OpenCode/Hermes stay in check. Frontier hosts (Grok 4.6 class) with `suit_temperament.profile: auto` **warn** on spawn-without-plan instead of deny — the engine is still there. Existing `.xray/features.json` without `suit_temperament` stays **guided**. Docs: v3 from v2 · Suit temperament.
+
+## Hot-swap
+
+Before other work, Read `.xray/state/STATION.md`. Compaction and host change are the same cut. Continue the card. Do not restart the job. Grok does not inject the card (OpenCode does) — this Read is the Grok contract. Do not thicken the Grok exo.
+
+A peer lead continues from this card + Repertoire + the `orchestrator` skill. Dummy tests `SKILLS.md`. Same-sess bodies wear the suit. Branch + worktree + PR. Loop until Station is done. Live work ticks, not idle pacers. Same critic seat (resume only). Ship when mill-gate D + `foundry gate` PASS — green CI is not ship. Spend / credentials stay Ask-first. OTP in a browser, poll the new version before the next cut.
 
 ## Postinstall (automatic)
 
-`npm install 0xray` runs `install-bridges.cjs` and:
+`npm install 0xray` links vendored `@0xray/repertoire` and prints `npx 0xray wear`. It does not write `AGENTS.md`, `.mcp.json`, or the chat bridges.
+
+`npx 0xray wear` writes the consumer suit:
 
 - Copies this file → **`AGENTS.md`** in your project root
-- Ships root **`SKILLS.md`** and syncs **45 skills** to platform skill directories
+- Fastens mill plant (`mill` + `inspect`) then overlays **your** `src/skills` (same name wins). Fasten is **foundry-plant/0**: builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill package declares (blip-inspect, blip-vibe, blip-looker, sound-inspect, sound-mixer live in the mill). `npx @0xray/foundry sound mix` / `sound render` / `blip render` are CLI shims (0.1.11+). `npx @0xray/foundry inspect` runs mill-exported inspect; on a sound seat the last bed receipt; on a blip seat the last 4.44s receipt. Chat is not a receipt. Does **not** dump 45/42 costume unless `foundry.json` `"costume": true`. Does **not** write root **`SKILLS.md`**
+- Factory shop plant (`shop-extract`, `shop-witness`, `shop-pin` from groover-hangar) is first-class with mill plant. Extra shops: `foundry.json` `"shopPlant"`. Not costume.
 - Seeds **`.gitignore`** (from template, if absent)
-- Deploys **`.xray/`** (`codex.json`, `features.json`, `config.json`)
+- Deploys **`.xray/`** (`codex.json`, `features.json`, `config.json`) then overlays **your** mill SSOT (`xray/codex.json`, `xray/features.json`, `src/skills`, `src/opencode/agents`; remap with `foundry.json`)
 - Writes **`.mcp.json`** with 7 MCPs servers (`npx -y 0xray mcp …`)
-- Installs bridges: **OpenCode**, **Grok**, **Hermes**, **OpenClaw**
+- Installs bridges: **OpenCode**, **Grok**, **Hermes**, **OpenClaw**, plus **Cursor** `.cursor/hooks.json`
 
 Optional extras: `npx 0xray setup`
 
@@ -41,56 +56,64 @@ Governance deliberation uses **code-review**, **security-audit** (via enforcer/s
 |---------|-------------|
 | `npx 0xray setup` | Symlinks, hook extras, Hermes skill sync |
 | `npx 0xray status` | Verify installation |
-| `npx 0xray opencode install` | OpenCode bridge (also runs on postinstall) |
-| `npx 0xray grok install` | Grok plugin + 7 MCPs servers + skill sync |
+| `npx 0xray opencode install` | OpenCode bridge. `npx 0xray wear` writes it too. |
+| `npx 0xray grok install` | Project `.grok/plugins/0xray` + 7 MCPs servers (machine plugin not last-wins) |
 | `npx 0xray hermes install` | Hermes plugin bridge |
 | `npx 0xray openclaw install` | OpenClaw config + skills |
 | `npx 0xray skill:install` | Install starter skills |
-| `npx 0xray validate` | Validate codex compliance |
+| `npx 0xray validate` | Wear check (pack paths, Cursor hooks, mill, repertoire) — not leftover init.sh |
 | `npx 0xray codex check` | Check codex rules |
 | `npx 0xray health` | Framework health check |
 | `npx 0xray mcp <server>` | Start an MCP server (stdio) |
+| `npx @0xray/foundry inspect` | Mill inspect (nested mill). Sound seat: plant + last bed PASS/FAIL. Blip seat: last 4.44s PASS/FAIL. Chat is not a receipt. |
+| `npx @0xray/foundry sound render` | Factory-sound bed: brief → seed → genre → crystal mill wav → metrics receipt. |
+| `npx @0xray/foundry sound mix` | sound-mixer: level every genre × tempo × motif (hats / plate / glue). |
+| `npx @0xray/foundry blip render` | Factory-blip mill (`@0xray/blip`): brief → seed → still\|motion:<id> → 4.44s mp4 + audio bed. Motions are Rippel v2 VisualConfig at ≥720p. `kapow` is a design opt (two-tier comic stamp). Sparse seed mesh plus field accents are the NFT fingerprints. `still` is the Power Plant ident (plate dissolves, not a frozen poster). Fasten is foundry-plant/0 (`@0xray/foundry@0.1.12`); CLI shims remain (0.1.11+). |
+| `npx @0xray/foundry blip vibe` | Stamp density. Appeal 0–10. Ship bar is 8. |
+| `npx @0xray/foundry blip look` | Friend hitting replay (looker). Appeal 0–10. Ship bar is 8. |
 
 ## Governance
 
 xray operates under the three-subsystem model: **Inference** + **External Governance** (Dynamo Solar SSOT) + **Autonomous Engine** (thinDispatch 7-flow in MCP orchestrator). All actions are validated against the Universal Development Codex before execution.
 
-**Codex**: `.xray/codex.json` — **68 terms** across all agent interactions.
+**Codex**: `.xray/codex.json` — **70 terms** across all agent interactions.
 
 ## thinDispatch Routing
 
-- Simple (≤15): Single agent
-- Moderate (≤25): Single agent with tools
-- Complex (≤50): Multi-agent coordination
-- Enterprise (>50): Orchestrator-led team
+- Simple (≤15): single-agent
+- Moderate (≤25): multi-agent
+- Complex (≤50): orchestrator-led
+- Enterprise (>50): orchestrator-led
 
 ## AsideContext (v3.2+)
 
-Bounded orchestrator subcontexts via `xray-orchestrator` MCP — `spawnAside` / `closeAside` on multi-step tasks. Repertoire memory routing (when enabled) flows through `inheritedContext.memoryRouting`.
+Bounded orchestrator subcontexts via `xray-orchestrator` MCP — `spawnAside` / `closeAside` on multi-step tasks. Repertoire (preferred) flows through `inheritedContext.memoryRouting`.
 
-## Memory Routing + Repertoire (optional, v3.3+)
+## Memory Routing + Repertoire (preferred, v3.3+)
 
 Configure in `.xray/features.json`:
 
 ```json
 "memory_routing": {
-  "enabled": true,
-  "provider": "repertoire",
-  "module_path": "../repertoire/dist/provider/memory-routing-provider.js",
-  "config": {
-    "signalsPath": "../repertoire/data/curated_signals.json"
-  }
+ "enabled": true,
+ "provider": "repertoire",
+ "module_path": "node_modules/@0xray/repertoire/dist/provider/memory-routing-provider.js",
+ "config": {
+ "signalsPath": ".xray/state/repertoire/curated_signals.json",
+ "statePath": ".xray/state/repertoire/inference-state.json",
+ "feedbackDir": ".xray/state/repertoire/feedback"
+ }
 }
 ```
 
-Without Repertoire: `{ "enabled": false, "provider": "null" }`.
+**Wear Repertoire.** Dest is named invariants, not hangar `repo-*`. Explicit opt-out only: `{ "enabled": false, "provider": "repertoire" }`.
 
 **External MCP** (Hermes/Grok): add Repertoire alongside 0xRay servers:
 
 ```json
 "repertoire": {
-  "command": "npx",
-  "args": ["-y", "@0xray/repertoire", "mcp"]
+ "command": "npx",
+ "args": ["-y", "@0xray/repertoire", "mcp"]
 }
 ```
 
@@ -98,13 +121,13 @@ Tools: `repertoire__get_task_confidence`, `repertoire__get_high_confidence_signa
 
 ## Codex OS (always on — not optional)
 
-The Universal Development Codex (`.xray/codex.json`, **69 terms**) is enforced by **PreToolUse** (blocks) and this section (brain). MCP enforcer is audit — not the gate.
+The Universal Development Codex (`.xray/codex.json`, **70 terms**) is enforced by **PreToolUse** (blocks) and this section (brain). MCP enforcer is audit — not the gate.
 
 | Term | Rule | Enforcement |
 |------|------|-------------|
 | 11 | No `any`, `@ts-ignore`, `@ts-expect-error` | PreToolUse deny on edits |
 | 29 | Security by design — no `eval()` | PreToolUse deny |
-| 59 | Complex work → orchestrator intake | PreToolUse deny `spawn_subagent` without plan |
+| 59 | Complex work → orchestrator intake | **guided/strict:** PreToolUse **deny** spawn without plan. **frontier:** **warn** (allow) — engine still available; leftover-plan todo mismatch also warns. Codex 11/29/69 still **deny**. |
 | 67–68 | Best subagents + lead dev ownership | `analyze-complexity` + orchestrator skill |
 | **69** | **No new MCP/skill/handler surface** | PreToolUse deny new `*.server.ts`, `SKILL.md` |
 
@@ -123,7 +146,7 @@ When the suit is worn, **lead dev mode** is ON via existing config + hooks:
 | Test triage | PreToolUse hook | Per-suite hint on full `npm test` |
 | Playbook | **`orchestrator`** skill | Codex 59, 67–69 rules |
 
-**First substantive task:** `analyze-complexity` with `tasks` array — **required before** `spawn_subagent`. You are the **lead developer**. Users speak in goals, not keywords.
+**First substantive task (guided/strict):** `analyze-complexity` with `tasks` array — **required before** `spawn_subagent`. **Frontier:** intake is optional; spawn without a plan **warns**. You are the **lead developer**. Users speak in goals, not keywords.
 
 | # | Rule |
 |---|------|
@@ -139,7 +162,7 @@ When the suit is worn, **lead dev mode** is ON via existing config + hooks:
 
 ## Skills
 
-Full catalog in root **`SKILLS.md`** (shipped on postinstall). **`orchestrator`** skill documents lead-dev mode. Invoke via `@orchestrator` or `xray-skills` MCP (`invoke-skill`, `list-skills`).
+Full catalog in root **`SKILLS.md`**. Wear does not write a consumer-root `SKILLS.md`. **`orchestrator`** skill documents lead-dev mode. Invoke via `@orchestrator` or `xray-skills` MCP (`invoke-skill`, `list-skills`).
 
 ## File Organization
 

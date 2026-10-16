@@ -1,11 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
+
+const recordLesson = vi.fn(() => [] as string[]);
+
+vi.mock('../../memory-routing/record-lesson.js', () => ({
+  recordLesson: (...args: unknown[]) => recordLesson(...args),
+}));
 
 vi.mock('../../core/framework-logger.js', () => ({
   frameworkLogger: { log: vi.fn().mockResolvedValue(undefined) },
 }));
 
 describe('thinDispatch — scoreComplexity edge cases', () => {
-  let scoreComplexity: any;
+  let scoreComplexity: (operation: string, context: unknown) => { score: number; level: string; recommendedStrategy: string; estimatedAgents: number };
 
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -48,7 +56,7 @@ describe('thinDispatch — scoreComplexity edge cases', () => {
 });
 
 describe('thinDispatch — routeToAgent edge cases', () => {
-  let routeToAgent: any;
+  let routeToAgent: (scoreOrLevel: number | { level: string }, level?: string) => string;
 
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -83,6 +91,66 @@ describe('thinDispatch — routeToAgent edge cases', () => {
     expect(result).toHaveProperty('score');
     expect(result).toHaveProperty('agent');
     expect(typeof result.agent).toBe('string');
+    expect(result.file).toBeUndefined();
+    expect(result.lens).toBeUndefined();
+  });
+
+  it('routes a named plane to its file and does not pick the researcher', async () => {
+    const { scoreAndRoute } = await import('../../nucleus/thin-dispatch.js');
+    const named = scoreAndRoute('open the boot plane', {});
+    expect(named.file).toBe('src/core/boot-orchestrator.ts');
+    expect(named.agent).not.toBe('researcher');
+    expect(named.agent.length).toBeGreaterThan(0);
+    expect(named.lens).toBeUndefined();
+  });
+
+  it('stops a look that names no plane', async () => {
+    const { scoreAndRoute } = await import('../../nucleus/thin-dispatch.js');
+    const stopped = scoreAndRoute('look', {});
+    expect(stopped.agent).toBe('');
+    expect(stopped.lens).toBe('Name one plane.');
+    expect(stopped.file).toBeUndefined();
+  });
+
+  it('stays quiet when two planes are named', async () => {
+    const { scoreAndRoute } = await import('../../nucleus/thin-dispatch.js');
+    const both = scoreAndRoute('routing and governance', {});
+    expect(both.file).toBeUndefined();
+    expect(both.lens).toBeUndefined();
+    expect(both.agent.length).toBeGreaterThan(0);
+  });
+});
+
+describe('thinDispatch — adjusted score updates strategy', () => {
+  it('sets recommendedStrategy from the level of the adjusted score', async () => {
+    const routing = await import('../../memory-routing/index.js');
+    const dispatch = await import('../../nucleus/thin-dispatch.js');
+    const { getStrategyForLevel, getAgentCountForLevel } = await import('../../delegation/complexity-core.js');
+    const spy = vi.spyOn(routing, 'ensureMemoryRoutingProviderSync').mockReturnValue({
+      id: 'test-adjust',
+      resolveThinDispatch: (agent: string, _operation: string, score: number) => ({
+        agent,
+        adjustedScore: score <= 50 ? 60 : 10,
+        context: {
+          providerId: 'test-adjust',
+          matchedSignals: ['level-cross'],
+          matchedTags: [],
+          flags: {},
+          synthesisAvailable: false,
+        },
+      }),
+    } as unknown as ReturnType<typeof routing.ensureMemoryRoutingProviderSync>);
+
+    try {
+      const base = dispatch.scoreComplexity('rename variable', { files: ['a.ts'] });
+      const routed = dispatch.scoreAndRoute('level-cross rename variable', { files: ['a.ts'] });
+      expect(routed.score.level).not.toBe(base.level);
+      expect(routed.score.recommendedStrategy).toBe(getStrategyForLevel(routed.score.level));
+      expect(routed.score.estimatedAgents).toBe(getAgentCountForLevel(routed.score.level));
+      expect(routed.memoryRouting?.overridden).toBe(false);
+    } finally {
+      spy.mockRestore();
+    }
   });
 });
 
@@ -90,5 +158,31 @@ describe('thinDispatch — NUCLEUS_THIN_DISPATCH_VERSION', () => {
   it('should be a valid semver string', async () => {
     const mod = await import('../../nucleus/thin-dispatch.js');
     expect(mod.NUCLEUS_THIN_DISPATCH_VERSION).toMatch(/^\d+\.\d+\.\d+$/);
+  });
+});
+
+describe('thinDispatch — organ after a yield', () => {
+  it('still routes a named trap after an awaited turn', async () => {
+    const organ = resolve(process.cwd(), 'node_modules/@0xray/repertoire/dist/provider/memory-routing-provider.js');
+    if (!existsSync(organ)) return;
+    const { scoreAndRoute } = await import('../../nucleus/thin-dispatch.js');
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    const matched = scoreAndRoute('attestation-as-map', {});
+    expect(matched.memoryRouting?.providerId).toBe('repertoire');
+    expect(matched.memoryRouting?.signals).toContain('attestation-as-map');
+    // Trap name alone keeps the complexity agent even when score is boosted.
+    expect(matched.agent).toBe('code-reviewer');
+    expect(matched.memoryRouting?.overridden).toBe(false);
+
+    const crossed = scoreAndRoute('debug attestation-as-map', {});
+    expect(crossed.agent).toBe('architect');
+    expect(crossed.memoryRouting?.overridden).toBe(true);
+
+    const routed = scoreAndRoute('debug attestation-as-map', { files: ['a.ts', 'b.ts'] });
+    expect(routed.memoryRouting?.signals).toContain('attestation-as-map');
+    expect(routed.agent).toBe('architect');
+    expect(routed.score.score).toBeGreaterThanOrEqual(26);
+    // Base complexity may already be architect with file context; override flag is optional.
+    expect(recordLesson).not.toHaveBeenCalled();
   });
 });

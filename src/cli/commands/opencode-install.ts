@@ -2,14 +2,18 @@ import { Command } from 'commander';
 import fs from 'fs';
 import path from 'path';
 import { createRequire } from 'module';
-import { frameworkLogger } from '../../core/framework-logger.js';
-import { syncBuiltinSkills } from './skill-install.js';
+import { fileURLToPath } from 'node:url';
 
-const __dirname = path.dirname(new URL(import.meta.url).pathname);
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
-const wiring = require(path.join(__dirname, '..', '..', '..', 'scripts', 'node', 'bridge-mcp-wiring.cjs')) as {
+
+type OpencodeWiring = {
   wireOpencodeBridge: (targetDir: string) => number;
 };
+
+function loadWiring(): OpencodeWiring {
+  return require(path.join(__dirname, '..', '..', '..', 'scripts', 'node', 'bridge-mcp-wiring.cjs')) as OpencodeWiring;
+}
 
 export function registerOpencodeCommands(opencodeCmd: Command) {
   opencodeCmd
@@ -76,6 +80,10 @@ function copyDir(src: string, dest: string, relPath = ""): void {
 }
 
 async function installForOpencode(options: OpencodeInstallOptions = {}): Promise<void> {
+  const { frameworkLogger } = await import('../../core/framework-logger.js');
+  const { syncBuiltinSkills } = await import('./skill-install.js');
+  const { mintAfterWear, wantsCostume } = await import('./foundry-mint-wear.js');
+  const wiring = loadWiring();
   frameworkLogger.log('opencode-integration', 'install-start', 'info', { options });
 
   const opencodeSource = path.join(__dirname, '..', '..', '..', '.opencode');
@@ -112,8 +120,13 @@ async function installForOpencode(options: OpencodeInstallOptions = {}): Promise
       console.log('[Opencode] .opencode/ directory already exists.');
       console.log('Use --force to reinstall.');
     } else {
-      copyDir(opencodeSource, opencodeDest);
-      frameworkLogger.log('opencode-integration', 'opencode-copied', 'info', { destination: opencodeDest });
+      if (wantsCostume(process.cwd())) {
+        copyDir(opencodeSource, opencodeDest);
+        frameworkLogger.log('opencode-integration', 'opencode-copied', 'info', { destination: opencodeDest });
+      } else {
+        fs.mkdirSync(opencodeDest, { recursive: true });
+        frameworkLogger.log('opencode-integration', 'mill-plant-plugin', 'info', { destination: opencodeDest });
+      }
 
       const pluginSource = path.join(__dirname, '..', '..', '..', 'dist', 'plugin', 'xray-codex-injection.js');
       const pluginDest = path.join(opencodeDest, 'plugin', 'xray-codex-injection.js');
@@ -143,6 +156,7 @@ async function installForOpencode(options: OpencodeInstallOptions = {}): Promise
     }
 
     const mcpCount = wiring.wireOpencodeBridge(process.cwd());
+    mintAfterWear(process.cwd());
     console.log(`\x1b[32m✓ Wired opencode.json mcp (${mcpCount} servers)\x1b[0m`);
 
     console.log('\n✅ 0xRay OpenCode plugin installed!');

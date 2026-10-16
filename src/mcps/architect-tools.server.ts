@@ -10,12 +10,37 @@ import { XrayKnowledgeSkillBase } from "./shared/knowledge-skill-base.js";
 import * as fs from "fs";
 import * as path from "path";
 import { frameworkLogger } from "../core/framework-logger.js";
+import { type GovernanceVote } from "../governance/llm-governance-provider.js";
 import {
   contextAnalysis as architectContextAnalysis,
   codebaseStructure as architectCodebaseStructure,
   dependencyAnalysis as architectDependencyAnalysis,
   architectureAssessment as architectArchitectureAssessment,
+  type ArchitectureAssessment,
 } from "../architect/architect-tools.js";
+
+export type ConferModelVerdict = "PASS" | "CONDITIONAL" | "FAIL" | "UNREVIEWED";
+
+/** A confer verdict counts only when a model vote exists. Metrics alone are UNREVIEWED. */
+export function conferVerdictFromModelVote(
+  vote: Pick<GovernanceVote, "decision"> | null,
+): ConferModelVerdict {
+  if (!vote) return "UNREVIEWED";
+  if (vote.decision === "reject") return "FAIL";
+  if (vote.decision === "approve") return "PASS";
+  return "CONDITIONAL";
+}
+
+export function formatArchitectureAssessmentConferText(
+  conferPrompt: string,
+  assessment: ArchitectureAssessment,
+  verdict: ConferModelVerdict = "UNREVIEWED",
+): string {
+  const assessmentJson = JSON.stringify(assessment, null, 2);
+  const trimmed = conferPrompt.trim();
+  if (!trimmed) return assessmentJson;
+  return `${trimmed}\n\n## Architecture assessment\n${assessmentJson}\n\nVerdict: ${verdict}\nTop risks: review assessment metrics above\nHardening: address high-complexity or coupling findings before resuming`;
+}
 
 interface DirectoryNode {
   name: string;
@@ -28,6 +53,29 @@ interface FileNode {
   name: string;
   type: "file";
   extension: string;
+}
+
+export async function renderArchitectureAssessment(
+  args: Record<string, unknown> | undefined,
+): Promise<{ content: Array<{ type: "text"; text: string }> }> {
+  const projectRoot = typeof args?.projectRoot === "string" ? args.projectRoot : "";
+  const assessmentType =
+    args?.assessmentType === "quick" || args?.assessmentType === "comprehensive"
+      ? args.assessmentType
+      : "comprehensive";
+  const conferPrompt = typeof args?.conferPrompt === "string" ? args.conferPrompt : "";
+
+  frameworkLogger.log("mcps/architect-tools", "architecture-assessment", "info", { projectRoot });
+
+  const result = await architectArchitectureAssessment(projectRoot, assessmentType);
+  return {
+    content: [
+      {
+        type: "text",
+        text: formatArchitectureAssessmentConferText(conferPrompt, result, "UNREVIEWED"),
+      },
+    ],
+  };
 }
 
 class XrayArchitectToolsServer extends XrayKnowledgeSkillBase {
@@ -233,21 +281,7 @@ class XrayArchitectToolsServer extends XrayKnowledgeSkillBase {
   }
 
   private async architectureAssessment(args: Record<string, unknown> | undefined) {
-    const projectRoot = (args?.projectRoot as string) || "";
-    const assessmentType = (args?.assessmentType as "quick" | "comprehensive") || "comprehensive";
-
-    frameworkLogger.log("mcps/architect-tools", "architecture-assessment", "info", { projectRoot });
-
-    const result = await architectArchitectureAssessment(projectRoot, assessmentType);
-
-    return {
-      content: [
-        {
-          type: "text",
-          text: JSON.stringify(result, null, 2),
-        },
-      ],
-    };
+    return renderArchitectureAssessment(args);
   }
 
 

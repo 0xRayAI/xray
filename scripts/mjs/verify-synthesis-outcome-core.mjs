@@ -40,7 +40,7 @@ mkdirSync(join(tmp, '.xray', 'state'), { recursive: true });
 writeFileSync(
   join(tmp, '.xray', 'features.json'),
   JSON.stringify({
-    multi_agent_orchestration: { lead_dev_mode: true, auto_consult_major_work: true },
+    multi_agent_orchestration: { lead_dev_mode: true, auto_consult_major_work: true, confer_on_synthesis: true },
     synthesis: { enabled: true, every_n_gates: 1, every_n_turns: 0, every_n_todos_completed: 0 },
   }),
 );
@@ -50,7 +50,7 @@ try {
   if (!isSynthesisCheckpointDue(tmp, sessionId)) fail('checkpoint due after gate');
   else pass('checkpoint due after gate');
 
-  const plan = buildSynthesisCheckpointPlan('gate threshold (1/1)');
+  const plan = buildSynthesisCheckpointPlan('gate threshold (1/1)', tmp);
   savePersistedLeadDevPlan(
     { ...plan, persistedAt: new Date().toISOString(), sessionId },
     tmp,

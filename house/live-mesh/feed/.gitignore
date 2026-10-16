@@ -1,0 +1,9 @@
+live-events.json
+live-events.json.tmp
+live-events.jsonl
+light-notes.jsonl
+x-ledger.jsonl
+health-state.json
+health-state.tmp
+*.mp4
+frames/

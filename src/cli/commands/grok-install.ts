@@ -5,7 +5,6 @@
  */
 
 import { Command } from 'commander';
-import { installForGrokCLI } from '../../integrations/grok/grok-cli.js';
 
 export function registerGrokCommands(grokCmd: Command) {
   grokCmd
@@ -14,6 +13,7 @@ export function registerGrokCommands(grokCmd: Command) {
     .option('--dry-run', 'Show what would be done without making changes')
     .option('--force', 'Force reinstall even if already present')
     .action(async (options) => {
+      const { installForGrokCLI } = await import('../../integrations/grok/grok-cli.js');
       await installForGrokCLI({ dryRun: options.dryRun, force: options.force });
     });
 }

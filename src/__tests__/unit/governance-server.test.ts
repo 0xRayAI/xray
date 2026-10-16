@@ -9,7 +9,10 @@ vi.mock("../../governance/codex-policy.service.js", () => ({
 }));
 
 vi.mock("../../integrations/governance/index.js", () => ({
-  initializeGovernanceIntegration: vi.fn(),
+  initializeGovernanceIntegration: vi.fn(async () => ({
+    isAvailable: () => true,
+    ensureDynamoClient: async () => undefined,
+  })),
   shutdownGovernanceIntegration: vi.fn(),
 }));
 
@@ -43,19 +46,21 @@ describe("GovernanceServer", () => {
   });
 
   describe("constructor", () => {
-    it("registers 3 tools", () => {
-      expect(server.tools).toHaveLength(3);
+    it("registers 4 tools", () => {
+      expect(server.tools).toHaveLength(4);
       const names = server.tools.map((t: any) => t.name);
       expect(names).toContain("govern_proposals");
       expect(names).toContain("govern_reflection");
       expect(names).toContain("get_active_codex");
+      expect(names).toContain("record_confer_receipt");
     });
 
-    it("registers 3 handlers matching tool names", () => {
-      expect(Object.keys(server.handlers)).toHaveLength(3);
+    it("registers 4 handlers matching tool names", () => {
+      expect(Object.keys(server.handlers)).toHaveLength(4);
       expect(server.handlers).toHaveProperty("govern_proposals");
       expect(server.handlers).toHaveProperty("govern_reflection");
       expect(server.handlers).toHaveProperty("get_active_codex");
+      expect(server.handlers).toHaveProperty("record_confer_receipt");
     });
   });
 
@@ -490,12 +495,39 @@ describe("GovernanceServer", () => {
 
   describe("setupToolHandlers error handling", () => {
     it("handlers map has all tool names", () => {
-      expect(Object.keys(server.handlers)).toHaveLength(3);
+      expect(Object.keys(server.handlers)).toHaveLength(4);
       expect(typeof server.handlers["govern_proposals"]).toBe("function");
       expect(typeof server.handlers["govern_reflection"]).toBe("function");
       expect(typeof server.handlers["get_active_codex"]).toBe("function");
+      expect(typeof server.handlers["record_confer_receipt"]).toBe("function");
     });
   });
+
+    it("arms Dynamo when external governance is required and the client is down", async () => {
+      const ensureDynamoClient = vi.fn();
+      vi.mocked(initializeGovernanceIntegration).mockResolvedValue({
+        isAvailable: () => false,
+        ensureDynamoClient,
+      } as Awaited<ReturnType<typeof initializeGovernanceIntegration>>);
+      const mockGovern = vi.fn().mockResolvedValue({ summary: "ok", results: [] });
+      vi.mocked(getGovernanceService).mockReturnValue({
+        govern: mockGovern,
+      } as ReturnType<typeof getGovernanceService>);
+
+      const handle = server as unknown as {
+        handleGovernProposals: (args: {
+          proposals: Array<{ type: string; title: string; description: string }>;
+          options: { require_external: boolean };
+        }) => Promise<unknown>;
+      };
+      await handle.handleGovernProposals({
+        proposals: [{ type: "fix", title: "Fix", description: "Desc" }],
+        options: { require_external: true },
+      });
+
+      expect(ensureDynamoClient).toHaveBeenCalledTimes(1);
+      expect(mockGovern).toHaveBeenCalledTimes(1);
+    });
 
   describe("initializeGovernance", () => {
     it("initializes governance when enabled in config", async () => {

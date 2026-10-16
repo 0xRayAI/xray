@@ -18,7 +18,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Detect if running in consumer environment (node_modules)
-const isConsumerEnvironment = __dirname.includes("node_modules/xray");
+const isConsumerEnvironment = __dirname.includes(`${path.sep}node_modules${path.sep}0xray${path.sep}`)
+  || __dirname.includes(`${path.sep}node_modules${path.sep}xray${path.sep}`);
 const pathPrefix = isConsumerEnvironment ? "" : "";
 
 const MCP_SERVERS = [

@@ -13,6 +13,9 @@ import { fileURLToPath } from 'url';
 import { dirname, join, resolve } from 'path';
 import fs from 'fs';
 
+/** Must outlast the 120s governance model call so a real approve can return. */
+const GOVERNANCE_MODEL_TIMEOUT_MS = 150_000;
+
 /**
  * Registry for managing MCP server configurations
  */
@@ -95,7 +98,7 @@ export class ServerConfigRegistry {
       serverName: 'code-review',
       command: 'node',
       args: [`${basePath}/knowledge-skills/code-review.server.js`],
-      timeout: 30000,
+      timeout: GOVERNANCE_MODEL_TIMEOUT_MS,
     });
 
     // Security Audit Server
@@ -103,7 +106,7 @@ export class ServerConfigRegistry {
       serverName: 'security-audit',
       command: 'node',
       args: [`${basePath}/knowledge-skills/security-audit.server.js`],
-      timeout: 45000,
+      timeout: GOVERNANCE_MODEL_TIMEOUT_MS,
     });
 
     // Performance Optimization Server
@@ -127,7 +130,7 @@ export class ServerConfigRegistry {
       serverName: 'researcher',
       command: 'node',
       args: [`${basePath}/researcher.server.js`],
-      timeout: 60000,
+      timeout: GOVERNANCE_MODEL_TIMEOUT_MS,
     });
 
     // Governance Service (meta-MCP that orchestrates the three skill servers + required external Dynamo)
@@ -199,7 +202,7 @@ export class ServerConfigRegistry {
       serverName: 'architect',
       command: 'node',
       args: [`${basePath}/architect-tools.server.js`],
-      timeout: 45000,
+      timeout: GOVERNANCE_MODEL_TIMEOUT_MS,
     });
 
     // Bug Triage Specialist Server
@@ -224,7 +227,7 @@ export class ServerConfigRegistry {
       serverName: 'code-reviewer',
       command: 'node',
       args: [`${basePath}/knowledge-skills/code-review.server.js`],
-      timeout: 30000,
+      timeout: GOVERNANCE_MODEL_TIMEOUT_MS,
     });
 
     // Security Auditor (alias for security-audit)
@@ -232,7 +235,7 @@ export class ServerConfigRegistry {
       serverName: 'security-auditor',
       command: 'node',
       args: [`${basePath}/knowledge-skills/security-audit.server.js`],
-      timeout: 45000,
+      timeout: GOVERNANCE_MODEL_TIMEOUT_MS,
     });
 
     // Refactorer Server

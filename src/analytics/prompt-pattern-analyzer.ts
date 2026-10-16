@@ -75,24 +75,31 @@ class PromptPatternAnalyzer {
       return this.emptyComparisonResult();
     }
 
-    const templateMatches = promptData.filter(
-      (p) => p.templatePrompt && p.templatePrompt.length > 0,
-    );
-    const nonTemplatePrompts = promptData.filter(
-      (p) => !p.templatePrompt || p.templatePrompt.length === 0,
-    );
+    let templateMatchCount = 0;
+    for (const prompt of promptData) {
+      if (prompt.templatePrompt && prompt.templatePrompt.length > 0) templateMatchCount++;
+    }
 
-    const gaps = this.detectTemplateGaps(promptData, outcomes);
-    const emergingPatterns = this.identifyEmergingPatterns(promptData, outcomes);
-    const topMissedKeywords = this.analyzeMissedKeywords(promptData);
+    const keywordsByPrompt = promptData.map((prompt) =>
+      this.extractKeywords(prompt.userRequest || ""),
+    );
+    const outcomeByTask = this.indexOutcomes(outcomes);
+
+    const gaps = this.detectTemplateGaps(promptData, outcomeByTask);
+    const emergingPatterns = this.identifyEmergingPatterns(
+      promptData,
+      keywordsByPrompt,
+      outcomeByTask,
+    );
+    const topMissedKeywords = this.analyzeMissedKeywords(promptData, keywordsByPrompt);
     const agentCoverage = this.calculateAgentCoverage(promptData);
 
     return {
       totalPrompts: promptData.length,
-      templateMatches: templateMatches.length,
-      nonTemplatePrompts: nonTemplatePrompts.length,
+      templateMatches: templateMatchCount,
+      nonTemplatePrompts: promptData.length - templateMatchCount,
       templateMatchRate:
-        promptData.length > 0 ? templateMatches.length / promptData.length : 0,
+        promptData.length > 0 ? templateMatchCount / promptData.length : 0,
       gaps,
       emergingPatterns,
       topMissedKeywords,
@@ -103,9 +110,17 @@ class PromptPatternAnalyzer {
   /**
    * Detect gaps where templates don't match user requests
    */
+  private indexOutcomes(outcomes: RoutingOutcome[]): Map<string, RoutingOutcome> {
+    const indexed = new Map<string, RoutingOutcome>();
+    for (const outcome of outcomes) {
+      if (!indexed.has(outcome.taskId)) indexed.set(outcome.taskId, outcome);
+    }
+    return indexed;
+  }
+
   private detectTemplateGaps(
     promptData: PromptDataPoint[],
-    outcomes: RoutingOutcome[],
+    outcomeByTask: Map<string, RoutingOutcome>,
   ): TemplateGap[] {
     const gaps: TemplateGap[] = [];
     const gapMap = new Map<string, TemplateGap>();
@@ -121,7 +136,7 @@ class PromptPatternAnalyzer {
             existing.lastSeen = prompt.timestamp;
           }
         } else {
-          const outcome = outcomes.find((o) => o.taskId === prompt.taskId);
+          const outcome = outcomeByTask.get(prompt.taskId);
           gaps.push({
             gapType: this.classifyGapType(prompt, outcome),
             userRequest: prompt.userRequest || '',
@@ -150,14 +165,13 @@ class PromptPatternAnalyzer {
    */
   private identifyEmergingPatterns(
     promptData: PromptDataPoint[],
-    outcomes: RoutingOutcome[],
+    keywordsByPrompt: readonly string[][],
+    outcomeByTask: Map<string, RoutingOutcome>,
   ): EmergingPattern[] {
     const patternMap = new Map<string, EmergingPattern>();
     const keywordFrequency = new Map<string, number>();
 
-    for (const prompt of promptData) {
-      const keywords = this.extractKeywords(prompt.userRequest || '');
-
+    for (const keywords of keywordsByPrompt) {
       for (const keyword of keywords) {
         keywordFrequency.set(keyword, (keywordFrequency.get(keyword) || 0) + 1);
       }
@@ -167,17 +181,18 @@ class PromptPatternAnalyzer {
       .filter(([, count]) => count >= this.minFrequencyThreshold)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 50);
+    const significantSet = new Set(significantKeywords.map(([keyword]) => keyword));
 
-    for (const prompt of promptData) {
-      const keywords = this.extractKeywords(prompt.userRequest || '');
-      const significantKeywordsInPrompt = keywords.filter((kw) =>
-        significantKeywords.some(([sigKw]) => kw === sigKw),
-      );
+    for (let i = 0; i < promptData.length; i++) {
+      const prompt = promptData[i];
+      const keywords = keywordsByPrompt[i];
+      if (!prompt || !keywords) continue;
+      const significantKeywordsInPrompt = keywords.filter((kw) => significantSet.has(kw));
 
       if (significantKeywordsInPrompt.length === 0) continue;
 
       const patternKey = significantKeywordsInPrompt.sort().join("|");
-      const outcome = outcomes.find((o) => o.taskId === prompt.taskId);
+      const outcome = outcomeByTask.get(prompt.taskId);
 
       if (!outcome) continue;
 
@@ -228,13 +243,16 @@ class PromptPatternAnalyzer {
    */
   private analyzeMissedKeywords(
     promptData: PromptDataPoint[],
+    keywordsByPrompt: readonly string[][],
   ): Array<{ keyword: string; count: number; suggestedMappings: string[] }> {
     const missedKeywords = new Map<string, number>();
     const keywordToAgent = new Map<string, Set<string>>();
 
-    for (const prompt of promptData) {
+    for (let i = 0; i < promptData.length; i++) {
+      const prompt = promptData[i];
+      const keywords = keywordsByPrompt[i];
+      if (!prompt || !keywords) continue;
       if (!prompt.templatePrompt || prompt.templatePrompt.length === 0) {
-        const keywords = this.extractKeywords(prompt.userRequest || '');
 
         for (const keyword of keywords) {
           if (keyword.length > 3) {

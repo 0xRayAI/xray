@@ -4,13 +4,853 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [Unreleased]
+
+Groundwork before the 4.1.0 publish. The notes under [4.1.0] are the cut. npm latest is still 4.0.42.
+
+## [4.1.0] - 2026-10-15
+
+Work on main after 4.0.42. The [4.0.43] section below is the earlier confer and hook cut. 4.0.43 was stamped and not published.
+
+### Bifrost board
+
+The board seats see is the collector board. `house/live/feed/live_mesh.py` runs the collector and the board every `LIVE_WATCH_S` seconds (default 45). An empty box board does not replace those cards.
+
+- A pull request or issue is one card. Reviews, merges, CI, pushes, reopens, drafts, and a quiet pull request land on that card. CI stays on the card and is not board traffic.
+- `merged_by` is the GitHub user who merged. A pulls list that omits `merged_by`, or that only has the author, is corrected with `GET /pulls/:n` (`house/live/feed/live_collect.py`). The author is not stored as the merger.
+- `live-inbox <seat> --card <owner/repo#n> --start-after <ISO>` parks the card until that time, then one inbox line wakes the owning seat. A GitHub comment whose first line is `Start after: <ISO>` sets the same field only when the comment is from the card owner or a fleet seat, and only within 30 days.
+- Handoff is `live-inbox <seat> --handoff <to> --pr <owner/repo#n> --kind <ready|critic_fail|live_pass|merge|ci_fail> --sha <head>`. `--sha` is 7 to 64 hex digits. The command posts one inbox packet and prints the 1:1 line. A room post does not clear a missing packet.
+- Railway deploy polls stamp BUILDING, then DEPLOYING, then the terminal status. A poll that first sees SUCCESS backfills the stages it missed.
+- Deploy goes through `house/live/app/deploy.sh`, which assembles `collector/`. A Railway build straight from git stops in the Dockerfile with `ERROR: collector/ is not assembled`.
+- A cloud agent is a board row (`cloud_agents`, also `board.cloud_agents` when a card board is present). Each row has `bcId`, owning seat, linked card, `pr` when the webhook sent one, state `running`, `finished`, or `failed`, and `updated_ct`. `POST /cursor/webhook` appends `agents.jsonl` after the signature check. `POST /activity` with kind `cloud_agent` or `agent` and action `launch`, `reply`, `finished`, or `cancel` is the other feed. Webhook `ERROR`, `FAILED`, `TIMED_OUT`, and `CANCELLED` are `failed`. The newest line sets the state. (#367)
+
+### Nudge
+
+`evalNudges` in `house/live/app/server.mjs` is the one nudge path.
+
+- A live card with no beat for `NUDGE_L1_S` (default 3600) sends L1 to the next owner, or else the card owner. L2 goes to the CoS role after `NUDGE_L2_S` (default 1800). L3 repeats to the L1 seat after `NUDGE_L3_S` (default 7200), and the CoS role is woken once to reassign.
+- An unacked inbox line steps L1, L2, and L3 on that same seat, `NUDGE_LINE_S` apart (default 900). The CoS role is woken at L3.
+- A missing handoff nudges the owing seat at L1, again at L2, and again at L3. The CoS role is woken once at L3.
+
+### Wake routine
+
+`grok-bot/templates/house/fleet/WAKE-ROUTINE.md` is the seat wake. Every turn runs `live-inbox <seat> --turn start`. Turn end runs on every exit. An owner message runs `live-inbox <seat> --prompt` first. Compaction is a wake: read Station, then NOTES, before the inbox. Notes are appended after every beat. Before launching a cloud agent for a card, the seat checks for one already running or finished with a pull request for that card.
+
+### live-inbox
+
+`house/live/tools/live-inbox` requires `LIVE_URL`, `SEAT_KEYS_DIR`, and `LIVE_CURSORS`. A missing or empty one exits 2 and names it. The tool does not guess. The installed copy is `$HOME/.burst/bin/live-inbox` unless `LIVE_INBOX_BIN` is set. The wake template ships the export line.
+
+### Lexicon
+
+`grok-bot/LEXICON.md` records the handoff `--sha` row and the practice **button up**: when weekly burn hits the hold line, every seat stops new work, runs no local builds, tests, or deploys on its own computer, pauses its Bifrost inbox wake until the reset, leaves only cloud agents for anything essential, and reports and acks in the room.
+
+### Nudge monitor
+
+`src/monitoring/nudge-watchdog.ts` is now `nudge-monitor.ts` (`NudgeMonitor`, `nudgeMonitor`, `getNudgeMonitor`) and the config key is `features.nudge_monitor`. The old key `features.nudge_watchdog` still works as a deprecated alias when `nudge_monitor` is unset (the new key wins if both are set) and logs a one-time deprecation warning. (#303)
+
+## [4.0.43] - 2026-10-12
+
+### 🔄 Changes
+
+- A Cursor pre-tool error denies the tool unless that error is EACCES. A cloud wrapper that cannot write dest still allows the tool.
+- Cursor gate events (preToolUse, beforeShellExecution, beforeReadFile) fail closed. A crashed gate, empty or malformed input, or a missing node or hook file denies the tool. The one exception is EACCES when a cloud wrapper cannot write dest, which still allows the tool. Wear and re-wear set failClosed on those events.
+- Hermes, OpenCode, OpenClaw, and Cursor run the lens and the repertoire route on the pre-tool allow path. The lens sees the tool path. A research call with no named plane stops. One named plane allows.
+- The shipped plant does not write the autonomous-reporting schedule or the post-tool light marker. Turn either switch on and the writer still runs. The inference cycle still starts from `inference:run`.
+- Consumer smoke inspects an empty machine home, so a Grok plugin on the real machine does not fail that seat.
+- OpenCode mill install copies the plugin and leaves leftover init.sh uncopied.
+- Gate C cannot be skipped. Gate D is proven only when npm lists the version, the annotated tag points at that commit, and the GitHub Release page exists. A local gate pass is not that proof.
+
+### 🐛 Bug Fixes
+- fix: stop the vendored complete-todo command from minting PASS (39c88c8fa)
+- fix: bind Confer receipts to a synthesis cycle (5134c5d05)
+- fix: treat ambiguous Confer text as UNREVIEWED (06acc24f1)
+- fix: complete Confer only on a real approve (8776562d7)
+- fix: parse only the first Confer DECISION token (c06747d95)
+- fix: keep Confer off unless it is explicitly enabled (8cd356c24). These confer fixes, and the no-LLM confer test below, are ancestors of the v4.0.42 tag. The new work in this stamp is the Cursor fail-closed cut (#255).
+
+### 🧪 Tests
+- test: lock no-LLM confer votes out of a PASS merge (e30628fef)
+
+---
+
+## [4.0.42] - 2026-10-09
+
+### 🔄 Changes
+
+Confer votes. Burst runs the swarm.
+
+- Confer asks the MCP servers the wearing chat already spawned. Only a real PASS completes the consult. A PASS that belongs to another session is asked again.
+- Wear pins Grok at the installed CLI. Hermes codex-check catches a console call. OpenClaw stays on the installed plugin. Cursor hooks stay on a git checkout.
+- Burst runs the swarm live. The board keeps an honest LIVE pill and one seat state. The box posts one delta while `push.sh` holds the lock, retries once on 409, and keeps the ingest secret in the header.
+- A SENT prompt holds that seat working for 10 minutes. A posted seat must match the installation token. Legacy prompt lines are still read from `fleet/prompts.jsonl`. Seats post a prompt with `live-inbox <seat> --prompt`.
+
+
+### Notes above this cut in the published package
+
+These notes were `[Unreleased]` in the 4.0.42 package. #368 removed them from `main`. They are not new in 4.1. `[4.0.22]` through `[4.0.41]` keep the short commit lines. This is the prose.
+
+### Features
+- **Goggles.** Proposed plates for goggles, suit, kits, host pack, and glossary. Goggles views one plane. Recall opens a plate when speech names that plate. Plates only. Not a new skill.
+- **Plates.** Pipeline schematics live in `docs-site/docs/plates/` (routing, governance, boot, orchestration, processor, reporting, memory-recall). Station keeps one pointer line. Pre-compact and the `MEMORY_ROUTING` inject carry that one schematic. A lesson is an episode. A plate is the machine. Not a new skill.
+- **Vendored Repertoire 0.2.8.** `vendor/@0xray/repertoire` is that package. Lesson lines and retained ids stay at 20. Speech that names nothing mints a learned signal, and only those mints evict past 24. Not a new skill.
+- **Feat rebase.** When the mandated work turns into mantra, or the job has split across planes that no longer share one present, stop and answer the original message again from this seat. On `LEAD-CADENCE.md`, the orchestrator skill, and the ship-ready mill gate. Project dest grows the name `feat-rebase` from the stack overlay. Not a new skill.
+
+### Fixed
+- **Lesson caps and speech mint.** `LESSON_LINE_CAP` is 20. `RETAINED_LESSON_ID_CAP` is 20 in insertion order. Speech that names no stored signal mints one `proposed` signal tagged `learned`. `LEARNED_SIGNAL_CAP` is 24 and evicts only those mints. Factory signals stay. Not a new skill.
+- **External grade writes the line.** `governExternalProposals` grades the signals a proposal already named, the same way the local cycle does. Needs-revision and a governance error still do not write. The vendored organ puts a missing lesson ledger back when dest still has its lines, so an aged task id does not step the average again. Not a new skill.
+- **A governed proposal teaches.** A route lookup does not write a lesson. When a vote finishes, the cycle grades the signals that proposal's sessions already named. A session that names a stored signal is graded even when that name appears once. Landed approaches and no wrong turn clear the solid band. A wrong turn stays below the cutoff. Earlier rejects of other codify proposals do not pull that grade down. Approve steps those signals up by a tenth. Reject steps them down by a tenth. Needs-revision, an abstain, a governance error, and a proposal whose sessions named nothing do not write. Proposal ids stay on the signal and the sessions not yet graded, so a later cycle does not teach those sessions again. A new session is a new id. Those ids remain after the history window of 50 fills, including with empty cycles. A proposal that carries an empty name list does not fall through to matching its text. A grade that passes appends one line — the task, the decision, and the approaches, solutions, or wrong turn from the sessions that named the law — on that signal and beside the average. The same task does not append again. The route for a law above 0.55 includes the law text and those lines, and Station's lessons section is refreshed from dest. Not a new skill.
+- **Dynamo client on a required external call.** `govern_proposals` with external governance required starts `InferenceGovernanceIntegration` even when `inference_governance.enabled` is false. Boot still skips that client while the flag is off, and the inference cycle still uses the local matrix unless the flag is on or `XRAY_FORCE_MCP_GOVERNANCE=true`. An unreadable MCP payload is stored as the error text, not an abstain at 0.5. The MCP wait matches the governance budget (90s). Not a new skill.
+- **Subsystem pass.** A session file with no `metrics.commits` is not a session, and a captured pattern with no `evidence` array is empty evidence, so the inference cycle no longer dies before it writes state. `scoreAndRoute` loads the memory organ on the first call with a synchronous require, before any dynamic import of that module. A cached null provider does not block that load, and a late null load does not replace an organ already in hand. Not a new skill.
+- **Local governance pass.** When `inference_governance.enabled` is false, the inference cycle scores each proposal with the local decision matrix. That miss is not stored as a reject at confidence 0, and Dynamo is not called. The governance MCP path stays in place when the flag is on. Not a new skill.
+- **Learned conviction.** A floor observation count does not change a route. Feedback moves conviction by a tenth, and a failure can leave 0.55. Retrieval hits a local clause of four definition content words. Two definition words are not a hit. The same words scattered through a long diary are not a hit. x402 prose alone is not a hit. `learned-conviction.json` beside dest restores the average when a wake flattens it to 0.55 and does not store the observation count. The vendored organ dist matches that behavior. Not a new skill.
+- **Seeded conviction.** Load writes `learned-conviction.json` for dest averages already above 0.55, including historical averages with no evidence count. Evidence is the existing positive count, otherwise 1. Floor averages, including float dust at 0.55, stay out of the file. A later load restores those averages after a flatten. The vendored organ dist matches that behavior. Not a new skill.
+- **Lock matches the cut.** `package-lock.json` root version and `packages[""].version` follow `package.json` on stamp. The 4.0.22 release left the lock at 4.0.21. Not a new skill.
+- **Bumper writes the lock.** `reconcile --apply` updates `package.json` and the lock version fields together. `reconcile --check` (the docs mill in CI) fails when they differ. Not a new skill.
+- **Cursor gate root.** The suit mill already has synthesis off. Cursor tools follow that mill when it is in the heat set, so a sibling repo's leftover synthesis checkpoint does not deny the host. Not a new skill.
+- **Engine cadence.** Change the engine, ship it local (build and install the tree; a live cut stays live), test, review the diff, monitor dest and Station, then ship the PR. Missing moral fusion is not an isotopic reject; vote confidence is a clamped weighted mean; thinDispatch strategy follows the adjusted level; an empty inference cycle saves state and later getInstance options apply. On `LEAD-CADENCE.md`, the orchestrator skill, and the ship-ready mill gate. Not a new skill.
+- **Operating planes.** Code, OP-PROC, model, suit, mill, host, and test/ship. Test then ship is the hero; ship without that proof is the catastrophe. Project long-term memory refreshes a changed stack definition and keeps observation stats. Heat writes the matched names onto Station. Name `operating-planes` on the stack overlay. Not a new skill.
+- **Wake cascade.** Chat is not the brain. A cascade that must survive compaction is the repertoire name `wake-cascade` on the stack overlay, with the same text in NOTES for the second Read. A reflection is not this capture. Not a new skill.
+- **Hero invariants.** Capture priority is an invariant you would otherwise re-read the source to relearn. Names: `heat-is-not-conviction`, `inference-cycle-invariant`, `governance-vote-invariant`, `thin-dispatch-invariant`. Heat touches last_seen and does not append a confidence sample. Heat touches last_seen when the diary contains that signal's name or a local clause of four definition content words; two definition words are not a hit; the same words scattered through a long diary are not a hit; a weak session score is not lifted to 0.55 and a sample below 0.55 is not recorded. Constructing the organ does not append workspace samples. Repertoire `mergeStackOverlay` refreshes a changed stack definition and keeps observation stats. Not a new skill.
+- **Stamper strip set.** Once a version is live, the stamper strips every present-tense patch pin from shipped guides and shipped OP-PROC, or reconcile advances the next cut. The stamper does not edit Station, NOTES, dest, or node_modules. It does not publish. The release docs check uses that same strip set, including `grok-bot/skills/ship-ready-mill-gate/SKILL.md`. Proposal text stays a keyword map over session problem strings, and `generateProposals` also emits recurring-pattern titles. Not a new skill.
+- **Heat + capture leftover** — module-missing resume is `Repertoire: module unresolved`, not “memory_routing stays off”. Session capture writes `matched_primitives` from existing dest laws in git. Grow receipt is post-prune dest count + heated length. Leftover `provider: null` still migrates old tarballs; explicit opt-out stays `enabled: false` + `provider: repertoire`. Does not republish.
+
+### 📚 Documentation
+- **Cold brief.** A new critic or any new subagent that does not already have this thread gets the latest commit SHA on the branch under review (fetch it) and the Station card. If the branch moves, send the new SHA before they verdict. On `LEAD-CADENCE.md` + ship-ready mill gate + orchestrator cadence. Not a new skill.
+- **Jargon is not the job.** Review and cadence ask whether the change works. Do not spend the loop reciting dest names, mill liturgy, or host mantras. On `LEAD-CADENCE.md` + ship-ready mill gate + orchestrator cadence. Not a new Codex term.
+- **Leftover after #102** — `station-vs-repertoire.md` opt-out ASCII no longer teaches package-absence (`no @0xray/repertoire` / `memory_routing stays off`). Explicit opt-out is `enabled: false` + `provider: repertoire`. Dead integrate note is history. Compact seed drops leftover “optional MCP”. `validate-release-docs` now gates that guide. Does not republish.
+- **Leftover after #101** — stamp `package-lock.json` and `.xray/features.json` to the live package version. Rewire `updateFeaturesJsonVersion` so both features files stamp together. Guides that still called Repertoire optional now say preferred + explicit opt-out; Station is the compact ticket.
+
+### 🧹 Cleanup
+- Drop unused `src/mcps/shared/security-scanner.ts` and its unused validator twin. Live scanner stays `src/security/`.
+- Archive root `integrations/` costume SKILL dump → `docs/archive/integrations-costume/`. Live wear is `src/integrations`.
+- Archive root `commands/` stale copy → `docs/archive/commands-copy/`. Live wear is `src/opencode/commands`.
+
+---
+
+## [4.0.41] - 2026-10-07
+
+### 🔄 Changes
+
+- Wake cascade. Station and the notes page stay on the station module. Heat writes `Cascade: record-map · notes N current` on the card. A memory-recall look returns that plane, the matched law names, and the current lines from the session-note index beside the laws.
+- Session notes sit in `.xray/state/repertoire/session-notes.json` beside the laws. A replaced note stays history. The short index returns the current line. A stale page does not revive a replaced line.
+- `Sleeve: on` means the previous ticket came back, the worn plate matched the package, the previous ticket matched the working record, and inspect passed. Session start and compact run that check. The card keeps the named plane. Judgement is continue, retry N, stop, or start. The same miss keeps its retry. A different ticket stops. Payments is on only when the ticket is a payment.
+- A fresh wear fastens mill and inspect. The durable copy is staged beside the live wear. Hooks and MCP launchers are not pinned at a temporary checkout.
+- Goggles. A checkout named `0xray` records `scripts/mjs/run-goggles-mcp.mjs`. A consumer records `node_modules/0xray`. An upgrade that removes a self-install no longer leaves the handshake on a missing file.
+- A machine-level Grok plugin does not fail the mill and is not stored in the mill receipt. A change to the worn skills drops that pass until the next session start or compact. When the plate or the mill is the miss, that miss is the plan until the line is on again. A copied role skill whose text was edited still stops wear.
+- A SessionStart event that carries the opening prompt stays a session start, so the check runs before that first card is read.
+- Live page. The mesh plays in the browser, with rewind and seat images. The watch survives a dropped connection. Fleet pushes go out as packets.
+- The Playwright release-gate smoke stays on the Playwright battery. The unit runner does not load that spec.
+
+---
+
+## [4.0.40] - 2026-10-05
+
+### 🔄 Changes
+
+### 🔎 Other Changes
+- house/live-mesh: full loop — feed watch, mesh render, direction, deploy, `/health`, X ledger both ways (#214, #215).
+- house: define Ping-pong in OP-PROC lexicon (#213).
+- house: OP-PROC cadence cleanup — muse-house lock, fleet forge0x1-merge, quiet/budget, sudo-copy seats (#216).
+- house: OP-PROC eng PR coach stack + 2026-10-04 eng state lock (#210, #212).
+- docs/dist: Dist packet note for 0xray 4.0.39 / repertoire 0.2.9 (#211).
+
+---
+
+## [4.0.39] - 2026-10-03
+
+### 🔄 Changes
+
+### 🔎 Other Changes
+- Keep the seven stack laws already worn in the suit. (427b0538e)
+- Vendor repertoire 0.2.9. (b45ed22f9)
+- Merge pull request #209 from 0xRayAI/cursor/evidence-before-grade-d703 (92a4d6dd9)
+- house: add Evidence before grade rules under §3 (0fa229981)
+
+---
+
+## [4.0.38] - 2026-10-03
+
+### 🔄 Changes
+
+### 🔎 Other Changes
+- Merge pull request #171 from 0xRayAI/fix/solar-verdict-decides (7b6ac081a)
+- Merge remote-tracking branch 'origin/main' into fix/solar-verdict-decides (a342e0b0d)
+- fix(types): declare work-freshness so the Codex 70 import typechecks (16b2db194)
+- feat(codex): term 70 requires current source and worn npm (dacecc916)
+- fix(governance): honor Dynamo's recommendation (968cd6a14)
+
+---
+
+## [4.0.37] - 2026-10-02
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: a naked checkout wakes with repertoire on (7b75bedbc)
+
+### ⚡ Performance
+- perf: cut repeated work on the processor data path (baadb4d35)
+
+### 📚 Documentation
+- docs: move fleet house SSOT out of the kit (7dcf08e94)
+
+---
+
+## [4.0.36] - 2026-10-02
+
+### 🔄 Changes
+
+### 🔎 Other Changes
+- Merge pull request #178 from 0xRayAI/fix/goggles-robust (21c8f30d9)
+- fix(goggles): hold the stop through search, read, and a dist wipe (abe603265)
+
+---
+
+## [4.0.35] - 2026-10-02
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: wear rewrites a checkout dist/cli launch to node_modules/0xray (aa44ae462)
+
+### 📚 Documentation
+- docs: point the trim restore at 601cdafc0 (be2a4e91d)
+- docs: say what each chat can actually do (0c70532a6)
+
+### 🔧 Maintenance
+- chore: drop unused modules and wait for the registry before tagging (3a29409a8)
+
+---
+
+## [4.0.34] - 2026-10-01
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: hold the lens on the worn build when the source is not packed (6f561ef6f)
+
+---
+
+## [4.0.33] - 2026-10-01
+
+### 🔄 Changes
+
+- Version bump
+
+---
+
+## [4.0.32] - 2026-10-01
+
+Next patch after npm `4.0.31`. Not published from this commit.
+
+Organ bolster for goggles-pipeline after #167. `0xray look` (and `goggles`) opens one plane through the organ. Digest and triage return the card pane. Status and health show the organ worn and Kind 0 quiet/match. Bot Plugin MCP `goggles` exposes lean tools `look` and `status_lens` over stdio on the same organ. Kind 0 name-checks the six outers and stays quiet on match; reading stays a dichotomy; digest/triage stay the card. Calling and confer stay off. Companion `@0xray/grok-bot` is unchanged at 0.1.8.
+
+---
+
+## [4.0.31] - 2026-10-01
+
+Next patch after npm `4.0.30`. Not published from this commit.
+
+Goggles looks at one pipeline. Kind 0 name-checks the six outer names and stays quiet when the worn list matches the map. Digest and triage return one card. A leave is denied. Session boot hands the card through `handCard` and normalizes the workspace root, including a trailing slash. The mill path is `scripts/foundry`. Run `node dist/integrations/hooks/goggles-pipeline.mjs`. This cut also carries the plate docs and the live project-file signal count that landed on main after 4.0.30. Calling and confer stay off. Companion `@0xray/grok-bot` is unchanged at 0.1.8.
+
+---
+
+## [4.0.30] - 2026-09-28
+
+Next patch after npm `4.0.29`. Released 2026-09-28.
+
+Fixes the 4.0.29 regression where `npx 0xray wear` and `npx 0xray setup` exited 1 with `cursor-wear: not a git work tree` outside a git checkout (#147). Outside a git checkout, both commands again write the 4.0.28 consumer project setup and skip only Cursor hooks, with one stderr line: `cursor-wear: hooks skipped because this folder is not a git checkout`. Inside a git checkout, `wear` and `setup` restore the 4.0.28 project setup that 4.0.29 had dropped: managed `AGENTS.md`, `.gitignore` entries, `.xray` config, the `node_modules/@0xray/repertoire` link, the mill/inspect plant, chat bridges, the `.opencode/skills` sync, and the `dist` / `scripts` links. `wear` then adds the Cursor hooks, including the six hook scripts, and the `.xray/state/cursor-hook-wear/` snapshot. Postinstall is unchanged: it links the vendored repertoire and prints `npx 0xray wear`. Companion package `@0xray/grok-bot` is unchanged at 0.1.8.
+
+---
+
+## [4.0.29] - 2026-09-28
+
+Next patch after npm `4.0.28`. Released 2026-09-28.
+
+`npm install` now only creates the relative `node_modules/@0xray/repertoire` link to the vendored repertoire and prints one line: `npx 0xray wear`. It no longer writes the suit. Run `npx 0xray wear` after install. Wear writes only the consumer project's `.cursor/hooks.json`, pointing at the installed package's dist hooks, and adds them beside existing user entries. It snapshots the pre-wear file under `.xray/state/cursor-hook-wear/`, and `npx 0xray unwear` restores it. `npx 0xray setup` writes `.mcp.json` and the OpenCode, Grok, Hermes, and OpenClaw bridges. Companion package `@0xray/grok-bot` is unchanged at 0.1.8.
+
+---
+
+## [4.0.28] - 2026-09-26
+
+Next patch after npm `4.0.27`. Released 2026-09-27.
+
+MCP servers start through `scripts/node/mcp-launch.cjs` and only see PATH, HOME, and XRAY_ROOT, plus the names on their keep list. Tokens such as NPM_TOKEN are no longer inherited. User env values stay out of argv. Postinstall keeps user edits to AGENTS.md, .mcp.json, and opencode.json. `house init` no longer copies EXAMPLE.md, and doctor FAILs while `house/EXAMPLE.md` exists. Inspect has a new machinePlugin check. The Cursor hook defaults XRAY_ROOT to the suit directory. Companion package `@0xray/grok-bot@0.1.7`.
+
+---
+
+## [4.0.27] - 2026-09-25
+
+Next patch after npm `4.0.26`. Released 2026-09-26.
+
+A counted host compact needs a non-empty generation id and a numeric `context_usage_percent`. That hook line and per-session receipt are written on the suit mill and mirrored onto nested consumer wear roots. Memory scoring rules live in `docs/memory-scoring.md`. The orchestrator links that file and does not copy the rules. Companion package `@0xray/grok-bot@0.1.6`: one general operating page, a `house/` overlay that is not in that npm pack, `templates/house/` in the pack, `grok-bot house init` (copy, refuse to overwrite), and doctor lookup via `GROK_BOT_HOUSE` or a walk-up for `house/HOUSE.md`.
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: a host compact proof requires a non-empty generation id and a numeric context_usage_percent (d869cbf79)
+- fix: mirror preCompact proof to nested consumer wear roots (16b7481af)
+
+### 📚 Documentation
+- feat(grok-bot): house init and shared house lookup (#128) (0f93687f2)
+- General operating page for grok-bot, with a fill-in house (#124) (17e02c5a7)
+- docs: orchestrator links memory-scoring (#127) (bca04dba8)
+- docs: add ben-proof suited compaction bench harness (13284b9d8)
+- docs: core audit fixes and a readable memory-scoring doc (#126) (23b370d1e)
+- docs: point 0xray at grok-bot/OP-PROC.md (#125) (53b1889dc)
+
+### 🔎 Other Changes
+- docs(grok-bot): OP-PROC amendment (Blaze 10:31) + moltbook push allow (#123) (a2abed78c)
+- docs(grok-bot): OP-PROC one-page front door + WAVEBOARD/ATTENTION_STATE mirror (#122) (519b2dae0)
+
+---
+
+## [4.0.26] - 2026-09-25
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: store a lesson when the task matches no signal (e3c75b43d)
+- fix: prove a Cursor compact cut with a session log and per-session receipt (bb3a1c68f)
+- fix: mill check accepts a published version; mcp:status runs (a8bd79e23)
+
+### 🔎 Other Changes
+- Merge pull request #116 from 0xRayAI/cursor/mill-ci-mcp-status-fbe0 (ba94508d2)
+- Merge pull request #120 from 0xRayAI/cursor/lesson-recall-fbe0 (8f4a5a62a)
+- Merge pull request #119 from 0xRayAI/cursor/compact-receipt-proof-fbe0 (a911fd17b)
+
+---
+
+## [4.0.25] - 2026-09-24
+
+`0xray@4.0.25` ships the plate schematics in the package. `docs-site/docs/plates/` is on the npm `files` list. A worn suit resolves `memory-recall` and `processor` from `dist/integrations/hooks/plates.cjs`.
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: ship plate schematics in the npm package (b1bdd7415)
+
+### 📚 Documentation
+- docs: announce 4.0.24 — hot-swap, memory organ, plates (b04b80a15)
+
+---
+
+## [4.0.24] - 2026-09-24
+
+`0xray@4.0.24` is on npm. `npm install 0xray`.
+
+Exo, not a catalog. A factory stamps a skeleton (Inference, External Governance, Autonomous Engine) and fastens a mill. Code mill, music mill (`@0xray/blip` sound), agents across TUIs and LLMs wear it and operate.
+
+- **Hot-swappable compaction.** Compaction and host change are the same cut. The station card (`.xray/state/STATION.md`) is the handoff. The next turn continues the card.
+- **Memory organ.** Finished speech and reflections become lessons on signals. Kernel and activity logs are heat (`last_seen`) only. Unnamed speech mints a signal. Caps: 20 hot lesson lines, 20 retained ids (insertion order), 24 learned proposed signals. Factory laws stay.
+- **Plates.** One INPUT/PROCESSING/OUTPUT schematic per pipeline in `docs-site/docs/plates/`. Station keeps one pointer line. Recall injects that one schematic. A lesson is an episode. A plate is the machine.
+- **Repertoire 0.2.8** is the organ package, vendored in 4.0.24.
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: put matched lesson speech on the MEMORY_ROUTING block (2a2f0411d)
+- fix: process reflection markdown as inference speech (64d7a6eee)
+- fix: run discovered processors and keep commit subjects off the session log (d9fb2ee15)
+- fix: grade a captured operation before the wake ends (c5760000b)
+- fix: heat no longer writes a gradeable lesson from commit subjects (ceeb3a536)
+- fix: grade a new session when another proposal already named the signal (bf4d5e59a)
+- fix: let inference:run enter the cycle and exit (12c3e5142)
+- fix: grade named signals on an external vote (5fc21d174)
+
+---
+
+## [4.0.23] - 2026-09-23
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: start the Dynamo client when external governance is required (d17b9cf19)
+- fix: score proposals locally when inference governance is off (ae8075116)
+- fix: finish the inference cycle and load the organ before routing (69522e6c3)
+- fix: vendor the organ that seeds conviction above the floor (103961128)
+- fix: vendor the organ that routes on conviction, not a floor count (24d215a5a)
+- fix: reconcile writes the lock version when it bumps (434ddafef)
+- fix: package-lock version follows package.json on stamp (026c36d55)
+
+---
+
+## [4.0.22] - 2026-09-23
+
+### 🔄 Changes
+
+### ✨ Features
+- feat: rebase — answer the original message from this seat (a9a9e432b)
+
+### 🐛 Bug Fixes
+- fix: cursor gate follows the suit mill, not a sibling synthesis checkpoint (7a21cd996)
+- fix: stamper strips every present-tense patch pin from shipped prose (4962b353f)
+- fix: docs check uses the stamper strip set (f46377822)
+- fix: stamper strips shipped prose only and proposals name recurring patterns (2b98354f7)
+- fix: worn heat matches the signal id and dest keeps that law (9952f6dc2)
+- fix: wake does not append a floor sample on heat (fe0492c98)
+- fix: heat law matches the organ that touches last_seen (35390de44)
+- fix: stack law refresh stays on the wake hook (f4a0c5d82)
+- fix: store hero invariants as repertoire laws (9deed910b)
+- fix: store the wake cascade as a repertoire law (ebf5aed8a)
+- fix: test/ship plane and law refresh onto Station (87ad30bc5)
+- fix: encode six planes and the live-cut hand (2eb24387e)
+- fix: engine cadence and the three-module defects (d11b796d9)
+- fix: heat resume and session match leftover after #103 (#104) (664a2039b)
+- fix: persist heated length on the working receipt (2e28d1dbe)
+- fix: heat resume and session match leftover (0f8b5b4ab)
+- fix: leftover opt-out teaching after #102 (#103) (b8fc6bef7)
+- fix: leftover stamps and dest-as-laws docs after #101 (#102) (910a739c4)
+- fix: stamp leftover lock and worn features to the live package version (41f648d43)
+- fix: dest stays laws — compact boot holds (#101) (9b731441d)
+- fix: cleanse stale 4.0.15 pins and leftover validate wording (5ea8e0dff)
+
+### 📚 Documentation
+- docs: cold brief is latest SHA plus Station (55c2497e4)
+- docs: jargon is not the job — results first on cadence (3699a56d0)
+- docs: leftover opt-out ASCII after #102 (3974a2920)
+- docs: leftover Repertoire optional language after #101 (5f64b68f3)
+- docs: archive unused v2-refactor harness and fix migrate leftover URLs (23042fb7e)
+- docs: archive StringRay leftover reports and update mill seed (eaa85fe5a)
+
+### 🧪 Tests
+- test: gate station-vs-repertoire opt-out leftover (aef80e538)
+
+### 🔧 Maintenance
+- chore: drop unused MCP scanner twin and archive costume dumps (49fc4c96c)
+- chore: drop leftover root test toys and stamp live 4.0.19 (5997a5924)
+- chore: archive leftover sync-docs script that wipes the live site (a23205b5b)
+- chore: alias leftover consumer check and drop blaze pipeline paths (ef98637d9)
+- chore: archive unused duplicate e2e runners (7806bd21e)
+- chore: tidy leftover CI harnesses, kernel repro, and live npm pins (fe1f08ad0)
+- chore: tidy leftover vote harnesses, debug repro, and shipped Unreleased pins (05587368e)
+
+---
+
+## [4.0.21] - 2026-09-23
+
+### ✨ Features
+- **Cleanup is memory** — `applyStationHeat` grows the project copy when Repertoire is on: kernel sessions and NOTES/CLEANSE diary heat, then prunes keyword names. Dest is laws (named invariants), not hangar `repo-*` or git slugs. Groover field stays off. Opt-out still skips seed and grow. Station stays the pickup card. Not a new MCP/skill.
+- **Live context memory** — capture then grow. Session `patterns` observe existing dest/stack laws mentioned in git — they do not mint commit slugs. Cursor skip / afterFileEdit, Grok heat, Hermes pre-process, and OpenClaw pre-tool share one dest lock so parallel seats write one project copy. Not a new MCP/skill.
+- **Vendored Repertoire 0.2.5** — `vendor/@0xray/repertoire` is the published 0.2.5 package (overlays included). Wear replaces an older leftover in `node_modules`. A newer user-installed copy is left alone. Boot reads worn `node_modules`, then vendor, then a sibling checkout last. **Repertoire is preferred.** Explicit opt-out (`enabled: false` + `provider: repertoire`) still skips seed and grow; Station is the memory when it is off.
+- **Cursor fifth wear** — `install-bridges.cjs` fastens project `.cursor/hooks.json` plus relative `.cursor/hooks/*.sh` so Cursor Cloud heats Station and gates tools. Leftover env-assignment commands are rewritten. Not a fifth chat TUI. No new MCP/skill surface. Pack gate (`REQUIRED_PACK_PATHS`) now requires `dist/integrations/cursor/hooks/{hooks.json,pre-tool-use.js,pre-compact.js,after-file-edit.js,cursor-hook-utils.js,cursor-usage-receipt.js,xray-cloud-hook.sh,pre-tool-use.sh,pre-compact.sh,after-file-edit.sh}` so a published tarball cannot ship a dead consumer command. `preToolUse` / `afterFileEdit` rewrite the card when git HEAD or Repertoire count diverges — Ticket / Durable / Seed stay. OP-PROC stays in the hook, not on Station.
+
+### 📚 Documentation
+- Cursor fifth wear in README integrations table, AGENTS / AGENTS-consumer / SKILLS / llms.txt, and Docusaurus integrations / getting-started / consumer-migration.
+- **Lead cadence (syncopation)** — `grok-bot/ops/LEAD-CADENCE.md` is the peer-lead OP-PROC: dummy `SKILLS.md` tests, same-sess wear + Station card, npm OTP+poll, always branch/worktree/PR, loop until Station is done, workstreams not idle pacers. Wired into `orchestrator` skill, AGENTS hot-swap, OPS-CATALOG. Not a new skill (Codex 69).
+- **Repertoire is preferred** — README, SKILLS.md, llms.txt, AGENTS, AGENTS-consumer, and the memory guides say wear it. Dest is named laws. Station is the compact ticket, not a substitute. Shipped `signalsPath` is `.xray/state/repertoire/curated_signals.json`. Do not pin 0.1.8.
+- **Few files have versions** — patch stamps live in `package.json`, CHANGELOG, and stamped JSON only. Guides, Station, and OP-PROC do not pin a cut. `release:docs-check` refuses present-tense `0xray@x.y.z` / “this cut is” on those surfaces.
+- **Board clock** — critique board wakes on PR events and resumes the same critic. Two idle pacers (reviewer + lead-reader) are forbidden; they inflate context and cause compact. Merge after PASS+CI (gate A). Publish only after mill-gate D + `foundry gate`.
+- **Dispatch encode** — lead cards ticket + PR URLs + “Wear, then review.” Critic OP-PROC lives on `SEATS.md` Reviewer. When a law is spoken twice, write it to disk this wake. No new skill.
+- **Ship decision matrix** — lead-owned. A PR+CI · B pack (`assert-packed-dist-cli` + consumer smoke) · C `npm run release:docs-check` · D `npx @0xray/foundry release --i-mean-it`. Green CI is not ship. Spend / credentials stay Ask-first. Host Auto Review may still card npm/Railway; that is not the OS decision.
+- **Metamorphosis** — an LLM becomes OP-PROC through in-context worn seats (same critic, same dummy, four-line dispatch). Spawning more bots is the old skin.
+- **Publish OTP latch** — stay logged in (do not `npm logout`). Every time run `npm publish --access public` in the live TTY (no `--auth-type=web`, no `--otp=` from chat, no `tee`). Paste the clickable `auth/cli` URL. Do not ask for a 6-digit authenticator code in chat. Do not press Enter. Do not hand publish to a browser subagent. Poll `npm view` until the version is live. Then prove **fresh** and **upgrade** registry installs. `npm view` is not an install.
+- **`npx 0xray validate` cleansed** — no longer shells leftover `.opencode/init.sh` (macOS `md5` + `enforcer-config.json`). Wear check: `REQUIRED_PACK_PATHS`, Cursor hooks, mill+inspect, repertoire. `init.sh` still boots OpenCode but accepts Linux `md5sum` and consumer `.xray/codex.json`.
+- **Swamp reflection (new arch)** — `docs/reflections/swamp-new-arch-reflection-2026-09-20.md`. Card, organ, hook. Lying metal. Live tarball lag.
+- **Clean ticks every cycle** — `/loop` prompt is rewritten at the end of every live tick. `subscribe_timer` name-dedupe does not update the prompt. Unsubscribe then resubscribe. A tick that contradicts metal is dirty: rewrite, do not act. Not on Station.
+- **Idle `/loop` stop** — if Station `Working` and the WAVEBOARD (open ship PR, live OTP, unfinished close) are idle, unsubscribe and do not resubscribe. A parked mill is not an active wave.
+- **Subject review. Fix n ship.** After board PASS, review the worn dest / domain (not only CI), close leftovers, then mill-gate D. PASS is not ship. On `LEAD-CADENCE.md` Ship track + `SEATS.md` Reviewer. Not on Station.
+- **OP-PROC reload after compact** — overlay dest names *are* OP-PROC. Heat writes them to `.xray/state/repertoire-working.json` `opProcNames`. Station stays a ticket (count + four working matches). Not a new skill.
+- **Groover is not Repertoire.** Groover was a broken experiment of the organ. Do not grow dest from Groover field as if that is the KB. On `LEAD-CADENCE.md` Heads from tails. Not on Station.
+
+### 🐛 Bug Fixes
+- **Dest is laws, not keywords** — wake hydrate is seed + stack only. `patternsFromGit` observes existing laws. Grow skips `syncWorkspaceRepos`. `pruneKeywordDest` drops `repo-*` / release-stamp slugs / generic field-observed names unless factory or stack protects them. Compact `hookEvent` / `event_class` hold across later preToolUse even when HEAD moves. Not a new MCP/skill.
+- **Cursor Cloud host fire** — leftover `XRAY_AI_PATH=` / invoke-probe one-liners never start on Cloud (argv[0] is not a shell). Fasten copies `.cursor/hooks/*.sh` and rewrites leftover env-assignment templates to relative paths (`preToolUse` / `preCompact` / `afterFileEdit` / `beforeShellExecution` / `beforeReadFile`). Workspace wrapper (`/agent` with `repos/xray`) is not a dest heat root, even with a leftover wrapper card. Heat discovers mill cards under `repos/` and the Read path. Dest `EACCES` fail-opens so a wired hook cannot deny every tool. Fasten also writes the daemon workspace root when visible, then pokes local `ReloadAgentSkills` so a mid-session wear binds this daemon. Cloud `preCompact` is supported (hooks.md: Yes). It fires on a real window compact after bind — this seat `event=preCompact` at 2026-09-22T23:16:22 with host stdin (256k / 230861 / 90%). Hook stdout cannot spawn; persist `conversation_id` + `generation_id` on the receipt and resume that id (same as Task's returned agent id). Not a new MCP/skill.
+- **Station ticket survives heat** — leftover `session-boot` extras (`Subject brain` / Draft #96) no longer overwrite a live Station Intent/Plan. Pickup beats a boot-echo card. HEAD move drops a leftover lead-dev-plan that still echoes boot. Not a new MCP/skill.
+
+### 🔄 Changes
+- **Durable Hold npm** — heat + `cursorBootNeedsRefresh` + `npx 0xray validate` drop/fail `Hold npm` on Station. Identity stays. Mill-gate holds the ship latch. Not a new skill.
+- **Hangar catalog** — mill hangar docs use Clearing `GET /v1/catalog` as the directory (listed hangars: Groover DID + pin, plus solar + live shop), not a hardcoded extract/witness/pin route table. Groover MCP `list_hangars` reads that catalog.
+- **foundry-plant/0** — fasten is a protocol any mill implements, not a 0xray-owned catalog of plant kinds. Builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (alias `"blip"`) fastens whatever that mill package declares. Organs (looker, vibe, mixer) live in the mill; adding one is a mill publish, not an xray catalog PR. Nested mill `@0xray/foundry@0.1.12`. CLI shims `foundry blip|sound` still exist on foundry 0.1.11+.
+- **Blip/sound mills moved to `@0xray/blip`** — 4.44s drawers (render, kapow, vibe, wow-pass listen/cel, sound bed/mixer, looker) live in the blip product mill. `@0xray/foundry@0.1.11` shims `foundry blip|sound` including `blip look`. Railway plant consumes the product mill, not a hand-vendored copy.
+
+---
+
+## [4.0.20] - 2026-09-22
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: rewrite session-boot when HEAD moves — first-wins skip froze metal (same session still heats dest)
+- fix: grow dest from live git on every floor (a7685eb09)
+- fix: heat grows the project copy — cleanup is memory (be10c82eb)
+
+---
+
+## [4.0.19] - 2026-09-22
+
+### ✨ Features
+- **Vendored Repertoire 0.2.5** — published 0.2.5 lives in `vendor/@0xray/repertoire`. Wear replaces older leftovers. Optional; Station is the memory when it is off.
+
+### 🔎 Other Changes
+- Load worn Repertoire first; sibling checkout last. (f8a90b531)
+- Put published Repertoire 0.2.5 inside 0xray vendor and wear it. (a90b0a7a4)
+
+---
+
+## [4.0.18] - 2026-09-22
+
+### 🔄 Changes
+
+### ✨ Features
+- feat: wake heat joins bookmark, index, and mind (ad596aae2)
+
+### 🐛 Bug Fixes
+- fix: pin subject hits on wake rematch (65de9d37a)
+- fix: wake match loads 0.2.5 and keeps subject hits (80b61236d)
+
+### 📚 Documentation
+- docs: memory-wake join — BRAIN-003 (1c128e69c)
+
+---
+
+## [4.0.17] - 2026-09-22
+
+### 🔄 Changes
+
+### ✨ Features
+- feat: write session-*.json from Cursor heat when HEAD moves (363186a02)
+- feat: persist overlay OP-PROC on repertoire-working after compact heat (8c55793e8)
+
+### 📚 Documentation
+- docs: ASCII gather/store/retrieve trees for Station memory (d8f2f3b89)
+- docs: Station is always the pickup memory after compact (bec431c61)
+- docs: Groover is not Repertoire — do not grow dest from Groover field (203147d19)
+- docs: Subject review. Fix n ship. — dest review then leftover then D (ad4ffa7f6)
+- docs: stop /loop when the card and WAVEBOARD are idle (60f0fd53f)
+- docs: clean ticks every cycle — rewrite /loop prompt, do not act on stale metal (e71a19559)
+
+### 🧪 Tests
+- test: match Compact cut wording on Station-as-memory (7f9a4f091)
+
+### 🔎 Other Changes
+- Merge main — include weekday-mirror #97 in 4.0.17 tarball (86fdec7ce)
+- Merge pull request #97 from 0xRayAI/cursor/weekday-mirror-dist-voice-9b4d (d0853aad1)
+- docs(grok-bot): weekday mirror for Dist reply voice and CoS wake hygiene (f91233b59)
+- Merge branch 'cursor/clean-ticks-fbe0' — clean ticks every cycle (12dd06362)
+- Merge branch 'cursor/leftover-validate-d-fbe0' — release 4.0.16 live, leftover validate gone (8fa037212)
+
+---
+
+## [4.0.16] - 2026-09-20
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: type validate pack paths — no untyped mjs import in src/cli (ff936b276)
+- fix: cleanse npx 0xray validate — wear check, not leftover init.sh (741cca410)
+
+### 📚 Documentation
+- docs: new-arch reflection after wading part of the swamp (12d1fff69)
+- docs: persist peer-boot seat bc-49e17122 after four-line wear (5c8be98bb)
+- docs: encode registry install as live-verify after npm view (bd32bd1c4)
+- docs: encode npm CLI OTP latch — lead publishes, no subagent (d600d12a2)
+
+### 🔎 Other Changes
+- Merge branch 'cursor/npm-cli-otp-fbe0' — OTP latch, two-path live-verify, cleanse leftover validate (568797952)
+
+---
+
+## [4.0.15] - 2026-09-17
+
+### ✨ Features
+- **Factory-blip vibe seat** — `blip-vibe` plant agent scores still + Rippel five + kapow on the same aesthetic organ. Appeal 0–10. Ship bar is **8**. Shared fill / tint / contrast / outline / flash / differ; kapow extras stay kapow-only. Kapow is a comic burst: 8–10 outer points, 6–8 inner, some spikes longer than others. `npx @0xray/foundry blip vibe`. Inspect stays duration / mode / file. No `@0xray/foundry` bump.
+- **Factory-sound mixer seat** — `sound-mixer` plant agent levels every genre × tempo × motif (hats, plate, glue, phrase). `npx @0xray/foundry sound mix`. Dries the plate, pulls hot hats, eases glue. Inspect stays the last-bed gate. No `@0xray/foundry` bump.
+- **Factory-blip kapow opt** — `--mode motion:kapow` is a two-tier stamp on the same stanza (outer cyan burst winds, inner gold burst + `KAPOW!` hit the jewel cut). Not a third look. v0 five stay. No `@0xray/foundry` bump.
+
+### 🐛 Bug Fixes
+- **Mixer matrix CI timeout** — the 60-seat `mixMatrix` mill test keeps the same gates; the `all` project 30s cap was killing a ~34s PASS on GitHub runners. Per-test timeout is 120s. No `@0xray/foundry` bump.
+
+### 🔄 Changes
+
+### 📚 Documentation
+- docs: Claim C compact 8 — quiz-first no restates (e66ffe11f)
+- docs: mention blip render on the consumer agents card (9cd6662bc)
+- docs: Claim C compact 7 — quiz-first still summarizer keep (931547be6)
+- docs: Claim C compact 6 — summarizer kept canaries, not the old window (a3a6a83a8)
+- docs: Claim C memory protocol — quiz-first, no canary values (b38dcd5d4)
+- docs: Station guide also denies mind-survival overclaim (af7b686ca)
+- docs: compact scores disk, not conversation memory (6cf1d5d2f)
+- docs: Station is survive-the-cut; Repertoire 0.1 is judgment (d87a39d37)
+
+### 🧪 Tests
+- test: Claim C quiz printer and canary leak scan for compact 7 (d1cff2de4)
+
+---
+
+## [4.0.14] - 2026-09-16
+
+### ✨ Features
+- **Factory-blip music drop** — every genre bed hits on the jewel cut (shared crash + motif answer), stamps the hook cell on the tag, and keeps six tellable bodies. Not a sectionGain fader. Inspect still PASSes. No `@0xray/foundry` bump.
+- **Factory-blip drop seats** — cage recoils then whips (shards off the lantern). Cameras read as different shots (top flattens, low hero-lifts, dutch slashes the floor). Snap still cracks. Looker still eclipses. No `@0xray/foundry` bump.
+- **Factory-blip drop rupture** — orb-cage and snap crack on the turn (gold lantern / held slash through the noun), not a linear spin. Looker wears one large eclipse moon the noun eats. Floor still fades; the punch lives on the jewel. No `@0xray/foundry` bump.
+- **Factory-blip camera seats** — six seed shots (`front` `three-quarter` `top` `low` `dutch` `side`) plus a phrase travel / turn push-in. Cube jewel keeps its faces (quads → tris). Large faces actually fill. Floor fades on the turn. Horizon wash stays cyan/blue (no olive). Inner moons graze the disc so the noun can occlude. Embers stay tethered after the burst. `--camera` overrides; seed picks if omitted. Receipt `visualConfig.mesh.camera`. No `@0xray/foundry` bump.
+- **Factory-blip prod-grade phrase** — hook/turn/tag now crossfade (`hookEase`/`turnEase`/`tagEase`). Still plates dissolve (~300ms) instead of hard-cutting. Focus orb wears field + mesh mass so two briefs do not clone. Ambient bed writes a 3-section score (turn crash, tag stab, walk on turn). Mill stays deterministic — no LLM in the render loop. No `@0xray/foundry` bump.
+- **Factory-blip Rippel v2** — 4.44s is a Short: hook → turn → tag on one motion grid for picture and bed. Two looks (`focus` disc-satellites | `cage` Wu+field). Stereo AAC bed with a written motif (not `pick()` soup), better voices, mix pocket. Missing stream or inaudible bed FAILs inspect. No `@0xray/foundry` bump.
+- **Factory-blip plant** — new factory plant sibling to mill + sound (not a mill copy). `foundry.json` `"plant": "blip"` fastens `blip` + `blip-inspect`. Dynamic motion registry (not a frozen Rippel enum). v0: still + Rippel five (`still` `orb` `swirl` `snap` `waves` `spark`). `kapow` is a growth stub. Still generator wears the Power Plant intro plate (void `#08090B` · ink `#F5F7FA` · cyan `#3DE0E8` · gold `#F5C518` · agent blue `#4A7FD4`). Hangar shop pair later. Brief → seed → still|motion:<id> → 4.44s mp4 → `.xray/blip/receipt.json`. Unknown id FAIL. No `@0xray/foundry` bump.
+- **Factory-sound crystal mill** — sound plant render locks Rippel SSOT numbers (Membrane octaves 10 / pitchDecay 0.08, Metal harmonicity 5.1, Duo bass, ProfessionalMixer) then mixes crystal-clear (rumble HP, mud cut, sidechain, one limiter). Prototype was the topology, not the quality bar. Tone.Offline blocked in Node. Metrics stay fail-closed. No `@0xray/foundry` bump.
+- **Factory-sound Rippel retool** — sound plant render is membrane kick + metal hat + mixer (Rippel prototype topology). Tone.Offline blocked in Node (`OfflineAudioContext`). `phonk` is first-class. Metrics stay fail-closed. No `@0xray/foundry` bump.
+- **Factory-sound plant** — `foundry.json` `"plant": "sound"` fastens `sound` + `sound-inspect` (mill optional/off). Brief → checksum seed → genre → headless wav → metrics gate → `.xray/sound-bed-receipt.json`. `npx @0xray/foundry sound render|inspect`. Foundry inspect reports sound plant + last bed PASS/FAIL. Not a mill copy. Not costume. No `@0xray/foundry` bump — dogfood from branch/pack.
+- **Cursor cloud hooks adapter** — repo `.cursor/hooks.json` (version 1) runs `preToolUse` / `preCompact` / `afterFileEdit` against 0xRay gates + Station merge. No `sessionStart` (unavailable on managed cloud). Path C seed: `examples/cursor-cloud-compact/` (COMPACT-BEN-001).
+- **Cursor cloud real-usage receipt** — `writeCursorUsageReceipt` records host `preCompact` fire from invoke-probe (Y/N, no hand-invoke) and accepts only host/MCP/dashboard usage fields. FILL / chars÷4 is `ok: false`. Station compact-row + `.xray/state/cursor-usage-receipt.json`. Killer-dual Arm S: `examples/killer-dual/`.
+- Mill inspect treats factory shop plant (`shop-extract`, `shop-witness`, `shop-pin`) as first-class with mill plant. `foundry.json` `shopPlant` names more shops. Not `"costume": true`. Nested mill **0.1.10**.
+- Exo agent map: root `llms.txt` (mill+inspect plant, 7 MCPs, hangar/`shopPlant` coexistence, Codex 69, no costume dump). README / AGENTS / SKILLS / Docusaurus no longer claim default 45-skill sync.
+- Pack → tmp suit proof: `npm run pack:tmp-proof` (and consumer smoke) installs the packed tgz, runs `foundry mint --skip-live`, plants factory hangar shops, and inspects without costume dump. Playwright n/a (mill CLI).
+
+### 🐛 Bug Fixes
+- **Packed dist/cli gate** — `0xray@4.0.13` listed `dist/` in `files[]` but the npm tarball shipped **0 dist files** (`npx 0xray` fell back to 4.0.9). `npm pack` silently omits missing `files[]` entries. `prepack`, mill `release` / `gate`, and consumer smoke now fail unless the tarball contains `dist/cli/index.js`, `dist/mcps/orchestrator.server.js`, and Grok `session-start.js`. This PR does not publish; forge PUT is 4.0.14 after merge.
+- **Station merge on compact** — PreCompact / PostCompact / SessionStart `writeStationMarkdown` updates stock heat (intent, repertoire, working, host) and **merges** unknown keys plus `## Durable` / `## Seed` blocks. COMPACT-AB-001: no wipe-then-write of ticket / seed / open cloud / unfinished path.
+- **Cursor session-boot is runtime** — `.xray/state/session-boot.json` is gitignored with the Station projection. A tracked leftover Grok boot no longer resurrects on rebase and clobber live compact heat.
+- **Grok multi-seat wear** — last-mile dest is project `.grok/plugins/0xray`. Shared HOME (passwd `$HOME`) no longer writes machine `~/.grok/plugins/0xray`, so two seats (forge/critic/herald/blinky) cannot last-wins clobber each other's `XRAY_ROOT`. Isolated HOME may wear `$HOME/.grok/plugins/0xray` and still must not write the passwd machine plugin. Inspect reports project dest. Not a 45-skill dump.
+- **Foundry inspect dest lag** — nested mill **0.1.10**. `npx @0xray/foundry inspect` isolated-home `dest` matches `resolveGrokPluginDests` (project `.grok/plugins/0xray` on shared HOME). Published `@0xray/foundry@0.1.9` still joined dest from `$HOME` after 4.0.12 / #29 wear. This PR does not publish the mill.
+- **Grok marketplace pack** — `package.json` `files` includes `.grok-plugin/` so `npm pack` ships the mill-default Grok manifest (`package/.grok-plugin/plugin.json`). Consumers no longer receive only stale `.plugin/plugin.json`.
+- **Grok marketplace manifest** — `.grok-plugin/plugin.json` matches `4.0.10`: `author` is an object, `mcpServers` is a flat path (not `components.mcpServers`), description is mill+inspect default wear (not a 45 knowledge-skills claim). Fixes `grok plugin validate`.
+- **Consumer install of packed `0xray`** — stop shipping `@0xray/repertoire` as `file:./vendor/@0xray/repertoire`. npm `--install-links`, pnpm, and yarn resolve that path from the **consumer** root (`ENOENT .../vendor/@0xray/repertoire/package.json`), not from `node_modules/0xray`. The organ stays in the tarball at `vendor/@0xray/repertoire/`; postinstall wears it into `node_modules/@0xray/repertoire`. Fresh `npm install 0xray` / `npm install 0xray-*.tgz` no longer needs a consumer-root `vendor/` tree. Mill plant (`mill`+`inspect`) unchanged.
+
+### 🔧 Maintenance
+- **HOST-FIRE Arm S** — first live `cursor-host-precompact` on `bc-cd19bb4e` (count=2). Survive receipt + compare: `examples/killer-dual/RECEIPT-HOST-PRECOMPACT.md`, `COMPARE.md`.
+- **HOST-FIRE #3** — `examples/cursor-cloud-compact/RECEIPT-HOST-PRECOMPACT-3.md`: hooks bound at boot + live `preToolUse` spawn; host `preCompact` still did not fire (`cursor-host-precompact-FAIL`).
+- Foundry mill: one bumper (`reconcile-version.mjs`); `version-manager.mjs` is `--artifacts-only` (JSON + CHANGELOG). Bump and `--tag` are refused.
+- Docs mill verifies era kernel headers (`4.0`) and skill counts; it does not rewrite markdown prose.
+- Exo cannot ship: `executeReleaseWorkflow` is blocked (`FOUNDRY_EXO_CANNOT_SHIP`).
+- Full `release-gate` now runs `validate-release-docs` (not only `--verify-only`).
+- `VersionComplianceProcessor` treats `package.json` as SSOT; UVM is frozen.
+- CI: version-compliance and AGENTS.md workflows target `main`; mill check is `validate-release-docs` (not UVM 1-ahead). `publish.yml` runs the docs mill before PUT.
+- Mill extracted to `scripts/foundry/` (`@0xray/foundry`). `release:npm` is `release.mjs --publish-only`. UVM file removed. Consumer mint writes `foundry-inventory.json` from their package.json.
+- Consumer postinstall overlays their mill SSOT onto the hanger: constitution (`xray/codex.json`), features/temperament, config, `src/skills/<name>/SKILL.md`, `src/opencode/agents/*.yml`. Remap with `foundry.json`. Overlay is **project** skill hangers. JSON mill-fill always merges. CLI re-wear mints once after mill copies. `npx @0xray/foundry mint` reapplies overlay.
+- `@0xray/foundry@0.1.0` mills `FOUNDRY_ROOT` or cwd. Full docs corpus only on the 0xray exo; light mill otherwise. Stamp creates CHANGELOG when missing. Publish refuses a nameless `package.json`. Mill PUT is `cd scripts/foundry && npm publish`; stranger `release` does not force `--access public`. Deprecated `sync-versions.mjs` and `release.js` wrappers removed.
+- Honesty: consumer card does not claim it writes root `SKILLS.md`; mill help is `npx @0xray/foundry`; shims mill cwd; mill-managed `AGENTS.md` overlays from `xray/AGENTS.md`. Mill-fill stays law.
+- Scar tissue cut: no `homeSkills`, no `codexMode`/`featuresMode`/`configMode`. JSON always merge. One `mintConsumerSuit` after mill copies (not inside `syncBuiltinSkills`).
+- Mill flesh: live `npx @0xray/foundry release` is opt-in (`--i-mean-it` / `FOUNDRY_RELEASE=1`). Packed mill mint and Unreleased stamp are executed tests. `@0xray/foundry` tree is 0.1.1 (not a 0xray bump).
+- Mill CI: `0xRay CI/CD` is the mill gate on `main` (typecheck, lint, mill tests, build, curated tests, smoke). Monitor reports Actions; it does not auto-push. `npx @0xray/foundry ci` / `hooks`. Mill package 0.1.2.
+- GitHub Pages: stop copying stale `docs-site/static/index.html` over the Docusaurus homepage (unprefixed `/docs` links 404ed). `npx @0xray/foundry docs-build` is the mill Docusaurus build. Mill 0.1.3.
+- Mill self-host: `0xRay CI/CD` lives in `mill-ci.yml` so GitHub registers push/PR after the inactivity disable. Mill CI always builds Docusaurus.
+- GitHub Pages homepage: no client `<Redirect to="/docs/…">` (that 404s at the org root). Meta refresh + `useBaseUrl('/docs/')`. `.nojekyll` in static.
+- Mill CI report: `mill-monitor.yml` (fresh workflow ID) listens for mill CI completion. Report only.
+- Published mill `hooks` uses the 0xray garment installer (`node_modules/0xray/scripts/hooks`), not `node_modules/@0xray/hooks`. Mill tree 0.1.4 (not a 0xray bump).
+- Nested mill in the 0xray tarball (`scripts/foundry/`). Wear no longer needs a second `npm i @0xray/foundry` for mint-on-install. 4.0.2.
+- Empty garment: mill plant (`mill` skill) is the hanger. Not 45/42 costume unless `foundry.json` `"costume": true`. Mill 0.1.5.
+- Mill plant fastens **inspect** (inspect AI work) plus `mill`. Not empty. Mill 0.1.6.
+- Nested mill **0.1.7**: inspect organ, four floors, passwd HOME, mill CI receipt. 4.0.5.
+- Nested mill **0.1.8**: isolated Hermes/OpenClaw, consumer tarball GET, CLI mint inspects. 4.0.6.
+- Nested mill **0.1.9**: inventory DNA for Groover 0xray-suit pack. 4.0.7.
+
+---
+
+## [4.0.13] - 2026-09-14
+
+Station PreCompact merge keeps custom STATION.md keys.
+
+---
+
+## [4.0.12] - 2026-09-12
+
+Public npm is still `0xray@4.0.11`, which predates #29. Isolation cannot be proven from `main` alone — bots dogfood the registry. This patch PUT wears project-scoped Grok plugin dest so multi-seat wear does not last-wins clobber machine `~/.grok/plugins/0xray`. Shared HOME writes project `.grok/plugins/0xray` only. Isolated HOME may wear `$HOME/.grok/plugins/0xray` and still must not write the passwd machine plugin. Mill+inspect default. Nested mill stays **0.1.9**. Not 5.0.0. This PR does not publish.
+
+- fix(grok): project-scoped plugin dest so multi-seat wear does not last-wins clobber machine ~/.grok (747816635)
+
+---
+
+## [4.0.11] - 2026-09-12
+
+npm pack now includes `.grok-plugin/` so the mill-default Grok marketplace manifest ships in the tarball (`package/.grok-plugin/plugin.json`). Published `0xray@4.0.10` omitted it — the `files` whitelist landed in #27 after that PUT. Not 5.0.0. This PR does not publish.
+
+- fix(pack): ship .grok-plugin in npm files whitelist (5a65851cb)
+
+---
+
+## [4.0.10] - 2026-09-12
+
+### 🔄 Changes
+
+- Version bump
+
+---
+
+## [4.0.9] - 2026-09-11
+
+Postinstall does **not** mill npm global prefix or npx cache as a consumer. `resolveConsumerTargetDir` treats `_npx` and a prefix without `package.json` as an install prefix: mill `INIT_CWD` if it is a real project, else mill the 0xray package (dogfood skip). Isolated HOME still skips machine `~/.grok`. Mill plant stays `mill` + `inspect`. Not 45/42 costume. Nested mill stays **0.1.9**. Not 5.0.0.
+
+- fix(foundry): do not mill npm global prefix or npx cache as a consumer (b08b19612)
+
+---
+
+## [4.0.8] - 2026-09-11
+
+### 🔄 Changes
+
+### 🔎 Other Changes
+- fix(foundry): mill release gate uses test:comprehensive like mill CI (bd980ea3f)
+- fix(confer): allow undefined on optional local vote fields (e4436af8f)
+- fix(confer): abstain locally; do not rubber-stamp analyze_proposal (0f6c61cbe)
+- fix(confer): local vote when nested LLM is not configured (eb6004b07)
+
+---
+
+## [4.0.7] - 2026-09-09
+
+Nested mill **0.1.9**. Inventory writes `dna` (keccak256 of canonical JSON without `mintedAt`). Inspect echoes dna + pack `0xray-suit`. Mill does not mint on chain. Not 5.0.0.
+
+---
+
+## [4.0.6] - 2026-09-09
+
+Nested mill **0.1.8**. Isolated HOME skips machine Hermes/OpenClaw. Inspect GETs public consumer `.tgz`. CLI `mint` runs inspect (chat is not done). Postinstall does not inspect. Not 5.0.0.
+
+---
+
+## [4.0.5] - 2026-09-04
+
+Nested mill **0.1.7**. Inspect is a mill command (`npx @0xray/foundry inspect`): costume dump fails mint, live PUT GETs the `.tgz`, four project floors, mill CI receipt, passwd HOME isolation. Mill plant stays `mill` + `inspect`. Not 45/42 costume. Not 5.0.0.
+
+---
+
+## [4.0.4] - 2026-09-04
+
+Mill **fastens** an inspect suit: mill plant is `mill` + `inspect` (inspect AI work — diffs, traces, mill receipts, CI). Not empty. Not 45/42 costume unless `foundry.json` `"costume": true`. Factory Repertoire + PPE stay. Mill **0.1.6**. Not 5.0.0.
+
+Naming: inventory `suit` (`fastened` / `overlay` / `costume`). Not garment. Not hanger. Costume is the 45/42 dump flag only.
+
+---
+
+## [4.0.3] - 2026-09-04
+
+Empty garment. Their plant is the suit. Mill plant (`mill` skill) is the factory discipline on the hanger. Not 45/42 costume unless `foundry.json` `"costume": true`. Factory Repertoire still enable-when-resolves. PPE stays worn. Mill **0.1.5**. Not 5.0.0.
+
+---
+
+## [4.0.2] - 2026-09-04
+
+Nested mill in the **0xray tarball**. `npm i 0xray` mill-fills via `scripts/foundry/` (postinstall + CLI re-wear `require` it). `@0xray/foundry` stays the standalone mill CLI (**0.1.4**). Not 5.0.0.
+
+Pack tests and consumer smoke require `scripts/foundry/mint-suit.cjs` in the tarball. Mill self-host (mill-ci, mill-monitor, Pages `docs-build`, mill-fill overlay) was already on main; this patch is the npm PUT of that mill next to the garment.
+
+### 🐛 Bug Fixes
+- Processor-test ESLint config is ESLint 9 ESM
+
+---
+
+## [4.0.1] - 2026-09-02
+
+Patch on the 4.0 temperament line. npm **4.0.0** stays latest until this tag publishes.
+
+### 🐛 Bug Fixes
+- CLI `-V` / `--version` no longer dumps a Commander stack after `exitOverride`
+- Hermes: post-processor logs `[nudge]`; e2e calls `session-start`
+- OpenClaw e2e reads `plugins.entries` (OpenClaw 2026.8.2)
+- Release gate: consumer smoke expects organ **on**; no `scripts.publish` after the registry PUT; reconcile allows tagged-but-unpublished
+
+### 📚 Documentation
+- Archive catalog / enterprise Docusaurus boiler; live site is exo wear
+- Version-manager stamps live Docusaurus kernel headers (no archived `docs-site/docs/README.md`)
+
+---
+
+## [4.0.0] - 2026-09-02
+
+First ship of the **temperament** line on the **v2 three-subsystem OS** (Inference · External Governance · Autonomous Engine). npm **4.0.0**. Tag `v4.0.0` on `0xRayAI/xray` `main` (`f80b42c`).
+
+### ✨ Features
+- **Factory memory organ** — `@0xray/repertoire@0.2.0` vendored as a runtime dependency. Shipped `memory_routing` is **on** (8 factory primitives). Extra host MCP stays `repertoire`, not an 8th `xray-*` server. Compact ingest writes `.xray/state/repertoire/`. Explicit opt-out: `enabled: false` + `provider: "repertoire"`.
+- **Four-floor compact + memory** — station heat matches Repertoire on every host (not only Grok). Compact on Grok Pre/PostCompact, Hermes session-start, OpenCode plugin boot, OpenClaw PreToolUse keeps intent, Working signals, and `Repertoire: on`.
+- **Suit temperament** — `frontier` | `guided` | `strict` | `auto`. Constitution (Codex 11/29/69, destructive shell) always on. Ceremony (spawn-plan deny, confer, synthesis) scales by host.
+- **Grok 4.6 / Grok Build** — `auto` → frontier: spawn missing/stale/todo-mismatch **warns**; confer off unless opted in.
+- **OpenCode / Hermes** (including free models) — stay **guided**: full v2 engine ceremony.
+- **Upgrade safety** — consumers without `suit_temperament` stay **guided**; postinstall merge will not frontier existing Grok installs.
+- **Codex 69** — in `codex.json` (blocking). PreToolUse already denied new MCP/skill/handler files.
+- **OpenClaw host PreToolUse** — `evaluateOpenClawHostPreTool` SSOT + `~/.openclaw/hooks/xray-pre-tool.mjs` on `0xray openclaw install`. Platform still has no native abort API; this is the host adapter.
+- **Repertoire harness** — leftover `memory_routing` default-off auto-enables when sibling `@0xray/repertoire` or `node_modules/@0xray/repertoire` resolves (install **and** runtime provider load). Explicit `enabled: false` + `provider: repertoire` is opt-out. Consumers without the module stay off. Not an 8th 0xRay MCP.
+- **Repertoire working state** — station heat writes `.xray/state/repertoire-working.json` and a `Working:` line on the card. Compact may ingest non-Bedrock matches. Registry primitives are routing; the working file is session memory.
+- **Session resume** — Grok session-start writes `repertoireResume` (one line, signal count) into `session-boot.json` so the next station survives compaction.
+- **Hot-swap station card** — `.xray/state/STATION.md` is the projection of `session-boot.json` (intent, git, **live** plan, last host, Repertoire). PreCompact/PostCompact persist it. AGENTS.md tells the model to Read it (Grok does not inject). Host change sets `hotSwap`. Same-host compact **keeps** the last swap stamp. OpenClaw first PreToolUse heats the card. Intent strips `<user_query>` wrappers. Works without Repertoire.
+- **Framework dogfood wear** — `installAllBridges` on the 0xRay package still patches `<project>/.grok/hooks/0xray.json` and enable-when-resolves. Does not deploy consumer copies over the package.
+- **Repertoire MCP names** — unprefixed server tools; Grok TUI namespaces them as `repertoire__*`. Grok install resolves sibling *or* `node_modules/@0xray/repertoire`.
+- **Configurable archive marker** — `plan_archive_marker_hours` (default 24) in `features.json`
+- **grok_postprocessor_light** — PostToolUse write-tool marker + activity.log
+- **P2 session capture** — git post-commit → `captureSessionInference` when `inference_session_capture.min_commits` met
+- **Docs** — [4.0 vision](docs-site/docs/architecture/v4-vision.md), [v3 from v2](docs-site/docs/architecture/v3-from-v2.md), [temperament](docs-site/docs/guides/v3-temperament.md), [trim list](docs-site/docs/architecture/v3-museum.md).
+
+### 🔄 Changes
+- Product version **4.0.0** throughout (`package.json`, `features.json`, plugin, banners). 3.x entries below are historical (npm `3.0.0`–`3.5.5`).
+- `evaluatePreToolGate` is constitution-first (Grok, Hermes, OpenCode). Grok PreToolUse no longer re-runs 11/29/69/surface/destructive after the SSOT.
+- Codex 69 denies **new** surface only (existing MCP/skill files may be rewired). `paths[]` / `target_notebook` / `prompt` content are in the SSOT collector.
+- **strict** locks `no_new_surface` on (cannot opt out).
+- Dual-host session-boot: Hermes / OpenCode / OpenClaw write `host` + `suit_profile`. A Hermes host ignores leftover Grok boot (and vice versa). Kernel/`generic` uses last boot.
+- Frontier `auto_consult` follows confer opt-in (`confer.enabled` / `confer_on_synthesis`).
+- Session-boot refreshes leftover host/workspace from another machine.
+- Post-commit log maintenance prefers consumer `node_modules/0xray/dist` and ESM `pathToFileURL`.
+
+### 🐛 Fixes
+- OpenClaw plugin ships in the npm tarball; install resolves `dist` then `src`.
+- Bare `node scripts/node/release.mjs` no longer defaults to patch (that path applied npm `3.5.5` → `3.5.6` over the 4.0 plant). Bump type is required. CJS/MJS loadability syntax-checks version/release/reflection/prepare/setup/CI-report scripts instead of executing them.
+- Postinstall wears OpenClaw PreToolUse (stdin hook + plugin link), not only `0xray openclaw install`.
+- Ephemeral e2e consumers no longer overwrite machine Hermes/OpenClaw `xray-consumer-root.txt`.
+- Hermes postinstall copies hook runtimes; plugin enable prefers `xray-hermes`.
+- OpenClaw install writes `opencode-cli` backend when `opencode` is on PATH (CLI pickle, not Zen HTTP).
+- `0xray grok install` always runs `patchGrokHooks` (command strings, PreCompact/PostCompact) even when the plugin already exists. Stale `args[]` / smoke / blaze paths no longer leave compact cold. Patched JSON is also copied to `<project>/.grok/hooks/0xray.json` — the path Grok TUI actually loads.
+- `buildLeadDevPlan` / `buildSynthesisCheckpointPlan` resolve temperament from `projectRoot`, not `process.cwd()` session-boot. A Grok frontier checkout no longer empties guided confer todos in tmp asides and release-gate verify scripts.
+- Stop committing machine-local `.grok/` (absolute hook paths). Template stays `src/integrations/grok/plugin/0xray`.
+- Grok hook `command` strings quote `XRAY_AI_PATH` and the script path so installs with spaces still start PreToolUse (Grok fail-opens on crash).
+- OpenClaw `maybeHeatHostStation` skips only when both sides have a concrete matching session id. An install card with no session no longer swallows first PreToolUse.
+- `postinstall.cjs` always calls `installAllBridges` (framework dogfood wear is no longer gated out of the production caller).
+- `loadFeatures` forwards `grok_postprocessor_light`; PostToolUse can run the advertised write-tool marker path.
+- `0xray grok install` writes `[mcp_servers.repertoire]` to `<project>/.grok/config.toml` and resolves the sibling from the consumer root.
+- OpenClaw 2026.8.2 handshake uses client id `gateway-client` (not `openclaw-tui`). Control-UI id requires device identity; TUI id is rejected on loopback.
+- OpenClaw e2e falls back to `openclaw agent` when token-only WS lacks `operator.write`. Grok e2e asserts `evaluatePreToolGate` SSOT instead of inlined gate names.
+
+### ✅ Tests
+- `suit-temperament.test.ts`; leftover-plan warn; confer frontier opt-in; install-bridges guided pin; Codex 69 rewrite vs create; strict lock; `paths[]`; dual-host boot.
+- `spawn-plan-stale` after archival in `verify-delegation-gate-core` (6/6); OpenCode host in `release-gate`.
+- OpenClaw PreToolUse unit coverage; live temperament probe across Grok, Hermes, OpenCode, OpenClaw.
+- Wear-layout: plugin/hook resolve, ephemeral marker skip, opencode-cli backend write.
+- `grok-hooks-json`: stale `args[]` smoke hooks gain compact events; station compact keeps `hotSwap`.
+- `autonomy-kernel`: plan consults follow `projectRoot` profile; confer/synthesis verify scripts pass tmp, not cwd Grok boot.
+- Repertoire enable-when-resolves + session-start `repertoireResume` unit coverage.
+- Quoted Grok hook commands; postinstall dogfood wear; OpenClaw install-then-first-tool heat; `grok_postprocessor_light` loadFeatures; project Repertoire `config.toml`.
+- Four-floor compact survival attests Codex 11 / 69 / destructive shell plus temperament after the cut. `XRAY_LIVE_SUCCESSOR=1` asks each host CLI to quote the station card.
+
+---
+
+## [3.5.5] - 2026-06-20
+
+### ✨ Features
+- **User-asides P0** — PreToolUse **denies** aside spawns without `cwd` / `working_directory` matching `aside.worktree`; `aside-worktree.ts` SSOT; synthesis-gate parity
+- **Worktree auto-provision** — `analyze-complexity` runs guarded `git worktree add` when `user_asides.auto_provision_worktree: true`
+- **Pipeline P3** — `verify:pipeline-facets` script; consumer `confirm:suit:full --pipeline-audit` wiring
+
+### 🐛 Fixes
+- **Worktree cwd enforce** — `auto_chain_delegations: false` no longer bypasses aside worktree cwd check; synthesis-gate parity retained
+- **`isAutoProvisionWorktreeEnabled`** — requires `user_asides.enabled` before honoring `auto_provision_worktree`
+- **`provisionGitWorktree`** — macOS `/var` vs `/private/var` path resolution for idempotent worktree detection
+
+### 🔄 Changes
+- **`verify:pipeline-facets --package-only`** — release-gate probes shipped artifacts without consumer feature matrix
+- **`release-gate.mjs`** — wires pipeline facet verify (package-only mode)
+
+### ✅ Tests
+- `aside-worktree.test.ts`; delegation-gate cwd deny/allow; auto_chain-off + synthesis worktree deny; `provisionGitWorktree` guards; `verify-user-aside-core` 10/10
+
+---
+
 ## [3.5.4] - 2026-06-19
 
 ### ✨ Features
 - **Synthesis consult receipt gate** — s.1–s.3 todos require `.xray/state/synthesis-consult-{id}.json` before completion; `evaluatePostToolSpawn` records receipts from subagent output; Grok post-tool hook wired
+- **User asides** — parallel work tracks (worktree-like) via `.xray/state/asides/{id}.json`; namespaced `{asideId}.a.*` todo routing; `analyze-complexity` + `orchestrate-task` rewire (no new MCP); session-boot hints; synthesis/pending bypass for aside spawns; `verify:user-aside` 9/9; docs `guides/user-asides.md`
+- **Confer quorum** — `confer.ts` SSOT; auto-runs at synthesis `analyze-complexity` (researcher → architect-tools → code-review); `verify:confer` 7/7; config `confer_on_synthesis` (default true); session-boot `conferPending` hint; emoji agent panel in quorum report
+- **Pipeline integration (P0–P2)** — enforcement-gate `{ proposals: [...] }` shape; `applyDecisionMatrix` + `calculateMetamorphosisScore` in `GovernanceService`; Grok `pipeline-hook-runtime.mjs` (reflection stubs, routing outcomes, reporting, inference-improvement light); `SelfProposalEngine` wired in PostProcessor; aside worktree cwd warn in delegation-gate; `autonomous_reporting` config key fix in SessionSummaryProcessor
+- **Stale lead-dev plan** — archive after `plan_stale_hours`; `spawn-plan-stale` persists after archival via recent archive marker; synthesis realignment (s.1–s.3) exempt until consult todos complete
+- **Hermes session-start parity** — `bridge.mjs` `session-start` command archives stale plans; lazy `plan-hook-runtime.mjs`; `verify-hermes-session-start.mjs` (4/4)
+- **Pre-commit / pre-push codex** — diff-hunk and commit-range scope verifiers (`verify:pre-commit-diff`, `verify:pre-push-diff`)
+- **Reflection noise** — minimal defaults 50 commits / `autoGenerate: false`; shell fallbacks synced
+- **Multi-repo boot** — `sibling_repos` in `session-boot.json`
+
+### 🔄 Changes
+- **autonomy-command.md** — SSOT is `analyze-complexity` + `multi_agent_orchestration`; removed stale `autonomy-intake` / `autonomy_kernel` references
 
 ### ✅ Tests
 - `synthesis-consult-receipt.test.ts`; E2E/outcome verifiers write fixture receipts
+- `governance-service-metamorphosis.test.ts`; `confer.test.ts` emoji panel
 
 ---
 

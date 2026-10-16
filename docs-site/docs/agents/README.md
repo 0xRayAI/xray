@@ -1,10 +1,12 @@
 # Agents
 
-**Version**: 3.4.1
+**4.1** — a suit that survives the context window
 
-0xRay provides **42 YML agent surfaces** in `src/opencode/agents/*.yml` for AI governance, code quality, and automation. Zero manual registration — invoke via `@agent-name` in OpenCode.
+These are organs. The product is the suit. 0xRay is a three-subsystem autonomous engine. The suit is the wear.
 
-Consumer projects receive a slimmed **AGENTS.md** (from `AGENTS-consumer.md`) on `npm install 0xray`.
+**42 YML surfaces** in `src/opencode/agents/*.yml`. Zero manual registration. Invoke via `@agent-name` in OpenCode.
+
+Consumer projects receive a slimmed **AGENTS.md** (from `AGENTS-consumer.md`) when they run `npx 0xray wear`.
 
 ## Core governance agents
 
@@ -89,17 +91,17 @@ Removed from prior docs: `@librarian`, `@general`, `@document-writer` — not pr
 
 ## thinDispatch Routing
 
-- **Simple** (≤15): Single agent
-- **Moderate** (≤25): Single agent with tools
-- **Complex** (≤50): Multi-agent coordination
-- **Enterprise** (>50): Orchestrator-led team
+- **Simple** (≤15): single-agent
+- **Moderate** (≤25): multi-agent
+- **Complex** (≤50): orchestrator-led
+- **Enterprise** (>50): orchestrator-led
 
-## Memory routing (v3.3)
+## Memory routing
 
-Optional provider enrichment affects orchestrator selection and researcher votes. See [Memory Routing](../guides/memory-routing.md).
+Shipped on. See [Memory Routing](../guides/memory-routing.md).
 
 ## Related
 
-- [Architecture](../architecture/) — Three-subsystem model
-- [MCP Servers](../mcp/) — 7 consumer MCP servers
-- [Adding Agents](./ADDING_AGENTS.md) — Configuration reference
+- [4.0 vision](../architecture/v4-vision.md)
+- [MCP Servers](../mcp/README.md) — 7 consumer MCP servers
+- [SKILLS.md](https://github.com/0xRayAI/xray/blob/main/SKILLS.md)

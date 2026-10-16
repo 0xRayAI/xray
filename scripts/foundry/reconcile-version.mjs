@@ -1,0 +1,192 @@
+#!/usr/bin/env node
+/**
+ * reconcile-version.mjs — Single version truth before bump/tag/publish.
+ *
+ * Sources: npm registry, package.json, latest git tag.
+ *
+ * Usage:
+ *   npx @0xray/foundry reconcile
+ *   npx @0xray/foundry reconcile --check
+ *   npx @0xray/foundry reconcile patch
+ *   npx @0xray/foundry reconcile patch --apply
+ *
+ * --apply writes package.json and the package-lock.json version fields.
+ * --check passes when package.json is equal to the registry (already published)
+ * or greater (the pre-publish bump). It fails when package.json is behind npm,
+ * or when the lock does not match package.json.
+ */
+
+import { execSync } from "child_process";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+import { readRootPackage, resolveMillRoot } from "./mill-root.mjs";
+import { packageLockVersions, syncPackageLockVersion } from "./version-manager.mjs";
+
+const rootDir = resolveMillRoot();
+const pkgPath = path.join(rootDir, "package.json");
+
+const args = process.argv.slice(2);
+const checkMode = args.includes("--check");
+const applyMode = args.includes("--apply");
+const printTarget = args.includes("--print-target");
+const bumpType = args.find((a) => ["major", "minor", "patch"].includes(a)) || null;
+
+function run(cmd) {
+  try {
+    return execSync(cmd, { cwd: rootDir, encoding: "utf-8" }).trim();
+  } catch {
+    return null;
+  }
+}
+
+function readLocalVersion() {
+  return JSON.parse(fs.readFileSync(pkgPath, "utf-8")).version;
+}
+
+function readPublishedVersion() {
+  const name = readRootPackage(rootDir).name;
+  if (!name) return "0.0.0";
+  const v = run(`npm view ${name} version`);
+  return v || "0.0.0";
+}
+
+function readLatestTag() {
+  const tag = run('git describe --tags --abbrev=0 2>/dev/null');
+  if (!tag) return null;
+  return tag.replace(/^v/, "");
+}
+
+function parseVersion(version) {
+  const [major, minor, patch] = version.split(".").map((n) => parseInt(n, 10));
+  return { major, minor, patch };
+}
+
+function bumpVersion(version, type) {
+  const v = parseVersion(version);
+  switch (type) {
+    case "major":
+      return `${v.major + 1}.0.0`;
+    case "minor":
+      return `${v.major}.${v.minor + 1}.0`;
+    case "patch":
+      return `${v.major}.${v.minor}.${v.patch + 1}`;
+    default:
+      return version;
+  }
+}
+
+function compare(a, b) {
+  const va = parseVersion(a);
+  const vb = parseVersion(b);
+  if (va.major !== vb.major) return va.major - vb.major;
+  if (va.minor !== vb.minor) return va.minor - vb.minor;
+  return va.patch - vb.patch;
+}
+
+function maxVersion(...versions) {
+  return versions.reduce((best, cur) => (compare(cur, best) > 0 ? cur : best));
+}
+
+function fail(msg) {
+  console.error(`❌ ${msg}`);
+  process.exit(1);
+}
+
+/**
+ * Registry gate for --check.
+ * Equal to npm is a shipped release. Greater is the pre-publish bump.
+ * Only a package.json behind the registry fails.
+ * @param {string} local
+ * @param {string} npmVersion
+ * @returns {string | null}
+ */
+export function publishedVersionCheckError(local, npmVersion) {
+  if (compare(local, npmVersion) < 0) {
+    return `package.json (${local}) must be >= npm (${npmVersion}). Run: npx @0xray/foundry reconcile patch --apply`;
+  }
+  return null;
+}
+
+function main() {
+  const local = readLocalVersion();
+  const npm = readPublishedVersion();
+  const tag = readLatestTag();
+
+  const baseline = maxVersion(npm, tag || "0.0.0");
+  const target = bumpType ? bumpVersion(baseline, bumpType) : local;
+
+  if (printTarget && bumpType) {
+    console.log(target);
+    return;
+  }
+
+  console.log("\n=== Version Reconcile ===\n");
+  const lockBefore = packageLockVersions(rootDir);
+  console.log(`  npm registry : ${npm}`);
+  console.log(`  package.json : ${local}`);
+  console.log(
+    `  package-lock : ${lockBefore ? `${lockBefore.root} / ${lockBefore.pkg}` : "(none)"}`,
+  );
+  console.log(`  latest tag   : ${tag ? `v${tag}` : "(none)"}`);
+  if (bumpType) {
+    console.log(`  bump ${bumpType}  : ${target} (from baseline ${baseline})`);
+  }
+
+  if (applyMode && bumpType) {
+    const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf-8"));
+    pkg.version = target;
+    fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + "\n");
+    const synced = syncPackageLockVersion(rootDir, target);
+    if (synced === "unmatched") {
+      fail(
+        `package-lock.json version fields were not updated to ${target}. Refusing to leave the lock behind package.json.`,
+      );
+    }
+    console.log(`\n✅ Updated package.json and package-lock.json → ${target}`);
+  }
+
+  if (!checkMode) {
+    if (compare(local, npm) <= 0 && !bumpType) {
+      console.log("\n⚠️  Local version is not ahead of npm — bump before publishing.");
+    } else {
+      console.log("\n✅ Reconcile report complete.");
+    }
+    return;
+  }
+
+  // Strict checks for release gate / pre-tag.
+  // `local` is the version read before --apply. Apply still writes
+  // bumpVersion(max(npm, tag)) and is not this gate.
+  const behindNpm = publishedVersionCheckError(local, npm);
+  if (behindNpm) {
+    fail(behindNpm);
+  }
+
+  const pkgVersion = readLocalVersion();
+  const lockNow = packageLockVersions(rootDir);
+  if (lockNow && (lockNow.root !== pkgVersion || lockNow.pkg !== pkgVersion)) {
+    fail(
+      `package-lock.json (${lockNow.root} / ${lockNow.pkg}) must match package.json (${pkgVersion}). The bumper writes both: npx @0xray/foundry reconcile patch --apply`,
+    );
+  }
+
+  if (tag && compare(local, tag) < 0) {
+    fail(`package.json (${local}) is behind latest tag v${tag}`);
+  }
+
+  if (tag && compare(local, tag) > 0 && compare(npm, tag) === 0) {
+    console.log(`✅ Ready to tag v${local} (npm at ${npm})`);
+  } else if (compare(local, npm) > 0) {
+    console.log(`✅ Ready to publish ${local} (npm at ${npm})`);
+  } else {
+    console.log("✅ Version reconcile OK");
+  }
+}
+
+const isMain =
+  process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+
+if (isMain) {
+  main();
+}

@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "hooks": {
+    "preToolUse": [
+      {
+        "command": ".cursor/hooks/pre-tool-use.sh",
+        "failClosed": true
+      }
+    ],
+    "preCompact": [
+      {
+        "command": ".cursor/hooks/pre-compact.sh"
+      }
+    ],
+    "afterFileEdit": [
+      {
+        "command": ".cursor/hooks/after-file-edit.sh"
+      }
+    ],
+    "beforeShellExecution": [
+      {
+        "command": ".cursor/hooks/before-shell-execution.sh",
+        "failClosed": true
+      }
+    ],
+    "beforeReadFile": [
+      {
+        "command": ".cursor/hooks/before-read-file.sh",
+        "failClosed": true
+      }
+    ]
+  }
+}

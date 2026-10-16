@@ -1,17 +1,30 @@
 import { Command } from 'commander';
 import fs from 'fs';
 import path from 'path';
-import { homedir } from 'os';
 import { createRequire } from 'module';
-import { frameworkLogger } from '../../core/framework-logger.js';
-import { syncBuiltinSkills } from './skill-install.js';
-import { OpenClawConfigLoader } from '../../integrations/openclaw/config.js';
+import { fileURLToPath } from 'node:url';
 
-const __dirname = path.dirname(new URL(import.meta.url).pathname);
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
-const wiring = require(path.join(__dirname, '..', '..', '..', 'scripts', 'node', 'bridge-mcp-wiring.cjs')) as {
-  wireOpenClawBridge: (targetDir: string) => { count: number; path: string; method: string };
+
+type MillSuit = {
+  isIsolatedHome: () => boolean;
+  machineHome: () => string;
 };
+
+type OpenClawWiring = {
+  wireOpenClawBridge: (targetDir: string) => { count: number; path: string; method: string };
+  installOpenClawHostWear: (packageRoot: string, targetDir?: string) => string | null;
+  maybeWriteOpenClawCliBackend: () => boolean;
+};
+
+function loadMillSuit(): MillSuit {
+  return require(path.join(__dirname, '..', '..', '..', 'scripts', 'foundry', 'mint-suit.cjs')) as MillSuit;
+}
+
+function loadWiring(): OpenClawWiring {
+  return require(path.join(__dirname, '..', '..', '..', 'scripts', 'node', 'bridge-mcp-wiring.cjs')) as OpenClawWiring;
+}
 
 export function registerOpenClawCommands(openclawCmd: Command) {
   openclawCmd
@@ -30,6 +43,13 @@ interface OpenClawInstallOptions {
 }
 
 async function installForOpenClaw(options: OpenClawInstallOptions = {}): Promise<void> {
+  const { frameworkLogger } = await import('../../core/framework-logger.js');
+  const { syncBuiltinSkills } = await import('./skill-install.js');
+  const { mintAfterWear } = await import('./foundry-mint-wear.js');
+  const { OpenClawConfigLoader } = await import('../../integrations/openclaw/config.js');
+  const { writeSuitSessionBoot } = await import('../../nucleus/suit-temperament.js');
+  const millSuit = loadMillSuit();
+  const wiring = loadWiring();
   frameworkLogger.log('openclaw-integration', 'install-start', 'info', { options });
 
   const configPath = path.join(process.cwd(), '.xray', 'config', 'openclaw.json');
@@ -53,18 +73,38 @@ async function installForOpenClaw(options: OpenClawInstallOptions = {}): Promise
       console.log(`\x1b[32m✓ Created OpenClaw config at ${relative}\x1b[0m`);
     }
 
-    const openclawSkillsDir = path.join(homedir(), '.openclaw', 'skills');
+    const isolated = millSuit.isIsolatedHome();
+    const openclawSkillsDir = isolated
+      ? path.join(targetDir, '.openclaw', 'skills')
+      : path.join(millSuit.machineHome(), '.openclaw', 'skills');
     const skillsCopied = syncBuiltinSkills(openclawSkillsDir);
     if (skillsCopied > 0) {
       console.log(`\x1b[32m✓ Synced ${skillsCopied} builtin skills to ~/.openclaw/skills/\x1b[0m`);
     }
     frameworkLogger.log('openclaw-integration', 'skills-synced', 'info', { count: skillsCopied });
+    mintAfterWear(targetDir);
 
-    const wired = wiring.wireOpenClawBridge(targetDir);
+    const wired = isolated
+      ? { count: 0, path: configPath, method: 'skipped-isolated-home' }
+      : wiring.wireOpenClawBridge(targetDir);
     console.log(
       `\x1b[32m✓ Wired OpenClaw MCP servers (${wired.count} via ${wired.method}) → ${wired.path}\x1b[0m`,
     );
     console.log(`\x1b[32m✓ Consumer root → ${targetDir}\x1b[0m`);
+
+    try {
+      writeSuitSessionBoot(targetDir, 'openclaw', { source: '0xray/openclaw-install' });
+    } catch {
+      /* session-boot is best-effort */
+    }
+
+    const packageRoot = path.resolve(__dirname, '..', '..', '..');
+    const hookInstalled = isolated ? null : wiring.installOpenClawHostWear(packageRoot, targetDir);
+    const cliBackend = isolated ? false : wiring.maybeWriteOpenClawCliBackend();
+    frameworkLogger.log('openclaw-integration', 'cli-backend', 'info', { written: cliBackend });
+    if (hookInstalled) {
+      console.log(`\x1b[32m✓ OpenClaw PreToolUse hook → ${hookInstalled}\x1b[0m`);
+    }
 
     console.log('\n✅ 0xRay OpenClaw integration configured!');
     console.log('Run `openclaw mcp list` to verify MCP servers.');

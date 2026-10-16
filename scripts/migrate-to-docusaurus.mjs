@@ -669,10 +669,10 @@ const config: Config = {
   title: '0xRay',
   tagline: 'Enterprise AI Orchestration Framework',
   favicon: 'img/favicon.ico',
-  url: 'https://stringray.dev',
-  baseUrl: '/',
-  organizationName: 'htafolla',
-  projectName: '0xRay',
+  url: 'https://0xrayai.github.io',
+  baseUrl: '/xray/',
+  organizationName: '0xRayAI',
+  projectName: 'xray',
   onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'warn',
   i18n: {
@@ -685,7 +685,7 @@ const config: Config = {
       {
         docs: {
           sidebarPath: './sidebars.ts',
-          editUrl: 'https://github.com/htafolla/0xRay/tree/master/',
+          editUrl: 'https://github.com/0xRayAI/xray/tree/main/',
           routeBasePath: 'docs',
           showLastUpdateTime: true,
           showLastUpdateAuthor: true,
@@ -713,7 +713,7 @@ const config: Config = {
           label: 'Docs',
         },
         {
-          href: 'https://github.com/htafolla/0xRay',
+          href: 'https://github.com/0xRayAI/xray',
           label: 'GitHub',
           position: 'right',
         },
@@ -739,7 +739,7 @@ const config: Config = {
         {
           title: 'Community',
           items: [
-            { label: 'GitHub', href: 'https://github.com/htafolla/0xRay' },
+            { label: 'GitHub', href: 'https://github.com/0xRayAI/xray' },
             { label: 'npm', href: 'https://npmjs.com/package/0xray' },
           ],
         },
@@ -761,7 +761,7 @@ export default config;
 function generatePackageJson() {
   return JSON.stringify(
     {
-      name: "stringray-docs",
+      name: "xray-docs",
       version: "1.0.0",
       private: true,
       scripts: {
