@@ -6,9 +6,10 @@ live-inbox <seat> --card <owner/repo#n> --start-after <ISO>
 Read: OPEN lines from the Bifrost server inbox for <seat>, one JSON object per line on stdout. The server hides lines the
 seat acked. A closed or merged card does not hide an unacked line. For reviewer, a Reviewer verdict at the card's head does.
 A read never acks. The ack is the receipt (the pop) and a seat sends it after it handles the line, with
---ack or --pop <id> (one line) or --ack all / --pop all (everything open). --ack stale lists lines whose card is merged,
-closed, or gone, and does not ack them. --ack stale --apply sends that receipt. --upto <id> acks every open line through
-that id. A plain read still shows a merged card until one of those receipts. --peek means the same as a plain read.
+--ack or --pop <id> (one line) or --ack all / --pop all (everything open). --ack stale lists lines with a close or merge
+event, or a closed or done card, and does not ack them. A missing card stays. --ack stale --apply acks the ids just listed.
+--upto <id> acks the stored prefix through that id. A plain read still shows a merged card until one of those receipts.
+--peek means the same as a plain read.
 The local cursor still advances to the newest line seen.
 --turn start|end posts {kind:turn, action, t_ct, tag?} to POST /activity.
 --prompt posts {t_ct, seat, kind:prompt, action:sent, from, to:seat, room?} to POST /activity. from defaults to blaze.
@@ -188,13 +189,23 @@ if upto is not None:
 if ack == "stale":
     if ack_flag != "--ack":
         sys.exit(USAGE)
+    lines = call("GET", f"/inbox/{seat}?stale=1").get("lines") or []
     if not apply:
-        lines = call("GET", f"/inbox/{seat}?stale=1").get("lines") or []
         for l in lines:
             print(json.dumps(l, ensure_ascii=False))
         print(f"dry run: {len(lines)} stale line(s); pass --apply to ack", file=sys.stderr)
         sys.exit(0)
-    print(json.dumps(call("POST", f"/inbox/{seat}/ack", {"stale": True})))
+    acked = 0
+    open_n = None
+    for l in lines:
+        line_id = l.get("id")
+        if not isinstance(line_id, str) or not line_id:
+            continue
+        result = call("POST", f"/inbox/{seat}/ack", {"id": line_id})
+        acked += int(result.get("acked") or 0)
+        if "open" in result:
+            open_n = result.get("open")
+    print(json.dumps({"ok": True, "acked": acked, "open": 0 if open_n is None else open_n}))
     sys.exit(0)
 if ack is not None:
     r = call("POST", f"/inbox/{seat}/ack", {"all": True} if ack == "all" else {"id": ack})

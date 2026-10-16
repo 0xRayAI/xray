@@ -34,7 +34,7 @@ class Inbox(BaseHTTPRequestHandler):
     def do_POST(self):
         body = self._read()
         Inbox.calls.append({"method": "POST", "path": self.path, "auth": self.headers.get("Authorization"), "body": body})
-        self._ok({"ok": True, "acked": 2, "open": 1})
+        self._ok({"ok": True, "acked": 1, "open": 1})
 
 
 class StaleAck(unittest.TestCase):
@@ -70,9 +70,14 @@ class StaleAck(unittest.TestCase):
         self.assertIn("stale=1", Inbox.calls[0]["path"])
         applied = self.run_tool("--ack", "stale", "--apply")
         self.assertEqual(applied.returncode, 0, applied.stderr)
-        self.assertEqual(json.loads(applied.stdout), {"ok": True, "acked": 2, "open": 1})
-        self.assertEqual(Inbox.calls[-1]["body"], {"stale": True})
+        self.assertEqual(json.loads(applied.stdout)["acked"], 2)
+        posts = [c for c in Inbox.calls if c["method"] == "POST"]
+        self.assertEqual([c["body"] for c in posts], [
+            {"id": "org/repo#1:merged"},
+            {"id": "org/repo#2:gone"},
+        ])
         self.assertNotIn("seat-key-arch1", applied.stdout + applied.stderr)
+        self.assertNotIn("stale", json.dumps(posts))
 
     def test_upto_posts_the_receipt(self):
         r = self.run_tool("--upto", "org/repo#2:gone")

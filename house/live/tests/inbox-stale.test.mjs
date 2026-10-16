@@ -25,7 +25,7 @@ before(async () => {
 after(async () => { srv.kill(); await new Promise(r => srv.exitCode != null || srv.signalCode ? r() : srv.once('exit', r)); fs.rmSync(DATA, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 }); });
 const CK = () => ({ Authorization: 'Bearer ' + CKEY });
 
-test('stale ack settles merged, closed, and off-board lines and leaves the live card on the plain read', async () => {
+test('stale ack settles a close event or a closed or done card, and leaves a missing card on the plain read', async () => {
   const R = 'example-org/stale';
   const t0 = new Date().toISOString();
   const mk = (id, n) => ({ id, t_ct: t0, seat: 'critic', type: 'pr_comment', repo: R, number: n, title: 'note', url: '', reason: 'ask' });
@@ -36,9 +36,9 @@ test('stale ack settles merged, closed, and off-board lines and leaves the live 
   assert.equal(board.status, 200);
   const ids = async (q = '') => (await (await fetch(BASE + '/inbox/critic' + q, { headers: CK() })).json()).lines.map(l => l.id).filter(id => id.startsWith('stale:')).sort();
   assert.deepEqual(await ids(), ['stale:closed', 'stale:done', 'stale:gone', 'stale:live']);
-  assert.deepEqual(await ids('?stale=1'), ['stale:closed', 'stale:done', 'stale:gone']);
+  assert.deepEqual(await ids('?stale=1'), ['stale:closed', 'stale:done']);
   const acked = await (await fetch(BASE + '/inbox/critic/ack', { method: 'POST', body: JSON.stringify({ stale: true }), headers: { ...CK(), 'Content-Type': 'application/json' } })).json();
-  assert.equal(acked.acked, 3);
-  assert.deepEqual(await ids(), ['stale:live']);
-  assert.deepEqual((await ids('?all=1')).filter(id => id !== 'stale:live').sort(), ['stale:closed', 'stale:done', 'stale:gone']);
+  assert.equal(acked.acked, 2);
+  assert.deepEqual(await ids(), ['stale:gone', 'stale:live']);
+  assert.deepEqual((await ids('?all=1')).filter(id => id === 'stale:closed' || id === 'stale:done').sort(), ['stale:closed', 'stale:done']);
 });

@@ -553,13 +553,14 @@ function lineDone(seat, l) {
   if (seat === REVIEW && c.reviewer && c.reviewer.at_head && Number(c.reviewer.t) >= lt) return true;   // verdict at head = Reviewer's step done
   return false;
 }
-// A settled line still shows on a plain read. --ack stale is the explicit receipt for it: merged, closed, or no longer on the board.
+// A settled line still shows on a plain read. --ack stale is the receipt: a close or merge event, or a card that is closed or done.
+// A missing card is not settled. The board drops cards, and a handoff can arrive before the card does.
 function settledLine(l) {
   const number = Number(l && l.number);
   if (!l || !l.repo || !Number.isInteger(number) || number < 1) return false;
   if (itemClosed(l.repo, number)) return true;
   const c = lineCard(l);
-  if (!c) return true;
+  if (!c) return false;
   return c.state === 'closed' || c.stage === 'done';
 }
 function openLines(seat, all) { const acked = ackedSet(seat); return all ? seatInbox[seat].slice() : seatInbox[seat].filter(l => !acked.has(l.id) && !lineDone(seat, l)); }
@@ -2726,7 +2727,7 @@ async function handle(req, res) {
     return json(req, res, 200, { ok: true, started: true, clock: run });
   }
   const ackM = /^\/inbox\/([a-z0-9-]{2,16})\/ack$/.exec(p);
-  if (ackM) {   // POST /inbox/<seat>/ack {"id"} | {"upto"} | {"stale": true} | {"all": true}: that seat's key only. stale acks merged, closed, and off-board lines.
+  if (ackM) {   // POST /inbox/<seat>/ack {"id"} | {"upto"} | {"stale": true} | {"all": true}: that seat's key only. stale acks lines with a close or merge event, or a closed or done card.
     if (m !== 'POST') return json(req, res, 405, { error: 'method not allowed' }, { Allow: 'POST' });
     let who; try { who = await seatOf(req); } catch { return json(req, res, 503, { error: 'could not verify token, retry' }, { 'Retry-After': '30' }); }
     if (!who) { req.resume(); return json(req, res, 401, { error: 'unauthorized' }); }
