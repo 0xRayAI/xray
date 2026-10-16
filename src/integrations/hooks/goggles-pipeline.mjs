@@ -966,6 +966,7 @@ export function holdPlane(root, id) {
   const dest = join(root, ".xray", "state", "goggles-plane.json");
   mkdirSync(dirname(dest), { recursive: true });
   writeFileSync(dest, `${JSON.stringify({ plane })}\n`);
+  maintainLens(root);
 }
 
 function stampPlane(root, id) {
@@ -1098,11 +1099,14 @@ export function shippedDrift(projectRoot) {
   const shipped = shippedSet(root);
   for (const id of CARD_PLANES) {
     const plane = growPlane(id, platesDir, projectRoot || stateRoot());
+    const files = Array.isArray(plane.files) ? plane.files : [];
     const kept = {
       ...plane,
-      files: (Array.isArray(plane.files) ? plane.files : []).filter((rel) => ships(shipped, rel)),
+      files: files.filter((rel) => ships(shipped, rel)),
       skills: ships(shipped, plane.skills) ? plane.skills : '',
       worn: ships(shipped, plane.worn) ? plane.worn : '',
+      // The mark is a phrase in the first file. It stays on that file.
+      mark: files[0] && !ships(shipped, files[0]) ? '' : plane.mark,
     };
     const exam = examinePlane(kept, root);
     if (exam.kind === 'drift') return `Actuality. ${id}: ${exam.text}`;
@@ -1274,11 +1278,35 @@ export function lensPath(root) {
 }
 
 
+function heldCardPlane(root) {
+  const reading = loadReading(root);
+  if (reading && !reading.drift && CARD_PLANES.includes(reading.plane)) {
+    return { id: reading.plane, scope: reading.scope || '' };
+  }
+  try {
+    const data = JSON.parse(readFileSync(join(root, '.xray', 'state', 'goggles-plane.json'), 'utf8'));
+    const plane = data && typeof data.plane === 'string' ? data.plane : '';
+    if (CARD_PLANES.includes(plane)) return { id: plane, scope: '' };
+  } catch {
+    /* no held plane */
+  }
+  return null;
+}
+
+function lensCardText(root, held) {
+  const platesDir = findPlatesDir(HERE);
+  const plane = growPlane(held.id, platesDir, root);
+  return formatCardText(cardView(plane, held.scope, 'digest', sourceRoot(platesDir), root));
+}
+
 export function maintainLens(root) {
   const drift = actualityLine();
-  const text = drift || 'quiet (match)';
+  const head = drift || 'quiet (match)';
+  const held = heldCardPlane(root);
+  const card = held ? lensCardText(root, held) : '';
+  const body = card ? `${head}\n\n${card}` : head;
   mkdirSync(dirname(lensPath(root)), { recursive: true });
-  writeFileSync(lensPath(root), `${text}\n`);
+  writeFileSync(lensPath(root), `${body}\n`);
   return ok(drift);
 }
 

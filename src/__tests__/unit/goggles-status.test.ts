@@ -59,6 +59,26 @@ describe('goggles status probe', () => {
     rmSync(root, { recursive: true, force: true });
   });
 
+  it('a card under the kind 0 line does not become the kind 0 label', () => {
+    const cwd = tempCwd();
+    mkdirSync(join(cwd, '.xray', 'state'), { recursive: true });
+    const card = ['Plane: routing', 'Entry: task text', 'Exit: agent'].join('\n');
+    writeFileSync(join(cwd, '.xray', 'state', 'LENS.md'), `quiet (match)\n\n${card}\n`);
+    const quiet = probeGoggles(repoRoot, cwd);
+    expect(quiet.kind0Quiet).toBe(true);
+    expect(quiet.kind0Label).toBe('quiet (match)');
+    expect(quiet.kind0Text).not.toContain('Entry');
+    writeFileSync(
+      join(cwd, '.xray', 'state', 'LENS.md'),
+      `Actuality. Drift: worn is not the map.\n\nPlane: ground\n`,
+    );
+    const drift = probeGoggles(repoRoot, cwd);
+    expect(drift.kind0Quiet).toBe(false);
+    expect(drift.kind0Label).toBe('Actuality. Drift: worn is not the map.');
+    expect(drift.kind0Text).not.toContain('ground');
+    rmSync(cwd, { recursive: true, force: true });
+  });
+
   it('status and health both call the same probe', () => {
     const status = readFileSync(join(repoRoot, 'src/cli/commands/status.ts'), 'utf8');
     const health = readFileSync(join(repoRoot, 'src/cli/index.ts'), 'utf8');

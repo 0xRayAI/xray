@@ -30,6 +30,11 @@ function organPair(packageRoot: string): readonly [string, string] | null {
   return null;
 }
 
+function firstLensLine(text: string): string {
+  const line = text.split(/\r?\n/).map((row) => row.trim()).find((row) => row.length > 0);
+  return line ?? "";
+}
+
 function lensText(cwd: string): { found: boolean; text: string } {
   const file = join(cwd, ".xray", "state", "LENS.md");
   if (!existsSync(file)) return { found: false, text: "" };
@@ -59,12 +64,13 @@ export function probeGoggles(packageRoot: string, cwd: string): GogglesStatus {
   let kind0Label = "(no LENS yet)";
   let kind0Quiet = false;
   if (lens.found) {
-    kind0Text = lens.text;
-    if (!lens.text || lens.text === "quiet (match)") {
+    const line = firstLensLine(lens.text);
+    kind0Text = line;
+    if (!line || line === "quiet (match)") {
       kind0Quiet = true;
       kind0Label = "quiet (match)";
     } else {
-      kind0Label = lens.text;
+      kind0Label = line;
     }
   } else if (pair) {
     const drift = mapDrift(packageRoot, pair[1]);

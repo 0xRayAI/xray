@@ -240,9 +240,7 @@ export async function answerLook(raw, root) {
   if (Array.isArray(cards) && cards.length) {
     const shown = cards.map(publicCard);
     if (shown.length === 1 && shown[0] && typeof shown[0].plane === 'string') {
-      const dest = join(here, '.xray', 'state', 'goggles-plane.json');
-      mkdirSync(dirname(dest), { recursive: true });
-      writeFileSync(dest, `${JSON.stringify({ plane: shown[0].plane })}\n`);
+      api.holdPlane(here, shown[0].plane);
     }
     return {
       ok: true,
@@ -311,10 +309,13 @@ export async function answerStatus(root) {
   const lens = lensBody(here);
   let kind0 = 'none';
   let kind0Text = '';
-  if (lens.found && (!lens.text || lens.text === 'quiet (match)')) kind0 = 'quiet';
+  const lensLine = lens.found
+    ? (lens.text.split(/\r?\n/).map((row) => row.trim()).find((row) => row) || '')
+    : '';
+  if (lens.found && (!lensLine || lensLine === 'quiet (match)')) kind0 = 'quiet';
   else if (lens.found) {
     kind0 = 'drift';
-    kind0Text = lens.text;
+    kind0Text = lensLine;
   } else if (worn) {
     const line = api.actualityLine();
     if (line) {

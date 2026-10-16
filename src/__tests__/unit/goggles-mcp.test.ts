@@ -194,11 +194,17 @@ describe('goggles MCP', () => {
   });
 
   it('a plane name returns that view', async () => {
-    const { payload, isError } = await dispatchTool('look', { plane: 'routing' }, tempRoot());
+    const root = tempRoot();
+    const { payload, isError } = await dispatchTool('look', { plane: 'routing' }, root);
     expect(isError).toBe(false);
     expect(payload.mode).toBe('card');
     expect(payload.content.plane).toBe('routing');
     expect(payload.content.files).toEqual(['src/nucleus/thin-dispatch.ts']);
+    const lens = readFileSync(join(root, '.xray', 'state', 'LENS.md'), 'utf8');
+    expect(lens.startsWith('quiet (match)\n\n')).toBe(true);
+    expect(lens).toContain('Entry: task text · context · thresholds');
+    expect(lens).toContain('Exit: agent · strategy · adjusted score · file');
+    rmSync(root, { recursive: true, force: true });
   });
 
   it('the whole set is name one plane', async () => {
@@ -239,9 +245,16 @@ describe('goggles MCP', () => {
       expect(quiet.payload.kind0).toBe('quiet');
       expect(quiet.payload.kind0Text).toBe('');
 
-      writeFileSync(join(root, '.xray', 'state', 'LENS.md'), 'Actuality. Drift: worn is not the map.\n');
+      writeFileSync(join(root, '.xray', 'state', 'LENS.md'), 'quiet (match)\n\nPlane: routing\nEntry: task text\n');
+      const card = await dispatchTool('status_lens', {}, root);
+      expect(card.payload.kind0).toBe('quiet');
+      expect(card.payload.kind0Text).toBe('');
+
+      writeFileSync(join(root, '.xray', 'state', 'LENS.md'), 'Actuality. Drift: worn is not the map.\n\nPlane: ground\n');
       const drift = await dispatchTool('status_lens', {}, root);
       expect(drift.payload.kind0).toBe('drift');
+      expect(drift.payload.kind0Text).toBe('Actuality. Drift: worn is not the map.');
+      expect(drift.payload.kind0Text).not.toContain('ground');
       expect(drift.payload.organ).toBe('worn');
     } finally {
       rmSync(root, { recursive: true, force: true });

@@ -18,8 +18,10 @@ import {
   lensBeforeResearch,
   planesFile,
   lookCards,
+  holdPlane,
   maintainLens,
   organStop,
+  shippedDrift,
   suitHint,
 } from '../../integrations/hooks/goggles-pipeline.mjs';
 
@@ -372,6 +374,35 @@ describe('goggles plate', () => {
     expect(notes).not.toContain('## Pop job');
     expect(notes).not.toContain('Home. The dev plane.');
     rmSync(root, { recursive: true, force: true });
+  });
+
+  it('a shipped sweep keeps a mark on the first file', () => {
+    const root = mkdtempSync(join(tmpdir(), 'goggles-ship-'));
+    try {
+      expect(shippedDrift(root)).toBe('');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('compact writes the held plane card under the kind 0 line', () => {
+    const root = mkdtempSync(join(tmpdir(), 'goggles-lens-card-'));
+    try {
+      holdPlane(root, 'routing');
+      const lens = readFileSync(join(root, '.xray', 'state', 'LENS.md'), 'utf8');
+      expect(lens.startsWith('quiet (match)\n\n')).toBe(true);
+      expect(lens).toContain('Plane: routing');
+      expect(lens).toContain('Entry: task text · context · thresholds');
+      expect(lens).toContain('Exit: agent · strategy · adjusted score · file');
+      expect(lens).toContain('Files: src/nucleus/thin-dispatch.ts');
+      expect(lens).toContain('Skills: .agents/skills/routing/SKILL.md');
+      expect(lens).toContain('\nSetup:\n');
+      expect(lens).toContain('\nTeardown:\n');
+      expect(maintainLens(root)).toEqual({ ok: true, text: '' });
+      expect(readFileSync(join(root, '.xray', 'state', 'LENS.md'), 'utf8')).toBe(lens);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 
   it('exports the digest card and a pane that keeps empties', () => {
