@@ -169,6 +169,7 @@ Layouts on C: `tech-rows` · `console-core` · `suit-split`
 | `tech-rows` | C | Drawn logo top-center + 4 chamfered/capsule rows | Release flows |
 | `console-core` | C | Bezel + pill + hero title + core circle + 4 seat modules | Suit core / host pack |
 | `suit-split` | C | draw-me-a-suit left (~50%) + stamped panel right | Edu intros (≤1/thread) |
+| `stamped-table` | C | Nameplate (logo + stamped title + sub) + header row + 4–7 raised row plaques, 2–3 fixed-x columns + footer | Doc/state tables (e.g. LENS.md) |
 | `storyboard-snake` | C | Nameplate (logo + stamped title + sub) + 2×3 snake of step plaques + rainbow arrows + footer | Flow / "how it works" (Bifrost) |
 
 Dropped as own bases: brass nameplate (fold into A with brass ink only if Blaze asks — default off); old F09-as-default overuse.
@@ -192,6 +193,19 @@ python3 render.py --out /path/new.png --steps my-steps.json    # new storyboard:
 - 3-second read at 600 px wide; type last, flat fill, PNG out (see review log).
 - Compare your render with `recipes/bifrost-storyboard/reference.png` before handing it off.
 
+## Table layout (C / stamped-table)
+**Use when** a plate turns a doc into a 2–3 column table (term → meaning). Recipe: `recipes/stamped-table/` (reuses the storyboard's `lib/`, fonts and base-C-console, so the nameplate matches).
+
+```bash
+cd recipes/stamped-table
+python3 render.py --out /path/plate.png --table my-table.json --previews   # >7 rows auto-splits to plate-1.png, plate-2.png ("1/2" in footer)
+```
+`table.json` = `title`, `sub`, `footer`, `columns` (2–3 headers), `rows` (each the same width), optional `col_fracs`, optional `accent` (`cyan` default; `rainbow` only for Bifrost — default is rainbow when the title contains BIFROST).
+- Terms: Barlow Condensed Bold 28 on a fixed x; definitions: Barlow SemiBold 26 on a fixed x past an engraved divider; header: Chakra 28 cyan.
+- Each row is its own raised plaque; text is centered on the plaque's computed cap midline.
+- 4–7 rows per plate. The script asserts every string fits its column: shorten the text, never shrink fonts.
+- Text comes from the source doc only — condense, don't invent.
+
 ## Renderer map
 | Layout | Function |
 |---|---|
@@ -200,6 +214,7 @@ python3 render.py --out /path/new.png --steps my-steps.json    # new storyboard:
 | tech-rows | `plate_4039` path + drawn logo + clear_y |
 | cyan-ledger / console-core / suit-split | `dry_run_stamped.py` |
 | storyboard-snake | `recipes/bifrost-storyboard/render.py` |
+| stamped-table | `recipes/stamped-table/render.py` |
 
 ## Pass/fail (every card)
 - [ ] Exactly one of bases A/B/C

@@ -1,0 +1,15 @@
+{
+ "title": "LENS",
+ "sub": "LENS.MD, ONE LINE",
+ "footer": "QUIET IS A MATCH. ANY OTHER LINE IS DRIFT.",
+ "_note": "columns: 2-3 headers. rows: 4-7 per plate (more auto-splits). Column 0 = term (Barlow Bold 28), others = body (Barlow SemiBold 26). Optional accent: cyan (default) | rainbow (Bifrost only). Optional col_fracs.",
+ "columns": ["FIELD", "WHAT IT HOLDS"],
+ "rows": [
+  ["PATH", ".xray/state/LENS.md, in the project"],
+  ["WRITER", "The lens check writes one line"],
+  ["QUIET", "quiet (match): Kind 0 stays quiet"],
+  ["DRIFT", "Any other line names the first drift"],
+  ["MISSING", "(no LENS yet): status checks the map"],
+  ["READERS", "status_lens and goggles status"]
+ ]
+}
