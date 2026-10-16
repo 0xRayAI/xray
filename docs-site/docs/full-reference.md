@@ -96,7 +96,7 @@ Routes tasks to the right agents based on complexity (simple tasks go to a singl
 | `init` | Initialize xray configuration in the current project |
 | `wear` | Wear the 0xray suit in this git checkout |
 | `unwear` | Remove the 0xray suit and restore the pre-wear hooks file |
-| `look` | Kind 0 is quiet on a match. One outer is a reading. digest and triage return a card |
+| `look` | One outer is a reading. digest and triage return a card |
 | `goggles` | Same organ as `look` |
 | `confer` | Turn confer on or off in `.xray/features.json`. A missing key stays off until this runs |
 | `status` | Show comprehensive xray framework status |

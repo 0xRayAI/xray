@@ -6,8 +6,6 @@ import { writeSessionBoot } from '../../integrations/grok/hooks/grok-hook-utils.
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import {
-  actualityLine,
-  actualityOf,
   cardStop,
   findPlatesDir,
   formatCardPane,
@@ -22,22 +20,10 @@ import {
   maintainLens,
   organStop,
   readLensCard,
-  shippedDrift,
   suitHint,
 } from '../../integrations/hooks/goggles-pipeline.mjs';
 
-const PLANES = ['dichotomy', 'syncopate', 'synthesis', 'digest', 'triage', 'loop'];
-
 describe('goggles plate', () => {
-  it('kind 0 speaks only on drift', () => {
-    expect(actualityLine()).toBe('');
-    expect(actualityOf(PLANES, PLANES)).toBe('');
-    expect(actualityOf(['dichotomy'], PLANES)).toBe('Actuality. Drift: worn is not the map.');
-    expect(look(['actuality']).text).toBe('');
-    expect(look(['kind', '0']).text).toBe('');
-    expect(look(['actuality', 'part']).text).toBe('');
-  });
-
   it('kind 1 names one plane', () => {
     for (const name of ['dichotomy', 'syncopate', 'loop']) {
       expect(look([name]).text).toBe(`The reading is ${name}.`);
@@ -366,7 +352,7 @@ describe('goggles plate', () => {
     writeFileSync(join(root, '.xray', 'state', 'NOTES.md'), '**Pickup line:** old job\n\n# Stay\n\nThe body stays.\n');
     const written = maintainLens(root);
     expect(written).toEqual({ ok: true, text: '' });
-    expect(readFileSync(join(root, '.xray', 'state', 'LENS.md'), 'utf8')).toBe('quiet (match)\n');
+    expect(readFileSync(join(root, '.xray', 'state', 'LENS.md'), 'utf8')).toBe('');
     const notes = readFileSync(join(root, '.xray', 'state', 'NOTES.md'), 'utf8');
     expect(notes).toContain('# Stay');
     expect(notes).toContain('The body stays.');
@@ -377,21 +363,12 @@ describe('goggles plate', () => {
     rmSync(root, { recursive: true, force: true });
   });
 
-  it('a shipped sweep keeps a mark on the first file', () => {
-    const root = mkdtempSync(join(tmpdir(), 'goggles-ship-'));
-    try {
-      expect(shippedDrift(root)).toBe('');
-    } finally {
-      rmSync(root, { recursive: true, force: true });
-    }
-  });
-
-  it('compact writes the held plane card under the kind 0 line', () => {
+  it('compact writes the held plane card', () => {
     const root = mkdtempSync(join(tmpdir(), 'goggles-lens-card-'));
     try {
       holdPlane(root, 'routing');
       const lens = readFileSync(join(root, '.xray', 'state', 'LENS.md'), 'utf8');
-      expect(lens.startsWith('quiet (match)\n\n')).toBe(true);
+      expect(lens.startsWith('Plane: routing\n')).toBe(true);
       expect(lens).toContain('Plane: routing');
       expect(lens).toContain('Entry: task text · context · thresholds');
       expect(lens).toContain('Exit: agent · strategy · adjusted score · file');
@@ -405,7 +382,7 @@ describe('goggles plate', () => {
       writeFileSync(join(root, '.xray', 'state', 'LENS.md'), marked);
       holdPlane(root, 'house');
       const next = readFileSync(join(root, '.xray', 'state', 'LENS.md'), 'utf8');
-      expect(next.startsWith('quiet (match)\n\n')).toBe(true);
+      expect(next.startsWith('Plane: routing\n')).toBe(true);
       expect(readLensCard(root, 'routing')).toContain('Entry: kept');
       expect(next).toContain('Plane: house');
       expect(next).toContain('Entry: EMPTY');

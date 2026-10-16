@@ -95,7 +95,7 @@ program
   });
 
 const LOOK_HELP =
-  "Kind 0 is quiet on a match. One outer is a reading. digest and triage return a card.";
+  "One outer is a reading. digest and triage return a card.";
 
 function gogglesScript(): string {
   const built = join(packageRoot, "dist", "integrations", "hooks", "goggles-pipeline.mjs");
@@ -121,7 +121,7 @@ function runGoggles(args: string[]): void {
 
 program
   .command("look")
-  .argument("[args...]", "kind 0, one outer, or digest/triage and one card plane")
+  .argument("[args...]", "one outer, or digest/triage and one card plane")
   .description(LOOK_HELP)
   .action((args: string[]) => {
     runGoggles(args);

@@ -2,7 +2,7 @@
  * Goggles MCP. Stdio. Server name `goggles`.
  * Tools: look, status_lens. Same organ as the CLI.
  */
-import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, realpathSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
@@ -23,8 +23,8 @@ const LOOK_SCHEMA = {
   properties: {
     kind: {
       type: 'string',
-      description: 'Use "0" or "actuality" for the lens. Send kind, outer, or plane: an empty look is refused. Never with outer: kind and outer together is refused.',
-      enum: ['0', 'actuality'],
+      description: '1 names the outer set. Send kind, outer, or plane. An empty look is refused. Never with outer.',
+      enum: ['1'],
     },
     outer: {
       type: 'string',
@@ -47,12 +47,12 @@ const LOOK_SCHEMA = {
 export const TOOLS = [
   {
     name: 'look',
-    description: 'Kind 0 is quiet on a match. It checks the six outer names, then sweeps every card plane for missing shipped files and names the first drift. One outer is a reading. digest and triage return a card. Refused: an empty look; kind with outer; a plane with an outer other than digest or triage.',
+    description: 'One outer is a reading. digest and triage return a card. A named card plane is written into LENS.md when its Entry and Exit are missing. Refused: an empty look; kind with outer; a plane with an outer other than digest or triage.',
     inputSchema: LOOK_SCHEMA,
   },
   {
     name: 'status_lens',
-    description: 'Whether the organ is worn, and the last Kind 0. Quiet is a match. A missing organ is not drift.',
+    description: 'Whether the organ is worn. A missing organ is not a card.',
     inputSchema: { type: 'object', additionalProperties: false, properties: {} },
   },
 ];
@@ -98,9 +98,7 @@ function projectRoot(root) {
 
 function argvFrom(args) {
   const words = [];
-  if (args.kind === '0') words.push('kind', '0');
-  else if (args.kind === 'actuality') words.push('actuality');
-  else if (args.kind === '1' || args.kind === '2') words.push('kind', String(args.kind));
+  if (args.kind === '1' || args.kind === '2') words.push('kind', String(args.kind));
   else if (typeof args.kind === 'string') words.push(args.kind);
   if (args.outer === 'outer loop') words.push('outer', 'loop');
   else if (typeof args.outer === 'string') words.push(args.outer);
@@ -109,13 +107,6 @@ function argvFrom(args) {
   else if (args.scope === 'one artifact') words.push('one', 'artifact');
   else if (typeof args.scope === 'string') words.push(args.scope);
   return words;
-}
-
-function pureKind0(args) {
-  return (args.kind === '0' || args.kind === 'actuality')
-    && args.outer == null
-    && args.plane == null
-    && args.scope == null;
 }
 
 function checkArgs(args) {
@@ -131,8 +122,8 @@ function checkArgs(args) {
       return deny('invalid_args', `${key} must be a string.`);
     }
   }
-  if (args.kind != null && !['0', 'actuality', '1', '2'].includes(args.kind)) {
-    return deny('invalid_args', 'kind is 0 or actuality.');
+  if (args.kind != null && !['1', '2'].includes(args.kind)) {
+    return deny('invalid_args', 'kind is 1.');
   }
   if (args.outer != null && !LOOK_SCHEMA.properties.outer.enum.includes(args.outer)) {
     const setName = args.outer === 'outer' || args.outer === 'outer-loop' || args.outer === 'outer loop';
@@ -145,7 +136,7 @@ function checkArgs(args) {
     return deny('invalid_args', 'plane is a card plane.');
   }
   if (args.kind == null && args.outer == null && args.plane == null) {
-    return deny('invalid_args', 'Name a kind, one outer, or one plane.');
+    return deny('invalid_args', 'Name one outer or one plane.');
   }
   if (args.kind != null && args.outer != null) {
     return deny('invalid_args', 'Send kind or outer, not both.');
@@ -226,13 +217,6 @@ export async function answerLook(raw, root) {
   const api = await organApi();
   if (!api) return deny('invalid_args', 'Goggles organ not found.');
   const here = projectRoot(root);
-  if (pureKind0(args)) {
-    api.maintainLens(here);
-    const line = api.actualityLine() || cardDrift(api, here);
-    if (line) writeLens(api, here, line);
-    if (!line) return quiet('kind0');
-    return { ok: true, quiet: false, mode: 'kind0', content: line };
-  }
   const argv = argvFrom(args);
   const text = api.look(argv, here).text;
   if (text === 'Name one plane.') return deny('name_one', 'Name one plane.');
@@ -252,12 +236,8 @@ export async function answerLook(raw, root) {
     };
   }
   if (!text) {
-    if (args.kind === '0' || args.kind === 'actuality') return quiet('kind0');
     if (args.outer === 'digest' || args.outer === 'triage') return quiet('card');
     return quiet('reading');
-  }
-  if (text.startsWith('Actuality. Drift:')) {
-    return { ok: true, quiet: false, mode: 'kind0', content: text };
   }
   return {
     ok: true,
@@ -267,40 +247,6 @@ export async function answerLook(raw, root) {
     outer: args.outer ?? null,
     scope: args.scope || null,
   };
-}
-
-/** Kind 0 card sweep: triage's file check on every card plane, shipped paths only. */
-function cardDrift(api, here) {
-  if (typeof api.shippedDrift !== 'function') return '';
-  try {
-    return api.shippedDrift(here);
-  } catch {
-    return '';
-  }
-}
-
-function writeLens(api, here, line) {
-  const file = api.lensPath(here);
-  mkdirSync(dirname(file), { recursive: true });
-  let tail = '';
-  try {
-    const prev = readFileSync(file, 'utf8');
-    const cut = prev.indexOf('\n\nPlane:');
-    if (cut !== -1) tail = prev.slice(cut).replace(/\s*$/, '');
-  } catch {
-    /* a new lens is the line */
-  }
-  writeFileSync(file, tail ? `${line}${tail}\n` : `${line}\n`);
-}
-
-function lensBody(root) {
-  const file = join(root, '.xray', 'state', 'LENS.md');
-  if (!existsSync(file)) return { found: false, text: '' };
-  try {
-    return { found: true, text: readFileSync(file, 'utf8').trim() };
-  } catch {
-    return { found: false, text: '' };
-  }
 }
 
 export async function answerStatus(root) {
@@ -314,30 +260,11 @@ export async function answerStatus(root) {
   const planesOk = Boolean(planesPath) && existsSync(planesPath);
   const worn = Boolean(api) && organOk && planesOk;
   const here = projectRoot(root);
-  const lens = lensBody(here);
-  let kind0 = 'none';
-  let kind0Text = '';
-  const lensLine = lens.found
-    ? (lens.text.split(/\r?\n/).map((row) => row.trim()).find((row) => row) || '')
-    : '';
-  if (lens.found && (!lensLine || lensLine === 'quiet (match)')) kind0 = 'quiet';
-  else if (lens.found) {
-    kind0 = 'drift';
-    kind0Text = lensLine;
-  } else if (worn) {
-    const line = api.actualityLine();
-    if (line) {
-      kind0 = 'drift';
-      kind0Text = line;
-    }
-  }
   return {
     ok: true,
     organ: worn ? 'worn' : 'not_found',
     organPath: organOk ? organPath : '',
     planesPath: planesOk ? planesPath : '',
-    kind0,
-    kind0Text,
     lensPath: '.xray/state/LENS.md',
   };
 }

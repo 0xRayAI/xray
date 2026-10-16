@@ -1,5 +1,5 @@
 /**
- * Goggles. Kind 0 name-checks the six outer names.
+ * Goggles. A named plane returns its card.
  * A named plane returns its view. Field pipes fill what they can see.
  * The view keeps every field for the next look.
  * A held plane stays quiet. A leave is denied.
@@ -37,17 +37,6 @@ function drawnPlanes() {
   } catch {
     return [];
   }
-}
-
-export function actualityOf(map, worn) {
-  const left = Array.isArray(map) ? map : [];
-  const right = Array.isArray(worn) ? worn : [];
-  const same = left.length === right.length && left.every((name, index) => name === right[index]);
-  return same ? '' : 'Actuality. Drift: worn is not the map.';
-}
-
-export function actualityLine() {
-  return actualityOf(drawnPlanes(), WORN_PLANES);
 }
 
 function acceptedPlanes() {
@@ -193,15 +182,6 @@ function kindPastOne(words) {
   return false;
 }
 
-function isKindZero(lower) {
-  if (lower.includes('actuality')) return true;
-  if (lower.length === 1 && lower[0] === '0') return true;
-  for (let i = 0; i < lower.length; i += 1) {
-    if ((lower[i] === 'kind' || lower[i] === 'level') && lower[i + 1] === '0') return true;
-  }
-  return false;
-}
-
 function namesTheSet(lower) {
   const joined = lower.join(' ');
   if (joined === 'kind 1' || joined === 'level 1') return true;
@@ -225,11 +205,6 @@ function gogglesAnswer(argv, projectRoot) {
   if (kindPastOne(words)) return none('');
   if (words.length === 0) return none('');
   if (namesTheSet(lower)) return none('Name one plane.');
-  if (isKindZero(lower)) {
-    if (findScopes(words).length) return none('');
-    if (acceptedPlanes().some((name) => lower.includes(name))) return none('');
-    return none(actualityLine());
-  }
   const flavors = CARD_FLAVORS.filter((name) => lower.includes(name));
   if (flavors.length > 1) return none('');
   if (flavors.length === 1) {
@@ -1067,54 +1042,6 @@ export function growPlane(id, platesDir, root) {
   return { ...base, ...grown };
 }
 
-/** Paths the package ships: package.json files, plus what npm always packs. */
-function shippedSet(root) {
-  try {
-    const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
-    if (!Array.isArray(pkg.files)) return null;
-    return pkg.files
-      .map(String)
-      .filter((entry) => entry && !entry.startsWith('!'))
-      .map((entry) => entry.replace(/\/+$/, ''))
-      .concat(['package.json', 'README.md', 'LICENSE']);
-  } catch {
-    return null;
-  }
-}
-
-function ships(shipped, rel) {
-  if (!shipped) return true;
-  const path = String(rel || '').replace(/\/+$/, '');
-  if (!path) return false;
-  return shipped.some((entry) => path === entry || path.startsWith(`${entry}/`) || entry.startsWith(`${path}/`));
-}
-
-/**
- * Kind 0 card sweep: triage's file check on every card plane, limited to
- * paths the package ships, so a packed install and the repo read the same.
- * Returns the first drift line, or '' when every card holds.
- */
-export function shippedDrift(projectRoot) {
-  const platesDir = findPlatesDir(HERE);
-  const root = sourceRoot(platesDir);
-  const shipped = shippedSet(root);
-  for (const id of CARD_PLANES) {
-    const plane = growPlane(id, platesDir, projectRoot || stateRoot());
-    const files = Array.isArray(plane.files) ? plane.files : [];
-    const kept = {
-      ...plane,
-      files: files.filter((rel) => ships(shipped, rel)),
-      skills: ships(shipped, plane.skills) ? plane.skills : '',
-      worn: ships(shipped, plane.worn) ? plane.worn : '',
-      // The mark is a phrase in the first file. It stays on that file.
-      mark: files[0] && !ships(shipped, files[0]) ? '' : plane.mark,
-    };
-    const exam = examinePlane(kept, root);
-    if (exam.kind === 'drift') return `Actuality. ${id}: ${exam.text}`;
-  }
-  return '';
-}
-
 function repoRootFrom(platesDir) {
   return dirname(dirname(dirname(platesDir)));
 }
@@ -1198,8 +1125,6 @@ function isGogglesWork(text) {
 export function cardStop(root, toolName, text, paths = []) {
   const held = loadReading(root);
   if (!held) return null;
-  const drift = actualityLine();
-  if (drift) return organDeny(drift);
   const stopped = organStop(held, { tool: toolName, text, paths });
   if (stopped) return stopped;
   return { gate: 'goggles', decision: 'allow' };
@@ -1249,11 +1174,6 @@ export function handCard(root, intent) {
     if (!asked && planes.length === 0) return null;
     if (!asked && planes.length === 1 && !HOLDS_ON_NAME.has(planes[0])) return null;
     clearCardLine(root);
-    const looked = readGoggles(words);
-    if (looked.text.startsWith('Actuality. Drift')) {
-      saveReading(root, { drift: looked.text });
-      return null;
-    }
     if (planes.length !== 1) {
       clearReading(root);
       return null;
@@ -1329,11 +1249,11 @@ function cardOrder(text, cards) {
   return order;
 }
 
-function writeLensBody(root, head, prev, cards) {
-  const parts = [head || 'quiet (match)'];
+function writeLensBody(root, prev, cards) {
+  const parts = [];
   for (const id of cardOrder(prev, cards)) parts.push(cards.get(id));
   mkdirSync(dirname(lensPath(root)), { recursive: true });
-  writeFileSync(lensPath(root), `${parts.join('\n\n')}\n`);
+  writeFileSync(lensPath(root), parts.length ? `${parts.join('\n\n')}\n` : '');
 }
 
 function lensCardText(root, held) {
@@ -1359,20 +1279,17 @@ export function fillLensCard(root, id) {
   const cards = lensCards(prev);
   const block = lensCardText(root, { id: plane, scope: '' });
   cards.set(plane, block);
-  const drift = actualityLine();
-  writeLensBody(root, drift || 'quiet (match)', prev, cards);
+  writeLensBody(root, prev, cards);
   return block;
 }
 
 export function maintainLens(root) {
-  const drift = actualityLine();
-  const head = drift || 'quiet (match)';
   const held = heldCardPlane(root);
   if (held) fillLensCard(root, held.id);
   const prev = readLensText(root);
   const cards = lensCards(prev);
-  writeLensBody(root, head, prev, cards);
-  return ok(drift);
+  writeLensBody(root, prev, cards);
+  return ok('');
 }
 
 

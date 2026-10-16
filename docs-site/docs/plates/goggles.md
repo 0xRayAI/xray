@@ -6,7 +6,7 @@ plate_type: domain model
 
 # Goggles
 
-It views one plane. The lens check is the one look that spans planes.
+It views one plane.
 
 ```
   ┌────────────────────────────────────────────────────────────┐
@@ -14,8 +14,8 @@ It views one plane. The lens check is the one look that spans planes.
   ├────────────────────────────────────────────────────────────┤
   │ · it views one plane                                       │
   │ · not every plane at once                                  │
-  │ · the lens check sweeps every card plane for shipped files │
-  │ · it names the first drift, or stays quiet on a match      │
+  │ · a missing card is written into LENS.md                   │
+  │ · later passes read that stored card                       │
   ├────────────────────────────────────────────────────────────┤
   │ REFUSED                                                    │
   │ · an empty look                                            │
@@ -24,9 +24,9 @@ It views one plane. The lens check is the one look that spans planes.
   └────────────────────────────────────────────────────────────┘
 ```
 
-A card views one plane. The lens check reads every card plane, but only the files the package ships (`package.json` `files`), so a packed install and the repo read the same. A file that does not ship is triage's job, one plane at a time.
+A card views one plane. When Entry and Exit are missing, the named plane is written into `.xray/state/LENS.md`. Later passes read that card.
 
-The refusals read: `Name a kind, one outer, or one plane.` · `Send kind or outer, not both.` · `plane goes with digest or triage only.`
+The refusals read: `Name one outer or one plane.` · `Send kind or outer, not both.` · `plane goes with digest or triage only.`
 
 A checkout named `0xray` records `scripts/mjs/run-goggles-mcp.mjs`. Any other project records `node_modules/0xray/scripts/mjs/run-goggles-mcp.mjs`.
 

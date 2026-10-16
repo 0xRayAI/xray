@@ -30,6 +30,6 @@ The suit writes its trail under .xray.
 └────────────────────────────────────────────────────────────┘
 ```
 
-Session boot and the station card are state. `.xray/state/LENS.md` opens with the Kind 0 line. A named plane whose Entry and Exit are missing is written there, and later passes read that card. Commit `.xray/state/LENS.md`. Do not commit the rest of `.xray/state`.
+Session boot and the station card are state. `.xray/state/LENS.md` is the plane cards. A named plane whose Entry and Exit are missing is written there, and later passes read that card. Commit `.xray/state/LENS.md`. Do not commit the rest of `.xray/state`.
 
 stamped · 0xray 4.1.0

@@ -1,7 +1,7 @@
-import { execFileSync, spawn } from 'node:child_process';
-import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { spawn } from 'node:child_process';
+import { mkdtempSync, readFileSync, rmSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
 import { lookCards } from '../../integrations/hooks/goggles-pipeline.mjs';
@@ -14,14 +14,6 @@ function tempRoot(): string {
   return mkdtempSync(join(tmpdir(), 'goggles-mcp-'));
 }
 
-/** A planes file with the map but no card rows, so no card files to check. */
-function bareMap(root: string): string {
-  const drawn = JSON.parse(readFileSync(fileURLToPath(new URL('../../integrations/hooks/goggles-planes.json', import.meta.url)), 'utf8'));
-  const file = join(root, 'bare-planes.json');
-  writeFileSync(file, `${JSON.stringify({ actuality: drawn.actuality, planes: drawn.planes, scope: drawn.scope })}\n`);
-  return file;
-}
-
 afterEach(() => {
   delete process.env.GOGGLES_PLANES_PATH;
   delete process.env.GOGGLES_ORGAN_PATH;
@@ -31,74 +23,12 @@ describe('goggles MCP', () => {
   it('lists only look and status_lens', () => {
     expect(TOOLS.map((tool) => tool.name)).toEqual(['look', 'status_lens']);
     const copy = TOOLS.map((tool) => tool.description).join('\n');
-    expect(copy).toMatch(/quiet/i);
-    expect(copy).toMatch(/match/i);
-    expect(copy).toMatch(/six/);
+    expect(copy).toMatch(/LENS\.md/);
+    expect(copy).toMatch(/Entry and Exit/);
+    expect(copy).not.toMatch(/Kind 0|quiet \(match\)/);
     expect(copy).not.toMatch(/Dynamo|Clearing|Repertoire/);
     expect(copy).not.toMatch(/memory-recall/);
     for (const name of NINE) expect(copy).not.toContain(name);
-  });
-
-  it('kind 0 is quiet and not an error', async () => {
-    const root = tempRoot();
-    process.env.GOGGLES_PLANES_PATH = bareMap(root);
-    try {
-      const { payload, isError } = await dispatchTool('look', { kind: '0' }, root);
-      expect(isError).toBe(false);
-      expect(payload).toMatchObject({ ok: true, quiet: true, mode: 'kind0', content: '' });
-      expect(readFileSync(join(root, '.xray', 'state', 'LENS.md'), 'utf8')).toBe('quiet (match)\n');
-    } finally {
-      rmSync(root, { recursive: true, force: true });
-    }
-  });
-
-  it('kind 0 reports drift when a card file is missing', async () => {
-    const root = tempRoot();
-    const drawn = JSON.parse(readFileSync(bareMap(root), 'utf8'));
-    const planes = join(root, 'holed-planes.json');
-    writeFileSync(planes, `${JSON.stringify({ ...drawn, boot: { files: ['dist/core/not-there.js'] } })}\n`);
-    process.env.GOGGLES_PLANES_PATH = planes;
-    try {
-      const { payload, isError } = await dispatchTool('look', { kind: '0' }, root);
-      expect(isError).toBe(false);
-      expect(payload.quiet).toBe(false);
-      expect(payload.mode).toBe('kind0');
-      expect(payload.content).toBe('Actuality. boot: Drift: dist/core/not-there.js is not there');
-      expect(readFileSync(join(root, '.xray', 'state', 'LENS.md'), 'utf8').trim()).toBe(payload.content);
-      const status = await dispatchTool('status_lens', {}, root);
-      expect(status.payload.kind0).toBe('drift');
-    } finally {
-      rmSync(root, { recursive: true, force: true });
-    }
-  });
-
-  it('a packed install gives a quiet kind 0', async () => {
-    const repo = fileURLToPath(new URL('../../../', import.meta.url));
-    const listed = JSON.parse(execFileSync('npm', ['pack', '--dry-run', '--json', '--ignore-scripts'], { cwd: repo, encoding: 'utf8' }));
-    const packed = tempRoot();
-    const suit = tempRoot();
-    try {
-      for (const { path } of listed[0].files) {
-        const dest = join(packed, path);
-        mkdirSync(dirname(dest), { recursive: true });
-        copyFileSync(join(repo, path), dest);
-      }
-      symlinkSync(join(repo, 'node_modules'), join(packed, 'node_modules'));
-      expect(existsSync(join(packed, 'grok-bot'))).toBe(false);
-      process.env.GOGGLES_ORGAN_PATH = join(packed, 'dist/integrations/hooks/goggles-pipeline.mjs');
-      const { payload, isError } = await dispatchTool('look', { kind: '0' }, suit);
-      expect(isError).toBe(false);
-      expect(payload).toMatchObject({ ok: true, quiet: true, mode: 'kind0', content: '' });
-    } finally {
-      rmSync(packed, { recursive: true, force: true });
-      rmSync(suit, { recursive: true, force: true });
-    }
-  }, 60000);
-
-  it('an empty look is refused, not quiet', async () => {
-    const { payload, isError } = await dispatchTool('look', {}, tempRoot());
-    expect(isError).toBe(true);
-    expect(payload.error.code).toBe('invalid_args');
   });
 
   it('plane on an outer with no cards is refused', async () => {
@@ -108,7 +38,7 @@ describe('goggles MCP', () => {
   });
 
   it('kind with outer is refused', async () => {
-    const { payload, isError } = await dispatchTool('look', { kind: '0', outer: 'digest', plane: 'boot' }, tempRoot());
+    const { payload, isError } = await dispatchTool('look', { kind: '1', outer: 'digest', plane: 'boot' }, tempRoot());
     expect(isError).toBe(true);
     expect(payload.error.reason).toBe('Send kind or outer, not both.');
   });
@@ -193,30 +123,6 @@ describe('goggles MCP', () => {
     expect(payload.mode).not.toBe('card');
   });
 
-  it('a drifting kind 0 look keeps the held card', async () => {
-    const root = tempRoot();
-    const drawn = JSON.parse(readFileSync(fileURLToPath(new URL('../../integrations/hooks/goggles-planes.json', import.meta.url)), 'utf8'));
-    drawn.planes = ['nope'];
-    const planes = join(root, 'drift-planes.json');
-    writeFileSync(planes, `${JSON.stringify(drawn)}\n`);
-    process.env.GOGGLES_PLANES_PATH = planes;
-    try {
-      const looked = await dispatchTool('look', { plane: 'routing' }, root);
-      expect(looked.isError).toBe(false);
-      const before = readFileSync(join(root, '.xray', 'state', 'LENS.md'), 'utf8');
-      expect(before.startsWith('Actuality. Drift: worn is not the map.\n\n')).toBe(true);
-      expect(before).toContain('Plane: routing');
-      const { payload, isError } = await dispatchTool('look', { kind: '0' }, root);
-      expect(isError).toBe(false);
-      expect(payload.content).toBe('Actuality. Drift: worn is not the map.');
-      const after = readFileSync(join(root, '.xray', 'state', 'LENS.md'), 'utf8');
-      expect(after.startsWith('Actuality. Drift: worn is not the map.\n\n')).toBe(true);
-      expect(after).toContain('Plane: routing');
-      expect(after).toContain('Entry: task text · context · thresholds');
-    } finally {
-      rmSync(root, { recursive: true, force: true });
-    }
-  });
   it('a plane name returns that view', async () => {
     const root = tempRoot();
     const { payload, isError } = await dispatchTool('look', { plane: 'routing' }, root);
@@ -225,7 +131,7 @@ describe('goggles MCP', () => {
     expect(payload.content.plane).toBe('routing');
     expect(payload.content.files).toEqual(['src/nucleus/thin-dispatch.ts']);
     const lens = readFileSync(join(root, '.xray', 'state', 'LENS.md'), 'utf8');
-    expect(lens.startsWith('quiet (match)\n\n')).toBe(true);
+    expect(lens.startsWith('Plane: routing\n')).toBe(true);
     expect(lens).toContain('Entry: task text · context · thresholds');
     expect(lens).toContain('Exit: agent · strategy · adjusted score · file');
     rmSync(root, { recursive: true, force: true });
@@ -238,75 +144,18 @@ describe('goggles MCP', () => {
     expect(payload.error.reason).toBe('Name one plane.');
   });
 
-  it('kind 0 with a scope stays quiet', async () => {
-    const root = tempRoot();
-    try {
-      const { payload, isError } = await dispatchTool('look', { kind: '0', scope: 'part' }, root);
-      expect(isError).toBe(false);
-      expect(payload).toMatchObject({ ok: true, quiet: true, mode: 'kind0', content: '' });
-      expect(existsSync(join(root, '.xray', 'state', 'LENS.md'))).toBe(false);
-    } finally {
-      rmSync(root, { recursive: true, force: true });
-    }
-  });
-
-  it('status_lens says worn, and quiet is not drift', async () => {
+  it('status_lens says whether the organ is worn', async () => {
     const root = tempRoot();
     try {
       const missing = await dispatchTool('status_lens', {}, root);
       expect(missing.isError).toBe(false);
       expect(missing.payload.organ).toBe('worn');
-      expect(missing.payload.kind0).toBe('none');
-      expect(missing.payload.kind0Text).toBe('');
       expect(missing.payload.stamps).toBeUndefined();
       expect(missing.payload.lensPath).toBe('.xray/state/LENS.md');
       expect(JSON.stringify(missing.payload)).not.toContain('nine');
       expect(JSON.stringify(missing.payload)).not.toContain('memory-recall');
-
-      mkdirSync(join(root, '.xray', 'state'), { recursive: true });
-      writeFileSync(join(root, '.xray', 'state', 'LENS.md'), 'quiet (match)\n');
-      const quiet = await dispatchTool('status_lens', {}, root);
-      expect(quiet.payload.kind0).toBe('quiet');
-      expect(quiet.payload.kind0Text).toBe('');
-
-      writeFileSync(join(root, '.xray', 'state', 'LENS.md'), 'quiet (match)\n\nPlane: routing\nEntry: task text\n');
-      const card = await dispatchTool('status_lens', {}, root);
-      expect(card.payload.kind0).toBe('quiet');
-      expect(card.payload.kind0Text).toBe('');
-
-      writeFileSync(join(root, '.xray', 'state', 'LENS.md'), 'Actuality. Drift: worn is not the map.\n\nPlane: ground\n');
-      const drift = await dispatchTool('status_lens', {}, root);
-      expect(drift.payload.kind0).toBe('drift');
-      expect(drift.payload.kind0Text).toBe('Actuality. Drift: worn is not the map.');
-      expect(drift.payload.kind0Text).not.toContain('ground');
-      expect(drift.payload.organ).toBe('worn');
+      expect(JSON.stringify(missing.payload)).not.toContain('Kind 0');
     } finally {
-      rmSync(root, { recursive: true, force: true });
-    }
-  });
-
-  it('a tampered map is drift of the six, and a missing organ is not that drift', async () => {
-    const root = tempRoot();
-    const planes = join(root, 'planes.json');
-    try {
-      writeFileSync(planes, `${JSON.stringify({ planes: ['ground'] })}\n`);
-      process.env.GOGGLES_PLANES_PATH = planes;
-      const drifted = await dispatchTool('status_lens', {}, root);
-      expect(drifted.payload.organ).toBe('worn');
-      expect(drifted.payload.kind0).toBe('drift');
-      expect(drifted.payload.kind0Text).toBe('Actuality. Drift: worn is not the map.');
-      expect(drifted.payload.kind0Text).not.toContain('ground');
-      expect(drifted.payload.kind0Text).not.toContain('nine');
-
-      delete process.env.GOGGLES_PLANES_PATH;
-      process.env.GOGGLES_ORGAN_PATH = join(root, 'missing.mjs');
-      const gone = await dispatchTool('status_lens', {}, root);
-      expect(gone.payload.organ).toBe('not_found');
-      expect(gone.payload.kind0).toBe('none');
-      expect(gone.payload.kind0Text).not.toContain('Drift');
-    } finally {
-      delete process.env.GOGGLES_PLANES_PATH;
-      delete process.env.GOGGLES_ORGAN_PATH;
       rmSync(root, { recursive: true, force: true });
     }
   });
