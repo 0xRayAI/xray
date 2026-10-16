@@ -6,6 +6,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image, ImageDraw
 HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE.parent.parent / 'lib'))
 sys.path.insert(0, str(HERE / 'lib'))
 import metal_kit
 from metal_kit import *
@@ -13,15 +14,15 @@ FD = HERE / 'assets' / 'fonts'
 metal_kit.FONTS.update({'blackops': str(FD / 'BlackOpsOne-Regular.ttf'), 'barlowc': str(FD / 'BarlowCondensed-Bold.ttf'),
                         'barlowc_sb': str(FD / 'BarlowCondensed-SemiBold.ttf'), 'chakra': str(FD / 'ChakraPetch-Bold.ttf')})
 from draw_0xray_logo import draw_0xray_logo
+from accent import resolve_accent
 ap = argparse.ArgumentParser(); ap.add_argument('--out', required=True); ap.add_argument('--steps', default=str(HERE / 'steps.json'))
-ap.add_argument('--accent', choices=['rainbow', 'cyan'], help='override steps.json "accent"; default rainbow if title names BIFROST, else cyan')
+ap.add_argument('--accent', choices=['rainbow', 'cyan'], help='accent request; resolved by draw-stamped-card/lib/accent.py')
 ap.add_argument('--previews', action='store_true', help='also write <out>.600.png and <out>.crop200.png')
 ARGS = ap.parse_args()
 CFG = json.loads(Path(ARGS.steps).read_text())
 OUT = Path(ARGS.out)
 TITLE, SUB = CFG['title'], CFG['sub']
-# rainbow is Bifrost-only (brand rule 2026-10-15); every other plate uses cyan #5AD6DE
-ACCENT = ARGS.accent or CFG.get('accent') or ('rainbow' if 'BIFROST' in TITLE.upper() else 'cyan')
+ACCENT = resolve_accent(TITLE, ARGS.accent or CFG.get('accent'))
 assert ACCENT in ('rainbow', 'cyan'), ACCENT
 ACCENT_CY = np.array((0x5A, 0xD6, 0xDE), np.float32)
 T_TITLE, T_SEC, T_BODY, T_FOOT = 52, 28, 26, 18  # house minimums (compose_gen_bases)
@@ -65,7 +66,7 @@ rx = xs[2] + PW + 20
 arrows.append([(rx-4, ROWS[0]+PH/2), (rx+4, ROWS[0]+PH/2), (rx+4, ROWS[1]+PH/2-14), (rx+12, ROWS[1]+PH/2-14),
                (rx, ROWS[1]+PH/2+4), (rx-12, ROWS[1]+PH/2-14), (rx-4, ROWS[1]+PH/2-14)])
 arrows.append([(xs[2]+PW, ROWS[0]+PH/2-4), (rx+4, ROWS[0]+PH/2-4), (rx+4, ROWS[0]+PH/2+4), (xs[2]+PW, ROWS[0]+PH/2+4)])
-# Bifrost rainbow (brand rule 2026-10-15): spectrum red -> violet
+# spectrum red -> violet, or flat cyan, from ACCENT
 SPEC = np.array([(235, 52, 52), (245, 140, 30), (245, 220, 40), (60, 200, 90), (50, 140, 245), (150, 70, 230)], np.float32)
 def spectrum(t):
     t = np.clip(t, 0, 1) * (len(SPEC) - 1); i = np.minimum(t.astype(int), len(SPEC) - 2); f = (t - i)[..., None]
@@ -140,7 +141,7 @@ wy = int(MID - TITLE_CAP / 2) - pad
 assert tx + word.width <= NP[2] - 24
 img.alpha_composite(word, (tx, wy)); img = img.convert('RGB')
 TW = word.width
-# rainbow underline under BIFROST: one smooth L->R spectrum hairline with soft glow (hero-image style)
+# title underline: one smooth L->R hairline with soft glow (hero-image style)
 uy = wy + pad + TITLE_CAP + 7
 ua = np.asarray(img, np.float32).copy()
 um = rect_mask((tx, uy, tx + TW - 8, uy + 3), radius=1)

@@ -81,4 +81,4 @@ Attach the matching `FINAL-REFS/bots/…` file as the reference image when the t
 - [ ] No garbled AI captions on the suit chrome
 
 ## Dry-run location
-`/workspace/dist-media/brand/skill-dry-runs/draw-me-a-suit/` — populate when GenerateImage runs.
+Suit dry-runs stay out of this repo. Populate them when GenerateImage runs.

@@ -8,6 +8,7 @@ import numpy as np
 from PIL import Image, ImageDraw
 HERE = Path(__file__).resolve().parent
 SB = HERE.parent / 'bifrost-storyboard'
+sys.path.insert(0, str(HERE.parent.parent / 'lib'))
 sys.path.insert(0, str(SB / 'lib'))
 import metal_kit
 from metal_kit import *
@@ -15,13 +16,15 @@ FD = SB / 'assets' / 'fonts'
 metal_kit.FONTS.update({'blackops': str(FD / 'BlackOpsOne-Regular.ttf'), 'barlowc': str(FD / 'BarlowCondensed-Bold.ttf'),
                         'barlowc_sb': str(FD / 'BarlowCondensed-SemiBold.ttf'), 'chakra': str(FD / 'ChakraPetch-Bold.ttf')})
 from draw_0xray_logo import draw_0xray_logo, WHITE, ORANGE
+from accent import resolve_accent
 
 ap = argparse.ArgumentParser(); ap.add_argument('--out', required=True); ap.add_argument('--table', default=str(HERE / 'table.json'))
-ap.add_argument('--accent', choices=['rainbow', 'cyan']); ap.add_argument('--previews', action='store_true')
+ap.add_argument('--accent', choices=['rainbow', 'cyan'], help='accent request; resolved by draw-stamped-card/lib/accent.py')
+ap.add_argument('--previews', action='store_true')
 ARGS = ap.parse_args()
 CFG = json.loads(Path(ARGS.table).read_text())
 TITLE, SUB, FOOT, COLS, ROWS = CFG['title'], CFG['sub'], CFG['footer'], CFG['columns'], CFG['rows']
-ACCENT = ARGS.accent or CFG.get('accent') or ('rainbow' if 'BIFROST' in TITLE.upper() else 'cyan')
+ACCENT = resolve_accent(TITLE, ARGS.accent or CFG.get('accent'))
 assert 2 <= len(COLS) <= 3 and all(len(r) == len(COLS) for r in ROWS), 'columns: 2-3, every row same width'
 MIN_ROWS, MAX_ROWS = 4, 7
 T_HEAD, T_TERM, T_BODY, T_FOOT = 28, 28, 26, 30   # >= house minimums (section 28, body 26, footer 18)

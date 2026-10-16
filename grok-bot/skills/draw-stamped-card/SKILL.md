@@ -17,23 +17,22 @@ description: >-
   - **Columns:** terms left-aligned at a fixed x (well left + ~40). Definitions left-aligned at a fixed x (divider + ~24). Anchor `lm` on each row's measured well center. Assert that the widest string fits its column.
   - Measure row and well centers from base pixels (grooves) before trusting boxes.json.
   - No type over rivets: shorten the text, or lay a raised nameplate (`raised_plaque`) over the header rivets and set the type and logo on it.
-- 2026-10-15 1:50 PM CT, Blaze: Bifrost always appears with its rainbow (6-color rails or underline) on any plate that names Bifrost.
+- 2026-10-15 1:50 PM CT, Blaze: plate accent is one rule, in `lib/accent.py`.
 
 # Draw stamped card
 
 ## Source of truth
-FINAL-REFS: `/workspace/dist-media/brand/FINAL-REFS/`
 Logo: [draw-0xray-logo](sand-workflow:draw-0xray-logo) · Suit: [draw-me-a-suit](sand-workflow:draw-me-a-suit)
-Kit: `/workspace/dist-media/release/src/metal_kit.py` · dry-run: `dry_run_stamped.py`
+Kit: `grok-bot/skills/draw-stamped-card/recipes/bifrost-storyboard/lib/metal_kit.py`
 
 
 ## PRIMARY method (Blaze OK 2026-10-05): generated blank base + code type/logo
 
-1. **Reuse a house base** from `/workspace/dist-media/brand/skill-dry-runs/draw-stamped-card/gen-bases/` (do **not** regenerate for the same layout — uniformity).
+1. **Reuse a house base** (do **not** regenerate for the same layout — uniformity). Shipped console base: `grok-bot/skills/draw-stamped-card/recipes/bifrost-storyboard/assets/bases/base-C-console.jpg`.
 2. Load matching `*.boxes.json` for plaque/well coordinates.
 3. Draw type with `metal_kit` emboss (silver emboss cast-iron; cyan/mono for ledger & capsules).
 4. Draw logo with [draw-0xray-logo](sand-workflow:draw-0xray-logo) into the header well or header-right — never paste stamp-FINAL; never cover plaque edges awkwardly.
-5. Composer: `/workspace/dist-media/release/src/compose_gen_bases.py`
+5. Composer for the shipped layouts: `grok-bot/skills/draw-stamped-card/recipes/bifrost-storyboard/render.py` and `grok-bot/skills/draw-stamped-card/recipes/stamped-table/render.py`.
 
 ### House base library (1280×720)
 | File | Layout | Boxes JSON |
@@ -170,7 +169,7 @@ Layouts on C: `tech-rows` · `console-core` · `suit-split`
 | `console-core` | C | Bezel + pill + hero title + core circle + 4 seat modules | Suit core / host pack |
 | `suit-split` | C | draw-me-a-suit left (~50%) + stamped panel right | Edu intros (≤1/thread) |
 | `stamped-table` | C | Nameplate (logo + stamped title + sub) + header row + 4–7 raised row plaques, 2–3 fixed-x columns + footer | Doc/state tables (e.g. LENS.md) |
-| `storyboard-snake` | C | Nameplate (logo + stamped title + sub) + 2×3 snake of step plaques + rainbow arrows + footer | Flow / "how it works" (Bifrost) |
+| `storyboard-snake` | C | Nameplate (logo + stamped title + sub) + 2×3 snake of step plaques + flow arrows + footer | Flow / "how it works" |
 
 Dropped as own bases: brass nameplate (fold into A with brass ink only if Blaze asks — default off); old F09-as-default overuse.
 
@@ -179,15 +178,15 @@ Dropped as own bases: brass nameplate (fold into A with brass ink only if Blaze 
 Recipe (self-contained: lib, fonts, base, glyphs all inside): `recipes/bifrost-storyboard/`
 
 ```bash
-cd /home/box/agent-data/workflows/draw-stamped-card/recipes/bifrost-storyboard
-python3 render.py --out /path/plate.png                       # approved Bifrost plate (byte-identical to reference.png)
-python3 render.py --out /path/new.png --steps my-steps.json    # new storyboard: copy steps.json, swap title/sub/footer/steps
+cd grok-bot/skills/draw-stamped-card/recipes/bifrost-storyboard
+python3 render.py --out plate.png                       # approved Bifrost plate (byte-identical to reference.png)
+python3 render.py --out new.png --steps my-steps.json   # new storyboard: copy steps.json, swap title/sub/footer/steps
 # add --previews for a 600px preview and a 200% crop beside the output
 ```
-`steps.json` = `title`, `sub`, `footer`, optional `accent` (`rainbow` | `cyan`), and 6 `steps` of `[HEADING, line1, line2]` in snake order (row 1 L→R, row 2 R→L). Icons are fixed per slot (card, bolt, chevrons, bomb, packet, cloud); the script asserts every string fits its plaque — shorten text, never shrink fonts.
+`steps.json` = `title`, `sub`, `footer`, optional `accent`, and 6 `steps` of `[HEADING, line1, line2]` in snake order (row 1 L→R, row 2 R→L). Icons are fixed per slot (card, bolt, chevrons, bomb, packet, cloud); the script asserts every string fits its plaque — shorten text, never shrink fonts.
 
 **Mandatory rules**
-- The rainbow is **Bifrost-only**: a plate naming Bifrost carries the 3 px red→violet title underline with glow and rainbow-graded flow arrows. Every other plate uses **cyan `#5AD6DE`** (same underline + arrows, cyan glow). Default: `rainbow` when the title contains BIFROST, else `cyan`; override with `"accent"` in steps.json or `--accent rainbow|cyan`.
+- Plate accent is resolved only by `lib/accent.py`. A title that contains BIFROST (any case) is always rainbow; `--accent` and any `steps.json` or `table.json` accent are ignored. Every other title uses cyan `#5AD6DE` for the same underline and flow arrows. A rainbow request on a non-Bifrost title (for example LENS) falls back to cyan.
 - Stamped title cap height ≤ the drawn 0xRay logo's cap height (60 vs 66 px) and centered on the logo midline (nameplate y=140).
 - Arrows + icons show order — no number badges.
 - 3-second read at 600 px wide; type last, flat fill, PNG out (see review log).
@@ -200,7 +199,7 @@ python3 render.py --out /path/new.png --steps my-steps.json    # new storyboard:
 cd recipes/stamped-table
 python3 render.py --out /path/plate.png --table my-table.json --previews   # >7 rows auto-splits to plate-1.png, plate-2.png ("1/2" in footer)
 ```
-`table.json` = `title`, `sub`, `footer`, `columns` (2–3 headers), `rows` (each the same width), optional `col_fracs`, optional `accent` (`cyan` default; `rainbow` only for Bifrost — default is rainbow when the title contains BIFROST).
+`table.json` = `title`, `sub`, `footer`, `columns` (2–3 headers), `rows` (each the same width), optional `col_fracs`, optional `accent` (resolved by `lib/accent.py`).
 - Terms: Barlow Condensed Bold 28 on a fixed x; definitions: Barlow SemiBold 26 on a fixed x past an engraved divider; header: Chakra 28 cyan.
 - Each row is its own raised plaque; text is centered on the plaque's computed cap midline.
 - 4–7 rows per plate. The script asserts every string fits its column: shorten the text, never shrink fonts.

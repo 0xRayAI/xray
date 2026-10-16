@@ -7,7 +7,7 @@ description: >-
 # Draw 0xRay logo
 
 ## Ref (measure / checklist only — do not paste onto plates)
-`/workspace/dist-media/brand/FINAL-REFS/logos/00-0xray-stamp-FINAL.png`
+`00-0xray-stamp-FINAL.png` is the measure target. It is not in this repo.
 Supporting: `0xray-logo-always-on-white.jpg` (light-bg look target), `0xray-logo-mark.png` (mark crop target).
 
 ## API
@@ -20,8 +20,8 @@ mark = draw_0xray_logo(100, variant='mark', bg='transparent')
 plate, info = place_drawn_logo(plate, 'top-center', width=320, margin=36)
 # info['clear_y'] = first Y where other type may start (logo bottom + 16)
 ```
-Module: `/workspace/dist-media/release/src/draw_0xray_logo.py`
-Recipes: `/workspace/dist-media/release/src/logo_glyphs/` (binary ink + orange maps measured from stamp-FINAL).
+Module: `grok-bot/skills/draw-stamped-card/recipes/bifrost-storyboard/lib/draw_0xray_logo.py`
+Recipes: `grok-bot/skills/draw-stamped-card/recipes/bifrost-storyboard/lib/logo_glyphs/` (binary ink + orange maps measured from stamp-FINAL).
 
 ## Measured facts (from stamp-FINAL)
 | Token | Value |
