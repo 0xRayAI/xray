@@ -367,13 +367,24 @@ describe('goggles plate', () => {
     const dir = mkdtempSync(join(tmpdir(), 'goggles-link-'));
     const link = join(dir, 'goggles-pipeline.mjs');
     const source = fileURLToPath(new URL('../../integrations/hooks/goggles-pipeline.mjs', import.meta.url));
+    const root = mkdtempSync(join(tmpdir(), 'goggles-look-'));
     try {
       symlinkSync(source, link);
-      expect(execFileSync(process.execPath, [link, 'dichotomy'], { encoding: 'utf8' })).toBe('Name one plane.\n');
-      expect(execFileSync(process.execPath, [link, 'kind', '0'], { encoding: 'utf8' })).toBe('Name one plane.\n');
-      expect(execFileSync(process.execPath, [link, 'dev'], { encoding: 'utf8' })).toContain('Plane: dev');
+      const run = (args: string[]) =>
+        execFileSync(process.execPath, [link, ...args], { cwd: root, encoding: 'utf8' });
+      expect(run(['dichotomy'])).toBe('Name one plane.\n');
+      expect(run(['kind', '0'])).toBe('Name one plane.\n');
+      expect(run(['dev'])).toContain('Plane: dev');
+      expect(run(['synthesis'])).toContain('Card: synthesis');
+      expect(run(['synthesis'])).toContain('one plate for this card');
+      const held = JSON.parse(readFileSync(join(root, '.xray', 'state', 'goggles-plane.json'), 'utf8'));
+      expect(held.plane).toBe('integration');
+      expect(held.card).toBe('synthesis');
+      expect(run([])).toContain('Card: synthesis');
+      expect(existsSync(join(root, 'docs-site', 'docs', 'plates', 'synthesis.md'))).toBe(false);
     } finally {
       rmSync(dir, { recursive: true, force: true });
+      rmSync(root, { recursive: true, force: true });
     }
   });
 });

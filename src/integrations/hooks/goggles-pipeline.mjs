@@ -1159,7 +1159,7 @@ function sameInvoked(argvPath, modulePath) {
 
 const isMain = Boolean(process.argv[1]) && sameInvoked(process.argv[1], fileURLToPath(import.meta.url));
 if (isMain) {
-  const answered = gogglesAnswer(process.argv.slice(2));
+  const answered = gogglesAnswer(process.argv.slice(2), undefined, true);
   const pane = process.stdout.isTTY && Array.isArray(answered.cards) && answered.cards.length > 0;
   const text = pane ? answered.cards.map((card) => formatCardPane(card)).join('\n\n') : answered.text;
   process.stdout.write(`${text}\n`);
