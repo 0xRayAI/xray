@@ -1,6 +1,6 @@
 """Bifrost storyboard plate on house base C-console (compose_gen_bases path)."""
 # Self-contained recipe: all deps live beside this script (lib/, assets/).
-# Usage: python3 render.py --out /path/plate.png [--steps steps.json]
+# Usage: python3 render.py --out /path/plate.png [--steps steps.json] [--accent rainbow|cyan]
 import sys, json, argparse
 from pathlib import Path
 import numpy as np
@@ -14,11 +14,16 @@ metal_kit.FONTS.update({'blackops': str(FD / 'BlackOpsOne-Regular.ttf'), 'barlow
                         'barlowc_sb': str(FD / 'BarlowCondensed-SemiBold.ttf'), 'chakra': str(FD / 'ChakraPetch-Bold.ttf')})
 from draw_0xray_logo import draw_0xray_logo
 ap = argparse.ArgumentParser(); ap.add_argument('--out', required=True); ap.add_argument('--steps', default=str(HERE / 'steps.json'))
+ap.add_argument('--accent', choices=['rainbow', 'cyan'], help='override steps.json "accent"; default rainbow if title names BIFROST, else cyan')
 ap.add_argument('--previews', action='store_true', help='also write <out>.600.png and <out>.crop200.png')
 ARGS = ap.parse_args()
 CFG = json.loads(Path(ARGS.steps).read_text())
 OUT = Path(ARGS.out)
 TITLE, SUB = CFG['title'], CFG['sub']
+# rainbow is Bifrost-only (brand rule 2026-10-15); every other plate uses cyan #5AD6DE
+ACCENT = ARGS.accent or CFG.get('accent') or ('rainbow' if 'BIFROST' in TITLE.upper() else 'cyan')
+assert ACCENT in ('rainbow', 'cyan'), ACCENT
+ACCENT_CY = np.array((0x5A, 0xD6, 0xDE), np.float32)
 T_TITLE, T_SEC, T_BODY, T_FOOT = 52, 28, 26, 18  # house minimums (compose_gen_bases)
 BASES = HERE / 'assets' / 'bases'
 def load(name):
@@ -69,7 +74,7 @@ def rainbow_paint(a, m, axis, lo, hi, glow_r=7, ga=0.9, reverse=False):
     yy, xx = np.mgrid[0:H, 0:W].astype(np.float32)
     t = ((xx if axis == 'x' else yy) - lo) / max(hi - lo, 1)
     if reverse: t = 1 - t
-    col = spectrum(t)
+    col = spectrum(t) if ACCENT == 'rainbow' else np.broadcast_to(ACCENT_CY, t.shape + (3,))
     g = blur(m, glow_r)[..., None] * ga
     a = np.clip(a + g * col, 0, 255)
     return a * (1 - m[..., None]) + col * m[..., None]

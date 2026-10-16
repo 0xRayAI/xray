@@ -183,10 +183,10 @@ python3 render.py --out /path/plate.png                       # approved Bifrost
 python3 render.py --out /path/new.png --steps my-steps.json    # new storyboard: copy steps.json, swap title/sub/footer/steps
 # add --previews for a 600px preview and a 200% crop beside the output
 ```
-`steps.json` = `title`, `sub`, `footer`, and 6 `steps` of `[HEADING, line1, line2]` in snake order (row 1 L→R, row 2 R→L). Icons are fixed per slot (card, bolt, chevrons, bomb, packet, cloud); the script asserts every string fits its plaque — shorten text, never shrink fonts.
+`steps.json` = `title`, `sub`, `footer`, optional `accent` (`rainbow` | `cyan`), and 6 `steps` of `[HEADING, line1, line2]` in snake order (row 1 L→R, row 2 R→L). Icons are fixed per slot (card, bolt, chevrons, bomb, packet, cloud); the script asserts every string fits its plaque — shorten text, never shrink fonts.
 
 **Mandatory rules**
-- Bifrost always carries its rainbow: 3 px red→violet underline with glow under the title, and rainbow-graded flow arrows.
+- The rainbow is **Bifrost-only**: a plate naming Bifrost carries the 3 px red→violet title underline with glow and rainbow-graded flow arrows. Every other plate uses **cyan `#5AD6DE`** (same underline + arrows, cyan glow). Default: `rainbow` when the title contains BIFROST, else `cyan`; override with `"accent"` in steps.json or `--accent rainbow|cyan`.
 - Stamped title cap height ≤ the drawn 0xRay logo's cap height (60 vs 66 px) and centered on the logo midline (nameplate y=140).
 - Arrows + icons show order — no number badges.
 - 3-second read at 600 px wide; type last, flat fill, PNG out (see review log).
