@@ -282,7 +282,15 @@ function cardDrift(api, here) {
 function writeLens(api, here, line) {
   const file = api.lensPath(here);
   mkdirSync(dirname(file), { recursive: true });
-  writeFileSync(file, `${line}\n`);
+  let tail = '';
+  try {
+    const prev = readFileSync(file, 'utf8');
+    const cut = prev.indexOf('\n\nPlane:');
+    if (cut !== -1) tail = prev.slice(cut).replace(/\s*$/, '');
+  } catch {
+    /* a new lens is the line */
+  }
+  writeFileSync(file, tail ? `${line}${tail}\n` : `${line}\n`);
 }
 
 function lensBody(root) {

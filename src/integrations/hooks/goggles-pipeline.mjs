@@ -6,6 +6,7 @@
  * On this host a search is grep, glob, or a shell that runs one.
  * A shell that reads a project source file is a search.
  * The lens file stays open. One later read may go on, then the next read stops.
+ * A plane card is written into LENS.md when Entry and Exit are missing. Later passes read that card.
  * An opened source file that no lens lists is remembered.
  * The next search stops until that file is on a lens and its plate is on disk.
  * The hook does not author the plate.
@@ -1293,20 +1294,84 @@ function heldCardPlane(root) {
   return null;
 }
 
+function readLensText(root) {
+  try {
+    return readFileSync(lensPath(root), 'utf8');
+  } catch {
+    return '';
+  }
+}
+
+function lensCards(text) {
+  const cards = new Map();
+  for (const part of String(text || '').split(/\n\n/)) {
+    const match = part.match(/^Plane:\s*(\S+)/);
+    if (!match || !CARD_PLANES.includes(match[1])) continue;
+    cards.set(match[1], part.replace(/\s*$/, ''));
+  }
+  return cards;
+}
+
+function cardIsFilled(block) {
+  return /^Entry:/m.test(block) && /^Exit:/m.test(block);
+}
+
+function cardOrder(text, cards) {
+  const order = [];
+  for (const part of String(text || '').split(/\n\n/)) {
+    const match = part.match(/^Plane:\s*(\S+)/);
+    if (!match || !cards.has(match[1]) || order.includes(match[1])) continue;
+    order.push(match[1]);
+  }
+  for (const id of cards.keys()) {
+    if (!order.includes(id)) order.push(id);
+  }
+  return order;
+}
+
+function writeLensBody(root, head, prev, cards) {
+  const parts = [head || 'quiet (match)'];
+  for (const id of cardOrder(prev, cards)) parts.push(cards.get(id));
+  mkdirSync(dirname(lensPath(root)), { recursive: true });
+  writeFileSync(lensPath(root), `${parts.join('\n\n')}\n`);
+}
+
 function lensCardText(root, held) {
   const platesDir = findPlatesDir(HERE);
   const plane = growPlane(held.id, platesDir, root);
-  return formatCardText(cardView(plane, held.scope, 'digest', sourceRoot(platesDir), root));
+  const view = cardView(plane, held.scope, 'digest', sourceRoot(platesDir), root);
+  return cardRows(view).map(([key, value]) => `${key}: ${value}`.trimEnd()).join('\n');
+}
+
+/** The stored card. Empty until Entry and Exit are in the file. */
+export function readLensCard(root, id) {
+  const block = lensCards(readLensText(root)).get(String(id || '').trim()) || '';
+  return cardIsFilled(block) ? block : '';
+}
+
+/** Write the plane card once. A later pass reads the stored rows. */
+export function fillLensCard(root, id) {
+  const plane = String(id || '').trim();
+  if (!CARD_PLANES.includes(plane)) return '';
+  const kept = readLensCard(root, plane);
+  if (kept) return kept;
+  const prev = readLensText(root);
+  const cards = lensCards(prev);
+  const block = lensCardText(root, { id: plane, scope: '' });
+  cards.set(plane, block);
+  const drift = actualityLine();
+  writeLensBody(root, drift || 'quiet (match)', prev, cards);
+  return block;
 }
 
 export function maintainLens(root) {
   const drift = actualityLine();
   const head = drift || 'quiet (match)';
   const held = heldCardPlane(root);
-  const card = held ? lensCardText(root, held) : '';
-  const body = card ? `${head}\n\n${card}` : head;
-  mkdirSync(dirname(lensPath(root)), { recursive: true });
-  writeFileSync(lensPath(root), `${body}\n`);
+  if (held) fillLensCard(root, held.id);
+  const prev = readLensText(root);
+  const cards = lensCards(prev);
+  writeLensBody(root, head, prev, cards);
   return ok(drift);
 }
 

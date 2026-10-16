@@ -29,7 +29,10 @@ AGENTS.md
 SKILLS.md
 
 # Runtime state (xray inference workflows, session state)
-.xray/
+.xray/*
+!.xray/state/
+.xray/state/*
+!.xray/state/LENS.md
 .strray/
 strray/
 xray/inference/

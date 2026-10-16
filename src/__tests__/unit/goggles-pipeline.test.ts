@@ -21,6 +21,7 @@ import {
   holdPlane,
   maintainLens,
   organStop,
+  readLensCard,
   shippedDrift,
   suitHint,
 } from '../../integrations/hooks/goggles-pipeline.mjs';
@@ -400,6 +401,14 @@ describe('goggles plate', () => {
       expect(lens).toContain('\nTeardown:\n');
       expect(maintainLens(root)).toEqual({ ok: true, text: '' });
       expect(readFileSync(join(root, '.xray', 'state', 'LENS.md'), 'utf8')).toBe(lens);
+      const marked = lens.replace('Entry: task text · context · thresholds', 'Entry: kept');
+      writeFileSync(join(root, '.xray', 'state', 'LENS.md'), marked);
+      holdPlane(root, 'house');
+      const next = readFileSync(join(root, '.xray', 'state', 'LENS.md'), 'utf8');
+      expect(next.startsWith('quiet (match)\n\n')).toBe(true);
+      expect(readLensCard(root, 'routing')).toContain('Entry: kept');
+      expect(next).toContain('Plane: house');
+      expect(next).toContain('Entry: EMPTY');
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

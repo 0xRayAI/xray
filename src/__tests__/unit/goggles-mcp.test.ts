@@ -193,6 +193,30 @@ describe('goggles MCP', () => {
     expect(payload.mode).not.toBe('card');
   });
 
+  it('a drifting kind 0 look keeps the held card', async () => {
+    const root = tempRoot();
+    const drawn = JSON.parse(readFileSync(fileURLToPath(new URL('../../integrations/hooks/goggles-planes.json', import.meta.url)), 'utf8'));
+    drawn.planes = ['nope'];
+    const planes = join(root, 'drift-planes.json');
+    writeFileSync(planes, `${JSON.stringify(drawn)}\n`);
+    process.env.GOGGLES_PLANES_PATH = planes;
+    try {
+      const looked = await dispatchTool('look', { plane: 'routing' }, root);
+      expect(looked.isError).toBe(false);
+      const before = readFileSync(join(root, '.xray', 'state', 'LENS.md'), 'utf8');
+      expect(before.startsWith('Actuality. Drift: worn is not the map.\n\n')).toBe(true);
+      expect(before).toContain('Plane: routing');
+      const { payload, isError } = await dispatchTool('look', { kind: '0' }, root);
+      expect(isError).toBe(false);
+      expect(payload.content).toBe('Actuality. Drift: worn is not the map.');
+      const after = readFileSync(join(root, '.xray', 'state', 'LENS.md'), 'utf8');
+      expect(after.startsWith('Actuality. Drift: worn is not the map.\n\n')).toBe(true);
+      expect(after).toContain('Plane: routing');
+      expect(after).toContain('Entry: task text · context · thresholds');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
   it('a plane name returns that view', async () => {
     const root = tempRoot();
     const { payload, isError } = await dispatchTool('look', { plane: 'routing' }, root);

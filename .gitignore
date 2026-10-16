@@ -52,6 +52,9 @@ rerun_*/
 .xray/state/WATCHER-HEARTBEAT.md
 .xray/state/CLEANSE-LIST.md
 
+# Plane cards stay in git.
+!.xray/state/LENS.md
+
 # 0xRay runtime artifacts
 .opencode/**/*.d.ts
 .opencode/**/*.d.ts.map
