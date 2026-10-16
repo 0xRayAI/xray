@@ -31,11 +31,15 @@ Write `.agents/skills/<id>/SKILL.md` in the same change. Short steps for this on
 
 `stampPlateIfMissing` copies that file to `.xray/state/plates/<id>.md` only when the copy is missing.
 
+## Missing plate
+
+A card with no plate needs one plate. Stamp that one plate for the card. Do not add a plane. Do not stamp a second plate for the same card. The hook does not write the plate. You do, with the steps above.
+
 ## Lens
 
-The planes are dev, integration, domain, and ecosystem. They are the four tokens in `CARD_PLANES`. Do not add a fifth.
+The planes are dev, integration, domain, and ecosystem. A plane holds many cards. One card is one thing. Each card has its own plate, and it can name more on the Plates row. Do not add a fifth plane.
 
-A plate is a drawing. It is not a new plane. A session starts on dev. The card is in `.xray/state/LENS.md`. A search returns the current card. The path switches the plane.
+A session starts on dev. The cards are in `.xray/state/LENS.md`. A search returns the current card. The path switches the plane. A missing plate names this skill.
 
 1. Write the skill in the same change as the plate.
 2. Run `npx vitest run src/__tests__/unit/goggles-pipeline.test.ts src/__tests__/unit/plates.test.ts` from the worktree.

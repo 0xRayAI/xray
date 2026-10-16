@@ -15,3 +15,4 @@ The function is `lensBeforeResearch` in `src/integrations/hooks/goggles-pipeline
 5. Opening a file on another plane switches, returns that card, and the open proceeds.
 6. A file on no plane stays on the current plane. The hook returns that card.
 7. A switch sticks. Compact writes that same card back.
+8. A card with no plate names `.agents/skills/stamp-plate/SKILL.md`. Stamp one plate for that card. The hook does not write it.

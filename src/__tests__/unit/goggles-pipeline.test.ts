@@ -44,9 +44,18 @@ describe('goggles plate', () => {
       expect(look(['please', 'dev'], root).text).toBe(DEV_CARD);
       expect(look([], root).text).toContain('Plane: dev');
       expect(look([], root).text).toContain('Entry:');
-      for (const name of ['ground', 'routing', 'boot', 'house', 'dichotomy', 'syncopate', 'synthesis', 'loop', 'kind', 'outer', 'eco']) {
+      for (const name of ['dichotomy', 'syncopate', 'loop', 'kind', 'outer', 'eco']) {
         expect(look([name], root).text).toBe('Name one plane.');
       }
+      const boot = look(['boot'], root).text;
+      expect(boot).toContain('Card: boot');
+      expect(boot).toContain('Plane: integration');
+      expect(boot).toContain('docs-site/docs/plates/boot.md');
+      expect(boot).not.toContain('Stamp:');
+      const synthesis = look(['synthesis'], root).text;
+      expect(synthesis).toContain('Card: synthesis');
+      expect(synthesis).toContain('.agents/skills/stamp-plate/SKILL.md');
+      expect(synthesis).toContain('one plate for this card');
       expect(look(['kind', '1'], root).text).toBe('Name one plane.');
       expect(look(['dev', 'integration'], root).text).toBe('Name one plane.');
       expect(look(['routing', 'house'], root).text).toBe('Name one plane.');
@@ -104,27 +113,32 @@ describe('goggles plate', () => {
       expect(search?.reason).not.toContain('Plane: boot');
       expect(existsSync(join(root, '.xray', 'state', 'plates', 'boot.md'))).toBe(false);
       expect(lensBeforeResearch(root, 'grep', 'src/nucleus/thin-dispatch.ts')?.reason).toContain('Plane: dev');
-      expect(lensBeforeResearch(root, 'read_file', 'src/cli/index.ts')).toBeNull();
+      expect(lensBeforeResearch(root, 'read_file', 'README.md')).toBeNull();
       expect(lensBeforeResearch(root, 'read_file', 'src/core/config-paths.ts')).toBeNull();
       expect(lensBeforeResearch(root, 'Read', 'package.json')).toBeNull();
       const hop = lensBeforeResearch(root, 'read_file', 'src/nucleus/thin-dispatch.ts');
       expect(hop?.decision).toBe('allow');
+      expect(hop?.reason).toContain('Card: routing');
       expect(hop?.reason).toContain('Plane: integration');
-      expect(hop?.reason).toContain('Entry:');
-      expect(lensBeforeResearch(root, 'read_file', 'src/governance/governance-service.ts')).toBeNull();
+      expect(hop?.reason).toContain('docs-site/docs/plates/routing.md');
+      expect(hop?.reason).not.toContain('Stamp:');
+      expect(lensBeforeResearch(root, 'read_file', 'src/nucleus/thin-dispatch.ts')).toBeNull();
       const stayed = lensBeforeResearch(root, 'grep', 'still searching');
       expect(stayed?.decision).toBe('deny');
-      expect(stayed?.reason).toContain('Plane: integration');
-      expect(lensBeforeResearch(root, 'Grep', 'src/cli/index.ts')?.reason).toContain('Plane: integration');
-      expect(lensBeforeResearch(root, 'SemanticSearch', 'where is login')?.reason).toContain('Plane: integration');
-      expect(lensBeforeResearch(root, 'bash', 'rg plane src')?.reason).toContain('Plane: integration');
+      expect(stayed?.reason).toContain('Card: routing');
+      const missing = lensBeforeResearch(root, 'read_file', 'src/nucleus/synthesis.ts');
+      expect(missing?.decision).toBe('allow');
+      expect(missing?.reason).toContain('Card: synthesis');
+      expect(missing?.reason).toContain('.agents/skills/stamp-plate/SKILL.md');
+      expect(missing?.reason).toContain('one plate for this card');
+      expect(existsSync(fileURLToPath(new URL('../../docs-site/docs/plates/synthesis.md', import.meta.url)))).toBe(false);
       const stray = lensBeforeResearch(root, 'read_file', 'CHANGELOG.md');
       expect(stray?.decision).toBe('allow');
-      expect(stray?.reason).toContain('Plane: integration');
-      const back = lensBeforeResearch(root, 'Read', 'src/cli/index.ts');
+      expect(stray?.reason).toContain('Card: synthesis');
+      const back = lensBeforeResearch(root, 'Read', 'README.md');
       expect(back?.decision).toBe('allow');
       expect(back?.reason).toContain('Plane: dev');
-      const both = lensBeforeResearch(root, 'read_file', 'src/cli/index.ts and src/nucleus/thin-dispatch.ts');
+      const both = lensBeforeResearch(root, 'read_file', 'README.md and src/nucleus/thin-dispatch.ts');
       expect(both?.decision).toBe('allow');
       expect(both?.reason).toContain('Plane: dev');
       expect(lensBeforeResearch(root, 'grep', 'after two files')?.reason).toContain('Plane: dev');
@@ -163,9 +177,9 @@ describe('goggles plate', () => {
       expect(look(['pull', '3'], root).text).toBe('Name one plane.');
       expect(look(['2'], root).text).toBe('Name one plane.');
       expect(look(['dichotomy', 'triage'], root).text).toBe('Name one plane.');
-      expect(look(['ground'], root).text).toBe('Name one plane.');
-      expect(look(['routing'], root).text).toBe('Name one plane.');
-      expect(look(['boot'], root).text).toBe('Name one plane.');
+      expect(look(['ground'], root).text).toContain('Stamp:');
+      expect(look(['routing'], root).text).toContain('Card: routing');
+      expect(look(['boot'], root).text).toContain('Card: boot');
       expect(look(['eco'], root).text).toBe('Name one plane.');
       expect(look(['TEGHAL'], root).text).toBe('Name one plane.');
       expect(look(['dev'], root).text).toContain('Plane: dev');
@@ -246,8 +260,10 @@ describe('goggles plate', () => {
       holdPlane(root, 'routing');
       const kept = readFileSync(join(root, '.xray', 'state', 'LENS.md'), 'utf8');
       expect(kept).toContain('Entry: kept');
-      expect(kept).not.toContain('Plane: routing');
-      expect(kept.split('Plane:').length - 1).toBe(2);
+      expect(kept).toContain('Card: routing');
+      expect(kept).toContain('Plane: integration');
+      expect(kept).not.toMatch(/^Plane: routing/m);
+      expect(kept.split('Plane:').length - 1).toBe(3);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -284,7 +300,11 @@ describe('goggles plate', () => {
       expect(pane).toContain('package.json');
       expect(pane).not.toContain('n/a');
       expect(pane).not.toContain('The reading is');
-      expect(lookCards(['routing'], root)).toBeNull();
+      const routing = lookCards(['routing'], root);
+      expect(routing).toHaveLength(1);
+      expect(routing[0].card).toBe('routing');
+      expect(routing[0].plane).toBe('integration');
+      expect(routing[0].plates).toEqual(['orchestration', 'processor']);
       expect(lookCards(['dichotomy'], root)).toBeNull();
       const integration = lookCards(['integration'], root);
       expect(integration).toHaveLength(1);

@@ -68,9 +68,9 @@ describe("sleeve", () => {
       holdPlane(root, "memory recall");
       expect(fs.existsSync(path.join(root, ".xray", "state", "goggles-plane.json"))).toBe(false);
       holdPlane(root, "memory-recall");
-      expect(
-        JSON.parse(fs.readFileSync(path.join(root, ".xray", "state", "goggles-plane.json"), "utf8")).plane,
-      ).toBe("memory-recall");
+      const held = JSON.parse(fs.readFileSync(path.join(root, ".xray", "state", "goggles-plane.json"), "utf8"));
+      expect(held.plane).toBe("domain");
+      expect(held.card).toBe("memory-recall");
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
     }

@@ -37,20 +37,29 @@ try {
       missing.join(', ') || files[0],
     );
   }
-  check('a worn name asks for one plane', look(['dichotomy']).text === 'Name one plane.' && look(['synthesis']).text === 'Name one plane.');
+  check('a worn name asks for one plane', look(['dichotomy']).text === 'Name one plane.');
+  const synthesis = look(['synthesis']).text;
+  check(
+    'a missing plate names the stamp skill',
+    synthesis.includes('Card: synthesis') && synthesis.includes('.agents/skills/stamp-plate/SKILL.md') && !existsSync(join(repo, 'docs-site/docs/plates/synthesis.md')),
+  );
+
 
   const held = mkdtempSync(join(tmpdir(), 'goggles-observer-hold-'));
   try {
     const search = lensBeforeResearch(held, 'grep', 'find the login bug');
     check('a search returns the dev card', search?.decision === 'deny' && String(search.reason).includes('Plane: dev') && String(search.reason).includes('Entry:'));
     check('git and npm stay open', lensBeforeResearch(held, 'bash', 'git status') === null && lensBeforeResearch(held, 'bash', 'npm test') === null);
-    check('a file on the current plane stays quiet', lensBeforeResearch(held, 'read_file', 'src/cli/index.ts') === null);
+    check('a file on the current plane stays quiet', lensBeforeResearch(held, 'read_file', 'README.md') === null);
     const hop = lensBeforeResearch(held, 'read_file', 'src/nucleus/thin-dispatch.ts');
-    check('another plane switches and stays open', hop?.decision === 'allow' && String(hop.reason).includes('Plane: integration'));
+    check(
+      'another plane switches and stays open',
+      hop?.decision === 'allow' && String(hop.reason).includes('Card: routing') && String(hop.reason).includes('Plane: integration'),
+    );
     const next = lensBeforeResearch(held, 'grep', 'still looking');
-    check('the next search uses the plane it is on', next?.decision === 'deny' && String(next.reason).includes('Plane: integration'));
+    check('the next search uses the card it is on', next?.decision === 'deny' && String(next.reason).includes('Card: routing'));
     const stray = lensBeforeResearch(held, 'read_file', 'CHANGELOG.md');
-    check('a file on no plane keeps the current card', stray?.decision === 'allow' && String(stray.reason).includes('Plane: integration'));
+    check('a file on no plane keeps the current card', stray?.decision === 'allow' && String(stray.reason).includes('Card: routing'));
   } finally {
     rmSync(held, { recursive: true, force: true });
   }

@@ -21,8 +21,7 @@ const LOOK_SCHEMA = {
   properties: {
     plane: {
       type: 'string',
-      description: 'dev, integration, domain, or ecosystem. Omit it to read the current card.',
-      enum: CARD_PLANES,
+      description: 'A plane, or the card for one thing. Omit it to read the current card.',
     },
   },
 };
@@ -30,7 +29,7 @@ const LOOK_SCHEMA = {
 export const TOOLS = [
   {
     name: 'look',
-    description: 'The card for this plane. Entry and Exit, and the other rows, are in LENS.md. Pass dev, integration, domain, or ecosystem to switch.',
+    description: 'The card for this plane, or for one thing on it. Entry and Exit, and the other rows, are in LENS.md. A missing plate names the stamp-plate skill.',
     inputSchema: LOOK_SCHEMA,
   },
   {
@@ -86,7 +85,7 @@ function checkArgs(args) {
   }
   if (args.plane == null) return null;
   if (typeof args.plane !== 'string') return deny('invalid_args', 'plane must be a string.');
-  if (!CARD_PLANES.includes(args.plane)) return deny('invalid_args', 'Name one plane.');
+  if (typeof bundled.isCardName !== 'function' || !bundled.isCardName(args.plane)) return deny('invalid_args', 'Name one plane.');
   return null;
 }
 
@@ -105,6 +104,8 @@ function publicCard(view) {
     setup: view.setup || '',
     teardown: view.teardown || '',
     worn: view.worn || '',
+    card: view.card || view.plane || '',
+    stamp: view.stamp || '',
     notes,
   };
 }
@@ -125,8 +126,9 @@ export async function answerLook(raw, root) {
   const cards = api.lookCards(argv, here);
   if (!Array.isArray(cards) || !cards.length) return deny('name_one', 'Name one plane.');
   const shown = cards.map(publicCard);
-  if (shown.length === 1 && shown[0] && typeof shown[0].plane === 'string') {
-    api.holdPlane(here, shown[0].plane);
+  if (shown.length === 1 && shown[0]) {
+    const heldName = shown[0].card || shown[0].plane;
+    if (heldName) api.holdPlane(here, heldName);
   }
   return {
     ok: true,

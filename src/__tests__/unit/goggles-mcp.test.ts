@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
-import { CARD_PLANES, lookCards } from '../../integrations/hooks/goggles-pipeline.mjs';
+import { lookCards } from '../../integrations/hooks/goggles-pipeline.mjs';
 import { TOOLS, dispatchTool } from '../../integrations/hooks/goggles-mcp.mjs';
 
 const LAUNCHER = fileURLToPath(new URL('../../../scripts/mjs/run-goggles-mcp.mjs', import.meta.url));
@@ -29,8 +29,9 @@ describe('goggles MCP', () => {
     expect(copy).not.toMatch(/Dynamo|Clearing|Repertoire/);
     expect(copy).not.toMatch(/memory-recall/);
     for (const name of NINE) expect(copy).not.toContain(name);
-    const lookTool = TOOLS[0] as { inputSchema?: { properties?: { plane?: { enum?: string[] } } } };
-    expect(lookTool.inputSchema?.properties?.plane?.enum).toEqual([...CARD_PLANES]);
+    const lookTool = TOOLS[0] as { inputSchema?: { properties?: { plane?: { enum?: string[]; description?: string } } } };
+    expect(lookTool.inputSchema?.properties?.plane?.enum).toBeUndefined();
+    expect(lookTool.inputSchema?.properties?.plane?.description).toMatch(/card/);
   });
 
   it('an extra argument is refused', async () => {
@@ -56,16 +57,21 @@ describe('goggles MCP', () => {
     const { payload, isError } = await dispatchTool('look', { plane: 'dev' }, root);
     expect(isError).toBe(false);
     expect(payload.content.plane).toBe('dev');
-    const missed = await dispatchTool('look', { plane: 'lens-gate' }, root);
+    const thing = await dispatchTool('look', { plane: 'lens-gate' }, root);
+    expect(thing.isError).toBe(false);
+    expect(thing.payload.content.card).toBe('lens-gate');
+    const missed = await dispatchTool('look', { plane: 'not-a-card' }, root);
     expect(missed.isError).toBe(true);
     expect(missed.payload.error.reason).toBe('Name one plane.');
     rmSync(root, { recursive: true, force: true });
   });
 
-  it('a plate id is not a card plane', async () => {
-    const { payload, isError } = await dispatchTool('look', { plane: 'stamp-plate' }, tempRoot());
-    expect(isError).toBe(true);
-    expect(payload.error.reason).toBe('Name one plane.');
+  it('a missing plate names the stamp skill', async () => {
+    const { payload, isError } = await dispatchTool('look', { plane: 'synthesis' }, tempRoot());
+    expect(isError).toBe(false);
+    expect(payload.content.card).toBe('synthesis');
+    expect(payload.content.stamp).toContain('.agents/skills/stamp-plate/SKILL.md');
+    expect(payload.content.stamp).toContain('one plate for this card');
   });
 
   it('an empty look returns the current card', async () => {

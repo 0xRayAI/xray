@@ -57,7 +57,7 @@ When `multi_agent_orchestration.lead_dev_mode` is true in `features.json` (defau
 
 The command is `0xray look`. `0xray goggles` is the same organ. A pipe keeps the line card. A terminal shows that card as a pane. Chat seats without hooks use the `goggles` MCP tools `look` and `status_lens`. Same organ.
 
-A session starts on dev. The boot payload includes that card from `.xray/state/LENS.md`. The planes are dev, integration, domain, and ecosystem. A search returns the current card and does not run. Opening a file on the current card adds nothing. Opening a file on another plane switches to that card and the open proceeds. A file on no card stays on the current plane and returns that card. Compact writes that same card back. A name that is not one of the four says `Name one plane.` Saying goggles clears a stale card line on the station.
+A session starts on dev. The boot payload includes that card from `.xray/state/LENS.md`. The planes are dev, integration, domain, and ecosystem. A search returns the current card and does not run. Opening a file on the current card adds nothing. Opening a file on another plane switches to that card and the open proceeds. A file on no card stays on the current plane and returns that card. Compact writes that same card back. A thing on that plane has its own card. One card has its own plate and can name more. A missing plate names the stamp-plate skill. Stamp one plate for that card. The cards and plates that stay are what the next agent reads. Saying goggles clears a stale card line on the station.
 
 ## Hooks (rewired, not new MCPs)
 
