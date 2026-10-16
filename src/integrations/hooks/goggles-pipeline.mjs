@@ -272,7 +272,12 @@ function splitRow(block, label) {
   return cardRow(block, label).split(',').map((part) => part.trim()).filter(Boolean);
 }
 
-function liveDrift(block, root) {
+function installedPack(root) {
+  return /\/node_modules\/0xray$/.test(String(root || '').replace(/\\/g, '/'));
+}
+
+export function liveDrift(block, root) {
+  if (installedPack(root)) return '';
   const files = splitRow(block, 'Files');
   const worn = cardRow(block, 'Worn');
   const held = Boolean(worn) && existsSync(join(root, worn));

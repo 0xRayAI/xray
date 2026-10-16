@@ -12,6 +12,7 @@ import {
   look,
   growPlane,
   lensBeforeResearch,
+  liveDrift,
   lookCards,
   holdPlane,
   maintainLens,
@@ -360,6 +361,20 @@ describe('goggles plate', () => {
       if (previous === undefined) delete process.env.GOGGLES_ROOT;
       else process.env.GOGGLES_ROOT = previous;
       rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('an installed pack does not report drift', () => {
+    const pack = mkdtempSync(join(tmpdir(), 'goggles-pack-'));
+    const installed = join(pack, 'node_modules', '0xray');
+    mkdirSync(installed, { recursive: true });
+    const gone = mkdtempSync(join(tmpdir(), 'goggles-gone-'));
+    try {
+      expect(liveDrift(DEV_CARD, installed)).toBe('');
+      expect(liveDrift('Plane: dev\nFiles: missing-tree\n', gone)).toBe('Drift: missing-tree is not there');
+    } finally {
+      rmSync(pack, { recursive: true, force: true });
+      rmSync(gone, { recursive: true, force: true });
     }
   });
 
