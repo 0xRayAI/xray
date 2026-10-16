@@ -59,7 +59,7 @@ The command is `0xray look`. `0xray goggles` is the same organ. A pipe keeps the
 
 Name one plane. The look returns that card from `.xray/state/LENS.md`. The first time Entry and Exit are missing, the card is written from the plate. A later look reads those rows. A hand edit stays. A missing file is one live line and is not stored. Any other look says `Name one plane.` The rows are ground, routing, house, boot, governance, memory-recall, orchestration, processor, and reporting. The mill path is `scripts/foundry`.
 
-A search names one card plane or it stops. Saying goggles clears a stale card line on the station. When a tool names one card plane, the suit adds that plane's file as a hint.
+A search names one card plane and returns that card from `.xray/state/LENS.md`. The code search does not continue. Saying goggles clears a stale card line on the station. When a tool names one card plane, the suit adds that plane's file as a hint.
 
 ## Hooks (rewired, not new MCPs)
 

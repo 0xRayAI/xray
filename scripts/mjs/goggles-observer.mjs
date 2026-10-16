@@ -42,14 +42,17 @@ try {
   try {
     handCard(held, 'name dichotomy');
     check('a spoken name does not arm', look(['dichotomy']).text === 'Name one plane.');
-    check('a named card plane continues', lensBeforeResearch(held, 'grep', 'open the boot plane') === null);
+    const bootSearch = lensBeforeResearch(held, 'grep', 'open the boot plane');
+    check(
+      'a named search returns the boot card',
+      bootSearch?.decision === 'deny' && String(bootSearch.reason).includes('Plane: boot') && String(bootSearch.reason).includes('Entry:'),
+    );
     check('a shell rg is a search', lensBeforeResearch(held, 'bash', 'rg plane src')?.decision === 'deny');
     check('git and npm stay open', lensBeforeResearch(held, 'bash', 'git status') === null && lensBeforeResearch(held, 'bash', 'npm test') === null);
     check('a mapped file stays open', lensBeforeResearch(held, 'read_file', 'src/core/boot-orchestrator.ts') === null);
     const other = 'src/core/config-paths.ts';
-    check('the first other read stops', lensBeforeResearch(held, 'read_file', other)?.reason === 'Name one plane.');
-    check('one later read goes on', lensBeforeResearch(held, 'read_file', other) === null);
-    check('the read after that stops', lensBeforeResearch(held, 'read_file', other)?.reason === 'Name one plane.');
+    check('a read with no plane asks for one', lensBeforeResearch(held, 'read_file', other)?.reason === 'Name one plane.');
+    check('the next read still asks for one', lensBeforeResearch(held, 'read_file', other)?.reason === 'Name one plane.');
   } finally {
     rmSync(held, { recursive: true, force: true });
   }

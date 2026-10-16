@@ -6,9 +6,9 @@
  * Any other look says Name one plane.
  * On this host a search is grep, glob, or a shell that runs one.
  * A shell that reads a project source file is a search.
- * The lens file stays open. One later read may go on, then the next read stops.
- * An opened source file that no lens lists is remembered.
- * The next search stops until that file is on a lens and its plate is on disk.
+ * A search that names one plane returns that card and does not continue.
+ * A search that does not name one plane says Name one plane.
+ * A file already on the lens stays open. git and npm stay open.
  * The hook does not author the plate.
  */
 import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, unlinkSync, writeFileSync } from 'node:fs';
@@ -575,88 +575,7 @@ function shellReadsSource(text) {
   return SOURCE_READER.test(spoken) && openedSourcePaths(spoken).length > 0;
 }
 
-function isLensWrite(toolName) {
-  return /write|edit|replace/i.test(String(toolName || ''));
-}
-
-function debtFile(root) {
-  return join(root, '.xray', 'state', 'goggles-lens-debt.json');
-}
-
-function loadDebt(root) {
-  try {
-    const data = JSON.parse(readFileSync(debtFile(root), 'utf8'));
-    return Array.isArray(data.paths) ? data.paths.filter((file) => typeof file === 'string') : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveDebt(root, paths) {
-  const unique = [];
-  for (const file of paths) {
-    if (!unique.includes(file)) unique.push(file);
-  }
-  const dest = debtFile(root);
-  if (!unique.length) {
-    try {
-      unlinkSync(dest);
-    } catch {
-      /* already clear */
-    }
-    return;
-  }
-  mkdirSync(dirname(dest), { recursive: true });
-  writeFileSync(dest, `${JSON.stringify({ paths: unique })}\n`);
-}
-
-function lensRecords() {
-  try {
-    const data = JSON.parse(readFileSync(planesFile(), 'utf8'));
-    const records = [];
-    if (!data || typeof data !== 'object') return records;
-    for (const [name, entry] of Object.entries(data)) {
-      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) continue;
-      if (!Array.isArray(entry.files)) continue;
-      records.push([name, entry.files.filter((file) => typeof file === 'string')]);
-    }
-    return records;
-  } catch {
-    return [];
-  }
-}
-
-function plateIsOnDisk(root, name) {
-  const beside = findPlatesDir(HERE);
-  if (beside && existsSync(join(beside, `${name}.md`))) return true;
-  return existsSync(join(root, 'docs-site', 'docs', 'plates', `${name}.md`));
-}
-
-function lensCovers(root, file) {
-  for (const [name, files] of lensRecords()) {
-    if (!files.includes(file)) continue;
-    if (name === 'ground' || plateIsOnDisk(root, name)) return true;
-  }
-  return false;
-}
-
-function unsettledDebt(root) {
-  const prior = loadDebt(root);
-  const kept = prior.filter((file) => !lensCovers(root, file));
-  if (kept.length !== prior.length) saveDebt(root, kept);
-  return kept;
-}
-
-function rememberOpened(root, text) {
-  const fresh = openedSourcePaths(text).filter((file) => !lensCovers(root, file));
-  if (!fresh.length) return;
-  saveDebt(root, [...loadDebt(root), ...fresh]);
-}
-
-function debtReason(paths) {
-  return `Opened ${paths.join(', ')} has no lens.`;
-}
-
+/** One plane: the files the suit continues with. A look with no plane stops. Two planes stay quiet. */
 function researchCall(toolName, text) {
   const tool = String(toolName || '');
   const spoken = String(text || '');
@@ -666,27 +585,6 @@ function researchCall(toolName, text) {
   return /^read_file$/i.test(tool) && !opensLensFile(spoken);
 }
 
-function passPath(root) {
-  return join(root, '.xray', 'state', 'goggles-lens-pass.json');
-}
-
-function loadReadPass(root) {
-  try {
-    const data = JSON.parse(readFileSync(passPath(root), 'utf8'));
-    if (!data || data.read !== true) return null;
-    return data.spent === true ? 'spent' : 'armed';
-  } catch {
-    return null;
-  }
-}
-
-function saveReadPass(root, spent) {
-  const file = passPath(root);
-  mkdirSync(dirname(file), { recursive: true });
-  writeFileSync(file, `${JSON.stringify({ read: true, spent: Boolean(spent) })}\n`);
-}
-
-/** One plane: the files the suit continues with. A look with no plane stops. Two planes stay quiet. */
 export function lensPlane(text) {
   const hint = suitHint(String(text || ''));
   if (hint === 'Name one plane.') return { stop: true, files: [] };
@@ -716,34 +614,22 @@ function stampPlane(root, id) {
   }
 }
 
-/** Name one plane and the tool continues. Name none, or more than one, and the search stops. */
+/** A search names one plane and returns that card. The code search does not continue. */
 export function lensBeforeResearch(root, toolName, text) {
   const spoken = String(text || '');
-  const openDebt = unsettledDebt(root);
-  const research = researchCall(toolName, spoken);
-  if (openDebt.length && research) {
-    return { gate: 'lens', decision: 'deny', reason: debtReason(openDebt) };
-  }
-  if (openDebt.length && isLensWrite(toolName) && !isStampPath(spoken)) {
-    return { gate: 'lens', decision: 'deny', reason: debtReason(openDebt) };
-  }
-  if (!research) return null;
+  if (!researchCall(toolName, spoken)) return null;
   const names = CARD_PLANES.filter((name) => intentWords(spoken).includes(name));
-  if (names.length === 1) {
-    holdPlane(root, names[0]);
-    stampPlane(root, names[0]);
-    rememberOpened(root, spoken);
-    return null;
-  }
-  if (/^read_file$/i.test(String(toolName || ''))) {
-    if (loadReadPass(root) === 'armed') {
-      saveReadPass(root, true);
-      return null;
-    }
-    if (loadReadPass(root) !== 'spent') saveReadPass(root, false);
+  if (names.length !== 1) {
     return { gate: 'lens', decision: 'deny', reason: 'Name one plane.' };
   }
-  return { gate: 'lens', decision: 'deny', reason: 'Name one plane.' };
+  const id = names[0];
+  holdPlane(root, id);
+  stampPlane(root, id);
+  const card = presentCard(root, id);
+  if (!card || !card.text) {
+    return { gate: 'lens', decision: 'deny', reason: 'Name one plane.' };
+  }
+  return { gate: 'lens', decision: 'deny', reason: card.text };
 }
 
 function seenFields(plane, root) {

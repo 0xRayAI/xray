@@ -12,7 +12,6 @@ import {
   look,
   growPlane,
   lensBeforeResearch,
-  planesFile,
   lookCards,
   holdPlane,
   maintainLens,
@@ -100,114 +99,43 @@ describe('goggles plate', () => {
     expect(suitHint('read the readme')).toBe('');
   });
 
-  it('lets a named plane continue and stops an unnamed search', () => {
+  it('a search returns that plane card', () => {
     const root = mkdtempSync(join(tmpdir(), 'goggles-lens-gate-'));
     try {
-      expect(lensBeforeResearch(root, 'read_file', 'src/core/boot-orchestrator.ts')).toBeNull();
-      expect(lensBeforeResearch(root, 'grep', 'open the boot plane')).toBeNull();
+      const boot = lensBeforeResearch(root, 'grep', 'open the boot plane');
+      expect(boot?.decision).toBe('deny');
+      expect(boot?.reason).toContain('Plane: boot');
+      expect(boot?.reason).toContain('Entry:');
+      expect(boot?.reason).toContain('Exit:');
+      expect(boot?.reason).toContain('src/core/boot-orchestrator.ts');
       const two = lensBeforeResearch(root, 'grep', 'open the boot and governance planes');
       expect(two?.decision).toBe('deny');
       expect(two?.reason).toBe('Name one plane.');
       expect(readFileSync(join(root, '.xray', 'state', 'plates', 'boot.md'), 'utf8')).toContain('INPUT');
-      expect(lensBeforeResearch(root, 'grep', 'open the boot plane')).toBeNull();
-      expect(lensBeforeResearch(root, 'explore', 'open the boot plane')).toBeNull();
-      const lensFile = 'src/integrations/hooks/goggles-pipeline.mjs';
-      expect(lensBeforeResearch(root, 'read_file', lensFile)).toBeNull();
-      expect(lensBeforeResearch(root, 'read_file', lensFile)).toBeNull();
-      const other = 'src/core/config-paths.ts';
-      const firstRead = lensBeforeResearch(root, 'read_file', other);
-      expect(firstRead?.decision).toBe('deny');
-      expect(firstRead?.reason).toBe('Name one plane.');
-      expect(lensBeforeResearch(root, 'read_file', other)).toBeNull();
-      expect(lensBeforeResearch(root, 'read_file', other)?.reason).toBe('Name one plane.');
-      expect(lensBeforeResearch(root, 'read_file', 'read the boot file')).toBeNull();
-      expect(lensBeforeResearch(root, 'grep', 'still searching')?.decision).toBe('deny');
+      expect(lensBeforeResearch(root, 'read_file', 'src/core/boot-orchestrator.ts')).toBeNull();
+      expect(lensBeforeResearch(root, 'read_file', 'src/integrations/hooks/goggles-pipeline.mjs')).toBeNull();
+      const other = lensBeforeResearch(root, 'read_file', 'src/core/config-paths.ts');
+      expect(other?.decision).toBe('deny');
+      expect(other?.reason).toBe('Name one plane.');
+      expect(lensBeforeResearch(root, 'read_file', 'src/core/config-paths.ts')?.reason).toBe('Name one plane.');
+      const namedRead = lensBeforeResearch(root, 'read_file', 'read the boot file');
+      expect(namedRead?.decision).toBe('deny');
+      expect(namedRead?.reason).toContain('Plane: boot');
       expect(lensBeforeResearch(root, 'grep', 'still searching')?.reason).toBe('Name one plane.');
-      expect(lensBeforeResearch(root, 'glob', 'still searching')?.decision).toBe('deny');
-      expect(lensBeforeResearch(root, 'bash', 'rg plane src')?.decision).toBe('deny');
-      expect(lensBeforeResearch(root, 'bash', 'grep plane src')?.decision).toBe('deny');
-      expect(lensBeforeResearch(root, 'bash', 'find . -name plane')?.decision).toBe('deny');
-      expect(lensBeforeResearch(root, 'bash', 'git grep plane')?.decision).toBe('deny');
-      expect(lensBeforeResearch(root, 'bash', 'rg boot src')).toBeNull();
-      expect(lensBeforeResearch(root, 'bash', 'git status')).toBeNull();
-      expect(lensBeforeResearch(root, 'bash', 'npm test')).toBeNull();
-      expect(lensBeforeResearch(root, 'bash', 'echo find the file')).toBeNull();
-      expect(lensBeforeResearch(root, 'xray-researcher', 'open the boot plane')).toBeNull();
-      expect(lensBeforeResearch(root, 'search_codebase', 'open the boot plane')).toBeNull();
-      expect(lensBeforeResearch(root, 'find_implementation', 'open the boot plane')).toBeNull();
-      expect(lensBeforeResearch(root, 'get_documentation', 'open the boot plane')).toBeNull();
-      const unnamed = lensBeforeResearch(root, 'explorer', 'learn the code');
-      expect(unnamed?.decision).toBe('deny');
-      expect(unnamed?.reason).toBe('Name one plane.');
-      expect(lensBeforeResearch(root, 'explorer', 'learn the code')?.decision).toBe('deny');
-      expect(lensBeforeResearch(root, 'bash', 'search_codebase boot')).toBeNull();
-      expect(lensBeforeResearch(root, 'bash', 'ls')).toBeNull();
-    } finally {
-      rmSync(root, { recursive: true, force: true });
-    }
-  });
-
-  it('an opened source file stops the next search until a lens and a plate exist', () => {
-    const root = mkdtempSync(join(tmpdir(), 'goggles-lens-debt-'));
-    const planesCopy = join(root, 'planes.json');
-    const previousPlanes = process.env.GOGGLES_PLANES_PATH;
-    const opened = 'src/core/config-paths.ts';
-    try {
-      writeFileSync(planesCopy, readFileSync(planesFile()));
-      process.env.GOGGLES_PLANES_PATH = planesCopy;
-
-      expect(lensBeforeResearch(root, 'bash', 'rg boot src')).toBeNull();
-      expect(lensBeforeResearch(root, 'grep', 'open the boot plane')).toBeNull();
-      expect(lensBeforeResearch(root, 'bash', `echo ${opened}`)).toBeNull();
+      expect(lensBeforeResearch(root, 'bash', 'rg plane src')?.reason).toBe('Name one plane.');
+      expect(lensBeforeResearch(root, 'bash', 'rg boot src')?.reason).toContain('Plane: boot');
       expect(lensBeforeResearch(root, 'bash', 'git status')).toBeNull();
       expect(lensBeforeResearch(root, 'bash', 'npm test')).toBeNull();
       expect(lensBeforeResearch(root, 'bash', 'ls')).toBeNull();
-
-      const unnamed = lensBeforeResearch(root, 'bash', `python3 -c "print(1)" ${opened}`);
-      expect(unnamed?.decision).toBe('deny');
-      expect(unnamed?.reason).toBe('Name one plane.');
-      expect(lensBeforeResearch(root, 'bash', `node -e 1 ${opened}`)?.reason).toBe('Name one plane.');
-
-      expect(lensBeforeResearch(root, 'bash', `python3 -c "print(1)" ${opened} # ground`)).toBeNull();
-      const again = lensBeforeResearch(root, 'bash', `python3 -c "print(1)" ${opened} # ground`);
-      expect(again?.decision).toBe('deny');
-      expect(again?.reason).toContain(opened);
-
-      expect(lensBeforeResearch(root, 'bash', 'git status')).toBeNull();
-      expect(lensBeforeResearch(root, 'bash', 'npm test')).toBeNull();
-      expect(lensBeforeResearch(root, 'bash', `echo ${opened}`)).toBeNull();
-      expect(lensBeforeResearch(root, 'grep', 'open the boot plane')?.reason).toContain(opened);
-
-      const edit = lensBeforeResearch(root, 'search_replace', opened);
-      expect(edit?.decision).toBe('deny');
-      expect(edit?.reason).toContain(opened);
-      expect(
-        lensBeforeResearch(root, 'search_replace', `docs-site/docs/plates/config-paths.md\n${opened}`),
-      ).toBeNull();
-
-      const passRoot = mkdtempSync(join(tmpdir(), 'goggles-lens-debt-pass-'));
-      const bare = 'src/core/not-a-lens.ts';
-      expect(lensBeforeResearch(passRoot, 'read_file', bare)?.reason).toBe('Name one plane.');
-      expect(lensBeforeResearch(passRoot, 'read_file', bare)).toBeNull();
-      expect(lensBeforeResearch(passRoot, 'read_file', bare)?.reason).toBe('Name one plane.');
-      expect(lensBeforeResearch(passRoot, 'grep', 'open the boot plane')).toBeNull();
-      rmSync(passRoot, { recursive: true, force: true });
-
-      const live = JSON.parse(readFileSync(planesCopy, 'utf8'));
-      live['config-paths'] = {
-        files: [opened],
-        skills: '.agents/skills/config-paths/SKILL.md',
-        plates: [],
-      };
-      writeFileSync(planesCopy, `${JSON.stringify(live)}\n`);
-      expect(lensBeforeResearch(root, 'grep', 'open the boot plane')?.reason).toContain(opened);
-
-      mkdirSync(join(root, 'docs-site', 'docs', 'plates'), { recursive: true });
-      writeFileSync(join(root, 'docs-site', 'docs', 'plates', 'config-paths.md'), '# Config paths\n\nA plate.\n');
-      expect(lensBeforeResearch(root, 'grep', 'open the boot plane')).toBeNull();
+      expect(lensBeforeResearch(root, 'search_replace', 'src/core/config-paths.ts')).toBeNull();
+      expect(lensBeforeResearch(root, 'xray-researcher', 'open the boot plane')?.reason).toContain('Plane: boot');
+      expect(lensBeforeResearch(root, 'explorer', 'learn the code')?.reason).toBe('Name one plane.');
+      const ground = lensBeforeResearch(root, 'bash', 'python3 -c "print(1)" src/core/config-paths.ts # ground');
+      expect(ground?.decision).toBe('deny');
+      expect(ground?.reason).toContain('Plane: ground');
+      expect(ground?.reason).toContain('Entry:');
+      expect(ground?.reason).not.toContain('has no lens');
     } finally {
-      if (previousPlanes === undefined) delete process.env.GOGGLES_PLANES_PATH;
-      else process.env.GOGGLES_PLANES_PATH = previousPlanes;
       rmSync(root, { recursive: true, force: true });
     }
   });
