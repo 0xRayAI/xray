@@ -12,6 +12,7 @@ import sys
 import tempfile
 import time
 import unittest
+from datetime import datetime, timedelta, timezone
 import urllib.error
 from pathlib import Path
 from unittest import mock
@@ -673,9 +674,10 @@ class InboxWrite(unittest.TestCase):
         }
         roles_path = root / "roles.json"
         roles_path.write_text(json.dumps(roles), encoding="utf-8")
+        fresh = (datetime.now(timezone.utc) - timedelta(hours=1)).replace(microsecond=0).isoformat()
         feed = {"events": [{
             "id": "org/repo#7:open",
-            "t_ct": "2026-10-09T17:50:00+00:00",
+            "t_ct": fresh,
             "from": "forge", "to": "GitHub", "kind": "pr_open", "direction": "internal",
             "label": "opened", "source": "https://github.com/org/repo/pull/7",
             "src_file": "github-api", "repo": "org/repo", "number": 7,
