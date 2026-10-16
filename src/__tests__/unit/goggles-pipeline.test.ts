@@ -12,7 +12,6 @@ import {
   handCard,
   look,
   growPlane,
-  examinePlane,
   lensBeforeResearch,
   planesFile,
   lookCards,
@@ -33,11 +32,11 @@ describe('goggles plate', () => {
     expect(look(['syncopate', 'one', 'flow']).text).toBe('The reading is syncopate. Scope is one flow.');
     expect(look(['loop', 'one', 'artifact']).text).toBe('The reading is loop. Scope is one artifact.');
     expect(look(['digest', 'ecosystem', 'part']).text).toBe('Name one plane.');
-    expect(look(['digest', 'dichotomy']).text).toBe('');
-    expect(look(['digest', 'triage']).text).toBe('');
+    expect(look(['digest', 'dichotomy']).text).toBe('Name one outer or one plane.');
+    expect(look(['digest', 'triage']).text).toBe('Name one outer or one plane.');
   });
 
-  it('digest returns the card and triage shows the holes', () => {
+  it('digest and triage return the same card', () => {
     const ground = look(['digest', 'ground']).text;
     expect(ground).toBe([
       'Plane: ground',
@@ -222,18 +221,18 @@ describe('goggles plate', () => {
     expect(look(['the', 'outer', 'loop']).text).toBe('Name one plane.');
     expect(look(['name', 'dichotomy']).text).toBe('The reading is dichotomy.');
     expect(look(['kind', '1']).text).toBe('Name one plane.');
-    expect(look(['kind', '2']).text).toBe('');
-    expect(look(['pull', '3']).text).toBe('');
-    expect(look(['2']).text).toBe('');
-    expect(look([]).text).toBe('');
-    expect(look(['dichotomy', 'triage']).text).toBe('');
-    expect(look(['dichotomy', 'calling']).text).toBe('');
+    expect(look(['kind', '2']).text).toBe('kind is 1.');
+    expect(look(['pull', '3']).text).toBe('kind is 1.');
+    expect(look(['2']).text).toBe('kind is 1.');
+    expect(look([]).text).toBe('Name one outer or one plane.');
+    expect(look(['dichotomy', 'triage']).text).toBe('Name one outer or one plane.');
+    expect(look(['dichotomy', 'calling']).text).toBe('The reading is dichotomy.');
     expect(look(['ground']).text).toContain('Plane: ground');
     expect(look(['routing']).text).toContain('Plane: routing');
     expect(look(['boot']).text).toContain('Plane: boot');
-    expect(look(['domain']).text).toBe('');
-    expect(look(['eco']).text).toBe('');
-    expect(look(['TEGHAL']).text).toBe('');
+    expect(look(['domain']).text).toBe('Name one outer or one plane.');
+    expect(look(['eco']).text).toBe('Name one outer or one plane.');
+    expect(look(['TEGHAL']).text).toBe('Name one outer or one plane.');
   });
 
   it('stops an action that leaves the plane and stays quiet on the plane', () => {
@@ -387,7 +386,7 @@ describe('goggles plate', () => {
     }
   });
 
-  it('exports the digest card and a pane that keeps empties', () => {
+  it('exports the digest card and a pane', () => {
     const cards = lookCards(['digest', 'ground']);
     expect(cards).toHaveLength(1);
     const card = cards[0];
@@ -438,7 +437,7 @@ describe('goggles plate', () => {
     expect(piped).toContain('Plane: ground');
     expect(piped).not.toContain('┌');
     expect(execFileSync(process.execPath, [bin, 'dichotomy'], { encoding: 'utf8' })).toBe('The reading is dichotomy.\n');
-    expect(execFileSync(process.execPath, [bin, 'kind', '0'], { encoding: 'utf8' })).toBe('\n');
+    expect(execFileSync(process.execPath, [bin, 'kind', '0'], { encoding: 'utf8' })).toBe('kind is 1.\n');
   });
 
   it('reads the stored card and keeps a hand edit', () => {
@@ -484,27 +483,6 @@ describe('goggles plate', () => {
     }
   });
 
-  it('an install holds on the worn build when the factory source is not packed', () => {
-    const root = mkdtempSync(join(tmpdir(), 'goggles-install-'));
-    const worn = join(root, 'dist/nucleus/thin-dispatch.js');
-    mkdirSync(join(root, 'dist/nucleus'), { recursive: true });
-    const plane = {
-      files: ['src/nucleus/thin-dispatch.ts'],
-      worn: 'dist/nucleus/thin-dispatch.js',
-      wornMark: 'function scoreAndRoute',
-      mark: 'export function scoreAndRoute',
-      skills: 'src/skills/routing/SKILL.md',
-    };
-    try {
-      writeFileSync(worn, 'function scoreAndRoute() {}\n');
-      expect(examinePlane(plane, root).text).toBe('Holds.');
-      writeFileSync(worn, 'unrelated\n');
-      expect(examinePlane(plane, root).text).toBe('Drift: the worn build is not src/nucleus/thin-dispatch.ts');
-    } finally {
-      rmSync(root, { recursive: true, force: true });
-    }
-  });
-
   it('a symlinked lens still answers', () => {
     const dir = mkdtempSync(join(tmpdir(), 'goggles-link-'));
     const link = join(dir, 'goggles-pipeline.mjs');
@@ -512,7 +490,7 @@ describe('goggles plate', () => {
     try {
       symlinkSync(source, link);
       expect(execFileSync(process.execPath, [link, 'dichotomy'], { encoding: 'utf8' })).toBe('The reading is dichotomy.\n');
-      expect(execFileSync(process.execPath, [link, 'kind', '0'], { encoding: 'utf8' })).toBe('\n');
+      expect(execFileSync(process.execPath, [link, 'kind', '0'], { encoding: 'utf8' })).toBe('kind is 1.\n');
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

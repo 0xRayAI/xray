@@ -98,7 +98,7 @@ function projectRoot(root) {
 
 function argvFrom(args) {
   const words = [];
-  if (args.kind === '1' || args.kind === '2') words.push('kind', String(args.kind));
+  if (args.kind === '1') words.push('kind', String(args.kind));
   else if (typeof args.kind === 'string') words.push(args.kind);
   if (args.outer === 'outer loop') words.push('outer', 'loop');
   else if (typeof args.outer === 'string') words.push(args.outer);
@@ -122,7 +122,7 @@ function checkArgs(args) {
       return deny('invalid_args', `${key} must be a string.`);
     }
   }
-  if (args.kind != null && !['1', '2'].includes(args.kind)) {
+  if (args.kind != null && args.kind !== '1') {
     return deny('invalid_args', 'kind is 1.');
   }
   if (args.outer != null && !LOOK_SCHEMA.properties.outer.enum.includes(args.outer)) {

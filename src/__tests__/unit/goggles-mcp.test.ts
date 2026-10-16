@@ -43,6 +43,12 @@ describe('goggles MCP', () => {
     expect(payload.error.reason).toBe('Send kind or outer, not both.');
   });
 
+  it('any other kind is refused', async () => {
+    const { payload, isError } = await dispatchTool('look', { kind: '2' }, tempRoot());
+    expect(isError).toBe(true);
+    expect(payload.error.reason).toBe('kind is 1.');
+  });
+
   it('card skills show the full path', async () => {
     const { payload, isError } = await dispatchTool('look', { outer: 'digest', plane: 'routing' }, tempRoot());
     expect(isError).toBe(false);
@@ -90,7 +96,7 @@ describe('goggles MCP', () => {
     expect(JSON.stringify(card)).not.toContain('n/a');
   });
 
-  it('triage routing keeps the hole notes and the organ entry', async () => {
+  it('triage routing returns the stored card', async () => {
     const organ = lookCards(['triage', 'routing'])[0];
     const { payload } = await dispatchTool('look', { outer: 'triage', plane: 'routing' }, tempRoot());
     const card = payload.content;

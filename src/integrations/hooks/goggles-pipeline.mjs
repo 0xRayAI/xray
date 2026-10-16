@@ -7,7 +7,6 @@
  * On this host a search is grep, glob, or a shell that runs one.
  * A shell that reads a project source file is a search.
  * The lens file stays open. One later read may go on, then the next read stops.
- * A plane card is written into LENS.md when Entry and Exit are missing. Later passes read that card.
  * An opened source file that no lens lists is remembered.
  * The next search stops until that file is on a lens and its plate is on disk.
  * The hook does not author the plate.
@@ -172,13 +171,13 @@ function findScopes(words) {
   return hits;
 }
 
-function kindPastOne(words) {
+function refusedKind(words) {
   const lower = words.map((word) => word.toLowerCase());
-  if (lower.length === 1 && /^\d+$/.test(lower[0]) && Number(lower[0]) > 1) return true;
+  if (lower.length === 1 && /^\d+$/.test(lower[0]) && lower[0] !== '1') return true;
   for (let i = 0; i < lower.length; i += 1) {
     if (!/^(kind|pull|pull-up|level)$/.test(lower[i])) continue;
     const next = lower[i + 1];
-    if (next && /^\d+$/.test(next) && Number(next) > 1) return true;
+    if (next && /^\d+$/.test(next) && next !== '1') return true;
   }
   return false;
 }
@@ -271,27 +270,26 @@ function gogglesAnswer(argv, projectRoot) {
   }
   const lower = words.map((word) => word.toLowerCase());
   const none = (text) => ({ text, cards: null });
-  if (lower.includes('calling')) return none('');
-  if (kindPastOne(words)) return none('');
-  if (words.length === 0) return none('');
+  if (refusedKind(words)) return none('kind is 1.');
+  if (words.length === 0) return none('Name one outer or one plane.');
   if (namesTheSet(lower)) return none('Name one plane.');
   const flavors = CARD_FLAVORS.filter((name) => lower.includes(name));
-  if (flavors.length > 1) return none('');
+  if (flavors.length > 1) return none('Name one outer or one plane.');
   const named = cardPlanesNamed(lower);
   if (named.length > 1) return none('Name one plane.');
   const outers = acceptedPlanes().filter((name) => !CARD_FLAVORS.includes(name) && lower.includes(name));
-  if (flavors.length === 1 && outers.length) return none('');
+  if (flavors.length === 1 && outers.length) return none('Name one outer or one plane.');
   if (named.length === 1) {
-    if (outers.length) return none('');
+    if (outers.length) return none('plane goes with digest or triage only.');
     const card = presentCard(projectRoot, named[0]);
-    if (!card) return none('');
+    if (!card) return none('Name one plane.');
     return { text: card.text, cards: [card.view] };
   }
   if (flavors.length === 1) return none('Name one plane.');
   const planes = acceptedPlanes().filter((name) => lower.includes(name));
-  if (planes.length !== 1) return none('');
+  if (planes.length !== 1) return none('Name one outer or one plane.');
   const scopes = findScopes(words.filter((word) => word.toLowerCase() !== planes[0]));
-  if (scopes.length > 1) return none('');
+  if (scopes.length > 1) return none('Name one outer or one plane.');
   const line = readingLine(planes[0], scopes[0] || '');
   const file = moduleFile(planes[0]);
   return none(file ? `${line} File: ${file}` : line);
@@ -989,71 +987,9 @@ function repoRootFrom(platesDir) {
   return dirname(dirname(dirname(platesDir)));
 }
 
-function miss(text) {
-  return { ok: false, text };
-}
-
 function ok(text) {
   return { ok: true, text };
 }
-
-function holds() {
-  return { kind: 'holds', text: 'Holds.' };
-}
-
-function drift(text) {
-  return { kind: 'drift', text: `Drift: ${text}` };
-}
-
-function drawing() {
-  return { kind: 'drawing', text: 'Drawing only.' };
-}
-
-function fileHas(root, rel, mark) {
-  if (!rel || !mark) return false;
-  const full = join(root, rel);
-  return existsSync(full) && readFileSync(full, 'utf8').includes(mark);
-}
-
-
-function factoryName(rel) {
-  return rel.startsWith('src/') || rel.startsWith('grok-bot/');
-}
-
-function wornHolds(plane, root) {
-  if (!plane.worn || !existsSync(join(root, plane.worn))) return false;
-  if (!plane.wornMark) return true;
-  return fileHas(root, plane.worn, plane.wornMark);
-}
-
-export function examinePlane(plane, root) {
-  const files = Array.isArray(plane.files) ? plane.files : [];
-  const checkable = files.length > 0 || plane.skills || plane.worn;
-  if (!checkable) return drawing();
-  const held = wornHolds(plane, root);
-  if (plane.worn && !held) {
-    return drift(`the worn build is not ${files[0] || plane.worn}`);
-  }
-  for (const rel of files) {
-    if (existsSync(join(root, rel))) continue;
-    if (held && factoryName(rel)) continue;
-    return drift(`${rel} is not there`);
-  }
-  if (plane.mark && files[0] && existsSync(join(root, files[0])) && !fileHas(root, files[0], plane.mark)) {
-    return drift(`${plane.mark} is not in ${files[0]}`);
-  }
-  if (plane.skills && !existsSync(join(root, plane.skills)) && !(held && factoryName(plane.skills))) {
-    return drift(`${plane.skills} is not there`);
-  }
-  if (plane.entryIsMark && plane.entry && files[0] && existsSync(join(root, files[0])) && !fileHas(root, files[0], plane.entry)) {
-    return drift(`${plane.entry} is not in ${files[0]}`);
-  }
-  if (plane.exitIsMark && plane.exit && files[0] && existsSync(join(root, files[0])) && !fileHas(root, files[0], plane.exit)) {
-    return drift(`${plane.exit} is not in ${files[0]}`);
-  }
-  return holds();
-}
-
 
 export function look(argv, projectRoot) {
   return readGoggles(argv, projectRoot);

@@ -78,9 +78,9 @@ describe("sleeve", () => {
 
   it("keeps the outer readings and leaves ground, routing, and house alone", () => {
     expect(look(["loop"]).text).toBe("The reading is loop.");
-    expect(look(["domain"]).text).toBe("");
-    expect(look(["state"]).text).toBe("");
-    expect(look(["eco"]).text).toBe("");
+    expect(look(["domain"]).text).toBe("Name one outer or one plane.");
+    expect(look(["state"]).text).toBe("Name one outer or one plane.");
+    expect(look(["eco"]).text).toBe("Name one outer or one plane.");
     expect(look(["outer-loop"]).text).toBe("Name one plane.");
     const ground = look(["digest", "ground"]).text;
     expect(ground.startsWith("Plane: ground")).toBe(true);
