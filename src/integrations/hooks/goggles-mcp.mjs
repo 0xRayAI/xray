@@ -149,45 +149,7 @@ function checkArgs(args) {
 
 function publicCard(view) {
   const notes = [];
-  if (view.flavor === 'triage') {
-    if (Array.isArray(view.empty) && view.empty.length) notes.push(`Empty: ${view.empty.join(', ')}`);
-    if (view.exam) notes.push(view.exam);
-  }
-  const skills = view.skills ? String(view.skills) : '';
-  const cascade = view.cascade
-    ? {
-      plane: view.cascade.plane,
-      station: view.cascade.station,
-      notesPage: view.cascade.notesPage,
-      index: view.cascade.index,
-      laws: Array.isArray(view.cascade.laws) ? view.cascade.laws : [],
-      notes: Array.isArray(view.cascade.notes) ? view.cascade.notes : [],
-    }
-    : null;
-  const sleeve = view.sleeve
-    ? {
-      on: Boolean(view.sleeve.on),
-      missing: Array.isArray(view.sleeve.missing) ? view.sleeve.missing : [],
-      stitches: Array.isArray(view.sleeve.stitches)
-        ? view.sleeve.stitches.map((row) => ({
-          name: String(row && row.name || ''),
-          on: Boolean(row && row.on),
-          at: Array.isArray(row && row.at) ? row.at.map((item) => String(item)) : [],
-        }))
-        : [],
-    }
-    : null;
-  if (view.narrow) {
-    return {
-      plane: view.plane,
-      flavor: view.flavor,
-      digest: view.digest || '',
-      files: Array.isArray(view.files) ? view.files : [],
-      notes,
-      ...(cascade ? { cascade } : {}),
-      ...(sleeve ? { sleeve } : {}),
-    };
-  }
+  if (typeof view.exam === 'string' && view.exam.startsWith('Drift:')) notes.push(view.exam);
   return {
     plane: view.plane,
     flavor: view.flavor,
@@ -197,13 +159,11 @@ function publicCard(view) {
     entry: view.entry || '',
     exit: view.exit || '',
     files: Array.isArray(view.files) ? view.files : [],
-    skills,
+    skills: view.skills ? String(view.skills) : '',
     setup: view.setup || '',
     teardown: view.teardown || '',
     worn: view.worn || '',
     notes,
-    ...(cascade ? { cascade } : {}),
-    ...(sleeve ? { sleeve } : {}),
   };
 }
 
@@ -259,7 +219,6 @@ export async function answerStatus(root) {
   const organOk = existsSync(organPath);
   const planesOk = Boolean(planesPath) && existsSync(planesPath);
   const worn = Boolean(api) && organOk && planesOk;
-  const here = projectRoot(root);
   return {
     ok: true,
     organ: worn ? 'worn' : 'not_found',

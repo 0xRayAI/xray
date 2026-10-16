@@ -93,12 +93,9 @@ describe("wake cascade", () => {
       expect(cascadeLines).toEqual(["Cascade: record-map · notes 1 current"]);
 
       const reading = look(["digest", "memory-recall"], root).text;
-      expect(reading).toContain("Cascade: record-map");
-      expect(reading).toContain("Station: .xray/state/STATION.md");
-      expect(reading).toContain("Notes page: .xray/state/NOTES.md");
-      expect(reading).toContain("index line beta is current");
-      expect(reading).not.toContain("index line alpha stays history");
-      expect(reading).toContain(`- ${saved.id}`);
+      expect(reading.startsWith("Plane: memory-recall")).toBe(true);
+      expect(reading).not.toContain("Cascade:");
+      expect(reading).not.toContain("index line beta is current");
 
       const ground = look(["digest", "ground"], root).text;
       expect(ground.startsWith("Plane: ground")).toBe(true);
@@ -114,10 +111,6 @@ describe("wake cascade", () => {
       expect(working.cascade?.plane).toBe("record-map");
       expect(working.cascade?.notes).toBe(1);
       expect((working.cascade?.laws ?? []).join(" ")).not.toContain("index line");
-      const lawLine = (working.cascade?.laws ?? []).length
-        ? `Laws: ${(working.cascade?.laws ?? []).join(", ")}`
-        : "Laws: (none yet)";
-      expect(reading).toContain(lawLine);
 
       const looked = await dispatchTool(
         "look",
@@ -127,10 +120,7 @@ describe("wake cascade", () => {
       expect(looked.isError).toBe(false);
       const payload = looked.payload.content as LookCard;
       expect(payload.plane).toBe("memory-recall");
-      expect(payload.cascade?.plane).toBe("record-map");
-      expect(payload.cascade?.notes?.map((note) => note.text)).toEqual([
-        "index line beta is current",
-      ]);
+      expect(payload.cascade).toBeUndefined();
 
       const plain = await dispatchTool("look", { outer: "digest", plane: "ground" }, root);
       const plainCard = plain.payload.content as LookCard;

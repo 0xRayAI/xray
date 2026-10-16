@@ -24,7 +24,7 @@ It views one plane.
   └────────────────────────────────────────────────────────────┘
 ```
 
-A card views one plane. When Entry and Exit are missing, the named plane is written into `.xray/state/LENS.md`. Later passes read that card.
+A card views one plane. When Entry and Exit are missing, the named plane is written into `.xray/state/LENS.md`. Later passes read that card. A missing file is a live line and is not stored.
 
 The refusals read: `Name one outer or one plane.` · `Send kind or outer, not both.` · `plane goes with digest or triage only.`
 

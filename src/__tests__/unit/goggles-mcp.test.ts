@@ -95,9 +95,9 @@ describe('goggles MCP', () => {
     const { payload } = await dispatchTool('look', { outer: 'triage', plane: 'routing' }, tempRoot());
     const card = payload.content;
     expect(card.entry).toBe(organ.entry);
-    expect(card.notes.join('\n')).toContain('Empty: setup, teardown');
-    expect(card.notes.join('\n')).toContain('Holds.');
-    expect(card.notes.join('\n')).not.toContain('entry');
+    expect(card.entry).toBe('task text · context · thresholds');
+    expect(card.notes.join('\n')).not.toContain('Empty:');
+    expect(card.notes.join('\n')).not.toContain('Holds.');
   });
 
   it('one artifact on a multi-file plane keeps the view', async () => {

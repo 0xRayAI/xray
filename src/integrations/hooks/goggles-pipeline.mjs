@@ -1,7 +1,8 @@
 /**
- * Goggles. A named plane returns its card.
- * A named plane returns its view. Field pipes fill what they can see.
- * The view keeps every field for the next look.
+ * Goggles. A named card plane returns its stored card.
+ * The card is written once, when Entry and Exit are missing.
+ * Later looks read that card. A hand edit stays.
+ * A missing file is one live line. It is not stored.
  * A held plane stays quiet. A leave is denied.
  * On this host a search is grep, glob, or a shell that runs one.
  * A shell that reads a project source file is a search.
@@ -192,6 +193,75 @@ function namesTheSet(lower) {
   return planes.length === 1 && planes[0] === 'loop' && findScopes(lower).length === 0;
 }
 
+function lensRoot(projectRoot) {
+  if (typeof projectRoot === 'string' && projectRoot.trim() && projectRoot.trim() !== '.') {
+    return resolve(projectRoot.trim());
+  }
+  return stateRoot();
+}
+
+function cardRow(block, label) {
+  const match = String(block || '').match(new RegExp(`^${label}:[ \t]*(.*)$`, 'm'));
+  return match ? match[1].trim() : '';
+}
+
+function splitRow(block, label) {
+  return cardRow(block, label).split(',').map((part) => part.trim()).filter(Boolean);
+}
+
+function liveDrift(block, root) {
+  const files = splitRow(block, 'Files');
+  const worn = cardRow(block, 'Worn');
+  const held = Boolean(worn) && existsSync(join(root, worn));
+  const packed = (rel) => held && (rel.startsWith('src/') || rel.startsWith('grok-bot/'));
+  for (const rel of files) {
+    if (existsSync(join(root, rel))) continue;
+    if (packed(rel)) continue;
+    return `Drift: ${rel} is not there`;
+  }
+  const skills = cardRow(block, 'Skills');
+  if (skills.includes('/') && !existsSync(join(root, skills)) && !packed(skills)) {
+    return `Drift: ${skills} is not there`;
+  }
+  return '';
+}
+
+function viewFromBlock(block, drift) {
+  return {
+    plane: cardRow(block, 'Plane'),
+    flavor: 'digest',
+    scope: '',
+    from: cardRow(block, 'From'),
+    digest: cardRow(block, 'Digest'),
+    plate: cardRow(block, 'Plate'),
+    plates: splitRow(block, 'Plates'),
+    entry: cardRow(block, 'Entry'),
+    exit: cardRow(block, 'Exit'),
+    files: splitRow(block, 'Files'),
+    skills: cardRow(block, 'Skills'),
+    setup: cardRow(block, 'Setup'),
+    teardown: cardRow(block, 'Teardown'),
+    worn: cardRow(block, 'Worn'),
+    exam: drift || '',
+  };
+}
+
+function storedCard(root, id) {
+  const kept = readLensCard(root, id);
+  if (kept) return kept;
+  return fillLensCard(root, id);
+}
+
+function presentCard(projectRoot, id) {
+  const block = storedCard(lensRoot(projectRoot), id);
+  if (!block) return null;
+  const drift = liveDrift(block, sourceRoot(findPlatesDir(HERE)));
+  return {
+    text: drift ? `${block}\n${drift}` : block,
+    view: viewFromBlock(block, drift),
+  };
+}
+
 function gogglesAnswer(argv, projectRoot) {
   const words = [];
   for (const raw of argv || []) {
@@ -207,23 +277,19 @@ function gogglesAnswer(argv, projectRoot) {
   if (namesTheSet(lower)) return none('Name one plane.');
   const flavors = CARD_FLAVORS.filter((name) => lower.includes(name));
   if (flavors.length > 1) return none('');
-  if (flavors.length === 1) {
-    const others = acceptedPlanes().filter((name) => name !== flavors[0] && lower.includes(name));
-    if (others.length) return none('');
-    const cards = collectCards(flavors[0], lower, projectRoot);
-    if (!cards) return none('');
-    return { text: cards.map((card) => formatCardText(card)).join('\n\n'), cards };
+  const named = cardPlanesNamed(lower);
+  if (named.length > 1) return none('Name one plane.');
+  const outers = acceptedPlanes().filter((name) => !CARD_FLAVORS.includes(name) && lower.includes(name));
+  if (flavors.length === 1 && outers.length) return none('');
+  if (named.length === 1) {
+    if (outers.length) return none('');
+    const card = presentCard(projectRoot, named[0]);
+    if (!card) return none('');
+    return { text: card.text, cards: [card.view] };
   }
+  if (flavors.length === 1) return none('Name one plane.');
   const planes = acceptedPlanes().filter((name) => lower.includes(name));
-  if (planes.length !== 1) {
-    if (!planes.length && cardPlanesNamed(lower).length) {
-      const cards = collectCards('digest', lower, projectRoot);
-      if (cards && cards.length) {
-        return { text: cards.map((card) => formatCardText(card)).join('\n\n'), cards };
-      }
-    }
-    return none('');
-  }
+  if (planes.length !== 1) return none('');
   const scopes = findScopes(words.filter((word) => word.toLowerCase() !== planes[0]));
   if (scopes.length > 1) return none('');
   const line = readingLine(planes[0], scopes[0] || '');
@@ -247,61 +313,6 @@ function listedFiles(plane) {
   return Array.isArray(plane.files) ? plane.files.map(String) : [];
 }
 
-function cascadeApi() {
-  return createRequire(import.meta.url)('./wake-cascade.cjs');
-}
-
-function sleeveApi() {
-  return createRequire(import.meta.url)('./sleeve.cjs');
-}
-
-function appendLining(text, view) {
-  let next = text;
-  if (view.cascade) next = `${next}\n${cascadeApi().formatCascadeReading(view.cascade)}`;
-  if (view.sleeve) next = `${next}\n${sleeveApi().formatSleeveReading(view.sleeve)}`;
-  return next;
-}
-
-function cardView(plane, scope, flavor, root, cascadeRoot) {
-  const listed = listedFiles(plane);
-  const view = {
-    plane: plane.id,
-    flavor,
-    scope: scope || '',
-    from: plane.id === 'ground' ? '' : (plane.from || 'ground'),
-    digest: plane.digest || '',
-    plate: plane.plate || '',
-    plates: Array.isArray(plane.plates) ? plane.plates : [],
-    entry: plane.entry || '',
-    exit: plane.exit || '',
-    files: listed,
-    skills: plane.skills || '',
-    setup: plane.setup || '',
-    teardown: plane.teardown || '',
-    worn: plane.worn || '',
-  };
-  view.exam = examinePlane(plane, root).text;
-  if (cascadeApi().isCascadePlane(plane.id)) {
-    try {
-      view.cascade = cascadeApi().readWakeCascade(cascadeRoot || stateRoot());
-    } catch {
-      view.cascade = null;
-    }
-  }
-  if (sleeveApi().isSleevePlane(plane.id)) {
-    try {
-      view.sleeve = sleeveApi().readSleeve(cascadeRoot || stateRoot());
-    } catch {
-      view.sleeve = null;
-    }
-  }
-  if (flavor === 'triage') {
-    const filled = new Set(filledOf(plane));
-    view.empty = FIELD_ORDER.filter((name) => !filled.has(name));
-  }
-  return view;
-}
-
 function cardRows(view) {
   const rows = [
     ['Plane', view.plane],
@@ -322,26 +333,9 @@ function cardRows(view) {
   return rows;
 }
 
-function formatCardText(view) {
-  const rows = cardRows(view);
-  let text = rows.map(([key, value]) => `${key}: ${value}`.trimEnd()).join('\n');
-  if (view.flavor === 'triage') {
-    const lines = [];
-    if (view.empty.length) lines.push(`Empty: ${view.empty.join(', ')}`);
-    lines.push(view.exam);
-    text = `${text}\n${lines.join('\n')}`;
-  } else if (typeof view.exam === 'string' && view.exam.startsWith('Drift:')) {
-    text = `${text}\n${view.exam}`;
-  }
-  return appendLining(text, view);
-}
-
 export function formatCardPane(view) {
   const rows = cardRows(view);
-  if (view.flavor === 'triage') {
-    if (Array.isArray(view.empty) && view.empty.length) rows.push(['Empty', view.empty.join(', ')]);
-    if (view.exam) rows.push(['', view.exam]);
-  } else if (typeof view.exam === 'string' && view.exam.startsWith('Drift:')) {
+  if (typeof view.exam === 'string' && view.exam.startsWith('Drift:')) {
     rows.push(['', view.exam]);
   }
   const body = rows.map(([label, value]) => (label ? `${label.padEnd(8)} ${value}` : value).trimEnd());
@@ -351,23 +345,7 @@ export function formatCardPane(view) {
   const mid = body.map((line) => `│ ${line.padEnd(width)} │`);
   const bot = `└${'─'.repeat(width + 2)}┘`;
   const pane = [top, ...mid, bot].join('\n');
-  return appendLining(pane, view);
-}
-
-function collectCards(flavor, lower, projectRoot) {
-  const named = cardPlanesNamed(lower);
-  const scopes = findScopes(lower.filter((word) => word !== flavor && !named.includes(word)));
-  if (scopes.length > 1) return null;
-  const scope = scopes[0] || '';
-  const platesDir = findPlatesDir(HERE);
-  const ids = named.length ? named : CARD_PLANES;
-  const root = sourceRoot(platesDir);
-  const cards = [];
-  for (const id of ids) {
-    const plane = growPlane(id, platesDir, stateRoot());
-    cards.push(cardView(plane, scope, flavor, root, projectRoot));
-  }
-  return cards;
+  return pane;
 }
 
 export function findPlatesDir(start) {
@@ -576,25 +554,6 @@ function stateRoot() {
 
 function sourceRoot(platesDir) {
   return platesDir ? repoRootFrom(platesDir) : stateRoot();
-}
-
-function viewsPath(root) {
-  return join(root, '.xray', 'state', 'goggles-views.json');
-}
-
-function loadViews(root) {
-  try {
-    const data = JSON.parse(readFileSync(viewsPath(root), 'utf8'));
-    return data && typeof data === 'object' && !Array.isArray(data) ? data : {};
-  } catch {
-    return {};
-  }
-}
-
-function saveViews(root, views) {
-  const file = viewsPath(root);
-  mkdirSync(dirname(file), { recursive: true });
-  writeFileSync(file, `${JSON.stringify(views, null, 2)}\n`);
 }
 
 function cluesOf(body) {
@@ -924,18 +883,6 @@ export function lensPlane(text) {
   return { stop: false, files };
 }
 
-function lensPage(root, names) {
-  if (!names.length) return 'Name one plane.';
-  const platesDir = findPlatesDir(HERE);
-  const parts = [];
-  for (const id of names) {
-    const plane = growPlane(id, platesDir, root);
-    parts.push(formatCardText(cardView(plane, '', 'digest', sourceRoot(platesDir))));
-  }
-  return parts.join('\n\n');
-}
-
-
 export function holdPlane(root, id) {
   const plane = String(id || "").trim();
   if (!plane || plane.includes(" ")) return;
@@ -1029,15 +976,11 @@ function freshField(seen, key) {
   return seen[key] || '';
 }
 
-export function growPlane(id, platesDir, root) {
+export function growPlane(id, platesDir, _root) {
   const seen = seenFields(assemblePlane(id, platesDir), sourceRoot(platesDir));
-  const views = loadViews(root);
   const grown = { id };
   for (const key of VIEW_KEYS) grown[key] = freshField(seen, key);
   if (id === 'ground') grown.from = '';
-  views[id] = {};
-  for (const key of VIEW_KEYS) views[id][key] = grown[key];
-  saveViews(root, views);
   const base = assemblePlane(id, platesDir);
   return { ...base, ...grown };
 }
@@ -1259,7 +1202,20 @@ function writeLensBody(root, prev, cards) {
 function lensCardText(root, held) {
   const platesDir = findPlatesDir(HERE);
   const plane = growPlane(held.id, platesDir, root);
-  const view = cardView(plane, held.scope, 'digest', sourceRoot(platesDir), root);
+  const view = {
+    plane: plane.id,
+    from: plane.id === 'ground' ? '' : (plane.from || 'ground'),
+    digest: plane.digest || '',
+    plate: plane.plate || '',
+    plates: Array.isArray(plane.plates) ? plane.plates : [],
+    entry: plane.entry || '',
+    exit: plane.exit || '',
+    files: listedFiles(plane),
+    skills: plane.skills || '',
+    setup: plane.setup || '',
+    teardown: plane.teardown || '',
+    worn: plane.worn || '',
+  };
   return cardRows(view).map(([key, value]) => `${key}: ${value}`.trimEnd()).join('\n');
 }
 
