@@ -6,7 +6,6 @@ import { writeSessionBoot } from '../../integrations/grok/hooks/grok-hook-utils.
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import {
-  cardStop,
   findPlatesDir,
   formatCardPane,
   handCard,
@@ -17,23 +16,22 @@ import {
   lookCards,
   holdPlane,
   maintainLens,
-  organStop,
   readLensCard,
   suitHint,
 } from '../../integrations/hooks/goggles-pipeline.mjs';
 
 describe('goggles plate', () => {
-  it('kind 1 names one plane', () => {
-    for (const name of ['dichotomy', 'syncopate', 'loop']) {
-      expect(look([name]).text).toBe(`The reading is ${name}.`);
+  it('one plane returns its card', () => {
+    expect(look(['routing']).text).toContain('Plane: routing');
+    expect(look(['digest', 'ground']).text).toContain('Plane: ground');
+    expect(look(['triage', 'boot']).text).toContain('Plane: boot');
+    for (const name of ['dichotomy', 'syncopate', 'synthesis', 'loop', 'kind', 'outer', 'domain']) {
+      expect(look([name]).text).toBe('Name one plane.');
     }
-    expect(look(['synthesis']).text).toBe('The reading is synthesis. File: src/nucleus/synthesis.ts');
-    expect(look(['dichotomy', 'part']).text).toBe('The reading is dichotomy. Scope is part.');
-    expect(look(['syncopate', 'one', 'flow']).text).toBe('The reading is syncopate. Scope is one flow.');
-    expect(look(['loop', 'one', 'artifact']).text).toBe('The reading is loop. Scope is one artifact.');
-    expect(look(['digest', 'ecosystem', 'part']).text).toBe('Name one plane.');
-    expect(look(['digest', 'dichotomy']).text).toBe('Name one outer or one plane.');
-    expect(look(['digest', 'triage']).text).toBe('Name one outer or one plane.');
+    expect(look(['kind', '1']).text).toBe('Name one plane.');
+    expect(look(['kind', '0']).text).toBe('Name one plane.');
+    expect(look([]).text).toBe('Name one plane.');
+    expect(look(['routing', 'house']).text).toBe('Name one plane.');
   });
 
   it('digest and triage return the same card', () => {
@@ -219,126 +217,45 @@ describe('goggles plate', () => {
     expect(look(['outer-loop']).text).toBe('Name one plane.');
     expect(look(['outer', 'loop']).text).toBe('Name one plane.');
     expect(look(['the', 'outer', 'loop']).text).toBe('Name one plane.');
-    expect(look(['name', 'dichotomy']).text).toBe('The reading is dichotomy.');
+    expect(look(['name', 'dichotomy']).text).toBe('Name one plane.');
     expect(look(['kind', '1']).text).toBe('Name one plane.');
-    expect(look(['kind', '2']).text).toBe('kind is 1.');
-    expect(look(['pull', '3']).text).toBe('kind is 1.');
-    expect(look(['2']).text).toBe('kind is 1.');
-    expect(look([]).text).toBe('Name one outer or one plane.');
-    expect(look(['dichotomy', 'triage']).text).toBe('Name one outer or one plane.');
-    expect(look(['dichotomy', 'calling']).text).toBe('The reading is dichotomy.');
+    expect(look(['kind', '2']).text).toBe('Name one plane.');
+    expect(look(['pull', '3']).text).toBe('Name one plane.');
+    expect(look(['2']).text).toBe('Name one plane.');
+    expect(look([]).text).toBe('Name one plane.');
+    expect(look(['dichotomy', 'triage']).text).toBe('Name one plane.');
+    expect(look(['dichotomy', 'calling']).text).toBe('Name one plane.');
     expect(look(['ground']).text).toContain('Plane: ground');
     expect(look(['routing']).text).toContain('Plane: routing');
     expect(look(['boot']).text).toContain('Plane: boot');
-    expect(look(['domain']).text).toBe('Name one outer or one plane.');
-    expect(look(['eco']).text).toBe('Name one outer or one plane.');
-    expect(look(['TEGHAL']).text).toBe('Name one outer or one plane.');
+    expect(look(['domain']).text).toBe('Name one plane.');
+    expect(look(['eco']).text).toBe('Name one plane.');
+    expect(look(['TEGHAL']).text).toBe('Name one plane.');
   });
 
-  it('stops an action that leaves the plane and stays quiet on the plane', () => {
+  it('a spoken name does not arm a hold', () => {
     const root = mkdtempSync(join(tmpdir(), 'goggles-read-'));
     const station = join(root, '.xray', 'state', 'STATION.md');
     mkdirSync(join(root, '.xray', 'state'), { recursive: true });
     writeFileSync(station, '# Station\n\nCard: routing. From: ground. Digest: old. Filled: plate. Open: src/nucleus/thin-dispatch.ts\n\nContinue this card.\n');
-    expect(handCard(root, 'name dichotomy')).toBeNull();
-    expect(readFileSync(station, 'utf8')).not.toMatch(/^Card:/m);
-    const plate = ['docs-site/docs/plates/routing.md'];
-    const stopped = cardStop(root, 'read_file', plate[0], plate);
-    expect(stopped).toEqual({
-      gate: 'goggles',
-      decision: 'deny',
-      reason: 'The reading is dichotomy. That drawing is not the plane.',
-    });
-    expect(cardStop(root, 'read_file', plate[0], plate)?.decision).toBe('deny');
-    expect(cardStop(root, 'read_file', 'stay on dichotomy in src/nucleus/thin-dispatch.ts', ['src/nucleus/thin-dispatch.ts'])).toEqual({
-      gate: 'goggles',
-      decision: 'allow',
-    });
-    expect(cardStop(root, 'read_file', 'src/nucleus/synthesis.ts', ['src/nucleus/synthesis.ts'])).toEqual({
-      gate: 'goggles',
-      decision: 'deny',
-      reason: 'The reading is dichotomy. The action is synthesis.',
-    });
-    expect(cardStop(root, 'read_file', 'src/foo/synthesis-notes.md', ['src/foo/synthesis-notes.md'])).toEqual({
-      gate: 'goggles',
-      decision: 'allow',
-    });
-    expect(cardStop(root, 'grep', 'goggles', [])).toEqual({ gate: 'goggles', decision: 'allow' });
-    expect(cardStop(root, 'read_file', plate[0], plate)?.decision).toBe('deny');
-    expect(cardStop(root, 'grep', 'triage the logs', [])).toEqual({
-      gate: 'goggles',
-      decision: 'deny',
-      reason: 'The reading is dichotomy. The action is triage.',
-    });
-    expect(handCard(root, 'please triage this bug')).toBeNull();
-    expect(cardStop(root, 'read_file', plate[0], plate)?.decision).toBe('deny');
-    expect(handCard(root, 'name routing boot')).toBeNull();
-    expect(cardStop(root, 'read_file', plate[0], plate)).toBeNull();
-    rmSync(root, { recursive: true, force: true });
+    try {
+      expect(handCard(root, 'name dichotomy')).toBeNull();
+      expect(readFileSync(station, 'utf8')).toMatch(/^Card:/m);
+      expect(look(['dichotomy']).text).toBe('Name one plane.');
+      expect(handCard(root, 'goggles')).toBeNull();
+      expect(readFileSync(station, 'utf8')).not.toMatch(/^Card:/m);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 
-  it('a held plane may open its own drawing and a plate named on the lens', () => {
-    const held = { plane: 'stamp-plate', scope: '' };
-    const own = 'docs-site/docs/plates/stamp-plate.md';
-    const listed = 'docs-site/docs/plates/review.md';
-    const foreign = 'docs-site/docs/plates/routing.md';
-    expect(organStop(held, { tool: 'read_file', text: own, paths: [own] })).toBeNull();
-    expect(organStop(held, { tool: 'read_file', text: listed, paths: [listed] })).toBeNull();
-    expect(organStop(held, { tool: 'read_file', text: foreign, paths: [foreign] })).toEqual({
-      gate: 'goggles',
-      decision: 'deny',
-      reason: 'The reading is stamp-plate. That drawing is not the plane.',
-    });
-  });
-
-  it('holds a named plane without look and leaves casual speech alone', () => {
-    const root = mkdtempSync(join(tmpdir(), 'goggles-name-'));
-    mkdirSync(join(root, '.xray', 'state'), { recursive: true });
-    expect(handCard(root, 'synthesis is the bug')).toBeNull();
-    expect(cardStop(root, 'grep', 'triage the logs', [])?.reason).toBe('The reading is synthesis. The action is triage.');
-    expect(handCard(root, 'please triage this bug')).toBeNull();
-    expect(handCard(root, 'fix the loop')).toBeNull();
-    expect(cardStop(root, 'grep', 'triage the logs', [])?.reason).toBe('The reading is synthesis. The action is triage.');
-    expect(handCard(root, 'dichotomy and syncopate')).toBeNull();
-    expect(cardStop(root, 'read_file', 'docs-site/docs/plates/routing.md', ['docs-site/docs/plates/routing.md'])).toBeNull();
-    rmSync(root, { recursive: true, force: true });
-  });
-
-  it('scope stops an action wider than the dial', () => {
-    expect(organStop(
-      { plane: 'loop', scope: 'one artifact' },
-      { tool: 'bash', text: 'npm test', paths: [] },
-    )?.reason).toBe('The reading is loop. Scope is one artifact. This action is wider.');
-    expect(organStop(
-      { plane: 'loop', scope: 'one artifact' },
-      { tool: 'read_file', text: 'src/one.ts', paths: ['src/one.ts'] },
-    )).toBeNull();
-    expect(organStop(
-      { plane: 'digest', scope: 'part' },
-      { tool: 'grep', text: 'two places', paths: ['src/a.ts', 'docs/b.ts'] },
-    )?.reason).toBe('The reading is digest. Scope is part. This action crosses parts.');
-  });
-
-  it('session boot holds the plane and does not write a file card', () => {
+  it('session boot does not write a file card', () => {
     const root = mkdtempSync(join(tmpdir(), 'goggles-boot-'));
     mkdirSync(join(root, '.xray', 'state'), { recursive: true });
     writeSessionBoot(root, { intent: 'short', cardText: 'look at synthesis then part', host: 'grok' });
     const station = readFileSync(join(root, '.xray', 'state', 'STATION.md'), 'utf8');
     expect(station).not.toMatch(/^Card:/m);
-    expect(cardStop(root, 'bash', 'npm test', [])).toEqual({ gate: 'goggles', decision: 'allow' });
-    const plate = 'docs-site/docs/plates/boot.md';
-    expect(cardStop(root, 'read_file', plate, [plate])?.reason).toBe('The reading is synthesis. That drawing is not the plane.');
     rmSync(root, { recursive: true, force: true });
-  });
-
-  it('allows the plane plate and the plates listed on the lens', () => {
-    const own = 'docs-site/docs/plates/routing.md';
-    expect(organStop({ plane: 'routing' }, { tool: 'read_file', text: own, paths: [own] })).toBeNull();
-    const related = 'docs-site/docs/plates/write-home.md';
-    expect(organStop({ plane: 'activity-log' }, { tool: 'read_file', text: related, paths: [related] })).toBeNull();
-    const other = 'docs-site/docs/plates/house.md';
-    expect(organStop({ plane: 'activity-log' }, { tool: 'read_file', text: other, paths: [other] })?.reason)
-      .toBe('The reading is activity-log. That drawing is not the plane.');
   });
 
   it('compact writes the lens and does not replace the notes body', () => {
@@ -391,7 +308,6 @@ describe('goggles plate', () => {
     expect(cards).toHaveLength(1);
     const card = cards[0];
     expect(card.plane).toBe('ground');
-    expect(card.flavor).toBe('digest');
     expect(card.from).toBe('');
     expect(card.digest).toBe('Home. The dev plane.');
     expect(card.plate).toBe('');
@@ -436,8 +352,8 @@ describe('goggles plate', () => {
     const piped = execFileSync(process.execPath, [bin, 'digest', 'ground'], { encoding: 'utf8' });
     expect(piped).toContain('Plane: ground');
     expect(piped).not.toContain('┌');
-    expect(execFileSync(process.execPath, [bin, 'dichotomy'], { encoding: 'utf8' })).toBe('The reading is dichotomy.\n');
-    expect(execFileSync(process.execPath, [bin, 'kind', '0'], { encoding: 'utf8' })).toBe('kind is 1.\n');
+    expect(execFileSync(process.execPath, [bin, 'dichotomy'], { encoding: 'utf8' })).toBe('Name one plane.\n');
+    expect(execFileSync(process.execPath, [bin, 'kind', '0'], { encoding: 'utf8' })).toBe('Name one plane.\n');
   });
 
   it('reads the stored card and keeps a hand edit', () => {
@@ -489,8 +405,8 @@ describe('goggles plate', () => {
     const source = fileURLToPath(new URL('../../integrations/hooks/goggles-pipeline.mjs', import.meta.url));
     try {
       symlinkSync(source, link);
-      expect(execFileSync(process.execPath, [link, 'dichotomy'], { encoding: 'utf8' })).toBe('The reading is dichotomy.\n');
-      expect(execFileSync(process.execPath, [link, 'kind', '0'], { encoding: 'utf8' })).toBe('kind is 1.\n');
+      expect(execFileSync(process.execPath, [link, 'dichotomy'], { encoding: 'utf8' })).toBe('Name one plane.\n');
+      expect(execFileSync(process.execPath, [link, 'kind', '0'], { encoding: 'utf8' })).toBe('Name one plane.\n');
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

@@ -95,7 +95,7 @@ program
   });
 
 const LOOK_HELP =
-  "One outer is a reading. digest and triage return a card.";
+  "Name one plane. A missing card is written into LENS.md. Later looks read that card.";
 
 function gogglesScript(): string {
   const built = join(packageRoot, "dist", "integrations", "hooks", "goggles-pipeline.mjs");
@@ -121,7 +121,7 @@ function runGoggles(args: string[]): void {
 
 program
   .command("look")
-  .argument("[args...]", "one outer, or digest/triage and one card plane")
+  .argument("[args...]", "one card plane")
   .description(LOOK_HELP)
   .action((args: string[]) => {
     runGoggles(args);

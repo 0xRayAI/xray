@@ -77,10 +77,10 @@ describe("sleeve", () => {
   });
 
   it("keeps the outer readings and leaves ground, routing, and house alone", () => {
-    expect(look(["loop"]).text).toBe("The reading is loop.");
-    expect(look(["domain"]).text).toBe("Name one outer or one plane.");
-    expect(look(["state"]).text).toBe("Name one outer or one plane.");
-    expect(look(["eco"]).text).toBe("Name one outer or one plane.");
+    expect(look(["loop"]).text).toBe("Name one plane.");
+    expect(look(["domain"]).text).toBe("Name one plane.");
+    expect(look(["state"]).text).toBe("Name one plane.");
+    expect(look(["eco"]).text).toBe("Name one plane.");
     expect(look(["outer-loop"]).text).toBe("Name one plane.");
     const ground = look(["digest", "ground"]).text;
     expect(ground.startsWith("Plane: ground")).toBe(true);
@@ -256,19 +256,20 @@ describe("sleeve", () => {
 
       const looked = await dispatchTool(
         "look",
-        { outer: "digest", plane: "memory-recall" },
+        { plane: "memory-recall" },
         root,
       );
       const payload = looked.payload.content as LookCard;
       expect(payload.plane).toBe("memory-recall");
       expect(payload.sleeve).toBeUndefined();
-      const plain = await dispatchTool("look", { outer: "digest", plane: "ground" }, root);
+      const plain = await dispatchTool("look", { plane: "ground" }, root);
       expect((plain.payload.content as LookCard).sleeve).toBeUndefined();
       expect(
         JSON.parse(fs.readFileSync(path.join(root, ".xray", "state", "goggles-plane.json"), "utf8")).plane,
       ).toBe("ground");
-      const loop = await dispatchTool("look", { outer: "loop" }, root);
-      expect(loop.payload.content).toBe("The reading is loop.");
+      const loop = await dispatchTool("look", { plane: "loop" }, root);
+      expect(loop.isError).toBe(true);
+      expect(loop.payload.error.reason).toBe("plane is a card plane.");
 
       const ranAt = JSON.parse(
         fs.readFileSync(path.join(root, ".xray", "state", "sleeve-mill.json"), "utf8"),

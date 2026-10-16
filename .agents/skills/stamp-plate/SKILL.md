@@ -45,7 +45,7 @@ The lens is the door. It lists one skill. Read the lens and the skill is already
 3. Leave the top-level `planes` array as it is. That array is the worn set, not the search lens.
 4. Write `.agents/skills/<token>/SKILL.md` in the same change. Short steps for this one artifact.
 5. A pipeline lens also gets a plate, type omitted, with `INPUT` and `OUTPUT`. `ground` lists `SKILLS.md` and has no plate file.
-6. Opening the lens's own drawing, or a plate named in `plates`, stays on the plane. Any other drawing is refused: `The reading is <token>. That drawing is not the plane.`
+6. A file listed on the plane map stays open.
 7. Run `npx vitest run src/__tests__/unit/goggles-pipeline.test.ts` from the worktree. The worktree needs `dist` or the worn build drifts.
 
 Naming exactly one plane lets the search continue. Zero planes, or more than one, stops it with `Name one plane.`

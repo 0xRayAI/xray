@@ -54,7 +54,7 @@ const TOP_LEVEL = [
 const HELP_LINES = [
   'Install xray framework in the current project',
   'Set up .mcp.json and the OpenCode, Grok, Hermes, and OpenClaw bridges',
-  'One outer is a reading. digest and triage return a card.',
+  'Name one plane. A missing card is written into LENS.md. Later looks read that card.',
   'Same organ as look.',
   'Wear the 0xray suit in this git checkout',
   'Remove the 0xray suit and restore the pre-wear hooks file',

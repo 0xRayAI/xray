@@ -21,7 +21,7 @@ import {
   workspaceRoot,
 } from './grok-hook-utils.js';
 import { appendHookActivity } from './grok-hook-activity.js';
-import { cardStop, lensBeforeResearch } from '../../hooks/goggles-pipeline.mjs';
+import { lensBeforeResearch } from '../../hooks/goggles-pipeline.mjs';
 import { repertoireDecisionFields, repertoireRoute } from '../../hooks/pre-tool-speak.mjs';
 
 export { repertoireDecisionFields };
@@ -79,23 +79,6 @@ async function main() {
     if (isWriteTool(toolName) && content) {
       const extraBlock = checkCodexPatterns(content, { terms: [2, 7] });
       if (extraBlock) finish(eventRoot, 'deny', extraBlock, null, toolName);
-    }
-
-    const stop = cardStop(
-      eventRoot,
-      toolName,
-      [cmd, content, toolInput.pattern, toolInput.query, ...(ctx.paths || [])].filter(Boolean).join('\n'),
-      ctx.paths || [],
-      toolInput,
-    );
-    if (stop?.decision === 'deny') {
-      finish(eventRoot, 'deny', stop.reason, null, toolName, { gate: stop.gate });
-    }
-    if (stop?.decision === 'allow') {
-      finish(eventRoot, 'allow', null, null, toolName, {
-        gate: stop.gate,
-        hookSpecificOutput: stop.hookSpecificOutput,
-      });
     }
 
     const spoken = [cmd, content, toolInput.pattern, toolInput.query, ...(ctx.paths || [])].filter(Boolean).join('\n');

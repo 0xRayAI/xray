@@ -57,11 +57,9 @@ When `multi_agent_orchestration.lead_dev_mode` is true in `features.json` (defau
 
 The command is `0xray look`. `0xray goggles` is the same organ. A pipe keeps the line card. A terminal shows that card as a pane. Chat seats without hooks use the `goggles` MCP tools `look` and `status_lens`. Same organ.
 
-Name one card plane. The look returns that card from `.xray/state/LENS.md`. The first time Entry and Exit are missing, the card is written from the plate. A later look reads those rows. A hand edit stays. A missing file is one live line and is not stored. `digest` and `triage` return that same card. Scope words on a card look are ignored. The rows are ground, routing, house, boot, governance, memory-recall, orchestration, processor, and reporting. The mill path is `scripts/foundry`.
+Name one plane. The look returns that card from `.xray/state/LENS.md`. The first time Entry and Exit are missing, the card is written from the plate. A later look reads those rows. A hand edit stays. A missing file is one live line and is not stored. Any other look says `Name one plane.` The rows are ground, routing, house, boot, governance, memory-recall, orchestration, processor, and reporting. The mill path is `scripts/foundry`.
 
-Name one of dichotomy, syncopate, synthesis, or loop and the look returns that reading. `kind 1` and `outer` with no single plane say `Name one plane.` Any other kind says `kind is 1.` An empty look, an unknown name, or two outers say `Name one outer or one plane.` A card plane named with dichotomy, syncopate, synthesis, or loop says `plane goes with digest or triage only.`
-
-The hold lasts for the work that named the plane. A sentence that does not say look or name does not arm it and does not drop it. Work that says goggles clears the hold and stays quiet. When a tool names one card plane, the suit adds that plane's file as a hint.
+A search names one card plane or it stops. Saying goggles clears a stale card line on the station. When a tool names one card plane, the suit adds that plane's file as a hint.
 
 ## Hooks (rewired, not new MCPs)
 

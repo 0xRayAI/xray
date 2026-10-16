@@ -114,7 +114,7 @@ describe("wake cascade", () => {
 
       const looked = await dispatchTool(
         "look",
-        { outer: "digest", plane: "memory-recall" },
+        { plane: "memory-recall" },
         root,
       );
       expect(looked.isError).toBe(false);
@@ -122,7 +122,7 @@ describe("wake cascade", () => {
       expect(payload.plane).toBe("memory-recall");
       expect(payload.cascade).toBeUndefined();
 
-      const plain = await dispatchTool("look", { outer: "digest", plane: "ground" }, root);
+      const plain = await dispatchTool("look", { plane: "ground" }, root);
       const plainCard = plain.payload.content as LookCard;
       expect(plainCard.cascade).toBeUndefined();
     } finally {

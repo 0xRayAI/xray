@@ -18,15 +18,13 @@ It views one plane.
   │ · later passes read that stored card                       │
   ├────────────────────────────────────────────────────────────┤
   │ REFUSED                                                    │
-  │ · an empty look                                            │
-  │ · kind and outer together                                  │
-  │ · a plane on an outer that has no card                     │
+  │ · a look that does not name one plane                      │
   └────────────────────────────────────────────────────────────┘
 ```
 
 A card views one plane. When Entry and Exit are missing, the named plane is written into `.xray/state/LENS.md`. Later passes read that card. A missing file is a live line and is not stored.
 
-The refusals read: `Name one outer or one plane.` · `Name one plane.` · `kind is 1.` · `Send kind or outer, not both.` · `plane goes with digest or triage only.`
+A look that does not name one plane says `Name one plane.`
 
 A checkout named `0xray` records `scripts/mjs/run-goggles-mcp.mjs`. Any other project records `node_modules/0xray/scripts/mjs/run-goggles-mcp.mjs`.
 

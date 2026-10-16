@@ -8,7 +8,6 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  cardStop,
   findPlatesDir,
   growPlane,
   handCard,
@@ -37,19 +36,12 @@ try {
     check(`${id} file`, files.length > 0 && missing.length === 0, files.join(', ') || 'none');
   }
 
-  const synthesis = look(['synthesis']).text;
-  check('synthesis file', synthesis.includes('src/nucleus/synthesis.ts'), synthesis);
-  check('dichotomy stays a reading', look(['dichotomy']).text === 'The reading is dichotomy.');
+  check('a worn name asks for one plane', look(['dichotomy']).text === 'Name one plane.' && look(['synthesis']).text === 'Name one plane.');
 
   const held = mkdtempSync(join(tmpdir(), 'goggles-observer-hold-'));
   try {
-    handCard(held, 'please triage this bug');
-    const casual = cardStop(held, 'grep', 'check the loop', []);
-    check('casual triage does not arm', casual === null);
     handCard(held, 'name dichotomy');
-    handCard(held, 'is it useful');
-    const stayed = cardStop(held, 'read_file', 'docs-site/docs/plates/routing.md', ['docs-site/docs/plates/routing.md']);
-    check('ordinary sentence does not drop the hold', Boolean(stayed && stayed.decision === 'deny'));
+    check('a spoken name does not arm', look(['dichotomy']).text === 'Name one plane.');
     check('a named card plane continues', lensBeforeResearch(held, 'grep', 'open the boot plane') === null);
     check('a shell rg is a search', lensBeforeResearch(held, 'bash', 'rg plane src')?.decision === 'deny');
     check('git and npm stay open', lensBeforeResearch(held, 'bash', 'git status') === null && lensBeforeResearch(held, 'bash', 'npm test') === null);

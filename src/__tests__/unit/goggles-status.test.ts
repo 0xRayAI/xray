@@ -29,7 +29,7 @@ describe('goggles status probe', () => {
     expect(status).toContain('probeGoggles(packageRoot, cwd)');
     expect(health).toContain('formatGogglesStatus(probeGoggles(packageRoot, process.cwd()))');
     expect(health).toContain('.command("look")');
-    expect(health).toContain('One outer is a reading. digest and triage return a card.');
+    expect(health).toContain('Name one plane. A missing card is written into LENS.md. Later looks read that card.');
     expect(health).not.toContain('Kind 0');
     expect(health).not.toContain('Glimpse every plane');
   });
