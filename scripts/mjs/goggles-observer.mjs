@@ -10,7 +10,6 @@ import { fileURLToPath } from 'node:url';
 import {
   findPlatesDir,
   growPlane,
-  handCard,
   lensBeforeResearch,
   look,
   suitHint,
@@ -28,31 +27,30 @@ function check(name, ok, detail) {
 }
 
 try {
-  const planes = ['ground', 'routing', 'house', 'boot', 'governance', 'memory-recall', 'orchestration', 'processor', 'reporting'];
-  for (const id of planes) {
-    const text = look(['digest', id]).text;
+  for (const id of ['dev', 'integration', 'domain', 'ecosystem']) {
+    const text = look([id]).text;
     const files = (text.match(/^Files: (.+)$/m) || [, ''])[1].split(',').map((item) => item.trim()).filter(Boolean);
     const missing = files.filter((rel) => !existsSync(join(repo, rel)));
-    check(`${id} file`, files.length > 0 && missing.length === 0, files.join(', ') || 'none');
+    check(
+      `${id} card`,
+      text.includes(`Plane: ${id}`) && text.includes('Entry:') && text.includes('Exit:') && files.length > 0 && missing.length === 0,
+      missing.join(', ') || files[0],
+    );
   }
-
   check('a worn name asks for one plane', look(['dichotomy']).text === 'Name one plane.' && look(['synthesis']).text === 'Name one plane.');
 
   const held = mkdtempSync(join(tmpdir(), 'goggles-observer-hold-'));
   try {
-    handCard(held, 'name dichotomy');
-    check('a spoken name does not arm', look(['dichotomy']).text === 'Name one plane.');
-    const bootSearch = lensBeforeResearch(held, 'grep', 'open the boot plane');
-    check(
-      'a named search returns the boot card',
-      bootSearch?.decision === 'deny' && String(bootSearch.reason).includes('Plane: boot') && String(bootSearch.reason).includes('Entry:'),
-    );
-    check('a shell rg is a search', lensBeforeResearch(held, 'bash', 'rg plane src')?.decision === 'deny');
+    const search = lensBeforeResearch(held, 'grep', 'find the login bug');
+    check('a search returns the dev card', search?.decision === 'deny' && String(search.reason).includes('Plane: dev') && String(search.reason).includes('Entry:'));
     check('git and npm stay open', lensBeforeResearch(held, 'bash', 'git status') === null && lensBeforeResearch(held, 'bash', 'npm test') === null);
-    check('a mapped file stays open', lensBeforeResearch(held, 'read_file', 'src/core/boot-orchestrator.ts') === null);
-    const other = 'src/core/config-paths.ts';
-    check('a read with no plane asks for one', lensBeforeResearch(held, 'read_file', other)?.reason === 'Name one plane.');
-    check('the next read still asks for one', lensBeforeResearch(held, 'read_file', other)?.reason === 'Name one plane.');
+    check('a file on the current plane stays quiet', lensBeforeResearch(held, 'read_file', 'src/cli/index.ts') === null);
+    const hop = lensBeforeResearch(held, 'read_file', 'src/nucleus/thin-dispatch.ts');
+    check('another plane switches and stays open', hop?.decision === 'allow' && String(hop.reason).includes('Plane: integration'));
+    const next = lensBeforeResearch(held, 'grep', 'still looking');
+    check('the next search uses the plane it is on', next?.decision === 'deny' && String(next.reason).includes('Plane: integration'));
+    const stray = lensBeforeResearch(held, 'read_file', 'CHANGELOG.md');
+    check('a file on no plane keeps the current card', stray?.decision === 'allow' && String(stray.reason).includes('Plane: integration'));
   } finally {
     rmSync(held, { recursive: true, force: true });
   }
@@ -69,12 +67,6 @@ try {
     files.includes('src/core/boot-orchestrator.ts') && !files.includes('src/missing.ts'),
     files.join(', '),
   );
-  check('suit hint names the boot file', suitHint('open the boot plane').includes('src/core/boot-orchestrator.ts'));
-  const house = look(['digest', 'house']).text;
-  check('house doors', house.includes('Entry: EMPTY') && house.includes('Setup: no house/ folder yet'), house.split('\n').filter((line) => /^(Entry|Exit|Setup|Teardown):/.test(line)).join(' | '));
-  const memory = look(['digest', 'memory-recall']).text;
-  check('memory worn twin', memory.includes('Worn: dist/integrations/hooks/plates.cjs'));
-  check('two planes both files', suitHint('routing and governance').includes('routing:') && suitHint('routing and governance').includes('governance:'));
   check('a look with no plane asks for one', suitHint('look') === 'Name one plane.');
 } finally {
   rmSync(state, { recursive: true, force: true });

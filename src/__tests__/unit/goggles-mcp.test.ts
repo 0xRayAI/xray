@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
-import { lookCards } from '../../integrations/hooks/goggles-pipeline.mjs';
+import { CARD_PLANES, lookCards } from '../../integrations/hooks/goggles-pipeline.mjs';
 import { TOOLS, dispatchTool } from '../../integrations/hooks/goggles-mcp.mjs';
 
 const LAUNCHER = fileURLToPath(new URL('../../../scripts/mjs/run-goggles-mcp.mjs', import.meta.url));
@@ -29,6 +29,8 @@ describe('goggles MCP', () => {
     expect(copy).not.toMatch(/Dynamo|Clearing|Repertoire/);
     expect(copy).not.toMatch(/memory-recall/);
     for (const name of NINE) expect(copy).not.toContain(name);
+    const lookTool = TOOLS[0] as { inputSchema?: { properties?: { plane?: { enum?: string[] } } } };
+    expect(lookTool.inputSchema?.properties?.plane?.enum).toEqual([...CARD_PLANES]);
   });
 
   it('an extra argument is refused', async () => {
@@ -40,73 +42,78 @@ describe('goggles MCP', () => {
   it('a worn name is not a card plane', async () => {
     const { payload, isError } = await dispatchTool('look', { plane: 'dichotomy' }, tempRoot());
     expect(isError).toBe(true);
-    expect(payload.error.reason).toBe('plane is a card plane.');
+    expect(payload.error.reason).toBe('Name one plane.');
   });
 
-  it('card skills show the full path', async () => {
-    const { payload, isError } = await dispatchTool('look', { plane: 'routing' }, tempRoot());
+  it('card skills show the path on the card', async () => {
+    const { payload, isError } = await dispatchTool('look', { plane: 'domain' }, tempRoot());
     expect(isError).toBe(false);
-    expect(payload.content.skills).toBe('.agents/skills/routing/SKILL.md');
+    expect(payload.content.skills).toBe('.agents/skills');
   });
 
   it('card planes come from the organ list', async () => {
-    const { payload, isError } = await dispatchTool('look', { plane: 'lens-gate' }, tempRoot());
+    const root = tempRoot();
+    const { payload, isError } = await dispatchTool('look', { plane: 'dev' }, root);
     expect(isError).toBe(false);
-    expect(payload.content.plane).toBe('lens-gate');
+    expect(payload.content.plane).toBe('dev');
+    const missed = await dispatchTool('look', { plane: 'lens-gate' }, root);
+    expect(missed.isError).toBe(true);
+    expect(missed.payload.error.reason).toBe('Name one plane.');
+    rmSync(root, { recursive: true, force: true });
   });
 
-  it('stamp-plate is a selectable card plane', async () => {
+  it('a plate id is not a card plane', async () => {
     const { payload, isError } = await dispatchTool('look', { plane: 'stamp-plate' }, tempRoot());
-    expect(isError).toBe(false);
-    expect(payload.mode).toBe('card');
-    expect(payload.content.plane).toBe('stamp-plate');
-    expect(payload.content.skills).toBe('.agents/skills/stamp-plate/SKILL.md');
-  });
-
-  it('an empty look asks for one plane', async () => {
-    const { payload, isError } = await dispatchTool('look', {}, tempRoot());
     expect(isError).toBe(true);
     expect(payload.error.reason).toBe('Name one plane.');
   });
 
-  it('digest ground is the card with empties empty', async () => {
-    const { payload, isError } = await dispatchTool('look', { plane: 'ground' }, tempRoot());
+  it('an empty look returns the current card', async () => {
+    const { payload, isError } = await dispatchTool('look', {}, tempRoot());
+    expect(isError).toBe(false);
+    expect(payload.mode).toBe('card');
+    expect(payload.content.plane).toBe('dev');
+    expect(payload.content.entry).toContain('package.json');
+    expect(payload.content.exit).toContain('this repo');
+  });
+
+  it('dev is the card for this checkout', async () => {
+    const { payload, isError } = await dispatchTool('look', { plane: 'dev' }, tempRoot());
     expect(isError).toBe(false);
     expect(payload.mode).toBe('card');
     const card = payload.content;
-    expect(card.plane).toBe('ground');
-    expect(card.digest).toBe('Home. The dev plane.');
-    expect(card.files).toContain('scripts/foundry');
-    expect(card.entry).toBe('');
-    expect(card.exit).toBe('');
-    expect(card.setup).toBe('');
-    expect(card.teardown).toBe('');
+    expect(card.plane).toBe('dev');
+    expect(card.digest).toBe('This checkout.');
+    expect(card.files).toEqual(['src', 'grok-bot', 'docs-site', 'AGENTS.md', 'package.json', 'README.md']);
+    expect(card.entry).toBe('package.json, src, and grok-bot/OP-PROC.md.');
+    expect(card.exit).toBe('A change that stays in this repo.');
+    expect(card.setup).toBe('You are in this repo.');
+    expect(card.teardown).toBe('Leave other repos alone.');
     expect(card.skills).toBe('SKILLS.md');
     expect(card.notes).toEqual([]);
     expect(JSON.stringify(card)).not.toContain('The reading is');
     expect(JSON.stringify(card)).not.toContain('n/a');
+    expect(JSON.stringify(card)).not.toContain('Sleeve:');
   });
 
-  it('triage routing returns the stored card', async () => {
-    const organ = lookCards(['triage', 'routing'])[0];
-    const { payload } = await dispatchTool('look', { plane: 'routing' }, tempRoot());
+  it('integration returns the stored card', async () => {
+    const organ = lookCards(['integration'])[0];
+    const { payload } = await dispatchTool('look', { plane: 'integration' }, tempRoot());
     const card = payload.content;
     expect(card.entry).toBe(organ.entry);
-    expect(card.entry).toBe('task text · context · thresholds');
+    expect(card.entry).toBe('The hook, the dispatch, or the bridge this file sits on.');
+    expect(card.exit).toBe('The next call. Stop there.');
     expect(card.notes.join('\n')).not.toContain('Empty:');
     expect(card.notes.join('\n')).not.toContain('Holds.');
   });
 
-  it('one artifact on a multi-file plane keeps the view', async () => {
-    const { payload, isError } = await dispatchTool(
-      'look',
-      { plane: 'ground' },
-      tempRoot(),
-    );
+  it('a dev look keeps every file on the card', async () => {
+    const { payload, isError } = await dispatchTool('look', { plane: 'dev' }, tempRoot());
     expect(isError).toBe(false);
     expect(payload.mode).toBe('card');
-    expect(payload.content.files).toContain('scripts/foundry');
-    expect(payload.content.setup).toBe('');
+    expect(payload.content.files).toContain('src');
+    expect(payload.content.files).toContain('README.md');
+    expect(payload.content.setup).toBe('You are in this repo.');
   });
 
   it('a plate path is not a card plane', async () => {
@@ -122,15 +129,16 @@ describe('goggles MCP', () => {
 
   it('a plane name returns that view', async () => {
     const root = tempRoot();
-    const { payload, isError } = await dispatchTool('look', { plane: 'routing' }, root);
+    const { payload, isError } = await dispatchTool('look', { plane: 'integration' }, root);
     expect(isError).toBe(false);
     expect(payload.mode).toBe('card');
-    expect(payload.content.plane).toBe('routing');
-    expect(payload.content.files).toEqual(['src/nucleus/thin-dispatch.ts']);
+    expect(payload.content.plane).toBe('integration');
+    expect(payload.content.files).toContain('src/nucleus');
+    expect(payload.content.files).toContain('src/integrations');
     const lens = readFileSync(join(root, '.xray', 'state', 'LENS.md'), 'utf8');
-    expect(lens.startsWith('Plane: routing\n')).toBe(true);
-    expect(lens).toContain('Entry: task text · context · thresholds');
-    expect(lens).toContain('Exit: agent · strategy · adjusted score · file');
+    expect(lens.startsWith('Plane: integration\n')).toBe(true);
+    expect(lens).toContain('Entry: The hook, the dispatch, or the bridge this file sits on.');
+    expect(lens).toContain('Exit: The next call. Stop there.');
     rmSync(root, { recursive: true, force: true });
   });
 
@@ -157,10 +165,10 @@ describe('goggles MCP', () => {
   });
 
   it('prefixed tool names still hit the same two tools', async () => {
-    const { payload, isError } = await dispatchTool('goggles__look', { plane: 'routing' }, tempRoot());
+    const { payload, isError } = await dispatchTool('goggles__look', { plane: 'integration' }, tempRoot());
     expect(isError).toBe(false);
     expect(payload.mode).toBe('card');
-    expect(payload.content.plane).toBe('routing');
+    expect(payload.content.plane).toBe('integration');
     const status = await dispatchTool('goggles__status_lens', { extra: true }, tempRoot());
     expect(status.isError).toBe(true);
     expect(status.payload.error.code).toBe('invalid_args');

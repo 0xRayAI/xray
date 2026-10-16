@@ -86,6 +86,9 @@ async function main() {
     if (lensStop?.decision === 'deny') {
       finish(eventRoot, 'deny', lensStop.reason, null, toolName, { gate: lensStop.gate });
     }
+    if (lensStop?.decision === 'allow' && lensStop.reason) {
+      finish(eventRoot, 'allow', lensStop.reason, lensStop.reason, toolName, { gate: lensStop.gate });
+    }
 
     const route = repertoireRoute([toolName, cmd, content].filter(Boolean).join(' '));
 

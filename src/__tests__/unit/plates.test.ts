@@ -84,7 +84,7 @@ describe('pipeline plates', () => {
       'Plate: processor — .xray/state/plates/processor.md',
     );
     expect(plateStockLine('open the boot plane')).toBe(
-      'Plate: boot — .xray/state/plates/boot.md File: src/core/boot-orchestrator.ts',
+      'Plate: boot — .xray/state/plates/boot.md',
     );
     expect(plateStockLine('survive the cut')).toBeNull();
   });

@@ -97,8 +97,8 @@ describe('thinDispatch — routeToAgent edge cases', () => {
 
   it('routes a named plane to its file and does not pick the researcher', async () => {
     const { scoreAndRoute } = await import('../../nucleus/thin-dispatch.js');
-    const named = scoreAndRoute('open the boot plane', {});
-    expect(named.file).toBe('src/core/boot-orchestrator.ts');
+    const named = scoreAndRoute('open the integration plane', {});
+    expect(named.file).toBe('src/integrations');
     expect(named.agent).not.toBe('researcher');
     expect(named.agent.length).toBeGreaterThan(0);
     expect(named.lens).toBeUndefined();
@@ -114,7 +114,7 @@ describe('thinDispatch — routeToAgent edge cases', () => {
 
   it('stays quiet when two planes are named', async () => {
     const { scoreAndRoute } = await import('../../nucleus/thin-dispatch.js');
-    const both = scoreAndRoute('routing and governance', {});
+    const both = scoreAndRoute('dev and integration', {});
     expect(both.file).toBeUndefined();
     expect(both.lens).toBeUndefined();
     expect(both.agent.length).toBeGreaterThan(0);

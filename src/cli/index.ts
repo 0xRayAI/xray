@@ -95,7 +95,7 @@ program
   });
 
 const LOOK_HELP =
-  "Name one plane. A missing card is written into LENS.md. Later looks read that card.";
+  "dev, integration, domain, or ecosystem. The card is in LENS.md.";
 
 function gogglesScript(): string {
   const built = join(packageRoot, "dist", "integrations", "hooks", "goggles-pipeline.mjs");

@@ -60,6 +60,9 @@ describe('grok-hook-utils', () => {
     expect(payload.siblingWorkspaceRoots?.[0]?.path).toBe(siblingDir);
     expect(payload.host).toBe('grok');
     expect(payload.repertoireResume).toMatch(/^Repertoire:/);
+    expect(payload.plane).toBe('dev');
+    expect(String(payload.card)).toContain('Plane: dev');
+    expect(String(payload.card)).toContain('Entry:');
   });
 
   it('buildSessionBootPayload does not keep extra.timestamp from a prior boot', () => {

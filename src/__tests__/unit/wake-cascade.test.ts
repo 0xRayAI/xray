@@ -92,14 +92,14 @@ describe("wake cascade", () => {
       const cascadeLines = twice.split("\n").filter((line) => line.startsWith("Cascade:"));
       expect(cascadeLines).toEqual(["Cascade: record-map · notes 1 current"]);
 
-      const reading = look(["digest", "memory-recall"], root).text;
-      expect(reading.startsWith("Plane: memory-recall")).toBe(true);
+      const reading = look(["dev"], root).text;
+      expect(reading.startsWith("Plane: dev")).toBe(true);
       expect(reading).not.toContain("Cascade:");
       expect(reading).not.toContain("index line beta is current");
 
-      const ground = look(["digest", "ground"], root).text;
-      expect(ground.startsWith("Plane: ground")).toBe(true);
-      expect(ground).not.toContain("index line beta is current");
+      const other = look(["integration"], root).text;
+      expect(other.startsWith("Plane: integration")).toBe(true);
+      expect(other).not.toContain("index line beta is current");
 
       const laws = lawsPath(root);
       if (fs.existsSync(laws)) {
@@ -114,15 +114,15 @@ describe("wake cascade", () => {
 
       const looked = await dispatchTool(
         "look",
-        { plane: "memory-recall" },
+        { plane: "dev" },
         root,
       );
       expect(looked.isError).toBe(false);
       const payload = looked.payload.content as LookCard;
-      expect(payload.plane).toBe("memory-recall");
+      expect(payload.plane).toBe("dev");
       expect(payload.cascade).toBeUndefined();
 
-      const plain = await dispatchTool("look", { plane: "ground" }, root);
+      const plain = await dispatchTool("look", { plane: "integration" }, root);
       const plainCard = plain.payload.content as LookCard;
       expect(plainCard.cascade).toBeUndefined();
     } finally {

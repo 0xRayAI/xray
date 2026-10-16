@@ -1,15 +1,11 @@
 /**
- * Goggles. A named card plane returns its stored card.
- * The card is written once, when Entry and Exit are missing.
- * Later looks read that card. A hand edit stays.
- * A missing file is one live line. It is not stored.
- * Any other look says Name one plane.
- * On this host a search is grep, glob, or a shell that runs one.
- * A shell that reads a project source file is a search.
- * A search that names one plane returns that card and does not continue.
- * A search that does not name one plane says Name one plane.
- * A file already on the lens stays open. git and npm stay open.
- * The hook does not author the plate.
+ * Goggles. The plane is state. A session starts on dev.
+ * The card is in LENS.md: Entry, Exit, and the other rows.
+ * A search returns the current card and does not run.
+ * Opening a file on that card stays quiet.
+ * Opening a file on another plane switches, returns that card, and the open proceeds.
+ * A file on no plane stays put and returns the current card.
+ * Compact writes the current card back. It does not add a plane.
  */
 import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, unlinkSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -20,7 +16,111 @@ const FIELD_ORDER = ['plate', 'entry', 'exit', 'files', 'skills', 'setup', 'tear
 const HERE = dirname(fileURLToPath(import.meta.url));
 /** Map names. A look does not answer them. Their files stay on the lens. */
 const WORN_PLANES = ['dichotomy', 'syncopate', 'synthesis', 'digest', 'triage', 'loop'];
-export const CARD_PLANES = ['ground', 'routing', 'house', 'boot', 'governance', 'memory-recall', 'orchestration', 'processor', 'reporting', 'stamp-plate', 'record-map', 'write-home', 'activity-log', 'session-capture', 'suit-wear', 'suit-organs', 'station-card', 'notes-page', 'reflection-page', 'site-manual', 'package-face', 'suit-settings', 'trail-state', 'inference-files', 'grok-compact', 'payload-heat', 'station-heat', 'pickup-stamp', 'cursor-compact', 'work-fresh', 'kept-line', 'lens-gate', 'pre-tool', 'lens-page', 'centrifuge'];
+export const CARD_PLANES = ['dev', 'integration', 'domain', 'ecosystem'];
+
+const PLANE_PATHS = {
+  dev: ['src', 'grok-bot', 'docs-site', 'AGENTS.md', 'package.json', 'README.md'],
+  integration: [
+    'src/integrations',
+    'src/nucleus',
+    'src/governance',
+    'src/mcps',
+    'src/processors',
+    'src/reporting',
+    'src/core/boot-orchestrator.ts',
+    'grok-bot/lib',
+    'grok-bot/templates',
+  ],
+  domain: ['docs-site/docs/plates', 'src/integrations/hooks/plates.cjs', '.agents/skills'],
+  ecosystem: ['scripts/foundry', 'node_modules/@0xray'],
+};
+
+const PLANE_ROWS = {
+  dev: {
+    from: '',
+    digest: 'This checkout.',
+    plate: '',
+    entry: 'package.json, src, and grok-bot/OP-PROC.md.',
+    exit: 'A change that stays in this repo.',
+    files: 'src, grok-bot, docs-site, AGENTS.md, package.json, README.md',
+    skills: 'SKILLS.md',
+    setup: 'You are in this repo.',
+    teardown: 'Leave other repos alone.',
+    worn: '',
+  },
+  integration: {
+    from: 'dev',
+    digest: 'How one part calls the next.',
+    plate: '',
+    entry: 'The hook, the dispatch, or the bridge this file sits on.',
+    exit: 'The next call. Stop there.',
+    files: 'src/integrations, src/nucleus, src/governance, src/mcps, src/processors, src/reporting, src/core/boot-orchestrator.ts, grok-bot/lib, grok-bot/templates',
+    skills: 'SKILLS.md',
+    setup: 'One connection at a time.',
+    teardown: 'Do not sweep the rest of the repo.',
+    worn: '',
+  },
+  domain: {
+    from: 'dev',
+    digest: 'The drawing of one area.',
+    plate: 'docs-site/docs/plates',
+    entry: 'The plate under docs-site/docs/plates, or the plate reader.',
+    exit: 'The entry and exit written on that plate.',
+    files: 'docs-site/docs/plates, src/integrations/hooks/plates.cjs, .agents/skills',
+    skills: '.agents/skills',
+    setup: 'One plate is in the frame.',
+    teardown: 'The plate is the drawing. The code stays on dev or integration.',
+    worn: '',
+  },
+  ecosystem: {
+    from: 'dev',
+    digest: 'What this repo wears from outside.',
+    plate: '',
+    entry: 'scripts/foundry, and the @0xray packages this repo wears.',
+    exit: 'Back to this checkout when the change is here.',
+    files: 'scripts/foundry, node_modules/@0xray',
+    skills: '',
+    setup: 'The outside package is not this repo.',
+    teardown: 'Do not edit a worn package from here.',
+    worn: 'node_modules/@0xray',
+  },
+};
+
+function builtinCard(id) {
+  const row = PLANE_ROWS[id];
+  if (!row) return '';
+  const lines = [
+    ['Plane', id],
+    ['From', row.from],
+    ['Digest', row.digest],
+    ['Plate', row.plate],
+    ['Entry', row.entry],
+    ['Exit', row.exit],
+    ['Files', row.files],
+    ['Skills', row.skills],
+    ['Setup', row.setup],
+    ['Teardown', row.teardown],
+    ['Worn', row.worn],
+  ];
+  return lines.map(([key, value]) => `${key}: ${value}`.trimEnd()).join('\n');
+}
+
+function planeOfPath(file) {
+  const rel = String(file || '').replace(/\\/g, '/').replace(/^\.\//, '');
+  let best = '';
+  let winner = '';
+  for (const [id, paths] of Object.entries(PLANE_PATHS)) {
+    for (const prefix of paths) {
+      if (rel === prefix || rel.startsWith(`${prefix}/`)) {
+        if (prefix.length > best.length) {
+          best = prefix;
+          winner = id;
+        }
+      }
+    }
+  }
+  return winner;
+}
 
 /** Empty GOGGLES_PLANES_PATH keeps the file beside the organ. */
 export function planesFile() {
@@ -127,7 +227,7 @@ function presentCard(projectRoot, id) {
   };
 }
 
-function gogglesAnswer(argv, projectRoot) {
+function gogglesAnswer(argv, projectRoot, hold) {
   const words = [];
   for (const raw of argv || []) {
     const arg = String(raw || '').trim();
@@ -136,18 +236,23 @@ function gogglesAnswer(argv, projectRoot) {
   }
   const lower = words.map((word) => word.toLowerCase());
   const named = cardPlanesNamed(lower);
-  if (named.length !== 1) return { text: 'Name one plane.', cards: null };
-  const card = presentCard(projectRoot, named[0]);
+  const root = lensRoot(projectRoot);
+  let id = '';
+  if (named.length === 1) id = named[0];
+  else if (words.length === 0) id = hold ? ensurePlane(root) : currentPlane(root);
+  else return { text: 'Name one plane.', cards: null };
+  if (hold && named.length === 1) holdPlane(root, id);
+  const card = presentCard(root, id);
   if (!card) return { text: 'Name one plane.', cards: null };
   return { text: card.text, cards: [card.view] };
 }
 
 export function readGoggles(argv, projectRoot) {
-  return ok(gogglesAnswer(argv, projectRoot).text);
+  return ok(gogglesAnswer(argv, projectRoot, true).text);
 }
 
 export function lookCards(argv, projectRoot) {
-  return gogglesAnswer(argv, projectRoot).cards;
+  return gogglesAnswer(argv, projectRoot, false).cards;
 }
 
 function cardPlanesNamed(lower) {
@@ -614,22 +719,73 @@ function stampPlane(root, id) {
   }
 }
 
-/** A search names one plane and returns that card. The code search does not continue. */
+function openPaths(text) {
+  const raw = String(text || '').replace(/\\/g, '/');
+  const found = [];
+  const re = /(?:^|[^A-Za-z0-9_])((?:src|scripts|docs-site|\.agents|grok-bot|node_modules\/@0xray)\/[\w./@-]*|AGENTS\.md|package\.json|README\.md)/g;
+  let match = re.exec(raw);
+  while (match) {
+    found.push(match[1].replace(/\/+$/, ''));
+    match = re.exec(raw);
+  }
+  return found;
+}
+
+function isSearch(tool, text) {
+  const name = String(tool || '');
+  const spoken = String(text || '');
+  if (/researcher|explorer|deep[- ]?research/i.test(name) || DEEP_SEARCH.test(name)) return true;
+  if (/semanticsearch|codebase_search/i.test(name)) return true;
+  if (/^(grep|glob|rg|ripgrep)$/i.test(name)) return true;
+  return /bash|shell/i.test(name) && (shellSearches(spoken) || DEEP_SEARCH.test(spoken) || /researcher|explorer|deep[- ]?research/i.test(spoken));
+}
+
+function isRead(tool, text) {
+  if (/^(read_file|read)$/i.test(String(tool || ''))) return true;
+  return /bash|shell/i.test(String(tool || '')) && shellReadsSource(text) && !shellSearches(text);
+}
+
+function currentPlane(root) {
+  const held = heldCardPlane(root);
+  if (held && CARD_PLANES.includes(held.id)) return held.id;
+  return 'dev';
+}
+
+function ensurePlane(root) {
+  const held = heldCardPlane(root);
+  if (held && CARD_PLANES.includes(held.id)) return held.id;
+  holdPlane(root, 'dev');
+  return 'dev';
+}
+
+function cardText(root, id) {
+  const card = presentCard(root, id);
+  return card && card.text ? card.text : '';
+}
+
+/** The current card, for the boot payload. Starts on dev. */
+export function planeCard(root) {
+  const id = ensurePlane(root);
+  return { plane: id, card: cardText(root, id) };
+}
+
+/** A search returns the current card and stops. A file open follows the path. */
 export function lensBeforeResearch(root, toolName, text) {
   const spoken = String(text || '');
-  if (!researchCall(toolName, spoken)) return null;
-  const names = CARD_PLANES.filter((name) => intentWords(spoken).includes(name));
-  if (names.length !== 1) {
-    return { gate: 'lens', decision: 'deny', reason: 'Name one plane.' };
+  const searching = isSearch(toolName, spoken);
+  const reading = isRead(toolName, spoken);
+  if (!searching && !reading) return null;
+  const current = ensurePlane(root);
+  if (searching) {
+    return { gate: 'lens', decision: 'deny', reason: cardText(root, current) };
   }
-  const id = names[0];
-  holdPlane(root, id);
-  stampPlane(root, id);
-  const card = presentCard(root, id);
-  if (!card || !card.text) {
-    return { gate: 'lens', decision: 'deny', reason: 'Name one plane.' };
+  const hits = [...new Set(openPaths(spoken).map(planeOfPath).filter(Boolean))];
+  if (hits.length === 1 && hits[0] === current) return null;
+  if (hits.length === 1) {
+    holdPlane(root, hits[0]);
+    return { gate: 'lens', decision: 'allow', reason: cardText(root, hits[0]) };
   }
-  return { gate: 'lens', decision: 'deny', reason: card.text };
+  return { gate: 'lens', decision: 'allow', reason: cardText(root, current) };
 }
 
 function seenFields(plane, root) {
@@ -811,6 +967,8 @@ function writeLensBody(root, prev, cards) {
 }
 
 function lensCardText(root, held) {
+  const built = builtinCard(held.id);
+  if (built) return built;
   const platesDir = findPlatesDir(HERE);
   const plane = growPlane(held.id, platesDir, root);
   const view = {

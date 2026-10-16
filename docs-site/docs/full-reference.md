@@ -96,7 +96,7 @@ Routes tasks to the right agents based on complexity (simple tasks go to a singl
 | `init` | Initialize xray configuration in the current project |
 | `wear` | Wear the 0xray suit in this git checkout |
 | `unwear` | Remove the 0xray suit and restore the pre-wear hooks file |
-| `look` | Name one plane. A missing card is written into LENS.md. Later looks read that card |
+| `look` | dev, integration, domain, or ecosystem. The card is in LENS.md. |
 | `goggles` | Same organ as `look` |
 | `confer` | Turn confer on or off in `.xray/features.json`. A missing key stays off until this runs |
 | `status` | Show comprehensive xray framework status |

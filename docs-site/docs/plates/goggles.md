@@ -14,17 +14,17 @@ It views one plane.
   ├────────────────────────────────────────────────────────────┤
   │ · it views one plane                                       │
   │ · not every plane at once                                  │
-  │ · a missing card is written into LENS.md                   │
-  │ · later passes read that stored card                       │
+  │ · a session starts on dev                                  │
+  │ · the card is in LENS.md                                   │
   ├────────────────────────────────────────────────────────────┤
   │ REFUSED                                                    │
-  │ · a look that does not name one plane                      │
+  │ · a search, until the card is read                         │
   └────────────────────────────────────────────────────────────┘
 ```
 
-A card views one plane. When Entry and Exit are missing, the named plane is written into `.xray/state/LENS.md`. Later passes read that card. A missing file is a live line and is not stored.
+A session starts on dev. The card is in `.xray/state/LENS.md`. The planes are dev, integration, domain, and ecosystem. A search returns the current card and does not run. Opening a file on another plane switches to that card.
 
-A look that does not name one plane says `Name one plane.`
+A name that is not one of those four says `Name one plane.`
 
 A checkout named `0xray` records `scripts/mjs/run-goggles-mcp.mjs`. Any other project records `node_modules/0xray/scripts/mjs/run-goggles-mcp.mjs`.
 

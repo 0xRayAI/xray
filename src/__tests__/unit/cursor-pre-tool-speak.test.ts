@@ -12,7 +12,7 @@ function runCursorHook(payload: Record<string, unknown>) {
   const hook = join(process.cwd(), 'src/integrations/cursor/hooks/pre-tool-use.js');
   return spawnSync(process.execPath, [hook], {
     cwd,
-    input: JSON.stringify(payload),
+    input: JSON.stringify({ ...payload, cwd }),
     encoding: 'utf8',
   });
 }
@@ -39,26 +39,26 @@ describe('repertoireDecisionFields', () => {
 });
 
 describe('cursor lens spoken path', () => {
-  it('denies a grep that names no plane', () => {
+  it('a search returns the dev card', () => {
     const result = runCursorHook({
-      cwd: '/tmp',
-      tool_name: 'grep',
+      tool_name: 'Grep',
       tool_input: { pattern: 'hello', path: 'src' },
     });
     expect(result.status).toBe(0);
     const out = JSON.parse(result.stdout);
     expect(out.permission).toBe('deny');
-    expect(out.agent_message).toBe('Name one plane.');
+    expect(out.agent_message).toContain('Plane: dev');
+    expect(out.agent_message).toContain('Entry:');
   });
 
-  it('allows a grep whose path names one plane', () => {
+  it('opening a file on another plane returns that card and allows the open', () => {
     const result = runCursorHook({
-      cwd: '/tmp',
-      tool_name: 'grep',
-      tool_input: { pattern: 'hello', path: '/tmp/package-face/src' },
+      tool_name: 'Read',
+      tool_input: { path: 'src/nucleus/thin-dispatch.ts' },
     });
     expect(result.status).toBe(0);
     const out = JSON.parse(result.stdout);
     expect(out.permission).toBe('allow');
+    expect(out.agent_message).toContain('Plane: integration');
   });
 });

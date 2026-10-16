@@ -8,9 +8,10 @@ description: >
 
 The function is `lensBeforeResearch` in `src/integrations/hooks/goggles-pipeline.mjs`. The plate is `docs-site/docs/plates/lens-gate.md`.
 
-1. A research call is `read_file`, `grep`, `glob`, a researcher tool, or a shell that runs `rg`, `grep`, `ag`, `ack`, `fd`, `find`, or `git grep`.
-2. A shell that runs `python3`, `node`, `cat`, `head`, `tail`, `sed`, `less`, `more`, `bat`, or `awk` against a project source file is also research. `echo` naming a path is not.
-3. Exactly one card-plane name lets that call continue. Zero, or more than one, stops it with `Name one plane.`
-4. The first open of a source file that no lens lists is allowed and remembered. The next search stops until that file is on a lens and `docs-site/docs/plates/<id>.md` is on disk. The next edit stops too, unless it is the plate, the lens json, the skill, or the registry.
-5. The hook does not author a plate or a lens.
-6. The plate that stays with this lens is pre-tool.
+1. A session starts on dev. The card is in `.xray/state/LENS.md`.
+2. The planes are dev, integration, domain, and ecosystem. The hook looks at the path.
+3. A search returns the current card and does not run.
+4. Opening a file on the current card adds nothing.
+5. Opening a file on another plane switches, returns that card, and the open proceeds.
+6. A file on no plane stays on the current plane. The hook returns that card.
+7. A switch sticks. Compact writes that same card back.

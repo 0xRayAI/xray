@@ -21,7 +21,7 @@ const LOOK_SCHEMA = {
   properties: {
     plane: {
       type: 'string',
-      description: 'One card plane. The look returns that card.',
+      description: 'dev, integration, domain, or ecosystem. Omit it to read the current card.',
       enum: CARD_PLANES,
     },
   },
@@ -30,7 +30,7 @@ const LOOK_SCHEMA = {
 export const TOOLS = [
   {
     name: 'look',
-    description: 'Name one plane. A missing card is written into LENS.md when Entry and Exit are missing. Later looks read that card.',
+    description: 'The card for this plane. Entry and Exit, and the other rows, are in LENS.md. Pass dev, integration, domain, or ecosystem to switch.',
     inputSchema: LOOK_SCHEMA,
   },
   {
@@ -84,9 +84,9 @@ function checkArgs(args) {
   for (const key of Object.keys(args)) {
     if (!allowed.has(key)) return deny('invalid_args', 'Unknown argument.');
   }
-  if (args.plane == null) return deny('invalid_args', 'Name one plane.');
+  if (args.plane == null) return null;
   if (typeof args.plane !== 'string') return deny('invalid_args', 'plane must be a string.');
-  if (!CARD_PLANES.includes(args.plane)) return deny('invalid_args', 'plane is a card plane.');
+  if (!CARD_PLANES.includes(args.plane)) return deny('invalid_args', 'Name one plane.');
   return null;
 }
 
@@ -119,7 +119,7 @@ export async function answerLook(raw, root) {
   const api = await organApi();
   if (!api) return deny('invalid_args', 'Goggles organ not found.');
   const here = projectRoot(root);
-  const argv = [args.plane];
+  const argv = args.plane == null ? [] : [args.plane];
   const text = api.look(argv, here).text;
   if (text === 'Name one plane.') return deny('name_one', 'Name one plane.');
   const cards = api.lookCards(argv, here);
