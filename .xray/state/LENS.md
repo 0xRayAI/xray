@@ -546,3 +546,159 @@ Skills: .agents/skills/centrifuge/SKILL.md
 Setup:
 Teardown: JUDGEMENT    LOOP                   STATE       PAYMENTS off                STATION                    · off fixed                            FOUNDRY      · fixed MEMORY
 Worn:
+
+Card: repertoire
+Plane: dev
+From: dev
+Digest: The memory organ matches named laws.
+Plate: docs-site/docs/plates/repertoire.md
+Entry: a task and its signals
+Exit: one law, or none
+Files: src/memory-routing
+Skills: .agents/skills/repertoire/SKILL.md
+Setup:
+Teardown:
+Worn:
+
+Card: dynamo
+Plane: dev
+From: dev
+Digest: Dynamo is the external governance service.
+Plate: docs-site/docs/plates/dynamo.md
+Entry: a proposal
+Exit: pass, revision, or reject
+Files: docs-site/docs/guides/self-hosting-dynamo.md
+Skills: .agents/skills/dynamo/SKILL.md
+Setup:
+Teardown:
+Worn:
+
+Card: foundry
+Plane: ecosystem
+From: ecosystem
+Digest: The mill builds and ships a suit.
+Plate: docs-site/docs/plates/foundry.md
+Entry: a version bump
+Exit: the registry lists that version
+Files: scripts/foundry/release.mjs
+Skills: .agents/skills/foundry/SKILL.md
+Setup:
+Teardown:
+Worn:
+
+Card: delegation-gate
+Plane: integration
+From: integration
+Digest: The pre-tool gate for every host.
+Plate: docs-site/docs/plates/delegation-gate.md
+Entry: a tool call
+Exit: allow, or deny
+Files: src/nucleus/delegation-gate.ts
+Skills: .agents/skills/delegation-gate/SKILL.md
+Setup:
+Teardown:
+Worn:
+
+Card: temperament
+Plane: integration
+From: integration
+Digest: Ceremony scales by host.
+Plate: docs-site/docs/plates/temperament.md
+Entry: a host
+Exit: frontier warns, guided denies
+Files: src/nucleus/suit-temperament.ts
+Skills: .agents/skills/temperament/SKILL.md
+Setup:
+Teardown:
+Worn:
+
+Card: asides
+Plane: integration
+From: integration
+Digest: A user aside is one parallel track.
+Plate: docs-site/docs/plates/asides.md
+Entry: a named track
+Exit: that track, or the main line
+Files: src/nucleus/user-aside.ts
+Skills: .agents/skills/asides/SKILL.md
+Setup:
+Teardown:
+Worn:
+
+Card: inference-cycle
+Plane: dev
+From: dev
+Digest: The inference cycle turns a corpus into a proposal.
+Plate: docs-site/docs/plates/inference-cycle.md
+Entry: a session corpus
+Exit: a governed proposal, or no change
+Files: src/inference/inference-cycle.ts
+Skills: .agents/skills/inference-cycle/SKILL.md
+Setup:
+Teardown:
+Worn:
+
+Card: hermes
+Plane: integration
+From: integration
+Digest: Hermes wears the suit through its bridge.
+Plate: docs-site/docs/plates/hermes.md
+Entry: a Hermes session
+Exit: the suit on that host
+Files: src/integrations/hermes-agent
+Skills: .agents/skills/hermes/SKILL.md
+Setup:
+Teardown:
+Worn:
+
+Card: openclaw
+Plane: integration
+From: integration
+Digest: OpenClaw wears the suit through its plugin.
+Plate: docs-site/docs/plates/openclaw.md
+Entry: an OpenClaw session
+Exit: the suit on that host
+Files: src/integrations/openclaw
+Skills: .agents/skills/openclaw/SKILL.md
+Setup:
+Teardown:
+Worn:
+
+Card: opencode
+Plane: dev
+From: dev
+Digest: OpenCode install writes the plugin.
+Plate: docs-site/docs/plates/opencode.md
+Entry: an install
+Exit: the OpenCode plugin on disk
+Files: src/cli/commands/opencode-install.ts
+Skills: .agents/skills/opencode/SKILL.md
+Setup:
+Teardown:
+Worn:
+
+Card: consumer-mcp
+Plane: dev
+From: dev
+Digest: The worn checkout lists seven MCP servers.
+Plate: docs-site/docs/plates/consumer-mcp.md
+Entry: a worn checkout
+Exit: the seven servers
+Files: .mcp.json
+Skills: .agents/skills/consumer-mcp/SKILL.md
+Setup:
+Teardown:
+Worn:
+
+Card: confer
+Plane: integration
+From: integration
+Digest: Confer stays off unless it is enabled.
+Plate: docs-site/docs/plates/confer.md
+Entry: a synthesis checkpoint
+Exit: skipped, unless it is enabled
+Files: src/nucleus/confer.ts
+Skills: .agents/skills/confer/SKILL.md
+Setup:
+Teardown:
+Worn:

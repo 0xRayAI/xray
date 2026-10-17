@@ -29,19 +29,19 @@ Plates have a type. A domain model plate shows how named parts fit. A state flow
 
 [Routing](./routing.md) · [Governance](./governance.md) · [Boot](./boot.md) · [Orchestration](./orchestration.md) · [Processor](./processor.md) · [Reporting](./reporting.md) · [Memory recall](./memory-recall.md) · [Stamp plate](./stamp-plate.md) · [Ground](./ground.md) · [Synthesis](./synthesis.md)
 
-Each of these is a lens plane. Each drawing is an input layer, a processing layer, and an output layer.
+The planes are dev, integration, domain, and ecosystem. Each drawing above is a card on one of those planes. A plate id is not a plane.
 
 ## Write home
 
 [Record map](./record-map.md) · [Write home](./write-home.md) · [Activity log](./activity-log.md) · [Session capture](./session-capture.md) · [Suit wear](./suit-wear.md) · [Suit organs](./suit-organs.md)
 
-These six are the file ref. Each one is a search lens. The pipeline drawings above stay the lens planes for those machines.
+These six are the file ref. Each one is a card. The planes stay dev, integration, domain, and ecosystem.
 
 ## Hands
 
 [Station card](./station-card.md) · [Notes page](./notes-page.md) · [Reflection page](./reflection-page.md) · [Site manual](./site-manual.md) · [Package face](./package-face.md) · [Suit settings](./suit-settings.md) · [Trail state](./trail-state.md) · [Inference files](./inference-files.md)
 
-These eight are the pages the file ref names. Each one is a search lens. Each lens lists one skill and the plates that belong with it.
+These eight are the pages the file ref names. Each one is a card. Each card lists one skill.
 
 ## Compact path
 
@@ -51,6 +51,13 @@ These eight are the pages the file ref names. Each one is a search lens. Each le
 
 [Work fresh](./work-fresh.md) · [Kept line](./kept-line.md) · [Lens gate](./lens-gate.md) · [Pre tool](./pre-tool.md) · [Lens page](./lens-page.md)
 
-These five are the compact path that was opened. Each one is a search lens. Each lens lists one skill and the plates that belong with it.
+These five are the compact path that was opened. Each one is a card. Each card lists one skill.
+
+
+## Spectra
+
+[Repertoire](./repertoire.md) · [Dynamo](./dynamo.md) · [Foundry](./foundry.md) · [Delegation gate](./delegation-gate.md) · [Temperament](./temperament.md) · [Asides](./asides.md) · [Inference cycle](./inference-cycle.md) · [Hermes](./hermes.md) · [OpenClaw](./openclaw.md) · [OpenCode](./opencode.md) · [Consumer MCP](./consumer-mcp.md) · [Confer](./confer.md)
+
+Each one is a card. One top file. The planes stay dev, integration, domain, and ecosystem.
 
 stamped · 0xray 4.1.0

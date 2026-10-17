@@ -49,6 +49,18 @@ export const PLATE_IDS = [
   'centrifuge',
   'ground',
   'synthesis',
+  'repertoire',
+  'dynamo',
+  'foundry',
+  'delegation-gate',
+  'temperament',
+  'asides',
+  'inference-cycle',
+  'hermes',
+  'openclaw',
+  'opencode',
+  'consumer-mcp',
+  'confer',
 ] as const;
 
 export type PlateId = (typeof PLATE_IDS)[number];

@@ -4,11 +4,13 @@ sidebar_label: 4.0 foundry
 
 # 4.0 foundry — mill vs exo
 
+This page is the 4.0 record. The suit era is 4.1.
+
 The suit is what an agent **wears**. The foundry is how a team **gets** a suit.
 
 4.0 shipped **wear**. The mill that **fashions** the mill plant (bridges, reconcile, gate, stamps) lives in `scripts/foundry/`. This page is the inventory. It is not a new MCP, skill, or handler.
 
-Vision: [4.0 vision](./v4-vision.md). Handoff: [4.0 now](./v4-now.md). Open list: [4.0 left](./v4-left.md).
+Vision: [4.0 vision](./v4-vision.md). Handoff: [4.0 handoff](./v4-now.md). Open list: [4.0 left](./v4-left.md).
 
 ## Law
 

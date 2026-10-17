@@ -49,6 +49,18 @@ const PLATE_IDS = Object.freeze([
   "centrifuge",
   "ground",
   "synthesis",
+  "repertoire",
+  "dynamo",
+  "foundry",
+  "delegation-gate",
+  "temperament",
+  "asides",
+  "inference-cycle",
+  "hermes",
+  "openclaw",
+  "opencode",
+  "consumer-mcp",
+  "confer",
 ]);
 
 /** Id token, then extra phrases. Equal top scores recall nothing. */
@@ -246,6 +258,66 @@ const CUES = {
     [/synthesis plate/i, 6],
     [/synthesis checkpoint/i, 5],
     [/plates\/synthesis/i, 6],
+  ],
+  "repertoire": [
+    [/repertoire plate/i, 6],
+    [/repertoire organ/i, 5],
+    [/plates\/repertoire/i, 6],
+  ],
+  "dynamo": [
+    [/dynamo plate/i, 6],
+    [/dynamo judgment/i, 5],
+    [/plates\/dynamo/i, 6],
+  ],
+  "foundry": [
+    [/foundry plate/i, 6],
+    [/foundry release/i, 5],
+    [/plates\/foundry/i, 6],
+  ],
+  "delegation-gate": [
+    [/delegation gate/i, 6],
+    [/delegation-gate plate/i, 6],
+    [/plates\/delegation-gate/i, 6],
+  ],
+  "temperament": [
+    [/temperament plate/i, 6],
+    [/suit temperament/i, 6],
+    [/plates\/temperament/i, 6],
+  ],
+  "asides": [
+    [/asides plate/i, 6],
+    [/user aside/i, 6],
+    [/plates\/asides/i, 6],
+  ],
+  "inference-cycle": [
+    [/inference cycle/i, 6],
+    [/inference-cycle plate/i, 6],
+    [/plates\/inference-cycle/i, 6],
+  ],
+  "hermes": [
+    [/hermes plate/i, 6],
+    [/hermes bridge/i, 5],
+    [/plates\/hermes/i, 6],
+  ],
+  "openclaw": [
+    [/openclaw plate/i, 6],
+    [/openclaw plugin/i, 5],
+    [/plates\/openclaw/i, 6],
+  ],
+  "opencode": [
+    [/opencode plate/i, 6],
+    [/opencode install/i, 5],
+    [/plates\/opencode/i, 6],
+  ],
+  "consumer-mcp": [
+    [/consumer mcp/i, 6],
+    [/mcp registry set/i, 5],
+    [/plates\/consumer-mcp/i, 6],
+  ],
+  "confer": [
+    [/confer plate/i, 6],
+    [/confer stays off/i, 5],
+    [/plates\/confer/i, 6],
   ],
 };
 

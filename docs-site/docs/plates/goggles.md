@@ -18,7 +18,7 @@ It views one plane.
   │ · the card is in LENS.md                                   │
   ├────────────────────────────────────────────────────────────┤
   │ REFUSED                                                    │
-  │ · a search, until the card is read                         │
+  │ · a search returns the card and does not run               │
   └────────────────────────────────────────────────────────────┘
 ```
 

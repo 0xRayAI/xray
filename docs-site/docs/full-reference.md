@@ -1,7 +1,7 @@
-# 0xRay 4.0 — reference
+# 0xRay — reference
 
 **4.1** — a suit that survives the context window
-Confer votes. Burst runs the swarm.
+Bifrost is the live board. Goggles views one plane. A search returns that card.
 
 
 Exo, not catalog. Constitution always on. Temperament by host. Four floors. Repertoire organ on.

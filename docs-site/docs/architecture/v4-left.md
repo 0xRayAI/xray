@@ -4,7 +4,7 @@ sidebar_label: 4.0 left
 
 # 4.0 left
 
-What is **done on the plant** vs what is **still open**. Vision: [4.0 vision](./v4-vision.md). Handoff: [4.0 now](./v4-now.md). Mill: [4.0 foundry](./v4-foundry.md).
+What was **done on the plant** vs what was **still open** in the 4.0 handoff. The suit era is 4.1. The live ticket is `.xray/state/STATION.md`. Vision: [4.0 vision](./v4-vision.md). Handoff: [4.0 handoff](./v4-now.md). Mill: [4.0 foundry](./v4-foundry.md).
 
 Mill plant fastens **inspect** (inspect AI work) plus `mill`. Empty mill plant is gone. Do not run `release:major`. Costume dump is `foundry.json` `"costume": true`.
 
