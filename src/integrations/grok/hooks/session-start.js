@@ -24,7 +24,7 @@ import {
   runInferenceImprovementLight,
 } from '../../hooks/pipeline-hook-runtime.mjs';
 import { maintainLens } from '../../hooks/goggles-pipeline.mjs';
-import { readSavedFreshness, refreshFreshness } from '../../../nucleus/work-freshness.mjs';
+import { freshnessNeedsRefresh, readSavedFreshness, refreshFreshness } from '../../../nucleus/work-freshness.mjs';
 
 function extractIntent(event) {
   return event.prompt || event.userMessage || event.user_prompt || event.compactContext || null;
@@ -137,7 +137,9 @@ async function main() {
     let freshnessLine = null;
     if (!compact) {
       try {
-        freshnessLine = HOOK_EVENT === 'session_start'
+        const refresh = HOOK_EVENT === 'session_start'
+          || (HOOK_EVENT === 'user_prompt_submit' && freshnessNeedsRefresh(eventRoot));
+        freshnessLine = refresh
           ? refreshFreshness(eventRoot).freshnessLine
           : readSavedFreshness(eventRoot);
       } catch {
