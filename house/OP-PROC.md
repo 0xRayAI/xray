@@ -165,7 +165,7 @@ Blaze, 10:36 CT: "this is new ship cadence. understand it document it. live it."
 **Room vs 1:1 writes (Blaze 2026-10-13).** No outside writes or deploys (issues, pushes, comments, merges, Railway) from a group room. From a seat's own 1:1 they proceed once the gates pass (critic PASS, CI green, Arch1 yes where required), without asking Blaze. The Always-allow ban on App PEM, token minting and App review is revoked; PEM text and tokens are still never printed or stored. Never split, rename or rework a command to get past a check.
 
 **Drill refinements.**
-- Wakes ack only with `live-inbox <seat> --ack <id>`, never a hand-written POST (no approval card for a routine ack).
+- Wakes ack only with `live-inbox <seat> --ack <id>` after the line is handled, never a hand-written POST (no approval card for a routine ack). `--ack stale` lists lines with a close or merge event, or a closed or done card, and does not ack until `--apply`. A missing card stays, and so does an old handoff on a live card. `--upto <id>` acks the stored prefix through that id, including live lines. `--ack all` acks every open line.
 - A wake change is tested against a real seat routine (2xx and the routine runs), not unit stubs alone. A wake test sends a well-formed inbox line; receipt = `200 added:1` + `wake: <seat> ok` + the seat confirms.
 - Waveboard history lives on the `/data` volume; rollbacks and redeploys keep it. Confirm a diff does not touch `/data`.
 - Our install is public (no password, no masking); other installs stay gated and masked unless they opt in.
