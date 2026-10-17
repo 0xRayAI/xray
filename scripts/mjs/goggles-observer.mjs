@@ -161,11 +161,12 @@ try {
 
   const synthesis = look(['synthesis'], fresh()).text;
   check('synthesis is a thing card on integration', synthesis.includes('Card: synthesis') && synthesis.includes('Plane: integration'));
-  check('a missing plate names the stamp skill', synthesis.includes(STAMP));
-  check('the synthesis plate file is absent', !existsSync(join(repo, 'docs-site/docs/plates/synthesis.md')));
+  check('synthesis names its plate', synthesis.includes('Plate: docs-site/docs/plates/synthesis.md') && synthesis.includes('Entry: a gate, a turn, or a finished todo') && synthesis.includes('Exit: due or not due') && !synthesis.includes('Stamp:'));
+  check('the synthesis plate file is present', existsSync(join(repo, 'docs-site/docs/plates/synthesis.md')));
+  check('synthesis names its skill', synthesis.includes('Skills: .agents/skills/synthesis/SKILL.md'));
   const ground = look(['ground'], fresh()).text;
-  check('ground is a card with no plate', ground.includes('Card: ground') && ground.includes(STAMP));
-  check('the ground plate file is absent', !existsSync(join(repo, 'docs-site/docs/plates/ground.md')));
+  check('ground names its plate', ground.includes('Card: ground') && ground.includes('Plane: dev') && ground.includes('Plate: docs-site/docs/plates/ground.md') && ground.includes('Entry: this checkout') && !ground.includes('Stamp:'));
+  check('the ground plate file is present', existsSync(join(repo, 'docs-site/docs/plates/ground.md')));
 
   const devView = lookCards(['dev'], fresh());
   check('dev view is one place', devView?.length === 1 && devView[0].plane === 'dev' && devView[0].digest === 'This checkout.');
@@ -201,8 +202,8 @@ try {
   check('the next search uses the routing card', lensBeforeResearch(gate, 'grep', 'still searching')?.decision === 'deny' && String(lensBeforeResearch(gate, 'grep', 'still searching')?.reason).includes('Card: routing'));
   const missing = lensBeforeResearch(gate, 'read_file', 'src/nucleus/synthesis.ts');
   check('synthesis.ts opens the synthesis card', missing?.decision === 'allow' && String(missing.reason).includes('Card: synthesis'));
-  check('the opened card names the stamp skill', String(missing?.reason).includes(STAMP));
-  check('the open does not write the plate', !existsSync(join(repo, 'docs-site/docs/plates/synthesis.md')));
+  check('the opened card names its plate', String(missing?.reason).includes('docs-site/docs/plates/synthesis.md') && !String(missing?.reason).includes('Stamp:'));
+  check('the open does not write the plate into the project', !existsSync(join(gate, 'docs-site', 'docs', 'plates', 'synthesis.md')));
   const stored = readFileSync(join(gate, '.xray', 'state', 'LENS.md'), 'utf8');
   check('the stored card does not keep the stamp line', !stored.includes('Stamp:'));
   check('the lens grew the synthesis card', stored.includes('Card: synthesis'));
@@ -301,11 +302,11 @@ try {
   check('the command dichotomy asks for one plane', runLook(['dichotomy']) === 'Name one plane.\n');
   check('the command kind 0 asks for one plane', runLook(['kind', '0']) === 'Name one plane.\n');
   check('the command dev shows the place', runLook(['dev']).startsWith('Plane: dev\n') && !runLook(['dev']).includes('┌'));
-  check('the command synthesis names the stamp skill', runLook(['synthesis']).includes(STAMP));
+  check('the command synthesis names its plate', runLook(['synthesis']).includes('docs-site/docs/plates/synthesis.md') && !runLook(['synthesis']).includes('Stamp:'));
   const commandHold = holdOf(lookRoot);
   check('the command holds the card it shows', commandHold?.plane === 'integration' && commandHold?.card === 'synthesis', JSON.stringify(commandHold));
   check('a command with no name stays on that card', runLook([]).includes('Card: synthesis'));
-  check('the command did not write the plate', !existsSync(join(repo, 'docs-site/docs/plates/synthesis.md')));
+  check('the command did not write the plate into the project', !existsSync(join(lookRoot, 'docs-site', 'docs', 'plates', 'synthesis.md')));
 
   const toolRoot = fresh();
   const opened = await mcp.dispatchTool('look', {}, toolRoot);
@@ -313,7 +314,22 @@ try {
   const toolBoot = await mcp.dispatchTool('look', { plane: 'boot' }, toolRoot);
   check('the tool look boot holds the card', toolBoot.payload?.content?.card === 'boot' && holdOf(toolRoot)?.card === 'boot' && holdOf(toolRoot)?.plane === 'integration');
   const toolMissing = await mcp.dispatchTool('look', { plane: 'synthesis' }, fresh());
-  check('the tool names the stamp skill', toolMissing.isError === false && String(toolMissing.payload?.content?.stamp).includes('.agents/skills/stamp-plate/SKILL.md') && String(toolMissing.payload?.content?.stamp).includes('one plate for this card'));
+  check('the tool names the synthesis plate', toolMissing.isError === false && toolMissing.payload?.content?.plate === 'docs-site/docs/plates/synthesis.md' && toolMissing.payload?.content?.stamp === '');
+  const unplatedDir = fresh();
+  const unplatedPlanes = join(unplatedDir, 'planes.json');
+  const unplatedTable = JSON.parse(readFileSync(join(repo, 'src/integrations/hooks/goggles-planes.json'), 'utf8'));
+  unplatedTable.unplated = { file: 'src/core/config-paths.ts' };
+  writeFileSync(unplatedPlanes, JSON.stringify(unplatedTable));
+  const previousPlanes = process.env.GOGGLES_PLANES_PATH;
+  process.env.GOGGLES_PLANES_PATH = unplatedPlanes;
+  try {
+    const toolUnplated = await mcp.dispatchTool('look', { plane: 'unplated' }, fresh());
+    check('a card with no plate names the stamp skill', toolUnplated.isError === false && `Stamp: ${toolUnplated.payload?.content?.stamp}` === STAMP);
+    check('the missing plate file stays absent', !existsSync(join(repo, 'docs-site/docs/plates/unplated.md')));
+  } finally {
+    if (previousPlanes === undefined) delete process.env.GOGGLES_PLANES_PATH;
+    else process.env.GOGGLES_PLANES_PATH = previousPlanes;
+  }
   const refused = fresh();
   const bad = await mcp.dispatchTool('look', { plane: 'not-a-card' }, refused);
   check('the tool refuses a name that is not a card', bad.isError === true && bad.payload?.error?.reason === 'Name one plane.' && holdOf(refused) == null, bad.payload?.error?.reason);

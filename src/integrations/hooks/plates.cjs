@@ -47,6 +47,8 @@ const PLATE_IDS = Object.freeze([
   "pre-tool",
   "lens-page",
   "centrifuge",
+  "ground",
+  "synthesis",
 ]);
 
 /** Id token, then extra phrases. Equal top scores recall nothing. */
@@ -234,6 +236,16 @@ const CUES = {
     [/centrifuge plate/i, 6],
     [/the centrifuge/i, 5],
     [/plates\/centrifuge/i, 6],
+  ],
+  ground: [
+    [/ground plane/i, 6],
+    [/ground plate/i, 6],
+    [/plates\/ground/i, 6],
+  ],
+  synthesis: [
+    [/synthesis plate/i, 6],
+    [/synthesis checkpoint/i, 5],
+    [/plates\/synthesis/i, 6],
   ],
 };
 

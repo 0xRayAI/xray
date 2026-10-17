@@ -548,7 +548,7 @@ export function filledOf(plane) {
 }
 
 function plateSource(id, platesDir) {
-  if (!platesDir || id === 'ground') return { body: '', path: '' };
+  if (!platesDir) return { body: '', path: '' };
   const abs = join(platesDir, `${id}.md`);
   if (!existsSync(abs)) return { body: '', path: '' };
   return {

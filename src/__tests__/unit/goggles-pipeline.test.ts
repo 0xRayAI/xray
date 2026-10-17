@@ -55,8 +55,11 @@ describe('goggles plate', () => {
       expect(boot).not.toContain('Stamp:');
       const synthesis = look(['synthesis'], root).text;
       expect(synthesis).toContain('Card: synthesis');
-      expect(synthesis).toContain('.agents/skills/stamp-plate/SKILL.md');
-      expect(synthesis).toContain('one plate for this card');
+      expect(synthesis).toContain('Plane: integration');
+      expect(synthesis).toContain('Plate: docs-site/docs/plates/synthesis.md');
+      expect(synthesis).toContain('Entry: a gate, a turn, or a finished todo');
+      expect(synthesis).toContain('Exit: due or not due');
+      expect(synthesis).not.toContain('Stamp:');
       expect(look(['kind', '1'], root).text).toBe('Name one plane.');
       expect(look(['dev', 'integration'], root).text).toBe('Name one plane.');
       expect(look(['routing', 'house'], root).text).toBe('Name one plane.');
@@ -130,9 +133,10 @@ describe('goggles plate', () => {
       const missing = lensBeforeResearch(root, 'read_file', 'src/nucleus/synthesis.ts');
       expect(missing?.decision).toBe('allow');
       expect(missing?.reason).toContain('Card: synthesis');
-      expect(missing?.reason).toContain('.agents/skills/stamp-plate/SKILL.md');
-      expect(missing?.reason).toContain('one plate for this card');
-      expect(existsSync(fileURLToPath(new URL('../../docs-site/docs/plates/synthesis.md', import.meta.url)))).toBe(false);
+      expect(missing?.reason).toContain('Plate: docs-site/docs/plates/synthesis.md');
+      expect(missing?.reason).not.toContain('Stamp:');
+      expect(existsSync(fileURLToPath(new URL('../../../docs-site/docs/plates/synthesis.md', import.meta.url)))).toBe(true);
+      expect(existsSync(join(root, 'docs-site', 'docs', 'plates', 'synthesis.md'))).toBe(false);
       const stray = lensBeforeResearch(root, 'read_file', 'CHANGELOG.md');
       expect(stray?.decision).toBe('allow');
       expect(stray?.reason).toContain('Card: synthesis');
@@ -178,7 +182,13 @@ describe('goggles plate', () => {
       expect(look(['pull', '3'], root).text).toBe('Name one plane.');
       expect(look(['2'], root).text).toBe('Name one plane.');
       expect(look(['dichotomy', 'triage'], root).text).toBe('Name one plane.');
-      expect(look(['ground'], root).text).toContain('Stamp:');
+      const ground = look(['ground'], root).text;
+      expect(ground).toContain('Card: ground');
+      expect(ground).toContain('Plane: dev');
+      expect(ground).toContain('Plate: docs-site/docs/plates/ground.md');
+      expect(ground).toContain('Entry: this checkout');
+      expect(ground).toContain('Exit: a change that stays in this repo');
+      expect(ground).not.toContain('Stamp:');
       expect(look(['routing'], root).text).toContain('Card: routing');
       expect(look(['boot'], root).text).toContain('Card: boot');
       expect(look(['eco'], root).text).toBe('Name one plane.');
@@ -364,6 +374,37 @@ describe('goggles plate', () => {
     }
   });
 
+  it('a card with no plate names the stamp skill', () => {
+    const root = mkdtempSync(join(tmpdir(), 'goggles-unplated-'));
+    const table = JSON.parse(readFileSync(fileURLToPath(new URL('../../integrations/hooks/goggles-planes.json', import.meta.url)), 'utf8'));
+    table.unplated = { file: 'src/core/config-paths.ts' };
+    const planes = join(root, 'planes.json');
+    writeFileSync(planes, JSON.stringify(table));
+    const previous = process.env.GOGGLES_PLANES_PATH;
+    process.env.GOGGLES_PLANES_PATH = planes;
+    const project = mkdtempSync(join(tmpdir(), 'goggles-unplated-root-'));
+    try {
+      const opened = lensBeforeResearch(project, 'read_file', 'src/core/config-paths.ts');
+      expect(opened?.decision).toBe('allow');
+      expect(opened?.reason).toContain('Card: unplated');
+      expect(opened?.reason).toContain('.agents/skills/stamp-plate/SKILL.md');
+      expect(opened?.reason).toContain('one plate for this card');
+      expect(existsSync(fileURLToPath(new URL('../../../docs-site/docs/plates/unplated.md', import.meta.url)))).toBe(false);
+      expect(lensBeforeResearch(project, 'read_file', 'src/core/config-paths.ts')).toBeNull();
+      const shown = look(['unplated'], project).text;
+      expect(shown).toContain('Card: unplated');
+      expect(shown).toContain('one plate for this card');
+      const stored = readFileSync(join(project, '.xray', 'state', 'LENS.md'), 'utf8');
+      expect(stored).toContain('Card: unplated');
+      expect(stored).not.toContain('Stamp:');
+    } finally {
+      if (previous === undefined) delete process.env.GOGGLES_PLANES_PATH;
+      else process.env.GOGGLES_PLANES_PATH = previous;
+      rmSync(root, { recursive: true, force: true });
+      rmSync(project, { recursive: true, force: true });
+    }
+  });
+
   it('an installed pack does not report drift', () => {
     const pack = mkdtempSync(join(tmpdir(), 'goggles-pack-'));
     const installed = join(pack, 'node_modules', '0xray');
@@ -391,7 +432,8 @@ describe('goggles plate', () => {
       expect(run(['kind', '0'])).toBe('Name one plane.\n');
       expect(run(['dev'])).toContain('Plane: dev');
       expect(run(['synthesis'])).toContain('Card: synthesis');
-      expect(run(['synthesis'])).toContain('one plate for this card');
+      expect(run(['synthesis'])).toContain('Plate: docs-site/docs/plates/synthesis.md');
+      expect(run(['synthesis'])).not.toContain('Stamp:');
       const held = JSON.parse(readFileSync(join(root, '.xray', 'state', 'goggles-plane.json'), 'utf8'));
       expect(held.plane).toBe('integration');
       expect(held.card).toBe('synthesis');

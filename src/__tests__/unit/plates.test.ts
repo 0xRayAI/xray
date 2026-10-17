@@ -58,6 +58,8 @@ describe('pipeline plates', () => {
       'pre-tool',
       'lens-page',
       'centrifuge',
+      'ground',
+      'synthesis',
     ]);
     for (const id of PLATE_IDS) {
       const plate = loadPlate(id);
@@ -198,6 +200,10 @@ describe('pipeline plates', () => {
     expect(recallPlate('pre tool')?.id).toBe('pre-tool');
     expect(recallPlate('lens page')?.id).toBe('lens-page');
     expect(recallPlate('centrifuge plate')?.id).toBe('centrifuge');
+    expect(recallPlate('ground plane')?.id).toBe('ground');
+    expect(recallPlate('synthesis plate')?.id).toBe('synthesis');
+    expect(recallPlate('ground')).toBeNull();
+    expect(recallPlate('synthesis')).toBeNull();
     expect(recallPlate('in-house tooling review')).toBeNull();
     expect(recallPlate('house init')?.id).toBe('house');
     expect(recallPlate('what is actuality')).toBeNull();

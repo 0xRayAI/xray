@@ -16,7 +16,8 @@
     "skills": "SKILLS.md"
   },
   "synthesis": {
-    "file": "src/nucleus/synthesis.ts"
+    "file": "src/nucleus/synthesis.ts",
+    "skills": ".agents/skills/synthesis/SKILL.md"
   },
   "routing": {
     "files": ["src/nucleus/thin-dispatch.ts"],

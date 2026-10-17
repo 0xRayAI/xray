@@ -93,6 +93,8 @@ const sidebars: SidebarsConfig = {
         'plates/pre-tool',
         'plates/lens-page',
         'plates/centrifuge',
+        'plates/ground',
+        'plates/synthesis',
         'plates/grokbot',
       ],
     },

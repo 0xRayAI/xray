@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync, symlinkSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -66,12 +66,33 @@ describe('goggles MCP', () => {
     rmSync(root, { recursive: true, force: true });
   });
 
-  it('a missing plate names the stamp skill', async () => {
+  it('synthesis names its plate', async () => {
     const { payload, isError } = await dispatchTool('look', { plane: 'synthesis' }, tempRoot());
     expect(isError).toBe(false);
     expect(payload.content.card).toBe('synthesis');
-    expect(payload.content.stamp).toContain('.agents/skills/stamp-plate/SKILL.md');
-    expect(payload.content.stamp).toContain('one plate for this card');
+    expect(payload.content.plate).toBe('docs-site/docs/plates/synthesis.md');
+    expect(payload.content.entry).toContain('a gate, a turn, or a finished todo');
+    expect(payload.content.exit).toContain('due or not due');
+    expect(payload.content.stamp).toBe('');
+  });
+
+  it('a card with no plate names the stamp skill', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'goggles-mcp-unplated-'));
+    const table = JSON.parse(readFileSync(fileURLToPath(new URL('../../integrations/hooks/goggles-planes.json', import.meta.url)), 'utf8'));
+    table.unplated = { file: 'src/core/config-paths.ts' };
+    const planes = join(dir, 'planes.json');
+    writeFileSync(planes, JSON.stringify(table));
+    process.env.GOGGLES_PLANES_PATH = planes;
+    try {
+      const { payload, isError } = await dispatchTool('look', { plane: 'unplated' }, tempRoot());
+      expect(isError).toBe(false);
+      expect(payload.content.card).toBe('unplated');
+      expect(payload.content.stamp).toContain('.agents/skills/stamp-plate/SKILL.md');
+      expect(payload.content.stamp).toContain('one plate for this card');
+      expect(existsSync(fileURLToPath(new URL('../../../docs-site/docs/plates/unplated.md', import.meta.url)))).toBe(false);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 
   it('an empty look returns the current card', async () => {
