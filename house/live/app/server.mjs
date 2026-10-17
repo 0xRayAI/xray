@@ -514,7 +514,7 @@ function ackLines(seat, what) {
   const arr = seatInbox[seat] || [], have = new Set(inboxAcks[seat] || []); let n = 0;
   const at = typeof what === 'object' && what ? arr.findIndex(l => l.id === what.upto) : -1;
   const ids = what === 'all' ? arr.map(l => l.id)
-    : what === 'stale' ? arr.filter(settledLine).map(l => l.id)
+    : what === 'stale' ? arr.filter(l => settledLine(l) && !have.has(l.id)).slice(0, 1000).map(l => l.id)
     : typeof what === 'object' && what ? (at < 0 ? null : arr.slice(0, at + 1).map(l => l.id))
     : arr.some(l => l.id === what) ? [what] : null;
   if (!ids) return -1;
@@ -2727,7 +2727,7 @@ async function handle(req, res) {
     return json(req, res, 200, { ok: true, started: true, clock: run });
   }
   const ackM = /^\/inbox\/([a-z0-9-]{2,16})\/ack$/.exec(p);
-  if (ackM) {   // POST /inbox/<seat>/ack {"id"} | {"upto"} | {"stale": true} | {"all": true}: that seat's key only. stale acks lines with a close or merge event, or a closed or done card.
+  if (ackM) {   // POST /inbox/<seat>/ack {"id"} | {"upto"} | {"stale": true} | {"all": true}: that seat's key only. stale acks up to 1000 open lines with a close or merge event, or a closed or done card. The same cap is on GET ?stale=1.
     if (m !== 'POST') return json(req, res, 405, { error: 'method not allowed' }, { Allow: 'POST' });
     let who; try { who = await seatOf(req); } catch { return json(req, res, 503, { error: 'could not verify token, retry' }, { 'Retry-After': '30' }); }
     if (!who) { req.resume(); return json(req, res, 401, { error: 'unauthorized' }); }
