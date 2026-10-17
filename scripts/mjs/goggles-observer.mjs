@@ -191,7 +191,8 @@ try {
   check('a search returns the dev card', String(search?.reason).includes('Plane: dev') && String(search?.reason).includes('Entry:') && String(search?.reason).includes('Exit:'));
   check('a search does not invent the boot plane', !String(search?.reason).includes('Plane: boot'));
   check('a search does not write a plate', !existsSync(join(gate, '.xray', 'state', 'plates', 'boot.md')));
-  check('a search that names a file still returns the current card', String(lensBeforeResearch(gate, 'grep', 'src/nucleus/thin-dispatch.ts')?.reason).includes('Plane: dev'));
+  check('a search inside the dev card runs', lensBeforeResearch(gate, 'grep', 'src/nucleus/thin-dispatch.ts') === null);
+  check('a search outside the dev card stays there', lensBeforeResearch(gate, 'grep', 'scripts/foundry/release.mjs')?.decision === 'deny' && String(lensBeforeResearch(gate, 'grep', 'scripts/foundry/release.mjs')?.reason).includes('Plane: dev'));
   check('README on dev stays quiet', lensBeforeResearch(gate, 'read_file', 'README.md') === null);
   check('config-paths on dev stays quiet', lensBeforeResearch(gate, 'read_file', 'src/core/config-paths.ts') === null);
   check('package.json on dev stays quiet', lensBeforeResearch(gate, 'Read', 'package.json') === null);
@@ -216,13 +217,13 @@ try {
   const domainOpen = lensBeforeResearch(gate, 'read_file', 'src/integrations/hooks/plates.cjs');
   check('the plate reader is the domain place', domainOpen?.decision === 'allow' && String(domainOpen.reason).startsWith('Plane: domain') && !String(domainOpen.reason).includes('Card: memory-recall'));
   const outside = lensBeforeResearch(gate, 'read_file', 'scripts/foundry/package.json');
-  check('foundry is the ecosystem place', outside?.decision === 'allow' && String(outside.reason).includes('Plane: ecosystem'));
+  check('foundry is its own card on the ecosystem place', outside?.decision === 'allow' && String(outside.reason).includes('Card: foundry') && String(outside.reason).includes('Plane: ecosystem'));
   check('git stays open', lensBeforeResearch(gate, 'bash', 'git status') === null);
   check('npm stays open', lensBeforeResearch(gate, 'bash', 'npm test') === null);
   check('ls stays open', lensBeforeResearch(gate, 'bash', 'ls') === null);
   check('an edit is not a search', lensBeforeResearch(gate, 'search_replace', 'src/nucleus/thin-dispatch.ts') === null);
-  check('a researcher search returns the ecosystem card', String(lensBeforeResearch(gate, 'xray-researcher', 'learn the code')?.reason).includes('Plane: ecosystem'));
-  check('an explorer search returns the ecosystem card', String(lensBeforeResearch(gate, 'explorer', 'learn the code')?.reason).includes('Plane: ecosystem'));
+  check('a researcher search returns the foundry card', String(lensBeforeResearch(gate, 'xray-researcher', 'learn the code')?.reason).includes('Card: foundry') && String(lensBeforeResearch(gate, 'xray-researcher', 'learn the code')?.reason).includes('Plane: ecosystem'));
+  check('an explorer search returns the foundry card', String(lensBeforeResearch(gate, 'explorer', 'learn the code')?.reason).includes('Card: foundry') && String(lensBeforeResearch(gate, 'explorer', 'learn the code')?.reason).includes('Plane: ecosystem'));
   const home = lensBeforeResearch(gate, 'bash', 'python3 -c "print(1)" src/core/config-paths.ts');
   check('a shell read of a dev file returns the dev card', home?.decision === 'allow' && String(home.reason).includes('Plane: dev') && String(home.reason).includes('Entry:'));
   check('the search after that shell read is dev', String(lensBeforeResearch(gate, 'grep', 'back home')?.reason).includes('Plane: dev'));

@@ -4,7 +4,7 @@
 
 ![0xRay — A Power Suit for AI Agents. survive compaction. build foundries. monitor the swarm.](/img/readme-hero.jpg)
 
-Bifrost is the live board. Goggles views one plane. A search returns that card.
+Bifrost is the live board. Goggles views one plane. A search runs inside that card.
 
 0xRay is a three-subsystem autonomous engine. The suit is the wear. Inference remembers. External Governance judges. The Autonomous Engine runs the work. The host you already run wears it: Grok, OpenCode, Hermes, OpenClaw, or Cursor. Memory, judgement, and payments come on with the suit. When the window closes, the next session wakes with the job, the page, and the laws. Bifrost turns each pull request, issue, and comment into one card and a line in the right seat's inbox, then wakes that seat. Confer still completes only on a real yes.
 
@@ -57,7 +57,7 @@ Every code change is checked against a **69-term Codex**, deliberated by **3 spe
 
 | Version | Highlights |
 |---------|------------|
-| **4.1.0** | Bifrost is the collector board. A cloud agent is a board row. A stuck card's L2 nudge goes to the CoS role. Goggles views one plane. The card is in LENS.md. A search returns that card. |
+| **4.1.0** | Bifrost is the collector board. A cloud agent is a board row. A stuck card's L2 nudge goes to the CoS role. Goggles views one plane. The card is in LENS.md. A search runs inside that card. |
 | **4.0.43** | Confer completes only on a real PASS. Cursor gate events fail closed, except EACCES when a cloud wrapper cannot write dest. |
 | **4.0.42** | Confer votes. Burst runs the swarm. |
 | **4.0.9** | Mill target: postinstall does not mill npm global prefix or `_npx` as a consumer. Isolated HOME skips machine `~/.grok`. |

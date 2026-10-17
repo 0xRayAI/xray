@@ -53,7 +53,7 @@ Digest: Home. The dev plane.
 Plate: docs-site/docs/plates/ground.md
 Entry: this checkout
 Exit: a change that stays in this repo
-Files: src, grok-bot/OP-PROC.md, grok-bot/LEXICON.md, src/opencode/agents, AGENTS.md, src/integrations, package.json, scripts/foundry
+Files: src, grok-bot/OP-PROC.md, grok-bot/LEXICON.md, src/opencode/agents, AGENTS.md, src/integrations, package.json
 Skills: SKILLS.md
 Setup:
 Teardown:
@@ -494,7 +494,7 @@ Worn:
 Card: lens-gate
 Plane: integration
 From: integration
-Digest: A search returns the current card and does not run.
+Digest: A search inside the current card runs.
 Plate: docs-site/docs/plates/lens-gate.md
 Plates: pre-tool
 Entry: the tool call and the file path
@@ -580,7 +580,7 @@ Digest: The mill builds and ships a suit.
 Plate: docs-site/docs/plates/foundry.md
 Entry: a version bump
 Exit: the registry lists that version
-Files: scripts/foundry/release.mjs
+Files: scripts/foundry, scripts/foundry/release.mjs
 Skills: .agents/skills/foundry/SKILL.md
 Setup:
 Teardown:
@@ -684,7 +684,7 @@ Digest: The worn checkout lists seven MCP servers.
 Plate: docs-site/docs/plates/consumer-mcp.md
 Entry: a worn checkout
 Exit: the seven servers
-Files: .mcp.json
+Files: src/mcps, .mcp.json
 Skills: .agents/skills/consumer-mcp/SKILL.md
 Setup:
 Teardown:

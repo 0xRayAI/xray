@@ -10,8 +10,7 @@
       "src/opencode/agents",
       "AGENTS.md",
       "src/integrations",
-      "package.json",
-      "scripts/foundry"
+      "package.json"
     ],
     "skills": "SKILLS.md"
   },
@@ -230,6 +229,7 @@
     "skills": ".agents/skills/dynamo/SKILL.md"
   },
   "foundry": {
+    "root": "scripts/foundry",
     "file": "scripts/foundry/release.mjs",
     "skills": ".agents/skills/foundry/SKILL.md"
   },
@@ -262,6 +262,7 @@
     "skills": ".agents/skills/opencode/SKILL.md"
   },
   "consumer-mcp": {
+    "root": "src/mcps",
     "file": ".mcp.json",
     "skills": ".agents/skills/consumer-mcp/SKILL.md"
   },

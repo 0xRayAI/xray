@@ -10,7 +10,7 @@ npm latest is 4.1.0. The notes under [4.1.0] are that publish.
 
 ### Goggles
 
-The lens file is `.xray/state/LENS.md`. The planes are dev, integration, domain, and ecosystem. A search returns the current card and does not run. A path switches the card. A missing plate names the stamp-plate skill.
+The lens file is `.xray/state/LENS.md`. The planes are dev, integration, domain, and ecosystem. A search inside the current card runs. Any other search returns the current card and does not run. A path switches the card. A missing plate names the stamp-plate skill.
 
 Plates for repertoire, dynamo, foundry, the delegation gate, temperament, asides, the inference cycle, Hermes, OpenClaw, OpenCode, the consumer MCP set, and confer.
 

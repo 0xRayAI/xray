@@ -10,7 +10,7 @@ The function is `lensBeforeResearch` in `src/integrations/hooks/goggles-pipeline
 
 1. A session starts on dev. The card is in `.xray/state/LENS.md`.
 2. The planes are dev, integration, domain, and ecosystem. The hook looks at the path.
-3. A search returns the current card and does not run.
+3. A search inside the current card runs. Any other search returns the current card and does not run.
 4. Opening a file on the current card adds nothing.
 5. Opening a file on another plane switches, returns that card, and the open proceeds.
 6. A file on no plane stays on the current plane. The hook returns that card.

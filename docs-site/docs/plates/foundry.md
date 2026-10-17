@@ -30,6 +30,6 @@ The mill builds and ships a suit.
 └────────────────────────────────────────────────────────────┘
 ```
 
-The card file is `scripts/foundry/release.mjs`. The rest of `scripts/foundry` stays on the ecosystem plane. A live publish needs `--i-mean-it`.
+The card owns `scripts/foundry`. The release script is `scripts/foundry/release.mjs`. A longer card still wins. A live publish needs `--i-mean-it`.
 
 stamped · 0xray 4.1.0

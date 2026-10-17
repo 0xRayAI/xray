@@ -16,8 +16,10 @@ import {
   lookCards,
   holdPlane,
   maintainLens,
+  PATH_OWNER,
   readLensCard,
   suitHint,
+  thingOfPath,
 } from '../../integrations/hooks/goggles-pipeline.mjs';
 
 const DEV_CARD = [
@@ -106,7 +108,7 @@ describe('goggles plate', () => {
     }
   });
 
-  it('a search returns the current card and a file open follows the path', () => {
+  it('a search inside the current card runs and a file open follows the path', () => {
     const root = mkdtempSync(join(tmpdir(), 'goggles-lens-gate-'));
     try {
       const search = lensBeforeResearch(root, 'grep', 'open the boot plane');
@@ -116,7 +118,10 @@ describe('goggles plate', () => {
       expect(search?.reason).toContain('Exit:');
       expect(search?.reason).not.toContain('Plane: boot');
       expect(existsSync(join(root, '.xray', 'state', 'plates', 'boot.md'))).toBe(false);
-      expect(lensBeforeResearch(root, 'grep', 'src/nucleus/thin-dispatch.ts')?.reason).toContain('Plane: dev');
+      expect(lensBeforeResearch(root, 'grep', 'src/nucleus/thin-dispatch.ts')).toBeNull();
+      const outsideDev = lensBeforeResearch(root, 'grep', 'scripts/foundry/release.mjs');
+      expect(outsideDev?.decision).toBe('deny');
+      expect(outsideDev?.reason).toContain('Plane: dev');
       expect(lensBeforeResearch(root, 'read_file', 'README.md')).toBeNull();
       expect(lensBeforeResearch(root, 'read_file', 'src/core/config-paths.ts')).toBeNull();
       expect(lensBeforeResearch(root, 'Read', 'package.json')).toBeNull();
@@ -127,6 +132,10 @@ describe('goggles plate', () => {
       expect(hop?.reason).toContain('docs-site/docs/plates/routing.md');
       expect(hop?.reason).not.toContain('Stamp:');
       expect(lensBeforeResearch(root, 'read_file', 'src/nucleus/thin-dispatch.ts')).toBeNull();
+      expect(lensBeforeResearch(root, 'grep', 'src/nucleus/thin-dispatch.ts')).toBeNull();
+      const wider = lensBeforeResearch(root, 'grep', 'src/nucleus');
+      expect(wider?.decision).toBe('deny');
+      expect(wider?.reason).toContain('Card: routing');
       const stayed = lensBeforeResearch(root, 'grep', 'still searching');
       expect(stayed?.decision).toBe('deny');
       expect(stayed?.reason).toContain('Card: routing');
@@ -152,13 +161,21 @@ describe('goggles plate', () => {
       expect(domain?.reason).toContain('Plane: domain');
       const outside = lensBeforeResearch(root, 'read_file', 'scripts/foundry/package.json');
       expect(outside?.decision).toBe('allow');
+      expect(outside?.reason).toContain('Card: foundry');
       expect(outside?.reason).toContain('Plane: ecosystem');
       expect(lensBeforeResearch(root, 'bash', 'git status')).toBeNull();
       expect(lensBeforeResearch(root, 'bash', 'npm test')).toBeNull();
       expect(lensBeforeResearch(root, 'bash', 'ls')).toBeNull();
       expect(lensBeforeResearch(root, 'search_replace', 'src/nucleus/thin-dispatch.ts')).toBeNull();
-      expect(lensBeforeResearch(root, 'xray-researcher', 'learn the code')?.reason).toContain('Plane: ecosystem');
-      expect(lensBeforeResearch(root, 'explorer', 'learn the code')?.reason).toContain('Plane: ecosystem');
+      const researcher = lensBeforeResearch(root, 'xray-researcher', 'learn the code');
+      expect(researcher?.decision).toBe('deny');
+      expect(researcher?.reason).toContain('Card: foundry');
+      expect(researcher?.reason).toContain('Plane: ecosystem');
+      const explorer = lensBeforeResearch(root, 'explorer', 'learn the code');
+      expect(explorer?.decision).toBe('deny');
+      expect(explorer?.reason).toContain('Card: foundry');
+      expect(explorer?.reason).toContain('Plane: ecosystem');
+      expect(lensBeforeResearch(root, 'grep', 'scripts/foundry/package.json')).toBeNull();
       const home = lensBeforeResearch(root, 'bash', 'python3 -c "print(1)" src/core/config-paths.ts');
       expect(home?.decision).toBe('allow');
       expect(home?.reason).toContain('Plane: dev');
@@ -166,6 +183,53 @@ describe('goggles plate', () => {
       expect(lensBeforeResearch(root, 'grep', 'back home')?.reason).toContain('Plane: dev');
     } finally {
       rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('a shared path opens the named owner', () => {
+    const root = mkdtempSync(join(tmpdir(), 'goggles-owner-'));
+    try {
+      for (const [file, id] of Object.entries(PATH_OWNER)) {
+        expect(thingOfPath(file)).toBe(id);
+        const opened = lensBeforeResearch(root, 'read_file', file);
+        expect(opened?.decision).toBe('allow');
+        expect(opened?.reason).toContain(`Card: ${id}`);
+      }
+      expect(thingOfPath('package.json')).toBe('');
+      const pack = lensBeforeResearch(root, 'read_file', 'package.json');
+      expect(pack?.decision).toBe('allow');
+      expect(pack?.reason).toContain('Plane: dev');
+      expect(pack?.reason).not.toMatch(/^Card:/m);
+      const servers = lensBeforeResearch(root, 'read_file', '.mcp.json');
+      expect(servers?.reason).toContain('Card: consumer-mcp');
+      expect(lensBeforeResearch(root, 'read_file', 'src/mcps/registry.json')).toBeNull();
+      const dispatch = lensBeforeResearch(root, 'read_file', 'src/mcps/orchestrator/server.ts');
+      expect(dispatch?.reason).toContain('Card: orchestration');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('a tied path with no owner stays on the plane', () => {
+    const root = mkdtempSync(join(tmpdir(), 'goggles-twin-'));
+    const table = JSON.parse(readFileSync(fileURLToPath(new URL('../../integrations/hooks/goggles-planes.json', import.meta.url)), 'utf8'));
+    table.twin = { file: 'src/nucleus/thin-dispatch.ts' };
+    const planes = join(root, 'planes.json');
+    writeFileSync(planes, JSON.stringify(table));
+    const previous = process.env.GOGGLES_PLANES_PATH;
+    process.env.GOGGLES_PLANES_PATH = planes;
+    const project = mkdtempSync(join(tmpdir(), 'goggles-twin-root-'));
+    try {
+      expect(thingOfPath('src/nucleus/thin-dispatch.ts')).toBe('');
+      const opened = lensBeforeResearch(project, 'read_file', 'src/nucleus/thin-dispatch.ts');
+      expect(opened?.decision).toBe('allow');
+      expect(opened?.reason).toContain('Plane: integration');
+      expect(opened?.reason).not.toMatch(/^Card:/m);
+    } finally {
+      if (previous === undefined) delete process.env.GOGGLES_PLANES_PATH;
+      else process.env.GOGGLES_PLANES_PATH = previous;
+      rmSync(root, { recursive: true, force: true });
+      rmSync(project, { recursive: true, force: true });
     }
   });
 

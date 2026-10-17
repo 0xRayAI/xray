@@ -30,6 +30,6 @@ Home. The dev plane.
 └────────────────────────────────────────────────────────────┘
 ```
 
-The card lists src, grok-bot/OP-PROC.md, grok-bot/LEXICON.md, src/opencode/agents, AGENTS.md, src/integrations, package.json, and scripts/foundry. The session starts on the dev plane.
+The card lists src, grok-bot/OP-PROC.md, grok-bot/LEXICON.md, src/opencode/agents, AGENTS.md, src/integrations, and package.json. The session starts on the dev plane.
 
 stamped · 0xray 4.1.0

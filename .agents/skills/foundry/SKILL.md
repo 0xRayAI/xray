@@ -10,4 +10,4 @@ The file is `scripts/foundry/release.mjs`. The plate is `docs-site/docs/plates/f
 
 1. Read this lens. The skill is this file.
 2. The script is `scripts/foundry/release.mjs`.
-3. A live publish needs `--i-mean-it`. The rest of the folder stays on the ecosystem plane.
+3. The card owns `scripts/foundry`. A live publish needs `--i-mean-it`.

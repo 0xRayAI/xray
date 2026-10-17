@@ -1,7 +1,7 @@
 /**
  * Goggles. The plane is state. A session starts on dev.
  * The card is in LENS.md: Entry, Exit, and the other rows.
- * A search returns the current card and does not run.
+ * A search inside the current card runs. Any other search returns the card and does not run.
  * Opening a file on that card stays quiet.
  * Opening a file on another plane switches, returns that card, and the open proceeds.
  * A file on no plane stays put and returns the current card.
@@ -160,25 +160,65 @@ function planeSpan(file) {
   return best;
 }
 
-function thingOfPath(file) {
+export const PATH_OWNER = {
+  'src/integrations/hooks/station-hook-runtime.cjs': 'station-card',
+  'src/integrations/hooks/wake-cascade.cjs': 'record-map',
+  'src/integrations/hooks/session-note-index.cjs': 'notes-page',
+  'src/reporting/framework-reporting-system.ts': 'reporting',
+  'src/inference/inference-accumulator.ts': 'inference-files',
+  'src/integrations/hooks/goggles-pipeline.mjs': 'lens-gate',
+};
+
+function covers(listed, rel) {
+  return rel === listed || rel.startsWith(`${listed}/`);
+}
+
+function rootsOf(entry) {
+  if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return [];
+  if (Array.isArray(entry.root)) return entry.root.map(String).filter((item) => item.trim());
+  if (typeof entry.root === 'string' && entry.root.trim()) return [entry.root.trim()];
+  return [];
+}
+
+function cardMatchPaths(id) {
+  if (CARD_PLANES.includes(id)) return PLANE_PATHS[id] || [];
+  const row = mapEntry(id);
+  if (!row) return [];
+  return [...thingFiles(row), ...rootsOf(row)];
+}
+
+/** Longest listed path. A root may equal the plane. A tie uses PATH_OWNER, or stays the plane. */
+export function thingOfPath(file) {
   const rel = String(file || '').replace(/\\/g, '/').replace(/^\.\//, '');
   const table = overlayTable();
-  let best = '';
-  let winner = '';
+  let best = -1;
+  const hits = [];
   for (const [id, entry] of Object.entries(table)) {
     if (CARD_PLANES.includes(id)) continue;
     const row = entry && typeof entry === 'object' && !Array.isArray(entry) ? entry : null;
     if (!row) continue;
-    for (const listed of thingFiles(row)) {
-      if ((rel === listed || rel.startsWith(`${listed}/`)) && listed.length > best.length) {
-        best = listed;
-        winner = id;
+    const span = planeSpan(rel);
+    const consider = (listed, floor) => {
+      if (!covers(listed, rel) || listed.length < floor) return;
+      if (listed.length > best) {
+        best = listed.length;
+        hits.length = 0;
       }
-    }
+      if (listed.length === best) hits.push({ id, listed });
+    };
+    for (const listed of thingFiles(row)) consider(listed, span + 1);
+    for (const listed of rootsOf(row)) consider(listed, span);
   }
-  if (!winner || best.length <= planeSpan(rel)) return '';
-  return winner;
+  const ids = [];
+  for (const hit of hits) {
+    if (!ids.includes(hit.id)) ids.push(hit.id);
+  }
+  if (ids.length === 1) return ids[0];
+  if (!ids.length) return '';
+  const owner = PATH_OWNER[hits[0].listed];
+  return owner && ids.includes(owner) ? owner : '';
 }
+
 
 function platePath(id) {
   if (CARD_PLANES.includes(id)) return '';
@@ -588,7 +628,8 @@ export function assemblePlane(id, platesDir) {
   const listed = Array.isArray(extra.files)
     ? extra.files.map(String)
     : (typeof extra.file === 'string' && extra.file.trim() ? [extra.file.trim()] : []);
-  const files = listed;
+  const roots = rootsOf(extra);
+  const files = [...roots.filter((item) => !listed.includes(item)), ...listed];
   return {
     id,
     digest,
@@ -840,7 +881,7 @@ function stampPlane(root, id) {
 function openPaths(text) {
   const raw = String(text || '').replace(/\\/g, '/');
   const found = [];
-  const re = /(?:^|[^A-Za-z0-9_])((?:src|scripts|docs-site|\.agents|grok-bot|node_modules\/@0xray)\/[\w./@-]*|AGENTS\.md|package\.json|README\.md)/g;
+  const re = /(?:^|[^A-Za-z0-9_])((?:src|scripts|docs-site|\.agents|grok-bot|node_modules\/@0xray)\/[\w./@-]*|AGENTS\.md|package\.json|README\.md|\.mcp\.json)/g;
   let match = re.exec(raw);
   while (match) {
     found.push(match[1].replace(/\/+$/, ''));
@@ -894,13 +935,13 @@ export function planeCard(root) {
 }
 
 function targetOf(file) {
-  const plane = planeOfPath(file);
-  if (!plane) return null;
   const thing = thingOfPath(file);
+  const plane = planeOfPath(file) || (thing ? planeForCard(thing) : '');
+  if (!plane) return null;
   return { plane, card: thing || plane };
 }
 
-/** A search returns the current card and stops. A file open follows the path. */
+/** A search inside the current card runs. A file open follows the path. */
 export function lensBeforeResearch(root, toolName, text) {
   const spoken = String(text || '');
   const searching = isSearch(toolName, spoken);
@@ -908,7 +949,15 @@ export function lensBeforeResearch(root, toolName, text) {
   if (!searching && !reading) return null;
   ensurePlane(root);
   const current = currentCard(root);
-  if (searching) return { gate: 'lens', decision: 'deny', reason: cardText(root, current) };
+  if (searching) {
+    const owned = cardMatchPaths(current);
+    const paths = openPaths(spoken);
+    const inside = owned.length > 0
+      && paths.length > 0
+      && paths.every((file) => owned.some((listed) => covers(listed, file)));
+    if (inside) return null;
+    return { gate: 'lens', decision: 'deny', reason: cardText(root, current) };
+  }
   const targets = [];
   for (const file of openPaths(spoken)) {
     const target = targetOf(file);

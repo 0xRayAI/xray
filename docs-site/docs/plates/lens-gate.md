@@ -5,7 +5,7 @@ sidebar_label: Lens gate
 
 # Lens gate
 
-A search returns the current card and does not run.
+A search inside the current card runs.
 
 ```
 ┌────────────────────────────────────────────────────────────┐
@@ -30,7 +30,7 @@ A search returns the current card and does not run.
 └────────────────────────────────────────────────────────────┘
 ```
 
-lensBeforeResearch in src/integrations/hooks/goggles-pipeline.mjs looks at the path. A search returns the current card and does not run. Opening a file on the current plane adds nothing. Opening a file on another plane switches and returns that card. A file on no plane stays and returns the current card. The hook does not search the repo.
+lensBeforeResearch in src/integrations/hooks/goggles-pipeline.mjs looks at the path. A search inside the current card runs. Any other search returns the current card and does not run. Opening a file on the current plane adds nothing. Opening a file on another plane switches and returns that card. A file on no plane stays and returns the current card. The hook does not search the repo.
 
 A session starts on dev. Compact writes that same card back.
 
