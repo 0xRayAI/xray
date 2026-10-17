@@ -58,6 +58,20 @@ describe('pipeline plates', () => {
       'pre-tool',
       'lens-page',
       'centrifuge',
+      'ground',
+      'synthesis',
+      'repertoire',
+      'dynamo',
+      'foundry',
+      'delegation-gate',
+      'temperament',
+      'asides',
+      'inference-cycle',
+      'hermes',
+      'openclaw',
+      'opencode',
+      'consumer-mcp',
+      'confer',
     ]);
     for (const id of PLATE_IDS) {
       const plate = loadPlate(id);
@@ -84,7 +98,7 @@ describe('pipeline plates', () => {
       'Plate: processor — .xray/state/plates/processor.md',
     );
     expect(plateStockLine('open the boot plane')).toBe(
-      'Plate: boot — .xray/state/plates/boot.md File: src/core/boot-orchestrator.ts',
+      'Plate: boot — .xray/state/plates/boot.md',
     );
     expect(plateStockLine('survive the cut')).toBeNull();
   });
@@ -198,6 +212,29 @@ describe('pipeline plates', () => {
     expect(recallPlate('pre tool')?.id).toBe('pre-tool');
     expect(recallPlate('lens page')?.id).toBe('lens-page');
     expect(recallPlate('centrifuge plate')?.id).toBe('centrifuge');
+    expect(recallPlate('ground plane')?.id).toBe('ground');
+    expect(recallPlate('synthesis plate')?.id).toBe('synthesis');
+    expect(recallPlate('repertoire plate')?.id).toBe('repertoire');
+    expect(recallPlate('dynamo plate')?.id).toBe('dynamo');
+    expect(recallPlate('foundry plate')?.id).toBe('foundry');
+    expect(recallPlate('delegation gate')?.id).toBe('delegation-gate');
+    expect(recallPlate('temperament plate')?.id).toBe('temperament');
+    expect(recallPlate('asides plate')?.id).toBe('asides');
+    expect(recallPlate('inference cycle')?.id).toBe('inference-cycle');
+    expect(recallPlate('hermes plate')?.id).toBe('hermes');
+    expect(recallPlate('openclaw plate')?.id).toBe('openclaw');
+    expect(recallPlate('opencode plate')?.id).toBe('opencode');
+    expect(recallPlate('consumer mcp')?.id).toBe('consumer-mcp');
+    expect(recallPlate('confer plate')?.id).toBe('confer');
+    expect(recallPlate('repertoire')).toBeNull();
+    expect(recallPlate('dynamo')).toBeNull();
+    expect(recallPlate('foundry')).toBeNull();
+    expect(recallPlate('hermes')).toBeNull();
+    expect(recallPlate('confer')).toBeNull();
+    expect(recallPlate('opencode')).toBeNull();
+    expect(recallPlate('openclaw')).toBeNull();
+    expect(recallPlate('ground')).toBeNull();
+    expect(recallPlate('synthesis')).toBeNull();
     expect(recallPlate('in-house tooling review')).toBeNull();
     expect(recallPlate('house init')?.id).toBe('house');
     expect(recallPlate('what is actuality')).toBeNull();

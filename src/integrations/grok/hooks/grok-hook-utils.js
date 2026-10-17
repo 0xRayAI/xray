@@ -28,7 +28,7 @@ import {
   retainCompactFields,
   writeStationMarkdown,
 } from '../../hooks/station-hook-runtime.mjs';
-import { handCard } from '../../hooks/goggles-pipeline.mjs';
+import { handCard, planeCard } from '../../hooks/goggles-pipeline.mjs';
 
 export {
   checkPendingDelegationGate,
@@ -315,6 +315,7 @@ export function buildSessionBootPayload(root, source = '0xray/grok-session-start
   const existing = readExistingBoot(root);
   const heat = applyStationHeat(root, extra.host || 'grok', extra, existing);
   const compactHold = retainCompactFields(existing, extra);
+  const shown = planeCard(root);
   return {
     lead_dev_mode: features.lead_dev_mode,
     no_new_surface: features.no_new_surface,
@@ -348,6 +349,8 @@ export function buildSessionBootPayload(root, source = '0xray/grok-session-start
     hook: source,
     source,
     timestamp: new Date().toISOString(),
+    plane: shown.plane,
+    card: shown.card,
   };
 }
 

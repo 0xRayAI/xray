@@ -74,7 +74,7 @@ async function decide(event, gate) {
   const spoken = `${toolName} ${JSON.stringify(args)}`.slice(0, 500);
   const { lensDecision, repertoireRoute } = await import('../../hooks/pre-tool-speak.mjs');
   const lens = lensDecision(projectRoot, toolName, spoken);
-  if (lens) {
+  if (lens?.decision === 'deny') {
     return {
       action: 'block',
       allow: false,
@@ -86,9 +86,9 @@ async function decide(event, gate) {
   const allowed = {
     action: 'allow',
     allow: true,
-    reason: outcome.reason,
-    gate: outcome.gate,
-    warn: Boolean(outcome.reason),
+    reason: lens?.reason || outcome.reason,
+    gate: lens?.reason ? 'lens' : outcome.gate,
+    warn: Boolean(lens?.reason || outcome.reason),
   };
   if (route?.hookSpecificOutput) {
     allowed.hookSpecificOutput = route.hookSpecificOutput;

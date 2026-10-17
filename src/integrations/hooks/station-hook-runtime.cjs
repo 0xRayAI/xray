@@ -1033,7 +1033,10 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
   const intent = resolved.intent;
   const rematch = resolved.rematch;
   let notesLine = null;
-  if (isCompactHook(extra)) {
+  const notesWake = isCompactHook(extra)
+    || isPromptHook(extra)
+    || /session[_-]?start/i.test(String(extra.hookEvent || extra.source || ""));
+  if (notesWake) {
     if (intent && (readStationTicketField(root, "Intent") || pickup || clipIntent(extra.intent))) {
       const stamped = stampNotesPickup(root, intent);
       if (stamped) pickup = stamped;

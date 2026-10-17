@@ -1,7 +1,7 @@
-# 0xRay 4.0 — reference
+# 0xRay — reference
 
 **4.1** — a suit that survives the context window
-Confer votes. Burst runs the swarm.
+Bifrost is the live board. Goggles views one plane. A search runs inside that card.
 
 
 Exo, not catalog. Constitution always on. Temperament by host. Four floors. Repertoire organ on.
@@ -96,7 +96,7 @@ Routes tasks to the right agents based on complexity (simple tasks go to a singl
 | `init` | Initialize xray configuration in the current project |
 | `wear` | Wear the 0xray suit in this git checkout |
 | `unwear` | Remove the 0xray suit and restore the pre-wear hooks file |
-| `look` | Kind 0 is quiet on a match. One outer is a reading. digest and triage return a card |
+| `look` | dev, integration, domain, or ecosystem. The card is in LENS.md. |
 | `goggles` | Same organ as `look` |
 | `confer` | Turn confer on or off in `.xray/features.json`. A missing key stays off until this runs |
 | `status` | Show comprehensive xray framework status |

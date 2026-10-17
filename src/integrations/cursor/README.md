@@ -34,7 +34,7 @@ Install the package first (`npm install`), then `npx 0xray wear`. Postinstall wr
 
 | Hook | Stdin | Stdout |
 |------|--------|--------|
-| `preToolUse` | Cursor tool event (`tool_name`, `tool_input`, `cwd`, `workspace_roots`, `conversation_id`) | `{ "permission": "allow" \| "deny" }` plus `user_message` / `agent_message` on deny |
+| `preToolUse` | Cursor tool event (`tool_name`, `tool_input`, `cwd`, `workspace_roots`, `conversation_id`) | `{ "permission": "allow" \| "deny" }` plus `user_message` / `agent_message` when the hook has something to say |
 | `preCompact` | `{ trigger, context_tokens, conversation_id, generation_id, … }` | `{ "user_message": "…" }` after Station write. Receipt keeps `conversation_id` + `generation_id`. That id is enough to resume. |
 | `afterFileEdit` | file event | `{}` — boots Station only |
 

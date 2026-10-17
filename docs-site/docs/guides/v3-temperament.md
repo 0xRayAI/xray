@@ -2,7 +2,9 @@
 sidebar_label: Suit temperament
 ---
 
-# 0xRay 4.0 — Suit temperament
+# Suit temperament
+
+The suit era is 4.1. This page is how ceremony scales by host.
 
 v2 forged the **three-subsystem OS** (Inference · External Governance · Autonomous Engine). That is the marvel. 4.0 wears it as the engine. The suit is the wear.
 

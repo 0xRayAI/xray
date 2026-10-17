@@ -1,7 +1,7 @@
-import { execFileSync, spawn } from 'node:child_process';
-import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { spawn } from 'node:child_process';
+import { existsSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
 import { lookCards } from '../../integrations/hooks/goggles-pipeline.mjs';
@@ -14,14 +14,6 @@ function tempRoot(): string {
   return mkdtempSync(join(tmpdir(), 'goggles-mcp-'));
 }
 
-/** A planes file with the map but no card rows, so no card files to check. */
-function bareMap(root: string): string {
-  const drawn = JSON.parse(readFileSync(fileURLToPath(new URL('../../integrations/hooks/goggles-planes.json', import.meta.url)), 'utf8'));
-  const file = join(root, 'bare-planes.json');
-  writeFileSync(file, `${JSON.stringify({ actuality: drawn.actuality, planes: drawn.planes, scope: drawn.scope })}\n`);
-  return file;
-}
-
 afterEach(() => {
   delete process.env.GOGGLES_PLANES_PATH;
   delete process.env.GOGGLES_ORGAN_PATH;
@@ -31,155 +23,124 @@ describe('goggles MCP', () => {
   it('lists only look and status_lens', () => {
     expect(TOOLS.map((tool) => tool.name)).toEqual(['look', 'status_lens']);
     const copy = TOOLS.map((tool) => tool.description).join('\n');
-    expect(copy).toMatch(/quiet/i);
-    expect(copy).toMatch(/match/i);
-    expect(copy).toMatch(/six/);
+    expect(copy).toMatch(/LENS\.md/);
+    expect(copy).toMatch(/Entry and Exit/);
+    expect(copy).not.toMatch(/Kind 0|quiet \(match\)/);
     expect(copy).not.toMatch(/Dynamo|Clearing|Repertoire/);
     expect(copy).not.toMatch(/memory-recall/);
     for (const name of NINE) expect(copy).not.toContain(name);
+    const lookTool = TOOLS[0] as { inputSchema?: { properties?: { plane?: { enum?: string[]; description?: string } } } };
+    expect(lookTool.inputSchema?.properties?.plane?.enum).toBeUndefined();
+    expect(lookTool.inputSchema?.properties?.plane?.description).toMatch(/card/);
   });
 
-  it('kind 0 is quiet and not an error', async () => {
-    const root = tempRoot();
-    process.env.GOGGLES_PLANES_PATH = bareMap(root);
-    try {
-      const { payload, isError } = await dispatchTool('look', { kind: '0' }, root);
-      expect(isError).toBe(false);
-      expect(payload).toMatchObject({ ok: true, quiet: true, mode: 'kind0', content: '' });
-      expect(readFileSync(join(root, '.xray', 'state', 'LENS.md'), 'utf8')).toBe('quiet (match)\n');
-    } finally {
-      rmSync(root, { recursive: true, force: true });
-    }
-  });
-
-  it('kind 0 reports drift when a card file is missing', async () => {
-    const root = tempRoot();
-    const drawn = JSON.parse(readFileSync(bareMap(root), 'utf8'));
-    const planes = join(root, 'holed-planes.json');
-    writeFileSync(planes, `${JSON.stringify({ ...drawn, boot: { files: ['dist/core/not-there.js'] } })}\n`);
-    process.env.GOGGLES_PLANES_PATH = planes;
-    try {
-      const { payload, isError } = await dispatchTool('look', { kind: '0' }, root);
-      expect(isError).toBe(false);
-      expect(payload.quiet).toBe(false);
-      expect(payload.mode).toBe('kind0');
-      expect(payload.content).toBe('Actuality. boot: Drift: dist/core/not-there.js is not there');
-      expect(readFileSync(join(root, '.xray', 'state', 'LENS.md'), 'utf8').trim()).toBe(payload.content);
-      const status = await dispatchTool('status_lens', {}, root);
-      expect(status.payload.kind0).toBe('drift');
-    } finally {
-      rmSync(root, { recursive: true, force: true });
-    }
-  });
-
-  it('a packed install gives a quiet kind 0', async () => {
-    const repo = fileURLToPath(new URL('../../../', import.meta.url));
-    const listed = JSON.parse(execFileSync('npm', ['pack', '--dry-run', '--json', '--ignore-scripts'], { cwd: repo, encoding: 'utf8' }));
-    const packed = tempRoot();
-    const suit = tempRoot();
-    try {
-      for (const { path } of listed[0].files) {
-        const dest = join(packed, path);
-        mkdirSync(dirname(dest), { recursive: true });
-        copyFileSync(join(repo, path), dest);
-      }
-      symlinkSync(join(repo, 'node_modules'), join(packed, 'node_modules'));
-      expect(existsSync(join(packed, 'grok-bot'))).toBe(false);
-      process.env.GOGGLES_ORGAN_PATH = join(packed, 'dist/integrations/hooks/goggles-pipeline.mjs');
-      const { payload, isError } = await dispatchTool('look', { kind: '0' }, suit);
-      expect(isError).toBe(false);
-      expect(payload).toMatchObject({ ok: true, quiet: true, mode: 'kind0', content: '' });
-    } finally {
-      rmSync(packed, { recursive: true, force: true });
-      rmSync(suit, { recursive: true, force: true });
-    }
-  }, 60000);
-
-  it('an empty look is refused, not quiet', async () => {
-    const { payload, isError } = await dispatchTool('look', {}, tempRoot());
-    expect(isError).toBe(true);
-    expect(payload.error.code).toBe('invalid_args');
-  });
-
-  it('plane on an outer with no cards is refused', async () => {
+  it('an extra argument is refused', async () => {
     const { payload, isError } = await dispatchTool('look', { outer: 'dichotomy', plane: 'routing' }, tempRoot());
     expect(isError).toBe(true);
-    expect(payload.error.reason).toBe('plane goes with digest or triage only.');
+    expect(payload.error.reason).toBe('Unknown argument.');
   });
 
-  it('kind with outer is refused', async () => {
-    const { payload, isError } = await dispatchTool('look', { kind: '0', outer: 'digest', plane: 'boot' }, tempRoot());
+  it('a worn name is not a card plane', async () => {
+    const { payload, isError } = await dispatchTool('look', { plane: 'dichotomy' }, tempRoot());
     expect(isError).toBe(true);
-    expect(payload.error.reason).toBe('Send kind or outer, not both.');
+    expect(payload.error.reason).toBe('Name one plane.');
   });
 
-  it('card skills show the full path', async () => {
-    const { payload, isError } = await dispatchTool('look', { outer: 'digest', plane: 'routing' }, tempRoot());
+  it('card skills show the path on the card', async () => {
+    const { payload, isError } = await dispatchTool('look', { plane: 'domain' }, tempRoot());
     expect(isError).toBe(false);
-    expect(payload.content.skills).toBe('.agents/skills/routing/SKILL.md');
+    expect(payload.content.skills).toBe('.agents/skills');
   });
 
   it('card planes come from the organ list', async () => {
-    const { payload, isError } = await dispatchTool('look', { outer: 'digest', plane: 'lens-gate' }, tempRoot());
+    const root = tempRoot();
+    const { payload, isError } = await dispatchTool('look', { plane: 'dev' }, root);
     expect(isError).toBe(false);
-    expect(payload.content.plane).toBe('lens-gate');
+    expect(payload.content.plane).toBe('dev');
+    const thing = await dispatchTool('look', { plane: 'lens-gate' }, root);
+    expect(thing.isError).toBe(false);
+    expect(thing.payload.content.card).toBe('lens-gate');
+    const missed = await dispatchTool('look', { plane: 'not-a-card' }, root);
+    expect(missed.isError).toBe(true);
+    expect(missed.payload.error.reason).toBe('Name one plane.');
+    rmSync(root, { recursive: true, force: true });
   });
 
-  it('stamp-plate is a selectable card plane', async () => {
-    const { payload, isError } = await dispatchTool('look', { outer: 'digest', plane: 'stamp-plate' }, tempRoot());
+  it('synthesis names its plate', async () => {
+    const { payload, isError } = await dispatchTool('look', { plane: 'synthesis' }, tempRoot());
+    expect(isError).toBe(false);
+    expect(payload.content.card).toBe('synthesis');
+    expect(payload.content.plate).toBe('docs-site/docs/plates/synthesis.md');
+    expect(payload.content.entry).toContain('a gate, a turn, or a finished todo');
+    expect(payload.content.exit).toContain('due or not due');
+    expect(payload.content.stamp).toBe('');
+  });
+
+  it('a card with no plate names the stamp skill', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'goggles-mcp-unplated-'));
+    const table = JSON.parse(readFileSync(fileURLToPath(new URL('../../integrations/hooks/goggles-planes.json', import.meta.url)), 'utf8'));
+    table.unplated = { file: 'src/core/config-paths.ts' };
+    const planes = join(dir, 'planes.json');
+    writeFileSync(planes, JSON.stringify(table));
+    process.env.GOGGLES_PLANES_PATH = planes;
+    try {
+      const { payload, isError } = await dispatchTool('look', { plane: 'unplated' }, tempRoot());
+      expect(isError).toBe(false);
+      expect(payload.content.card).toBe('unplated');
+      expect(payload.content.stamp).toContain('.agents/skills/stamp-plate/SKILL.md');
+      expect(payload.content.stamp).toContain('one plate for this card');
+      expect(existsSync(fileURLToPath(new URL('../../../docs-site/docs/plates/unplated.md', import.meta.url)))).toBe(false);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('an empty look returns the current card', async () => {
+    const { payload, isError } = await dispatchTool('look', {}, tempRoot());
     expect(isError).toBe(false);
     expect(payload.mode).toBe('card');
-    expect(payload.content.plane).toBe('stamp-plate');
-    expect(payload.content.skills).toBe('.agents/skills/stamp-plate/SKILL.md');
+    expect(payload.content.plane).toBe('dev');
+    expect(payload.content.entry).toContain('package.json');
+    expect(payload.content.exit).toContain('this repo');
   });
 
-  it('dichotomy is a reading, not a card', async () => {
-    const { payload, isError } = await dispatchTool('look', { outer: 'dichotomy' }, tempRoot());
-    expect(isError).toBe(false);
-    expect(payload.mode).toBe('reading');
-    expect(payload.content).toBe('The reading is dichotomy.');
-    expect(payload.content).not.toMatch(/Plane:|files/);
-  });
-
-  it('digest ground is the card with empties empty', async () => {
-    const { payload, isError } = await dispatchTool('look', { outer: 'digest', plane: 'ground' }, tempRoot());
+  it('dev is the card for this checkout', async () => {
+    const { payload, isError } = await dispatchTool('look', { plane: 'dev' }, tempRoot());
     expect(isError).toBe(false);
     expect(payload.mode).toBe('card');
     const card = payload.content;
-    expect(card.plane).toBe('ground');
-    expect(card.flavor).toBe('digest');
-    expect(card.digest).toBe('Home. The dev plane.');
-    expect(card.files).toContain('scripts/foundry');
-    expect(card.entry).toBe('');
-    expect(card.exit).toBe('');
-    expect(card.setup).toBe('');
-    expect(card.teardown).toBe('');
+    expect(card.plane).toBe('dev');
+    expect(card.digest).toBe('This checkout.');
+    expect(card.files).toEqual(['src', 'grok-bot', 'docs-site', 'AGENTS.md', 'package.json', 'README.md']);
+    expect(card.entry).toBe('package.json, src, and grok-bot/OP-PROC.md.');
+    expect(card.exit).toBe('A change that stays in this repo.');
+    expect(card.setup).toBe('You are in this repo.');
+    expect(card.teardown).toBe('Leave other repos alone.');
     expect(card.skills).toBe('SKILLS.md');
     expect(card.notes).toEqual([]);
     expect(JSON.stringify(card)).not.toContain('The reading is');
     expect(JSON.stringify(card)).not.toContain('n/a');
+    expect(JSON.stringify(card)).not.toContain('Sleeve:');
   });
 
-  it('triage routing keeps the hole notes and the organ entry', async () => {
-    const organ = lookCards(['triage', 'routing'])[0];
-    const { payload } = await dispatchTool('look', { outer: 'triage', plane: 'routing' }, tempRoot());
+  it('integration returns the stored card', async () => {
+    const organ = lookCards(['integration'])[0];
+    const { payload } = await dispatchTool('look', { plane: 'integration' }, tempRoot());
     const card = payload.content;
     expect(card.entry).toBe(organ.entry);
-    expect(card.notes.join('\n')).toContain('Empty: setup, teardown');
-    expect(card.notes.join('\n')).toContain('Holds.');
-    expect(card.notes.join('\n')).not.toContain('entry');
+    expect(card.entry).toBe('The hook, the dispatch, or the bridge this file sits on.');
+    expect(card.exit).toBe('The next call. Stop there.');
+    expect(card.notes.join('\n')).not.toContain('Empty:');
+    expect(card.notes.join('\n')).not.toContain('Holds.');
   });
 
-  it('one artifact on a multi-file plane keeps the view', async () => {
-    const { payload, isError } = await dispatchTool(
-      'look',
-      { outer: 'digest', plane: 'ground', scope: 'one artifact' },
-      tempRoot(),
-    );
+  it('a dev look keeps every file on the card', async () => {
+    const { payload, isError } = await dispatchTool('look', { plane: 'dev' }, tempRoot());
     expect(isError).toBe(false);
     expect(payload.mode).toBe('card');
-    expect(payload.content.files).toContain('scripts/foundry');
-    expect(payload.content.setup).toBe('');
+    expect(payload.content.files).toContain('src');
+    expect(payload.content.files).toContain('README.md');
+    expect(payload.content.setup).toBe('You are in this repo.');
   });
 
   it('a plate path is not a card plane', async () => {
@@ -194,90 +155,47 @@ describe('goggles MCP', () => {
   });
 
   it('a plane name returns that view', async () => {
-    const { payload, isError } = await dispatchTool('look', { plane: 'routing' }, tempRoot());
+    const root = tempRoot();
+    const { payload, isError } = await dispatchTool('look', { plane: 'integration' }, root);
     expect(isError).toBe(false);
     expect(payload.mode).toBe('card');
-    expect(payload.content.plane).toBe('routing');
-    expect(payload.content.files).toEqual(['src/nucleus/thin-dispatch.ts']);
+    expect(payload.content.plane).toBe('integration');
+    expect(payload.content.files).toContain('src/nucleus');
+    expect(payload.content.files).toContain('src/integrations');
+    const lens = readFileSync(join(root, '.xray', 'state', 'LENS.md'), 'utf8');
+    expect(lens.startsWith('Plane: integration\n')).toBe(true);
+    expect(lens).toContain('Entry: The hook, the dispatch, or the bridge this file sits on.');
+    expect(lens).toContain('Exit: The next call. Stop there.');
+    rmSync(root, { recursive: true, force: true });
   });
 
-  it('the whole set is name one plane', async () => {
+  it('an unknown argument is refused', async () => {
     const { payload, isError } = await dispatchTool('look', { outer: 'outer' }, tempRoot());
     expect(isError).toBe(true);
-    expect(payload.error.code).toBe('name_one');
-    expect(payload.error.reason).toBe('Name one plane.');
+    expect(payload.error.reason).toBe('Unknown argument.');
   });
 
-  it('kind 0 with a scope stays quiet', async () => {
-    const root = tempRoot();
-    try {
-      const { payload, isError } = await dispatchTool('look', { kind: '0', scope: 'part' }, root);
-      expect(isError).toBe(false);
-      expect(payload).toMatchObject({ ok: true, quiet: true, mode: 'kind0', content: '' });
-      expect(existsSync(join(root, '.xray', 'state', 'LENS.md'))).toBe(false);
-    } finally {
-      rmSync(root, { recursive: true, force: true });
-    }
-  });
-
-  it('status_lens says worn, and quiet is not drift', async () => {
+  it('status_lens says whether the organ is worn', async () => {
     const root = tempRoot();
     try {
       const missing = await dispatchTool('status_lens', {}, root);
       expect(missing.isError).toBe(false);
       expect(missing.payload.organ).toBe('worn');
-      expect(missing.payload.kind0).toBe('none');
-      expect(missing.payload.kind0Text).toBe('');
       expect(missing.payload.stamps).toBeUndefined();
       expect(missing.payload.lensPath).toBe('.xray/state/LENS.md');
       expect(JSON.stringify(missing.payload)).not.toContain('nine');
       expect(JSON.stringify(missing.payload)).not.toContain('memory-recall');
-
-      mkdirSync(join(root, '.xray', 'state'), { recursive: true });
-      writeFileSync(join(root, '.xray', 'state', 'LENS.md'), 'quiet (match)\n');
-      const quiet = await dispatchTool('status_lens', {}, root);
-      expect(quiet.payload.kind0).toBe('quiet');
-      expect(quiet.payload.kind0Text).toBe('');
-
-      writeFileSync(join(root, '.xray', 'state', 'LENS.md'), 'Actuality. Drift: worn is not the map.\n');
-      const drift = await dispatchTool('status_lens', {}, root);
-      expect(drift.payload.kind0).toBe('drift');
-      expect(drift.payload.organ).toBe('worn');
+      expect(JSON.stringify(missing.payload)).not.toContain('Kind 0');
     } finally {
-      rmSync(root, { recursive: true, force: true });
-    }
-  });
-
-  it('a tampered map is drift of the six, and a missing organ is not that drift', async () => {
-    const root = tempRoot();
-    const planes = join(root, 'planes.json');
-    try {
-      writeFileSync(planes, `${JSON.stringify({ planes: ['ground'] })}\n`);
-      process.env.GOGGLES_PLANES_PATH = planes;
-      const drifted = await dispatchTool('status_lens', {}, root);
-      expect(drifted.payload.organ).toBe('worn');
-      expect(drifted.payload.kind0).toBe('drift');
-      expect(drifted.payload.kind0Text).toBe('Actuality. Drift: worn is not the map.');
-      expect(drifted.payload.kind0Text).not.toContain('ground');
-      expect(drifted.payload.kind0Text).not.toContain('nine');
-
-      delete process.env.GOGGLES_PLANES_PATH;
-      process.env.GOGGLES_ORGAN_PATH = join(root, 'missing.mjs');
-      const gone = await dispatchTool('status_lens', {}, root);
-      expect(gone.payload.organ).toBe('not_found');
-      expect(gone.payload.kind0).toBe('none');
-      expect(gone.payload.kind0Text).not.toContain('Drift');
-    } finally {
-      delete process.env.GOGGLES_PLANES_PATH;
-      delete process.env.GOGGLES_ORGAN_PATH;
       rmSync(root, { recursive: true, force: true });
     }
   });
 
   it('prefixed tool names still hit the same two tools', async () => {
-    const { payload, isError } = await dispatchTool('goggles__look', { outer: 'loop' }, tempRoot());
+    const { payload, isError } = await dispatchTool('goggles__look', { plane: 'integration' }, tempRoot());
     expect(isError).toBe(false);
-    expect(payload.content).toBe('The reading is loop.');
+    expect(payload.mode).toBe('card');
+    expect(payload.content.plane).toBe('integration');
     const status = await dispatchTool('goggles__status_lens', { extra: true }, tempRoot());
     expect(status.isError).toBe(true);
     expect(status.payload.error.code).toBe('invalid_args');

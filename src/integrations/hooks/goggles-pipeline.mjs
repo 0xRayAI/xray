@@ -1,14 +1,13 @@
 /**
- * Goggles. Kind 0 name-checks the six outer names.
- * A named plane returns its view. Field pipes fill what they can see.
- * The view keeps every field for the next look.
- * A held plane stays quiet. A leave is denied.
- * On this host a search is grep, glob, or a shell that runs one.
- * A shell that reads a project source file is a search.
- * The lens file stays open. One later read may go on, then the next read stops.
- * An opened source file that no lens lists is remembered.
- * The next search stops until that file is on a lens and its plate is on disk.
- * The hook does not author the plate.
+ * Goggles. The plane is state. A session starts on dev.
+ * The card is in LENS.md: Entry, Exit, and the other rows.
+ * A search inside the current card runs. Any other search returns the card and does not run.
+ * Opening a file on that card stays quiet.
+ * Opening a file on another plane switches, returns that card, and the open proceeds.
+ * A file on no plane stays put and returns the current card.
+ * A thing on that plane has its own card. One card can name many plates.
+ * A missing plate names the stamp-plate skill. The hook does not write the plate.
+ * Compact writes the current card back. It does not add a plane.
  */
 import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, unlinkSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -17,12 +16,250 @@ import { fileURLToPath } from 'node:url';
 
 const FIELD_ORDER = ['plate', 'entry', 'exit', 'files', 'skills', 'setup', 'teardown', 'worn'];
 const HERE = dirname(fileURLToPath(import.meta.url));
+/** Map names. A look does not answer them. Their files stay on the lens. */
 const WORN_PLANES = ['dichotomy', 'syncopate', 'synthesis', 'digest', 'triage', 'loop'];
-export const CARD_PLANES = ['ground', 'routing', 'house', 'boot', 'governance', 'memory-recall', 'orchestration', 'processor', 'reporting', 'stamp-plate', 'record-map', 'write-home', 'activity-log', 'session-capture', 'suit-wear', 'suit-organs', 'station-card', 'notes-page', 'reflection-page', 'site-manual', 'package-face', 'suit-settings', 'trail-state', 'inference-files', 'grok-compact', 'payload-heat', 'station-heat', 'pickup-stamp', 'cursor-compact', 'work-fresh', 'kept-line', 'lens-gate', 'pre-tool', 'lens-page', 'centrifuge'];
-const CARD_FLAVORS = ['digest', 'triage'];
-const SCOPE_ZOOM = ['ecosystem', 'part', 'one flow', 'one artifact'];
+export const CARD_PLANES = ['dev', 'integration', 'domain', 'ecosystem'];
+
+const PLANE_PATHS = {
+  dev: ['src', 'grok-bot', 'docs-site', 'AGENTS.md', 'package.json', 'README.md'],
+  integration: [
+    'src/integrations',
+    'src/nucleus',
+    'src/governance',
+    'src/mcps',
+    'src/processors',
+    'src/reporting',
+    'src/core/boot-orchestrator.ts',
+    'grok-bot/lib',
+    'grok-bot/templates',
+  ],
+  domain: ['docs-site/docs/plates', 'src/integrations/hooks/plates.cjs', '.agents/skills'],
+  ecosystem: ['scripts/foundry', 'node_modules/@0xray'],
+};
+
+const PLANE_ROWS = {
+  dev: {
+    from: '',
+    digest: 'This checkout.',
+    plate: '',
+    entry: 'package.json, src, and grok-bot/OP-PROC.md.',
+    exit: 'A change that stays in this repo.',
+    files: 'src, grok-bot, docs-site, AGENTS.md, package.json, README.md',
+    skills: 'SKILLS.md',
+    setup: 'You are in this repo.',
+    teardown: 'Leave other repos alone.',
+    worn: '',
+  },
+  integration: {
+    from: 'dev',
+    digest: 'How one part calls the next.',
+    plate: '',
+    entry: 'The hook, the dispatch, or the bridge this file sits on.',
+    exit: 'The next call. Stop there.',
+    files: 'src/integrations, src/nucleus, src/governance, src/mcps, src/processors, src/reporting, src/core/boot-orchestrator.ts, grok-bot/lib, grok-bot/templates',
+    skills: 'SKILLS.md',
+    setup: 'One connection at a time.',
+    teardown: 'Do not sweep the rest of the repo.',
+    worn: '',
+  },
+  domain: {
+    from: 'dev',
+    digest: 'The drawing of one area.',
+    plate: 'docs-site/docs/plates',
+    entry: 'The plate under docs-site/docs/plates, or the plate reader.',
+    exit: 'The entry and exit written on that plate.',
+    files: 'docs-site/docs/plates, src/integrations/hooks/plates.cjs, .agents/skills',
+    skills: '.agents/skills',
+    setup: 'One plate is in the frame.',
+    teardown: 'The plate is the drawing. The code stays on dev or integration.',
+    worn: '',
+  },
+  ecosystem: {
+    from: 'dev',
+    digest: 'What this repo wears from outside.',
+    plate: '',
+    entry: 'scripts/foundry, and the @0xray packages this repo wears.',
+    exit: 'Back to this checkout when the change is here.',
+    files: 'scripts/foundry, node_modules/@0xray',
+    skills: '',
+    setup: 'The outside package is not this repo.',
+    teardown: 'Do not edit a worn package from here.',
+    worn: 'node_modules/@0xray',
+  },
+};
+
+function builtinCard(id) {
+  const row = PLANE_ROWS[id];
+  if (!row) return '';
+  const lines = [
+    ['Plane', id],
+    ['From', row.from],
+    ['Digest', row.digest],
+    ['Plate', row.plate],
+    ['Entry', row.entry],
+    ['Exit', row.exit],
+    ['Files', row.files],
+    ['Skills', row.skills],
+    ['Setup', row.setup],
+    ['Teardown', row.teardown],
+    ['Worn', row.worn],
+  ];
+  return lines.map(([key, value]) => `${key}: ${value}`.trimEnd()).join('\n');
+}
+
+function planeOfPath(file) {
+  const rel = String(file || '').replace(/\\/g, '/').replace(/^\.\//, '');
+  let best = '';
+  let winner = '';
+  for (const [id, paths] of Object.entries(PLANE_PATHS)) {
+    for (const prefix of paths) {
+      if (rel === prefix || rel.startsWith(`${prefix}/`)) {
+        if (prefix.length > best.length) {
+          best = prefix;
+          winner = id;
+        }
+      }
+    }
+  }
+  return winner;
+}
 
 /** Empty GOGGLES_PLANES_PATH keeps the file beside the organ. */
+const STAMP_LINE = 'Stamp: .agents/skills/stamp-plate/SKILL.md — one plate for this card.';
+
+function mapEntry(id) {
+  const table = overlayTable();
+  const entry = table[id];
+  if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return null;
+  return entry;
+}
+
+/** A plane, or a thing that has a card. */
+export function isCardName(id) {
+  const name = String(id || '').trim();
+  if (!name || name.includes(' ')) return false;
+  if (CARD_PLANES.includes(name)) return true;
+  return Boolean(mapEntry(name));
+}
+
+function thingFiles(entry) {
+  if (!entry) return [];
+  if (Array.isArray(entry.files)) return entry.files.map(String);
+  if (typeof entry.file === 'string' && entry.file.trim()) return [entry.file.trim()];
+  return [];
+}
+
+function planeSpan(file) {
+  const rel = String(file || '').replace(/\\/g, '/').replace(/^\.\//, '');
+  let best = 0;
+  for (const paths of Object.values(PLANE_PATHS)) {
+    for (const prefix of paths) {
+      if (rel === prefix || rel.startsWith(`${prefix}/`)) best = Math.max(best, prefix.length);
+    }
+  }
+  return best;
+}
+
+export const PATH_OWNER = {
+  'src/integrations/hooks/station-hook-runtime.cjs': 'station-card',
+  'src/integrations/hooks/wake-cascade.cjs': 'record-map',
+  'src/integrations/hooks/session-note-index.cjs': 'notes-page',
+  'src/reporting/framework-reporting-system.ts': 'reporting',
+  'src/inference/inference-accumulator.ts': 'inference-files',
+  'src/integrations/hooks/goggles-pipeline.mjs': 'lens-gate',
+};
+
+function covers(listed, rel) {
+  return rel === listed || rel.startsWith(`${listed}/`);
+}
+
+function rootsOf(entry) {
+  if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return [];
+  if (Array.isArray(entry.root)) return entry.root.map(String).filter((item) => item.trim());
+  if (typeof entry.root === 'string' && entry.root.trim()) return [entry.root.trim()];
+  return [];
+}
+
+function cardMatchPaths(id) {
+  if (CARD_PLANES.includes(id)) return PLANE_PATHS[id] || [];
+  const row = mapEntry(id);
+  if (!row) return [];
+  return [...thingFiles(row), ...rootsOf(row)];
+}
+
+/** Longest listed path. A root may equal the plane. A tie uses PATH_OWNER, or stays the plane. */
+export function thingOfPath(file) {
+  const rel = String(file || '').replace(/\\/g, '/').replace(/^\.\//, '');
+  const table = overlayTable();
+  let best = -1;
+  const hits = [];
+  for (const [id, entry] of Object.entries(table)) {
+    if (CARD_PLANES.includes(id)) continue;
+    const row = entry && typeof entry === 'object' && !Array.isArray(entry) ? entry : null;
+    if (!row) continue;
+    const span = planeSpan(rel);
+    const consider = (listed, floor) => {
+      if (!covers(listed, rel) || listed.length < floor) return;
+      if (listed.length > best) {
+        best = listed.length;
+        hits.length = 0;
+      }
+      if (listed.length === best) hits.push({ id, listed });
+    };
+    for (const listed of thingFiles(row)) consider(listed, span + 1);
+    for (const listed of rootsOf(row)) consider(listed, span);
+  }
+  const ids = [];
+  for (const hit of hits) {
+    if (!ids.includes(hit.id)) ids.push(hit.id);
+  }
+  if (ids.length === 1) return ids[0];
+  if (!ids.length) return '';
+  const owner = PATH_OWNER[hits[0].listed];
+  return owner && ids.includes(owner) ? owner : '';
+}
+
+
+function platePath(id) {
+  if (CARD_PLANES.includes(id)) return '';
+  const dir = findPlatesDir(HERE);
+  if (!dir) return '';
+  const abs = join(dir, `${id}.md`);
+  return existsSync(abs) ? join('docs-site', 'docs', 'plates', `${id}.md`) : '';
+}
+
+function showCard(id, block) {
+  if (CARD_PLANES.includes(id)) return block;
+  const path = platePath(id);
+  let shown = block;
+  if (path && /^Plate:[ \t]*$/m.test(shown)) shown = shown.replace(/^Plate:[ \t]*$/m, `Plate: ${path}`);
+  if (!path && !shown.includes('Stamp:')) shown = `${shown}\n${STAMP_LINE}`;
+  return shown;
+}
+
+function readHold(root) {
+  try {
+    const data = JSON.parse(readFileSync(join(root, '.xray', 'state', 'goggles-plane.json'), 'utf8'));
+    const named = typeof data.card === 'string' ? data.card : '';
+    const plane = CARD_PLANES.includes(data.plane) ? data.plane : '';
+    const card = isCardName(named) ? named : (plane || '');
+    if (plane) return { plane, card: card || plane };
+    if (card && CARD_PLANES.includes(card)) return { plane: card, card };
+  } catch {
+    /* no hold yet */
+  }
+  return null;
+}
+
+function planeForCard(id) {
+  if (CARD_PLANES.includes(id)) return id;
+  for (const file of thingFiles(mapEntry(id))) {
+    const plane = planeOfPath(file);
+    if (plane) return plane;
+  }
+  return 'dev';
+}
+
 export function planesFile() {
   const override = process.env.GOGGLES_PLANES_PATH;
   if (typeof override === 'string' && override.trim()) return override.trim();
@@ -36,109 +273,6 @@ function drawnPlanes() {
   } catch {
     return [];
   }
-}
-
-export function actualityOf(map, worn) {
-  const left = Array.isArray(map) ? map : [];
-  const right = Array.isArray(worn) ? worn : [];
-  const same = left.length === right.length && left.every((name, index) => name === right[index]);
-  return same ? '' : 'Actuality. Drift: worn is not the map.';
-}
-
-export function actualityLine() {
-  return actualityOf(drawnPlanes(), WORN_PLANES);
-}
-
-function acceptedPlanes() {
-  const map = new Set(drawnPlanes());
-  return WORN_PLANES.filter((name) => map.has(name));
-}
-
-function readingLine(name, scope) {
-  return scope ? `The reading is ${name}. Scope is ${scope}.` : `The reading is ${name}.`;
-}
-
-function organDeny(reason) {
-  return { gate: 'goggles', decision: 'deny', reason };
-}
-
-function plateIdsIn(spoken) {
-  const ids = [];
-  const re = /docs-site\/docs\/plates\/([a-z0-9-]+)\.md/ig;
-  let match;
-  while ((match = re.exec(String(spoken || '')))) ids.push(match[1]);
-  return ids;
-}
-
-function associatedPlates(plane) {
-  try {
-    const data = JSON.parse(readFileSync(planesFile(), 'utf8'));
-    const entry = data[plane];
-    const listed = entry && Array.isArray(entry.plates) ? entry.plates.map(String) : [];
-    return new Set([plane, ...listed]);
-  } catch {
-    return new Set([plane]);
-  }
-}
-
-function planeWord(name, text) {
-  return new RegExp(`(?:^|[^A-Za-z0-9-])${String(name).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:[^A-Za-z0-9-]|$)`, 'i').test(String(text || ''));
-}
-
-function withoutPaths(text) {
-  return String(text || '').replace(/(?:[\w.@~-]+\/)+[\w.-]+/g, ' ');
-}
-
-export function organStop(held, action) {
-  if (!held) return null;
-  if (held.drift) return organDeny(held.drift);
-  const plane = held.plane;
-  if (!plane) return null;
-  const text = String(action?.text || '');
-  const paths = (action?.paths || []).map(String).filter(Boolean);
-  const tool = String(action?.tool || '');
-  const spoken = [text, ...paths].join('\n');
-  const drawn = plateIdsIn(spoken);
-  if (drawn.length) {
-    const allowed = associatedPlates(plane);
-    const foreign = drawn.filter((id) => !allowed.has(id));
-    if (foreign.length) {
-      return organDeny(`The reading is ${plane}. That drawing is not the plane.`);
-    }
-  }
-  const otherFile = otherPlaneFile(plane, spoken);
-  if (otherFile) return organDeny(`The reading is ${plane}. The action is ${otherFile}.`);
-  const stripped = withoutPaths(text);
-  const others = acceptedPlanes().filter((name) => name !== plane && planeWord(name, stripped));
-  const namesThis = planeWord(plane, stripped);
-  if (others.length > 1 || (others.length === 1 && namesThis)) {
-    return organDeny(`The reading is ${plane}. The action names two planes.`);
-  }
-  if (others.length === 1) {
-    return organDeny(`The reading is ${plane}. The action is ${others[0]}.`);
-  }
-  return scopeStop(plane, held.scope, tool, paths);
-}
-
-function scopeStop(plane, scope, tool, paths) {
-  if (!scope || scope === 'ecosystem') return null;
-  if (scope === 'part') {
-    const dirs = new Set(paths.map((file) => dirname(file)));
-    if (dirs.size > 1) return organDeny(`The reading is ${plane}. Scope is part. This action crosses parts.`);
-    return null;
-  }
-  if (scope === 'one flow') {
-    if (/grep|search|glob|read|open/i.test(tool) && paths.length !== 1) {
-      return organDeny(`The reading is ${plane}. Scope is one flow. This action is not one flow.`);
-    }
-    return null;
-  }
-  if (scope === 'one artifact') {
-    if (/bash|shell/i.test(tool) || paths.length !== 1) {
-      return organDeny(`The reading is ${plane}. Scope is one artifact. This action is wider.`);
-    }
-  }
-  return null;
 }
 
 function readingPath(root) {
@@ -157,61 +291,89 @@ function loadReading(root) {
   }
 }
 
-function saveReading(root, rec) {
-  const file = readingPath(root);
-  mkdirSync(dirname(file), { recursive: true });
-  writeFileSync(file, `${JSON.stringify(rec)}\n`);
-}
-
 function clearReading(root) {
   const file = readingPath(root);
   if (existsSync(file)) unlinkSync(file);
 }
 
-function findScopes(words) {
-  let rest = ` ${words.join(' ').toLowerCase()} `;
-  const hits = [];
-  const ordered = [...SCOPE_ZOOM].sort((a, b) => b.length - a.length);
-  for (const scope of ordered) {
-    const needle = ` ${scope} `;
-    if (!rest.includes(needle)) continue;
-    hits.push(scope);
-    rest = rest.split(needle).join(' ');
+function lensRoot(projectRoot) {
+  if (typeof projectRoot === 'string' && projectRoot.trim() && projectRoot.trim() !== '.') {
+    return resolve(projectRoot.trim());
   }
-  return hits;
+  return stateRoot();
 }
 
-function kindPastOne(words) {
-  const lower = words.map((word) => word.toLowerCase());
-  if (lower.length === 1 && /^\d+$/.test(lower[0]) && Number(lower[0]) > 1) return true;
-  for (let i = 0; i < lower.length; i += 1) {
-    if (!/^(kind|pull|pull-up|level)$/.test(lower[i])) continue;
-    const next = lower[i + 1];
-    if (next && /^\d+$/.test(next) && Number(next) > 1) return true;
+function cardRow(block, label) {
+  const match = String(block || '').match(new RegExp(`^${label}:[ \t]*(.*)$`, 'm'));
+  return match ? match[1].trim() : '';
+}
+
+function splitRow(block, label) {
+  return cardRow(block, label).split(',').map((part) => part.trim()).filter(Boolean);
+}
+
+function installedPack(root) {
+  return /\/node_modules\/0xray$/.test(String(root || '').replace(/\\/g, '/'));
+}
+
+export function liveDrift(block, root) {
+  if (installedPack(root)) return '';
+  const files = splitRow(block, 'Files');
+  const worn = cardRow(block, 'Worn');
+  const held = Boolean(worn) && existsSync(join(root, worn));
+  const packed = (rel) => held && (rel.startsWith('src/') || rel.startsWith('grok-bot/'));
+  for (const rel of files) {
+    if (existsSync(join(root, rel))) continue;
+    if (packed(rel)) continue;
+    return `Drift: ${rel} is not there`;
   }
-  return false;
-}
-
-function isKindZero(lower) {
-  if (lower.includes('actuality')) return true;
-  if (lower.length === 1 && lower[0] === '0') return true;
-  for (let i = 0; i < lower.length; i += 1) {
-    if ((lower[i] === 'kind' || lower[i] === 'level') && lower[i + 1] === '0') return true;
+  const skills = cardRow(block, 'Skills');
+  if (skills.includes('/') && !existsSync(join(root, skills)) && !packed(skills)) {
+    return `Drift: ${skills} is not there`;
   }
-  return false;
+  return '';
 }
 
-function namesTheSet(lower) {
-  const joined = lower.join(' ');
-  if (joined === 'kind 1' || joined === 'level 1') return true;
-  const mentionsSet = lower.includes('outer') || lower.includes('outer-loop');
-  if (!mentionsSet) return false;
-  const planes = acceptedPlanes().filter((name) => lower.includes(name));
-  if (planes.length === 0) return true;
-  return planes.length === 1 && planes[0] === 'loop' && findScopes(lower).length === 0;
+function viewFromBlock(block, drift) {
+  const plane = cardRow(block, 'Plane');
+  return {
+    card: cardRow(block, 'Card') || plane,
+    plane,
+    stamp: cardRow(block, 'Stamp'),
+    scope: '',
+    from: cardRow(block, 'From'),
+    digest: cardRow(block, 'Digest'),
+    plate: cardRow(block, 'Plate'),
+    plates: splitRow(block, 'Plates'),
+    entry: cardRow(block, 'Entry'),
+    exit: cardRow(block, 'Exit'),
+    files: splitRow(block, 'Files'),
+    skills: cardRow(block, 'Skills'),
+    setup: cardRow(block, 'Setup'),
+    teardown: cardRow(block, 'Teardown'),
+    worn: cardRow(block, 'Worn'),
+    exam: drift || '',
+  };
 }
 
-function gogglesAnswer(argv, projectRoot) {
+function storedCard(root, id) {
+  const kept = readLensCard(root, id);
+  if (kept) return kept;
+  return fillLensCard(root, id);
+}
+
+function presentCard(projectRoot, id) {
+  const block = storedCard(lensRoot(projectRoot), id);
+  if (!block) return null;
+  const shown = showCard(id, block);
+  const drift = liveDrift(shown, sourceRoot(findPlatesDir(HERE)));
+  return {
+    text: drift ? `${shown}\n${drift}` : shown,
+    view: viewFromBlock(shown, drift),
+  };
+}
+
+function gogglesAnswer(argv, projectRoot, hold) {
   const words = [];
   for (const raw of argv || []) {
     const arg = String(raw || '').trim();
@@ -219,120 +381,49 @@ function gogglesAnswer(argv, projectRoot) {
     words.push(arg);
   }
   const lower = words.map((word) => word.toLowerCase());
-  const none = (text) => ({ text, cards: null });
-  if (lower.includes('calling')) return none('');
-  if (kindPastOne(words)) return none('');
-  if (words.length === 0) return none('');
-  if (namesTheSet(lower)) return none('Name one plane.');
-  if (isKindZero(lower)) {
-    if (findScopes(words).length) return none('');
-    if (acceptedPlanes().some((name) => lower.includes(name))) return none('');
-    return none(actualityLine());
-  }
-  const flavors = CARD_FLAVORS.filter((name) => lower.includes(name));
-  if (flavors.length > 1) return none('');
-  if (flavors.length === 1) {
-    const others = acceptedPlanes().filter((name) => name !== flavors[0] && lower.includes(name));
-    if (others.length) return none('');
-    const cards = collectCards(flavors[0], lower, projectRoot);
-    if (!cards) return none('');
-    return { text: cards.map((card) => formatCardText(card)).join('\n\n'), cards };
-  }
-  const planes = acceptedPlanes().filter((name) => lower.includes(name));
-  if (planes.length !== 1) {
-    if (!planes.length && cardPlanesNamed(lower).length) {
-      const cards = collectCards('digest', lower, projectRoot);
-      if (cards && cards.length) {
-        return { text: cards.map((card) => formatCardText(card)).join('\n\n'), cards };
-      }
-    }
-    return none('');
-  }
-  const scopes = findScopes(words.filter((word) => word.toLowerCase() !== planes[0]));
-  if (scopes.length > 1) return none('');
-  const line = readingLine(planes[0], scopes[0] || '');
-  const file = moduleFile(planes[0]);
-  return none(file ? `${line} File: ${file}` : line);
+  const named = cardsNamed(lower);
+  const root = lensRoot(projectRoot);
+  let id = '';
+  if (named.length === 1) id = named[0];
+  else if (words.length === 0) {
+    if (hold) ensurePlane(root);
+    id = currentCard(root);
+  } else return { text: 'Name one plane.', cards: null };
+  if (hold && named.length === 1) holdPlane(root, id);
+  const card = presentCard(root, id);
+  if (!card) return { text: 'Name one plane.', cards: null };
+  return { text: card.text, cards: [card.view] };
 }
 
 export function readGoggles(argv, projectRoot) {
-  return ok(gogglesAnswer(argv, projectRoot).text);
+  return ok(gogglesAnswer(argv, projectRoot, true).text);
 }
 
 export function lookCards(argv, projectRoot) {
-  return gogglesAnswer(argv, projectRoot).cards;
+  return gogglesAnswer(argv, projectRoot, false).cards;
 }
 
-function cardPlanesNamed(lower) {
-  return CARD_PLANES.filter((name) => lower.includes(name));
+function cardsNamed(lower) {
+  const found = [];
+  for (const word of lower) {
+    if (isCardName(word) && !found.includes(word)) found.push(word);
+  }
+  return found;
 }
 
 function listedFiles(plane) {
   return Array.isArray(plane.files) ? plane.files.map(String) : [];
 }
 
-function cascadeApi() {
-  return createRequire(import.meta.url)('./wake-cascade.cjs');
-}
-
-function sleeveApi() {
-  return createRequire(import.meta.url)('./sleeve.cjs');
-}
-
-function appendLining(text, view) {
-  let next = text;
-  if (view.cascade) next = `${next}\n${cascadeApi().formatCascadeReading(view.cascade)}`;
-  if (view.sleeve) next = `${next}\n${sleeveApi().formatSleeveReading(view.sleeve)}`;
-  return next;
-}
-
-function cardView(plane, scope, flavor, root, cascadeRoot) {
-  const listed = listedFiles(plane);
-  const view = {
-    plane: plane.id,
-    flavor,
-    scope: scope || '',
-    from: plane.id === 'ground' ? '' : (plane.from || 'ground'),
-    digest: plane.digest || '',
-    plate: plane.plate || '',
-    plates: Array.isArray(plane.plates) ? plane.plates : [],
-    entry: plane.entry || '',
-    exit: plane.exit || '',
-    files: listed,
-    skills: plane.skills || '',
-    setup: plane.setup || '',
-    teardown: plane.teardown || '',
-    worn: plane.worn || '',
-  };
-  view.exam = examinePlane(plane, root).text;
-  if (cascadeApi().isCascadePlane(plane.id)) {
-    try {
-      view.cascade = cascadeApi().readWakeCascade(cascadeRoot || stateRoot());
-    } catch {
-      view.cascade = null;
-    }
-  }
-  if (sleeveApi().isSleevePlane(plane.id)) {
-    try {
-      view.sleeve = sleeveApi().readSleeve(cascadeRoot || stateRoot());
-    } catch {
-      view.sleeve = null;
-    }
-  }
-  if (flavor === 'triage') {
-    const filled = new Set(filledOf(plane));
-    view.empty = FIELD_ORDER.filter((name) => !filled.has(name));
-  }
-  return view;
-}
-
 function cardRows(view) {
-  const rows = [
+  const rows = [];
+  if (view.card && view.card !== view.plane) rows.push(['Card', view.card]);
+  rows.push(
     ['Plane', view.plane],
     ['From', view.from],
     ['Digest', view.digest],
     ['Plate', view.plate],
-  ];
+  );
   if (Array.isArray(view.plates) && view.plates.length) rows.push(['Plates', view.plates.join(', ')]);
   rows.push(
     ['Entry', view.entry],
@@ -346,52 +437,19 @@ function cardRows(view) {
   return rows;
 }
 
-function formatCardText(view) {
-  const rows = cardRows(view);
-  let text = rows.map(([key, value]) => `${key}: ${value}`.trimEnd()).join('\n');
-  if (view.flavor === 'triage') {
-    const lines = [];
-    if (view.empty.length) lines.push(`Empty: ${view.empty.join(', ')}`);
-    lines.push(view.exam);
-    text = `${text}\n${lines.join('\n')}`;
-  } else if (typeof view.exam === 'string' && view.exam.startsWith('Drift:')) {
-    text = `${text}\n${view.exam}`;
-  }
-  return appendLining(text, view);
-}
-
 export function formatCardPane(view) {
   const rows = cardRows(view);
-  if (view.flavor === 'triage') {
-    if (Array.isArray(view.empty) && view.empty.length) rows.push(['Empty', view.empty.join(', ')]);
-    if (view.exam) rows.push(['', view.exam]);
-  } else if (typeof view.exam === 'string' && view.exam.startsWith('Drift:')) {
+  if (typeof view.exam === 'string' && view.exam.startsWith('Drift:')) {
     rows.push(['', view.exam]);
   }
   const body = rows.map(([label, value]) => (label ? `${label.padEnd(8)} ${value}` : value).trimEnd());
-  const title = `${view.flavor} · ${view.plane}`;
+  const title = view.card && view.card !== view.plane ? view.card : view.plane;
   const width = Math.max(title.length + 2, ...body.map((line) => line.length));
   const top = `┌ ${title} ${'─'.repeat(Math.max(0, width - title.length - 1))}┐`;
   const mid = body.map((line) => `│ ${line.padEnd(width)} │`);
   const bot = `└${'─'.repeat(width + 2)}┘`;
   const pane = [top, ...mid, bot].join('\n');
-  return appendLining(pane, view);
-}
-
-function collectCards(flavor, lower, projectRoot) {
-  const named = cardPlanesNamed(lower);
-  const scopes = findScopes(lower.filter((word) => word !== flavor && !named.includes(word)));
-  if (scopes.length > 1) return null;
-  const scope = scopes[0] || '';
-  const platesDir = findPlatesDir(HERE);
-  const ids = named.length ? named : CARD_PLANES;
-  const root = sourceRoot(platesDir);
-  const cards = [];
-  for (const id of ids) {
-    const plane = growPlane(id, platesDir, stateRoot());
-    cards.push(cardView(plane, scope, flavor, root, projectRoot));
-  }
-  return cards;
+  return pane;
 }
 
 export function findPlatesDir(start) {
@@ -530,7 +588,7 @@ export function filledOf(plane) {
 }
 
 function plateSource(id, platesDir) {
-  if (!platesDir || id === 'ground') return { body: '', path: '' };
+  if (!platesDir) return { body: '', path: '' };
   const abs = join(platesDir, `${id}.md`);
   if (!existsSync(abs)) return { body: '', path: '' };
   return {
@@ -567,7 +625,11 @@ export function assemblePlane(id, platesDir) {
   const doors = src.body ? doorsOf(src.body) : { entry: null, exit: null };
   const flow = src.body ? flowEnds(src.body) : null;
   const digest = extra.digest || (src.body ? takeOf(stripFrontmatter(src.body)) : '');
-  const files = Array.isArray(extra.files) ? extra.files.map(String) : [];
+  const listed = Array.isArray(extra.files)
+    ? extra.files.map(String)
+    : (typeof extra.file === 'string' && extra.file.trim() ? [extra.file.trim()] : []);
+  const roots = rootsOf(extra);
+  const files = [...roots.filter((item) => !listed.includes(item)), ...listed];
   return {
     id,
     digest,
@@ -600,25 +662,6 @@ function stateRoot() {
 
 function sourceRoot(platesDir) {
   return platesDir ? repoRootFrom(platesDir) : stateRoot();
-}
-
-function viewsPath(root) {
-  return join(root, '.xray', 'state', 'goggles-views.json');
-}
-
-function loadViews(root) {
-  try {
-    const data = JSON.parse(readFileSync(viewsPath(root), 'utf8'));
-    return data && typeof data === 'object' && !Array.isArray(data) ? data : {};
-  } catch {
-    return {};
-  }
-}
-
-function saveViews(root, views) {
-  const file = viewsPath(root);
-  mkdirSync(dirname(file), { recursive: true });
-  writeFileSync(file, `${JSON.stringify(views, null, 2)}\n`);
 }
 
 function cluesOf(body) {
@@ -714,29 +757,8 @@ function skillFor(id, root) {
   return existsSync(join(root, rel)) ? rel : '';
 }
 
-function mappedFile(name) {
-  try {
-    const data = JSON.parse(readFileSync(planesFile(), 'utf8'));
-    const entry = data[name];
-    if (!entry || typeof entry !== 'object') return '';
-    if (typeof entry.file === 'string' && entry.file) return entry.file;
-  } catch {
-    return '';
-  }
-  return '';
-}
-
-function moduleFile(name) {
-  const mapped = mappedFile(name);
-  if (mapped) return mapped;
-  const platesDir = findPlatesDir(HERE);
-  const root = sourceRoot(platesDir);
-  const hit = sourceTexts(root).find((file) => file.rel.endsWith(`/${name}.ts`) || file.rel.endsWith(`/${name}.mjs`));
-  return hit ? hit.rel : '';
-}
-
 function hintLine(name) {
-  const cards = lookCards(['digest', name]);
+  const cards = lookCards([name]);
   const files = cards && cards[0] && Array.isArray(cards[0].files) ? cards[0].files : [];
   return files.length ? `${name}: ${files.join(', ')}` : '';
 }
@@ -749,7 +771,6 @@ export function suitHint(text) {
 }
 
 const DEEP_SEARCH = /search_codebase|find_implementation|get_documentation/i;
-const HOLDS_ON_NAME = new Set(['dichotomy', 'syncopate', 'synthesis']);
 const SHELL_SEARCH = /(?:^|&&|\|\||[;&|`(\n])\s*(?:(?:\/[\w.+/-]+\/)|(?:npx\s+))?(?:rg|grep|ag|ack|fd|find)\b|\bgit\s+grep\b/;
 
 function shellSearches(text) {
@@ -767,15 +788,6 @@ function mappedPlaneFiles(name) {
   } catch {
     return [];
   }
-}
-
-function otherPlaneFile(held, spoken) {
-  const text = String(spoken || '');
-  for (const name of acceptedPlanes()) {
-    if (name === held) continue;
-    if (mappedPlaneFiles(name).some((file) => text.includes(file))) return name;
-  }
-  return '';
 }
 
 function mapFiles() {
@@ -826,88 +838,7 @@ function shellReadsSource(text) {
   return SOURCE_READER.test(spoken) && openedSourcePaths(spoken).length > 0;
 }
 
-function isLensWrite(toolName) {
-  return /write|edit|replace/i.test(String(toolName || ''));
-}
-
-function debtFile(root) {
-  return join(root, '.xray', 'state', 'goggles-lens-debt.json');
-}
-
-function loadDebt(root) {
-  try {
-    const data = JSON.parse(readFileSync(debtFile(root), 'utf8'));
-    return Array.isArray(data.paths) ? data.paths.filter((file) => typeof file === 'string') : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveDebt(root, paths) {
-  const unique = [];
-  for (const file of paths) {
-    if (!unique.includes(file)) unique.push(file);
-  }
-  const dest = debtFile(root);
-  if (!unique.length) {
-    try {
-      unlinkSync(dest);
-    } catch {
-      /* already clear */
-    }
-    return;
-  }
-  mkdirSync(dirname(dest), { recursive: true });
-  writeFileSync(dest, `${JSON.stringify({ paths: unique })}\n`);
-}
-
-function lensRecords() {
-  try {
-    const data = JSON.parse(readFileSync(planesFile(), 'utf8'));
-    const records = [];
-    if (!data || typeof data !== 'object') return records;
-    for (const [name, entry] of Object.entries(data)) {
-      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) continue;
-      if (!Array.isArray(entry.files)) continue;
-      records.push([name, entry.files.filter((file) => typeof file === 'string')]);
-    }
-    return records;
-  } catch {
-    return [];
-  }
-}
-
-function plateIsOnDisk(root, name) {
-  const beside = findPlatesDir(HERE);
-  if (beside && existsSync(join(beside, `${name}.md`))) return true;
-  return existsSync(join(root, 'docs-site', 'docs', 'plates', `${name}.md`));
-}
-
-function lensCovers(root, file) {
-  for (const [name, files] of lensRecords()) {
-    if (!files.includes(file)) continue;
-    if (name === 'ground' || plateIsOnDisk(root, name)) return true;
-  }
-  return false;
-}
-
-function unsettledDebt(root) {
-  const prior = loadDebt(root);
-  const kept = prior.filter((file) => !lensCovers(root, file));
-  if (kept.length !== prior.length) saveDebt(root, kept);
-  return kept;
-}
-
-function rememberOpened(root, text) {
-  const fresh = openedSourcePaths(text).filter((file) => !lensCovers(root, file));
-  if (!fresh.length) return;
-  saveDebt(root, [...loadDebt(root), ...fresh]);
-}
-
-function debtReason(paths) {
-  return `Opened ${paths.join(', ')} has no lens.`;
-}
-
+/** One plane: the files the suit continues with. A look with no plane stops. Two planes stay quiet. */
 function researchCall(toolName, text) {
   const tool = String(toolName || '');
   const spoken = String(text || '');
@@ -917,27 +848,6 @@ function researchCall(toolName, text) {
   return /^read_file$/i.test(tool) && !opensLensFile(spoken);
 }
 
-function passPath(root) {
-  return join(root, '.xray', 'state', 'goggles-lens-pass.json');
-}
-
-function loadReadPass(root) {
-  try {
-    const data = JSON.parse(readFileSync(passPath(root), 'utf8'));
-    if (!data || data.read !== true) return null;
-    return data.spent === true ? 'spent' : 'armed';
-  } catch {
-    return null;
-  }
-}
-
-function saveReadPass(root, spent) {
-  const file = passPath(root);
-  mkdirSync(dirname(file), { recursive: true });
-  writeFileSync(file, `${JSON.stringify({ read: true, spent: Boolean(spent) })}\n`);
-}
-
-/** One plane: the files the suit continues with. A look with no plane stops. Two planes stay quiet. */
 export function lensPlane(text) {
   const hint = suitHint(String(text || ''));
   if (hint === 'Name one plane.') return { stop: true, files: [] };
@@ -948,24 +858,14 @@ export function lensPlane(text) {
   return { stop: false, files };
 }
 
-function lensPage(root, names) {
-  if (!names.length) return 'Name one plane.';
-  const platesDir = findPlatesDir(HERE);
-  const parts = [];
-  for (const id of names) {
-    const plane = growPlane(id, platesDir, root);
-    parts.push(formatCardText(cardView(plane, '', 'digest', sourceRoot(platesDir))));
-  }
-  return parts.join('\n\n');
-}
-
-
 export function holdPlane(root, id) {
-  const plane = String(id || "").trim();
-  if (!plane || plane.includes(" ")) return;
-  const dest = join(root, ".xray", "state", "goggles-plane.json");
+  const name = String(id || '').trim();
+  if (!name || name.includes(' ') || !isCardName(name)) return;
+  const plane = planeForCard(name);
+  const dest = join(root, '.xray', 'state', 'goggles-plane.json');
   mkdirSync(dirname(dest), { recursive: true });
-  writeFileSync(dest, `${JSON.stringify({ plane })}\n`);
+  writeFileSync(dest, `${JSON.stringify({ plane, card: name })}\n`);
+  maintainLens(root);
 }
 
 function stampPlane(root, id) {
@@ -978,34 +878,97 @@ function stampPlane(root, id) {
   }
 }
 
-/** Name one plane and the tool continues. Name none, or more than one, and the search stops. */
+function openPaths(text) {
+  const raw = String(text || '').replace(/\\/g, '/');
+  const found = [];
+  const re = /(?:^|[^A-Za-z0-9_])((?:src|scripts|docs-site|\.agents|grok-bot|node_modules\/@0xray)\/[\w./@-]*|AGENTS\.md|package\.json|README\.md|\.mcp\.json)/g;
+  let match = re.exec(raw);
+  while (match) {
+    found.push(match[1].replace(/\/+$/, ''));
+    match = re.exec(raw);
+  }
+  return found;
+}
+
+function isSearch(tool, text) {
+  const name = String(tool || '');
+  const spoken = String(text || '');
+  if (/researcher|explorer|deep[- ]?research/i.test(name) || DEEP_SEARCH.test(name)) return true;
+  if (/semanticsearch|codebase_search/i.test(name)) return true;
+  if (/^(grep|glob|rg|ripgrep)$/i.test(name)) return true;
+  return /bash|shell/i.test(name) && (shellSearches(spoken) || DEEP_SEARCH.test(spoken) || /researcher|explorer|deep[- ]?research/i.test(spoken));
+}
+
+function isRead(tool, text) {
+  if (/^(read_file|read)$/i.test(String(tool || ''))) return true;
+  return /bash|shell/i.test(String(tool || '')) && shellReadsSource(text) && !shellSearches(text);
+}
+
+function currentPlane(root) {
+  const held = readHold(root);
+  if (held && CARD_PLANES.includes(held.plane)) return held.plane;
+  return 'dev';
+}
+
+function currentCard(root) {
+  const held = readHold(root);
+  if (held && held.card) return held.card;
+  return currentPlane(root);
+}
+
+function ensurePlane(root) {
+  const held = readHold(root);
+  if (held && CARD_PLANES.includes(held.plane)) return held.plane;
+  holdPlane(root, 'dev');
+  return 'dev';
+}
+
+function cardText(root, id) {
+  const card = presentCard(root, id);
+  return card && card.text ? card.text : '';
+}
+
+/** The current card, for the boot payload. Starts on dev. */
+export function planeCard(root) {
+  const plane = ensurePlane(root);
+  return { plane, card: cardText(root, currentCard(root)) };
+}
+
+function targetOf(file) {
+  const thing = thingOfPath(file);
+  const plane = planeOfPath(file) || (thing ? planeForCard(thing) : '');
+  if (!plane) return null;
+  return { plane, card: thing || plane };
+}
+
+/** A search inside the current card runs. A file open follows the path. */
 export function lensBeforeResearch(root, toolName, text) {
   const spoken = String(text || '');
-  const openDebt = unsettledDebt(root);
-  const research = researchCall(toolName, spoken);
-  if (openDebt.length && research) {
-    return { gate: 'lens', decision: 'deny', reason: debtReason(openDebt) };
+  const searching = isSearch(toolName, spoken);
+  const reading = isRead(toolName, spoken);
+  if (!searching && !reading) return null;
+  ensurePlane(root);
+  const current = currentCard(root);
+  if (searching) {
+    const owned = cardMatchPaths(current);
+    const paths = openPaths(spoken);
+    const inside = owned.length > 0
+      && paths.length > 0
+      && paths.every((file) => owned.some((listed) => covers(listed, file)));
+    if (inside) return null;
+    return { gate: 'lens', decision: 'deny', reason: cardText(root, current) };
   }
-  if (openDebt.length && isLensWrite(toolName) && !isStampPath(spoken)) {
-    return { gate: 'lens', decision: 'deny', reason: debtReason(openDebt) };
+  const targets = [];
+  for (const file of openPaths(spoken)) {
+    const target = targetOf(file);
+    if (target && !targets.includes(target.card)) targets.push(target.card);
   }
-  if (!research) return null;
-  const names = CARD_PLANES.filter((name) => intentWords(spoken).includes(name));
-  if (names.length === 1) {
-    holdPlane(root, names[0]);
-    stampPlane(root, names[0]);
-    rememberOpened(root, spoken);
-    return null;
+  if (targets.length === 1 && targets[0] === current) return null;
+  if (targets.length === 1) {
+    holdPlane(root, targets[0]);
+    return { gate: 'lens', decision: 'allow', reason: cardText(root, targets[0]) };
   }
-  if (/^read_file$/i.test(String(toolName || ''))) {
-    if (loadReadPass(root) === 'armed') {
-      saveReadPass(root, true);
-      return null;
-    }
-    if (loadReadPass(root) !== 'spent') saveReadPass(root, false);
-    return { gate: 'lens', decision: 'deny', reason: 'Name one plane.' };
-  }
-  return { gate: 'lens', decision: 'deny', reason: 'Name one plane.' };
+  return { gate: 'lens', decision: 'allow', reason: cardText(root, current) };
 }
 
 function seenFields(plane, root) {
@@ -1052,133 +1015,22 @@ function freshField(seen, key) {
   return seen[key] || '';
 }
 
-export function growPlane(id, platesDir, root) {
+export function growPlane(id, platesDir, _root) {
   const seen = seenFields(assemblePlane(id, platesDir), sourceRoot(platesDir));
-  const views = loadViews(root);
   const grown = { id };
   for (const key of VIEW_KEYS) grown[key] = freshField(seen, key);
   if (id === 'ground') grown.from = '';
-  views[id] = {};
-  for (const key of VIEW_KEYS) views[id][key] = grown[key];
-  saveViews(root, views);
   const base = assemblePlane(id, platesDir);
   return { ...base, ...grown };
-}
-
-/** Paths the package ships: package.json files, plus what npm always packs. */
-function shippedSet(root) {
-  try {
-    const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
-    if (!Array.isArray(pkg.files)) return null;
-    return pkg.files
-      .map(String)
-      .filter((entry) => entry && !entry.startsWith('!'))
-      .map((entry) => entry.replace(/\/+$/, ''))
-      .concat(['package.json', 'README.md', 'LICENSE']);
-  } catch {
-    return null;
-  }
-}
-
-function ships(shipped, rel) {
-  if (!shipped) return true;
-  const path = String(rel || '').replace(/\/+$/, '');
-  if (!path) return false;
-  return shipped.some((entry) => path === entry || path.startsWith(`${entry}/`) || entry.startsWith(`${path}/`));
-}
-
-/**
- * Kind 0 card sweep: triage's file check on every card plane, limited to
- * paths the package ships, so a packed install and the repo read the same.
- * Returns the first drift line, or '' when every card holds.
- */
-export function shippedDrift(projectRoot) {
-  const platesDir = findPlatesDir(HERE);
-  const root = sourceRoot(platesDir);
-  const shipped = shippedSet(root);
-  for (const id of CARD_PLANES) {
-    const plane = growPlane(id, platesDir, projectRoot || stateRoot());
-    const kept = {
-      ...plane,
-      files: (Array.isArray(plane.files) ? plane.files : []).filter((rel) => ships(shipped, rel)),
-      skills: ships(shipped, plane.skills) ? plane.skills : '',
-      worn: ships(shipped, plane.worn) ? plane.worn : '',
-    };
-    const exam = examinePlane(kept, root);
-    if (exam.kind === 'drift') return `Actuality. ${id}: ${exam.text}`;
-  }
-  return '';
 }
 
 function repoRootFrom(platesDir) {
   return dirname(dirname(dirname(platesDir)));
 }
 
-function miss(text) {
-  return { ok: false, text };
-}
-
 function ok(text) {
   return { ok: true, text };
 }
-
-function holds() {
-  return { kind: 'holds', text: 'Holds.' };
-}
-
-function drift(text) {
-  return { kind: 'drift', text: `Drift: ${text}` };
-}
-
-function drawing() {
-  return { kind: 'drawing', text: 'Drawing only.' };
-}
-
-function fileHas(root, rel, mark) {
-  if (!rel || !mark) return false;
-  const full = join(root, rel);
-  return existsSync(full) && readFileSync(full, 'utf8').includes(mark);
-}
-
-
-function factoryName(rel) {
-  return rel.startsWith('src/') || rel.startsWith('grok-bot/');
-}
-
-function wornHolds(plane, root) {
-  if (!plane.worn || !existsSync(join(root, plane.worn))) return false;
-  if (!plane.wornMark) return true;
-  return fileHas(root, plane.worn, plane.wornMark);
-}
-
-export function examinePlane(plane, root) {
-  const files = Array.isArray(plane.files) ? plane.files : [];
-  const checkable = files.length > 0 || plane.skills || plane.worn;
-  if (!checkable) return drawing();
-  const held = wornHolds(plane, root);
-  if (plane.worn && !held) {
-    return drift(`the worn build is not ${files[0] || plane.worn}`);
-  }
-  for (const rel of files) {
-    if (existsSync(join(root, rel))) continue;
-    if (held && factoryName(rel)) continue;
-    return drift(`${rel} is not there`);
-  }
-  if (plane.mark && files[0] && existsSync(join(root, files[0])) && !fileHas(root, files[0], plane.mark)) {
-    return drift(`${plane.mark} is not in ${files[0]}`);
-  }
-  if (plane.skills && !existsSync(join(root, plane.skills)) && !(held && factoryName(plane.skills))) {
-    return drift(`${plane.skills} is not there`);
-  }
-  if (plane.entryIsMark && plane.entry && files[0] && existsSync(join(root, files[0])) && !fileHas(root, files[0], plane.entry)) {
-    return drift(`${plane.entry} is not in ${files[0]}`);
-  }
-  if (plane.exitIsMark && plane.exit && files[0] && existsSync(join(root, files[0])) && !fileHas(root, files[0], plane.exit)) {
-    return drift(`${plane.exit} is not in ${files[0]}`);
-  }
-  return holds();
-}
-
 
 export function look(argv, projectRoot) {
   return readGoggles(argv, projectRoot);
@@ -1190,15 +1042,6 @@ function isGogglesWork(text) {
 }
 
 
-export function cardStop(root, toolName, text, paths = []) {
-  const held = loadReading(root);
-  if (!held) return null;
-  const drift = actualityLine();
-  if (drift) return organDeny(drift);
-  const stopped = organStop(held, { tool: toolName, text, paths });
-  if (stopped) return stopped;
-  return { gate: 'goggles', decision: 'allow' };
-}
 
 function stationFile(root) {
   return join(root, '.xray', 'state', 'STATION.md');
@@ -1233,35 +1076,10 @@ function lookVerb(words) {
 export function handCard(root, intent) {
   try {
     const text = String(intent || '');
-    const words = intentWords(text);
     if (isGogglesWork(text) && text.length <= 200) {
       clearReading(root);
       clearCardLine(root);
-      return null;
     }
-    const asked = lookVerb(words);
-    const planes = acceptedPlanes().filter((name) => words.includes(name));
-    if (!asked && planes.length === 0) return null;
-    if (!asked && planes.length === 1 && !HOLDS_ON_NAME.has(planes[0])) return null;
-    clearCardLine(root);
-    const looked = readGoggles(words);
-    if (looked.text.startsWith('Actuality. Drift')) {
-      saveReading(root, { drift: looked.text });
-      return null;
-    }
-    if (planes.length !== 1) {
-      clearReading(root);
-      return null;
-    }
-    const scopes = findScopes(words.filter((word) => word !== planes[0]));
-    if (scopes.length > 1) {
-      clearReading(root);
-      return null;
-    }
-    const next = { plane: planes[0], scope: scopes[0] || '' };
-    const prev = loadReading(root);
-    if (prev && prev.plane === next.plane && (prev.scope || '') === next.scope && !prev.drift) return null;
-    saveReading(root, next);
     return null;
   } catch {
     return null;
@@ -1274,12 +1092,114 @@ export function lensPath(root) {
 }
 
 
-export function maintainLens(root) {
-  const drift = actualityLine();
-  const text = drift || 'quiet (match)';
+function heldCardPlane(root) {
+  const held = readHold(root);
+  if (!held || !held.card) return null;
+  return { id: held.card, scope: '' };
+}
+
+function readLensText(root) {
+  try {
+    return readFileSync(lensPath(root), 'utf8');
+  } catch {
+    return '';
+  }
+}
+
+function blockId(part) {
+  const card = String(part || '').match(/^Card:\s*(\S+)/m);
+  if (card) return card[1];
+  const plane = String(part || '').match(/^Plane:\s*(\S+)/);
+  return plane ? plane[1] : '';
+}
+
+function lensCards(text) {
+  const cards = new Map();
+  for (const part of String(text || '').split(/\n\n/)) {
+    const id = blockId(part);
+    if (!id) continue;
+    const block = part.replace(/\s*$/, '');
+    if (!isCardName(id) && !cardIsFilled(block)) continue;
+    cards.set(id, block);
+  }
+  return cards;
+}
+
+function cardIsFilled(block) {
+  return /^Entry:/m.test(block) && /^Exit:/m.test(block);
+}
+
+function cardOrder(text, cards) {
+  const order = [];
+  for (const part of String(text || '').split(/\n\n/)) {
+    const id = blockId(part);
+    if (!id || !cards.has(id) || order.includes(id)) continue;
+    order.push(id);
+  }
+  for (const id of cards.keys()) {
+    if (!order.includes(id)) order.push(id);
+  }
+  return order;
+}
+
+function writeLensBody(root, prev, cards) {
+  const parts = [];
+  for (const id of cardOrder(prev, cards)) parts.push(cards.get(id));
   mkdirSync(dirname(lensPath(root)), { recursive: true });
-  writeFileSync(lensPath(root), `${text}\n`);
-  return ok(drift);
+  writeFileSync(lensPath(root), parts.length ? `${parts.join('\n\n')}\n` : '');
+}
+
+function lensCardText(root, held) {
+  const built = builtinCard(held.id);
+  if (built) return built;
+  const platesDir = findPlatesDir(HERE);
+  const plane = growPlane(held.id, platesDir, root);
+  const place = planeForCard(held.id);
+  const view = {
+    card: held.id,
+    plane: place,
+    from: place,
+    digest: plane.digest || '',
+    plate: plane.plate || '',
+    plates: Array.isArray(plane.plates) ? plane.plates : [],
+    entry: plane.entry || '',
+    exit: plane.exit || '',
+    files: listedFiles(plane),
+    skills: plane.skills || '',
+    setup: plane.setup || '',
+    teardown: plane.teardown || '',
+    worn: plane.worn || '',
+  };
+  return cardRows(view).map(([key, value]) => `${key}: ${value}`.trimEnd()).join('\n');
+}
+
+/** The stored card. Empty until Entry and Exit are in the file. */
+export function readLensCard(root, id) {
+  const block = lensCards(readLensText(root)).get(String(id || '').trim()) || '';
+  return cardIsFilled(block) ? block : '';
+}
+
+/** Write the plane card once. A later pass reads the stored rows. */
+export function fillLensCard(root, id) {
+  const plane = String(id || '').trim();
+  if (!isCardName(plane)) return '';
+  const kept = readLensCard(root, plane);
+  if (kept) return kept;
+  const prev = readLensText(root);
+  const cards = lensCards(prev);
+  const block = lensCardText(root, { id: plane, scope: '' });
+  cards.set(plane, block);
+  writeLensBody(root, prev, cards);
+  return block;
+}
+
+export function maintainLens(root) {
+  const held = heldCardPlane(root);
+  if (held) fillLensCard(root, held.id);
+  const prev = readLensText(root);
+  const cards = lensCards(prev);
+  writeLensBody(root, prev, cards);
+  return ok('');
 }
 
 
@@ -1293,7 +1213,7 @@ function sameInvoked(argvPath, modulePath) {
 
 const isMain = Boolean(process.argv[1]) && sameInvoked(process.argv[1], fileURLToPath(import.meta.url));
 if (isMain) {
-  const answered = gogglesAnswer(process.argv.slice(2));
+  const answered = gogglesAnswer(process.argv.slice(2), undefined, true);
   const pane = process.stdout.isTTY && Array.isArray(answered.cards) && answered.cards.length > 0;
   const text = pane ? answered.cards.map((card) => formatCardPane(card)).join('\n\n') : answered.text;
   process.stdout.write(`${text}\n`);

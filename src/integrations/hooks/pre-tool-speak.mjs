@@ -64,12 +64,10 @@ export function repertoireRoute(operation) {
   }
 }
 
-/** Deny when the lens stops the tool. Any other lens result is quiet. */
+/** The card for this tool, or null when the tool just runs. */
 export function lensDecision(root, toolName, spoken) {
   try {
-    const stop = lensBeforeResearch(root, toolName, spoken);
-    if (stop?.decision === 'deny') return stop;
-    return null;
+    return lensBeforeResearch(root, toolName, spoken);
   } catch {
     return null;
   }

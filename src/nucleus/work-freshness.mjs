@@ -135,9 +135,19 @@ function freshnessFile(projectRoot) {
   return join(projectRoot, '.xray', 'state', 'freshness.json');
 }
 
+export const FRESHNESS_MAX_AGE_MS = 60 * 60 * 1000;
+
 export function readSavedFreshness(projectRoot) {
   const saved = readJson(freshnessFile(projectRoot));
   return saved ? describeFreshness(saved) : null;
+}
+
+/** A missing stamp or a stamp older than an hour is due. */
+export function freshnessNeedsRefresh(projectRoot, now = Date.now()) {
+  const saved = readJson(freshnessFile(projectRoot));
+  const at = saved && saved.checkedAt ? Date.parse(String(saved.checkedAt)) : NaN;
+  if (!Number.isFinite(at)) return true;
+  return now - at >= FRESHNESS_MAX_AGE_MS;
 }
 
 export function probeFreshness(projectRoot) {
