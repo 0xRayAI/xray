@@ -169,7 +169,7 @@ A seat shows ACTIVE when, within the fleet window (`LIVE_WINDOW_MIN`, default 15
 - an owned box file changed or an activity line (turn, task, watcher) was logged (see Seat activity above);
 - a wake to its webhook landed (2xx);
 - it read its inbox (`live-inbox <seat>`);
-- it acked a line (`live-inbox <seat> --ack <id>`).
+- it acked a line (`live-inbox <seat> --ack <id>`, `--ack stale --apply`, `--upto <id>`, or `--ack all`).
 
 The last good wake lives in `wake-ok.json` on the volume. An ack is an append-only archive row (`acks.jsonl`, with `t_ct`). Startup reads those rows and `foldSeatTouch` applies them, so a restart keeps the last ack.
 
