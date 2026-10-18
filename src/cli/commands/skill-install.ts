@@ -554,7 +554,15 @@ export function syncBuiltinSkills(targetSkillsDir: string, packageRoot?: string)
   try {
     if (!existsSync(targetSkillsDir)) mkdirSync(targetSkillsDir, { recursive: true });
     for (const entry of readdirSync(sourceDir, { withFileTypes: true })) {
-      if (!entry.isDirectory()) continue;
+      let linkedDir = false;
+      if (entry.isSymbolicLink()) {
+        try {
+          linkedDir = statSync(join(sourceDir, entry.name)).isDirectory();
+        } catch {
+          linkedDir = false;
+        }
+      }
+      if (!entry.isDirectory() && !linkedDir) continue;
       const skillMd = join(sourceDir, entry.name, "SKILL.md");
       if (!existsSync(skillMd)) continue;
       const destMd = join(targetSkillsDir, entry.name, "SKILL.md");

@@ -216,7 +216,15 @@ function syncBuiltinSkills(targetSkillsDir, packageRoot) {
   try {
     if (!fs.existsSync(targetSkillsDir)) fs.mkdirSync(targetSkillsDir, { recursive: true });
     for (const entry of fs.readdirSync(sourceDir, { withFileTypes: true })) {
-      if (!entry.isDirectory()) continue;
+      let linkedDir = false;
+      if (entry.isSymbolicLink()) {
+        try {
+          linkedDir = fs.statSync(path.join(sourceDir, entry.name)).isDirectory();
+        } catch {
+          linkedDir = false;
+        }
+      }
+      if (!entry.isDirectory() && !linkedDir) continue;
       const skillMd = path.join(sourceDir, entry.name, "SKILL.md");
       if (!fs.existsSync(skillMd)) continue;
       const destMd = path.join(targetSkillsDir, entry.name, "SKILL.md");
@@ -1988,9 +1996,11 @@ function syncSetupSkillsAndRootLinks(packageRoot, targetDir) {
 
 /** A byte-identical package skill is the old mirror. A different body still throws. */
 function wornSkillMatchesPackage(packageRoot, targetDir, name) {
-  const source = fs.existsSync(path.join(packageRoot, "src", "skills"))
-    ? path.join(packageRoot, "src", "skills")
-    : path.join(packageRoot, "dist", "skills");
+  const distSkills = path.join(packageRoot, "dist", "skills");
+  const srcSkills = path.join(packageRoot, "src", "skills");
+  const source = fs.existsSync(path.join(distSkills, name, "SKILL.md"))
+    ? distSkills
+    : srcSkills;
   const packaged = path.join(source, name, "SKILL.md");
   if (!fs.existsSync(packaged)) return false;
   const packagedBytes = fs.readFileSync(packaged);
@@ -2030,11 +2040,6 @@ const ROLE_SKILL_DIRS = [
   [".openclaw", "skills"],
 ];
 
-function removeCopiedRoleSkills(packageRoot, targetDir) {
-  void packageRoot;
-  void targetDir;
-}
-
 function installConsumerProjectFiles(packageRoot, targetDir, log) {
   const write = typeof log === "function" ? log : () => {};
   if (!isConsumerInstall(packageRoot, targetDir) || !packageShipsConsumerSuit(packageRoot)) {
@@ -2053,7 +2058,6 @@ function installConsumerProjectFiles(packageRoot, targetDir, log) {
   installGrokBridge(targetDir, packageRoot, write);
   installHermesBridge(targetDir, packageRoot, write);
   installOpenclawBridge(targetDir, packageRoot, write);
-  removeCopiedRoleSkills(packageRoot, targetDir);
   try {
     mintConsumerSuit(packageRoot, targetDir, write);
   } catch (err) {

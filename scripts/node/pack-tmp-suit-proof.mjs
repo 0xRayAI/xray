@@ -103,10 +103,13 @@ export function wornSkillNames(consumerRoot) {
 function catalogSkillNamesNear(millRoot) {
   let dir = millRoot;
   for (let i = 0; i < 4 && dir; i += 1) {
-    for (const rel of ["src/skills", "dist/skills"]) {
+    for (const rel of ["dist/skills", "src/skills"]) {
       const skills = path.join(dir, rel);
       if (!fs.existsSync(skills)) continue;
-      return fs.readdirSync(skills).filter((name) => fs.existsSync(path.join(skills, name, "SKILL.md")));
+      const names = fs.readdirSync(skills).filter((name) =>
+        fs.existsSync(path.join(skills, name, "SKILL.md")),
+      );
+      if (names.length > 0) return names;
     }
     const parent = path.dirname(dir);
     if (parent === dir) break;

@@ -138,7 +138,7 @@ function suitPackageRoot(start) {
 function catalogSkillDir(packageRoot) {
   const base = suitPackageRoot(packageRoot);
   const dirs = [path.join(base, "dist", "skills"), path.join(base, "src", "skills")];
-  return dirs.find((p) => fs.existsSync(p)) || "";
+  return dirs.find((dir) => listSkillNamesAt(dir).length > 0) || "";
 }
 
 function catalogSkillNames(packageRoot) {
@@ -287,11 +287,21 @@ function inventoryPlantKinds(inventory) {
   return millPlantProtocol.plantKindsFromInventory(inventory);
 }
 
+function skillDirEntry(parent, entry) {
+  if (entry.isDirectory()) return true;
+  if (!entry.isSymbolicLink()) return false;
+  try {
+    return fs.statSync(path.join(parent, entry.name)).isDirectory();
+  } catch {
+    return false;
+  }
+}
+
 function listSkillNamesAt(skillsSrc) {
   if (!isDirectory(skillsSrc)) return [];
   const names = [];
   for (const entry of fs.readdirSync(skillsSrc, { withFileTypes: true })) {
-    if (!entry.isDirectory() || entry.name.startsWith(".")) continue;
+    if (entry.name.startsWith(".") || !skillDirEntry(skillsSrc, entry)) continue;
     const skillMd = path.join(skillsSrc, entry.name, "SKILL.md");
     if (!fs.existsSync(skillMd)) continue;
     names.push(entry.name);

@@ -1,6 +1,6 @@
 import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -1254,6 +1254,25 @@ describe('foundry mill — inspect organ', () => {
       mkdirSync(path.join(tmp, '.opencode/skills/not-a-suit-skill'), { recursive: true });
       writeFileSync(path.join(tmp, '.opencode/skills/not-a-suit-skill/SKILL.md'), 'NO\n');
       expect(() => mintConsumerSuit(root, tmp, () => undefined)).toThrow(/costume dump/);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('listSkillNamesAt counts a linked skill directory and skips a broken link', () => {
+    const { listSkillNamesAt } = requireCjs(path.join(root, 'scripts/foundry/mint-suit.cjs')) as {
+      listSkillNamesAt: (dir: string) => string[];
+    };
+    const tmp = mkdtempSync(path.join(os.tmpdir(), 'xray-skill-link-'));
+    try {
+      const real = path.join(tmp, 'real-enforcer');
+      mkdirSync(real, { recursive: true });
+      writeFileSync(path.join(real, 'SKILL.md'), 'ENFORCER\n');
+      const skills = path.join(tmp, 'skills');
+      mkdirSync(skills);
+      symlinkSync(real, path.join(skills, 'enforcer'), 'dir');
+      symlinkSync(path.join(tmp, 'missing'), path.join(skills, 'gone'), 'dir');
+      expect(listSkillNamesAt(skills)).toEqual(['enforcer']);
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }
