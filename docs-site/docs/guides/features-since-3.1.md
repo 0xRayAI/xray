@@ -56,9 +56,9 @@ Confer votes. Burst runs the swarm.
 
 ## 4.0.27 — compact proof, memory scoring, grok-bot house
 
-- **Nested preCompact wear.** A counted host compact needs a non-empty `generation_id` and a numeric `context_usage_percent`. The same hook line and per-session receipt are written on the suit mill and on nested consumer wear roots (a bench with local `node_modules/0xray`). `preCompact` has no Read paths, so those roots are discovered from the mill at compact time. See [Cursor hooks](../../../src/integrations/cursor/README.md).
-- **Memory scoring** is one doc: [memory-scoring](../../../docs/memory-scoring.md). The orchestrator skill links it and does not copy the rules.
-- **@0xray/grok-bot 0.1.6** is the companion package, not this tarball. The general operating page is the same for every team ([OP-PROC](../../../grok-bot/OP-PROC.md)). `house/` is the team overlay and is not in that npm pack. `templates/house/` ships. `grok-bot house init` copies the template and refuses to overwrite. Doctor reads `GROK_BOT_HOUSE` when it is set (a missing path warns and does not walk). Otherwise it walks up from the working directory for `house/HOUSE.md`.
+- **Nested preCompact wear.** A counted host compact needs a non-empty `generation_id` and a numeric `context_usage_percent`. The same hook line and per-session receipt are written on the suit mill and on nested consumer wear roots (a bench with local `node_modules/0xray`). `preCompact` has no Read paths, so those roots are discovered from the mill at compact time. See [Cursor hooks](https://github.com/0xRayAI/xray/blob/main/src/integrations/cursor/README.md).
+- **Memory scoring** is one doc: [memory-scoring](https://github.com/0xRayAI/xray/blob/main/docs/memory-scoring.md). The orchestrator skill links it and does not copy the rules.
+- **@0xray/grok-bot 0.1.6** is the companion package, not this tarball. The general operating page is the same for every team ([OP-PROC](https://github.com/0xRayAI/xray/blob/main/grok-bot/OP-PROC.md)). `house/` is the team overlay and is not in that npm pack. `templates/house/` ships. `grok-bot house init` copies the template and refuses to overwrite. Doctor reads `GROK_BOT_HOUSE` when it is set (a missing path warns and does not walk). Otherwise it walks up from the working directory for `house/HOUSE.md`.
 
 ## 4.0.25 — plates travel in the package
 
