@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # live-inbox-watch [seat] [interval_s]: poll a seat's inbox for a CLI seat with no webhook (Arch1 on Blaze's Mac).
 # Runs `live-inbox <seat>` every interval (default arch1, 60s) and prints any open asks. Never acks: ack with
-# `live-inbox <seat> --ack <id|all>` after the PR receipt. Env (defaults): LIVE_URL, SEAT_KEYS_DIR=~/.burst/seat-keys,
+# `live-inbox <seat> --ack <id>` after the PR receipt for that line. `--ack stale` lists settled lines and waits for `--apply`. `--upto <id>` acks the stored prefix, including live lines. `--ack all` acks every open line. Env (defaults): LIVE_URL, SEAT_KEYS_DIR=~/.burst/seat-keys,
 # LIVE_CURSORS=~/.burst/cursors, LIVE_INBOX=live-inbox beside this script. The key is never read or printed here.
 # An approved exception to the no-local-watchers rule (Arch1's inbox poll; approved by Blaze 2026-10-13).
 # Grok hears a printed line only when this script is the host's internal monitor. A launchd job writes

@@ -152,7 +152,7 @@ Don't confuse: watcher ≠ Dist; workstream ≠ product; workstream ≠ planes.
 Every bolded term in the pack OP-PROC and runbooks is defined here (`bifrost check --only lexicon`).
 | Term | Bucket | Plain |
 |------|--------|-------|
-| **ack** | Workstream | The receipt a seat sends after it handles an inbox line (`live-inbox <seat> --ack <id>`). Plain seat-key call, never an approval card. |
+| **ack** | Workstream | The receipt a seat sends after it handles an inbox line (`live-inbox <seat> --ack <id>`). `--ack stale` lists lines with a close or merge event, or a closed or done card, and does not ack until `--apply`. A missing card stays, and so does an old handoff on a live card. `--upto <id>` acks the stored prefix through that id, including live lines. `--ack all` acks every open line. Plain seat-key call, never an approval card. |
 | **coordinator** | Workstream | The CoS role: owns the board, comes in through tripwire and nudge, reassigns or splits stuck cards. |
 | **coordinator never** | Workstream | What the coordinator never does: deploy, publish, change production, launch cloud agents, post in public, spend, merge. |
 | **done** | Workstream | A live receipt (URL, registry view, Release URL, or reviewer PASS). Green CI alone is not done. |

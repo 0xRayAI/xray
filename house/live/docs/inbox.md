@@ -26,11 +26,11 @@ A line is a tracked packet only when `type` or `kind` is `dispatch`, `ready`, `p
 
 `POST /activity` is per seat. Every seat except Builder sends `Authorization: Bearer <its key>`. The server checks the sha256 against that seat's `SEAT_KEYS` entry and stores the line as that seat. Posting with another seat's name in `seat` returns `403` `{"error":"seat mismatch"}`. An unknown key is `401`. `POST /activity/ingest` is the box-uploader exception: `X-Live-Ingest` may write for every fleet seat, and those lines use the same store. See [work-tracking.md](work-tracking.md) and [activity-upload.md](activity-upload.md).
 
-A read never acks. A non-empty read is the work: handle the line, post the receipt, then ack that id. Printing the title and going back to the chat is a miss. `GET /inbox/<seat>` returns open lines. The receipt is `POST /inbox/<seat>/ack` with `{id}`, `{upto}`, or `{all: true}`.
+A read never acks. A non-empty read is the work: handle the line, post the receipt, then ack that id. Printing the title and going back to the chat is a miss. `GET /inbox/<seat>` returns open lines. The receipt is `POST /inbox/<seat>/ack` with `{id}`, `{upto}`, `{stale: true}`, or `{all: true}`. `{stale: true}` acks up to 1000 open lines that have a close or merge event, or a closed or done card. A missing card is not in that set. A second apply takes the rest. A plain `GET /inbox/<seat>` still returns a merged or closed card until that line is acked.
 
 A card date is `live-inbox <seat> --card <owner/repo#n> --start-after <ISO>`. The ISO time carries a numeric offset (`-05:00` or `-06:00` for Chicago). The same date is a GitHub comment whose first line is `Start after: <ISO>`, and that comment counts only from the card owner or a fleet seat. A stranger's comment is ignored. A time more than 30 days out is ignored, on the comment and on `POST /cards/start-after`. The command wins while it is stored. Until that time the card stays parked (no nudge, no tripwire, no empty-board pull). At that time the server wakes the owning seat through the normal inbox wake. The date is on disk, so a restart still honors it.
 
-`tools/live-inbox <seat>` prints open lines and advances the local cursor to the newest line seen. It does not ack. `--peek` means the same as a plain read. `--ack <id|all>` and `--pop <id|all>` are the receipt. A handoff is `live-inbox <seat> --handoff <to> --pr <owner/repo#n> --kind <ready|critic_fail|live_pass|merge|ci_fail> --sha <head>`. It posts one inbox packet and prints the 1:1 line. `--sha` is required and is a head of 7 to 64 hex digits. A plain `GET /inbox/<seat>` returns every unacked line, including a line whose card is closed or merged. An ack hides it. `?all=1` is the history. `LIVE_URL`, `SEAT_KEYS_DIR` and `LIVE_CURSORS` are required: `live-inbox` never guesses, and a missing one exits 2 and names it. Run the export line in `grok-bot/templates/house/fleet/WAKE-ROUTINE.md` first; it puts the installed copy (`~/.burst/bin`, or `LIVE_INBOX_BIN`) on `PATH` and sets the defaults. Set those only to override.
+`tools/live-inbox <seat>` prints open lines and advances the local cursor to the newest line seen. It does not ack. `--peek` means the same as a plain read. `--ack <id>` is the receipt for one handled line. `--ack stale` lists lines with a close or merge event, or a closed or done card, and does not ack until `--apply`, which posts each listed id. A missing card stays, and so does an old handoff whose card is still live. `--upto <id>` acks the stored prefix through that id, including live lines. `--ack all` acks every open line. `--pop <id|all>` is the same receipt as `--ack` for one id or all. A handoff is `live-inbox <seat> --handoff <to> --pr <owner/repo#n> --kind <ready|critic_fail|live_pass|merge|ci_fail> --sha <head>`. It posts one inbox packet and prints the 1:1 line. `--sha` is required and is a head of 7 to 64 hex digits. A plain `GET /inbox/<seat>` returns every unacked line, including a line whose card is closed or merged. An ack hides it. `?all=1` is the history. `LIVE_URL`, `SEAT_KEYS_DIR` and `LIVE_CURSORS` are required: `live-inbox` never guesses, and a missing one exits 2 and names it. Run the export line in `grok-bot/templates/house/fleet/WAKE-ROUTINE.md` first; it puts the installed copy (`~/.burst/bin`, or `LIVE_INBOX_BIN`) on `PATH` and sets the defaults. Set those only to override.
 
 ## Seat wake URLs and webhooks
 
@@ -50,7 +50,7 @@ Grok Bot seats **do** use webhooks. This reverses the earlier reading of #265 (l
 - Blinky's (CoS) scheduled sweep is only a backstop: it catches wakes that were dropped and packets the server writes on its own.
 
 **Adding the missing seat webhooks (magnet, nibbler, sound, herald, arch1).** These five have no `SEAT_WEBHOOKS` entry yet, so they get no wake POST. For each:
-1. The seat creates its webhook-triggered inbox wake routine (reads with `live-inbox <seat>`, acks with `live-inbox <seat> --ack <id>`).
+1. The seat creates its webhook-triggered inbox wake routine (reads with `live-inbox <seat>`, acks one handled line with `live-inbox <seat> --ack <id>`; settled lines, a prefix, and every open line are under [Ack route](#ack-route)).
 2. The seat sends its owner the webhook URL, key and header links in the owner's 1:1 only.
 3. The owner adds `"<seat>": {"url": "<webhook url>", "key_env": "WAKE_KEY_<SEAT>"}` (plus `header` if the routine needs one) to `SEAT_WEBHOOKS`, and puts the key in `WAKE_KEY_<SEAT>` on the service. Values never go in a room, repo, PR or log.
 4. Restart burst-live (config is read at startup) and verify one real wake: `wake: <seat> ok` in the log and the seat confirms its routine ran.
@@ -146,7 +146,7 @@ A seat not in `SEAT_WEBHOOKS` gets no POST. It learns of work from the one-line 
 
 ### Ack route
 
-Reading never acks, but a non-empty read is the work. Seats read with `live-inbox <seat>`, handle each line, then ack with `live-inbox <seat> --ack <id|all>`, never a hand-built curl (a wake routine runs only that tool, so it raises no approval card). Under the hood it calls `GET /inbox/<seat>` and `POST /inbox/<seat>/ack` with `{"id":"<id>"}`, `{"upto":"<id>"}` or `{"all":true}`. An unacked line stays open and is read again on the next wake or sweep.
+Reading never acks, but a non-empty read is the work. Seats read with `live-inbox <seat>`, handle each line, then ack with `live-inbox <seat> --ack <id>`, never a hand-built curl (a wake routine runs only that tool, so it raises no approval card). `--ack stale` lists lines with a close or merge event, or a closed or done card, and does not ack until `--apply`, which posts `{"id"}` for each listed line. A missing card stays, and so does an old handoff on a live card. `--upto <id>` acks the stored prefix through that id, including live lines. `--ack all` acks every open line. Under the hood a one-id ack is `{"id"}`, a prefix is `{"upto"}`, and every open line is `{"all":true}`. The server also accepts `{"stale":true}`, which acks up to 1000 of that set. The tool does not send `{"stale":true}`. An unacked line stays open and is read again on the next wake or sweep.
 
 ### Key folder on our box
 
@@ -159,9 +159,12 @@ Reading never acks, but a non-empty read is the work. Seats read with `live-inbo
 The wake carries no secrets and is not the record. The wake routine runs the committed tool and nothing else: it never builds an inbox or ack request by hand with curl.
 
 ```sh
-tools/live-inbox <seat>                 # read open lines (never acks)
-tools/live-inbox <seat> --ack <id>      # receipt for one handled line
-tools/live-inbox <seat> --ack all       # receipt for everything open
+tools/live-inbox <seat>                      # read open lines (never acks)
+tools/live-inbox <seat> --ack <id>           # receipt for one handled line
+tools/live-inbox <seat> --ack stale          # list close/merge or closed/done; does not ack
+tools/live-inbox <seat> --ack stale --apply  # ack the ids just listed
+tools/live-inbox <seat> --upto <id>          # stored prefix through that id, including live lines
+tools/live-inbox <seat> --ack all            # every open line
 ```
 
 `live-inbox` reads the seat key from its own key file and calls `GET /inbox/<seat>` and `POST /inbox/<seat>/ack`; the raw routes above are for reference only.
@@ -245,7 +248,7 @@ Run: `~/.burst/bin/inbox-watch.sh arch1`
 
 The key file is `arch1.key` in `SEAT_KEYS_DIR` (dir 700, file 600). Blaze delivers it only through his 1:1, never in a chat room, a repo or a routine. The server checks it against the `arch1` entry in the `SEAT_KEYS` Railway variable (sha256 of the key); if that entry is missing, every read returns 401 and the fix needs Blaze's GO for the variable change.
 
-**Acking.** After Arch1 posts its receipt on the PR (envs, exit codes, tarball sha), run `live-inbox arch1 --ack <id>` for that line, or `live-inbox arch1 --ack all`.
+**Acking.** After Arch1 posts its receipt on the PR (envs, exit codes, tarball sha), run `live-inbox arch1 --ack <id>` for that line. `--ack stale` lists lines with a close or merge event, or a closed or done card, and does not ack until `--apply`. A missing card stays, and so does an old handoff on a live card. `--upto <id>` acks the stored prefix through that id, including live lines. `--ack all` acks every open line.
 
 **Round-trip test.**
 1. forge sends a test wake for `seat: arch1` with `POST /inbox` (see [Sending a test wake](#sending-a-test-wake)); expect 200 with `added: 1`.

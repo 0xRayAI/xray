@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
-"""live-inbox <seat> [--peek] | live-inbox <seat> --ack <id|all> | live-inbox <seat> --pop <id|all> | live-inbox <seat> --turn start|end [--tag <tag>] | live-inbox <seat> --prompt [--from <name>] [--room <name>]
+"""live-inbox <seat> [--peek] | live-inbox <seat> --ack <id|all|stale> [--apply] | live-inbox <seat> --pop <id|all> | live-inbox <seat> --upto <id> | live-inbox <seat> --turn start|end [--tag <tag>] | live-inbox <seat> --prompt [--from <name>] [--room <name>]
 live-inbox <seat> --handoff <to> --pr <owner/repo#n> --kind <ready|critic_fail|live_pass|merge|ci_fail> --sha <head>
 live-inbox <seat> --card <owner/repo#n> --start-after <ISO>
 
 Read: OPEN lines from the Bifrost server inbox for <seat>, one JSON object per line on stdout. The server hides lines the
 seat acked. A closed or merged card does not hide an unacked line. For reviewer, a Reviewer verdict at the card's head does.
 A read never acks. The ack is the receipt (the pop) and a seat sends it after it handles the line, with
---ack or --pop <id> (one line) or --ack all / --pop all (everything open). --peek means the same as a plain read.
+--ack or --pop <id> (one line) or --ack all / --pop all (everything open). --ack stale lists lines with a close or merge
+event, or a closed or done card, and does not ack them. A missing card stays. --ack stale --apply acks the ids just listed.
+--upto <id> acks the stored prefix through that id. A plain read still shows a merged card until one of those receipts.
+--peek means the same as a plain read.
 The local cursor still advances to the newest line seen.
 --turn start|end posts {kind:turn, action, t_ct, tag?} to POST /activity.
 --prompt posts {t_ct, seat, kind:prompt, action:sent, from, to:seat, room?} to POST /activity. from defaults to blaze.
@@ -30,7 +33,8 @@ URL = os.environ["LIVE_URL"].rstrip("/")
 KEYS = Path(os.environ["SEAT_KEYS_DIR"]).expanduser()
 CUR = Path(os.environ["LIVE_CURSORS"]).expanduser()
 KINDS = ("ready", "critic_fail", "live_pass", "merge", "ci_fail")
-USAGE = ("usage: live-inbox <seat> [--peek] | live-inbox <seat> --ack <id|all> | live-inbox <seat> --pop <id|all> | "
+USAGE = ("usage: live-inbox <seat> [--peek] | live-inbox <seat> --ack <id|all|stale> [--apply] | live-inbox <seat> --pop <id|all> | "
+         "live-inbox <seat> --upto <id> | "
          "live-inbox <seat> --turn start|end [--tag <tag>] | live-inbox <seat> --prompt [--from <name>] [--room <name>] | "
          "live-inbox <seat> --handoff <to> --pr <owner/repo#n> --kind <" + "|".join(KINDS) + "> --sha <head> | "
          "live-inbox <seat> --card <owner/repo#n> --start-after <ISO>")
@@ -49,12 +53,18 @@ def take(flag):
     return val
 
 
+apply = "--apply" in argv
+if apply:
+    argv.remove("--apply")
+upto = take("--upto")
 ack = None
+ack_flag = None
 for flag in ("--ack", "--pop"):
     if flag in argv:
         i = argv.index(flag)
         if i + 1 >= len(argv):
             sys.exit(USAGE)
+        ack_flag = flag
         ack = argv[i + 1]
         del argv[i:i + 2]
         break
@@ -81,7 +91,11 @@ if len(args) != 1 or not re.fullmatch(r"[a-z0-9-]{2,16}", args[0]):
     sys.exit(USAGE)
 if tag is not None and turn is None:
     sys.exit(USAGE)
-busy = ack is not None or prompt or handoff_to is not None or card_raw is not None or start_after is not None
+busy = ack is not None or upto is not None or prompt or handoff_to is not None or card_raw is not None or start_after is not None
+if apply and ack != "stale":
+    sys.exit(USAGE)
+if upto is not None and ack is not None:
+    sys.exit(USAGE)
 if turn is not None and (busy or turn not in ("start", "end")):
     sys.exit(USAGE)
 if prompt and (ack is not None or handoff_to is not None or card_raw is not None):
@@ -127,16 +141,22 @@ if not kf.is_file():
 H = {"Authorization": "Bearer " + kf.read_text().strip()}
 
 
-def call(method, path, body=None):
+def call(method, path, body=None, exit_on_error=True):
     req = urllib.request.Request(URL + path, data=json.dumps(body).encode() if body is not None else None, method=method,
                                  headers={**H, **({"Content-Type": "application/json"} if body is not None else {})})
     try:
         with urllib.request.urlopen(req, timeout=20) as r:
             return json.loads(r.read().decode())
     except urllib.error.HTTPError as e:
-        sys.exit(f"live-inbox: HTTP {e.code} {e.read().decode()[:200]}")
+        msg = f"live-inbox: HTTP {e.code} {e.read().decode()[:200]}"
+        if exit_on_error:
+            sys.exit(msg)
+        return {"ok": False, "error": msg}
     except (urllib.error.URLError, TimeoutError) as e:
-        sys.exit(f"live-inbox: server unreachable ({e})")
+        msg = f"live-inbox: server unreachable ({e})"
+        if exit_on_error:
+            sys.exit(msg)
+        return {"ok": False, "error": msg}
 
 
 def ct_now():
@@ -169,6 +189,41 @@ if turn is not None:
         body["tag"] = tag
     print(json.dumps(call("POST", "/activity", body)))
     sys.exit(0)
+if upto is not None:
+    print(json.dumps(call("POST", f"/inbox/{seat}/ack", {"upto": upto})))
+    sys.exit(0)
+if ack == "stale":
+    if ack_flag != "--ack":
+        sys.exit(USAGE)
+    lines = call("GET", f"/inbox/{seat}?stale=1").get("lines") or []
+    if not apply:
+        for l in lines:
+            print(json.dumps(l, ensure_ascii=False))
+        print(f"dry run: {len(lines)} stale line(s); pass --apply to ack", file=sys.stderr)
+        sys.exit(0)
+    acked = 0
+    open_n = None
+    acked_ids = []
+    failed = None
+    for l in lines:
+        line_id = l.get("id")
+        if not isinstance(line_id, str) or not line_id:
+            continue
+        result = call("POST", f"/inbox/{seat}/ack", {"id": line_id}, exit_on_error=False)
+        if result.get("error"):
+            failed = result["error"]
+            break
+        acked += int(result.get("acked") or 0)
+        acked_ids.append(line_id)
+        if "open" in result:
+            open_n = result.get("open")
+    receipt = {"ok": failed is None, "acked": acked, "ids": acked_ids}
+    if open_n is not None:
+        receipt["open"] = open_n
+    if failed:
+        receipt["error"] = failed
+    print(json.dumps(receipt))
+    sys.exit(0 if failed is None else 1)
 if ack is not None:
     r = call("POST", f"/inbox/{seat}/ack", {"all": True} if ack == "all" else {"id": ack})
     print(json.dumps(r))
