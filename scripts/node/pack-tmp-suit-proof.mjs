@@ -100,7 +100,22 @@ export function wornSkillNames(consumerRoot) {
   );
 }
 
-export function assertFastenedMillPlant(consumerRoot) {
+function catalogSkillNamesNear(millRoot) {
+  let dir = millRoot;
+  for (let i = 0; i < 4 && dir; i += 1) {
+    for (const rel of ["src/skills", "dist/skills"]) {
+      const skills = path.join(dir, rel);
+      if (!fs.existsSync(skills)) continue;
+      return fs.readdirSync(skills).filter((name) => fs.existsSync(path.join(skills, name, "SKILL.md")));
+    }
+    const parent = path.dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
+  }
+  return [];
+}
+
+export function assertFastenedMillPlant(consumerRoot, millRoot = consumerRoot) {
   const inventoryPath = path.join(consumerRoot, ".xray", "foundry-inventory.json");
   if (!fs.existsSync(inventoryPath)) {
     throw new Error("foundry-inventory.json missing — mill did not fasten");
@@ -126,8 +141,9 @@ export function assertFastenedMillPlant(consumerRoot) {
     }
   }
   const worn = wornSkillNames(consumerRoot);
+  const catalog = catalogSkillNamesNear(millRoot);
   const extras = worn.filter(
-    (name) => !MILL_PLANT_SKILLS.includes(name) && !FACTORY_SHOP_SKILLS.includes(name),
+    (name) => !MILL_PLANT_SKILLS.includes(name) && !FACTORY_SHOP_SKILLS.includes(name) && !catalog.includes(name),
   );
   if (extras.length > 0) {
     throw new Error(`costume dump extras before hangar plant: ${extras.join(",")}`);
@@ -145,7 +161,7 @@ export function proveSuitAfterInstall(consumerRoot, millRoot) {
   if (mint.status !== 0) {
     throw new Error(`foundry mint --skip-live failed:\n${mint.stdout}\n${mint.stderr}`);
   }
-  const inventory = assertFastenedMillPlant(consumerRoot);
+  const inventory = assertFastenedMillPlant(consumerRoot, millRoot);
   if (inventory.suit !== "fastened" && inventory.suit !== "overlay") {
     throw new Error(`expected fastened/overlay suit, got ${inventory.suit}`);
   }
@@ -180,7 +196,7 @@ export function proveSuitAfterInstall(consumerRoot, millRoot) {
   if (Array.isArray(plantVsWorn.extraSkills) && plantVsWorn.extraSkills.length > 0) {
     throw new Error(`inspect extraSkills after hangar plant: ${plantVsWorn.extraSkills.join(",")}`);
   }
-  const after = assertFastenedMillPlant(consumerRoot);
+  const after = assertFastenedMillPlant(consumerRoot, millRoot);
   if (after.costume === true) {
     throw new Error("costume flipped true after hangar plant");
   }

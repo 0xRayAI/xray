@@ -108,7 +108,7 @@ Confer votes. Burst runs the swarm.
 - Postinstall does **not** mill npm global prefix (Homebrew `lib`, `/usr/local/lib`) or `_npx` cache as a consumer
 - Prefix without `package.json` → mill `INIT_CWD` if it is a project, else mill the 0xray package (dogfood skip)
 - Isolated HOME still skips machine `~/.grok` / Hermes / OpenClaw
-- Mill plant stays `mill` + `inspect`. Not 45/42 costume. Nested mill stays **0.1.9**
+- Mill plant stays `mill` + `inspect`. Wear also copies every catalog skill and role file. Nested mill stays **0.1.9**
 
 ## 4.0.1 — Patch (CLI, host e2e, release gate, docs)
 

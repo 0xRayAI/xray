@@ -418,7 +418,7 @@ describe('foundry mill — gate and scripts', () => {
     );
   });
 
-  it('mill plant fastens mill+inspect, not 45/42 costume', () => {
+  it('mill plant fastens mill+inspect and wears the catalog', () => {
     const { mintConsumerSuit, wantsCostume } = requireCjs(
       path.join(root, 'scripts/foundry/mint-suit.cjs'),
     ) as {
@@ -450,7 +450,9 @@ describe('foundry mill — gate and scripts', () => {
       );
       expect(existsSync(path.join(tmp, '.opencode/agents/mill.yml'))).toBe(true);
       expect(existsSync(path.join(tmp, '.opencode/agents/inspect.yml'))).toBe(true);
-      expect(existsSync(path.join(tmp, '.opencode/skills/enforcer/SKILL.md'))).toBe(false);
+      expect(existsSync(path.join(tmp, '.opencode/skills/enforcer/SKILL.md'))).toBe(true);
+      expect(existsSync(path.join(tmp, '.opencode/skills/ui-ux-design/SKILL.md'))).toBe(true);
+      expect(existsSync(path.join(tmp, '.opencode/agents/boot-orchestrator.yml'))).toBe(true);
       expect(existsSync(path.join(tmp, '.grok/plugins/0xray/skills/inspect/SKILL.md'))).toBe(true);
       expect(existsSync(path.join(tmp, '.hermes/plugins/xray-hermes/skills/mill/SKILL.md'))).toBe(
         true,
@@ -473,7 +475,7 @@ describe('foundry mill — gate and scripts', () => {
     }
   });
 
-  it('consumer postinstall skips costume skill dump unless foundry.json costume', () => {
+  it('consumer wear copies catalog skills and role files when costume is off', () => {
     const { mintConsumerSuit } = requireCjs(path.join(root, 'scripts/foundry/mint-suit.cjs')) as {
       mintConsumerSuit: (pkg: string, target: string, log: (...a: unknown[]) => void) => void;
     };
@@ -497,8 +499,12 @@ describe('foundry mill — gate and scripts', () => {
         `${JSON.stringify({ name: 'acme-app', version: '1.0.0' }, null, 2)}\n`,
       );
       mintConsumerSuit(mill, consumer, () => undefined);
-      expect(existsSync(path.join(consumer, '.opencode/skills/enforcer/SKILL.md'))).toBe(false);
-      expect(existsSync(path.join(consumer, '.opencode/agents/orchestrator.yml'))).toBe(false);
+      expect(readFileSync(path.join(consumer, '.opencode/skills/enforcer/SKILL.md'), 'utf8')).toBe(
+        'COSTUME ENFORCER\n',
+      );
+      expect(readFileSync(path.join(consumer, '.opencode/agents/orchestrator.yml'), 'utf8')).toBe(
+        'name: costume-orch\n',
+      );
       expect(readFileSync(path.join(consumer, '.opencode/skills/mill/SKILL.md'), 'utf8')).toBe(
         'MILL PLANT\n',
       );
@@ -882,11 +888,6 @@ describe('foundry mill — mint from consumer SSOT', () => {
       mkdirSync(path.join(tmp, '.opencode/skills/enforcer'), { recursive: true });
       writeFileSync(path.join(tmp, 'src/skills/acme-tool/SKILL.md'), 'CONSUMER ACME\n');
       writeFileSync(path.join(tmp, '.opencode/skills/enforcer/SKILL.md'), 'MILL GARMENT\n');
-      expect(() => mintAfterWear(tmp)).toThrow(/costume dump/);
-      writeFileSync(
-        path.join(tmp, 'foundry.json'),
-        `${JSON.stringify({ costume: true }, null, 2)}\n`,
-      );
       mintAfterWear(tmp);
       expect(readFileSync(path.join(tmp, '.opencode/skills/acme-tool/SKILL.md'), 'utf8')).toBe(
         'CONSUMER ACME\n',
@@ -1168,8 +1169,8 @@ describe('foundry mill — inspect organ', () => {
       expect(wantsCostume(tmp)).toBe(false);
       expect(existsSync(path.join(tmp, 'foundry.json'))).toBe(false);
 
-      mkdirSync(path.join(tmp, '.opencode/skills/enforcer'), { recursive: true });
-      writeFileSync(path.join(tmp, '.opencode/skills/enforcer/SKILL.md'), 'LEFTOVER\n');
+      mkdirSync(path.join(tmp, '.opencode/skills/not-a-suit-skill'), { recursive: true });
+      writeFileSync(path.join(tmp, '.opencode/skills/not-a-suit-skill/SKILL.md'), 'LEFTOVER\n');
       expect(() => mintConsumerSuit(root, tmp, () => undefined)).toThrow(/costume dump/);
       const blocked = await inspectSuit(tmp, { millRoot: root, skipLive: true });
       expect(blocked.ok).toBe(false);
@@ -1177,7 +1178,7 @@ describe('foundry mill — inspect organ', () => {
       const extras = blocked.checks.find((c) => c.id === 'plant-vs-worn') as {
         extraSkills?: string[];
       };
-      expect(extras.extraSkills).toEqual(['enforcer']);
+      expect(extras.extraSkills).toEqual(['not-a-suit-skill']);
       expect(wantsCostume(tmp)).toBe(false);
     } finally {
       rmSync(tmp, { recursive: true, force: true });
@@ -1235,7 +1236,7 @@ describe('foundry mill — inspect organ', () => {
     }
   });
 
-  it('mint fails on leftover costume skills unless costume is true', () => {
+  it('mint allows a catalog skill and still fails a name outside the catalog', () => {
     const { mintConsumerSuit } = requireCjs(path.join(root, 'scripts/foundry/mint-suit.cjs')) as {
       mintConsumerSuit: (pkg: string, target: string, log: (...a: unknown[]) => void) => unknown;
     };
@@ -1247,14 +1248,12 @@ describe('foundry mill — inspect organ', () => {
       );
       mkdirSync(path.join(tmp, '.opencode/skills/enforcer'), { recursive: true });
       writeFileSync(path.join(tmp, '.opencode/skills/enforcer/SKILL.md'), 'LEFTOVER\n');
-      expect(() => mintConsumerSuit(root, tmp, () => undefined)).toThrow(/costume dump/);
-      writeFileSync(
-        path.join(tmp, 'foundry.json'),
-        `${JSON.stringify({ costume: true }, null, 2)}\n`,
-      );
-      const inventory = mintConsumerSuit(root, tmp, () => undefined) as { millPlant?: { skills: string[] } };
-      expect(inventory.millPlant?.skills).toEqual(expect.arrayContaining(['mill', 'inspect']));
+      const kept = mintConsumerSuit(root, tmp, () => undefined) as { costume?: boolean };
+      expect(kept.costume).toBe(false);
       expect(readFileSync(path.join(tmp, '.opencode/skills/enforcer/SKILL.md'), 'utf8')).toBe('LEFTOVER\n');
+      mkdirSync(path.join(tmp, '.opencode/skills/not-a-suit-skill'), { recursive: true });
+      writeFileSync(path.join(tmp, '.opencode/skills/not-a-suit-skill/SKILL.md'), 'NO\n');
+      expect(() => mintConsumerSuit(root, tmp, () => undefined)).toThrow(/costume dump/);
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }

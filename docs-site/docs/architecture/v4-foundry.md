@@ -45,7 +45,7 @@ npx 0xray wear
       → Cursor project hooks inside a git checkout
 ```
 
-Wear copies **factory** (PPE hooks, **Repertoire preferred** / vendored on, 7 MCP). Mill **fastens** mill plant: `mill` + `inspect` (inspect AI work). Overlay mints their plant on top. Not empty. Not 45/42 unless `foundry.json` `"costume": true`. Nested mill lives at `scripts/foundry/` inside the **0xray tarball**. `npx @0xray/foundry mint` reapplies overlay.
+Wear copies **factory** (PPE hooks, **Repertoire preferred** / vendored on, 7 MCP). Mill **fastens** mill plant: `mill` + `inspect` (inspect AI work). Overlay mints their plant on top. Not empty. Wear also copies every catalog skill and every role file. Nested mill lives at `scripts/foundry/` inside the **0xray tarball**. `npx @0xray/foundry mint` reapplies overlay.
 
 **Mill target:** `resolveConsumerTargetDir` does not mill npm global prefix or `_npx`. Isolated HOME skips machine `~/.grok`. Global `npm i -g 0xray` dogfood-skips. A consumer `npm i 0xray` links repertoire and prints wear. `npx 0xray wear` fastens mill+inspect.
 
