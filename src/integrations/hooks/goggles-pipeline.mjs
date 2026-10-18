@@ -927,7 +927,10 @@ function seatLensOf(root) {
 
 function ensurePlane(root) {
   const held = readHold(root);
-  if (held && CARD_PLANES.includes(held.plane)) return held.plane;
+  if (held && CARD_PLANES.includes(held.plane)) {
+    // A held dev card still receives the plant lens in overlaySeatLens.
+    return held.plane;
+  }
   const lens = seatLensOf(root);
   const card = lens && lens.card && isCardName(lens.card) ? lens.card : 'dev';
   holdPlane(root, card);
@@ -1231,7 +1234,9 @@ function writeLensBody(root, prev, cards) {
 function overlaySeatLens(root, id, block) {
   const lens = seatLensOf(root);
   if (!lens) return block;
-  if (id !== lens.card && id !== lens.plane) return block;
+  const onPlant = id === lens.card || id === lens.plane;
+  const onHeldDev = id === 'dev';
+  if (!onPlant && !onHeldDev) return block;
   let next = block;
   if (lens.skills) next = next.replace(/^Skills:.*$/m, `Skills: ${lens.skills}`);
   if (lens.worn) next = next.replace(/^Worn:.*$/m, `Worn: ${lens.worn}`);

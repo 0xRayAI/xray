@@ -213,6 +213,8 @@ describe('goggles organ files are on the pack list', () => {
     expect(REQUIRED_PACK_PATHS).toContain('dist/integrations/hooks/goggles-planes.json');
     expect(REQUIRED_PACK_PATHS).toContain('dist/integrations/hooks/goggles-mcp.mjs');
     expect(REQUIRED_PACK_PATHS).toContain('scripts/mjs/run-goggles-mcp.mjs');
+    expect(REQUIRED_PACK_PATHS).toContain('scripts/node/suit-seat.cjs');
+    expect(existsSync(joinPack('scripts/node/suit-seat.cjs'))).toBe(true);
     expect(existsSync(joinPack('src/integrations/hooks/goggles-pipeline.mjs'))).toBe(true);
     expect(existsSync(joinPack('src/integrations/hooks/goggles-planes.json'))).toBe(true);
     expect(existsSync(joinPack('src/integrations/hooks/goggles-mcp.mjs'))).toBe(true);

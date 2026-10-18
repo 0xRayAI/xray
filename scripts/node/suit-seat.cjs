@@ -1,75 +1,21 @@
 /**
  * Suit seat: the fastened plant, the wear proof, and the station stamp.
- * TODO(#385): the role picker ranks the full catalog. This map is only the
- * plant or role line from suit config until that picker lands.
+ * TODO(#385): the role picker ranks the full catalog. Until then the lens
+ * is the plant or a plane named by the suit config, not a fleet roster.
  */
 const { execFileSync } = require("child_process");
 const fs = require("fs");
 const path = require("path");
+const millPlantProtocol = require("../foundry/mill-plant.cjs");
 
-const PLANT_SKILLS = {
-  mill: ["mill", "inspect"],
-  sound: ["sound", "sound-inspect", "sound-mixer"],
-  blip: ["blip-vibe", "blip-looker"],
+/** Card a plant shows. Not a fleet roster. */
+const PLANT_PLANE = {
+  mill: "integration",
+  sound: "ecosystem",
+  blip: "ecosystem",
 };
 
-const SEAT_LENS = {
-  mill: {
-    card: "integration",
-    plane: "integration",
-    skills: "mill, inspect, testing-best-practices, backend-engineer, git-workflow",
-  },
-  implementer: {
-    card: "integration",
-    plane: "integration",
-    skills: "mill, inspect, testing-best-practices, backend-engineer, git-workflow",
-  },
-  sound: {
-    card: "ecosystem",
-    plane: "ecosystem",
-    skills: "sound, sound-inspect, sound-mixer, foundry, tech-writer",
-  },
-  blip: {
-    card: "ecosystem",
-    plane: "ecosystem",
-    skills: "blip-vibe, blip-looker, foundry, tech-writer, project-analysis",
-  },
-  critic: {
-    card: "integration",
-    plane: "integration",
-    skills: "code-review, testing-best-practices, security-audit, enforcer, researcher",
-  },
-  reviewer: {
-    card: "integration",
-    plane: "integration",
-    skills: "code-review, testing-best-practices, security-audit, enforcer, researcher",
-  },
-  forge: {
-    card: "integration",
-    plane: "integration",
-    skills: "orchestrator, foundry, git-workflow, project-analysis, tech-writer",
-  },
-  cos: {
-    card: "integration",
-    plane: "integration",
-    skills: "orchestrator, strategist, reporting, project-analysis, git-workflow",
-  },
-  herald: {
-    card: "integration",
-    plane: "integration",
-    skills: "reporting, orchestrator, tech-writer, project-analysis, git-workflow",
-  },
-  blinky: {
-    card: "ecosystem",
-    plane: "ecosystem",
-    skills: "foundry, tech-writer, project-analysis, git-workflow, orchestrator",
-  },
-  nibbler: {
-    card: "dev",
-    plane: "dev",
-    skills: "researcher, content-creator, seo-consultant, tech-writer, project-analysis",
-  },
-};
+const CARD_PLANES = ["dev", "integration", "domain", "ecosystem"];
 
 const NOTES_SEED = ["Point:", "Open:", "Learned:", "Next cut:", ""].join("\n");
 
@@ -128,32 +74,47 @@ function pushNames(into, list) {
   }
 }
 
-function fastenedPlantSkills(root) {
-  const inventory = readJson(path.join(root, ".xray", "foundry-inventory.json"));
-  const fromInventory = [];
-  if (inventory && typeof inventory === "object") {
-    pushNames(fromInventory, inventory.millPlant && inventory.millPlant.skills);
-    pushNames(fromInventory, inventory.soundPlant && inventory.soundPlant.skills);
-    pushNames(fromInventory, inventory.blipPlant && inventory.blipPlant.skills);
-    if (inventory.plants && typeof inventory.plants === "object") {
-      for (const spec of Object.values(inventory.plants)) {
-        pushNames(fromInventory, spec && spec.skills);
-      }
+function installedPackageRoot(root) {
+  const linked = path.join(root, "node_modules", "0xray");
+  if (fs.existsSync(path.join(linked, "package.json"))) {
+    try {
+      return fs.realpathSync(linked);
+    } catch {
+      return linked;
     }
   }
-  if (fromInventory.length) return fromInventory;
-  const kinds = [];
-  const extra = foundryExtra(root);
-  if (Array.isArray(extra.plant)) pushNames(kinds, extra.plant);
-  else if (typeof extra.plant === "string" && extra.plant.trim()) kinds.push(extra.plant.trim());
-  else if (declaredPlant(root)) kinds.push(declaredPlant(root));
+  const own = readJson(path.join(root, "package.json"));
+  if (own && own.name === "0xray") return root;
+  return "";
+}
+
+/** Skills for one fastened plant. Inventory for that plant, else the mill package. */
+function skillsForPlant(root, plant) {
+  const kind = normalizePlant(plant) || "mill";
+  const inventory = readJson(path.join(root, ".xray", "foundry-inventory.json"));
   const names = [];
-  for (const kind of kinds) {
-    const list = PLANT_SKILLS[normalizePlant(kind)];
-    if (list) pushNames(names, list);
+  if (inventory) {
+    const spec = millPlantProtocol.inventoryFilesForKind(inventory, kind);
+    pushNames(names, spec && spec.skills);
   }
   if (names.length) return names;
-  return PLANT_SKILLS.mill.slice();
+  const packageRoot = installedPackageRoot(root);
+  const declared = normalizePlant(declaredPlant(root));
+  const extra = foundryExtra(root);
+  const request = declared === kind && Object.keys(extra).length ? extra : { plant: kind };
+  try {
+    const seats = millPlantProtocol.resolvePlantSeats(root, packageRoot || root, request);
+    const seat = seats.find((item) => item.kind === kind);
+    if (seat && Array.isArray(seat.skills) && seat.skills.length) return seat.skills.slice();
+  } catch {
+    /* this folder has no mill package for that plant */
+  }
+  if (kind === "mill") return millPlantProtocol.BUILTIN_MILL.skills.slice();
+  return [];
+}
+
+function fastenedPlantSkills(root) {
+  return skillsForPlant(root, normalizePlant(declaredPlant(root)) || "mill");
 }
 
 function wornVersion(root) {
@@ -168,21 +129,25 @@ function wornVersion(root) {
 
 function seatConfig(root) {
   const role = declaredRole(root);
-  const plant = normalizePlant(declaredPlant(root));
-  const version = wornVersion(root);
-  if (!role && !plant && !version) return null;
-  return { role, plant: plant || "mill", version };
+  const declared = normalizePlant(declaredPlant(root));
+  const rolePlant = PLANT_PLANE[role] ? role : "";
+  const rolePlane = CARD_PLANES.includes(role) ? role : "";
+  const plant = rolePlant || declared;
+  if (!plant && !rolePlane) return null;
+  const plane = rolePlane || PLANT_PLANE[plant] || "";
+  if (!plane) return null;
+  return { role, plant, plane, version: wornVersion(root) };
 }
 
 function seatLens(root) {
   const seat = seatConfig(root);
   if (!seat) return null;
-  const picked = (seat.role && SEAT_LENS[seat.role]) || SEAT_LENS[seat.plant] || SEAT_LENS.mill;
-  const worn = seat.version ? `${seat.plant} ${seat.version}` : seat.plant;
+  const skills = seat.plant ? skillsForPlant(root, seat.plant) : [];
+  const worn = seat.plant ? (seat.version ? `${seat.plant} ${seat.version}` : seat.plant) : "";
   return {
-    card: picked.card,
-    plane: picked.plane,
-    skills: picked.skills,
+    card: seat.plane,
+    plane: seat.plane,
+    skills: skills.join(", "),
     worn,
     plant: seat.plant,
   };
@@ -258,17 +223,14 @@ function stationSeed(version, plane) {
 }
 
 function restampFresh(text, version) {
-  const line = freshLine(version);
-  if (/^Fresh:.*\bpackage\s+\d+\.\d+\.\d+/m.test(text)) {
-    return text.replace(/^(Fresh:.*\bpackage\s+)\d+\.\d+\.\d+/m, `$1${version}`);
-  }
-  if (/^Fresh:/m.test(text)) return text.replace(/^Fresh:.*$/m, line);
-  if (/^Git:.*$/m.test(text)) return text.replace(/^(Git:.*)$/m, `$1\n${line}`);
-  return text.replace(/^(# Station\s*\n)/, `$1\n${line}\n`);
+  if (!version) return text;
+  if (!/^Fresh:.*\bpackage\s+\d+\.\d+\.\d+/m.test(text)) return text;
+  return text.replace(/^(Fresh:.*\bpackage\s+)\d+\.\d+\.\d+/m, `$1${version}`);
 }
 
 function restampPlane(text, plane) {
-  if (/^Plane:/m.test(text)) return text.replace(/^Plane:.*$/m, `Plane: ${plane}`);
+  if (/^Plane:/m.test(text)) return text;
+  if (!plane) return text;
   if (/^Library:.*$/m.test(text)) return text.replace(/^(Library:.*)$/m, `$1\nPlane: ${plane}`);
   return `${text.replace(/\s*$/, "")}\nPlane: ${plane}\n`;
 }
@@ -290,8 +252,7 @@ function seedSuitPages(root, packageRoot) {
 }
 
 module.exports = {
-  PLANT_SKILLS,
-  SEAT_LENS,
+  PLANT_PLANE,
   NOTES_SEED,
   normalizePlant,
   fastenedPlantSkills,

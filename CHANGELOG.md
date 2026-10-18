@@ -16,7 +16,7 @@ Wear, validate, and goggles follow the fastened plant. A non-mill seat does not 
 
 Doctor treats a suit as worn when `.xray/features.json` and the fastened plant's skills are on disk. It fails when `goggles.enabled` is false. (#395)
 
-Goggles reads the seat role or plant from suit config. `Worn:` names that plant and the package version. The full ranking stays with the role picker. (#395, #385)
+Goggles reads the plant, or a plane named in suit config, and fills `Worn:` with that plant and the package version. A held dev card still gets that lens. Wear replaces only a `package` version token on `Fresh:` and leaves a `Plane:` line that is already set. The full ranking stays with the role picker. (#395, #385)
 
 Wear seeds `STATION.md` and `NOTES.md` when they are missing, and restamps `Fresh:` and `Plane:` on every wear. The seat wake reads both on every turn, including Grok wakes that do not run `.cursor` hooks. (#395, #386)
 

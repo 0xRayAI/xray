@@ -1,4 +1,5 @@
 import { execFileSync, spawnSync } from 'node:child_process';
+import { createRequire } from 'node:module';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -57,7 +58,7 @@ describe('wear fixtures for mill, sound, and git', () => {
       mkdirSync(path.join(sound, '.xray', 'state'), { recursive: true });
       writeFileSync(
         path.join(sound, '.xray', 'state', 'STATION.md'),
-        ['# Station', '', 'Intent: keep this', 'Git: n/a', 'Fresh: up to date. package 4.0.42.', 'Plane: none', ''].join('\n'),
+        ['# Station', '', 'Intent: keep this', 'Git: n/a', 'Fresh: up to date. package 4.0.42.', 'Plane: domain', ''].join('\n'),
       );
       execFileSync('git', ['init'], { cwd: git, stdio: 'ignore' });
       for (const project of [mill, sound, git]) linkPackage(project);
@@ -99,7 +100,7 @@ describe('wear fixtures for mill, sound, and git', () => {
       expect(station).toContain('Intent: keep this');
       expect(station).toContain(`package ${version}`);
       expect(station).not.toContain('package 4.0.42');
-      expect(station).toMatch(/^Plane: ecosystem$/m);
+      expect(station).toMatch(/^Plane: domain$/m);
       const millStation = readFileSync(path.join(mill, '.xray', 'state', 'STATION.md'), 'utf8');
       expect(millStation).toContain(`package ${version}`);
       expect(millStation).toMatch(/^Plane: integration$/m);
@@ -111,8 +112,8 @@ describe('wear fixtures for mill, sound, and git', () => {
       const soundLens = goggles(sound);
       expect(millLens).toContain(`Worn: mill ${version}`);
       expect(soundLens).toContain(`Worn: sound ${version}`);
-      expect(millLens).toContain('Skills: mill, inspect, testing-best-practices, backend-engineer, git-workflow');
-      expect(soundLens).toContain('Skills: sound, sound-inspect, sound-mixer, foundry, tech-writer');
+      expect(millLens).toContain('Skills: mill, inspect');
+      expect(soundLens).toContain('Skills: sound, sound-inspect, sound-mixer');
       expect(millLens).not.toContain('Skills: sound, sound-inspect, sound-mixer');
     } finally {
       for (const project of [mill, sound, git]) rmSync(project, { recursive: true, force: true });
@@ -120,9 +121,56 @@ describe('wear fixtures for mill, sound, and git', () => {
     }
   });
 
+  it('restamps only a version token and keeps a Plane the seat set', () => {
+    const seat = createRequire(import.meta.url)('../../../scripts/node/suit-seat.cjs') as {
+      seedSuitPages: (root: string, packageRoot: string) => { version: string };
+      fastenedPlantSkills: (root: string) => string[];
+    };
+    const dir = mkdtempSync(path.join(tmpdir(), 'xray-restamp-'));
+    try {
+      writeFileSync(path.join(dir, 'foundry.json'), `${JSON.stringify({ plant: 'mill' })}\n`);
+      mkdirSync(path.join(dir, '.xray', 'state'), { recursive: true });
+      const kept = [
+        '# Station',
+        '',
+        'Intent: keep this',
+        'Git: n/a',
+        'Fresh: 2 behind main.',
+        'Plane: domain',
+        '',
+      ].join('\n');
+      writeFileSync(path.join(dir, '.xray', 'state', 'STATION.md'), kept);
+      seat.seedSuitPages(dir, repoRoot);
+      expect(readFileSync(path.join(dir, '.xray', 'state', 'STATION.md'), 'utf8')).toBe(kept);
+
+      writeFileSync(path.join(dir, 'foundry.json'), `${JSON.stringify({ plant: 'sound' })}\n`);
+      writeFileSync(
+        path.join(dir, '.xray', 'foundry-inventory.json'),
+        `${JSON.stringify({
+          plant: ['sound'],
+          millPlant: { skills: ['mill', 'inspect'] },
+          soundPlant: { skills: ['sound', 'sound-inspect', 'sound-mixer'] },
+          blipPlant: { skills: ['blip-vibe', 'blip-looker'] },
+        })}\n`,
+      );
+      expect(seat.fastenedPlantSkills(dir)).toEqual(['sound', 'sound-inspect', 'sound-mixer']);
+
+      const blip = mkdtempSync(path.join(tmpdir(), 'xray-blip-skills-'));
+      writeFileSync(path.join(blip, 'foundry.json'), `${JSON.stringify({ plant: 'blip' })}\n`);
+      expect(seat.fastenedPlantSkills(blip).sort()).toEqual(
+        ['blip', 'blip-inspect', 'blip-looker', 'blip-vibe'].sort(),
+      );
+      rmSync(blip, { recursive: true, force: true });
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   it('puts the station boot read in the Grok wake template', () => {
     const text = readFileSync(path.join(repoRoot, 'grok-bot/templates/house/fleet/WAKE-ROUTINE.md'), 'utf8');
     expect(text).toContain('Grok Bot wakes never run `.cursor` hooks, so this step is the boot hook.');
+    expect(text).toContain('if it\'s still stale, append one line to NOTES.md and go on.');
+    expect(text).not.toContain('#395');
     expect(text).toContain('An empty read with nothing owed is a quiet wake: skip steps 3 to 6 and go straight to step 7.');
   });
 });

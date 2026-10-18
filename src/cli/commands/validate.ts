@@ -36,6 +36,7 @@ export const VALIDATE_PACK_PATHS: readonly string[] = [
   "dist/integrations/hooks/goggles-planes.json",
   "dist/integrations/hooks/goggles-mcp.mjs",
   "scripts/mjs/run-goggles-mcp.mjs",
+  "scripts/node/suit-seat.cjs",
   "docs-site/docs/plates/memory-recall.md",
   "docs-site/docs/plates/processor.md",
   "docs-site/docs/plates/goggles.md",
