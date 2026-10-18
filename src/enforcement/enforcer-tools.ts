@@ -268,7 +268,7 @@ export const FOUNDRY_EXO_CANNOT_SHIP =
 
 /**
  * Release keyword used to run version-manager + git add -A + npm publish from the exo.
- * That path is refused. Canonical mill: reconcile → artifacts-only → gate → PUT → tag.
+ * That path is refused. Canonical mill: scripts/foundry/release.mjs.
  */
 export async function executeReleaseWorkflow(
   operation: string,

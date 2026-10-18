@@ -574,9 +574,16 @@ function runReleaseDocsValidation() {
 
 function refuseBump(reason) {
   process.stderr.write(`${reason}\n`);
-  process.stderr.write('One bumper: npx @0xray/foundry reconcile [patch|minor|major] --apply\n');
-  process.stderr.write('Then stamp:  npx @0xray/foundry stamp\n');
-  process.stderr.write('Ship:        npx @0xray/foundry release [patch|minor|major]\n');
+  process.stderr.write('Ship: npx @0xray/foundry release [patch|minor|major] --i-mean-it\n');
+  process.exit(1);
+}
+
+function refuseOutsideRelease() {
+  if (!isXrayExoRepo(rootDir)) return;
+  if (process.env.FOUNDRY_VIA_RELEASE === '1') return;
+  process.stderr.write('This repo stamps only through scripts/foundry/release.mjs.\n');
+  process.stderr.write('Ship: node scripts/foundry/release.mjs patch --i-mean-it\n');
+  process.stderr.write('That command publishes. A docs fix does not. Stop.\n');
   process.exit(1);
 }
 
@@ -586,13 +593,14 @@ function main() {
   if (args.includes('--help') || args.includes('-h')) {
     process.stdout.write(`Current version: ${getCurrentVersion()}\n`);
     process.stdout.write('Usage: npx @0xray/foundry stamp\n');
-    process.stdout.write('Bump is refused. Reconcile advances the next cut, then this stamper runs.\n');
+    process.stdout.write('Bump is refused. On this repo the stamper runs only from scripts/foundry/release.mjs.\n');
     process.stdout.write('The stamper strips every present-tense patch pin from shipped guides and shipped OP-PROC.\n');
     process.stdout.write('It does not edit Station, NOTES, dest, or node_modules. It does not publish.\n');
     process.exit(0);
   }
 
   if (args.includes('--artifacts-only')) {
+    refuseOutsideRelease();
     updateReleaseArtifactsOnly('');
     return;
   }

@@ -53,12 +53,12 @@ Wear copies **factory** (PPE hooks, **Repertoire preferred** / vendored on, 7 MC
 
 ### 1. Release / version / docs stamp
 
-Canonical path: `reconcile-version --apply` → `version-manager --artifacts-only` → `release-gate` → commit → `--verify-only` → PUT → tag.
+Canonical path: `scripts/foundry/release.mjs` (bump, stamp, gate, commit, publish, tag). A lone `reconcile-version --apply` or `version-manager --artifacts-only` exits on this repo.
 
 | Piece | Role |
 |---|---|
 | `scripts/foundry/reconcile-version.mjs` | **One bumper.** npm + tag vs `package.json` |
-| `scripts/foundry/version-manager.mjs` | Stamper. `--artifacts-only` only (JSON + CHANGELOG). Bump/`--tag` refused |
+| `scripts/foundry/version-manager.mjs` | Stamper. Runs from `release.mjs` on this repo. `--artifacts-only` alone exits here. Bump/`--tag` refused |
 | `scripts/foundry/release.mjs` | Canonical conductor; `--publish-only` is the old `release:npm`. Live run needs `--i-mean-it` or `FOUNDRY_RELEASE=1` |
 | `scripts/foundry/release-gate.mjs` | Build, test, **docs**, smoke. `--verify-only` is the post-push path |
 | `scripts/foundry/validate-release-docs.mjs` | Read-only freshness (kernel header, CHANGELOG top, counts) |

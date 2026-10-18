@@ -37,6 +37,8 @@ npx @0xray/foundry hooks
 
 `release` without `--dry-run` requires `--i-mean-it` or `FOUNDRY_RELEASE=1`. It is a bump/commit/push/publish bot for the **milled cwd**, not a casual command.
 
+On the 0xray repo, `reconcile --apply` and `stamp` refuse unless `release.mjs` called them. `npm run version:sync` refuses here too. Run `npx @0xray/foundry release [patch|minor|major] --i-mean-it`. That command publishes. A docs fix does not.
+
 `FOUNDRY_ROOT` overrides cwd (the repo being milled).
 
 `gate` is build + test + docs-check. `--skip-docs` fails the gate. `--prove-published` is Gate D and does not publish: npm lists the version, the annotated tag points at HEAD, and the GitHub Release page exists. A local gate pass is not Gate D. `docs-build` runs Docusaurus on the 0xray exo (`docs-site/`); stranger mills skip. `inspect` runs the six mill checks (diff, plant vs worn, receipt, CI, live tarball GET, isolated HOME) plus observational harness (Cursor/Grok hooks bound, Repertoire fastened, Station present). `--go` emits a shop-style forge GO receipt; `--require-harness=bare|suited|partial` turns that observation into a gate. Mint fails on a costume dump. Isolated HOME skips machine `~/.grok`. Shared HOME last-mile dest is project `.grok/plugins/0xray` (no last-wins machine plugin). `ci` reports GitHub Actions (no auto-push). `hooks` installs git pre/post hooks. GitHub `0xRay CI/CD` is the mill gate on `main`. `Deploy Docs` is the mill Pages put.

@@ -20,7 +20,7 @@ import { execSync } from "child_process";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { readRootPackage, resolveMillRoot } from "./mill-root.mjs";
+import { isXrayExoRepo, readRootPackage, resolveMillRoot } from "./mill-root.mjs";
 import { packageLockVersions, syncPackageLockVersion } from "./version-manager.mjs";
 
 const rootDir = resolveMillRoot();
@@ -103,7 +103,7 @@ function fail(msg) {
  */
 export function publishedVersionCheckError(local, npmVersion) {
   if (compare(local, npmVersion) < 0) {
-    return `package.json (${local}) must be >= npm (${npmVersion}). Run: npx @0xray/foundry reconcile patch --apply`;
+    return `package.json (${local}) must be >= npm (${npmVersion}). The bump is npx @0xray/foundry release patch --i-mean-it. That command publishes. A docs fix does not. Stop.`;
   }
   return null;
 }
@@ -134,6 +134,13 @@ function main() {
   }
 
   if (applyMode && bumpType) {
+    if (isXrayExoRepo(rootDir) && process.env.FOUNDRY_VIA_RELEASE !== "1") {
+      fail(
+        "This repo bumps only through scripts/foundry/release.mjs.\n" +
+          "Ship: node scripts/foundry/release.mjs patch --i-mean-it\n" +
+          "That command publishes. A docs fix does not. Stop.",
+      );
+    }
     const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf-8"));
     pkg.version = target;
     fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + "\n");
@@ -167,7 +174,7 @@ function main() {
   const lockNow = packageLockVersions(rootDir);
   if (lockNow && (lockNow.root !== pkgVersion || lockNow.pkg !== pkgVersion)) {
     fail(
-      `package-lock.json (${lockNow.root} / ${lockNow.pkg}) must match package.json (${pkgVersion}). The bumper writes both: npx @0xray/foundry reconcile patch --apply`,
+      `package-lock.json (${lockNow.root} / ${lockNow.pkg}) must match package.json (${pkgVersion}). The bumper is npx @0xray/foundry release patch --i-mean-it. That command publishes. A docs fix does not. Stop.`,
     );
   }
 

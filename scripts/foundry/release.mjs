@@ -57,7 +57,7 @@ function run(cmd, label) {
     cwd: rootDir,
     stdio: "inherit",
     encoding: "utf-8",
-    env: { ...process.env, FOUNDRY_ROOT: rootDir },
+    env: { ...process.env, FOUNDRY_ROOT: rootDir, FOUNDRY_VIA_RELEASE: "1" },
   });
 }
 
