@@ -91,7 +91,7 @@ describe('foundry mill — one bumper', () => {
         encoding: 'utf8',
       });
       expect(r.status, arg).not.toBe(0);
-      expect(`${r.stdout}${r.stderr}`).toMatch(/release\.mjs/);
+      expect(`${r.stdout}${r.stderr}`).toMatch(/@0xray\/foundry release/);
     }
   });
 
@@ -217,7 +217,7 @@ describe('foundry mill — docs verify, do not rewrite', () => {
     expect(publishedVersionCheckError('4.0.25', '4.0.25')).toBeNull();
     expect(publishedVersionCheckError('4.0.26', '4.0.25')).toBeNull();
     expect(publishedVersionCheckError('4.0.24', '4.0.25')).toBe(
-      'package.json (4.0.24) must be >= npm (4.0.25). Run: npx @0xray/foundry reconcile patch --apply',
+      'package.json (4.0.24) must be >= npm (4.0.25). The bump is npx @0xray/foundry release patch --i-mean-it. That command publishes. A docs fix does not. Stop.',
     );
   });
 
@@ -1688,6 +1688,8 @@ describe('foundry mill — flesh', () => {
       );
       expect(bump.status, `${bump.stdout}${bump.stderr}`).not.toBe(0);
       expect(`${bump.stdout}${bump.stderr}`).toMatch(/scripts\/foundry\/release\.mjs/);
+      expect(`${stamp.stdout}${stamp.stderr}`).not.toMatch(/--publish-only/);
+      expect(`${bump.stdout}${bump.stderr}`).not.toMatch(/--publish-only/);
       expect(readFileSync(path.join(tmp, 'package.json'), 'utf8')).toContain('"version": "1.2.3"');
     } finally {
       rmSync(tmp, { recursive: true, force: true });

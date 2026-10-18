@@ -37,7 +37,7 @@ npx @0xray/foundry hooks
 
 `release` without `--dry-run` requires `--i-mean-it` or `FOUNDRY_RELEASE=1`. It is a bump/commit/push/publish bot for the **milled cwd**, not a casual command.
 
-On the 0xray repo, `reconcile --apply` and `stamp` refuse unless `release.mjs` called them. Run `npx @0xray/foundry release [patch|minor|major] --i-mean-it`.
+On the 0xray repo, `reconcile --apply` and `stamp` refuse unless `release.mjs` called them. `npm run version:sync` refuses here too. Run `npx @0xray/foundry release [patch|minor|major] --i-mean-it`. That command publishes. A docs fix does not.
 
 `FOUNDRY_ROOT` overrides cwd (the repo being milled).
 

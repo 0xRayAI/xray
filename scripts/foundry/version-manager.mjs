@@ -574,17 +574,16 @@ function runReleaseDocsValidation() {
 
 function refuseBump(reason) {
   process.stderr.write(`${reason}\n`);
-  process.stderr.write('Ship: node scripts/foundry/release.mjs [patch|minor|major] --i-mean-it\n');
+  process.stderr.write('Ship: npx @0xray/foundry release [patch|minor|major] --i-mean-it\n');
   process.exit(1);
 }
-
 
 function refuseOutsideRelease() {
   if (!isXrayExoRepo(rootDir)) return;
   if (process.env.FOUNDRY_VIA_RELEASE === '1') return;
   process.stderr.write('This repo stamps only through scripts/foundry/release.mjs.\n');
   process.stderr.write('Ship: node scripts/foundry/release.mjs patch --i-mean-it\n');
-  process.stderr.write('Already bumped: node scripts/foundry/release.mjs --publish-only --i-mean-it\n');
+  process.stderr.write('That command publishes. A docs fix does not. Stop.\n');
   process.exit(1);
 }
 
