@@ -6,6 +6,20 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+### 4.1.2 notes
+
+Arch1 owns the version bump, the tag, and the publish.
+
+#393 was left out of the [4.1.1] changelog and the release body. The release script is the only stamp. (#393)
+
+Wear, validate, and goggles follow the fastened plant. A non-mill seat does not receive the catalog through the Grok plugin folder. Validate checks that plant and runs the same checks on every suit. On a folder that is not a git work tree, validate skips the three `.cursor` hook paths and says so. (#395)
+
+Doctor treats a suit as worn when `.xray/features.json` and the fastened plant's skills are on disk. It fails when `goggles.enabled` is false. (#395)
+
+Goggles reads the seat role or plant from suit config. `Worn:` names that plant and the package version. The full ranking stays with the role picker. (#395, #385)
+
+Wear seeds `STATION.md` and `NOTES.md` when they are missing, and restamps `Fresh:` and `Plane:` on every wear. The seat wake reads both on every turn, including Grok wakes that do not run `.cursor` hooks. (#395, #386)
+
 ## [4.1.1] - 2026-10-18
 
 Work on main after 4.1.0.

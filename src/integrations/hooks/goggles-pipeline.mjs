@@ -917,11 +917,21 @@ function currentCard(root) {
   return currentPlane(root);
 }
 
+function seatLensOf(root) {
+  try {
+    return createRequire(import.meta.url)('../../../scripts/node/suit-seat.cjs').seatLens(root);
+  } catch {
+    return null;
+  }
+}
+
 function ensurePlane(root) {
   const held = readHold(root);
   if (held && CARD_PLANES.includes(held.plane)) return held.plane;
-  holdPlane(root, 'dev');
-  return 'dev';
+  const lens = seatLensOf(root);
+  const card = lens && lens.card && isCardName(lens.card) ? lens.card : 'dev';
+  holdPlane(root, card);
+  return currentPlane(root);
 }
 
 function cardText(root, id) {
@@ -1218,9 +1228,19 @@ function writeLensBody(root, prev, cards) {
   writeFileSync(lensPath(root), parts.length ? `${parts.join('\n\n')}\n` : '');
 }
 
+function overlaySeatLens(root, id, block) {
+  const lens = seatLensOf(root);
+  if (!lens) return block;
+  if (id !== lens.card && id !== lens.plane) return block;
+  let next = block;
+  if (lens.skills) next = next.replace(/^Skills:.*$/m, `Skills: ${lens.skills}`);
+  if (lens.worn) next = next.replace(/^Worn:.*$/m, `Worn: ${lens.worn}`);
+  return next;
+}
+
 function lensCardText(root, held) {
   const built = builtinCard(held.id);
-  if (built) return built;
+  if (built) return overlaySeatLens(root, held.id, built);
   const platesDir = findPlatesDir(HERE);
   const plane = growPlane(held.id, platesDir, root);
   const place = planeForCard(held.id);
@@ -1239,7 +1259,8 @@ function lensCardText(root, held) {
     teardown: plane.teardown || '',
     worn: plane.worn || '',
   };
-  return cardRows(view).map(([key, value]) => `${key}: ${value}`.trimEnd()).join('\n');
+  const block = cardRows(view).map(([key, value]) => `${key}: ${value}`.trimEnd()).join('\n');
+  return overlaySeatLens(root, held.id, block);
 }
 
 /** The stored card. Empty until Entry and Exit are in the file. */

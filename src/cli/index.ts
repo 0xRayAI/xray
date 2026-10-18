@@ -205,7 +205,7 @@ program
 
 program
   .command("validate")
-  .description("Validate consumer wear (pack paths, Cursor hooks, mill plant) — not leftover init.sh")
+  .description("Validate consumer wear (pack paths, Cursor hooks, fastened plant) — not leftover init.sh")
   .action(async () => {
     console.log("🔬 xray CLI: Validating installation...");
 
@@ -600,89 +600,11 @@ program
   .command("doctor")
   .description("Diagnose framework issues (does not fix them)")
   .action(async () => {
-    console.log("🩺 xray Framework Doctor");
-    console.log("===============================");
-    console.log("");
-
     try {
-      const fs = await import("fs");
-      const path = await import("path");
-
-      const issues = [];
-      const fixes = [];
-
-      // Check Node.js version
-      const nodeVersion = process.version;
-      const versionParts = nodeVersion.slice(1).split(".");
-      const majorVersion = parseInt(versionParts[0] || "0");
-      if (majorVersion < 18) {
-        issues.push("Node.js version too old");
-        fixes.push("Upgrade to Node.js 18+");
-      } else {
-        console.log("✅ Node.js version:", nodeVersion);
-      }
-
-      // Check package installation
-      const packageExists = fs.existsSync(
-        path.join(process.cwd(), "node_modules", "0xray"),
-      );
-      if (!packageExists) {
-        issues.push("xray package not installed");
-        fixes.push("Run: npm install xray");
-      } else {
-        console.log("✅ xray package installed");
-      }
-
-      // Check configuration - check for opencode.json or .xray/ (min compat .xray/ fallback for prior 0xRay consumer runtime per Scope Rule; plain xray primary)
-      const cwd = process.cwd();
-      const wearMeta = path.join(cwd, ".xray", "state", "cursor-hook-wear", "meta.json");
-      if (!fs.existsSync(wearMeta)) {
-        process.stdout.write("not worn\n");
-      }
-      const opencodeConfigPath = path.join(cwd, "opencode.json");
-      const { getConfigDir } = await import("../core/config-paths.js");
-      const xrayDir = getConfigDir(cwd);
-      const opencodeExists = fs.existsSync(opencodeConfigPath);
-      const configDirExists = fs.existsSync(xrayDir);
-      if (opencodeExists) {
-        console.log("✅ opencode configuration found");
-      } else if (configDirExists) {
-        console.log(`✅ Configuration directory found: ${xrayDir}`);
-      } else {
-        console.log("ℹ️  No opencode.json or config directory found (run: npx xray fix to create)");
-      }
-
-      // Check for common issues
-      const mcpConfigExists = fs.existsSync(
-        path.join(process.cwd(), ".mcp.json"),
-      );
-      if (mcpConfigExists) {
-        console.log("ℹ️ Found .mcp.json - may conflict with framework");
-        fixes.push(
-          "Consider removing .mcp.json or excluding framework servers",
-        );
-      }
-
-      console.log("");
-
-      if (issues.length === 0) {
-        console.log("🎉 No issues found! Framework is healthy.");
-        console.log("");
-        console.log("💡 Pro tips:");
-        console.log("  • Use @security-auditor for code quality checks");
-        console.log("  • Run reports regularly: npx xray report");
-        console.log("  • Check health anytime: npx xray health");
-      } else {
-        console.log("⚠️ Issues found:");
-        issues.forEach((issue, i) => {
-          console.log(`  ${i + 1}. ${issue}`);
-        });
-
-        console.log("");
-        console.log(
-          '🔧 Run "npx xray fix" to automatically fix these issues',
-        );
-      }
+      const { runDoctor } = await import("./commands/doctor.js");
+      const result = runDoctor(process.cwd());
+      process.stdout.write(result.text);
+      if (result.exitCode !== 0) process.exit(result.exitCode);
     } catch (error) {
       console.error(
         "❌ Doctor check failed:",

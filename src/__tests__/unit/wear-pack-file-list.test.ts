@@ -181,7 +181,9 @@ describe('packed tarball file list against 0xray@4.0.28', () => {
         expect(plainAgents.length).toBeGreaterThan(30);
         // Mill and inspect agent files were already on 4.0.28. The rest of the role
         // files are the mill suit. Hooks and init.sh stay off unless costume is on.
-        expect(plainExtra).toEqual(['.grok/config.toml', ...plainAgents].sort());
+        // Wear seeds the station ticket and the notes page on every suit.
+        const seededPages = ['.xray/state/NOTES.md', '.xray/state/STATION.md'];
+        expect(plainExtra).toEqual(['.grok/config.toml', ...seededPages, ...plainAgents].sort());
         expect(plainMissing).toEqual([...CURSOR_HOOK_FILES].sort());
 
         const gitAgents = roleAgentFiles(packedGit).filter((rel) => !oldGit.includes(rel));
@@ -191,6 +193,7 @@ describe('packed tarball file list against 0xray@4.0.28', () => {
             ...CURSOR_HOOK_FILES,
             ...GIT_HOOK_SNAPSHOT,
             '.grok/config.toml',
+            ...seededPages,
             ...gitAgents,
           ]),
         ]

@@ -247,6 +247,40 @@ function plantIncludesMill(targetDir, packageRoot) {
   return loadFactoryPlantKinds(targetDir, packageRoot).includes("mill");
 }
 
+function listCatalogSkillNames(packageRoot) {
+  const dirs = [path.join(packageRoot, "dist", "skills"), path.join(packageRoot, "src", "skills")];
+  const sourceDir = dirs.find((dir) => fs.existsSync(dir));
+  if (!sourceDir) return [];
+  const names = [];
+  for (const entry of fs.readdirSync(sourceDir, { withFileTypes: true })) {
+    if (!entry.isDirectory() && !entry.isSymbolicLink()) continue;
+    if (fs.existsSync(path.join(sourceDir, entry.name, "SKILL.md"))) names.push(entry.name);
+  }
+  return names;
+}
+
+/** A non-mill seat must not keep the catalog that arrived inside the Grok plugin tree. */
+function stripCatalogSkills(skillsDir, packageRoot) {
+  if (!skillsDir || !fs.existsSync(skillsDir)) return 0;
+  let removed = 0;
+  for (const name of listCatalogSkillNames(packageRoot)) {
+    const dest = path.join(skillsDir, name);
+    if (!fs.existsSync(dest)) continue;
+    fs.rmSync(dest, { recursive: true, force: true });
+    removed += 1;
+  }
+  return removed;
+}
+
+function dropPluginSkillFiles(files) {
+  const next = new Map();
+  for (const [rel, value] of files) {
+    if (rel === "skills" || rel.startsWith("skills/")) continue;
+    next.set(rel, value);
+  }
+  return next;
+}
+
 function copyRoleAgentFiles(packageRoot, opencodeDest) {
   const dirs = [
     path.join(packageRoot, "src", "opencode", "agents"),
@@ -617,12 +651,16 @@ function grokPluginSettled(sourceDir, dest, packageRoot, targetDir) {
       return false;
     }
   }
-  if (desired.size !== destFiles.size) return false;
-  for (const [rel, body] of desired) {
-    const abs = destFiles.get(rel);
+  const ignoreCatalog = !plantIncludesMill(targetDir, packageRoot);
+  const wanted = ignoreCatalog ? dropPluginSkillFiles(desired) : desired;
+  const have = ignoreCatalog ? dropPluginSkillFiles(destFiles) : destFiles;
+  if (wanted.size !== have.size) return false;
+  for (const [rel, body] of wanted) {
+    const abs = have.get(rel);
     if (!abs || !sameFileBytes(abs, body)) return false;
   }
   for (const [rel, abs] of sourceFiles) {
+    if (ignoreCatalog && (rel === "skills" || rel.startsWith("skills/"))) continue;
     const destAbs = destFiles.get(rel);
     if (destAbs) adoptSourceMode(abs, destAbs);
   }
@@ -746,6 +784,9 @@ function installGrokBridge(targetDir, packageRoot, log, opts) {
       placed = copyPluginDir(sourceDir, dest);
     }
     if (placed) {
+      if (!plantIncludesMill(targetDir, packageRoot)) {
+        stripCatalogSkills(path.join(dest, "skills"), packageRoot);
+      }
       log("grok-bridge", "plugin copied", "info", { path: rel || dest });
       writePluginMcpJson(dest, targetDir, log, "grok-bridge");
       patchGrokHooks(dest, packageRoot, targetDir, log, "grok-bridge");
@@ -2064,6 +2105,7 @@ function installConsumerProjectFiles(packageRoot, targetDir, log) {
     if (!isSetupSkillMirrorDump(err, packageRoot, targetDir)) throw err;
   }
   syncSetupSkillsAndRootLinks(packageRoot, targetDir);
+  require("./suit-seat.cjs").seedSuitPages(targetDir, packageRoot);
   return true;
 }
 

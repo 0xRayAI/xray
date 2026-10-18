@@ -511,4 +511,54 @@ describe('goggles plate', () => {
       rmSync(root, { recursive: true, force: true });
     }
   });
+
+  it('reads plant or role from suit config and fills Worn', () => {
+    const sound = mkdtempSync(join(tmpdir(), 'goggles-sound-seat-'));
+    const mill = mkdtempSync(join(tmpdir(), 'goggles-mill-seat-'));
+    const reviewer = mkdtempSync(join(tmpdir(), 'goggles-reviewer-seat-'));
+    const stockSkills = 'orchestrator, researcher, project-analysis, git-workflow, tech-writer';
+    try {
+      mkdirSync(join(sound, '.xray'), { recursive: true });
+      writeFileSync(join(sound, 'foundry.json'), `${JSON.stringify({ plant: 'sound' })}\n`);
+      writeFileSync(
+        join(sound, '.xray', 'foundry-inventory.json'),
+        `${JSON.stringify({ mill: { version: '4.1.1' }, plant: ['sound'] })}\n`,
+      );
+      const soundCard = look([], sound).text;
+      expect(soundCard).toContain('Plane: ecosystem');
+      expect(soundCard).toContain('Skills: sound, sound-inspect, sound-mixer, foundry, tech-writer');
+      expect(soundCard).toContain('Worn: sound 4.1.1');
+      expect(soundCard).not.toContain(stockSkills);
+
+      mkdirSync(join(mill, '.xray'), { recursive: true });
+      writeFileSync(join(mill, 'foundry.json'), `${JSON.stringify({ plant: 'mill' })}\n`);
+      writeFileSync(
+        join(mill, '.xray', 'foundry-inventory.json'),
+        `${JSON.stringify({ mill: { version: '4.1.1' }, plant: ['mill'] })}\n`,
+      );
+      const millCard = look([], mill).text;
+      expect(millCard).toContain('Plane: integration');
+      expect(millCard).toContain('Skills: mill, inspect, testing-best-practices, backend-engineer, git-workflow');
+      expect(millCard).toContain('Worn: mill 4.1.1');
+      expect(millCard).not.toContain(stockSkills);
+      expect(millCard).not.toContain('Skills: sound, sound-inspect, sound-mixer');
+
+      mkdirSync(join(reviewer, '.xray'), { recursive: true });
+      writeFileSync(
+        join(reviewer, 'foundry.json'),
+        `${JSON.stringify({ plant: 'mill', role: 'reviewer' })}\n`,
+      );
+      writeFileSync(
+        join(reviewer, '.xray', 'foundry-inventory.json'),
+        `${JSON.stringify({ mill: { version: '4.1.1' }, plant: ['mill'] })}\n`,
+      );
+      const reviewCard = look([], reviewer).text;
+      expect(reviewCard).toContain('Skills: code-review, testing-best-practices, security-audit, enforcer, researcher');
+      expect(reviewCard).toContain('Worn: mill 4.1.1');
+    } finally {
+      rmSync(sound, { recursive: true, force: true });
+      rmSync(mill, { recursive: true, force: true });
+      rmSync(reviewer, { recursive: true, force: true });
+    }
+  });
 });

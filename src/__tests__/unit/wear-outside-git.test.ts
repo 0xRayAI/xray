@@ -61,6 +61,8 @@ const SUIT_WITHOUT_CURSOR_HOOKS = [
   '.xray/features.json',
   '.xray/features.schema.json',
   '.xray/foundry-inventory.json',
+  '.xray/state/NOTES.md',
+  '.xray/state/STATION.md',
   'AGENTS.md',
   'opencode.json',
 ];
