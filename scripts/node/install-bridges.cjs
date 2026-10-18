@@ -216,7 +216,15 @@ function syncBuiltinSkills(targetSkillsDir, packageRoot) {
   try {
     if (!fs.existsSync(targetSkillsDir)) fs.mkdirSync(targetSkillsDir, { recursive: true });
     for (const entry of fs.readdirSync(sourceDir, { withFileTypes: true })) {
-      if (!entry.isDirectory()) continue;
+      let linkedDir = false;
+      if (entry.isSymbolicLink()) {
+        try {
+          linkedDir = fs.statSync(path.join(sourceDir, entry.name)).isDirectory();
+        } catch {
+          linkedDir = false;
+        }
+      }
+      if (!entry.isDirectory() && !linkedDir) continue;
       const skillMd = path.join(sourceDir, entry.name, "SKILL.md");
       if (!fs.existsSync(skillMd)) continue;
       const destMd = path.join(targetSkillsDir, entry.name, "SKILL.md");
@@ -234,8 +242,45 @@ function syncBuiltinSkills(targetSkillsDir, packageRoot) {
   return copied;
 }
 
+function plantIncludesMill(targetDir, packageRoot) {
+  const { loadFactoryPlantKinds } = require("../foundry/mint-suit.cjs");
+  return loadFactoryPlantKinds(targetDir, packageRoot).includes("mill");
+}
+
+function copyRoleAgentFiles(packageRoot, opencodeDest) {
+  const dirs = [
+    path.join(packageRoot, "src", "opencode", "agents"),
+    path.join(packageRoot, ".opencode", "agents"),
+  ].filter((dir) => fs.existsSync(dir));
+  const destDir = path.join(opencodeDest, "agents");
+  for (const dir of dirs) {
+    let names;
+    try {
+      names = fs.readdirSync(dir);
+    } catch {
+      continue;
+    }
+    for (const name of names) {
+      if (!name.endsWith(".yml") && !name.endsWith(".yaml")) continue;
+      const src = path.join(dir, name);
+      let st;
+      try {
+        st = fs.statSync(src);
+      } catch {
+        continue;
+      }
+      if (!st.isFile()) continue;
+      const dest = path.join(destDir, name);
+      if (fs.existsSync(dest)) continue;
+      fs.mkdirSync(destDir, { recursive: true });
+      fs.copyFileSync(src, dest);
+    }
+  }
+}
+
 function syncCostumeSkills(targetSkillsDir, packageRoot, targetDir) {
-  if (targetDir && !wantsCostume(targetDir)) return 0;
+  // Catalog skills belong on the mill suit. A blip or sound seat keeps its plant.
+  if (targetDir && !plantIncludesMill(targetDir, packageRoot)) return 0;
   return syncBuiltinSkills(targetSkillsDir, packageRoot);
 }
 
@@ -448,7 +493,7 @@ function installOpencodeBridge(targetDir, packageRoot, log) {
   const opencodeSource = path.join(packageRoot, ".opencode");
   const opencodeDest = path.join(targetDir, ".opencode");
   const costume = wantsCostume(targetDir);
-
+  const millSuit = plantIncludesMill(targetDir, packageRoot);
   if (costume) {
     if (!fs.existsSync(opencodeSource)) {
       log("opencode-bridge", "skipped", "warn", { reason: ".opencode source missing" });
@@ -460,14 +505,18 @@ function installOpencodeBridge(targetDir, packageRoot, log) {
     } else {
       log("opencode-bridge", ".opencode exists — merging skills/plugin only", "info");
     }
-    copyOpencodePlugin(packageRoot, opencodeDest, log);
-    const copied = syncCostumeSkills(path.join(opencodeDest, "skills"), packageRoot, targetDir);
-    if (copied > 0) log("opencode-bridge", `skills synced (${copied})`, "info", { path: ".opencode/skills/" });
   } else {
-    log("opencode-bridge", "mill plant — plugin only, not costume dump", "info");
     fs.mkdirSync(opencodeDest, { recursive: true });
-    copyOpencodePlugin(packageRoot, opencodeDest, log);
+    if (millSuit) {
+      copyRoleAgentFiles(packageRoot, opencodeDest);
+      log("opencode-bridge", "mill suit — role files, not the costume tree", "info");
+    } else {
+      log("opencode-bridge", "plant seat — plugin only", "info");
+    }
   }
+  copyOpencodePlugin(packageRoot, opencodeDest, log);
+  const copied = syncCostumeSkills(path.join(opencodeDest, "skills"), packageRoot, targetDir);
+  if (copied > 0) log("opencode-bridge", `skills synced (${copied})`, "info", { path: ".opencode/skills/" });
 
   try {
     const count = wireOpencodeBridge(targetDir);
@@ -1947,9 +1996,11 @@ function syncSetupSkillsAndRootLinks(packageRoot, targetDir) {
 
 /** A byte-identical package skill is the old mirror. A different body still throws. */
 function wornSkillMatchesPackage(packageRoot, targetDir, name) {
-  const source = fs.existsSync(path.join(packageRoot, "src", "skills"))
-    ? path.join(packageRoot, "src", "skills")
-    : path.join(packageRoot, "dist", "skills");
+  const distSkills = path.join(packageRoot, "dist", "skills");
+  const srcSkills = path.join(packageRoot, "src", "skills");
+  const source = fs.existsSync(path.join(distSkills, name, "SKILL.md"))
+    ? distSkills
+    : srcSkills;
   const packaged = path.join(source, name, "SKILL.md");
   if (!fs.existsSync(packaged)) return false;
   const packagedBytes = fs.readFileSync(packaged);
@@ -1977,38 +2028,17 @@ function packageShipsConsumerSuit(packageRoot) {
 /**
  * Consumer wear files: AGENTS.md, .gitignore, repertoire link, .xray config,
  * bridges, mill plant (mill + inspect), and the scripts and dist links.
- * The role-skill mirror stays in the package.
+ * Catalog skills and role files stay worn. Costume does not strip them.
  * Does not install Cursor hooks or git hooks.
  * Existing user files follow the 4.0.28 guards inside those functions.
  */
 
-const ROLE_SKILL_KEEP = new Set(["mill", "inspect"]);
 const ROLE_SKILL_DIRS = [
   [".opencode", "skills"],
   [".grok", "plugins", "0xray", "skills"],
   [".hermes", "plugins", "xray-hermes", "skills"],
   [".openclaw", "skills"],
 ];
-
-function removeCopiedRoleSkills(packageRoot, targetDir) {
-  const source = fs.existsSync(path.join(packageRoot, "src", "skills"))
-    ? path.join(packageRoot, "src", "skills")
-    : path.join(packageRoot, "dist", "skills");
-  if (!fs.existsSync(source)) return;
-  for (const parts of ROLE_SKILL_DIRS) {
-    const dir = path.join(targetDir, ...parts);
-    if (!fs.existsSync(dir)) continue;
-    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-      if (!entry.isDirectory() || ROLE_SKILL_KEEP.has(entry.name)) continue;
-      const packaged = path.join(source, entry.name, "SKILL.md");
-      const worn = path.join(dir, entry.name, "SKILL.md");
-      if (!fs.existsSync(packaged) || !fs.existsSync(worn)) continue;
-      const same = fs.readFileSync(packaged).equals(fs.readFileSync(worn));
-      if (!same) continue;
-      fs.rmSync(path.join(dir, entry.name), { recursive: true, force: true });
-    }
-  }
-}
 
 function installConsumerProjectFiles(packageRoot, targetDir, log) {
   const write = typeof log === "function" ? log : () => {};
@@ -2028,7 +2058,6 @@ function installConsumerProjectFiles(packageRoot, targetDir, log) {
   installGrokBridge(targetDir, packageRoot, write);
   installHermesBridge(targetDir, packageRoot, write);
   installOpenclawBridge(targetDir, packageRoot, write);
-  removeCopiedRoleSkills(packageRoot, targetDir);
   try {
     mintConsumerSuit(packageRoot, targetDir, write);
   } catch (err) {

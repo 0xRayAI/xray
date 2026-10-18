@@ -158,6 +158,7 @@ describe('foundry blip plant — files and mint', () => {
       expect(existsSync(path.join(blipSeat, '.opencode/agents/blip-looker.yml'))).toBe(true);
       expect(existsSync(path.join(blipSeat, '.opencode/skills/mill/SKILL.md'))).toBe(false);
       expect(existsSync(path.join(blipSeat, '.opencode/skills/inspect/SKILL.md'))).toBe(false);
+      expect(existsSync(path.join(blipSeat, '.opencode/skills/enforcer/SKILL.md'))).toBe(false);
       expect(existsSync(path.join(blipSeat, '.grok/plugins/0xray/skills/blip/SKILL.md'))).toBe(true);
 
       const report = await inspectSuit(blipSeat, { millRoot: root, skipLive: true });

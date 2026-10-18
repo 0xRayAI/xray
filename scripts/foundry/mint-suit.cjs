@@ -114,10 +114,89 @@ function loadFoundryParams(targetDir) {
   return params;
 }
 
-/** 45/42 costume dump. Default false on consumers. Exo mill keeps the costume. */
+/** Exo repo, or foundry.json costume true. This flag does not gate catalog skills. */
 function wantsCostume(targetDir) {
   if (isExoRepo(targetDir)) return true;
   return loadFoundryExtra(targetDir).costume === true;
+}
+
+function suitPackageRoot(start) {
+  let dir = start;
+  for (let i = 0; i < 4 && dir; i += 1) {
+    if (
+      fs.existsSync(path.join(dir, "src", "skills"))
+      || fs.existsSync(path.join(dir, "dist", "skills"))
+      || fs.existsSync(path.join(dir, "src", "opencode", "agents"))
+    ) return dir;
+    const parent = path.dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
+  }
+  return start || "";
+}
+
+function catalogSkillDir(packageRoot) {
+  const base = suitPackageRoot(packageRoot);
+  const dirs = [path.join(base, "dist", "skills"), path.join(base, "src", "skills")];
+  return dirs.find((dir) => listSkillNamesAt(dir).length > 0) || "";
+}
+
+function catalogSkillNames(packageRoot) {
+  const dir = catalogSkillDir(packageRoot);
+  return dir ? listSkillNamesAt(dir) : [];
+}
+
+function catalogAgentDirs(packageRoot) {
+  const base = suitPackageRoot(packageRoot);
+  return [
+    path.join(base, "src", "opencode", "agents"),
+    path.join(base, ".opencode", "agents"),
+  ].filter((p) => fs.existsSync(p));
+}
+
+function catalogAgentFiles(packageRoot) {
+  const names = new Set();
+  for (const dir of catalogAgentDirs(packageRoot)) {
+    for (const file of listAgentFilesAt(dir)) names.add(file);
+  }
+  return [...names];
+}
+
+/**
+ * The mill suit wears the catalog. A blip-only or sound-only seat does not.
+ * Costume stays a separate flag and does not decide this.
+ */
+function suitCatalogApplies(targetDir, millPlant, packageRoot) {
+  const fromPlant = Array.isArray(millPlant?.kinds) ? millPlant.kinds : [];
+  const kinds = fromPlant.length > 0
+    ? fromPlant
+    : loadFactoryPlantKinds(targetDir, packageRoot || "");
+  return kinds.includes("mill");
+}
+
+/** Every catalog skill and role file. An existing file stays. */
+function wearCatalog(packageRoot, targetDir) {
+  const source = catalogSkillDir(packageRoot);
+  if (source) {
+    for (const dir of listProjectSkillDirs(targetDir)) {
+      for (const name of catalogSkillNames(packageRoot)) {
+        const src = path.join(source, name, "SKILL.md");
+        const dest = path.join(dir, name, "SKILL.md");
+        if (!fs.existsSync(src) || fs.existsSync(dest)) continue;
+        fs.mkdirSync(path.dirname(dest), { recursive: true });
+        fs.copyFileSync(src, dest);
+      }
+    }
+  }
+  const agentsDest = path.join(targetDir, ".opencode", "agents");
+  for (const dir of catalogAgentDirs(packageRoot)) {
+    for (const file of listAgentFilesAt(dir)) {
+      const dest = path.join(agentsDest, file);
+      if (fs.existsSync(dest)) continue;
+      fs.mkdirSync(agentsDest, { recursive: true });
+      fs.copyFileSync(path.join(dir, file), dest);
+    }
+  }
 }
 
 function millPlantDir(millPackageRoot) {
@@ -208,11 +287,21 @@ function inventoryPlantKinds(inventory) {
   return millPlantProtocol.plantKindsFromInventory(inventory);
 }
 
+function skillDirEntry(parent, entry) {
+  if (entry.isDirectory()) return true;
+  if (!entry.isSymbolicLink()) return false;
+  try {
+    return fs.statSync(path.join(parent, entry.name)).isDirectory();
+  } catch {
+    return false;
+  }
+}
+
 function listSkillNamesAt(skillsSrc) {
   if (!isDirectory(skillsSrc)) return [];
   const names = [];
   for (const entry of fs.readdirSync(skillsSrc, { withFileTypes: true })) {
-    if (!entry.isDirectory() || entry.name.startsWith(".")) continue;
+    if (entry.name.startsWith(".") || !skillDirEntry(skillsSrc, entry)) continue;
     const skillMd = path.join(skillsSrc, entry.name, "SKILL.md");
     if (!fs.existsSync(skillMd)) continue;
     names.push(entry.name);
@@ -615,7 +704,10 @@ function costumeDumpExtras(targetDir, millPlant, tree) {
       if (Array.isArray(spec?.agents)) plantMapAgents.push(...spec.agents);
     }
   }
+  const packageRoot = tree?.millPackageRoot || "";
+  const catalogOn = suitCatalogApplies(targetDir, millPlant, packageRoot);
   const allowedSkills = new Set([
+    ...(catalogOn ? catalogSkillNames(packageRoot) : []),
     ...(Array.isArray(millPlant?.skills) ? millPlant.skills : []),
     ...(Array.isArray(millPlant?.sound?.skills) ? millPlant.sound.skills : []),
     ...(Array.isArray(millPlant?.blip?.skills) ? millPlant.blip.skills : []),
@@ -627,6 +719,7 @@ function costumeDumpExtras(targetDir, millPlant, tree) {
     ...shopPlant,
   ]);
   const allowedAgents = new Set([
+    ...(catalogOn ? catalogAgentFiles(packageRoot) : []),
     ...(Array.isArray(millPlant?.agents) ? millPlant.agents : []),
     ...(Array.isArray(millPlant?.sound?.agents) ? millPlant.sound.agents : []),
     ...(Array.isArray(millPlant?.blip?.agents) ? millPlant.blip.agents : []),
@@ -801,6 +894,9 @@ function mintConsumerSuit(millPackageRoot, targetDir, log) {
   }
   const params = loadFoundryParams(targetDir);
   const millPlant = fastenMillPlant(millPackageRoot, targetDir, log);
+  if (suitCatalogApplies(targetDir, millPlant, millPackageRoot)) {
+    wearCatalog(millPackageRoot, targetDir);
+  }
   const tree = overlayConsumerTree(targetDir, log, params);
   tree.plantKinds = millPlant.kinds || loadFactoryPlantKinds(targetDir);
   tree.millPlantSkills = millPlant.skills;
@@ -866,6 +962,7 @@ module.exports = {
   loadShopPlant,
   declaredShopPlant,
   wantsCostume,
+  suitCatalogApplies,
   millPlantDir,
   loadFactoryPlantKinds,
   factoryPlantAllowlist,

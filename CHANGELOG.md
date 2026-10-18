@@ -8,6 +8,10 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 npm latest is 4.1.0. The notes under [4.1.0] are that publish.
 
+### Wear
+
+The mill suit wears every catalog skill and every role file when costume is off. The mill plant stays `mill` and `inspect`. A blip or sound seat fastens that plant only. A name outside the fastened set still fails inspect.
+
 ### Goggles
 
 The lens file is `.xray/state/LENS.md`. The planes are dev, integration, domain, and ecosystem. A search inside the current card runs. Any other search returns the current card and does not run. A path switches the card. A missing plate names the stamp-plate skill.

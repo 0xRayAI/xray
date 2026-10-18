@@ -8,5 +8,5 @@ description: >
 
 The file is `src/core/features-config.ts`. The plate is `docs-site/docs/plates/suit-wear.md`.
 
-Wear fastens mill and inspect. The 45 role skills are the costume dump. `log_path` still defaults to `.opencode/logs` until the home move. The plates that stay with this lens are suit-settings, write-home, and package-face.
+The mill suit fastens mill and inspect and wears every catalog skill and every role file. A blip or sound seat fastens that plant only. `log_path` still defaults to `.opencode/logs` until the home move. The plates that stay with this lens are suit-settings, write-home, and package-face.
 

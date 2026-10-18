@@ -74,7 +74,6 @@ export async function installForGrokCLI(options: GrokInstallOptions = {}): Promi
     machineHome: () => string;
     processHome: (env?: NodeJS.ProcessEnv) => string;
     isIsolatedHome: (env?: NodeJS.ProcessEnv, machine?: string) => boolean;
-    wantsCostume: (targetDir: string) => boolean;
     wouldClobberMachineGrok: (dest: string, env?: NodeJS.ProcessEnv, machine?: string) => boolean;
     resolveGrokPluginDests: (targetDir: string, env?: NodeJS.ProcessEnv, machine?: string) => string[];
   };
@@ -125,19 +124,17 @@ export async function installForGrokCLI(options: GrokInstallOptions = {}): Promi
         console.log(`\x1b[32m✓ Copied Grok plugin to ${dest}\x1b[0m`);
       }
 
-      if (millSuit.wantsCostume(targetDir)) {
-        const skillsCopied = syncBuiltinSkills(path.join(dest, 'skills'));
-        if (skillsCopied > 0) {
-          console.log(`\x1b[32m✓ Synced ${skillsCopied} builtin skills to Grok plugin\x1b[0m`);
-        }
-        frameworkLogger.log('grok-integration', 'skills-synced', 'info', { count: skillsCopied });
+      const skillsCopied = syncBuiltinSkills(path.join(dest, 'skills'));
+      if (skillsCopied > 0) {
+        console.log(`\x1b[32m✓ Synced ${skillsCopied} builtin skills to Grok plugin\x1b[0m`);
       }
+      frameworkLogger.log('grok-integration', 'skills-synced', 'info', { count: skillsCopied });
 
       pinGrokPluginToInstalledDist(dest, packageRoot, targetDir);
       wearGrokHookCommands(dest, packageRoot, targetDir);
     }
 
-    if (isolated && millSuit.wantsCostume(targetDir)) {
+    if (isolated) {
       const home = millSuit.processHome(env);
       const globalCopied = syncBuiltinSkills(path.join(home, '.grok', 'skills'));
       if (globalCopied > 0) {

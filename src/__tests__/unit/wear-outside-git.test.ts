@@ -93,8 +93,39 @@ function listFiles(root: string): string[] {
   return out.sort();
 }
 
+const CATALOG_SKILL_ROOTS = [
+  '.grok/plugins/0xray/skills',
+  '.hermes/plugins/xray-hermes/skills',
+  '.openclaw/skills',
+  '.opencode/skills',
+];
+
+function catalogSkillNames(): string[] {
+  const dir = path.join(repoRoot, 'src', 'skills');
+  return readdirSync(dir)
+    .filter((name) => existsSync(path.join(dir, name, 'SKILL.md')))
+    .sort();
+}
+
+function catalogAgentNames(): string[] {
+  const dir = path.join(repoRoot, 'src', 'opencode', 'agents');
+  return readdirSync(dir).filter((name) => name.endsWith('.yml')).sort();
+}
+
+/** Mill suit: the 4.0.28 project files plus every catalog skill and role file. */
 function wornSuit(): string[] {
-  return [...new Set([...SUIT_WITHOUT_CURSOR_HOOKS, 'dist', 'scripts'])].sort();
+  const skills = catalogSkillNames();
+  const agents = catalogAgentNames();
+  const catalog = [
+    ...CATALOG_SKILL_ROOTS.flatMap((root) => skills.map((name) => `${root}/${name}/SKILL.md`)),
+    ...agents.map((name) => `.opencode/agents/${name}`),
+  ];
+  return [...new Set([...SUIT_WITHOUT_CURSOR_HOOKS, ...catalog, 'dist', 'scripts'])].sort();
+}
+
+function homeFromWear(): string[] {
+  const skills = catalogSkillNames().map((name) => `.grok/plugins/0xray/skills/${name}/SKILL.md`);
+  return [...HOME_FROM_428, ...skills].sort();
 }
 
 function linkStdout(): string {
@@ -155,7 +186,7 @@ describe('wear and setup outside a git checkout', () => {
       expect(readFileSync(path.join(project, 'keep.txt'), 'utf8')).toBe('stay\n');
       const homeAfter = listFiles(home);
       expect(homeBefore).toEqual([]);
-      expect(homeAfter.filter((rel) => !homeBefore.includes(rel))).toEqual(HOME_FROM_428);
+      expect(homeAfter.filter((rel) => !homeBefore.includes(rel))).toEqual(homeFromWear());
     } finally {
       rmSync(project, { recursive: true, force: true });
       rmSync(home, { recursive: true, force: true });
@@ -175,7 +206,7 @@ describe('wear and setup outside a git checkout', () => {
       const wrote = listFiles(project).filter((rel) => rel !== 'package.json');
       expect(wrote).toEqual(wornSuit());
       expect(existsSync(path.join(project, '.cursor'))).toBe(false);
-      expect(listFiles(home).filter((rel) => !homeBefore.includes(rel))).toEqual(HOME_FROM_428);
+      expect(listFiles(home).filter((rel) => !homeBefore.includes(rel))).toEqual(homeFromWear());
       const again = runNode(wearScript, [project], project, home);
       expect(again.status).toBe(0);
       expect(again.stderr).toBe(`${SKIPPED}\n`);
@@ -201,7 +232,7 @@ describe('wear and setup outside a git checkout', () => {
       expect(existsSync(path.join(project, '.cursor', 'hooks', 'pre-tool-use.sh'))).toBe(true);
       expect(existsSync(path.join(project, '.opencode', 'skills', 'mill', 'SKILL.md'))).toBe(true);
       expect(existsSync(path.join(project, '.opencode', 'skills', 'inspect', 'SKILL.md'))).toBe(true);
-      expect(existsSync(path.join(project, '.opencode', 'skills', 'orchestrator', 'SKILL.md'))).toBe(false);
+      expect(existsSync(path.join(project, '.opencode', 'skills', 'orchestrator', 'SKILL.md'))).toBe(true);
       const inspected = runInspect(project, home);
       expect(inspected.status, `${inspected.stdout}\n${inspected.stderr}`).toBe(0);
       mkdirSync(path.join(project, ".opencode", "skills", "orchestrator"), { recursive: true });
@@ -213,7 +244,7 @@ describe('wear and setup outside a git checkout', () => {
       writeFileSync(path.join(project, ".opencode", "skills", "local-note", "SKILL.md"), "local\n");
       const again = runNode(wearScript, [project], project, home);
       expect(again.status).not.toBe(0);
-      expect(existsSync(path.join(project, ".opencode", "skills", "orchestrator", "SKILL.md"))).toBe(false);
+      expect(existsSync(path.join(project, ".opencode", "skills", "orchestrator", "SKILL.md"))).toBe(true);
       expect(readFileSync(path.join(project, ".opencode", "skills", "local-note", "SKILL.md"), "utf8")).toBe("local\n");
       rmSync(path.join(project, ".opencode", "skills", "local-note"), { recursive: true, force: true });
       const cleared = runNode(wearScript, [project], project, home);
@@ -228,11 +259,12 @@ describe('wear and setup outside a git checkout', () => {
         `${readFileSync(path.join(repoRoot, "src", "skills", "orchestrator", "SKILL.md"), "utf8")}\nlocal edit\n`,
       );
       const edited = runNode(wearScript, [project], project, home);
-      expect(edited.status).not.toBe(0);
+      expect(edited.status).toBe(0);
       expect(readFileSync(editedSkill, "utf8")).toContain("local edit");
       rmSync(path.dirname(editedSkill), { recursive: true, force: true });
       const restored = runNode(wearScript, [project], project, home);
       expect(restored.status).toBe(0);
+      expect(existsSync(path.join(project, ".opencode", "skills", "orchestrator", "SKILL.md"))).toBe(true);
       expect(lstatSync(path.join(project, 'dist')).isSymbolicLink()).toBe(true);
       expect(lstatSync(path.join(project, 'scripts')).isSymbolicLink()).toBe(true);
       expect(existsSync(path.join(project, 'AGENTS.md'))).toBe(true);
@@ -241,7 +273,7 @@ describe('wear and setup outside a git checkout', () => {
       expect(existsSync(path.join(project, '.xray', 'features.json'))).toBe(true);
       expect(existsSync(path.join(project, '.xray', 'config.json'))).toBe(true);
       expect(lstatSync(path.join(project, 'node_modules', '@0xray', 'repertoire')).isSymbolicLink()).toBe(true);
-      expect(listFiles(home).filter((rel) => !homeBefore.includes(rel))).toEqual(HOME_FROM_428);
+      expect(listFiles(home).filter((rel) => !homeBefore.includes(rel))).toEqual(homeFromWear());
     } finally {
       rmSync(project, { recursive: true, force: true });
       rmSync(home, { recursive: true, force: true });

@@ -73,7 +73,11 @@ const SKILL_ROOTS = [
   '.openclaw/skills/',
 ];
 
-/** 4.0.28 copied the role-skill mirror. Current wear fastens mill and inspect only. */
+/**
+ * 4.0.28 copied the role-skill mirror. The mill suit still wears that mirror,
+ * so those paths stay out of the project-file diff. Role agent files are not
+ * in this filter.
+ */
 function isDroppedRoleSkill(rel: string): boolean {
   const pathOnly = rel.split(' -> ')[0];
   return SKILL_ROOTS.some((root) => {
@@ -84,6 +88,11 @@ function isDroppedRoleSkill(rel: string): boolean {
 }
 
 /** Consumer setup links the package dist and scripts. 4.0.28 did not. That pair is expected. */
+/** OpenCode role files the mill suit wears. 4.0.28 did not write these. */
+function roleAgentFiles(rels: string[]): string[] {
+  return rels.filter((rel) => rel.startsWith('.opencode/agents/') && rel.endsWith('.yml')).sort();
+}
+
 function isRootSuitLink(rel: string): boolean {
   const name = rel.startsWith('dist -> ') ? 'dist' : rel.startsWith('scripts -> ') ? 'scripts' : '';
   return name !== '' && rel.includes(`/node_modules/0xray/${name}`);
@@ -168,11 +177,23 @@ describe('packed tarball file list against 0xray@4.0.28', () => {
         const keep = (rel: string) => !isRootSuitLink(rel) && !isDroppedRoleSkill(rel);
         const plainMissing = oldPlain.filter((rel) => !packedPlain.includes(rel) && keep(rel));
         const plainExtra = packedPlain.filter((rel) => !oldPlain.includes(rel) && keep(rel));
-        // Current wear writes the project Grok config. 4.0.28 setup did not.
-        expect(plainExtra).toEqual(['.grok/config.toml']);
+        const plainAgents = roleAgentFiles(packedPlain).filter((rel) => !oldPlain.includes(rel));
+        expect(plainAgents.length).toBeGreaterThan(30);
+        // Mill and inspect agent files were already on 4.0.28. The rest of the role
+        // files are the mill suit. Hooks and init.sh stay off unless costume is on.
+        expect(plainExtra).toEqual(['.grok/config.toml', ...plainAgents].sort());
         expect(plainMissing).toEqual([...CURSOR_HOOK_FILES].sort());
 
-        const expectedGit = [...new Set([...oldGit, ...CURSOR_HOOK_FILES, ...GIT_HOOK_SNAPSHOT, '.grok/config.toml'])]
+        const gitAgents = roleAgentFiles(packedGit).filter((rel) => !oldGit.includes(rel));
+        const expectedGit = [
+          ...new Set([
+            ...oldGit,
+            ...CURSOR_HOOK_FILES,
+            ...GIT_HOOK_SNAPSHOT,
+            '.grok/config.toml',
+            ...gitAgents,
+          ]),
+        ]
           .filter(keep)
           .sort();
         expect(packedGit.filter(keep)).toEqual(expectedGit);

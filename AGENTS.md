@@ -24,7 +24,7 @@ Before other work, Read `.xray/state/STATION.md`. Compaction and host change are
 - **External Governance** — Dynamo Solar SSOT, 69-term Codex. Judgement stays on.
 - **Autonomous Engine** — thinDispatch 7-flow, AsideContext, confidence gate
 
-Agents are declared in `src/opencode/agents/*.yml` — the YML SSOT. Skills live in `src/skills/*/SKILL.md` — see [SKILLS.md](SKILLS.md) for the exo catalog. Consumer default plant is **mill + inspect**, not a 45-skill sync (`AGENTS-consumer.md` → `AGENTS.md`). Factory hangar shops coexist via shop plant. See [llms.txt](llms.txt).
+Agents are declared in `src/opencode/agents/*.yml` — the YML SSOT. Skills live in `src/skills/*/SKILL.md` — see [SKILLS.md](SKILLS.md) for the exo catalog. Consumer default plant is **mill + inspect**. The mill suit also wears every catalog skill and every role file (`AGENTS-consumer.md` → `AGENTS.md`). Factory hangar shops coexist via shop plant. See [llms.txt](llms.txt).
 
 ## Consumer MCP surface (7 servers)
 
@@ -49,7 +49,7 @@ Governance deliberation: **code-review**, **security-audit**, **researcher** wit
 `npx 0xray wear` runs `installAllBridges()` from `install-bridges.cjs`:
 
 1. `AGENTS-consumer.md` → `AGENTS.md` (does **not** write consumer-root `SKILLS.md`)
-2. Fasten mill plant (`mill` + `inspect`). Fasten is **foundry-plant/0**: builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill package declares (looker, vibe, mixer, blip-inspect, blip-vibe, blip-looker, sound-inspect, sound-mixer live in the mill). Not a 45-skill costume dump unless `foundry.json` `"costume": true`
+2. Fasten mill plant (`mill` + `inspect`). Fasten is **foundry-plant/0**: builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill package declares (looker, vibe, mixer, blip-inspect, blip-vibe, blip-looker, sound-inspect, sound-mixer live in the mill). The mill suit also wears every catalog skill and every OpenCode role file. A blip or sound seat fastens that plant only. A name outside the fastened set still fails inspect.
 3. `.gitignore.default` → `.gitignore` (if absent)
 4. `.xray/` config (`codex.json`, `features.json`, `config.json`) then overlay their plant
 5. `.mcp.json` (7 servers)

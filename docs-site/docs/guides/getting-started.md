@@ -16,7 +16,7 @@ npx 0xray wear
 `npm install 0xray` links vendored `@0xray/repertoire` and prints `npx 0xray wear`. It does not write `.mcp.json` or the chat bridges. Wear writes the consumer suit (via `install-bridges.cjs`):
 
 - Copies **`AGENTS.md`** (from `AGENTS-consumer.md`). Does **not** write consumer-root **`SKILLS.md`**
-- Fastens **mill plant** (`mill` + `inspect`). Fasten is **foundry-plant/0**: builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill package declares (looker, vibe, mixer live in the mill). Nested mill `@0xray/foundry@0.1.12`. CLI shims `foundry blip|sound` still exist on foundry 0.1.11+. Not a 45-skill costume dump unless `foundry.json` `"costume": true`
+- Fastens **mill plant** (`mill` + `inspect`). Fasten is **foundry-plant/0**: builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill package declares (looker, vibe, mixer live in the mill). Nested mill `@0xray/foundry@0.1.12`. CLI shims `foundry blip|sound` still exist on foundry 0.1.11+. The mill suit also wears every catalog skill and every role file. A blip or sound seat fastens that plant only.
 - Seeds **`.gitignore`** (if absent)
 - Deploys **`.xray/`** config (`codex.json`, `features.json`, `config.json`) then overlays **their** plant
 - Writes **`.mcp.json`** with **7 MCP servers** (`npx -y 0xray mcp …`)

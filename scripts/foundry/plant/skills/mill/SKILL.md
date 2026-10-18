@@ -13,7 +13,7 @@ The mill **fastens** a suit. Default mill plant is **inspect** (inspecting AI wo
 
 **Factory:** **Repertoire is preferred** (vendored 0.2.9 ships on; dest = named laws). Seven generated MCP. Constitution (PPE) stays worn. Not a fifth MCP. Not 5.0.
 
-**Costume:** `foundry.json` `"costume": true` copies the 45/42 mill costume.
+**Skills:** the mill suit wears every catalog skill and every role file. The mill plant stays `mill` and `inspect`. A blip or sound seat fastens that plant only.
 
 ```bash
 npx @0xray/foundry mint

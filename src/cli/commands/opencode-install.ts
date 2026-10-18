@@ -82,7 +82,7 @@ function copyDir(src: string, dest: string, relPath = ""): void {
 async function installForOpencode(options: OpencodeInstallOptions = {}): Promise<void> {
   const { frameworkLogger } = await import('../../core/framework-logger.js');
   const { syncBuiltinSkills } = await import('./skill-install.js');
-  const { mintAfterWear, wantsCostume } = await import('./foundry-mint-wear.js');
+  const { mintAfterWear } = await import('./foundry-mint-wear.js');
   const wiring = loadWiring();
   frameworkLogger.log('opencode-integration', 'install-start', 'info', { options });
 
@@ -120,13 +120,8 @@ async function installForOpencode(options: OpencodeInstallOptions = {}): Promise
       console.log('[Opencode] .opencode/ directory already exists.');
       console.log('Use --force to reinstall.');
     } else {
-      if (wantsCostume(process.cwd())) {
-        copyDir(opencodeSource, opencodeDest);
-        frameworkLogger.log('opencode-integration', 'opencode-copied', 'info', { destination: opencodeDest });
-      } else {
-        fs.mkdirSync(opencodeDest, { recursive: true });
-        frameworkLogger.log('opencode-integration', 'mill-plant-plugin', 'info', { destination: opencodeDest });
-      }
+      copyDir(opencodeSource, opencodeDest);
+      frameworkLogger.log('opencode-integration', 'opencode-copied', 'info', { destination: opencodeDest });
 
       const pluginSource = path.join(__dirname, '..', '..', '..', 'dist', 'plugin', 'xray-codex-injection.js');
       const pluginDest = path.join(opencodeDest, 'plugin', 'xray-codex-injection.js');

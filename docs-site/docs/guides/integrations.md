@@ -28,8 +28,8 @@ npm run confirm:suit:all # install + verify + Grok harness + trap-routing e2e
 
 1. Deploy `.xray/` (`codex.json`, `features.json`, `config.json`) then overlay their plant
 2. Write project `.mcp.json` (7 servers)
-3. Fasten mill plant (`mill` + `inspect`) on OpenCode. Not a 42-YML / 45-skill costume dump unless `foundry.json` `"costume": true`
-4. Install Grok plugin + PPE hooks (mill plant, not costume skill dump)
+3. Fasten mill plant (`mill` + `inspect`) on OpenCode. The mill suit also wears every catalog skill and every role file. A blip or sound seat fastens that plant only.
+4. Install Grok plugin + PPE hooks (catalog skills on a mill suit; a blip or sound seat does not)
 5. Install Hermes plugin + `xray-consumer-root.txt` marker
 6. Create OpenClaw config (mill plant)
 7. Fasten Cursor `.cursor/hooks.json` + relative `.cursor/hooks/*.sh`; rewrite leftover env-assignment commands
@@ -70,7 +70,7 @@ npx 0xray opencode install
 - Copies plugin to project `.grok/plugins/0xray` (Grok discovers at project+user)
 - Shared HOME does **not** write machine `~/.grok/plugins/0xray` (last-wins XRAY_ROOT clobber)
 - Isolated HOME may wear `$HOME/.grok/plugins/0xray` and must not write the passwd machine plugin
-- Mill+inspect plant; costume skill dump only when `foundry.json` `"costume": true`
+- The mill suit fastens mill and inspect and wears every catalog skill and every role file. A blip or sound seat fastens that plant only.
 - Registers 7 MCP servers in the project plugin config
 - Marketplace: `.grok-plugin/plugin.json` + root `.mcp.json`
 
