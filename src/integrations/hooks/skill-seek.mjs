@@ -55,14 +55,48 @@ function fits(skill, need, taskType) {
   return mentioned(skill, need);
 }
 
-function skillFromPlate(plate) {
+const PLATE_SKILL = {
+  boot: "boot-orchestrator",
+  processor: "processor-pipeline",
+  review: "code-review",
+  suit: "suit-wear",
+};
+
+const PLATE_ONLY = new Set([
+  "goggles",
+  "kits",
+  "host-pack",
+  "glossary",
+  "dichotomy",
+  "syncopate",
+  "digest",
+  "triage",
+  "loop",
+]);
+
+export function staleSkillRow(skills) {
+  const raw = String(skills || "").trim();
+  if (!raw || CATALOG_POINTERS.has(raw)) return true;
+  if (raw.includes("/")) return true;
+  return skillIdsFromRow(raw).length < 3;
+}
+
+function skillFromPlate(plate, known, cardSkills) {
   if (!plate || typeof plate !== "object") return "";
   const id = String(plate.id || "").trim();
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(id)) return "";
+  if (typeof cardSkills === "function") {
+    const first = skillIdsFromRow(cardSkills(id))[0] || "";
+    if (first && (!known || known.has(first))) return first;
+  }
+  const mapped = Object.prototype.hasOwnProperty.call(PLATE_SKILL, id) ? PLATE_SKILL[id] : "";
+  if (mapped && (!known || known.has(mapped))) return mapped;
+  if (PLATE_ONLY.has(id)) return "";
+  if (known && !known.has(id)) return "";
   return id;
 }
 
-export function seekSkill({ skills, need, taskType, workKind, recall } = {}) {
+export function seekSkill({ skills, need, taskType, workKind, recall, known, cardSkills } = {}) {
   const confer = workKind === "feat" || workKind === "refactor";
   for (const skill of skillIdsFromRow(skills)) {
     if (fits(skill, need, taskType)) return { skill, tier: "card", confer };
@@ -75,7 +109,7 @@ export function seekSkill({ skills, need, taskType, workKind, recall } = {}) {
       plate = null;
     }
   }
-  const fromPlate = skillFromPlate(plate);
+  const fromPlate = skillFromPlate(plate, known, cardSkills);
   if (fromPlate) return { skill: fromPlate, tier: "plate", confer };
   return { skill: null, tier: "decline", confer };
 }

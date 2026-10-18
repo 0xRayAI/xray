@@ -11,7 +11,7 @@
  */
 import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, unlinkSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
-import { seekSkill } from './skill-seek.mjs';
+import { seekSkill, skillIdsFromRow, staleSkillRow } from './skill-seek.mjs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -935,11 +935,53 @@ export function planeCard(root) {
   return { plane, card: cardText(root, currentCard(root)) };
 }
 
+
+function rankedSkillRow(id) {
+  const builtin = PLANE_ROWS[id];
+  if (builtin && builtin.skills) return builtin.skills;
+  const row = overlayTable()[id];
+  return row && typeof row.skills === 'string' ? row.skills : '';
+}
+
+function skillNamesOnCards() {
+  const names = new Set();
+  for (const row of Object.values(PLANE_ROWS)) {
+    for (const id of skillIdsFromRow(row.skills)) names.add(id);
+  }
+  for (const row of Object.values(overlayTable())) {
+    if (!row || typeof row.skills !== 'string') continue;
+    for (const id of skillIdsFromRow(row.skills)) names.add(id);
+  }
+  return names;
+}
+
+/** Replace a stored Skills row that still points at the catalog or one file. */
+export function migrateLensSkills(root) {
+  const prev = readLensText(root);
+  if (!prev) return false;
+  const cards = lensCards(prev);
+  let next = prev;
+  let changed = false;
+  for (const [id, block] of cards) {
+    const current = cardRow(block, 'Skills');
+    const ranked = rankedSkillRow(id);
+    if (!ranked || !staleSkillRow(current) || current === ranked) continue;
+    const updated = block.replace(/^Skills:.*$/m, `Skills: ${ranked}`);
+    if (!next.includes(block)) continue;
+    next = next.replace(block, updated);
+    changed = true;
+  }
+  if (!changed) return false;
+  writeFileSync(lensPath(root), next.endsWith('\n') ? next : `${next}\n`);
+  return true;
+}
+
 /** Read the held card's skill list. Plate recall runs only when the list has no fit. */
 export function seekHeldCard(root, need, opts = {}) {
   const id = currentCard(root);
+  migrateLensSkills(root);
   const shown = lookCards([id], root);
-  const skills = shown && shown[0] ? shown[0].skills : '';
+  const skills = (shown && shown[0] && shown[0].skills) || rankedSkillRow(id);
   const recall = typeof opts.recall === 'function'
     ? opts.recall
     : (text) => {
@@ -955,6 +997,8 @@ export function seekHeldCard(root, need, opts = {}) {
     taskType: opts.taskType || '',
     workKind: opts.workKind || '',
     recall,
+    known: skillNamesOnCards(),
+    cardSkills: rankedSkillRow,
   });
 }
 
@@ -1219,6 +1263,7 @@ export function fillLensCard(root, id) {
 }
 
 export function maintainLens(root) {
+  migrateLensSkills(root);
   const held = heldCardPlane(root);
   if (held) fillLensCard(root, held.id);
   const prev = readLensText(root);

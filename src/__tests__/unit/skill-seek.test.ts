@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -79,6 +79,43 @@ describe('skill seek', () => {
         recall: () => ({ id: 'governance' }),
       });
       expect(fell).toEqual({ skill: 'governance', tier: 'plate', confer: false });
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('rewrites a filled lens before it seeks, and a plate id must be a skill', () => {
+    const root = mkdtempSync(join(tmpdir(), 'goggles-stale-lens-'));
+    try {
+      const lensDir = join(root, '.xray', 'state');
+      mkdirSync(lensDir, { recursive: true });
+      writeFileSync(
+        join(lensDir, 'LENS.md'),
+        [
+          'Plane: dev',
+          'Entry: package.json',
+          'Exit: a change in this repo',
+          'Skills: SKILLS.md',
+          '',
+          'Card: routing',
+          'Plane: integration',
+          'Entry: the dispatch',
+          'Exit: the next call',
+          'Skills: .agents/skills/routing/SKILL.md',
+          '',
+        ].join('\n'),
+      );
+      holdPlane(root, 'routing');
+      const hit = seekHeldCard(root, 'delegation-gate', { recall: () => ({ id: 'goggles' }) });
+      expect(hit).toEqual({ skill: 'delegation-gate', tier: 'card', confer: false });
+      const stored = readFileSync(join(lensDir, 'LENS.md'), 'utf8');
+      expect(stored).toContain('Skills: routing, orchestration, processor-pipeline, delegation-gate');
+      expect(stored).not.toContain('SKILLS.md');
+      expect(stored).not.toContain('.agents/skills/routing/SKILL.md');
+      const declined = seekHeldCard(root, 'no such words', { recall: () => ({ id: 'goggles' }) });
+      expect(declined).toEqual({ skill: null, tier: 'decline', confer: false });
+      const boot = seekHeldCard(root, 'no such words', { recall: () => ({ id: 'boot' }) });
+      expect(boot).toEqual({ skill: 'boot-orchestrator', tier: 'plate', confer: false });
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

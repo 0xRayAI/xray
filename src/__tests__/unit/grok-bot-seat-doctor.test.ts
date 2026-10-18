@@ -892,6 +892,7 @@ describe('grok-bot seat doctor — goggles stays on', () => {
       const report = diagnoseSeat({ cwd: dir, home: dir });
       expect(report.plant.ok).toBe(false);
       expect(formatDoctor(report)).toContain('Goggles: FAIL — goggles organ missing');
+      expect(report.next[0]).toBe('Restore the goggles organ. The suit keeps the lens.');
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

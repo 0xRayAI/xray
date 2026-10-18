@@ -663,7 +663,11 @@ function migrateHouse({ seatRoot, srcDir, destDir, names }) {
 function nextSteps(report) {
   const steps = [];
   if (report.goggles && report.goggles.status === 'off') {
-    steps.push('Turn goggles on. The suit keeps the lens.');
+    if (report.goggles.detail === 'goggles organ missing') {
+      steps.push('Restore the goggles organ. The suit keeps the lens.');
+    } else {
+      steps.push('Turn goggles on. The suit keeps the lens.');
+    }
   }
   const installStep = 'npm i 0xray && npx @0xray/foundry inspect --skip-live';
   if (!report.plant.installed) steps.push(installStep);

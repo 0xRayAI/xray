@@ -24,7 +24,7 @@ Read on 2026-10-18 from `main` at the station snapshot. Code under `src/`, `grok
 ## 2. Goggles: which card a path is on
 
 - **Class:** branch.
-- **Where:** `src/integrations/hooks/goggles-pipeline.mjs`. `planeOfPath` 110. `thingOfPath` 191. `lensBeforeResearch` 945. Planes at 23. `PATH_OWNER` at 163.
+- **Where:** `src/integrations/hooks/goggles-pipeline.mjs`. `planeOfPath` 111. `thingOfPath` 192. `lensBeforeResearch` 1014. Planes at 22. `PATH_OWNER` at 164.
 - **In:** a tool name and the paths in that call. Hold file `.xray/state/goggles-plane.json`.
 - **Candidates:** planes `dev`, `integration`, `domain`, `ecosystem`, then a thing card when a listed path is longer than the plane prefix. A tie among things uses `PATH_OWNER` or stays the plane.
 - **Decision:** longest matching prefix wins the plane. A search runs only when every path in the call sits inside the current card (`covers`, 172 and 952). Anything else is denied and the card text is returned. Opening one file on another card switches and sticks. Zero or two cards do not switch. A session starts on dev (`ensurePlane`, 919).
@@ -35,7 +35,7 @@ Read on 2026-10-18 from `main` at the station snapshot. Code under `src/`, `grok
 ## 3. Goggles: name one plane
 
 - **Class:** branch.
-- **Where:** `gogglesAnswer` 376, `suitHint` 766, `lensPlane` 851. CLI `look` and `goggles` in `src/cli/index.ts` 122 and 130.
+- **Where:** `gogglesAnswer` 377, `suitHint` 767, `lensPlane` 852. CLI `look` and `goggles` in `src/cli/index.ts` 122 and 130.
 - **In:** words. `look` / `name` with no plane is a stop.
 - **Candidates:** card names and the four planes.
 - **Decision:** exactly one named card returns that card. Zero names on an empty argv returns the held card. Any other mix returns the text `Name one plane.` `lensPlane` stops `scoreAndRoute` before an agent is picked (`src/nucleus/thin-dispatch.ts` 98).
@@ -46,7 +46,7 @@ Read on 2026-10-18 from `main` at the station snapshot. Code under `src/`, `grok
 ## 4. Goggles: pick a file from clues
 
 - **Class:** scored.
-- **Where:** `fileFromClues` in `goggles-pipeline.mjs` 713, used when a plane has clues and no files (`growPlane` / `seenFields` 980).
+- **Where:** `fileFromClues` in `goggles-pipeline.mjs` 714, used when a plane has clues and no files (`seenFields` 1043, `growPlane` 1087).
 - **In:** clue strings and `src/**` texts, skipping tests.
 - **Candidates:** source files that contain a clue. A clue that hits more than 8 files is dropped.
 - **Decision:** rarer clues weigh more (`9 - hits`). A file whose path contains the plane token gets +20. Paths under `src/cli/` get −3. Highest rank wins. A rank tie prefers the shorter path.
@@ -211,7 +211,7 @@ Read on 2026-10-18 from `main` at the station snapshot. Code under `src/`, `grok
 ## 19. Governance vote
 
 - **Class:** scored for the vote ratio, then branch for the resonance bands and the moral override.
-- **Where:** `mergeVotes` and `applyDecisionMatrix` and `calculateMetamorphosisScore` in `src/governance/governance-core.ts` 49, 167, 221. Assembly in `src/governance/governance-service.ts` 163 and the per-proposal merge at 174. Batch rollup at 122. Abstention throw at 66.
+- **Where:** `applyDecisionMatrix` 49, `mergeVotes` 167, and `calculateMetamorphosisScore` 221 in `src/governance/governance-core.ts`. Assembly in `src/governance/governance-service.ts` 163 and the per-proposal merge at 174. Batch rollup at 122. Abstention throw at 66.
 - **In:** one vote each from code-review, security-audit, and researcher, plus external Dynamo when it is required. Resonance for the matrix is the merged average confidence. Moral fields come from the Dynamo vote.
 - **Candidates:** approve, needs_revision, reject. Matrix recommendations PASS, NEEDS_REVISION, REJECT.
 - **Decision:** approve weight over total weighted confidence. Above 0.66 approves. Below 0.33 rejects. Otherwise needs revision. Empty votes abstain at 0.5. Critical moral tension rejects immediately at confidence 0.92. Significant tension demotes PASS to NEEDS_REVISION. Resonance bands: ≥0.92 (and isotopic ratio ≥0.95 when a ratio was supplied) passes at 0.97. ≥0.82 (ratio ≥0.88 when supplied) passes at 0.89. Below 0.75 resonance or below 0.80 ratio rejects. The middle stays needs revision. Vortex volume under `2.5e25` or historical coherence under 0.70 demotes a pass. Solar `active` or `storm` multiplies vote weight by 0.92. Metamorphosis score starts at average confidence, +0.10 for automate or codify, −0.15 for compliance, +0.05 for coherence ≥0.8 and +0.05 for resonance ≥0.8. Under 0.7 the decision becomes needs_revision (`governance-service.ts` 157 and 238). If `lensPlane` names files and an approve does not mention one of those files, the decision becomes needs_revision (243). Across proposals, approve wins the batch only when approved count is over 60 percent; else reject if rejects outnumber approves; else needs revision. Abstention ratio above `maxAbstentionThreshold` (default 1.0, so the check is off unless the caller lowers it) throws.
@@ -381,8 +381,8 @@ No seek function asks a model to pick among candidates. Confer and governance st
 | Area | Arms | What the arms do |
 |------|------|------------------|
 | Plate recall | 1 | Tie or zero score returns null (`plates.cjs` 390). |
-| Goggles hold | 6 | Skip a non-search, allow a search inside the card, deny a search outside it, stay, switch to the one other card, stay on a mix (`goggles-pipeline.mjs` 949, 958, 959, 966, 967, 971). |
-| Goggles name | 4 | One named card, empty argv uses the hold, anything else stops, a missing card stops (`goggles-pipeline.mjs` 387, 388, 391, 394). |
+| Goggles hold | 6 | Skip a non-search, allow a search inside the card, deny a search outside it, stay, switch to the one other card, stay on a mix (`goggles-pipeline.mjs` 1018, 1027, 1028, 1035, 1036, 1040). |
+| Goggles name | 4 | One named card, empty argv uses the hold, anything else stops, a missing card stops (`goggles-pipeline.mjs` 388, 389, 392, 395). |
 | Complexity words and cuts | 14 | Operation type 6 (`complexity-analyzer.ts` 331–336), risk 4 (350–353), level 4 (`complexity-core.ts` 145–148). |
 | Thin dispatch | 7 | How to read the score, 4 (`thin-dispatch.ts` 73–80). Stop, repertoire, or the base agent, 3 (99, 108, 144). The agent name after that is a table. |
 | Task-type table | 1 | Unknown key falls back to `backend-engineer` (`autonomy-kernel.ts` 120). |
@@ -464,15 +464,15 @@ Skills are the first seek to implement. The card list and the suit rule are in t
 
 Skill selection routes cheap-first, in the order in the definition.
 
-Branch first. A work-kind test returns before any lookup. Confer is the example. Confer runs only for feat or refactor work. It stays off for fix, docs, and chore. The tree already defaults that way: `defaultConferConfig` returns `enabled: false` (`src/nucleus/confer.ts` 77) and `conferDefaultForProfile` returns false for every host (`src/nucleus/suit-temperament.ts` 232). The branch turns the three-agent quorum on only for feat and refactor. Fix, docs, and chore never pay for it.
+Branch first. A work-kind test returns before any lookup. Confer is the example. Confer runs only for feat or refactor work. It stays off for fix, docs, and chore. The tree already defaults that way: `defaultConferConfig` returns `enabled: false` (`src/nucleus/confer.ts` 77) and `conferDefaultForProfile` returns false for every host (`src/nucleus/suit-temperament.ts` 232). The seek marks confer only for a feat or a refactor. It does not start the quorum. `defaultConferConfig` stays off. Fix, docs, and chore never pay for it.
 
-Table next, and only if the branch did not finish the choice. Reuse `TASK_TYPE_ROUTES` and `routeSubagent` (`src/nucleus/autonomy-kernel.ts` 77 and 119). That row already maps plan, research, implement, frontend, test, review, security, and governance to one route. #385's picker is the allowed subset. The table is read only inside that subset. An unknown key keeps the existing fallback, `backend-engineer`, and does not start a scan.
+Table next, and only if the branch did not finish the choice. Reuse `TASK_TYPE_ROUTES` and `routeSubagent` (`src/nucleus/autonomy-kernel.ts` 77 and 119). That row already maps plan, research, implement, frontend, test, review, security, and governance to one route. #385's picker is the allowed subset. The table is read only inside that subset. An unknown key does not become `backend-engineer` inside the seek. `routeSubagent` still uses that fallback. The seek returns no skill for an unknown key, and it does not scan.
 
 Score third, and only if the branch and the table did not name a skill. Reuse plate recall (`recallPlate` in `src/integrations/hooks/plates.cjs` at 374). Cue weights pick one plate. A tie or a zero returns nothing. The plate's skill line is the candidate. Do not score every skill when a plate already won.
 
-Model last. A model chooses only when the branch, the table, and the score all decline. It is not the default path.
+The last tier declines. `seekSkill` does not call a model.
 
-Goggles is the scope around those tiers, not another rank. `lensBeforeResearch` (`src/integrations/hooks/goggles-pipeline.mjs` 945) already refuses a search outside the held card. A skill seek reads the skill named on that card before it opens any other skill file. It does not walk the catalog.
+Goggles is the scope around those tiers, not another rank. `lensBeforeResearch` (`src/integrations/hooks/goggles-pipeline.mjs` 1014) already refuses a search outside the held card. A skill seek reads the skill named on that card before it opens any other skill file. It does not walk the catalog.
 
 The seek has to stay cheaper than opening the skill. A branch or a table row is the whole decision whenever it can be.
 
@@ -480,11 +480,11 @@ The seek has to stay cheaper than opening the skill. A branch or a table row is 
 
 Arch1: Goggles sets the scope. A seek chooses inside that scope. They meet on the held card. They do not do the same job.
 
-The hold is `.xray/state/goggles-plane.json`. `lensBeforeResearch` (`src/integrations/hooks/goggles-pipeline.mjs` 945) allows a search only when every path sits on the current card, and it denies the rest. That is scope. Plate recall, the task-type table, and a complexity score then choose among what that card already holds. That is the seek.
+The hold is `.xray/state/goggles-plane.json`. `lensBeforeResearch` (`src/integrations/hooks/goggles-pipeline.mjs` 1014) allows a search only when every path sits on the current card, and it denies the rest. That is scope. Plate recall, the task-type table, and a complexity score then choose among what that card already holds. That is the seek.
 
-The shared rule is refusal. On a tie or a miss, return nothing. Never guess. Plate recall already does this: score 0 or equal top scores return null (`plates.cjs` 390). A look that names no plane returns nobody (`gogglesAnswer` 391).
+The shared rule is refusal. On a tie or a miss, return nothing. Never guess. Plate recall already does this: score 0 or equal top scores return null (`plates.cjs` 390). A look that names no plane returns nobody (`gogglesAnswer` 377, the miss returns at 392 and 395).
 
-The card's skill list is the rank. `seekHeldCard` (`src/integrations/hooks/goggles-pipeline.mjs`) reads that list. `invoke-skill` (`src/mcps/knowledge-skills/skill-invocation.server.ts` 19) still takes a `skillName` the caller already chose.
+The card's skill list is the rank. `seekHeldCard` (`src/integrations/hooks/goggles-pipeline.mjs` 980) reads that list. A stored `Skills` row that still points at the catalog or one file is rewritten first (`migrateLensSkills` 959). `invoke-skill` (`src/mcps/knowledge-skills/skill-invocation.server.ts` 19) still takes a `skillName` the caller already chose.
 
 ## Two kinds of seek
 
@@ -498,7 +498,7 @@ Push as many seeks as possible into the prefab kind. A list written on the card 
 
 Each lens card lists its own skills, 3 to 5, in hand-set rank order. Card order is the rank. No scores are stored on cards.
 
-Skill choice on a card is a read down that list. The first fit wins. No fit falls to plate recall, then a model last.
+Skill choice on a card is a read down that list. The first fit wins. No fit falls to plate recall. A plate that is not a skill declines. The function does not call a model.
 
 `SKILLS.md` stays the full catalog. Cards do not point at it, so the seek never walks the catalog.
 
@@ -509,7 +509,7 @@ The suit carries the cards. Goggles reads them. Every suit has goggles on. A mis
 
 Wear throws when the target features set `goggles.enabled` to false (`assertGogglesOn` in `scripts/foundry/mint-suit.cjs`). Doctor fails when a fastened suit has goggles off or the goggles organ is missing (`probeGoggles` in `grok-bot/lib/seat-doctor.cjs`).
 
-`seekSkill` (`src/integrations/hooks/skill-seek.mjs`) reads the card list first. The first fit wins. No fit falls to plate recall. A miss there declines. The function does not call a model. Confer on the result is true only for a feat or a refactor, and the function does not start the quorum. Confer in features stays off.
+`seekSkill` (`src/integrations/hooks/skill-seek.mjs`) reads the card list first. The first fit wins. No fit falls to plate recall. A plate id that is not a skill declines. A miss there declines. The function does not call a model. Confer on the result is true only for a feat or a refactor, and the function does not start the quorum. Confer in features stays off.
 
 ## Found issue: two complexity formulas
 
