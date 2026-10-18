@@ -132,6 +132,14 @@
         }
       }
     },
+    "goggles": {
+      "type": "object",
+      "description": "The suit keeps goggles on. enabled false fails wear and doctor.",
+      "properties": {
+        "enabled": { "type": "boolean" }
+      },
+      "required": ["enabled"]
+    },
     "synthesis": {
       "type": "object",
       "properties": {

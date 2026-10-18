@@ -12,11 +12,11 @@
       "src/integrations",
       "package.json"
     ],
-    "skills": "SKILLS.md"
+    "skills": "orchestrator, researcher, project-analysis, git-workflow, tech-writer"
   },
   "synthesis": {
     "file": "src/nucleus/synthesis.ts",
-    "skills": ".agents/skills/synthesis/SKILL.md"
+    "skills": "synthesis, confer, inference-cycle, temperament"
   },
   "routing": {
     "files": ["src/nucleus/thin-dispatch.ts"],
@@ -24,17 +24,17 @@
     "mark": "export function scoreAndRoute",
     "wornMark": "function scoreAndRoute",
     "pick": "resolveThinDispatch",
-    "skills": ".agents/skills/routing/SKILL.md",
+    "skills": "routing, orchestration, processor-pipeline, delegation-gate",
     "plates": ["orchestration", "processor"]
   },
   "house": {
     "files": ["grok-bot/lib/seat-doctor.cjs", "grok-bot/templates/house/fleet/WAKE-ROUTINE.md", "grok-bot/templates/house/HOUSE.md", "src/__tests__/unit/grok-bot-house-template.test.ts", "src/__tests__/unit/grok-bot-house-migrate.test.ts"],
-    "skills": ".agents/skills/house/SKILL.md",
+    "skills": "house, suit-wear, record-map, activity-log",
     "plates": ["suit-wear"]
   },
   "boot": {
     "files": ["src/core/boot-orchestrator.ts"],
-    "skills": "src/skills/boot-orchestrator/SKILL.md",
+    "skills": "boot-orchestrator, suit-wear, hermes-agent, opencode",
     "plates": ["suit-wear"]
   },
   "governance": {
@@ -42,232 +42,232 @@
       "src/governance/governance-service.ts",
       "src/governance/llm-governance-provider.ts"
     ],
-    "skills": ".agents/skills/governance/SKILL.md"
+    "skills": "governance, enforcer, dynamo, confer"
   },
   "memory-recall": {
     "files": ["src/integrations/hooks/plates.cjs", "src/__tests__/unit/plates.test.ts"],
-    "skills": ".agents/skills/memory-recall/SKILL.md",
+    "skills": "memory-recall, record-map, repertoire, station-card",
     "plates": ["record-map"]
   },
   "orchestration": {
     "files": ["src/mcps/orchestrator/server.ts"],
-    "skills": ".agents/skills/orchestration/SKILL.md",
+    "skills": "orchestration, routing, processor-pipeline, strategist",
     "plates": ["routing", "processor"]
   },
   "processor": {
     "files": ["src/processors/processor-manager.ts"],
-    "skills": "src/skills/processor-pipeline/SKILL.md",
+    "skills": "processor-pipeline, orchestration, routing",
     "plates": ["orchestration"]
   },
   "reporting": {
     "files": ["src/reporting/framework-reporting-system.ts"],
-    "skills": ".agents/skills/reporting/SKILL.md",
+    "skills": "reporting, activity-log, suit-organs, write-home",
     "plates": ["activity-log", "suit-organs"]
   },
   "stamp-plate": {
     "files": [".agents/skills/stamp-plate/SKILL.md"],
     "mark": "Stamp a plate or a lens",
-    "skills": ".agents/skills/stamp-plate/SKILL.md",
+    "skills": "stamp-plate, lens-gate, record-map, site-manual",
     "plates": ["review"]
   },
   "record-map": {
     "files": ["docs-site/docs/plates/record-map.md", "src/integrations/hooks/wake-cascade.cjs", "src/integrations/hooks/session-note-index.cjs"],
-    "skills": ".agents/skills/record-map/SKILL.md",
+    "skills": "record-map, station-card, notes-page, reflection-page, site-manual",
     "plates": ["station-card", "notes-page", "reflection-page", "site-manual", "package-face", "write-home", "activity-log", "session-capture", "lens-page"]
   },
   "write-home": {
     "files": ["src/integrations/hooks/write-home.cjs"],
     "mark": "function activityLog",
-    "skills": ".agents/skills/write-home/SKILL.md",
+    "skills": "write-home, activity-log, session-capture, inference-files, trail-state",
     "plates": ["activity-log", "session-capture", "inference-files", "trail-state", "suit-wear"]
   },
   "activity-log": {
     "files": ["src/core/activity-logger.ts"],
     "mark": "activity.log",
-    "skills": ".agents/skills/activity-log/SKILL.md",
+    "skills": "activity-log, write-home, reporting, suit-organs",
     "plates": ["write-home", "reporting", "suit-organs"]
   },
   "session-capture": {
     "files": ["src/inference/session-capture.ts"],
     "mark": "saveSessionInference",
-    "skills": ".agents/skills/session-capture/SKILL.md",
+    "skills": "session-capture, write-home, inference-files, suit-organs",
     "plates": ["write-home", "inference-files", "suit-organs"]
   },
   "suit-wear": {
     "files": ["src/core/features-config.ts", "scripts/node/install-bridges.cjs", "scripts/node/setup.cjs", "src/integrations/cursor/hooks/xray-cloud-hook.sh"],
     "mark": "log_path",
-    "skills": ".agents/skills/suit-wear/SKILL.md",
+    "skills": "suit-wear, suit-settings, write-home, package-face",
     "plates": ["suit-settings", "write-home", "package-face"]
   },
   "suit-organs": {
     "files": ["src/reporting/framework-reporting-system.ts"],
     "mark": "activity.log",
-    "skills": ".agents/skills/suit-organs/SKILL.md",
+    "skills": "suit-organs, activity-log, session-capture, inference-files, trail-state",
     "plates": ["activity-log", "session-capture", "inference-files", "trail-state"]
   },
   "station-card": {
     "files": ["src/integrations/hooks/station-hook-runtime.cjs", "src/integrations/hooks/wake-cascade.cjs"],
     "mark": "formatStationMarkdown",
-    "skills": ".agents/skills/station-card/SKILL.md",
+    "skills": "station-card, notes-page, record-map, kept-line",
     "plates": ["notes-page", "record-map", "kept-line"]
   },
   "notes-page": {
     "files": ["src/integrations/hooks/station-hook-runtime.cjs", "src/integrations/hooks/session-note-index.cjs"],
     "mark": "stampNotesPickup",
-    "skills": ".agents/skills/notes-page/SKILL.md",
+    "skills": "notes-page, station-card, record-map, pickup-stamp",
     "plates": ["station-card", "record-map"]
   },
   "reflection-page": {
     "files": ["src/inference/inference-accumulator.ts"],
     "mark": "loadReflectionInferences",
-    "skills": ".agents/skills/reflection-page/SKILL.md",
+    "skills": "reflection-page, record-map, inference-files, storyteller",
     "plates": ["record-map"]
   },
   "site-manual": {
     "files": ["docs-site/docs/introduction.md", "docs-site/docs/index.md", "docs-site/docs/full-reference.md", "docs-site/docs/guides/features-since-3.1.md"],
     "mark": "survives the context window",
-    "skills": ".agents/skills/site-manual/SKILL.md",
+    "skills": "site-manual, record-map, package-face, tech-writer",
     "plates": ["record-map"]
   },
   "package-face": {
     "files": ["package.json", "grok-bot/README.md", "grok-bot/llms.txt", "grok-bot/CHANGELOG.md", "src/cli/index.ts", "src/cli/commands/plugin-commands.ts", "src/__tests__/unit/plugin-commands.test.ts"],
     "mark": "\"name\": \"0xray\"",
-    "skills": ".agents/skills/package-face/SKILL.md",
+    "skills": "package-face, record-map, suit-wear, tech-writer",
     "plates": ["record-map", "suit-wear"]
   },
   "suit-settings": {
     "files": ["xray/features.json"],
     "mark": "log_path",
-    "skills": ".agents/skills/suit-settings/SKILL.md",
+    "skills": "suit-settings, suit-wear, record-map",
     "plates": ["suit-wear", "record-map"]
   },
   "trail-state": {
     "files": ["src/integrations/hooks/station-hook-runtime.cjs"],
     "mark": "session-boot.json",
-    "skills": ".agents/skills/trail-state/SKILL.md",
+    "skills": "trail-state, write-home, suit-organs, station-card",
     "plates": ["write-home", "suit-organs"]
   },
   "inference-files": {
     "files": ["src/inference/inference-accumulator.ts"],
     "mark": "loadSessionInferences",
-    "skills": ".agents/skills/inference-files/SKILL.md",
+    "skills": "inference-files, session-capture, write-home, suit-organs",
     "plates": ["session-capture", "write-home", "suit-organs"]
   },
   "grok-compact": {
     "files": ["src/integrations/grok/hooks/session-start.js"],
     "mark": "pre_compact",
-    "skills": ".agents/skills/grok-compact/SKILL.md",
+    "skills": "grok-compact, payload-heat, cursor-compact, work-fresh",
     "plates": ["payload-heat", "cursor-compact", "work-fresh"]
   },
   "payload-heat": {
     "files": ["src/integrations/grok/hooks/grok-hook-utils.js"],
     "mark": "function buildSessionBootPayload",
-    "skills": ".agents/skills/payload-heat/SKILL.md",
+    "skills": "payload-heat, station-heat, pickup-stamp, grok-compact",
     "plates": ["station-heat", "pickup-stamp"]
   },
   "station-heat": {
     "files": ["src/integrations/hooks/station-hook-runtime.cjs"],
     "mark": "function applyStationHeat",
-    "skills": ".agents/skills/station-heat/SKILL.md",
+    "skills": "station-heat, pickup-stamp, notes-page, station-card",
     "plates": ["pickup-stamp", "notes-page"]
   },
   "pickup-stamp": {
     "files": ["src/integrations/hooks/station-hook-runtime.cjs"],
     "mark": "One pickup line",
-    "skills": ".agents/skills/pickup-stamp/SKILL.md",
+    "skills": "pickup-stamp, notes-page, station-heat",
     "plates": ["notes-page"]
   },
   "cursor-compact": {
     "files": ["src/integrations/cursor/hooks/pre-compact.js"],
     "mark": "cannot block",
-    "skills": ".agents/skills/cursor-compact/SKILL.md",
+    "skills": "cursor-compact, payload-heat, station-heat, grok-compact",
     "plates": ["payload-heat", "station-heat"]
   }
 ,
   "work-fresh": {
     "files": ["src/nucleus/work-freshness.mjs"],
     "mark": "export function refreshFreshness",
-    "skills": ".agents/skills/work-fresh/SKILL.md",
+    "skills": "work-fresh, station-card, grok-compact, kept-line",
     "plates": ["station-card", "grok-compact"]
   },
   "kept-line": {
     "files": ["src/integrations/hooks/station-hook-runtime.cjs"],
     "mark": "function withOneFreshLine",
-    "skills": ".agents/skills/kept-line/SKILL.md",
+    "skills": "kept-line, station-card, work-fresh",
     "plates": ["station-card", "work-fresh"]
   },
   "lens-gate": {
     "files": ["src/integrations/hooks/goggles-pipeline.mjs", "src/__tests__/unit/goggles-pipeline.test.ts"],
     "mark": "export function lensBeforeResearch",
-    "skills": ".agents/skills/lens-gate/SKILL.md",
+    "skills": "lens-gate, pre-tool, lens-page, stamp-plate",
     "plates": ["pre-tool"]
   },
   "pre-tool": {
     "files": ["src/integrations/grok/hooks/pre-tool-use.js"],
     "mark": "function extractFromEvent",
-    "skills": ".agents/skills/pre-tool/SKILL.md",
+    "skills": "pre-tool, lens-gate, delegation-gate",
     "plates": ["lens-gate"]
   },
   "lens-page": {
     "files": ["src/integrations/hooks/goggles-pipeline.mjs"],
     "mark": "export function formatCardPane",
-    "skills": ".agents/skills/lens-page/SKILL.md",
+    "skills": "lens-page, record-map, lens-gate",
     "plates": ["record-map", "lens-gate"]
   },
   "centrifuge": {
     "files": ["src/integrations/hooks/station-hook-runtime.cjs"],
     "mark": "function wakeOrder",
-    "skills": ".agents/skills/centrifuge/SKILL.md",
+    "skills": "centrifuge, station-card, inference-cycle",
     "plates": ["station-card", "goggles"]
   },
   "repertoire": {
     "file": "src/memory-routing",
-    "skills": ".agents/skills/repertoire/SKILL.md"
+    "skills": "repertoire, memory-recall, record-map, governance"
   },
   "dynamo": {
     "file": "docs-site/docs/guides/self-hosting-dynamo.md",
-    "skills": ".agents/skills/dynamo/SKILL.md"
+    "skills": "dynamo, governance, enforcer, confer"
   },
   "foundry": {
     "root": "scripts/foundry",
     "file": "scripts/foundry/release.mjs",
-    "skills": ".agents/skills/foundry/SKILL.md"
+    "skills": "foundry, suit-wear, package-face, consumer-mcp"
   },
   "delegation-gate": {
     "file": "src/nucleus/delegation-gate.ts",
-    "skills": ".agents/skills/delegation-gate/SKILL.md"
+    "skills": "delegation-gate, temperament, orchestration, routing"
   },
   "temperament": {
     "file": "src/nucleus/suit-temperament.ts",
-    "skills": ".agents/skills/temperament/SKILL.md"
+    "skills": "temperament, delegation-gate, confer, orchestrator"
   },
   "asides": {
     "file": "src/nucleus/user-aside.ts",
-    "skills": ".agents/skills/asides/SKILL.md"
+    "skills": "asides, orchestration, station-card, record-map"
   },
   "inference-cycle": {
     "file": "src/inference/inference-cycle.ts",
-    "skills": ".agents/skills/inference-cycle/SKILL.md"
+    "skills": "inference-cycle, inference-files, session-capture, repertoire"
   },
   "hermes": {
     "file": "src/integrations/hermes-agent",
-    "skills": ".agents/skills/hermes/SKILL.md"
+    "skills": "hermes, hermes-agent, boot-orchestrator, consumer-mcp"
   },
   "openclaw": {
     "file": "src/integrations/openclaw",
-    "skills": ".agents/skills/openclaw/SKILL.md"
+    "skills": "openclaw, boot-orchestrator, consumer-mcp, hermes"
   },
   "opencode": {
     "file": "src/cli/commands/opencode-install.ts",
-    "skills": ".agents/skills/opencode/SKILL.md"
+    "skills": "opencode, boot-orchestrator, consumer-mcp, orchestrator"
   },
   "consumer-mcp": {
     "root": "src/mcps",
     "file": ".mcp.json",
-    "skills": ".agents/skills/consumer-mcp/SKILL.md"
+    "skills": "consumer-mcp, boot-orchestrator, hermes, openclaw"
   },
   "confer": {
     "file": "src/nucleus/confer.ts",
-    "skills": ".agents/skills/confer/SKILL.md"
+    "skills": "confer, governance, code-review, researcher"
   }
 }
