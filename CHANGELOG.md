@@ -18,7 +18,7 @@ Doctor treats a suit as worn when `.xray/features.json` and the fastened plant's
 
 Goggles reads the plant, or a plane named in suit config, and fills `Worn:` with that plant and the package version. A held dev card still gets that lens. Wear replaces only a `package` version token on `Fresh:` and leaves a `Plane:` line that is already set. The full ranking stays with the role picker. (#395, #385)
 
-Wear seeds `STATION.md` and `NOTES.md` when they are missing, and restamps `Fresh:` and `Plane:` on every wear. The seat wake reads both on every turn, including Grok wakes that do not run `.cursor` hooks. (#395, #386)
+Wear seeds `STATION.md` and `NOTES.md` when they are missing. After that, wear changes only the version token described above and leaves the rest of the station as written. The seat wake reads both on every turn, including Grok wakes that do not run `.cursor` hooks. (#395, #386)
 
 ## [4.1.1] - 2026-10-18
 
