@@ -69,8 +69,17 @@ export default definePluginEntry({
           if (!speakPath) return undefined;
           const speak = await import(pathToFileURL(speakPath).href);
           const lens = speak.lensDecision(projectRoot, event.toolName, spoken);
-          if (lens) {
+          if (lens?.decision === 'deny') {
             return { block: true, blockReason: lens.reason };
+          }
+          if (lens?.reason) {
+            return {
+              block: false,
+              hookSpecificOutput: {
+                hookEventName: 'PreToolUse',
+                additionalContext: lens.reason,
+              },
+            };
           }
           const route = speak.repertoireRoute(spoken);
           if (route?.hookSpecificOutput) {

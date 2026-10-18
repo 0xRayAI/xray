@@ -68,25 +68,32 @@ describe("sleeve", () => {
       holdPlane(root, "memory recall");
       expect(fs.existsSync(path.join(root, ".xray", "state", "goggles-plane.json"))).toBe(false);
       holdPlane(root, "memory-recall");
-      expect(
-        JSON.parse(fs.readFileSync(path.join(root, ".xray", "state", "goggles-plane.json"), "utf8")).plane,
-      ).toBe("memory-recall");
+      const held = JSON.parse(fs.readFileSync(path.join(root, ".xray", "state", "goggles-plane.json"), "utf8"));
+      expect(held.plane).toBe("domain");
+      expect(held.card).toBe("memory-recall");
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
     }
   });
 
-  it("keeps the outer readings and leaves ground, routing, and house alone", () => {
-    expect(look(["loop"]).text).toBe("The reading is loop.");
-    expect(look(["domain"]).text).toBe("");
-    expect(look(["state"]).text).toBe("");
-    expect(look(["eco"]).text).toBe("");
-    expect(look(["outer-loop"]).text).toBe("Name one plane.");
-    const ground = look(["digest", "ground"]).text;
-    expect(ground.startsWith("Plane: ground")).toBe(true);
-    expect(ground).not.toContain("Sleeve:");
-    expect(look(["digest", "routing"]).text).not.toContain("Sleeve:");
-    expect(look(["digest", "house"]).text).not.toContain("Sleeve:");
+  it("keeps the outer readings off the four cards", () => {
+    const root = tempRoot("xray-sleeve-cards-");
+    try {
+      expect(look(["loop"], root).text).toBe("Name one plane.");
+      expect(look(["state"], root).text).toBe("Name one plane.");
+      expect(look(["eco"], root).text).toBe("Name one plane.");
+      expect(look(["outer-loop"], root).text).toBe("Name one plane.");
+      const domain = look(["domain"], root).text;
+      expect(domain.startsWith("Plane: domain")).toBe(true);
+      expect(domain).not.toContain("Sleeve:");
+      const dev = look(["dev"], root).text;
+      expect(dev.startsWith("Plane: dev")).toBe(true);
+      expect(dev).not.toContain("Sleeve:");
+      expect(look(["integration"], root).text).not.toContain("Sleeve:");
+      expect(look(["ecosystem"], root).text).not.toContain("Sleeve:");
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
   });
 
   it("does not store a machine plugin as a mill failure", () => {
@@ -150,8 +157,9 @@ describe("sleeve", () => {
           "Foundry: off",
         ].join("\n"),
       );
-      const text = look(["digest", "memory-recall"], root).text;
-      expect(text).toContain("Sleeve: off loop, domain, state, foundry");
+      const text = look(["dev"], root).text;
+      expect(text.startsWith("Plane: dev")).toBe(true);
+      expect(text).not.toContain("Sleeve:");
       expect(text).not.toContain("plate_type");
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
@@ -236,11 +244,11 @@ describe("sleeve", () => {
       expect(kept.card).not.toContain("Loop:");
       expect(kept.card).not.toContain("Domain:");
       expect(kept.card).not.toContain("Foundry:");
-      const text = look(["digest", "memory-recall"], root).text;
-      expect(text).toContain("Loop: goggles");
-      expect(text).toContain("Domain: goggles");
-      expect(text).toContain("State: .xray/state/STATION.md");
-      expect(text).toContain("Foundry: inspect --skip-live");
+      const text = look(["dev"], root).text;
+      expect(text.startsWith("Plane: dev")).toBe(true);
+      expect(text).not.toContain("Loop:");
+      expect(text).not.toContain("Domain:");
+      expect(text).not.toContain("Sleeve:");
 
       const working = JSON.parse(
         fs.readFileSync(path.join(root, ".xray", "state", "repertoire-working.json"), "utf8"),
@@ -255,24 +263,26 @@ describe("sleeve", () => {
 
       const looked = await dispatchTool(
         "look",
-        { outer: "digest", plane: "memory-recall" },
+        { plane: "integration" },
         root,
       );
+      expect(looked.isError).toBe(false);
       const payload = looked.payload.content as LookCard;
-      expect(payload.sleeve?.on).toBe(true);
-      expect(atOf(payload.sleeve || {}, "domain")).toEqual(["goggles"]);
-      const plain = await dispatchTool("look", { outer: "digest", plane: "ground" }, root);
+      expect(payload.plane).toBe("integration");
+      expect(payload.sleeve).toBeUndefined();
+      const plain = await dispatchTool("look", { plane: "dev" }, root);
       expect((plain.payload.content as LookCard).sleeve).toBeUndefined();
       expect(
         JSON.parse(fs.readFileSync(path.join(root, ".xray", "state", "goggles-plane.json"), "utf8")).plane,
-      ).toBe("ground");
-      const loop = await dispatchTool("look", { outer: "loop" }, root);
-      expect(loop.payload.content).toBe("The reading is loop.");
+      ).toBe("dev");
+      const loop = await dispatchTool("look", { plane: "loop" }, root);
+      expect(loop.isError).toBe(true);
+      expect(loop.payload.error.reason).toBe("Name one plane.");
 
       const ranAt = JSON.parse(
         fs.readFileSync(path.join(root, ".xray", "state", "sleeve-mill.json"), "utf8"),
       ).ranAt;
-      look(["digest", "memory-recall"], root);
+      look(["dev"], root);
       expect(
         JSON.parse(fs.readFileSync(path.join(root, ".xray", "state", "sleeve-mill.json"), "utf8")).ranAt,
       ).toBe(ranAt);
@@ -288,7 +298,7 @@ describe("sleeve", () => {
       expect(held.card).toContain("Judgement: retry 1");
       expect(held.card).toContain("Sleeve: off foundry");
       expect(stalled.card).toContain("Payments: off");
-      expect(stalled.card).toContain("Plane: ground");
+      expect(stalled.card).toContain("Plane: dev");
       expect(
         JSON.parse(fs.readFileSync(path.join(root, ".xray", "state", "sleeve-mill.json"), "utf8")).ranAt,
       ).toBe(ranAt);

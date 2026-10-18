@@ -1,6 +1,6 @@
 """Board model (cards / packets / beats) + packet parser: Lead 1:53 PM spec."""
 import json, os, sys, tempfile, time, unittest
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from unittest import mock
 from zoneinfo import ZoneInfo
@@ -240,19 +240,22 @@ class Model(unittest.TestCase):
         self.assertEqual(uc.card_fields({"number": 21, "body": "Fixes #20, supersedes #19; see #21"})["fixes"], [19, 20])
         class FF:
             CT = CT
+        now = datetime.now(timezone.utc).replace(microsecond=0)
+        def z(delta):
+            return (now + delta).strftime("%Y-%m-%dT%H:%M:%SZ")
         class C:
             token = "t"
             def rest(self, path, params=None, etag=None, essential=False):
                 if str(path).endswith("/commits") or str(path).endswith("/reviews"):
                     return 200, [], None, None
                 return 200, [{
-                    "number": 303, "user": {"login": "forge0x1[bot]"}, "updated_at": "2026-10-14T17:00:00Z",
-                    "created_at": "2026-10-14T12:00:00Z", "html_url": f"https://github.com/{R}/pull/303",
+                    "number": 303, "user": {"login": "forge0x1[bot]"}, "updated_at": z(timedelta(hours=-24)),
+                    "created_at": z(timedelta(days=-2)), "html_url": f"https://github.com/{R}/pull/303",
                     "title": "ship", "head": {"sha": "abc"}, "base": {"ref": "main"}, "state": "closed",
-                    "merged_at": "2026-10-14T16:00:00Z", "draft": False, "body": body, "labels": [],
+                    "merged_at": z(timedelta(hours=-26)), "draft": False, "body": body, "labels": [],
                 }], "etag", None
         rc = uc.RepoCollector(R, self.root, FF(), lambda *a: None)
-        rc.st["cur"]["pulls"] = "2026-10-14T18:00:00Z"
+        rc.st["cur"]["pulls"] = z(timedelta(hours=-1))
         rc.st["bf"]["prs:done"] = True
         rc.st["etags"]["pulls"] = "old"
         with mock.patch.dict(uc.NODE_LC, {"forge0x1[bot]": "forge"}):

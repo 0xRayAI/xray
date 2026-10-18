@@ -48,6 +48,7 @@ function finish(root, permission, reason, hint, toolName, extra = {}) {
   }
   if (hint && permission === 'allow') {
     out.user_message = hint;
+    out.agent_message = hint;
   }
   if (extra.hookSpecificOutput) out.hookSpecificOutput = extra.hookSpecificOutput;
   console.log(JSON.stringify(out));
@@ -114,6 +115,9 @@ async function main() {
     const lensStop = lensDecision(gateRoot, toolName, spoken);
     if (lensStop?.decision === 'deny') {
       finish(gateRoot, 'deny', lensStop.reason, null, toolName, { gate: lensStop.gate });
+    }
+    if (lensStop?.decision === 'allow' && lensStop.reason) {
+      finish(gateRoot, 'allow', lensStop.reason, lensStop.reason, toolName, { gate: lensStop.gate });
     }
     const route = repertoireRoute([toolName, cmd, content].filter(Boolean).join(' '));
 

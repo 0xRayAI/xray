@@ -4,7 +4,7 @@
 
 **4.1** — a suit that survives the context window
 
-Bifrost is the live board. Goggles reads one named plane.
+Bifrost is the live board. Goggles views one plane. A search runs inside that card.
 
 0xRay is a three-subsystem autonomous engine. The suit is the wear. Inference remembers. External Governance judges. The Autonomous Engine runs the work. The host you already run wears it: Grok, OpenCode, Hermes, OpenClaw, or Cursor. Memory, judgement, and payments come on with the suit. When the window closes, the next session wakes with the job, the page, and the laws.
 
@@ -59,7 +59,7 @@ Docs: [guides/autonomy-command](docs-site/docs/guides/autonomy-command.md) · Sk
 
 | Version | Highlights |
 |---------|------------|
-| **4.1.0** | Bifrost is the collector board. A cloud agent is a board row. A stuck card's L2 nudge goes to the CoS role. `live-inbox` requires `LIVE_URL`, `SEAT_KEYS_DIR`, and `LIVE_CURSORS`. Goggles reads one named plane. |
+| **4.1.0** | Bifrost is the collector board. A cloud agent is a board row. A stuck card's L2 nudge goes to the CoS role. `live-inbox` requires `LIVE_URL`, `SEAT_KEYS_DIR`, and `LIVE_CURSORS`. Goggles views one plane. The card is in LENS.md. A search runs inside that card. |
 | **4.0.43** | Confer completes only on a real PASS. Cursor gate events fail closed, except EACCES when a cloud wrapper cannot write dest. Gate C cannot be skipped. |
 | **4.0.42** | Confer votes. Burst runs the swarm. |
 | **4.0.41** | Wake cascade stays on the station module. A fresh wear fastens mill and inspect. Goggles records the worn package path. The live page plays the mesh in the browser. |

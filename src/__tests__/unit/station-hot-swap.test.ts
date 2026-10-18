@@ -290,6 +290,39 @@ describe('station hot-swap', () => {
     }
   });
 
+  it('a user prompt refreshes a stale pickup and leaves the notes body', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-station-prompt-refreshes-pickup-'));
+    try {
+      fs.mkdirSync(path.join(tmp, '.xray', 'state'), { recursive: true });
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'state', 'STATION.md'),
+        ['# Station', '', 'Intent: Views grow on feat/goggles-look.', 'Plan: Do not push.', ''].join('\n'),
+      );
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'state', 'NOTES.md'),
+        '**Pickup line:** stale line from before the cut.\n\n## Working notes\n\nkeep this body.\n',
+      );
+      const heat = applyStationHeat(
+        tmp,
+        'grok',
+        {
+          intent: 'did you survive the compaction how well.',
+          hookEvent: 'user_prompt_submit',
+        },
+        { host: 'grok', intent: 'older boot sentence' },
+      );
+      expect(heat.intent).toBe('Views grow on feat/goggles-look.');
+      expect(heat.notesLine).toBe('Notes: present');
+      const notes = fs.readFileSync(path.join(tmp, '.xray', 'state', 'NOTES.md'), 'utf8');
+      expect(notes).toContain('**Pickup line:** Views grow on feat/goggles-look.');
+      expect(notes).not.toContain('stale line');
+      expect(notes).toContain('## Working notes');
+      expect(notes).toContain('keep this body.');
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
   it('pre_compact keeps the ticket and refreshes the pickup', () => {
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-station-compact-keeps-ticket-'));
     try {

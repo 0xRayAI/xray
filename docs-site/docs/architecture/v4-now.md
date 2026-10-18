@@ -1,10 +1,10 @@
 ---
-sidebar_label: 4.0 now (handoff)
+sidebar_label: 4.0 handoff
 ---
 
-# 4.0 now — compaction handoff
+# 4.0 handoff
 
-Read [4.0 vision](./v4-vision.md) for why. This page is the **station card** so the next session wakes with the job. What's still open: [4.0 left](./v4-left.md).
+Read [4.0 vision](./v4-vision.md) for why. This page is the 4.0 compaction handoff. The live ticket is `.xray/state/STATION.md`. The suit era is 4.1. What's still open from that handoff: [4.0 left](./v4-left.md).
 
 ## What 4.0 is
 
@@ -14,7 +14,7 @@ The suit is the wear on a three-subsystem autonomous engine. Constitution always
 
 ## Line (feat/v4-temperament)
 
-Live npm: [`0xray`](https://www.npmjs.com/package/0xray). Tag `v4.0.0` on `0xRayAI/xray` `main` (`f80b42c`) is history. Next 4.x fix is `npm run release:npm` — never `release:major` (that becomes 5.0.0). Do not pin a patch number here.
+Do not pin a patch number here. Tag `v4.0.0` (`f80b42c`) is history. The suit era is 4.1. The next publish is a patch. Never `release:major` (that becomes 5.0.0).
 
 **Bone that is already worn (this machine + branch):**
 

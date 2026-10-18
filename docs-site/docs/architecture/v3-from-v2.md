@@ -1,5 +1,7 @@
 # 0xRay 4.0 from v2 — keep the marvel, trim the fat
 
+This page is the 4.0 record. The suit era is 4.1.
+
 v2 was forged as a **three-subsystem OS**. That design is not disposable. 4.0 wears that bone as a three-subsystem autonomous engine. The suit is the wear. 4.0 **tempers how loudly the engine speaks** to different hosts, and **cuts duplicate organs** that grew around the core.
 
 Grok 4.2 treated this architecture as the product. Grok 4.6 still does. The work now is discipline: same skeleton, less bloat.

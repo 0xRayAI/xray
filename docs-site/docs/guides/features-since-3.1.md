@@ -2,16 +2,20 @@
 
 Complete reference of capabilities through **0xRay 4.1**. 0xRay is a three-subsystem autonomous engine. The suit is the wear. Patch notes live here; kernel headers stay era `4.1`. 3.x development tags (3.1–3.5.x) remain below as history.
 
+## Unreleased
+
+Goggles keeps four planes: dev, integration, domain, and ecosystem. Each card is one thing. A search inside the current card runs. Any other search returns that card and does not run. Plates now exist for repertoire, dynamo, foundry, the delegation gate, temperament, asides, the inference cycle, Hermes, OpenClaw, OpenCode, the consumer MCP set, and confer. Confer stays off unless it is enabled.
+
 ## 4.1.0 — Bifrost board, goggles, wake
 
-Bifrost is the collector board. Goggles reads one named plane. 4.0.43 below is the earlier confer and hook cut. It was stamped and not published.
+Bifrost is the collector board. Goggles views one plane. The cards are in `.xray/state/LENS.md`. A search inside the current card runs. 4.0.43 below is the earlier confer and hook cut. It was stamped and not published.
 
 - **Board.** `house/live/feed/live_mesh.py` runs the collector and the board every `LIVE_WATCH_S` seconds (default 45). Reviews, merges, pushes, and CI land on the card. CI is not board traffic. `merged_by` is the GitHub merger, filled from `GET /pulls/:n` when the list payload omits it or only has the author. A cloud agent is a board row (`cloud_agents`): `bcId`, owning seat, linked card, and state `running`, `finished`, or `failed`.
 - **Nudge.** `evalNudges` sends a stuck card's L1 to the next owner or the card owner, L2 to the CoS role, and L3 back to the L1 seat, with the CoS role woken once to reassign. An unacked inbox line and a missing handoff stay on that seat for L1, L2, and L3. The CoS role is woken at L3 on those two ladders.
 - **Wake.** `grok-bot/templates/house/fleet/WAKE-ROUTINE.md` posts `live-inbox <seat> --turn start` on every turn and `--turn end` on every exit. Compaction is a wake. Notes are appended after every beat. One cloud agent per card.
 - **live-inbox.** `LIVE_URL`, `SEAT_KEYS_DIR`, and `LIVE_CURSORS` are required. A missing or empty one exits 2 and names it. The tool does not guess. Handoff requires `--sha` (7 to 64 hex digits).
 - **Lexicon.** `grok-bot/LEXICON.md` adds the handoff `--sha` row and the practice **button up**.
-- **Goggles.** A read names one plane. Recall opens that plate.
+- **Goggles.** A search inside the current card runs. Any other search returns the card and does not run. Opening a file on another card switches to that card. Recall still opens one plate.
 
 ## 4.0.43 — confer PASS, hooks fail closed
 

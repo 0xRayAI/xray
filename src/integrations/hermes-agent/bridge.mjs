@@ -920,13 +920,16 @@ async function handleDelegationGate(command, projectRoot, logDir) {
     const spoken = `${tool} ${JSON.stringify(args)}`.slice(0, 500);
     const { lensDecision, repertoireRoute } = await import("../hooks/pre-tool-speak.mjs");
     const lens = lensDecision(projectRoot, tool, spoken);
-    if (lens) {
+    if (lens?.decision === "deny") {
       return {
         allow: false,
         phase: "pre",
         gate: lens.gate || "lens",
         reason: lens.reason,
       };
+    }
+    if (lens?.decision === "allow" && lens.reason) {
+      return { phase: "pre", ...outcome, gate: "lens", reason: lens.reason };
     }
     const route = repertoireRoute(spoken);
     return { phase: "pre", ...outcome, ...(route || {}) };

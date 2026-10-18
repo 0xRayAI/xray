@@ -6,7 +6,7 @@ plate_type: domain model
 
 # Goggles
 
-It views one plane. The lens check is the one look that spans planes.
+It views one plane.
 
 ```
   ┌────────────────────────────────────────────────────────────┐
@@ -14,19 +14,19 @@ It views one plane. The lens check is the one look that spans planes.
   ├────────────────────────────────────────────────────────────┤
   │ · it views one plane                                       │
   │ · not every plane at once                                  │
-  │ · the lens check sweeps every card plane for shipped files │
-  │ · it names the first drift, or stays quiet on a match      │
+  │ · a session starts on dev                                  │
+  │ · the card is in LENS.md                                   │
   ├────────────────────────────────────────────────────────────┤
   │ REFUSED                                                    │
-  │ · an empty look                                            │
-  │ · kind and outer together                                  │
-  │ · a plane on an outer that has no card                     │
+  │ · a search outside the card does not run                   │
   └────────────────────────────────────────────────────────────┘
 ```
 
-A card views one plane. The lens check reads every card plane, but only the files the package ships (`package.json` `files`), so a packed install and the repo read the same. A file that does not ship is triage's job, one plane at a time.
+A session starts on dev. The card is in `.xray/state/LENS.md`. The planes are dev, integration, domain, and ecosystem. A search inside the current card runs. Any other search returns the card and does not run. Opening a file on another plane switches to that card.
 
-The refusals read: `Name a kind, one outer, or one plane.` · `Send kind or outer, not both.` · `plane goes with digest or triage only.`
+A thing on that plane has its own card. A card with no plate names the stamp-plate skill. Stamp one plate for that card.
+
+A name that is not a plane or a card says `Name one plane.`
 
 A checkout named `0xray` records `scripts/mjs/run-goggles-mcp.mjs`. Any other project records `node_modules/0xray/scripts/mjs/run-goggles-mcp.mjs`.
 

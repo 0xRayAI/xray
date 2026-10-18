@@ -5,33 +5,33 @@ sidebar_label: Lens gate
 
 # Lens gate
 
-A search names one plane or it stops.
+A search inside the current card runs.
 
 ```
 ┌────────────────────────────────────────────────────────────┐
 │ INPUT LAYER                                                │
 │   ┌────────────────────────────────────────────────────┐   │
-│   │ the tool name and the spoken text                     │   │
+│   │ the tool call and the file path                       │   │
 │   └──────────────────────────┬─────────────────────────┘   │
 └──────────────────────────────┼─────────────────────────────┘
              v
 ┌────────────┼───────────────────────────────────────────────┐
 │ PROCESSING LAYER                                            │
 │   ┌────────────────────────────────────────────────────┐   │
-│   │ count card-plane names                                │   │
+│   │ which plane the path is on                           │   │
 │   └──────────────────────────┬─────────────────────────┘   │
 └──────────────────────────────┼─────────────────────────────┘
                                v
 ┌──────────────────────────────┼─────────────────────────────┐
 │ OUTPUT LAYER                 v                             │
 │   ┌────────────────────────────────────────────────────┐   │
-│   │ allow on one name, otherwise stop                     │   │
+│   │ the card for the plane you are on                    │   │
 │   └────────────────────────────────────────────────────┘   │
 └────────────────────────────────────────────────────────────┘
 ```
 
-lensBeforeResearch in src/integrations/hooks/goggles-pipeline.mjs returns null when the call is not research, and when the spoken text names exactly one card plane. Zero names, or more than one, deny with Name one plane. A shell that reads a project source file is research. The first open of a source file that no lens lists is allowed and remembered. The next search stops until that file is on a lens and the plate is on disk. The hook does not author the plate. The plate that belongs here is pre-tool.
+lensBeforeResearch in src/integrations/hooks/goggles-pipeline.mjs looks at the path. A search inside the current card runs. Any other search returns the current card and does not run. Opening a file on the current plane adds nothing. Opening a file on another plane switches and returns that card. A file on no plane stays and returns the current card. The hook does not search the repo.
 
-Only the lens check spans planes. It reads, it does not search, so this gate does not stop it. Every other look and every search names one plane.
+A session starts on dev. Compact writes that same card back.
 
 stamped · 0xray 4.1.0

@@ -92,17 +92,14 @@ describe("wake cascade", () => {
       const cascadeLines = twice.split("\n").filter((line) => line.startsWith("Cascade:"));
       expect(cascadeLines).toEqual(["Cascade: record-map · notes 1 current"]);
 
-      const reading = look(["digest", "memory-recall"], root).text;
-      expect(reading).toContain("Cascade: record-map");
-      expect(reading).toContain("Station: .xray/state/STATION.md");
-      expect(reading).toContain("Notes page: .xray/state/NOTES.md");
-      expect(reading).toContain("index line beta is current");
-      expect(reading).not.toContain("index line alpha stays history");
-      expect(reading).toContain(`- ${saved.id}`);
+      const reading = look(["dev"], root).text;
+      expect(reading.startsWith("Plane: dev")).toBe(true);
+      expect(reading).not.toContain("Cascade:");
+      expect(reading).not.toContain("index line beta is current");
 
-      const ground = look(["digest", "ground"], root).text;
-      expect(ground.startsWith("Plane: ground")).toBe(true);
-      expect(ground).not.toContain("index line beta is current");
+      const other = look(["integration"], root).text;
+      expect(other.startsWith("Plane: integration")).toBe(true);
+      expect(other).not.toContain("index line beta is current");
 
       const laws = lawsPath(root);
       if (fs.existsSync(laws)) {
@@ -114,25 +111,18 @@ describe("wake cascade", () => {
       expect(working.cascade?.plane).toBe("record-map");
       expect(working.cascade?.notes).toBe(1);
       expect((working.cascade?.laws ?? []).join(" ")).not.toContain("index line");
-      const lawLine = (working.cascade?.laws ?? []).length
-        ? `Laws: ${(working.cascade?.laws ?? []).join(", ")}`
-        : "Laws: (none yet)";
-      expect(reading).toContain(lawLine);
 
       const looked = await dispatchTool(
         "look",
-        { outer: "digest", plane: "memory-recall" },
+        { plane: "dev" },
         root,
       );
       expect(looked.isError).toBe(false);
       const payload = looked.payload.content as LookCard;
-      expect(payload.plane).toBe("memory-recall");
-      expect(payload.cascade?.plane).toBe("record-map");
-      expect(payload.cascade?.notes?.map((note) => note.text)).toEqual([
-        "index line beta is current",
-      ]);
+      expect(payload.plane).toBe("dev");
+      expect(payload.cascade).toBeUndefined();
 
-      const plain = await dispatchTool("look", { outer: "digest", plane: "ground" }, root);
+      const plain = await dispatchTool("look", { plane: "integration" }, root);
       const plainCard = plain.payload.content as LookCard;
       expect(plainCard.cascade).toBeUndefined();
     } finally {

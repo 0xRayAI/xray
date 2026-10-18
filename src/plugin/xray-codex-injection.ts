@@ -184,7 +184,7 @@ export default async function xrayCodexPlugin(input: {
           root: string,
           toolName: string,
           spoken: string,
-        ) => { gate?: string; reason?: string } | null;
+        ) => { gate?: string; decision?: string; reason?: string } | null;
         repertoireRoute: (operation: string) => {
           hookSpecificOutput?: { additionalContext?: string };
         } | null;
@@ -200,9 +200,10 @@ export default async function xrayCodexPlugin(input: {
       if (speak) {
         const spoken = `${tool} ${JSON.stringify(args ?? {})}`.slice(0, 500);
         const lens = speak.lensDecision(directory, tool, spoken);
-        if (lens) {
+        if (lens?.decision === "deny") {
           throw new Error(`DELEGATION GATE: ${lens.reason ?? "lens"}`);
         }
+        if (lens?.reason) logger.log(lens.reason);
         const additional = speak.repertoireRoute(spoken)?.hookSpecificOutput?.additionalContext;
         if (additional) {
           logger.log(additional);

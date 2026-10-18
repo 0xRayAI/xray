@@ -2,7 +2,7 @@
  * Goggles MCP. Stdio. Server name `goggles`.
  * Tools: look, status_lens. Same organ as the CLI.
  */
-import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, realpathSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
@@ -14,32 +14,14 @@ const HERE = fileURLToPath(new URL('.', import.meta.url));
 const SERVER_NAME = 'goggles';
 /** Card planes come from the organ, not a hand-kept copy. */
 const CARD_PLANES = Array.isArray(bundled.CARD_PLANES) ? bundled.CARD_PLANES : [];
-const CARD_OUTERS = ['digest', 'triage'];
-const SCOPES = ['ecosystem', 'part', 'one flow', 'one artifact'];
 
 const LOOK_SCHEMA = {
   type: 'object',
   additionalProperties: false,
   properties: {
-    kind: {
-      type: 'string',
-      description: 'Use "0" or "actuality" for the lens. Send kind, outer, or plane: an empty look is refused. Never with outer: kind and outer together is refused.',
-      enum: ['0', 'actuality'],
-    },
-    outer: {
-      type: 'string',
-      description: 'One outer name. digest and triage return a card. The others return a reading.',
-      enum: ['dichotomy', 'syncopate', 'synthesis', 'digest', 'triage', 'loop'],
-    },
-    scope: {
-      type: 'string',
-      description: 'Zoom only. Not a kind. One level.',
-      enum: SCOPES,
-    },
     plane: {
       type: 'string',
-      description: 'Card plane for digest or triage only. Not the lens. A plane with any other outer is refused.',
-      enum: CARD_PLANES,
+      description: 'A plane, or the card for one thing. Omit it to read the current card.',
     },
   },
 };
@@ -47,12 +29,12 @@ const LOOK_SCHEMA = {
 export const TOOLS = [
   {
     name: 'look',
-    description: 'Kind 0 is quiet on a match. It checks the six outer names, then sweeps every card plane for missing shipped files and names the first drift. One outer is a reading. digest and triage return a card. Refused: an empty look; kind with outer; a plane with an outer other than digest or triage.',
+    description: 'The card for this plane, or for one thing on it. Entry and Exit, and the other rows, are in LENS.md. A missing plate names the stamp-plate skill.',
     inputSchema: LOOK_SCHEMA,
   },
   {
     name: 'status_lens',
-    description: 'Whether the organ is worn, and the last Kind 0. Quiet is a match. A missing organ is not drift.',
+    description: 'Whether the organ is worn. A missing organ is not a card.',
     inputSchema: { type: 'object', additionalProperties: false, properties: {} },
   },
 ];
@@ -76,9 +58,6 @@ function deny(code, reason) {
   };
 }
 
-function quiet(mode) {
-  return { ok: true, quiet: true, mode, content: '' };
-}
 
 async function organApi() {
   const override = typeof process.env.GOGGLES_ORGAN_PATH === 'string'
@@ -96,123 +75,38 @@ function projectRoot(root) {
   return process.cwd();
 }
 
-function argvFrom(args) {
-  const words = [];
-  if (args.kind === '0') words.push('kind', '0');
-  else if (args.kind === 'actuality') words.push('actuality');
-  else if (args.kind === '1' || args.kind === '2') words.push('kind', String(args.kind));
-  else if (typeof args.kind === 'string') words.push(args.kind);
-  if (args.outer === 'outer loop') words.push('outer', 'loop');
-  else if (typeof args.outer === 'string') words.push(args.outer);
-  if (typeof args.plane === 'string') words.push(args.plane);
-  if (args.scope === 'one flow') words.push('one', 'flow');
-  else if (args.scope === 'one artifact') words.push('one', 'artifact');
-  else if (typeof args.scope === 'string') words.push(args.scope);
-  return words;
-}
-
-function pureKind0(args) {
-  return (args.kind === '0' || args.kind === 'actuality')
-    && args.outer == null
-    && args.plane == null
-    && args.scope == null;
-}
-
 function checkArgs(args) {
   if (!args || typeof args !== 'object' || Array.isArray(args)) {
     return deny('invalid_args', 'look takes an object.');
   }
-  const allowed = new Set(['kind', 'outer', 'scope', 'plane']);
+  const allowed = new Set(['plane']);
   for (const key of Object.keys(args)) {
     if (!allowed.has(key)) return deny('invalid_args', 'Unknown argument.');
   }
-  for (const key of ['kind', 'outer', 'scope', 'plane']) {
-    if (args[key] != null && typeof args[key] !== 'string') {
-      return deny('invalid_args', `${key} must be a string.`);
-    }
-  }
-  if (args.kind != null && !['0', 'actuality', '1', '2'].includes(args.kind)) {
-    return deny('invalid_args', 'kind is 0 or actuality.');
-  }
-  if (args.outer != null && !LOOK_SCHEMA.properties.outer.enum.includes(args.outer)) {
-    const setName = args.outer === 'outer' || args.outer === 'outer-loop' || args.outer === 'outer loop';
-    if (!setName) return deny('invalid_args', 'Name one outer.');
-  }
-  if (args.scope != null && !SCOPES.includes(args.scope)) {
-    return deny('invalid_args', 'scope is one zoom level.');
-  }
-  if (args.plane != null && !CARD_PLANES.includes(args.plane)) {
-    return deny('invalid_args', 'plane is a card plane.');
-  }
-  if (args.kind == null && args.outer == null && args.plane == null) {
-    return deny('invalid_args', 'Name a kind, one outer, or one plane.');
-  }
-  if (args.kind != null && args.outer != null) {
-    return deny('invalid_args', 'Send kind or outer, not both.');
-  }
-  if (args.plane != null && args.outer != null && !CARD_OUTERS.includes(args.outer)) {
-    return deny('invalid_args', 'plane goes with digest or triage only.');
-  }
+  if (args.plane == null) return null;
+  if (typeof args.plane !== 'string') return deny('invalid_args', 'plane must be a string.');
+  if (typeof bundled.isCardName !== 'function' || !bundled.isCardName(args.plane)) return deny('invalid_args', 'Name one plane.');
   return null;
 }
 
 function publicCard(view) {
   const notes = [];
-  if (view.flavor === 'triage') {
-    if (Array.isArray(view.empty) && view.empty.length) notes.push(`Empty: ${view.empty.join(', ')}`);
-    if (view.exam) notes.push(view.exam);
-  }
-  const skills = view.skills ? String(view.skills) : '';
-  const cascade = view.cascade
-    ? {
-      plane: view.cascade.plane,
-      station: view.cascade.station,
-      notesPage: view.cascade.notesPage,
-      index: view.cascade.index,
-      laws: Array.isArray(view.cascade.laws) ? view.cascade.laws : [],
-      notes: Array.isArray(view.cascade.notes) ? view.cascade.notes : [],
-    }
-    : null;
-  const sleeve = view.sleeve
-    ? {
-      on: Boolean(view.sleeve.on),
-      missing: Array.isArray(view.sleeve.missing) ? view.sleeve.missing : [],
-      stitches: Array.isArray(view.sleeve.stitches)
-        ? view.sleeve.stitches.map((row) => ({
-          name: String(row && row.name || ''),
-          on: Boolean(row && row.on),
-          at: Array.isArray(row && row.at) ? row.at.map((item) => String(item)) : [],
-        }))
-        : [],
-    }
-    : null;
-  if (view.narrow) {
-    return {
-      plane: view.plane,
-      flavor: view.flavor,
-      digest: view.digest || '',
-      files: Array.isArray(view.files) ? view.files : [],
-      notes,
-      ...(cascade ? { cascade } : {}),
-      ...(sleeve ? { sleeve } : {}),
-    };
-  }
+  if (typeof view.exam === 'string' && view.exam.startsWith('Drift:')) notes.push(view.exam);
   return {
     plane: view.plane,
-    flavor: view.flavor,
     from: view.from || '',
     digest: view.digest || '',
     plate: view.plate || '',
     entry: view.entry || '',
     exit: view.exit || '',
     files: Array.isArray(view.files) ? view.files : [],
-    skills,
+    skills: view.skills ? String(view.skills) : '',
     setup: view.setup || '',
     teardown: view.teardown || '',
     worn: view.worn || '',
+    card: view.card || view.plane || '',
+    stamp: view.stamp || '',
     notes,
-    ...(cascade ? { cascade } : {}),
-    ...(sleeve ? { sleeve } : {}),
   };
 }
 
@@ -226,75 +120,22 @@ export async function answerLook(raw, root) {
   const api = await organApi();
   if (!api) return deny('invalid_args', 'Goggles organ not found.');
   const here = projectRoot(root);
-  if (pureKind0(args)) {
-    api.maintainLens(here);
-    const line = api.actualityLine() || cardDrift(api, here);
-    if (line) writeLens(api, here, line);
-    if (!line) return quiet('kind0');
-    return { ok: true, quiet: false, mode: 'kind0', content: line };
-  }
-  const argv = argvFrom(args);
+  const argv = args.plane == null ? [] : [args.plane];
   const text = api.look(argv, here).text;
   if (text === 'Name one plane.') return deny('name_one', 'Name one plane.');
   const cards = api.lookCards(argv, here);
-  if (Array.isArray(cards) && cards.length) {
-    const shown = cards.map(publicCard);
-    if (shown.length === 1 && shown[0] && typeof shown[0].plane === 'string') {
-      const dest = join(here, '.xray', 'state', 'goggles-plane.json');
-      mkdirSync(dirname(dest), { recursive: true });
-      writeFileSync(dest, `${JSON.stringify({ plane: shown[0].plane })}\n`);
-    }
-    return {
-      ok: true,
-      quiet: false,
-      mode: 'card',
-      content: shown.length === 1 ? shown[0] : shown,
-      outer: args.outer,
-      scope: args.scope || null,
-    };
-  }
-  if (!text) {
-    if (args.kind === '0' || args.kind === 'actuality') return quiet('kind0');
-    if (args.outer === 'digest' || args.outer === 'triage') return quiet('card');
-    return quiet('reading');
-  }
-  if (text.startsWith('Actuality. Drift:')) {
-    return { ok: true, quiet: false, mode: 'kind0', content: text };
+  if (!Array.isArray(cards) || !cards.length) return deny('name_one', 'Name one plane.');
+  const shown = cards.map(publicCard);
+  if (shown.length === 1 && shown[0]) {
+    const heldName = shown[0].card || shown[0].plane;
+    if (heldName) api.holdPlane(here, heldName);
   }
   return {
     ok: true,
     quiet: false,
-    mode: 'reading',
-    content: text,
-    outer: args.outer ?? null,
-    scope: args.scope || null,
+    mode: 'card',
+    content: shown.length === 1 ? shown[0] : shown,
   };
-}
-
-/** Kind 0 card sweep: triage's file check on every card plane, shipped paths only. */
-function cardDrift(api, here) {
-  if (typeof api.shippedDrift !== 'function') return '';
-  try {
-    return api.shippedDrift(here);
-  } catch {
-    return '';
-  }
-}
-
-function writeLens(api, here, line) {
-  const file = api.lensPath(here);
-  mkdirSync(dirname(file), { recursive: true });
-  writeFileSync(file, `${line}\n`);
-}
-
-function lensBody(root) {
-  const file = join(root, '.xray', 'state', 'LENS.md');
-  if (!existsSync(file)) return { found: false, text: '' };
-  try {
-    return { found: true, text: readFileSync(file, 'utf8').trim() };
-  } catch {
-    return { found: false, text: '' };
-  }
 }
 
 export async function answerStatus(root) {
@@ -307,28 +148,11 @@ export async function answerStatus(root) {
   const organOk = existsSync(organPath);
   const planesOk = Boolean(planesPath) && existsSync(planesPath);
   const worn = Boolean(api) && organOk && planesOk;
-  const here = projectRoot(root);
-  const lens = lensBody(here);
-  let kind0 = 'none';
-  let kind0Text = '';
-  if (lens.found && (!lens.text || lens.text === 'quiet (match)')) kind0 = 'quiet';
-  else if (lens.found) {
-    kind0 = 'drift';
-    kind0Text = lens.text;
-  } else if (worn) {
-    const line = api.actualityLine();
-    if (line) {
-      kind0 = 'drift';
-      kind0Text = line;
-    }
-  }
   return {
     ok: true,
     organ: worn ? 'worn' : 'not_found',
     organPath: organOk ? organPath : '',
     planesPath: planesOk ? planesPath : '',
-    kind0,
-    kind0Text,
     lensPath: '.xray/state/LENS.md',
   };
 }

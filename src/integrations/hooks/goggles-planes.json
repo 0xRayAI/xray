@@ -1,5 +1,4 @@
 {
-  "actuality": "map vs worn",
   "planes": ["dichotomy", "syncopate", "synthesis", "digest", "triage", "loop"],
   "scope": ["ecosystem", "part", "one flow", "one artifact"],
   "ground": {
@@ -11,13 +10,13 @@
       "src/opencode/agents",
       "AGENTS.md",
       "src/integrations",
-      "package.json",
-      "scripts/foundry"
+      "package.json"
     ],
     "skills": "SKILLS.md"
   },
   "synthesis": {
-    "file": "src/nucleus/synthesis.ts"
+    "file": "src/nucleus/synthesis.ts",
+    "skills": ".agents/skills/synthesis/SKILL.md"
   },
   "routing": {
     "files": ["src/nucleus/thin-dispatch.ts"],
@@ -220,6 +219,55 @@
     "mark": "function wakeOrder",
     "skills": ".agents/skills/centrifuge/SKILL.md",
     "plates": ["station-card", "goggles"]
+  },
+  "repertoire": {
+    "file": "src/memory-routing",
+    "skills": ".agents/skills/repertoire/SKILL.md"
+  },
+  "dynamo": {
+    "file": "docs-site/docs/guides/self-hosting-dynamo.md",
+    "skills": ".agents/skills/dynamo/SKILL.md"
+  },
+  "foundry": {
+    "root": "scripts/foundry",
+    "file": "scripts/foundry/release.mjs",
+    "skills": ".agents/skills/foundry/SKILL.md"
+  },
+  "delegation-gate": {
+    "file": "src/nucleus/delegation-gate.ts",
+    "skills": ".agents/skills/delegation-gate/SKILL.md"
+  },
+  "temperament": {
+    "file": "src/nucleus/suit-temperament.ts",
+    "skills": ".agents/skills/temperament/SKILL.md"
+  },
+  "asides": {
+    "file": "src/nucleus/user-aside.ts",
+    "skills": ".agents/skills/asides/SKILL.md"
+  },
+  "inference-cycle": {
+    "file": "src/inference/inference-cycle.ts",
+    "skills": ".agents/skills/inference-cycle/SKILL.md"
+  },
+  "hermes": {
+    "file": "src/integrations/hermes-agent",
+    "skills": ".agents/skills/hermes/SKILL.md"
+  },
+  "openclaw": {
+    "file": "src/integrations/openclaw",
+    "skills": ".agents/skills/openclaw/SKILL.md"
+  },
+  "opencode": {
+    "file": "src/cli/commands/opencode-install.ts",
+    "skills": ".agents/skills/opencode/SKILL.md"
+  },
+  "consumer-mcp": {
+    "root": "src/mcps",
+    "file": ".mcp.json",
+    "skills": ".agents/skills/consumer-mcp/SKILL.md"
+  },
+  "confer": {
+    "file": "src/nucleus/confer.ts",
+    "skills": ".agents/skills/confer/SKILL.md"
   }
 }
-
