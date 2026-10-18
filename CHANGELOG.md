@@ -6,17 +6,33 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
-npm latest is 4.1.0. The notes under [4.1.0] are that publish.
+## [4.1.1] - 2026-10-18
+
+Work on main after 4.1.0.
 
 ### Wear
 
-The mill suit wears every catalog skill and every role file when costume is off. The mill plant stays `mill` and `inspect`. A blip or sound seat fastens that plant only. A name outside the fastened set still fails inspect.
+The mill suit wears every catalog skill and every role file when costume is off. The mill plant stays `mill` and `inspect`. A blip or sound seat fastens that plant only. A name outside the fastened set still fails inspect. (#379)
 
 ### Goggles
 
-The lens file is `.xray/state/LENS.md`. The planes are dev, integration, domain, and ecosystem. A search inside the current card runs. Any other search returns the current card and does not run. A path switches the card. A missing plate names the stamp-plate skill.
+The lens file is `.xray/state/LENS.md`. The planes are dev, integration, domain, and ecosystem. A search runs only inside the current card. Any other search returns that card and does not run. A path switches the card. (#371)
 
-Plates for repertoire, dynamo, foundry, the delegation gate, temperament, asides, the inference cycle, Hermes, OpenClaw, OpenCode, the consumer MCP set, and confer.
+Each card lists three to five skills in hand order. That list is the skills seek. The first skill that fits wins. If none fit, plate recall returns a skill name or declines. The seek does not call a model. A stored lens that still points at the catalog is rewritten to that list before the seek. Wear and doctor fail when a fastened suit turns goggles off. (#390)
+
+### Live inbox
+
+A seat can ack an inbox line after the pull has merged or the line was dropped. (#375)
+
+### Docs
+
+Four broken repository links on the docs site are fixed. (#383)
+
+The grok-bot notes cover the memory packet, the duplicate-agent guard, and no local builds. (#378)
+
+### Skills
+
+`draw-stamped-card` and the bifrost-storyboard recipe are in the catalog. (#370)
 
 ## [4.1.0] - 2026-10-15
 
