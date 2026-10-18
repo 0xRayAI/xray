@@ -231,7 +231,7 @@
   "foundry": {
     "root": "scripts/foundry",
     "file": "scripts/foundry/release.mjs",
-    "skills": "foundry, suit-wear, package-face, consumer-mcp"
+    "skills": "foundry, npm-publish, suit-wear, package-face, consumer-mcp"
   },
   "delegation-gate": {
     "file": "src/nucleus/delegation-gate.ts",

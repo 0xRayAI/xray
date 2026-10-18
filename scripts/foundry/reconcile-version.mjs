@@ -20,7 +20,7 @@ import { execSync } from "child_process";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { readRootPackage, resolveMillRoot } from "./mill-root.mjs";
+import { isXrayExoRepo, readRootPackage, resolveMillRoot } from "./mill-root.mjs";
 import { packageLockVersions, syncPackageLockVersion } from "./version-manager.mjs";
 
 const rootDir = resolveMillRoot();
@@ -134,6 +134,13 @@ function main() {
   }
 
   if (applyMode && bumpType) {
+    if (isXrayExoRepo(rootDir) && process.env.FOUNDRY_VIA_RELEASE !== "1") {
+      fail(
+        "This repo bumps only through scripts/foundry/release.mjs.\n" +
+          "Ship: node scripts/foundry/release.mjs patch --i-mean-it\n" +
+          "Already bumped: node scripts/foundry/release.mjs --publish-only --i-mean-it",
+      );
+    }
     const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf-8"));
     pkg.version = target;
     fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + "\n");

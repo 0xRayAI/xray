@@ -581,7 +581,7 @@ Plate: docs-site/docs/plates/foundry.md
 Entry: a version bump
 Exit: the registry lists that version
 Files: scripts/foundry, scripts/foundry/release.mjs
-Skills: foundry, suit-wear, package-face, consumer-mcp
+Skills: foundry, npm-publish, suit-wear, package-face, consumer-mcp
 Setup:
 Teardown:
 Worn:

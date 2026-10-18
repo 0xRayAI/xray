@@ -91,7 +91,7 @@ describe('foundry mill — one bumper', () => {
         encoding: 'utf8',
       });
       expect(r.status, arg).not.toBe(0);
-      expect(`${r.stdout}${r.stderr}`).toMatch(/reconcile/);
+      expect(`${r.stdout}${r.stderr}`).toMatch(/release\.mjs/);
     }
   });
 
@@ -1659,6 +1659,36 @@ describe('foundry mill — flesh', () => {
       expect(log).toContain('## [1.2.4]');
       expect(log.indexOf('## [Unreleased]')).toBeLessThan(log.indexOf('## [1.2.4]'));
       expect(log.indexOf('## [1.2.4]')).toBeLessThan(log.indexOf('## [1.2.3]'));
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('the exo repo refuses a stamp that did not come from release.mjs', () => {
+    const tmp = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-exo-stamp-'));
+    try {
+      writeFileSync(
+        path.join(tmp, 'package.json'),
+        `${JSON.stringify({ name: '0xray', version: '1.2.3' }, null, 2)}\n`,
+      );
+      mkdirSync(path.join(tmp, 'docs-site'));
+      const env = { ...process.env, FOUNDRY_ROOT: tmp };
+      delete env.FOUNDRY_VIA_RELEASE;
+      const stamp = spawnSync(process.execPath, ['scripts/foundry/version-manager.mjs', '--artifacts-only'], {
+        cwd: root,
+        encoding: 'utf8',
+        env,
+      });
+      expect(stamp.status, `${stamp.stdout}${stamp.stderr}`).not.toBe(0);
+      expect(`${stamp.stdout}${stamp.stderr}`).toMatch(/scripts\/foundry\/release\.mjs/);
+      const bump = spawnSync(
+        process.execPath,
+        ['scripts/foundry/reconcile-version.mjs', 'patch', '--apply'],
+        { cwd: root, encoding: 'utf8', env },
+      );
+      expect(bump.status, `${bump.stdout}${bump.stderr}`).not.toBe(0);
+      expect(`${bump.stdout}${bump.stderr}`).toMatch(/scripts\/foundry\/release\.mjs/);
+      expect(readFileSync(path.join(tmp, 'package.json'), 'utf8')).toContain('"version": "1.2.3"');
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }

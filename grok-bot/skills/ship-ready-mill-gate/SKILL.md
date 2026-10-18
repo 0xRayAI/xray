@@ -1,8 +1,8 @@
 ---
 name: Ship-ready mill gate
 description: >-
- use this when deciding if a mill/factory product may merge or release;
- Strict full gate — Light/Normal skip long reviews; plain language
+  Use when deciding if a mill may merge or release, and for the npm OTP link,
+  the approval link, and https://www.npmjs.com/auth/cli. The release script is the only stamp.
 ---
 # Ship-ready mill gate
 
