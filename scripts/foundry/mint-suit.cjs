@@ -888,7 +888,26 @@ function mintConsumerFromSsot(packageRoot, targetDir, log, tree) {
   return withDna;
 }
 
+
+function gogglesDisabled(targetDir) {
+  const file = path.join(targetDir, ".xray", "features.json");
+  if (!fs.existsSync(file)) return false;
+  try {
+    const data = JSON.parse(fs.readFileSync(file, "utf8"));
+    return Boolean(data && data.goggles && data.goggles.enabled === false);
+  } catch {
+    return false;
+  }
+}
+
+function assertGogglesOn(targetDir) {
+  if (gogglesDisabled(targetDir)) {
+    throw new Error("goggles off — the suit keeps goggles on");
+  }
+}
+
 function mintConsumerSuit(millPackageRoot, targetDir, log) {
+  assertGogglesOn(targetDir);
   if (isDogfood(millPackageRoot, targetDir)) {
     return { suit: "dogfood", skipped: true };
   }
@@ -921,6 +940,7 @@ function mintConsumerSuit(millPackageRoot, targetDir, log) {
     resolveInside(targetDir, params.features),
     path.join(targetDir, ".xray", "features.json"),
   );
+  assertGogglesOn(targetDir);
   tree.config = overlayJsonFacet(
     resolveInside(targetDir, params.config),
     path.join(targetDir, ".xray", "config.json"),
@@ -981,6 +1001,7 @@ module.exports = {
   listProjectSkillDirs,
   mintConsumerFromSsot,
   mintConsumerSuit,
+  assertGogglesOn,
   attachInventoryDna,
   inventoryDna,
   isDogfood,

@@ -11,6 +11,7 @@
  */
 import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, unlinkSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
+import { seekSkill, skillIdsFromRow, staleSkillRow } from './skill-seek.mjs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -45,7 +46,7 @@ const PLANE_ROWS = {
     entry: 'package.json, src, and grok-bot/OP-PROC.md.',
     exit: 'A change that stays in this repo.',
     files: 'src, grok-bot, docs-site, AGENTS.md, package.json, README.md',
-    skills: 'SKILLS.md',
+    skills: 'orchestrator, researcher, project-analysis, git-workflow, tech-writer',
     setup: 'You are in this repo.',
     teardown: 'Leave other repos alone.',
     worn: '',
@@ -57,7 +58,7 @@ const PLANE_ROWS = {
     entry: 'The hook, the dispatch, or the bridge this file sits on.',
     exit: 'The next call. Stop there.',
     files: 'src/integrations, src/nucleus, src/governance, src/mcps, src/processors, src/reporting, src/core/boot-orchestrator.ts, grok-bot/lib, grok-bot/templates',
-    skills: 'SKILLS.md',
+    skills: 'routing, orchestration, boot-orchestrator, enforcer, hermes-agent',
     setup: 'One connection at a time.',
     teardown: 'Do not sweep the rest of the repo.',
     worn: '',
@@ -69,7 +70,7 @@ const PLANE_ROWS = {
     entry: 'The plate under docs-site/docs/plates, or the plate reader.',
     exit: 'The entry and exit written on that plate.',
     files: 'docs-site/docs/plates, src/integrations/hooks/plates.cjs, .agents/skills',
-    skills: '.agents/skills',
+    skills: 'lens-gate, stamp-plate, record-map, station-card, memory-recall',
     setup: 'One plate is in the frame.',
     teardown: 'The plate is the drawing. The code stays on dev or integration.',
     worn: '',
@@ -81,7 +82,7 @@ const PLANE_ROWS = {
     entry: 'scripts/foundry, and the @0xray packages this repo wears.',
     exit: 'Back to this checkout when the change is here.',
     files: 'scripts/foundry, node_modules/@0xray',
-    skills: '',
+    skills: 'foundry, suit-wear, consumer-mcp, house, package-face',
     setup: 'The outside package is not this repo.',
     teardown: 'Do not edit a worn package from here.',
     worn: 'node_modules/@0xray',
@@ -934,6 +935,74 @@ export function planeCard(root) {
   return { plane, card: cardText(root, currentCard(root)) };
 }
 
+
+function rankedSkillRow(id) {
+  const builtin = PLANE_ROWS[id];
+  if (builtin && builtin.skills) return builtin.skills;
+  const row = overlayTable()[id];
+  return row && typeof row.skills === 'string' ? row.skills : '';
+}
+
+function skillNamesOnCards() {
+  const names = new Set();
+  for (const row of Object.values(PLANE_ROWS)) {
+    for (const id of skillIdsFromRow(row.skills)) names.add(id);
+  }
+  for (const row of Object.values(overlayTable())) {
+    if (!row || typeof row.skills !== 'string') continue;
+    for (const id of skillIdsFromRow(row.skills)) names.add(id);
+  }
+  return names;
+}
+
+/** Replace a stored Skills row that still points at the catalog or one file. */
+export function migrateLensSkills(root) {
+  const prev = readLensText(root);
+  if (!prev) return false;
+  const cards = lensCards(prev);
+  let next = prev;
+  let changed = false;
+  for (const [id, block] of cards) {
+    const current = cardRow(block, 'Skills');
+    const ranked = rankedSkillRow(id);
+    if (!ranked || !staleSkillRow(current) || current === ranked) continue;
+    const updated = block.replace(/^Skills:.*$/m, `Skills: ${ranked}`);
+    if (!next.includes(block)) continue;
+    next = next.replace(block, updated);
+    changed = true;
+  }
+  if (!changed) return false;
+  writeFileSync(lensPath(root), next.endsWith('\n') ? next : `${next}\n`);
+  return true;
+}
+
+/** Read the held card's skill list. Plate recall runs only when the list has no fit. */
+export function seekHeldCard(root, need, opts = {}) {
+  const id = currentCard(root);
+  migrateLensSkills(root);
+  const shown = lookCards([id], root);
+  const skills = (shown && shown[0] && shown[0].skills) || rankedSkillRow(id);
+  const recall = typeof opts.recall === 'function'
+    ? opts.recall
+    : (text) => {
+        try {
+          return createRequire(import.meta.url)('./plates.cjs').recallPlate(text);
+        } catch {
+          return null;
+        }
+      };
+  return seekSkill({
+    skills,
+    need,
+    taskType: opts.taskType || '',
+    workKind: opts.workKind || '',
+    recall,
+    known: skillNamesOnCards(),
+    cardSkills: rankedSkillRow,
+  });
+}
+
+
 function targetOf(file) {
   const thing = thingOfPath(file);
   const plane = planeOfPath(file) || (thing ? planeForCard(thing) : '');
@@ -1194,6 +1263,7 @@ export function fillLensCard(root, id) {
 }
 
 export function maintainLens(root) {
+  migrateLensSkills(root);
   const held = heldCardPlane(root);
   if (held) fillLensCard(root, held.id);
   const prev = readLensText(root);

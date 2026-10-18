@@ -186,3 +186,8 @@ Every bolded term in the pack OP-PROC and runbooks is defined here (`bifrost che
 | **boil-up** | Workstream | A periodic correlate-and-sync pass over OP-PROC (a rules engine for bots): similar, compounding rules merge into one broader rule. CoS triggers it every few waves or past 70 of 75 lines. |
 | **activity key** | Workstream | The per-seat `SEAT_KEYS` hash on `POST /activity`. The seat posts only as itself. A cross-seat `seat` is `403` seat mismatch. |
 | **button up** | Practices | When weekly burn hits the hold line, every seat stops new work, runs no local builds, tests, or deploys on its own computer, pauses its Bifrost inbox wake until the reset, leaves only cloud agents for anything essential, and reports and acks in the room. |
+
+## Lexicon add (2026-10-18 — seek)
+| Term | Bucket | Plain |
+|------|--------|-------|
+| **seek** | Workstream | A cheap-first choice. A branch, then a table, then a score. The skills seek reads the ranked list on the held card, then plate recall, and declines when both miss. It does not call a model. Confer on the result is only a feat or a refactor, and the quorum stays off. |

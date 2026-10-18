@@ -193,6 +193,9 @@ describe('grok-bot seat doctor — diagnose', () => {
       writeSeat(dir);
       installXrayPkg(dir);
       writeInventory(dir);
+      const organ = path.join(dir, 'node_modules', '0xray', 'dist', 'integrations', 'hooks');
+      mkdirSync(organ, { recursive: true });
+      writeFileSync(path.join(organ, 'goggles-pipeline.mjs'), 'export {}\n');
       const report = diagnoseSeat({ cwd: dir, home: dir });
       expect(report.ok).toBe(true);
       expect(report.plant.installed).toBe(true);
@@ -853,6 +856,60 @@ describe('grok-bot seat doctor — cadence warnings', () => {
       goodActivity(dir);
       writeSuitCodex(dir, 69, '2026-08-24');
       expect(warningsOf(dir).some((line) => line.includes('codex'))).toBe(false);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('grok-bot seat doctor — goggles stays on', () => {
+  it('fails a fastened suit when goggles is off', () => {
+    const dir = scratch();
+    try {
+      writeSeat(dir);
+      plantMillInspect(dir);
+      writeInventory(dir);
+      mkdirSync(path.join(dir, '.xray'), { recursive: true });
+      writeFileSync(
+        path.join(dir, '.xray', 'features.json'),
+        `${JSON.stringify({ goggles: { enabled: false } }, null, 2)}\n`,
+      );
+      const report = diagnoseSeat({ cwd: dir, home: dir });
+      expect(report.plant.ok).toBe(false);
+      expect(formatDoctor(report)).toContain('Goggles: FAIL — goggles.enabled is false');
+      expect(report.next[0]).toBe('Turn goggles on. The suit keeps the lens.');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('fails a fastened suit when the goggles organ is missing', () => {
+    const dir = scratch();
+    try {
+      writeSeat(dir);
+      plantMillInspect(dir);
+      writeInventory(dir);
+      const report = diagnoseSeat({ cwd: dir, home: dir });
+      expect(report.plant.ok).toBe(false);
+      expect(formatDoctor(report)).toContain('Goggles: FAIL — goggles organ missing');
+      expect(report.next[0]).toBe('Restore the goggles organ. The suit keeps the lens.');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('passes goggles when the organ is in the worn package', () => {
+    const dir = scratch();
+    try {
+      writeSeat(dir);
+      plantMillInspect(dir);
+      writeInventory(dir);
+      const organ = path.join(dir, 'node_modules', '0xray', 'dist', 'integrations', 'hooks');
+      mkdirSync(organ, { recursive: true });
+      writeFileSync(path.join(organ, 'goggles-pipeline.mjs'), 'export {}\n');
+      const report = diagnoseSeat({ cwd: dir, home: dir });
+      expect(report.plant.ok).toBe(true);
+      expect(formatDoctor(report)).toContain('Goggles: on');
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

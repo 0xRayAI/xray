@@ -6,6 +6,7 @@ import { writeSessionBoot } from '../../integrations/grok/hooks/grok-hook-utils.
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import {
+  CARD_PLANES,
   findPlatesDir,
   formatCardPane,
   handCard,
@@ -18,9 +19,11 @@ import {
   maintainLens,
   PATH_OWNER,
   readLensCard,
+  seekHeldCard,
   suitHint,
   thingOfPath,
 } from '../../integrations/hooks/goggles-pipeline.mjs';
+import { skillIdsFromRow } from '../../integrations/hooks/skill-seek.mjs';
 
 const DEV_CARD = [
   'Plane: dev',
@@ -30,7 +33,7 @@ const DEV_CARD = [
   'Entry: package.json, src, and grok-bot/OP-PROC.md.',
   'Exit: A change that stays in this repo.',
   'Files: src, grok-bot, docs-site, AGENTS.md, package.json, README.md',
-  'Skills: SKILLS.md',
+  'Skills: orchestrator, researcher, project-analysis, git-workflow, tech-writer',
   'Setup: You are in this repo.',
   'Teardown: Leave other repos alone.',
   'Worn:',
@@ -364,7 +367,7 @@ describe('goggles plate', () => {
         'package.json',
         'README.md',
       ]);
-      expect(card.skills).toBe('SKILLS.md');
+      expect(card.skills).toBe('orchestrator, researcher, project-analysis, git-workflow, tech-writer');
       expect(card.setup).toBe('You are in this repo.');
       expect(card.teardown).toBe('Leave other repos alone.');
       expect(card.worn).toBe('');

@@ -5,7 +5,7 @@ Plate:
 Entry: package.json, src, and grok-bot/OP-PROC.md.
 Exit: A change that stays in this repo.
 Files: src, grok-bot, docs-site, AGENTS.md, package.json, README.md
-Skills: SKILLS.md
+Skills: orchestrator, researcher, project-analysis, git-workflow, tech-writer
 Setup: You are in this repo.
 Teardown: Leave other repos alone.
 Worn:
@@ -17,7 +17,7 @@ Plate:
 Entry: The hook, the dispatch, or the bridge this file sits on.
 Exit: The next call. Stop there.
 Files: src/integrations, src/nucleus, src/governance, src/mcps, src/processors, src/reporting, src/core/boot-orchestrator.ts, grok-bot/lib, grok-bot/templates
-Skills: SKILLS.md
+Skills: routing, orchestration, boot-orchestrator, enforcer, hermes-agent
 Setup: One connection at a time.
 Teardown: Do not sweep the rest of the repo.
 Worn:
@@ -29,7 +29,7 @@ Plate: docs-site/docs/plates
 Entry: The plate under docs-site/docs/plates, or the plate reader.
 Exit: The entry and exit written on that plate.
 Files: docs-site/docs/plates, src/integrations/hooks/plates.cjs, .agents/skills
-Skills: .agents/skills
+Skills: lens-gate, stamp-plate, record-map, station-card, memory-recall
 Setup: One plate is in the frame.
 Teardown: The plate is the drawing. The code stays on dev or integration.
 Worn:
@@ -41,7 +41,7 @@ Plate:
 Entry: scripts/foundry, and the @0xray packages this repo wears.
 Exit: Back to this checkout when the change is here.
 Files: scripts/foundry, node_modules/@0xray
-Skills:
+Skills: foundry, suit-wear, consumer-mcp, house, package-face
 Setup: The outside package is not this repo.
 Teardown: Do not edit a worn package from here.
 Worn: node_modules/@0xray
@@ -54,7 +54,7 @@ Plate: docs-site/docs/plates/ground.md
 Entry: this checkout
 Exit: a change that stays in this repo
 Files: src, grok-bot/OP-PROC.md, grok-bot/LEXICON.md, src/opencode/agents, AGENTS.md, src/integrations, package.json
-Skills: SKILLS.md
+Skills: orchestrator, researcher, project-analysis, git-workflow, tech-writer
 Setup:
 Teardown:
 Worn:
@@ -67,7 +67,7 @@ Plate: docs-site/docs/plates/synthesis.md
 Entry: a gate, a turn, or a finished todo
 Exit: due or not due
 Files: src/nucleus/synthesis.ts
-Skills: .agents/skills/synthesis/SKILL.md
+Skills: synthesis, confer, inference-cycle, temperament
 Setup:
 Teardown:
 Worn:
@@ -81,7 +81,7 @@ Plates: orchestration, processor
 Entry: task text · context · thresholds
 Exit: agent · strategy · adjusted score · file
 Files: src/nucleus/thin-dispatch.ts
-Skills: .agents/skills/routing/SKILL.md
+Skills: routing, orchestration, processor-pipeline, delegation-gate
 Setup:
 Teardown:
 Worn: dist/nucleus/thin-dispatch.js
@@ -95,7 +95,7 @@ Plates: suit-wear
 Entry: EMPTY
 Exit: DOCTOR · House: PASS?
 Files: grok-bot/lib/seat-doctor.cjs, grok-bot/templates/house/fleet/WAKE-ROUTINE.md, grok-bot/templates/house/HOUSE.md, src/__tests__/unit/grok-bot-house-template.test.ts, src/__tests__/unit/grok-bot-house-migrate.test.ts
-Skills: .agents/skills/house/SKILL.md
+Skills: house, suit-wear, record-map, activity-log
 Setup: no house/ folder yet
 Teardown: doctor checks it yes: House: PASS
 Worn:
@@ -109,7 +109,7 @@ Plates: suit-wear
 Entry: process start · SIGINT / SIGTERM
 Exit: BootResult
 Files: src/core/boot-orchestrator.ts
-Skills: src/skills/boot-orchestrator/SKILL.md
+Skills: boot-orchestrator, suit-wear, hermes-agent, opencode
 Setup:
 Teardown:
 Worn:
@@ -122,7 +122,7 @@ Plate: docs-site/docs/plates/governance.md
 Entry: proposal
 Exit: vote · codex decision
 Files: src/governance/governance-service.ts, src/governance/llm-governance-provider.ts
-Skills: .agents/skills/governance/SKILL.md
+Skills: governance, enforcer, dynamo, confer
 Setup:
 Teardown:
 Worn:
@@ -136,7 +136,7 @@ Plates: record-map
 Entry: intent
 Exit: plate line · stamp file
 Files: src/integrations/hooks/plates.cjs, src/__tests__/unit/plates.test.ts
-Skills: .agents/skills/memory-recall/SKILL.md
+Skills: memory-recall, record-map, repertoire, station-card
 Setup:
 Teardown:
 Worn:
@@ -150,7 +150,7 @@ Plates: routing, processor
 Entry: tool name · arguments
 Exit: tool result · aside id
 Files: src/mcps/orchestrator/server.ts
-Skills: .agents/skills/orchestration/SKILL.md
+Skills: orchestration, routing, processor-pipeline, strategist
 Setup:
 Teardown:
 Worn:
@@ -164,7 +164,7 @@ Plates: orchestration
 Entry: tool · args · operation
 Exit: pre result · post results
 Files: src/processors/processor-manager.ts
-Skills: src/skills/processor-pipeline/SKILL.md
+Skills: processor-pipeline, orchestration, routing
 Setup:
 Teardown:
 Worn:
@@ -178,7 +178,7 @@ Plates: activity-log, suit-organs
 Entry: activity log · schedule · CLI request
 Exit: report file · realtime health
 Files: src/reporting/framework-reporting-system.ts
-Skills: .agents/skills/reporting/SKILL.md
+Skills: reporting, activity-log, suit-organs, write-home
 Setup:
 Teardown:
 Worn:
@@ -192,7 +192,7 @@ Plates: review
 Entry: one plane that was opened
 Exit: the plate the lens can open
 Files: .agents/skills/stamp-plate/SKILL.md
-Skills: .agents/skills/stamp-plate/SKILL.md
+Skills: stamp-plate, lens-gate, record-map, site-manual
 Setup:
 Teardown:
 Worn:
@@ -206,7 +206,7 @@ Plates: station-card, notes-page, reflection-page, site-manual, package-face, wr
 Entry: which file
 Exit: the one path to open
 Files: docs-site/docs/plates/record-map.md, src/integrations/hooks/wake-cascade.cjs, src/integrations/hooks/session-note-index.cjs
-Skills: .agents/skills/record-map/SKILL.md
+Skills: record-map, station-card, notes-page, reflection-page, site-manual
 Setup:
 Teardown:
 Worn:
@@ -220,7 +220,7 @@ Plates: activity-log, session-capture, inference-files, trail-state, suit-wear
 Entry: activity log · inference files · cycle state
 Exit: .xray/logs/activity.log · .xray/inference
 Files: src/integrations/hooks/write-home.cjs
-Skills: .agents/skills/write-home/SKILL.md
+Skills: write-home, activity-log, session-capture, inference-files, trail-state
 Setup:
 Teardown:
 Worn:
@@ -234,7 +234,7 @@ Plates: write-home, reporting, suit-organs
 Entry: pipeline hook · grok hook · hermes · logger
 Exit: .xray/logs/activity.log
 Files: src/core/activity-logger.ts
-Skills: .agents/skills/activity-log/SKILL.md
+Skills: activity-log, write-home, reporting, suit-organs
 Setup:
 Teardown:
 Worn:
@@ -248,7 +248,7 @@ Plates: write-home, inference-files, suit-organs
 Entry: station HEAD move · saveSessionInference
 Exit: .xray/inference/latest-session.json
 Files: src/inference/session-capture.ts
-Skills: .agents/skills/session-capture/SKILL.md
+Skills: session-capture, write-home, inference-files, suit-organs
 Setup:
 Teardown:
 Worn:
@@ -262,7 +262,7 @@ Plates: suit-settings, write-home, package-face
 Entry: wear / postinstall
 Exit: consumer .xray/logs and .xray/inference
 Files: src/core/features-config.ts, scripts/node/install-bridges.cjs, scripts/node/setup.cjs, src/integrations/cursor/hooks/xray-cloud-hook.sh
-Skills: .agents/skills/suit-wear/SKILL.md
+Skills: suit-wear, suit-settings, write-home, package-face
 Setup:
 Teardown:
 Worn:
@@ -276,7 +276,7 @@ Plates: activity-log, session-capture, inference-files, trail-state
 Entry: activity log · latest-session.json
 Exit: report · heat line · cycle state
 Files: src/reporting/framework-reporting-system.ts
-Skills: .agents/skills/suit-organs/SKILL.md
+Skills: suit-organs, activity-log, session-capture, inference-files, trail-state
 Setup:
 Teardown:
 Worn:
@@ -290,7 +290,7 @@ Plates: notes-page, record-map, kept-line
 Entry: the card on disk
 Exit: the same job continues
 Files: src/integrations/hooks/station-hook-runtime.cjs, src/integrations/hooks/wake-cascade.cjs
-Skills: .agents/skills/station-card/SKILL.md
+Skills: station-card, notes-page, record-map, kept-line
 Setup:
 Teardown:
 Worn:
@@ -304,7 +304,7 @@ Plates: station-card, record-map
 Entry: the pickup line
 Exit: the next seat continues
 Files: src/integrations/hooks/station-hook-runtime.cjs, src/integrations/hooks/session-note-index.cjs
-Skills: .agents/skills/notes-page/SKILL.md
+Skills: notes-page, station-card, record-map, pickup-stamp
 Setup:
 Teardown:
 Worn:
@@ -318,7 +318,7 @@ Plates: record-map
 Entry: a session ends
 Exit: one reflection file
 Files: src/inference/inference-accumulator.ts
-Skills: .agents/skills/reflection-page/SKILL.md
+Skills: reflection-page, record-map, inference-files, storyteller
 Setup:
 Teardown:
 Worn:
@@ -332,7 +332,7 @@ Plates: record-map
 Entry: the product changed
 Exit: the manual matches the product
 Files: docs-site/docs/introduction.md, docs-site/docs/index.md, docs-site/docs/full-reference.md, docs-site/docs/guides/features-since-3.1.md
-Skills: .agents/skills/site-manual/SKILL.md
+Skills: site-manual, record-map, package-face, tech-writer
 Setup:
 Teardown:
 Worn:
@@ -346,7 +346,7 @@ Plates: record-map, suit-wear
 Entry: a release runs
 Exit: the published package
 Files: package.json, grok-bot/README.md, grok-bot/llms.txt, grok-bot/CHANGELOG.md, src/cli/index.ts, src/cli/commands/plugin-commands.ts, src/__tests__/unit/plugin-commands.test.ts
-Skills: .agents/skills/package-face/SKILL.md
+Skills: package-face, record-map, suit-wear, tech-writer
 Setup:
 Teardown:
 Worn:
@@ -360,7 +360,7 @@ Plates: suit-wear, record-map
 Entry: the suit is worn
 Exit: the agent reads settings
 Files: xray/features.json
-Skills: .agents/skills/suit-settings/SKILL.md
+Skills: suit-settings, suit-wear, record-map
 Setup:
 Teardown:
 Worn:
@@ -374,7 +374,7 @@ Plates: write-home, suit-organs
 Entry: a wake starts
 Exit: state under .xray
 Files: src/integrations/hooks/station-hook-runtime.cjs
-Skills: .agents/skills/trail-state/SKILL.md
+Skills: trail-state, write-home, suit-organs, station-card
 Setup:
 Teardown:
 Worn:
@@ -388,7 +388,7 @@ Plates: session-capture, write-home, suit-organs
 Entry: a cycle closes
 Exit: files under .xray/inference
 Files: src/inference/inference-accumulator.ts
-Skills: .agents/skills/inference-files/SKILL.md
+Skills: inference-files, session-capture, write-home, suit-organs
 Setup:
 Teardown:
 Worn:
@@ -402,7 +402,7 @@ Plates: payload-heat, cursor-compact, work-fresh
 Entry: a compact is about to happen
 Exit: the station card is written
 Files: src/integrations/grok/hooks/session-start.js
-Skills: .agents/skills/grok-compact/SKILL.md
+Skills: grok-compact, payload-heat, cursor-compact, work-fresh
 Setup:
 Teardown:
 Worn:
@@ -416,7 +416,7 @@ Plates: station-heat, pickup-stamp
 Entry: the compact event
 Exit: STATION.md is on disk
 Files: src/integrations/grok/hooks/grok-hook-utils.js
-Skills: .agents/skills/payload-heat/SKILL.md
+Skills: payload-heat, station-heat, pickup-stamp, grok-compact
 Setup:
 Teardown:
 Worn:
@@ -430,7 +430,7 @@ Plates: pickup-stamp, notes-page
 Entry: the compact hook
 Exit: the pickup matches intent
 Files: src/integrations/hooks/station-hook-runtime.cjs
-Skills: .agents/skills/station-heat/SKILL.md
+Skills: station-heat, pickup-stamp, notes-page, station-card
 Setup:
 Teardown:
 Worn:
@@ -444,7 +444,7 @@ Plates: notes-page
 Entry: the intent line
 Exit: the body is untouched
 Files: src/integrations/hooks/station-hook-runtime.cjs
-Skills: .agents/skills/pickup-stamp/SKILL.md
+Skills: pickup-stamp, notes-page, station-heat
 Setup:
 Teardown:
 Worn:
@@ -458,7 +458,7 @@ Plates: payload-heat, station-heat
 Entry: the host fires preCompact
 Exit: the compact continues
 Files: src/integrations/cursor/hooks/pre-compact.js
-Skills: .agents/skills/cursor-compact/SKILL.md
+Skills: cursor-compact, payload-heat, station-heat, grok-compact
 Setup:
 Teardown:
 Worn:
@@ -472,7 +472,7 @@ Plates: station-card, grok-compact
 Entry: the repo and the published version
 Exit: one line on the station card
 Files: src/nucleus/work-freshness.mjs
-Skills: .agents/skills/work-fresh/SKILL.md
+Skills: work-fresh, station-card, grok-compact, kept-line
 Setup:
 Teardown:
 Worn:
@@ -486,7 +486,7 @@ Plates: station-card, work-fresh
 Entry: the card already on disk
 Exit: one Fresh line in the stock card
 Files: src/integrations/hooks/station-hook-runtime.cjs
-Skills: .agents/skills/kept-line/SKILL.md
+Skills: kept-line, station-card, work-fresh
 Setup:
 Teardown:
 Worn:
@@ -500,7 +500,7 @@ Plates: pre-tool
 Entry: the tool call and the file path
 Exit: the card for the plane you are on
 Files: src/integrations/hooks/goggles-pipeline.mjs, src/__tests__/unit/goggles-pipeline.test.ts
-Skills: .agents/skills/lens-gate/SKILL.md
+Skills: lens-gate, pre-tool, lens-page, stamp-plate
 Setup:
 Teardown:
 Worn:
@@ -514,7 +514,7 @@ Plates: lens-gate
 Entry: the tool name and its arguments
 Exit: deny when the lens gate denies
 Files: src/integrations/grok/hooks/pre-tool-use.js
-Skills: .agents/skills/pre-tool/SKILL.md
+Skills: pre-tool, lens-gate, delegation-gate
 Setup:
 Teardown:
 Worn:
@@ -528,7 +528,7 @@ Plates: record-map, lens-gate
 Entry: one plane name
 Exit: the skill and the plates on that card
 Files: src/integrations/hooks/goggles-pipeline.mjs
-Skills: .agents/skills/lens-page/SKILL.md
+Skills: lens-page, record-map, lens-gate
 Setup:
 Teardown:
 Worn:
@@ -542,7 +542,7 @@ Plates: station-card, goggles
 Entry: GOGGLES
 Exit: DOMAIN
 Files: src/integrations/hooks/station-hook-runtime.cjs
-Skills: .agents/skills/centrifuge/SKILL.md
+Skills: centrifuge, station-card, inference-cycle
 Setup:
 Teardown: JUDGEMENT    LOOP                   STATE       PAYMENTS off                STATION                    · off fixed                            FOUNDRY      · fixed MEMORY
 Worn:
@@ -555,7 +555,7 @@ Plate: docs-site/docs/plates/repertoire.md
 Entry: a task and its signals
 Exit: one law, or none
 Files: src/memory-routing
-Skills: .agents/skills/repertoire/SKILL.md
+Skills: repertoire, memory-recall, record-map, governance
 Setup:
 Teardown:
 Worn:
@@ -568,7 +568,7 @@ Plate: docs-site/docs/plates/dynamo.md
 Entry: a proposal
 Exit: pass, revision, or reject
 Files: docs-site/docs/guides/self-hosting-dynamo.md
-Skills: .agents/skills/dynamo/SKILL.md
+Skills: dynamo, governance, enforcer, confer
 Setup:
 Teardown:
 Worn:
@@ -581,7 +581,7 @@ Plate: docs-site/docs/plates/foundry.md
 Entry: a version bump
 Exit: the registry lists that version
 Files: scripts/foundry, scripts/foundry/release.mjs
-Skills: .agents/skills/foundry/SKILL.md
+Skills: foundry, suit-wear, package-face, consumer-mcp
 Setup:
 Teardown:
 Worn:
@@ -594,7 +594,7 @@ Plate: docs-site/docs/plates/delegation-gate.md
 Entry: a tool call
 Exit: allow, or deny
 Files: src/nucleus/delegation-gate.ts
-Skills: .agents/skills/delegation-gate/SKILL.md
+Skills: delegation-gate, temperament, orchestration, routing
 Setup:
 Teardown:
 Worn:
@@ -607,7 +607,7 @@ Plate: docs-site/docs/plates/temperament.md
 Entry: a host
 Exit: frontier warns, guided denies
 Files: src/nucleus/suit-temperament.ts
-Skills: .agents/skills/temperament/SKILL.md
+Skills: temperament, delegation-gate, confer, orchestrator
 Setup:
 Teardown:
 Worn:
@@ -620,7 +620,7 @@ Plate: docs-site/docs/plates/asides.md
 Entry: a named track
 Exit: that track, or the main line
 Files: src/nucleus/user-aside.ts
-Skills: .agents/skills/asides/SKILL.md
+Skills: asides, orchestration, station-card, record-map
 Setup:
 Teardown:
 Worn:
@@ -633,7 +633,7 @@ Plate: docs-site/docs/plates/inference-cycle.md
 Entry: a session corpus
 Exit: a governed proposal, or no change
 Files: src/inference/inference-cycle.ts
-Skills: .agents/skills/inference-cycle/SKILL.md
+Skills: inference-cycle, inference-files, session-capture, repertoire
 Setup:
 Teardown:
 Worn:
@@ -646,7 +646,7 @@ Plate: docs-site/docs/plates/hermes.md
 Entry: a Hermes session
 Exit: the suit on that host
 Files: src/integrations/hermes-agent
-Skills: .agents/skills/hermes/SKILL.md
+Skills: hermes, hermes-agent, boot-orchestrator, consumer-mcp
 Setup:
 Teardown:
 Worn:
@@ -659,7 +659,7 @@ Plate: docs-site/docs/plates/openclaw.md
 Entry: an OpenClaw session
 Exit: the suit on that host
 Files: src/integrations/openclaw
-Skills: .agents/skills/openclaw/SKILL.md
+Skills: openclaw, boot-orchestrator, consumer-mcp, hermes
 Setup:
 Teardown:
 Worn:
@@ -672,7 +672,7 @@ Plate: docs-site/docs/plates/opencode.md
 Entry: an install
 Exit: the OpenCode plugin on disk
 Files: src/cli/commands/opencode-install.ts
-Skills: .agents/skills/opencode/SKILL.md
+Skills: opencode, boot-orchestrator, consumer-mcp, orchestrator
 Setup:
 Teardown:
 Worn:
@@ -685,7 +685,7 @@ Plate: docs-site/docs/plates/consumer-mcp.md
 Entry: a worn checkout
 Exit: the seven servers
 Files: src/mcps, .mcp.json
-Skills: .agents/skills/consumer-mcp/SKILL.md
+Skills: consumer-mcp, boot-orchestrator, hermes, openclaw
 Setup:
 Teardown:
 Worn:
@@ -698,7 +698,7 @@ Plate: docs-site/docs/plates/confer.md
 Entry: a synthesis checkpoint
 Exit: skipped, unless it is enabled
 Files: src/nucleus/confer.ts
-Skills: .agents/skills/confer/SKILL.md
+Skills: confer, governance, code-review, researcher
 Setup:
 Teardown:
 Worn:

@@ -49,7 +49,7 @@ describe('goggles MCP', () => {
   it('card skills show the path on the card', async () => {
     const { payload, isError } = await dispatchTool('look', { plane: 'domain' }, tempRoot());
     expect(isError).toBe(false);
-    expect(payload.content.skills).toBe('.agents/skills');
+    expect(payload.content.skills).toBe('lens-gate, stamp-plate, record-map, station-card, memory-recall');
   });
 
   it('card planes come from the organ list', async () => {
@@ -116,7 +116,7 @@ describe('goggles MCP', () => {
     expect(card.exit).toBe('A change that stays in this repo.');
     expect(card.setup).toBe('You are in this repo.');
     expect(card.teardown).toBe('Leave other repos alone.');
-    expect(card.skills).toBe('SKILLS.md');
+    expect(card.skills).toBe('orchestrator, researcher, project-analysis, git-workflow, tech-writer');
     expect(card.notes).toEqual([]);
     expect(JSON.stringify(card)).not.toContain('The reading is');
     expect(JSON.stringify(card)).not.toContain('n/a');

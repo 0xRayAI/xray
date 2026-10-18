@@ -12,6 +12,9 @@
       "generic": "guided"
     }
   },
+  "goggles": {
+    "enabled": true
+  },
   "token_optimization": {
     "enabled": true,
     "max_context_tokens": 20000,

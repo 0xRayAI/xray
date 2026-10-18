@@ -662,6 +662,13 @@ function migrateHouse({ seatRoot, srcDir, destDir, names }) {
 
 function nextSteps(report) {
   const steps = [];
+  if (report.goggles && report.goggles.status === 'off') {
+    if (report.goggles.detail === 'goggles organ missing') {
+      steps.push('Restore the goggles organ. The suit keeps the lens.');
+    } else {
+      steps.push('Turn goggles on. The suit keeps the lens.');
+    }
+  }
   const installStep = 'npm i 0xray && npx @0xray/foundry inspect --skip-live';
   if (!report.plant.installed) steps.push(installStep);
   const millReady = report.plant.mill && report.plant.inspect;
@@ -695,6 +702,29 @@ function nextSteps(report) {
   return steps;
 }
 
+
+function gogglesEnabled(cwd) {
+  const data = readJson(path.join(cwd, '.xray', 'features.json'));
+  if (!data || !data.goggles) return true;
+  return data.goggles.enabled !== false;
+}
+
+function gogglesOrganPresent(cwd) {
+  const candidates = [
+    path.join(cwd, 'src', 'integrations', 'hooks', 'goggles-pipeline.mjs'),
+    path.join(cwd, 'node_modules', '0xray', 'dist', 'integrations', 'hooks', 'goggles-pipeline.mjs'),
+    path.join(cwd, 'node_modules', '0xray', 'src', 'integrations', 'hooks', 'goggles-pipeline.mjs'),
+  ];
+  return candidates.some((file) => fs.existsSync(file));
+}
+
+function probeGoggles(cwd, inventoryPresent) {
+  if (!inventoryPresent) return { status: 'skip', detail: 'suit off' };
+  if (!gogglesEnabled(cwd)) return { status: 'off', detail: 'goggles.enabled is false' };
+  if (!gogglesOrganPresent(cwd)) return { status: 'off', detail: 'goggles organ missing' };
+  return { status: 'on', detail: 'goggles on' };
+}
+
 function diagnoseSeat(opts = {}) {
   const cwd = path.resolve(opts.cwd || process.cwd());
   const home = opts.home || os.homedir();
@@ -707,7 +737,9 @@ function diagnoseSeat(opts = {}) {
   const inspect = Boolean(inspectFile) || fromInventory.inspect;
   const installed = xrayPackageInstalled(cwd);
   const deadHooks = deadHookPaths(cwd);
-  const plantOk = Boolean(seat) && mill && inspect && installed && deadHooks.length === 0;
+  const inventoryPresent = Boolean(inventory);
+  const goggles = probeGoggles(cwd, inventoryPresent);
+  const plantOk = Boolean(seat) && mill && inspect && installed && deadHooks.length === 0 && goggles.status !== 'off';
   const house = probeHouse(cwd, opts.env || process.env);
   const report = {
     ok: plantOk && house.status !== 'fail',
@@ -724,8 +756,9 @@ function diagnoseSeat(opts = {}) {
       suit: typeof inventory?.suit === 'string' ? inventory.suit : null,
       dna: typeof inventory?.dna === 'string' ? inventory.dna : null,
       costume: loadCostume(cwd),
-      inventoryPresent: Boolean(inventory),
+      inventoryPresent,
     },
+    goggles,
     repertoire: probeRepertoire(cwd),
     ows: probeOws(home),
     house,
@@ -744,6 +777,7 @@ function plantLine(report) {
   for (const dead of report.plant.deadHooks) {
     parts.push(`${dead.file} missing ${dead.path}`);
   }
+  if (report.goggles && report.goggles.status === 'off') parts.push(report.goggles.detail);
   if (parts.length === 0) parts.push('mill+inspect not fastened');
   return `Plant: FAIL — ${parts.join('; ')}`;
 }
@@ -771,6 +805,8 @@ function formatDoctor(report) {
     lines.push('  inventory: miss (.xray/foundry-inventory.json)');
   }
   lines.push(`  costume: ${report.plant.costume ? 'true (do not dump 45 skills)' : 'false'}`);
+  if (report.goggles && report.goggles.status === 'on') lines.push('Goggles: on');
+  else if (report.goggles && report.goggles.status === 'off') lines.push(`Goggles: FAIL — ${report.goggles.detail}`);
   lines.push('');
   if (report.repertoire.status === 'on') {
     const sig = report.repertoire.signals == null ? '' : ` — ${report.repertoire.signals} signals`;
