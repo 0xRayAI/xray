@@ -162,7 +162,19 @@ function catalogAgentFiles(packageRoot) {
   return [...names];
 }
 
-/** Every catalog skill and role file. An existing file stays. Costume does not gate this. */
+/**
+ * The mill suit wears the catalog. A blip-only or sound-only seat does not.
+ * Costume stays a separate flag and does not decide this.
+ */
+function suitCatalogApplies(targetDir, millPlant, packageRoot) {
+  const fromPlant = Array.isArray(millPlant?.kinds) ? millPlant.kinds : [];
+  const kinds = fromPlant.length > 0
+    ? fromPlant
+    : loadFactoryPlantKinds(targetDir, packageRoot || "");
+  return kinds.includes("mill");
+}
+
+/** Every catalog skill and role file. An existing file stays. */
 function wearCatalog(packageRoot, targetDir) {
   const source = catalogSkillDir(packageRoot);
   if (source) {
@@ -683,8 +695,9 @@ function costumeDumpExtras(targetDir, millPlant, tree) {
     }
   }
   const packageRoot = tree?.millPackageRoot || "";
+  const catalogOn = suitCatalogApplies(targetDir, millPlant, packageRoot);
   const allowedSkills = new Set([
-    ...catalogSkillNames(packageRoot),
+    ...(catalogOn ? catalogSkillNames(packageRoot) : []),
     ...(Array.isArray(millPlant?.skills) ? millPlant.skills : []),
     ...(Array.isArray(millPlant?.sound?.skills) ? millPlant.sound.skills : []),
     ...(Array.isArray(millPlant?.blip?.skills) ? millPlant.blip.skills : []),
@@ -696,7 +709,7 @@ function costumeDumpExtras(targetDir, millPlant, tree) {
     ...shopPlant,
   ]);
   const allowedAgents = new Set([
-    ...catalogAgentFiles(packageRoot),
+    ...(catalogOn ? catalogAgentFiles(packageRoot) : []),
     ...(Array.isArray(millPlant?.agents) ? millPlant.agents : []),
     ...(Array.isArray(millPlant?.sound?.agents) ? millPlant.sound.agents : []),
     ...(Array.isArray(millPlant?.blip?.agents) ? millPlant.blip.agents : []),
@@ -871,7 +884,9 @@ function mintConsumerSuit(millPackageRoot, targetDir, log) {
   }
   const params = loadFoundryParams(targetDir);
   const millPlant = fastenMillPlant(millPackageRoot, targetDir, log);
-  wearCatalog(millPackageRoot, targetDir);
+  if (suitCatalogApplies(targetDir, millPlant, millPackageRoot)) {
+    wearCatalog(millPackageRoot, targetDir);
+  }
   const tree = overlayConsumerTree(targetDir, log, params);
   tree.plantKinds = millPlant.kinds || loadFactoryPlantKinds(targetDir);
   tree.millPlantSkills = millPlant.skills;
@@ -937,6 +952,7 @@ module.exports = {
   loadShopPlant,
   declaredShopPlant,
   wantsCostume,
+  suitCatalogApplies,
   millPlantDir,
   loadFactoryPlantKinds,
   factoryPlantAllowlist,

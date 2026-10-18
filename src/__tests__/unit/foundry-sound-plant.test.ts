@@ -143,6 +143,7 @@ describe('foundry sound plant — files and mint', () => {
       expect(existsSync(path.join(soundSeat, '.opencode/agents/sound.yml'))).toBe(true);
       expect(existsSync(path.join(soundSeat, '.opencode/skills/mill/SKILL.md'))).toBe(false);
       expect(existsSync(path.join(soundSeat, '.opencode/skills/inspect/SKILL.md'))).toBe(false);
+      expect(existsSync(path.join(soundSeat, '.opencode/skills/enforcer/SKILL.md'))).toBe(false);
       expect(
         existsSync(path.join(soundSeat, '.grok/plugins/0xray/skills/sound/SKILL.md')),
       ).toBe(true);

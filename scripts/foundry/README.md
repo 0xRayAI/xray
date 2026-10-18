@@ -60,7 +60,7 @@ After mill plant is fastened, overlay their plant (defaults; remap in `foundry.j
 
 **Mill-fill is law:** their keys/files win; mill names they did not plant stay unless they overlay the same name. JSON facets always merge. Skill overlay is project dirs on every TUI floor (OpenCode, Grok, Hermes, OpenClaw). YML agents stay OpenCode. CLI re-wear calls mint **once** after mill copies. Isolated HOME is passwd home, not `os.homedir()`. CI report is `.xray/foundry-ci-report.json` (`.opencode/logs` shim).
 
-**Default mill plant:** `mill` + `inspect` (inspect AI work). Fasten is **foundry-plant/0**: builtin plant is mill+inspect only (files from this package `plant/`). Fastens a suit, not an empty one. Wear also copies every catalog skill and every role file. A name outside that catalog still fails inspect. **Repertoire is preferred** (vendored, dest = laws). PPE stays worn.
+**Default mill plant:** `mill` + `inspect` (inspect AI work). Fasten is **foundry-plant/0**: builtin plant is mill+inspect only (files from this package `plant/`). Fastens a suit, not an empty one. The mill suit also wears every catalog skill and every role file. A blip or sound seat fastens that plant only. A name outside the fastened set still fails inspect. **Repertoire is preferred** (vendored, dest = laws). PPE stays worn.
 
 **foundry-plant/0:** `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill package declares and ships in its own `plant/`. Organs (looker, vibe, mixer) live in the mill. Adding an organ is a mill publish, not a foundry catalog PR. CLI shims `foundry blip|sound` still exist on foundry 0.1.11+; fasten is the new cut. Foundry **0.1.12**.
 

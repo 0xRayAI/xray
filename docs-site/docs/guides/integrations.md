@@ -28,7 +28,7 @@ npm run confirm:suit:all # install + verify + Grok harness + trap-routing e2e
 
 1. Deploy `.xray/` (`codex.json`, `features.json`, `config.json`) then overlay their plant
 2. Write project `.mcp.json` (7 servers)
-3. Fasten mill plant (`mill` + `inspect`) on OpenCode. Wear also copies every catalog skill and every role file.
+3. Fasten mill plant (`mill` + `inspect`) on OpenCode. The mill suit also wears every catalog skill and every role file. A blip or sound seat fastens that plant only.
 4. Install Grok plugin + PPE hooks (mill plant, not costume skill dump)
 5. Install Hermes plugin + `xray-consumer-root.txt` marker
 6. Create OpenClaw config (mill plant)

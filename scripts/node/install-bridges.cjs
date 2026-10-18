@@ -234,8 +234,45 @@ function syncBuiltinSkills(targetSkillsDir, packageRoot) {
   return copied;
 }
 
+function plantIncludesMill(targetDir, packageRoot) {
+  const { loadFactoryPlantKinds } = require("../foundry/mint-suit.cjs");
+  return loadFactoryPlantKinds(targetDir, packageRoot).includes("mill");
+}
+
+function copyRoleAgentFiles(packageRoot, opencodeDest) {
+  const dirs = [
+    path.join(packageRoot, "src", "opencode", "agents"),
+    path.join(packageRoot, ".opencode", "agents"),
+  ].filter((dir) => fs.existsSync(dir));
+  const destDir = path.join(opencodeDest, "agents");
+  for (const dir of dirs) {
+    let names;
+    try {
+      names = fs.readdirSync(dir);
+    } catch {
+      continue;
+    }
+    for (const name of names) {
+      if (!name.endsWith(".yml") && !name.endsWith(".yaml")) continue;
+      const src = path.join(dir, name);
+      let st;
+      try {
+        st = fs.statSync(src);
+      } catch {
+        continue;
+      }
+      if (!st.isFile()) continue;
+      const dest = path.join(destDir, name);
+      if (fs.existsSync(dest)) continue;
+      fs.mkdirSync(destDir, { recursive: true });
+      fs.copyFileSync(src, dest);
+    }
+  }
+}
+
 function syncCostumeSkills(targetSkillsDir, packageRoot, targetDir) {
-  void targetDir;
+  // Catalog skills belong on the mill suit. A blip or sound seat keeps its plant.
+  if (targetDir && !plantIncludesMill(targetDir, packageRoot)) return 0;
   return syncBuiltinSkills(targetSkillsDir, packageRoot);
 }
 
@@ -447,15 +484,27 @@ function copyOpencodePlugin(packageRoot, opencodeDest, log) {
 function installOpencodeBridge(targetDir, packageRoot, log) {
   const opencodeSource = path.join(packageRoot, ".opencode");
   const opencodeDest = path.join(targetDir, ".opencode");
-  if (!fs.existsSync(opencodeSource)) {
-    log("opencode-bridge", "skipped", "warn", { reason: ".opencode source missing" });
-    return;
-  }
-  if (!fs.existsSync(opencodeDest)) {
-    copyTree(opencodeSource, opencodeDest);
-    log("opencode-bridge", "copied .opencode tree", "info");
+  const costume = wantsCostume(targetDir);
+  const millSuit = plantIncludesMill(targetDir, packageRoot);
+  if (costume) {
+    if (!fs.existsSync(opencodeSource)) {
+      log("opencode-bridge", "skipped", "warn", { reason: ".opencode source missing" });
+      return;
+    }
+    if (!fs.existsSync(opencodeDest)) {
+      copyTree(opencodeSource, opencodeDest);
+      log("opencode-bridge", "copied .opencode tree", "info");
+    } else {
+      log("opencode-bridge", ".opencode exists — merging skills/plugin only", "info");
+    }
   } else {
-    log("opencode-bridge", ".opencode exists — merging skills/plugin only", "info");
+    fs.mkdirSync(opencodeDest, { recursive: true });
+    if (millSuit) {
+      copyRoleAgentFiles(packageRoot, opencodeDest);
+      log("opencode-bridge", "mill suit — role files, not the costume tree", "info");
+    } else {
+      log("opencode-bridge", "plant seat — plugin only", "info");
+    }
   }
   copyOpencodePlugin(packageRoot, opencodeDest, log);
   const copied = syncCostumeSkills(path.join(opencodeDest, "skills"), packageRoot, targetDir);

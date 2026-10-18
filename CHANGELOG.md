@@ -10,7 +10,7 @@ npm latest is 4.1.0. The notes under [4.1.0] are that publish.
 
 ### Wear
 
-A suit wears every catalog skill and every role file when costume is off. The mill plant stays `mill` and `inspect`. A name outside that catalog still fails inspect.
+The mill suit wears every catalog skill and every role file when costume is off. The mill plant stays `mill` and `inspect`. A blip or sound seat fastens that plant only. A name outside the fastened set still fails inspect.
 
 ### Goggles
 
