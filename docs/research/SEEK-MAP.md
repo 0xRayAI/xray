@@ -476,6 +476,32 @@ Goggles is the scope around those tiers, not another rank. `lensBeforeResearch` 
 
 The seek has to stay cheaper than opening the skill. A branch or a table row is the whole decision whenever it can be.
 
+## Goggles and seek
+
+Arch1: Goggles sets the scope. A seek chooses inside that scope. They meet on the held card. They do not do the same job.
+
+The hold is `.xray/state/goggles-plane.json`. `lensBeforeResearch` (`src/integrations/hooks/goggles-pipeline.mjs` 945) allows a search only when every path sits on the current card, and it denies the rest. That is scope. Plate recall, the task-type table, and a complexity score then choose among what that card already holds. That is the seek.
+
+The shared rule is refusal. On a tie or a miss, return nothing. Never guess. Plate recall already does this: score 0 or equal top scores return null (`plates.cjs` 390). A look that names no plane returns nobody (`gogglesAnswer` 391).
+
+Nothing in goggles ranks skills today. `invoke-skill` (`src/mcps/knowledge-skills/skill-invocation.server.ts` 19) takes a `skillName` the caller already chose.
+
+## Two kinds of seek
+
+A prefab look-ahead seek is decided ahead of time and read back at run time. Goggles and the lens cards are this kind. The card was written before the turn. The run only reads it.
+
+A live seek is decided in the moment. Plate recall and the complexity score are this kind. The turn brings the words or the metrics, and the function ranks them then.
+
+Push as many seeks as possible into the prefab kind. A list written on the card is cheaper than a score computed on the turn, and cheaper than a model.
+
+## Seek built into the card
+
+Each lens card lists its own skills, 3 to 5, in hand-set rank order. Card order is the rank. No scores are stored on cards.
+
+Skill choice on a card is a read down that list. The first fit wins. No fit falls to plate recall, then a model last.
+
+`SKILLS.md` stays the full catalog. Cards do not point at it, so the seek never walks the catalog.
+
 ## Found issue: two complexity formulas
 
 Thin dispatch and `calculateBaseScore` do not compute the same number. This is a found issue, not a fix. Core code stays held until 4.1.1 ships.
