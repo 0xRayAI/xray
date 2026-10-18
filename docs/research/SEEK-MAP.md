@@ -1,5 +1,9 @@
 # Seek map
 
+## Definition
+
+A seek takes a need, weighs more than one candidate as cheaply as it can, and routes the work. Cheapest first: branch, then table, then score, model only when cheaper tiers cannot decide. A seek must itself cost far less than the work it routes.
+
 A seek, for this pass, is a mechanism that takes a need, looks at more than one candidate, and sends the work somewhere. Cost shows up as a score, a threshold, a ladder, or a written rule about what is expensive. This file lists the ones that are in this checkout. Each entry says where it lives, what goes in, what the candidates are, how it decides, what comes out, whether cheap and expensive are different, and whether the decision is code, a written rule, or a habit with no function.
 
 Each seek has a class. **Branch** means an if, else, or switch picks the destination. **Table** means a key looks up a row. **Scored** means a number picks the winner. **Model** means a model emits the choice. When two steps run, the class names the step that picks the destination, then the step that feeds it. The counts of those ifs and switches are in [Hard-coded branches](#hard-coded-branches). A branch is counted only when it routes, gates, selects, or names a fallback. Empty checks, file-exists checks, and field copies are not counted.
@@ -453,3 +457,31 @@ Cost is almost always a step, not a price. Under 15 is one agent. Under 25 can s
 ## Lexicon paragraph
 
 A seek takes a need, sets it against the candidates on hand, and sends it down the cheapest path that still holds. The cheap test is usually a hard-coded if or a table row: a keyword, a kind, a host profile, an inbox rule. A score promotes the work when the ifs do not settle it: a plate cue, a complexity tier, a law match. A model may write a confer or governance verdict, and a branch then reads that verdict. A tie, a weak hit, or a missing name does not guess: plate recall returns nothing, a law under 0.55 stays out, and a look that names no plane returns nobody.
+
+## First impl: skills as a seek
+
+Skills are the first seek to implement. This section is design text only. Core code stays held until 4.1.1 ships. The seat-facing half is #385: a role picker, a configurator, so a suit wears a chosen set of roles and skills, and inspect checks that pick instead of the whole catalog.
+
+Skill selection routes cheap-first, in the order in the definition.
+
+Branch first. A work-kind test returns before any lookup. Confer is the example. Confer runs only for feat or refactor work. It stays off for fix, docs, and chore. The tree already defaults that way: `defaultConferConfig` returns `enabled: false` (`src/nucleus/confer.ts` 77) and `conferDefaultForProfile` returns false for every host (`src/nucleus/suit-temperament.ts` 232). The branch turns the three-agent quorum on only for feat and refactor. Fix, docs, and chore never pay for it.
+
+Table next, and only if the branch did not finish the choice. Reuse `TASK_TYPE_ROUTES` and `routeSubagent` (`src/nucleus/autonomy-kernel.ts` 77 and 119). That row already maps plan, research, implement, frontend, test, review, security, and governance to one route. #385's picker is the allowed subset. The table is read only inside that subset. An unknown key keeps the existing fallback, `backend-engineer`, and does not start a scan.
+
+Score third, and only if the branch and the table did not name a skill. Reuse plate recall (`recallPlate` in `src/integrations/hooks/plates.cjs` at 374). Cue weights pick one plate. A tie or a zero returns nothing. The plate's skill line is the candidate. Do not score every skill when a plate already won.
+
+Model last. A model chooses only when the branch, the table, and the score all decline. It is not the default path.
+
+Goggles is the scope around those tiers, not another rank. `lensBeforeResearch` (`src/integrations/hooks/goggles-pipeline.mjs` 945) already refuses a search outside the held card. A skill seek reads the skill named on that card before it opens any other skill file. It does not walk the catalog.
+
+The seek has to stay cheaper than opening the skill. A branch or a table row is the whole decision whenever it can be.
+
+## Found issue: two complexity formulas
+
+Thin dispatch and `calculateBaseScore` do not compute the same number. This is a found issue, not a fix. Core code stays held until 4.1.1 ships.
+
+`scoreComplexity` (`src/nucleus/thin-dispatch.ts` 41) calls `ComplexityAnalyzer.calculateComplexityScore` (`src/delegation/complexity-analyzer.ts` 83). That formula caps files at 40 (`files * 4`), lines at 50 (`lines / 5`), dependencies at 25 (`deps * 5`), and duration at 15 (`duration / 10`), then multiplies by an operation weight and a risk multiplier.
+
+`calculateBaseScore` (`src/delegation/complexity-core.ts` 229) is a second formula. It caps files at 30 (`files * 3`), volume at 25 (`changeVolume / 10`), dependencies at 20 (`deps * 2`), and duration at 15 (`duration / 3`), then applies the same kind of weight and multiplier and caps at 100. `scoreComplexity` does not call it.
+
+A caller that hits one function and a caller that hits the other will disagree about how big the task is. The planner's third formula (`calculateTaskComplexity` in `src/mcps/orchestrator/execution/execution-planner.ts` 346, base 30 plus a priority switch) is a separate number again, already listed under Gaps. The disagreement to fix first is thin dispatch versus `calculateBaseScore`.
