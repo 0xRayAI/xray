@@ -279,9 +279,22 @@ function postInbox({ secret, headerSecret, body, lines }) {
 // against SEAT_KEYS (Railway variable, JSON seat -> sha256 hex of the key; the keys themselves live only on the box).
 // Our 9 seats (feed/fleet-roster.json) plus the kit's builder / builder-cloud plumbing (installation-token auth, mirror);
 // no route writes to builder. The kit's sample seats (reviewer, tester, qa, coord, operator, triager, ...) are gone: their
-// jobs map to ours (coord -> blinky, operator / tester / qa -> forge, reviewer -> critic), see SEAT_ALIAS.
+// jobs map to ours (coord -> the CoS role, operator / tester / qa -> the operator role, reviewer -> critic).
+// canonSeat reads those roles; blinky and forge stay the defaults when routing is absent.
 const COS = 'blinky', OPS = 'forge', REVIEW = 'critic';
+const COORD_SEAT = (() => {   // the CoS role (routing seats.coord.seat): pulls the next work on an empty board
+  try { const r = JSON.parse(fs.readFileSync(path.join(process.env.BIFROST_ROUTING_DIR || path.join(COLLECTOR_DIR_EARLY(), 'routing'), 'inbox-roles.json'), 'utf8'));
+    const c = r?.seats?.coord; return c && !c.off && c.seat ? String(c.seat).toLowerCase() : null; } catch { return null; }
+})();
+const OPERATOR_SEAT = (() => {   // the operator role (routing seats.operator.seat): delivers nudges
+  try { const r = JSON.parse(fs.readFileSync(path.join(process.env.BIFROST_ROUTING_DIR || path.join(COLLECTOR_DIR_EARLY(), 'routing'), 'inbox-roles.json'), 'utf8'));
+    const c = r?.seats?.operator; return c && !c.off && c.seat ? String(c.seat).toLowerCase() : null; } catch { return null; }
+})();
+const cosSeat = () => COORD_SEAT || COS;   // the CoS role (routing seats.coord)
+const operatorSeat = () => OPERATOR_SEAT || OPS;   // the operator role (routing seats.operator)
 const SEAT_ALIAS = { coord: COS, coordinator: COS, cos: COS, operator: OPS, tester: OPS, qa: OPS, lab: OPS, reviewer: REVIEW, triager: COS };
+const COORD_NAMES = new Set(['coord', 'coordinator', 'cos', 'triager']);
+const OPERATOR_NAMES = new Set(['operator', 'tester', 'qa', 'lab']);
 // LIVE_SEAT_IDS (comma list) replaces the fleet's seat ids; builder / builder-cloud are kit plumbing and always kept.
 const SEAT_IDS = process.env.LIVE_SEAT_IDS
   ? [...new Set(['builder', 'builder-cloud', ...process.env.LIVE_SEAT_IDS.split(',').map(x => x.trim().toLowerCase()).filter(x => /^[a-z0-9][a-z0-9_-]{0,31}$/.test(x))])]
@@ -289,6 +302,8 @@ const SEAT_IDS = process.env.LIVE_SEAT_IDS
 function canonSeat(name) {
   const id = String(name || '').toLowerCase();
   if (SEAT_IDS.includes(id)) return id;
+  if (COORD_NAMES.has(id)) return cosSeat();
+  if (OPERATOR_NAMES.has(id)) return operatorSeat();
   return SEAT_ALIAS[id] || id;
 }
 // Builder-cloud: the cloud Builder seat (own key). It reads Builder's work: every builder inbox line is mirrored into its inbox,
@@ -615,8 +630,6 @@ setInterval(() => auditRouting().catch(() => {}), (Number(process.env.BIFROST_RO
 // (default 900) gets nudge L1 and a re-wake of its seat; L2 and L3 follow one window apart, then it stops (never loops).
 // Each is a nudge record (kind 'line') on the board. An ack (or the card moving on) closes them.
 const NUDGE_LINE_MS = Math.max(1, Number(process.env.NUDGE_LINE_S) > 0 ? Number(process.env.NUDGE_LINE_S) : 900) * 1000;
-const cosSeat = () => (typeof COORD_SEAT !== 'undefined' && COORD_SEAT) || COS;   // the CoS role (routing seats.coord)
-const operatorSeat = () => (typeof OPERATOR_SEAT !== 'undefined' && OPERATOR_SEAT) || OPS;   // the operator role (routing seats.operator)
 function nudgeLines(now) {
   let changed = false;
   const open = new Set();
@@ -1169,7 +1182,7 @@ function evalSilent(fleet, now = Date.now()) {
     const nid = `silent:${id}:${last}`;
     if (nudges.some(n => n.id === nid)) continue;
     nudges.push({ id: nid, kind: 'silent', t: now, t_ct: ctStamp(now), card: '', repo: '', number: 0,
-      title: `${name} silent 2h while owning live work`, url: '', stage: '', level: 2, seat: COS, via: 'silent seat', about: id, beat_t: last });
+      title: `${name} silent 2h while owning live work`, url: '', stage: '', level: 2, seat: cosSeat(), via: 'silent seat', about: id, beat_t: last });
     changed = true;
   }
   if (changed) saveNudges();
@@ -1395,14 +1408,6 @@ const GOV_MS = Math.max(200, (Number(process.env.BIFROST_TICK_S) > 0 ? Number(pr
 // clock starts a timed run (the same run the CoS starts by hand with POST /clock). A seat's move clears it.
 const TRIP_MS = (Number(process.env.BIFROST_TRIPWIRE_MINUTES) > 0 ? Number(process.env.BIFROST_TRIPWIRE_MINUTES) : 30) * 60000;
 const PER_SEAT_MS = (Number(process.env.BIFROST_RUN_SEAT_MINUTES) > 0 ? Number(process.env.BIFROST_RUN_SEAT_MINUTES) : 2) * 60000;
-const COORD_SEAT = (() => {   // the CoS role (routing seats.coord.seat): pulls the next work on an empty board
-  try { const r = JSON.parse(fs.readFileSync(path.join(process.env.BIFROST_ROUTING_DIR || path.join(COLLECTOR_DIR_EARLY(), 'routing'), 'inbox-roles.json'), 'utf8'));
-    const c = r?.seats?.coord; return c && !c.off && c.seat ? String(c.seat).toLowerCase() : null; } catch { return null; }
-})();
-const OPERATOR_SEAT = (() => {   // the operator role (routing seats.operator.seat): delivers nudges
-  try { const r = JSON.parse(fs.readFileSync(path.join(process.env.BIFROST_ROUTING_DIR || path.join(COLLECTOR_DIR_EARLY(), 'routing'), 'inbox-roles.json'), 'utf8'));
-    const c = r?.seats?.operator; return c && !c.off && c.seat ? String(c.seat).toLowerCase() : null; } catch { return null; }
-})();
 const CLOCK_SEATS = (() => {   // who may start a run by hand: BIFROST_CLOCK_SEATS, else the coord (CoS) seat
   const env = String(process.env.BIFROST_CLOCK_SEATS || '').split(',').map(x => x.trim().toLowerCase()).filter(Boolean);
   return env.length ? env : COORD_SEAT ? [COORD_SEAT] : [];
