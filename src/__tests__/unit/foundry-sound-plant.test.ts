@@ -165,9 +165,22 @@ describe('foundry sound plant — files and mint', () => {
       expect(bed.status).toBe('NONE');
       expect(bed.skipped).toBe(true);
 
-      mkdirSync(path.join(soundSeat, '.opencode/skills/enforcer'), { recursive: true });
-      writeFileSync(path.join(soundSeat, '.opencode/skills/enforcer/SKILL.md'), 'LEFTOVER\n');
+      const seatText = 'LEFTOVER\n';
+      const leftoverDirs = [
+        path.join(soundSeat, '.opencode/skills/enforcer'),
+        path.join(soundSeat, '.grok/plugins/0xray/skills/enforcer'),
+      ];
+      for (const dir of leftoverDirs) {
+        mkdirSync(dir, { recursive: true });
+        writeFileSync(path.join(dir, 'SKILL.md'), seatText);
+      }
+      const seatAgent = path.join(soundSeat, '.opencode/agents/researcher.yml');
+      writeFileSync(seatAgent, 'SEAT AGENT\n');
       expect(() => mintConsumerSuit(root, soundSeat, () => undefined)).toThrow(/costume dump/);
+      for (const dir of leftoverDirs) {
+        expect(readFileSync(path.join(dir, 'SKILL.md'), 'utf8')).toBe(seatText);
+      }
+      expect(readFileSync(seatAgent, 'utf8')).toBe('SEAT AGENT\n');
     } finally {
       rmSync(millSeat, { recursive: true, force: true });
       rmSync(soundSeat, { recursive: true, force: true });

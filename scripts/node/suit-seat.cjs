@@ -31,13 +31,14 @@ function foundryExtra(root) {
   return millPlantProtocol.readFoundryExtra(root);
 }
 
-/** A held dev card from an older suit is not a choice. Any other plane, or dev marked chosen, stays. */
+/** A held dev card from an older suit is not a choice. Any other plane, or dev marked chosen, stays. A mill plant keeps that dev hold. */
 function replaceStaleDevHold(root) {
   const dest = path.join(root, ".xray", "state", "goggles-plane.json");
   const held = readJson(dest);
   if (!held || typeof held !== "object" || Array.isArray(held)) return false;
   if (held.chosen === true) return false;
   if (held.plane !== "dev") return false;
+  if (normalizePlant(declaredPlant(root)) === "mill") return false;
   const lens = seatLens(root);
   const next = lens && CARD_PLANES.includes(lens.plane) && lens.plane !== "dev" ? lens.plane : "";
   if (!next) return false;

@@ -583,6 +583,45 @@ describe('goggles plate', () => {
     }
   });
 
+  it('overlays a stored domain or integration card with the plant lens', () => {
+    const root = mkdtempSync(join(tmpdir(), 'goggles-stored-plane-'));
+    const stockSkills = 'orchestrator, researcher, project-analysis, git-workflow, tech-writer';
+    const stale = (plane: string) => [
+      `Plane: ${plane}`,
+      'From: dev',
+      'Digest: stale',
+      'Plate:',
+      'Entry: old',
+      'Exit: old',
+      'Files: src',
+      `Skills: ${stockSkills}`,
+      'Setup: old',
+      'Teardown: old',
+      'Worn:',
+      '',
+    ].join('\n');
+    try {
+      mkdirSync(join(root, '.xray', 'state'), { recursive: true });
+      writeFileSync(join(root, 'foundry.json'), `${JSON.stringify({ plant: 'sound' })}\n`);
+      writeFileSync(
+        join(root, '.xray', 'foundry-inventory.json'),
+        `${JSON.stringify({ mill: { version: '4.1.1' }, plant: ['sound'], soundPlant: { skills: ['sound', 'sound-inspect', 'sound-mixer'] } })}\n`,
+      );
+      writeFileSync(join(root, '.xray', 'state', 'goggles-plane.json'), `${JSON.stringify({ plane: 'domain', card: 'domain' })}\n`);
+      writeFileSync(join(root, '.xray', 'state', 'LENS.md'), `${stale('domain')}\n${stale('integration')}`);
+      for (const plane of ['domain', 'integration']) {
+        const card = look([plane], root).text;
+        expect(card).toContain(`Plane: ${plane}`);
+        expect(card).toContain('Skills: sound, sound-inspect, sound-mixer');
+        expect(card).toContain('Worn: sound 4.1.1');
+        expect(card).not.toContain(stockSkills);
+        expect(card).not.toMatch(/^Worn:\s*$/m);
+      }
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it('runs a stored card through the plant lens', () => {
     const root = mkdtempSync(join(tmpdir(), 'goggles-stored-card-'));
     const stockSkills = 'orchestrator, researcher, project-analysis, git-workflow, tech-writer';

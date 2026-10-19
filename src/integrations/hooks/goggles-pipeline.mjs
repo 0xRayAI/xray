@@ -1238,8 +1238,8 @@ function overlaySeatLens(root, id, block) {
   const lens = seatLensOf(root);
   if (!lens) return block;
   const onPlant = id === lens.card || id === lens.plane;
-  const onHeldDev = id === 'dev';
-  if (!onPlant && !onHeldDev) return block;
+  const onStoredPlane = id === 'dev' || id === 'domain' || id === 'integration';
+  if (!onPlant && !onStoredPlane) return block;
   let next = block;
   if (lens.skills) next = next.replace(/^Skills:.*$/m, `Skills: ${lens.skills}`);
   if (lens.worn) next = next.replace(/^Worn:.*$/m, `Worn: ${lens.worn}`);

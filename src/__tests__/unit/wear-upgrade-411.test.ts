@@ -165,7 +165,7 @@ function proveUpgrade(spec: string) {
     setPlaneLine(domain, 'domain');
     writeFileSync(
       path.join(domain, '.xray', 'state', 'goggles-plane.json'),
-      `${JSON.stringify({ plane: 'domain', card: 'domain' })}\n`,
+      `${JSON.stringify({ plane: 'domain', card: 'domain', chosen: true })}\n`,
     );
     writeFileSync(path.join(domain, '.xray', 'state', 'LENS.md'), `${staleCard('domain')}\n`);
     const domainStation = readFileSync(path.join(domain, '.xray', 'state', 'STATION.md'), 'utf8');
@@ -216,13 +216,81 @@ function proveUpgrade(spec: string) {
     const domainCard = goggles(domain);
     expect(domainCard).toContain('Plane: domain');
     expect(domainCard).not.toContain('Plane: ecosystem');
+    expect(domainCard).toContain('Skills: sound, sound-inspect, sound-mixer');
+    expect(domainCard).toContain(`Worn: sound ${version}`);
+    expect(domainCard).not.toContain(stockSkills);
+    expect(JSON.parse(readFileSync(path.join(domain, '.xray', 'state', 'goggles-plane.json'), 'utf8')).chosen).toBe(true);
     expect(readFileSync(path.join(domain, '.xray', 'state', 'STATION.md'), 'utf8')).toBe(domainStation);
   } finally {
     for (const dir of [dev, domain, ...homes, ...machines]) rmSync(dir, { recursive: true, force: true });
   }
 }
 
+/** A 4.1.1 mill suit has no chosen flag. Upgrade keeps that dev hold and the catalog. */
+function proveMillUpgrade(spec: string) {
+  const oldWear = path.join(publishedPackage(spec), 'scripts/node/wear-cursor-hooks.cjs');
+  const project = mkdtempSync(path.join(tmpdir(), `xray-up-${spec}-mill-`));
+  const home = mkdtempSync(path.join(tmpdir(), 'xray-up-mill-home-'));
+  const machine = mkdtempSync(path.join(tmpdir(), 'xray-up-mill-machine-'));
+  try {
+    writeFileSync(path.join(project, 'package.json'), `${JSON.stringify({ name: 'mill-seat', private: true })}\n`);
+    mkdirSync(path.join(project, '.xray'), { recursive: true });
+    writeFileSync(
+      path.join(project, '.xray', 'features.json'),
+      `${JSON.stringify({ plant: 'mill', goggles: { enabled: true } }, null, 2)}\n`,
+    );
+    const first = wear(oldWear, project, home, machine);
+    expect(first.status, `${first.stdout}\n${first.stderr}`).toBe(0);
+    const catalogDirs = skillDirs.filter((rel) => existsSync(skillFile(project, rel, 'orchestrator')));
+    expect(catalogDirs.length).toBeGreaterThan(0);
+    expect(existsSync(path.join(project, '.opencode/agents/researcher.yml'))).toBe(true);
+
+    const holdPath = path.join(project, '.xray', 'state', 'goggles-plane.json');
+    mkdirSync(path.dirname(holdPath), { recursive: true });
+    const hold = `${JSON.stringify({ plane: 'dev', card: 'dev' })}\n`;
+    writeFileSync(holdPath, hold);
+    writeFileSync(path.join(project, '.xray', 'state', 'LENS.md'), `${staleCard('dev')}\n`);
+    setPlaneLine(project, 'dev');
+    const stationBefore = readFileSync(path.join(project, '.xray', 'state', 'STATION.md'), 'utf8');
+    expect(stationBefore).toMatch(/^Plane: dev$/m);
+
+    dropLink(project, 'scripts');
+    dropLink(project, 'dist');
+    linkRepo(project);
+    const features = JSON.parse(readFileSync(path.join(project, '.xray', 'features.json'), 'utf8'));
+    features.plant = 'mill';
+    features.goggles = { ...(features.goggles || {}), enabled: true };
+    writeFileSync(path.join(project, '.xray', 'features.json'), `${JSON.stringify(features, null, 2)}\n`);
+    const foundryPaths = [path.join(project, 'foundry.json'), path.join(project, '.xray', 'foundry.json')];
+    for (const foundryPath of foundryPaths) {
+      if (!existsSync(foundryPath)) continue;
+      const foundry = JSON.parse(readFileSync(foundryPath, 'utf8'));
+      foundry.plant = 'mill';
+      writeFileSync(foundryPath, `${JSON.stringify(foundry, null, 2)}\n`);
+    }
+
+    const upgraded = wear(wearScript, project, home, machine);
+    expect(upgraded.status, `${upgraded.stdout}\n${upgraded.stderr}`).toBe(0);
+    expect(upgraded.stderr).not.toContain('costume dump');
+    expect(readFileSync(holdPath, 'utf8')).toBe(hold);
+    expect(readFileSync(path.join(project, '.xray', 'state', 'STATION.md'), 'utf8')).toMatch(/^Plane: dev$/m);
+    for (const rel of catalogDirs) {
+      expect(existsSync(skillFile(project, rel, 'orchestrator')), rel).toBe(true);
+    }
+    expect(existsSync(path.join(project, '.opencode/agents/researcher.yml'))).toBe(true);
+    const card = goggles(project);
+    expect(card).toContain('Plane: dev');
+    expect(card).not.toContain('Plane: integration');
+  } finally {
+    for (const dir of [project, home, machine]) rmSync(dir, { recursive: true, force: true });
+  }
+}
+
 describe('upgrade a published non-mill suit without postinstall', () => {
+  it('wears 4.1.1 mill, then keeps the dev hold and the catalog', () => {
+    proveMillUpgrade('4.1.1');
+  }, 240000);
+
   it('wears 4.1.1, then replaces a held dev plane and keeps a chosen domain plane', () => {
     proveUpgrade('4.1.1');
   }, 240000);

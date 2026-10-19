@@ -102,7 +102,7 @@ function readFoundryExtra(targetDir) {
         return { ...fromFeatures, ...parsed };
       }
     } catch {
-      return {};
+      continue;
     }
   }
   return fromFeatures;

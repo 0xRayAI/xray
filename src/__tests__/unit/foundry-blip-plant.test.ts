@@ -178,9 +178,22 @@ describe('foundry blip plant — files and mint', () => {
       expect(blipCheck.status).toBe('NONE');
       expect(blipCheck.skipped).toBe(true);
 
-      mkdirSync(path.join(blipSeat, '.opencode/skills/enforcer'), { recursive: true });
-      writeFileSync(path.join(blipSeat, '.opencode/skills/enforcer/SKILL.md'), 'LEFTOVER\n');
+      const seatText = 'LEFTOVER\n';
+      const leftoverDirs = [
+        path.join(blipSeat, '.opencode/skills/enforcer'),
+        path.join(blipSeat, '.hermes/plugins/xray-hermes/skills/enforcer'),
+      ];
+      for (const dir of leftoverDirs) {
+        mkdirSync(dir, { recursive: true });
+        writeFileSync(path.join(dir, 'SKILL.md'), seatText);
+      }
+      const seatAgent = path.join(blipSeat, '.opencode/agents/researcher.yml');
+      writeFileSync(seatAgent, 'SEAT AGENT\n');
       expect(() => mintConsumerSuit(root, blipSeat, () => undefined)).toThrow(/costume dump/);
+      for (const dir of leftoverDirs) {
+        expect(readFileSync(path.join(dir, 'SKILL.md'), 'utf8')).toBe(seatText);
+      }
+      expect(readFileSync(seatAgent, 'utf8')).toBe('SEAT AGENT\n');
     } finally {
       rmSync(millSeat, { recursive: true, force: true });
       rmSync(blipSeat, { recursive: true, force: true });

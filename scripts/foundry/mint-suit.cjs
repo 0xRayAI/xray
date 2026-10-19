@@ -733,7 +733,7 @@ function packagedSkillPath(packageRoot, name) {
   return files.find((file) => fs.existsSync(file)) || "";
 }
 
-function packagedAgent(packageRoot, file) {
+function packagedAgentPath(packageRoot, file) {
   const files = [
     path.join(packageRoot, "src", "opencode", "agents", file),
     path.join(packageRoot, ".opencode", "agents", file),
@@ -741,7 +741,7 @@ function packagedAgent(packageRoot, file) {
     path.join(packageRoot, "plant", "agents", file),
     path.join(packageRoot, "node_modules", "@0xray", "blip", "plant", "agents", file),
   ];
-  return files.some((candidate) => fs.existsSync(candidate));
+  return files.find((candidate) => fs.existsSync(candidate)) || "";
 }
 
 function sameBytes(left, right) {
@@ -755,8 +755,9 @@ function sameBytes(left, right) {
 /**
  * A non-mill seat does not wear the catalog. An older wear copied each
  * packaged skill into the project skill dirs, and each packaged agent into
- * .opencode/agents. Remove that fan-out before inspect. A skill the seat
- * wrote in one dir, with its own text, stays so the costume check can refuse it.
+ * .opencode/agents. Remove a worn file only when its bytes match that package
+ * copy. A seat's own text stays, even when the same bytes sit in several
+ * dirs, so the costume check can refuse it.
  */
 function stripPackagedCatalog(targetDir, millPlant, packageRoot) {
   if (suitCatalogApplies(targetDir, millPlant, packageRoot)) return;
@@ -770,18 +771,18 @@ function stripPackagedCatalog(targetDir, millPlant, packageRoot) {
     const worn = listProjectSkillDirs(targetDir)
       .map((dir) => path.join(dir, name, "SKILL.md"))
       .filter((file) => fs.existsSync(file));
-    if (worn.length === 0) continue;
-    const matchesPackage = worn.filter((file) => sameBytes(file, packaged));
-    const fanout = worn.length >= 2 && worn.every((file) => sameBytes(file, worn[0]));
-    if (!fanout && matchesPackage.length === 0) continue;
-    for (const file of fanout ? worn : matchesPackage) {
+    for (const file of worn) {
+      if (!sameBytes(file, packaged)) continue;
       fs.rmSync(path.dirname(file), { recursive: true, force: true });
     }
   }
   const agentsDir = path.join(targetDir, ".opencode", "agents");
   for (const file of wornAgentFiles(targetDir)) {
-    if (allowAgents.has(file) || !packagedAgent(packageRoot, file)) continue;
-    fs.rmSync(path.join(agentsDir, file), { force: true });
+    if (allowAgents.has(file)) continue;
+    const packaged = packagedAgentPath(packageRoot, file);
+    const wornAgent = path.join(agentsDir, file);
+    if (!packaged || !sameBytes(wornAgent, packaged)) continue;
+    fs.rmSync(wornAgent, { force: true });
   }
 }
 
