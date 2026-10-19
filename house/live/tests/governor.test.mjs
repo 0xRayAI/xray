@@ -149,6 +149,7 @@ test('stall seats: muted open lines are left out and do not cancel the stall', (
   parkedOnly.observe('a', 0, held);
   assert.equal(parkedOnly.observe('a', W, held), 'stall');
   assert.deepEqual(Object.keys(parkedOnly.run.deadlines), ['blinky']);
+  assert.equal(parkedOnly.observe('a', W + 1, held), null);
   const mixedSeats = selectStallSeats(ids, muted, { forge: 1, herald: 0, sound: 3, blinky: 0 }, []);
   assert.deepEqual(mixedSeats, ['forge']);
   const mixed = createClock({ tripMs: W, perSeatMs: 120000, now: 0 });

@@ -170,6 +170,67 @@ class ConcurrentClaim(unittest.TestCase):
         self.assertIn("crit-1", freed.stdout)
         self.assertIn("hand-1", freed.stdout)
 
+    def test_shell_exit_releases_the_claim_without_turn_end(self):
+        owner = self.sleeper.pid
+        script = (
+            "set -eu\n"
+            f"export WAKE_RUN={owner}\n"
+            f"trap '\"{TOOL}\" forge --release' EXIT\n"
+            f"\"{TOOL}\" forge >/dev/null\n"
+        )
+        ran = subprocess.run(["bash", "-c", script], env=self.env_base, capture_output=True, text=True, timeout=20)
+        self.assertEqual(ran.returncode, 0, ran.stderr)
+        self.assertEqual(Inbox.posts, [])
+        nxt = self.inbox(owner=os.getpid())
+        self.assertEqual(nxt.returncode, 0, nxt.stderr)
+        self.assertIn("crit-1", nxt.stdout)
+        self.assertIn("hand-1", nxt.stdout)
+
+    def test_other_token_release_leaves_the_claim(self):
+        self.inbox(owner=os.getpid())
+        quiet = self.inbox("--release", owner=self.sleeper.pid)
+        self.assertEqual(quiet.returncode, 0, quiet.stderr)
+        self.assertEqual(quiet.stdout, "")
+        self.assertEqual(Inbox.posts, [])
+        blocked = self.inbox(owner=self.sleeper.pid)
+        self.assertEqual(blocked.stdout, "")
+
+    def test_empty_inbox_still_posts_the_owner_prompt(self):
+        Inbox.lines = []
+        script = (
+            "set -eu\n"
+            f"read_out=$(\"{TOOL}\" forge)\n"
+            f"\"{TOOL}\" forge --prompt --from blaze\n"
+            "test -z \"$read_out\"\n"
+        )
+        ran = subprocess.run(
+            ["bash", "-c", script],
+            env={**self.env_base, "WAKE_RUN": str(os.getpid())},
+            capture_output=True, text=True, timeout=20,
+        )
+        self.assertEqual(ran.returncode, 0, ran.stderr)
+        self.assertEqual(len(Inbox.posts), 1)
+        self.assertEqual(Inbox.posts[0]["body"]["kind"], "prompt")
+        self.assertEqual(Inbox.posts[0]["body"]["action"], "sent")
+        self.assertEqual(Inbox.posts[0]["body"]["from"], "blaze")
+
+    def test_cursor_key_keeps_a_new_head_unhandled(self):
+        owner = os.getpid()
+        read = self.inbox(owner=owner)
+        self.assertIn("crit-1", read.stdout)
+        fresh = self.inbox("--repeat", "--pr", "0xRayAI/xray#399", "--sha", "abc1234dead", "--kind", "critic_fail", owner=owner)
+        self.assertEqual(fresh.returncode, 1, fresh.stdout + fresh.stderr)
+        self.assertIn("new", fresh.stdout)
+        remembered = self.inbox("--remember", "--pr", "0xRayAI/xray#399", "--sha", "abc1234dead", "--kind", "critic_fail", owner=owner)
+        self.assertEqual(remembered.returncode, 0, remembered.stderr)
+        again = self.inbox("--repeat", "--pr", "0xRayAI/xray#399", "--sha", "abc1234dead", "--kind", "critic_fail", owner=owner)
+        self.assertEqual(again.returncode, 0, again.stderr)
+        self.assertIn("repeat", again.stdout)
+        new_head = self.inbox("--repeat", "--pr", "0xRayAI/xray#399", "--sha", "fff9999dead", "--kind", "critic_fail", owner=owner)
+        self.assertEqual(new_head.returncode, 1, new_head.stderr)
+        self.assertIn("new", new_head.stdout)
+        self.assertEqual(Inbox.posts, [])
+
     def test_turn_end_releases_the_claim(self):
         self.inbox(owner=os.getpid())
         ended = self.inbox("--turn", "end", "--tag", "wake", owner=os.getpid())
