@@ -63,6 +63,26 @@ export function defaultLedgerPath(cwd) {
   return path.join(cwd, 'house', 'arcade', 'pulsar-hold.json');
 }
 
+function readSeedFile(file) {
+  try {
+    const data = JSON.parse(fs.readFileSync(file, 'utf8'));
+    if (data && typeof data === 'object') return data;
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+export function readBoardSeed(cwd, seedPath) {
+  const primary = seedPath || path.join(cwd, 'house', 'bifrost-waves.json');
+  const found = readSeedFile(primary);
+  if (found) return found;
+  if (!seedPath) {
+    const bundled = readSeedFile(path.join(cwd, 'house', 'live', 'app', 'bifrost-waves.json'));
+    if (bundled) return bundled;
+  }
+  return { waves: [] };
+}
 function readJson(file) {
   if (!fs.existsSync(file)) return null;
   try {
@@ -94,6 +114,26 @@ export function writeSelected(text, seat, wave) {
   const body = String(text ?? '');
   if (/^Selected:.*$/m.test(body)) return body.replace(/^Selected:.*$/m, line);
   return `${body.replace(/\s*$/, '')}\n\n${line}\n`;
+}
+
+
+function claimHouse(housePath, record) {
+  const lock = `${housePath}.lock`;
+  try {
+    fs.writeFileSync(lock, `${record.seat}\n`, { flag: 'wx' });
+  } catch (err) {
+    if (err && err.code === 'EEXIST') return false;
+    throw err;
+  }
+  try {
+    const fresh = fs.readFileSync(housePath, 'utf8');
+    const held = readSelected(fresh);
+    if (held && (held.seat || held.jammed)) return false;
+    fs.writeFileSync(housePath, writeSelected(fresh, record.seat, record.wave));
+    return true;
+  } finally {
+    fs.rmSync(lock, { force: true });
+  }
 }
 
 export function readHold(record, seed, cards) {
@@ -179,35 +219,33 @@ export function runRangeCli(argv, io = {}) {
   }
   const charge = words.join(' ').trim();
   const housePath = io.housePath || path.join(cwd, 'house', 'OP-PROC.md');
-  const seedPath = io.seedPath || path.join(cwd, 'house', 'bifrost-waves.json');
   if (!charge && !seat) {
     stdout.write('The range is cold.\n');
     return 1;
   }
-  let houseText = '';
-  let seed = { waves: [] };
   try {
-    houseText = fs.readFileSync(housePath, 'utf8');
+    fs.readFileSync(housePath, 'utf8');
   } catch {
     stdout.write('The house override is missing.\n');
     return 2;
   }
-  try {
-    seed = JSON.parse(fs.readFileSync(seedPath, 'utf8'));
-  } catch {
-    seed = { waves: [] };
-  }
+  const seed = readBoardSeed(cwd, io.seedPath);
   const result = claimPulsar({
     charge,
     seat,
     now: io.now,
     seed,
     cards: io.cards || [],
-    readLedger: () => readSelected(houseText),
-    writeLedger: () => true,
-    writeHouse: (record) => {
-      fs.writeFileSync(housePath, writeSelected(houseText, record.seat, record.wave));
+    hash: io.hash,
+    digest: io.digest,
+    readLedger: () => {
+      try {
+        return readSelected(fs.readFileSync(housePath, 'utf8'));
+      } catch {
+        return { jammed: true };
+      }
     },
+    writeLedger: (record) => claimHouse(housePath, record),
   });
   stdout.write(`${result.say}\n`);
   return result.code;

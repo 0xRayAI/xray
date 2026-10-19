@@ -155,6 +155,45 @@ describe('pulsar range', () => {
     expect(miss.stdout).toContain('The house override is missing.');
     expect(miss.stdout).not.toContain('http');
   });
+
+  it('writes the selected seat into the house file and reads the bundled seed', () => {
+    const dir = mkdtempSync(path.join(tmpdir(), 'pulsar-house-'));
+    const houseDir = path.join(dir, 'house');
+    const bundledDir = path.join(houseDir, 'live', 'app');
+    mkdirSync(bundledDir, { recursive: true });
+    writeFileSync(path.join(houseDir, 'OP-PROC.md'), 'Initial: the find starts at the cold range.\nSelected: (none)\n');
+    writeFileSync(path.join(bundledDir, 'bifrost-waves.json'), JSON.stringify({
+      waves: [{ id: 'alpha', rank: 1, title: 'Alpha', cards: [{ repo: '0xRayAI/xray', number: 9 }] }],
+    }));
+    const now = Date.parse('2026-03-07T18:00:00Z');
+    const hour = String(game.chicagoParts(now).hour).padStart(2, '0');
+    let said = '';
+    const stdout = { write(chunk: string) { said += chunk; } };
+    const hit = game.runRangeCli([`left-${hour}-right`, '--seat', 'new-back'], {
+      cwd: dir,
+      now,
+      stdout,
+      hash: 'abc',
+      digest: (outer: string) => (outer === 'left-right' ? 'abc' : 'no'),
+    });
+    const house = readFileSync(path.join(houseDir, 'OP-PROC.md'), 'utf8');
+    expect(hit).toBe(0);
+    expect(said).toContain('holds wave alpha');
+    expect(house).toContain('Initial:');
+    expect(house).toContain('Selected: new-back alpha');
+    expect(house).not.toContain('pulsar-hold');
+    said = '';
+    const late = game.runRangeCli([`left-${hour}-right`, '--seat', 'forge'], {
+      cwd: dir,
+      now,
+      stdout,
+      hash: 'abc',
+      digest: (outer: string) => (outer === 'left-right' ? 'abc' : 'no'),
+    });
+    expect(late).not.toBe(0);
+    expect(said).toContain('Late');
+    expect(readFileSync(path.join(houseDir, 'OP-PROC.md'), 'utf8')).toContain('Selected: new-back alpha');
+  });
 });
 
 describe('charge pin', () => {

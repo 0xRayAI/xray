@@ -19,7 +19,7 @@ After that the seat holds nothing. A silent seat does not keep the cards.
 The initial and the selected seat are in `house/OP-PROC.md`.
 The ledger stays closed. There is no second winner.
 
-The ledger is `house/arcade/pulsar-hold.json` on this machine.
+The selected seat is the Selected line in that house file.
 A hit does not post. It does not deploy. It does not publish.
 It does not call the solar hammer, and it does not merge.
 
