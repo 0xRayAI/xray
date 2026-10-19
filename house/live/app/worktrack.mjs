@@ -466,58 +466,6 @@ export function boardCloudAgents({ agents = [], activity = [], links = [] } = {}
   return [...by.values()].sort((a, b) => (Date.parse(b.updated_ct) || 0) - (Date.parse(a.updated_ct) || 0) || a.bcId.localeCompare(b.bcId));
 }
 
-const BUILD_BC_SEATS = new Set(['mill', 'forge', 'builder', 'builder-cloud']);
-
-function agentSlot(seat) {
-  const name = String(seat || '').trim().toLowerCase();
-  if (name === 'critic') return 'critic_bc';
-  if (BUILD_BC_SEATS.has(name)) return 'build_bc';
-  return '';
-}
-
-function refsOfCard(card) {
-  const refs = new Set();
-  const add = (value) => {
-    const ref = cardRefOf(value);
-    if (ref) refs.add(ref.toLowerCase());
-  };
-  add(card.key);
-  add(card.card);
-  add(card.url);
-  add(card.pr);
-  const repo = String(card.repo || '').trim();
-  const number = Number(card.number);
-  if (/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repo) && Number.isInteger(number) && number >= 1 && number <= 99999999) {
-    add(repo + '#' + number);
-  }
-  return refs;
-}
-
-/** Newest running or finished agent for the card. A failed row does not take the slot. */
-export function stampCardAgents(cards, agents) {
-  const list = Array.isArray(cards) ? cards : [];
-  const rows = (Array.isArray(agents) ? agents : []).filter(row => row && typeof row === 'object');
-  const ordered = [...rows].sort((a, b) => (Date.parse(a.updated_ct) || 0) - (Date.parse(b.updated_ct) || 0) || String(a.bcId || '').localeCompare(String(b.bcId || '')));
-  return list.map(card => {
-    if (!card || typeof card !== 'object' || Array.isArray(card)) return card;
-    const refs = refsOfCard(card);
-    let build = '';
-    let critic = '';
-    for (const row of ordered) {
-      const ref = (cardRefOf(row.card) || cardRefOf(row.pr) || '').toLowerCase();
-      if (!ref || !refs.has(ref)) continue;
-      const state = String(row.state || '');
-      if (state !== 'running' && state !== 'finished') continue;
-      const slot = agentSlot(row.seat);
-      const id = String(row.bcId || '').trim();
-      if (!slot || !AGENT_ID.test(id)) continue;
-      if (slot === 'build_bc') build = id;
-      else critic = id;
-    }
-    return { ...card, build_bc: build, critic_bc: critic };
-  });
-}
-
 function agentItems(agents) {
   const byAgent = new Map();
   for (const row of agents || []) {
