@@ -2,6 +2,7 @@
 // Live state is rebuilt from append-only files on the volume. Nothing here is deleted.
 import fs from 'node:fs';
 import path from 'node:path';
+import { clockStamp } from './chicago-stamp.mjs';
 
 // Seats, display names, aliases and the human lane come from the server's config (configureWorkTrack); nothing here
 // names a seat. HUMAN_TO is the `to` value that parks a packet with a person; HUMAN_LANE is that lane's label.
@@ -245,7 +246,7 @@ export function acceptCursorWebhook({ dir, raw, headers, map, now = Date.now() }
     status: classified.status,
     rank: classified.rank,
     seat,
-    t_ct: new Date(now).toISOString(),
+    t_ct: clockStamp(now),
     title: textOf(parsed.summary || parsed.name || agent, 120) || agent,
     pr: classified.pr || '',
   };

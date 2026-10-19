@@ -18,6 +18,17 @@ export function chicagoStamp(ms) {
   return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}:${parts.second}${off < 0 ? '-' : '+'}${hh}:${mm}`;
 }
 
+/** America/Chicago wall time with milliseconds, same shape as the server ctStamp. */
+export function clockStamp(value) {
+  if (!value) return null;
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return null;
+  const base = chicagoStamp(d.getTime());
+  if (!base || base.includes('.')) return base;
+  const ms = String(d.getUTCMilliseconds()).padStart(3, '0');
+  return base.replace(/([+-]\d{2}:\d{2})$/, '.' + ms + '$1');
+}
+
 function offsetOf(iso) {
   const match = /([+-]\d{2}:\d{2})$/.exec(String(iso || ''));
   return match ? match[1] : '';
