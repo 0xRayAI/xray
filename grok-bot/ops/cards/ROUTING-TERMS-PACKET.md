@@ -10,12 +10,12 @@ The deep-seek reference agent that opened this card keeps it for the life of the
 
 ## Packet
 
-- goal: Build escalating scales of multiplicity. Many concurrent streams across planes, each placed on the escalator by difficulty, the oscillator setting how many get attention at once, the sweep keeping cold ones moving. Escalator is the scale. A threshold is one rung on that scale.
-- constraints: Packet only in this PR. Public lines stay free of patent-sensitive mechanism. Seek behavior stays. Sizing stays on the routing plate. No second word for the scale. No separate role-picker entry. Dichotomy stays an open question for Blaze. Do not recreate the missing planes file. Goggles looks and does not spin. The sweep does not replace nudge, tripwire, or the plan-next-wave card on #400.
-- path: Phase 1 writes the lexicon and makes the cutoff numbers agree. Phase 2 wires the system after the open research on this card is answered. Phase 3 is the multiplicity sweep, after that wiring, one plane at a time. This PR lands only `grok-bot/ops/cards/ROUTING-TERMS-PACKET.md`.
-- acceptance: The card states the settled terms, the public one-liners, the goggles relation, the routing inventory, the open research, the confer gate before code, the three phases, the files and plates, the tests, and what stays out. A later phase 1 PR matches those lines and one threshold table. A later phase 2 PR wires one system. A later phase 3 PR sweeps per plane.
-- gates: This PR is the card. Phase 1 later takes A and C (CI green, docs match the table and the lines). B and D stay off (no pack, no publish). Phase 2 does not start until the research listed here is answered on this card. Phase 3 waits on phase 2 and on the lens-card question.
-- evidence: Read of `grok-bot/OP-PROC.md`, `grok-bot/LEXICON.md`, `grok-bot/CADENCE.md`, `src/integrations/hooks/goggles-planes.json`, `src/integrations/hooks/goggles-pipeline.mjs`, `src/delegation/complexity-core.ts`, `src/delegation/complexity-analyzer.ts`, `src/nucleus/thin-dispatch.ts`, `src/mcps/orchestrator/execution/execution-planner.ts`, `src/mcps/orchestrator/handlers/complexity-handler.ts`, the plates named below, and draft #400 (`house/live/app/wave-schedule.mjs` at `cbb3c28ac`). `PLANES-2026-09-28.md` is absent from the tree, from `origin/main`, and from git objects.
+- goal: Build escalating scales of multiplicity. Streams sit on the escalator by difficulty. The oscillator sets attention. The sweep moves the cold ones. Escalator is the scale. A threshold is one rung.
+- constraints: Packet only. No patent text in public lines. Seek behavior stays. Sizing stays on the routing plate. No scale row, no role-picker row. Dichotomy is Blaze's question. Do not recreate the planes file.
+- path: Phase 1 writes the lexicon and one cutoff table. Phase 2 wires one system after the research on this card. Phase 3 sweeps per plane. This PR lands only the routing-terms packet.
+- acceptance: Settled terms, public lines, goggles, inventory, open research, confer gate, three phases, files, plates, tests, and exclusions are on the card. Later PRs match the lines, then wire, then sweep.
+- gates: This PR is the card. Phase 1 later takes A and C. B and D stay off. Phase 2 waits on the research on this card. Phase 3 waits on phase 2 and the lens-card question.
+- evidence: Read OP-PROC, LEXICON, CADENCE, goggles planes, complexity-core, thin-dispatch, the planner, the plates below, and draft #400. PLANES-2026-09-28.md is absent.
 - next owner: deep-seek reference agent for this card. Do not hand off.
 - escalate: Blaze, for the dichotomy gloss and for any capital call. The card stays with the reference agent.
 
@@ -27,7 +27,7 @@ The system is escalating scales of multiplicity: many concurrent streams, each p
 
 Role picker is the switch at a rung. It names the seat or agent that does the work at that cutoff. It is a clause of the escalator entry, not its own row.
 
-Seek stays the cheap-first skill choice. Its behavior stays. Its public line drops the held-card clause. The sizing pass stays on the routing plate (`scoreComplexity` / `scoreAndRoute`). Sizing feeds the escalator. It does not become a new meaning of seek.
+Seek places work on a rung of the escalator. It stays the cheap-first skill choice. Its behavior stays. Its public line drops the held-card clause. The sizing pass stays on the routing plate (`scoreComplexity` / `scoreAndRoute`). Sizing feeds the escalator.
 
 ## Public lines
 
@@ -35,9 +35,9 @@ These are the lines phase 1 may write. They are the public text.
 
 - **escalator** — Escalator is the scale: the whole ladder of thresholds that work climbs by difficulty. At a rung, a switch names the seat or agent that does the work.
 - **threshold** — A threshold is one rung, one cutoff, on the escalator. The oscillator may move a rung.
-- **oscillator** — Oscillator changes pace, quiet, and wait through the suit's feature settings.
+- **oscillator** — Oscillator changes pace and wait through the suit's feature settings.
 - **ponder** — Ponder is the slow pass after the work that writes one reflection.
-- **seek** (replace the public line, leave the behavior) — A cheap-first choice. A branch, then a table, then a score. It declines when nothing matches. It does not call a model. Confer on the result is only a feat or a refactor, and the quorum stays off.
+- **seek** (replace the public line, leave the behavior) — Seek places work on a rung. A cheap-first choice: a branch, then a table, then a score. It declines when nothing matches. It does not call a model. Confer on the result is only a feat or a refactor, and the quorum stays off.
 
 ## One routing system
 
@@ -47,7 +47,7 @@ Today the work is scored in more than one place, and the fleet clock is a third 
 - `analyze-complexity` on the orchestrator goes through `ComplexityHandler` into `ExecutionPlanner.analyzeTaskComplexity`, which blends `estimatedComplexity` and does not call `ComplexityAnalyzer`.
 - The stall clock is the Bifrost governor (`house/live/app/governor.mjs`): tripwire when nothing moves, nudge L1/L2/L3 when a live card has no beat, tandem as the governor. Drawn on `docs-site/docs/plates/bifrost.md`.
 
-The amalgamation makes these one system. The escalator is the scale the score climbs. Each published cutoff is a threshold on that scale. The rung switch names who works that cutoff. The oscillator is the settings layer that can move a rung, and that can change pace, quiet, and wait. The stall clock is the time side of the same system: how long a rung sits still before nudge and tripwire fire. Ponder is the pass after the work that writes one reflection. Seek still chooses a skill and does not size the work. The multiplicity sweep is the attention pass: it walks planes so a cold card is either given one step or marked parked.
+The amalgamation makes these one system. The escalator is the scale the score climbs. Each published cutoff is a threshold on that scale. The rung switch names who works that cutoff. The oscillator is the settings layer that can move a rung, and that can change pace, quiet, and wait. The stall clock is the time side of the same system: how long a rung sits still before nudge and tripwire fire. Ponder is the pass after the work that writes one reflection. Seek places work on a rung, still chooses a skill, and does not size the work. The multiplicity sweep is the attention pass: it walks planes so a cold card is either given one step or marked parked.
 
 ## Phase 1 — lexicon and one threshold table
 
@@ -62,7 +62,7 @@ Make one cutoff table, and make every published copy use it. These copies disagr
 - `xray/features.json`, `docs-site/docs/guides/features-json.md`, and `docs-site/docs/full-reference.md`: simple 15, moderate 25, complex 50, enterprise 100. The guide maps those to the plate's bands.
 - `src/__tests__/unit/complexity-analyzer-calibration.test.ts` uses `enterprise: 100` as sample input to `updateThresholds`. That fixture is not the source of truth.
 
-Phase 1 picks one table before editing. Default proposal, unless Blaze picks another: the bands `getLevelFromScore` already applies (15, 25, 50, and above that enterprise), and `features.json` `enterprise` matches that meaning. Each band edge is a threshold. The ladder of those thresholds is the escalator.
+Phase 1 picks one table before editing. Default proposal, unless Blaze picks another: the bands `getLevelFromScore` already applies (15, 25, 50, and above that enterprise), and `features.json` `enterprise` is 100, matching that meaning. Each band edge is a threshold. The ladder of those thresholds is the escalator.
 
 `docs-site/docs/guides/features-since-3.1.md` only names `complexity_thresholds` as tier boundaries. Touch it only if it starts quoting numbers.
 
@@ -100,7 +100,7 @@ Scope on `goggles-planes.json` is the four words ecosystem, part, one flow, and 
 
 How the four terms use planes and scope:
 
-- Seek. The sizing pass stays on the routing plate. Plane and scope are the sizing inputs that pass hands seek. Seek still chooses a skill from that sized result. A sweep runs seek once per chosen card, on the plane the pass is holding.
+- Seek places work on a rung. The sizing pass stays on the routing plate. Plane and scope are the sizing inputs that pass hands seek. Seek still chooses a skill from that sized result. A sweep runs seek once per chosen card, on the plane the pass is holding.
 - Escalator. Scope widens as the score climbs. A low rung is one artifact. A higher rung is a wider scope, up to ecosystem. The rung is still one threshold. The widen is which scope that rung is allowed to touch.
 - Oscillator. It sets N, the per-plane cap for a sweep pass, and it may move a threshold. It does not change which plane goggles is allowed to look at. One plane per look stays the rule.
 - Sweep. It runs per plane so no plane starves. Oldest-touched on that plane, capped at N, then seek, then the escalator. Cascade carries a finding from the plane where it was seen to the next plane on a later look. The station card's `Cascade:` line today is the wake handoff (`Cascade: record-map · notes N current` on `docs-site/docs/plates/station-card.md`). Phase 3 says whether the sweep writes that same line or a board field. It does not invent a second cascade word before that answer.
@@ -111,7 +111,7 @@ Open question. Does the escalator get its own lens card, or does it ride the rou
 
 Searched this branch (off `origin/main`). Each row is a system that chooses a handler, a destination, a model, or whether a call may run. `replaces` means the escalator becomes that decision. `absorbs` means the decision becomes a rung or the rung switch, and the old function becomes a caller. `leaves` means the system stays, and the escalator does not take it over.
 
-Question 8 is which absorbed table is the trunk. It is not a vote to keep the competing tables.
+Question 3 is which scorer is the trunk. It is not a vote to keep the competing tables.
 
 | System | Where | What it routes | Conflict | Escalator |
 | --- | --- | --- | --- | --- |
