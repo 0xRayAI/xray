@@ -6,6 +6,14 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+### 4.1.3 notes
+
+Arch1 owns the version bump, the tag, and the publish.
+
+A suit first worn on 4.1.1 keeps the catalog and a held dev card. On a non-mill seat, wear now removes a packaged catalog skill when that file is the package copy or the same text in two or more project skill dirs, and packaged role agents that are not in the fastened plant, before foundry-inspect. A skill the seat wrote in one dir stays, and foundry-inspect still refuses it. A plant set in `.xray/features.json` counts. Goggles runs a stored card through the plant lens, so `Skills:` and `Worn:` fill on a card the older suit already wrote. Wear replaces a held dev plane that has no `chosen` flag. A domain or integration plane, or a dev plane marked `chosen`, stays. A `Plane:` line already set on the station stays. (#395)
+
+`require('0xray/package.json')` resolves. Wear links vendored `@0xray/repertoire` itself, so a skipped install script is not required.
+
 ### 4.1.2 notes
 
 Arch1 owns the version bump, the tag, and the publish.

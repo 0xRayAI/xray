@@ -68,8 +68,28 @@ function existingPlantFiles(plantDir, spec) {
   };
 }
 
+const FEATURE_PLANT_KEYS = ["plant", "millPlant", "soundPlant", "blipPlant", "shopPlant", "role"];
+
+function plantKeysFrom(data) {
+  const out = {};
+  if (!data || typeof data !== "object" || Array.isArray(data)) return out;
+  for (const key of FEATURE_PLANT_KEYS) {
+    if (data[key] !== undefined) out[key] = data[key];
+  }
+  return out;
+}
+
 function readFoundryExtra(targetDir) {
   if (!targetDir) return {};
+  let fromFeatures = {};
+  const featuresFile = path.join(targetDir, ".xray", "features.json");
+  if (fs.existsSync(featuresFile)) {
+    try {
+      fromFeatures = plantKeysFrom(JSON.parse(fs.readFileSync(featuresFile, "utf8")));
+    } catch {
+      fromFeatures = {};
+    }
+  }
   const candidates = [
     path.join(targetDir, "foundry.json"),
     path.join(targetDir, ".xray", "foundry.json"),
@@ -78,12 +98,14 @@ function readFoundryExtra(targetDir) {
     if (!fs.existsSync(candidate)) continue;
     try {
       const parsed = JSON.parse(fs.readFileSync(candidate, "utf8"));
-      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) return parsed;
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        return { ...fromFeatures, ...parsed };
+      }
     } catch {
-      return {};
+      continue;
     }
   }
-  return {};
+  return fromFeatures;
 }
 
 function foundryPlantDir(millPackageRoot) {

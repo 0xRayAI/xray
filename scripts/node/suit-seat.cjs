@@ -28,12 +28,23 @@ function readJson(file) {
 }
 
 function foundryExtra(root) {
-  const candidates = [path.join(root, "foundry.json"), path.join(root, ".xray", "foundry.json")];
-  for (const file of candidates) {
-    const parsed = readJson(file);
-    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) return parsed;
-  }
-  return {};
+  return millPlantProtocol.readFoundryExtra(root);
+}
+
+/** A held dev card from an older suit is not a choice. Any other plane, or dev marked chosen, stays. A mill plant keeps that dev hold. */
+function replaceStaleDevHold(root) {
+  const dest = path.join(root, ".xray", "state", "goggles-plane.json");
+  const held = readJson(dest);
+  if (!held || typeof held !== "object" || Array.isArray(held)) return false;
+  if (held.chosen === true) return false;
+  if (held.plane !== "dev") return false;
+  if (normalizePlant(declaredPlant(root)) === "mill") return false;
+  const lens = seatLens(root);
+  const next = lens && CARD_PLANES.includes(lens.plane) && lens.plane !== "dev" ? lens.plane : "";
+  if (!next) return false;
+  fs.mkdirSync(path.dirname(dest), { recursive: true });
+  fs.writeFileSync(dest, `${JSON.stringify({ plane: next, card: next })}\n`);
+  return true;
 }
 
 function normalizePlant(raw) {
@@ -236,6 +247,7 @@ function restampPlane(text, plane) {
 }
 
 function seedSuitPages(root, packageRoot) {
+  replaceStaleDevHold(root);
   const version = packageVersion(packageRoot);
   const lens = seatLens(root);
   const plane = lens && lens.plane ? lens.plane : "dev";
