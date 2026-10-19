@@ -1,5 +1,6 @@
 """Unit tests for the Example adapter (stdlib, no network). Run: python3 -m unittest -v tests/test_collect.py"""
 import json, os, subprocess, sys, tempfile, threading, time, unittest, http.server
+from datetime import datetime
 from unittest import mock
 from pathlib import Path
 HERE = Path(__file__).resolve().parent
@@ -658,6 +659,35 @@ class CardLifecycle(unittest.TestCase):
         self.assertEqual(col.ev["example-org/app#8:merged"]["merged_by"], "critic0x[bot]")
         col.backfill_mergers(C())
         self.assertEqual(col.st["merger_tried"].get("8"), True)
+
+    def test_pull_fetch_writes_the_open_card(self):
+        """GET /pulls/:n is a card even when the list walk never stored pr_open."""
+        col = _collector("example-org/app")
+        col.st["need_merger"] = {"8": 1}
+        fetched = self._pull(state="open", merged_at=None, title="fetched card",
+                             user={"login": "forge0x1[bot]"}, merged_by=None)
+
+        class C:
+            token = "t"
+            def rest(self, path, params=None, etag=None, essential=True):
+                if str(path).endswith("/pulls/8"):
+                    return 200, fetched, None, None
+                return 200, [], "etag", None
+
+        with mock.patch.dict(uc.NODE_LC, {"forge0x1[bot]": "forge"}):
+            col.backfill_mergers(C())
+        opened = col.ev["example-org/app#8:open"]
+        self.assertEqual(opened["kind"], "pr_open")
+        self.assertEqual(opened["title"], "fetched card")
+        self.assertEqual(opened["pr_state"], "open")
+        self.assertEqual(opened["from"], "forge")
+        import live_board
+        when = datetime.fromisoformat(opened["t_ct"]).timestamp()
+        with mock.patch.object(live_board, "CACHE", Path("/tmp/no-inbox-events-b2.json")):
+            cards = [c for c in live_board.model([opened], now=when + 60)["cards"]
+                     if c.get("repo") == "example-org/app" and c.get("number") == 8]
+        self.assertEqual(len(cards), 1)
+        self.assertEqual(cards[0]["state"], "live")
 
     def test_pull_get_replaces_author_merged_by_after_backfill_done(self):
         """Author != merger. A finished backfill that left the author in merged_by is corrected by GET /pulls/:n."""

@@ -727,6 +727,28 @@ class RepoCollector:
             tried.pop(key, None)
         self.st["bf"]["merged_by_pull"] = True
 
+    def ensure_pull_card(self, p):
+        """A fetched pull is a card even when the list walk never stored pr_open."""
+        if not isinstance(p, dict) or p.get("number") is None:
+            return
+        try:
+            n = int(p["number"])
+        except (TypeError, ValueError):
+            return
+        eid = f"{self.repo}#{n}:open"
+        if eid in self.ev:
+            return
+        user = p.get("user") if isinstance(p.get("user"), dict) else {}
+        login = user.get("login") or ""
+        head = (p.get("head") or {}).get("sha") if isinstance(p.get("head"), dict) else None
+        url = p.get("html_url") or f"https://github.com/{self.repo}/pull/{n}"
+        created = p.get("created_at") or p.get("updated_at")
+        base = (p.get("base") or {}).get("ref") if isinstance(p.get("base"), dict) else None
+        self.put(eid, created, node(login) if login else "GitHub", "GitHub", "pr_open",
+                 f"{self.short} #{n} opened · {p.get('title') or ''}", url, n,
+                 base=base, actor=login or None, sha=head, author=login or None,
+                 draft=p.get("draft"), mentions=mentions(p.get("body")), **card_fields(p))
+
     def backfill_mergers(self, c, limit=20):
         """GET /pulls/{n} and stamp merged_by.login. The author is never the stamp. A list payload often omits it."""
         if not getattr(c, "token", None):
@@ -744,6 +766,8 @@ class RepoCollector:
                 raise
             except (urllib.error.URLError, http.client.HTTPException, TimeoutError, OSError, ValueError, KeyError, TypeError):
                 continue
+            if isinstance(data, dict):
+                self.ensure_pull_card(data)
             login = ((data or {}).get("merged_by") or {}).get("login") if isinstance(data, dict) else None
             if login:
                 self._stamp_merger(int(n), login)
