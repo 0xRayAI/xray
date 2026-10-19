@@ -517,11 +517,21 @@ def stats(evs, now=None):
     is_pr = lambda key: opened.get(key, {}).get("kind") == "pr_open" or key in merged or key in unmerged
     iss = [k for k in opened if not is_pr(k)]
     prs = [k for k in opened if is_pr(k)]
-    out = {"issues_opened_24h": sum(day(opened[k]) for k in iss),
-           "issues_closed_24h": sum(1 for k, e in closed.items() if not is_pr(k) and day(e)),
-           "prs_opened_24h": sum(day(opened[k]) for k in prs),
-           "prs_merged_24h": sum(day(e) for e in merged.values()),
-           "prs_closed_unmerged_24h": sum(1 for k, e in unmerged.items() if k not in merged and day(e)),
+
+    def window_ids(rows):
+        ids = [f"{repo}#{number}" for (repo, number), e in rows if day(e)]
+        return len(ids), ids
+
+    issues_opened_n, issues_opened_ids = window_ids((k, opened[k]) for k in iss)
+    issues_closed_n, issues_closed_ids = window_ids((k, e) for k, e in closed.items() if not is_pr(k))
+    prs_opened_n, prs_opened_ids = window_ids((k, opened[k]) for k in prs)
+    prs_merged_n, prs_merged_ids = window_ids(merged.items())
+    prs_unmerged_n, prs_unmerged_ids = window_ids((k, e) for k, e in unmerged.items() if k not in merged)
+    out = {"issues_opened_24h": issues_opened_n, "issues_opened_24h_ids": issues_opened_ids,
+           "issues_closed_24h": issues_closed_n, "issues_closed_24h_ids": issues_closed_ids,
+           "prs_opened_24h": prs_opened_n, "prs_opened_24h_ids": prs_opened_ids,
+           "prs_merged_24h": prs_merged_n, "prs_merged_24h_ids": prs_merged_ids,
+           "prs_closed_unmerged_24h": prs_unmerged_n, "prs_closed_unmerged_24h_ids": prs_unmerged_ids,
            "issues_open": sum(1 for k in iss if k not in closed and "pr_state" in opened[k]),
            "prs_open": sum(1 for k in prs if k not in closed and "pr_state" in opened[k])}
     out["open_total"] = out["issues_open"] + out["prs_open"]
