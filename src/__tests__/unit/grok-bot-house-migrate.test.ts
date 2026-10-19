@@ -17,6 +17,7 @@ const { boardSurface, diagnoseSeat, formatDoctor, initHouse, parseDoctorArgs, ru
   diagnoseSeat: (opts: { cwd: string; home?: string; env?: Record<string, string> }) => {
     house: { status: string; scope?: { wallet: string } };
     next: string[];
+    board?: { board: string; read: string };
   };
   formatDoctor: (report: { ok: boolean; next: string[] } & Record<string, unknown>) => string;
   initHouse: (opts: { dir: string; kitRoot: string; migrate?: boolean }) => {
@@ -211,6 +212,16 @@ describe('board when Bifrost is not configured', () => {
       board: 'bifrost',
       read: 'GET /cards',
     });
+    const dir = scratch();
+    try {
+      const unset = diagnoseSeat({ cwd: dir, env: {} });
+      expect(unset.board).toEqual({ board: 'waveboard', read: 'house/WAVEBOARD.md' });
+      expect(formatDoctor(unset as { ok: boolean; next: string[] })).toContain('Board: house/WAVEBOARD.md');
+      const set = diagnoseSeat({ cwd: dir, env: { LIVE_URL: 'https://burst-live-production.up.railway.app' } });
+      expect(formatDoctor(set as { ok: boolean; next: string[] })).toContain('Board: GET /cards');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
     const board = template('WAVEBOARD.md');
     expect(board).toContain('when `LIVE_URL` is unset');
     expect(board).not.toContain('Do not add open work');

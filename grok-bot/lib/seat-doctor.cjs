@@ -746,7 +746,8 @@ function diagnoseSeat(opts = {}) {
   const inventoryPresent = Boolean(inventory);
   const goggles = probeGoggles(cwd, inventoryPresent);
   const plantOk = Boolean(seat) && mill && inspect && installed && deadHooks.length === 0 && goggles.status !== 'off';
-  const house = probeHouse(cwd, opts.env || process.env);
+  const env = opts.env || process.env;
+  const house = probeHouse(cwd, env);
   const report = {
     ok: plantOk && house.status !== 'fail',
     cwd,
@@ -768,6 +769,7 @@ function diagnoseSeat(opts = {}) {
     repertoire: probeRepertoire(cwd),
     ows: probeOws(home),
     house,
+    board: boardSurface(env),
     urls: PLANT_URLS,
     next: [],
   };
@@ -849,6 +851,7 @@ function formatDoctor(report) {
       }
     }
   }
+  if (report.board && report.board.read) lines.push(`Board: ${report.board.read}`);
   lines.push('');
   lines.push('Next');
   report.next.forEach((step, i) => {
