@@ -11,7 +11,7 @@ This file is the whole change. No other file is edited here.
 - path: Critic PASS on this packet, then one follow-up that edits the files below to match the tables.
 - acceptance: Every in-scope CoS and mill-seat reference is in the tables with a replacement, or in Open questions. The new inbound-triage rule is stated. Plant hits are listed as out of this retirement.
 - gates: Critic packet PASS is the gate before any code. The @arch10x comment is a fleet-wide read, not the gate. This PR is docs-only; A and C wait on the follow-up. B and D stay off.
-- evidence: Read pack OP-PROC, house/OP-PROC, WAKE-ROUTINE, house/live docs, LEXICON, bifrost plate, CADENCE, both runbooks, the seat skills and house templates, wave-schedule.mjs, fleet-roster.json.
+- evidence: Read pack OP-PROC, house/OP-PROC, WAKE-ROUTINE, house/live docs, LEXICON, bifrost plate, CADENCE, the runbooks, the seat skills and house templates, wave-schedule.mjs, fleet-roster.json, and critic review 5575662717 at `84e6533`. Checked `server.mjs:159`, `:283`, `:618`, `:944`, `:1041`, `:1048`, `:1055`, `:1126`, `:1397-1403`, `:1455`, `:1493`, `governor.mjs:100-102`, and `inbox-roles.json:110-122`.
 - next owner: critic for packet PASS. Follow-up code waits on that PASS.
 - escalate: Blaze, for the open questions only.
 
@@ -21,17 +21,27 @@ Plates read: `docs-site/docs/plates/bifrost.md`, `docs-site/docs/plates/lens-gat
 
 | Bucket | Takes |
 |---|---|
-| Bifrost board / collector | Eng-loop CoS: board ownership, nudge L2/L3, tripwire tell, handoff-missing L3, plan-next-wave card, beat → card, drift between board and PR heads. The card owner already gets L1. Drop the extra CoS wake. |
-| forge | Release. Inbound triage (new rule below). Launches and resumes the cloud agent that writes code and opens the PR (replaces the mill seat). |
-| delete | Seat rows, roster entries, `@blinky` / `@mill` routes, emoji, and the coordinator runbook, after Blaze answers anything that is only CoS. |
+| Bifrost board / collector | Board ownership, plan-next-wave card, beat → card, drift between board and PR heads. The card owner already gets L1. Drop the L2/L3 CoS wake. Do not retarget it. |
+| forge | Release. Inbound triage (new rule below). Launches the cloud agent that writes code and opens the PR. Empty-board wake and `POST /clock`. |
+| delete | Seat rows, roster entries, `@blinky` / `@mill` routes, emoji, and the coordinator runbook, after Blaze answers anything that is only CoS. Do not delete `seats.coord`. |
 
-`grok-bot/templates/house/fleet/WAKE-ROUTINE.md` does not name CoS or mill. Line 23 already hands builds to forge's chat and reviews to critic. No edit until a follow-up has a real rule change there.
+`grok-bot/templates/house/fleet/WAKE-ROUTINE.md` does not name CoS or mill. Line 24 already hands builds to forge's chat and reviews to critic. No edit until a follow-up has a real rule change there.
 
 ## New rule
 
 Outside and inbound PRs are triaged on the board by forge into **current wave**, **next wave**, or **backlog**, and each card carries a **target release**.
 
-That replaces CoS assignment and the blinky "new issue" route. It does not replace critic PASS, Arch1's yes where the tier already requires it, or Blaze on money, credentials, deletes, publishing, production, and taste.
+That replaces CoS assignment and the blinky "new issue" route. It does not replace critic PASS, Arch1's yes where the tier already requires it, or Blaze on money, credentials, deletes, publishing, production, and taste. Handoff kinds stay (`handoff.mjs:78-82`): critic reviews, forge merges, `critic_fail` and `ci_fail` go to the author.
+
+## Coord route (critic round 1)
+
+`seats.coord` is one block with two jobs. Do not delete it.
+
+- The empty-board wake and `POST /clock` read `seats.coord.seat` (`server.mjs:1397-1403`). `CLOCK_SEATS` defaults to that seat (`:1401-1403`). If the seat is missing, the empty wake does not run (`governor.mjs:100-102`).
+- That same lookup is `cosSeat()` (`server.mjs:618`). L2 uses the constant `COS` (`:1048`). L3 reassign uses `cosSeat()` (`:1055`, handoff `:1126`, stall tell `:1455`). If the route is missing, `cosSeat()` falls back to `COS = 'blinky'` (`:283`). One delete cannot both wake forge and stop those CoS wakes.
+- Follow-up: point the empty-board wake and the clock at forge by a separate target. Stop using this seat for L2/L3. Do not retarget L2/L3 at forge.
+- The block also holds labels `needs-decision` and `lead`, and the same needles (`inbox-roles.json:110-122`). `seat` stays `blinky` until Blaze answers Q4. Do not move those labels by rewriting `seats.coord.seat`.
+- `holdOwner` (`server.mjs:944`) and the L1 fallback `|| COS` (`:1041`) are the no-owner path. Leave them until Q5.
 
 ## CoS inventory
 
@@ -39,9 +49,9 @@ That replaces CoS assignment and the blinky "new issue" route. It does not repla
 |---|---|---|
 | `grok-bot/OP-PROC.md:6` | Coordinator never deploys, publishes, launches a cloud, posts, spends, or merges | delete the role |
 | `grok-bot/OP-PROC.md:7` | Coordinator is also called CoS. CoS cards a new seat's first work | delete the name. First-card hire is an open question |
-| `grok-bot/OP-PROC.md:10` | A CoS room post is not a handoff. CoS is woken at L3 | board / collector. Room-post rule stays |
-| `grok-bot/OP-PROC.md:16` | Empty board and plan-next-wave wake the coordinator | board / collector raises the card. forge triages what gets pulled (new rule) |
-| `grok-bot/OP-PROC.md:17` | L2 to CoS. L3 wakes CoS to reassign. CoS owns the board | board / collector. Drop the CoS wake |
+| `grok-bot/OP-PROC.md:10` | A CoS room post is not a handoff. CoS is woken at L3 | drop the L3 wake. Room-post rule stays |
+| `grok-bot/OP-PROC.md:16` | Empty board and plan-next-wave wake the coordinator | empty-board wake and clock → forge. Do not delete `seats.coord` to get there |
+| `grok-bot/OP-PROC.md:17` | L2 to CoS. L3 wakes CoS to reassign. CoS owns the board | drop L2/L3 (`server.mjs:1048`, `:1055`). Do not retarget them. Owner keeps L1 |
 | `grok-bot/OP-PROC.md:19` | Coordinator runbook | delete `grok-bot/runbooks/COORDINATOR.md` after open questions |
 | `grok-bot/CADENCE.md:18` | Critic and CoS agree design before the paid round | open question |
 | `grok-bot/CADENCE.md:27` | CoS weighs cost, then the room decides | open question |
@@ -55,11 +65,11 @@ That replaces CoS assignment and the blinky "new issue" route. It does not repla
 | `grok-bot/LEXICON.md:144` | Tripwire empty board and plan-next-wave wake the coordinator | same as OP-PROC:16 |
 | `grok-bot/LEXICON.md:145` | Nudge L2/L3 to the CoS role | same as OP-PROC:17 |
 | `grok-bot/LEXICON.md:156-157` | Coordinator owns the board via tripwire and nudge, and the never-list | delete both rows |
-| `grok-bot/LEXICON.md:159-160` | Handoff L3 wakes CoS. A CoS room post is not a handoff | board / collector. Room-post rule stays |
+| `grok-bot/LEXICON.md:159-160` | Handoff L3 wakes CoS. A CoS room post is not a handoff | drop the L3 wake. Room-post rule stays |
 | `grok-bot/LEXICON.md:168` | Roles list includes coordinator | delete coordinator |
 | `grok-bot/LEXICON.md:186` | CoS triggers boil-up | open question |
 | `grok-bot/LEXICON.md:193` | Plan-next-wave card is for the coordinator | forge, under the new triage rule |
-| `grok-bot/runbooks/COORDINATOR.md:3-4` | L3 reassign. Empty board and plan-next-wave wake this seat | board / collector, then delete the runbook |
+| `grok-bot/runbooks/COORDINATOR.md:3-4` | L3 reassign. Empty board and plan-next-wave wake this seat | drop L3. Empty wake and clock → forge. Delete the runbook after the open questions |
 | `grok-bot/runbooks/COORDINATOR.md:9` | Boil-up | open question |
 | `grok-bot/runbooks/COORDINATOR.md:12` | Coordinator only enters through tripwire and nudge | delete |
 | `house/OP-PROC.md:11-12` | CoS does not police chimes. CoS assigns | delete. Inbound assignment is forge |
@@ -77,38 +87,38 @@ That replaces CoS assignment and the blinky "new issue" route. It does not repla
 | `house/OP-PROC.md:150` | CoS owns the board digest. Forge owns eng cadence | digest → open question. Eng cadence stays forge |
 | `house/OP-PROC.md:156` | CoS sets the lap clock | open question (section is still waiting on Arch1) |
 | `house/OP-PROC.md:163` | CoS logs cadence refinements into one OP-PROC PR | open question |
-| `house/live/docs/inbox.md:3-5` | CoS owns the board. Nudge L2/L3 and tripwire wake CoS | board / collector |
-| `house/live/docs/inbox.md:39` | Handoff-missing L3 wakes CoS | board / collector |
+| `house/live/docs/inbox.md:3-5` | CoS owns the board. Nudge L2/L3 and the empty-board wake go to CoS | drop L2/L3. Empty-board wake → forge. Keep `seats.coord` |
+| `house/live/docs/inbox.md:39` | Handoff-missing L3 wakes CoS | drop it (`server.mjs:1126`). Do not retarget it |
 | `house/live/docs/inbox.md:51` | Blinky's scheduled sweep is the backstop for dropped wakes | open question |
 | `house/live/docs/inbox.md:58` | Blinky's sweep covers seats with no webhook | open question |
 | `house/live/docs/inbox.md:68` | New issue routes to blinky | forge (new rule) |
 | `house/live/docs/inbox.md:69-70` | Comment-watch and PR-head heads-up copy blinky | delete the blinky copy. Author seat and critic stay |
-| `house/live/docs/inbox.md:75` | needs-decision / lead label routes to blinky | open question |
+| `house/live/docs/inbox.md:75` | needs-decision / lead label routes to blinky | keep. The labels are `seats.coord` (`inbox-roles.json:114-121`) until Q4 |
 | `house/live/docs/inbox.md:78` | Fallback seat is blinky | forge for an inbound PR. Anything else → open question |
 | `house/live/docs/inbox.md:82` | Server nudges and silent-seat lines go to blinky (was coord) | drop the blinky copy |
 | `house/live/docs/inbox.md:86-87` | Coordinator fallback and PR-head copy to blinky | same as :78 and :70 |
 | `house/live/docs/inbox.md:146` | No-webhook seats learn of work from blinky's sweep | open question (same sweep) |
 | `house/live/docs/inbox.md:218` | Arch1's lines are never copied to blinky | delete the blinky clause when fallback moves |
-| `house/live/docs/inbox.md:272` | Empty board wakes the CoS seat. `POST /clock` defaults to coord | forge, under the new triage rule |
-| `house/live/docs/inbox.md:274` | Card L2 goes to CoS | board / collector |
+| `house/live/docs/inbox.md:272` | Empty board wakes the CoS seat. `POST /clock` defaults to coord | point both at forge. Keep `seats.coord` so the wake still runs |
+| `house/live/docs/inbox.md:274` | Card L2 goes to CoS | drop L2. Do not send it to forge |
 | `house/live/docs/inbox.md:276-277` | Unrouted and quiet-seat nudges go to CoS | collector records them. Drop the CoS wake |
-| `house/live/docs/board.md:22` | Handoff-missing L3 wakes CoS | board / collector |
-| `house/live/docs/board.md:28-30` | Nudge ladder L2/L3 to CoS | board / collector |
+| `house/live/docs/board.md:22` | Handoff-missing L3 wakes CoS | drop it. Do not retarget it |
+| `house/live/docs/board.md:28-30` | Nudge ladder L2/L3 to CoS | drop L2/L3. Owner keeps L1 |
 | `house/live/docs/board.md:65` | start-after wake lists blinky beside mill, critic, forge | drop blinky and mill |
 | `house/live/docs/board.md:144` | blinky avatar on the board | delete with the seat |
 | `house/live/docs/fleet-setup.md:7` | Roster names blinky | delete from `feed/fleet-roster.json` |
-| `house/live/docs/fleet-setup.md:13` | `coord` → blinky | delete the coord route |
+| `house/live/docs/fleet-setup.md:13` | `coord` → blinky | keep until Q4. Wake and clock are a separate forge target |
 | `house/live/docs/fleet-setup.md:19-20` | Fallback, PR heads, and comment-watch include blinky | same as inbox.md :68-78 |
 | `house/live/docs/fleet-setup.md:30` | Example: login `blinky` is a stranger, not the seat | drop the example name |
 | `house/live/docs/fleet-setup.md:34` | Board strip includes blinky | delete from the strip |
-| `house/live/docs/fleet-setup.md:60` | Nudges go to blinky (was coord) | board / collector |
+| `house/live/docs/fleet-setup.md:60` | Nudges go to blinky (was coord) | drop the L2/L3 copy. Keep `seats.coord` |
 | `house/live/SETUP.md:13` | A login GitHub does not know nudges CoS | collector shows `routing: fail`. Drop the CoS nudge |
 | `house/live/SETUP.md:37` | Seat-key list includes blinky | drop the seat. Key deletion stays with Blaze |
 | `house/live/SETUP.md:49` | blinky inbox is CoS / board asks | delete. Inbound PRs go to forge |
 | `house/live/SETUP.md:76` | blinky or forge may read every card | forge keeps all-cards. Drop blinky |
 | `house/live/SETUP.md:104` | A silent seat nudges blinky | drop the CoS nudge |
-| `house/live/PLAYBOOK.md:12` | L2 nudge to Coord | board / collector. Playbook is the stale 30-min ladder; match `board.md` |
-| `house/live/PLAYBOOK.md:24` | Coord unblocks, reassigns, or parks | board / collector |
+| `house/live/PLAYBOOK.md:12` | L2 nudge to Coord | drop L2. Playbook is the stale 30-min ladder; match `board.md` |
+| `house/live/PLAYBOOK.md:24` | Coord unblocks, reassigns, or parks | drop the reassign. Park stays a card state |
 | `house/live/docs/README.md:3` | Kit example roles include Coord | delete Coord from the example list |
 | `house/live/app/wave-schedule.mjs:3` | Plan-next-wave is raised for the CoS seat | forge |
 | `house/live/app/wave-schedule.mjs:252` | Plan card owner `coord` | forge |
@@ -129,12 +139,12 @@ That replaces CoS assignment and the blinky "new issue" route. It does not repla
 | `grok-bot/skills/synaptical-comms/SKILL.md:30` | CoS rewrite of Dist openers | open question |
 | `grok-bot/skills/dist-0xrayai-publish/SKILL.md:12-14` | Exact CoS copy. CoS owns the plain rewrite. Herald does not invent it | open question |
 | `grok-bot/skills/draw-seat-emoji/SKILL.md:28` | blinky mark | delete with the seat |
-| `grok-bot/skills/draw-stamped-card/recipes/bifrost-storyboard/steps.json:20` | Step label "Nudge, then CoS" | board / collector |
-| `docs-site/docs/plates/bifrost.md:40` | Tripwire tells CoS. Empty board wakes CoS. CoS can `POST /clock` | board / collector. Clock seats → forge |
-| `docs-site/docs/plates/bifrost.md:44` | `evalNudges` L2/L3 and quiet/unrouted nudges go to CoS | board / collector |
-| `docs-site/docs/introduction.md:60` | L2 nudge goes to the CoS role | board / collector |
-| `docs-site/docs/guides/features-since-3.1.md:14` | Same nudge ladder to CoS | board / collector |
-| `AGENTS.md:242` | L2 to CoS. L3 wakes CoS | board / collector |
+| `grok-bot/skills/draw-stamped-card/recipes/bifrost-storyboard/steps.json:20` | Step label "Nudge, then CoS" | drop the CoS step |
+| `docs-site/docs/plates/bifrost.md:40` | Tripwire tells CoS. Empty board wakes CoS. CoS can `POST /clock` | drop the stall tell. Empty wake and clock → forge |
+| `docs-site/docs/plates/bifrost.md:44` | `evalNudges` L2/L3 and quiet/unrouted nudges go to CoS | drop the CoS wake. Owner ladder stays |
+| `docs-site/docs/introduction.md:60` | L2 nudge goes to the CoS role | drop L2 |
+| `docs-site/docs/guides/features-since-3.1.md:14` | Same nudge ladder to CoS | drop L2/L3. Owner keeps L1 |
+| `AGENTS.md:242` | L2 to CoS. L3 wakes CoS | drop L2/L3. Owner keeps L1 |
 | `docs-site/static/live/live.js:25` | blinky labeled CoS | delete the node |
 | `docs-site/static/live/live.js:30` | blinky color | delete |
 | `docs-site/static/live/live.js:35` | blinky label | delete |
@@ -148,7 +158,26 @@ That replaces CoS assignment and the blinky "new issue" route. It does not repla
 | `docs-site/static/live/live-events.json:2367` | sample event `to: blinky` | delete or retarget in the follow-up |
 | `docs-site/static/live/live-events.json:2738` | sample label mentions CoS | delete the CoS phrase |
 | `docs-site/static/live/live-events.json:4252` | sample event `to: blinky` | delete or retarget in the follow-up |
-| `house/live/app/server.mjs` | `evalNudges`, tripwire, comment-watch, and clock seats. Docs cite this file; this packet does not pin source lines | follow-up edits the CoS wake target out. Behavior stays the tables above |
+| `house/live/app/server.mjs:159` | a `coord` credit returns blinky | when blinky leaves the roster, do not keep this hardcoded return. Not a reason to delete `seats.coord` |
+| `house/live/app/server.mjs:283-284` | `COS = 'blinky'`. Alias `coord` → blinky. `cosSeat()` falls back here | do not delete the route to avoid this fallback. L2/L3 stop calling it |
+| `house/live/app/server.mjs:288` | default `SEAT_IDS` still lists mill and blinky | drop mill with the seat. blinky stays listed while `seats.coord.seat` is blinky |
+| `house/live/app/server.mjs:618` | `cosSeat()` reads `seats.coord`, else blinky | wake and clock do not use this for L2/L3 |
+| `house/live/app/server.mjs:944` | `holdOwner` returns `COS` when the card has no seat | leave until Q5 |
+| `house/live/app/server.mjs:1041` | L1 target falls back to `COS` | leave until Q5 |
+| `house/live/app/server.mjs:1048` | L2 nudge seat is `COS` | drop. Do not retarget at forge |
+| `house/live/app/server.mjs:1055` | L3 reassign wakes `cosSeat()` | drop. Do not retarget at forge |
+| `house/live/app/server.mjs:1126` | handoff-missing L3 wakes `cosSeat()` | drop. Do not retarget at forge |
+| `house/live/app/server.mjs:1397-1403` | `COORD_SEAT` is `seats.coord.seat`. Clock seats default to it | point the empty-board wake and the clock at forge. Leave the coord block |
+| `house/live/app/server.mjs:1455` | a stall run also tells `cosSeat()` | drop. Do not retarget at forge |
+| `house/live/app/server.mjs:1493` | `SEAT_GIT_NAMES` lists blinky and mill | drop mill. blinky stays while Q4 holds `seats.coord.seat` |
+| `house/live/app/governor.mjs:100-102` | empty wake does not run when `coord` is missing | forge is that argument. Do not pass null |
+| `house/live/app/governor.mjs:104` | `startByHand` records reason `cos` | clock starter is forge. Reason text can follow in the same edit |
+| `house/live/feed/routing/inbox-roles.json:110-122` | `seats.coord` seat blinky, labels needs-decision and lead | keep the whole block until Q4 |
+| `grok-bot/runbooks/CRITIC.md:22` | nudge check wakes the coordinator once after L1→L3 | drop the coordinator wake. Owner ladder stays |
+| `grok-bot/runbooks/SHIP.md:1` | runbook title | no seat duty. Listed so the follow-up opens the file |
+| `grok-bot/runbooks/SHIP.md:16` | ship seat takes dev cards when the implementer is full | the implementer is the forge-owned cloud agent |
+| `grok-bot/AGENTS.md:8` | key agents include coordinator and implementer | drop coordinator. Implementer is the cloud agent |
+| `grok-bot/AGENTS.md:35` | Coordinator routes. Implementer executes | forge triages inbound. The cloud agent executes. Forge still does not mint for it |
 | `src/__tests__/unit/grok-bot-house-template.test.ts:57` | Generic auto-review text must not match blinky | keep. The kit must stay free of the fleet name |
 | `src/__tests__/unit/grok-bot-house-template.test.ts:72` | Generic role map must not match blinky | keep |
 | `src/__tests__/unit/grok-multi-seat-wear.test.ts:200` | Temp dir named `blinky-suit` | not the role. Leave |
@@ -230,6 +259,10 @@ These say mill and mean the foundry organ (build, test, ship inside the suit). L
 | `docs-site/docs/plates/suit-wear.md:37` | wear fastens mill and inspect |
 | `docs-site/docs/plates/glossary.md:22` | mill builds and ships the plant |
 | `src/__tests__/unit/grok-bot-house-migrate.test.ts:271` | asserts the fasten mill+inspect step |
+| `grok-bot/AGENTS.md:10` | fasten mill+inspect per agent | plant. Leave |
+| `grok-bot/AGENTS.md:18` | doctor PASS is mill+inspect | plant. Leave |
+| `grok-bot/AGENTS.md:40` | mill nested in the tarball | plant. Leave |
+| `grok-bot/AGENTS.md:52` | mill gates | plant. Leave |
 
 ## Files to change (follow-up, not this PR)
 
@@ -238,6 +271,9 @@ These say mill and mean the foundry organ (build, test, ship inside the suit). L
 - `grok-bot/LEXICON.md`
 - `grok-bot/runbooks/COORDINATOR.md` (delete after open questions)
 - `grok-bot/runbooks/IMPLEMENTER.md`
+- `grok-bot/runbooks/CRITIC.md` (line 22 only)
+- `grok-bot/runbooks/SHIP.md` (line 16; line 1 is the title)
+- `grok-bot/AGENTS.md` (lines 8 and 35; mill+inspect lines stay)
 - `house/OP-PROC.md`
 - `house/live/docs/inbox.md`
 - `house/live/docs/board.md`
@@ -248,9 +284,10 @@ These say mill and mean the foundry organ (build, test, ship inside the suit). L
 - `house/live/SETUP.md`
 - `house/live/PLAYBOOK.md`
 - `house/live/app/server.mjs`
+- `house/live/app/governor.mjs`
 - `house/live/app/wave-schedule.mjs`
 - `house/live/feed/fleet-roster.json`
-- `house/live/feed/routing/inbox-roles.json` (the routes fleet-setup.md describes)
+- `house/live/feed/routing/inbox-roles.json` (keep `seats.coord` at `:110-122` until Q4; other blinky copies still move)
 - `grok-bot/templates/house/EXAMPLE.md`
 - `grok-bot/templates/house/HOUSE.md`
 - `grok-bot/templates/house/WAVE-SCHEDULE.md`
@@ -279,7 +316,7 @@ House live docs with no CoS and no mill seat, so no edit: `faq.md`, `activity-up
 
 No new test in this PR.
 
-- `house/live/tests/nudge-escalation.test.mjs:2-3` and `:32` lock a CoS wake at L3 (`seats.coord`). Follow-up drops that wake and keeps the owner ladder.
+- `house/live/tests/nudge-escalation.test.mjs:2-3` and `:32` lock an L3 reassign to whatever `seats.coord` names. Follow-up drops that reassign and keeps the owner ladder. Deleting the coord route is not the fix.
 - `house/live/tests/mill-forge-wake.test.mjs:1` locks a mill wake. Follow-up retargets it to forge.
 - `house/live/tests/test_routing_ours.py` and `house/live/tests/test_fleet_seats.py` are the roster and fallback locks cited from `inbox.md:64` and `:84`. Follow-up updates them to the roster without blinky and mill.
 - Re-read `governor.test.mjs`, `test_nudges.py`, and `fleet-seats.test.mjs` in that follow-up. This packet does not claim their line numbers.
@@ -292,8 +329,8 @@ Not decided here.
 1. Dist packets. CoS still drafts EXECUTE copy, friend-tests it, and rewrites openers. Herald posts those words and does not invent them (`house/OP-PROC.md:39`, `:51`; `dist-0xrayai-publish`; `synaptical-comms`). Who drafts after CoS?
 2. Fleet-wide notices. Pipe down, In the dark, Lights on, and the weekly spend line in `ATTENTION_STATE.md` (`house/OP-PROC.md:23-27`). Who tells every seat?
 3. Blinky's sweep. It is the backstop for dropped wakes and for seats with no webhook (`inbox.md:51`, `:58`, `:146`). Does the collector own that, or does some seat?
-4. needs-decision / lead label, currently routed to blinky (`inbox.md:75`). Forge triage, or Blaze?
-5. Fallback for actionable events that are not an inbound PR (`inbox.md:78`).
+4. needs-decision and lead. They are `seats.coord.labels` and `needles` (`inbox-roles.json:110-122`), and `seat` is still blinky. Keep that whole block until this is answered. Forge triage, or Blaze?
+5. No-owner path. Fallback for an actionable event that is not an inbound PR (`inbox.md:78`). Also `holdOwner` (`server.mjs:944`) and the L1 fallback `|| COS` (`:1041`). Leave both until this is answered.
 6. Hire gate. CoS creates the agent and cards first work (`house/OP-PROC.md:46`). Who hires?
 7. Boil-up trigger (`LEXICON.md:186`, `COORDINATOR.md:9`).
 8. Design-before-spend agreement, cost weigh, and the daily digest (`CADENCE.md:18`, `:27`, `:40`, `:53-64`).
