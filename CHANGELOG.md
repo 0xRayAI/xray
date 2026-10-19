@@ -14,6 +14,12 @@ A suit first worn on 4.1.1 keeps the catalog and a held dev card. On a non-mill 
 
 `require('0xray/package.json')` resolves. Wear links vendored `@0xray/repertoire` itself, so a skipped install script is not required.
 
+### Wake and tripwire
+
+The seat wake lists the open inbox first. No lines, or lines that repeat a packet already handled, are acked and the turn stops. A still-waiting line gets one line back. A new line keeps the full boot read. Blaze, 2026-10-19: anything that needs deep search or thinking runs on a cloud agent, however small. Head-SHA and review-list checks, a verdict the cloud already wrote, inbox acks, handoffs, and NOTES lines stay local.
+
+The tripwire does not wake a seat marked parked or dark. If those are the only seats with open lines, it does not fall back to the CoS role.
+
 ### 4.1.2 notes
 
 Arch1 owns the version bump, the tag, and the publish.

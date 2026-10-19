@@ -16,7 +16,7 @@ import { spawn } from 'node:child_process';
 import { seatPresence, presentSeat, foldSeatTouch, fleetConfigOf, readWakeOk, writeWakeOk } from './presence.mjs';
 import { parseAllowlist, mergeCards, sourceCardsFrom, projectAllowed, validateItem, workEventToItem, cardNoNudge, workItemNewer } from './source.mjs';
 import { checkRoutesFromDir, readRoutingMap, createLoginResolver, auditLogins } from './routes.mjs';
-import { fingerprint, tripwire, createClock } from './governor.mjs';
+import { fingerprint, tripwire, createClock, mutedSeats } from './governor.mjs';
 import { createArch1Launch, ARCH1_CANON } from './arch1-launch.mjs';
 import { configureWorkTrack, acceptCursorWebhook, appendWake, boardCloudAgents, canonSeatToken, deriveTrackFromDir, displaySeat, loadSeatAgentMap, readJsonl, readWakeRows, seatForAgentId, toToken } from './worktrack.mjs';
 const COLLECTOR_DIR_EARLY = () => path.join(path.dirname(fileURLToPath(import.meta.url)), 'collector');
@@ -1294,7 +1294,23 @@ const CLOCK_SEATS = (() => {   // who may start a run by hand: BIFROST_CLOCK_SEA
 const clock = createClock({ tripMs: TRIP_MS, perSeatMs: PER_SEAT_MS });
 const trip = tripwire();
 let governorChanges = 0;
-const openSeats = () => SEAT_IDS.filter(s => s !== 'builder' && s !== 'builder-cloud' && openLines(s).length);
+function loadMutedSeats() {
+  const files = [
+    process.env.BIFROST_ROSTER,
+    path.join(COLLECTOR_DIR_EARLY(), 'fleet-roster.json'),
+    path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'feed', 'fleet-roster.json'),
+  ].filter(Boolean);
+  for (const file of files) {
+    try {
+      const data = JSON.parse(fs.readFileSync(file, 'utf8'));
+      if (data && (Array.isArray(data.parked) || Array.isArray(data.dark))) return mutedSeats(data);
+    } catch { /* try the next roster */ }
+  }
+  return mutedSeats({}, [...PARKED_QUEUE]);
+}
+const MUTED_SEATS = loadMutedSeats();
+const openSeats = () => SEAT_IDS.filter(s => s !== 'builder' && s !== 'builder-cloud' && !MUTED_SEATS.has(s) && openLines(s).length);
+const heldSeats = () => SEAT_IDS.filter(s => MUTED_SEATS.has(s) && openLines(s).length);
 function wakeRun(run) {
   for (const [seat, by] of Object.entries(run.deadlines)) {
     const n = openLines(seat).length;
@@ -1313,7 +1329,7 @@ function moveFp() { return fingerprint([...evs.values()].map(v => v.e).filter(e 
 function governorRun(now = Date.now()) {
   if (evalNudges(now)) { seq++; fullDirty = true; }
   const w = wakeBoard(now);
-  const r = clock.observe(moveFp(), now, { openCards: bfCards.filter(c => c.state === 'live').length, scheduled: scheduledCards(now), openSeats: openSeats(), coord: COORD_SEAT });
+  const r = clock.observe(moveFp(), now, { openCards: bfCards.filter(c => c.state === 'live').length, scheduled: scheduledCards(now), openSeats: openSeats(), heldSeats: heldSeats(), coord: COORD_SEAT });
   if (r === 'stall' || r === 'empty') wakeRun(clock.run);
   if (r === 'cleared') console.log('clock: cleared by a seat move');
   const fp = fingerprint([...evs.values()].map(v => v.e), { nudges: nudges.filter(n => !n.closed_at).map(n => n.id), routing: ROUTING.ok,

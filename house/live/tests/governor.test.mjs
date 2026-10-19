@@ -7,7 +7,7 @@ import { spawn } from 'node:child_process';
 import http from 'node:http'; import crypto from 'node:crypto'; import path from 'node:path'; import fs from 'node:fs'; import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { checkRoutes } from '../app/routes.mjs';
-import { fingerprint, tripwire, realEvents, createClock } from '../app/governor.mjs';
+import { fingerprint, tripwire, realEvents, createClock, mutedSeats } from '../app/governor.mjs';
 const APP = process.env.MESH_APP_DIR || path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app');
 const got = [];
 const sink = http.createServer((q, s) => { let b = ''; q.on('data', d => b += d); q.on('end', () => { got.push({ path: q.url, body: b, at: Date.now() }); s.writeHead(200); s.end('{}'); }); });
@@ -131,6 +131,31 @@ test('clock: a card waiting on start_after does not pull an empty board', () => 
   c.observe('x', 0, waiting);
   assert.equal(c.observe('x', W, waiting), null);
   assert.equal(c.run, null);
+});
+
+test('clock: parked or dark seats are not woken, and they do not fall back to coord', () => {
+  const roster = JSON.parse(fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'feed', 'fleet-roster.json'), 'utf8'));
+  const muted = mutedSeats(roster);
+  assert.equal(muted.has('herald') && muted.has('sound'), true);
+  assert.equal(muted.has('forge'), false);
+  const dark = mutedSeats({ parked: ['herald'], dark: ['sound'] });
+  assert.equal(dark.has('sound') && dark.has('herald'), true);
+  const W = 60000;
+  const parkedOnly = createClock({ tripMs: W, perSeatMs: 120000, now: 0 });
+  const held = { openCards: 2, openSeats: [], heldSeats: ['herald', 'sound'], coord: 'blinky' };
+  parkedOnly.observe('a', 0, held);
+  assert.equal(parkedOnly.observe('a', W, held), null);
+  assert.equal(parkedOnly.run, null);
+  const mixed = createClock({ tripMs: W, perSeatMs: 120000, now: 0 });
+  const board = { openCards: 2, openSeats: ['forge'], heldSeats: ['sound'], coord: 'blinky' };
+  mixed.observe('b', 0, board);
+  assert.equal(mixed.observe('b', W, board), 'stall');
+  assert.deepEqual(Object.keys(mixed.run.deadlines), ['forge']);
+  const open = createClock({ tripMs: W, perSeatMs: 120000, now: 0 });
+  const noneHeld = { openCards: 1, openSeats: [], coord: 'blinky' };
+  open.observe('c', 0, noneHeld);
+  assert.equal(open.observe('c', W, noneHeld), 'stall');
+  assert.deepEqual(Object.keys(open.run.deadlines), ['blinky']);
 });
 
 test('clock: an empty board wakes the coord (CoS) role once per window; re-arms after the window passes', () => {

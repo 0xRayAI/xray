@@ -24,6 +24,14 @@ export function tripwire() {
 // The CoS can start a run by hand (POST /clock). Blockers come back as one line; the countdown shows on the board until a
 // seat moves something, which clears the clock. Each trigger fires at most once per window: it re-arms only after the
 // board moves or another full window passes, never on every tick.
+/** Seats marked parked or dark. A roster without those arrays uses fallback. */
+export function mutedSeats(roster, fallback = []) {
+  const data = roster && typeof roster === 'object' ? roster : {};
+  const parked = Array.isArray(data.parked) ? data.parked : fallback;
+  const dark = Array.isArray(data.dark) ? data.dark : [];
+  return new Set([...parked, ...dark].map((seat) => String(seat).toLowerCase()).filter(Boolean));
+}
+
 export function createClock({ tripMs, perSeatMs, now = Date.now() }) {
   let lastFp = null, lastMove = now, lastTrip = null, run = null;
   const start = (t, seats, reason, by) => {
@@ -46,8 +54,9 @@ export function createClock({ tripMs, perSeatMs, now = Date.now() }) {
       }
       const armed = lastTrip === null || t - lastTrip >= tripMs;
       if (!armed || t - lastMove < tripMs) return null;
-      const { openCards = 0, openSeats = [], coord = null, scheduled = 0 } = board || {};
+      const { openCards = 0, openSeats = [], heldSeats = [], coord = null, scheduled = 0 } = board || {};
       if (openCards > 0) {
+        if (!openSeats.length && heldSeats.length) return null;
         const seats = openSeats.length ? openSeats : [coord];
         if (!seats.filter(Boolean).length) return null;
         start(t, seats, 'stall'); return 'stall';
