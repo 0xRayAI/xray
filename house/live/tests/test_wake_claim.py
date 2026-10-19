@@ -101,6 +101,13 @@ class ConcurrentClaim(unittest.TestCase):
         self.assertEqual(started.returncode, 0, started.stderr)
         self.assertEqual(len(Inbox.posts), 1)
         self.assertEqual(Inbox.posts[0]["body"]["action"], "start")
+        quiet_end = self.inbox("--turn", "end", "--tag", "wake", owner=loser)
+        self.assertEqual(quiet_end.returncode, 0, quiet_end.stderr)
+        self.assertEqual(quiet_end.stdout, "")
+        self.assertEqual(len(Inbox.posts), 1)
+        ended = self.inbox("--turn", "end", "--tag", "wake", owner=winner)
+        self.assertEqual(ended.returncode, 0, ended.stderr)
+        self.assertEqual(Inbox.posts[-1]["body"]["action"], "end")
 
     def test_same_wake_rereads_its_lines(self):
         owner = os.getpid()
@@ -128,6 +135,14 @@ class ConcurrentClaim(unittest.TestCase):
         self.assertEqual(taken.returncode, 0, taken.stderr)
         self.assertIn("crit-1", taken.stdout)
         self.assertIn("hand-1", taken.stdout)
+
+    def test_new_head_is_not_the_claimed_line(self):
+        self.inbox(owner=os.getpid())
+        Inbox.lines = [LINE, {**LINE, "id": "crit-new", "sha": "fff9999dead", "title": "new head"}]
+        second = self.inbox(owner=self.sleeper.pid)
+        self.assertEqual(second.returncode, 0, second.stderr)
+        self.assertIn("crit-new", second.stdout)
+        self.assertNotIn("crit-1", second.stdout)
 
     def test_turn_end_releases_the_claim(self):
         self.inbox(owner=os.getpid())

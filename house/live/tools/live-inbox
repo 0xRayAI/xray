@@ -6,7 +6,7 @@ live-inbox <seat> --card <owner/repo#n> --start-after <ISO>
 Read: OPEN lines from the Bifrost server inbox for <seat>, one JSON object per line on stdout. The server hides lines the
 seat acked. A closed or merged card does not hide an unacked line. For reviewer, a Reviewer verdict at the card's head does.
 A read claims each open line for this wake (WAKE_RUN, or this process). The claim key is the pull request, the head sha,
-and the kind. A second run whose lines are already claimed prints nothing and exits 0. Its --turn start then posts nothing.
+and the kind. A second run whose lines are already claimed prints nothing and exits 0. Its --turn start and its --turn end then post nothing.
 A read never acks. The ack is the receipt (the pop) and a seat sends it after it handles the line, with
 --ack or --pop <id> (one line) or --ack all / --pop all (everything open). --ack stale lists lines with a close or merge
 event, or a closed or done card, and does not ack them. A missing card stays. --ack stale --apply acks the ids just listed.
@@ -301,7 +301,8 @@ if prompt:
     print(json.dumps(call("POST", "/activity", body)))
     sys.exit(0)
 if turn is not None:
-    if turn == "start" and other_run_holds(seat):
+    # A wake that lost the lines does not start a turn and does not end the winner's turn.
+    if other_run_holds(seat):
         sys.exit(0)
     if turn == "end":
         release_claims(seat)
