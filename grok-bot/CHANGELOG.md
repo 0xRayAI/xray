@@ -10,6 +10,13 @@
 - OP-PROC merge tiers: gates A and C on every merge; B and D set per PR in a new packet `gates:` field (raise-only, locked at review). Gate B runs locally on the owner's machine across TUI environments. Adds proof, review-round, App-only identity, release-order, stacked-fix, fold-watch and stuck-tool rules.
 - Lexicon and pack notes since the 0.1.9 publish: chime, packet, EXECUTE, handoff (#221), the pack OP-PROC new-seat gate (#224), and watcher and workstream (#225).
 
+- Since the version bump, before the publish: the kit hides a one-wave range game in `lib/pulsar-game.mjs` (#417).
+- Bifrost: one batch flushes per pull-request head (#404), a wave schedule template with a 75% empty-board quiet and a hand-kept board (#400), and wake routing by @-mention only (#303, #311).
+- Seat wake: turn start and end on every exit (#355), the card goes to the owner's chat and the stall stays (#399), `LIVE_CURSORS` is the cursors directory (#409), and the template env defaults are named as one fleet's (#408). New `templates/house/fleet/WAKE-ROUTINE.md`.
+- Live board: cloud agents show as board rows (#367), card dates, `merged_by` from the GitHub merger, push beats and inbox wake (#362, #366), and a seat can ack merged and dropped inbox lines (#375).
+- `grok-bot doctor` follows the fastened plant when the seat is worn (#396).
+- Pack docs (OP-PROC, LEXICON, runbooks, skills): the hotfix bypass rule (#331, #333), deploy stages stamped in order (#354, #356), and the memory packet, duplicate-agent guard and no local builds (#378). Drawing skills and `ops/` packets stay in the repo and do not ship in the kit.
+
 ## 0.1.9
 
 - `grok-bot house init --migrate` moves `ops/WAVEBOARD.md` to `house/WAVEBOARD.md` and starts `ATTENTION_STATE.md` when that file is missing. It leaves a house file you already changed, and refuses when both boards exist and the house board is not the untouched template. A HOUSE.md line that is exactly `wallet off` (or `Scope: wallet off`) skips Open Wallet, Clearing, and hangar pay steps in `grok-bot doctor`.
