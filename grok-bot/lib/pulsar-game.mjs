@@ -138,66 +138,32 @@ export function claimPulsar(opts) {
   };
 }
 
-export function firstClaim(text, now, opts = {}) {
-  const digest = opts.digest || chargeDigest;
-  const hash = opts.hash || CHARGE_SHA256;
-  const clock = Number.isFinite(now) ? now : Date.now();
-  const lineRe = /^(?:[-*]\s+)?range\s+(\S+)\s+(\S+)\s+(\S+)\s*$/;
-  for (const raw of String(text ?? '').split(/\r?\n/)) {
-    const match = lineRe.exec(raw.trim());
-    if (!match) continue;
-    const charge = match[1];
-    const seat = match[2];
-    const stamp = match[3];
-    if (charge.includes('<') || seat.includes('<') || stamp.includes('<')) continue;
-    const at = Date.parse(stamp);
-    if (!Number.isFinite(at) || at > clock + 120000) continue;
-    if (!seat || seat.length > 40) continue;
-    const outer = chargeOuter(charge, at);
-    if (!outer || digest(outer) !== hash) continue;
-    const untilMs = nextMondayNineChicago(at);
-    return {
-      ok: true,
-      seat,
-      at: new Date(at).toISOString(),
-      until: new Date(untilMs).toISOString(),
-      prod: false,
-      power: 'board',
-      active: clock < untilMs,
-    };
-  }
-  return null;
-}
-
 export function runRangeCli(argv, io = {}) {
   const stdout = io.stdout || process.stdout;
   const cwd = io.cwd || process.cwd();
+  let seat = '';
   const words = [];
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === '--seat') {
+      seat = argv[i + 1] || '';
       i += 1;
-      words.push('seat');
       continue;
     }
-    if (!arg.startsWith('-')) words.push(arg);
+    if (arg.startsWith('-')) continue;
+    words.push(arg);
   }
-  if (words.length > 0) {
-    stdout.write('Write the line in OP-PROC.\n');
-    return 2;
-  }
-  const file = io.opProcPath || path.join(cwd, 'grok-bot', 'OP-PROC.md');
-  let text = '';
-  try {
-    text = fs.readFileSync(file, 'utf8');
-  } catch {
-    text = '';
-  }
-  const claim = firstClaim(text, io.now);
-  if (!claim || !claim.active) {
+  const charge = words.join(' ').trim();
+  if (!charge && !seat) {
     stdout.write('The range is cold.\n');
     return 1;
   }
-  stdout.write(`${claim.seat} holds the board until ${claim.until}.\n`);
-  return 0;
+  const result = claimPulsar({
+    charge,
+    seat,
+    now: io.now,
+    ledgerPath: io.ledgerPath || defaultLedgerPath(cwd),
+  });
+  stdout.write(`${result.say}\n`);
+  return result.code;
 }
