@@ -20,6 +20,15 @@ Goggles reads the plant, or a plane named in suit config, and fills `Worn:` with
 
 Wear seeds `STATION.md` and `NOTES.md` when they are missing. After that, wear changes only the version token described above and leaves the rest of the station as written. The seat wake reads both on every turn, including Grok wakes that do not run `.cursor` hooks. (#395, #386)
 
+## [4.1.2] - 2026-10-19
+
+### 🔄 Changes
+
+### 🔎 Other Changes
+- fix(suit): follow the fastened plant when the seat is worn (#396) (c82fe7ae9)
+
+---
+
 ## [4.1.1] - 2026-10-18
 
 Work on main after 4.1.0.
