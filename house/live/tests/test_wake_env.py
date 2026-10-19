@@ -20,10 +20,14 @@ class Hit(BaseHTTPRequestHandler):
         pass
 
 
-def export_line():
+def bash_block():
     blocks = re.findall(r"```bash\n(.*?)```", TEMPLATE.read_text(), re.S)
-    lines = [l for b in blocks for l in b.splitlines() if l.startswith("export ")]
-    return lines[0] if lines else ""
+    return blocks[0] if blocks else ""
+
+
+def export_line():
+    lines = [line for line in bash_block().splitlines() if line.startswith("export ")]
+    return "\n".join(lines)
 
 
 class WakeEnvFreshShell(unittest.TestCase):
@@ -57,6 +61,24 @@ class WakeEnvFreshShell(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertEqual([p for p, _ in self.srv.posts], ["/activity", "/activity"])
         self.assertNotIn("k-test", r.stdout + r.stderr)
+
+    def test_documented_command_runs_as_written(self):
+        recorded = self.home / "ran.txt"
+        stub = self.home / ".burst" / "bin" / "live-inbox"
+        stub.write_text("#!/bin/bash\nprintf '%s\\n' \"$LIVE_URL\" \"$LIVE_CURSORS\" \"$SEAT_KEYS_DIR\" \"$WAKE_RUN\" \"$*\" > \"$OUT\"\n")
+        stub.chmod(0o755)
+        script = bash_block().replace("<seat>", "forge")
+        self.assertIn("export LIVE_URL=", bash_block())
+        self.assertIn("export LIVE_CURSORS=", bash_block())
+        self.assertIn("live-inbox <seat>", bash_block())
+        r = self.sh(script, OUT=str(recorded))
+        self.assertEqual(r.returncode, 0, r.stderr + r.stdout)
+        url, cursors, keys, wake_run, args = recorded.read_text().splitlines()
+        self.assertEqual(url, "https://burst-live-production.up.railway.app")
+        self.assertEqual(cursors, str(self.home / ".burst" / "cursors" / "forge"))
+        self.assertEqual(keys, str(self.home / ".burst" / "seat-keys"))
+        self.assertRegex(wake_run, r"^\d+$")
+        self.assertEqual(args, "forge")
 
     def test_missing_env_fails_loudly(self):
         r = self.sh(f"{self.home}/.burst/bin/live-inbox forge --turn end --tag wake")

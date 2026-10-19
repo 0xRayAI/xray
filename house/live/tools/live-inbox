@@ -5,6 +5,8 @@ live-inbox <seat> --card <owner/repo#n> --start-after <ISO>
 
 Read: OPEN lines from the Bifrost server inbox for <seat>, one JSON object per line on stdout. The server hides lines the
 seat acked. A closed or merged card does not hide an unacked line. For reviewer, a Reviewer verdict at the card's head does.
+A read claims each open line for this wake (WAKE_RUN, or this process). The claim key is the pull request, the head sha,
+and the kind. A second run whose lines are already claimed prints nothing and exits 0. Its --turn start then posts nothing.
 A read never acks. The ack is the receipt (the pop) and a seat sends it after it handles the line, with
 --ack or --pop <id> (one line) or --ack all / --pop all (everything open). --ack stale lists lines with a close or merge
 event, or a closed or done card, and does not ack them. A missing card stays. --ack stale --apply acks the ids just listed.
@@ -21,7 +23,7 @@ stays parked until that time, then the server wakes the owning seat. A GitHub co
 `Start after: <ISO>` sets the same field; the command wins while it is stored.
 Env (required, never guessed): LIVE_URL, SEAT_KEYS_DIR (key <seat>.key, never printed), LIVE_CURSORS (cursor <seat>.txt).
 A missing or empty one exits 2 and names it. WAKE-ROUTINE.md ships the export line with the defaults."""
-import json, os, re, sys, urllib.error, urllib.parse, urllib.request
+import fcntl, json, os, re, sys, time, urllib.error, urllib.parse, urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -163,6 +165,121 @@ def ct_now():
     return datetime.now(ZoneInfo("America/Chicago")).isoformat(timespec="seconds")
 
 
+def owner_id():
+    raw = os.environ.get("WAKE_RUN", "").strip()
+    if raw.isdigit():
+        return int(raw)
+    return os.getpid()
+
+
+def pid_alive(pid):
+    if not isinstance(pid, int) or pid <= 0:
+        return False
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def packet_key(line):
+    repo = str(line.get("repo") or "").strip().lower()
+    number = line.get("number")
+    sha = str(line.get("sha") or line.get("head") or "").strip().lower()
+    kind = str(line.get("kind") or line.get("type") or "").strip().lower()
+    if repo and number is not None and str(number) != "" and sha and kind:
+        return f"{repo}#{number}|{sha}|{kind}"
+    ident = str(line.get("id") or "").strip()
+    return f"id:{ident}" if ident else ""
+
+
+def claim_paths(seat):
+    CUR.mkdir(parents=True, exist_ok=True)
+    return CUR / f"{seat}.lock", CUR / f"{seat}.claims.json"
+
+
+def live_claims(seat):
+    """Drop claims whose owner pid is gone. Caller holds the seat lock."""
+    _, path = claim_paths(seat)
+    try:
+        data = json.loads(path.read_text() or "{}")
+    except (OSError, ValueError):
+        data = {}
+    if not isinstance(data, dict):
+        data = {}
+    live = {}
+    for key, rec in data.items():
+        if isinstance(rec, dict) and pid_alive(rec.get("pid")):
+            live[key] = rec
+    tmp = path.with_name(path.name + ".tmp")
+    tmp.write_text(json.dumps(live))
+    os.replace(tmp, path)
+    return live
+
+
+def locked(seat):
+    lock_path, _ = claim_paths(seat)
+    handle = open(lock_path, "a+")
+    fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
+    return handle
+
+
+def claim_open(seat, lines):
+    """Lines this wake owns. A line claimed by another live wake is left out."""
+    handle = locked(seat)
+    try:
+        claims = live_claims(seat)
+        owner = owner_id()
+        now = time.time()
+        mine = []
+        for line in lines:
+            key = packet_key(line)
+            rec = claims.get(key) if key else None
+            if rec and rec.get("pid") != owner:
+                continue
+            if key:
+                claims[key] = {"pid": owner, "at": now, "id": line.get("id")}
+            mine.append(line)
+        _, path = claim_paths(seat)
+        tmp = path.with_name(path.name + ".tmp")
+        tmp.write_text(json.dumps(claims))
+        os.replace(tmp, path)
+        return mine
+    finally:
+        handle.close()
+
+
+def release_claims(seat):
+    handle = locked(seat)
+    try:
+        claims = live_claims(seat)
+        owner = owner_id()
+        keep = {key: rec for key, rec in claims.items() if rec.get("pid") != owner}
+        _, path = claim_paths(seat)
+        tmp = path.with_name(path.name + ".tmp")
+        tmp.write_text(json.dumps(keep))
+        os.replace(tmp, path)
+    finally:
+        handle.close()
+
+
+def other_run_holds(seat):
+    """True when another live wake holds a claim and this wake holds none."""
+    if not (CUR / f"{seat}.claims.json").is_file():
+        return False
+    handle = locked(seat)
+    try:
+        claims = live_claims(seat)
+        owner = owner_id()
+        mine = any(rec.get("pid") == owner for rec in claims.values())
+        others = any(rec.get("pid") != owner for rec in claims.values())
+        return others and not mine
+    finally:
+        handle.close()
+
+
 if card_raw is not None:
     call("POST", "/cards/start-after", {"repo": repo, "number": number, "start_after": start_after})
     print(f"start after {start_after} {repo}#{number}")
@@ -184,6 +301,10 @@ if prompt:
     print(json.dumps(call("POST", "/activity", body)))
     sys.exit(0)
 if turn is not None:
+    if turn == "start" and other_run_holds(seat):
+        sys.exit(0)
+    if turn == "end":
+        release_claims(seat)
     body = {"kind": "turn", "action": turn, "t_ct": ct_now()}
     if tag is not None:
         body["tag"] = tag
@@ -229,7 +350,7 @@ if ack is not None:
     print(json.dumps(r))
     sys.exit(0)
 cf = CUR / f"{seat}.txt"
-lines = call("GET", f"/inbox/{seat}").get("lines") or []
+lines = claim_open(seat, call("GET", f"/inbox/{seat}").get("lines") or [])
 for l in lines:
     print(json.dumps(l, ensure_ascii=False))
 if lines:   # remember the newest line seen; the ack stays explicit

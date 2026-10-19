@@ -16,7 +16,7 @@ A suit first worn on 4.1.1 keeps the catalog and a held dev card. On a non-mill 
 
 ### Wake and tripwire
 
-The seat wake lists the open inbox first. No lines, or lines that repeat a packet already handled, are acked and the turn stops. A still-waiting line gets one line back. A new line keeps the full boot read. Blaze, 2026-10-19: anything that needs deep search or thinking runs on a cloud agent, however small. Head-SHA and review-list checks, a verdict the cloud already wrote, inbox acks, handoffs, and NOTES lines stay local.
+The seat wake lists the open inbox first. No lines, or lines that repeat a packet already handled, are acked and the turn stops. A second run of the same seat, started by another webhook for the same pull request, head, and kind, gets an empty read and stops before turn start. A still-waiting line gets one line back. A new line keeps the full boot read. The wake command exports `LIVE_URL` and a per-seat `LIVE_CURSORS`, then runs `live-inbox <seat>`. Blaze, 2026-10-19: anything that needs deep search or thinking runs on a cloud agent, however small. Head-SHA and review-list checks, a verdict the cloud already wrote, inbox acks, handoffs, and NOTES lines stay local.
 
 The tripwire does not wake a seat marked parked or dark. If those are the only seats with open lines, it does not fall back to the CoS role.
 
