@@ -1,5 +1,7 @@
 # Cold range
 
+> 0xRay house example — not the general procedure. Your team’s rules live in `house/` after `grok-bot house init`.
+
 You found the toy. The help text does not name this command.
 
 The charge is two words with the hour between them, in small letters.
