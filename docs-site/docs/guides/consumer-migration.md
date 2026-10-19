@@ -10,9 +10,10 @@ Existing `.xray/features.json` **without** `suit_temperament` stays **guided** (
 
 ```bash
 npm install 0xray
+npx 0xray wear
 ```
 
-Postinstall **automatically** runs `install-bridges.cjs` (consumer projects only):
+Wear writes the consumer suit, including when npm did not run the install script. When that script does run, it only prints `npx 0xray wear`. Wear then:
 
 | Step | Action |
 |------|--------|

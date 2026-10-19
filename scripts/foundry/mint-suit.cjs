@@ -89,20 +89,7 @@ function resolveInside(targetDir, rel) {
 }
 
 function loadFoundryExtra(targetDir) {
-  const candidates = [
-    path.join(targetDir, "foundry.json"),
-    path.join(targetDir, ".xray", "foundry.json"),
-  ];
-  for (const candidate of candidates) {
-    if (!fs.existsSync(candidate)) continue;
-    try {
-      const parsed = JSON.parse(fs.readFileSync(candidate, "utf8"));
-      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) return parsed;
-    } catch {
-      return {};
-    }
-  }
-  return {};
+  return millPlantProtocol.readFoundryExtra(targetDir);
 }
 
 function loadFoundryParams(targetDir) {
@@ -735,6 +722,53 @@ function costumeDumpExtras(targetDir, millPlant, tree) {
   };
 }
 
+function packagedSkill(packageRoot, name) {
+  const files = [
+    path.join(packageRoot, "src", "skills", name, "SKILL.md"),
+    path.join(packageRoot, "dist", "skills", name, "SKILL.md"),
+    path.join(packageRoot, "scripts", "foundry", "plant", "skills", name, "SKILL.md"),
+    path.join(packageRoot, "plant", "skills", name, "SKILL.md"),
+    path.join(packageRoot, "node_modules", "@0xray", "blip", "plant", "skills", name, "SKILL.md"),
+  ];
+  return files.some((file) => fs.existsSync(file));
+}
+
+function packagedAgent(packageRoot, file) {
+  const files = [
+    path.join(packageRoot, "src", "opencode", "agents", file),
+    path.join(packageRoot, ".opencode", "agents", file),
+    path.join(packageRoot, "scripts", "foundry", "plant", "agents", file),
+    path.join(packageRoot, "plant", "agents", file),
+    path.join(packageRoot, "node_modules", "@0xray", "blip", "plant", "agents", file),
+  ];
+  return files.some((candidate) => fs.existsSync(candidate));
+}
+
+/**
+ * A non-mill seat does not wear the catalog. Packaged skills land in every
+ * project skill dir, and packaged agents land in .opencode/agents. The
+ * Grok-tree strip does not see the other dirs, and a leftover agent makes
+ * the byte-match swallow return false. Remove both before inspect.
+ * A skill or agent the seat wrote itself is not in the package, so it stays.
+ */
+function stripPackagedCatalog(targetDir, millPlant, packageRoot) {
+  if (suitCatalogApplies(targetDir, millPlant, packageRoot)) return;
+  const planted = factoryPlantAllowlist(packageRoot, targetDir);
+  const allowSkills = new Set([...(planted.skills || []), ...loadShopPlant(targetDir)]);
+  const allowAgents = new Set(planted.agents || []);
+  for (const name of wornSkillNames(targetDir)) {
+    if (allowSkills.has(name) || !packagedSkill(packageRoot, name)) continue;
+    for (const dir of listProjectSkillDirs(targetDir)) {
+      fs.rmSync(path.join(dir, name), { recursive: true, force: true });
+    }
+  }
+  const agentsDir = path.join(targetDir, ".opencode", "agents");
+  for (const file of wornAgentFiles(targetDir)) {
+    if (allowAgents.has(file) || !packagedAgent(packageRoot, file)) continue;
+    fs.rmSync(path.join(agentsDir, file), { force: true });
+  }
+}
+
 function assertNoCostumeDump(targetDir, millPlant, tree) {
   if (wantsCostume(targetDir)) {
     return { ok: true, extraSkills: [], extraAgents: [] };
@@ -946,6 +980,7 @@ function mintConsumerSuit(millPackageRoot, targetDir, log) {
     path.join(targetDir, ".xray", "config.json"),
   );
   tree.agentsCard = overlayAgentsCard(targetDir, params);
+  stripPackagedCatalog(targetDir, millPlant, millPackageRoot);
   assertNoCostumeDump(targetDir, millPlant, tree);
   if (log && (tree.codex || tree.features || tree.config)) {
     log("foundry-mint", "Overlaid consumer suit facets onto .xray", "info", {

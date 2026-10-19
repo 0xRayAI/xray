@@ -45,7 +45,8 @@
     "./nucleus/*": {
       "import": "./dist/nucleus/*.js",
       "types": "./dist/nucleus/*.d.ts"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "bin": {
     "0xray": "dist/cli/index.js",

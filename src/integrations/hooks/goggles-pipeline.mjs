@@ -364,9 +364,10 @@ function storedCard(root, id) {
 }
 
 function presentCard(projectRoot, id) {
-  const block = storedCard(lensRoot(projectRoot), id);
+  const root = lensRoot(projectRoot);
+  const block = storedCard(root, id);
   if (!block) return null;
-  const shown = showCard(id, block);
+  const shown = showCard(id, overlaySeatLens(root, id, block));
   const drift = liveDrift(shown, sourceRoot(findPlatesDir(HERE)));
   return {
     text: drift ? `${shown}\n${drift}` : shown,
@@ -390,7 +391,7 @@ function gogglesAnswer(argv, projectRoot, hold) {
     if (hold) ensurePlane(root);
     id = currentCard(root);
   } else return { text: 'Name one plane.', cards: null };
-  if (hold && named.length === 1) holdPlane(root, id);
+  if (hold && named.length === 1) holdPlane(root, id, { chosen: true });
   const card = presentCard(root, id);
   if (!card) return { text: 'Name one plane.', cards: null };
   return { text: card.text, cards: [card.view] };
@@ -859,13 +860,15 @@ export function lensPlane(text) {
   return { stop: false, files };
 }
 
-export function holdPlane(root, id) {
+export function holdPlane(root, id, opts) {
   const name = String(id || '').trim();
   if (!name || name.includes(' ') || !isCardName(name)) return;
   const plane = planeForCard(name);
   const dest = join(root, '.xray', 'state', 'goggles-plane.json');
   mkdirSync(dirname(dest), { recursive: true });
-  writeFileSync(dest, `${JSON.stringify({ plane, card: name })}\n`);
+  const body = { plane, card: name };
+  if (opts && opts.chosen === true) body.chosen = true;
+  writeFileSync(dest, `${JSON.stringify(body)}\n`);
   maintainLens(root);
 }
 

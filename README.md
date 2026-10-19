@@ -27,7 +27,7 @@ npm install 0xray
 npx 0xray wear
 ```
 
-`npm install 0xray` links vendored `@0xray/repertoire` and prints `npx 0xray wear`. It does not write `.mcp.json` or the chat bridges. Wear writes the consumer suit: managed `AGENTS.md`, `.xray` config, seven MCP servers, and the OpenCode, Grok, Hermes, and OpenClaw bridges (`install-bridges.cjs`). Inside a git checkout, wear also fastens Cursor project hooks. **Repertoire is preferred** — vendored **0.2.9** ships on: factory + stack laws, in-process routing, extra host MCP `repertoire`. Not an eighth `xray-*` server. Dest is a judgment index. Explicit opt-out only: `"enabled": false, "provider": "repertoire"`. Do not pin 0.1.8.
+Wear links vendored `@0xray/repertoire` and writes the consumer suit, including when npm did not run the install script. When that script does run, it only prints `npx 0xray wear` and does not write `.mcp.json` or the chat bridges. Wear writes the consumer suit: managed `AGENTS.md`, `.xray` config, seven MCP servers, and the OpenCode, Grok, Hermes, and OpenClaw bridges (`install-bridges.cjs`). Inside a git checkout, wear also fastens Cursor project hooks. **Repertoire is preferred** — vendored **0.2.9** ships on: factory + stack laws, in-process routing, extra host MCP `repertoire`. Not an eighth `xray-*` server. Dest is a judgment index. Explicit opt-out only: `"enabled": false, "provider": "repertoire"`. Do not pin 0.1.8.
 
 ## Quick Start
 
@@ -113,7 +113,7 @@ Docs: [guides/autonomy-command](docs-site/docs/guides/autonomy-command.md) · Sk
 
 ### Consolidations
 
-- **Install, then wear, then setup where needed** — `npm install` runs `postinstall.cjs`, which writes nothing and prints one line: `npx 0xray wear`. `wear` and `unwear` set up or remove the Cursor suit. `npx 0xray setup` writes `.mcp.json` and the OpenCode, Grok, Hermes, and OpenClaw bridges (`install-bridges.cjs`); git hooks only with `--git-hooks`. Mill target is the consumer project, not npm global prefix or `_npx`.
+- **Install, then wear, then setup where needed** — Wear links vendored `@0xray/repertoire` and writes the suit. `postinstall.cjs`, when npm runs it, writes nothing and prints one line: `npx 0xray wear`. `wear` and `unwear` set up or remove the Cursor suit. `npx 0xray setup` writes `.mcp.json` and the OpenCode, Grok, Hermes, and OpenClaw bridges (`install-bridges.cjs`); git hooks only with `--git-hooks`. Mill target is the consumer project, not npm global prefix or `_npx`.
 - **7-server MCP surface** — `.mcp.json` SSOT; Grok plugin and all bridges share `XRAY_MCP_SERVERS`.
 - **Dev vs consumer AGENTS** — `AGENTS.md` (framework) vs `AGENTS-consumer.md` (copied to consumer projects on install).
 - **Release pipeline** — `npm run release:patch|minor|major` → reconcile → gate → artifacts → tag → publish.
@@ -150,7 +150,7 @@ Docs: [guides/autonomy-command](docs-site/docs/guides/autonomy-command.md) · Sk
 
 ## Consumer Install (wear)
 
-`npm install 0xray` links the vendored repertoire and prints `npx 0xray wear`. Wear then:
+Wear links the vendored repertoire, including when npm did not run the install script. Wear then:
 
 1. Copies **`AGENTS-consumer.md` → `AGENTS.md`**. Does **not** write consumer-root **`SKILLS.md`**.
 2. Fastens **mill plant** (`mill` + `inspect`). Fasten is **foundry-plant/0**: builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill package declares — organs (looker, vibe, mixer) live in the mill, not an xray catalog. Nested mill `@0xray/foundry@0.1.12`. CLI shims `foundry blip|sound` still exist on foundry 0.1.11+; fasten is the new cut. Not a 45-skill / 42-agent costume dump. `foundry.json` `"costume": true` is the opt-in dump.

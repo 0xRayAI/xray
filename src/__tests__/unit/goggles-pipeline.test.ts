@@ -583,6 +583,42 @@ describe('goggles plate', () => {
     }
   });
 
+  it('runs a stored card through the plant lens', () => {
+    const root = mkdtempSync(join(tmpdir(), 'goggles-stored-card-'));
+    const stockSkills = 'orchestrator, researcher, project-analysis, git-workflow, tech-writer';
+    const stale = [
+      'Plane: dev',
+      'From:',
+      'Digest: stale',
+      'Plate:',
+      'Entry: old',
+      'Exit: old',
+      'Files: src',
+      `Skills: ${stockSkills}`,
+      'Setup: old',
+      'Teardown: old',
+      'Worn:',
+      '',
+    ].join('\n');
+    try {
+      mkdirSync(join(root, '.xray', 'state'), { recursive: true });
+      writeFileSync(join(root, 'foundry.json'), `${JSON.stringify({ plant: 'sound' })}\n`);
+      writeFileSync(
+        join(root, '.xray', 'foundry-inventory.json'),
+        `${JSON.stringify({ mill: { version: '4.1.1' }, plant: ['sound'], soundPlant: { skills: ['sound', 'sound-inspect', 'sound-mixer'] } })}\n`,
+      );
+      writeFileSync(join(root, '.xray', 'state', 'goggles-plane.json'), `${JSON.stringify({ plane: 'dev', card: 'dev' })}\n`);
+      writeFileSync(join(root, '.xray', 'state', 'LENS.md'), stale);
+      const card = look([], root).text;
+      expect(card).toContain('Plane: dev');
+      expect(card).toContain('Skills: sound, sound-inspect, sound-mixer');
+      expect(card).toContain('Worn: sound 4.1.1');
+      expect(card).not.toContain(stockSkills);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it('does not treat an installed package alone as a mill lens', () => {
     const root = mkdtempSync(join(tmpdir(), 'goggles-install-only-'));
     try {
