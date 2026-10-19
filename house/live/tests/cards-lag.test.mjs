@@ -263,6 +263,53 @@ test('a pr_open on a closed card stays HTTP 200', async () => {
   }
 });
 
+test('an issue reopen moves the card clock on a parked card', async () => {
+  const data = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-lag-reopen-'));
+  const openedAt = new Date(Date.now() - 400 * 1000).toISOString();
+  const reopenAt = new Date(Date.now() - 10 * 1000).toISOString();
+  fs.mkdirSync(path.join(data, 'live'), { recursive: true });
+  fs.mkdirSync(path.join(data, 'feed'), { recursive: true });
+  fs.writeFileSync(path.join(data, 'live', 'cards.json'), JSON.stringify({
+    updated_ct: new Date().toISOString(),
+    cards: [{ key: 'example-org/app#12', repo: 'example-org/app', number: 12, state: 'parked', title: 'back', stage: 'open', kind: 'issue' }],
+  }));
+  fs.writeFileSync(path.join(data, 'feed', 'github-events.json'), JSON.stringify({
+    generated_at: reopenAt,
+    events: [
+      { id: 'open-12', t_ct: openedAt, kind: 'issue_open', repo: 'example-org/app', number: 12 },
+      { id: 'reopen-12', t_ct: reopenAt, kind: 'issue_reopen', repo: 'example-org/app', number: 12 },
+    ],
+  }));
+  const srv = start(data);
+  try {
+    let health, live;
+    for (let i = 0; i < 40; i++) {
+      const base = srv.baseOf();
+      if (base) {
+        health = await (await fetch(base + '/healthz')).json();
+        if (typeof health.data_age === 'number') {
+          const login = await fetch(base + '/login', {
+            method: 'POST', redirect: 'manual',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'password=' + encodeURIComponent(srv.password),
+          });
+          const cookie = (login.headers.get('set-cookie') || '').split(';')[0];
+          live = await (await fetch(base + '/live-events.json', { headers: { Cookie: cookie } })).json();
+          if (live.freshness && live.freshness.github_card_latest_ct) break;
+        }
+      }
+      await new Promise(r => setTimeout(r, 100));
+    }
+    assert.equal(Date.parse(live.freshness.github_card_latest_ct), Date.parse(reopenAt));
+    assert.equal(health.cards_behind, false, JSON.stringify(health));
+  } finally {
+    const done = new Promise(r => srv.child.once('exit', r));
+    srv.child.kill();
+    await done;
+    fs.rmSync(data, { recursive: true, force: true });
+  }
+});
+
 test('card clock inside the lag window stays caught up', async () => {
   const data = lay(4 * 60 * 1000, 2 * 60 * 1000);
   const srv = start(data);

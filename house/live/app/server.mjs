@@ -1884,6 +1884,7 @@ function eventMovesCard(e) {
   if (/watcher|turn|subagent/.test(k)) return false;
   if (k === 'check_run' || k === 'check_suite' || k === 'workflow_run' || k === 'ci_pass' || k === 'ci_fail' || k === 'pr_commit') return false;
   if (k === 'pr_open' || k === 'issue_open' || k === 'pr_force_push' || k === 'pr_update' || k === 'merged') return true;
+  if (k === 'pr_reopen' || k === 'issue_reopen') return true;
   if (k.startsWith('critic_')) return true;
   if (k.startsWith('lab_retest_')) return true;
   if (k.startsWith('prompt') && e.from === 'Lead') return true;
