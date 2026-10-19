@@ -11,12 +11,16 @@ import {
   symlinkSync,
   writeFileSync,
 } from 'node:fs';
+import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
 const repoRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../..');
+const mintSuit = createRequire(import.meta.url)('../../../scripts/foundry/mint-suit.cjs') as {
+  staleShippedSkillBodies: (cwd: string, packageRoot: string) => string[];
+};
 const wearScript = path.join(repoRoot, 'scripts/node/wear-cursor-hooks.cjs');
 const gogglesScript = path.join(repoRoot, 'src/integrations/hooks/goggles-pipeline.mjs');
 const version = JSON.parse(readFileSync(path.join(repoRoot, 'package.json'), 'utf8')).version as string;
@@ -113,12 +117,19 @@ function wearMillAndProve(orchestrator: string, expected: string, label: string,
   const home = mkdtempSync(path.join(tmpdir(), 'xray-shipped-home-'));
   const machine = mkdtempSync(path.join(tmpdir(), 'xray-shipped-machine-'));
   try {
+    const shipped = expected !== orchestrator;
+    const before = mintSuit.staleShippedSkillBodies(project, repoRoot);
+    const staleDirs = skillDirs.map((rel) => path.join(rel, 'orchestrator', 'SKILL.md'));
+    expect(before.filter((f) => f.includes('orchestrator')), `${label} validate before`).toEqual(
+      shipped && blobId(readFileSync(orchestrator)) !== blobId(readFileSync(expected)) ? staleDirs : [],
+    );
     const ran = spawnSync(process.execPath, [wearScript, project], {
       cwd: project,
       encoding: 'utf8',
       env: { ...process.env, HOME: home, USERPROFILE: home, FOUNDRY_MACHINE_HOME: machine },
     });
     expect(ran.status, `${label}\n${ran.stdout}\n${ran.stderr}`).toBe(0);
+    expect(mintSuit.staleShippedSkillBodies(project, repoRoot), `${label} validate after`).toEqual([]);
     const want = blobId(readFileSync(expected));
     for (const rel of dirs) {
       const worn = readFileSync(path.join(project, rel, 'orchestrator', 'SKILL.md'));
@@ -170,4 +181,20 @@ describe('wear strips catalog skill bodies shipped since v4.0.0', () => {
       rmSync(dir, { recursive: true, force: true });
     }
   }, 120000);
+
+  it('validate fails while an older shipped body sits in any skill dir', async () => {
+    const { collectValidateReport } = await import('../../cli/commands/validate.js');
+    const old = fixtureFor('orchestrator', pinned.skills.orchestrator[0].blob);
+    for (const rel of skillDirs) {
+      const project = plantSoundSuit(path.join(repoRoot, 'src/skills/orchestrator/SKILL.md'), 'mill');
+      try {
+        copyFileSync(old, path.join(project, rel, 'orchestrator', 'SKILL.md'));
+        const check = collectValidateReport(project).checks.find((c) => c.id === 'skill-bodies');
+        expect(check?.ok, rel).toBe(false);
+        expect(check?.detail, rel).toContain(path.join(rel, 'orchestrator', 'SKILL.md'));
+      } finally {
+        rmSync(project, { recursive: true, force: true });
+      }
+    }
+  });
 });

@@ -15,6 +15,9 @@ const suitSeat = requireCjs("../../../scripts/node/suit-seat.cjs") as {
   fastenedPlantSkills: (cwd: string) => string[];
   isGitWorkTree: (cwd: string) => boolean;
 };
+const mintSuit = requireCjs("../../../scripts/foundry/mint-suit.cjs") as {
+  staleShippedSkillBodies: (cwd: string, packageRoot: string) => string[];
+};
 
 /** Same paths as `REQUIRED_PACK_PATHS` in assert-packed-dist-cli.mjs — typed here so src/cli does not import untyped .mjs. */
 export const VALIDATE_PACK_PATHS: readonly string[] = [
@@ -184,6 +187,16 @@ export function collectValidateReport(cwd: string): ValidateReport {
         missingPlant.length === 0
           ? `${plantSkills.join(" + ")} fastened`
           : `missing plant ${missingPlant.join(", ")}`,
+    });
+
+    const stale = mintSuit.staleShippedSkillBodies(cwd, packageRoot);
+    checks.push({
+      id: "skill-bodies",
+      ok: stale.length === 0,
+      detail:
+        stale.length === 0
+          ? "no worn skill holds an older shipped body"
+          : `older shipped body still worn: ${stale.join(", ")} — run npx 0xray wear`,
     });
 
     const repertoire =

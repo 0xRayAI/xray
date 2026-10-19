@@ -814,6 +814,27 @@ function refreshShippedSkillBodies(targetDir, packageRoot) {
 }
 
 /**
+ * Worn skill files still holding a pinned shipped body that is not the
+ * current package body, in every project skill dir. Validate fails on any.
+ */
+function staleShippedSkillBodies(targetDir, packageRoot) {
+  const stale = [];
+  for (const name of wornSkillNames(targetDir)) {
+    const packaged = packagedSkillPath(packageRoot, name);
+    if (!packaged) continue;
+    const shipped = shippedSkillBlobs().get(name);
+    if (!shipped) continue;
+    for (const dir of listProjectSkillDirs(targetDir)) {
+      const file = path.join(dir, name, "SKILL.md");
+      if (!fs.existsSync(file) || sameBytes(file, packaged)) continue;
+      if (!shipped.has(gitBlobId(fs.readFileSync(file)))) continue;
+      stale.push(path.relative(targetDir, file));
+    }
+  }
+  return stale;
+}
+
+/**
  * A non-mill seat does not wear the catalog. An older wear copied each
  * packaged skill into the project skill dirs, and each packaged agent into
  * .opencode/agents. Remove a worn file only when its bytes match that package
@@ -1128,6 +1149,7 @@ module.exports = {
   costumeDumpExtras,
   assertNoCostumeDump,
   wornSkillIsShippedMirror,
+  staleShippedSkillBodies,
   machineHome,
   processHome,
   isIsolatedHome,
