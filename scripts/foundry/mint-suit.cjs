@@ -722,7 +722,7 @@ function costumeDumpExtras(targetDir, millPlant, tree) {
   };
 }
 
-function packagedSkill(packageRoot, name) {
+function packagedSkillPath(packageRoot, name) {
   const files = [
     path.join(packageRoot, "src", "skills", name, "SKILL.md"),
     path.join(packageRoot, "dist", "skills", name, "SKILL.md"),
@@ -730,7 +730,7 @@ function packagedSkill(packageRoot, name) {
     path.join(packageRoot, "plant", "skills", name, "SKILL.md"),
     path.join(packageRoot, "node_modules", "@0xray", "blip", "plant", "skills", name, "SKILL.md"),
   ];
-  return files.some((file) => fs.existsSync(file));
+  return files.find((file) => fs.existsSync(file)) || "";
 }
 
 function packagedAgent(packageRoot, file) {
@@ -744,12 +744,19 @@ function packagedAgent(packageRoot, file) {
   return files.some((candidate) => fs.existsSync(candidate));
 }
 
+function sameBytes(left, right) {
+  try {
+    return fs.readFileSync(left).equals(fs.readFileSync(right));
+  } catch {
+    return false;
+  }
+}
+
 /**
- * A non-mill seat does not wear the catalog. Packaged skills land in every
- * project skill dir, and packaged agents land in .opencode/agents. The
- * Grok-tree strip does not see the other dirs, and a leftover agent makes
- * the byte-match swallow return false. Remove both before inspect.
- * A skill or agent the seat wrote itself is not in the package, so it stays.
+ * A non-mill seat does not wear the catalog. An older wear copied each
+ * packaged skill into the project skill dirs, and each packaged agent into
+ * .opencode/agents. Remove that fan-out before inspect. A skill the seat
+ * wrote in one dir, with its own text, stays so the costume check can refuse it.
  */
 function stripPackagedCatalog(targetDir, millPlant, packageRoot) {
   if (suitCatalogApplies(targetDir, millPlant, packageRoot)) return;
@@ -757,9 +764,18 @@ function stripPackagedCatalog(targetDir, millPlant, packageRoot) {
   const allowSkills = new Set([...(planted.skills || []), ...loadShopPlant(targetDir)]);
   const allowAgents = new Set(planted.agents || []);
   for (const name of wornSkillNames(targetDir)) {
-    if (allowSkills.has(name) || !packagedSkill(packageRoot, name)) continue;
-    for (const dir of listProjectSkillDirs(targetDir)) {
-      fs.rmSync(path.join(dir, name), { recursive: true, force: true });
+    if (allowSkills.has(name)) continue;
+    const packaged = packagedSkillPath(packageRoot, name);
+    if (!packaged) continue;
+    const worn = listProjectSkillDirs(targetDir)
+      .map((dir) => path.join(dir, name, "SKILL.md"))
+      .filter((file) => fs.existsSync(file));
+    if (worn.length === 0) continue;
+    const matchesPackage = worn.filter((file) => sameBytes(file, packaged));
+    const fanout = worn.length >= 2 && worn.every((file) => sameBytes(file, worn[0]));
+    if (!fanout && matchesPackage.length === 0) continue;
+    for (const file of fanout ? worn : matchesPackage) {
+      fs.rmSync(path.dirname(file), { recursive: true, force: true });
     }
   }
   const agentsDir = path.join(targetDir, ".opencode", "agents");
