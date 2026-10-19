@@ -1,0 +1,79 @@
+{
+  "generatedFrom": "v4.0.0..HEAD",
+  "skills": {
+    "hermes-agent": [
+      {
+        "blob": "35b18d2d92586960b95d44d0f6898c27ecbfcb1a",
+        "since": "4.0.0"
+      },
+      {
+        "blob": "6a37417f49387107a0247f0af338f6b5ba8bb50c",
+        "since": "4.0.22"
+      }
+    ],
+    "orchestrator": [
+      {
+        "blob": "84cf4df3ef16aa7fc384df48adc892352896129f",
+        "since": "4.0.0"
+      },
+      {
+        "blob": "089a3f2fe6baed4d60e8e3d756addf6a91592363",
+        "since": "4.0.15"
+      },
+      {
+        "blob": "7da02097e59837281ae33a6062ffe4849e5866d6",
+        "since": "4.0.16"
+      },
+      {
+        "blob": "6d8caf3f6c21eb021eb0479261e1ddf365a9b79f",
+        "since": "4.0.17"
+      },
+      {
+        "blob": "c92b0ce60d663b1522512704e4f0fe394bc686f2",
+        "since": "4.0.21"
+      },
+      {
+        "blob": "8694519d1b279a05f3de3d4173a99dd8c03e439a",
+        "since": "4.0.22"
+      },
+      {
+        "blob": "97a5376316fbfd6f93d5250c9ae1d052bde570b3",
+        "since": "4.0.23"
+      },
+      {
+        "blob": "f473321beabeb5975f378ce9a5f268b726ef20af",
+        "since": "4.0.27"
+      },
+      {
+        "blob": "27e51f8d6d35fc9d50e431f2c93d973461c218f1",
+        "since": "4.0.31"
+      },
+      {
+        "blob": "521a7d2c634ad63d02b22d0bbb82c00aa6474ddc",
+        "since": "4.0.33"
+      },
+      {
+        "blob": "193f8260d545b40379f9b2de31e19a2dca1f6a8d",
+        "since": "4.0.42"
+      },
+      {
+        "blob": "c0d251da786dd12ba6e13a90a11be0cd2e30a868",
+        "since": "4.1.1"
+      },
+      {
+        "blob": "13e539a824d3632b36e60bdf37e436800a70eabb",
+        "since": "4.0.32"
+      }
+    ],
+    "storyteller": [
+      {
+        "blob": "eb6dcd29e0df06941f4128f6a79163f79b50c802",
+        "since": "4.0.0"
+      },
+      {
+        "blob": "448dbfb95f77163f51b347a2491bd92d8a433a71",
+        "since": "4.0.27"
+      }
+    ]
+  }
+}
