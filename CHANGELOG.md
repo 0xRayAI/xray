@@ -36,7 +36,7 @@ Wear seeds `STATION.md` and `NOTES.md` when they are missing. After that, wear c
 
 ### Wave schedule
 
-When `LIVE_URL` is unset, the board is `house/WAVEBOARD.md`. When `LIVE_URL` is set, the board is Bifrost (`GET /cards`). When a real wave's last card is closed or merged, the board raises one plan-next-wave card for the CoS seat naming the next open wave. The window is a Chicago cron stored on the card. A due plan does not hide a stall wake. Weekly burn at 75% keeps the plan quiet. Synthetic cards with no GitHub number are closed. `--apply` boards only the current wave and refuses the production board unless `BIFROST_SEED_APPLY=1`. The live image copies `wave-schedule.mjs` and `bifrost-waves.json`. `house init` copies an empty wave list. The server reads `house/bifrost-waves.json`.
+When `LIVE_URL` is unset, the board is `house/WAVEBOARD.md`. When `LIVE_URL` is set, the board is Bifrost (`GET /cards`). When a real wave's last card is closed or merged, the board raises one plan-next-wave card for the CoS seat naming the next open wave. The window is a Chicago cron stored on the card. A due plan does not hide a stall wake. Weekly burn at 75% keeps the plan quiet and keeps an empty-board wake quiet. Synthetic cards with no GitHub number are closed. `--apply` boards only the current wave and refuses the production board unless `BIFROST_SEED_APPLY=1`. The live image copies `wave-schedule.mjs` and `bifrost-waves.json`. `house init` copies an empty wave list. The server reads `house/bifrost-waves.json`.
 
 ## [4.1.2] - 2026-10-19
 

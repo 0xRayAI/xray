@@ -20,9 +20,11 @@ A state flow plate: the stages a house goes through before doctor says House: PA
   │ STARTER FILES COPIED         │
   ├──────────────────────────────┤
   │ · copy starter               │
-  │ · HOUSE.md, WAVEBOARD.md,    │
-  │   ATTENTION_STATE.md         │
-  │ · Bifrost when LIVE_URL set  │
+  │ · HOUSE.md                   │
+  │ · ATTENTION_STATE.md         │
+  │ · hand-kept WAVEBOARD.md     │
+  │   when LIVE_URL is unset     │
+  │ · GET /cards when it is set  │
   └──────────────────────────────┘
                   │
                   v
@@ -51,4 +53,6 @@ A state flow plate: the stages a house goes through before doctor says House: PA
   └──────────────────────────────┘
 ```
 
-stamped · 0xray 4.1.0 · @0xray/grok-bot 0.1.8
+When `LIVE_URL` is unset, open cards are hand-kept in `house/WAVEBOARD.md`. When `LIVE_URL` is set, the board is Bifrost (`GET /cards`). `ATTENTION_STATE.md` is read in either case.
+
+stamped · 0xray 4.1.0 · @0xray/grok-bot 0.1.10

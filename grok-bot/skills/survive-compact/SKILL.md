@@ -25,7 +25,7 @@ Grok Bot chat **does not** fire 0xRay `PreCompact` / Repertoire hooks. Do not wa
 2. **Name the live track** in one line: intent · open PR/cloud id · next beat · “already built / do not rebuild”
 3. **Clouds:** same problem/PR/ship → **resume** that `bc-…`. New outcome only → launch. Never duplicate a live track.
 4. **Code / docs:** read live `AGENTS.md` / `SKILLS.md` / `llms.txt` (and the repo path you are about to touch) before inventing a parallel stack or second implementation.
-5. **Write forward** if something material changed: update STATION or the board (`house/WAVEBOARD.md` when `LIVE_URL` is unset) (short), and agent memory for lasting facts. Chat alone is not survival. Recalling a fact that was also in the summary or on disk is not a memory test.
+5. **Write forward** if something material changed: update STATION, the board (`house/WAVEBOARD.md` when `LIVE_URL` is unset), and `house/ATTENTION_STATE.md` (short), and agent memory for lasting facts. Chat alone is not survival. Recalling a fact that was also in the summary or on disk is not a memory test.
 
 ## Do not
 - Bolt full Repertoire MCP onto every chat seat as theater

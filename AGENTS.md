@@ -239,7 +239,7 @@ Full skill mapping: [SKILLS.md](SKILLS.md).
 
 ## Live board
 
-The board seats see is the collector board (`house/live/feed/live_mesh.py`). A cloud agent is a board row (`bcId`, owning seat, linked card, state `running`, `finished`, or `failed`). The seat wake is `grok-bot/templates/house/fleet/WAKE-ROUTINE.md`: `live-inbox <seat> --turn start` on every turn, and `--turn end` on every exit. `live-inbox` requires `LIVE_URL`, `SEAT_KEYS_DIR`, and `LIVE_CURSORS`. A missing or empty one exits 2 and names it. A stuck card sends L1 to the next owner or the card owner, and L2 to the CoS role. An unacked line and a missing handoff stay on that seat through L3, and the CoS role is woken at L3.
+When `LIVE_URL` is set, the board seats see is the collector board (`house/live/feed/live_mesh.py`). When `LIVE_URL` is unset, the board is hand-kept `house/WAVEBOARD.md`. A cloud agent is a board row (`bcId`, owning seat, linked card, state `running`, `finished`, or `failed`). The seat wake is `grok-bot/templates/house/fleet/WAKE-ROUTINE.md`: `live-inbox <seat> --turn start` on every turn, and `--turn end` on every exit. `live-inbox` requires `LIVE_URL`, `SEAT_KEYS_DIR`, and `LIVE_CURSORS`. A missing or empty one exits 2 and names it. A stuck card sends L1 to the next owner or the card owner, and L2 to the CoS role. An unacked line and a missing handoff stay on that seat through L3, and the CoS role is woken at L3.
 
 ## Release artifacts
 

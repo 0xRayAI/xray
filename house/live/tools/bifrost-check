@@ -146,6 +146,7 @@ def check_edit_sim(rep, seats, roles, logins):
 
 TRIP_JS = r"""
 import { createClock } from %s;
+import { burnQuiet } from %s;
 const W = 1000, c = createClock({ tripMs: W, perSeatMs: 10, now: 0 });
 const out = { empty: [], stall: [] };
 c.observe('a', 0, { openCards: 0, coord: 'coord' });
@@ -159,18 +160,47 @@ p.observe('c', 0, { openCards: 2, openSeats: ['x'], coord: 'coord', planDue: tru
 out.plan = [];
 for (let t = 100; t < 1900; t += 100) { const r = p.observe('c', t, { openCards: 2, openSeats: ['x'], coord: 'coord', planDue: true }); if (r) out.plan.push(r); }
 out.planSeats = Object.keys(p.run?.deadlines || {});
+const burnRaw = process.env.BIFROST_WEEKLY_BURN;
+const burnN = Number(burnRaw);
+const burnFrac = Number.isFinite(burnN) && burnN >= 0 ? (burnN > 1 ? burnN / 100 : burnN) : 0;
+if (burnRaw !== '0.75' || !burnQuiet(burnFrac)) throw new Error('BIFROST_WEEKLY_BURN=0.75 did not quiet');
+const q = createClock({ tripMs: W, perSeatMs: 10, now: 0 });
+q.observe('d', 0, { openCards: 0, coord: 'coord', burnQuiet: true });
+out.quiet = [];
+for (let t = 100; t < 1900; t += 100) {
+  const r = q.observe('d', t, { openCards: 0, coord: 'coord', burnQuiet: burnQuiet(burnFrac) });
+  if (r) out.quiet.push(r);
+}
+out.quietRun = q.run;
 console.log(JSON.stringify(out));
 """
 
 
 def check_tripwire(rep):
-    js = TRIP_JS % json.dumps((LIVE / "app" / "governor.mjs").as_uri())
-    r = subprocess.run(["node", "--input-type=module", "-e", js], capture_output=True, text=True, timeout=60)
+    js = TRIP_JS % (
+        json.dumps((LIVE / "app" / "governor.mjs").as_uri()),
+        json.dumps((LIVE / "app" / "wave-schedule.mjs").as_uri()),
+    )
+    env = dict(os.environ)
+    env["BIFROST_WEEKLY_BURN"] = "0.75"
+    r = subprocess.run(["node", "--input-type=module", "-e", js], capture_output=True, text=True, timeout=60, env=env)
     if r.returncode:
         return rep.add("tripwire", "FAIL", "governor did not run: " + r.stderr.strip()[-200:])
     o = json.loads(r.stdout)
-    ok = o["empty"] == ["empty"] and o["stall"] == ["stall"] and o["stallSeats"] == ["x"] and o["plan"] == ["stall"] and "x" in o["planSeats"]
-    rep.add("tripwire", "PASS" if ok else "FAIL", f"empty fired {len(o['empty'])}x, stall fired {len(o['stall'])}x in one window")
+    ok = (
+        o["empty"] == ["empty"]
+        and o["stall"] == ["stall"]
+        and o["stallSeats"] == ["x"]
+        and o["plan"] == ["stall"]
+        and "x" in o["planSeats"]
+        and o["quiet"] == ["quiet"]
+        and o["quietRun"] is None
+    )
+    rep.add(
+        "tripwire",
+        "PASS" if ok else "FAIL",
+        f"empty fired {len(o['empty'])}x, stall fired {len(o['stall'])}x, BIFROST_WEEKLY_BURN=0.75 quiet {len(o.get('quiet', []))}x",
+    )
 
 
 def check_nudge(rep):
