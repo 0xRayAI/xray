@@ -78,7 +78,7 @@ class WakeEnvFreshShell(unittest.TestCase):
         self.assertGreaterEqual(len(rows), 10, rows)
         url, cursors, keys, wake_run, args = rows[:5]
         self.assertEqual(url, "https://burst-live-production.up.railway.app")
-        self.assertEqual(cursors, str(self.home / ".burst" / "cursors" / "forge"))
+        self.assertEqual(cursors, str(self.home / ".burst" / "cursors"))
         self.assertEqual(keys, str(self.home / ".burst" / "seat-keys"))
         self.assertRegex(wake_run, r"^\d+$")
         self.assertEqual(args, "forge")
@@ -96,7 +96,7 @@ class WakeEnvFreshShell(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stderr + r.stdout)
         url, cursors, keys, args = recorded.read_text().splitlines()
         self.assertEqual(url, "https://burst-live-production.up.railway.app")
-        self.assertEqual(cursors, str(self.home / ".burst" / "cursors" / "forge"))
+        self.assertEqual(cursors, str(self.home / ".burst" / "cursors"))
         self.assertEqual(keys, str(self.home / ".burst" / "seat-keys"))
         self.assertEqual(args, "forge --ack line-1")
 
