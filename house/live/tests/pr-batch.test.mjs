@@ -78,6 +78,22 @@ test('a head already green before run_end queues critic when the run ends', () =
   assert.equal(batch.runEnd(line({ id: 'end' }), {}).action, 'wait');
 });
 
+test('a later head queued from head_sha still reaches critic at run_end', () => {
+  const batch = createBatch();
+  batch.observeCi({ id: 'g0', kind: 'ci_pass', repo: REPO, number: 402, sha: SHA, name: 'ci' });
+  assert.equal(batch.runEnd(line({ id: 'end0' }), {}).action, 'critic');
+  assert.equal(batch.observeCi({
+    id: 'g1', kind: 'ci_pass', repo: REPO, number: 402, head_sha: NEXT, name: 'ci', conclusion: 'success',
+  }), null);
+  const queued = batch.runEnd(line({ id: 'end1', sha: NEXT }), {});
+  assert.equal(queued.action, 'critic');
+  assert.equal(queued.line.seat, 'critic');
+  assert.equal(queued.line.sha, NEXT);
+  assert.equal(batch.observeCi({
+    id: 'g1', kind: 'ci_pass', repo: REPO, number: 402, head_sha: NEXT, name: 'ci', conclusion: 'success',
+  }), null);
+});
+
 test('a second critic FAIL goes to Blaze and the first returns to the worker', () => {
   const batch = createBatch();
   batch.absorb(line({ id: 'cf1', from: 'critic', kind: 'critic_fail', title: 'round 1' }), true);

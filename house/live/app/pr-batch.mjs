@@ -2,6 +2,7 @@
 // Flushes are run_end and ci_pass only. A green head queues critic on run_end
 // when the checks are already green, and on a later ci_pass after run_end.
 // A green event seen before run_end is not replayed. Pending waits.
+// Collector ci rows carry head_sha. That is the head when sha is absent.
 
 const FOLLOW = new Set(['ci_fail', 'critic_fail', 'ready', 'live_pass', 'merge', 'handoff', 'pr_review', 'review']);
 const FAILED = new Set(['failure', 'failed', 'error', 'cancelled', 'timed_out', 'startup_failure']);
@@ -175,7 +176,8 @@ export function createBatch() {
       const row = slot(key);
       const seen = ev.id ? 'ci:' + ev.id : '';
       if (seen && row.seen.has(seen)) return null;
-      shiftSha(row, ev.sha);
+      const head = ev.sha || ev.head_sha;
+      shiftSha(row, head);
       const name = String(ev.name || ev.context || ev.kind || 'check');
       let check = row.checks.find((item) => item.name === name);
       if (!check) {
@@ -187,7 +189,7 @@ export function createBatch() {
       if (conclusion) check.conclusion = String(conclusion).toLowerCase();
       if (ev.required === false) check.required = false;
       const live = !!(opts.busy) || !!row.live;
-      if ((live || row.runEnded) && (ev.kind === 'ci_fail' || FAILED.has(check.conclusion))) addPart(row, 'ci_fail', name, ev.sha);
+      if ((live || row.runEnded) && (ev.kind === 'ci_fail' || FAILED.has(check.conclusion))) addPart(row, 'ci_fail', name, head);
       const color = headColor(row.checks);
       const idle = row.live !== 'worker' && row.live !== 'critic' && !row.criticQueued;
       const wantWorker = color === 'red' && row.runEnded && idle;
