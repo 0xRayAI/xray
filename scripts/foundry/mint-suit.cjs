@@ -796,6 +796,24 @@ function sameBytes(left, right) {
 }
 
 /**
+ * A mill seat keeps the catalog. In every project skill dir, a worn body
+ * pinned in shipped-skill-blobs.json becomes the current package body. A
+ * seat's own text stays.
+ */
+function refreshShippedSkillBodies(targetDir, packageRoot) {
+  for (const name of wornSkillNames(targetDir)) {
+    const packaged = packagedSkillPath(packageRoot, name);
+    if (!packaged) continue;
+    for (const dir of listProjectSkillDirs(targetDir)) {
+      const file = path.join(dir, name, "SKILL.md");
+      if (!fs.existsSync(file) || sameBytes(file, packaged)) continue;
+      if (!wornSkillIsShippedMirror(name, file, packaged)) continue;
+      fs.copyFileSync(packaged, file);
+    }
+  }
+}
+
+/**
  * A non-mill seat does not wear the catalog. An older wear copied each
  * packaged skill into the project skill dirs, and each packaged agent into
  * .opencode/agents. Remove a worn file only when its bytes match that package
@@ -804,7 +822,10 @@ function sameBytes(left, right) {
  * dirs, so the costume check can refuse it.
  */
 function stripPackagedCatalog(targetDir, millPlant, packageRoot) {
-  if (suitCatalogApplies(targetDir, millPlant, packageRoot)) return;
+  if (suitCatalogApplies(targetDir, millPlant, packageRoot)) {
+    refreshShippedSkillBodies(targetDir, packageRoot);
+    return;
+  }
   const planted = factoryPlantAllowlist(packageRoot, targetDir);
   const allowSkills = new Set([...(planted.skills || []), ...loadShopPlant(targetDir)]);
   const allowAgents = new Set(planted.agents || []);

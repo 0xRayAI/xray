@@ -44,15 +44,15 @@ function fixtureFor(name: string, blob: string): string {
   return path.join(fixtures, name, file);
 }
 
-/** A non-git sound suit wearing all catalog skills, orchestrator replaced by `orchestrator`. */
-function plantSoundSuit(orchestrator: string) {
+/** A non-git suit wearing all catalog skills, orchestrator replaced by `orchestrator`. */
+function plantSoundSuit(orchestrator: string, plant = 'sound') {
   const project = mkdtempSync(path.join(tmpdir(), 'xray-shipped-blob-'));
-  writeFileSync(path.join(project, 'package.json'), `${JSON.stringify({ name: 'sound-seat', private: true })}\n`);
-  writeFileSync(path.join(project, 'foundry.json'), `${JSON.stringify({ plant: 'sound' }, null, 2)}\n`);
+  writeFileSync(path.join(project, 'package.json'), `${JSON.stringify({ name: `${plant}-seat`, private: true })}\n`);
+  writeFileSync(path.join(project, 'foundry.json'), `${JSON.stringify({ plant }, null, 2)}\n`);
   mkdirSync(path.join(project, '.xray', 'state'), { recursive: true });
   writeFileSync(
     path.join(project, '.xray', 'features.json'),
-    `${JSON.stringify({ plant: 'sound', goggles: { enabled: true } }, null, 2)}\n`,
+    `${JSON.stringify({ plant, goggles: { enabled: true } }, null, 2)}\n`,
   );
   writeFileSync(
     path.join(project, '.xray', 'state', 'goggles-plane.json'),
@@ -107,6 +107,28 @@ function wearAndProve(orchestrator: string, label: string) {
   }
 }
 
+/** Mill wear: every project skill dir ends on `expected` bytes for orchestrator. */
+function wearMillAndProve(orchestrator: string, expected: string, label: string, dirs = skillDirs) {
+  const project = plantSoundSuit(orchestrator, 'mill');
+  const home = mkdtempSync(path.join(tmpdir(), 'xray-shipped-home-'));
+  const machine = mkdtempSync(path.join(tmpdir(), 'xray-shipped-machine-'));
+  try {
+    const ran = spawnSync(process.execPath, [wearScript, project], {
+      cwd: project,
+      encoding: 'utf8',
+      env: { ...process.env, HOME: home, USERPROFILE: home, FOUNDRY_MACHINE_HOME: machine },
+    });
+    expect(ran.status, `${label}\n${ran.stdout}\n${ran.stderr}`).toBe(0);
+    const want = blobId(readFileSync(expected));
+    for (const rel of dirs) {
+      const worn = readFileSync(path.join(project, rel, 'orchestrator', 'SKILL.md'));
+      expect(blobId(worn), `${label} ${rel}`).toBe(want);
+    }
+  } finally {
+    for (const dir of [project, home, machine]) rmSync(dir, { recursive: true, force: true });
+  }
+}
+
 describe('wear strips catalog skill bodies shipped since v4.0.0', () => {
   it('pins 13 orchestrator, 2 hermes-agent and 2 storyteller blobs, each matching its fixture', () => {
     expect(catalog.length).toBe(45);
@@ -128,5 +150,24 @@ describe('wear strips catalog skill bodies shipped since v4.0.0', () => {
 
   it('wears a sound plant over the current orchestrator bytes', () => {
     wearAndProve(path.join(repoRoot, 'src/skills/orchestrator/SKILL.md'), 'current');
+  }, 120000);
+
+  it('refreshes each shipped orchestrator body in every skill dir of a mill suit', () => {
+    const current = path.join(repoRoot, 'src/skills/orchestrator/SKILL.md');
+    for (const { blob, since } of pinned.skills.orchestrator) {
+      wearMillAndProve(fixtureFor('orchestrator', blob), current, `mill ${since} ${blob}`);
+    }
+  }, 600000);
+
+  // Bridges recopy .opencode/.grok/.hermes; .openclaw/skills is touched only by the refresh pass.
+  it("keeps a mill seat's own orchestrator text in .openclaw/skills", () => {
+    const dir = mkdtempSync(path.join(tmpdir(), 'xray-own-skill-'));
+    const own = path.join(dir, 'SKILL.md');
+    writeFileSync(own, '---\nname: orchestrator\ndescription: seat own\n---\n# Mine\n');
+    try {
+      wearMillAndProve(own, own, 'mill own text', ['.openclaw/skills']);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   }, 120000);
 });
