@@ -788,8 +788,10 @@ class RepoCollector:
         elif not self.st["bf"].get("author:seat"):
             self.st["bf"]["author:seat"] = True
         newest = cur
+        # Replay a pull that shares the cursor second. put() is idempotent.
+        # Stopping on <= skips that pull, and the page-1 ETag then answers 304 forever.
         for p in self.paged(c, f"/repos/{self.repo}/pulls", {"state": "all", "sort": "updated", "direction": "desc"},
-                            "pulls", stop=lambda p: cur is not None and p["updated_at"] <= cur):
+                            "pulls", stop=lambda p: cur is not None and p["updated_at"] < cur):
             n = p["number"]
             # A pull with user null is still a card. Subscripting it raised TypeError, which run()
             # does not catch, so every later pull on the page was dropped and the cursor never moved.
