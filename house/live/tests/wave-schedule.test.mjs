@@ -10,7 +10,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { createClock, wakeTitle } from '../app/governor.mjs';
 import { listenPort } from './free-port.mjs';
 import { loadSeedFile, refuseLiveApply } from '../tools/load-wave-seed.mjs';
-import { PLAN_FLAG, PLAN_TITLE, cardClosed, cardsFromSeed, liveWorkCount, postedCards, resolveWaveSeed, scheduleWaves } from '../app/wave-schedule.mjs';
+import { PLAN_EXPIRE_MS, PLAN_FLAG, PLAN_TITLE, cardClosed, cardsFromSeed, liveWorkCount, postedCards, resolveWaveSeed, scheduleWaves } from '../app/wave-schedule.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const APP = path.join(HERE, '..', 'app');
@@ -132,6 +132,33 @@ test('the Chicago cron flags the plan card, a restart keeps the due time, and we
   assert.equal(cleared.planDue, false);
 });
 
+test('a stale plan card closes and is not raised again for the same wave', () => {
+  assert.equal(PLAN_EXPIRE_MS, 7 * 24 * 60 * 60 * 1000);
+  const closed = close(postedCards(seed, { now: 5_000, coord: 'blinky' }), 'W2');
+  const first = scheduleWaves(closed, seed, { now: 5_000, coord: 'blinky', window: '* * * * *', expireMs: 10_000 });
+  const plan = first.cards.find((card) => card.kind === 'plan');
+  assert.equal(plan.state, 'live');
+  const stillYoung = scheduleWaves(first.cards, seed, { now: 5_000 + 9_999, coord: 'blinky', prior: first.cards, window: '* * * * *', expireMs: 10_000 });
+  assert.equal(stillYoung.cards.find((card) => card.kind === 'plan').state, 'live');
+  const expired = scheduleWaves(first.cards, seed, { now: 5_000 + 10_000, coord: 'blinky', prior: first.cards, window: '* * * * *', expireMs: 10_000 });
+  const dead = expired.cards.find((card) => card.kind === 'plan');
+  assert.equal(expired.cards.filter((card) => card.kind === 'plan').length, 1);
+  assert.equal(dead.state, 'closed');
+  assert.equal(dead.stage, 'done');
+  assert.equal(dead.flag, 'expired');
+  assert.equal(expired.planDue, false);
+  const again = scheduleWaves(expired.cards, seed, { now: 5_000 + 20_000, coord: 'blinky', prior: expired.cards, window: '* * * * *', expireMs: 10_000 });
+  assert.equal(again.cards.filter((card) => card.kind === 'plan' && card.state === 'live').length, 0);
+  assert.equal(again.cards.find((card) => card.kind === 'plan').flag, 'expired');
+  assert.equal(again.planDue, false);
+  const withNext = expired.cards.concat(cardsFromSeed(seed, { now: 1 }).filter((card) => card.wave === 'W3').map((card) => ({ ...card, state: 'closed' })));
+  const moved = scheduleWaves(withNext, seed, { now: 5_000 + 30_000, coord: 'blinky', prior: expired.cards, window: '* * * * *', expireMs: 10_000 });
+  const next = moved.cards.filter((card) => card.kind === 'plan');
+  assert.equal(next.length, 1);
+  assert.equal(next[0].state, 'live');
+  assert.deepEqual(next[0].backlog.map((item) => item.wave), ['W4']);
+});
+
 test('a restart does not re-arm the trip window', () => {
   const windowMs = 60_000;
   const board = { openCards: 1, openSeats: ['forge'], coord: 'blinky', planDue: true };
@@ -167,7 +194,7 @@ test('the load command prints the seed and refuses the live board', () => {
 function planOnlyCard() {
   return {
     key: 'plan:next-wave', kind: 'plan', title: PLAN_TITLE, state: 'live', owner: 'blinky',
-    due_at: 1, raised_at: 1, last_beat_t: Date.now(), flag: '', seen: [],
+    due_at: 1, raised_at: Date.now(), last_beat_t: Date.now(), flag: '', seen: [],
     backlog: [
       { rank: 2, wave: 'W2', title: '#389' },
       { rank: 3, wave: 'W3', title: '#386' },

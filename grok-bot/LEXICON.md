@@ -190,7 +190,7 @@ Every bolded term in the pack OP-PROC and runbooks is defined here (`bifrost che
 ## Lexicon add (2026-10-19 — wave schedule)
 | Term | Bucket | Plain |
 |------|--------|-------|
-| **plan next wave** | Workstream | The card Bifrost raises for the coordinator when a real wave's last card is closed or merged. It names the next open wave. The window is a Chicago cron. The due time stays on the card. Weekly burn at 75% keeps that plan card quiet, and the same burn keeps an empty-board wake quiet. The tripwire flags it `nothing carded` when the window passes and no new card was added. |
+| **plan next wave** | Workstream | The card Bifrost raises for the coordinator when a real wave's last card is closed or merged. It names the next open wave. The window is a Chicago cron. The due time stays on the card. Weekly burn at 75% keeps that plan card quiet, and the same burn keeps an empty-board wake quiet. A plan card older than 7 days closes as expired and is not raised again for that same wave. The tripwire flags it `nothing carded` when the window passes and no new card was added. |
 
 ## Lexicon add (2026-10-18 — seek)
 | Term | Bucket | Plain |

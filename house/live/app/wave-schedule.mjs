@@ -10,6 +10,7 @@ export const PLAN_TITLE = 'plan next wave';
 export const PLAN_FLAG = 'nothing carded';
 export const DEFAULT_WINDOW = '0 9 * * 1';
 export const BURN_QUIET = 0.75;
+export const PLAN_EXPIRE_MS = 7 * 24 * 60 * 60 * 1000;
 
 const WEEKDAY = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
 
@@ -291,6 +292,21 @@ function refreshPlan(card, fresh, now, nudgeMs) {
   };
 }
 
+function waveOf(card) {
+  const backlog = Array.isArray(card && card.backlog) ? card.backlog : [];
+  const named = backlog[0] && backlog[0].wave;
+  return String(named || (card && card.wave) || '');
+}
+
+function planAgeExpired(card, now, expireMs) {
+  const raised = Number(card && card.raised_at) || 0;
+  return raised > 0 && now - raised >= expireMs;
+}
+
+function expirePlan(card, now) {
+  return { ...card, state: 'closed', stage: 'done', flag: 'expired', last_beat_t: now };
+}
+
 /** Keep a plan card and loaded wave cards the collector does not send. Earlier cards win on key. */
 export function retainSeedCards(collector, prior, seedCards) {
   const base = Array.isArray(collector) ? collector.slice() : [];
@@ -322,17 +338,40 @@ export function scheduleWaves(incoming, seed, opts = {}) {
   const coord = opts.coord || 'coord';
   const window = opts.window || (seed && seed.window) || DEFAULT_WINDOW;
   const nudgeMs = opts.nudgeMs > 0 ? opts.nudgeMs : 60 * 60000;
+  const expireMs = opts.expireMs > 0 ? opts.expireMs : PLAN_EXPIRE_MS;
   const quiet = burnQuiet(opts.weeklyBurn);
   const list = oneWave(
-    retainSeedCards(incoming, opts.prior, []).filter((card) => !(isPlanCard(card) && cardClosed(card))),
+    retainSeedCards(incoming, opts.prior, []).filter((card) => {
+      if (!isPlanCard(card) || !cardClosed(card)) return true;
+      return card.flag === 'expired';
+    }),
     seed,
   );
-  const openPlan = list.find((card) => isPlanCard(card));
+  const openPlan = list.find((card) => isPlanCard(card) && !cardClosed(card));
+  const expiredPlan = list.find((card) => isPlanCard(card) && card.flag === 'expired');
   const fresh = quiet ? null : planFrom(seed, list, coord, now, window);
   let cards = list;
-  if (fresh && !openPlan) cards = [...list, fresh];
-  else if (fresh && openPlan) cards = list.map((card) => (isPlanCard(card) ? refreshPlan(card, fresh, now, nudgeMs) : card));
-  else if (openPlan && quiet) cards = list.map((card) => (isPlanCard(card) ? { ...card, last_beat_t: now, flag: '' } : card));
+  if (fresh && openPlan) {
+    cards = list.map((card) => {
+      if (!isPlanCard(card) || cardClosed(card)) return card;
+      const refreshed = refreshPlan(card, fresh, now, nudgeMs);
+      if (waveOf(card) === waveOf(fresh)) return refreshed;
+      return { ...refreshed, raised_at: now, state: 'live', stage: 'open', flag: '' };
+    });
+  } else if (fresh && expiredPlan && waveOf(expiredPlan) === waveOf(fresh)) {
+    cards = list;
+  } else if (fresh && expiredPlan) {
+    cards = list.map((card) => (isPlanCard(card) ? fresh : card));
+  } else if (fresh) {
+    cards = [...list, fresh];
+  } else if (openPlan && quiet) {
+    cards = list.map((card) => (isPlanCard(card) && !cardClosed(card) ? { ...card, last_beat_t: now, flag: '' } : card));
+  }
+  cards = cards.map((card) => {
+    if (!isPlanCard(card) || cardClosed(card)) return card;
+    if (!planAgeExpired(card, now, expireMs)) return card;
+    return expirePlan(card, now);
+  });
   let planDue = false;
   cards = cards.map((card) => {
     if (!isPlanCard(card) || cardClosed(card)) return card;

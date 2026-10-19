@@ -6,7 +6,7 @@ A wave is one stretch of cards in `house/bifrost-waves.json`, in rank order. The
 
 The server reads `house/bifrost-waves.json`. `BIFROST_WAVE_SEED` overrides it. The live image also bundles `house/live/app/bifrost-waves.json` so boot still finds a seed.
 
-When a real wave's last card is closed or merged, Bifrost raises one card titled `plan next wave` for the CoS seat. The card names the next open wave. One wave is on the board at a time. A card with no GitHub number is closed.
+When a real wave's last card is closed or merged, Bifrost raises one card titled `plan next wave` for the CoS seat. The card names the next open wave. One wave is on the board at a time. A card with no GitHub number is closed. A plan card older than 7 days closes as expired and is not raised again for that same wave.
 
 The window is a Chicago cron (`window` in the seed, default `0 9 * * 1`, Monday 09:00 America/Chicago). The due time is stored on the card. A restart does not re-arm it. Weekly burn at 75% (`BIFROST_WEEKLY_BURN` of `0.75` or `75`) keeps the plan card quiet and keeps an empty-board wake quiet: no seat is woken. Below 75% an empty board still wakes the coordinator. The tripwire flags that card `nothing carded` when the window passes and no new card appeared.
 
