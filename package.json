@@ -219,6 +219,7 @@
     "grok-bot/bin/grok-bot.js",
     "grok-bot/lib/pulsar-game.mjs",
     "grok-bot/ops/arcade/RANGE.md",
+    "house/live/app/wave-schedule.mjs",
     "vendor/@0xray/repertoire/",
     "!vendor/**/*.map"
   ],

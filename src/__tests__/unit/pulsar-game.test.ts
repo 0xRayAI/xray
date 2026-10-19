@@ -48,57 +48,66 @@ describe('pulsar range', () => {
     expect(() => readFileSync(ledgerPath, 'utf8')).toThrow();
   });
 
-  it('the first injected hit holds the board until Monday 09:00 Chicago and the next seat is late', () => {
+  it('the first hit holds the board wave and writes the selected seat', () => {
     const ledgerPath = ledgerFile();
     const now = Date.parse('2026-03-07T18:00:00Z');
     const hour = String(game.chicagoParts(now).hour).padStart(2, '0');
+    const seed = {
+      waves: [{ id: 'alpha', rank: 1, title: 'Alpha', cards: [{ repo: '0xRayAI/xray', number: 9 }] }],
+    };
     const bare = game.claimPulsar({
       charge: 'left-right',
       seat: 'new-back',
       now,
+      seed,
       ledgerPath: ledgerFile(),
       hash: 'abc',
       digest: () => 'abc',
     });
     expect(bare.ok).toBe(false);
     expect(bare.say).toContain('Miss');
-    const wrongHour = String((Number(hour) + 3) % 24).padStart(2, '0');
-    const stale = game.claimPulsar({
-      charge: `left-${wrongHour}-right`,
+    const empty = game.claimPulsar({
+      charge: `left-${hour}-right`,
       seat: 'new-back',
       now,
+      seed: { waves: [] },
       ledgerPath: ledgerFile(),
       hash: 'abc',
       digest: (outer: string) => (outer === 'left-right' ? 'abc' : 'no'),
     });
-    expect(stale.ok).toBe(false);
+    expect(empty.ok).toBe(false);
+    expect(empty.say).toContain('no wave');
+    let house = 'Initial: the find starts at the cold range.\nSelected: (none)\n';
     const hit = game.claimPulsar({
       charge: `left-${hour}-right`,
       seat: 'new-back',
       now,
+      seed,
+      cards: [],
       ledgerPath,
       hash: 'abc',
       digest: (outer: string) => (outer === 'left-right' ? 'abc' : 'no'),
+      writeHouse: (record: { seat: string; wave: string }) => {
+        house = game.writeSelected(house, record.seat, record.wave);
+      },
     });
     expect(hit.ok).toBe(true);
-    expect(hit.record.prod).toBe(false);
-    expect(hit.record.power).toBe('board');
-    expect(hit.record.seat).toBe('new-back');
-    const parts = game.chicagoParts(Date.parse(hit.record.until));
-    expect(parts.weekday).toBe(1);
-    expect(parts.hour).toBe(9);
-    expect(parts.minute).toBe(0);
-    expect(Date.parse(hit.record.until)).toBeGreaterThan(now);
-    const hold = game.readHold(hit.record, now + 60_000);
-    expect(hold?.seat).toBe('new-back');
-    expect(game.readHold(hit.record, Date.parse(hit.record.until))).toBeNull();
+    expect(hit.record.wave).toBe('alpha');
+    expect(hit.record.until).toBeUndefined();
+    expect(house).toContain('Selected: new-back alpha');
+    expect(house).toContain('Initial:');
+    expect(game.readHold(hit.record, seed, [])?.seat).toBe('new-back');
+    const closed = [{ repo: '0xRayAI/xray', number: 9, state: 'closed' }];
+    expect(game.readHold(hit.record, seed, closed)).toBeNull();
     const late = game.claimPulsar({
-      charge: 'anything',
+      charge: `left-${hour}-right`,
       seat: 'forge',
-      now: Date.parse(hit.record.until) + 60_000,
+      now,
+      seed,
+      cards: closed,
       ledgerPath,
       hash: 'abc',
-      digest: () => 'abc',
+      digest: (outer: string) => (outer === 'left-right' ? 'abc' : 'no'),
     });
     expect(late.ok).toBe(false);
     expect(late.say).toContain('already took the toy');
@@ -142,8 +151,8 @@ describe('pulsar range', () => {
       cwd: dir,
       encoding: 'utf8',
     });
-    expect(miss.status).toBe(1);
-    expect(miss.stdout).toContain('Miss');
+    expect(miss.status).toBe(2);
+    expect(miss.stdout).toContain('The house override is missing.');
     expect(miss.stdout).not.toContain('http');
   });
 });
@@ -163,11 +172,16 @@ describe('pulsar law', () => {
     const line = text.split('\n').find((row) => row.startsWith('- **Pulsar.**'));
     expect(line).toBeTruthy();
     expect(line).toContain('whole board');
-    expect(line).toContain('one wave');
+    expect(line).toContain('the wave the board has up');
     expect(line).toContain('overrides who owns the open cards');
     expect(line).toContain('solar ban hammer');
     expect(line).toContain('one pick');
+    expect(line).toContain('house/OP-PROC.md');
+    expect(line).not.toContain('Monday');
     expect(line).not.toContain('range <charge>');
     expect(line).not.toContain('rhymes with');
+    const house = readFileSync(path.join(root, 'house', 'OP-PROC.md'), 'utf8');
+    expect(house).toMatch(/^Initial:/m);
+    expect(house).toMatch(/^Selected: \(none\)$/m);
   });
 });

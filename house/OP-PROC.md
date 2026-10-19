@@ -185,3 +185,8 @@ Blaze, 10:36 CT: "this is new ship cadence. understand it document it. live it."
 A Card is done when its receipt is on the PR and its board card is closed.
 
 This file is house/OP-PROC.md for our fleet. Pack stays generic; this file is the house layer.
+
+## Pulsar
+
+Initial: the find starts at `grok-bot/ops/arcade/RANGE.md`.
+Selected: (none)

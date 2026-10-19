@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import { nextWave } from '../../house/live/app/wave-schedule.mjs';
 
 /** sha256 of the charge. The word stays off this file. */
 export const CHARGE_SHA256 = 'a31ec5957bbbd20f9c5b7f33449ec7de6bc3f6b574d50fa748c3216b67eaa2ee';
@@ -73,17 +74,39 @@ function readJson(file) {
   }
 }
 
-export function readHold(record, now) {
-  if (!record || record.jammed || !record.seat || !record.until) return null;
-  const until = Date.parse(record.until);
-  if (!Number.isFinite(until) || until <= now) return null;
+export function boardWave(seed, cards) {
+  const current = nextWave(seed || { waves: [] }, Array.isArray(cards) ? cards : []);
+  return current && current.wave ? current : null;
+}
+
+export function readSelected(text) {
+  const match = /^Selected:\s*(.*)$/m.exec(String(text ?? ''));
+  if (!match) return null;
+  const rest = match[1].trim();
+  if (!rest || rest === '(none)') return null;
+  const parts = rest.split(/\s+/);
+  if (parts.length < 2) return { jammed: true };
+  return { seat: parts[0], wave: parts[1], power: 'board', prod: false };
+}
+
+export function writeSelected(text, seat, wave) {
+  const line = `Selected: ${seat} ${wave}`;
+  const body = String(text ?? '');
+  if (/^Selected:.*$/m.test(body)) return body.replace(/^Selected:.*$/m, line);
+  return `${body.replace(/\s*$/, '')}\n\n${line}\n`;
+}
+
+export function readHold(record, seed, cards) {
+  if (!record || record.jammed || !record.seat || !record.wave) return null;
+  const current = boardWave(seed, cards);
+  if (!current || current.wave !== record.wave) return null;
   return record;
 }
 
-function lateLine(record, now) {
+function lateLine(record, seed, cards) {
   if (record && record.jammed) return 'The range is jammed.';
-  const hold = readHold(record, now);
-  if (hold) return `Late. ${hold.seat} holds the board until ${hold.until}.`;
+  const hold = readHold(record, seed, cards);
+  if (hold) return `Late. ${hold.seat} holds wave ${hold.wave}.`;
   if (record && record.seat) return `Late. ${record.seat} already took the toy.`;
   return 'The range is cold.';
 }
@@ -97,7 +120,7 @@ export function claimPulsar(opts) {
   const read = opts.readLedger || (() => readJson(file));
   const existing = read();
   if (existing && (existing.seat || existing.jammed)) {
-    return { ok: false, code: 1, say: lateLine(existing, now) };
+    return { ok: false, code: 1, say: lateLine(existing, opts.seed, opts.cards) };
   }
   if (!seat || /\s/.test(seat) || seat.length > 40) {
     return { ok: false, code: 2, say: 'Name a seat.' };
@@ -106,15 +129,15 @@ export function claimPulsar(opts) {
   if (!outer || digest(outer) !== hash) {
     return { ok: false, code: 1, say: 'Miss. The toy does not know you.' };
   }
-  const untilMs = nextMondayNineChicago(now);
+  const current = boardWave(opts.seed, opts.cards);
+  if (!current) return { ok: false, code: 1, say: 'The board has no wave.' };
   const record = {
     mark: '\u{1F52B}',
     seat,
+    wave: current.wave,
     power: 'board',
     prod: false,
     claimedAt: new Date(now).toISOString(),
-    until: new Date(untilMs).toISOString(),
-    window: 'Monday 09:00 America/Chicago',
   };
   const write = opts.writeLedger || ((row) => {
     fs.mkdirSync(path.dirname(file), { recursive: true });
@@ -128,12 +151,13 @@ export function claimPulsar(opts) {
   });
   if (!write(record)) {
     const winner = read() || { jammed: true };
-    return { ok: false, code: 1, say: lateLine(winner, now) };
+    return { ok: false, code: 1, say: lateLine(winner, opts.seed, opts.cards) };
   }
+  if (typeof opts.writeHouse === 'function') opts.writeHouse(record);
   return {
     ok: true,
     code: 0,
-    say: `Hit. ${seat} holds the board until ${record.until}.\nOne wave. The toy stays in the house.`,
+    say: `Hit. ${seat} holds wave ${record.wave} until the board closes it.\nThe toy stays in the house.`,
     record,
   };
 }
@@ -154,15 +178,36 @@ export function runRangeCli(argv, io = {}) {
     words.push(arg);
   }
   const charge = words.join(' ').trim();
+  const housePath = io.housePath || path.join(cwd, 'house', 'OP-PROC.md');
+  const seedPath = io.seedPath || path.join(cwd, 'house', 'bifrost-waves.json');
   if (!charge && !seat) {
     stdout.write('The range is cold.\n');
     return 1;
+  }
+  let houseText = '';
+  let seed = { waves: [] };
+  try {
+    houseText = fs.readFileSync(housePath, 'utf8');
+  } catch {
+    stdout.write('The house override is missing.\n');
+    return 2;
+  }
+  try {
+    seed = JSON.parse(fs.readFileSync(seedPath, 'utf8'));
+  } catch {
+    seed = { waves: [] };
   }
   const result = claimPulsar({
     charge,
     seat,
     now: io.now,
-    ledgerPath: io.ledgerPath || defaultLedgerPath(cwd),
+    seed,
+    cards: io.cards || [],
+    readLedger: () => readSelected(houseText),
+    writeLedger: () => true,
+    writeHouse: (record) => {
+      fs.writeFileSync(housePath, writeSelected(houseText, record.seat, record.wave));
+    },
   });
   stdout.write(`${result.say}\n`);
   return result.code;

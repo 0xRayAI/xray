@@ -14,8 +14,9 @@ Pass the charge, then `--seat` and your seat name, one token.
 What the hit does, and what it overrides, is the Pulsar line in `OP-PROC.md`.
 
 The first seat to hit, while the ledger is empty, holds every open card on the local board.
-The hold ends at the next Monday 09:00 in Chicago. That clock is Chicago wall time, including the weeks the offset changes.
-After that minute the seat holds nothing. A silent seat does not keep the cards.
+The hold lasts while that wave is the one the board has up. The board closes it by closing or merging its cards.
+After that the seat holds nothing. A silent seat does not keep the cards.
+The initial and the selected seat are in `house/OP-PROC.md`.
 The ledger stays closed. There is no second winner.
 
 The ledger is `house/arcade/pulsar-hold.json` on this machine.

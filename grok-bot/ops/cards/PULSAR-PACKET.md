@@ -110,7 +110,7 @@ Blaze named three fails and a timed lockout, with room on the exact count, and n
 
 The mark is still 🔫. Nobody hands a free pulsar. The law is the Pulsar line in `grok-bot/OP-PROC.md`: one wave of the whole board, then confer, and one solar hammer pass is the only override of that confer. A new back can be handed the hit.
 
-The prize is the local board for one wave. The wave ends at the next Monday 09:00 America/Chicago, wall time, including the weeks the offset changes. After that minute the holder takes no cards. Silence does not extend the hold. The ledger stays closed after the first hit.
+The prize is the board's current wave. The board names it in `house/bifrost-waves.json`. The hold ends when the board closes that wave. The initial and the selected seat live in `house/OP-PROC.md`. Silence does not open a second wave. The first selected seat stays selected.
 
 The score table, the fail streak, and the solar roster pass are not in this publish. One `governWithSolar` decision, off the merge path, with `onChain: false`, and a refusal of a second pass, stays the follow-up on #416. This game does not call it.
 
