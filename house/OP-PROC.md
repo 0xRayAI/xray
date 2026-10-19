@@ -143,7 +143,7 @@ Public words are friend-speak. Test them on a person before they go out.
 
 The board is useful and obvious: find a need, fill a need, don't make the human think. At a glance it shows who is working on what and what is stuck. Upstream and foreign repos show only the PRs and issues we opened. A seat's cloud agent activity counts as that seat being present.
 
-Open Cards live in `WAVEBOARD.md`. What needs Blaze lives in `ATTENTION_STATE.md`. Do not repeat that status in chat.
+When `LIVE_URL` is unset, open cards are hand-kept in `house/WAVEBOARD.md`. When `LIVE_URL` is set, the board is Bifrost (`GET /cards`). What needs Blaze lives in `ATTENTION_STATE.md`. Do not repeat that status in chat.
 
 Watchers follow Beats on the repos named in `house/WATCHERS.md`. On new activity they create or bump a WAVEBOARD card (signal→ticket) with a Done·Verify·Next owner. GitHub signals: issue, pull request, review, checks, merge. X signals: mention or reply, only when Dist policy allows that class. Watcher ≠ implementer ≠ Dist — queue only; seats execute; watchers do not ship Dist or merge. Quiet when nothing changed. CoS owns the board digest. Forge owns the engineering cadence. A wake resumes the same seat and the same cloud id (`bc-…`).
 

@@ -601,6 +601,12 @@ function initHouse(opts = {}) {
   };
 }
 
+function boardSurface(env = {}) {
+  const live = String(env.LIVE_URL == null ? '' : env.LIVE_URL).trim();
+  if (!live) return { board: 'waveboard', read: 'house/WAVEBOARD.md' };
+  return { board: 'bifrost', read: 'GET /cards' };
+}
+
 function migrateHouse({ seatRoot, srcDir, destDir, names }) {
   const legacy = legacyBoardPath(seatRoot);
   const destBoard = path.join(destDir, 'WAVEBOARD.md');
@@ -740,7 +746,8 @@ function diagnoseSeat(opts = {}) {
   const inventoryPresent = Boolean(inventory);
   const goggles = probeGoggles(cwd, inventoryPresent);
   const plantOk = Boolean(seat) && mill && inspect && installed && deadHooks.length === 0 && goggles.status !== 'off';
-  const house = probeHouse(cwd, opts.env || process.env);
+  const env = opts.env || process.env;
+  const house = probeHouse(cwd, env);
   const report = {
     ok: plantOk && house.status !== 'fail',
     cwd,
@@ -762,6 +769,7 @@ function diagnoseSeat(opts = {}) {
     repertoire: probeRepertoire(cwd),
     ows: probeOws(home),
     house,
+    board: boardSurface(env),
     urls: PLANT_URLS,
     next: [],
   };
@@ -843,6 +851,7 @@ function formatDoctor(report) {
       }
     }
   }
+  if (report.board && report.board.read) lines.push(`Board: ${report.board.read}`);
   lines.push('');
   lines.push('Next');
   report.next.forEach((step, i) => {
@@ -919,7 +928,7 @@ Commands:
   doctor | ready   Prove mill+inspect. Say house on, or house is not enabled here. Fail if example lines remain
   house init       Copy templates/house into ./house, including watchers/ and fleet/. Refuses if a target file exists. Writes a file only when it is missing
   house init --migrate
-                   Move ops/WAVEBOARD.md to house/WAVEBOARD.md when that old board is a file. Start ATTENTION_STATE.md from the template when it is missing. Append the template ## Cadence block when HOUSE.md has none. Start missing watchers/ and fleet/ files. Never overwrite a ledger or any other house file you already changed. Refuse when both boards exist and the house board is not the untouched template
+                   Move ops/WAVEBOARD.md to house/WAVEBOARD.md when that old board is a file. That file is the board when LIVE_URL is unset. Bifrost (GET /cards) is the board only when LIVE_URL is set. Start ATTENTION_STATE.md from the template when it is missing. Append the template ## Cadence block when HOUSE.md has none. Start missing watchers/ and fleet/ files. Never overwrite a ledger or any other house file you already changed. Refuse when both boards exist and the house board is not the untouched template
   (default)        Point at AGENTS.md / SKILLS.md / llms.txt
 
 Flags:
@@ -980,6 +989,7 @@ function runDoctorCli(argv, io = {}) {
 
 module.exports = {
   PLANT_URLS,
+  boardSurface,
   diagnoseSeat,
   formatDoctor,
   initHouse,

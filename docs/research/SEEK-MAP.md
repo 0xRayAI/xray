@@ -289,11 +289,11 @@ Read on 2026-10-18 from `main` at the station snapshot. Code under `src/`, `grok
 
 - **Class:** branch.
 - **Where:** `createClock` in `house/live/app/governor.mjs` 27. Wired at `server.mjs` 1281. `TRIP_MS` defaults to 30 minutes (`BIFROST_TRIPWIRE_MINUTES`).
-- **In:** a fingerprint of seat moves, open card count, seats with open work, whether any card is waiting on `start_after`, and the CoS seat.
-- **Candidates:** do nothing, wake every seat that has open work (stall), or wake CoS (empty board).
-- **Decision:** a fingerprint change clears a running clock. If nothing moved for a full window, open cards start a stall run with per-seat deadlines. No open cards and no scheduled `start_after` wakes CoS to pull work. A card waiting on `start_after` is not an empty board (governor.mjs 55). `POST /clock` can start the same run.
-- **Out:** a run with deadlines, or null.
-- **Tiers:** quiet board costs nothing. A stall wakes many seats. An empty board wakes one.
+- **In:** a fingerprint of seat moves, open card count, seats with open work, whether any card is waiting on `start_after`, weekly burn, and the CoS seat.
+- **Candidates:** do nothing, wake every seat that has open work (stall), wake CoS (empty board), or stay quiet when weekly burn is at or above 75%.
+- **Decision:** a fingerprint change clears a running clock. If nothing moved for a full window, open cards start a stall run with per-seat deadlines. No open cards and no scheduled `start_after` wakes CoS to pull work, unless weekly burn is at or above 75% (`BIFROST_WEEKLY_BURN` of `0.75` or `75`): that empty-board wake stays quiet and no seat is woken. Below 75% the empty board still wakes CoS. A card waiting on `start_after` is not an empty board (governor.mjs 55). `POST /clock` can start the same run.
+- **Out:** a run with deadlines, `quiet` with no run, or null.
+- **Tiers:** quiet board costs nothing. A stall wakes many seats. An empty board at or above 75% weekly burn wakes no one. Below that it wakes one.
 - **Kind:** code. Plate bifrost 40.
 
 ## 27. Review depth

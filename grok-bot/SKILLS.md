@@ -19,7 +19,7 @@ Primary scripts for agents. Run in order for **each** key agent.
 | [fasten-suit-and-hangar](skills/fasten-suit-and-hangar/SKILL.md) | Legacy combined fasten (prefer per-agent skill above) |
 
 ## Board
-Read `house/WAVEBOARD.md` and `house/ATTENTION_STATE.md` first. If a file is missing, use the same name under `templates/house/`.
+When `LIVE_URL` is unset, read the hand-kept board `house/WAVEBOARD.md` and `house/ATTENTION_STATE.md` first. When `LIVE_URL` is set, read Bifrost cards (`GET /cards`) and `house/ATTENTION_STATE.md`. If a file is missing, use the same name under `templates/house/`.
 
 ## Ops reference
 Longer notes under `ops/` stay in the git repo and are not in the npm package.

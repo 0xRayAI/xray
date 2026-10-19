@@ -5,7 +5,7 @@
 
 **Read first:** [`OP-PROC.md`](OP-PROC.md) — the one-page operating procedure.
 
-Board: `house/WAVEBOARD.md` and `house/ATTENTION_STATE.md` (your project house, not in this package). If `house/` is missing, run `npx @0xray/grok-bot house init` (skill [`setup-house`](skills/setup-house/SKILL.md)). It copies [`templates/house/`](templates/house/), including `watchers/` and `fleet/`, and refuses to overwrite. `house init --migrate` moves an old `ops/WAVEBOARD.md` into `house/WAVEBOARD.md`, starts missing files, and appends the template `## Cadence` block when `HOUSE.md` lacks it. It does not overwrite a ledger.
+Board: `house/WAVEBOARD.md` when `LIVE_URL` is unset, and Bifrost cards (`GET /cards`) when `LIVE_URL` is set, plus `house/ATTENTION_STATE.md` (your project house, not in this package). If `house/` is missing, run `npx @0xray/grok-bot house init` (skill [`setup-house`](skills/setup-house/SKILL.md)). It copies [`templates/house/`](templates/house/), including `watchers/` and `fleet/`, and refuses to overwrite. `house init --migrate` moves an old `ops/WAVEBOARD.md` into `house/WAVEBOARD.md`, starts missing files, and appends the template `## Cadence` block when `HOUSE.md` lacks it. When both boards exist and `house/WAVEBOARD.md` is not the untouched template, migrate exits 1 and writes nothing. It does not overwrite a ledger.
 
 | House file | What |
 |---|---|
@@ -14,7 +14,7 @@ Board: `house/WAVEBOARD.md` and `house/ATTENTION_STATE.md` (your project house, 
 | `house/watchers/review-sent.log` | Reviewer dedupe log (PR + SHA) |
 | `house/watchers/stall-sweep.log` | One line per stall nudge |
 | `house/watchers/issue-sweep-last.txt` | Issue-sweep cursor (one UTC time) |
-| `house/watchers/waveboard-static.md` | Hand-kept board sections, merged by heading |
+| `house/watchers/waveboard-static.md` | Notes beside the hand-kept board. Not merged into `house/WAVEBOARD.md` |
 | `house/fleet/activity.jsonl` | Live-mesh activity (`BURST_ACTIVITY`) |
 | owner prompt | `live-inbox <seat> --prompt` posts to `/activity` |
 Complete setup path for **Grok Bot agents** on the 0xRay mill.
