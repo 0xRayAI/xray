@@ -827,6 +827,57 @@ class RepoCollector:
                         "unassigned": "unassigned", "milestoned": "milestoned", "demilestoned": "demilestoned",
                         "reopened": "reopen", "renamed": "edit"}
 
+    def _record_merged_event(self, n, e, actor, url):
+        """Store the merged beat from an issue event when pulls have not stored merged_at yet."""
+        created = e.get("created_at")
+        pr = self.st.setdefault("prs", {}).setdefault(str(n), {})
+        if created and not pr.get("merged_at"):
+            pr["merged_at"] = created
+        eid = f"{self.repo}#{int(n)}:merged"
+        if created and eid not in self.ev:
+            login = pr.get("author")
+            base = pr.get("base")
+            extra = {"actor": actor or login, "author": login}
+            commit_id = e.get("commit_id")
+            if isinstance(commit_id, str) and commit_id:
+                extra["merge_sha"] = commit_id
+            if base:
+                extra["base"] = base
+            arrow = f" → {base}" if base else ""
+            self.put(eid, created, node(actor or login), "GitHub", "merged",
+                     f"merged {self.short} #{n}{arrow}", url, n, **extra)
+        if actor:
+            self._stamp_merger(n, actor)
+
+    def _forget_merge_close(self, n, when):
+        """Drop the pr_close written for this merge before merged_at was stored.
+
+        A close more than 30s from the merge stays. That is the same window the
+        closed handler uses to tell a merge from an unmerged close.
+        """
+        if not isinstance(when, str) or not when:
+            return
+        try:
+            merge_ts = datetime.fromisoformat(when.replace("Z", "+00:00")).timestamp()
+        except ValueError:
+            return
+        number = int(n)
+        drop = []
+        for eid, ev in self.ev.items():
+            if ev.get("kind") != "pr_close" or ev.get("number") != number:
+                continue
+            raw = ev.get("t_ct")
+            if not isinstance(raw, str):
+                continue
+            try:
+                close_ts = datetime.fromisoformat(raw).timestamp()
+            except ValueError:
+                continue
+            if abs(close_ts - merge_ts) < 30:
+                drop.append(eid)
+        for eid in drop:
+            self.ev.pop(eid, None)
+
     def poll_issue_events(self, c):
         cur = self.st["cur"].get("ievents", 0)
         newest = cur
@@ -856,8 +907,8 @@ class RepoCollector:
                     self.put(eid, e["created_at"], frm, "GitHub", "issue_close", f"closed {tag} ({sr or 'closed'})",
                              url, n, actor=actor, state_reason=sr)
             elif ev == "merged":
-                if actor:
-                    self._stamp_merger(n, actor)
+                self._record_merged_event(n, e, actor, url)
+                self._forget_merge_close(n, e.get("created_at"))
                 continue
             elif ev in ("ready_for_review", "convert_to_draft") and is_pr:
                 k = "pr_ready" if ev == "ready_for_review" else "pr_draft"
