@@ -40,7 +40,7 @@ When `LIVE_URL` is unset, the board is `house/WAVEBOARD.md`. When `LIVE_URL` is 
 
 ## [4.1.3] - 2026-10-19
 
-A hidden range ships in the kit. The first seat to land a hit holds the local board for one wave, until the next Monday 09:00 in Chicago. The hit stays on that machine. It does not post, deploy, or publish.
+A hidden range ships in the kit. The first seat to land a hit holds the board for the wave the board has up. The initial and the selected seat live in `house/OP-PROC.md`. The hit stays on that machine. It does not post, deploy, or publish.
 
 One flushed batch per pull request head. Follow-ups collapse on the pull request and the head sha. `run_end` and `ci_pass` are the only flushes. A green head queues critic on `run_end` when the checks are already green, and on `ci_pass` when the run has already ended. A collector ci row carries `head_sha` when it has no `sha`, and that sha is the head the slot keeps. A green event seen before `run_end` is not replayed. (#404, #407)
 

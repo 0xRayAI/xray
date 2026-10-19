@@ -35,7 +35,7 @@ A pass waits while someone already holds it.
 
 ## Power for one wave
 
-The wave window is the one Bifrost already uses. `house/live/app/wave-schedule.mjs` stores it as a Chicago cron. The template default is `0 9 * * 1`, Monday 09:00 America/Chicago. The holder keeps the pulsar until that window ends and the confer is recorded.
+The wave is the one the board has up. The board names it in `house/bifrost-waves.json`. The holder keeps the pulsar until the board closes that wave, and then confer is recorded.
 
 While they hold it, the round robin does not pick someone else. The holder takes that wave's cards.
 
