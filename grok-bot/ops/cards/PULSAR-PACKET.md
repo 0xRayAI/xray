@@ -108,7 +108,7 @@ Blaze named three fails and a timed lockout, with room on the exact count, and n
 
 4.1.3 already carries the version. This game is what that publish includes. It does not bump again.
 
-The mark is still 🔫. Nobody hands a free pulsar. The first seat to solve the range, while the ledger is empty, claims it. That claim is the handoff. A new back can be that seat.
+The mark is still 🔫. Nobody hands a free pulsar. The claim is one line in `grok-bot/OP-PROC.md`. A command, a room message, and a Bifrost card do not take it. The first valid line is the handoff. A new back can write that line.
 
 The prize is the local board for one wave. The wave ends at the next Monday 09:00 America/Chicago, wall time, including the weeks the offset changes. After that minute the holder takes no cards. Silence does not extend the hold. The ledger stays closed after the first hit.
 

@@ -142,8 +142,8 @@ describe('pulsar range', () => {
       cwd: dir,
       encoding: 'utf8',
     });
-    expect(miss.status).toBe(1);
-    expect(miss.stdout).toContain('Miss');
+    expect(miss.status).toBe(2);
+    expect(miss.stdout).toContain('Write the line in OP-PROC.');
     expect(miss.stdout).not.toContain('http');
   });
 });
@@ -156,3 +156,48 @@ describe('charge pin', () => {
     }
   });
 });
+
+describe('OP-PROC line', () => {
+  const opPath = path.join(root, 'grok-bot', 'OP-PROC.md');
+
+  function lineAt(now: number, seat = 'new-back'): string {
+    const hour = String(game.chicagoParts(now).hour).padStart(2, '0');
+    return `range left-${hour}-right ${seat} ${new Date(now).toISOString()}`;
+  }
+
+  const digest = (outer: string) => (outer === 'left-right' ? 'abc' : 'no');
+
+  it('the procedure line is not itself a claim', () => {
+    const text = readFileSync(opPath, 'utf8');
+    expect(text).toContain('**Range.**');
+    expect(text).toContain('range <charge> <seat> <UTC time>');
+    expect(text).not.toContain('Bifrost card is the hit');
+    expect(game.firstClaim(text, Date.parse('2026-10-19T18:00:00Z'))).toBeNull();
+  });
+
+  it('the first valid line holds, a bad line does not block, and a later line loses', () => {
+    const now = Date.parse('2026-03-07T18:00:00Z');
+    const hour = String(game.chicagoParts(now).hour).padStart(2, '0');
+    const wrong = String((Number(hour) + 5) % 24).padStart(2, '0');
+    const iso = new Date(now).toISOString();
+    const text = [
+      `range left-right forge ${iso}`,
+      `range left-${wrong}-right forge ${iso}`,
+      lineAt(now, 'new-back'),
+      lineAt(now, 'critic'),
+    ].join('\n');
+    const found = game.firstClaim(text, now, { hash: 'abc', digest });
+    expect(found?.seat).toBe('new-back');
+    expect(found?.prod).toBe(false);
+    expect(found?.active).toBe(true);
+    expect(found?.power).toBe('board');
+    const old = now - 14 * 24 * 60 * 60 * 1000;
+    const spent = game.firstClaim(`${lineAt(old, 'old-seat')}\n${lineAt(now, 'new-back')}`, now, {
+      hash: 'abc',
+      digest,
+    });
+    expect(spent?.seat).toBe('old-seat');
+    expect(spent?.active).toBe(false);
+  });
+});
+
