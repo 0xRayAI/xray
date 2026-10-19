@@ -1,12 +1,14 @@
 # Packet: routing terms
 
-Backlog card for one routing system. This file is the whole change. Lexicon, plates, and code stay as they are until a later phase on this same card.
+Escalating scales of multiplicity. Many streams run at once, across planes. Each stream is placed on the escalator by difficulty. The oscillator sets how many get attention at once. The sweep keeps the cold ones moving.
+
+This file is the whole change. Lexicon, plates, and code stay as they are until a later phase on this same card.
 
 The deep-seek reference agent that opened this card keeps it for the life of the card. Do not hand the card off.
 
 ## Packet
 
-- goal: Amalgamate the complexity analyzer, the routing tiers, the stall clock, and the new terms into one routing system. Escalator is the scale. A threshold is one rung on that scale. A later sweep gives every plane a turn so cold cards do not sit.
+- goal: Build escalating scales of multiplicity. Many concurrent streams across planes, each placed on the escalator by difficulty, the oscillator setting how many get attention at once, the sweep keeping cold ones moving. Escalator is the scale. A threshold is one rung on that scale.
 - constraints: Packet only in this PR. Public lines stay free of patent-sensitive mechanism. Seek behavior stays. Sizing stays on the routing plate. No second word for the scale. No separate role-picker entry. Dichotomy stays an open question for Blaze. Do not recreate the missing planes file. Goggles looks and does not spin. The sweep does not replace nudge, tripwire, or the plan-next-wave card on #400.
 - path: Phase 1 writes the lexicon and makes the cutoff numbers agree. Phase 2 wires the system after the open research on this card is answered. Phase 3 is the multiplicity sweep, after that wiring, one plane at a time. This PR lands only `grok-bot/ops/cards/ROUTING-TERMS-PACKET.md`.
 - acceptance: The card states the settled terms, the public one-liners, the goggles relation, the routing inventory, the open research, the confer gate before code, the three phases, the files and plates, the tests, and what stays out. A later phase 1 PR matches those lines and one threshold table. A later phase 2 PR wires one system. A later phase 3 PR sweeps per plane.
@@ -19,7 +21,7 @@ Plates read: `docs-site/docs/plates/routing.md`, `docs-site/docs/plates/bifrost.
 
 ## Settled terms
 
-Escalator is the scale. Blaze's phrase is "escalating scales of evaluation": the whole ladder of thresholds that work climbs by difficulty. Threshold is one rung, one cutoff, on that escalator. The lexicon does not add a second word for the scale.
+The system is escalating scales of multiplicity: many concurrent streams, each placed on the scale by difficulty. Escalator is that scale. Blaze's earlier phrase "escalating scales of evaluation" names the same scale: the whole ladder of thresholds that work climbs by difficulty. Threshold is one rung, one cutoff, on that escalator. The lexicon does not add a second word for the scale, and it does not add a row named multiplicity. Multiplicity is the header for this system, the fact of many streams. The oscillator's N is how many of them get attention at once. The sweep is what keeps the rest from going cold.
 
 Role picker is the switch at a rung. It names the seat or agent that does the work at that cutoff. It is a clause of the escalator entry, not its own row.
 
