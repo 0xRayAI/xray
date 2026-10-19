@@ -320,6 +320,54 @@
     return h + 'h ' + (m % 60) + 'm ago';
   }
 
+  /* Spectrum stream. Curved lanes stay. The meter and the trail are on unless the
+     flag is false, the page is ?spectrum=0, or the viewer asked for reduced motion. */
+  var METER_BARS = 14, TRAIL_STOPS = 12;
+  function hueOf(n) {
+    var h = Math.round(n) % 360;
+    return h < 0 ? h + 360 : h;
+  }
+  function spectrumEnabled(flag, search, reduced) {
+    if (reduced || flag === false) return false;
+    return !/[?&]spectrum=0(&|$)/.test(String(search || ''));
+  }
+  function spectrumShows(enabled, mode) {
+    if (!enabled || !mode) return false;
+    return !!(mode.replay || mode.playing || mode.ambient);
+  }
+  function spectrumMeter(tMs, reduced) {
+    var t = Number(tMs) || 0, bars = [], i, hue, level;
+    for (i = 0; i < METER_BARS; i++) {
+      hue = hueOf(t * 0.05 + i * (360 / METER_BARS));
+      level = reduced ? 0.45 : 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(t / 220 + i * 0.7));
+      bars.push({ hue: hue, level: level });
+    }
+    return bars;
+  }
+  function spectrumTrail(p, nowMs, light) {
+    var stops = [], base = light ? 0.98 : 0.9, lit = light ? 46 : 62;
+    var head = Number(p) || 0, t = Number(nowMs) || 0, k;
+    for (k = 1; k <= TRAIL_STOPS; k++) {
+      stops.push({
+        t: Math.max(0, head - k * 0.025),
+        hue: hueOf(head * 360 + k * 28 + t * 0.12),
+        alpha: (13 - k) / 13 * base,
+        lightness: lit,
+        radius: 1.5 + (13 - k) * 0.38
+      });
+    }
+    return stops;
+  }
+  function packetCore(light) { return light ? '#141820' : '#ffffff'; }
+  function aspectFit(boxW, boxH, contentW, contentH) {
+    var bw = Number(boxW) || 0, bh = Number(boxH) || 0;
+    var cw = Number(contentW) || 1, ch = Number(contentH) || 1;
+    var scale = Math.min(bw / cw, bh / ch);
+    if (!isFinite(scale) || scale < 0) scale = 0;
+    var w = cw * scale, h = ch * scale;
+    return { scale: scale, x: (bw - w) / 2, y: (bh - h) / 2, w: w, h: h };
+  }
+
   function feedUrl(base, nowMs) {
     return base + (base.indexOf('?') < 0 ? '?' : '&') + 't=' + Math.floor(nowMs / 1000);
   }
@@ -365,6 +413,8 @@
     own: own, botImage: botImage, badgeLetter: badgeLetter, bob: bob, pulse: pulse, entry: entry,
     ENTRY_MS: ENTRY_MS, PULSE_MS: PULSE_MS, MARK: MARK, markCells: markCells,
     isPlaying: isPlaying, sliderAction: sliderAction, edgeTraffic: edgeTraffic, orbitStep: orbitStep,
+    spectrumEnabled: spectrumEnabled, spectrumShows: spectrumShows, spectrumMeter: spectrumMeter,
+    spectrumTrail: spectrumTrail, packetCore: packetCore, aspectFit: aspectFit,
     GLYPH: GLYPH, MARK_PATH: MARK_PATH, activeSeats: activeSeats, recentItems: recentItems, BOT_IMAGES: BOT_IMAGES, BLACKOUT_UNTIL: BLACKOUT_UNTIL,
     countdown: countdown, blackoutLine: blackoutLine, clockLine: clockLine, fleetLine: fleetLine, wireGlow: wireGlow
   };

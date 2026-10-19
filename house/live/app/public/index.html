@@ -59,7 +59,16 @@
       color: #fff; border: 1px solid #8a7bff; background: linear-gradient(90deg, #3a1530, #3a2a10, #123320, #10263a, #24143a);
       opacity: 0; visibility: hidden; transition: opacity .3s ease, visibility 0s linear .3s; pointer-events: none; }
     .spec-tag.on { opacity: 1; visibility: visible; transition: opacity .3s ease; }
+    .spectrum-pill { display: inline-block; flex: none; font-size: 11px; font-weight: 700; letter-spacing: .08em; padding: 3px 8px; border-radius: 999px;
+      color: #fff; border: 1px solid #8a7bff; background: linear-gradient(90deg, #3a1530, #3a2a10, #123320, #10263a, #24143a); }
+    .spectrum-meter { display: inline-flex; align-items: flex-end; gap: 2px; height: 16px; flex: none; }
+    .spectrum-pill[hidden], .spectrum-meter[hidden] { display: none !important; }
+    .spectrum-meter i { display: block; width: 3px; border-radius: 1px; }
     @media (prefers-reduced-motion: reduce) { .spec-tag, .spec-tag.on { transition: none; } }
+    @media (prefers-reduced-motion: reduce) { .spectrum-meter i { transition: none; } }
+    @media (prefers-color-scheme: light) {
+      :root { --bg: #f4f6fb; --panel: #ffffff; --line: #d5dbe8; --dim: #4c5670; --text: #1a1d27; --teal: #0e7c66; }
+    }
     main { max-width: 1560px; }
     .split { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 12px; align-items: start; }
     .split > .panel { margin: 0; min-width: 0; }
@@ -156,7 +165,7 @@
 <body>
 <main>
   <header>
-    <div class="title"><h1>🌈 Live board</h1><span class="pill" id="pill">LIVE</span><span class="spec-tag" id="specTag" aria-hidden="true">🪞 REPLAY</span></div>
+    <div class="title"><h1>🌈 Live board</h1><span class="pill" id="pill">LIVE</span><span class="spec-tag" id="specTag" aria-hidden="true">🪞 REPLAY</span><span class="spectrum-pill" id="spectrumPill" hidden>Spectrum</span><span class="spectrum-meter" id="spectrumMeter" hidden aria-hidden="true"></span></div>
     <p class="status" id="status">Loading…</p>
     <p class="fresh" id="fresh"><span class="fresh-dot"></span><span id="freshText">Loading…</span></p>
     <div hidden><canvas id="mark" width="112" height="44"></canvas><b id="fleet"></b><span id="blackout"></span></div>
@@ -291,8 +300,11 @@
   function fitCanvas() {
     var dpr = window.devicePixelRatio || 1;
     var cssW = canvas.clientWidth || W;
-    canvas.width = Math.round(cssW * dpr);
-    canvas.height = Math.round(cssW * H / W * dpr);
+    var cssH = canvas.clientHeight || Math.round(cssW * H / W);
+    var nextW = Math.max(1, Math.round(cssW * dpr));
+    var nextH = Math.max(1, Math.round(cssH * dpr));
+    if (canvas.width !== nextW) canvas.width = nextW;
+    if (canvas.height !== nextH) canvas.height = nextH;
   }
   window.addEventListener('resize', fitCanvas);
   fitCanvas();
@@ -388,13 +400,23 @@
   // Ambient Replay loop: dimmed overlay replay on its own clock; never changes live state, pill, counts or seats
   var AMBIENT_EVERY_MS = 10000, AMBIENT_MS = 5000, AMBIENT_WINDOW_MS = 5 * 60 * 1000, AMBIENT_ALPHA = 0.4;
   var ambientOn = !reduced && !/[?&]replay=0(&|$)/.test(location.search);
+  var spectrumOn = L.spectrumEnabled(L.SPECTRUM, location.search, reduced);
   var ambient = null, ambientNext = 0, ambientStats = window.LIVE_AMBIENT = { passes: 0, on: ambientOn };
-  // Live board: replayed packets leave a short fading rainbow tail whose hue cycles along the path (never live pings)
+  function plateLight() {
+    var bg = '', m, lum;
+    try { bg = getComputedStyle(document.body).backgroundColor || ''; } catch (e) { bg = ''; }
+    m = /rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)/.exec(bg);
+    if (!m) return false;
+    lum = (0.2126 * Number(m[1]) + 0.7152 * Number(m[2]) + 0.0722 * Number(m[3])) / 255;
+    return lum > 0.6;
+  }
+  // Replayed packets (manual playback, the opening burst, and the loop) leave a 12-stop rainbow trail on the curved lane.
   function replayTrail(a, m, b, p, nowWall) {
-    for (var k = 12; k >= 1; k--) {
-      var tq = bez(a, m, b, Math.max(0, p - k * 0.025)), hue = Math.round((p * 360 + k * 28 + nowWall * 0.12) % 360);
-      ctx.fillStyle = 'hsla(' + hue + ',95%,62%,' + ((13 - k) / 13 * 0.9).toFixed(3) + ')';
-      ctx.beginPath(); ctx.arc(tq[0], tq[1], 1.5 + (13 - k) * 0.38, 0, 7); ctx.fill();
+    var light = plateLight(), stops = L.spectrumTrail(p, nowWall, light), i, stop, tq;
+    for (i = stops.length - 1; i >= 0; i--) {
+      stop = stops[i]; tq = bez(a, m, b, stop.t);
+      ctx.fillStyle = 'hsla(' + stop.hue + ',95%,' + stop.lightness + '%,' + stop.alpha + ')';
+      ctx.beginPath(); ctx.arc(tq[0], tq[1], stop.radius, 0, 7); ctx.fill();
     }
   }
   var specTagOn = false;
@@ -625,13 +647,33 @@
   $('waveToggle').addEventListener('click', function () {
     var c = $('wave').classList.toggle('collapsed'); this.textContent = c ? 'Show' : 'Hide'; this.setAttribute('aria-expanded', String(!c));
   });
+  function paintSpectrum(nowWall) {
+    var pill = $('spectrumPill'), meter = $('spectrumMeter'), on, bars, i;
+    if (!pill || !meter) return;
+    on = L.spectrumShows(spectrumOn, { replay: !!replay, playing: !!playing, ambient: !!ambient });
+    pill.hidden = !on; meter.hidden = !on;
+    if (!on) return;
+    bars = L.spectrumMeter(nowWall, reduced);
+    while (meter.children.length < bars.length) meter.appendChild(document.createElement('i'));
+    for (i = 0; i < bars.length; i++) {
+      meter.children[i].style.background = 'hsl(' + bars[i].hue + ',90%,58%)';
+      meter.children[i].style.height = Math.round(4 + bars[i].level * 12) + 'px';
+    }
+  }
   function draw(nowWall, pings) {
-    var s = canvas.width / W;
+    fitCanvas();
+    paintSpectrum(nowWall);
+    var light = plateLight();
+    var fit = L.aspectFit(canvas.width, canvas.height, W, H);
+    window.LIVE_FIT = fit;
     var fs = Math.max(1, 0.55 / (canvas.clientWidth / W));   // keep labels readable on phones
     var tt = nowWall / 1000;
-    ctx.setTransform(s, 0, 0, s, 0, 0);
-    ctx.fillStyle = '#04060c'; ctx.fillRect(0, 0, W, H);
-    ctx.strokeStyle = '#0a0e16'; ctx.lineWidth = 1;
+    var plate = light ? '#f4f6fb' : '#04060c';
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.fillStyle = plate; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.setTransform(fit.scale, 0, 0, fit.scale, fit.x, fit.y);
+    ctx.fillStyle = plate; ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = light ? '#d5dceb' : '#0a0e16'; ctx.lineWidth = 1;
     for (var gx = 0; gx < W; gx += 24) { ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, H); ctx.stroke(); }
     for (var gy = 0; gy < H; gy += 24) { ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke(); }
     // hub orbit
@@ -680,7 +722,7 @@
     var ghosts = ambientPings(nowWall); ambientStats.drawing = ghosts.length;
     var tagOn = !!ambient && !replay;   // ambient loop only: a replay pass already says REPLAY on the pill (no duplicate badge)
     if (tagOn !== specTagOn) { specTagOn = tagOn; $('specTag').classList.toggle('on', tagOn); }
-    if (!reduced) { ghosts.forEach(function (g) { g.live = true; }); if (replay) pings.forEach(function (g) { g.live = true; }); }
+    if (spectrumOn) { ghosts.forEach(function (g) { g.live = true; }); if (replay || playing) pings.forEach(function (g) { g.live = true; }); }
     if (ghosts.length) { ctx.globalAlpha = AMBIENT_ALPHA; ghosts.forEach(drawPing); ctx.globalAlpha = 1; }
     pings.forEach(drawPing);
     function drawPing(pk) {
@@ -701,7 +743,7 @@
       var q = bez(a, m, b, p);
       ctx.fillStyle = rgb(pk.col, 0.25); ctx.beginPath(); ctx.arc(q[0], q[1], 18, 0, 7); ctx.fill();   // halo
       ctx.fillStyle = rgb(pk.col); ctx.beginPath(); ctx.arc(q[0], q[1], 11, 0, 7); ctx.fill();
-      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(q[0], q[1], 4, 0, 7); ctx.fill();
+      ctx.fillStyle = L.packetCore(light); ctx.beginPath(); ctx.arc(q[0], q[1], 4, 0, 7); ctx.fill();
       if (pk.late) { ctx.font = '600 9px ui-monospace, monospace'; ctx.fillStyle = 'rgba(255,214,120,.85)'; ctx.fillText('late', q[0] + 8, q[1] - 13); }
     }
     // hub
