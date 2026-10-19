@@ -603,34 +603,14 @@ function initHouse(opts = {}) {
 
 function migrateHouse({ seatRoot, srcDir, destDir, names }) {
   const legacy = legacyBoardPath(seatRoot);
-  const destBoard = path.join(destDir, 'WAVEBOARD.md');
   if (fs.existsSync(legacy) && !isFile(legacy)) {
     return { ok: false, code: 1, message: `refusing to migrate: ${legacy} is not a file` };
   }
   const legacyIsFile = isFile(legacy);
-  if (legacyIsFile && isFile(destBoard)) {
-    const templateBoard = path.join(srcDir, 'WAVEBOARD.md');
-    const templateText = isFile(templateBoard) ? fs.readFileSync(templateBoard, 'utf8') : null;
-    const destText = fs.readFileSync(destBoard, 'utf8');
-    if (templateText === null || destText !== templateText) {
-      return {
-        ok: false,
-        code: 1,
-        message: `refusing to overwrite ${destBoard} with ${legacy}`,
-      };
-    }
-  }
   fs.mkdirSync(destDir, { recursive: true });
-  let moved = null;
-  if (legacyIsFile) {
-    fs.copyFileSync(legacy, destBoard);
-    fs.unlinkSync(legacy);
-    moved = destBoard;
-  }
   const copied = [];
   const skipped = [];
   for (const name of names) {
-    if (name === 'WAVEBOARD.md' && moved) continue;
     const result = copyMissingHouseFile(srcDir, destDir, name);
     if (result.copied) copied.push(result.dest);
     else skipped.push(result.dest);
@@ -639,7 +619,7 @@ function migrateHouse({ seatRoot, srcDir, destDir, names }) {
   const addedCadence = appendCadenceBlock(destHouse, templateCadenceBlock(srcDir));
   const attention = path.join(destDir, 'ATTENTION_STATE.md');
   const parts = [];
-  if (moved) parts.push(`moved ${legacy} to ${destBoard}`);
+  if (legacyIsFile) parts.push(`left ${legacy}; the board is Bifrost`);
   else parts.push('no ops/WAVEBOARD.md to move');
   if (copied.includes(attention)) parts.push(`started ${attention}`);
   if (addedCadence) parts.push(`added Cadence section to ${destHouse}`);
@@ -648,13 +628,13 @@ function migrateHouse({ seatRoot, srcDir, destDir, names }) {
   const fleetPhrase = startedFolderPhrase(copied, destDir, 'fleet');
   if (fleetPhrase) parts.push(fleetPhrase);
   if (copied.length > 0) parts.push(`copied templates/house to ${destDir}`);
-  else if (!moved && !addedCadence) parts.push(`left existing house files in ${destDir}`);
+  else if (!addedCadence) parts.push(`left existing house files in ${destDir}`);
   return {
     ok: true,
     code: 0,
     destDir,
-    files: moved ? [moved, ...copied] : copied,
-    moved,
+    files: copied,
+    moved: null,
     skipped,
     message: parts.join('; '),
   };
@@ -919,7 +899,7 @@ Commands:
   doctor | ready   Prove mill+inspect. Say house on, or house is not enabled here. Fail if example lines remain
   house init       Copy templates/house into ./house, including watchers/ and fleet/. Refuses if a target file exists. Writes a file only when it is missing
   house init --migrate
-                   Move ops/WAVEBOARD.md to house/WAVEBOARD.md when that old board is a file. Start ATTENTION_STATE.md from the template when it is missing. Append the template ## Cadence block when HOUSE.md has none. Start missing watchers/ and fleet/ files. Never overwrite a ledger or any other house file you already changed. Refuse when both boards exist and the house board is not the untouched template
+                   Leave ops/WAVEBOARD.md where it is. The board is Bifrost. Start ATTENTION_STATE.md from the template when it is missing. Append the template ## Cadence block when HOUSE.md has none. Start missing watchers/ and fleet/ files. Never overwrite a ledger or any other house file you already changed.
   (default)        Point at AGENTS.md / SKILLS.md / llms.txt
 
 Flags:

@@ -154,6 +154,11 @@ const s = createClock({ tripMs: W, perSeatMs: 10, now: 0 });
 s.observe('b', 0, { openCards: 2, openSeats: ['x'], coord: 'coord' });
 for (let t = 100; t < 1900; t += 100) { const r = s.observe('b', t, { openCards: 2, openSeats: ['x'], coord: 'coord' }); if (r) out.stall.push(r); }
 out.stallSeats = Object.keys(s.run?.deadlines || {});
+const p = createClock({ tripMs: W, perSeatMs: 10, now: 0 });
+p.observe('c', 0, { openCards: 2, openSeats: ['x'], coord: 'coord', planDue: true });
+out.plan = [];
+for (let t = 100; t < 1900; t += 100) { const r = p.observe('c', t, { openCards: 2, openSeats: ['x'], coord: 'coord', planDue: true }); if (r) out.plan.push(r); }
+out.planSeats = Object.keys(p.run?.deadlines || {});
 console.log(JSON.stringify(out));
 """
 
@@ -164,7 +169,7 @@ def check_tripwire(rep):
     if r.returncode:
         return rep.add("tripwire", "FAIL", "governor did not run: " + r.stderr.strip()[-200:])
     o = json.loads(r.stdout)
-    ok = o["empty"] == ["empty"] and o["stall"] == ["stall"] and o["stallSeats"] == ["x"]
+    ok = o["empty"] == ["empty"] and o["stall"] == ["stall"] and o["stallSeats"] == ["x"] and o["plan"] == ["stall"] and "x" in o["planSeats"]
     rep.add("tripwire", "PASS" if ok else "FAIL", f"empty fired {len(o['empty'])}x, stall fired {len(o['stall'])}x in one window")
 
 

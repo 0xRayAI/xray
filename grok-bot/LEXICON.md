@@ -141,7 +141,7 @@ Don't confuse: watcher ≠ Dist; workstream ≠ product; workstream ≠ planes.
 | Term | Bucket | Plain |
 |------|--------|-------|
 | **Bifrost** | Workstream | The fleet's live board and router (burst-live). burst-live is the board, never a node on it. Turns every issue, PR and comment into a card and an inbox line, then wakes the seat. |
-| **tripwire** | Workstream | Fires when nothing has moved for a window: a stalled board wakes each card owner with a deadline; an empty board wakes the coordinator to pull the next issue. At most once per window. A closed wave raises one plan next wave card for the coordinator; the tripwire flags that card when nothing is carded in the window. |
+| **tripwire** | Workstream | Fires when nothing has moved for a window: a stalled board wakes each card owner with a deadline; an empty board wakes the coordinator to pull the next issue. At most once per window. A due plan card does not replace that stall wake. A closed real wave raises one plan next wave card for the coordinator; the tripwire flags that card when nothing is carded in the Chicago cron window. |
 | **nudge** | Workstream | A live card with no beat: L1 goes to the next owner, or else the card owner. L2 goes to the CoS role. L3 repeats to the L1 seat, and the CoS role is woken once to reassign. An unacked inbox line steps L1, L2, and L3 on that same seat, and the CoS role is woken at L3. A stranger's `Start after:` comment is ignored. A time more than 30 days out is ignored. `merged_by` is the merger, never the author. |
 | **routing** | Workstream | Which seat gets which line. The routing map lists each seat once with its real GitHub login and nicknames; served read-only at `/routing`. Look a login up there before any @-mention. |
 | **two loops** | Workstream | Outer loop: GitHub issues, PRs and @-comments (the record). Inner loop: seat DMs, each pointing at one of them (the wake). |
@@ -190,7 +190,7 @@ Every bolded term in the pack OP-PROC and runbooks is defined here (`bifrost che
 ## Lexicon add (2026-10-19 — wave schedule)
 | Term | Bucket | Plain |
 |------|--------|-------|
-| **plan next wave** | Workstream | The card Bifrost raises for the coordinator when a wave's last card is closed or merged. It carries the ranked backlog of waves still open. The tripwire flags it `nothing carded` when the window passes and no new card was added. |
+| **plan next wave** | Workstream | The card Bifrost raises for the coordinator when a real wave's last card is closed or merged. It names the next open wave. The window is a Chicago cron. The due time stays on the card. Weekly burn at 75% keeps it quiet. The tripwire flags it `nothing carded` when the window passes and no new card was added. |
 
 ## Lexicon add (2026-10-18 — seek)
 | Term | Bucket | Plain |

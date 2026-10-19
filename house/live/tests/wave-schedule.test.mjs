@@ -5,19 +5,22 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { createClock } from '../app/governor.mjs';
+import { createClock, wakeTitle } from '../app/governor.mjs';
 import { loadSeedFile, refuseLiveApply } from '../tools/load-wave-seed.mjs';
-import { PLAN_FLAG, PLAN_TITLE, cardClosed, cardsFromSeed, scheduleWaves } from '../app/wave-schedule.mjs';
+import { PLAN_FLAG, PLAN_TITLE, cardClosed, cardsFromSeed, liveWorkCount, postedCards, resolveWaveSeed, scheduleWaves } from '../app/wave-schedule.mjs';
 
-const SEED = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'grok-bot', 'templates', 'house', 'bifrost-waves.json');
-const TOOL = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'tools', 'load-wave-seed.mjs');
+const HERE = path.dirname(fileURLToPath(import.meta.url));
+const APP = path.join(HERE, '..', 'app');
+const SEED = path.join(APP, 'bifrost-waves.json');
+const TEMPLATE = path.join(HERE, '..', '..', '..', 'grok-bot', 'templates', 'house', 'bifrost-waves.json');
+const TOOL = path.join(HERE, '..', 'tools', 'load-wave-seed.mjs');
 const seed = loadSeedFile(SEED);
 
 function close(cards, wave) {
   return cards.map((card) => (card.wave === wave ? { ...card, state: 'closed', stage: 'done' } : card));
 }
 
-test('the seed is W1 through W5', () => {
+test('the seed is W1 through W5 and synthetic cards are closed', () => {
   const cards = cardsFromSeed(seed, { now: 1_000, coord: 'blinky' });
   assert.deepEqual(cards.map((card) => [card.wave, card.title]), [
     ['W1', 're-wear close'],
@@ -29,51 +32,113 @@ test('the seed is W1 through W5', () => {
   assert.equal(cards.find((card) => card.wave === 'W2').key, '0xrayai/xray#389');
   assert.equal(cards.find((card) => card.wave === 'W4').number, 397);
   assert.equal(cards.find((card) => card.wave === 'W1').kind, 'wave');
+  assert.equal(cards.find((card) => card.wave === 'W1').state, 'closed');
+  assert.equal(cards.find((card) => card.wave === 'W5').state, 'closed');
+  assert.deepEqual(postedCards(seed, { now: 1_000 }).map((card) => card.wave), ['W2']);
 });
 
-test('a closed wave raises one plan next wave card for the CoS with the ranked backlog', () => {
-  const open = cardsFromSeed(seed, { now: 5_000, coord: 'blinky' });
-  assert.equal(scheduleWaves(open, seed, { now: 5_000, coord: 'blinky' }).cards.some((card) => card.title === PLAN_TITLE), false);
-  const closed = close(open, 'W1');
-  const first = scheduleWaves(closed, seed, { now: 5_000, coord: 'blinky', tripMs: 30 * 60_000 });
+test('a house template seed has no fleet issues', () => {
+  const starter = loadSeedFile(TEMPLATE);
+  assert.deepEqual(starter.waves, []);
+  assert.equal(JSON.stringify(starter).includes('0xRayAI/xray'), false);
+});
+
+test('the server reads house/bifrost-waves.json and the image bundles a copy', () => {
+  const house = path.join(APP, '..', '..', '..', 'house', 'bifrost-waves.json');
+  assert.equal(resolveWaveSeed(APP, {}, () => false), path.join(APP, 'bifrost-waves.json'));
+  assert.equal(resolveWaveSeed(APP, {}, (file) => file === house), house);
+  assert.equal(resolveWaveSeed(APP, { BIFROST_WAVE_SEED: '/tmp/seed.json' }, () => false), '/tmp/seed.json');
+  const dock = fs.readFileSync(path.join(APP, 'Dockerfile'), 'utf8');
+  const dep = fs.readFileSync(path.join(APP, 'deploy.sh'), 'utf8');
+  for (const file of ['wave-schedule.mjs', 'bifrost-waves.json']) {
+    assert.equal(dock.includes(file), true, file);
+    assert.equal(dep.includes(file), true, file);
+  }
+  assert.equal(fs.existsSync(path.join(APP, 'bifrost-waves.json')), true);
+});
+
+test('a closed wave raises one plan next wave card naming only the next wave', () => {
+  const open = postedCards(seed, { now: 5_000, coord: 'blinky' });
+  assert.equal(scheduleWaves(open, seed, { now: 5_000, coord: 'blinky', window: '* * * * *' }).cards.some((card) => card.title === PLAN_TITLE), false);
+  const closed = close(open, 'W2');
+  const first = scheduleWaves(closed, seed, { now: 5_000, coord: 'blinky', window: '* * * * *' });
   const plans = first.cards.filter((card) => card.title === PLAN_TITLE);
   assert.equal(plans.length, 1);
   assert.equal(plans[0].owner, 'blinky');
-  assert.deepEqual(plans[0].backlog.map((item) => item.wave), ['W2', 'W3', 'W4', 'W5']);
-  assert.match(plans[0].packet.constraints, /W2 #389 ponder\/reflections/);
-  const again = scheduleWaves(first.cards, seed, { now: 6_000, coord: 'blinky', prior: first.cards, tripMs: 30 * 60_000 });
+  assert.deepEqual(plans[0].backlog.map((item) => item.wave), ['W3']);
+  assert.match(plans[0].packet.constraints, /W3 #386 boot-read hook/);
+  assert.equal(plans[0].packet.path, 'house/bifrost-waves.json');
+  assert.equal(first.cards.some((card) => card.wave === 'W4'), false);
+  const again = scheduleWaves(first.cards, seed, { now: 6_000, coord: 'blinky', prior: first.cards, window: '* * * * *', nudgeMs: 1 });
   assert.equal(again.cards.filter((card) => card.title === PLAN_TITLE).length, 1);
   assert.equal(again.planDue, false);
+  const kept = again.cards.find((card) => card.kind === 'plan');
+  assert.equal(kept.due_at, plans[0].due_at);
+  assert.equal(kept.last_beat_t, 6_000);
+  const withNext = first.cards.concat(cardsFromSeed(seed, { now: 1 }).filter((card) => card.wave === 'W3').map((card) => ({ ...card, state: 'closed' })));
+  const moved = scheduleWaves(withNext, seed, { now: 7_000, coord: 'blinky', prior: first.cards, window: '* * * * *' });
+  assert.deepEqual(moved.cards.find((card) => card.kind === 'plan').backlog.map((item) => item.wave), ['W4']);
+  assert.equal(moved.cards.find((card) => card.kind === 'plan').due_at, plans[0].due_at);
 });
 
-test('a merged card closes its wave, and a later closed wave drops out of the backlog', () => {
+test('a merged card closes its wave, and the plan names only the next wave', () => {
   const cards = cardsFromSeed(seed, { now: 1, coord: 'blinky' }).map((card) => {
-    if (card.wave === 'W1') return { ...card, state: 'live', beats: [{ what: 'merged' }] };
-    if (card.wave === 'W3') return { ...card, state: 'closed' };
+    if (card.wave === 'W2') return { ...card, state: 'live', beats: [{ what: 'merged' }] };
+    if (card.wave === 'W4') return { ...card, state: 'closed' };
     return card;
   });
-  assert.equal(cardClosed(cards[0]), true);
-  const scheduled = scheduleWaves(cards, seed, { now: 1, coord: 'blinky' });
-  assert.deepEqual(scheduled.cards.find((card) => card.kind === 'plan').backlog.map((item) => item.wave), ['W2', 'W4', 'W5']);
+  assert.equal(cardClosed(cards.find((card) => card.wave === 'W2')), true);
+  const scheduled = scheduleWaves(cards, seed, { now: 1, coord: 'blinky', window: '* * * * *' });
+  assert.deepEqual(scheduled.cards.find((card) => card.kind === 'plan').backlog.map((item) => item.wave), ['W3']);
+  assert.equal(scheduled.cards.some((card) => card.wave === 'W5' && card.state === 'live'), false);
 });
 
-test('the tripwire flags the plan card when nothing is carded in the window', () => {
-  const raisedAt = 10_000;
-  const closed = close(cardsFromSeed(seed, { now: raisedAt, coord: 'blinky' }), 'W1');
-  const raised = scheduleWaves(closed, seed, { now: raisedAt, coord: 'blinky', tripMs: 1_000 });
+test('the Chicago cron flags the plan card, a restart keeps the due time, and weekly burn stays quiet', () => {
+  const raisedAt = Date.parse('2026-10-19T15:00:30Z');
+  const closed = close(postedCards(seed, { now: raisedAt, coord: 'blinky' }), 'W2');
+  const raised = scheduleWaves(closed, seed, { now: raisedAt, coord: 'blinky', window: '* * * * *' });
   const plan = raised.cards.find((card) => card.kind === 'plan');
   assert.equal(plan.flag, '');
-  const flagged = scheduleWaves(raised.cards, seed, { now: raisedAt + 1_000, coord: 'blinky', prior: raised.cards, tripMs: 1_000 });
+  assert.equal(raised.planDue, false);
+  const due = Number(plan.due_at);
+  assert.ok(due > raisedAt);
+  const early = scheduleWaves(raised.cards, seed, { now: due - 1, coord: 'blinky', prior: raised.cards, window: '* * * * *' });
+  assert.equal(early.planDue, false);
+  assert.equal(early.cards.find((card) => card.kind === 'plan').due_at, plan.due_at);
+  const flagged = scheduleWaves(raised.cards, seed, { now: due, coord: 'blinky', prior: raised.cards, window: '* * * * *' });
   assert.equal(flagged.cards.find((card) => card.kind === 'plan').flag, PLAN_FLAG);
   assert.equal(flagged.planDue, true);
+  const quiet = scheduleWaves(raised.cards, seed, { now: due, coord: 'blinky', prior: raised.cards, window: '* * * * *', weeklyBurn: 0.75 });
+  assert.equal(quiet.planDue, false);
+  assert.equal(quiet.cards.find((card) => card.kind === 'plan').flag, '');
   const clock = createClock({ tripMs: 1_000, perSeatMs: 10, now: 0 });
   clock.observe('fp', 0, { openCards: 1, openSeats: ['forge'], coord: 'blinky', planDue: true });
-  assert.equal(clock.observe('fp', 1_000, { openCards: 1, openSeats: ['forge'], coord: 'blinky', planDue: true }), 'plan');
-  assert.deepEqual(Object.keys(clock.run.deadlines), ['blinky']);
-  const carded = flagged.cards.concat([{ key: '0xrayai/xray#400', title: 'next', state: 'live', wave: 'W2' }]);
-  const cleared = scheduleWaves(carded, seed, { now: raisedAt + 2_000, coord: 'blinky', prior: flagged.cards, tripMs: 1_000 });
+  assert.equal(clock.observe('fp', 1_000, { openCards: 1, openSeats: ['forge'], coord: 'blinky', planDue: true }), 'stall');
+  assert.deepEqual(Object.keys(clock.run.deadlines).sort(), ['blinky', 'forge']);
+  assert.equal(wakeTitle(clock.run, 'blinky', 1), 'plan next wave');
+  assert.equal(wakeTitle(clock.run, 'forge', 1), 'timed run: 1 open line(s)');
+  const planOnly = createClock({ tripMs: 1_000, perSeatMs: 10, now: 0 });
+  const board = [{ state: 'live', kind: 'plan', title: PLAN_TITLE }, { state: 'closed', title: 'done' }];
+  assert.equal(liveWorkCount(board), 0);
+  planOnly.observe('fp', 0, { openCards: liveWorkCount(board), openSeats: [], coord: 'blinky', planDue: true });
+  assert.equal(planOnly.observe('fp', 1_000, { openCards: liveWorkCount(board), openSeats: [], coord: 'blinky', planDue: true }), 'plan');
+  assert.equal(wakeTitle(planOnly.run, 'blinky', 0), 'plan next wave');
+  const carded = flagged.cards.concat([{ key: '0xrayai/xray#400', repo: '0xRayAI/xray', number: 400, title: 'next', state: 'live', wave: 'W3' }]);
+  const cleared = scheduleWaves(carded, seed, { now: due + 60_000, coord: 'blinky', prior: flagged.cards, window: '* * * * *' });
   assert.equal(cleared.cards.find((card) => card.kind === 'plan').flag, '');
   assert.equal(cleared.planDue, false);
+});
+
+test('a restart does not re-arm the trip window', () => {
+  const windowMs = 60_000;
+  const board = { openCards: 1, openSeats: ['forge'], coord: 'blinky', planDue: true };
+  const clock = createClock({ tripMs: windowMs, perSeatMs: 1_000, now: 0 });
+  clock.observe('a', 0, board);
+  clock.observe('a', windowMs - 1_000, board);
+  const restarted = createClock({ tripMs: windowMs, perSeatMs: 1_000, now: windowMs - 1_000, state: clock.snapshot() });
+  assert.equal(restarted.observe('a', windowMs - 1_000, board), null);
+  assert.equal(restarted.observe('a', windowMs, board), 'stall');
+  assert.ok(Object.keys(restarted.run.deadlines).includes('forge'));
 });
 
 test('the load command prints the seed and refuses the live board', () => {
@@ -84,6 +149,7 @@ test('the load command prints the seed and refuses the live board', () => {
   });
   assert.equal(printed.status, 0, printed.stderr);
   assert.match(printed.stderr, /not posted/);
+  assert.match(printed.stderr, /current wave posts 1 card/);
   assert.deepEqual(JSON.parse(fs.readFileSync(out, 'utf8')).cards.map((card) => card.wave), ['W1', 'W2', 'W3', 'W4', 'W5']);
   const refused = spawnSync(process.execPath, [TOOL, '--apply'], {
     encoding: 'utf8',

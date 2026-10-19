@@ -4,10 +4,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { cardsFromSeed, seedWaves } from '../app/wave-schedule.mjs';
+import { cardsFromSeed, postedCards, seedWaves } from '../app/wave-schedule.mjs';
 
 const LIVE_HOST = 'burst-live-production.up.railway.app';
-const DEFAULT_SEED = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'grok-bot', 'templates', 'house', 'bifrost-waves.json');
+const DEFAULT_SEED = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app', 'bifrost-waves.json');
 
 function arg(name, argv) {
   const i = argv.indexOf(name);
@@ -42,7 +42,9 @@ async function main(argv) {
   const text = `${JSON.stringify(body, null, 2)}\n`;
   if (outPath) fs.writeFileSync(outPath, text);
   else process.stdout.write(text);
+  const posting = postedCards(seed);
   process.stderr.write(`loaded ${body.cards.length} cards in ${seedWaves(seed).length} waves from ${seedPath}\n`);
+  process.stderr.write(`current wave posts ${posting.length} card(s)\n`);
   if (!apply) {
     process.stderr.write('not posted\n');
     return;

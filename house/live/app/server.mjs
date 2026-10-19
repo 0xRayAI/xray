@@ -16,8 +16,8 @@ import { spawn } from 'node:child_process';
 import { seatPresence, presentSeat, foldSeatTouch, fleetConfigOf, readWakeOk, writeWakeOk } from './presence.mjs';
 import { parseAllowlist, mergeCards, sourceCardsFrom, projectAllowed, validateItem, workEventToItem, cardNoNudge, workItemNewer } from './source.mjs';
 import { checkRoutesFromDir, readRoutingMap, createLoginResolver, auditLogins } from './routes.mjs';
-import { fingerprint, tripwire, createClock, mutedSeats, selectStallSeats } from './governor.mjs';
-import { cardsFromSeed, retainSeedCards, scheduleWaves } from './wave-schedule.mjs';
+import { fingerprint, tripwire, createClock, wakeTitle, mutedSeats, selectStallSeats } from './governor.mjs';
+import { isPlanCard, liveWorkCount, postedCards, retainSeedCards, resolveWaveSeed, scheduleWaves } from './wave-schedule.mjs';
 import { createArch1Launch, ARCH1_CANON } from './arch1-launch.mjs';
 import { configureWorkTrack, acceptCursorWebhook, appendWake, boardCloudAgents, canonSeatToken, deriveTrackFromDir, displaySeat, loadSeatAgentMap, readJsonl, readWakeRows, seatForAgentId, stampCriticCloud, toToken } from './worktrack.mjs';
 const COLLECTOR_DIR_EARLY = () => path.join(path.dirname(fileURLToPath(import.meta.url)), 'collector');
@@ -747,7 +747,7 @@ function dotsFleet(fleet, now = Date.now()) {   // Assistant node state, merged 
 let waveCards = []; let bfCards = []; let seedHold = []; let nudges = []; let waveSig = ''; let boardSig = '';
 let WAVE_SEED = { waves: [] };
 try {
-  const seedPath = process.env.BIFROST_WAVE_SEED || path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'grok-bot', 'templates', 'house', 'bifrost-waves.json');
+  const seedPath = resolveWaveSeed(path.dirname(fileURLToPath(import.meta.url)), process.env, (file) => fs.existsSync(file));
   const seed = JSON.parse(fs.readFileSync(seedPath, 'utf8'));
   if (seed && Array.isArray(seed.waves)) WAVE_SEED = seed;
 } catch { /* a fleet with no seed file does not schedule waves */ }
@@ -833,10 +833,18 @@ function itemsFromWork() {
   }
   return [...latest.values()];
 }
+function weeklyBurnFraction() {
+  const raw = process.env.BIFROST_WEEKLY_BURN;
+  if (raw == null || String(raw).trim() === '') return 0;
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n < 0) return 0;
+  return n > 1 ? n / 100 : n;
+}
 function waveBoard(cards, now = Date.now()) {
   const coord = (typeof COORD_SEAT !== 'undefined' && COORD_SEAT) || COS;
-  const tripMs = typeof TRIP_MS === 'number' ? TRIP_MS : 30 * 60000;
-  return scheduleWaves(retainSeedCards(cards, bfCards, seedHold), WAVE_SEED, { coord, now, tripMs, prior: bfCards });
+  return scheduleWaves(retainSeedCards(cards, bfCards, seedHold), WAVE_SEED, {
+    coord, now, prior: bfCards, weeklyBurn: weeklyBurnFraction(), window: WAVE_SEED.window,
+  });
 }
 function publishBoard(updatedCt) {
   const merged = mergeCards(waveCards, sourceCardsFrom(itemsFromWork(), { seats: SEAT_IDS }));
@@ -939,6 +947,7 @@ function evalNudges(now = Date.now()) {
     if (!c || c.state !== 'live' || c.waiting || c.last_beat_t !== n.beat_t) { n.closed_at = new Date(now).toISOString(); changed = true; }
   }
   for (const c of bfCards) {
+    if (isPlanCard(c)) continue;   // the plan card is the tripwire's, and its beat is refreshed by the scheduler
     if (cardNoNudge(c) || itemClosed(c.repo, c.number)) continue;   // closed / merged PRs and issues are never nudged
     if (c.state === 'held' && !c.pinned && c.last_beat_t && now - c.last_beat_t >= HELD_MAX_MS) {
       const nid = `nudge:${c.key}:held:${c.last_beat_t}`;
@@ -1320,7 +1329,14 @@ const CLOCK_SEATS = (() => {   // who may start a run by hand: BIFROST_CLOCK_SEA
   const env = String(process.env.BIFROST_CLOCK_SEATS || '').split(',').map(x => x.trim().toLowerCase()).filter(Boolean);
   return env.length ? env : COORD_SEAT ? [COORD_SEAT] : [];
 })();
-const clock = createClock({ tripMs: TRIP_MS, perSeatMs: PER_SEAT_MS });
+function readClockState() {
+  try {
+    const saved = JSON.parse(fs.readFileSync(path.join(STATE_DIR, 'clock.json'), 'utf8'));
+    if (saved && typeof saved === 'object') return saved;
+  } catch { /* first boot has no clock file */ }
+  return null;
+}
+const clock = createClock({ tripMs: TRIP_MS, perSeatMs: PER_SEAT_MS, state: readClockState() });
 const trip = tripwire();
 let governorChanges = 0;
 function loadMutedSeats() {
@@ -1357,10 +1373,11 @@ function stallOpenSeats(now = Date.now()) {
 function wakeRun(run) {
   for (const [seat, by] of Object.entries(run.deadlines)) {
     const n = openLines(seat).length;
+    const planning = run.reason === 'plan' || (run.planSeat && seat === run.planSeat);
     const reason = run.reason === 'empty' ? `board empty, pull next work by ${by}`
-      : run.reason === 'plan' ? `plan next wave: nothing carded, card the ranked backlog by ${by}`
+      : planning ? `plan next wave: nothing carded, card the ranked backlog by ${by}`
       : `timed run (${run.reason}): move your open work or post your blocker in one line by ${by}`;
-    noteWake(seat, { id: `clock:${run.started_at}:${seat}`, type: 'timed_run', title: run.reason === 'empty' ? 'board empty' : `timed run: ${n} open line(s)`, reason });
+    noteWake(seat, { id: `clock:${run.started_at}:${seat}`, type: 'timed_run', title: wakeTitle(run, seat, n), reason });
   }
   const cos = cosSeat();
   if (run.reason !== 'empty' && cos && !(cos in run.deadlines)) {   // the CoS role owns the board: told about every stall run
@@ -1379,7 +1396,8 @@ function governorRun(now = Date.now()) {
     seq++; fullDirty = true;
   }
   const w = wakeBoard(now);
-  const r = clock.observe(moveFp(), now, { openCards: bfCards.filter(c => c.state === 'live').length, scheduled: scheduledCards(now), openSeats: stallOpenSeats(now), coord: COORD_SEAT, planDue: scheduled.planDue });
+  const r = clock.observe(moveFp(), now, { openCards: liveWorkCount(bfCards), scheduled: scheduledCards(now), openSeats: stallOpenSeats(now), coord: COORD_SEAT, planDue: scheduled.planDue });
+  bfWrite('clock.json', JSON.stringify(clock.snapshot()));
   if (r === 'stall' || r === 'empty' || r === 'plan') wakeRun(clock.run);
   if (r === 'cleared') console.log('clock: cleared by a seat move');
   const fp = fingerprint([...evs.values()].map(v => v.e), { nudges: nudges.filter(n => !n.closed_at).map(n => n.id), routing: ROUTING.ok,
@@ -2843,7 +2861,7 @@ async function handle(req, res) {
     if (!d || !Array.isArray(d.waves)) return json(req, res, 400, { error: 'waves array required' });
     const now = Date.now();
     WAVE_SEED = d;
-    seedHold = cardsFromSeed(d, { now, coord: COORD_SEAT || COS });
+    seedHold = postedCards(d, { now, coord: COORD_SEAT || COS });
     bfWrite('wave-seed.json', JSON.stringify({ updated_ct: new Date(now).toISOString(), cards: seedHold }));
     publishBoard(new Date(now).toISOString());
     seq++; header = mergedHeader(); fullDirty = true;

@@ -36,7 +36,7 @@ Wear seeds `STATION.md` and `NOTES.md` when they are missing. After that, wear c
 
 ### Wave schedule
 
-Bifrost is the board. The local waveboard template is retired. When a wave's last card is closed or merged, the board raises one plan-next-wave card for the CoS seat with the ranked backlog, and the tripwire flags it when nothing is carded in that window. `load-wave-seed` prints the W1–W5 seed and does not post. `--apply` refuses the production board unless `BIFROST_SEED_APPLY=1`. The live deploy copies `wave-schedule.mjs` with the other server imports.
+Bifrost is the board. The local waveboard template is retired. When a real wave's last card is closed or merged, the board raises one plan-next-wave card for the CoS seat naming the next open wave. The window is a Chicago cron stored on the card. A due plan does not hide a stall wake. Weekly burn at 75% keeps the plan quiet. Synthetic cards with no GitHub number are closed. `--apply` boards only the current wave and refuses the production board unless `BIFROST_SEED_APPLY=1`. The live image copies `wave-schedule.mjs` and `bifrost-waves.json`. `house init` copies an empty wave list. The server reads `house/bifrost-waves.json`.
 
 ## [4.1.2] - 2026-10-19
 

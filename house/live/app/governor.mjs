@@ -18,9 +18,10 @@ export function tripwire() {
   return fp => { if (fp === last) return false; last = fp; return true; };
 }
 
-// Timed run (the clock). The tripwire is the trigger, on EITHER of two conditions once nothing has moved for tripMs:
-//   plan: a plan-next-wave card is due -> the CoS seat is woken once (the card is already flagged);
-//   stall: open cards on the board -> each seat with open work is woken with its own deadline (perSeatMs apart);
+// Timed run (the clock). The tripwire is the trigger once nothing has moved for tripMs:
+//   stall: open cards on the board -> each seat with open work is woken with its own deadline (perSeatMs apart).
+//          A due plan card does not hide this. The CoS seat is included so the plan still wakes.
+//   plan: the plan card is due and the board has no other open card -> the CoS seat is woken once;
 //   empty: no open cards -> the CoS (coord role) seat is woken to pull the next work.
 // The CoS can start a run by hand (POST /clock). Blockers come back as one line; the countdown shows on the board until a
 // seat moves something, which clears the clock. Each trigger fires at most once per window: it re-arms only after the
@@ -48,20 +49,34 @@ export function selectStallSeats(ids, muted, openCounts, prompted) {
   });
 }
 
-export function createClock({ tripMs, perSeatMs, now = Date.now() }) {
-  let lastFp = null, lastMove = now, lastTrip = null, run = null;
-  const start = (t, seats, reason, by) => {
+export function wakeTitle(run, seat, openCount) {
+  if (!run) return '';
+  if (run.reason === 'empty') return 'board empty';
+  if (run.reason === 'plan' || (run.planSeat && seat === run.planSeat)) return 'plan next wave';
+  return `timed run: ${openCount} open line(s)`;
+}
+
+export function createClock({ tripMs, perSeatMs, now = Date.now(), state = null }) {
+  const saved = state && typeof state === 'object' ? state : null;
+  let lastFp = saved && saved.lastFp != null ? saved.lastFp : null;
+  let lastMove = saved && Number.isFinite(saved.lastMove) ? saved.lastMove : now;
+  let lastTrip = saved && Number.isFinite(saved.lastTrip) ? saved.lastTrip : null;
+  let run = saved && saved.run ? saved.run : null;
+  const start = (t, seats, reason, by, extra = {}) => {
     const order = [...new Set(seats)].filter(Boolean);
     const deadlines = Object.fromEntries(order.map((s, i) => [s, new Date(t + (i + 1) * perSeatMs).toISOString()]));
     run = { started_at: new Date(t).toISOString(), reason, by: by || null, deadlines,
-      ends_at: order.length ? deadlines[order.at(-1)] : new Date(t).toISOString() };
+      ends_at: order.length ? deadlines[order.at(-1)] : new Date(t).toISOString(),
+      planSeat: extra.planSeat || null };
     lastTrip = t;
     return run;
   };
   return {
     get run() { return run; },
+    snapshot() { return { lastFp, lastMove, lastTrip, run }; },
     /** -> 'plan' | 'stall' | 'empty' | 'cleared' | null.
-     *  moveFp: fingerprint of seat moves (events, acks); board: { openCards, openSeats, coord, planDue }. */
+     *  moveFp: fingerprint of seat moves (events, acks); board: { openCards, openSeats, coord, planDue }.
+     *  A due plan does not hide a stall: seats with open work are still woken. */
     observe(moveFp, t, board) {
       if (moveFp !== lastFp) {
         const first = lastFp === null; lastFp = moveFp; lastMove = t; lastTrip = null;
@@ -71,12 +86,14 @@ export function createClock({ tripMs, perSeatMs, now = Date.now() }) {
       const armed = lastTrip === null || t - lastTrip >= tripMs;
       if (!armed || t - lastMove < tripMs) return null;
       const { openCards = 0, openSeats = [], coord = null, scheduled = 0, planDue = false } = board || {};
-      if (planDue && coord) { start(t, [coord], 'plan'); return 'plan'; }
       if (openCards > 0) {
-        const seats = openSeats.length ? openSeats : [coord];
+        const seats = openSeats.length ? [...openSeats] : [coord];
+        if (planDue && coord && !seats.includes(coord)) seats.push(coord);
         if (!seats.filter(Boolean).length) return null;
-        start(t, seats, 'stall'); return 'stall';
+        start(t, seats, 'stall', null, { planSeat: planDue ? coord : null });
+        return 'stall';
       }
+      if (planDue && coord) { start(t, [coord], 'plan', null, { planSeat: coord }); return 'plan'; }
       if (scheduled > 0) return null;   // a card waiting on start_after is not an empty board
       if (!coord) return null;
       start(t, [coord], 'empty'); return 'empty';

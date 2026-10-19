@@ -20,10 +20,11 @@ npx @0xray/grok-bot house init
 That copies every file in `templates/house/` into `./house` except `EXAMPLE.md`.
 
 - `HOUSE.md`
-- `WAVEBOARD.md`
 - `ATTENTION_STATE.md`
+- `bifrost-waves.json` (empty wave list)
 - `AUTO-REVIEW.md`
 - `ROLE-MAP.md`
+- `WAVEBOARD.md` (retired; the board is Bifrost)
 
 A first run prints `copied templates/house to <project>/house` and exits 0.
 
@@ -35,21 +36,9 @@ refusing to overwrite existing house files: <project>/house/ATTENTION_STATE.md, 
 
 `--dir <path>` chooses the project root. The default is the working directory.
 
-## Move an old board
+## An old local board
 
-Teams that still keep the board at `ops/WAVEBOARD.md` run:
-
-```bash
-npx @0xray/grok-bot house init --migrate
-```
-
-That moves `ops/WAVEBOARD.md` to `house/WAVEBOARD.md` and copies each missing template, including `ATTENTION_STATE.md`. A house file you already changed stays as it is. When both boards exist and `house/WAVEBOARD.md` is not the untouched template, the command exits 1 and writes nothing:
-
-```text
-refusing to overwrite <project>/house/WAVEBOARD.md with <project>/ops/WAVEBOARD.md
-```
-
-An untouched template board is the same bytes as `templates/house/WAVEBOARD.md`. Migrate may replace that copy with the old board. Plain `house init` does not move `ops/WAVEBOARD.md`.
+The board is Bifrost. `house init --migrate` leaves `ops/WAVEBOARD.md` where it is and copies each missing template, including `ATTENTION_STATE.md` and an empty `bifrost-waves.json`. A house file you already changed stays as it is. Plain `house init` does not read `ops/WAVEBOARD.md`.
 
 ## Fill the six headings
 
@@ -81,7 +70,7 @@ Git push to mina/shop. No other repo.
 Package publish, production deploy, payments, secrets, and deletes.
 
 ## Board
-Open cards: house/WAVEBOARD.md. What needs the owner now: house/ATTENTION_STATE.md.
+Open cards are Bifrost cards. What needs the owner now: house/ATTENTION_STATE.md. Waves: house/bifrost-waves.json.
 ```
 
 ## Optional roster and Auto Review
@@ -135,4 +124,4 @@ The process exits 0 when the house check is not FAIL and mill plus inspect are f
 
 ## Every wake
 
-Read `.xray/state/STATION.md` first. Then read the board: `house/WAVEBOARD.md` and `house/ATTENTION_STATE.md`. If either file is missing, use the same name under `templates/house/`. The setup-house skill tells every seat to read `house/` on its next wake. One card, one owner. For the six headings, `HOUSE.md` is the copy that wins.
+Read `.xray/state/STATION.md` first. Then read Bifrost cards (`GET /cards`) and `house/ATTENTION_STATE.md`. If attention state is missing, use `templates/house/ATTENTION_STATE.md`. The setup-house skill tells every seat to read `house/` on its next wake. One card, one owner. For the six headings, `HOUSE.md` is the copy that wins.
