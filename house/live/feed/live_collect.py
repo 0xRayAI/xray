@@ -766,16 +766,20 @@ class RepoCollector:
         newest = cur
         for p in self.paged(c, f"/repos/{self.repo}/pulls", {"state": "all", "sort": "updated", "direction": "desc"},
                             "pulls", stop=lambda p: cur is not None and p["updated_at"] <= cur):
-            n, login = p["number"], p["user"]["login"]
+            n = p["number"]
+            # A pull with user null is still a card. Subscripting it raised TypeError, which run()
+            # does not catch, so every later pull on the page was dropped and the cursor never moved.
+            user = p.get("user") if isinstance(p.get("user"), dict) else {}
+            login = user.get("login") or ""
             prev = self.st["prs"].get(str(n), {})
             prev_head = prev.get("head")
             head = (p.get("head") or {}).get("sha")
-            self.st["prs"][str(n)] = {"author": login, "updated_at": p["updated_at"], "head": head,
+            self.st["prs"][str(n)] = {"author": login or None, "updated_at": p["updated_at"], "head": head,
                                       "merged_at": p.get("merged_at"), "state": p["state"], "base": p["base"]["ref"]}
             url = p["html_url"]
-            self.put(f"{self.repo}#{n}:open", p["created_at"], node(login), "GitHub", "pr_open",
-                     f"{self.short} #{n} opened · {p['title']}", url, n, base=p["base"]["ref"], actor=login,
-                     sha=head, author=login,
+            self.put(f"{self.repo}#{n}:open", p["created_at"], node(login) if login else "GitHub", "GitHub", "pr_open",
+                     f"{self.short} #{n} opened · {p['title']}", url, n, base=p["base"]["ref"], actor=login or None,
+                     sha=head, author=login or None,
                      draft=p.get("draft"), mentions=mentions(p.get("body")), **card_fields(p))
             if p.get("merged_at"):
                 listed = p.get("merged_by") if isinstance(p.get("merged_by"), dict) else None

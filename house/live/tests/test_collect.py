@@ -689,6 +689,31 @@ class CardLifecycle(unittest.TestCase):
         self.assertEqual(col.ev["example-org/app#8:merged"]["merged_by"], "forge0x1[bot]")
         self.assertNotEqual(col.ev["example-org/app#8:merged"]["merged_by"], "htafolla")
 
+    def test_null_user_does_not_drop_later_open_pulls(self):
+        """A pull with user null must not abort the page, or the next open PR never becomes a card."""
+        col = _collector("example-org/app")
+        ghost = self._pull(number=3, user=None, updated_at="2026-10-14T18:00:00Z", state="open",
+                           merged_at=None, title="ghost", html_url="https://github.com/example-org/app/pull/3")
+        kept = self._pull(number=4, user={"login": "forge0x1[bot]"}, updated_at="2026-10-14T17:00:00Z",
+                          state="open", merged_at=None, title="kept card",
+                          html_url="https://github.com/example-org/app/pull/4")
+
+        class C:
+            token = "t"
+            def rest(self, path, params=None, etag=None, essential=True):
+                return 200, [ghost, kept], "etag", None
+
+        with mock.patch.dict(uc.NODE_LC, {"forge0x1[bot]": "forge"}):
+            col.poll_pulls(C())
+        self.assertIn("example-org/app#3:open", col.ev)
+        self.assertEqual(col.ev["example-org/app#3:open"]["from"], "GitHub")
+        self.assertNotEqual(col.ev["example-org/app#3:open"]["from"], "Others")
+        kept_ev = col.ev["example-org/app#4:open"]
+        self.assertEqual(kept_ev["kind"], "pr_open")
+        self.assertEqual(kept_ev["from"], "forge")
+        self.assertEqual(kept_ev["title"], "kept card")
+        self.assertEqual(kept_ev["pr_state"], "open")
+
     def test_head_change_emits_pr_commit(self):
         col = _collector("example-org/app")
         first = "a" * 40
