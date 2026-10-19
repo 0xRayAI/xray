@@ -51,13 +51,34 @@ describe('pulsar range', () => {
   it('the first injected hit holds the board until Monday 09:00 Chicago and the next seat is late', () => {
     const ledgerPath = ledgerFile();
     const now = Date.parse('2026-03-07T18:00:00Z');
+    const hour = String(game.chicagoParts(now).hour).padStart(2, '0');
+    const bare = game.claimPulsar({
+      charge: 'left-right',
+      seat: 'new-back',
+      now,
+      ledgerPath: ledgerFile(),
+      hash: 'abc',
+      digest: () => 'abc',
+    });
+    expect(bare.ok).toBe(false);
+    expect(bare.say).toContain('Miss');
+    const wrongHour = String((Number(hour) + 3) % 24).padStart(2, '0');
+    const stale = game.claimPulsar({
+      charge: `left-${wrongHour}-right`,
+      seat: 'new-back',
+      now,
+      ledgerPath: ledgerFile(),
+      hash: 'abc',
+      digest: (outer: string) => (outer === 'left-right' ? 'abc' : 'no'),
+    });
+    expect(stale.ok).toBe(false);
     const hit = game.claimPulsar({
-      charge: 'anything',
+      charge: `left-${hour}-right`,
       seat: 'new-back',
       now,
       ledgerPath,
       hash: 'abc',
-      digest: () => 'abc',
+      digest: (outer: string) => (outer === 'left-right' ? 'abc' : 'no'),
     });
     expect(hit.ok).toBe(true);
     expect(hit.record.prod).toBe(false);

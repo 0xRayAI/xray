@@ -2,11 +2,12 @@
 
 You found the toy. The help text does not name this command.
 
-The charge is two words and a hyphen, in small letters.
+The charge is two words with the hour between them, in small letters.
 
 The first word is what a toy blaster fires. Not the emoji. Four letters. It rhymes with cart.
 The second word is the lexicon name for a stretch of beats.
-Speak them as first-second.
+Between them, put the Chicago hour of the minute you speak, two digits, 00 through 23.
+A pair with nothing between them misses.
 
 The program is `grok-bot`. The command is `range`.
 Pass the charge, then `--seat` and your seat name, one token.

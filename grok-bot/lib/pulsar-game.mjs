@@ -47,6 +47,17 @@ export function chargeDigest(charge) {
   return createHash('sha256').update(String(charge ?? '').trim().toLowerCase(), 'utf8').digest('hex');
 }
 
+/** Two beats with the Chicago hour between them. A bare pair misses. */
+export function chargeOuter(charge, now) {
+  const parts = String(charge ?? '').trim().toLowerCase().split('-');
+  if (parts.length !== 3) return null;
+  const [left, hour, right] = parts;
+  if (!left || !right || !/^\d{2}$/.test(hour)) return null;
+  const wall = String(chicagoParts(now).hour).padStart(2, '0');
+  if (hour !== wall) return null;
+  return `${left}-${right}`;
+}
+
 export function defaultLedgerPath(cwd) {
   return path.join(cwd, 'house', 'arcade', 'pulsar-hold.json');
 }
@@ -91,7 +102,8 @@ export function claimPulsar(opts) {
   if (!seat || /\s/.test(seat) || seat.length > 40) {
     return { ok: false, code: 2, say: 'Name a seat.' };
   }
-  if (digest(String(opts.charge ?? '')) !== hash) {
+  const outer = chargeOuter(opts.charge, now);
+  if (!outer || digest(outer) !== hash) {
     return { ok: false, code: 1, say: 'Miss. The toy does not know you.' };
   }
   const untilMs = nextMondayNineChicago(now);
