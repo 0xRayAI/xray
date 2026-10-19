@@ -147,7 +147,7 @@ The board is useful and obvious: find a need, fill a need, don't make the human 
 
 When `LIVE_URL` is unset, open cards are hand-kept in `house/WAVEBOARD.md`. When `LIVE_URL` is set, the board is Bifrost (`GET /cards`). What needs Blaze lives in `ATTENTION_STATE.md`. Do not repeat that status in chat.
 
-Watchers follow Beats on the repos named in `house/WATCHERS.md`. On new activity they create or bump a card (signal→ticket) with a Done·Verify·Next owner: a Bifrost card when `LIVE_URL` is set, and a card in local `house/WAVEBOARD.md` when `LIVE_URL` is unset. GitHub signals: issue, pull request, review, checks, merge. X signals: mention or reply, only when Dist policy allows that class. Watcher ≠ implementer ≠ Dist — queue only; seats execute; watchers do not ship Dist or merge. Quiet when nothing changed. CoS owns the board digest. Forge owns the engineering cadence. A wake resumes the same seat and the same cloud id (`bc-…`).
+Watchers follow Beats on the repos named in `house/WATCHERS.md`. On new activity they create or bump a card (signal→ticket) with a Done·Verify·Next owner: a Bifrost card when `LIVE_URL` is set, and a card in local `house/WAVEBOARD.md` when `LIVE_URL` is unset. GitHub signals: issue, pull request, review, checks, merge. X signals: mention or reply, only when Dist policy allows that class. Watcher ≠ implementer ≠ Dist — queue only; seats execute; watchers do not ship Dist or merge. Quiet when nothing changed. CoS owns the board digest. Forge owns the engineering cadence. A wake hands off to the owner's chat. It does not launch or resume a cloud agent.
 
 ## Ship cadence (proposed 2026-10-13, needs Arch1's approval)
 

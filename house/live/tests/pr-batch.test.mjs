@@ -57,13 +57,25 @@ test('run_end waits while checks are pending and routes a red head to the worker
 
 test('ci_pass queues critic only after run_end, and not while the worker is live', () => {
   const batch = createBatch();
-  assert.equal(batch.observeCi({ id: 'g', kind: 'ci_pass', repo: REPO, number: 402, sha: SHA }), null);
+  batch.observeCi({ id: 'p', kind: 'check_run', repo: REPO, number: 402, sha: SHA, name: 'ci', status: 'in_progress' });
   assert.equal(batch.runEnd(line({ id: 'end' }), {}).action, 'wait');
-  const queued = batch.observeCi({ id: 'g2', kind: 'ci_pass', repo: REPO, number: 402, sha: SHA });
+  const queued = batch.observeCi({ id: 'g', kind: 'ci_pass', repo: REPO, number: 402, sha: SHA, name: 'ci' });
   assert.equal(queued.action, 'critic');
   assert.equal(queued.line.seat, 'critic');
   assert.equal(queued.line.kind, 'ci_pass');
-  assert.equal(batch.observeCi({ id: 'g3', kind: 'ci_pass', repo: REPO, number: 402, sha: SHA }), null);
+  assert.equal(batch.observeCi({ id: 'g', kind: 'ci_pass', repo: REPO, number: 402, sha: SHA, name: 'ci' }), null);
+});
+
+test('a head already green before run_end queues critic when the run ends', () => {
+  const batch = createBatch();
+  assert.equal(batch.observeCi({ id: 'g', kind: 'ci_pass', repo: REPO, number: 402, sha: SHA }), null);
+  const queued = batch.runEnd(line({ id: 'end' }), {});
+  assert.equal(queued.action, 'critic');
+  assert.equal(queued.line.seat, 'critic');
+  assert.equal(queued.line.kind, 'ci_pass');
+  assert.equal(queued.line.title, 'ci_pass');
+  assert.equal(batch.observeCi({ id: 'g', kind: 'ci_pass', repo: REPO, number: 402, sha: SHA }), null);
+  assert.equal(batch.runEnd(line({ id: 'end' }), {}).action, 'wait');
 });
 
 test('a second critic FAIL goes to Blaze and the first returns to the worker', () => {
@@ -92,6 +104,12 @@ test('a flush is held over pace unless it is a hotfix', () => {
   const hot = createBatch();
   hot.observeCi({ id: 'f', kind: 'ci_fail', repo: REPO, number: 402, sha: SHA });
   assert.equal(hot.runEnd(line({ id: 'end', flag: 'hotfix' }), { attention: 'over pace', hotfix: true }).action, 'worker');
+  const green = createBatch();
+  green.observeCi({ id: 'g', kind: 'ci_pass', repo: REPO, number: 402, sha: SHA });
+  assert.equal(green.runEnd(line({ id: 'end' }), { attention: 'over pace' }).action, 'hold');
+  const critic = green.drain({ attention: '' });
+  assert.equal(critic.length, 1);
+  assert.equal(critic[0].action, 'critic');
 });
 
 test('a pending head waits, then a required failure routes to the worker', () => {

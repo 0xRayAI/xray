@@ -1,6 +1,7 @@
 // One buffer per PR. Follow-ups collapse on PR + head sha.
-// Flushes are run_end and ci_pass only. Critic is queued only on ci_pass after run_end.
-// A head is red only when a required check has failed. Pending waits.
+// Flushes are run_end and ci_pass only. A green head queues critic on run_end
+// when the checks are already green, and on a later ci_pass after run_end.
+// A green event seen before run_end is not replayed. Pending waits.
 
 const FOLLOW = new Set(['ci_fail', 'critic_fail', 'ready', 'live_pass', 'merge', 'handoff', 'pr_review', 'review']);
 const FAILED = new Set(['failure', 'failed', 'error', 'cancelled', 'timed_out', 'startup_failure']);
@@ -145,7 +146,8 @@ export function createBatch() {
       const from = String(line.from || '').toLowerCase();
       const critic = from === 'critic' || row.live === 'critic';
       const gate = { ...opts, line };
-      if (held(row, gate) && (critic || headColor(row.checks) === 'red')) {
+      const color = headColor(row.checks);
+      if (held(row, gate) && (critic || color === 'red' || color === 'green')) {
         row.replay = { op: 'end', line };
         row.touched = true;
         return { action: 'hold' };
@@ -163,7 +165,8 @@ export function createBatch() {
       row.live = '';
       row.runEnded = true;
       row.touched = true;
-      if (headColor(row.checks) === 'red') return deliver(key, row, 'worker');
+      if (color === 'red') return deliver(key, row, 'worker');
+      if (color === 'green' && !row.criticQueued) return deliver(key, row, 'critic');
       return { action: 'wait' };
     },
     observeCi(ev, opts = {}) {
