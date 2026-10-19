@@ -11,7 +11,7 @@ This file is the whole change. No other file is edited here.
 - path: Critic PASS on this packet, then one follow-up that edits the files below to match the tables.
 - acceptance: Every in-scope CoS and mill-seat reference is in the tables with a replacement, or in Open questions. The new inbound-triage rule is stated. Plant hits are listed as out of this retirement.
 - gates: Critic packet PASS is the gate before any code. The @arch10x comment is a fleet-wide read, not the gate. This PR is docs-only; A and C wait on the follow-up. B and D stay off.
-- evidence: Read pack OP-PROC, house/OP-PROC, WAKE-ROUTINE, house/live docs, LEXICON, bifrost plate, CADENCE, the runbooks, the seat skills and house templates, wave-schedule.mjs, fleet-roster.json, and critic review 5575662717 at `84e6533`. Checked `server.mjs:159`, `:283`, `:618`, `:944`, `:1041`, `:1048`, `:1055`, `:1126`, `:1397-1403`, `:1455`, `:1493`, `governor.mjs:100-102`, and `inbox-roles.json:110-122`.
+- evidence: Read pack OP-PROC, house/OP-PROC, WAKE-ROUTINE, house/live docs, LEXICON, bifrost plate, CADENCE, the runbooks, the seat skills and house templates, wave-schedule.mjs, fleet-roster.json, critic review 5575662717 at `84e6533`, and review 5575857672 at `df7d42f`. Checked `server.mjs:159`, `:283`, `:618`, `:637`, `:658`, `:944`, `:1041`, `:1048`, `:1055`, `:1126`, `:1397-1403`, `:1455`, `:1493`, `governor.mjs:100-102`, and `inbox-roles.json:110-122`.
 - next owner: critic for packet PASS. Follow-up code waits on that PASS.
 - escalate: Blaze, for the open questions only.
 
@@ -39,8 +39,9 @@ That replaces CoS assignment and the blinky "new issue" route. It does not repla
 
 - Critic's cites for this blocker: `server.mjs:1397-1403`, `governor.mjs:100-102` (it skips the wake when the coord seat is missing), and the L2/L3 reassign at `:618`, used at `:1048`, `:1055`, `:1126`, and `:1455`. The `cosSeat()` fallback to `COS = 'blinky'` is at `:283`.
 - The empty-board wake and `POST /clock` read `seats.coord.seat` (`server.mjs:1397-1403`). `CLOCK_SEATS` defaults to that seat (`:1401-1403`). If the seat is missing, the empty wake does not run (`governor.mjs:100-102`).
-- That same lookup is `cosSeat()` (`server.mjs:618`). `:1048` passes the constant `COS`. `:1055`, `:1126`, and `:1455` call `cosSeat()`. If the route is missing, `cosSeat()` falls back to `COS = 'blinky'` (`:283`). One delete cannot both wake forge and stop those CoS wakes.
-- Follow-up: point the empty-board wake and the clock at forge by a separate target. Stop using this seat for L2/L3. Do not retarget L2/L3 at forge.
+- That same lookup is `cosSeat()` (`server.mjs:618`). `:1048` passes the constant `COS`. `:637`, `:658`, `:1055`, `:1126`, and `:1455` call `cosSeat()`. If the route is missing, `cosSeat()` falls back to `COS = 'blinky'` (`:283`). One delete cannot both wake forge and stop those CoS wakes.
+- Round 2 (review 5575857672): `:637` is the unacked-line L3 reassign. `:658` is the unrouted and quiet nudge. Both still wake blinky. Add both to this drop list. Keep both off forge.
+- Follow-up: point the empty-board wake and the clock at forge by a separate target. Stop using this seat for L2/L3, including `:637` and `:658`. Do not retarget L2/L3 at forge.
 - The block also holds labels `needs-decision` and `lead`, and the same needles (`inbox-roles.json:110-122`). `seat` stays `blinky` until Blaze answers Q4. Do not move those labels by rewriting `seats.coord.seat`.
 - `holdOwner` (`server.mjs:944`) and the L1 fallback `|| COS` (`:1041`) are the no-owner path. Leave them until Q5.
 
@@ -162,7 +163,9 @@ That replaces CoS assignment and the blinky "new issue" route. It does not repla
 | `house/live/app/server.mjs:159` | a `coord` credit returns blinky | when blinky leaves the roster, do not keep this hardcoded return. Not a reason to delete `seats.coord` |
 | `house/live/app/server.mjs:283-284` | `COS = 'blinky'`. Alias `coord` → blinky. `cosSeat()` falls back here | do not delete the route to avoid this fallback. L2/L3 stop calling it |
 | `house/live/app/server.mjs:288` | default `SEAT_IDS` still lists mill and blinky | drop mill with the seat. blinky stays listed while `seats.coord.seat` is blinky |
-| `house/live/app/server.mjs:618` | `cosSeat()` reads `seats.coord`, else blinky | wake and clock do not use this for L2/L3 |
+| `house/live/app/server.mjs:618` | `cosSeat()` reads `seats.coord`, else blinky | wake and clock do not use this for L2/L3. Drop `:637` and `:658` too |
+| `house/live/app/server.mjs:637` | unacked-line L3 reassign wakes `cosSeat()` | drop. Keep it off forge |
+| `house/live/app/server.mjs:658` | unrouted and quiet nudges go to `cosSeat()` | drop. Keep them off forge |
 | `house/live/app/server.mjs:944` | `holdOwner` returns `COS` when the card has no seat | leave until Q5 |
 | `house/live/app/server.mjs:1041` | L1 target falls back to `COS` | leave until Q5 |
 | `house/live/app/server.mjs:1048` | L2 nudge seat is `COS` | drop. Do not retarget at forge |
@@ -284,7 +287,7 @@ These say mill and mean the foundry organ (build, test, ship inside the suit). L
 - `house/live/README.md`
 - `house/live/SETUP.md`
 - `house/live/PLAYBOOK.md`
-- `house/live/app/server.mjs` — non-blocking, from the review: `:159` a coord credit still returns blinky; `:288` the hardcoded seat list; `:1493` `git:mill` and `git:blinky` in the login map. B1 lines stay `:1397-1403`, `:618` used at `:1048` `:1055` `:1126` `:1455`, and the blinky fallback at `:283`.
+- `house/live/app/server.mjs` — non-blocking, from the review: `:159` a coord credit still returns blinky; `:288` the hardcoded seat list; `:1493` `git:mill` and `git:blinky` in the login map. B1 drop list: `:618` used at `:637` (unacked-line L3 reassign), `:658` (unrouted and quiet nudge), `:1048`, `:1055`, `:1126`, and `:1455`. Keep `:637` and `:658` off forge. Also `:1397-1403`, and the blinky fallback at `:283`.
 - `house/live/app/server.mjs:944` `holdOwner` and `:1041` the L1 `|| COS` fallback — leave both alone until Blaze answers Q5.
 - `house/live/app/governor.mjs` — `:100-102` skips the empty wake when the coord seat is missing.
 - `house/live/app/wave-schedule.mjs`
