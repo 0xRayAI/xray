@@ -37,8 +37,9 @@ That replaces CoS assignment and the blinky "new issue" route. It does not repla
 
 `seats.coord` is one block with two jobs. Do not delete it.
 
+- Critic's cites for this blocker: `server.mjs:1397-1403`, `governor.mjs:100-102` (it skips the wake when the coord seat is missing), and the L2/L3 reassign at `:618`, used at `:1048`, `:1055`, `:1126`, and `:1455`. The `cosSeat()` fallback to `COS = 'blinky'` is at `:283`.
 - The empty-board wake and `POST /clock` read `seats.coord.seat` (`server.mjs:1397-1403`). `CLOCK_SEATS` defaults to that seat (`:1401-1403`). If the seat is missing, the empty wake does not run (`governor.mjs:100-102`).
-- That same lookup is `cosSeat()` (`server.mjs:618`). L2 uses the constant `COS` (`:1048`). L3 reassign uses `cosSeat()` (`:1055`, handoff `:1126`, stall tell `:1455`). If the route is missing, `cosSeat()` falls back to `COS = 'blinky'` (`:283`). One delete cannot both wake forge and stop those CoS wakes.
+- That same lookup is `cosSeat()` (`server.mjs:618`). `:1048` passes the constant `COS`. `:1055`, `:1126`, and `:1455` call `cosSeat()`. If the route is missing, `cosSeat()` falls back to `COS = 'blinky'` (`:283`). One delete cannot both wake forge and stop those CoS wakes.
 - Follow-up: point the empty-board wake and the clock at forge by a separate target. Stop using this seat for L2/L3. Do not retarget L2/L3 at forge.
 - The block also holds labels `needs-decision` and `lead`, and the same needles (`inbox-roles.json:110-122`). `seat` stays `blinky` until Blaze answers Q4. Do not move those labels by rewriting `seats.coord.seat`.
 - `holdOwner` (`server.mjs:944`) and the L1 fallback `|| COS` (`:1041`) are the no-owner path. Leave them until Q5.
@@ -169,7 +170,7 @@ That replaces CoS assignment and the blinky "new issue" route. It does not repla
 | `house/live/app/server.mjs:1126` | handoff-missing L3 wakes `cosSeat()` | drop. Do not retarget at forge |
 | `house/live/app/server.mjs:1397-1403` | `COORD_SEAT` is `seats.coord.seat`. Clock seats default to it | point the empty-board wake and the clock at forge. Leave the coord block |
 | `house/live/app/server.mjs:1455` | a stall run also tells `cosSeat()` | drop. Do not retarget at forge |
-| `house/live/app/server.mjs:1493` | `SEAT_GIT_NAMES` lists blinky and mill | drop mill. blinky stays while Q4 holds `seats.coord.seat` |
+| `house/live/app/server.mjs:1493` | login map still has `git:mill` and `git:blinky` | drop `git:mill`. `git:blinky` stays while Q4 holds `seats.coord.seat` |
 | `house/live/app/governor.mjs:100-102` | empty wake does not run when `coord` is missing | forge is that argument. Do not pass null |
 | `house/live/app/governor.mjs:104` | `startByHand` records reason `cos` | clock starter is forge. Reason text can follow in the same edit |
 | `house/live/feed/routing/inbox-roles.json:110-122` | `seats.coord` seat blinky, labels needs-decision and lead | keep the whole block until Q4 |
@@ -271,9 +272,9 @@ These say mill and mean the foundry organ (build, test, ship inside the suit). L
 - `grok-bot/LEXICON.md`
 - `grok-bot/runbooks/COORDINATOR.md` (delete after open questions)
 - `grok-bot/runbooks/IMPLEMENTER.md`
-- `grok-bot/runbooks/CRITIC.md` (line 22 only)
-- `grok-bot/runbooks/SHIP.md` (line 16; line 1 is the title)
-- `grok-bot/AGENTS.md` (lines 8 and 35; mill+inspect lines stay)
+- `grok-bot/runbooks/CRITIC.md:22`
+- `grok-bot/runbooks/SHIP.md:1` and `:16`
+- `grok-bot/AGENTS.md:35` (the review's `AGENTS.md:35`; line 8 is the same role list. mill+inspect lines stay)
 - `house/OP-PROC.md`
 - `house/live/docs/inbox.md`
 - `house/live/docs/board.md`
@@ -283,8 +284,9 @@ These say mill and mean the foundry organ (build, test, ship inside the suit). L
 - `house/live/README.md`
 - `house/live/SETUP.md`
 - `house/live/PLAYBOOK.md`
-- `house/live/app/server.mjs`
-- `house/live/app/governor.mjs`
+- `house/live/app/server.mjs` — non-blocking, from the review: `:159` a coord credit still returns blinky; `:288` the hardcoded seat list; `:1493` `git:mill` and `git:blinky` in the login map. B1 lines stay `:1397-1403`, `:618` used at `:1048` `:1055` `:1126` `:1455`, and the blinky fallback at `:283`.
+- `house/live/app/server.mjs:944` `holdOwner` and `:1041` the L1 `|| COS` fallback — leave both alone until Blaze answers Q5.
+- `house/live/app/governor.mjs` — `:100-102` skips the empty wake when the coord seat is missing.
 - `house/live/app/wave-schedule.mjs`
 - `house/live/feed/fleet-roster.json`
 - `house/live/feed/routing/inbox-roles.json` (keep `seats.coord` at `:110-122` until Q4; other blinky copies still move)
