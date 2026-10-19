@@ -926,6 +926,9 @@
   $('play').addEventListener('click', function () {
     if (state.live) { if (!reduced) startReplay(); lastText = 0; return; }
     if (playing) { playing = false; lastText = 0; return; }
+    /* A pause at the live edge leaves t at now. The next frame adds at most 250ms * speed
+       (2.5 min at 600×) and goLive() snaps back. Rewind into a replay before that jump. */
+    if (state.t + 250 * speed >= Date.now()) { if (!reduced) startReplay(); }
     playing = true; lastText = 0;
   });
   $('speed').addEventListener('change', function (ev) { endReplay(); speed = Number(ev.target.value) || 600; });
