@@ -502,9 +502,10 @@ function agentItems(agents) {
     if (!row || typeof row.agent !== 'string' || !row.agent) continue;
     const cur = byAgent.get(row.agent);
     const rank = Number(row.rank) || 0;
-    const at = String(row.t_ct || '');
+    const atMs = Date.parse(row.t_ct || '') || 0;
+    const curMs = Date.parse((cur && cur.t_ct) || '') || 0;
     const named = row.seat && row.seat !== UNASSIGNED ? row.seat : '';
-    if (!cur || rank > Number(cur.rank) || (rank === Number(cur.rank) && at >= String(cur.t_ct || ''))) {
+    if (!cur || rank > Number(cur.rank) || (rank === Number(cur.rank) && atMs >= curMs)) {
       const keptSeat = named || (cur && cur.seat && cur.seat !== UNASSIGNED ? cur.seat : '') || UNASSIGNED;
       byAgent.set(row.agent, { ...row, pr: row.pr || (cur && cur.pr) || '', seat: keptSeat });
     } else if (cur) {
