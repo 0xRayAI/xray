@@ -108,6 +108,10 @@ describe('grok-bot house template — USMail docs', () => {
       const copiedWaves = JSON.parse(readFileSync(path.join(dir, 'house', 'bifrost-waves.json'), 'utf8')) as { waves: unknown[] };
       expect(copiedWaves.waves).toEqual([]);
       expect(JSON.stringify(copiedWaves)).not.toContain('0xRayAI/xray');
+      const localBoard = readFileSync(path.join(dir, 'house', 'WAVEBOARD.md'), 'utf8');
+      expect(localBoard).toContain('when `LIVE_URL` is unset');
+      expect(localBoard).not.toContain('Do not add open work');
+      expect(localBoard).toContain('Open cards');
       const board = readFileSync(path.join(kit, 'templates', 'house', 'watchers', 'waveboard-static.md'), 'utf8');
       expect(board).toContain(cadenceDoc);
       expect(board).toMatch(/^## Card rule$/m);

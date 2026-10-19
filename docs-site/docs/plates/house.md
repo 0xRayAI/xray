@@ -20,9 +20,9 @@ A state flow plate: the stages a house goes through before doctor says House: PA
   │ STARTER FILES COPIED         │
   ├──────────────────────────────┤
   │ · copy starter               │
-  │ · HOUSE.md, ATTENTION_STATE  │
-  │   bifrost-waves.json         │
-  │ · WAVEBOARD.md is retired    │
+  │ · HOUSE.md, WAVEBOARD.md,    │
+  │   ATTENTION_STATE.md         │
+  │ · Bifrost when LIVE_URL set  │
   └──────────────────────────────┘
                   │
                   v

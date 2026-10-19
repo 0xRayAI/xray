@@ -10,9 +10,10 @@ const requireCjs = createRequire(import.meta.url);
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const kit = path.join(root, 'grok-bot');
 const bin = path.join(kit, 'bin', 'grok-bot.js');
-const { diagnoseSeat, formatDoctor, initHouse, parseDoctorArgs, runDoctorCli } = requireCjs(
+const { boardSurface, diagnoseSeat, formatDoctor, initHouse, parseDoctorArgs, runDoctorCli } = requireCjs(
   path.join(kit, 'lib', 'seat-doctor.cjs'),
 ) as {
+  boardSurface: (env: { LIVE_URL?: string }) => { board: string; read: string };
   diagnoseSeat: (opts: { cwd: string; home?: string; env?: Record<string, string> }) => {
     house: { status: string; scope?: { wallet: string } };
     next: string[];
@@ -50,7 +51,7 @@ function cadenceBlock(): string {
 }
 
 describe('grok-bot house init --migrate', () => {
-  it('leaves ops/WAVEBOARD.md in place and starts ATTENTION_STATE.md', () => {
+  it('moves ops/WAVEBOARD.md and starts ATTENTION_STATE.md', () => {
     const dir = scratch();
     try {
       mkdirSync(path.join(dir, 'ops'), { recursive: true });
@@ -58,18 +59,17 @@ describe('grok-bot house init --migrate', () => {
       const result = initHouse({ dir, kitRoot: kit, migrate: true });
       expect(result.ok).toBe(true);
       expect(result.code).toBe(0);
-      expect(result.message).toMatch(/left .+\/ops\/WAVEBOARD\.md; the board is Bifrost/);
+      expect(result.message).toMatch(/moved .+\/ops\/WAVEBOARD\.md to .+\/house\/WAVEBOARD\.md/);
       expect(result.message).toMatch(/started .+\/house\/ATTENTION_STATE\.md/);
-      expect(readFileSync(path.join(dir, 'ops', 'WAVEBOARD.md'), 'utf8')).toBe('old cards\n');
-      expect(readFileSync(path.join(dir, 'house', 'WAVEBOARD.md'), 'utf8')).toBe(template('WAVEBOARD.md'));
+      expect(existsSync(path.join(dir, 'ops', 'WAVEBOARD.md'))).toBe(false);
+      expect(readFileSync(path.join(dir, 'house', 'WAVEBOARD.md'), 'utf8')).toBe('old cards\n');
       expect(readFileSync(path.join(dir, 'house', 'ATTENTION_STATE.md'), 'utf8')).toBe(template('ATTENTION_STATE.md'));
       expect(existsSync(path.join(dir, 'house', 'HOUSE.md'))).toBe(true);
       expect(existsSync(path.join(dir, 'house', 'EXAMPLE.md'))).toBe(false);
       const again = initHouse({ dir, kitRoot: kit, migrate: true });
       expect(again.ok).toBe(true);
-      expect(again.message).toMatch(/left .+\/ops\/WAVEBOARD\.md; the board is Bifrost/);
-      expect(readFileSync(path.join(dir, 'house', 'WAVEBOARD.md'), 'utf8')).toBe(template('WAVEBOARD.md'));
-      expect(readFileSync(path.join(dir, 'ops', 'WAVEBOARD.md'), 'utf8')).toBe('old cards\n');
+      expect(again.message).toMatch(/no ops\/WAVEBOARD\.md to move/);
+      expect(readFileSync(path.join(dir, 'house', 'WAVEBOARD.md'), 'utf8')).toBe('old cards\n');
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
@@ -89,7 +89,7 @@ describe('grok-bot house init --migrate', () => {
     }
   });
 
-  it('leaves an edited house board and the old ops board', () => {
+  it('refuses when both boards exist and the house board was edited', () => {
     const dir = scratch();
     try {
       mkdirSync(path.join(dir, 'ops'), { recursive: true });
@@ -97,19 +97,19 @@ describe('grok-bot house init --migrate', () => {
       writeFileSync(path.join(dir, 'ops', 'WAVEBOARD.md'), 'old cards\n');
       writeFileSync(path.join(dir, 'house', 'WAVEBOARD.md'), 'edited board\n');
       const result = initHouse({ dir, kitRoot: kit, migrate: true });
-      expect(result.ok).toBe(true);
-      expect(result.code).toBe(0);
-      expect(result.message).toMatch(/the board is Bifrost/);
+      expect(result.ok).toBe(false);
+      expect(result.code).toBe(1);
+      expect(result.message).toMatch(/refusing to overwrite .+\/house\/WAVEBOARD\.md with .+\/ops\/WAVEBOARD\.md/);
       expect(readFileSync(path.join(dir, 'ops', 'WAVEBOARD.md'), 'utf8')).toBe('old cards\n');
       expect(readFileSync(path.join(dir, 'house', 'WAVEBOARD.md'), 'utf8')).toBe('edited board\n');
-      expect(existsSync(path.join(dir, 'house', 'HOUSE.md'))).toBe(true);
-      expect(existsSync(path.join(dir, 'house', 'ATTENTION_STATE.md'))).toBe(true);
+      expect(existsSync(path.join(dir, 'house', 'HOUSE.md'))).toBe(false);
+      expect(existsSync(path.join(dir, 'house', 'ATTENTION_STATE.md'))).toBe(false);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
   });
 
-  it('leaves an untouched template board and a changed HOUSE.md', () => {
+  it('replaces an untouched template board and leaves a changed HOUSE.md', () => {
     const dir = scratch();
     try {
       mkdirSync(path.join(dir, 'ops'), { recursive: true });
@@ -119,8 +119,8 @@ describe('grok-bot house init --migrate', () => {
       writeFileSync(path.join(dir, 'ops', 'WAVEBOARD.md'), 'old cards\n');
       const result = initHouse({ dir, kitRoot: kit, migrate: true });
       expect(result.ok).toBe(true);
-      expect(readFileSync(path.join(dir, 'ops', 'WAVEBOARD.md'), 'utf8')).toBe('old cards\n');
-      expect(readFileSync(path.join(dir, 'house', 'WAVEBOARD.md'), 'utf8')).toBe(template('WAVEBOARD.md'));
+      expect(existsSync(path.join(dir, 'ops', 'WAVEBOARD.md'))).toBe(false);
+      expect(readFileSync(path.join(dir, 'house', 'WAVEBOARD.md'), 'utf8')).toBe('old cards\n');
       const house = readFileSync(path.join(dir, 'house', 'HOUSE.md'), 'utf8');
       expect(house.startsWith('custom house\n')).toBe(true);
       expect(house.match(/^## Cadence$/gm)).toHaveLength(1);
@@ -185,9 +185,9 @@ describe('grok-bot house init --migrate', () => {
       expect(parseDoctorArgs(['house', 'init']).migrate).toBe(false);
       const migrated = runBin(['house', 'init', '--migrate', '--dir', dir], dir);
       expect(migrated.status).toBe(0);
-      expect(migrated.stdout).toMatch(/the board is Bifrost/);
-      expect(readFileSync(path.join(dir, 'ops', 'WAVEBOARD.md'), 'utf8')).toBe('old cards\n');
-      expect(readFileSync(path.join(dir, 'house', 'WAVEBOARD.md'), 'utf8')).toBe(template('WAVEBOARD.md'));
+      expect(migrated.stdout).toMatch(/moved /);
+      expect(existsSync(path.join(dir, 'ops', 'WAVEBOARD.md'))).toBe(false);
+      expect(readFileSync(path.join(dir, 'house', 'WAVEBOARD.md'), 'utf8')).toBe('old cards\n');
       const chunks: string[] = [];
       const code = runDoctorCli(['doctor', '--migrate'], {
         stdout: { write: (s) => chunks.push(s) },
@@ -199,6 +199,24 @@ describe('grok-bot house init --migrate', () => {
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
+  });
+});
+
+describe('board when Bifrost is not configured', () => {
+  it('uses house/WAVEBOARD.md when LIVE_URL is unset and Bifrost only when it is set', () => {
+    expect(boardSurface({})).toEqual({ board: 'waveboard', read: 'house/WAVEBOARD.md' });
+    expect(boardSurface({ LIVE_URL: '' })).toEqual({ board: 'waveboard', read: 'house/WAVEBOARD.md' });
+    expect(boardSurface({ LIVE_URL: '   ' })).toEqual({ board: 'waveboard', read: 'house/WAVEBOARD.md' });
+    expect(boardSurface({ LIVE_URL: 'https://burst-live-production.up.railway.app' })).toEqual({
+      board: 'bifrost',
+      read: 'GET /cards',
+    });
+    const board = template('WAVEBOARD.md');
+    expect(board).toContain('when `LIVE_URL` is unset');
+    expect(board).not.toContain('Do not add open work');
+    const copied = template('HOUSE.md');
+    expect(copied).toContain('house/WAVEBOARD.md when LIVE_URL is unset');
+    expect(copied).toContain('when LIVE_URL is set');
   });
 });
 

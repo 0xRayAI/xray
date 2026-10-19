@@ -1,6 +1,6 @@
 # Wave schedule
 
-The board is Bifrost. `WAVEBOARD.md` is retired. Seats read Bifrost cards.
+When `LIVE_URL` is set, the board is Bifrost and this schedule runs there. When `LIVE_URL` is unset, open cards stay in `WAVEBOARD.md`.
 
 A wave is one stretch of cards in `house/bifrost-waves.json`, in rank order. The template ships with an empty `waves` array. Fill it with this house's ranked backlog. `house init` copies that empty file. It does not copy another fleet's issues.
 

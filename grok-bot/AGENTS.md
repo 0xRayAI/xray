@@ -51,12 +51,12 @@ Cold-seat proof: [GROK-HOOK-PROOF.md](https://github.com/0xRayAI/xray/blob/main/
 - Grok Bot **chat** is not that plugin host — do not invent a fake PreToolUse floor in the assistant.
 - Where the Grok CLI plugin loads `hooks.json`, A-hooks are live; elsewhere rely on skills + Strict review + mill gates.
 
-**Wearing a suit in Grok Bot chat.** A seat wears its suit when its profile names its suit folder and DNA. Each time it wakes, or after its chat history is compacted, it reads the suit's `.xray/state/STATION.md`, then its Bifrost cards (`GET /cards`) and `house/ATTENTION_STATE.md`. Before it says ship or live work is done, it runs `npx @0xray/foundry inspect` from the suit folder and quotes `ok: true`. A doctor PASS alone doesn't prove the suit is worn.
+**Wearing a suit in Grok Bot chat.** A seat wears its suit when its profile names its suit folder and DNA. Each time it wakes, or after its chat history is compacted, it reads the suit's `.xray/state/STATION.md`, then the board: `house/WAVEBOARD.md` when `LIVE_URL` is unset, or its Bifrost cards (`GET /cards`) when `LIVE_URL` is set, and `house/ATTENTION_STATE.md`. Before it says ship or live work is done, it runs `npx @0xray/foundry inspect` from the suit folder and quotes `ok: true`. A doctor PASS alone doesn't prove the suit is worn.
 
 ## Survive compaction (Grok Bot chat)
 The host may summarize or trim a long thread. 0xRay compact hooks (PreCompact) and Repertoire do **not** run in this chat — do not wait for them.
 
-Use skill `survive-compact`: read on-disk notes (station, then Bifrost cards and `house/ATTENTION_STATE.md`, else `templates/house/`, then stored memory), name the live track, **resume** the existing cloud, and do not rebuild what disk already shows done. Chat may lose early turns; disk must not lose the ticket. Do not treat a re-fed summary as proof the old context window survived.
+Use skill `survive-compact`: read on-disk notes (station, then `house/WAVEBOARD.md` when `LIVE_URL` is unset or Bifrost cards when `LIVE_URL` is set, and `house/ATTENTION_STATE.md`, else `templates/house/`, then stored memory), name the live track, **resume** the existing cloud, and do not rebuild what disk already shows done. Chat may lose early turns; disk must not lose the ticket. Do not treat a re-fed summary as proof the old context window survived.
 
 Repertoire is preferred on a worn 0xray seat. Do not bolt full Repertoire MCP onto every Grok Bot chat as theater — this chat does not fire 0xRay hooks.
 

@@ -1,6 +1,6 @@
 # WAVEBOARD
 
-Retired. The board is Bifrost. Seats read Bifrost cards (`GET /cards` on the Bifrost server). Do not add open work here.
+This file is the board when `LIVE_URL` is unset. When `LIVE_URL` is set, open cards are Bifrost (`GET /cards`) and new work goes there.
 
 Open cards. One card, one owner.
 

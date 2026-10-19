@@ -35,6 +35,7 @@ Merge-is-deploy, named one by one:
 7. Spend money or change billing
 
 ## Board
-- Bifrost cards (`GET /cards`) — open cards. `house/WAVEBOARD.md` is retired.
+- `house/WAVEBOARD.md` — open cards when `LIVE_URL` is unset
+- Bifrost cards (`GET /cards`) — open cards when `LIVE_URL` is set
 - `house/ATTENTION_STATE.md` — what needs the owner now
-- `house/bifrost-waves.json` — ranked waves. The server reads this file.
+- `house/bifrost-waves.json` — ranked waves. The server reads this file when Bifrost is running.
