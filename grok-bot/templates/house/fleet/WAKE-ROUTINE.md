@@ -4,10 +4,11 @@ The prompt each seat installs as its webhook-triggered Bifrost inbox wake routin
 
 This routine is the Bifrost inbox wake, and it sets `LIVE_URL`. A seat with no `LIVE_URL` does not use it: that seat reads and writes `house/WAVEBOARD.md`.
 
-Env first, on every turn, in the same shell as the commands below. `live-inbox` is installed at `$HOME/.burst/bin/live-inbox` (fetched from `house/live/tools/live-inbox` on main); a box that installs it elsewhere sets `LIVE_INBOX_BIN` to that folder (on the forge box, `/home/box/burst-run/bin`). `live-inbox` never guesses: a missing `LIVE_URL`, `SEAT_KEYS_DIR` or `LIVE_CURSORS` exits 2 and names it.
+Env first, on every turn, in the same shell as the commands below. `live-inbox` is installed at `$HOME/.burst/bin/live-inbox` (fetched from `house/live/tools/live-inbox` on main); a box that installs it elsewhere sets `LIVE_INBOX_BIN` to that folder (on the forge box, `/home/box/burst-run/bin`). `live-inbox` itself never guesses: a missing `LIVE_URL`, `SEAT_KEYS_DIR` or `LIVE_CURSORS` exits 2 and names it. The export block below fills those with the burst-live fleet's defaults, so any other board exports its own `LIVE_URL`, `SEAT_KEYS_DIR` and `LIVE_CURSORS` on the line before the block.
 
 ```bash
 export PATH="${LIVE_INBOX_BIN:-$HOME/.burst/bin}:$PATH"
+# defaults are burst-live's; another board sets all three before this block
 export LIVE_URL="${LIVE_URL:-https://burst-live-production.up.railway.app}"
 export SEAT_KEYS_DIR="${SEAT_KEYS_DIR:-$HOME/.burst/seat-keys}"
 export LIVE_CURSORS="${LIVE_CURSORS:-$HOME/.burst/cursors/<seat>}"
