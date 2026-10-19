@@ -8,7 +8,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { configureWorkTrack, acceptCursorWebhook, boardCloudAgents, classifyCursor, deriveTrackFromDir, readJsonl } from '../app/worktrack.mjs';
+import { configureWorkTrack, acceptCursorWebhook, boardCloudAgents, classifyCursor, criticCloudId, deriveTrackFromDir, readJsonl, stampCriticCloud } from '../app/worktrack.mjs';
 import { listenPort } from './free-port.mjs';
 
 const APP = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app', 'server.mjs');
@@ -16,6 +16,24 @@ const PAGE = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app'
 const SECRET = 'cursor-webhook-secret-test-fixture-32';
 
 configureWorkTrack({ seatIds: ['critic', 'arch1', 'mill'] });
+
+test('a PR keeps one critic cloud id and a new head resumes it', () => {
+  const card = '0xRayAI/xray#399';
+  const agents = [
+    { bcId: 'bc-old-critic', seat: 'critic', card, state: 'finished', updated_ct: '2026-10-19T12:00:00Z' },
+    { bcId: 'bc-mill-build', seat: 'mill', card, state: 'running', updated_ct: '2026-10-19T13:00:00Z' },
+    { bcId: 'bc-live-critic', seat: 'critic', card: '0xrayai/xray#399', state: 'running', updated_ct: '2026-10-19T14:00:00Z' },
+    { bcId: 'bc-other-pr', seat: 'critic', card: '0xRayAI/xray#400', state: 'running', updated_ct: '2026-10-19T15:00:00Z' },
+  ];
+  assert.equal(criticCloudId(card, agents), 'bc-live-critic');
+  const [stamped, other] = stampCriticCloud([{ key: card, title: 'wake' }, { key: '0xRayAI/xray#400' }], agents);
+  assert.equal(stamped.critic_bc, 'bc-live-critic');
+  assert.equal(other.critic_bc, 'bc-other-pr');
+  const failedOnly = [{ bcId: 'bc-refused', seat: 'critic', card, state: 'failed', updated_ct: '2026-10-19T16:00:00Z' }];
+  assert.equal(criticCloudId(card, failedOnly), 'bc-refused');
+  const kept = stampCriticCloud([{ key: card, critic_bc: 'bc-stored' }], []);
+  assert.equal(kept[0].critic_bc, 'bc-stored');
+});
 
 function sha(s) { return crypto.createHash('sha256').update(s).digest('hex'); }
 function sign(secret, body) { return 'sha256=' + crypto.createHmac('sha256', secret).update(body).digest('hex'); }

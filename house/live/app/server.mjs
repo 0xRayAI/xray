@@ -18,7 +18,7 @@ import { parseAllowlist, mergeCards, sourceCardsFrom, projectAllowed, validateIt
 import { checkRoutesFromDir, readRoutingMap, createLoginResolver, auditLogins } from './routes.mjs';
 import { fingerprint, tripwire, createClock, mutedSeats, selectStallSeats } from './governor.mjs';
 import { createArch1Launch, ARCH1_CANON } from './arch1-launch.mjs';
-import { configureWorkTrack, acceptCursorWebhook, appendWake, boardCloudAgents, canonSeatToken, deriveTrackFromDir, displaySeat, loadSeatAgentMap, readJsonl, readWakeRows, seatForAgentId, toToken } from './worktrack.mjs';
+import { configureWorkTrack, acceptCursorWebhook, appendWake, boardCloudAgents, canonSeatToken, deriveTrackFromDir, displaySeat, loadSeatAgentMap, readJsonl, readWakeRows, seatForAgentId, stampCriticCloud, toToken } from './worktrack.mjs';
 const COLLECTOR_DIR_EARLY = () => path.join(path.dirname(fileURLToPath(import.meta.url)), 'collector');
 import { initArchive, appendArchive, backfillArchive, readArchive, validArchiveDate, KINDS as ARCHIVE_KINDS, cardHistory, archiveDays } from './archive.mjs';
 import { pinnedOrigin } from './origin.mjs';
@@ -1168,7 +1168,10 @@ function mergedHeader(now = Date.now()) {
   const af = applyStoredActivity(h.fleet, now); if (af) h.fleet = af;   // open turns and tasks (activity.jsonl)
   h.track = trackView(now);   // Cursor agents, packets, wakes and blockers rebuilt from the volume
   h.cloud_agents = cloudAgentBoard();   // first-class board rows: bcId, seat, card, state, last update
-  if (h.board) h.board.cloud_agents = h.cloud_agents;
+  if (h.board) {
+    h.board.cloud_agents = h.cloud_agents;
+    if (Array.isArray(h.board.cards)) h.board.cards = stampCriticCloud(h.board.cards, h.cloud_agents);
+  }
   const wf = applyTrackWorking(h.fleet, h.track, now); if (wf) h.fleet = wf;   // woken packet or running agent
   const gf = applyGithubWorking(h.fleet, now); if (gf) h.fleet = gf;   // GitHub actor on a PR or issue
   if (h.fleet) h.fleet = clearClosedWork(h.fleet);
@@ -2817,7 +2820,7 @@ async function handle(req, res) {
     if (who && want !== who && who !== COS && who !== OPS) return json(req, res, 403, { error: 'not your seat' });
     const all = want === 'all' || want === 'coord' || want === COS || want === OPS;
     const cs = CARD_SEAT[want] || want;
-    return json(req, res, 200, { seat: want, cards: cardsView(bfCards.filter(c => all || cardSeats(c).includes(cs))) });
+    return json(req, res, 200, { seat: want, cards: stampCriticCloud(cardsView(bfCards.filter(c => all || cardSeats(c).includes(cs))), cloudAgentBoard()) });
   }
   if (p === '/nudges') {   // GET /nudges?since=<id>: forge's key only (forge delivers them; was the kit's Operator)
     if (m !== 'GET') return json(req, res, 405, { error: 'method not allowed' }, { Allow: 'GET' });

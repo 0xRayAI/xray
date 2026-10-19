@@ -404,6 +404,35 @@ function safePr(value) {
   return '';
 }
 
+/** The critic cloud id for one PR. A running agent wins, then the newest. A failed id is used only when it is the only one. */
+export function criticCloudId(cardKey, agents) {
+  const key = String(cardKey || '').trim().toLowerCase();
+  if (!key) return '';
+  const rows = (Array.isArray(agents) ? agents : []).filter((row) => {
+    if (!row || String(row.seat || '').toLowerCase() !== 'critic') return false;
+    return String(row.card || '').trim().toLowerCase() === key && typeof row.bcId === 'string' && row.bcId;
+  });
+  if (!rows.length) return '';
+  const usable = rows.filter((row) => row.state !== 'failed');
+  const pool = usable.length ? usable : rows;
+  pool.sort((a, b) => {
+    const run = (b.state === 'running' ? 1 : 0) - (a.state === 'running' ? 1 : 0);
+    if (run) return run;
+    return (Date.parse(b.updated_ct) || 0) - (Date.parse(a.updated_ct) || 0) || String(b.bcId).localeCompare(String(a.bcId));
+  });
+  return pool[0].bcId;
+}
+
+/** Copy critic_bc onto each card from the critic cloud row for that PR. A card with no critic row keeps a stored id. */
+export function stampCriticCloud(cards, agents) {
+  return (Array.isArray(cards) ? cards : []).map((card) => {
+    if (!card || typeof card !== 'object') return card;
+    const id = criticCloudId(card.key, agents);
+    if (!id || card.critic_bc === id) return card;
+    return { ...card, critic_bc: id };
+  });
+}
+
 /** One board row per cloud agent. Latest line wins the state; an earlier seat, card, or PR stays. */
 export function boardCloudAgents({ agents = [], activity = [], links = [] } = {}) {
   const events = [];
