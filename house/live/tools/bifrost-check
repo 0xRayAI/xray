@@ -7,7 +7,7 @@ Offline rules (always run, no writes):
   routing      every seat routed; every route @-mentions the seat's real GitHub login (bifrost init --check)
   deliver-sim  for each seat, an issue and an @-comment naming it route to that seat's inbox (the kit's own router)
   edit-sim     a comment edited to add an @-mention routes one line to the newly mentioned seat, once (inbox_pass)
-  tripwire     an empty board and a stalled board each fire the timed run once per window (the kit's governor.mjs)
+  tripwire     an empty board and a stalled board each fire the timed run once per window; at BIFROST_WEEKLY_BURN>=0.75 the empty board stays quiet (the kit's governor.mjs)
   nudge        a stuck line nudges L1 -> L3, then wakes the coordinator once (the kit's server, local, fake seats)
   nodes        every fleet-nodes.json bot login resolves on GitHub (404 fails; same lookup as routing)
   lexicon      every bolded term in the pack OP-PROC and runbooks is defined in grok-bot/LEXICON.md

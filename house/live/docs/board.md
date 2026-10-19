@@ -53,7 +53,7 @@ A `Parked:` comment still parks the card and wins over a hold.
 
 ## Date on a card
 
-A card may carry `start_after`, an ISO time with a numeric offset. Use Chicago time (`America/Chicago`, `-05:00` or `-06:00`), for example `2026-10-18T08:00-05:00`.
+A card may carry `start_after`, an ISO time with a numeric offset. The writer computes that offset from `America/Chicago` at the moment it writes (`-05:00` or `-06:00` for that instant), for example `2026-10-18T08:00-05:00`. A stamp already stored is not rewritten.
 
 Set it in either of these ways:
 
