@@ -1,5 +1,7 @@
 # WAVEBOARD
 
+Retired. The board is Bifrost. Seats read Bifrost cards (`GET /cards` on the Bifrost server). Do not add open work here.
+
 Open cards. One card, one owner.
 
 The live board is filled from the feed. A card is one GitHub issue or pull request (`repo#number`): title, url, owner seat, stage (`open` > `review` > `fix` > `merge` > `retest` > `done`), state (`live`, `parked`, or `closed`).

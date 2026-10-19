@@ -17,6 +17,7 @@ import { seatPresence, presentSeat, foldSeatTouch, fleetConfigOf, readWakeOk, wr
 import { parseAllowlist, mergeCards, sourceCardsFrom, projectAllowed, validateItem, workEventToItem, cardNoNudge, workItemNewer } from './source.mjs';
 import { checkRoutesFromDir, readRoutingMap, createLoginResolver, auditLogins } from './routes.mjs';
 import { fingerprint, tripwire, createClock, mutedSeats, selectStallSeats } from './governor.mjs';
+import { cardsFromSeed, retainSeedCards, scheduleWaves } from './wave-schedule.mjs';
 import { createArch1Launch, ARCH1_CANON } from './arch1-launch.mjs';
 import { configureWorkTrack, acceptCursorWebhook, appendWake, boardCloudAgents, canonSeatToken, deriveTrackFromDir, displaySeat, loadSeatAgentMap, readJsonl, readWakeRows, seatForAgentId, stampCriticCloud, toToken } from './worktrack.mjs';
 const COLLECTOR_DIR_EARLY = () => path.join(path.dirname(fileURLToPath(import.meta.url)), 'collector');
@@ -743,7 +744,17 @@ function dotsFleet(fleet, now = Date.now()) {   // Assistant node state, merged 
   return f;
 }
 // cards: the collector waveboard, plus one card per accepted source item. A collector pass replaces only the wave cards.
-let waveCards = []; let bfCards = []; let nudges = []; let waveSig = ''; let boardSig = '';
+let waveCards = []; let bfCards = []; let seedHold = []; let nudges = []; let waveSig = ''; let boardSig = '';
+let WAVE_SEED = { waves: [] };
+try {
+  const seedPath = process.env.BIFROST_WAVE_SEED || path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'grok-bot', 'templates', 'house', 'bifrost-waves.json');
+  const seed = JSON.parse(fs.readFileSync(seedPath, 'utf8'));
+  if (seed && Array.isArray(seed.waves)) WAVE_SEED = seed;
+} catch { /* a fleet with no seed file does not schedule waves */ }
+try {
+  const held = JSON.parse(fs.readFileSync(path.join(STATE_DIR, 'wave-seed.json'), 'utf8'));
+  seedHold = Array.isArray(held.cards) ? held.cards : [];
+} catch { /* nothing loaded */ }
 let cardsAt = 0;
 let githubDataAt = 0;
 let githubCardAt = 0;
@@ -822,12 +833,18 @@ function itemsFromWork() {
   }
   return [...latest.values()];
 }
+function waveBoard(cards, now = Date.now()) {
+  const coord = (typeof COORD_SEAT !== 'undefined' && COORD_SEAT) || COS;
+  const tripMs = typeof TRIP_MS === 'number' ? TRIP_MS : 30 * 60000;
+  return scheduleWaves(retainSeedCards(cards, bfCards, seedHold), WAVE_SEED, { coord, now, tripMs, prior: bfCards });
+}
 function publishBoard(updatedCt) {
   const merged = mergeCards(waveCards, sourceCardsFrom(itemsFromWork(), { seats: SEAT_IDS }));
-  const sig = JSON.stringify(merged);
+  const scheduled = waveBoard(merged);
+  const sig = JSON.stringify(scheduled.cards);
   if (sig === boardSig) return;
   boardSig = sig;
-  bfCards = merged; cardsAt = Date.now();
+  bfCards = scheduled.cards; cardsAt = Date.now();
   const stamp = updatedCt || new Date().toISOString();
   bfWrite('cards.json', JSON.stringify({ updated_ct: stamp, cards: bfCards }));
   for (const c of bfCards) {
@@ -1341,6 +1358,7 @@ function wakeRun(run) {
   for (const [seat, by] of Object.entries(run.deadlines)) {
     const n = openLines(seat).length;
     const reason = run.reason === 'empty' ? `board empty, pull next work by ${by}`
+      : run.reason === 'plan' ? `plan next wave: nothing carded, card the ranked backlog by ${by}`
       : `timed run (${run.reason}): move your open work or post your blocker in one line by ${by}`;
     noteWake(seat, { id: `clock:${run.started_at}:${seat}`, type: 'timed_run', title: run.reason === 'empty' ? 'board empty' : `timed run: ${n} open line(s)`, reason });
   }
@@ -1354,9 +1372,15 @@ function wakeRun(run) {
 function moveFp() { return fingerprint([...evs.values()].map(v => v.e).filter(e => e && e.moves !== false), { acks: Object.values(inboxAcks).reduce((n, a) => n + (a ? a.length : 0), 0) }); }
 function governorRun(now = Date.now()) {
   if (evalNudges(now)) { seq++; fullDirty = true; }
+  const scheduled = waveBoard(bfCards, now);
+  if (scheduled.changed) {
+    bfCards = scheduled.cards; cardsAt = now; boardSig = JSON.stringify(bfCards);
+    bfWrite('cards.json', JSON.stringify({ updated_ct: new Date(now).toISOString(), cards: bfCards }));
+    seq++; fullDirty = true;
+  }
   const w = wakeBoard(now);
-  const r = clock.observe(moveFp(), now, { openCards: bfCards.filter(c => c.state === 'live').length, scheduled: scheduledCards(now), openSeats: stallOpenSeats(now), coord: COORD_SEAT });
-  if (r === 'stall' || r === 'empty') wakeRun(clock.run);
+  const r = clock.observe(moveFp(), now, { openCards: bfCards.filter(c => c.state === 'live').length, scheduled: scheduledCards(now), openSeats: stallOpenSeats(now), coord: COORD_SEAT, planDue: scheduled.planDue });
+  if (r === 'stall' || r === 'empty' || r === 'plan') wakeRun(clock.run);
   if (r === 'cleared') console.log('clock: cleared by a seat move');
   const fp = fingerprint([...evs.values()].map(v => v.e), { nudges: nudges.filter(n => !n.closed_at).map(n => n.id), routing: ROUTING.ok,
     quiet: Object.keys(w).filter(k => w[k].quiet).sort(), clock: clock.run && clock.run.started_at });
@@ -2810,6 +2834,20 @@ async function handle(req, res) {
     evalNudges(now);
     seq++; header = mergedHeader(); fullDirty = true;
     return json(req, res, 200, { ok: true, repo, number, start_after: when.iso });
+  }
+  if (p === '/cards/seed' && m === 'POST') {   // ingest secret only. Loads a fleet wave seed. Does not run unless called.
+    const h = req.headers.authorization || '';
+    const tok = h.startsWith('Bearer ') ? h.slice(7).trim() : '';
+    if (!tok || !safeEq(tok, INGEST_SECRET)) { req.resume(); return json(req, res, 401, { error: 'unauthorized' }); }
+    let d; try { d = JSON.parse((await readBody(req, 256 * 1024)).toString('utf8')); } catch { return json(req, res, 400, { error: 'invalid json' }); }
+    if (!d || !Array.isArray(d.waves)) return json(req, res, 400, { error: 'waves array required' });
+    const now = Date.now();
+    WAVE_SEED = d;
+    seedHold = cardsFromSeed(d, { now, coord: COORD_SEAT || COS });
+    bfWrite('wave-seed.json', JSON.stringify({ updated_ct: new Date(now).toISOString(), cards: seedHold }));
+    publishBoard(new Date(now).toISOString());
+    seq++; header = mergedHeader(); fullDirty = true;
+    return json(req, res, 200, { ok: true, cards: seedHold.length });
   }
   if (p === '/cards') {   // GET /cards?seat=<seat>: that seat's key (CoS blinky and forge may read any seat); ?seat=all (or blinky / forge) sees all.
     // Public mode: no key needed, any ?seat= (default all cards); a key that is sent still limits to its own seat.

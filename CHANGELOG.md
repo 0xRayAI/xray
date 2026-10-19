@@ -34,6 +34,10 @@ Goggles reads the plant, or a plane named in suit config, and fills `Worn:` with
 
 Wear seeds `STATION.md` and `NOTES.md` when they are missing. After that, wear changes only the version token described above and leaves the rest of the station as written. The seat wake reads both on every turn, including Grok wakes that do not run `.cursor` hooks. (#395, #386)
 
+### Wave schedule
+
+Bifrost is the board. The local waveboard template is retired. When a wave's last card is closed or merged, the board raises one plan-next-wave card for the CoS seat with the ranked backlog, and the tripwire flags it when nothing is carded in that window. `load-wave-seed` prints the W1–W5 seed and does not post. `--apply` refuses the production board unless `BIFROST_SEED_APPLY=1`.
+
 ## [4.1.2] - 2026-10-19
 
 ### 🔄 Changes

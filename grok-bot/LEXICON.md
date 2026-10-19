@@ -35,7 +35,7 @@ Ops nouns — clocks, tickets, roles, decks. Not products.
 |------|-------------|
 | **beat** | One real event on a card: pull request opened or pushed, review verdict, merge, merge-queue tick, owner message, blocker, or a finished deploy (deploy, deploy_fail). CI stays on the card and is not board traffic. A watcher run whose start and end fall in the same second is not a beat |
 | **wave** | Stretch of beats toward one outcome (ship, dist week, proof) |
-| **board** | Where open work is visible (`WAVEBOARD`). GitHub cards grouped by stage, plus one cloud-agent row per `bcId` (owning seat, linked card, state `running` / `finished` / `failed`, last update). burst-live is this board, never a node on it |
+| **board** | Bifrost. Open work is a Bifrost card. The local `WAVEBOARD.md` is retired. GitHub cards grouped by stage, plus one cloud-agent row per `bcId` (owning seat, linked card, state `running` / `finished` / `failed`, last update). burst-live is this board, never a node on it |
 | **card** | One GitHub issue or pull request (`repo#number`): title, url, owner seat, stage (`open` > `review` > `fix` > `merge` > `retest` > `done`), state (`live`, `parked`, or `closed`) |
 | **seat** | Named bot role (CoS, forge, critic, herald, magnet…) |
 | **station** | "The station card is the one-line ticket at .xray/state/STATION.md." "The station module writes this card." Intent (≤240 chars) and the next cut; heat stamps `Cascade:` and `Sleeve:`. Never hand-edited; read after a compact, and on every wake. "The long body belongs in notes." No secrets, only env var names. (plates: `docs-site/docs/plates/station-card.md`, guide `docs-site/docs/guides/station-vs-repertoire.md`) |
@@ -71,7 +71,7 @@ How we act — not a product, not a ticket type.
 | mill ≠ plant (verb) | mill = product organ; plant = fasten act (or colloquial floor) |
 | dist ≠ product | lane/workstream for announcing products |
 | beat ≠ card | a real event on a card ≠ the card |
-| station ≠ board | CoS deck ≠ full WAVEBOARD |
+| station ≠ board | CoS deck ≠ the Bifrost board |
 | card ≠ receipt | assign ≠ proof |
 | group ≠ Station | chat bus ≠ durable deck |
 | pin (shop) ≠ pin (verb on-chain) | shop name vs Groover pin step — say which |
@@ -141,7 +141,7 @@ Don't confuse: watcher ≠ Dist; workstream ≠ product; workstream ≠ planes.
 | Term | Bucket | Plain |
 |------|--------|-------|
 | **Bifrost** | Workstream | The fleet's live board and router (burst-live). burst-live is the board, never a node on it. Turns every issue, PR and comment into a card and an inbox line, then wakes the seat. |
-| **tripwire** | Workstream | Fires when nothing has moved for a window: a stalled board wakes each card owner with a deadline; an empty board wakes the coordinator to pull the next issue. At most once per window. |
+| **tripwire** | Workstream | Fires when nothing has moved for a window: a stalled board wakes each card owner with a deadline; an empty board wakes the coordinator to pull the next issue. At most once per window. A closed wave raises one plan next wave card for the coordinator; the tripwire flags that card when nothing is carded in the window. |
 | **nudge** | Workstream | A live card with no beat: L1 goes to the next owner, or else the card owner. L2 goes to the CoS role. L3 repeats to the L1 seat, and the CoS role is woken once to reassign. An unacked inbox line steps L1, L2, and L3 on that same seat, and the CoS role is woken at L3. A stranger's `Start after:` comment is ignored. A time more than 30 days out is ignored. `merged_by` is the merger, never the author. |
 | **routing** | Workstream | Which seat gets which line. The routing map lists each seat once with its real GitHub login and nicknames; served read-only at `/routing`. Look a login up there before any @-mention. |
 | **two loops** | Workstream | Outer loop: GitHub issues, PRs and @-comments (the record). Inner loop: seat DMs, each pointing at one of them (the wake). |
@@ -186,6 +186,11 @@ Every bolded term in the pack OP-PROC and runbooks is defined here (`bifrost che
 | **boil-up** | Workstream | A periodic correlate-and-sync pass over OP-PROC (a rules engine for bots): similar, compounding rules merge into one broader rule. CoS triggers it every few waves or past 70 of 75 lines. |
 | **activity key** | Workstream | The per-seat `SEAT_KEYS` hash on `POST /activity`. The seat posts only as itself. A cross-seat `seat` is `403` seat mismatch. |
 | **button up** | Practices | When weekly burn hits the hold line, every seat stops new work, runs no local builds, tests, or deploys on its own computer, pauses its Bifrost inbox wake until the reset, leaves only cloud agents for anything essential, and reports and acks in the room. |
+
+## Lexicon add (2026-10-19 — wave schedule)
+| Term | Bucket | Plain |
+|------|--------|-------|
+| **plan next wave** | Workstream | The card Bifrost raises for the coordinator when a wave's last card is closed or merged. It carries the ranked backlog of waves still open. The tripwire flags it `nothing carded` when the window passes and no new card was added. |
 
 ## Lexicon add (2026-10-18 — seek)
 | Term | Bucket | Plain |

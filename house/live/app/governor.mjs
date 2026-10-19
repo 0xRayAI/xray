@@ -19,6 +19,7 @@ export function tripwire() {
 }
 
 // Timed run (the clock). The tripwire is the trigger, on EITHER of two conditions once nothing has moved for tripMs:
+//   plan: a plan-next-wave card is due -> the CoS seat is woken once (the card is already flagged);
 //   stall: open cards on the board -> each seat with open work is woken with its own deadline (perSeatMs apart);
 //   empty: no open cards -> the CoS (coord role) seat is woken to pull the next work.
 // The CoS can start a run by hand (POST /clock). Blockers come back as one line; the countdown shows on the board until a
@@ -59,8 +60,8 @@ export function createClock({ tripMs, perSeatMs, now = Date.now() }) {
   };
   return {
     get run() { return run; },
-    /** -> 'stall' | 'empty' | 'cleared' | null.
-     *  moveFp: fingerprint of seat moves (events, acks); board: { openCards, openSeats, coord }. */
+    /** -> 'plan' | 'stall' | 'empty' | 'cleared' | null.
+     *  moveFp: fingerprint of seat moves (events, acks); board: { openCards, openSeats, coord, planDue }. */
     observe(moveFp, t, board) {
       if (moveFp !== lastFp) {
         const first = lastFp === null; lastFp = moveFp; lastMove = t; lastTrip = null;
@@ -69,7 +70,8 @@ export function createClock({ tripMs, perSeatMs, now = Date.now() }) {
       }
       const armed = lastTrip === null || t - lastTrip >= tripMs;
       if (!armed || t - lastMove < tripMs) return null;
-      const { openCards = 0, openSeats = [], coord = null, scheduled = 0 } = board || {};
+      const { openCards = 0, openSeats = [], coord = null, scheduled = 0, planDue = false } = board || {};
+      if (planDue && coord) { start(t, [coord], 'plan'); return 'plan'; }
       if (openCards > 0) {
         const seats = openSeats.length ? openSeats : [coord];
         if (!seats.filter(Boolean).length) return null;
