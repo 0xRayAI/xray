@@ -5,9 +5,16 @@
  * `.opencode/enforcer-config.json`). That is factory boot theater, not wear.
  */
 
+import { createRequire } from "node:module";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { frameworkLogger } from "../../core/framework-logger.js";
+
+const requireCjs = createRequire(import.meta.url);
+const suitSeat = requireCjs("../../../scripts/node/suit-seat.cjs") as {
+  fastenedPlantSkills: (cwd: string) => string[];
+  isGitWorkTree: (cwd: string) => boolean;
+};
 
 /** Same paths as `REQUIRED_PACK_PATHS` in assert-packed-dist-cli.mjs — typed here so src/cli does not import untyped .mjs. */
 export const VALIDATE_PACK_PATHS: readonly string[] = [
@@ -29,6 +36,7 @@ export const VALIDATE_PACK_PATHS: readonly string[] = [
   "dist/integrations/hooks/goggles-planes.json",
   "dist/integrations/hooks/goggles-mcp.mjs",
   "scripts/mjs/run-goggles-mcp.mjs",
+  "scripts/node/suit-seat.cjs",
   "docs-site/docs/plates/memory-recall.md",
   "docs-site/docs/plates/processor.md",
   "docs-site/docs/plates/goggles.md",
@@ -47,6 +55,15 @@ export const CONSUMER_WEAR_PATHS = [
   ".cursor/hooks/pre-tool-use.sh",
   ".cursor/hooks/xray-cloud-hook.sh",
 ] as const;
+
+/** Skipped on a folder that is not a git work tree. Wear does not install them there. */
+export const CONSUMER_HOOK_PATHS = [
+  ".cursor/hooks.json",
+  ".cursor/hooks/pre-tool-use.sh",
+  ".cursor/hooks/xray-cloud-hook.sh",
+] as const;
+
+export const HOOKS_SKIPPED_DETAIL = "hooks skipped because this folder is not a git work tree";
 
 export const MILL_PLANT_SKILLS = ["mill", "inspect"] as const;
 
@@ -138,25 +155,35 @@ export function collectValidateReport(cwd: string): ValidateReport {
   });
 
   if (consumer) {
-    const missingWear = CONSUMER_WEAR_PATHS.filter((p) => !checkPath(cwd, p));
+    const gitTree = suitSeat.isGitWorkTree(cwd);
+    const hookPaths = new Set<string>(CONSUMER_HOOK_PATHS);
+    const requiredWear = gitTree
+      ? CONSUMER_WEAR_PATHS
+      : CONSUMER_WEAR_PATHS.filter((rel) => !hookPaths.has(rel));
+    const missingWear = requiredWear.filter((p) => !checkPath(cwd, p));
+    const wearDetail = gitTree
+      ? missingWear.length === 0
+        ? "AGENTS.md · .mcp.json · .xray · .cursor/hooks.json · .cursor/hooks/*.sh"
+        : `missing ${missingWear.join(", ")}`
+      : missingWear.length === 0
+        ? `AGENTS.md · .mcp.json · .xray · ${HOOKS_SKIPPED_DETAIL}`
+        : `missing ${missingWear.join(", ")}; ${HOOKS_SKIPPED_DETAIL}`;
     checks.push({
       id: "consumer-wear",
       ok: missingWear.length === 0,
-      detail:
-        missingWear.length === 0
-          ? "AGENTS.md · .mcp.json · .xray · .cursor/hooks.json · .cursor/hooks/*.sh"
-          : `missing ${missingWear.join(", ")}`,
+      detail: wearDetail,
     });
 
-    const millRoot = join(cwd, ".opencode", "skills");
-    const missingMill = MILL_PLANT_SKILLS.filter((name) => !existsSync(join(millRoot, name, "SKILL.md")));
+    const plantSkills = suitSeat.fastenedPlantSkills(cwd);
+    const plantRoot = join(cwd, ".opencode", "skills");
+    const missingPlant = plantSkills.filter((name) => !existsSync(join(plantRoot, name, "SKILL.md")));
     checks.push({
-      id: "mill-plant",
-      ok: missingMill.length === 0,
+      id: "plant",
+      ok: missingPlant.length === 0,
       detail:
-        missingMill.length === 0
-          ? "mill + inspect fastened"
-          : `missing plant ${missingMill.join(", ")}`,
+        missingPlant.length === 0
+          ? `${plantSkills.join(" + ")} fastened`
+          : `missing plant ${missingPlant.join(", ")}`,
     });
 
     const repertoire =
@@ -170,16 +197,17 @@ export function collectValidateReport(cwd: string): ValidateReport {
   }
 
   const stationPath = join(cwd, ".xray", "state", "STATION.md");
-  if (existsSync(stationPath)) {
-    const staleHold = stationDurableHoldsNpm(cwd);
-    checks.push({
-      id: "durable-hold",
-      ok: !staleHold,
-      detail: staleHold
+  const stationExists = existsSync(stationPath);
+  const staleHold = stationExists && stationDurableHoldsNpm(cwd);
+  checks.push({
+    id: "durable-hold",
+    ok: !staleHold,
+    detail: !stationExists
+      ? "no STATION.md"
+      : staleHold
         ? "STATION Durable still says Hold npm — heat should have stripped it"
         : "Durable has no Hold npm",
-    });
-  }
+  });
 
   return {
     ok: checks.every((c) => c.ok),

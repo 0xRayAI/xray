@@ -60,7 +60,7 @@ const HELP_LINES = [
   'Remove the 0xray suit and restore the pre-wear hooks file',
   'Initialize xray configuration in the current project',
   'Show comprehensive xray framework status',
-  'Validate consumer wear (pack paths, Cursor hooks, mill plant) — not leftover init.sh',
+  'Validate consumer wear (pack paths, Cursor hooks, fastened plant) — not leftover init.sh',
   'Show all available xray framework capabilities',
   'Check framework health and system status',
   'Generate framework activity and health reports',
@@ -216,7 +216,10 @@ describe('0xray command names', () => {
     expect(specs).not.toContain('../core/config-paths.js');
     expect(hasDynamicImport(entry, '../core/framework-logger.js')).toBe(true);
     expect(hasDynamicImport(entry, '../inference/inference-run-gate.js')).toBe(true);
-    expect(hasDynamicImport(entry, '../core/config-paths.js')).toBe(true);
+    expect(hasDynamicImport(entry, './commands/doctor.js')).toBe(true);
+    const doctor = readFileSync(path.join(root, 'dist/cli/commands/doctor.js'), 'utf8');
+    expect(staticSpecifiers(entry)).not.toContain('./commands/doctor.js');
+    expect(doctor).toContain('../core/config-paths.js');
 
     const grok = readFileSync(path.join(root, 'dist/cli/commands/grok-install.js'), 'utf8');
     expect(staticSpecifiers(grok)).not.toContain('../../integrations/grok/grok-cli.js');

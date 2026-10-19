@@ -511,4 +511,89 @@ describe('goggles plate', () => {
       rmSync(root, { recursive: true, force: true });
     }
   });
+
+  it('reads plant or role from suit config and fills Worn', () => {
+    const sound = mkdtempSync(join(tmpdir(), 'goggles-sound-seat-'));
+    const mill = mkdtempSync(join(tmpdir(), 'goggles-mill-seat-'));
+    const rolePlane = mkdtempSync(join(tmpdir(), 'goggles-role-plane-'));
+    const stockSkills = 'orchestrator, researcher, project-analysis, git-workflow, tech-writer';
+    try {
+      mkdirSync(join(sound, '.xray'), { recursive: true });
+      writeFileSync(join(sound, 'foundry.json'), `${JSON.stringify({ plant: 'sound' })}\n`);
+      writeFileSync(
+        join(sound, '.xray', 'foundry-inventory.json'),
+        `${JSON.stringify({ mill: { version: '4.1.1' }, plant: ['sound'], soundPlant: { skills: ['sound', 'sound-inspect', 'sound-mixer'] } })}\n`,
+      );
+      const soundCard = look([], sound).text;
+      expect(soundCard).toContain('Plane: ecosystem');
+      expect(soundCard).toContain('Skills: sound, sound-inspect, sound-mixer');
+      expect(soundCard).toContain('Worn: sound 4.1.1');
+      expect(soundCard).not.toContain(stockSkills);
+
+      mkdirSync(join(mill, '.xray'), { recursive: true });
+      writeFileSync(join(mill, 'foundry.json'), `${JSON.stringify({ plant: 'mill' })}\n`);
+      writeFileSync(
+        join(mill, '.xray', 'foundry-inventory.json'),
+        `${JSON.stringify({ mill: { version: '4.1.1' }, plant: ['mill'], millPlant: { skills: ['mill', 'inspect'] } })}\n`,
+      );
+      const millCard = look([], mill).text;
+      expect(millCard).toContain('Plane: integration');
+      expect(millCard).toContain('Skills: mill, inspect');
+      expect(millCard).toContain('Worn: mill 4.1.1');
+      expect(millCard).not.toContain(stockSkills);
+      expect(millCard).not.toContain('Skills: sound, sound-inspect, sound-mixer');
+
+      mkdirSync(join(rolePlane, '.xray'), { recursive: true });
+      writeFileSync(join(rolePlane, '.xray', 'config.json'), `${JSON.stringify({ role: 'domain' })}\n`);
+      writeFileSync(join(rolePlane, 'foundry.json'), `${JSON.stringify({ plant: 'mill' })}\n`);
+      writeFileSync(
+        join(rolePlane, '.xray', 'foundry-inventory.json'),
+        `${JSON.stringify({ mill: { version: '4.1.1' }, plant: ['mill'], millPlant: { skills: ['mill', 'inspect'] } })}\n`,
+      );
+      const roleCard = look([], rolePlane).text;
+      expect(roleCard).toContain('Plane: domain');
+      expect(roleCard).toContain('Skills: mill, inspect');
+      expect(roleCard).toContain('Worn: mill 4.1.1');
+      expect(roleCard).not.toContain('code-review, testing-best-practices');
+    } finally {
+      rmSync(sound, { recursive: true, force: true });
+      rmSync(mill, { recursive: true, force: true });
+      rmSync(rolePlane, { recursive: true, force: true });
+    }
+  });
+
+  it('applies the plant lens when the dev plane is already held', () => {
+    const root = mkdtempSync(join(tmpdir(), 'goggles-held-dev-'));
+    const stockSkills = 'orchestrator, researcher, project-analysis, git-workflow, tech-writer';
+    try {
+      mkdirSync(join(root, '.xray'), { recursive: true });
+      writeFileSync(join(root, 'foundry.json'), `${JSON.stringify({ plant: 'sound' })}\n`);
+      writeFileSync(
+        join(root, '.xray', 'foundry-inventory.json'),
+        `${JSON.stringify({ mill: { version: '4.1.1' }, plant: ['sound'], soundPlant: { skills: ['sound', 'sound-inspect', 'sound-mixer'] } })}\n`,
+      );
+      holdPlane(root, 'dev');
+      const card = look([], root).text;
+      expect(card).toContain('Plane: dev');
+      expect(card).toContain('Skills: sound, sound-inspect, sound-mixer');
+      expect(card).toContain('Worn: sound 4.1.1');
+      expect(card).not.toContain(stockSkills);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('does not treat an installed package alone as a mill lens', () => {
+    const root = mkdtempSync(join(tmpdir(), 'goggles-install-only-'));
+    try {
+      mkdirSync(join(root, 'node_modules', '0xray'), { recursive: true });
+      writeFileSync(join(root, 'node_modules', '0xray', 'package.json'), `${JSON.stringify({ name: '0xray', version: '4.1.1' })}\n`);
+      const card = look([], root).text;
+      expect(card).toContain('Plane: dev');
+      expect(card).toContain('Skills: orchestrator, researcher, project-analysis, git-workflow, tech-writer');
+      expect(card).not.toContain('Worn: mill');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
 });
