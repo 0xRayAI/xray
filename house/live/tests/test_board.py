@@ -368,6 +368,15 @@ class Model(unittest.TestCase):
         fresh = self.card([self.ev(68, "pr_open", 3600, title="fresh")], 68)
         self.assertEqual(fresh["state"], "live")
 
+    def test_reopened_issue_is_live_not_parked(self):
+        opened = self.ev(80, "issue_open", 3 * 86400, title="back", pr_state="open")
+        closed = self.ev(80, "issue_close", 2 * 86400)
+        reopened = self.ev(80, "issue_reopen", 30)
+        c = self.card([opened, closed, reopened], 80)
+        self.assertEqual(c["state"], "live")
+        self.assertIn("reopened", [b["what"] for b in c["beats"]])
+        self.assertEqual(self.w.beat_of({"kind": "pr_reopen"}), "reopened")
+
 
 if __name__ == "__main__":
     unittest.main()

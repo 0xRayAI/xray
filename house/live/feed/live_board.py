@@ -62,6 +62,8 @@ def beat_of(e):
         return None                                       # watcher runs are not card work
     if k in ("pr_open", "issue_open", "pr_ready"):
         return "opened"
+    if k in ("pr_reopen", "issue_reopen"):
+        return "reopened"
     if k == "review":
         st = str(e.get("state") or "").upper()
         if st == "APPROVED":
