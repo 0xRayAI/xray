@@ -1,5 +1,7 @@
 # Packet: routing terms
 
+> 0xRay house example — not the general procedure. Your team’s rules live in `house/` after `grok-bot house init`.
+
 Escalating scales of multiplicity. Many streams run at once, across planes. Each stream is placed on the escalator by difficulty. The oscillator sets how many get attention at once. The sweep keeps the cold ones moving.
 
 This file is the whole change. Lexicon, plates, and code stay as they are until a later phase on this same card.
