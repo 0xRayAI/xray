@@ -216,6 +216,9 @@
     ".xray/config.json",
     ".gitignore.default",
     "LICENSE",
+    "grok-bot/bin/grok-bot.js",
+    "grok-bot/lib/pulsar-game.mjs",
+    "grok-bot/ops/arcade/RANGE.md",
     "vendor/@0xray/repertoire/",
     "!vendor/**/*.map"
   ],

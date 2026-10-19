@@ -103,3 +103,17 @@ Code, lexicon edits, plate edits, and a live board write. Turning confer on. Tur
 ## Open edges
 
 Blaze named three fails and a timed lockout, with room on the exact count, and named no clock length. This card proposes three consecutive nos and one wave window. Those two numbers are the escalate line. The score step of 1 and the floor of 0 are the mechanics a test can pin. Critic may nit the step. Critic PASS is the gate before any of this becomes code.
+
+## Shipped game
+
+4.1.3 already carries the version. This game is what that publish includes. It does not bump again.
+
+The mark is still 🔫. Nobody hands a free pulsar. The first seat to solve the range, while the ledger is empty, claims it. That claim is the handoff. A new back can be that seat.
+
+The prize is the local board for one wave. The wave ends at the next Monday 09:00 America/Chicago, wall time, including the weeks the offset changes. After that minute the holder takes no cards. Silence does not extend the hold. The ledger stays closed after the first hit.
+
+The score table, the fail streak, and the solar roster pass are not in this publish. One `governWithSolar` decision, off the merge path, with `onChain: false`, and a refusal of a second pass, stays the follow-up on #416. This game does not call it.
+
+The range stays out of the lexicon **wave** gloss, out of review fails, and out of `task_distribution_strategy`. The plan-next-wave card and the ask-first lines stay put.
+
+The puzzle and the charge word are not written in this card. Critic PASS on `25fbd61` was the packet. The game is the owner's ship for 4.1.3.
