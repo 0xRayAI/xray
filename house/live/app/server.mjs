@@ -24,7 +24,7 @@ const COLLECTOR_DIR_EARLY = () => path.join(path.dirname(fileURLToPath(import.me
 import { initArchive, appendArchive, backfillArchive, readArchive, validArchiveDate, KINDS as ARCHIVE_KINDS, cardHistory, archiveDays } from './archive.mjs';
 import { pinnedOrigin } from './origin.mjs';
 import { missingHandoffs } from './handoff.mjs';
-import { writeStartAfter } from './chicago-stamp.mjs';
+import { clockStamp, writeStartAfter } from './chicago-stamp.mjs';
 import { createBatch } from './pr-batch.mjs';
 const batch = createBatch();
 
@@ -156,7 +156,7 @@ function creditOf(e) {
   if (typeof e.credit === 'string' && e.credit) return e.credit;
   if (!rosterSeats) { try { rosterSeats = new Set((JSON.parse(fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'collector', 'fleet-roster.json'), 'utf8')).seats || []).map(x => String(x).toLowerCase())); } catch { rosterSeats = new Set(); } }
   const f = String(e.from || '').toLowerCase();
-  if (f === 'coord') return 'blinky';
+  if (f === 'coord') return cosSeat();
   if (HUMAN_ALIASES[f]) return HUMAN_ALIASES[f];
   return rosterSeats.has(f) ? f : 'github';
 }
@@ -279,9 +279,27 @@ function postInbox({ secret, headerSecret, body, lines }) {
 // against SEAT_KEYS (Railway variable, JSON seat -> sha256 hex of the key; the keys themselves live only on the box).
 // Our 9 seats (feed/fleet-roster.json) plus the kit's builder / builder-cloud plumbing (installation-token auth, mirror);
 // no route writes to builder. The kit's sample seats (reviewer, tester, qa, coord, operator, triager, ...) are gone: their
-// jobs map to ours (coord -> blinky, operator / tester / qa -> forge, reviewer -> critic), see SEAT_ALIAS.
+// jobs map to ours (coord -> the CoS role, operator / tester / qa -> the operator role, reviewer -> critic).
+// canonSeat and seatIdOf read those roles. The worktrack alias stores the seat strings
+// cosSeat() and operatorSeat() return. blinky and forge stay the defaults when routing is absent.
 const COS = 'blinky', OPS = 'forge', REVIEW = 'critic';
-const SEAT_ALIAS = { coord: COS, coordinator: COS, cos: COS, operator: OPS, tester: OPS, qa: OPS, lab: OPS, reviewer: REVIEW, triager: COS };
+const COORD_SEAT = (() => {   // the CoS role (routing seats.coord.seat): pulls the next work on an empty board
+  try { const r = JSON.parse(fs.readFileSync(path.join(process.env.BIFROST_ROUTING_DIR || path.join(COLLECTOR_DIR_EARLY(), 'routing'), 'inbox-roles.json'), 'utf8'));
+    const c = r?.seats?.coord; return c && !c.off && c.seat ? String(c.seat).toLowerCase() : null; } catch { return null; }
+})();
+const OPERATOR_SEAT = (() => {   // the operator role (routing seats.operator.seat): delivers nudges
+  try { const r = JSON.parse(fs.readFileSync(path.join(process.env.BIFROST_ROUTING_DIR || path.join(COLLECTOR_DIR_EARLY(), 'routing'), 'inbox-roles.json'), 'utf8'));
+    const c = r?.seats?.operator; return c && !c.off && c.seat ? String(c.seat).toLowerCase() : null; } catch { return null; }
+})();
+const cosSeat = () => COORD_SEAT || COS;   // the CoS role (routing seats.coord)
+const operatorSeat = () => OPERATOR_SEAT || OPS;   // the operator role (routing seats.operator)
+const SEAT_ALIAS = {
+  coord: cosSeat(), coordinator: cosSeat(), cos: cosSeat(), triager: cosSeat(),
+  operator: operatorSeat(), tester: operatorSeat(), qa: operatorSeat(), lab: operatorSeat(),
+  reviewer: REVIEW,
+};
+const COORD_NAMES = new Set(['coord', 'coordinator', 'cos', 'triager']);
+const OPERATOR_NAMES = new Set(['operator', 'tester', 'qa', 'lab']);
 // LIVE_SEAT_IDS (comma list) replaces the fleet's seat ids; builder / builder-cloud are kit plumbing and always kept.
 const SEAT_IDS = process.env.LIVE_SEAT_IDS
   ? [...new Set(['builder', 'builder-cloud', ...process.env.LIVE_SEAT_IDS.split(',').map(x => x.trim().toLowerCase()).filter(x => /^[a-z0-9][a-z0-9_-]{0,31}$/.test(x))])]
@@ -289,6 +307,8 @@ const SEAT_IDS = process.env.LIVE_SEAT_IDS
 function canonSeat(name) {
   const id = String(name || '').toLowerCase();
   if (SEAT_IDS.includes(id)) return id;
+  if (COORD_NAMES.has(id)) return cosSeat();
+  if (OPERATOR_NAMES.has(id)) return operatorSeat();
   return SEAT_ALIAS[id] || id;
 }
 // Builder-cloud: the cloud Builder seat (own key). It reads Builder's work: every builder inbox line is mirrored into its inbox,
@@ -444,7 +464,12 @@ async function seatOf(req) {   // -> seat id | null; throws when GitHub can't ve
   return null;
 }
 const seatIdOf = name => { const t = String(name || '').toLowerCase().replace(/[^a-z0-9 -]/g, ' ');
-  for (const w of t.split(/\s+/)) { if (SEAT_IDS.includes(w) || w === 'lead') return w; if (SEAT_ALIAS[w]) return SEAT_ALIAS[w]; } return null; };
+  for (const w of t.split(/\s+/)) {
+    if (SEAT_IDS.includes(w) || w === 'lead') return w;
+    if (COORD_NAMES.has(w)) return cosSeat();
+    if (OPERATOR_NAMES.has(w)) return operatorSeat();
+    if (SEAT_ALIAS[w]) return SEAT_ALIAS[w];
+  } return null; };
 const STATE_DIR = path.join(process.env.MESH_DATA_DIR || '/data', 'live');
 function persistWakeOk() {
   try { writeWakeOk(path.join(STATE_DIR, 'wake-ok.json'), wakeOkAt); }
@@ -524,7 +549,7 @@ function ackLines(seat, what) {
     : typeof what === 'object' && what ? (at < 0 ? null : arr.slice(0, at + 1).map(l => l.id))
     : arr.some(l => l.id === what) ? [what] : null;
   if (!ids) return -1;
-  for (const id of ids) if (!have.has(id)) { have.add(id); n++; appendArchive('acks', { seat, line: id, t_ct: new Date().toISOString() }); }
+  for (const id of ids) if (!have.has(id)) { have.add(id); n++; appendArchive('acks', { seat, line: id, t_ct: ctStamp(Date.now()) }); }
   const live = new Set(arr.map(l => l.id)); inboxAcks[seat] = [...have].filter(id => live.has(id)).slice(-6000);
   bfWrite('acks.json', JSON.stringify(inboxAcks)); return n;
 }
@@ -615,7 +640,6 @@ setInterval(() => auditRouting().catch(() => {}), (Number(process.env.BIFROST_RO
 // (default 900) gets nudge L1 and a re-wake of its seat; L2 and L3 follow one window apart, then it stops (never loops).
 // Each is a nudge record (kind 'line') on the board. An ack (or the card moving on) closes them.
 const NUDGE_LINE_MS = Math.max(1, Number(process.env.NUDGE_LINE_S) > 0 ? Number(process.env.NUDGE_LINE_S) : 900) * 1000;
-const cosSeat = () => (typeof COORD_SEAT !== 'undefined' && COORD_SEAT) || COS;   // the CoS role (routing seats.coord)
 function nudgeLines(now) {
   let changed = false;
   const open = new Set();
@@ -630,7 +654,7 @@ function nudgeLines(now) {
     const last = mine[mine.length - 1];
     if (mine.length >= 3 || (last && now - last.t < NUDGE_LINE_MS)) continue;
     const lvl = mine.length + 1;
-    nudges.push({ id: `${base}:L${lvl}`, kind: 'line', line_key: base, t: now, t_ct: new Date(now).toISOString(), card: '', repo: l.repo || '',
+    nudges.push({ id: `${base}:L${lvl}`, kind: 'line', line_key: base, t: now, t_ct: ctStamp(now), card: '', repo: l.repo || '',
       number: Number.isInteger(l.number) ? l.number : 0, title: String(l.title || '').slice(0, 120), url: String(l.url || '').slice(0, 300),
       stage: '', level: lvl, seat, via: 'unacked line', line: String(l.id).slice(0, 300), since: new Date(t).toISOString() });
     noteWake(seat, { ...l, reason: (`nudge L${lvl}: ` + (l.reason || '')).slice(0, 300) });
@@ -654,7 +678,7 @@ function nudgeSeats(now) {
   const w = wakeBoard(now);
   for (const [seat, v] of Object.entries(w)) if (v.quiet) want.set(`nudge:quiet:${seat}:${v.last_ok || 'boot'}`, { seat, kind: 'quiet', via: 'wake quiet' });
   for (const [id, x] of want) if (!nudges.some(n => n.id === id)) {
-    nudges.push({ id, kind: x.kind, t: now, t_ct: new Date(now).toISOString(), card: '', repo: '', number: 0, title: `${x.seat}: ${x.via}`, url: '',
+    nudges.push({ id, kind: x.kind, t: now, t_ct: ctStamp(now), card: '', repo: '', number: 0, title: `${x.seat}: ${x.via}`, url: '',
       stage: '', level: 1, seat: cosSeat(), about: x.seat, via: x.via });
     changed = true;
   }
@@ -709,7 +733,7 @@ function prBusy(line) {
 }
 function storeFlush(src, out) {
   if (!out || !out.line) return null;
-  const line = { ...out.line, t_ct: new Date().toISOString() };
+  const line = { ...out.line, t_ct: ctStamp(Date.now()) };
   if (src && src.flag === 'hotfix') line.flag = 'hotfix';
   return line;
 }
@@ -894,7 +918,7 @@ function weeklyBurnFraction() {
   return n > 1 ? n / 100 : n;
 }
 function waveBoard(cards, now = Date.now()) {
-  const coord = (typeof COORD_SEAT !== 'undefined' && COORD_SEAT) || COS;
+  const coord = cosSeat();
   return scheduleWaves(retainSeedCards(cards, bfCards, seedHold), WAVE_SEED, {
     coord, now, prior: bfCards, weeklyBurn: weeklyBurnFraction(), window: WAVE_SEED.window,
   });
@@ -941,7 +965,7 @@ function holdOwner(c) {
   if (owner && SEAT_IDS.includes(owner)) return owner;
   const by = seatIdOf(c.hold && c.hold.by);
   if (by && SEAT_IDS.includes(by)) return by;
-  return COS;
+  return cosSeat();
 }
 // A future start_after parks the card (no nudge, and it is not an open card for the tripwire). At that time one
 // inbox line wakes the owning seat. The command override wins over the collector field. Both the date and the
@@ -980,7 +1004,7 @@ function applyStartAfter(now = Date.now()) {
     const seat = owningSeat(c);
     if (!seat || !SEAT_IDS.includes(seat)) continue;
     const line = {
-      id: `start-after:${key}:${when.iso}`, t_ct: new Date(now).toISOString(), seat, type: 'start_after',
+      id: `start-after:${key}:${when.iso}`, t_ct: ctStamp(now), seat, type: 'start_after',
       repo: String(c.repo || ''), number: Number.isInteger(c.number) ? c.number : Number(c.number) || 0,
       title: String(c.title || '').slice(0, 120), url: String(c.url || '').slice(0, 300), reason: `start after ${when.iso}`,
     };
@@ -1017,7 +1041,7 @@ function evalNudges(now = Date.now()) {
       const nid = `nudge:${c.key}:held:${c.last_beat_t}`;
       if (!nudges.some(n => n.id === nid)) {
         const seat = holdOwner(c);
-        nudges.push({ id: nid, kind: 'held', t: now, t_ct: new Date(now).toISOString(), card: c.key, repo: c.repo || '', number: c.number || 0,
+        nudges.push({ id: nid, kind: 'held', t: now, t_ct: ctStamp(now), card: c.key, repo: c.repo || '', number: c.number || 0,
           title: String(c.title || '').slice(0, 120), url: String(c.url || '').slice(0, 300), stage: c.stage || '', level: 0, seat, via: 'held past max', beat_t: c.last_beat_t });
         changed = true;
         if (seat === 'builder') nudgeToCloud(nudges[nudges.length - 1]);
@@ -1034,18 +1058,18 @@ function evalNudges(now = Date.now()) {
     }
     if (c.pinned || c.state !== 'live' || c.waiting || !c.last_beat_t || now - c.last_beat_t < NUDGE_L1_MS) continue;
     const id = lvl => `nudge:${c.key}:L${lvl}:${c.last_beat_t}`, has = lvl => nudges.find(n => n.id === id(lvl));
-    const mk = (lvl, seat, via, nid = id(lvl)) => { nudges.push({ id: nid, t: now, t_ct: new Date(now).toISOString(), card: c.key, repo: c.repo || '', number: c.number || 0,
+    const mk = (lvl, seat, via, nid = id(lvl)) => { nudges.push({ id: nid, t: now, t_ct: ctStamp(now), card: c.key, repo: c.repo || '', number: c.number || 0,
       title: String(c.title || '').slice(0, 120), url: String(c.url || '').slice(0, 300), stage: c.stage || '', level: lvl, seat, via, beat_t: c.last_beat_t }); changed = true;
       if (seat === 'builder') nudgeToCloud(nudges[nudges.length - 1]); };
     const to = seatIdOf(c.nudge_to), nx = to || seatIdOf((c.packet || {})['next owner']);
-    const tgt = nx || seatIdOf(c.owner) || COS, via = to ? (c.nudge_via || 'retest owner') : nx ? 'next owner' : 'card owner';
+    const tgt = nx || seatIdOf(c.owner) || cosSeat(), via = to ? (c.nudge_via || 'retest owner') : nx ? 'next owner' : 'card owner';
     const l1s = nudges.filter(n => n.id === id(1) || n.id.startsWith(id(1) + ':'));
     let l1 = l1s[l1s.length - 1];
     if (!l1) { mk(1, tgt, via); l1 = has(1); }
     else if (!l1.closed_at && l1.seat !== tgt) {
       l1.closed_at = new Date(now).toISOString(); changed = true;
       if (!l1s.some(n => n.seat === tgt)) { mk(1, tgt, via, id(1) + ':' + tgt); l1 = nudges[nudges.length - 1]; } }
-    if (l1 && !has(2) && now - l1.t >= NUDGE_L2_MS) mk(2, COS, 'escalation');
+    if (l1 && !has(2) && now - l1.t >= NUDGE_L2_MS) mk(2, cosSeat(), 'escalation');
     const l2 = has(2);
     if (l2 && !l2.closed_at) {
       const reps = nudges.filter(n => n.card === c.key && n.level === 3 && n.beat_t === c.last_beat_t && !n.closed_at);
@@ -1100,7 +1124,7 @@ function evalHandoffs(now) {
     const base = `nudge:handoff:${ob.key}:${ob.kind}:${ob.sha}`;
     open.add(base);
     if (!nudges.some(n => n.id === base)) {
-      nudges.push({ id: base, kind: 'handoff', t: now, t_ct: new Date(now).toISOString(), card: ob.key, repo: ob.repo, number: ob.number,
+      nudges.push({ id: base, kind: 'handoff', t: now, t_ct: ctStamp(now), card: ob.key, repo: ob.repo, number: ob.number,
         title: `handoff missing ${ob.kind}`.slice(0, 120), url: '', stage: '', level: 1, seat: ob.owes, via: 'handoff missing', beat_t: ob.since, sha: ob.sha, flag: 'handoff missing' });
       changed = true;
       noteWake(ob.owes, { id: base, type: 'nudge', repo: ob.repo, number: ob.number, title: 'handoff missing', reason: `handoff missing ${ob.kind}`, sha: ob.sha });
@@ -1108,7 +1132,7 @@ function evalHandoffs(now) {
     const l1 = nudges.find(n => n.id === base && !n.closed_at);
     const l2id = `${base}:L2`;
     if (l1 && !nudges.some(n => n.id === l2id) && now - l1.t >= NUDGE_L2_MS) {
-      nudges.push({ ...l1, id: l2id, t: now, t_ct: new Date(now).toISOString(), level: 2, seat: ob.owes, via: 'escalation' });
+      nudges.push({ ...l1, id: l2id, t: now, t_ct: ctStamp(now), level: 2, seat: ob.owes, via: 'escalation' });
       changed = true;
       noteWake(ob.owes, { id: l2id, type: 'nudge', repo: ob.repo, number: ob.number, title: 'handoff missing', reason: `nudge L2: handoff missing ${ob.kind}`, sha: ob.sha });
     }
@@ -1119,14 +1143,14 @@ function evalHandoffs(now) {
       if (now - prev >= NUDGE_L3_MS) {
         const id = `${base}:L3:${reps.length + 1}`;
         if (!nudges.some(n => n.id === id)) {
-          nudges.push({ ...l2, id, t: now, t_ct: new Date(now).toISOString(), level: 3, seat: ob.owes, via: 'repeat' });
+          nudges.push({ ...l2, id, t: now, t_ct: ctStamp(now), level: 3, seat: ob.owes, via: 'repeat' });
           changed = true;
         }
       }
       const cos = cosSeat();
       const cosId = `${base}:L3cos`;
       if (cos && cos !== ob.owes && !nudges.some(n => n.id === cosId)) {
-        nudges.push({ ...l2, id: cosId, kind: 'reassign', t: now, t_ct: new Date(now).toISOString(), level: 3, seat: cos, via: 'L3: reassign', about: ob.owes });
+        nudges.push({ ...l2, id: cosId, kind: 'reassign', t: now, t_ct: ctStamp(now), level: 3, seat: cos, via: 'L3: reassign', about: ob.owes });
         changed = true;
         noteWake(cos, { id: cosId, type: 'nudge', repo: ob.repo, number: ob.number, title: 'handoff missing', reason: `L3 handoff missing on ${ob.owes}` });
       }
@@ -1167,8 +1191,8 @@ function evalSilent(fleet, now = Date.now()) {
   for (const [id, { name, last }] of silentIds) {
     const nid = `silent:${id}:${last}`;
     if (nudges.some(n => n.id === nid)) continue;
-    nudges.push({ id: nid, kind: 'silent', t: now, t_ct: new Date(now).toISOString(), card: '', repo: '', number: 0,
-      title: `${name} silent 2h while owning live work`, url: '', stage: '', level: 2, seat: COS, via: 'silent seat', about: id, beat_t: last });
+    nudges.push({ id: nid, kind: 'silent', t: now, t_ct: ctStamp(now), card: '', repo: '', number: 0,
+      title: `${name} silent 2h while owning live work`, url: '', stage: '', level: 2, seat: cosSeat(), via: 'silent seat', about: id, beat_t: last });
     changed = true;
   }
   if (changed) saveNudges();
@@ -1316,7 +1340,7 @@ function arch1CloudLinks() {
         card,
         seat: ARCH1_CANON,
         state,
-        updated_ct: Number(row.at) ? new Date(Number(row.at)).toISOString() : '',
+        updated_ct: Number(row.at) ? ctStamp(Number(row.at)) : '',
       });
     }
   } catch { /* no launch file */ }
@@ -1394,10 +1418,6 @@ const GOV_MS = Math.max(200, (Number(process.env.BIFROST_TICK_S) > 0 ? Number(pr
 // clock starts a timed run (the same run the CoS starts by hand with POST /clock). A seat's move clears it.
 const TRIP_MS = (Number(process.env.BIFROST_TRIPWIRE_MINUTES) > 0 ? Number(process.env.BIFROST_TRIPWIRE_MINUTES) : 30) * 60000;
 const PER_SEAT_MS = (Number(process.env.BIFROST_RUN_SEAT_MINUTES) > 0 ? Number(process.env.BIFROST_RUN_SEAT_MINUTES) : 2) * 60000;
-const COORD_SEAT = (() => {   // the CoS role (routing seats.coord.seat): pulls the next work on an empty board
-  try { const r = JSON.parse(fs.readFileSync(path.join(process.env.BIFROST_ROUTING_DIR || path.join(COLLECTOR_DIR_EARLY(), 'routing'), 'inbox-roles.json'), 'utf8'));
-    const c = r?.seats?.coord; return c && !c.off && c.seat ? String(c.seat).toLowerCase() : null; } catch { return null; }
-})();
 const CLOCK_SEATS = (() => {   // who may start a run by hand: BIFROST_CLOCK_SEATS, else the coord (CoS) seat
   const env = String(process.env.BIFROST_CLOCK_SEATS || '').split(',').map(x => x.trim().toLowerCase()).filter(Boolean);
   return env.length ? env : COORD_SEAT ? [COORD_SEAT] : [];
@@ -1578,13 +1598,7 @@ function applyGithubWorking(fleet, now) {
 }
 // #336: fleet.as_of and every *_ct on the fleet and freshness are America/Chicago, never a bare Z.
 function ctStamp(t) {
-  if (!t) return null;
-  const base = ctOffset(t);
-  if (typeof base !== 'string') return base;
-  const d = new Date(t);
-  if (isNaN(d) || base.includes('.')) return base;
-  const ms = String(d.getUTCMilliseconds()).padStart(3, '0');
-  return base.replace(/([+-]\d{2}:\d{2})$/, '.' + ms + '$1');
+  return clockStamp(t);
 }
 function stampClockTree(node) {
   if (!node || typeof node !== 'object') return node;
@@ -1884,6 +1898,7 @@ function eventMovesCard(e) {
   if (/watcher|turn|subagent/.test(k)) return false;
   if (k === 'check_run' || k === 'check_suite' || k === 'workflow_run' || k === 'ci_pass' || k === 'ci_fail' || k === 'pr_commit') return false;
   if (k === 'pr_open' || k === 'issue_open' || k === 'pr_force_push' || k === 'pr_update' || k === 'merged') return true;
+  if (k === 'pr_reopen' || k === 'issue_reopen') return true;
   if (k.startsWith('critic_')) return true;
   if (k.startsWith('lab_retest_')) return true;
   if (k.startsWith('prompt') && e.from === 'Lead') return true;
@@ -1979,7 +1994,7 @@ function feedStalled(now = Date.now()) {
   return now - tick > watchLimitMs();
 }
 function feedHealthLine(why) {
-  upsert({ id: 'health:feed-loop', t_ct: new Date().toISOString(), from: 'watchdog', to: 'GitHub', kind: 'health_fail',
+  upsert({ id: 'health:feed-loop', t_ct: ctStamp(Date.now()), from: 'watchdog', to: 'GitHub', kind: 'health_fail',
     label: String(why).slice(0, 80), src_file: 'watchdog', direction: 'internal' });
   seq++; header = mergedHeader(); fullDirty = true;
   console.log('collector: ' + why);
@@ -2950,24 +2965,24 @@ async function handle(req, res) {
     seq++; header = mergedHeader(); fullDirty = true;
     return json(req, res, 200, { ok: true, cards: seedHold.length });
   }
-  if (p === '/cards') {   // GET /cards?seat=<seat>: that seat's key (CoS blinky and forge may read any seat); ?seat=all (or blinky / forge) sees all.
+  if (p === '/cards') {   // GET /cards?seat=<seat>: that seat's key (routing coord and operator may read any seat); ?seat=all (or those seats) sees all.
     // Public mode: no key needed, any ?seat= (default all cards); a key that is sent still limits to its own seat.
     if (m !== 'GET') return json(req, res, 405, { error: 'method not allowed' }, { Allow: 'GET' });
     let who; try { who = await seatOf(req); } catch { return json(req, res, 503, { error: 'could not verify token, retry' }, { 'Retry-After': '30' }); }
     if (!who && !PUBLIC) return json(req, res, 401, { error: 'unauthorized' });   // public mode: cards are readable without a key
     const want = String(url.searchParams.get('seat') || who || 'all').toLowerCase();
-    if (who && want !== who && who !== COS && who !== OPS) return json(req, res, 403, { error: 'not your seat' });
-    const all = want === 'all' || want === 'coord' || want === COS || want === OPS;
+    if (who && want !== who && who !== cosSeat() && who !== operatorSeat()) return json(req, res, 403, { error: 'not your seat' });
+    const all = want === 'all' || want === 'coord' || want === cosSeat() || want === operatorSeat();
     const cs = CARD_SEAT[want] || want;
     return json(req, res, 200, { seat: want, cards: stampCriticCloud(cardsView(bfCards.filter(c => all || cardSeats(c).includes(cs))), cloudAgentBoard()) });
   }
-  if (p === '/nudges') {   // GET /nudges?since=<id>: forge's key only (forge delivers them; was the kit's Operator)
+  if (p === '/nudges') {   // GET /nudges?since=<id>: the routing operator seat's key only (that seat delivers them)
     if (m !== 'GET') return json(req, res, 405, { error: 'method not allowed' }, { Allow: 'GET' });
     let who; try { who = await seatOf(req); } catch { return json(req, res, 503, { error: 'could not verify token, retry' }, { 'Retry-After': '30' }); }
     if (!who) return json(req, res, 401, { error: 'unauthorized' });
-    if (who !== OPS) return json(req, res, 403, { error: 'forge only' });
+    if (who !== operatorSeat()) return json(req, res, 403, { error: 'operator only' });
     evalNudges();
-    return json(req, res, 200, { nudges: linesAfter(nudges, url.searchParams.get('since')).slice(0, 500) });
+    return json(req, res, 200, { nudges: stampClockTree(linesAfter(nudges, url.searchParams.get('since')).slice(0, 500)) });
   }
 
   if (p === '/inbox/builder') {   // POST: box mirror (X-Live-Ingest = ingest secret); GET: Builder's installation token only

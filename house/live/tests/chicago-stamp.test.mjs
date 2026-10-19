@@ -2,7 +2,7 @@
 // The two 01:30s on the 2026-11-01 fall-back stay distinct. Stored stamps are not rewritten.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { keepStoredStartAfter, writeStartAfter } from '../app/chicago-stamp.mjs';
+import { clockStamp, keepStoredStartAfter, writeStartAfter } from '../app/chicago-stamp.mjs';
 
 test('a summer instant and a winter instant take the Chicago offset', () => {
   assert.equal(writeStartAfter('2026-07-15T16:00:00+00:00'), '2026-07-15T11:00:00-05:00');
@@ -17,6 +17,12 @@ test('writes across the 2026-11-01 fall-back without merging the two 01:30s', ()
   assert.notEqual(first, second);
   assert.equal(writeStartAfter('2026-11-01T06:30:00+00:00'), '2026-11-01T01:30:00-05:00');
   assert.equal(writeStartAfter('2026-11-01T07:30:00+00:00'), '2026-11-01T01:30:00-06:00');
+});
+
+test('clockStamp writes Chicago wall time with milliseconds', () => {
+  assert.equal(clockStamp(Date.parse('2026-10-15T15:00:00.123Z')), '2026-10-15T10:00:00.123-05:00');
+  assert.equal(clockStamp(Date.parse('2026-12-15T18:00:00.004Z')), '2026-12-15T12:00:00.004-06:00');
+  assert.equal(clockStamp('not-a-time'), null);
 });
 
 test('an offset that is already Chicago is kept, and a stored stamp is not migrated', () => {

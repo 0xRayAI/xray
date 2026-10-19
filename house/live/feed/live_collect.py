@@ -727,6 +727,28 @@ class RepoCollector:
             tried.pop(key, None)
         self.st["bf"]["merged_by_pull"] = True
 
+    def ensure_pull_card(self, p):
+        """A fetched pull is a card even when the list walk never stored pr_open."""
+        if not isinstance(p, dict) or p.get("number") is None:
+            return
+        try:
+            n = int(p["number"])
+        except (TypeError, ValueError):
+            return
+        eid = f"{self.repo}#{n}:open"
+        if eid in self.ev:
+            return
+        user = p.get("user") if isinstance(p.get("user"), dict) else {}
+        login = user.get("login") or ""
+        head = (p.get("head") or {}).get("sha") if isinstance(p.get("head"), dict) else None
+        url = p.get("html_url") or f"https://github.com/{self.repo}/pull/{n}"
+        created = p.get("created_at") or p.get("updated_at")
+        base = (p.get("base") or {}).get("ref") if isinstance(p.get("base"), dict) else None
+        self.put(eid, created, node(login) if login else "GitHub", "GitHub", "pr_open",
+                 f"{self.short} #{n} opened · {p.get('title') or ''}", url, n,
+                 base=base, actor=login or None, sha=head, author=login or None,
+                 draft=p.get("draft"), mentions=mentions(p.get("body")), **card_fields(p))
+
     def backfill_mergers(self, c, limit=20):
         """GET /pulls/{n} and stamp merged_by.login. The author is never the stamp. A list payload often omits it."""
         if not getattr(c, "token", None):
@@ -744,6 +766,8 @@ class RepoCollector:
                 raise
             except (urllib.error.URLError, http.client.HTTPException, TimeoutError, OSError, ValueError, KeyError, TypeError):
                 continue
+            if isinstance(data, dict):
+                self.ensure_pull_card(data)
             login = ((data or {}).get("merged_by") or {}).get("login") if isinstance(data, dict) else None
             if login:
                 self._stamp_merger(int(n), login)
@@ -766,16 +790,20 @@ class RepoCollector:
         newest = cur
         for p in self.paged(c, f"/repos/{self.repo}/pulls", {"state": "all", "sort": "updated", "direction": "desc"},
                             "pulls", stop=lambda p: cur is not None and p["updated_at"] <= cur):
-            n, login = p["number"], p["user"]["login"]
+            n = p["number"]
+            # A pull with user null is still a card. Subscripting it raised TypeError, which run()
+            # does not catch, so every later pull on the page was dropped and the cursor never moved.
+            user = p.get("user") if isinstance(p.get("user"), dict) else {}
+            login = user.get("login") or ""
             prev = self.st["prs"].get(str(n), {})
             prev_head = prev.get("head")
             head = (p.get("head") or {}).get("sha")
-            self.st["prs"][str(n)] = {"author": login, "updated_at": p["updated_at"], "head": head,
+            self.st["prs"][str(n)] = {"author": login or None, "updated_at": p["updated_at"], "head": head,
                                       "merged_at": p.get("merged_at"), "state": p["state"], "base": p["base"]["ref"]}
             url = p["html_url"]
-            self.put(f"{self.repo}#{n}:open", p["created_at"], node(login), "GitHub", "pr_open",
-                     f"{self.short} #{n} opened · {p['title']}", url, n, base=p["base"]["ref"], actor=login,
-                     sha=head, author=login,
+            self.put(f"{self.repo}#{n}:open", p["created_at"], node(login) if login else "GitHub", "GitHub", "pr_open",
+                     f"{self.short} #{n} opened · {p['title']}", url, n, base=p["base"]["ref"], actor=login or None,
+                     sha=head, author=login or None,
                      draft=p.get("draft"), mentions=mentions(p.get("body")), **card_fields(p))
             if p.get("merged_at"):
                 listed = p.get("merged_by") if isinstance(p.get("merged_by"), dict) else None
@@ -827,6 +855,57 @@ class RepoCollector:
                         "unassigned": "unassigned", "milestoned": "milestoned", "demilestoned": "demilestoned",
                         "reopened": "reopen", "renamed": "edit"}
 
+    def _record_merged_event(self, n, e, actor, url):
+        """Store the merged beat from an issue event when pulls have not stored merged_at yet."""
+        created = e.get("created_at")
+        pr = self.st.setdefault("prs", {}).setdefault(str(n), {})
+        if created and not pr.get("merged_at"):
+            pr["merged_at"] = created
+        eid = f"{self.repo}#{int(n)}:merged"
+        if created and eid not in self.ev:
+            login = pr.get("author")
+            base = pr.get("base")
+            extra = {"actor": actor or login, "author": login}
+            commit_id = e.get("commit_id")
+            if isinstance(commit_id, str) and commit_id:
+                extra["merge_sha"] = commit_id
+            if base:
+                extra["base"] = base
+            arrow = f" → {base}" if base else ""
+            self.put(eid, created, node(actor or login), "GitHub", "merged",
+                     f"merged {self.short} #{n}{arrow}", url, n, **extra)
+        if actor:
+            self._stamp_merger(n, actor)
+
+    def _forget_merge_close(self, n, when):
+        """Drop the pr_close written for this merge before merged_at was stored.
+
+        A close more than 30s from the merge stays. That is the same window the
+        closed handler uses to tell a merge from an unmerged close.
+        """
+        if not isinstance(when, str) or not when:
+            return
+        try:
+            merge_ts = datetime.fromisoformat(when.replace("Z", "+00:00")).timestamp()
+        except ValueError:
+            return
+        number = int(n)
+        drop = []
+        for eid, ev in self.ev.items():
+            if ev.get("kind") != "pr_close" or ev.get("number") != number:
+                continue
+            raw = ev.get("t_ct")
+            if not isinstance(raw, str):
+                continue
+            try:
+                close_ts = datetime.fromisoformat(raw).timestamp()
+            except ValueError:
+                continue
+            if abs(close_ts - merge_ts) < 30:
+                drop.append(eid)
+        for eid in drop:
+            self.ev.pop(eid, None)
+
     def poll_issue_events(self, c):
         cur = self.st["cur"].get("ievents", 0)
         newest = cur
@@ -856,8 +935,8 @@ class RepoCollector:
                     self.put(eid, e["created_at"], frm, "GitHub", "issue_close", f"closed {tag} ({sr or 'closed'})",
                              url, n, actor=actor, state_reason=sr)
             elif ev == "merged":
-                if actor:
-                    self._stamp_merger(n, actor)
+                self._record_merged_event(n, e, actor, url)
+                self._forget_merge_close(n, e.get("created_at"))
                 continue
             elif ev in ("ready_for_review", "convert_to_draft") and is_pr:
                 k = "pr_ready" if ev == "ready_for_review" else "pr_draft"

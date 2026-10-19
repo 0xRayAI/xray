@@ -1,5 +1,6 @@
 """Unit tests for the Example adapter (stdlib, no network). Run: python3 -m unittest -v tests/test_collect.py"""
 import json, os, subprocess, sys, tempfile, threading, time, unittest, http.server
+from datetime import datetime
 from unittest import mock
 from pathlib import Path
 HERE = Path(__file__).resolve().parent
@@ -659,6 +660,35 @@ class CardLifecycle(unittest.TestCase):
         col.backfill_mergers(C())
         self.assertEqual(col.st["merger_tried"].get("8"), True)
 
+    def test_pull_fetch_writes_the_open_card(self):
+        """GET /pulls/:n is a card even when the list walk never stored pr_open."""
+        col = _collector("example-org/app")
+        col.st["need_merger"] = {"8": 1}
+        fetched = self._pull(state="open", merged_at=None, title="fetched card",
+                             user={"login": "forge0x1[bot]"}, merged_by=None)
+
+        class C:
+            token = "t"
+            def rest(self, path, params=None, etag=None, essential=True):
+                if str(path).endswith("/pulls/8"):
+                    return 200, fetched, None, None
+                return 200, [], "etag", None
+
+        with mock.patch.dict(uc.NODE_LC, {"forge0x1[bot]": "forge"}):
+            col.backfill_mergers(C())
+        opened = col.ev["example-org/app#8:open"]
+        self.assertEqual(opened["kind"], "pr_open")
+        self.assertEqual(opened["title"], "fetched card")
+        self.assertEqual(opened["pr_state"], "open")
+        self.assertEqual(opened["from"], "forge")
+        import live_board
+        when = datetime.fromisoformat(opened["t_ct"]).timestamp()
+        with mock.patch.object(live_board, "CACHE", Path("/tmp/no-inbox-events-b2.json")):
+            cards = [c for c in live_board.model([opened], now=when + 60)["cards"]
+                     if c.get("repo") == "example-org/app" and c.get("number") == 8]
+        self.assertEqual(len(cards), 1)
+        self.assertEqual(cards[0]["state"], "live")
+
     def test_pull_get_replaces_author_merged_by_after_backfill_done(self):
         """Author != merger. A finished backfill that left the author in merged_by is corrected by GET /pulls/:n."""
         col = _collector("example-org/app")
@@ -688,6 +718,31 @@ class CardLifecycle(unittest.TestCase):
             col.poll_pulls(C())
         self.assertEqual(col.ev["example-org/app#8:merged"]["merged_by"], "forge0x1[bot]")
         self.assertNotEqual(col.ev["example-org/app#8:merged"]["merged_by"], "htafolla")
+
+    def test_null_user_does_not_drop_later_open_pulls(self):
+        """A pull with user null must not abort the page, or the next open PR never becomes a card."""
+        col = _collector("example-org/app")
+        ghost = self._pull(number=3, user=None, updated_at="2026-10-14T18:00:00Z", state="open",
+                           merged_at=None, title="ghost", html_url="https://github.com/example-org/app/pull/3")
+        kept = self._pull(number=4, user={"login": "forge0x1[bot]"}, updated_at="2026-10-14T17:00:00Z",
+                          state="open", merged_at=None, title="kept card",
+                          html_url="https://github.com/example-org/app/pull/4")
+
+        class C:
+            token = "t"
+            def rest(self, path, params=None, etag=None, essential=True):
+                return 200, [ghost, kept], "etag", None
+
+        with mock.patch.dict(uc.NODE_LC, {"forge0x1[bot]": "forge"}):
+            col.poll_pulls(C())
+        self.assertIn("example-org/app#3:open", col.ev)
+        self.assertEqual(col.ev["example-org/app#3:open"]["from"], "GitHub")
+        self.assertNotEqual(col.ev["example-org/app#3:open"]["from"], "Others")
+        kept_ev = col.ev["example-org/app#4:open"]
+        self.assertEqual(kept_ev["kind"], "pr_open")
+        self.assertEqual(kept_ev["from"], "forge")
+        self.assertEqual(kept_ev["title"], "kept card")
+        self.assertEqual(kept_ev["pr_state"], "open")
 
     def test_head_change_emits_pr_commit(self):
         col = _collector("example-org/app")
