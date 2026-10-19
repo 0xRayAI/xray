@@ -16,7 +16,7 @@ import { spawn } from 'node:child_process';
 import { seatPresence, presentSeat, foldSeatTouch, fleetConfigOf, readWakeOk, writeWakeOk } from './presence.mjs';
 import { parseAllowlist, mergeCards, sourceCardsFrom, projectAllowed, validateItem, workEventToItem, cardNoNudge, workItemNewer } from './source.mjs';
 import { checkRoutesFromDir, readRoutingMap, createLoginResolver, auditLogins } from './routes.mjs';
-import { fingerprint, tripwire, createClock, mutedSeats } from './governor.mjs';
+import { fingerprint, tripwire, createClock, mutedSeats, selectStallSeats } from './governor.mjs';
 import { createArch1Launch, ARCH1_CANON } from './arch1-launch.mjs';
 import { configureWorkTrack, acceptCursorWebhook, appendWake, boardCloudAgents, canonSeatToken, deriveTrackFromDir, displaySeat, loadSeatAgentMap, readJsonl, readWakeRows, seatForAgentId, toToken } from './worktrack.mjs';
 const COLLECTOR_DIR_EARLY = () => path.join(path.dirname(fileURLToPath(import.meta.url)), 'collector');
@@ -1249,9 +1249,10 @@ function queueStale(line, now) {
   return chicagoDay(t) < chicagoDay(now);
 }
 function openQueue(now = Date.now()) {
+  const muted = loadMutedSeats();
   const lines = [];
   for (const seat of SEAT_IDS) {
-    if (PARKED_QUEUE.has(seat)) continue;
+    if (muted.has(seat)) continue;
     for (const l of openLines(seat)) {
       if (!l || l.id == null || queueStale(l, now)) continue;
       lines.push({
@@ -1308,9 +1309,23 @@ function loadMutedSeats() {
   }
   return mutedSeats({}, [...PARKED_QUEUE]);
 }
-const MUTED_SEATS = loadMutedSeats();
-const openSeats = () => SEAT_IDS.filter(s => s !== 'builder' && s !== 'builder-cloud' && !MUTED_SEATS.has(s) && openLines(s).length);
-const heldSeats = () => SEAT_IDS.filter(s => MUTED_SEATS.has(s) && openLines(s).length);
+function recentPromptSeats(now = Date.now()) {
+  const out = new Set();
+  if (!activityReady || !Array.isArray(activity)) return out;
+  for (const line of activity) {
+    if (!line || line.kind !== 'prompt' || (line.action !== 'sent' && line.action !== 'received')) continue;
+    const t = Date.parse(line.t_ct);
+    if (!Number.isFinite(t) || now - t > PROMPT_WORK_MS || t > now + 300000) continue;
+    const seat = String(line.seat || '').toLowerCase();
+    if (seat) out.add(seat);
+  }
+  return out;
+}
+function stallOpenSeats(now = Date.now()) {
+  const counts = {};
+  for (const seat of SEAT_IDS) counts[seat] = openLines(seat).length;
+  return selectStallSeats(SEAT_IDS, loadMutedSeats(), counts, recentPromptSeats(now));
+}
 function wakeRun(run) {
   for (const [seat, by] of Object.entries(run.deadlines)) {
     const n = openLines(seat).length;
@@ -1329,7 +1344,7 @@ function moveFp() { return fingerprint([...evs.values()].map(v => v.e).filter(e 
 function governorRun(now = Date.now()) {
   if (evalNudges(now)) { seq++; fullDirty = true; }
   const w = wakeBoard(now);
-  const r = clock.observe(moveFp(), now, { openCards: bfCards.filter(c => c.state === 'live').length, scheduled: scheduledCards(now), openSeats: openSeats(), heldSeats: heldSeats(), coord: COORD_SEAT });
+  const r = clock.observe(moveFp(), now, { openCards: bfCards.filter(c => c.state === 'live').length, scheduled: scheduledCards(now), openSeats: stallOpenSeats(now), coord: COORD_SEAT });
   if (r === 'stall' || r === 'empty') wakeRun(clock.run);
   if (r === 'cleared') console.log('clock: cleared by a seat move');
   const fp = fingerprint([...evs.values()].map(v => v.e), { nudges: nudges.filter(n => !n.closed_at).map(n => n.id), routing: ROUTING.ok,
@@ -2736,7 +2751,7 @@ async function handle(req, res) {
     req.resume();
     if (!who) return json(req, res, 401, { error: 'unauthorized' });
     if (!CLOCK_SEATS.includes(who)) return json(req, res, 403, { error: 'not a clock seat' });
-    const seats = openSeats();
+    const seats = stallOpenSeats();
     if (!seats.length) return json(req, res, 200, { ok: true, started: false, reason: 'no open work' });
     const run = clock.startByHand(Date.now(), seats, who); wakeRun(run); touchSeat(who);
     seq++; header = mergedHeader(); fullDirty = true;

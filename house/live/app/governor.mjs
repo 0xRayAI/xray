@@ -32,6 +32,21 @@ export function mutedSeats(roster, fallback = []) {
   return new Set([...parked, ...dark].map((seat) => String(seat).toLowerCase()).filter(Boolean));
 }
 
+/** Seats the stall may wake. Muted seats are out unless an owner prompt just woke them. Line counts on muted seats do not cancel the stall. */
+export function selectStallSeats(ids, muted, openCounts, prompted) {
+  const mute = new Set([...(muted instanceof Set ? muted : (muted || []))].map((seat) => String(seat).toLowerCase()));
+  const woke = new Set([...(prompted instanceof Set ? prompted : (prompted || []))].map((seat) => String(seat).toLowerCase()));
+  const counts = openCounts && typeof openCounts === 'object' ? openCounts : {};
+  return (Array.isArray(ids) ? ids : []).filter((seat) => {
+    const name = String(seat || '').toLowerCase();
+    if (!name || name === 'builder' || name === 'builder-cloud') return false;
+    const lines = Number(counts[seat] ?? counts[name] ?? 0);
+    const promptedSeat = woke.has(name);
+    if (mute.has(name) && !promptedSeat) return false;
+    return lines > 0 || promptedSeat;
+  });
+}
+
 export function createClock({ tripMs, perSeatMs, now = Date.now() }) {
   let lastFp = null, lastMove = now, lastTrip = null, run = null;
   const start = (t, seats, reason, by) => {
@@ -54,9 +69,8 @@ export function createClock({ tripMs, perSeatMs, now = Date.now() }) {
       }
       const armed = lastTrip === null || t - lastTrip >= tripMs;
       if (!armed || t - lastMove < tripMs) return null;
-      const { openCards = 0, openSeats = [], heldSeats = [], coord = null, scheduled = 0 } = board || {};
+      const { openCards = 0, openSeats = [], coord = null, scheduled = 0 } = board || {};
       if (openCards > 0) {
-        if (!openSeats.length && heldSeats.length) return null;
         const seats = openSeats.length ? openSeats : [coord];
         if (!seats.filter(Boolean).length) return null;
         start(t, seats, 'stall'); return 'stall';

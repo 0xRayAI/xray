@@ -16,9 +16,9 @@ A suit first worn on 4.1.1 keeps the catalog and a held dev card. On a non-mill 
 
 ### Wake and tripwire
 
-The seat wake lists the open inbox first. No lines, or lines that repeat a packet already handled, are acked and the turn stops. A second run of the same seat, started by another webhook for the same pull request, head, and kind, gets an empty read and stops before turn start. A still-waiting line gets one line back. A new line keeps the full boot read. The wake command exports `LIVE_URL` and a per-seat `LIVE_CURSORS`, then runs `live-inbox <seat>`. A repeated line is acked with `live-inbox <seat> --ack <id>`. Blaze, 2026-10-19: anything that needs deep search or thinking runs on a cloud agent, however small. Head-SHA and review-list checks, a verdict the cloud already wrote, inbox acks, handoffs, and NOTES lines stay local.
+The seat wake lists the open inbox first. An owner message posts `--prompt` and turn start even when the inbox is empty or every line is a repeat. Before any ack, the wake reads the station ticket and `NOTES.md`. A line is acked with `live-inbox <seat> --ack <id>` only when `NOTES.md` already records that same pull request, head sha, and kind. A new head is not acked. A still-waiting line gets one reply and a NOTES line, and it does not stop a newer line. A second run of the same seat gets an empty read, does not ack the first run's lines, and posts no turn start. Turn end runs only after this wake posted turn start, because turn end clears the working mark. The wake command exports `LIVE_URL` and a per-seat `LIVE_CURSORS`, then runs `live-inbox <seat>`. Blaze, 2026-10-19: anything that needs deep search or thinking runs on a cloud agent, however small. Head-SHA and review-list checks, a verdict the cloud already wrote, inbox acks, handoffs, and NOTES lines stay local.
 
-The tripwire does not wake a seat marked parked or dark. If those are the only seats with open lines, it does not fall back to the CoS role.
+The tripwire reads the parked and dark roster on each check. Those seats are left out of the stall. Their open lines do not cancel it: when they are the only seats with open lines, the stall still wakes the CoS role. A parked or dark seat with a recent owner prompt stays in the stall.
 
 ### 4.1.2 notes
 
