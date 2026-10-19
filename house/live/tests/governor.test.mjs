@@ -185,7 +185,7 @@ test('tripwire: a second head sha is a real change', () => {
 test('stall roster is read on each check, not cached at boot', () => {
   const src = fs.readFileSync(path.join(APP, 'server.mjs'), 'utf8');
   assert.equal(src.includes('const MUTED_SEATS'), false);
-  assert.match(src, /function openQueue\(now = Date\.now\(\)\) \{\n  const muted = loadMutedSeats\(\)/);
+  assert.match(src, /function openLines\(seat, all\) \{[\s\S]*?loadMutedSeats\(\)\.has\(name\)/);
   assert.match(src, /function stallOpenSeats\(now = Date\.now\(\)\) \{\n  const counts = \{\};\n  for \(const seat of SEAT_IDS\) counts\[seat\] = openLines\(seat\)\.length;\n  return selectStallSeats\(SEAT_IDS, loadMutedSeats\(\), counts, recentPromptSeats\(now\)\);\n\}/);
   assert.match(src, /openSeats: stallOpenSeats\(now\)/);
 });

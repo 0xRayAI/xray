@@ -18,7 +18,7 @@ import { parseAllowlist, mergeCards, sourceCardsFrom, projectAllowed, validateIt
 import { checkRoutesFromDir, readRoutingMap, createLoginResolver, auditLogins } from './routes.mjs';
 import { fingerprint, tripwire, createClock, mutedSeats, selectStallSeats } from './governor.mjs';
 import { createArch1Launch, ARCH1_CANON } from './arch1-launch.mjs';
-import { configureWorkTrack, acceptCursorWebhook, appendWake, boardCloudAgents, canonSeatToken, deriveTrackFromDir, displaySeat, loadSeatAgentMap, readJsonl, readWakeRows, seatForAgentId, toToken } from './worktrack.mjs';
+import { configureWorkTrack, acceptCursorWebhook, appendWake, boardCloudAgents, canonSeatToken, deriveTrackFromDir, displaySeat, loadSeatAgentMap, readJsonl, readWakeRows, seatForAgentId, stampCardAgents, toToken } from './worktrack.mjs';
 const COLLECTOR_DIR_EARLY = () => path.join(path.dirname(fileURLToPath(import.meta.url)), 'collector');
 import { initArchive, appendArchive, backfillArchive, readArchive, validArchiveDate, KINDS as ARCHIVE_KINDS, cardHistory, archiveDays } from './archive.mjs';
 import { pinnedOrigin } from './origin.mjs';
@@ -563,7 +563,17 @@ function settledLine(l) {
   if (!c) return false;
   return c.state === 'closed' || c.stage === 'done';
 }
-function openLines(seat, all) { const acked = ackedSet(seat); return all ? seatInbox[seat].slice() : seatInbox[seat].filter(l => !acked.has(l.id) && !lineDone(seat, l)); }
+function seatOpenRows(seat, all) {
+  const acked = ackedSet(seat);
+  return all ? seatInbox[seat].slice() : seatInbox[seat].filter(l => !acked.has(l.id) && !lineDone(seat, l));
+}
+function openLines(seat, all) {
+  const name = String(seat || '').toLowerCase();
+  // Parked and dark seats stay in the inbox file and out of the open set, same as the queue.
+  // A recent owner prompt unmutes that seat. The roster is read on this call, not cached at boot.
+  if (loadMutedSeats().has(name) && !recentPromptSeats().has(name)) return [];
+  return seatOpenRows(seat, all);
+}
 function saveSeatInbox(s) {
   for (const l of seatInbox[s]) appendArchive('inbox', { ...l, seat: l.seat ?? s });
   const cut = Date.now() - 7 * 86400000;
@@ -1158,7 +1168,10 @@ function mergedHeader(now = Date.now()) {
   const af = applyStoredActivity(h.fleet, now); if (af) h.fleet = af;   // open turns and tasks (activity.jsonl)
   h.track = trackView(now);   // Cursor agents, packets, wakes and blockers rebuilt from the volume
   h.cloud_agents = cloudAgentBoard();   // first-class board rows: bcId, seat, card, state, last update
-  if (h.board) h.board.cloud_agents = h.cloud_agents;
+  if (h.board) {
+    h.board.cloud_agents = h.cloud_agents;
+    if (Array.isArray(h.board.cards)) h.board.cards = stampCardAgents(h.board.cards, h.cloud_agents);
+  }
   const wf = applyTrackWorking(h.fleet, h.track, now); if (wf) h.fleet = wf;   // woken packet or running agent
   const gf = applyGithubWorking(h.fleet, now); if (gf) h.fleet = gf;   // GitHub actor on a PR or issue
   if (h.fleet) h.fleet = clearClosedWork(h.fleet);
@@ -1249,10 +1262,8 @@ function queueStale(line, now) {
   return chicagoDay(t) < chicagoDay(now);
 }
 function openQueue(now = Date.now()) {
-  const muted = loadMutedSeats();
   const lines = [];
   for (const seat of SEAT_IDS) {
-    if (muted.has(seat)) continue;
     for (const l of openLines(seat)) {
       if (!l || l.id == null || queueStale(l, now)) continue;
       lines.push({
@@ -2741,7 +2752,7 @@ async function handle(req, res) {
     if (!SEAT_IDS.includes(inboxM[1]) || who !== inboxM[1]) return json(req, res, 403, { error: 'inbox is not exposed' });
     const since = url.searchParams.get('since'), all = url.searchParams.get('all') === '1', stale = url.searchParams.get('stale') === '1';
     const base = since && seatInbox[who].some(l => l.id === since) ? linesAfter(seatInbox[who], since) : seatInbox[who];
-    const keep = new Set(openLines(who, stale ? false : all).map(l => l.id)); touchSeat(who);
+    const keep = new Set(seatOpenRows(who, stale ? false : all).map(l => l.id)); touchSeat(who);
     const lines = base.filter(l => keep.has(l.id) && (!stale || settledLine(l)));
     return json(req, res, 200, { seat: who, lines: lines.slice(0, 1000) });
   }
@@ -2769,7 +2780,7 @@ async function handle(req, res) {
     const n = ackLines(who, what); touchSeat(who); if (n) serverActivity(who, 'turn', 'end', 'ack');
     if (n < 0) return json(req, res, 404, { error: 'no such line' });
     if (n > 0) publishHeader();   // work tracking moves the packet to acked
-    return json(req, res, 200, { ok: true, acked: n, open: openLines(who, false).length });
+    return json(req, res, 200, { ok: true, acked: n, open: seatOpenRows(who, false).length });
   }
   if (p === '/routing') {   // GET /routing: the routing map, read-only (seat, login, aliases, status). No keys, no webhook URLs.
     if (m !== 'GET') return json(req, res, 405, { error: 'method not allowed' }, { Allow: 'GET' });
@@ -2809,7 +2820,8 @@ async function handle(req, res) {
     if (who && want !== who && who !== COS && who !== OPS) return json(req, res, 403, { error: 'not your seat' });
     const all = want === 'all' || want === 'coord' || want === COS || want === OPS;
     const cs = CARD_SEAT[want] || want;
-    return json(req, res, 200, { seat: want, cards: cardsView(bfCards.filter(c => all || cardSeats(c).includes(cs))) });
+    const shown = cardsView(bfCards.filter(c => all || cardSeats(c).includes(cs)));
+    return json(req, res, 200, { seat: want, cards: stampCardAgents(shown, cloudAgentBoard()) });
   }
   if (p === '/nudges') {   // GET /nudges?since=<id>: forge's key only (forge delivers them; was the kit's Operator)
     if (m !== 'GET') return json(req, res, 405, { error: 'method not allowed' }, { Allow: 'GET' });

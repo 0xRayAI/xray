@@ -8,7 +8,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { configureWorkTrack, acceptCursorWebhook, boardCloudAgents, classifyCursor, deriveTrackFromDir, readJsonl } from '../app/worktrack.mjs';
+import { configureWorkTrack, acceptCursorWebhook, boardCloudAgents, classifyCursor, deriveTrackFromDir, readJsonl, stampCardAgents } from '../app/worktrack.mjs';
 import { listenPort } from './free-port.mjs';
 
 const APP = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app', 'server.mjs');
@@ -128,6 +128,32 @@ test('a webhook ERROR is a failed board row and is not working', () => {
   }
 });
 
+test('a card stores the newest build and critic agent for its pull request', () => {
+  const cards = [
+    { key: 'Acme/App#15', repo: 'Acme/App', number: 15, title: 'ship', url: 'https://github.com/Acme/App/pull/15' },
+    { key: 'acme/other#2', repo: 'acme/other', number: 2, title: 'else' },
+  ];
+  const agents = [
+    { bcId: 'bc-oldmill01', seat: 'mill', card: 'acme/app#15', state: 'running', updated_ct: '2026-10-15T12:00:00Z' },
+    { bcId: 'bc-cloud0001', seat: 'builder-cloud', card: 'acme/app#15', state: 'finished', updated_ct: '2026-10-15T12:30:00Z' },
+    { bcId: 'bc-newforge1', seat: 'forge', pr: 'https://github.com/acme/app/pull/15', state: 'finished', updated_ct: '2026-10-15T13:00:00Z' },
+    { bcId: 'bc-builder01', seat: 'builder', card: 'acme/app#15', state: 'running', updated_ct: '2026-10-15T11:00:00Z' },
+    { bcId: 'bc-oldcrit01', seat: 'critic', card: 'acme/app#15', state: 'finished', updated_ct: '2026-10-15T12:00:00Z' },
+    { bcId: 'bc-newcrit01', seat: 'critic', pr: 'https://github.com/Acme/App/pull/15', state: 'running', updated_ct: '2026-10-15T14:00:00Z' },
+    { bcId: 'bc-failcrit1', seat: 'critic', card: 'acme/app#15', state: 'failed', updated_ct: '2026-10-15T15:00:00Z' },
+    { bcId: 'bc-other0001', seat: 'critic', card: 'acme/other#9', state: 'running', updated_ct: '2026-10-15T16:00:00Z' },
+    { bcId: 'bc-arch10001', seat: 'arch1', card: 'acme/app#15', state: 'running', updated_ct: '2026-10-15T16:00:00Z' },
+  ];
+  const stamped = stampCardAgents(cards, agents);
+  assert.equal(stamped[0].build_bc, 'bc-newforge1');
+  assert.equal(stamped[0].critic_bc, 'bc-newcrit01');
+  assert.equal(stamped[0].title, 'ship');
+  assert.equal(stamped[1].build_bc, '');
+  assert.equal(stamped[1].critic_bc, '');
+  assert.equal(cards[0].build_bc, undefined);
+  assert.equal(stampCardAgents(null, agents).length, 0);
+});
+
 test('the live feed lists a running cloud agent, then a cancel as failed', async () => {
   const data = fs.mkdtempSync(path.join(os.tmpdir(), 'cloud-board-srv-'));
   const pw = crypto.randomBytes(8).toString('hex');
@@ -180,6 +206,62 @@ test('the live feed lists a running cloud agent, then a cancel as failed', async
     assert.equal(row.seat, 'critic');
     assert.equal(row.card, 'acme/app#15');
     assert.equal(row.updated_ct, stamp);
+  } finally {
+    await stopped(ctx.child);
+    fs.rmSync(data, { recursive: true, force: true });
+  }
+});
+
+test('the board card and GET /cards carry build_bc and critic_bc', async () => {
+  const data = fs.mkdtempSync(path.join(os.tmpdir(), 'cloud-card-srv-'));
+  const pw = crypto.randomBytes(8).toString('hex');
+  const ingest = crypto.randomBytes(16).toString('hex');
+  const criticKey = 'critic-' + crypto.randomBytes(4).toString('hex');
+  const ctx = await boot(data, {
+    MESH_PASSWORD: pw,
+    SESSION_SECRET: crypto.randomBytes(32).toString('hex'),
+    INGEST_SECRET: ingest,
+    CURSOR_WEBHOOK_SECRET: SECRET,
+    SEAT_KEYS: JSON.stringify({ critic: sha(criticKey) }),
+  });
+  try {
+    const login = await fetch(ctx.base + '/login', {
+      method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'password=' + encodeURIComponent(pw), redirect: 'manual',
+    });
+    const cookie = (login.headers.get('set-cookie') || '').split(';')[0];
+    const card = {
+      key: 'acme/app#15', repo: 'acme/app', number: 15, title: 'resume', url: 'https://github.com/acme/app/pull/15',
+      owner: 'critic', state: 'live', stage: 'review', kind: 'pr',
+    };
+    const ingested = await fetch(ctx.base + '/ingest', {
+      method: 'POST', headers: { Authorization: 'Bearer ' + ingest, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: 't', generated_at: new Date().toISOString(), event_count: 0, events: [], board: { updated_ct: new Date().toISOString(), cards: [card] } }),
+    });
+    assert.equal(ingested.status, 200, await ingested.clone().text());
+    const hook = async (id, status, seat, webhookId) => {
+      const payload = { id, status, metadata: { seat }, target: { prUrl: 'https://github.com/acme/app/pull/15' }, summary: 'card agent' };
+      const body = Buffer.from(JSON.stringify(payload));
+      const res = await fetch(ctx.base + '/cursor/webhook', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Webhook-Signature': sign(SECRET, body), 'X-Webhook-Id': webhookId },
+        body,
+      });
+      assert.equal(res.status, 200, await res.clone().text());
+    };
+    await hook('bc-mill00001', 'FINISHED', 'mill', 'mill-1');
+    await hook('bc-crit00001', 'RUNNING', 'critic', 'crit-1');
+    const live = await (await fetch(ctx.base + '/live-events.json', { headers: { Cookie: cookie } })).json();
+    const onBoard = (live.board && live.board.cards || []).find(item => item.key === 'acme/app#15');
+    assert.ok(onBoard, 'card missing from the board');
+    assert.equal(onBoard.build_bc, 'bc-mill00001');
+    assert.equal(onBoard.critic_bc, 'bc-crit00001');
+    const listed = await fetch(ctx.base + '/cards?seat=critic', { headers: { Authorization: 'Bearer ' + criticKey } });
+    assert.equal(listed.status, 200, await listed.clone().text());
+    const body = await listed.json();
+    const viaCards = (body.cards || []).find(item => item.key === 'acme/app#15');
+    assert.equal(viaCards.build_bc, 'bc-mill00001');
+    assert.equal(viaCards.critic_bc, 'bc-crit00001');
   } finally {
     await stopped(ctx.child);
     fs.rmSync(data, { recursive: true, force: true });

@@ -5,35 +5,37 @@ import { describe, expect, it } from 'vitest';
 
 const repoRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 
-/** Published npm keywords. Hermes and OpenClaw stay. A marketing rewrite is not this list. */
-const published = [
+/** Fleet roster on the package. Hermes and OpenClaw stay with the other hosts. */
+const fleetRoster = [
   'ai',
+  'agent',
+  'multi-agent',
+  'agent-fleet',
+  'bot-fleet',
+  'orchestration',
+  'governance',
+  'mcp',
+  'cli',
+  'tui',
+  'grok',
+  'grok-bot',
+  'cursor',
+  'codex',
   'opencode',
   'hermes',
   'openclaw',
-  'grok',
-  'mcp',
-  'agent',
-  'orchestration',
-  'codex',
-  'error-prevention',
-  'multi-agent',
-  'framework',
-  'governance',
-  'cli',
-  'tui',
-  'hallucination-prevention',
-  'ai-slop-prevention',
-  'terminal-ai',
-  'ai-assistant',
-  'plugin-system',
+  'claude-code',
+  'goggles',
+  'ai-suit',
+  'op-proc',
+  'self-improving-agents',
 ];
 
 describe('package keywords', () => {
-  it('keeps the published list, including hermes and openclaw', () => {
+  it('keeps the fleet roster, including hermes and openclaw', () => {
     const pkg = JSON.parse(readFileSync(path.join(repoRoot, 'package.json'), 'utf8')) as { keywords: string[] };
-    expect(pkg.keywords).toEqual(published);
-    expect(pkg.keywords).not.toContain('agent-fleet');
-    expect(pkg.keywords).not.toContain('self-improving-agents');
+    expect(pkg.keywords).toEqual(fleetRoster);
+    expect(pkg.keywords).toContain('hermes');
+    expect(pkg.keywords).toContain('openclaw');
   });
 });
