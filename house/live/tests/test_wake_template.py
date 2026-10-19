@@ -55,6 +55,28 @@ class WakeTemplate(unittest.TestCase):
         self.assertLess(blob.index("update"), blob.rindex("--turn end"))
         self.assertNotIn("prompts.jsonl", self.text)
 
+    def test_wake_never_launches_or_resumes(self):
+        cloud = self.steps[4]
+        self.assertIn("never launches or resumes a cloud agent", cloud)
+        self.assertIn("duplicate", cloud)
+        self.assertIn("still-waiting", cloud)
+        self.assertIn("records the event", cloud)
+        self.assertIn("forge for builds", cloud)
+        self.assertIn("critic for reviews", cloud)
+        self.assertIn("seat message pointing at the card", cloud)
+        self.assertIn("persistent chat", cloud)
+        self.assertIn("launches or resumes a cloud agent", cloud)
+        self.assertNotIn("build_bc", self.text)
+        self.assertNotIn("resume that same agent", self.text)
+        self.assertIn("critic_bc", cloud)
+        self.assertIn("one critic agent per pr", cloud.lower())
+        self.assertIn("launches a new agent only when", cloud.lower())
+        low = self.steps[0].lower()
+        self.assertIn("posts no turn end", low)
+        self.assertIn("owner token", low)
+        self.assertIn("still waiting", low)
+        self.assertIn("does not stop a newer line", low)
+
 
 class Handler(BaseHTTPRequestHandler):
     def do_POST(self):

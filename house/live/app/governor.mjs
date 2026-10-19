@@ -24,6 +24,29 @@ export function tripwire() {
 // The CoS can start a run by hand (POST /clock). Blockers come back as one line; the countdown shows on the board until a
 // seat moves something, which clears the clock. Each trigger fires at most once per window: it re-arms only after the
 // board moves or another full window passes, never on every tick.
+/** Seats marked parked or dark. A roster without those arrays uses fallback. */
+export function mutedSeats(roster, fallback = []) {
+  const data = roster && typeof roster === 'object' ? roster : {};
+  const parked = Array.isArray(data.parked) ? data.parked : fallback;
+  const dark = Array.isArray(data.dark) ? data.dark : [];
+  return new Set([...parked, ...dark].map((seat) => String(seat).toLowerCase()).filter(Boolean));
+}
+
+/** Seats the stall may wake. Muted seats are out unless an owner prompt just woke them. Line counts on muted seats do not cancel the stall. */
+export function selectStallSeats(ids, muted, openCounts, prompted) {
+  const mute = new Set([...(muted instanceof Set ? muted : (muted || []))].map((seat) => String(seat).toLowerCase()));
+  const woke = new Set([...(prompted instanceof Set ? prompted : (prompted || []))].map((seat) => String(seat).toLowerCase()));
+  const counts = openCounts && typeof openCounts === 'object' ? openCounts : {};
+  return (Array.isArray(ids) ? ids : []).filter((seat) => {
+    const name = String(seat || '').toLowerCase();
+    if (!name || name === 'builder' || name === 'builder-cloud') return false;
+    const lines = Number(counts[seat] ?? counts[name] ?? 0);
+    const promptedSeat = woke.has(name);
+    if (mute.has(name) && !promptedSeat) return false;
+    return lines > 0 || promptedSeat;
+  });
+}
+
 export function createClock({ tripMs, perSeatMs, now = Date.now() }) {
   let lastFp = null, lastMove = now, lastTrip = null, run = null;
   const start = (t, seats, reason, by) => {

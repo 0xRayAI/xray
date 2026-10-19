@@ -16,9 +16,9 @@ import { spawn } from 'node:child_process';
 import { seatPresence, presentSeat, foldSeatTouch, fleetConfigOf, readWakeOk, writeWakeOk } from './presence.mjs';
 import { parseAllowlist, mergeCards, sourceCardsFrom, projectAllowed, validateItem, workEventToItem, cardNoNudge, workItemNewer } from './source.mjs';
 import { checkRoutesFromDir, readRoutingMap, createLoginResolver, auditLogins } from './routes.mjs';
-import { fingerprint, tripwire, createClock } from './governor.mjs';
+import { fingerprint, tripwire, createClock, mutedSeats, selectStallSeats } from './governor.mjs';
 import { createArch1Launch, ARCH1_CANON } from './arch1-launch.mjs';
-import { configureWorkTrack, acceptCursorWebhook, appendWake, boardCloudAgents, canonSeatToken, deriveTrackFromDir, displaySeat, loadSeatAgentMap, readJsonl, readWakeRows, seatForAgentId, toToken } from './worktrack.mjs';
+import { configureWorkTrack, acceptCursorWebhook, appendWake, boardCloudAgents, canonSeatToken, deriveTrackFromDir, displaySeat, loadSeatAgentMap, readJsonl, readWakeRows, seatForAgentId, stampCriticCloud, toToken } from './worktrack.mjs';
 const COLLECTOR_DIR_EARLY = () => path.join(path.dirname(fileURLToPath(import.meta.url)), 'collector');
 import { initArchive, appendArchive, backfillArchive, readArchive, validArchiveDate, KINDS as ARCHIVE_KINDS, cardHistory, archiveDays } from './archive.mjs';
 import { pinnedOrigin } from './origin.mjs';
@@ -563,7 +563,17 @@ function settledLine(l) {
   if (!c) return false;
   return c.state === 'closed' || c.stage === 'done';
 }
-function openLines(seat, all) { const acked = ackedSet(seat); return all ? seatInbox[seat].slice() : seatInbox[seat].filter(l => !acked.has(l.id) && !lineDone(seat, l)); }
+function seatOpenRows(seat, all) {
+  const acked = ackedSet(seat);
+  return all ? seatInbox[seat].slice() : seatInbox[seat].filter(l => !acked.has(l.id) && !lineDone(seat, l));
+}
+function openLines(seat, all) {
+  const name = String(seat || '').toLowerCase();
+  // Parked and dark seats stay in the inbox file and out of the open set, same as the queue.
+  // A recent owner prompt unmutes that seat. The roster is read on this call, not cached at boot.
+  if (loadMutedSeats().has(name) && !recentPromptSeats().has(name)) return [];
+  return seatOpenRows(seat, all);
+}
 function saveSeatInbox(s) {
   for (const l of seatInbox[s]) appendArchive('inbox', { ...l, seat: l.seat ?? s });
   const cut = Date.now() - 7 * 86400000;
@@ -1158,7 +1168,10 @@ function mergedHeader(now = Date.now()) {
   const af = applyStoredActivity(h.fleet, now); if (af) h.fleet = af;   // open turns and tasks (activity.jsonl)
   h.track = trackView(now);   // Cursor agents, packets, wakes and blockers rebuilt from the volume
   h.cloud_agents = cloudAgentBoard();   // first-class board rows: bcId, seat, card, state, last update
-  if (h.board) h.board.cloud_agents = h.cloud_agents;
+  if (h.board) {
+    h.board.cloud_agents = h.cloud_agents;
+    if (Array.isArray(h.board.cards)) h.board.cards = stampCriticCloud(h.board.cards, h.cloud_agents);
+  }
   const wf = applyTrackWorking(h.fleet, h.track, now); if (wf) h.fleet = wf;   // woken packet or running agent
   const gf = applyGithubWorking(h.fleet, now); if (gf) h.fleet = gf;   // GitHub actor on a PR or issue
   if (h.fleet) h.fleet = clearClosedWork(h.fleet);
@@ -1251,7 +1264,6 @@ function queueStale(line, now) {
 function openQueue(now = Date.now()) {
   const lines = [];
   for (const seat of SEAT_IDS) {
-    if (PARKED_QUEUE.has(seat)) continue;
     for (const l of openLines(seat)) {
       if (!l || l.id == null || queueStale(l, now)) continue;
       lines.push({
@@ -1294,7 +1306,37 @@ const CLOCK_SEATS = (() => {   // who may start a run by hand: BIFROST_CLOCK_SEA
 const clock = createClock({ tripMs: TRIP_MS, perSeatMs: PER_SEAT_MS });
 const trip = tripwire();
 let governorChanges = 0;
-const openSeats = () => SEAT_IDS.filter(s => s !== 'builder' && s !== 'builder-cloud' && openLines(s).length);
+function loadMutedSeats() {
+  const files = [
+    process.env.BIFROST_ROSTER,
+    path.join(COLLECTOR_DIR_EARLY(), 'fleet-roster.json'),
+    path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'feed', 'fleet-roster.json'),
+  ].filter(Boolean);
+  for (const file of files) {
+    try {
+      const data = JSON.parse(fs.readFileSync(file, 'utf8'));
+      if (data && (Array.isArray(data.parked) || Array.isArray(data.dark))) return mutedSeats(data);
+    } catch { /* try the next roster */ }
+  }
+  return mutedSeats({}, [...PARKED_QUEUE]);
+}
+function recentPromptSeats(now = Date.now()) {
+  const out = new Set();
+  if (!activityReady || !Array.isArray(activity)) return out;
+  for (const line of activity) {
+    if (!line || line.kind !== 'prompt' || (line.action !== 'sent' && line.action !== 'received')) continue;
+    const t = Date.parse(line.t_ct);
+    if (!Number.isFinite(t) || now - t > PROMPT_WORK_MS || t > now + 300000) continue;
+    const seat = String(line.seat || '').toLowerCase();
+    if (seat) out.add(seat);
+  }
+  return out;
+}
+function stallOpenSeats(now = Date.now()) {
+  const counts = {};
+  for (const seat of SEAT_IDS) counts[seat] = openLines(seat).length;
+  return selectStallSeats(SEAT_IDS, loadMutedSeats(), counts, recentPromptSeats(now));
+}
 function wakeRun(run) {
   for (const [seat, by] of Object.entries(run.deadlines)) {
     const n = openLines(seat).length;
@@ -1313,7 +1355,7 @@ function moveFp() { return fingerprint([...evs.values()].map(v => v.e).filter(e 
 function governorRun(now = Date.now()) {
   if (evalNudges(now)) { seq++; fullDirty = true; }
   const w = wakeBoard(now);
-  const r = clock.observe(moveFp(), now, { openCards: bfCards.filter(c => c.state === 'live').length, scheduled: scheduledCards(now), openSeats: openSeats(), coord: COORD_SEAT });
+  const r = clock.observe(moveFp(), now, { openCards: bfCards.filter(c => c.state === 'live').length, scheduled: scheduledCards(now), openSeats: stallOpenSeats(now), coord: COORD_SEAT });
   if (r === 'stall' || r === 'empty') wakeRun(clock.run);
   if (r === 'cleared') console.log('clock: cleared by a seat move');
   const fp = fingerprint([...evs.values()].map(v => v.e), { nudges: nudges.filter(n => !n.closed_at).map(n => n.id), routing: ROUTING.ok,
@@ -2710,7 +2752,7 @@ async function handle(req, res) {
     if (!SEAT_IDS.includes(inboxM[1]) || who !== inboxM[1]) return json(req, res, 403, { error: 'inbox is not exposed' });
     const since = url.searchParams.get('since'), all = url.searchParams.get('all') === '1', stale = url.searchParams.get('stale') === '1';
     const base = since && seatInbox[who].some(l => l.id === since) ? linesAfter(seatInbox[who], since) : seatInbox[who];
-    const keep = new Set(openLines(who, stale ? false : all).map(l => l.id)); touchSeat(who);
+    const keep = new Set(seatOpenRows(who, stale ? false : all).map(l => l.id)); touchSeat(who);
     const lines = base.filter(l => keep.has(l.id) && (!stale || settledLine(l)));
     return json(req, res, 200, { seat: who, lines: lines.slice(0, 1000) });
   }
@@ -2720,7 +2762,7 @@ async function handle(req, res) {
     req.resume();
     if (!who) return json(req, res, 401, { error: 'unauthorized' });
     if (!CLOCK_SEATS.includes(who)) return json(req, res, 403, { error: 'not a clock seat' });
-    const seats = openSeats();
+    const seats = stallOpenSeats();
     if (!seats.length) return json(req, res, 200, { ok: true, started: false, reason: 'no open work' });
     const run = clock.startByHand(Date.now(), seats, who); wakeRun(run); touchSeat(who);
     seq++; header = mergedHeader(); fullDirty = true;
@@ -2738,7 +2780,7 @@ async function handle(req, res) {
     const n = ackLines(who, what); touchSeat(who); if (n) serverActivity(who, 'turn', 'end', 'ack');
     if (n < 0) return json(req, res, 404, { error: 'no such line' });
     if (n > 0) publishHeader();   // work tracking moves the packet to acked
-    return json(req, res, 200, { ok: true, acked: n, open: openLines(who, false).length });
+    return json(req, res, 200, { ok: true, acked: n, open: seatOpenRows(who, false).length });
   }
   if (p === '/routing') {   // GET /routing: the routing map, read-only (seat, login, aliases, status). No keys, no webhook URLs.
     if (m !== 'GET') return json(req, res, 405, { error: 'method not allowed' }, { Allow: 'GET' });
@@ -2778,7 +2820,7 @@ async function handle(req, res) {
     if (who && want !== who && who !== COS && who !== OPS) return json(req, res, 403, { error: 'not your seat' });
     const all = want === 'all' || want === 'coord' || want === COS || want === OPS;
     const cs = CARD_SEAT[want] || want;
-    return json(req, res, 200, { seat: want, cards: cardsView(bfCards.filter(c => all || cardSeats(c).includes(cs))) });
+    return json(req, res, 200, { seat: want, cards: stampCriticCloud(cardsView(bfCards.filter(c => all || cardSeats(c).includes(cs))), cloudAgentBoard()) });
   }
   if (p === '/nudges') {   // GET /nudges?since=<id>: forge's key only (forge delivers them; was the kit's Operator)
     if (m !== 'GET') return json(req, res, 405, { error: 'method not allowed' }, { Allow: 'GET' });

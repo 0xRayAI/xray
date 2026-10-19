@@ -243,6 +243,51 @@ test('the open queue hides parked seats and arch10x lines from a previous Chicag
   }
 });
 
+test('openLines skips a parked seat until the roster reloads, and an owner prompt unmutes it', async () => {
+  const data = fs.mkdtempSync(path.join(os.tmpdir(), 'board-open-lines-'));
+  const roster = path.join(data, 'roster.json');
+  const writeRoster = (parked) => fs.writeFileSync(roster, JSON.stringify({ seats: ['forge', 'herald', 'blinky'], parked, dark: [] }));
+  writeRoster(['herald']);
+  const heraldKey = 'hk-' + crypto.randomBytes(8).toString('hex');
+  const forgeKey = 'fk-' + crypto.randomBytes(8).toString('hex');
+  const hash = (s) => crypto.createHash('sha256').update(s).digest('hex');
+  const srv = start(data, {
+    COLLECTOR: 'off', SERVER_ROUTING: 'off', BIFROST_ROSTER: roster, BIFROST_CLOCK_SEATS: 'forge',
+    SEAT_KEYS: JSON.stringify({ herald: hash(heraldKey), forge: hash(forgeKey) }),
+  });
+  try {
+    await ready(srv.base, srv.logs);
+    const now = new Date().toISOString();
+    const posted = await fetch(srv.base + '/inbox', { method: 'POST', headers: { 'X-Live-Ingest': srv.ingest, 'Content-Type': 'application/json' }, body: JSON.stringify({ lines: [
+      { id: 'parked-herald', t_ct: now, seat: 'herald', type: 'issue', repo: 'example/repo', number: 1, title: 'verify herald', url: 'https://github.com/example/repo/issues/1', reason: 'parked' },
+    ] }) });
+    assert.equal(posted.status, 200, await posted.text());
+    const own = await fetch(srv.base + '/inbox/herald', { headers: { Authorization: 'Bearer ' + heraldKey } });
+    assert.equal(own.status, 200);
+    assert.deepEqual((await own.json()).lines.map(l => l.id), ['parked-herald']);
+    assert.ok(fs.readFileSync(path.join(data, 'live', 'inbox', 'herald.jsonl'), 'utf8').includes('parked-herald'));
+    const clockFor = async () => {
+      const res = await fetch(srv.base + '/clock', { method: 'POST', headers: { Authorization: 'Bearer ' + forgeKey } });
+      return res.json();
+    };
+    assert.equal((await clockFor()).started, false);
+    writeRoster([]);
+    const reloaded = await clockFor();
+    assert.equal(reloaded.started, true, 'a roster rewrite is visible without a restart');
+    assert.deepEqual(Object.keys(reloaded.clock.deadlines), ['herald']);
+    writeRoster(['herald']);
+    assert.equal((await clockFor()).started, false);
+    const prompt = await fetch(srv.base + '/activity', { method: 'POST', headers: { Authorization: 'Bearer ' + heraldKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ t_ct: new Date().toISOString(), seat: 'herald', kind: 'prompt', action: 'sent', from: 'blaze', to: 'herald' }) });
+    assert.equal(prompt.status, 202, await prompt.text());
+    const unmuted = await clockFor();
+    assert.equal(unmuted.started, true);
+    assert.deepEqual(Object.keys(unmuted.clock.deadlines), ['herald']);
+  } finally {
+    await stop(srv.child);
+    fs.rmSync(data, { recursive: true, force: true });
+  }
+});
+
 test('a persisted mill ack today marks mill active over a 10/13 github last_ct', async () => {
   const data = fs.mkdtempSync(path.join(os.tmpdir(), 'board-mill-'));
   const touch = Date.now();

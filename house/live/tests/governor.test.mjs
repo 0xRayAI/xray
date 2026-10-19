@@ -7,7 +7,7 @@ import { spawn } from 'node:child_process';
 import http from 'node:http'; import crypto from 'node:crypto'; import path from 'node:path'; import fs from 'node:fs'; import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { checkRoutes } from '../app/routes.mjs';
-import { fingerprint, tripwire, realEvents, createClock } from '../app/governor.mjs';
+import { fingerprint, tripwire, realEvents, createClock, mutedSeats, selectStallSeats } from '../app/governor.mjs';
 const APP = process.env.MESH_APP_DIR || path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app');
 const got = [];
 const sink = http.createServer((q, s) => { let b = ''; q.on('data', d => b += d); q.on('end', () => { got.push({ path: q.url, body: b, at: Date.now() }); s.writeHead(200); s.end('{}'); }); });
@@ -131,6 +131,64 @@ test('clock: a card waiting on start_after does not pull an empty board', () => 
   c.observe('x', 0, waiting);
   assert.equal(c.observe('x', W, waiting), null);
   assert.equal(c.run, null);
+});
+
+test('stall seats: muted open lines are left out and do not cancel the stall', () => {
+  const roster = JSON.parse(fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'feed', 'fleet-roster.json'), 'utf8'));
+  const muted = mutedSeats(roster);
+  assert.equal(muted.has('herald') && muted.has('sound'), true);
+  assert.equal(muted.has('forge'), false);
+  const dark = mutedSeats({ parked: ['herald'], dark: ['sound'] });
+  assert.equal(dark.has('sound') && dark.has('herald'), true);
+  const ids = ['builder', 'forge', 'herald', 'sound', 'blinky'];
+  const onlyMuted = selectStallSeats(ids, muted, { builder: 4, forge: 0, herald: 2, sound: 1, blinky: 0 }, []);
+  assert.deepEqual(onlyMuted, []);
+  const W = 60000;
+  const parkedOnly = createClock({ tripMs: W, perSeatMs: 120000, now: 0 });
+  const held = { openCards: 2, openSeats: onlyMuted, coord: 'blinky' };
+  parkedOnly.observe('a', 0, held);
+  assert.equal(parkedOnly.observe('a', W, held), 'stall');
+  assert.deepEqual(Object.keys(parkedOnly.run.deadlines), ['blinky']);
+  assert.equal(parkedOnly.observe('a', W + 1, held), null);
+  const mixedSeats = selectStallSeats(ids, muted, { forge: 1, herald: 0, sound: 3, blinky: 0 }, []);
+  assert.deepEqual(mixedSeats, ['forge']);
+  const mixed = createClock({ tripMs: W, perSeatMs: 120000, now: 0 });
+  const board = { openCards: 2, openSeats: mixedSeats, coord: 'blinky' };
+  mixed.observe('b', 0, board);
+  assert.equal(mixed.observe('b', W, board), 'stall');
+  assert.deepEqual(Object.keys(mixed.run.deadlines), ['forge']);
+  const woke = selectStallSeats(ids, dark, { herald: 2, sound: 0, forge: 0 }, ['Sound']);
+  assert.deepEqual(woke, ['sound']);
+  const prompted = createClock({ tripMs: W, perSeatMs: 120000, now: 0 });
+  const promptBoard = { openCards: 2, openSeats: woke, coord: 'blinky' };
+  prompted.observe('d', 0, promptBoard);
+  assert.equal(prompted.observe('d', W, promptBoard), 'stall');
+  assert.deepEqual(Object.keys(prompted.run.deadlines), ['sound']);
+  const later = mutedSeats({ parked: ['forge'], dark: [] });
+  assert.equal(later.has('herald'), false);
+  assert.equal(later.has('forge'), true);
+  assert.deepEqual(selectStallSeats(ids, later, { forge: 2, herald: 2, sound: 0 }, []), ['herald']);
+  const open = createClock({ tripMs: W, perSeatMs: 120000, now: 0 });
+  const noneHeld = { openCards: 1, openSeats: [], coord: 'blinky' };
+  open.observe('c', 0, noneHeld);
+  assert.equal(open.observe('c', W, noneHeld), 'stall');
+  assert.deepEqual(Object.keys(open.run.deadlines), ['blinky']);
+});
+
+test('tripwire: a second head sha is a real change', () => {
+  const t = tripwire();
+  const line = { id: 'e1', kind: 'pr_commit', t_ct: 't1', sha: 'aaa1111' };
+  assert.equal(t(fingerprint([line])), true);
+  assert.equal(t(fingerprint([line])), false);
+  assert.equal(t(fingerprint([{ ...line, sha: 'bbb2222' }])), true);
+});
+
+test('stall roster is read on each check, not cached at boot', () => {
+  const src = fs.readFileSync(path.join(APP, 'server.mjs'), 'utf8');
+  assert.equal(src.includes('const MUTED_SEATS'), false);
+  assert.match(src, /function openLines\(seat, all\) \{[\s\S]*?loadMutedSeats\(\)\.has\(name\)/);
+  assert.match(src, /function stallOpenSeats\(now = Date\.now\(\)\) \{\n  const counts = \{\};\n  for \(const seat of SEAT_IDS\) counts\[seat\] = openLines\(seat\)\.length;\n  return selectStallSeats\(SEAT_IDS, loadMutedSeats\(\), counts, recentPromptSeats\(now\)\);\n\}/);
+  assert.match(src, /openSeats: stallOpenSeats\(now\)/);
 });
 
 test('clock: an empty board wakes the coord (CoS) role once per window; re-arms after the window passes', () => {
