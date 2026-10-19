@@ -80,6 +80,22 @@ class WakeEnvFreshShell(unittest.TestCase):
         self.assertRegex(wake_run, r"^\d+$")
         self.assertEqual(args, "forge")
 
+    def test_documented_ack_runs_with_seat(self):
+        text = TEMPLATE.read_text()
+        self.assertIn("live-inbox <seat> --ack <id>", text)
+        recorded = self.home / "ack.txt"
+        stub = self.home / ".burst" / "bin" / "live-inbox"
+        stub.write_text("#!/bin/bash\nprintf '%s\\n' \"$LIVE_URL\" \"$LIVE_CURSORS\" \"$SEAT_KEYS_DIR\" \"$*\" > \"$OUT\"\n")
+        stub.chmod(0o755)
+        script = export_line().replace("<seat>", "forge") + "\n" + "live-inbox <seat> --ack <id>".replace("<seat>", "forge").replace("<id>", "line-1")
+        r = self.sh(script, OUT=str(recorded))
+        self.assertEqual(r.returncode, 0, r.stderr + r.stdout)
+        url, cursors, keys, args = recorded.read_text().splitlines()
+        self.assertEqual(url, "https://burst-live-production.up.railway.app")
+        self.assertEqual(cursors, str(self.home / ".burst" / "cursors" / "forge"))
+        self.assertEqual(keys, str(self.home / ".burst" / "seat-keys"))
+        self.assertEqual(args, "forge --ack line-1")
+
     def test_missing_env_fails_loudly(self):
         r = self.sh(f"{self.home}/.burst/bin/live-inbox forge --turn end --tag wake")
         self.assertEqual(r.returncode, 2)
