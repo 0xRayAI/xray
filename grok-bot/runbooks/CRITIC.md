@@ -18,7 +18,7 @@ The output goes on the PR as the live-pass comment.
 | board-owner (live) | every open card's owner is a seat in the routing map | **Card** |
 | addressed (live) | the test posts reach no seat they weren't addressed to (comment-watch / PR-head / issue_open watch seats excepted) | **Two loops** |
 | ack (live) | one delivered line acks with the seat key, non-interactively; the running seat confirms no approval card | **Ack** |
-| tripwire | an empty board and a stalled board each start the timed run once per window (`governor.mjs`) | **Tripwire** |
+| tripwire | a stalled board, and an empty board below 75% weekly burn, each start the timed run once per window; `BIFROST_WEEKLY_BURN=0.75` keeps the empty-board wake quiet (`governor.mjs`) | **Tripwire** |
 | nudge | a stuck line nudges its owner L1 -> L3, then wakes the coordinator once (kit server, local fake seats) | **Nudge** |
 | lexicon | every bolded term in the pack OP-PROC and runbooks has a row in `grok-bot/LEXICON.md` | OP-PROC line 3 |
 | names | docs and plates hold none of the stale phrases in `tools/bifrost-stale.json` | **Names** |

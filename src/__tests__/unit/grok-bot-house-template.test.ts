@@ -86,7 +86,9 @@ describe('grok-bot house template — USMail docs', () => {
         'AUTO-REVIEW.md',
         'HOUSE.md',
         'ROLE-MAP.md',
+        'WAVE-SCHEDULE.md',
         'WAVEBOARD.md',
+        'bifrost-waves.json',
         'fleet/WAKE-ROUTINE.md',
         'fleet/activity.jsonl',
         'fleet/prompts.jsonl',
@@ -103,6 +105,13 @@ describe('grok-bot house template — USMail docs', () => {
       expect(queue).toContain("lab tester's merge watcher");
       expect(queue).not.toMatch(/\]\(\.{1,2}\//);
       expect(readFileSync(path.join(dir, 'house', 'watchers', 'merge-queue.md'), 'utf8')).toBe(queue);
+      const copiedWaves = JSON.parse(readFileSync(path.join(dir, 'house', 'bifrost-waves.json'), 'utf8')) as { waves: unknown[] };
+      expect(copiedWaves.waves).toEqual([]);
+      expect(JSON.stringify(copiedWaves)).not.toContain('0xRayAI/xray');
+      const localBoard = readFileSync(path.join(dir, 'house', 'WAVEBOARD.md'), 'utf8');
+      expect(localBoard).toContain('when `LIVE_URL` is unset');
+      expect(localBoard).not.toContain('Do not add open work');
+      expect(localBoard).toContain('Open cards');
       const board = readFileSync(path.join(kit, 'templates', 'house', 'watchers', 'waveboard-static.md'), 'utf8');
       expect(board).toContain(cadenceDoc);
       expect(board).toMatch(/^## Card rule$/m);

@@ -10,12 +10,14 @@ const requireCjs = createRequire(import.meta.url);
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const kit = path.join(root, 'grok-bot');
 const bin = path.join(kit, 'bin', 'grok-bot.js');
-const { diagnoseSeat, formatDoctor, initHouse, parseDoctorArgs, runDoctorCli } = requireCjs(
+const { boardSurface, diagnoseSeat, formatDoctor, initHouse, parseDoctorArgs, runDoctorCli } = requireCjs(
   path.join(kit, 'lib', 'seat-doctor.cjs'),
 ) as {
+  boardSurface: (env: { LIVE_URL?: string }) => { board: string; read: string };
   diagnoseSeat: (opts: { cwd: string; home?: string; env?: Record<string, string> }) => {
     house: { status: string; scope?: { wallet: string } };
     next: string[];
+    board?: { board: string; read: string };
   };
   formatDoctor: (report: { ok: boolean; next: string[] } & Record<string, unknown>) => string;
   initHouse: (opts: { dir: string; kitRoot: string; migrate?: boolean }) => {
@@ -185,6 +187,7 @@ describe('grok-bot house init --migrate', () => {
       const migrated = runBin(['house', 'init', '--migrate', '--dir', dir], dir);
       expect(migrated.status).toBe(0);
       expect(migrated.stdout).toMatch(/moved /);
+      expect(existsSync(path.join(dir, 'ops', 'WAVEBOARD.md'))).toBe(false);
       expect(readFileSync(path.join(dir, 'house', 'WAVEBOARD.md'), 'utf8')).toBe('old cards\n');
       const chunks: string[] = [];
       const code = runDoctorCli(['doctor', '--migrate'], {
@@ -197,6 +200,34 @@ describe('grok-bot house init --migrate', () => {
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
+  });
+});
+
+describe('board when Bifrost is not configured', () => {
+  it('uses house/WAVEBOARD.md when LIVE_URL is unset and Bifrost only when it is set', () => {
+    expect(boardSurface({})).toEqual({ board: 'waveboard', read: 'house/WAVEBOARD.md' });
+    expect(boardSurface({ LIVE_URL: '' })).toEqual({ board: 'waveboard', read: 'house/WAVEBOARD.md' });
+    expect(boardSurface({ LIVE_URL: '   ' })).toEqual({ board: 'waveboard', read: 'house/WAVEBOARD.md' });
+    expect(boardSurface({ LIVE_URL: 'https://burst-live-production.up.railway.app' })).toEqual({
+      board: 'bifrost',
+      read: 'GET /cards',
+    });
+    const dir = scratch();
+    try {
+      const unset = diagnoseSeat({ cwd: dir, env: {} });
+      expect(unset.board).toEqual({ board: 'waveboard', read: 'house/WAVEBOARD.md' });
+      expect(formatDoctor(unset as { ok: boolean; next: string[] })).toContain('Board: house/WAVEBOARD.md');
+      const set = diagnoseSeat({ cwd: dir, env: { LIVE_URL: 'https://burst-live-production.up.railway.app' } });
+      expect(formatDoctor(set as { ok: boolean; next: string[] })).toContain('Board: GET /cards');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+    const board = template('WAVEBOARD.md');
+    expect(board).toContain('when `LIVE_URL` is unset');
+    expect(board).not.toContain('Do not add open work');
+    const copied = template('HOUSE.md');
+    expect(copied).toContain('house/WAVEBOARD.md when LIVE_URL is unset');
+    expect(copied).toContain('when LIVE_URL is set');
   });
 });
 

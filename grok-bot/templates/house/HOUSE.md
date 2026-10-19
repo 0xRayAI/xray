@@ -16,7 +16,7 @@
 (example) Package publish, production deploy, payments, secrets, and deletes.
 
 ## Board
-(example) Open cards: house/WAVEBOARD.md. What needs the owner now: house/ATTENTION_STATE.md.
+(example) Open cards: house/WAVEBOARD.md when LIVE_URL is unset. Bifrost cards (GET /cards) when LIVE_URL is set. What needs the owner now: house/ATTENTION_STATE.md. The ranked waves live in bifrost-waves.json. See WAVE-SCHEDULE.md.
 
 ## Cadence
 Optional. Delete this section if your house has no code loop. Defaults from [opproc-cadence.md](https://github.com/0xRayAI/xray/blob/main/docs/opproc-cadence.md); rename the roles to your seats.

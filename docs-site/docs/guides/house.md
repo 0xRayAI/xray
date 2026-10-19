@@ -7,7 +7,7 @@ sidebar_label: Set up a house
 
 The operating page is the same for every team. Yours is `house/HOUSE.md`: owner, seats, public voice, allowed repos, ask first, and the board. Those six headings win over the general page. Start at the [operating procedure](https://github.com/0xRayAI/xray/blob/main/grok-bot/OP-PROC.md), follow the [setup-house](https://github.com/0xRayAI/xray/blob/main/grok-bot/skills/setup-house/SKILL.md) skill, and keep the [house plate](../plates/house.md) as the stamp.
 
-These steps match `@0xray/grok-bot` 0.1.7 (`grok-bot/lib/seat-doctor.cjs`).
+These steps match `@0xray/grok-bot` 0.1.10 (`grok-bot/lib/seat-doctor.cjs`).
 
 ## Copy the template
 
@@ -20,8 +20,9 @@ npx @0xray/grok-bot house init
 That copies every file in `templates/house/` into `./house` except `EXAMPLE.md`.
 
 - `HOUSE.md`
-- `WAVEBOARD.md`
+- `WAVEBOARD.md` (the board when `LIVE_URL` is unset)
 - `ATTENTION_STATE.md`
+- `bifrost-waves.json` (empty wave list)
 - `AUTO-REVIEW.md`
 - `ROLE-MAP.md`
 
@@ -43,13 +44,13 @@ Teams that still keep the board at `ops/WAVEBOARD.md` run:
 npx @0xray/grok-bot house init --migrate
 ```
 
-That moves `ops/WAVEBOARD.md` to `house/WAVEBOARD.md` and copies each missing template, including `ATTENTION_STATE.md`. A house file you already changed stays as it is. When both boards exist and `house/WAVEBOARD.md` is not the untouched template, the command exits 1 and writes nothing:
+That moves `ops/WAVEBOARD.md` to `house/WAVEBOARD.md` and copies each missing template, including `ATTENTION_STATE.md` and an empty `bifrost-waves.json`. A house file you already changed stays as it is. When both boards exist and `house/WAVEBOARD.md` is not the untouched template, the command exits 1 and writes nothing:
 
 ```text
 refusing to overwrite <project>/house/WAVEBOARD.md with <project>/ops/WAVEBOARD.md
 ```
 
-An untouched template board is the same bytes as `templates/house/WAVEBOARD.md`. Migrate may replace that copy with the old board. Plain `house init` does not move `ops/WAVEBOARD.md`.
+An untouched template board is the same bytes as `templates/house/WAVEBOARD.md`. Migrate may replace that copy with the old board. Plain `house init` does not move `ops/WAVEBOARD.md`. `house/WAVEBOARD.md` is the board when `LIVE_URL` is unset. Bifrost (`GET /cards`) is the board only when `LIVE_URL` is set.
 
 ## Fill the six headings
 
@@ -81,7 +82,7 @@ Git push to mina/shop. No other repo.
 Package publish, production deploy, payments, secrets, and deletes.
 
 ## Board
-Open cards: house/WAVEBOARD.md. What needs the owner now: house/ATTENTION_STATE.md.
+Open cards: house/WAVEBOARD.md when LIVE_URL is unset. Bifrost cards (GET /cards) when LIVE_URL is set. What needs the owner now: house/ATTENTION_STATE.md.
 ```
 
 ## Optional roster and Auto Review
@@ -135,4 +136,4 @@ The process exits 0 when the house check is not FAIL and mill plus inspect are f
 
 ## Every wake
 
-Read `.xray/state/STATION.md` first. Then read the board: `house/WAVEBOARD.md` and `house/ATTENTION_STATE.md`. If either file is missing, use the same name under `templates/house/`. The setup-house skill tells every seat to read `house/` on its next wake. One card, one owner. For the six headings, `HOUSE.md` is the copy that wins.
+Read `.xray/state/STATION.md` first. When `LIVE_URL` is unset, read `house/WAVEBOARD.md` and `house/ATTENTION_STATE.md`. When `LIVE_URL` is set, read Bifrost cards (`GET /cards`) and `house/ATTENTION_STATE.md`. If a house file is missing, use the same name under `templates/house/`. The setup-house skill tells every seat to read `house/` on its next wake. One card, one owner. For the six headings, `HOUSE.md` is the copy that wins.

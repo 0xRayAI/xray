@@ -1,7 +1,10 @@
-"""Rebuild WAVEBOARD.md from the feed loop, at most once a minute.
+"""Optional feed-loop builder. It does not write the board.
 
-The builder is optional. It runs as a subprocess with a timeout. A failure
-stays in this process: the feed loop keeps writing. GitHub credentials passed
+When LIVE_URL is unset, the board is hand-kept house/WAVEBOARD.md.
+BURST_WAVEBOARD names an optional script and stays off unless that
+variable is set, or the Example builder file is already on disk.
+The builder runs as a subprocess with a timeout. A failure stays in
+this process: the feed loop keeps writing. GitHub credentials passed
 to the child are the read-only token, when one is set.
 """
 from __future__ import annotations
@@ -26,7 +29,11 @@ _DROP = (
 
 
 def script_path(env: dict | None = None) -> str:
-    """Explicit path, or the Example builder when that file is present. Off otherwise."""
+    """Explicit path, or the Example builder when that file is present. Off otherwise.
+
+    The hand-kept board is house/WAVEBOARD.md when LIVE_URL is unset.
+    This path does not fill that file.
+    """
     env = os.environ if env is None else env
     raw = env.get("BURST_WAVEBOARD")
     if raw is None:
