@@ -10,6 +10,7 @@ import path from 'node:path';
 import fs from 'node:fs';
 import os from 'node:os';
 import { fileURLToPath } from 'node:url';
+import { writeStartAfter } from '../app/chicago-stamp.mjs';
 
 const APP = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app');
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-sa-'));
@@ -85,6 +86,17 @@ test('a future start_after parks the card with no nudge, survives restart, then 
   const openNudge = async (n) => (await (await fetch(base + '/nudges', { headers: forge })).json()).nudges.filter((x) => x.number === n && !x.closed_at);
   const lines = async () => (await (await fetch(base + '/inbox/critic', { headers: critic })).json()).lines;
 
+  await stop(srv);
+  fs.mkdirSync(path.join(DATA, 'live'), { recursive: true });
+  const stale = '2026-11-10T12:00:00-05:00';
+  fs.writeFileSync(path.join(DATA, 'live', 'start-after.json'), JSON.stringify({
+    overrides: { [`${R}#9`]: { start_after: stale, by: 'critic' } }, woke: {}, parked: {},
+  }));
+  srv = spawnSrv();
+  base = await boot(srv);
+  assert.equal((await ingest([card(9)])).status, 200);
+  assert.equal((await one(9)).start_after, stale);
+
   const onCard = isoIn(12);
   assert.equal((await ingest([card(5, { start_after: onCard })])).status, 200);
   let c5 = await one(5);
@@ -98,7 +110,7 @@ test('a future start_after parks the card with no nudge, survives restart, then 
     body: JSON.stringify({ repo: R, number: 5, start_after: fleetDate }),
   });
   assert.equal(asForge.status, 200);
-  assert.equal((await one(5)).start_after, fleetDate);
+  assert.equal((await one(5)).start_after, writeStartAfter(fleetDate));
 
   assert.equal((await ingest([card(4)])).status, 200);
   let c = await one(4);
@@ -119,19 +131,19 @@ test('a future start_after parks the card with no nudge, survives restart, then 
   })).status, 400);
   c = await one(4);
   assert.equal(c.state, 'parked');
-  assert.equal(c.start_after, future);
+  assert.equal(c.start_after, writeStartAfter(future));
   assert.equal(c.stall, false);
   assert.equal((await openNudge(4)).length, 0);
   assert.equal((await lines()).filter((l) => l.type === 'start_after').length, 0);
   const saved = JSON.parse(fs.readFileSync(path.join(DATA, 'live', 'start-after.json'), 'utf8'));
-  assert.equal(saved.overrides[`${R}#4`].start_after, future);
+  assert.equal(saved.overrides[`${R}#4`].start_after, writeStartAfter(future));
 
   await stop(srv);
   srv = spawnSrv();
   base = await boot(srv);
   c = await one(4);
   assert.equal(c.state, 'parked');
-  assert.equal(c.start_after, future);
+  assert.equal(c.start_after, writeStartAfter(future));
   assert.equal((await openNudge(4)).length, 0);
   assert.equal((await lines()).filter((l) => l.type === 'start_after').length, 0);
 

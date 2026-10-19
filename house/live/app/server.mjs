@@ -24,6 +24,9 @@ const COLLECTOR_DIR_EARLY = () => path.join(path.dirname(fileURLToPath(import.me
 import { initArchive, appendArchive, backfillArchive, readArchive, validArchiveDate, KINDS as ARCHIVE_KINDS, cardHistory, archiveDays } from './archive.mjs';
 import { pinnedOrigin } from './origin.mjs';
 import { missingHandoffs } from './handoff.mjs';
+import { writeStartAfter } from './chicago-stamp.mjs';
+import { createBatch } from './pr-batch.mjs';
+const batch = createBatch();
 
 const PORT = process.env.PORT === '0' ? 0 : (Number(process.env.PORT) || 8080);   // PORT=0: the OS picks a free port (tests); the log line names it
 // Site mode. Default (no config): GATED = password login + private repos masked on the page, feed and logs.
@@ -221,6 +224,7 @@ function ingestSrc(n, events, hdr, remove = null) {   // remove === null -> full
     for (const n of SRC_PRIO) for (const [id, e] of SRCS[n].evs) if (e && (e.kind === 'deploy' || e.kind === 'deploy_fail') && e.src_file === 'github-api') touch(id);
   }
   for (const e of events) appendArchive('events', e);
+  for (const e of events) if (e && CI_KINDS.has(e.kind)) noteCi(e);
   if (n === 'github') recomputeGithubDataAt();
   header = mergedHeader(); fullDirty = true;
 }
@@ -229,7 +233,7 @@ const ingestDelta = d => ingestSrc('box', d.upsert, headerOf(d.header), d.remove
 // pusher-auth readback (ingest responses only): which seats the merged board shows working, no event data
 const fleetBrief = () => { refreshWorking(); const f = header.fleet || {}; return { box_stale: !!f.box_stale, cloud_working: !!f.cloud?.working, working: Object.keys(f.working || {}).sort() }; };
 // ---- builder inbox mirror (port of example-org/xray PR #5 house/live/activity.mjs): lines persist on the volume
-const INBOX_KEYS = new Set(['id', 't_ct', 'seat', 'type', 'repo', 'number', 'sha', 'title', 'url', 'reason', 'from', 'to', 'kind', 'flag']);
+const INBOX_KEYS = new Set(['id', 't_ct', 'seat', 'type', 'repo', 'number', 'sha', 'title', 'url', 'reason', 'from', 'to', 'kind', 'flag', 'batch']);
 const INBOX_BANNED = /body|text|message/i;   // tested against field NAMES only; values (e.g. type "prompt_message") are fine
 const INBOX_FILE = path.join(process.env.MESH_DATA_DIR || '/data', 'inbox', 'builder.jsonl');
 let inboxLines = [];
@@ -250,6 +254,7 @@ function validInboxLine(d) {
   if (d.to != null && !toToken(d.to)) return false;
   if (d.kind != null && !tokenOk(d.kind)) return false;
   if (d.flag != null && !tokenOk(d.flag)) return false;
+  if (d.batch != null && (typeof d.batch !== 'string' || d.batch.length > 2000)) return false;
   if (d.seat.toLowerCase() !== 'builder') return false;
   return true;
 }
@@ -678,11 +683,58 @@ function inboxLineError(d) {
   if (d.to != null && !toToken(d.to)) parts.push('to must be a seat id');
   if (d.kind != null && !tokenOk(d.kind)) parts.push('kind must be a string');
   if (d.flag != null && !tokenOk(d.flag)) parts.push('flag must be a string');
+  if (d.batch != null && typeof d.batch !== 'string') parts.push('batch must be a string');
+  else if (typeof d.batch === 'string' && d.batch.length > 2000) parts.push('batch is too long');
   return parts.length ? parts.join('; ') : null;
 }
 function rejectedRef(l, i) {
   if (l && typeof l.id === 'string' && l.id) return l.id.slice(0, 120);
   return '#' + i;
+}
+function attentionNow() {
+  const here = path.dirname(fileURLToPath(import.meta.url));
+  const files = [process.env.ATTENTION_STATE_FILE, path.join(here, '..', '..', '..', 'house', 'ATTENTION_STATE.md')].filter(Boolean);
+  for (const file of files) {
+    try { return fs.readFileSync(file, 'utf8'); } catch { /* the next path */ }
+  }
+  return '';
+}
+function prBusy(line) {
+  const repo = String(line && line.repo || '').toLowerCase();
+  const n = Number(line && line.number);
+  if (!repo || !Number.isInteger(n)) return false;
+  const key = repo + '#' + n;
+  if (batch.busy(key)) return true;
+  return cloudAgentBoard().some((row) => row && row.state === 'running' && String(row.card || '').toLowerCase() === key);
+}
+function storeFlush(src, out) {
+  if (!out || !out.line) return null;
+  const line = { ...out.line, t_ct: new Date().toISOString() };
+  if (src && src.flag === 'hotfix') line.flag = 'hotfix';
+  return line;
+}
+function noteCi(ev) {
+  const repo = String(ev && ev.repo || '').toLowerCase();
+  const n = Number(ev && ev.number);
+  const key = repo && Number.isInteger(n) ? repo + '#' + n : '';
+  const out = batch.observeCi(ev, { attention: attentionNow(), busy: key ? batch.busy(key) || prBusy({ repo, number: n }) : false });
+  const line = storeFlush(ev, out);
+  if (!line) return;
+  postSeatLines({ lines: [line] }, null);
+}
+function takeBatch(lines) {
+  const kept = [];
+  for (const line of lines) {
+    if (line && String(line.kind || '').toLowerCase() === 'run_end') {
+      const out = batch.runEnd(line, { attention: attentionNow(), hotfix: line.flag === 'hotfix' });
+      const flush = storeFlush(line, out);
+      if (flush) kept.push(flush);
+      continue;
+    }
+    if (line && batch.absorb(line, prBusy(line))) continue;
+    kept.push(line);
+  }
+  return kept;
 }
 function postSeatLines(parsed, onlySeat) {
   const incoming = parsed && Array.isArray(parsed.lines) ? parsed.lines : null;
@@ -701,12 +753,13 @@ function postSeatLines(parsed, onlySeat) {
     const why = rejected.slice(0, 8).map(r => r.ref + ': ' + r.error).join('; ');
     return { status: 400, error: ('no line stored: ' + why).slice(0, 800), rejected: refs };
   }
+  const outgoing = takeBatch(good);
   const touched = new Set(); let added = 0; const fresh = [];
   if (parsed.replace === true && onlySeat && good.length && seatInbox[onlySeat]) {
     seatInbox[onlySeat].length = 0;
     touched.add(onlySeat);
   }
-  for (const l of good) {
+  for (const l of outgoing) {
     const s = canonSeat(l.seat), arr = seatInbox[s]; if (!arr || arr.some(x => x.id === l.id)) continue;
     const stored = { ...l, seat: s };
     for (const k of ['from', 'to', 'kind', 'flag']) if (typeof stored[k] === 'string') stored[k] = stored[k].toLowerCase();
@@ -846,6 +899,16 @@ function waveBoard(cards, now = Date.now()) {
     coord, now, prior: bfCards, weeklyBurn: weeklyBurnFraction(), window: WAVE_SEED.window,
   });
 }
+function notePonder(card) {
+  const key = startKeyOf(card) || (card && card.key);
+  const row = batch.ponder(key, 'closed');
+  if (!row) return;
+  try {
+    const file = path.join(STATE_DIR, 'ponder.jsonl');
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.appendFileSync(file, JSON.stringify({ ...row, t_ct: new Date().toISOString() }) + '\n');
+  } catch (e) { console.log('ponder: ' + ((e && e.code) || 'write')); }
+}
 function publishBoard(updatedCt) {
   const merged = mergeCards(waveCards, sourceCardsFrom(itemsFromWork(), { seats: SEAT_IDS }));
   const scheduled = waveBoard(merged);
@@ -856,6 +919,7 @@ function publishBoard(updatedCt) {
   const stamp = updatedCt || new Date().toISOString();
   bfWrite('cards.json', JSON.stringify({ updated_ct: stamp, cards: bfCards }));
   for (const c of bfCards) {
+    if (c && String(c.state || '').toLowerCase() === 'closed') notePonder(c);
     if (!c || c.kind === 'source') continue;
     const beat = Number(c.last_beat_t);
     const updated = Number.isFinite(beat) && beat > 0 ? new Date(beat).toISOString() : (typeof c.updated_ct === 'string' ? c.updated_ct : '');
@@ -958,6 +1022,15 @@ function evalNudges(now = Date.now()) {
         changed = true;
         if (seat === 'builder') nudgeToCloud(nudges[nudges.length - 1]);
       }
+    }
+    if (batch.inBeat(startKeyOf(c))) {
+      for (const n of nudges) {
+        if (n.closed_at || n.card !== c.key) continue;
+        if (n.kind === 'handoff' || n.kind === 'line' || n.kind === 'silent' || n.kind === 'unrouted' || n.kind === 'quiet') continue;
+        n.closed_at = new Date(now).toISOString();
+        changed = true;
+      }
+      continue;
     }
     if (c.pinned || c.state !== 'live' || c.waiting || !c.last_beat_t || now - c.last_beat_t < NUDGE_L1_MS) continue;
     const id = lvl => `nudge:${c.key}:L${lvl}:${c.last_beat_t}`, has = lvl => nudges.find(n => n.id === id(lvl));
@@ -1387,7 +1460,14 @@ function wakeRun(run) {
   console.log(`clock: ${run.reason} run started, ${Object.keys(run.deadlines).length} seat(s), ends ${run.ends_at}`);
 }
 function moveFp() { return fingerprint([...evs.values()].map(v => v.e).filter(e => e && e.moves !== false), { acks: Object.values(inboxAcks).reduce((n, a) => n + (a ? a.length : 0), 0) }); }
+function flushHeld() {
+  const ready = batch.drain({ attention: attentionNow() });
+  if (!ready.length) return false;
+  postSeatLines({ lines: ready.map((out) => storeFlush(null, out)).filter(Boolean) }, null);
+  return true;
+}
 function governorRun(now = Date.now()) {
+  if (flushHeld()) { seq++; fullDirty = true; }
   if (evalNudges(now)) { seq++; fullDirty = true; }
   const scheduled = waveBoard(bfCards, now);
   if (scheduled.changed) {
@@ -2846,13 +2926,15 @@ async function handle(req, res) {
     const key = repo.toLowerCase() + '#' + number;
     const held = bfCards.find(c => c && (startKeyOf(c) === key || (String(c.repo || '').toLowerCase() === repo.toLowerCase() && Number(c.number) === number)));
     if (!maySetStartAfter(who, held)) return json(req, res, 403, { error: 'start_after is owner or fleet only' });
-    startAfter.overrides[key] = { start_after: when.iso, by: who, set_at: new Date().toISOString() };
+    const stamped = writeStartAfter(when.iso);
+    if (!stamped) return json(req, res, 400, { error: 'repo, number, and start_after (ISO with offset) required' });
+    startAfter.overrides[key] = { start_after: stamped, by: who, set_at: new Date().toISOString() };
     saveStartAfter();
     const now = Date.now();
     applyStartAfter(now);
     evalNudges(now);
     seq++; header = mergedHeader(); fullDirty = true;
-    return json(req, res, 200, { ok: true, repo, number, start_after: when.iso });
+    return json(req, res, 200, { ok: true, repo, number, start_after: stamped });
   }
   if (p === '/cards/seed' && m === 'POST') {   // ingest secret only. Loads a fleet wave seed. Does not run unless called.
     const h = req.headers.authorization || '';

@@ -210,7 +210,12 @@ function proveUpgrade(spec: string) {
     expect(devCard).toContain(`Worn: sound ${version}`);
     expect(devCard).not.toContain(stockSkills);
     const devStationAfter = readFileSync(devStationPath, 'utf8');
-    if (devStation) expect(devStationAfter).toBe(devStation);
+    // Wear restamps the Fresh line to the worn package; every other line holds.
+    const dropFresh = (text: string) => text.replace(/^Fresh:.*$/m, '');
+    if (devStation) {
+      expect(dropFresh(devStationAfter)).toBe(dropFresh(devStation));
+      expect(devStationAfter).toMatch(new RegExp(`^Fresh: .*package ${version.replace(/\./g, '\\.')}`, 'm'));
+    }
     else expect(devStationAfter).toMatch(/^Plane: ecosystem$/m);
 
     const domainCard = goggles(domain);
@@ -220,7 +225,9 @@ function proveUpgrade(spec: string) {
     expect(domainCard).toContain(`Worn: sound ${version}`);
     expect(domainCard).not.toContain(stockSkills);
     expect(JSON.parse(readFileSync(path.join(domain, '.xray', 'state', 'goggles-plane.json'), 'utf8')).chosen).toBe(true);
-    expect(readFileSync(path.join(domain, '.xray', 'state', 'STATION.md'), 'utf8')).toBe(domainStation);
+    expect(dropFresh(readFileSync(path.join(domain, '.xray', 'state', 'STATION.md'), 'utf8'))).toBe(
+      dropFresh(domainStation),
+    );
   } finally {
     for (const dir of [dev, domain, ...homes, ...machines]) rmSync(dir, { recursive: true, force: true });
   }

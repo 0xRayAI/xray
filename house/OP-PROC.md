@@ -13,7 +13,9 @@ OP-PROC is **layered**: pack base (`grok-bot/OP-PROC.md`) then this house file (
 - Message one owner. Do not fan out. Do not post to a room if that would wake every member for no reason.
 - After a real close, the coordinator starts the next everyday step. Aim for about two agents awake per real state change.
 - A seat does a small job itself: a check, a rerun, a merge after the gate, a file edit.
-- A webhook wake never launches or resumes a cloud agent. It hands off to the owner's chat (forge for builds, critic for reviews) with a seat message pointing at the card. Only that persistent chat launches or resumes a cloud agent. The card stores `critic_bc`, the critic cloud id for that PR. On a new head the critic chat resumes `critic_bc` and launches a new agent only when the card has no `critic_bc` or that resume is refused. Launch a new agent only when (a) no session has context for that repo, or (b) **all three** hold: the context-holding agent already has 2+ jobs queued, the new job touches different files, and the job can be briefed from the docs alone. Otherwise, queue it as a follow-up on the existing session.
+- A webhook wake never launches or resumes a cloud agent. It hands off to the owner's chat (forge for builds, critic for reviews) with a seat message pointing at the card. Only that persistent chat launches or resumes a cloud agent. The card stores `critic_bc`, the critic cloud id for that PR. On a new head the critic chat resumes `critic_bc` and launches a new agent only when the card has no `critic_bc` or that resume is refused. Launch a new agent only when (a) no session has context for that repo, or (b) **all three** hold: the context-holding agent already has 2+ jobs queued, the new job touches different files, and the job can be briefed from the docs alone. Otherwise, queue it as a follow-up on the existing session. Before that launch, read `ATTENTION_STATE.md` and do not launch when the day is over pace or weekly burn is at 75% or more, except a hotfix.
+- **Packet-first.** A new PR starts as a short packet in the issue or PR body: scope, files, plates and docs touched, tests, and out of scope. Critic PASS on that packet comes before any code. The cloud agent codes against the packet. Code review checks the diff against it. **Green sign-off** still applies: tests written, the suite run, the head pushed, and every required check green. A docs-only push does not wait on CI. The owner's chat acts on one flushed `batch` (`run_end` or `ci_pass`), not on each follow-up.
+- **Forward-motion.** Critic FAILs only for wrong live behavior, for security, spend, or on-chain risk, or for a plate or OP-PROC line that would send a seat the wrong way. Anything else is APPROVE plus a linked follow-up issue for the author. A bug fix ships when it fixes the bug and breaks nothing. A feature's rule is written before merge. After round 2, only an original blocker can FAIL. A docs-only PR does not wait on CI; critic checks that the words match the code.
 - A strict review that is already on a Card does not need a second yes.
 - Work moves on a **Beat**. Do not poll on a timer when an event exists. A script may poll; the seat may not. Seeing a line starts the work.
 - **Queue.** A non-empty live-inbox read is the queue, in order, this turn. A non-empty read is the work; a seat never reads open lines and then waits.
@@ -50,7 +52,7 @@ OP-PROC is **layered**: pack base (`grok-bot/OP-PROC.md`) then this house file (
 
 ## 3. Nothing ships unproven
 
-- **Review plate.** One pass, one fix, one re-check, then stop. A PASS ends it. A failed re-check is parked for Blaze. There is no third lap.
+- **Review plate.** One pass, one fix, one re-check, then stop. A PASS ends it. A failed re-check of an original blocker is parked for Blaze. A new finding on that re-check is an issue, not a FAIL. There is no third lap.
 - The words must match the live thing. Do not say personalized, generated, or composed for one person when the asset is the same for everyone. Fix the catalog and the page.
 - Open as a draft. Critic reviews by tier (Light, Normal, or Strict; see section 3). Merge only after the gate. Do not land unreviewed work on main.
 - **Wrong-author supersede.** If the open head is not forge0x1 when forge0x1 is required, forge0x1 opens one replacement pull request and closes the old one with a pointer. A forge0x1 FAIL stays on that Review plate. Do not open a new pull request for every FAIL.
@@ -145,7 +147,7 @@ The board is useful and obvious: find a need, fill a need, don't make the human 
 
 When `LIVE_URL` is unset, open cards are hand-kept in `house/WAVEBOARD.md`. When `LIVE_URL` is set, the board is Bifrost (`GET /cards`). What needs Blaze lives in `ATTENTION_STATE.md`. Do not repeat that status in chat.
 
-Watchers follow Beats on the repos named in `house/WATCHERS.md`. On new activity they create or bump a WAVEBOARD card (signal→ticket) with a Done·Verify·Next owner. GitHub signals: issue, pull request, review, checks, merge. X signals: mention or reply, only when Dist policy allows that class. Watcher ≠ implementer ≠ Dist — queue only; seats execute; watchers do not ship Dist or merge. Quiet when nothing changed. CoS owns the board digest. Forge owns the engineering cadence. A wake resumes the same seat and the same cloud id (`bc-…`).
+Watchers follow Beats on the repos named in `house/WATCHERS.md`. On new activity they create or bump a card (signal→ticket) with a Done·Verify·Next owner: a Bifrost card when `LIVE_URL` is set, and a card in local `house/WAVEBOARD.md` when `LIVE_URL` is unset. GitHub signals: issue, pull request, review, checks, merge. X signals: mention or reply, only when Dist policy allows that class. Watcher ≠ implementer ≠ Dist — queue only; seats execute; watchers do not ship Dist or merge. Quiet when nothing changed. CoS owns the board digest. Forge owns the engineering cadence. A wake hands off to the owner's chat. It does not launch or resume a cloud agent.
 
 ## Ship cadence (proposed 2026-10-13, needs Arch1's approval)
 
@@ -183,3 +185,8 @@ Blaze, 10:36 CT: "this is new ship cadence. understand it document it. live it."
 A Card is done when its receipt is on the PR and its board card is closed.
 
 This file is house/OP-PROC.md for our fleet. Pack stays generic; this file is the house layer.
+
+## Pulsar
+
+Initial: the find starts at `grok-bot/ops/arcade/RANGE.md`.
+Selected: (none)
