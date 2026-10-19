@@ -38,6 +38,14 @@ Wear seeds `STATION.md` and `NOTES.md` when they are missing. After that, wear c
 
 When `LIVE_URL` is unset, the board is `house/WAVEBOARD.md`. When `LIVE_URL` is set, the board is Bifrost (`GET /cards`). When a real wave's last card is closed or merged, the board raises one plan-next-wave card for the CoS seat naming the next open wave. The window is a Chicago cron stored on the card. A due plan does not hide a stall wake. Weekly burn at 75% keeps the plan quiet and keeps an empty-board wake quiet. A plan card older than 7 days closes as expired and is not raised again for that same wave. Synthetic cards with no GitHub number are closed. `--apply` boards only the current wave and refuses the production board unless `BIFROST_SEED_APPLY=1`. The live image copies `wave-schedule.mjs` and `bifrost-waves.json`. `house init` copies an empty wave list. The server reads `house/bifrost-waves.json`.
 
+## [4.1.3] - 2026-10-19
+
+One flushed batch per pull request head. Follow-ups collapse on the pull request and the head sha. `run_end` and `ci_pass` are the only flushes. A green head queues critic on `run_end` when the checks are already green, and on `ci_pass` when the run has already ended. A collector ci row carries `head_sha` when it has no `sha`, and that sha is the head the slot keeps. A green event seen before `run_end` is not replayed. (#404, #407)
+
+The wake template's export block is the burst-live fleet's defaults. `live-inbox` itself never guesses. Another board exports its own `LIVE_URL`, `SEAT_KEYS_DIR`, and `LIVE_CURSORS` before that block. (#408)
+
+`LIVE_CURSORS` defaults to `$HOME/.burst/cursors`. `live-inbox` writes `$LIVE_CURSORS/<seat>.txt`, so the seat name is not also in the default directory. (#409)
+
 ## [4.1.2] - 2026-10-19
 
 ### 🔄 Changes
