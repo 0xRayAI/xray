@@ -86,7 +86,7 @@ Design. A scheduled pass walks each goggles plane in turn. On that plane it take
 
 The step is an escalator assignment. The lexicon nudge is the stall wake (L1, L2, L3). Phase 3 uses "one step" for the sweep outcome so the stall wake keeps its name. Parked is the card state the lexicon already has (`live`, `parked`, `closed`). A sweep park is that mark, written because the pass looked. It is distinct from a `start_after` park, which is a time the owner set.
 
-Overlap with #400. Draft #400 (`cursor/bifrost-wave-seed-bbe1`, head `cbb3c28ac`) adds `house/live/app/wave-schedule.mjs`. When a real wave closes, the scheduler raises one card titled `plan next wave` for the CoS seat. The card names the next open wave. The window is the Chicago cron `0 9 * * 1`, stored on the card. A plan older than 7 days closes as `expired` and is not raised again for that same wave. Weekly burn at or above 0.75 (`BURN_QUIET`) keeps that wake quiet. The plan packet escalates to tripwire. The PR's rule is that a due plan does not hide a stall. The board those seats read is `GET /cards`.
+Overlap with #400. #400 is on main (`cc0ffabc8`) and adds `house/live/app/wave-schedule.mjs`. When a real wave closes, the scheduler raises one card titled `plan next wave` for the CoS seat. The card names the next open wave. The window is the Chicago cron `0 9 * * 1`, stored on the card. A plan older than 7 days closes as `expired` and is not raised again for that same wave. Weekly burn at or above 0.75 (`BURN_QUIET`) keeps that wake quiet. The plan packet escalates to tripwire. The PR's rule is that a due plan does not hide a stall. The board those seats read is `GET /cards`.
 
 The sweep is not that card. It does not name the next wave, does not close an expired plan, and does not clear a stall. It does not run while burn quiet is holding the empty-board wake. Plan-next-wave stays the scheduler's one card. Nudge and tripwire stay the time side. The sweep is the rotating look across cold work. Phase 3 lands beside `wave-schedule.mjs`. It folds into that module only if the seam note says the two schedulers are one pass.
 
@@ -135,7 +135,7 @@ Question 3 is which scorer is the trunk. It is not a vote to keep the competing 
 | Session nudge | `src/monitoring/nudge-monitor.ts:27` `NudgeType`; `src/processors/implementations/nudge-processor.ts:34` | A stuck session pattern to a prompt ("write code", "try another tool") | The name nudge. Not the fleet clock and not a difficulty rung | Leaves |
 | Incident escalation | `src/postprocessor/escalation/EscalationEngine.ts:48` | An incident past a manual, rollback, or emergency threshold to an alert channel | The name escalation, and the word threshold, for incidents | Leaves. Those cutoffs are not escalator rungs |
 | Plate recall | `recallPlate` `src/integrations/hooks/plates.cjs:374` | Intent text to one plate, or nothing on a tie | Seek can take a plate after its first miss. Not a who-route | Leaves |
-| Plan next wave | Not on this branch. Draft #400, `house/live/app/wave-schedule.mjs` | One CoS card naming the next open wave | A scheduler beside the sweep. Burn quiet and tripwire already hooked there | Leaves. Phase 3 said so |
+| Plan next wave | On main via #400 (`cc0ffabc8`), `house/live/app/wave-schedule.mjs` | One CoS card naming the next open wave | A scheduler beside the sweep. Burn quiet and tripwire already hooked there | Leaves. Phase 3 said so |
 
 `getConfidenceForTier` (`complexity-core.ts:190`) annotates a tier. It leaves. It is not a route.
 
