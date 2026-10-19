@@ -24,7 +24,7 @@ const COLLECTOR_DIR_EARLY = () => path.join(path.dirname(fileURLToPath(import.me
 import { initArchive, appendArchive, backfillArchive, readArchive, validArchiveDate, KINDS as ARCHIVE_KINDS, cardHistory, archiveDays } from './archive.mjs';
 import { pinnedOrigin } from './origin.mjs';
 import { missingHandoffs } from './handoff.mjs';
-import { writeStartAfter } from './chicago-stamp.mjs';
+import { clockStamp, writeStartAfter } from './chicago-stamp.mjs';
 import { createBatch } from './pr-batch.mjs';
 const batch = createBatch();
 
@@ -280,7 +280,8 @@ function postInbox({ secret, headerSecret, body, lines }) {
 // Our 9 seats (feed/fleet-roster.json) plus the kit's builder / builder-cloud plumbing (installation-token auth, mirror);
 // no route writes to builder. The kit's sample seats (reviewer, tester, qa, coord, operator, triager, ...) are gone: their
 // jobs map to ours (coord -> the CoS role, operator / tester / qa -> the operator role, reviewer -> critic).
-// canonSeat reads those roles; blinky and forge stay the defaults when routing is absent.
+// canonSeat and seatIdOf read those roles. The worktrack alias stores the seat strings
+// cosSeat() and operatorSeat() return. blinky and forge stay the defaults when routing is absent.
 const COS = 'blinky', OPS = 'forge', REVIEW = 'critic';
 const COORD_SEAT = (() => {   // the CoS role (routing seats.coord.seat): pulls the next work on an empty board
   try { const r = JSON.parse(fs.readFileSync(path.join(process.env.BIFROST_ROUTING_DIR || path.join(COLLECTOR_DIR_EARLY(), 'routing'), 'inbox-roles.json'), 'utf8'));
@@ -292,7 +293,11 @@ const OPERATOR_SEAT = (() => {   // the operator role (routing seats.operator.se
 })();
 const cosSeat = () => COORD_SEAT || COS;   // the CoS role (routing seats.coord)
 const operatorSeat = () => OPERATOR_SEAT || OPS;   // the operator role (routing seats.operator)
-const SEAT_ALIAS = { coord: COS, coordinator: COS, cos: COS, operator: OPS, tester: OPS, qa: OPS, lab: OPS, reviewer: REVIEW, triager: COS };
+const SEAT_ALIAS = {
+  coord: cosSeat(), coordinator: cosSeat(), cos: cosSeat(), triager: cosSeat(),
+  operator: operatorSeat(), tester: operatorSeat(), qa: operatorSeat(), lab: operatorSeat(),
+  reviewer: REVIEW,
+};
 const COORD_NAMES = new Set(['coord', 'coordinator', 'cos', 'triager']);
 const OPERATOR_NAMES = new Set(['operator', 'tester', 'qa', 'lab']);
 // LIVE_SEAT_IDS (comma list) replaces the fleet's seat ids; builder / builder-cloud are kit plumbing and always kept.
@@ -459,7 +464,12 @@ async function seatOf(req) {   // -> seat id | null; throws when GitHub can't ve
   return null;
 }
 const seatIdOf = name => { const t = String(name || '').toLowerCase().replace(/[^a-z0-9 -]/g, ' ');
-  for (const w of t.split(/\s+/)) { if (SEAT_IDS.includes(w) || w === 'lead') return w; if (SEAT_ALIAS[w]) return SEAT_ALIAS[w]; } return null; };
+  for (const w of t.split(/\s+/)) {
+    if (SEAT_IDS.includes(w) || w === 'lead') return w;
+    if (COORD_NAMES.has(w)) return cosSeat();
+    if (OPERATOR_NAMES.has(w)) return operatorSeat();
+    if (SEAT_ALIAS[w]) return SEAT_ALIAS[w];
+  } return null; };
 const STATE_DIR = path.join(process.env.MESH_DATA_DIR || '/data', 'live');
 function persistWakeOk() {
   try { writeWakeOk(path.join(STATE_DIR, 'wake-ok.json'), wakeOkAt); }
@@ -908,7 +918,7 @@ function weeklyBurnFraction() {
   return n > 1 ? n / 100 : n;
 }
 function waveBoard(cards, now = Date.now()) {
-  const coord = (typeof COORD_SEAT !== 'undefined' && COORD_SEAT) || COS;
+  const coord = cosSeat();
   return scheduleWaves(retainSeedCards(cards, bfCards, seedHold), WAVE_SEED, {
     coord, now, prior: bfCards, weeklyBurn: weeklyBurnFraction(), window: WAVE_SEED.window,
   });
@@ -955,7 +965,7 @@ function holdOwner(c) {
   if (owner && SEAT_IDS.includes(owner)) return owner;
   const by = seatIdOf(c.hold && c.hold.by);
   if (by && SEAT_IDS.includes(by)) return by;
-  return COS;
+  return cosSeat();
 }
 // A future start_after parks the card (no nudge, and it is not an open card for the tripwire). At that time one
 // inbox line wakes the owning seat. The command override wins over the collector field. Both the date and the
@@ -1052,7 +1062,7 @@ function evalNudges(now = Date.now()) {
       title: String(c.title || '').slice(0, 120), url: String(c.url || '').slice(0, 300), stage: c.stage || '', level: lvl, seat, via, beat_t: c.last_beat_t }); changed = true;
       if (seat === 'builder') nudgeToCloud(nudges[nudges.length - 1]); };
     const to = seatIdOf(c.nudge_to), nx = to || seatIdOf((c.packet || {})['next owner']);
-    const tgt = nx || seatIdOf(c.owner) || COS, via = to ? (c.nudge_via || 'retest owner') : nx ? 'next owner' : 'card owner';
+    const tgt = nx || seatIdOf(c.owner) || cosSeat(), via = to ? (c.nudge_via || 'retest owner') : nx ? 'next owner' : 'card owner';
     const l1s = nudges.filter(n => n.id === id(1) || n.id.startsWith(id(1) + ':'));
     let l1 = l1s[l1s.length - 1];
     if (!l1) { mk(1, tgt, via); l1 = has(1); }
@@ -1588,13 +1598,7 @@ function applyGithubWorking(fleet, now) {
 }
 // #336: fleet.as_of and every *_ct on the fleet and freshness are America/Chicago, never a bare Z.
 function ctStamp(t) {
-  if (!t) return null;
-  const base = ctOffset(t);
-  if (typeof base !== 'string') return base;
-  const d = new Date(t);
-  if (isNaN(d) || base.includes('.')) return base;
-  const ms = String(d.getUTCMilliseconds()).padStart(3, '0');
-  return base.replace(/([+-]\d{2}:\d{2})$/, '.' + ms + '$1');
+  return clockStamp(t);
 }
 function stampClockTree(node) {
   if (!node || typeof node !== 'object') return node;
