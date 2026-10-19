@@ -744,6 +744,49 @@ function packagedAgentPath(packageRoot, file) {
   return files.find((candidate) => fs.existsSync(candidate)) || "";
 }
 
+let shippedSkillBlobsCache = null;
+
+/** Pinned git blob ids of catalog skill bodies shipped since v4.0.0. Never reads git or npm. */
+function shippedSkillBlobs() {
+  if (shippedSkillBlobsCache) return shippedSkillBlobsCache;
+  const map = new Map();
+  try {
+    const data = JSON.parse(fs.readFileSync(path.join(__dirname, "shipped-skill-blobs.json"), "utf8"));
+    for (const [name, list] of Object.entries(data.skills || {})) {
+      map.set(name, new Set((Array.isArray(list) ? list : []).map((entry) => entry.blob)));
+    }
+  } catch {
+    /* no pinned list: only the current bytes count */
+  }
+  shippedSkillBlobsCache = map;
+  return map;
+}
+
+function gitBlobId(bytes) {
+  return require("node:crypto")
+    .createHash("sha1")
+    .update(`blob ${bytes.length}\0`)
+    .update(bytes)
+    .digest("hex");
+}
+
+/** Worn skill bytes equal the current package file or a shipped body of that skill. */
+function wornSkillIsShippedMirror(name, wornFile, packagedFile) {
+  let worn;
+  try {
+    worn = fs.readFileSync(wornFile);
+  } catch {
+    return false;
+  }
+  try {
+    if (packagedFile && worn.equals(fs.readFileSync(packagedFile))) return true;
+  } catch {
+    /* fall through to the pinned list */
+  }
+  const shipped = shippedSkillBlobs().get(name);
+  return Boolean(shipped && shipped.has(gitBlobId(worn)));
+}
+
 function sameBytes(left, right) {
   try {
     return fs.readFileSync(left).equals(fs.readFileSync(right));
@@ -753,14 +796,57 @@ function sameBytes(left, right) {
 }
 
 /**
+ * A mill seat keeps the catalog. In every project skill dir, a worn body
+ * pinned in shipped-skill-blobs.json becomes the current package body. A
+ * seat's own text stays.
+ */
+function refreshShippedSkillBodies(targetDir, packageRoot) {
+  for (const name of wornSkillNames(targetDir)) {
+    const packaged = packagedSkillPath(packageRoot, name);
+    if (!packaged) continue;
+    for (const dir of listProjectSkillDirs(targetDir)) {
+      const file = path.join(dir, name, "SKILL.md");
+      if (!fs.existsSync(file) || sameBytes(file, packaged)) continue;
+      if (!wornSkillIsShippedMirror(name, file, packaged)) continue;
+      fs.copyFileSync(packaged, file);
+    }
+  }
+}
+
+/**
+ * Worn skill files still holding a pinned shipped body that is not the
+ * current package body, in every project skill dir. Validate fails on any.
+ */
+function staleShippedSkillBodies(targetDir, packageRoot) {
+  const stale = [];
+  for (const name of wornSkillNames(targetDir)) {
+    const packaged = packagedSkillPath(packageRoot, name);
+    if (!packaged) continue;
+    const shipped = shippedSkillBlobs().get(name);
+    if (!shipped) continue;
+    for (const dir of listProjectSkillDirs(targetDir)) {
+      const file = path.join(dir, name, "SKILL.md");
+      if (!fs.existsSync(file) || sameBytes(file, packaged)) continue;
+      if (!shipped.has(gitBlobId(fs.readFileSync(file)))) continue;
+      stale.push(path.relative(targetDir, file));
+    }
+  }
+  return stale;
+}
+
+/**
  * A non-mill seat does not wear the catalog. An older wear copied each
  * packaged skill into the project skill dirs, and each packaged agent into
  * .opencode/agents. Remove a worn file only when its bytes match that package
- * copy. A seat's own text stays, even when the same bytes sit in several
+ * copy, or (skills) a body of that skill shipped since v4.0.0, pinned in
+ * shipped-skill-blobs.json. A seat's own text stays, even when the same bytes sit in several
  * dirs, so the costume check can refuse it.
  */
 function stripPackagedCatalog(targetDir, millPlant, packageRoot) {
-  if (suitCatalogApplies(targetDir, millPlant, packageRoot)) return;
+  if (suitCatalogApplies(targetDir, millPlant, packageRoot)) {
+    refreshShippedSkillBodies(targetDir, packageRoot);
+    return;
+  }
   const planted = factoryPlantAllowlist(packageRoot, targetDir);
   const allowSkills = new Set([...(planted.skills || []), ...loadShopPlant(targetDir)]);
   const allowAgents = new Set(planted.agents || []);
@@ -772,7 +858,7 @@ function stripPackagedCatalog(targetDir, millPlant, packageRoot) {
       .map((dir) => path.join(dir, name, "SKILL.md"))
       .filter((file) => fs.existsSync(file));
     for (const file of worn) {
-      if (!sameBytes(file, packaged)) continue;
+      if (!wornSkillIsShippedMirror(name, file, packaged)) continue;
       fs.rmSync(path.dirname(file), { recursive: true, force: true });
     }
   }
@@ -1062,6 +1148,8 @@ module.exports = {
   wornAgentFiles,
   costumeDumpExtras,
   assertNoCostumeDump,
+  wornSkillIsShippedMirror,
+  staleShippedSkillBodies,
   machineHome,
   processHome,
   isIsolatedHome,

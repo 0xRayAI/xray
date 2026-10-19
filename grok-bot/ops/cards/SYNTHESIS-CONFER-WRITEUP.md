@@ -1,5 +1,7 @@
 # Synthesis confer write-up
 
+> 0xRay house example — not the general procedure. Your team’s rules live in `house/` after `grok-bot house init`.
+
 Docs only. This card records the old synthesis checkpoint and every Confer entry point still in the tree. It does not enable Confer, does not set `synthesis.enabled`, and does not change code.
 
 Line numbers are from `main` at `27f9ac427` (2026-10-19). The two commits after `b4aa19c3e` only bump the package version. They do not move these lines.

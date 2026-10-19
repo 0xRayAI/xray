@@ -2035,8 +2035,12 @@ function syncSetupSkillsAndRootLinks(packageRoot, targetDir) {
   require("./setup.cjs").syncSetupSkillsAndRootLinks(packageRoot, targetDir);
 }
 
-/** A byte-identical package skill is the old mirror. A different body still throws. */
+/**
+ * A worn skill whose bytes match the package file, or a body of that skill
+ * shipped since v4.0.0, is the old mirror. A different body still throws.
+ */
 function wornSkillMatchesPackage(packageRoot, targetDir, name) {
+  const { wornSkillIsShippedMirror } = require("../foundry/mint-suit.cjs");
   const distSkills = path.join(packageRoot, "dist", "skills");
   const srcSkills = path.join(packageRoot, "src", "skills");
   const source = fs.existsSync(path.join(distSkills, name, "SKILL.md"))
@@ -2044,13 +2048,12 @@ function wornSkillMatchesPackage(packageRoot, targetDir, name) {
     : srcSkills;
   const packaged = path.join(source, name, "SKILL.md");
   if (!fs.existsSync(packaged)) return false;
-  const packagedBytes = fs.readFileSync(packaged);
   let saw = false;
   for (const parts of ROLE_SKILL_DIRS) {
     const worn = path.join(targetDir, ...parts, name, "SKILL.md");
     if (!fs.existsSync(worn)) continue;
     saw = true;
-    if (!packagedBytes.equals(fs.readFileSync(worn))) return false;
+    if (!wornSkillIsShippedMirror(name, worn, packaged)) return false;
   }
   return saw;
 }

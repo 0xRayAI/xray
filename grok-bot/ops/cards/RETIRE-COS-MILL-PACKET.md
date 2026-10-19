@@ -1,5 +1,7 @@
 # Packet: retire CoS and the mill seat
 
+> 0xRay house example — not the general procedure. Your team’s rules live in `house/` after `grok-bot house init`.
+
 CoS (blinky, the coordinator) is dead weight on the eng loop. Bifrost already does handoffs, the review queue, wakes, and receipts. The mill seat (eng implementer) is dead weight too: forge launches the cloud agent that writes code and opens the PR.
 
 This file is the whole change. No other file is edited here.

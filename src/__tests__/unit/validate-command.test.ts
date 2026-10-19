@@ -113,6 +113,7 @@ describe('validate command — consumer wear, not leftover init.sh', () => {
       'pack-paths',
       'consumer-wear',
       'plant',
+      'skill-bodies',
       'repertoire',
       'durable-hold',
     ]);
