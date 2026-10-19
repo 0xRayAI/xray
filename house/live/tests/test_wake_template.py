@@ -71,6 +71,7 @@ class WakeTemplate(unittest.TestCase):
         self.assertNotIn("resume that same agent", self.text)
         low = self.steps[0].lower()
         self.assertIn("posts no turn end", low)
+        self.assertIn("owner token", low)
         self.assertIn("still waiting", low)
         self.assertIn("does not stop a newer line", low)
 

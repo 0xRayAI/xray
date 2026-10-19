@@ -5,8 +5,10 @@ live-inbox <seat> --card <owner/repo#n> --start-after <ISO>
 
 Read: OPEN lines from the Bifrost server inbox for <seat>, one JSON object per line on stdout. The server hides lines the
 seat acked. A closed or merged card does not hide an unacked line. For reviewer, a Reviewer verdict at the card's head does.
-A read claims each open line for this wake (WAKE_RUN, or this process). The claim key is the pull request, the head sha,
-and the kind. A second run whose lines are already claimed prints nothing and exits 0. Its --turn start and its --turn end then post nothing.
+A read claims each open line for this wake. The owner token is WAKE_RUN, or this process when WAKE_RUN is unset.
+The claim key is the pull request, the head sha, and the kind. A second run whose lines are already claimed prints
+nothing and exits 0. Only the owner token may release that claim or post its turn end. A losing run's --turn start
+and its --turn end post nothing and leave the claim file unchanged.
 A read never acks. The ack is the receipt (the pop) and a seat sends it after it handles the line, with
 --ack or --pop <id> (one line) or --ack all / --pop all (everything open). --ack stale lists lines with a close or merge
 event, or a closed or done card, and does not ack them. A missing card stays. --ack stale --apply acks the ids just listed.
@@ -165,11 +167,26 @@ def ct_now():
     return datetime.now(ZoneInfo("America/Chicago")).isoformat(timespec="seconds")
 
 
+def owner_token():
+    raw = os.environ.get("WAKE_RUN", "").strip()
+    return raw if raw else str(os.getpid())
+
+
 def owner_id():
     raw = os.environ.get("WAKE_RUN", "").strip()
     if raw.isdigit():
         return int(raw)
     return os.getpid()
+
+
+def owned_by(rec, token):
+    """True when this owner token holds the claim. A claim with no token falls back to its pid."""
+    if not isinstance(rec, dict):
+        return False
+    stored = rec.get("token")
+    if isinstance(stored, str) and stored:
+        return stored == token
+    return rec.get("pid") == owner_id()
 
 
 def pid_alive(pid):
@@ -200,23 +217,28 @@ def claim_paths(seat):
     return CUR / f"{seat}.lock", CUR / f"{seat}.claims.json"
 
 
-def live_claims(seat):
-    """Drop claims whose owner pid is gone. Caller holds the seat lock."""
+def load_claims(seat):
+    """Read the claim file. Does not drop or write. Caller holds the seat lock."""
     _, path = claim_paths(seat)
     try:
         data = json.loads(path.read_text() or "{}")
     except (OSError, ValueError):
         data = {}
     if not isinstance(data, dict):
-        data = {}
-    live = {}
-    for key, rec in data.items():
-        if isinstance(rec, dict) and pid_alive(rec.get("pid")):
-            live[key] = rec
+        return {}
+    return {key: rec for key, rec in data.items() if isinstance(rec, dict)}
+
+
+def write_claims(seat, claims):
+    _, path = claim_paths(seat)
     tmp = path.with_name(path.name + ".tmp")
-    tmp.write_text(json.dumps(live))
+    tmp.write_text(json.dumps(claims))
     os.replace(tmp, path)
-    return live
+
+
+def live_claims(seat):
+    """Claims whose owner pid is still alive. Caller holds the seat lock. Does not write."""
+    return {key: rec for key, rec in load_claims(seat).items() if pid_alive(rec.get("pid"))}
 
 
 def locked(seat):
@@ -231,51 +253,42 @@ def claim_open(seat, lines):
     handle = locked(seat)
     try:
         claims = live_claims(seat)
-        owner = owner_id()
+        token = owner_token()
+        pid = owner_id()
         now = time.time()
         mine = []
         for line in lines:
             key = packet_key(line)
             rec = claims.get(key) if key else None
-            if rec and rec.get("pid") != owner:
+            if rec and not owned_by(rec, token):
                 continue
             if key:
-                claims[key] = {"pid": owner, "at": now, "id": line.get("id")}
+                claims[key] = {"pid": pid, "token": token, "at": now, "id": line.get("id")}
             mine.append(line)
-        _, path = claim_paths(seat)
-        tmp = path.with_name(path.name + ".tmp")
-        tmp.write_text(json.dumps(claims))
-        os.replace(tmp, path)
+        write_claims(seat, claims)
         return mine
     finally:
         handle.close()
 
 
-def release_claims(seat):
+def turn_gate(seat, action):
+    """True when this owner token may post the turn.
+
+    A live claim held by another token blocks start and end, and this call does not
+    rewrite that claim. Turn end releases only the claims this token holds.
+    """
     handle = locked(seat)
     try:
-        claims = live_claims(seat)
-        owner = owner_id()
-        keep = {key: rec for key, rec in claims.items() if rec.get("pid") != owner}
-        _, path = claim_paths(seat)
-        tmp = path.with_name(path.name + ".tmp")
-        tmp.write_text(json.dumps(keep))
-        os.replace(tmp, path)
-    finally:
-        handle.close()
-
-
-def other_run_holds(seat):
-    """True when another live wake holds a claim and this wake holds none."""
-    if not (CUR / f"{seat}.claims.json").is_file():
-        return False
-    handle = locked(seat)
-    try:
-        claims = live_claims(seat)
-        owner = owner_id()
-        mine = any(rec.get("pid") == owner for rec in claims.values())
-        others = any(rec.get("pid") != owner for rec in claims.values())
-        return others and not mine
+        claims = load_claims(seat)
+        token = owner_token()
+        live = {key: rec for key, rec in claims.items() if pid_alive(rec.get("pid"))}
+        mine = [key for key, rec in live.items() if owned_by(rec, token)]
+        others = [key for key in live if key not in mine]
+        if others and not mine:
+            return False
+        if action == "end":
+            write_claims(seat, {key: rec for key, rec in claims.items() if not owned_by(rec, token)})
+        return True
     finally:
         handle.close()
 
@@ -301,11 +314,9 @@ if prompt:
     print(json.dumps(call("POST", "/activity", body)))
     sys.exit(0)
 if turn is not None:
-    # A wake that lost the lines does not start a turn and does not end the winner's turn.
-    if other_run_holds(seat):
+    # A wake that lost the lines does not start a turn and does not end the winner's claim.
+    if not turn_gate(seat, turn):
         sys.exit(0)
-    if turn == "end":
-        release_claims(seat)
     body = {"kind": "turn", "action": turn, "t_ct": ct_now()}
     if tag is not None:
         body["tag"] = tag
