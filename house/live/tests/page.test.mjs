@@ -349,6 +349,25 @@ test('packets: longer flight, halo + path so a hop is visible seat to seat; one 
   assert.match(html, /var tagOn = !!ambient && !replay;/);
 });
 
+test('Play starts a replay; live is not playing, so the clock is not frozen at now', async () => {
+  const vm = await import('node:vm');
+  const pub = path.join(APP, 'public');
+  const ctx = { console, URLSearchParams, location: { search: '', hash: '', href: 'http://x/' }, document: { addEventListener() {} } };
+  ctx.globalThis = ctx; ctx.window = ctx;
+  vm.createContext(ctx);
+  vm.runInContext(fs.readFileSync(path.join(pub, 'live.js'), 'utf8'), ctx);
+  const L = ctx.LiveMesh;
+  assert.equal(L.isPlaying(true, false), false, 'live is real time, not a replay');
+  assert.equal(L.isPlaying(false, true), true, 'a rewound replay is playing');
+  assert.equal(L.isPlaying(true, true), false, 'live must not keep the replay button on Pause');
+  assert.equal(L.isPlaying(false, false), false);
+  assert.match(html, /if \(state\.live\) \{ if \(!reduced\) startReplay\(\); lastText = 0; return; \}/);
+  assert.doesNotMatch(html, /rewindTo\(Date\.now\(\)\); playing = false/);
+  assert.match(html, /if \(playing && \(replay \|\| !state\.live\)\)/);
+  assert.match(html, /if \(replay\) state\.live = false;/);
+  assert.match(html, /\(replay && state\.t >= replay\.end\)\) goLive\(\);/);
+});
+
 test('kit live-config carries no install brand (no Example / example.com); product names come from the feed header', () => {
   for (const f of [path.join(APP, 'public', 'live-config.js'), path.join(APP, '..', 'feed', 'live-config.js')]) {
     assert.doesNotMatch(fs.readFileSync(f, 'utf8'), /Example|example\.com/, f);

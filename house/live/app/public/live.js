@@ -125,9 +125,10 @@
     return 1 - Math.pow(1 - p, 3);
   }
 
-  /* Transport. Live counts as playing (the view runs at real time), so the button shows Pause.
+  /* Transport. Play is the replay flag. Live is real time, not a replay: counting live
+     as playing shows Pause, and that click freezes the clock at now instead of replaying.
      A slider click/drag plays from that point; at the right end it goes Live. */
-  function isPlaying(live, playing) { return !!(live || playing); }
+  function isPlaying(live, playing) { return !!(playing && !live); }
   function sliderAction(v, b) { return v >= b[1] - 1000 ? 'live' : 'play'; }
   /* Edge traffic: dots run only on an edge with a ping in flight (a real event in the recent
      window); a quiet edge is a still line. */

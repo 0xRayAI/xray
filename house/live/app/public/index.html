@@ -924,8 +924,7 @@
   if (reduced) $('ambient').parentNode.title = 'Replay loop is off (reduced motion)';
   $('ambient').addEventListener('change', function (ev) { ambientOn = ambientStats.on = !reduced && ev.target.checked; ambient = null; });
   $('play').addEventListener('click', function () {
-    endReplay();
-    if (state.live) { rewindTo(Date.now()); playing = false; return; }
+    if (state.live) { if (!reduced) startReplay(); lastText = 0; return; }
     if (playing) { playing = false; lastText = 0; return; }
     playing = true; lastText = 0;
   });
@@ -944,11 +943,11 @@
 
   function frame(nowWall) {
     var dt = Math.min(250, nowWall - lastFrame); lastFrame = nowWall;
-    if (state.live) state.t = Date.now();
-    else if (playing) {
+    if (playing && (replay || !state.live)) {
+      if (replay) state.live = false;
       state.t += dt * speed;
       if (state.t >= Date.now() || (replay && state.t >= replay.end)) goLive();
-    }
+    } else if (state.live) state.t = Date.now();
     try {
       var pings = currentPings(nowWall);
       var hot = draw(nowWall, pings);
