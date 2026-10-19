@@ -1,11 +1,14 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
 import fs from 'node:fs';
+import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { createClock, wakeTitle } from '../app/governor.mjs';
+import { listenPort } from './free-port.mjs';
 import { loadSeedFile, refuseLiveApply } from '../tools/load-wave-seed.mjs';
 import { PLAN_FLAG, PLAN_TITLE, cardClosed, cardsFromSeed, liveWorkCount, postedCards, resolveWaveSeed, scheduleWaves } from '../app/wave-schedule.mjs';
 
@@ -159,4 +162,95 @@ test('the load command prints the seed and refuses the live board', () => {
   assert.match(refused.stderr, /refusing to post the seed to the live board/);
   assert.equal(refuseLiveApply('https://burst-live-production.up.railway.app', ''), 'refusing to post the seed to the live board');
   assert.equal(refuseLiveApply('http://127.0.0.1:9', ''), '');
+});
+
+function planOnlyCard() {
+  return {
+    key: 'plan:next-wave', kind: 'plan', title: PLAN_TITLE, state: 'live', owner: 'blinky',
+    due_at: 1, raised_at: 1, last_beat_t: Date.now(), flag: '', seen: [],
+    backlog: [
+      { rank: 2, wave: 'W2', title: '#389' },
+      { rank: 3, wave: 'W3', title: '#386' },
+      { rank: 4, wave: 'W4', title: '#397' },
+    ],
+  };
+}
+
+async function bootPlanBoard(burn) {
+  const hits = [];
+  const sink = http.createServer((q, s) => {
+    let body = '';
+    q.on('data', (d) => { body += d; });
+    q.on('end', () => {
+      try { hits.push(JSON.parse(body || '{}')); } catch { hits.push({ raw: body }); }
+      s.writeHead(200); s.end('{}');
+    });
+  });
+  await new Promise((resolve) => sink.listen(0, '127.0.0.1', resolve));
+  const hook = sink.address().port;
+  const data = fs.mkdtempSync(path.join(os.tmpdir(), 'wave-burn-'));
+  const route = fs.mkdtempSync(path.join(os.tmpdir(), 'wave-burn-route-'));
+  fs.mkdirSync(path.join(data, 'live'), { recursive: true });
+  fs.writeFileSync(path.join(data, 'live', 'cards.json'), JSON.stringify({ updated_ct: new Date().toISOString(), cards: [planOnlyCard()] }));
+  fs.writeFileSync(path.join(route, 'inbox-roles.json'), JSON.stringify({ seats: { coord: { seat: 'blinky' } } }));
+  const child = spawn(process.execPath, [path.join(APP, 'server.mjs')], {
+    env: {
+      PORT: '0', PATH: process.env.PATH, COLLECTOR: 'off', LIVE_PUBLIC: '1',
+      MESH_DATA_DIR: data, BIFROST_ROUTING_DIR: route, BIFROST_WEEKLY_BURN: burn,
+      BIFROST_TICK_S: '0.2', BIFROST_TRIPWIRE_MINUTES: '0.02', BIFROST_RUN_SEAT_MINUTES: '0.01',
+      SESSION_SECRET: crypto.randomBytes(32).toString('hex'),
+      INGEST_SECRET: crypto.randomBytes(32).toString('hex'),
+      SEAT_WEBHOOKS: JSON.stringify({ blinky: { url: `http://127.0.0.1:${hook}/blinky` } }),
+      WAKE_KEY_BLINKY: 'wk', WAKE_DEBOUNCE_S: '0', WAKE_STAGGER_MS: '0',
+    },
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  let logs = '';
+  child.stdout.on('data', (d) => { logs += d; });
+  child.stderr.on('data', (d) => { logs += d; });
+  try {
+    await listenPort(child);
+    const deadline = Date.now() + 8000;
+    while (Date.now() < deadline) {
+      if (/clock: (plan|empty) run started/.test(logs) || /weekly burn quiet/.test(logs)) break;
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    return { logs, hits };
+  } finally {
+    if (child.exitCode == null) {
+      const done = new Promise((resolve) => child.once('exit', resolve));
+      child.kill();
+      await done;
+    }
+    sink.close();
+    fs.rmSync(data, { recursive: true, force: true });
+    fs.rmSync(route, { recursive: true, force: true });
+  }
+}
+
+test('a plan-only board at BIFROST_WEEKLY_BURN=0.75 does not wake blinky', async () => {
+  const quietBoard = { openCards: 0, openSeats: [], coord: 'blinky', planDue: false, burnQuiet: true };
+  const quietClock = createClock({ tripMs: 1_000, perSeatMs: 10, now: 0 });
+  quietClock.observe('fp', 0, quietBoard);
+  assert.equal(quietClock.observe('fp', 1_000, quietBoard), 'quiet');
+  assert.equal(quietClock.run, null);
+  const below = { openCards: 0, openSeats: [], coord: 'blinky', planDue: false, burnQuiet: false };
+  const belowClock = createClock({ tripMs: 1_000, perSeatMs: 10, now: 0 });
+  belowClock.observe('fp', 0, below);
+  assert.equal(belowClock.observe('fp', 1_000, below), 'empty');
+  assert.equal(wakeTitle(belowClock.run, 'blinky', 0), 'board empty');
+  const due = { openCards: 0, openSeats: [], coord: 'blinky', planDue: true, burnQuiet: false };
+  const dueClock = createClock({ tripMs: 1_000, perSeatMs: 10, now: 0 });
+  dueClock.observe('fp', 0, due);
+  assert.equal(dueClock.observe('fp', 1_000, due), 'plan');
+  assert.equal(wakeTitle(dueClock.run, 'blinky', 0), 'plan next wave');
+
+  const burned = await bootPlanBoard('0.75');
+  assert.match(burned.logs, /clock: weekly burn quiet, empty board not woken/);
+  assert.doesNotMatch(burned.logs, /clock: (empty|plan) run started/);
+  assert.equal(burned.hits.length, 0);
+  const open = await bootPlanBoard('0.74');
+  assert.match(open.logs, /clock: plan run started/);
+  assert.equal(open.hits.some((hit) => hit.seat === 'blinky' && hit.title === 'plan next wave'), true);
 });

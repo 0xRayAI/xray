@@ -23,6 +23,7 @@ export function tripwire() {
 //          A due plan card does not hide this. The CoS seat is included so the plan still wakes.
 //   plan: the plan card is due and the board has no other open card -> the CoS seat is woken once;
 //   empty: no open cards -> the CoS (coord role) seat is woken to pull the next work.
+//          Weekly burn at or above 75% keeps that wake quiet (no seat is woken).
 // The CoS can start a run by hand (POST /clock). Blockers come back as one line; the countdown shows on the board until a
 // seat moves something, which clears the clock. Each trigger fires at most once per window: it re-arms only after the
 // board moves or another full window passes, never on every tick.
@@ -74,9 +75,10 @@ export function createClock({ tripMs, perSeatMs, now = Date.now(), state = null 
   return {
     get run() { return run; },
     snapshot() { return { lastFp, lastMove, lastTrip, run }; },
-    /** -> 'plan' | 'stall' | 'empty' | 'cleared' | null.
-     *  moveFp: fingerprint of seat moves (events, acks); board: { openCards, openSeats, coord, planDue }.
-     *  A due plan does not hide a stall: seats with open work are still woken. */
+    /** -> 'plan' | 'stall' | 'empty' | 'quiet' | 'cleared' | null.
+     *  moveFp: fingerprint of seat moves (events, acks); board: { openCards, openSeats, coord, planDue, burnQuiet }.
+     *  A due plan does not hide a stall: seats with open work are still woken.
+     *  burnQuiet skips the empty-board wake and does not start a run. */
     observe(moveFp, t, board) {
       if (moveFp !== lastFp) {
         const first = lastFp === null; lastFp = moveFp; lastMove = t; lastTrip = null;
@@ -85,7 +87,7 @@ export function createClock({ tripMs, perSeatMs, now = Date.now(), state = null 
       }
       const armed = lastTrip === null || t - lastTrip >= tripMs;
       if (!armed || t - lastMove < tripMs) return null;
-      const { openCards = 0, openSeats = [], coord = null, scheduled = 0, planDue = false } = board || {};
+      const { openCards = 0, openSeats = [], coord = null, scheduled = 0, planDue = false, burnQuiet = false } = board || {};
       if (openCards > 0) {
         const seats = openSeats.length ? [...openSeats] : [coord];
         if (planDue && coord && !seats.includes(coord)) seats.push(coord);
@@ -96,6 +98,7 @@ export function createClock({ tripMs, perSeatMs, now = Date.now(), state = null 
       if (planDue && coord) { start(t, [coord], 'plan', null, { planSeat: coord }); return 'plan'; }
       if (scheduled > 0) return null;   // a card waiting on start_after is not an empty board
       if (!coord) return null;
+      if (burnQuiet) { lastTrip = t; return 'quiet'; }   // 75% weekly burn: no empty-board wake
       start(t, [coord], 'empty'); return 'empty';
     },
     startByHand(t, seats, by) { return start(t, seats, 'cos', by); },

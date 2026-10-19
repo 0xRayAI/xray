@@ -17,7 +17,7 @@ import { seatPresence, presentSeat, foldSeatTouch, fleetConfigOf, readWakeOk, wr
 import { parseAllowlist, mergeCards, sourceCardsFrom, projectAllowed, validateItem, workEventToItem, cardNoNudge, workItemNewer } from './source.mjs';
 import { checkRoutesFromDir, readRoutingMap, createLoginResolver, auditLogins } from './routes.mjs';
 import { fingerprint, tripwire, createClock, wakeTitle, mutedSeats, selectStallSeats } from './governor.mjs';
-import { isPlanCard, liveWorkCount, postedCards, retainSeedCards, resolveWaveSeed, scheduleWaves } from './wave-schedule.mjs';
+import { burnQuiet, isPlanCard, liveWorkCount, postedCards, retainSeedCards, resolveWaveSeed, scheduleWaves } from './wave-schedule.mjs';
 import { createArch1Launch, ARCH1_CANON } from './arch1-launch.mjs';
 import { configureWorkTrack, acceptCursorWebhook, appendWake, boardCloudAgents, canonSeatToken, deriveTrackFromDir, displaySeat, loadSeatAgentMap, readJsonl, readWakeRows, seatForAgentId, stampCriticCloud, toToken } from './worktrack.mjs';
 const COLLECTOR_DIR_EARLY = () => path.join(path.dirname(fileURLToPath(import.meta.url)), 'collector');
@@ -1396,9 +1396,10 @@ function governorRun(now = Date.now()) {
     seq++; fullDirty = true;
   }
   const w = wakeBoard(now);
-  const r = clock.observe(moveFp(), now, { openCards: liveWorkCount(bfCards), scheduled: scheduledCards(now), openSeats: stallOpenSeats(now), coord: COORD_SEAT, planDue: scheduled.planDue });
+  const r = clock.observe(moveFp(), now, { openCards: liveWorkCount(bfCards), scheduled: scheduledCards(now), openSeats: stallOpenSeats(now), coord: COORD_SEAT, planDue: scheduled.planDue, burnQuiet: burnQuiet(weeklyBurnFraction()) });
   bfWrite('clock.json', JSON.stringify(clock.snapshot()));
   if (r === 'stall' || r === 'empty' || r === 'plan') wakeRun(clock.run);
+  if (r === 'quiet') console.log('clock: weekly burn quiet, empty board not woken');
   if (r === 'cleared') console.log('clock: cleared by a seat move');
   const fp = fingerprint([...evs.values()].map(v => v.e), { nudges: nudges.filter(n => !n.closed_at).map(n => n.id), routing: ROUTING.ok,
     quiet: Object.keys(w).filter(k => w[k].quiet).sort(), clock: clock.run && clock.run.started_at });
