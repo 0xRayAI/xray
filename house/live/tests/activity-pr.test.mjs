@@ -9,6 +9,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { listenPort } from './free-port.mjs';
+import { cardRefOf, safePrUrl } from '../app/worktrack.mjs';
 
 const APP = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app', 'server.mjs');
 const KEY = 'writer-key';
@@ -99,6 +100,21 @@ async function withServer(fn) {
     fs.rmSync(data, { recursive: true, force: true });
   }
 }
+
+test('a dot-segment pull URL is empty and a dotted repo still cards', () => {
+  const bad = 'https://github.com/../../pull/1';
+  assert.equal(safePrUrl(bad), '');
+  assert.equal(cardRefOf(bad), '');
+  assert.equal(cardRefOf('../..#1'), '');
+  assert.equal(safePrUrl('  https://github.com/acme/repo.name/pull/2  '), 'https://github.com/acme/repo.name/pull/2');
+  assert.equal(cardRefOf('https://github.com/acme/repo.name/pull/2'), 'acme/repo.name#2');
+  assert.equal(cardRefOf('https://github.com/owner/repo/pull/1'), 'owner/repo#1');
+  const board = fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'docs', 'board.md'), 'utf8');
+  assert.match(board, /when the webhook or a cloud-agent activity line sent one/);
+  const plate = fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'docs-site', 'docs', 'plates', 'bifrost.md'), 'utf8');
+  assert.match(plate, /pull URL/);
+  assert.match(plate, /The pull URL is the row's `pr`/);
+});
 
 test('(a) an activity-only URL is shown', async () => {
   await withServer(async ctx => {
@@ -200,6 +216,20 @@ test('(f) a GitHub pull URL containing a banned word is kept', async () => {
     const row = await rowOf(ctx, await login(ctx), 'bc-actonly01');
     assert.ok(row, 'activity row missing');
     assert.equal(row.pr, BANNED);
+  });
+});
+
+test('(h) surrounding spaces are stored trimmed', async () => {
+  await withServer(async ctx => {
+    const posted = await postActivity(ctx, {
+      t_ct: stamp(0), kind: 'cloud_agent', action: 'launch', agent: 'bc-actonly01',
+      pr: '  ' + ACME + '  ',
+    });
+    assert.equal(posted.status, 202, JSON.stringify(posted.body));
+    const row = await rowOf(ctx, await login(ctx), 'bc-actonly01');
+    assert.ok(row, 'activity row missing');
+    assert.equal(row.pr, ACME);
+    assert.equal(row.card, 'acme/app#15');
   });
 });
 

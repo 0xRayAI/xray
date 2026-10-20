@@ -370,9 +370,13 @@ function packetItem(line, { acked, woken, closed, now, windowMs }) {
 }
 
 const AGENT_ID = /^[A-Za-z0-9][A-Za-z0-9._:-]{2,79}$/;
-const CARD_REF = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+#\d{1,8}$/;
-const PR_URL = /^https:\/\/github\.com\/([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+)\/pull\/(\d{1,8})(?:\/|\?|#|$)/;
-const SAFE_PR_URL = /^https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/pull\/\d{1,8}$/;
+// Same owner/repo rules as house/burst/activity.mjs. A dotted repo name stays.
+// "." and ".." are not names, so github.com/../../pull/1 is not a card.
+const GH_OWNER = '[A-Za-z0-9](?:-[A-Za-z0-9]|[A-Za-z0-9]){0,38}';
+const GH_REPO = '[A-Za-z0-9_](?:[A-Za-z0-9._-]*[A-Za-z0-9_])?';
+const CARD_REF = new RegExp('^' + GH_OWNER + '/' + GH_REPO + '#\\d{1,8}$');
+const PR_URL = new RegExp('^https://github\\.com/(' + GH_OWNER + ')/(' + GH_REPO + ')/pull/(\\d{1,8})(?:/|\\?|#|$)');
+const SAFE_PR_URL = new RegExp('^https://github\\.com/' + GH_OWNER + '/' + GH_REPO + '/pull/\\d{1,8}$');
 
 export function cardRefOf(value) {
   const raw = String(value || '').trim();

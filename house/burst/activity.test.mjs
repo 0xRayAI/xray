@@ -24,6 +24,22 @@ test('free text and unknown fields are refused', () => {
   assert.equal(validActivity({ t_ct: '2026-10-09T14:00:00Z', kind: 'turn', action: 'start', tag: 'see the body' }, now), 'free text is not accepted');
 });
 
+test('a cloud-agent pr is stored trimmed, and a dot segment is refused', () => {
+  const base = {
+    t_ct: '2026-10-09T14:00:00Z', seat: 'builder', kind: 'cloud_agent', action: 'launch', agent: 'bc-agent01',
+  };
+  const padded = '  https://github.com/acme/repo.name/pull/2  ';
+  assert.equal(validActivity({ ...base, pr: padded }, now), null);
+  const lines = [];
+  const out = acceptLine(lines, { ...base, pr: padded }, 'builder', now);
+  assert.equal(out.ok, true);
+  assert.equal(lines[0].pr, 'https://github.com/acme/repo.name/pull/2');
+  assert.equal(validActivity({ ...base, pr: 'https://github.com/../../pull/1' }, now), 'bad pr');
+  const manual = readFileSync(new URL('./ACTIVITY.md', import.meta.url), 'utf8');
+  assert.match(manual, /`pr`/);
+  assert.match(manual, /stored trimmed/);
+});
+
 test('a cloud agent line needs an agent id', () => {
   assert.equal(validActivity({
     t_ct: '2026-10-09T14:00:00Z', seat: 'builder', kind: 'cloud_agent', action: 'launch',
