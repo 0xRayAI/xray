@@ -458,6 +458,13 @@ test('resume at the live edge rewinds before frame, so frame does not goLive()',
   assert.ok(stepped.t < Date.now(), 'the frame does not reach now');
   assert.ok(stepped.t - behind < 250 * 600, 'the 2.5 min step is cut short of now');
 
+  await new Promise((resolve) => setTimeout(resolve, 40));
+  page.frame(at + 2040);
+  const caught = page.snap();
+  assert.equal(caught.live, true, 'a later frame after the wall moves goes live');
+  assert.equal(caught.playing, false, 'goLive stops the continue');
+  assert.ok(Math.abs(caught.t - Date.now()) < 1000, 'goLive parks the playhead on now');
+
   const far = at - (15 * 60 * 1000 - 1000);
   page.pauseAt(far, ev, 3600);
   page.clickPlay();
