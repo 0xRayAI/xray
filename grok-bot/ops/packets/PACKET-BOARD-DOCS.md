@@ -9,9 +9,9 @@ Packet only. No doc edits and no code in this change. Critic PASS on this packet
 - goal: New fleets and existing fleets can onboard or migrate to the board rule, the history archive, and the read-only kanban before the next grok-bot release.
 - constraints: Packet only. Say owner. No personal names. No closing keyword on a pull number. `--from owner` is required today. The note is a gist, never message text. Drag stays off. Server-side prompts and the packet card wait on the open pulls named below.
 - path: This file. After packet PASS, one follow-up edits the sections below and adds the docs-check test. It does not edit the board server, the page, or `live-inbox`.
-- acceptance: Each file in the docs-check list contains the board rule, the kanban note, and the history note, and none of them still say to pass no `--from`. The test fails when any of that is missing.
+- acceptance: Each file in the docs-check list contains the board rule, the kanban note, and the history note, and none of them still say to pass no `--from`. The same test fails when BOARD-PROMPT step 3, the HOUSE live-mesh bullet, or the board-prompt skill notes and step 5 miss the one wording.
 - gates: This PR is the packet. C only. A docs-only change does not wait on CI. The follow-up carries A and C. B and D stay off.
-- evidence: The sentences already on main, named in Files. #485 (every activity line archived to history, and the word owner via LIVE_OWNER or the owner-name) is on main. #486 (read-only kanban above Activity, columns open/review/fix/merge/retest/done, and `?card=`) is on main. #484 and #477 are still in review.
+- evidence: #485 and #486 are on main. #484 is merged at be073e85 and put the interim line in the five seat files. #488 is the open follow-up: BOARD-PROMPT step 3, the HOUSE live-mesh bullet, and the board-prompt skill notes and step 5 still use the old wording. #477 is still in review.
 - next owner: critic, for packet PASS.
 - escalate: owner, if the follow-up must make a missing `--from` a CLI error, or if drag must be documented before login is wired.
 
@@ -21,7 +21,7 @@ Plates read: `docs-site/docs/plates/bifrost.md`, `docs-site/docs/plates/house.md
 
 Three things a fleet has to read before the next grok-bot release. Two more stay marked as waiting.
 
-1. Board rule, in force today. On every owner message the seat runs the prompt below. It acks with `--ack <id>` or `--ack all`. A cloud agent uses the turn tag below. Wake turns stay `--tag wake`. This rule is the interim until the server pull is live.
+1. Board rule, in force today. #484 put one interim line in the five seat files. Three copies still use the old wording (#488). Those copies use this one wording: `live-inbox <seat> --prompt --from owner --note "<gist>"`, `--ack <id>|all`, and `--turn start/end --tag`. The start tag is `bc-<first8> <track>`. The end tag is `bc-<first8>`. Wake turns in the WAKE-ROUTINE trap stay `--tag wake`. Seats keep running the line. A real owner-chat source is still future work.
 2. History. Every activity line is archived to history, including turn, ack, and cloud lines, not only prompts. The word `owner` is the owner via `LIVE_OWNER` or the owner-name.
 3. Kanban. The live page shows a read-only kanban above Activity. Columns are `open`, `review`, `fix`, `merge`, `retest`, and `done`. A closed card sits in `done`. The deep link is `?card=`.
 
@@ -56,13 +56,13 @@ Not this change. The follow-up edits these sections.
 
 ### House template
 
-- `grok-bot/templates/house/HOUSE.md` — `## Cadence`. Replace the owner-prompt clause in the live-mesh bullet and in the inbound-message bullet (`On any inbound message, the seat runs the board-prompt skill first`). Paste the three sentences into that inbound-message bullet. Keep `--room <name>` for a room. Do not add a person's name. Do not edit `house/HOUSE.md`. That file is this fleet's filled house and has no cadence block.
+- `grok-bot/templates/house/HOUSE.md` — `## Cadence`, the live-mesh bullet (#488). That bullet still says an owner prompt is `live-inbox <seat> --prompt` with no `--from owner`. Replace that clause with the one wording: `live-inbox <seat> --prompt --from owner --note "<gist>"`, `--ack <id>|all`, and `--turn start/end --tag`. The inbound-message bullet and the interim bullet already carry the #484 line. A whole-file check passes today and is not the proof. The docs-check slices the live-mesh bullet. Keep `--room <name>` for a room. Do not add a person's name. Do not edit `house/HOUSE.md`. That file is this fleet's filled house and has no cadence block.
 
 ### Onboarding
 
 - `grok-bot/templates/house/STATION-BOOT.md` — the numbered steps before `## MIGRATION`. In step 1, stop telling a new fleet that a missing `name:` is how the prompt sends `from=owner`. Add one step that pastes the three sentences and points at `grok-bot/skills/board-prompt/SKILL.md` and `grok-bot/skills/station/SKILL.md`.
-- `grok-bot/templates/house/BOARD-PROMPT.md` — step 3. Replace `Post `live-inbox <seat> --prompt` only for an owner message, with no `--from``. The owner message uses the board rule. Wake start and wake end stay `--tag wake`.
-- `grok-bot/skills/board-prompt/SKILL.md` — `## Order` step 1. Replace `Pass no `--from``. Owner message only, and the command is the board rule. Keep the room flag, the seat-DM exclusion, and the rule that a webhook wake does not also run this skill. `## Note` keeps the charset and the ban on message text. An owner message always passes `--note`. Omitting `--note` is no longer the usual owner post. Update the assertion in `src/__tests__/unit/grok-bot-house-template.test.ts` that requires `one fixed summary the seat wrote, or it is omitted` so it matches that split. Keep the assertions that the inbound bullet names no person, that the wake step contains `live-inbox <seat> --prompt`, and that it rejects a hardcoded `--from` name.
+- `grok-bot/templates/house/BOARD-PROMPT.md` — step 3 (#488). That step still says to post `--turn start --tag wake` and `--turn end --tag wake` on every exit, and to post `live-inbox <seat> --prompt` with no `--from`. Replace that step with the one wording: `live-inbox <seat> --prompt --from owner --note "<gist>"`, `--ack <id>|all`, and `--turn start/end --tag`. Do not leave `--tag wake` or `with no `--from`` in step 3. The WAKE-ROUTINE trap is a different file and still uses `--tag wake`.
+- `grok-bot/skills/board-prompt/SKILL.md` — `## Note` and `## Order` step 5 (#488). Step 1 already posts `live-inbox <seat> --prompt --from owner --note "<gist>"`. `## Note` still says omitting `--note` is the usual post. An owner message always passes `--note "<gist>"`. Message text still stays out of `--note`, and the charset cap stays. Step 5 still posts `live-inbox <seat> --turn end --tag "bc-<first8>"` on every exit, including an early return. That end runs when the cloud finishes or is cancelled, with `--turn end --tag`. It is not the every-exit wake trap. `src/__tests__/unit/grok-bot-house-template.test.ts` locks `On every exit` and `one fixed summary the seat wrote, or it is omitted`. The follow-up updates those two assertions. Keep the assertions that the inbound bullet names no person and that the wake step rejects a hardcoded `--from` name.
 
 ### Operating procedure
 
@@ -102,6 +102,12 @@ New file: `src/__tests__/unit/board-docs-sweep.test.ts`. Vitest. No browser. Ind
 
 The test reads each path below and fails when any path is missing any of the three sentences, or when any path still contains `Pass no `--from``, `with no `--from``, or `Drop a hardcoded `--from` name`. It also fails when a path contains a personal name added as the prompt sender. The check is the three sentences and those banned phrases, not a full name list.
 
+#488 is a section check, not a whole-file check. A whole-file `toContain` already passes for `HOUSE.md` and `grok-bot/skills/board-prompt/SKILL.md` because other lines in those files have the #484 wording. The same test, and an added case in `src/__tests__/unit/owner-prompt-interim.test.ts`, fail unless these three slices contain the one wording `live-inbox <seat> --prompt --from owner --note "<gist>"`, `--ack <id>`, `--ack all`, `--turn start --tag`, and `--turn end --tag`:
+
+- `grok-bot/templates/house/BOARD-PROMPT.md` step 3, the line that starts `3. `. That line must not contain `--tag wake` or `with no `--from``.
+- `grok-bot/templates/house/HOUSE.md` `## Cadence` live-mesh bullet, the line that contains `Live mesh`. That line must not leave the owner prompt as `live-inbox <seat> --prompt` without `--from owner`.
+- `grok-bot/skills/board-prompt/SKILL.md` `## Note`, and `## Order` step 5, the line that starts `5. `. The note must not say omitting `--note` is the usual post. Step 5 must not post the cloud `--turn end --tag` on every exit.
+
 Paths:
 
 - `grok-bot/skills/setup-house/SKILL.md`
@@ -132,11 +138,9 @@ The follow-up also runs `npx vitest run src/__tests__/unit/grok-bot-house-templa
 
 ## What waits
 
-### Waits on #484 (server-side owner chat prompts and acks, still in review)
+### #484 is merged (be073e85)
 
-The server-side owner chat prompts and acks. Until that pull is live, seats keep running the board rule. This sweep does not document a world where the seat skips `--prompt` and `--ack`. It does not remove the command from the seat files. It does not add the one-day owner-prompts count.
-
-That pull's interim line omits `--from owner`. This packet's board rule is the line the follow-up writes. If that pull merges first, the follow-up still writes `--from owner` and does not restore "pass no `--from`". Removing the seat command waits until the server pull is live, and that removal is not this sweep.
+The interim line is on main in the five seat files, and it includes `--from owner`. Seats keep running it. This sweep does not remove `--prompt` or `--ack`, and it does not add the one-day owner-prompts count. A real owner-chat source stays future work. The three stale copies are #488, and they are in the file list above. They are not a later wait.
 
 ### Waits on #477 (a board card for every packet and cloud agent, still in review)
 
