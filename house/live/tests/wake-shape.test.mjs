@@ -22,34 +22,44 @@ let logs = '';
 const srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], { env: { PORT: '0', PATH: process.env.PATH, COLLECTOR: 'off',
   MESH_PASSWORD: 'x1', SESSION_SECRET: crypto.randomBytes(32).toString('hex'), INGEST_SECRET: ING, MESH_DATA_DIR: DATA,
   SEAT_WEBHOOKS: JSON.stringify(hooks), FORGE_WAKE_KEY: KEY, CRITIC_WAKE_KEY: KEY, WAKE_KEY_FORGE: 'not-this-one',
-  WAKE_RETRY_MS: '10', WAKE_STAGGER_MS: '4000' }, stdio: ['ignore', 'pipe', 'pipe'] });
+  WAKE_RETRY_MS: '10', WAKE_STAGGER_MS: '2000', WAKE_BATCH_S: '0', WAKE_KIND_COOLDOWN_S: '0', LIVE_TURN_OPEN_MIN: '0' }, stdio: ['ignore', 'pipe', 'pipe'] });
 srv.stdout.on('data', d => logs += d); srv.stderr.on('data', d => logs += d);
 PORT = await listenPort(srv); BASE = `http://127.0.0.1:${PORT}`;   // #304: port 0, read the assigned port
 after(async () => { srv.kill(); await new Promise(r => srv.exitCode != null || srv.signalCode ? r() : srv.once('exit', r)); sink.close(); fs.rmSync(DATA, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 }); });
 for (let i = 0; i < 50; i++) { try { if ((await fetch(BASE + '/healthz')).ok) break; } catch {} await new Promise(r => setTimeout(r, 100)); }
-const until = async fn => { for (let i = 0; i < 80 && !fn(); i++) await new Promise(r => setTimeout(r, 100)); return fn(); };
+const until = async fn => { for (let i = 0; i < 160 && !fn(); i++) await new Promise(r => setTimeout(r, 100)); return fn(); };
 
-test('wake request shape = #273: POST, Bearer key_env key, json headers, exact body keys and order', async () => {
+test('wake request shape = #273: one target, POST, Bearer key_env key, json headers, exact body keys and order', async () => {
   const t = new Date().toISOString();
-  const lines = ['forge', 'critic'].map(seat => ({ id: `w1:${seat}`, t_ct: t, seat, type: 'pr_comment', repo: 'example-org/x', number: 5, sha: 'abc', title: 'merge ask', url: 'https://github.com/example-org/x/pull/5', reason: 'ask' }));
+  const lines = [{ id: 'w1:forge', t_ct: t, seat: 'forge', type: 'ci_fail', repo: 'example-org/x', number: 5, title: 'merge ask', url: 'https://github.com/example-org/x/pull/5', reason: 'ci red' }];
   assert.equal((await fetch(BASE + '/inbox', { method: 'POST', body: JSON.stringify({ lines }), headers: { 'X-Live-Ingest': ING, 'Content-Type': 'application/json' } })).status, 200);
-  assert.ok(await until(() => got.some(g => g.path.startsWith('/forge')) && /wake: critic fail/.test(logs)), logs);
+  assert.ok(await until(() => got.some(g => g.path.startsWith('/forge'))), logs);
+  assert.equal(got.some(g => g.path.startsWith('/critic')), false);
   const f = got.find(g => g.path.startsWith('/forge'));
   assert.equal(f.method, 'POST');
   assert.equal(f.headers.authorization, 'Bearer ' + KEY);   // key_env wins over WAKE_KEY_<SEAT>
   assert.equal(f.headers['content-type'], 'application/json');
   assert.equal(f.headers['user-agent'], 'bifrost-live');
-  assert.equal(f.raw, JSON.stringify({ seat: 'forge', inbox_id: 'w1:forge', ids: ['w1:forge'], type: 'pr_comment', repo: 'example-org/x', number: 5,
-    title: 'merge ask', url: 'https://github.com/example-org/x/pull/5', reason: 'ask' }));
+  assert.equal(f.raw, JSON.stringify({ seat: 'forge', inbox_id: 'w1:forge', ids: ['w1:forge'], type: 'ci_fail', repo: 'example-org/x', number: 5,
+    title: 'merge ask', url: 'https://github.com/example-org/x/pull/5', reason: 'ci red',
+    lines: [{ id: 'w1:forge', type: 'ci_fail', repo: 'example-org/x', number: 5, title: 'merge ask', url: 'https://github.com/example-org/x/pull/5', reason: 'ci red' }] }));
+});
+
+test('two real targets are staggered, not fired together', async () => {
+  const t = new Date().toISOString();
+  const lines = [
+    { id: 'w2:critic', t_ct: t, seat: 'critic', type: 'pr_commit', repo: 'example-org/x', number: 8, sha: 'abc123', title: 'new head', url: 'https://github.com/example-org/x/pull/8', reason: 'new head' },
+    { id: 'w2:forge', t_ct: t, seat: 'forge', type: 'deploy_fail', repo: 'example-org/x', number: 8, title: 'deploy red', url: 'https://github.com/example-org/x/pull/8', reason: 'deploy failed' },
+  ];
+  assert.equal((await fetch(BASE + '/inbox', { method: 'POST', body: JSON.stringify({ lines }), headers: { 'X-Live-Ingest': ING, 'Content-Type': 'application/json' } })).status, 200);
+  assert.ok(await until(() => got.some(g => g.raw && g.raw.includes('w2:forge')) && got.some(g => g.path.startsWith('/critic')) && /wake: critic fail/.test(logs)), logs);
+  const f = got.find(g => g.path.startsWith('/forge') && g.raw.includes('w2:forge'));
+  const c = got.find(g => g.path.startsWith('/critic'));
+  assert.ok(f && c);
+  assert.ok(Math.abs(c.at - f.at) >= 1000, `${c.at - f.at}ms ${logs}`);
 });
 
 test('a non-2xx wake logs the response body, with the key and the automation id redacted', () => {
   assert.match(logs, /wake: critic fail attempts=3 http_400 body=.*bad thing for \[redacted\] at \[redacted\]/);
   assert.ok(!logs.includes(KEY) && !logs.includes(AUTO), logs);
-});
-
-test('two seats due at once are staggered, not fired together', () => {
-  const f = got.find(g => g.path.startsWith('/forge')), c = got.find(g => g.path.startsWith('/critic'));
-  assert.ok(Math.abs(c.at - f.at) >= 1000,   // wide margin: arrival times drift under a loaded box (#304 parallel runs)
-    `${c.at - f.at}ms ${logs}`);
 });

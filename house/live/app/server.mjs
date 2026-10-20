@@ -20,6 +20,7 @@ import { fingerprint, tripwire, createClock, wakeTitle, mutedSeats, selectStallS
 import { acceptWaveCards, burnQuiet, isPlanCard, liveWorkCount, postedCards, retainSeedCards, resolveWaveSeed, scheduleWaves } from './wave-schedule.mjs';
 import { createArch1Launch, ARCH1_CANON } from './arch1-launch.mjs';
 import { configureWorkTrack, acceptCursorWebhook, appendWake, applyCloudOwners, boardCloudAgents, canonSeatToken, deriveTrackFromDir, displaySeat, loadSeatAgentMap, readJsonl, readWakeRows, safePrUrl, seatForAgentId, stampCriticCloud, toToken } from './worktrack.mjs';
+import { wakeConfig, createWakeState, classifyBatch, gateLine, noteSent, releaseDue, publicStats, fullStats, restoreWakeBook, viewLine } from './wake-gate.mjs';
 const COLLECTOR_DIR_EARLY = () => path.join(path.dirname(fileURLToPath(import.meta.url)), 'collector');
 import { initArchive, appendArchive, backfillArchive, readArchive, validArchiveDate, KINDS as ARCHIVE_KINDS, cardHistory, archiveDays } from './archive.mjs';
 import { pinnedOrigin } from './origin.mjs';
@@ -233,7 +234,7 @@ const ingestDelta = d => ingestSrc('box', d.upsert, headerOf(d.header), d.remove
 // pusher-auth readback (ingest responses only): which seats the merged board shows working, no event data
 const fleetBrief = () => { refreshWorking(); const f = header.fleet || {}; return { box_stale: !!f.box_stale, cloud_working: !!f.cloud?.working, working: Object.keys(f.working || {}).sort() }; };
 // ---- builder inbox mirror (port of example-org/xray PR #5 house/live/activity.mjs): lines persist on the volume
-const INBOX_KEYS = new Set(['id', 't_ct', 'seat', 'type', 'repo', 'number', 'sha', 'title', 'url', 'reason', 'from', 'to', 'kind', 'flag', 'batch']);
+const INBOX_KEYS = new Set(['id', 't_ct', 'seat', 'type', 'repo', 'number', 'sha', 'title', 'url', 'reason', 'from', 'to', 'kind', 'flag', 'batch', 'labels']);
 const INBOX_BANNED = /body|text|message/i;   // tested against field NAMES only; values (e.g. type "prompt_message") are fine
 const INBOX_FILE = path.join(process.env.MESH_DATA_DIR || '/data', 'inbox', 'builder.jsonl');
 let inboxLines = [];
@@ -254,11 +255,13 @@ function validInboxLine(d) {
   if (d.to != null && !toToken(d.to)) return false;
   if (d.kind != null && !tokenOk(d.kind)) return false;
   if (d.flag != null && !tokenOk(d.flag)) return false;
+  if (d.labels != null && !labelsOk(d.labels)) return false;
   if (d.batch != null && (typeof d.batch !== 'string' || d.batch.length > 2000)) return false;
   if (d.seat.toLowerCase() !== 'builder') return false;
   return true;
 }
 function tokenOk(v) { return typeof v === 'string' && /^[a-z0-9_-]{1,40}$/i.test(v); }
+function labelsOk(v) { return Array.isArray(v) && v.length <= 20 && v.every(item => typeof item === 'string' && /^[A-Za-z0-9_.:-]{1,40}$/.test(item)); }
 function canonSeatTokenOk(v) { return typeof v === 'string' && !!canonSeatToken(v); }
 function linesAfter(lines, sinceId) { if (!sinceId) return lines.slice(); const at = lines.findIndex(l => l.id === sinceId); return at < 0 ? lines.slice() : lines.slice(at + 1); }
 function postInbox({ secret, headerSecret, body, lines }) {
@@ -359,6 +362,10 @@ function loadSeatWebhooks() {
 }
 const SEAT_WEBHOOKS = loadSeatWebhooks();
 const wakeQ = new Map();
+const wakeState = createWakeState();
+const turnTimers = new Map();
+let holdTimer = null;
+let holdAt = Infinity;
 const wakeOkAt = {};   // seat -> ISO of the last successful wake POST. Restored at boot from wake-ok.json, and from wakes.jsonl when that seat is missing (loadPersistedWakes). Not memory-only.
 // Wake health on the board: each configured seat's last good wake; quiet = none within BIFROST_WAKE_QUIET_MINUTES
 // (default 240) of now (or of server start), even with no unacked line.
@@ -373,29 +380,129 @@ function wakeBoard(now = Date.now()) {
   }
   return out;
 }
+function recordSkip(seat, line, reason) {
+  const row = {
+    t: Date.now(), seat: seat || '', reason,
+    id: String(line && line.id || '').slice(0, 300),
+    kind: String(line && (line.type || line.kind) || '').slice(0, 64),
+  };
+  wakeState.skips.push(row);
+  if (wakeState.skips.length > 4000) wakeState.skips.splice(0, wakeState.skips.length - 4000);
+  try {
+    fs.mkdirSync(STATE_DIR, { recursive: true });
+    fs.appendFileSync(path.join(STATE_DIR, 'wake-skips.jsonl'), JSON.stringify(row) + '\n');
+  } catch (e) { console.log('wake: skip append failed ' + ((e && e.code) || 'write')); }
+  console.log(`wake: skip ${row.seat || '-'} ${reason} ${row.id}`);
+}
+function ownerOfLine(line) {
+  const repo = String(line && line.repo || '').toLowerCase();
+  const n = Number(line && line.number);
+  if (!repo || !Number.isInteger(n)) return '';
+  const card = bfCards.find(c => c && String(c.repo || '').toLowerCase() === repo && Number(c.number) === n);
+  if (!card) return '';
+  return seatIdOf(card.assignee) || seatIdOf(card.owner) || '';
+}
+function enqueuePending(seat, line) {
+  const id = canonSeat(seat);
+  if (!id || !SEAT_WEBHOOKS[id] || !line) return;
+  let st = wakeQ.get(id);
+  if (!st) { st = { lastSent: 0, pending: [], timer: null, inflight: false, status: null }; wakeQ.set(id, st); }
+  st.pending.push(viewLine(line));
+  armWake(id);
+}
+function offerLines(lines) {
+  const cfg = wakeConfig(process.env);
+  const { wakes, skips } = classifyBatch(lines, { owner: ownerOfLine });
+  for (const s of skips) recordSkip(s.seat, s.line, s.reason);
+  const now = Date.now();
+  for (const w of wakes) {
+    const seat = canonSeat(w.seat);
+    if (!seat || !SEAT_WEBHOOKS[seat]) continue;
+    if (cfg.paused) { recordSkip(seat, w.line, 'paused'); continue; }
+    const d = gateLine({ seat, line: w.line }, wakeState, now, cfg);
+    if (d.op === 'skip') { recordSkip(seat, d.line, d.reason); continue; }
+    if (d.op === 'queue') {
+      wakeState.hold.push({ seat, line: d.line, until: d.until });
+      armHold(d.until);
+      continue;
+    }
+    enqueuePending(seat, d.line);
+  }
+}
 function noteWake(seat, line) {
   try {
-    const id = canonSeat(seat);
-    const cfg = SEAT_WEBHOOKS[id];
-    if (!cfg || !line) return;
-    let st = wakeQ.get(id);
-    if (!st) { st = { lastSent: 0, pending: [], timer: null, inflight: false, status: null }; wakeQ.set(id, st); }
-    st.pending.push({ id: String(line.id || '').slice(0, 300), type: String(line.type || '').slice(0, 64), repo: String(line.repo || '').slice(0, 200),
-      number: Number.isInteger(line.number) ? line.number : 0, title: String(line.title || '').slice(0, 200), url: String(line.url || '').slice(0, 500), reason: String(line.reason || '').slice(0, 300) });
-    armWake(id);
+    if (!line) return;
+    offerLines([{ ...line, seat: line.seat || seat }]);
   } catch { /* keep the inbox write */ }
 }
 function armWake(seat) {
   const st = wakeQ.get(seat);
   if (!st || st.timer || st.inflight || !st.pending.length) return;
-  const remain = st.lastSent ? WAKE_DEBOUNCE_MS - (Date.now() - st.lastSent) : 0;
-  const t = setTimeout(() => { st.timer = null; void flushWake(seat); }, (remain > 0 ? remain : WAKE_COALESCE_MS) + wakeSlot());
+  const cfg = wakeConfig(process.env);
+  const now = Date.now();
+  let wait;
+  if (!st.lastSent) wait = cfg.batchMs > 0 ? cfg.batchMs : WAKE_COALESCE_MS;
+  else {
+    const remain = cfg.batchMs - (now - st.lastSent);
+    wait = remain > 0 ? remain : (cfg.batchMs === 0 ? WAKE_COALESCE_MS : 0);
+  }
+  const t = setTimeout(() => { st.timer = null; void flushWake(seat); }, wait + wakeSlot());
   if (t.unref) t.unref();
   st.timer = t;
 }
+function pumpHold(now = Date.now()) {
+  const cfg = wakeConfig(process.env);
+  const { due, skips } = releaseDue(wakeState, now, cfg);
+  for (const s of skips) recordSkip(s.seat, s.line, s.reason);
+  for (const d of due) enqueuePending(d.seat, d.line);
+  let next = 0;
+  for (const item of wakeState.hold) if (!next || item.until < next) next = item.until;
+  if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; holdAt = Infinity; }
+  if (next) armHold(next);
+}
+function armHold(until) {
+  if (!until) return;
+  if (until <= Date.now()) { pumpHold(Date.now()); return; }
+  if (holdTimer && holdAt <= until) return;
+  if (holdTimer) clearTimeout(holdTimer);
+  holdAt = until;
+  holdTimer = setTimeout(() => { holdTimer = null; holdAt = Infinity; pumpHold(Date.now()); }, Math.max(0, until - Date.now()) + 15);
+  if (holdTimer.unref) holdTimer.unref();
+}
+function observeTurn(seat, kind, action) {
+  if (kind !== 'turn') return;
+  const id = canonSeat(seat);
+  if (!id) return;
+  if (action === 'start') {
+    const now = Date.now();
+    wakeState.turnOpen.set(id, now);
+    const prev = turnTimers.get(id);
+    if (prev) clearTimeout(prev);
+    const wait = wakeConfig(process.env).turnOpenMs;
+    const t = setTimeout(() => {
+      turnTimers.delete(id);
+      if (wakeState.turnOpen.get(id) !== now) return;
+      wakeState.turnOpen.delete(id);
+      pumpHold();
+    }, wait);
+    if (t.unref) t.unref();
+    turnTimers.set(id, t);
+    return;
+  }
+  if (action === 'end') {
+    const prev = turnTimers.get(id);
+    if (prev) clearTimeout(prev);
+    turnTimers.delete(id);
+    wakeState.turnOpen.delete(id);
+    pumpHold();
+  }
+}
 function wakePayload(seat, batch) {
-  const last = batch[batch.length - 1];
-  return { seat, inbox_id: last.id, ids: batch.map(l => l.id), type: last.type, repo: last.repo, number: last.number, title: last.title, url: last.url, reason: last.reason };
+  const real = batch.filter(l => !l.clock);
+  const shown = real.length ? real : batch;
+  const last = shown[shown.length - 1];
+  const lines = real.map(l => { const out = { ...l }; delete out.clock; return out; });
+  return { seat, inbox_id: last.id, ids: shown.map(l => l.id), type: last.type, repo: last.repo, number: last.number, title: last.title, url: last.url, reason: last.reason, lines };
 }
 function wakeErr(e) {
   if (e && (e.name === 'TimeoutError' || e.name === 'AbortError')) return 'timeout';
@@ -436,13 +543,21 @@ async function flushWake(seat) {
   st.status = { ok: !!result.ok, attempts: result.attempts, at: new Date().toISOString() };
   if (!result.ok) st.status.error = result.error || 'network';
   console.log(`wake: ${seat} ${result.ok ? 'ok' : 'fail'} attempts=${result.attempts}${result.ok ? '' : ' ' + st.status.error}${result.detail ? ' body=' + JSON.stringify(result.detail) : ''}`);
-  if (result.ok) { touchSeat(seat); wakeOkAt[seat] = st.status.at; persistWakeOk(); serverActivity(seat, 'turn', 'start', 'wake', { moves: false }); }
+  if (result.ok) {
+    noteSent(wakeState, seat, batch, Date.now());
+    touchSeat(seat); wakeOkAt[seat] = st.status.at; persistWakeOk();
+    serverActivity(seat, 'turn', 'start', 'wake', { moves: false });
+  }
   st.inflight = false;
+  const last = batch[batch.length - 1] || {};
   try {
     appendWake(STATE_DIR, {
-      seat, id: batch[batch.length - 1].id, ids: batch.map(l => l.id).filter(id => typeof id === 'string' && id),
+      seat, id: last.id, ids: batch.map(l => l.id).filter(id => typeof id === 'string' && id),
       t_ct: st.status.at, ok: !!result.ok, attempts: result.attempts,
-      title: String(batch[batch.length - 1].title || '').slice(0, 120),
+      title: String(last.title || '').slice(0, 120),
+      repo: String(last.repo || '').slice(0, 200), number: Number.isInteger(last.number) ? last.number : 0,
+      kind: String(last.type || last.kind || '').slice(0, 64),
+      ...(typeof last.sha === 'string' && last.sha ? { sha: last.sha.slice(0, 80) } : {}),
       ...(result.ok ? {} : { error: String(result.error || 'network').slice(0, 40) }),
     });
   } catch (e) { console.log('wake: append failed ' + ((e && e.code) || 'write')); }
@@ -707,6 +822,7 @@ function inboxLineError(d) {
   if (d.to != null && !toToken(d.to)) parts.push('to must be a seat id');
   if (d.kind != null && !tokenOk(d.kind)) parts.push('kind must be a string');
   if (d.flag != null && !tokenOk(d.flag)) parts.push('flag must be a string');
+  if (d.labels != null && !labelsOk(d.labels)) parts.push('labels must be a list of short names');
   if (d.batch != null && typeof d.batch !== 'string') parts.push('batch must be a string');
   else if (typeof d.batch === 'string' && d.batch.length > 2000) parts.push('batch is too long');
   return parts.length ? parts.join('; ') : null;
@@ -790,7 +906,8 @@ function postSeatLines(parsed, onlySeat) {
     arr.push(stored); touched.add(s); added++; fresh.push(stored);
     if (s === 'builder') { const c = seatInbox['builder-cloud']; if (!c.some(x => x.id === l.id)) { const copy = { ...stored, seat: 'builder-cloud' }; c.push(copy); touched.add('builder-cloud'); fresh.push(copy); } } }
   for (const s of touched) saveSeatInbox(s);
-  for (const l of fresh) { noteWake(l.seat, l); void arch1Launch.consider(l); }
+  for (const l of fresh) void arch1Launch.consider(l);
+  if (fresh.length) { try { offerLines(fresh); } catch { /* keep the inbox write */ } }
   return { status: 200, added, rejected: refs };
 }
 // ---- Assistant / emitter: the sample MCP server posts one event per tool call / OAuth sign-in (POST /emit, Bearer = the
@@ -1273,6 +1390,7 @@ function mergedHeader(now = Date.now()) {
   h.generated_at = g?.generated_at || b?.generated_at || null;   // LIVE pill: the Railway collector once it runs
   h.event_count = evs.size;
   h.wakes = wakeBoard(now);   // last successful wake per seat; quiet past BIFROST_WAKE_QUIET_MINUTES
+  h.wake_stats = publicStats(wakeState, now, wakeConfig(process.env).statMs);
   h.routing = ROUTING;   // startup route check (bifrost-init rules)
   h.clock = typeof clock === 'undefined' ? null : clock.run;   // timed run: deadlines per seat, cleared by a seat move
   h.kinds = [...new Set([...(g?.kinds || []), ...(b?.kinds || [])])].sort();
@@ -2081,7 +2199,7 @@ function healthBody() {   // public: counts, times, ages (s) and wake states; no
     card_stale_s: CARD_STALE_S, data_stale_s: DATA_STALE_S, board: boardWord(),
     cards_behind: behind, stale_status: staleStatus,
     last_tick: passAt ? new Date(passAt).toISOString() : null, stalled,
-    origin: ORIGIN || null, wakes: wakeHealth(), arch1_launch: arch1Launch.health(), nudged_lines: nudges.filter(n => n.kind === 'line' && !n.closed_at).length, routing: ROUTING.ok ? 'ok' : 'fail', governor_changes: governorChanges };
+    origin: ORIGIN || null, wakes: wakeHealth(), wake_stats: publicStats(wakeState, now, wakeConfig(process.env).statMs), arch1_launch: arch1Launch.health(), nudged_lines: nudges.filter(n => n.kind === 'line' && !n.closed_at).length, routing: ROUTING.ok ? 'ok' : 'fail', governor_changes: governorChanges };
   if (warming) body.status = 'warming';
   return body;
 }
@@ -2417,6 +2535,7 @@ function serverActivity(seat, kind, action, tag, opts) {
   actSeq++;
   const line = { id: `${ACT_EPOCH}.${actSeq}`, seq: actSeq, seat, t_ct: ctOffset(new Date().toISOString()), kind, action, tag, by: 'server' };
   rememberActivity(line); appendArchive('activity', line); activityEvent(line, opts);
+  observeTurn(seat, kind, action);
   seq++; header = mergedHeader(); fullDirty = true;
 }
 loadActivity();
@@ -2435,6 +2554,11 @@ function loadPersistedWakes() {   // last wake per seat survives a restart (wake
     if (Number.isFinite(t)) st.lastSent = t;
     if (row.ok && typeof row.t_ct === 'string' && !wakeOkAt[seat]) wakeOkAt[seat] = row.t_ct;
   }
+  let skipRows = [];
+  try {
+    skipRows = fs.readFileSync(path.join(STATE_DIR, 'wake-skips.jsonl'), 'utf8').split('\n').filter(Boolean).map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean);
+  } catch { /* no skip file yet */ }
+  restoreWakeBook(wakeState, readWakeRows(STATE_DIR), skipRows, Date.now(), wakeConfig(process.env).statMs);
 }
 header = mergedHeader(); fullDirty = true;
 function clearSeatWork(f, seat) {
@@ -2820,6 +2944,7 @@ async function handle(req, res) {
     rememberActivity(line);
     appendArchive('activity', line);
     activityEvent(line);
+    observeTurn(seat, d.kind, d.action);
     seq++; header = mergedHeader(); fullDirty = true;
     return json(req, res, 202, { ok: true });
   }
@@ -2844,7 +2969,7 @@ async function handle(req, res) {
       const line = { id: `${ACT_EPOCH}.${actSeq}`, seq: actSeq, seat, t_ct: d.t_ct, kind: d.kind, action: d.action, via: 'ingest' };
       for (const k of ['to', 'from', 'agent', 'tag', 'room', 'note']) if (d[k] != null) line[k] = d[k];
       if (d.pr != null) line.pr = safePrUrl(d.pr);
-      rememberActivity(line); appendArchive('activity', line); added++;
+      rememberActivity(line); appendArchive('activity', line); observeTurn(id, d.kind, d.action); added++;
     });
     if (added) { seq++; header = mergedHeader(); fullDirty = true; }
     return json(req, res, 200, { ok: true, added, rejected: rejected.slice(0, 50) });
@@ -3011,6 +3136,20 @@ async function handle(req, res) {
     const all = want === 'all' || want === 'coord' || want === cosSeat() || want === operatorSeat();
     const cs = CARD_SEAT[want] || want;
     return json(req, res, 200, { seat: want, cards: stampCriticCloud(cardsView(bfCards.filter(c => all || cardSeats(c).includes(cs))), cloudAgentBoard()) });
+  }
+  if (p === '/wake-stats') {
+    if (m !== 'GET') return json(req, res, 405, { error: 'method not allowed' }, { Allow: 'GET' });
+    let who; try { who = await seatOf(req); } catch { return json(req, res, 503, { error: 'could not verify token, retry' }, { 'Retry-After': '30' }); }
+    if (!who && !PUBLIC) return json(req, res, 401, { error: 'unauthorized' });
+    const want = String(url.searchParams.get('seat') || who || 'all').toLowerCase();
+    if (who && want !== who && who !== cosSeat() && who !== operatorSeat()) return json(req, res, 403, { error: 'not your seat' });
+    const body = fullStats(wakeState, Date.now(), wakeConfig(process.env).statMs);
+    const all = !who || want === 'all' || want === 'coord' || want === cosSeat() || want === operatorSeat();
+    if (!all) {
+      const row = body.seats[want] || { sent: 0, skipped: 0, reasons: {}, skips: [], queued: 0 };
+      body.seats = { [want]: row };
+    }
+    return json(req, res, 200, body);
   }
   if (p === '/nudges') {   // GET /nudges?since=<id>: the routing operator seat's key only (that seat delivers them)
     if (m !== 'GET') return json(req, res, 405, { error: 'method not allowed' }, { Allow: 'GET' });

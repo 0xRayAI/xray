@@ -20,7 +20,8 @@ function start() {
   srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], { env: { PORT: '0', PATH: process.env.PATH,
     MESH_PASSWORD: 'x' + crypto.randomBytes(4).toString('hex'), SESSION_SECRET: crypto.randomBytes(32).toString('hex'),
     INGEST_SECRET: crypto.randomBytes(32).toString('hex'), MESH_DATA_DIR: DATA, SEAT_WEBHOOKS: JSON.stringify(hooks),
-    K_FORGE: 'kf', WAKE_KEY_MILL: 'km', WAKE_KEY_FORGE: 'ignored', K_BLINKY: 'kb', WAKE_DEBOUNCE_S: '0' }, stdio: ['ignore', 'pipe', 'pipe'] });
+    K_FORGE: 'kf', WAKE_KEY_MILL: 'km', WAKE_KEY_FORGE: 'ignored', K_BLINKY: 'kb', WAKE_DEBOUNCE_S: '0',
+    WAKE_KIND_COOLDOWN_S: '0', LIVE_TURN_OPEN_MIN: '0' }, stdio: ['ignore', 'pipe', 'pipe'] });
   srv.stdout.on('data', d => { logs += d; const m = /listening on :(\d+)/.exec(logs); if (m) srvPort = Number(m[1]); }); srv.stderr.on('data', d => logs += d);
 }
 async function stop() { if (!srv) return; const p = new Promise(r => srv.once('exit', r)); srv.kill(); await p; srv = null; }
