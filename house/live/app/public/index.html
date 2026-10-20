@@ -33,6 +33,8 @@
   --warn: #ffb347;
   --dot-off: #283246;
   --card: #0b1120;
+  --card-hover: #1a2744;
+  --card-open: #243656;
   --card-line: #22304a;
   --card-edge: #3b82f6;
   --card-title: #e6ecff;
@@ -141,6 +143,8 @@
   --warn: #8a4b00;
   --dot-off: #c5cedd;
   --card: #ffffff;
+  --card-hover: #e7eef8;
+  --card-open: #d5e2f4;
   --card-line: #d5dceb;
   --card-edge: #1d4ed8;
   --card-title: #1a2030;
@@ -250,6 +254,8 @@
   --warn: #8a4b00;
   --dot-off: #c5cedd;
   --card: #ffffff;
+  --card-hover: #e7eef8;
+  --card-open: #d5e2f4;
   --card-line: #d5dceb;
   --card-edge: #1d4ed8;
   --card-title: #1a2030;
@@ -424,10 +430,14 @@ button.wstat.on { outline: 2px solid var(--focus); background: var(--panel); }
 .wgroup { margin: 8px 0 4px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 .wcards { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 .wcard { border: 1px solid var(--card-line); border-left: 4px solid var(--card-edge); border-radius: 8px; padding: 8px 10px; background: var(--card); font-size: 13px; cursor: pointer; box-shadow: 0 1px 0 var(--hairline); }
+.wcard:hover { background: var(--card-hover); }
+.wcard.open, .wcard.open:hover { background: var(--card-open); }
 .wcard.parked { opacity: .8; }
 .wcard.closed { opacity: .55; }
 .wcard .wtop { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
     .wcard .witem { color: var(--card-title); background: var(--card); font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wcard:hover .witem { background: var(--card-hover); }
+.wcard.open .witem, .wcard.open:hover .witem { background: var(--card-open); }
 .wcard .wage { color: var(--card-age); white-space: nowrap; font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; }
 .wcard .wmeta { color: var(--card-meta); margin-top: 4px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .wbadge { font-size: 10px; padding: 1px 6px; border-radius: 999px; border: 1px solid var(--badge-edge); color: var(--badge-fg); background: var(--stat-bg); }
@@ -1108,6 +1118,7 @@ footer a { color: var(--foot); }
     var host = $('cardPopDetail');
     if (host) { host.hidden = false; mountCardDetail(host, c); }
     setCardParam(key);
+    paintOpenCard(key);
     if (!pop.open) pop.showModal();
     return true;
   }
@@ -1119,6 +1130,14 @@ footer a { color: var(--foot); }
       [['bcId', a.bcId || '—'], ['owning seat', seatName], ['linked card', a.card || '—'], ['state', a.state || '—'], ['last update', a.updated_ct || '—']],
       []);
     return true;
+  }
+  function paintOpenCard(key) {
+    var next = {};
+    if (key) next[key] = 1;
+    wb.open = next;
+    document.querySelectorAll('.wcard').forEach(function (el) {
+      el.classList.toggle('open', !!(key && el.dataset.key === key));
+    });
   }
   function closeCardPop() {
     var pop = $('cardPop');
@@ -1145,7 +1164,7 @@ footer a { color: var(--foot); }
   var cardPop = $('cardPop');
   if (cardPop) {
     cardPop.addEventListener('click', function (ev) { if (ev.target === cardPop) closeCardPop(); });
-    cardPop.addEventListener('close', function () { if (cardPopKey()) setCardParam(''); });
+    cardPop.addEventListener('close', function () { paintOpenCard(''); if (cardPopKey()) setCardParam(''); });
     var cardPopClose = $('cardPopClose');
     if (cardPopClose) cardPopClose.addEventListener('click', closeCardPop);
   }

@@ -24,10 +24,14 @@ A kanban click and a wave click both call `openCardPop`. That used to fill `#car
 
 `#cardGroup` sits in the Cards header bar, on the right, sized to the words "By agent". It is a transparent menu item: no border, a hover wash, and teal text while agent grouping is on. `bifrost-card-group` in localStorage is unchanged.
 
+## Card hover and open
+
+Wave cards use `--card-hover` and `--card-open`. Dark lifts the card from `#0b1120` to `#1a2744` on hover and `#243656` when it is open. Light uses `#e7eef8` and `#d5e2f4`. The title row is transparent, so the card fill shows through.
+
 ## Links
 
 Kanban, wave, and activity anchors that have an `href` use the focus color, an underline, a pointer, and a teal hover. Both themes already define `--focus` and `--teal`.
 
 ## Checks
 
-`node --test` on `presence.test.mjs`, `page.test.mjs`, `board-folds.test.mjs`, `board-group.test.mjs`, `theme-colors.test.mjs`, and `kanban-board.test.mjs`. Playwright checks that the roster count is above 3, that the theme toggle is the rightmost header control, that a kanban click's detail matches the wave card, that those links look like links in light and dark, and that the grouping control is right-aligned and narrower than its header.
+`node --test` on `presence.test.mjs`, `page.test.mjs`, `board-folds.test.mjs`, `board-group.test.mjs`, `theme-colors.test.mjs`, and `kanban-board.test.mjs`. Playwright checks that the roster count is above 3, that the theme toggle is the rightmost header control, that a kanban click's detail matches the wave card, that those links look like links in light and dark, that the grouping control is right-aligned and narrower than its header, and that in the dark theme a wave card's hover and open backgrounds both differ from the resting card.
