@@ -372,6 +372,7 @@ function packetItem(line, { acked, woken, closed, now, windowMs }) {
 const AGENT_ID = /^[A-Za-z0-9][A-Za-z0-9._:-]{2,79}$/;
 const CARD_REF = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+#\d{1,8}$/;
 const PR_URL = /^https:\/\/github\.com\/([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+)\/pull\/(\d{1,8})(?:\/|\?|#|$)/;
+const SAFE_PR_URL = /^https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/pull\/\d{1,8}$/;
 
 export function cardRefOf(value) {
   const raw = String(value || '').trim();
@@ -403,6 +404,14 @@ function safePr(value) {
   if (CARD_REF.test(raw)) return raw;
   if (PR_URL.test(raw)) return raw.slice(0, 300);
   return '';
+}
+
+/** https GitHub pull URL only. A card ref stays on tag. javascript:, data:, and http: are empty. Longer than 300 is refused. */
+export function safePrUrl(value) {
+  if (typeof value !== 'string' || value.length > 300) return '';
+  const raw = value.trim();
+  if (!raw || raw.length > 300 || !SAFE_PR_URL.test(raw)) return '';
+  return raw;
 }
 
 /** The critic cloud id for one PR. A running agent wins, then the newest. A failed id is used only when it is the only one. */
@@ -459,7 +468,7 @@ export function boardCloudAgents({ agents = [], activity = [], links = [] } = {}
     events.push({
       bcId: row.agent,
       seat: row.seat || row.by || '',
-      pr: '',
+      pr: safePrUrl(row.pr),
       card: CARD_REF.test(tag) ? tag : '',
       state,
       updated_ct: typeof row.t_ct === 'string' ? row.t_ct : '',

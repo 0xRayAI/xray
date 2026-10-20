@@ -16,7 +16,13 @@
     "action": { "enum": ["launch", "reply", "finished", "cancel"] },
     "to": { "type": "string", "maxLength": 40, "pattern": "^[A-Za-z0-9 ._:@#+/\\-]{1,40}$" },
     "agent": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{2,40}$" },
-    "tag": { "type": "string", "maxLength": 80, "pattern": "^[A-Za-z0-9 ._:@#+/\\-]{1,80}$" }
+    "tag": { "type": "string", "maxLength": 80, "pattern": "^[A-Za-z0-9 ._:@#+/\\-]{1,80}$" },
+    "pr": {
+      "type": "string",
+      "maxLength": 300,
+      "pattern": "^https://github\\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/pull/[0-9]{1,8}$",
+      "description": "Optional https GitHub pull URL. A card ref stays on tag."
+    }
   },
   "examples": [
     { "t_ct": "2026-10-09T09:03:00-05:00", "seat": "cloud", "kind": "cloud_agent", "action": "launch", "agent": "agent-1", "tag": "issue-1" },

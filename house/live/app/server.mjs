@@ -19,7 +19,7 @@ import { checkRoutesFromDir, readRoutingMap, createLoginResolver, auditLogins } 
 import { fingerprint, tripwire, createClock, wakeTitle, mutedSeats, selectStallSeats } from './governor.mjs';
 import { burnQuiet, isPlanCard, liveWorkCount, postedCards, retainSeedCards, resolveWaveSeed, scheduleWaves } from './wave-schedule.mjs';
 import { createArch1Launch, ARCH1_CANON } from './arch1-launch.mjs';
-import { configureWorkTrack, acceptCursorWebhook, appendWake, boardCloudAgents, canonSeatToken, deriveTrackFromDir, displaySeat, loadSeatAgentMap, readJsonl, readWakeRows, seatForAgentId, stampCriticCloud, toToken } from './worktrack.mjs';
+import { configureWorkTrack, acceptCursorWebhook, appendWake, boardCloudAgents, canonSeatToken, deriveTrackFromDir, displaySeat, loadSeatAgentMap, readJsonl, readWakeRows, safePrUrl, seatForAgentId, stampCriticCloud, toToken } from './worktrack.mjs';
 const COLLECTOR_DIR_EARLY = () => path.join(path.dirname(fileURLToPath(import.meta.url)), 'collector');
 import { initArchive, appendArchive, backfillArchive, readArchive, validArchiveDate, KINDS as ARCHIVE_KINDS, cardHistory, archiveDays } from './archive.mjs';
 import { pinnedOrigin } from './origin.mjs';
@@ -2334,7 +2334,7 @@ function validFeed(f) {
 const ACT_KINDS = { prompt: ['received', 'sent'], turn: ['start', 'end', 'tick'], subagent: ['start', 'end', 'tick'],
   watcher: ['start', 'end', 'tick'], cloud_agent: ['launch', 'reply', 'finished', 'cancel'],
   agent: ['launch', 'reply', 'finish', 'cancel'] };
-const ACT_FIELDS = new Set(['t_ct', 'kind', 'action', 'to', 'from', 'agent', 'tag', 'seat', 'room']);   // seat: optional, must match the token; from: prompt sender (#281); room: optional short name
+const ACT_FIELDS = new Set(['t_ct', 'kind', 'action', 'to', 'from', 'agent', 'tag', 'seat', 'room', 'pr']);   // seat: optional, must match the token; from: prompt sender (#281); room: optional short name; pr: optional https GitHub pull URL
 const ACT_BANNED = /body|text|message/i;          // no free text of any kind, as a key or inside a value
 const ACT_VALUE = /^[A-Za-z0-9 ._:@#+\/-]{1,80}$/;
 const ACT_AGENT = /^[A-Za-z0-9][A-Za-z0-9_-]{2,40}$/;
@@ -2563,6 +2563,7 @@ function validActivity(d, now = Date.now()) {
     if (!ACT_FIELDS.has(k)) return 'unknown field';
   }
   for (const k of Object.keys(d)) {
+    if (k === 'pr') continue;
     const v = d[k];
     if (typeof v !== 'string' || !ACT_VALUE.test(v)) return 'fields must be short plain strings (<= 80 chars)';
     if (ACT_BANNED.test(v)) return 'free text is not accepted';
@@ -2578,6 +2579,10 @@ function validActivity(d, now = Date.now()) {
   if (d.room != null && (d.kind !== 'prompt' || d.room.length > 40)) return 'room is only for prompt (<= 40 chars)';
   if (d.to != null && d.to.length > 40) return 'to too long';
   if (d.from != null && (d.kind !== 'prompt' || d.from.length > 40)) return 'from is only for prompt (<= 40 chars)';
+  if (d.pr != null) {
+    if (d.kind !== 'cloud_agent') return 'pr is only for a cloud agent';
+    if (!safePrUrl(d.pr)) return 'bad pr';
+  }
   return null;
 }
 function actRateOk(seat, now = Date.now()) {
@@ -2782,6 +2787,7 @@ async function handle(req, res) {
     actSeq++;
     const line = { id: `${ACT_EPOCH}.${actSeq}`, seq: actSeq, seat, t_ct: d.t_ct, kind: d.kind, action: d.action };
     for (const k of ['to', 'from', 'agent', 'tag', 'room']) if (d[k] != null) line[k] = d[k];
+    if (d.pr != null) line.pr = safePrUrl(d.pr);
     rememberActivity(line);
     appendArchive('activity', line);
     activityEvent(line);
@@ -2808,6 +2814,7 @@ async function handle(req, res) {
       actSeq++;
       const line = { id: `${ACT_EPOCH}.${actSeq}`, seq: actSeq, seat, t_ct: d.t_ct, kind: d.kind, action: d.action, via: 'ingest' };
       for (const k of ['to', 'from', 'agent', 'tag', 'room']) if (d[k] != null) line[k] = d[k];
+      if (d.pr != null) line.pr = safePrUrl(d.pr);
       rememberActivity(line); appendArchive('activity', line); added++;
     });
     if (added) { seq++; header = mergedHeader(); fullDirty = true; }
