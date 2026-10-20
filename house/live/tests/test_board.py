@@ -36,6 +36,32 @@ class Packet(unittest.TestCase):
         self.assertIn("WORKING_CLOUD_S", fields["evidence"])
         self.assertEqual(p.parse("[docs](https://notion.so/x) text\n## Packet\n- Goal: [d](https://notion.so/y) z"), {"goal": "d z"})
 
+    def test_kanban_packet_is_packet_ok(self):
+        import live_packet as p
+        body = (Path(__file__).resolve().parents[3] / "grok-bot" / "ops" / "packets" / "PACKET-KANBAN.md").read_text()
+        fields = p.parse(body)
+        self.assertTrue(fields.get("acceptance"))
+        self.assertTrue(fields.get("next owner"))
+        missing = [f for f in ("acceptance", "next owner") if not fields.get(f)]
+        self.assertEqual(missing, [])
+
+    def test_kanban_exit_is_a_card_endpoint(self):
+        body = (Path(__file__).resolve().parents[3] / "grok-bot" / "ops" / "packets" / "PACKET-KANBAN.md").read_text()
+        self.assertIn("POST /cards/exit", body)
+        self.assertIn("card_exit` is not added", body)
+        self.assertIn("does not call `POST /activity`", body)
+        self.assertIn("80", body)
+        for key in ("repo", "number", "owner", "next", "acceptance", "evidence", "blockers"):
+            self.assertIn(key, body)
+        self.assertIn("`body`, `text`, or `message`", body)
+
+    def test_kanban_exit_is_inside_the_wake_trap(self):
+        body = (Path(__file__).resolve().parents[3] / "grok-bot" / "ops" / "packets" / "PACKET-KANBAN.md").read_text()
+        self.assertIn("grok-bot/templates/house/fleet/WAKE-ROUTINE.md", body)
+        self.assertIn("`--exit`, then `--turn end --tag wake`, then `--release`", body)
+        self.assertIn("exits 0 and posts nothing", body)
+        self.assertIn("does not run `--exit`", body)
+
 
 class Model(unittest.TestCase):
     def setUp(self):
