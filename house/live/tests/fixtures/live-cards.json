@@ -1,0 +1,661 @@
+{
+  "source": "https://bifrost.0xray.dev/cards",
+  "updated": "2026-10-20T21:45:28Z",
+  "cards": [
+    {
+      "key": "0xrayai/xray#498",
+      "kind": "issue",
+      "repo": "0xRayAI/xray",
+      "number": 498,
+      "title": "#496 follow-up: packet block, Blaze in fallback roster, wave row expand",
+      "url": "https://github.com/0xRayAI/xray/issues/498",
+      "born": null,
+      "packet_ok": false,
+      "missing": [
+        "acceptance",
+        "next owner"
+      ],
+      "packet": {}
+    },
+    {
+      "key": "0xrayai/xray#497",
+      "kind": "issue",
+      "repo": "0xRayAI/xray",
+      "number": 497,
+      "title": "#493 follow-up: packet block + reflection-due edge cases",
+      "url": "https://github.com/0xRayAI/xray/issues/497",
+      "born": null,
+      "packet_ok": false,
+      "missing": [
+        "acceptance",
+        "next owner"
+      ],
+      "packet": {}
+    },
+    {
+      "key": "0xrayai/xray#491",
+      "kind": "issue",
+      "repo": "0xRayAI/xray",
+      "number": 491,
+      "title": "#490 follow-up: release PRs show packet_ok false on the board",
+      "url": "https://github.com/0xRayAI/xray/issues/491",
+      "born": null,
+      "packet_ok": false,
+      "missing": [
+        "acceptance",
+        "next owner"
+      ],
+      "packet": {}
+    },
+    {
+      "key": "0xrayai/xray#489",
+      "kind": "issue",
+      "repo": "0xRayAI/xray",
+      "number": 489,
+      "title": "#477 follow-ups: busy-repo attach, legacy head_ref, alias-aware cardOnBoard",
+      "url": "https://github.com/0xRayAI/xray/issues/489",
+      "born": null,
+      "packet_ok": false,
+      "missing": [
+        "acceptance",
+        "next owner"
+      ],
+      "packet": {}
+    },
+    {
+      "key": "0xrayai/xray#488",
+      "kind": "issue",
+      "repo": "0xRayAI/xray",
+      "number": 488,
+      "title": "#484 follow-up: align BOARD-PROMPT template, HOUSE live-mesh bullet, board-prompt skill notes",
+      "url": "https://github.com/0xRayAI/xray/issues/488",
+      "born": null,
+      "packet_ok": false,
+      "missing": [
+        "acceptance",
+        "next owner"
+      ],
+      "packet": {}
+    },
+    {
+      "key": "0xrayai/xray#483",
+      "kind": "issue",
+      "repo": "0xRayAI/xray",
+      "number": 483,
+      "title": "#482 follow-up: list Plates read in packet body",
+      "url": "https://github.com/0xRayAI/xray/issues/483",
+      "born": null,
+      "packet_ok": false,
+      "missing": [
+        "acceptance",
+        "next owner"
+      ],
+      "packet": {}
+    },
+    {
+      "key": "0xrayai/xray#481",
+      "kind": "issue",
+      "repo": "0xRayAI/xray",
+      "number": 481,
+      "title": "#474 owner prompts follow-ups (critic r3)",
+      "url": "https://github.com/0xRayAI/xray/issues/481",
+      "born": null,
+      "packet_ok": false,
+      "missing": [
+        "acceptance",
+        "next owner"
+      ],
+      "packet": {}
+    },
+    {
+      "key": "0xrayai/xray#480",
+      "kind": "issue",
+      "repo": "0xRayAI/xray",
+      "number": 480,
+      "title": "#476 board hotfix follow-ups (critic post-merge)",
+      "url": "https://github.com/0xRayAI/xray/issues/480",
+      "born": null,
+      "packet_ok": false,
+      "missing": [
+        "acceptance",
+        "next owner"
+      ],
+      "packet": {}
+    },
+    {
+      "key": "0xrayai/xray#479",
+      "kind": "issue",
+      "repo": "0xRayAI/xray",
+      "number": 479,
+      "title": "#473 CoS narrowing follow-ups (critic r2)",
+      "url": "https://github.com/0xRayAI/xray/issues/479",
+      "born": null,
+      "packet_ok": false,
+      "missing": [
+        "acceptance",
+        "next owner"
+      ],
+      "packet": {}
+    },
+    {
+      "key": "0xrayai/xray#478",
+      "kind": "issue",
+      "repo": "0xRayAI/xray",
+      "number": 478,
+      "title": "#475 kanban packet follow-ups (critic r2)",
+      "url": "https://github.com/0xRayAI/xray/issues/478",
+      "born": null,
+      "packet_ok": false,
+      "missing": [
+        "acceptance",
+        "next owner"
+      ],
+      "packet": {}
+    },
+    {
+      "key": "0xrayai/xray#469",
+      "kind": "issue",
+      "repo": "0xRayAI/xray",
+      "number": 469,
+      "title": "#468 follow-ups: Prompt line in open-pr, OP-PROC wording, wake-test App-login assertion",
+      "url": "https://github.com/0xRayAI/xray/issues/469",
+      "born": null,
+      "packet_ok": false,
+      "missing": [
+        "acceptance",
+        "next owner"
+      ],
+      "packet": {}
+    },
+    {
+      "key": "0xrayai/xray#467",
+      "kind": "issue",
+      "repo": "0xRayAI/xray",
+      "number": 467,
+      "title": "#465 round-2 follow-ups: py wake test, OP-PROC sender assertion scope",
+      "url": "https://github.com/0xRayAI/xray/issues/467",
+      "born": null,
+      "packet_ok": false,
+      "missing": [
+        "acceptance",
+        "next owner"
+      ],
+      "packet": {}
+    },
+    {
+      "key": "0xrayai/xray#466",
+      "kind": "issue",
+      "repo": "0xRayAI/xray",
+      "number": 466,
+      "title": "#464 follow-ups: cloud-working packet field length, dedupe file, timeouts",
+      "url": "https://github.com/0xRayAI/xray/issues/466",
+      "born": null,
+      "packet_ok": false,
+      "missing": [
+        "acceptance",
+        "next owner"
+      ],
+      "packet": {}
+    },
+    {
+      "key": "0xrayai/xray#463",
+      "kind": "issue",
+      "repo": "0xRayAI/xray",
+      "number": 463,
+      "title": "packet: cloud agents push branches only; seats open PRs/issues as their App",
+      "url": "https://github.com/0xRayAI/xray/issues/463",
+      "born": null,
+      "packet_ok": false,
+      "missing": [
+        "acceptance",
+        "next owner"
+      ],
+      "packet": {}
+    },
+    {
+      "key": "0xrayai/xray#462",
+      "kind": "issue",
+      "repo": "0xRayAI/xray",
+      "number": 462,
+      "title": "#452 wake-gate follow-ups: issue_labeled routing, no-sha rate skip, persist hold queue",
+      "url": "https://github.com/0xRayAI/xray/issues/462",
+      "born": null,
+      "packet_ok": false,
+      "missing": [
+        "acceptance",
+        "next owner"
+      ],
+      "packet": {}
+    },
+    {
+      "key": "0xrayai/xray#461",
+      "kind": "issue",
+      "repo": "0xRayAI/xray",
+      "number": 461,
+      "title": "#460 follow-ups: CoS narrow-role packet wording",
+      "url": "https://github.com/0xRayAI/xray/issues/461",
+      "born": null,
+      "packet_ok": false,
+      "missing": [
+        "acceptance",
+        "next owner"
+      ],
+      "packet": {}
+    },
+    {
+      "key": "0xrayai/xray#459",
+      "kind": "issue",
+      "repo": "0xRayAI/xray",
+      "number": 459,
+      "title": "live: reclaim stored from=Others CI rows when actor later joins LIVE_NODE_MAP",
+      "url": "https://github.com/0xRayAI/xray/issues/459",
+      "born": null,
+      "packet_ok": false,
+      "missing": [
+        "acceptance",
+        "next owner"
+      ],
+      "packet": {}
+    },
+    {
+      "key": "0xrayai/xray#454",
+      "kind": "issue",
+      "repo": "0xRayAI/xray",
+      "number": 454,
+      "title": "#452 wake gate: fold critic round-2 follow-ups",
+      "url": "https://github.com/0xRayAI/xray/issues/454",
+      "born": null,
+      "packet_ok": false,
+      "missing": [
+        "acceptance",
+        "next owner"
+      ],
+      "packet": {}
+    },
+    {
+      "key": "0xrayai/xray#450",
+      "kind": "issue",
+      "repo": "0xRayAI/xray",
+      "number": 450,
+      "title": "Nibbler stack-up 2026-10-20: 0xRay against the field (memory, review, cost, identity, MCP, distribution)",
+      "url": "https://github.com/0xRayAI/xray/issues/450",
+      "born": null,
+      "packet_ok": false,
+      "missing": [
+        "acceptance",
+        "next owner"
+      ],
+      "packet": {}
+    },
+    {
+      "key": "0xrayai/xray#449",
+      "kind": "issue",
+      "repo": "0xRayAI/xray",
+      "number": 449,
+      "title": "Nibbler deep research 2026-10-20: agent memory (forgetting + store receipts) for the dreaming-cleaner gap",
+      "url": "https://github.com/0xRayAI/xray/issues/449",
+      "born": null,
+      "packet_ok": false,
+      "missing": [
+        "acceptance",
+        "next owner"
+      ],
+      "packet": {}
+    },
+    {
+      "key": "0xrayai/xray#440",
+      "kind": "issue",
+      "repo": "0xRayAI/xray",
+      "number": 440,
+      "title": "Follow-ups from #437 review",
+      "url": "https://github.com/0xRayAI/xray/issues/440",
+      "born": null,
+      "packet_ok": false,
+      "missing": [
+        "acceptance",
+        "next owner"
+      ],
+      "packet": {}
+    },
+    {
+      "key": "0xrayai/xray#439",
+      "kind": "issue",
+      "repo": "0xRayAI/xray",
+      "number": 439,
+      "title": "cloud_agent pr link: docs, burst trim, mirror, owner/repo rules",
+      "url": "https://github.com/0xRayAI/xray/issues/439",
+      "born": null,
+      "packet_ok": false,
+      "missing": [
+        "acceptance",
+        "next owner"
+      ],
+      "packet": {}
+    },
+    {
+      "key": "0xrayai/xray#438",
+      "kind": "issue",
+      "repo": "0xRayAI/xray",
+      "number": 438,
+      "title": "live spectrum: packet note, manual line, aspect check",
+      "url": "https://github.com/0xRayAI/xray/issues/438",
+      "born": null,
+      "packet_ok": false,
+      "missing": [
+        "acceptance",
+        "next owner"
+      ],
+      "packet": {}
+    },
+    {
+      "key": "0xrayai/xray#434",
+      "kind": "issue",
+      "repo": "0xRayAI/xray",
+      "number": 434,
+      "title": "Follow-ups from #432 and #433 reviews",
+      "url": "https://github.com/0xRayAI/xray/issues/434",
+      "born": null,
+      "packet_ok": false,
+      "missing": [
+        "acceptance",
+        "next owner"
+      ],
+      "packet": {}
+    },
+    {
+      "key": "0xrayai/xray#430",
+      "kind": "issue",
+      "repo": "0xRayAI/xray",
+      "number": 430,
+      "title": "live collector: fold leftovers from #424\u2013#428",
+      "url": "https://github.com/0xRayAI/xray/issues/430",
+      "born": null,
+      "packet_ok": false,
+      "missing": [
+        "acceptance",
+        "next owner"
+      ],
+      "packet": {}
+    },
+    {
+      "key": "0xrayai/xray#431",
+      "kind": "issue",
+      "repo": "0xRayAI/xray",
+      "number": 431,
+      "title": "live collector: same-second cursor stop on the other feeds (from #425)",
+      "url": "https://github.com/0xRayAI/xray/issues/431",
+      "born": null,
+      "packet_ok": false,
+      "missing": [
+        "acceptance",
+        "next owner"
+      ],
+      "packet": {}
+    },
+    {
+      "key": "0xrayai/xray#499",
+      "kind": "pr",
+      "repo": "0xRayAI/xray",
+      "number": 499,
+      "title": "fix(live): a cloud turn marks the agent, not the seat",
+      "url": "https://github.com/0xRayAI/xray/pull/499",
+      "born": null,
+      "packet_ok": true,
+      "missing": [],
+      "packet": {
+        "acceptance": "a cloud turn start with no seat turn leaves forge and critic idle and the agent working; the seat's own turn marks that seat; a reviewer row does not mark critic",
+        "next owner": "critic",
+        "goal": "each running bc- agent is working on its own card or node; the launching seat is working only during its own turn; critic is not marked by forge's agents"
+      }
+    },
+    {
+      "key": "0xrayai/xray#495",
+      "kind": "pr",
+      "repo": "0xRayAI/xray",
+      "number": 495,
+      "title": "Packet: owner sign-in card under the Bifrost mesh",
+      "url": "https://github.com/0xRayAI/xray/pull/495",
+      "born": null,
+      "packet_ok": true,
+      "missing": [],
+      "packet": {
+        "acceptance": "Logged out, the slot shows sign-in, the kanban does not drag, and ping and status posts answer 401. Logged in, a short note is stored on that seat's inbox and on the board timeline, and a drag from op",
+        "next owner": "reviewer, for packet PASS.",
+        "goal": "A sign-in card in the empty slot under the mesh. A logged-in owner pings a seat and drags a kanban card. The ping lands in that seat's inbox and on the board timeline. The drag writes a status beat on"
+      }
+    },
+    {
+      "key": "0xrayai/xray#388",
+      "kind": "pr",
+      "repo": "0xRayAI/xray",
+      "number": 388,
+      "title": "docs: seek map, cheap-first definition, skills as the first seek",
+      "url": "https://github.com/0xRayAI/xray/pull/388",
+      "born": null,
+      "packet_ok": false,
+      "missing": [
+        "acceptance",
+        "next owner"
+      ],
+      "packet": {}
+    },
+    {
+      "key": "0xrayai/xray#419",
+      "kind": "issue",
+      "repo": "0xRayAI/xray",
+      "number": 419,
+      "title": "packet: seat role reference so pre-0xray roles don't fall back to dev plane",
+      "url": "https://github.com/0xRayAI/xray/issues/419",
+      "born": null,
+      "packet_ok": false,
+      "missing": [
+        "acceptance",
+        "next owner"
+      ],
+      "packet": {}
+    },
+    {
+      "key": "0xrayai/xray#421",
+      "kind": "issue",
+      "repo": "0xRayAI/xray",
+      "number": 421,
+      "title": "#420 follow-ups: grok-bot 0.1.10 CHANGELOG cites",
+      "url": "https://github.com/0xRayAI/xray/issues/421",
+      "born": null,
+      "packet_ok": false,
+      "missing": [
+        "acceptance",
+        "next owner"
+      ],
+      "packet": {}
+    },
+    {
+      "key": "0xrayai/xray#416",
+      "kind": "issue",
+      "repo": "0xRayAI/xray",
+      "number": 416,
+      "title": "#415 follow-ups: pulsar packet clarifications",
+      "url": "https://github.com/0xRayAI/xray/issues/416",
+      "born": null,
+      "packet_ok": false,
+      "missing": [
+        "acceptance",
+        "next owner"
+      ],
+      "packet": {}
+    },
+    {
+      "key": "0xrayai/xray#414",
+      "kind": "issue",
+      "repo": "0xRayAI/xray",
+      "number": 414,
+      "title": "#413 follow-ups: synthesis/Confer writeup cites",
+      "url": "https://github.com/0xRayAI/xray/issues/414",
+      "born": null,
+      "packet_ok": false,
+      "missing": [
+        "acceptance",
+        "next owner"
+      ],
+      "packet": {}
+    },
+    {
+      "key": "0xrayai/xray#412",
+      "kind": "issue",
+      "repo": "0xRayAI/xray",
+      "number": 412,
+      "title": "4.1.3 follow-ups: CHANGELOG:19 LIVE_CURSORS line; grok-bot template not refreshed by 0xray publish",
+      "url": "https://github.com/0xRayAI/xray/issues/412",
+      "born": null,
+      "packet_ok": false,
+      "missing": [
+        "acceptance",
+        "next owner"
+      ],
+      "packet": {}
+    },
+    {
+      "key": "0xrayai/xray#401",
+      "kind": "issue",
+      "repo": "0xRayAI/xray",
+      "number": 401,
+      "title": "wake: fresh routine runs cannot resume earlier cloud agents, so every new head launches a new review",
+      "url": "https://github.com/0xRayAI/xray/issues/401",
+      "born": null,
+      "packet_ok": false,
+      "missing": [
+        "acceptance",
+        "next owner"
+      ],
+      "packet": {}
+    },
+    {
+      "key": "0xrayai/xray#397",
+      "kind": "issue",
+      "repo": "0xRayAI/xray",
+      "number": 397,
+      "title": "7 npm test failures on main (pre-existing, also on v4.1.2 and a3bf341)",
+      "url": "https://github.com/0xRayAI/xray/issues/397",
+      "born": null,
+      "packet_ok": false,
+      "missing": [
+        "acceptance",
+        "next owner"
+      ],
+      "packet": {}
+    },
+    {
+      "key": "0xrayai/xray#394",
+      "kind": "issue",
+      "repo": "0xRayAI/xray",
+      "number": 394,
+      "title": "docs ring: one source per fact, version law, required drift check",
+      "url": "https://github.com/0xRayAI/xray/issues/394",
+      "born": null,
+      "packet_ok": false,
+      "missing": [
+        "acceptance",
+        "next owner"
+      ],
+      "packet": {}
+    },
+    {
+      "key": "0xrayai/xray#391",
+      "kind": "issue",
+      "repo": "0xRayAI/xray",
+      "number": 391,
+      "title": "bifrost: critic verdicts must @-mention the PR author on GitHub (outer loop)",
+      "url": "https://github.com/0xRayAI/xray/issues/391",
+      "born": null,
+      "packet_ok": false,
+      "missing": [
+        "acceptance",
+        "next owner"
+      ],
+      "packet": {}
+    },
+    {
+      "key": "0xrayai/xray#387",
+      "kind": "issue",
+      "repo": "0xRayAI/xray",
+      "number": 387,
+      "title": "Kernel organ: digest inference, plan the next step, receive opted-in logs",
+      "url": "https://github.com/0xRayAI/xray/issues/387",
+      "born": null,
+      "packet_ok": false,
+      "missing": [
+        "acceptance",
+        "next owner"
+      ],
+      "packet": {}
+    },
+    {
+      "key": "0xrayai/xray#385",
+      "kind": "issue",
+      "repo": "0xRayAI/xray",
+      "number": 385,
+      "title": "feat: role picker (configurator) for which skills and roles a suit wears",
+      "url": "https://github.com/0xRayAI/xray/issues/385",
+      "born": null,
+      "packet_ok": false,
+      "missing": [
+        "acceptance",
+        "next owner"
+      ],
+      "packet": {}
+    },
+    {
+      "key": "0xrayai/xray#485",
+      "kind": "packet",
+      "repo": "0xRayAI/xray",
+      "number": 485,
+      "title": "handoff critic_fail",
+      "url": "https://github.com/0xRayAI/xray/pull/485",
+      "born": "packet",
+      "packet_ok": false,
+      "missing": [
+        "acceptance",
+        "next owner"
+      ],
+      "packet": {}
+    }
+  ],
+  "cloud_agents": [
+    {
+      "bcId": "bc-22f1b70d-a78d-5505-8ee0-9714f6ca1e99",
+      "seat": "forge",
+      "card": "",
+      "pr": "",
+      "state": "finished",
+      "flag": "card missing",
+      "updated_ct": "2026-10-19T18:33:19-05:00"
+    },
+    {
+      "bcId": "bc-8450c4aa-ed0a-5fb3-9748-f09a044c848f",
+      "seat": "forge",
+      "card": "",
+      "pr": "",
+      "state": "stale",
+      "flag": "card missing",
+      "updated_ct": "2026-10-18T17:30:55-05:00"
+    },
+    {
+      "bcId": "bc-f35e4c51",
+      "seat": "forge",
+      "card": "",
+      "pr": "",
+      "state": "finished",
+      "flag": "card missing",
+      "updated_ct": "2026-10-15T05:38:56-05:00"
+    },
+    {
+      "bcId": "bc-f0dc0299",
+      "seat": "forge",
+      "card": "",
+      "pr": "",
+      "state": "finished",
+      "flag": "card missing",
+      "updated_ct": "2026-10-15T05:38:55-05:00"
+    }
+  ]
+}

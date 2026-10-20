@@ -141,7 +141,7 @@ test('an open turn expires after 20 minutes and a younger one stays', async () =
   }
 });
 
-test('a running cloud agent stays working after the turn end', async () => {
+test('a running cloud agent stays on its own id after the seat turn ends', async () => {
   const data = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-end-agent-'));
   lay(data, {
     working: {},
@@ -161,9 +161,11 @@ test('a running cloud agent stays working after the turn end', async () => {
   try {
     const fleet = await fleetOf(srv);
     assert.ok(fleet, srv.logs());
-    assert.ok(fleet.working.forge, JSON.stringify(fleet.working));
-    assert.equal(fleet.working.forge.via, 'cloud');
-    assert.equal(fleet.seats.forge.working, true);
+    assert.equal(fleet.working.forge, undefined, JSON.stringify(fleet.working));
+    assert.notEqual(fleet.seats.forge && fleet.seats.forge.working, true);
+    assert.equal(fleet.working.critic, undefined, JSON.stringify(fleet.working));
+    assert.equal(fleet.cloud.working, true);
+    assert.ok(fleet.cloud.open_agents.includes('bc-forge0001'));
   } finally {
     await stop(srv.child);
     fs.rmSync(data, { recursive: true, force: true });

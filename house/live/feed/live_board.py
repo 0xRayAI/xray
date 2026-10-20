@@ -10,8 +10,10 @@ CARD   = one GitHub issue or PR (repo#number): title, url, owner seat, stage (op
 HOLD   = the owner posts a comment whose first line is 'Held: <reason>' (optional until:), or the issue / PR
          carries a label in GITHUB_HOLD_LABEL (default on-hold). A Parked: comment still parks and wins over a hold.
          Repos in NO_NUDGE_REPOS (unset means none) stay visible and are never stalled or nudged.
-PACKET = goal, constraints, path, acceptance, evidence, next owner, escalate. Missing acceptance or next owner ->
-         amber 'no packet'. Evidence fills from the latest beat (CI url, Reviewer verdict url, merge sha, retest tick).
+PACKET = goal, constraints, path, acceptance, evidence, next owner, escalate. An issue never needs a brief.
+         A packet card, a release PR (title starts with release), a body or branch that carries a packet
+         (PACKET.md, a packet heading, or a packet card alias), or acceptance plus next owner is packet_ok.
+         Anything else is amber 'no packet'. Evidence fills from the latest beat.
 BEAT   = one real event: PR opened/pushed, Reviewer verdict, CI result, merge, reopen, merge-queue.md tick, Lead message, blocker.
          A watcher run whose start and end fall in the same second is never a beat.
 STALL  = a live card with no beat for 60 min (red on the page; one line to fleet/inbox/coord.jsonl per stalled beat).
@@ -39,7 +41,33 @@ MAX_CARDS = 40
 # parked: a parked/blocked/waiting label, a draft PR quiet for 7 days, or an issue quiet for 24 h (backlog, no stall).
 # The hold label (default on-hold) is a hold, not a park.
 PARKED = re.compile(r"\b(parked|blocked|waiting|icebox)\b", re.I)
+RELEASE_TITLE = re.compile(r"^release\b", re.I)
 _last_md = [0.0]
+
+
+def brief_exempt(card, packet=None):
+    """Issues never need a brief. A packet card, a release PR, or a carried packet passes too.
+
+    A carried packet is packet_file (body or branch PACKET.md), a packet: alias, or both
+    acceptance and next owner. A plain PR with neither stays packet_ok false.
+    """
+    if not isinstance(card, dict):
+        return False
+    if card.get("pinned"):
+        return True
+    kind = str(card.get("kind") or "")
+    key = str(card.get("key") or "").lower()
+    if kind in ("issue", "packet") or card.get("born") == "packet" or key.startswith("packet:"):
+        return True
+    title = str(card.get("title") or "").strip()
+    if kind == "pr" and RELEASE_TITLE.match(title):
+        return True
+    if card.get("packet_file"):
+        return True
+    if str(card.get("alias") or "").lower().startswith("packet:"):
+        return True
+    pk = packet if isinstance(packet, dict) else (card.get("packet") if isinstance(card.get("packet"), dict) else {})
+    return bool(pk.get("acceptance") and pk.get("next owner"))
 
 
 def _t(e):
@@ -623,7 +651,8 @@ def model(extra_events=None, now=None, prompts=None, held=None):
                     "number": int(e["number"]), "title": live_packet.clean(title)[:120],
                     "url": live_packet.clean(e.get("source") or ""), "owner": str(e.get("from") or "-")[:24],
                     "labels": [live_packet.clean(x)[:30] for x in (e.get("labels") or [])][:6],
-                    "packet": pk, "_closed": e.get("pr_state") == "closed", "_closed_t": _t({"t_ct": e.get("closed_at")}) if e.get("closed_at") else 0,
+                    "packet": pk, "packet_file": bool(e.get("packet_file")),
+                    "_closed": e.get("pr_state") == "closed", "_closed_t": _t({"t_ct": e.get("closed_at")}) if e.get("closed_at") else 0,
                     "_draft": bool(e.get("draft")), "_beats": [], "_stop": False, "_known": "pr_state" in e}
     _claim_owners(cards, evs, sha_num)             # mill (trailer, credit, or git name) takes a card forge opened
     used_prompts = set()
@@ -802,6 +831,8 @@ def model(extra_events=None, now=None, prompts=None, held=None):
             c.pop("nudge_to", None); c.pop("nudge_via", None)
             stall = False
         missing = [f for f in ("acceptance", "next owner") if not pk.get(f)]
+        if brief_exempt(c, pk):
+            missing = []
         if resolved:
             c["resolved"] = resolved
         shown = _keep_push(beats, 5)

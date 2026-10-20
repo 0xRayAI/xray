@@ -1156,7 +1156,9 @@ footer a { color: var(--foot); }
   $('waveBody').addEventListener('click', function (ev) {
     if (ev.target.closest('a, button')) return;
     var li = ev.target.closest('.wcard'); if (!li) return;
-    openFromCardKey(li.dataset.key);
+    var k = li.dataset.key; if (!k) return;
+    wb.open[k] = !wb.open[k];
+    li.classList.toggle('open', !!wb.open[k]);
   });
   var kanbanBoard = $('kanbanBoard');
   if (kanbanBoard) kanbanBoard.addEventListener('click', function (ev) {

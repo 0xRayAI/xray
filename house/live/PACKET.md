@@ -39,3 +39,27 @@ Kanban, wave, and activity anchors that have an `href` use the focus color, an u
 ## Checks
 
 `node --test` on `presence.test.mjs`, `page.test.mjs`, `board-folds.test.mjs`, `board-group.test.mjs`, `theme-colors.test.mjs`, and `kanban-board.test.mjs`. Playwright checks that the roster count is above 3, that the theme toggle is the rightmost header control, that a kanban click's detail matches the wave card, that those links look like links in light and dark, that the grouping control is right-aligned and narrower than its header, that in the dark theme a wave card's hover and open backgrounds both differ from the resting card, and that the band under the mesh is at most 24px.
+
+## Turn state
+
+Forge lit during a cloud run because `applyStoredActivity` treated every open turn as the seat's turn. On main, `house/live/app/server.mjs:2711` built the turn key with `kind === 'turn' ? '-'`, so the tag `bc-9748f0dc track` was discarded and the line shared `forge:turn:-`. The open-key loop at `server.mjs:2734` then set `fleet.working.forge`.
+
+Critic lit because a running cloud row's seat is canonicalized, then stamped working. `house/live/app/server.mjs:292` sets `REVIEW` to `'critic'`, and `server.mjs:306` maps `reviewer: REVIEW`. `canonSeatToken` at `house/live/app/worktrack.mjs:39` resolves that alias. On main, `applyCloudOwners` at `worktrack.mjs:599` set that seat `working: true` and `working_via: 'cloud'`. The `bc-` tag is not parsed into a seat. `applyTrackWorking` at `server.mjs:1514` copied the same owner off an agent item.
+
+A cloud turn (`bc-<id>` or `bc-<id> <track>`) now marks that agent on its own card and on the cloud-agent node. The posting seat stays idle unless its own turn is open (no `bc-` tag). A row seated `reviewer` does not light critic. A woken packet and a GitHub mark still light their seat.
+
+## Wave card detail
+
+`#486` (`c5874959e`) replaced the wave click. Before that, `house/live/app/public/index.html` set `wb.open[k]` and toggled `.open`, and `.wcard.open .wdetail` showed the timeline. On main `0965e9737` the listener calls `openFromCardKey`, and `openCardPop` fills the dialog without setting `wb.open`. `.wdetail` stays `display: none`, so the expanded timeline, links, packet, owner, and status never appear. Kanban still opens that dialog.
+
+The wave click toggles `.open` again. `mountCardDetail` is the only renderer: the expanded wave card and the kanban dialog both receive the same card.
+
+## Brief badge
+
+The badge is `packet_ok === false`. `house/live/feed/live_board.py` set that from `missing = [f for f in ("acceptance", "next owner") if not pk.get(f)]` and then `packet_ok=not missing`. The packet dict comes only from the PR or issue body (`live_collect.card_fields` → `live_packet.parse`). An issue body has no packet, so all 36 issues on the live board were false. Packet card `#485` is born in `ensurePacketCard` (`house/live/app/server.mjs`) with `packet: {}` and `packet_ok: false`. PR `#493` names `PACKET.md` on the branch and the body parser returns `{}`. Release PR `#490` (`release(grok-bot): 0.1.11`, follow-up issue `#491`) has no packet. PR `#388` has neither a packet block nor `PACKET.md` on the branch, so it still needs a brief.
+
+An issue, a packet card, a title that starts with `release`, a `packet:` alias, or a body or branch that carries a packet (`PACKET.md`, a packet heading, or `Packet:`) is `packet_ok` with an empty `missing` list. The collector records `packet_file` and checks `PACKET.md` at the pull head. A pull that has none of those still needs acceptance and next owner.
+
+## Cloud card link
+
+`boardCloudAgents` flagged `card missing` when both `card` and `pr` were empty (`house/live/app/worktrack.mjs`). It never read a turn tag or a `head_ref`. A `bc-<id> <track>` turn (`#485`, `485`, or `owner/repo#n`) and a branch or `head_ref` that contains the id now fill the card from the board. A finished agent whose pull URL is already set does not get the flag.

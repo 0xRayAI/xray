@@ -251,15 +251,32 @@ def prompt_stamp(body):
 
 def card_fields(x) -> dict:
     """Board card fields from a PR / issue object this pass already fetched: branded title, state, labels and
-    the packet block (sanitized, <= 200 chars a field). The body itself is discarded here, never stored."""
+    the packet block (sanitized, <= 200 chars a field). The body itself is discarded here, never stored.
+    packet_file stays when the body carries a packet or names PACKET.md. The branch file is a separate check."""
+    body = x.get("body")
     fields = {"title": brand(x.get("title") or "")[:120], "pr_state": x.get("state"), "closed_at": x.get("closed_at"),
               "labels": [lb.get("name") for lb in (x.get("labels") or []) if isinstance(lb, dict) and lb.get("name")][:8],
-              "packet": live_packet.parse(x.get("body")) or None,
-              "fixes": closing_numbers(x.get("body"), x.get("number"))}
-    pid = prompt_stamp(x.get("body"))
+              "packet": live_packet.parse(body) or None,
+              "fixes": closing_numbers(body, x.get("number"))}
+    if live_packet.carries(body):
+        fields["packet_file"] = True
+    pid = prompt_stamp(body)
     if pid:
         fields["prompt"] = pid
     return fields
+
+
+def packet_file_on_ref(client, repo, ref):
+    """True when PACKET.md exists at ref. A 404 is a miss. A rate-limit skip is a miss, not a failure."""
+    if not ref or not repo or not getattr(client, "token", None):
+        return False
+    try:
+        st, data, _, _ = client.rest(f"/repos/{repo}/contents/PACKET.md", {"ref": ref}, essential=False)
+    except urllib.error.HTTPError:
+        return False
+    except (RateLow, urllib.error.URLError, http.client.HTTPException, TimeoutError, OSError, ValueError):
+        return False
+    return st == 200 and isinstance(data, dict)
 
 
 def open_numbers(c, repos, max_pages=20):
@@ -911,10 +928,13 @@ class RepoCollector:
             self.st["prs"][str(n)] = {"author": login or None, "updated_at": p["updated_at"], "head": head,
                                       "merged_at": p.get("merged_at"), "state": p["state"], "base": p["base"]["ref"]}
             url = p["html_url"]
+            fields = card_fields(p)
+            if not fields.get("packet_file") and head and packet_file_on_ref(c, self.repo, head):
+                fields["packet_file"] = True
             self.put(f"{self.repo}#{n}:open", p["created_at"], node(login) if login else "GitHub", "GitHub", "pr_open",
                      f"{self.short} #{n} opened · {p['title']}", url, n, base=p["base"]["ref"], actor=login or None,
                      sha=head, head_ref=head_ref, author=login or None,
-                     draft=p.get("draft"), mentions=mentions(p.get("body")), **card_fields(p))
+                     draft=p.get("draft"), mentions=mentions(p.get("body")), **fields)
             if p.get("merged_at"):
                 listed = p.get("merged_by") if isinstance(p.get("merged_by"), dict) else None
                 listed_login = (listed or {}).get("login")

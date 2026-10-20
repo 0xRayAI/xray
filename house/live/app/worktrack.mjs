@@ -478,15 +478,95 @@ function linkedCard(value, onBoard) {
   return '';
 }
 
+const BC_MENTION = /\b(bc-[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*)/;
+
+/** bc id anywhere in a turn tag or a branch name, plus the text after it. */
+function cloudMention(text) {
+  const raw = String(text || '');
+  const match = BC_MENTION.exec(raw);
+  if (!match) return null;
+  const id = match[1];
+  const track = raw.slice(match.index + id.length).trim().replace(/^[·:\-]+\s*/, '');
+  return { id, track };
+}
+
+function boardCardKey(repo, number, board) {
+  const num = Number(number);
+  if (!repo || !Number.isInteger(num) || num < 1) return '';
+  const hit = (board || []).find(card => card && String(card.repo || '').toLowerCase() === String(repo).toLowerCase() && Number(card.number) === num && card.key);
+  if (hit) return String(hit.key);
+  const key = `${repo}#${num}`;
+  return CARD_REF.test(key) ? key : '';
+}
+
+/** A turn track is `owner/repo#n`, `#n`, or a bare number that matches one board card. */
+function trackCard(track, board) {
+  const raw = String(track || '').trim();
+  if (!raw) return '';
+  const direct = cardRefOf(raw);
+  if (direct) return direct;
+  const marked = raw.match(/#(\d{1,8})\b/) || raw.match(/^(\d{1,8})(?:\b|[-#])/);
+  if (!marked) return '';
+  const num = Number(marked[1]);
+  const hits = (board || []).filter(card => card && Number(card.number) === num && card.key);
+  if (!hits.length) return '';
+  if (hits.length === 1) return String(hits[0].key);
+  const pr = hits.find(card => card.kind === 'pr' || card.kind === 'packet');
+  return String((pr || hits[0]).key);
+}
+
+function prOfCard(key, board) {
+  const hit = (board || []).find(card => card && String(card.key || '') === key);
+  return hit ? safePrUrl(hit.url) : '';
+}
+
+/** Fill an empty card or PR from a turn tag (`bc-<id> <track>`) or a head_ref that carries the id. */
+function linkCloudCards(rows, { activity = [], events = [], board = [] } = {}) {
+  const list = rows || [];
+  function touch(id, card, pr) {
+    if (!id) return;
+    for (const row of list) {
+      if (!row || !cloudIdsAlias(row.bcId, id)) continue;
+      if (card && !row.card) row.card = card;
+      if (pr && !row.pr) row.pr = pr;
+      if (row.card && !row.pr) {
+        const url = prOfCard(row.card, board);
+        if (url) row.pr = url;
+      }
+    }
+  }
+  const texts = [];
+  for (const row of activity || []) {
+    if (!row || typeof row !== 'object') continue;
+    const tag = typeof row.tag === 'string' ? row.tag : '';
+    const label = typeof row.label === 'string' ? row.label : '';
+    texts.push({ text: tag || label, event: row });
+  }
+  for (const event of events || []) {
+    if (!event || typeof event !== 'object') continue;
+    const blob = [event.head_ref, event.branch, event.ref, event.label, event.title].filter(value => typeof value === 'string').join(' ');
+    if (blob) texts.push({ text: blob, event });
+  }
+  for (const item of texts) {
+    const mention = cloudMention(item.text);
+    if (!mention) continue;
+    const fromEvent = boardCardKey(item.event && item.event.repo, item.event && item.event.number, board);
+    const card = fromEvent || trackCard(mention.track, board);
+    const pr = safePrUrl(item.event && (item.event.source || item.event.url || item.event.pr)) || safePr(item.event && item.event.pr);
+    touch(mention.id, card, pr);
+  }
+  return list;
+}
+
 /** One board row per cloud agent. Latest line wins the state; an earlier seat, card, or PR stays. */
-export function boardCloudAgents({ agents = [], activity = [], links = [], board = [], now = Date.now() } = {}) {
+export function boardCloudAgents({ agents = [], activity = [], links = [], board = [], events = [], now = Date.now() } = {}) {
   const onBoard = boardIds(board);
-  const events = [];
+  const lines = [];
   for (const row of agents || []) {
     if (!row || typeof row !== 'object') continue;
     const state = boardStateOfStatus(row.status);
     if (!state) continue;
-    events.push({
+    lines.push({
       bcId: row.agent,
       seat: row.seat && row.seat !== UNASSIGNED ? row.seat : '',
       pr: typeof row.pr === 'string' ? row.pr : '',
@@ -501,7 +581,7 @@ export function boardCloudAgents({ agents = [], activity = [], links = [], board
     const state = boardStateOfAction(row.action);
     if (!state) continue;
     const tag = typeof row.tag === 'string' ? row.tag : '';
-    events.push({
+    lines.push({
       bcId: row.agent,
       seat: row.seat || row.by || '',
       pr: safePrUrl(row.pr),
@@ -510,9 +590,9 @@ export function boardCloudAgents({ agents = [], activity = [], links = [], board
       updated_ct: typeof row.t_ct === 'string' ? row.t_ct : '',
     });
   }
-  events.sort((a, b) => (Date.parse(a.updated_ct) || 0) - (Date.parse(b.updated_ct) || 0));
+  lines.sort((a, b) => (Date.parse(a.updated_ct) || 0) - (Date.parse(b.updated_ct) || 0));
   const by = new Map();
-  for (const ev of events) {
+  for (const ev of lines) {
     const id = String(ev.bcId || '').trim();
     if (!AGENT_ID.test(id)) continue;
     const prev = by.get(id);
@@ -539,6 +619,7 @@ export function boardCloudAgents({ agents = [], activity = [], links = [], board
     if (!prev.pr && pr) prev.pr = pr;
   }
   const rows = [...by.values()].sort((a, b) => (Date.parse(b.updated_ct) || 0) - (Date.parse(a.updated_ct) || 0) || a.bcId.localeCompare(b.bcId));
+  linkCloudCards(rows, { activity, events, board });
   const flagged = foldCloudIds(rows).map(row => (!row.card && !row.pr ? { ...row, flag: 'card missing' } : row));
   return markStaleCloud(flagged, now);
 }
@@ -569,8 +650,51 @@ export function foldCloudIds(rows) {
   return folded;
 }
 
-/** A running cloud row keeps its owner active. An existing non-cloud working mark keeps its via.
- * A finished or failed row leaves open_agents. A seat loses a cloud mark when it has no running row left. */
+const CLOUD_TURN_ID = /^bc-[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*/;
+
+/** The bc id at the start of a cloud turn tag (`bc-<id>` or `bc-<id> <track>`). A seat turn has none. */
+export function cloudTurnId(tag) {
+  const match = CLOUD_TURN_ID.exec(String(tag || '').trim());
+  return match ? match[0] : '';
+}
+
+function cloudAliasKey(open, id) {
+  for (const key of open.keys()) if (cloudIdsAlias(key, id)) return key;
+  return '';
+}
+
+/** Open cloud turns. A start opens the bc id. An end closes that id. The seat on the line is not the agent. */
+export function openCloudTurns(lines, now = Date.now()) {
+  const open = new Map();
+  for (const line of lines || []) {
+    if (!line || line.kind !== 'turn') continue;
+    const id = cloudTurnId(line.tag);
+    if (!id) continue;
+    const t = Date.parse(line.t_ct || '');
+    if (!Number.isFinite(t) || t > now + 300000) continue;
+    const hit = cloudAliasKey(open, id);
+    if (line.action === 'end') {
+      if (hit && t >= open.get(hit)) open.delete(hit);
+      continue;
+    }
+    if (line.action === 'tick') {
+      if (hit) open.set(hit, Math.max(open.get(hit), t));
+      continue;
+    }
+    const keep = hit && hit.length >= id.length ? hit : id;
+    const at = Math.max(hit ? open.get(hit) : 0, t);
+    if (hit && hit !== keep) open.delete(hit);
+    open.set(keep, at);
+  }
+  return [...open.entries()]
+    .filter(([, t]) => now - t <= CLOUD_STALE_MS)
+    .map(([bcId, t]) => ({ bcId, updated_ct: new Date(t).toISOString() }))
+    .sort((a, b) => a.bcId.localeCompare(b.bcId));
+}
+
+/** A running cloud row is working on its own id. It does not mark the launching seat.
+ * `reviewer` canonicalizes to critic, so a row seat of reviewer must not light critic either.
+ * A finished or failed row leaves open_agents. A cloud via mark on a seat is dropped. */
 export function applyCloudOwners(fleet, rows, now = Date.now()) {
   const list = Array.isArray(rows) ? rows : [];
   const running = list.filter(row => row && row.state === 'running' && AGENT_ID.test(String(row.bcId || '')));
@@ -578,37 +702,18 @@ export function applyCloudOwners(fleet, rows, now = Date.now()) {
   const f = fleet
     ? { ...fleet, seats: { ...(fleet.seats || {}) }, working: { ...(fleet.working || {}) }, cloud: { ...(fleet.cloud || {}) } }
     : { as_of: new Date(now).toISOString(), window_min: 15, seats: {}, working: {}, cloud: {}, active: 0, total: 0 };
-  const nonRunning = new Set();
-  const seatRunning = new Map();
-  const seatsOnBoard = new Set();
+  const nonRunning = [];
   for (const row of list) {
     if (!row || !AGENT_ID.test(String(row.bcId || ''))) continue;
-    const id = String(row.bcId);
-    const seat = canonSeatToken(row.seat);
-    if (seat) seatsOnBoard.add(seat);
-    if (row.state === 'running') {
-      if (seat) seatRunning.set(seat, true);
-    } else nonRunning.add(id);
+    if (row.state !== 'running') nonRunning.push(String(row.bcId));
   }
   const open = new Set(
     (Array.isArray(f.cloud.open_agents) ? f.cloud.open_agents : [])
       .map(id => String(id))
-      .filter(id => id && !nonRunning.has(id)),
+      .filter(id => id && !nonRunning.some(gone => cloudIdsAlias(gone, id))),
   );
   for (const row of running) open.add(String(row.bcId));
-  for (const row of running) {
-    const seat = canonSeatToken(row.seat);
-    if (!seat) continue;
-    const src = f.seats[seat] || { active: false, last_ct: row.updated_ct || null, via: null, working: false };
-    const held = f.working[seat];
-    const keepVia = !!(src.working && held && held.via && held.via !== 'cloud');
-    const next = { ...src, active: true, working: true };
-    if (!keepVia) next.working_via = 'cloud';
-    if (!held) f.working[seat] = { via: 'cloud', since_ct: row.updated_ct || src.last_ct || null, agent: row.bcId };
-    f.seats[seat] = next;
-  }
-  for (const seat of seatsOnBoard) {
-    if (seatRunning.get(seat)) continue;
+  for (const seat of new Set([...Object.keys(f.working), ...Object.keys(f.seats)])) {
     const held = f.working[seat];
     const src = f.seats[seat];
     const cloudWork = !!(held && held.via === 'cloud');

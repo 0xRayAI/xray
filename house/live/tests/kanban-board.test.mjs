@@ -149,9 +149,21 @@ test('kanban renders above activity, opens a card, and keeps the GitHub link on 
     await page.keyboard.press('Escape');
     await page.waitForFunction(() => !document.getElementById('cardPop').open);
     await page.locator('#waveBody .wcard[data-key="example/app#3"] .witem').click();
-    await page.waitForFunction(() => document.getElementById('cardPop')?.open);
-    const fromWave = await page.locator('#cardPopDetail').evaluate((el) => (el.textContent || '').replace(/\s+/g, ' ').trim());
-    assert.equal(fromWave, waveText);
+    await page.waitForFunction(() => {
+      const card = document.querySelector('#waveBody .wcard[data-key="example/app#3"]');
+      const detail = card && card.querySelector('.wdetail');
+      return card && card.classList.contains('open') && detail && getComputedStyle(detail).display !== 'none';
+    });
+    const expanded = await page.locator('#waveBody .wcard[data-key="example/app#3"] .wdetail').evaluate((el) => ({
+      text: (el.textContent || '').replace(/\s+/g, ' ').trim(),
+      fields: [...el.querySelectorAll('dt')].map((dt) => dt.textContent),
+      hrefs: [...el.querySelectorAll('a')].map((a) => a.getAttribute('href')),
+    }));
+    assert.equal(await page.locator('#cardPop').evaluate((el) => el.open), false);
+    assert.equal(expanded.text, pop.detail);
+    assert.deepEqual(expanded.hrefs, pop.hrefs);
+    assert.deepEqual(expanded.fields, ['owner', 'status', 'acceptance', 'next owner']);
+    assert.match(expanded.text, /opened/);
 
     await page.keyboard.press('Escape');
     await page.waitForFunction(() => !document.getElementById('cardPop').open && !new URL(location.href).searchParams.get('card'));

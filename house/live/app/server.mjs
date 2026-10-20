@@ -17,9 +17,9 @@ import { seatPresence, presentSeat, foldSeatTouch, fleetConfigOf, configuredRost
 import { parseAllowlist, mergeCards, sourceCardsFrom, projectAllowed, validateItem, workEventToItem, cardNoNudge, workItemNewer } from './source.mjs';
 import { checkRoutesFromDir, readRoutingMap, createLoginResolver, auditLogins } from './routes.mjs';
 import { fingerprint, tripwire, createClock, wakeTitle, mutedSeats, selectStallSeats } from './governor.mjs';
-import { acceptWaveCards, attachPacketCards, burnQuiet, isPlanCard, liveWorkCount, postedCards, retainSeedCards, resolveWaveSeed, scheduleWaves } from './wave-schedule.mjs';
+import { acceptWaveCards, applyBrief, attachPacketCards, burnQuiet, isPlanCard, liveWorkCount, postedCards, retainSeedCards, resolveWaveSeed, scheduleWaves } from './wave-schedule.mjs';
 import { createArch1Launch, ARCH1_CANON, cardKeyOf } from './arch1-launch.mjs';
-import { configureWorkTrack, acceptCursorWebhook, appendWake, applyCloudOwners, boardCloudAgents, canonSeatToken, cloudIdsAlias, deriveTrackFromDir, displaySeat, isPacket, loadSeatAgentMap, readJsonl, readWakeRows, safePrUrl, seatForAgentId, stampCriticCloud, toToken } from './worktrack.mjs';
+import { configureWorkTrack, acceptCursorWebhook, appendWake, applyCloudOwners, boardCloudAgents, canonSeatToken, cloudIdsAlias, cloudTurnId, deriveTrackFromDir, displaySeat, isPacket, loadSeatAgentMap, openCloudTurns, readJsonl, readWakeRows, safePrUrl, seatForAgentId, stampCriticCloud, toToken } from './worktrack.mjs';
 import { wakeConfig, createWakeState, classifyBatch, gateLine, noteSent, releaseDue, publicStats, fullStats, restoreWakeBook, viewLine } from './wake-gate.mjs';
 const COLLECTOR_DIR_EARLY = () => path.join(path.dirname(fileURLToPath(import.meta.url)), 'collector');
 import { initArchive, appendArchive, backfillArchive, readArchive, validArchiveDate, KINDS as ARCHIVE_KINDS, cardHistory, archiveDays, archivedLineBytes } from './archive.mjs';
@@ -955,7 +955,7 @@ let githubCardAt = 0;
 try {
   const cardsPath = path.join(STATE_DIR, 'cards.json');
   const parsed = JSON.parse(fs.readFileSync(cardsPath, 'utf8'));
-  bfCards = Array.isArray(parsed.cards) ? parsed.cards : [];
+  bfCards = (Array.isArray(parsed.cards) ? parsed.cards : []).map(applyBrief);
   waveCards = bfCards.slice();
   const u = parsed.updated_ct;
   const t = typeof u === 'number' ? u : Date.parse(String(u ?? ''));
@@ -1075,7 +1075,7 @@ function ensurePacketCard(line) {
     number: Number.isInteger(number) ? number : 0,
     title: String(line.title || '').slice(0, 120), url: String(line.url || '').slice(0, 300),
     owner: String(owner || '').slice(0, 24), stage: 'open', state: 'live',
-    packet: {}, packet_ok: false, missing: ['acceptance', 'next owner'],
+    packet: {}, packet_ok: true, missing: [],
     beats: [], last_beat_t: Date.now(), stall: false,
   }]);
   publishBoard();
@@ -1086,7 +1086,7 @@ function githubEvents() {
 function publishBoard(updatedCt) {
   const merged = mergeCards(waveCards, sourceCardsFrom(itemsFromWork(), { seats: SEAT_IDS }));
   const scheduled = waveBoard(merged);
-  scheduled.cards = attachPacketCards(scheduled.cards, githubEvents());
+  scheduled.cards = attachPacketCards(scheduled.cards, githubEvents()).map(applyBrief);
   const sig = JSON.stringify(scheduled.cards);
   if (sig === boardSig) return;
   boardSig = sig;
@@ -1434,17 +1434,17 @@ function mergedHeader(now = Date.now()) {
   const tf = foldSeatTouch(h.fleet, seatTouch, now); if (tf) h.fleet = tf;   // wake / read / ack activity
   const af = applyStoredActivity(h.fleet, now); if (af) h.fleet = af;   // open turns and tasks (activity.jsonl)
   h.track = trackView(now);   // Cursor agents, packets, wakes and blockers rebuilt from the volume
-  h.cloud_agents = cloudAgentBoard();   // first-class board rows: bcId, seat, card, state, last update
+  h.cloud_agents = foldOpenCloudTurns(cloudAgentBoard(), now);   // first-class board rows: bcId, seat, card, state, last update
     if (h.board) {
     if (ownerName()) h.board.stats = { ...(h.board.stats || {}), ...ownerPromptStats(now) };
     h.board.cloud_agents = h.cloud_agents;
     if (Array.isArray(h.board.cards)) h.board.cards = stampCriticCloud(h.board.cards, h.cloud_agents);
   }
-  const wf = applyTrackWorking(h.fleet, h.track, now); if (wf) h.fleet = wf;   // woken packet or running agent
+  const wf = applyTrackWorking(h.fleet, h.track, now); if (wf) h.fleet = wf;   // a woken packet, not a running cloud agent
   const gf = applyGithubWorking(h.fleet, now); if (gf) h.fleet = gf;   // GitHub actor on a PR or issue
   if (h.fleet) h.fleet = clearClosedWork(h.fleet);
-  if (h.fleet) h.fleet = applyTurnRelease(h.fleet, now);   // an ended turn clears older marks; a fresh later mark and a running cloud agent stay
-  const cf = applyCloudOwners(h.fleet, h.cloud_agents, now); if (cf) h.fleet = cf;   // a running agent the seat launched stays active
+  if (h.fleet) h.fleet = applyTurnRelease(h.fleet, now);   // an ended turn clears older marks; a fresh later mark stays. a cloud via is not a seat turn
+  const cf = applyCloudOwners(h.fleet, h.cloud_agents, now); if (cf) h.fleet = cf;   // a running agent stays on its own id; the seat stays idle
   if (h.fleet) h.fleet = stampClockTree(h.fleet);
   if (h.fleet) h.fleet.seat_display = { ...SEAT_DISPLAY, ...jsonEnvObj('SEAT_DISPLAY_NAMES') };
   h.freshness = stampClockTree({
@@ -1501,6 +1501,14 @@ function arch1CloudLinks() {
   } catch { /* no launch file */ }
   return links;
 }
+function foldOpenCloudTurns(rows, now) {
+  const out = Array.isArray(rows) ? rows.slice() : [];
+  for (const turn of openCloudTurns(activityCloudRows(), now)) {
+    if (out.some(row => row && cloudIdsAlias(row.bcId, turn.bcId))) continue;
+    out.push({ bcId: turn.bcId, seat: '', card: '', pr: '', state: 'running', updated_ct: turn.updated_ct });
+  }
+  return out;
+}
 function cloudAgentBoard() {
   try {
     return boardCloudAgents({
@@ -1508,11 +1516,12 @@ function cloudAgentBoard() {
       activity: activityCloudRows(),
       links: arch1CloudLinks(),
       board: bfCards,
+      events: githubEvents(),
     });
   } catch (e) { console.log('cloud agents: ' + ((e && e.message) || 'read failed')); return []; }
 }
 function applyTrackWorking(fleet, track, now) {
-  const workingItems = (track && track.items || []).filter(item => item.working && item.seat_name);
+  const workingItems = (track && track.items || []).filter(item => item.working && item.seat_name && item.kind !== 'agent');
   if (!workingItems.length) return fleet;
   const f = fleet ? { ...fleet, seats: { ...(fleet.seats || {}) }, working: { ...(fleet.working || {}) } }
     : { as_of: iso(now), window_min: WINDOW_MIN, seats: {}, working: {}, active: 0, total: 0 };
@@ -2665,9 +2674,9 @@ function markTime(row) {
   return tsOf(row && (row.since_ct || row.t_ct));
 }
 // An end drops a mark at or before that end. A newer mark stays only while it is
-// inside TURN_OPEN_MS. A cloud mark stays through this pass so a still-running
-// agent is not cleared by the turn. applyCloudOwners drops it when that seat
-// has no running row, including on refreshWorking. A mark with no time stays.
+// inside TURN_OPEN_MS. A cloud via stays through this pass. applyCloudOwners
+// then drops every cloud via on a seat. The agent stays on its own id. A mark
+// with no time stays.
 // endAt 0 is an open turn past the window, not an end.
 function spareTurnMark(row, endAt, now = Date.now()) {
   if (row && row.via === 'cloud') return true;
@@ -2703,6 +2712,7 @@ function applyStoredActivity(fleet, now) {
   const prompted = new Map();
   for (const line of activity) {
     if (!line || typeof line.seat !== 'string') continue;
+    if (line.kind === 'turn' && cloudTurnId(line.tag)) continue;   // bc-… track is the agent, not the seat
     const seat = line.seat.toLowerCase();
     if (!SEAT_IDS.includes(seat)) continue;
     const t = Date.parse(line.t_ct);
@@ -2740,8 +2750,20 @@ function applyStoredActivity(fleet, now) {
     const src = f.seats[seat] || { active: false, last_ct: iso(t), via: 'activity' };
     f.seats[seat] = { ...src, working: true, working_via: src.working_via || 'activity' };
   }
+  // A via:turn mark with no open seat turn is a cloud-tagged turn filed under the seat.
+  // The collector still counts that tag. It does not keep the chip, and it does not move to another seat.
+  for (const seat of Object.keys(f.working)) {
+    const row = f.working[seat];
+    if (!row || row.via !== 'turn' || fresh.has(seat)) continue;
+    delete f.working[seat];
+    const src = f.seats[seat];
+    if (!src || (src.working_via !== 'turn' && src.working_via !== 'activity')) continue;
+    const next = { ...src, working: false };
+    delete next.working_via;
+    f.seats[seat] = next;
+  }
   // An ended turn clears a mark at or before that end, including after TURN_OPEN_MS.
-  // A newer mark stays only while it is fresh. A running cloud agent stays.
+  // A newer mark stays only while it is fresh. A cloud via is cleared later, on the agent's own id.
   // GitHub re-applies after this and expires on the same clock.
   // An open turn older than the window clears the seat. A newer open subagent or watcher keeps it.
   const release = new Map();
@@ -2777,6 +2799,23 @@ function applyStoredActivity(fleet, now) {
     f.working[seat] = { via: 'prompt', since_ct: iso(t) };
     const src = f.seats[seat] || { active: true, last_ct: iso(t), via: 'activity', working: false };
     f.seats[seat] = { ...src, working: true, working_via: 'prompt' };
+  }
+  const liveTurns = openCloudTurns(activity, now);
+  const liveIds = liveTurns.map(row => row.bcId);
+  const endedTurns = [];
+  for (const line of activity) {
+    if (!line || line.kind !== 'turn' || line.action !== 'end') continue;
+    const id = cloudTurnId(line.tag);
+    if (id) endedTurns.push(id);
+  }
+  const prevOpen = Array.isArray(f.cloud && f.cloud.open_agents) ? f.cloud.open_agents.map(String) : [];
+  if (liveIds.length || endedTurns.length || prevOpen.length) {
+    const aliases = (id, ids) => ids.some(other => cloudIdsAlias(id, other));
+    const openIds = [...new Set([
+      ...prevOpen.filter(id => !aliases(id, endedTurns) || aliases(id, liveIds)),
+      ...liveIds,
+    ])].filter(Boolean).sort();
+    f.cloud = { ...(f.cloud || {}), active: openIds.length > 0, open_agents: openIds, working: openIds.length > 0 };
   }
   f.active = Object.values(f.seats).filter(v => v.active).length;
   return f;
