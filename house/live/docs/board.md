@@ -84,7 +84,7 @@ Turns and owner messages are posted by the seat, with its own key, to `POST /act
 |---|---|---|
 | Turn start / end, background task start / end (desktop runs too), watcher start / stop | `POST /activity` | `{"t_ct","seat","kind":"turn"\|"subagent"\|"watcher","action":"start"\|"end","tag"?}` |
 | Owner → seat message, a 1:1 or a room (a pulse) | `POST /activity` via `live-inbox <seat> --prompt --from blaze` (add `--room <name>` in a room) | `{"t_ct","seat","kind":"prompt","action":"sent","from","to","room"?}`. Never the text, never a secret. The seat stays working for 10 minutes. `from: blaze` credits **Blaze** |
-| Cloud agent launch / finish | `fleet/cloud-agents.jsonl` | `{"t_ct","by","action":"launch"\|"reply"\|"finished"\|"cancel","agent"}` |
+| Cloud agent launch / finish | `fleet/cloud-agents.jsonl` | `{"t_ct","by","action":"launch"\|"reply"\|"finished"\|"cancel","agent","pr"}` |
 
 Seats post those turn and prompt lines with their seat key. A seat counts as working while a prompt pulse from the last 10 minutes is open, while it has an open turn or task, or while one of its cloud agents is running. Pulses never become inbox lines or wakes (see [inbox.md](inbox.md), routing guardrails).
 
@@ -108,7 +108,7 @@ A cloud agent is its own row on the board, in the `cloud agents` group, not only
 Two feeds, the same ones seats already write:
 
 1. `POST /cursor/webhook` appends `agents.jsonl` after the signature check.
-2. `POST /activity` with `kind` `cloud_agent` or `agent` and `action` `launch`, `reply`, `finished`, or `cancel`. `tag` may be `owner/repo#number`. `pr` may be the pull URL. This is the same line a `fleet/cloud-agents.jsonl` row carries (`t_ct`, `by`, `action`, `agent`, `tag`).
+2. `POST /activity` with `kind` `cloud_agent` or `agent` and `action` `launch`, `reply`, `finished`, or `cancel`. `tag` may be `owner/repo#number`. `pr` may be the pull URL. This is the same line a `fleet/cloud-agents.jsonl` row carries (`t_ct`, `by`, `action`, `agent`, `tag`, `pr`).
 
 An ARCH1 launch file row with an `agentId` fills the seat and card when the log has not named them yet. A running row shows a spinner. Open the row for the five fields. A `pr` url is a GitHub link.
 

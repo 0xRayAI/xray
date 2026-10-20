@@ -24,6 +24,21 @@ test('free text and unknown fields are refused', () => {
   assert.equal(validActivity({ t_ct: '2026-10-09T14:00:00Z', kind: 'turn', action: 'start', tag: 'see the body' }, now), 'free text is not accepted');
 });
 
+test('a 39-character owner is stored and a 40-character hyphenated owner is refused', () => {
+  const base = {
+    t_ct: '2026-10-09T14:00:00Z', seat: 'builder', kind: 'cloud_agent', action: 'launch', agent: 'bc-agent01',
+  };
+  const owner39 = 'a'.repeat(39);
+  const owner40 = 'a' + '-b'.repeat(19) + 'c';
+  assert.equal(owner40.length, 40);
+  assert.equal(validActivity({ ...base, pr: 'https://github.com/' + owner39 + '/app/pull/1' }, now), null);
+  assert.equal(validActivity({ ...base, pr: 'https://github.com/' + owner40 + '/app/pull/1' }, now), 'bad pr');
+  const repo100 = 'r' + 'e'.repeat(99);
+  const repo101 = 'r' + 'e'.repeat(100);
+  assert.equal(validActivity({ ...base, pr: 'https://github.com/acme/' + repo100 + '/pull/1' }, now), null);
+  assert.equal(validActivity({ ...base, pr: 'https://github.com/acme/' + repo101 + '/pull/1' }, now), 'bad pr');
+});
+
 test('a cloud-agent pr is stored trimmed, and a dot segment is refused', () => {
   const base = {
     t_ct: '2026-10-09T14:00:00Z', seat: 'builder', kind: 'cloud_agent', action: 'launch', agent: 'bc-agent01',

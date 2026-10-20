@@ -119,6 +119,44 @@ test('an older finish does not reopen a newer launch, and a launch link fills a 
   assert.equal(launched.state, 'running');
 });
 
+test('a FINISHED webhook stores pr only after safePrUrl', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'cloud-board-pr-'));
+  const owner40 = 'a' + '-b'.repeat(19) + 'c';
+  const bad = 'https://github.com/' + owner40 + '/app/pull/1';
+  const good = 'https://github.com/acme/app/pull/15';
+  const classified = classifyCursor({ id: 'bc-fin000001', status: 'FINISHED', target: { prUrl: bad } });
+  assert.ok(classified, 'FINISHED keeps classifyCursor from returning null');
+  assert.equal(classified.pr, '');
+  try {
+    const refused = acceptCursorWebhook({
+      dir,
+      raw: Buffer.from(JSON.stringify({ id: 'bc-fin000001', status: 'FINISHED', metadata: { seat: 'critic' }, target: { prUrl: bad }, summary: 'done' })),
+      headers: { 'x-webhook-id': 'fin-bad' },
+      map: {},
+      now: Date.parse('2026-10-15T15:00:00Z'),
+    });
+    assert.equal(refused.appended, true);
+    assert.equal(refused.record.pr, '');
+    const kept = acceptCursorWebhook({
+      dir,
+      raw: Buffer.from(JSON.stringify({ id: 'bc-fin000002', status: 'FINISHED', metadata: { seat: 'critic' }, target: { prUrl: good }, summary: 'done' })),
+      headers: { 'x-webhook-id': 'fin-good' },
+      map: {},
+      now: Date.parse('2026-10-15T15:00:01Z'),
+    });
+    assert.equal(kept.record.pr, good);
+    const view = deriveTrackFromDir(dir, Date.parse('2026-10-15T15:00:00Z'), 3600 * 1000, []);
+    const empty = view.items.find(row => row.agent === 'bc-fin000001');
+    const shown = view.items.find(row => row.agent === 'bc-fin000002');
+    assert.equal(empty.pr, '');
+    assert.equal(empty.url, '');
+    assert.equal(shown.pr, good);
+    assert.equal(shown.url, good);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test('a webhook ERROR is a failed board row and is not working', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'cloud-board-'));
   try {

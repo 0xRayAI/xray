@@ -101,6 +101,36 @@ async function withServer(fn) {
   }
 }
 
+test('a 39-character owner still cards and a 40-character hyphenated owner is empty', () => {
+  const owner39 = 'a'.repeat(39);
+  const owner40 = 'a' + '-b'.repeat(19) + 'c';
+  assert.equal(owner39.length, 39);
+  assert.equal(owner40.length, 40);
+  const ok = 'https://github.com/' + owner39 + '/app/pull/1';
+  const bad = 'https://github.com/' + owner40 + '/app/pull/1';
+  assert.equal(safePrUrl(ok), ok);
+  assert.equal(cardRefOf(ok), owner39 + '/app#1');
+  assert.equal(safePrUrl(bad), '');
+  assert.equal(cardRefOf(bad), '');
+  const repo100 = 'r' + 'e'.repeat(99);
+  const repo101 = 'r' + 'e'.repeat(100);
+  const kept = 'https://github.com/acme/' + repo100 + '/pull/1';
+  assert.equal(repo100.length, 100);
+  assert.equal(safePrUrl(kept), kept);
+  assert.equal(cardRefOf(kept), 'acme/' + repo100 + '#1');
+  assert.equal(safePrUrl('https://github.com/acme/' + repo101 + '/pull/1'), '');
+});
+
+test('cloud-agents field lists name pr inside the braces and the parentheses', () => {
+  const lines = fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'docs', 'board.md'), 'utf8').split('\n');
+  const brace = lines[86].match(/\{[^}]*\}/);
+  assert.ok(brace, 'line 87 brace list');
+  assert.match(brace[0], /"pr"/);
+  const paren = lines[110].match(/\([^)]*\)/);
+  assert.ok(paren, 'line 111 parenthetical');
+  assert.match(paren[0], /`pr`/);
+});
+
 test('a dot-segment pull URL is empty and a dotted repo still cards', () => {
   const bad = 'https://github.com/../../pull/1';
   assert.equal(safePrUrl(bad), '');

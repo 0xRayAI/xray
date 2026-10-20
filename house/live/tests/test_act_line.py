@@ -26,6 +26,19 @@ class ActLinePr(unittest.TestCase):
     def test_drops_a_dot_segment(self):
         self.assertIsNone(push_payload.act_line({**BASE, "pr": "https://github.com/../../pull/1"}))
 
+    def test_39_character_owner_is_kept_and_40_character_hyphenated_owner_is_dropped(self):
+        owner39 = "a" * 39
+        owner40 = "a" + ("-b" * 19) + "c"
+        self.assertEqual(len(owner40), 40)
+        kept = push_payload.act_line({**BASE, "pr": f"https://github.com/{owner39}/app/pull/1"})
+        self.assertEqual(kept["pr"], f"https://github.com/{owner39}/app/pull/1")
+        self.assertIsNone(push_payload.act_line({**BASE, "pr": f"https://github.com/{owner40}/app/pull/1"}))
+        repo100 = "r" + ("e" * 99)
+        repo101 = "r" + ("e" * 100)
+        long = push_payload.act_line({**BASE, "pr": f"https://github.com/acme/{repo100}/pull/1"})
+        self.assertEqual(long["pr"], f"https://github.com/acme/{repo100}/pull/1")
+        self.assertIsNone(push_payload.act_line({**BASE, "pr": f"https://github.com/acme/{repo101}/pull/1"}))
+
     def test_omitted_pr_stays_off_the_line(self):
         line = push_payload.act_line(dict(BASE))
         self.assertIsNotNone(line)

@@ -20,7 +20,7 @@
     "pr": {
       "type": "string",
       "maxLength": 300,
-      "pattern": "^https://github\\.com/[A-Za-z0-9](?:-[A-Za-z0-9]|[A-Za-z0-9]){0,38}/[A-Za-z0-9_](?:[A-Za-z0-9._-]*[A-Za-z0-9_])?/pull/[0-9]{1,8}$",
+      "pattern": "^https://github\\.com/(?![A-Za-z0-9-]{40})[A-Za-z0-9](?:-[A-Za-z0-9]|[A-Za-z0-9]){0,38}/(?![A-Za-z0-9._-]{101})[A-Za-z0-9_](?:[A-Za-z0-9._-]*[A-Za-z0-9_])?/pull/[0-9]{1,8}$",
       "description": "Optional https GitHub pull URL. A card ref stays on tag."
     }
   },

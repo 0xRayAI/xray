@@ -128,7 +128,7 @@ export function rankOf(status) {
 export function classifyCursor(parsed) {
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
   const raw = String(parsed.status || parsed.event || parsed.type || '').toUpperCase().replace(/[\s.-]+/g, '_');
-  const pr = prOf(parsed);
+  const pr = safePrUrl(prOf(parsed));
   let status = statusOf(raw);
   if (!status && pr) status = 'pr_opened';
   if (!status) return null;
@@ -372,8 +372,9 @@ function packetItem(line, { acked, woken, closed, now, windowMs }) {
 const AGENT_ID = /^[A-Za-z0-9][A-Za-z0-9._:-]{2,79}$/;
 // Same owner/repo rules as house/burst/activity.mjs. A dotted repo name stays.
 // "." and ".." are not names, so github.com/../../pull/1 is not a card.
-const GH_OWNER = '[A-Za-z0-9](?:-[A-Za-z0-9]|[A-Za-z0-9]){0,38}';
-const GH_REPO = '[A-Za-z0-9_](?:[A-Za-z0-9._-]*[A-Za-z0-9_])?';
+// The {0,38} group counts "-b" as one repeat. The lookahead counts characters: owner 39, repo 100.
+const GH_OWNER = '(?![A-Za-z0-9-]{40})[A-Za-z0-9](?:-[A-Za-z0-9]|[A-Za-z0-9]){0,38}';
+const GH_REPO = '(?![A-Za-z0-9._-]{101})[A-Za-z0-9_](?:[A-Za-z0-9._-]*[A-Za-z0-9_])?';
 const CARD_REF = new RegExp('^' + GH_OWNER + '/' + GH_REPO + '#\\d{1,8}$');
 const PR_URL = new RegExp('^https://github\\.com/(' + GH_OWNER + ')/(' + GH_REPO + ')/pull/(\\d{1,8})(?:/|\\?|#|$)');
 const SAFE_PR_URL = new RegExp('^https://github\\.com/' + GH_OWNER + '/' + GH_REPO + '/pull/\\d{1,8}$');
