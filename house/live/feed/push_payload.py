@@ -68,9 +68,10 @@ ACT_BANNED = re.compile(r"body|text|message", re.I)
 ACT_AGENT = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]{2,40}")
 ACT_T = re.compile(r"\d{4}-\d\d-\d\dT\d\d:\d\d(:\d\d(\.\d{1,6})?)?([+-]\d\d:\d\d|Z)")
 # Same owner/repo rules as the board. A dotted repo stays. "." and ".." do not.
+# Lookaheads count characters (owner 39, repo 100). The {0,38} group does not.
 PR_URL = re.compile(
-    r"https://github\.com/[A-Za-z0-9](?:-[A-Za-z0-9]|[A-Za-z0-9]){0,38}"
-    r"/[A-Za-z0-9_](?:[A-Za-z0-9._-]*[A-Za-z0-9_])?/pull/\d{1,8}"
+    r"https://github\.com/(?![A-Za-z0-9-]{40})[A-Za-z0-9](?:-[A-Za-z0-9]|[A-Za-z0-9]){0,38}"
+    r"/(?![A-Za-z0-9._-]{101})[A-Za-z0-9_](?:[A-Za-z0-9._-]*[A-Za-z0-9_])?/pull/\d{1,8}"
 )
 
 

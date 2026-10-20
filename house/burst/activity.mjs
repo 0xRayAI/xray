@@ -14,10 +14,11 @@ export const ACT_KINDS = {
   deploy: ['start', 'end', 'pass', 'fail', 'cancel'],
 };
 const ACT_FIELDS = new Set(['t_ct', 'kind', 'action', 'to', 'from', 'agent', 'tag', 'seat', 'room', 'pr']);
-// GitHub owner: letters, digits, single hyphens, not at either end, at most 39.
-// Repo may contain a dot. A segment of "." or ".." is not a name.
-const GH_OWNER = '[A-Za-z0-9](?:-[A-Za-z0-9]|[A-Za-z0-9]){0,38}';
-const GH_REPO = '[A-Za-z0-9_](?:[A-Za-z0-9._-]*[A-Za-z0-9_])?';
+// GitHub owner: letters, digits, single hyphens, not at either end, 39 characters.
+// The {0,38} group counts "-b" as one repeat, so the lookahead counts characters.
+// Repo may contain a dot, at most 100 characters. A segment of "." or ".." is not a name.
+const GH_OWNER = '(?![A-Za-z0-9-]{40})[A-Za-z0-9](?:-[A-Za-z0-9]|[A-Za-z0-9]){0,38}';
+const GH_REPO = '(?![A-Za-z0-9._-]{101})[A-Za-z0-9_](?:[A-Za-z0-9._-]*[A-Za-z0-9_])?';
 const PR_URL = new RegExp('^https://github\\.com/' + GH_OWNER + '/' + GH_REPO + '/pull/\\d{1,8}$');
 const ACT_BANNED = /body|text|message/i;
 const ACT_VALUE = /^[A-Za-z0-9 ._:@#+\/-]{1,80}$/;
