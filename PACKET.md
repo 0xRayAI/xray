@@ -48,7 +48,7 @@ The writers are still in the tree. Nothing that is allowed to write is both flag
 `src/__tests__/unit/reflection-feedback.test.ts`
 
 - A temp seat with the flag runs `auto-reflection-generator.mjs` and `maybeRunReflectionStub`. A markdown reflection (executive summary, `head:` of that seat's `HEAD`) appears under `<seat>/.xray/state/repertoire/feedback`. Nothing is written under `docs/reflections`, `node_modules/@0xray/repertoire`, or `vendor/@0xray/repertoire`. A second call on the same `HEAD` does not add a file.
-- 24 commits are not due. 26 commits are due even when the previous file's mtime is now and its `head:` is the root commit (the old mtime gate would skip; `HEAD % 25` would skip 26).
+- One commit is not due at threshold 2. Three commits are due at threshold 2 (`3 % 2 !== 0`, so the old `HEAD` modulo gate would skip). A prior file whose mtime is now and whose `head:` is the root commit is still due (the old mtime gate would skip). The shipped default threshold stays 25.
 - After the write, `.xray/state/synthesis-checkpoint.json` and `.xray/state/confer-checkpoint.json` are absent.
 - Both features files have the minimal flag, `synthesis.enabled` is false, and `confer` is absent.
 - `npm pack --dry-run --json --ignore-scripts` does not list a sentinel dropped in `.xray/state/repertoire/feedback`, and does not list `docs/reflections/`.

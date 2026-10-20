@@ -15,13 +15,17 @@ function gitInit(root: string) {
   execFileSync('git', ['init'], { cwd: root, stdio: 'ignore' });
   execFileSync('git', ['config', 'user.email', 'reflection@test'], { cwd: root, stdio: 'ignore' });
   execFileSync('git', ['config', 'user.name', 'reflection'], { cwd: root, stdio: 'ignore' });
+  const hooks = path.join(root, '.githooks');
+  mkdirSync(hooks);
+  execFileSync('git', ['config', 'core.hooksPath', hooks], { cwd: root, stdio: 'ignore' });
 }
 
 function commitTimes(root: string, count: number) {
   for (let i = 0; i < count; i++) {
-    writeFileSync(path.join(root, 'note.txt'), `${i}\n`);
-    execFileSync('git', ['add', 'note.txt'], { cwd: root, stdio: 'ignore' });
-    execFileSync('git', ['commit', '-m', `note ${i}`], { cwd: root, stdio: 'ignore' });
+    execFileSync('git', ['commit', '--allow-empty', '--no-verify', '-m', `note ${i}`], {
+      cwd: root,
+      stdio: 'ignore',
+    });
   }
 }
 
@@ -118,20 +122,28 @@ describe('automatic reflection reaches repertoire feedback', () => {
     }
   });
 
-  it('is due from the recorded head, not from mtime or HEAD modulo 25', () => {
+  it('is due from the recorded head, not from mtime or HEAD modulo', () => {
     const quiet = mkdtempSync(path.join(tmpdir(), 'xray-reflection-quiet-'));
     const due = mkdtempSync(path.join(tmpdir(), 'xray-reflection-due-'));
+    const stubRoot = mkdtempSync(path.join(tmpdir(), 'xray-reflection-mod-'));
     try {
       gitInit(quiet);
-      commitTimes(quiet, 24);
-      writeFeatures(quiet, 25);
-      expect(reflectionIsDue(quiet, feedbackDir(quiet), 25)).toBe(false);
+      commitTimes(quiet, 1);
+      writeFeatures(quiet, 2);
+      expect(reflectionIsDue(quiet, feedbackDir(quiet), 2)).toBe(false);
       runGenerator(quiet);
       expect(feedbackMarkdown(quiet)).toEqual([]);
 
+      gitInit(stubRoot);
+      commitTimes(stubRoot, 3);
+      writeFeatures(stubRoot, 2);
+      const stubbed = maybeRunReflectionStub(stubRoot);
+      expect(stubbed).toMatchObject({ triggered: true, exitCode: 0 });
+      expect(feedbackMarkdown(stubRoot)).toHaveLength(1);
+
       gitInit(due);
-      commitTimes(due, 26);
-      writeFeatures(due, 25);
+      commitTimes(due, 3);
+      writeFeatures(due, 2);
       const rootSha = execFileSync('git', ['rev-list', '--max-parents=0', 'HEAD'], {
         cwd: due,
         encoding: 'utf8',
@@ -141,7 +153,7 @@ describe('automatic reflection reaches repertoire feedback', () => {
       const dir = feedbackDir(due);
       mkdirSync(dir, { recursive: true });
       writeFileSync(path.join(dir, 'prior-reflection.md'), `---\nhead: ${rootSha}\n---\nprior\n`);
-      expect(reflectionIsDue(due, dir, 25)).toBe(true);
+      expect(reflectionIsDue(due, dir, 2)).toBe(true);
       runGenerator(due);
       const files = feedbackMarkdown(due);
       expect(files.length).toBe(2);
@@ -153,6 +165,7 @@ describe('automatic reflection reaches repertoire feedback', () => {
     } finally {
       rmSync(quiet, { recursive: true, force: true });
       rmSync(due, { recursive: true, force: true });
+      rmSync(stubRoot, { recursive: true, force: true });
     }
   });
 
