@@ -915,3 +915,78 @@ describe('grok-bot seat doctor — goggles stays on', () => {
     }
   });
 });
+
+describe('grok-bot seat doctor — station boot warnings', () => {
+  function filledHouse(dir: string): void {
+    mkdirSync(path.join(dir, 'house'), { recursive: true });
+    writeFileSync(
+      path.join(dir, 'house', 'HOUSE.md'),
+      '# House\n\nname: owner\nOP-PROC: grok-bot/OP-PROC.md\n\n## Owner\nowner.\n',
+    );
+  }
+
+  function plant(dir: string): void {
+    writeSeat(dir);
+    plantMillInspect(dir);
+    filledHouse(dir);
+  }
+
+  it('warns on a broken profile and a thin station card without failing the plant', () => {
+    const dir = scratch();
+    try {
+      plant(dir);
+      const profile = path.join(dir, 'profile.json');
+      writeFileSync(profile, `${JSON.stringify({ title: 'seat', description: 'hello' })}\n`);
+      const state = path.join(dir, '.xray', 'state');
+      mkdirSync(state, { recursive: true });
+      const notes = path.join(state, 'NOTES.md');
+      const station = path.join(state, 'STATION.md');
+      writeFileSync(notes, 'Point: work\n');
+      writeFileSync(station, 'Plane: core\n');
+      const newer = new Date();
+      const older = new Date(newer.getTime() - 60_000);
+      utimesSync(station, older, older);
+      utimesSync(notes, newer, newer);
+      const report = diagnoseSeat({ cwd: dir, home: dir, env: { GROK_BOT_PROFILE: profile } });
+      expect(report.house.status).toBe('pass');
+      expect(report.ok).toBe(true);
+      expect(report.plant.ok).toBe(true);
+      const warnings = report.house.warnings ?? [];
+      expect(warnings).toContain('profile.json title lacks the station hook');
+      expect(warnings).toContain('profile.json description does not open with the BOOT line');
+      expect(warnings).toContain('STATION.md is older than NOTES.md');
+      expect(warnings).toContain('STATION.md has no Skills: line');
+      expect(warnings).toContain('STATION.md has no Keys: line');
+      const printed = formatDoctor(report);
+      expect(printed).toMatch(/Plant: PASS/);
+      expect(printed).toMatch(/House: WARN — profile.json title lacks the station hook/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('stays quiet when the profile hook and the station lines are present', () => {
+    const dir = scratch();
+    try {
+      plant(dir);
+      const profile = path.join(dir, 'profile.json');
+      writeFileSync(
+        profile,
+        `${JSON.stringify({
+          title: 'You are forge, implementer on the core plane. Run the station skill first (suit /suits/forge).',
+          description: 'BOOT: on an owner message, run the station skill first.',
+        })}\n`,
+      );
+      const state = path.join(dir, '.xray', 'state');
+      mkdirSync(state, { recursive: true });
+      const station = path.join(state, 'STATION.md');
+      writeFileSync(station, 'Plane: core\nSkills: station\nKeys: gh-forge\n');
+      const report = diagnoseSeat({ cwd: dir, home: dir, env: { GROK_BOT_PROFILE: profile } });
+      expect(report.ok).toBe(true);
+      expect(report.house.status).toBe('pass');
+      expect(report.house.warnings ?? []).toEqual([]);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});

@@ -29,7 +29,7 @@ house/live/tools/bifrost-check --dry-run                                   # off
 house/live/tools/bifrost-check --repo <org>/<sandbox> --target https://<bifrost-host>   # full pass after deploy
 ```
 - Live writes go only to `--repo` (use a sandbox repo) and read/ack only on `--target`. Test issues are closed after (`--keep` leaves them).
-- `gh` must be signed in as the checking seat's App, never a personal login. Seat keys come from `SEAT_KEYS_DIR` and are never printed.
+- `~/bin/gh-<seat>` is the checking seat's App. Plain `gh` and a personal login are not. Seat keys come from `SEAT_KEYS_DIR` and are never printed.
 - `--wait` (default 240 s) covers the collector's ~1 min poll. `--only rule,rule` runs a subset. `--seats` scopes the run (and the routing rule) to those seats. `--self-seat` (or `$BIFROST_SEAT`) marks the checking seat: its own delivery is SKIP unless `--alt-token-env` names another seat's token to post with.
 - Tripwire and nudge run against the deployed commit's own code locally; emptying or stalling the production board is not done by the script.
 

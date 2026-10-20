@@ -20,7 +20,7 @@ The per-seat cursor `$LIVE_CURSORS/<seat>.txt` stores handled keys `repo#number|
 when the key is already there and exits 1 for a new head. The claim is not this record.
 --turn start|end posts {kind:turn, action, t_ct, tag?} to POST /activity.
 A turn inside a cloud agent posts that same kind:turn line and does not post cloud_agent launch.
---prompt posts {t_ct, seat, kind:prompt, action:sent, from, to:seat, room?, note?} to POST /activity. from defaults to the name: line in house config.
+--prompt posts {t_ct, seat, kind:prompt, action:sent, from, to:seat, room?, note?} to POST /activity. from defaults to the name: line under ## Owner in HOUSE.md. A missing name: warns and uses owner.
 --note is one quoted line, at most 240 characters of letters, digits, spaces, and ._:@#+/?'",;!()-. It is the only prose the board stores. Keys named body, text, or message are refused.
 t_ct is America/Chicago with its offset. Both posts use the seat key. The key is never printed. There is no local file.
 Handoff: POST one packet to /inbox for <to> and print the one-line 1:1 message the seat sends. The same pull request,
@@ -123,6 +123,8 @@ if prompt and (ack is not None or handoff_to is not None or card_raw is not None
     sys.exit(USAGE)
 if (frm is not None or room is not None or note is not None) and not prompt:
     sys.exit(USAGE)
+
+
 def house_path():
     raw = os.environ.get("HOUSE", "").strip()
     if raw:
@@ -131,7 +133,7 @@ def house_path():
 
 
 def owner_from_house():
-    """The name: line under ## Owner. Missing file or line exits 2 and names the file."""
+    """The name: line under ## Owner. A missing file exits 2. A missing line warns and uses owner."""
     path = house_path()
     if not path.is_file():
         print(f"live-inbox: missing name: in {path}", file=sys.stderr)
@@ -148,8 +150,8 @@ def owner_from_house():
             break
     found = re.search(r"(?m)^name:\s*(\S.*?)\s*$", section)
     if not found:
-        print(f"live-inbox: missing name: in {path}", file=sys.stderr)
-        sys.exit(2)
+        print("live-inbox: HOUSE.md has no name:; using from=owner", file=sys.stderr)
+        return "owner"
     name = found.group(1).strip()
     if not TAG.fullmatch(name):
         sys.exit("from must be a short plain id")

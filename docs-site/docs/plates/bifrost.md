@@ -6,7 +6,7 @@ plate_type: pipeline
 
 # Bifrost
 
-Bifrost is an autonomous AI fleet management system. Every PR, issue and comment becomes a card on one board and a line in the right seat's inbox, and the seat is woken to act on it.
+Bifrost is an autonomous AI fleet management system. The public board is https://bifrost.0xray.dev. Every PR, issue and comment becomes a card on one board and a line in the right seat's inbox, and the seat is woken to act on it.
 
 ```
 ┌────────────────────────────────────────────────────────────┐

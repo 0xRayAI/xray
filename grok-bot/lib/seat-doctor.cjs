@@ -380,6 +380,48 @@ function codexWarning(cwd, houseFile) {
   return null;
 }
 
+function readProfile(cwd, env) {
+  const candidates = [];
+  if (env && typeof env.GROK_BOT_PROFILE === 'string' && env.GROK_BOT_PROFILE.trim()) {
+    candidates.push(env.GROK_BOT_PROFILE.trim());
+  }
+  candidates.push(path.join(cwd, 'profile.json'));
+  for (const file of candidates) {
+    try {
+      const data = JSON.parse(fs.readFileSync(file, 'utf8'));
+      if (data && typeof data === 'object') return data;
+    } catch {
+      /* absent or unreadable */
+    }
+  }
+  return null;
+}
+
+function stationBootWarnings(cwd, env) {
+  const warnings = [];
+  const profile = readProfile(cwd, env);
+  if (profile) {
+    const title = typeof profile.title === 'string' ? profile.title : '';
+    const description = typeof profile.description === 'string' ? profile.description.trim() : '';
+    if (!title.includes('Run the station skill first')) {
+      warnings.push('profile.json title lacks the station hook');
+    }
+    if (!description.startsWith('BOOT:')) {
+      warnings.push('profile.json description does not open with the BOOT line');
+    }
+  }
+  const station = path.join(cwd, '.xray', 'state', 'STATION.md');
+  const notes = path.join(cwd, '.xray', 'state', 'NOTES.md');
+  if (!fs.existsSync(station)) return warnings;
+  if (fs.existsSync(notes) && fs.statSync(station).mtimeMs < fs.statSync(notes).mtimeMs) {
+    warnings.push('STATION.md is older than NOTES.md');
+  }
+  const card = fs.readFileSync(station, 'utf8');
+  if (!/^Skills:/m.test(card)) warnings.push('STATION.md has no Skills: line');
+  if (!/^Keys:/m.test(card)) warnings.push('STATION.md has no Keys: line');
+  return warnings;
+}
+
 function cadenceWarnings(houseFile, text, cwd, env, now) {
   const warnings = [];
   if (!hasCadence(text)) {
@@ -415,7 +457,7 @@ function inspectHouseFile(file, via, ctx = {}) {
       warnings: [],
     };
   }
-  const warnings = cadenceWarnings(file, text, cwd, env, now);
+  const warnings = cadenceWarnings(file, text, cwd, env, now).concat(stationBootWarnings(cwd, env));
   const exampleSibling = path.join(path.dirname(file), 'EXAMPLE.md');
   const scope = scopeFromHouseText(text);
   if (fs.existsSync(exampleSibling)) {

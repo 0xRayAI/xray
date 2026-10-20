@@ -45,7 +45,8 @@ House lookup: `GROK_BOT_HOUSE` (the house directory or its `HOUSE.md`) wins. If 
 1. **Suit** — mill + inspect (`fasten-suit-per-agent`)  
 2. **Identity** — Groover register → mint → pin (`groover-factory-parity`) when needed  
 3. **Pay** — OWS wallet + Base USDC (`setup-ows-pay`)  
-4. **Hangar** — plant shops (`plant-hangar-shops`)  
+4. **Hangar** — plant shops (`plant-hangar-shops`)
+5. **Label** — `seat-label` in that seat’s own chat (`UpdateProfile` title only)  
 
 ## Plant pins (monitor / adjust)
 - `0xray` (current npm) · mill nested in the tarball (`npx @0xray/foundry`)

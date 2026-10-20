@@ -9,5 +9,6 @@ Rules: pack [OP-PROC](../OP-PROC.md) (**Two loops**, **Tripwire**). Live pass: [
 4. Onboard a seat, including suit fitting (mill+inspect). List a finished or idle seat. Blaze deletes it.
 5. Dev talk is Blaze and forge. The cos-forge 1:1 carries the printed `live-inbox` handoff line. A room post is not a handoff.
 6. Do not assign dev work. Do not take L2 or L3 reassign. The card owner keeps L1.
+7. A new seat runs `seat-label` in its own chat.
 
 Note: Bifrost keeps the board, inbox routing, and wave timing.

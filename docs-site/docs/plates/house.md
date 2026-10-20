@@ -53,6 +53,8 @@ A state flow plate: the stages a house goes through before doctor says House: PA
   └──────────────────────────────┘
 ```
 
-When `LIVE_URL` is unset, open cards are hand-kept in `house/WAVEBOARD.md`. When `LIVE_URL` is set, the board is Bifrost (`GET /cards`). `ATTENTION_STATE.md` is read in either case.
+When `LIVE_URL` is unset, open cards are hand-kept in `house/WAVEBOARD.md`. When `LIVE_URL` is set, the board is Bifrost at https://bifrost.0xray.dev (`GET /cards`). `ATTENTION_STATE.md` is read in either case.
+
+`HOUSE.md` carries `name:` and `OP-PROC:`. Doctor warns, and House stays PASS, when the profile lacks the station hook, when the station card is older than NOTES, or when `Skills:` or `Keys:` is missing. Adoption is `templates/house/STATION-BOOT.md`.
 
 stamped · 0xray 4.1.0 · @0xray/grok-bot 0.1.10

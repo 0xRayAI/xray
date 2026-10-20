@@ -8,6 +8,7 @@ Primary scripts for agents. Run in order for **each** key agent.
 | [groover-factory-parity](skills/groover-factory-parity/SKILL.md) | Register → mint → pin identity for that agent |
 | [setup-ows-pay](skills/setup-ows-pay/SKILL.md) | Local OWS wallet + pay hangar/Clearing 402s |
 | [plant-hangar-shops](skills/plant-hangar-shops/SKILL.md) | Plant hangar shops and verify a paid call |
+| [seat-label](skills/seat-label/SKILL.md) | This seat sets its own profile title. Run it in that seat’s chat |
 
 ## Fleet / OS skills (reference)
 | Skill | When |
@@ -17,6 +18,8 @@ Primary scripts for agents. Run in order for **each** key agent.
 | [survive-compact](skills/survive-compact/SKILL.md) | After long wakes / before coding — re-read disk; chat may lose early turns |
 | [board-prompt](skills/board-prompt/SKILL.md) | On any inbound message, post the turn before other work, and one owner prompt |
 | [setup-house](skills/setup-house/SKILL.md) | No `house/` folder yet — `grok-bot house init` copies `templates/house/` and refuses to overwrite |
+| [station](skills/station/SKILL.md) | Boot hook. Light on an owner message. Full after a summary, a wake, or a gate |
+| [seat-github-key](skills/seat-github-key/SKILL.md) | `~/bin/gh-<seat>` mints a fresh App token every call. Never plain `gh` |
 | [fasten-suit-and-hangar](skills/fasten-suit-and-hangar/SKILL.md) | Legacy combined fasten (prefer per-agent skill above) |
 
 ## Board

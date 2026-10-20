@@ -1,5 +1,8 @@
 # House
 
+name: owner
+OP-PROC: grok-bot/OP-PROC.md
+
 ## Owner
 (example) Ada — the human who decides money, credentials, deletes, and taste.
 

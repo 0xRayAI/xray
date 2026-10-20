@@ -2,12 +2,12 @@
 
 > 0xRay house example — not the general procedure. Your team’s rules live in `house/` after `grok-bot house init`.
 
-This file is the whole change. No skill, doctor, or template code is edited here. The word in the generic rule is **owner**. The owner’s name is set once in house config.
+The word in the generic rule is **owner**. The owner’s name is set once in house config. This branch now carries the docs, templates, skills, and the doctor warnings below. Publish still waits for the owner GO.
 
 ## Packet
 
 - goal: Every seat boots through one station skill. Light on an owner message. Full after a summary, a wake, or a gate.
-- constraints: Packet only. No code in this PR. Say owner. No personal names. One description hook. Publish waits for owner GO.
+- constraints: Say owner. No personal names. One description hook. Publish waits for owner GO. Version stays 0.1.10 until that GO.
 - path: Critic PASS on this packet, then one follow-up edits the files below.
 - acceptance: Label, description, the three skills, the STATION and HOUSE lines, the doctor warnings, and the short OP-PROC rule match this file.
 - gates: Critic packet PASS before any code. A and C wait on the follow-up. B and D stay off until the owner GO to publish.
@@ -36,7 +36,7 @@ Fleet template for any house. Seat planes are `core`, `integration`, `ecosystem`
 
 ## Files
 
-Not this PR. The follow-up edits these:
+Landed on this branch:
 
 - `grok-bot/skills/station/SKILL.md` — new. Frontmatter `description` is the BOOT line. Light, Full, during-work, way out.
 - `grok-bot/skills/seat-github-key/SKILL.md` — new. Mint every call. Fail closed. No other identity.
@@ -89,7 +89,7 @@ One new bullet in `grok-bot/OP-PROC.md`, after **Disk, not chat**:
 
 ## Tests
 
-The follow-up adds tests that fail when the behavior is reverted. This change adds none.
+These fail when the behavior is reverted.
 
 - Station skill text has Light (`--prompt`, then STATION) and Full (the `OP-PROC:` path, two NOTES entries, TRACKS, open cards, `Skills:`). The frontmatter description and the ROLE-MAP first line are the BOOT sentence. The file contains no second boot sentence and no personal name.
 - `seat-github-key` text names `~/bin/gh-<seat>` and `~/.config/<seat>/github-app-mint-token.sh`. A failed mint exits non-zero and names no fallback identity. The words token and PEM appear only as text the wrapper must not print.
@@ -99,9 +99,29 @@ The follow-up adds tests that fail when the behavior is reverted. This change ad
 - `mergeStationMarkdown` keeps one `Skills:` line and one `Keys:` line across a rewrite.
 - `src/__tests__/unit/grok-bot-house-template.test.ts` still requires this file’s banner once, in the first six lines.
 
+## Docs touched
+
+- `grok-bot/README.md`, `grok-bot/AGENTS.md`, `grok-bot/SKILLS.md`, `grok-bot/llms.txt`
+- `grok-bot/skills/setup-house/SKILL.md`, `grok-bot/skills/fasten-suit-per-agent/SKILL.md`
+- `grok-bot/skills/station/SKILL.md`, `grok-bot/skills/seat-label/SKILL.md`, `grok-bot/skills/seat-github-key/SKILL.md`
+- `grok-bot/OP-PROC.md`, `grok-bot/LEXICON.md`, `grok-bot/CHANGELOG.md`
+- `grok-bot/runbooks/COORDINATOR.md`, `grok-bot/runbooks/IMPLEMENTER.md`, `grok-bot/runbooks/CRITIC.md`
+- `grok-bot/templates/house/HOUSE.md`, `ROLE-MAP.md`, `STATION-BOOT.md`, `fleet/WAKE-ROUTINE.md`, `fleet/TRACKS.md`
+- `grok-bot/templates/station/STATION.md`
+- `docs-site/docusaurus.config.ts`, `docs-site/static/CNAME`, `docs-site/docs/full-reference.md`
+- `docs-site/docs/guides/house.md`, `docs-site/docs/guides/features-since-3.1.md`
+- `docs-site/docs/plates/house.md`, `station-card.md`, `kept-line.md`, `bifrost.md`, `grokbot.md`
+- `AGENTS.md`, `AGENTS-consumer.md`
+- `house/live/SETUP.md`, `house/live/docs/inbox.md`, `house/live/docs/board.md`
+- Public board https://bifrost.0xray.dev. Docs https://docs.0xray.dev/.
+- `house/live/tools/live-inbox` reads `name:` from HOUSE.md. `LIVE_URL` defaults in the wake, `live-cards`, `inbox-watch.sh`, `live-inbox-watch`, and the launchd plist are https://bifrost.0xray.dev. `house/live/feed/site.json` health uses that host. `house/live/tools/load-wave-seed.mjs` still names the Railway host: it is the direct service, and a seed apply to either host is refused.
+- `grok-bot/lib/seat-doctor.cjs` and `src/integrations/hooks/station-hook-runtime.cjs`.
+- `src/__tests__/unit/docs-public-urls.test.ts`, `station-kept-lines.test.ts`, `grok-bot-seat-doctor.test.ts`, `grok-bot-house-template.test.ts`.
+- `.github/workflows/deploy-docs.yml` publishes `docs-site/build`, which includes `static/CNAME`.
+
 ## Release
 
-Follow-up only. This packet does not bump, pack, or publish.
+This branch does not bump, pack, or publish.
 
 1. **Build.** Bump `@0xray/grok-bot` from `0.1.10` to `0.2.0` in `grok-bot/package.json` and `grok-bot/CHANGELOG.md`. The kit is that folder’s `files` list.
 2. **Wear.** `npm pack` in `grok-bot/`, install the tarball on a temp seat, `npx 0xray wear`, then `npx @0xray/grok-bot house init`.

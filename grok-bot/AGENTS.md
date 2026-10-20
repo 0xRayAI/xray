@@ -26,6 +26,7 @@ Follow `SKILLS.md` in this order **per agent**:
 | B | `groover-factory-parity` | Register → Dynamo citation → mint → ERC-8004 → pin (when identity needed) |
 | C | `setup-ows-pay` | Local OWS wallet + fund USDC on Base + how to settle 402s |
 | D | `plant-hangar-shops` | `npx groover-hangar` + catalog (`GET /v1/catalog` / `list_hangars`) + call a shop |
+| E | `seat-label` | This seat sets its own title. Run it in that seat’s chat. |
 
 Humans: same path; start at `README.md`.
 
