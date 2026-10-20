@@ -441,68 +441,7 @@ function inspectHouseFile(file, via, ctx = {}) {
       warnings,
     };
   }
-  return flagOwnerPulls({ status: 'pass', file, via, detail: file, scope, warnings }, text, file, ctx);
-}
-
-function ownerSection(text) {
-  const match = /^## Owner[^\n]*\n/m.exec(text);
-  if (!match) return '';
-  const rest = text.slice(match.index + match[0].length);
-  const next = rest.search(/^## /m);
-  return next === -1 ? rest : rest.slice(0, next);
-}
-
-function ownerDisplay(section) {
-  for (const line of section.split(/\r?\n/)) {
-    const trimmed = line.trim().replace(/^[-*]\s*/, '');
-    if (!trimmed || trimmed.startsWith('(example)') || /^login:/i.test(trimmed)) continue;
-    const word = trimmed.split(/[\s.]+/)[0].replace(/[^A-Za-z0-9-]/g, '');
-    if (word) return word;
-  }
-  return '';
-}
-
-function explicitOwnerLogins(section) {
-  const logins = [];
-  for (const line of section.split(/\r?\n/)) {
-    const marked = /^\s*(?:[-*]\s*)?login:\s*([A-Za-z0-9][A-Za-z0-9-]*)\s*$/i.exec(line);
-    if (marked) logins.push(marked[1]);
-  }
-  return logins;
-}
-
-function fleetOwnerLogins(houseFile, display) {
-  if (!display) return [];
-  const dir = path.dirname(houseFile);
-  const candidates = [
-    path.join(dir, 'live', 'feed', 'fleet-nodes.json'),
-    path.join(dir, 'fleet-nodes.json'),
-  ];
-  let nodes = null;
-  for (const file of candidates) {
-    nodes = readJson(file);
-    if (nodes && typeof nodes === 'object' && !Array.isArray(nodes)) break;
-    nodes = null;
-  }
-  if (!nodes) return [];
-  const want = display.toLowerCase();
-  const logins = [];
-  for (const [login, seat] of Object.entries(nodes)) {
-    if (typeof login !== 'string' || typeof seat !== 'string') continue;
-    if (login.toLowerCase().endsWith('[bot]')) continue;
-    if (seat.toLowerCase() !== want) continue;
-    logins.push(login);
-  }
-  return logins;
-}
-
-function ownerLogins(text, houseFile) {
-  const section = ownerSection(text);
-  const logins = explicitOwnerLogins(section);
-  for (const login of fleetOwnerLogins(houseFile, ownerDisplay(section))) {
-    if (!logins.some((item) => item.toLowerCase() === login.toLowerCase())) logins.push(login);
-  }
-  return logins;
+  return flagPersonalPulls({ status: 'pass', file, via, detail: file, scope, warnings }, text, ctx);
 }
 
 function allowedRepos(text) {
@@ -521,21 +460,26 @@ function allowedRepos(text) {
   return repos;
 }
 
-function ownerPullNames(pulls, logins) {
-  const want = new Set(logins.map((login) => login.toLowerCase()));
-  const owned = [];
+function appAuthor(pr) {
+  const type = typeof pr.type === 'string' ? pr.type : '';
+  if (type) return type === 'Bot';
+  const author = typeof pr.author === 'string' ? pr.author : '';
+  return /\[bot\]$/i.test(author);
+}
+
+function personalPullLines(pulls) {
+  const lines = [];
   for (const pr of pulls) {
     if (!pr || typeof pr !== 'object') continue;
     const state = typeof pr.state === 'string' ? pr.state.toLowerCase() : 'open';
     if (state !== 'open') continue;
-    const author = typeof pr.author === 'string' ? pr.author.toLowerCase() : '';
-    if (!want.has(author)) continue;
-    const repo = typeof pr.repo === 'string' ? pr.repo : '';
+    if (appAuthor(pr)) continue;
     const number = Number.isInteger(pr.number) ? pr.number : 0;
-    if (!repo || !number) continue;
-    owned.push(`${repo}#${number}`);
+    if (!number) continue;
+    const login = typeof pr.author === 'string' && pr.author ? pr.author : 'unknown';
+    lines.push(`open PR #${number} authored by a personal account (${login})`);
   }
-  return owned;
+  return lines;
 }
 
 function defaultListOpenPulls(repos) {
@@ -555,8 +499,9 @@ function defaultListOpenPulls(repos) {
     '    if (!Array.isArray(body)) throw new Error("not a list");',
     '    for (const pr of body) {',
     '      const author = pr && pr.user && typeof pr.user.login === "string" ? pr.user.login : "";',
+    '      const type = pr && pr.user && typeof pr.user.type === "string" ? pr.user.type : "";',
     '      const number = Number.isInteger(pr.number) ? pr.number : 0;',
-    '      if (author && number) pulls.push({ repo, number, author, state: "open" });',
+    '      if (author && number) pulls.push({ repo, number, author, type, state: "open" });',
     '    }',
     '  } catch (err) {',
     '    errors.push(repo + " " + (err && err.message ? String(err.message).slice(0, 80) : "failed"));',
@@ -587,21 +532,19 @@ function defaultListOpenPulls(repos) {
   return pulls;
 }
 
-function ownerFail(result, owned) {
+function personalFail(result, lines) {
   return {
     status: 'fail',
     file: result.file,
     via: result.via,
-    detail: `open PR ${owned.join(', ')} is authored by the owner login`,
+    detail: `${lines.join('; ')}; seats must open PRs through their GitHub App`,
     scope: result.scope,
     warnings: result.warnings,
   };
 }
 
-function flagOwnerPulls(result, text, houseFile, ctx) {
+function flagPersonalPulls(result, text, ctx) {
   if (result.status !== 'pass') return result;
-  const logins = ownerLogins(text, houseFile);
-  if (logins.length === 0) return result;
   let pulls = ctx && ctx.pulls;
   if (!Array.isArray(pulls)) {
     const repos = allowedRepos(text);
@@ -611,16 +554,16 @@ function flagOwnerPulls(result, text, houseFile, ctx) {
       pulls = list(repos);
     } catch (err) {
       const partial = err && Array.isArray(err.pulls) ? err.pulls : [];
-      const owned = ownerPullNames(partial, logins);
-      if (owned.length > 0) return ownerFail(result, owned);
+      const lines = personalPullLines(partial);
+      if (lines.length > 0) return personalFail(result, lines);
       const message = err instanceof Error ? err.message : 'pull list failed';
       result.warnings.push(`open PR author check skipped (${message.slice(0, 120)})`);
       return result;
     }
   }
-  const owned = ownerPullNames(pulls, logins);
-  if (owned.length === 0) return result;
-  return ownerFail(result, owned);
+  const lines = personalPullLines(pulls);
+  if (lines.length === 0) return result;
+  return personalFail(result, lines);
 }
 
 function probeHouse(cwd, env, extra) {
