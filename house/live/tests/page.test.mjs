@@ -14,7 +14,7 @@ test('Replay: live on first load, ends into live, indicator', () => {
   assert.match(html, /if \(first && !reduced && startReplay\(\)\) fresh = \[\];/);
   assert.match(html, /\(replay && state\.t >= replay\.end\)\) goLive\(\);/);
   assert.match(html, /function goLive\(\) \{ endReplay\(\);/);
-  assert.match(html, /'REPLAY'/);
+  assert.match(html, /\$\('pill'\)\.hidden = spectrumUp && \(playing \|\| replay\);/);
 });
 test('pings never target an undrawn node (upstream lowercase reviewer)', () => {
   assert.match(html, /return fixPings\(L\.pingsAt\(/);
