@@ -453,6 +453,19 @@ button.wstat.on { outline: 2px solid var(--focus); background: var(--panel); }
 .wcard.cloud.failed { outline: 1px solid var(--cloud-fail); }
 .wcard.cloud.finished, .wcard.cloud.stale { opacity: .72; }
 .wbadge.cloud { border-color: var(--badge-held-edge); color: var(--badge-held-fg); }
+.kanban-board { display: grid; grid-template-columns: repeat(6, minmax(140px, 1fr)); gap: 8px; overflow-x: auto; }
+.kanban-col { min-width: 0; border: 1px solid var(--line); border-radius: 8px; background: var(--stat-bg); padding: 6px; }
+.kanban-col h3 { margin: 0 0 6px; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.kanban-col .wcards { max-height: 360px; overflow: auto; }
+.wgh { color: var(--focus); font-size: 11px; font-weight: 650; }
+#cardPop { border: 0; border-radius: 12px; padding: 0; background: transparent; color: var(--text); max-width: 560px; width: calc(100% - 32px); }
+#cardPop::backdrop { background: rgba(0, 0, 0, .55); }
+#cardPop .card-pop { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+#cardPop .card-pop-bar { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
+#cardPop h2 { margin: 0; font-size: 16px; }
+#cardPop dl { margin: 8px 0 0; display: grid; grid-template-columns: max-content 1fr; gap: 2px 8px; font-size: 12px; }
+#cardPop dt { color: var(--detail-label); } #cardPop dd { margin: 0; overflow-wrap: anywhere; }
+@media (max-width: 900px) { .kanban-board { grid-template-columns: 1fr; } }
 .wcard.glow { animation: wglow 2.6s ease-out; }
 @keyframes wglow { 0% { box-shadow: 0 0 0 2px var(--glow), 0 0 18px var(--glow); } 100% { box-shadow: none; } }
 @media (prefers-reduced-motion: reduce) { .wcard.glow { animation: none; outline: 2px solid var(--glow); } }
@@ -606,6 +619,19 @@ footer a { color: var(--foot); }
   </div>
 
 
+
+  <section class="panel kanban fold" id="kanban" data-fold="kanban" aria-label="Kanban">
+    <button class="fold-head" type="button" aria-expanded="true" aria-controls="kanbanBoard"><span>Kanban</span><span class="fold-sum" id="kanbanSum"></span></button>
+    <div class="fold-body kanban-board" id="kanbanBoard"></div>
+  </section>
+  <dialog id="cardPop" aria-labelledby="cardPopTitle">
+    <div class="card-pop">
+      <div class="card-pop-bar"><h2 id="cardPopTitle"></h2><button id="cardPopClose" type="button">Close</button></div>
+      <div id="cardPopMeta" class="wmeta"></div>
+      <dl id="cardPopFields"></dl>
+      <ol id="cardPopBeats" class="wbeats"></ol>
+    </div>
+  </dialog>
 
   <section class="panel activity fold" id="activity" data-fold="activity" aria-label="Activity">
     <button id="activityToggle" class="fold-head" type="button" aria-expanded="true" aria-controls="log"><span id="activityLabel">Activity</span><span class="fold-sum" id="activitySum"></span></button>
@@ -927,10 +953,86 @@ footer a { color: var(--foot); }
     return { kids: kids, child: child };
   }
   function byBeat(a, b) { return (b.last_beat_t || 0) - (a.last_beat_t || 0); }
+  function cardPopKey() {
+    try { return new URL(location.href).searchParams.get('card') || ''; } catch (e) { return ''; }
+  }
+  function setCardParam(key) {
+    var url = new URL(location.href);
+    if (key) url.searchParams.set('card', key); else url.searchParams.delete('card');
+    history.replaceState(null, '', url.pathname + url.search + url.hash);
+  }
+  function fillPop(title, metaBits, rows, beats) {
+    var pop = $('cardPop'); if (!pop) return;
+    $('cardPopTitle').textContent = title || '';
+    var meta = $('cardPopMeta'); meta.textContent = '';
+    (metaBits || []).forEach(function (bit) { if (bit) meta.appendChild(wbEl('span', bit.cls || '', bit.text)); });
+    var dl = $('cardPopFields'); dl.textContent = '';
+    (rows || []).forEach(function (row) {
+      dl.appendChild(wbEl('dt', '', row[0])); dl.appendChild(wbEl('dd', '', row[1]));
+    });
+    var ol = $('cardPopBeats'); ol.textContent = '';
+    (beats || []).forEach(function (b) {
+      var note = b.note ? String(b.note) : '';
+      if (note.length > 72) note = note.slice(0, 72);
+      ol.appendChild(wbEl('li', b.nudge ? 'nudge' : '', (b.nudge ? '\u23F0 ' : '') + wbCt(b.t) + ' · ' + b.what + (note ? ' · ' + note : '')));
+    });
+    if (!pop.open) pop.showModal();
+  }
+  function openCardPop(key) {
+    var c = null;
+    (wb.cards || []).forEach(function (x) { if (x && x.key === key) c = x; });
+    if (!c) return false;
+    var rows = [];
+    WB_PACKET.forEach(function (f) {
+      var v = (c.packet || {})[f];
+      if (v) rows.push([f, v]);
+    });
+    (c.field_check || []).forEach(function (f) { if (f && f.field) rows.push([f.field, f.why || 'missing']); });
+    if (c.head) rows.push(['head', c.head]);
+    fillPop((c.number ? '#' + c.number + ' ' : '') + cleanTitle(c),
+      [{ text: (c.owner || '') + (c.stage ? ' · ' + c.stage : '') }, { cls: 'wbadge state', text: c.state || 'live' }],
+      rows, c.beats || []);
+    setCardParam(key);
+    return true;
+  }
+  function openCloudPop(a) {
+    if (!a) return false;
+    var seatName = a['seat'] || 'unassigned';
+    fillPop(a.bcId || 'cloud agent',
+      [{ text: seatName }, { cls: 'wbadge state', text: a.state || 'running' }],
+      [['bcId', a.bcId || '—'], ['owning seat', seatName], ['linked card', a.card || '—'], ['state', a.state || '—'], ['last update', a.updated_ct || '—']],
+      []);
+    return true;
+  }
+  function closeCardPop() {
+    var pop = $('cardPop');
+    if (pop && pop.open) pop.close();
+    if (cardPopKey()) setCardParam('');
+  }
+  function openFromCardKey(key) {
+    if (openCardPop(key)) return;
+    var agent = null;
+    (wb.cloudAgents || []).forEach(function (a) { if (a && a.bcId === key) agent = a; });
+    if (agent) openCloudPop(agent);
+  }
   $('waveBody').addEventListener('click', function (ev) {
+    if (ev.target.closest('a, button')) return;
     var li = ev.target.closest('.wcard'); if (!li) return;
-    var k = li.dataset.key; wb.open[k] = !wb.open[k]; li.classList.toggle('open', !!wb.open[k]);
+    openFromCardKey(li.dataset.key);
   });
+  var kanbanBoard = $('kanbanBoard');
+  if (kanbanBoard) kanbanBoard.addEventListener('click', function (ev) {
+    if (ev.target.closest('a, button')) return;
+    var li = ev.target.closest('.wcard'); if (!li) return;
+    openFromCardKey(li.dataset.key);
+  });
+  var cardPop = $('cardPop');
+  if (cardPop) {
+    cardPop.addEventListener('click', function (ev) { if (ev.target === cardPop) closeCardPop(); });
+    cardPop.addEventListener('close', function () { if (cardPopKey()) setCardParam(''); });
+    var cardPopClose = $('cardPopClose');
+    if (cardPopClose) cardPopClose.addEventListener('click', closeCardPop);
+  }
   var wbSha = {}, wbShaLen = -1;
   function wbKeyOf(e) {   // CI results carry a sha, not a number: map through the PR pushes the page already has
     if (!e || !e.repo) return null;
@@ -1231,6 +1333,54 @@ footer a { color: var(--foot); }
     var pins = wb.cards.filter(function (c) { return c.pinned; });
     var inWork = wb.cards.filter(cardWorking).sort(byBeat);
     if (!inWork.length) wb.pinsOpen = false;
+    function addGithubFace(meta, c) {
+      var href = L.cardGithubUrl ? L.cardGithubUrl(c) : '';
+      if (!href) return;
+      var a = wbEl('a', 'wgh', 'GitHub');
+      a.href = href; a.target = '_blank'; a.rel = 'noopener';
+      a.addEventListener('click', function (ev) { ev.stopPropagation(); });
+      meta.appendChild(a);
+    }
+    function kanbanCard(c) {
+      var li = wbEl('li', 'wcard ' + (c.state || 'live'));
+      li.dataset.key = c.key; paintEdge(li, cardSeat(c));
+      var top = wbEl('div', 'wtop');
+      top.appendChild(wbEl('span', 'witem', (c.number ? '#' + c.number + ' ' : '') + cleanTitle(c)));
+      li.appendChild(top);
+      var meta = wbEl('div', 'wmeta');
+      meta.appendChild(wbEl('span', '', (c.owner || '—') + ' · ' + (c.stage || 'open')));
+      meta.appendChild(wbEl('span', 'wbadge state', c.state || 'live'));
+      var acc = c.packet && c.packet.acceptance;
+      if (acc) meta.appendChild(wbEl('span', '', acc));
+      addGithubFace(meta, c);
+      li.appendChild(meta);
+      return li;
+    }
+    function renderKanban() {
+      var board = $('kanbanBoard'); if (!board) return;
+      board.textContent = '';
+      var stages = L.KANBAN_STAGES || ['open', 'review', 'fix', 'merge', 'retest', 'done'];
+      var cols = {};
+      stages.forEach(function (s) { cols[s] = []; });
+      (wb.cards || []).forEach(function (c) {
+        if (!c) return;
+        var col = L.kanbanColumn ? L.kanbanColumn(c) : 'open';
+        if (!cols[col]) col = 'open';
+        cols[col].push(c);
+      });
+      stages.forEach(function (s) {
+        var sec = wbEl('section', 'kanban-col');
+        sec.dataset.stage = s;
+        sec.appendChild(wbEl('h3', '', s + ' (' + cols[s].length + ')'));
+        var ul = wbEl('ul', 'wcards');
+        cols[s].sort(byBeat).forEach(function (c) { ul.appendChild(kanbanCard(c)); });
+        sec.appendChild(ul);
+        board.appendChild(sec);
+      });
+      var sum = $('kanbanSum'); if (sum) sum.textContent = String((wb.cards || []).length);
+      var want = cardPopKey();
+      if (want && $('cardPop') && !$('cardPop').open) openCardPop(want);
+    }
     function card(c) {
       var li = wbEl('li', 'wcard ' + (c.state || 'live') + (c.packet_ok === false && !c.pinned ? ' nopacket' : '') + (c.stall ? ' stall' : '') + (wb.open[c.key] ? ' open' : ''));
       li.dataset.key = c.key; wb.byKey[c.key] = li; paintEdge(li, cardSeat(c));
@@ -1246,6 +1396,7 @@ footer a { color: var(--foot); }
       if (c.state === 'held') meta.appendChild(wbEl('span', 'wbadge held', 'On hold'));
       if (c.start_after) meta.appendChild(wbEl('span', 'wbadge', 'start after ' + c.start_after));
       if (c.stall) meta.appendChild(wbEl('span', 'wbadge stall', 'quiet 60 min+'));
+      addGithubFace(meta, c);
       li.appendChild(meta);
       var det = wbEl('div', 'wdetail'), dl = wbEl('dl');
       WB_PACKET.forEach(function (f) { var v = (c.packet || {})[f]; if (!v && !(f === 'acceptance' || f === 'next owner')) return;
@@ -1291,6 +1442,7 @@ footer a { color: var(--foot); }
       meta.appendChild(wbEl('span', '', (a.seat || 'unassigned')));
       meta.appendChild(wbEl('span', 'wbadge state', a.state || 'running'));
       if (a.card) meta.appendChild(wbEl('span', 'wbadge cloud', a.card));
+      addGithubFace(meta, { url: a.pr, kind: 'pr' });
       li.appendChild(meta);
       var det = wbEl('div', 'wdetail'), dl = wbEl('dl');
       [['bcId', a.bcId || '—'], ['owning seat', a.seat || '—'], ['linked card', a.card || '—'], ['state', a.state || '—'], ['last update', a.updated_ct || '—']].forEach(function (pair) {
@@ -1384,6 +1536,7 @@ footer a { color: var(--foot); }
     var cardsSum = $('cardsSum'); if (cardsSum) cardsSum.textContent = waveHead.textContent;
     var statsSum = $('statsSum'); if (statsSum) statsSum.textContent = S && S.open_total != null ? String(S.open_total) + ' open' : '';
     var cloudSum = $('cloudSum'); if (cloudSum) cloudSum.textContent = String((wb.cloudAgents || []).length);
+    renderKanban();
     applyFolds();
   }
 
@@ -1757,7 +1910,7 @@ footer a { color: var(--foot); }
   function foldSum(id, text) {
     var el = $(id); if (el) el.textContent = text;
   }
-  var FOLD_OPEN = { mesh: 1, stats: 1, roster: 1, cards: 1, activity: 1 };
+  var FOLD_OPEN = { mesh: 1, stats: 1, roster: 1, cards: 1, kanban: 1, activity: 1 };
   function applyFolds() {
     if (!document.querySelectorAll) return;
     var saved = foldSaved();

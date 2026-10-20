@@ -2,6 +2,8 @@
 
 A card is one GitHub issue or pull request. A beat is a real event on it. A packet is the structured fields (goal, constraints, path, acceptance, evidence, next owner, escalate).
 
+The live page shows the same cards in a kanban above the activity list. A column is the card's stage (`open`, `review`, `fix`, `merge`, `retest`, `done`). A closed card sits in `done`. A click opens the timeline. The GitHub link is on the card face.
+
 When `LIVE_URL` is set, the board seats see is the collector board (`GET /cards`). When `LIVE_URL` is unset, the board is hand-kept `house/WAVEBOARD.md`. `feed/live_mesh.py` runs `feed/live_collect.py` and `feed/live_board.py` every 45 seconds (`LIVE_WATCH_S`, default 45). An empty box board does not replace those cards.
 
 ## Event to card

@@ -216,6 +216,22 @@
     if (c.stage === 'review') return 'review';
     return 'waiting';
   };
+  L.KANBAN_STAGES = ['open', 'review', 'fix', 'merge', 'retest', 'done'];
+  L.kanbanColumn = function (c) {
+    if (!c) return 'open';
+    if (c.state === 'closed' || c.stage === 'done') return 'done';
+    var stage = String(c.stage || 'open');
+    return L.KANBAN_STAGES.indexOf(stage) >= 0 ? stage : 'open';
+  };
+  L.cardGithubUrl = function (c) {
+    if (!c) return '';
+    var url = String(c.url || '');
+    if (/^https:\/\/github\.com\/[^/]+\/[^/]+\/(?:pull|issues)\/[0-9]+\/?$/.test(url)) return url;
+    if (c.pinned && (c.number == null || !c.repo)) return '';
+    if (!c.repo || c.number == null) return '';
+    var kind = c.kind === 'issue' ? 'issues' : 'pull';
+    return 'https://github.com/' + c.repo + '/' + kind + '/' + Number(c.number);
+  };
   // Spectrum stream defaults on. The page also honors ?spectrum=0 and reduced motion.
   L.SPECTRUM = true;
 })(window.LiveMesh);
