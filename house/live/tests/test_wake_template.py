@@ -76,6 +76,11 @@ class WakeTemplate(unittest.TestCase):
         self.assertIn("owner token", low)
         self.assertIn("still waiting", low)
         self.assertIn("does not stop a newer line", low)
+        self.assertIn("pushes its branch only", cloud.lower())
+        self.assertIn("never opens a pull request or an issue", cloud.lower())
+        self.assertNotIn("forge0x1", self.text)
+        self.assertNotIn("critic0x", self.text)
+        self.assertNotIn("htafolla", self.text)
 
 
 class Handler(BaseHTTPRequestHandler):

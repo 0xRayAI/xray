@@ -1,5 +1,6 @@
 'use strict';
 
+const { spawnSync } = require('child_process');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -440,10 +441,190 @@ function inspectHouseFile(file, via, ctx = {}) {
       warnings,
     };
   }
-  return { status: 'pass', file, via, detail: file, scope, warnings };
+  return flagOwnerPulls({ status: 'pass', file, via, detail: file, scope, warnings }, text, file, ctx);
 }
 
-function probeHouse(cwd, env) {
+function ownerSection(text) {
+  const match = /^## Owner[^\n]*\n/m.exec(text);
+  if (!match) return '';
+  const rest = text.slice(match.index + match[0].length);
+  const next = rest.search(/^## /m);
+  return next === -1 ? rest : rest.slice(0, next);
+}
+
+function ownerDisplay(section) {
+  for (const line of section.split(/\r?\n/)) {
+    const trimmed = line.trim().replace(/^[-*]\s*/, '');
+    if (!trimmed || trimmed.startsWith('(example)') || /^login:/i.test(trimmed)) continue;
+    const word = trimmed.split(/[\s.]+/)[0].replace(/[^A-Za-z0-9-]/g, '');
+    if (word) return word;
+  }
+  return '';
+}
+
+function explicitOwnerLogins(section) {
+  const logins = [];
+  for (const line of section.split(/\r?\n/)) {
+    const marked = /^\s*(?:[-*]\s*)?login:\s*([A-Za-z0-9][A-Za-z0-9-]*)\s*$/i.exec(line);
+    if (marked) logins.push(marked[1]);
+  }
+  return logins;
+}
+
+function fleetOwnerLogins(houseFile, display) {
+  if (!display) return [];
+  const dir = path.dirname(houseFile);
+  const candidates = [
+    path.join(dir, 'live', 'feed', 'fleet-nodes.json'),
+    path.join(dir, 'fleet-nodes.json'),
+  ];
+  let nodes = null;
+  for (const file of candidates) {
+    nodes = readJson(file);
+    if (nodes && typeof nodes === 'object' && !Array.isArray(nodes)) break;
+    nodes = null;
+  }
+  if (!nodes) return [];
+  const want = display.toLowerCase();
+  const logins = [];
+  for (const [login, seat] of Object.entries(nodes)) {
+    if (typeof login !== 'string' || typeof seat !== 'string') continue;
+    if (login.toLowerCase().endsWith('[bot]')) continue;
+    if (seat.toLowerCase() !== want) continue;
+    logins.push(login);
+  }
+  return logins;
+}
+
+function ownerLogins(text, houseFile) {
+  const section = ownerSection(text);
+  const logins = explicitOwnerLogins(section);
+  for (const login of fleetOwnerLogins(houseFile, ownerDisplay(section))) {
+    if (!logins.some((item) => item.toLowerCase() === login.toLowerCase())) logins.push(login);
+  }
+  return logins;
+}
+
+function allowedRepos(text) {
+  const match = /^## Allowed[^\n]*\n/m.exec(text);
+  if (!match) return [];
+  const rest = text.slice(match.index + match[0].length);
+  const next = rest.search(/^## /m);
+  const body = next === -1 ? rest : rest.slice(0, next);
+  const repos = [];
+  const re = /`([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+)`/g;
+  let found = re.exec(body);
+  while (found) {
+    repos.push(found[1]);
+    found = re.exec(body);
+  }
+  return repos;
+}
+
+function ownerPullNames(pulls, logins) {
+  const want = new Set(logins.map((login) => login.toLowerCase()));
+  const owned = [];
+  for (const pr of pulls) {
+    if (!pr || typeof pr !== 'object') continue;
+    const state = typeof pr.state === 'string' ? pr.state.toLowerCase() : 'open';
+    if (state !== 'open') continue;
+    const author = typeof pr.author === 'string' ? pr.author.toLowerCase() : '';
+    if (!want.has(author)) continue;
+    const repo = typeof pr.repo === 'string' ? pr.repo : '';
+    const number = Number.isInteger(pr.number) ? pr.number : 0;
+    if (!repo || !number) continue;
+    owned.push(`${repo}#${number}`);
+  }
+  return owned;
+}
+
+function defaultListOpenPulls(repos) {
+  const script = [
+    'const repos = ' + JSON.stringify(repos) + ';',
+    'const pulls = [];',
+    'const errors = [];',
+    'for (const repo of repos) {',
+    '  try {',
+    '    const res = await fetch("https://api.github.com/repos/" + repo + "/pulls?state=open&per_page=100", {',
+    '      headers: { Accept: "application/vnd.github+json", "User-Agent": "grok-bot-doctor" },',
+    '      redirect: "error",',
+    '      signal: AbortSignal.timeout(12000),',
+    '    });',
+    '    if (!res.ok) throw new Error("HTTP " + res.status);',
+    '    const body = await res.json();',
+    '    if (!Array.isArray(body)) throw new Error("not a list");',
+    '    for (const pr of body) {',
+    '      const author = pr && pr.user && typeof pr.user.login === "string" ? pr.user.login : "";',
+    '      const number = Number.isInteger(pr.number) ? pr.number : 0;',
+    '      if (author && number) pulls.push({ repo, number, author, state: "open" });',
+    '    }',
+    '  } catch (err) {',
+    '    errors.push(repo + " " + (err && err.message ? String(err.message).slice(0, 80) : "failed"));',
+    '  }',
+    '}',
+    'process.stdout.write(JSON.stringify({ pulls, errors }));',
+  ].join('\n');
+  const run = spawnSync(process.execPath, ['--input-type=module', '-e', script], {
+    encoding: 'utf8',
+    timeout: 20000,
+    env: { PATH: process.env.PATH || '' },
+  });
+  if (run.error) throw run.error;
+  if (run.status !== 0) throw new Error((run.stderr || 'pull list failed').trim().slice(0, 120));
+  let parsed;
+  try {
+    parsed = JSON.parse(run.stdout || '{}');
+  } catch {
+    throw new Error('pull list was not JSON');
+  }
+  const pulls = Array.isArray(parsed.pulls) ? parsed.pulls : [];
+  const errors = Array.isArray(parsed.errors) ? parsed.errors : [];
+  if (errors.length > 0) {
+    const err = new Error(errors.join('; ').slice(0, 120));
+    err.pulls = pulls;
+    throw err;
+  }
+  return pulls;
+}
+
+function ownerFail(result, owned) {
+  return {
+    status: 'fail',
+    file: result.file,
+    via: result.via,
+    detail: `open PR ${owned.join(', ')} is authored by the owner login`,
+    scope: result.scope,
+    warnings: result.warnings,
+  };
+}
+
+function flagOwnerPulls(result, text, houseFile, ctx) {
+  if (result.status !== 'pass') return result;
+  const logins = ownerLogins(text, houseFile);
+  if (logins.length === 0) return result;
+  let pulls = ctx && ctx.pulls;
+  if (!Array.isArray(pulls)) {
+    const repos = allowedRepos(text);
+    if (repos.length === 0) return result;
+    try {
+      const list = ctx && typeof ctx.listOpenPulls === 'function' ? ctx.listOpenPulls : defaultListOpenPulls;
+      pulls = list(repos);
+    } catch (err) {
+      const partial = err && Array.isArray(err.pulls) ? err.pulls : [];
+      const owned = ownerPullNames(partial, logins);
+      if (owned.length > 0) return ownerFail(result, owned);
+      const message = err instanceof Error ? err.message : 'pull list failed';
+      result.warnings.push(`open PR author check skipped (${message.slice(0, 120)})`);
+      return result;
+    }
+  }
+  const owned = ownerPullNames(pulls, logins);
+  if (owned.length === 0) return result;
+  return ownerFail(result, owned);
+}
+
+function probeHouse(cwd, env, extra) {
+  const ctx = { cwd, env, ...(extra || {}) };
   const raw = env && typeof env.GROK_BOT_HOUSE === 'string' ? env.GROK_BOT_HOUSE.trim() : '';
   if (raw) {
     const file = fileFromHouseEnv(raw);
@@ -457,7 +638,7 @@ function probeHouse(cwd, env) {
         warnings: [],
       };
     }
-    return inspectHouseFile(file, 'GROK_BOT_HOUSE', { cwd, env });
+    return inspectHouseFile(file, 'GROK_BOT_HOUSE', ctx);
   }
   const walked = walkForHouse(cwd);
   if (!walked) {
@@ -469,7 +650,7 @@ function probeHouse(cwd, env) {
       warnings: [],
     };
   }
-  return inspectHouseFile(walked, 'walk-up', { cwd, env });
+  return inspectHouseFile(walked, 'walk-up', ctx);
 }
 
 function isFile(file) {
@@ -747,7 +928,7 @@ function diagnoseSeat(opts = {}) {
   const goggles = probeGoggles(cwd, inventoryPresent);
   const plantOk = Boolean(seat) && mill && inspect && installed && deadHooks.length === 0 && goggles.status !== 'off';
   const env = opts.env || process.env;
-  const house = probeHouse(cwd, env);
+  const house = probeHouse(cwd, env, { pulls: opts.pulls, listOpenPulls: opts.listOpenPulls });
   const report = {
     ok: plantOk && house.status !== 'fail',
     cwd,

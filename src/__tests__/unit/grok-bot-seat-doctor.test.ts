@@ -16,7 +16,12 @@ const {
   runDoctorCli,
   PLANT_URLS,
 } = requireCjs(path.join(root, 'grok-bot', 'lib', 'seat-doctor.cjs')) as {
-  diagnoseSeat: (opts?: { cwd?: string; home?: string; env?: Record<string, string> }) => {
+  diagnoseSeat: (opts?: {
+    cwd?: string;
+    home?: string;
+    env?: Record<string, string>;
+    pulls?: Array<{ author?: string; repo?: string; number?: number; state?: string }>;
+  }) => {
     ok: boolean;
     cwd: string;
     seat: { name: string | null; version: string | null } | null;
@@ -401,6 +406,46 @@ describe('grok-bot seat doctor — CLI', () => {
       const r = runBin(['doctor', '--cwd', dir, '--home', dir], dir);
       expect(r.status).toBe(1);
       expect(r.stdout).toMatch(/delete it/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('fails when an open pull request is authored by the owner login', () => {
+    const dir = scratch();
+    try {
+      writeSeat(dir);
+      plantMillInspect(dir);
+      mkdirSync(path.join(dir, 'house', 'live', 'feed'), { recursive: true });
+      writeFileSync(path.join(dir, 'house', 'HOUSE.md'), '# House\n\n## Owner\nAda.\n');
+      writeFileSync(
+        path.join(dir, 'house', 'live', 'feed', 'fleet-nodes.json'),
+        `${JSON.stringify({ 'owner-login': 'Ada', 'forge0x1[bot]': 'forge' })}\n`,
+      );
+      const stranger = diagnoseSeat({
+        cwd: dir,
+        home: dir,
+        env: {},
+        pulls: [{ author: 'forge0x1[bot]', repo: 'org/app', number: 4, state: 'open' }],
+      });
+      expect(stranger.house.status).toBe('pass');
+      const closed = diagnoseSeat({
+        cwd: dir,
+        home: dir,
+        env: {},
+        pulls: [{ author: 'owner-login', repo: 'org/app', number: 8, state: 'closed' }],
+      });
+      expect(closed.house.status).toBe('pass');
+      const report = diagnoseSeat({
+        cwd: dir,
+        home: dir,
+        env: {},
+        pulls: [{ author: 'owner-login', repo: 'org/app', number: 9, state: 'open' }],
+      });
+      expect(report.house.status).toBe('fail');
+      expect(report.ok).toBe(false);
+      expect(report.house.detail).toBe('open PR org/app#9 is authored by the owner login');
+      expect(formatDoctor(report)).toMatch(/House: FAIL — .+ — open PR org\/app#9 is authored by the owner login/);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
