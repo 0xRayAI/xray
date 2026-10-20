@@ -537,8 +537,8 @@ footer a { color: var(--foot); }
     <div hidden><canvas id="mark" width="112" height="44"></canvas><b id="fleet"></b><span id="blackout"></span></div>
   </header>
 
-  <section class="panel seats fold collapsed" id="seats" data-fold="roster" aria-label="Seats">
-    <button class="fold-head" type="button" aria-expanded="false"><span>Roster</span><span class="fold-sum" id="rosterSum"></span></button>
+  <section class="panel seats fold" id="seats" data-fold="roster" aria-label="Seats">
+    <button class="fold-head" type="button" aria-expanded="true"><span>Roster</span><span class="fold-sum" id="rosterSum"></span></button>
     <div class="fold-body" id="seatGrid"></div>
   </section>
 
@@ -1695,7 +1695,7 @@ footer a { color: var(--foot); }
   function foldSum(id, text) {
     var el = $(id); if (el) el.textContent = text;
   }
-  var FOLD_OPEN = { mesh: 1, stats: 1, cards: 1, activity: 1 };
+  var FOLD_OPEN = { mesh: 1, stats: 1, roster: 1, cards: 1, activity: 1 };
   function applyFolds() {
     if (!document.querySelectorAll) return;
     var saved = foldSaved();

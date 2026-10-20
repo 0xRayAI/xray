@@ -1,4 +1,4 @@
-// Mesh, stats, cards, and activity start open. A saved collapse still wins.
+// Mesh, stats, roster, cards, and activity start open. A saved collapse still wins.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
@@ -8,8 +8,8 @@ import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 
 const PUB = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app', 'public');
-const OPEN = ['mesh', 'stats', 'cards', 'activity'];
-const CLOSED = ['roster', 'cloud', 'recent', 'history', 'work', 'queue'];
+const OPEN = ['mesh', 'stats', 'roster', 'cards', 'activity'];
+const CLOSED = ['cloud', 'recent', 'history', 'work', 'queue'];
 
 function serve() {
   const types = { '.html': 'text/html', '.js': 'text/javascript', '.json': 'application/json' };
@@ -52,7 +52,7 @@ function readFolds(ids) {
   });
 }
 
-test('mesh, stats, cards, and activity start open in both themes', async () => {
+test('mesh, stats, roster, cards, and activity start open in both themes', async () => {
   const server = await serve();
   const base = `http://127.0.0.1:${server.address().port}/index.html`;
   let browser;
@@ -120,15 +120,16 @@ test('mesh, stats, cards, and activity start open in both themes', async () => {
     await page.goto(base, { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => document.querySelector('[data-fold="cards"]') && !document.querySelector('[data-fold="cards"]').classList.contains('collapsed'));
     await page.evaluate(() => {
-      localStorage.setItem('bifrost-folds', JSON.stringify({ cards: 'closed', stats: 'closed' }));
+      localStorage.setItem('bifrost-folds', JSON.stringify({ cards: 'closed', stats: 'closed', roster: 'closed' }));
       localStorage.removeItem('bifrost-activity');
     });
     await page.reload({ waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => document.querySelector('[data-fold="mesh"]'));
-    const saved = await page.evaluate(readFolds, ['mesh', 'stats', 'cards', 'activity']);
+    const saved = await page.evaluate(readFolds, ['mesh', 'stats', 'roster', 'cards', 'activity']);
     const savedBy = Object.fromEntries(saved.map((row) => [row.id, row]));
     assert.equal(savedBy.cards.collapsed, true);
     assert.equal(savedBy.stats.collapsed, true);
+    assert.equal(savedBy.roster.collapsed, true);
     assert.equal(savedBy.mesh.collapsed, false);
     assert.equal(savedBy.activity.collapsed, false);
     await page.evaluate(() => {
