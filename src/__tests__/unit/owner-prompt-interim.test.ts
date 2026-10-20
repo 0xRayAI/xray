@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 
 const INTERIM =
-  'On every owner message, first run `live-inbox <seat> --prompt --note "<gist>"`; when you launch or resume a cloud agent run `live-inbox <seat> --turn start --tag "bc-<first8> <track>"`; when it finishes or is cancelled run `live-inbox <seat> --turn end --tag "bc-<first8>"`. No exceptions for short turns.';
+  'On every owner message, first run `live-inbox <seat> --prompt --note "<gist>"`; after handling any inbox line (in chat or on a wake), ack it right away with `live-inbox <seat> --ack <id>` (or `--ack all` once everything open is handled); when you launch or resume a cloud agent run `live-inbox <seat> --turn start --tag "bc-<first8> <track>"`; when it finishes or is cancelled run `live-inbox <seat> --turn end --tag "bc-<first8>"`. No exceptions for short turns.';
 
 const FILES = [
   'grok-bot/OP-PROC.md',
