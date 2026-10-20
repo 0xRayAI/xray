@@ -48,7 +48,7 @@ Generic install mismatches. No project ids, no secret values. The agreed host se
 
 - **Symptom:** New events use the new seat. Events already in the store stay `Others`.
 - **Cause:** Incremental polls relabel an item only when that item changes.
-- **Fix:** On load, set `from` from `node(actor)` or `node(author)` again. Do not delete the store. `from` values `GitHub` and the product node stay as they are.
+- **Fix:** On load, set `from` from `node(actor)` or `node(author)` again. Do not delete the store. `from` values `GitHub`, `CI`, and the product node stay as they are. A CI-kind row already stored as `Others` goes back to `CI` while that actor is unmapped, so the load does not delete it. Once that actor is in `LIVE_NODE_MAP`, the same load sets `from` to that node.
 
 ### Unmapped logins publish their name and title
 

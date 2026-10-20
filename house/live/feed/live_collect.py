@@ -450,11 +450,16 @@ class RepoCollector:
             if not login and isinstance(e.get("author"), str) and e.get("author"):
                 login = e.get("author")
             # A later LIVE_NODE_MAP must relabel events already stored. Incremental polls only rewrite changed items.
-            # "CI" is a fixed node, same as GitHub. CI kinds stay put too: the actor is who
-            # triggered the run, and an unmapped bot must not turn that event into Others.
-            if (login and e.get("from") not in ("GitHub", "Example", "CI", live_site.SITE["node"])
-                    and e.get("kind") not in CI_KINDS):
-                e["from"] = node(login)
+            # "CI" is a fixed node, same as GitHub. An unmapped bot must not turn that into Others.
+            # A CI kind already stored as Others is that rewrite. Put it back on CI while the actor
+            # is unmapped, so this load does not delete it. Once the actor is in the map, reclaim it.
+            if login and e.get("from") not in ("GitHub", "Example", "CI", live_site.SITE["node"]):
+                if e.get("kind") in CI_KINDS:
+                    if e.get("from") == "Others":
+                        mapped = node(login)
+                        e["from"] = "CI" if mapped == "Others" else mapped
+                else:
+                    e["from"] = node(login)
             if e.get("from") == "Others" and CLOUD_AGENT_RE.match(str(e.get("actor") or e.get("author") or "")):
                 e["from"] = "CloudAgents"   # cloud-agent writes stored before the Cloud agents node existed
             # A merge is a fact about the pull. An unmapped merger (cursor[bot] -> Others) must not drop it.
