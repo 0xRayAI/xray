@@ -349,6 +349,98 @@ test('packets: longer flight, halo + path so a hop is visible seat to seat; one 
   assert.match(html, /var tagOn = !!ambient && !replay;/);
 });
 
+test('Play starts a replay; live is not playing, so the clock is not frozen at now', async () => {
+  const vm = await import('node:vm');
+  const pub = path.join(APP, 'public');
+  const ctx = { console, URLSearchParams, location: { search: '', hash: '', href: 'http://x/' }, document: { addEventListener() {} } };
+  ctx.globalThis = ctx; ctx.window = ctx;
+  vm.createContext(ctx);
+  vm.runInContext(fs.readFileSync(path.join(pub, 'live.js'), 'utf8'), ctx);
+  const L = ctx.LiveMesh;
+  assert.equal(L.isPlaying(true, false), false, 'live is real time, not a replay');
+  assert.equal(L.isPlaying(false, true), true, 'a rewound replay is playing');
+  assert.equal(L.isPlaying(true, true), false, 'live must not keep the replay button on Pause');
+  assert.equal(L.isPlaying(false, false), false);
+  assert.match(html, /if \(state\.live\) \{ if \(!reduced\) startReplay\(\); lastText = 0; return; \}/);
+  assert.doesNotMatch(html, /rewindTo\(Date\.now\(\)\); playing = false/);
+  assert.match(html, /if \(playing && \(replay \|\| !state\.live\)\)/);
+  assert.match(html, /if \(replay\) state\.live = false;/);
+  assert.match(html, /\(replay && state\.t >= replay\.end\)\) goLive\(\);/);
+});
+
+test('resume at the live edge rewinds before frame, so frame does not goLive()', async () => {
+  const vm = await import('node:vm');
+  const pub = path.join(APP, 'public');
+  const script = inline.find((s) => s.includes('function frame(nowWall)'));
+  const hooked = script.replace(
+    'setInterval(poll, L.POLL_MS);\n  requestAnimationFrame(frame);',
+    `__host.page = {
+      frame: frame,
+      clickPlay: function () { document.getElementById('play').dispatch('click'); },
+      pauseAt: function (t, events) { state.live = false; state.t = t; playing = false; replay = null; speed = 600; state.events = events; },
+      snap: function () { return { live: state.live, t: state.t, playing: playing, replay: !!replay }; }
+    };
+    setInterval(poll, L.POLL_MS);
+    requestAnimationFrame(frame);`,
+  );
+  const host = {};
+  function el(id) {
+    const listeners = {};
+    const node = {
+      id, style: {}, dataset: {}, textContent: '', innerHTML: '', hidden: false, checked: false, disabled: false,
+      value: '600', title: '', clientWidth: 920, width: 920, height: 400,
+      classList: { toggle() {}, add() {}, remove() {}, contains() { return false; } },
+      appendChild(c) { return c; },
+      addEventListener(type, fn) { (listeners[type] ||= []).push(fn); },
+      dispatch(type) { for (const fn of listeners[type] || []) fn({ type, target: { tagName: 'BUTTON' }, preventDefault() {} }); },
+      getContext() { return new Proxy({}, { get: () => () => {} }); },
+      getAttribute() { return null; }, setAttribute() {},
+      closest() { return null; },
+      querySelector() { return el('q'); },
+      querySelectorAll() { return []; },
+    };
+    node.parentNode = { title: '', appendChild() {}, style: {}, classList: node.classList };
+    return node;
+  }
+  const els = new Map();
+  const document = {
+    hidden: false,
+    addEventListener() {},
+    getElementById(id) { if (!els.has(id)) els.set(id, el(id)); return els.get(id); },
+    createElement() { return el('x'); },
+  };
+  const ctx = {
+    console, URL, URLSearchParams, Date, Math, Number, String, Object, Array, JSON, Promise, Error, parseInt,
+    setTimeout() { return 0; }, clearTimeout() {}, setInterval() { return 0; }, clearInterval() {},
+    performance: { now: () => Date.now() },
+    requestAnimationFrame() {},
+    devicePixelRatio: 1,
+    fetch: () => new Promise(() => {}),
+    document,
+    location: { search: '', hash: '', href: 'http://x/' },
+    Image: class { set src(_) {} },
+    addEventListener() {},
+    __host: host,
+  };
+  ctx.window = ctx; ctx.globalThis = ctx; ctx.self = ctx;
+  ctx.matchMedia = () => ({ matches: false, addEventListener() {} });
+  vm.createContext(ctx);
+  for (const f of ['live.js', 'live-config.js', 'site-config.js']) {
+    vm.runInContext(fs.readFileSync(path.join(pub, f), 'utf8'), ctx, { filename: f });
+  }
+  vm.runInContext(hooked, ctx, { filename: 'index-inline.js' });
+  const page = host.page;
+  const at = Date.now();
+  page.pauseAt(at, [{ id: 'e1', _t: at - 60 * 1000, from: 'forge', to: 'GitHub', label: 'example-org/app#4 opened' }]);
+  page.clickPlay();
+  page.frame(at + 1000);
+  const snap = page.snap();
+  assert.equal(snap.live, false, 'a playhead parked at now must not snap back to live');
+  assert.equal(snap.playing, true);
+  assert.ok(snap.replay, 'resume within one capped frame of now starts a replay');
+  assert.ok(snap.t < at, 'frame advanced the rewound playhead, it did not jump to now');
+});
+
 test('kit live-config carries no install brand (no Example / example.com); product names come from the feed header', () => {
   for (const f of [path.join(APP, 'public', 'live-config.js'), path.join(APP, '..', 'feed', 'live-config.js')]) {
     assert.doesNotMatch(fs.readFileSync(f, 'utf8'), /Example|example\.com/, f);
