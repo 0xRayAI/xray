@@ -28,6 +28,24 @@
         "command": ".cursor/hooks/before-read-file.sh",
         "failClosed": true
       }
+    ],
+    "sessionStart": [
+      {
+        "command": ".cursor/hooks/cloud-activity.sh",
+        "timeout": 2
+      }
+    ],
+    "postToolUse": [
+      {
+        "command": ".cursor/hooks/cloud-activity.sh",
+        "timeout": 2
+      }
+    ],
+    "stop": [
+      {
+        "command": ".cursor/hooks/cloud-activity.sh",
+        "timeout": 2
+      }
     ]
   }
 }

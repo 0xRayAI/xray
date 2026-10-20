@@ -548,14 +548,33 @@ export function foldCloudIds(rows) {
   return folded;
 }
 
-/** A running cloud row keeps its owner active. An existing non-cloud working mark keeps its via. */
+/** A running cloud row keeps its owner active. An existing non-cloud working mark keeps its via.
+ * A finished or failed row leaves open_agents. A seat loses a cloud mark when it has no running row left. */
 export function applyCloudOwners(fleet, rows, now = Date.now()) {
-  const running = (Array.isArray(rows) ? rows : []).filter(row => row && row.state === 'running' && AGENT_ID.test(String(row.bcId || '')));
+  const list = Array.isArray(rows) ? rows : [];
+  const running = list.filter(row => row && row.state === 'running' && AGENT_ID.test(String(row.bcId || '')));
   if (!fleet && !running.length) return fleet;
   const f = fleet
     ? { ...fleet, seats: { ...(fleet.seats || {}) }, working: { ...(fleet.working || {}) }, cloud: { ...(fleet.cloud || {}) } }
     : { as_of: new Date(now).toISOString(), window_min: 15, seats: {}, working: {}, cloud: {}, active: 0, total: 0 };
-  const open = new Set([...(Array.isArray(f.cloud.open_agents) ? f.cloud.open_agents : []), ...running.map(row => row.bcId)]);
+  const nonRunning = new Set();
+  const seatRunning = new Map();
+  const seatsOnBoard = new Set();
+  for (const row of list) {
+    if (!row || !AGENT_ID.test(String(row.bcId || ''))) continue;
+    const id = String(row.bcId);
+    const seat = canonSeatToken(row.seat);
+    if (seat) seatsOnBoard.add(seat);
+    if (row.state === 'running') {
+      if (seat) seatRunning.set(seat, true);
+    } else nonRunning.add(id);
+  }
+  const open = new Set(
+    (Array.isArray(f.cloud.open_agents) ? f.cloud.open_agents : [])
+      .map(id => String(id))
+      .filter(id => id && !nonRunning.has(id)),
+  );
+  for (const row of running) open.add(String(row.bcId));
   for (const row of running) {
     const seat = canonSeatToken(row.seat);
     if (!seat) continue;
@@ -567,7 +586,24 @@ export function applyCloudOwners(fleet, rows, now = Date.now()) {
     if (!held) f.working[seat] = { via: 'cloud', since_ct: row.updated_ct || src.last_ct || null, agent: row.bcId };
     f.seats[seat] = next;
   }
-  f.cloud = { ...f.cloud, active: open.size > 0, open_agents: [...open].sort(), working: open.size > 0 || !!f.cloud.working };
+  for (const seat of seatsOnBoard) {
+    if (seatRunning.get(seat)) continue;
+    const held = f.working[seat];
+    const src = f.seats[seat];
+    const cloudWork = !!(held && held.via === 'cloud');
+    const cloudSeat = !!(src && src.working_via === 'cloud');
+    if (!cloudWork && !cloudSeat) continue;
+    if (cloudWork) delete f.working[seat];
+    if (!src) continue;
+    const still = f.working[seat];
+    const next = { ...src, working: !!(still && still.via !== 'cloud') };
+    if (next.working_via === 'cloud') {
+      if (still && still.via && still.via !== 'cloud') next.working_via = still.via;
+      else delete next.working_via;
+    }
+    f.seats[seat] = next;
+  }
+  f.cloud = { ...f.cloud, active: open.size > 0, open_agents: [...open].sort(), working: open.size > 0 };
   f.active = Object.values(f.seats).filter(v => v.active && !v.external).length;
   if (!fleet) f.total = Object.keys(f.seats).length;
   return f;

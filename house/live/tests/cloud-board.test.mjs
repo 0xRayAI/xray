@@ -304,3 +304,95 @@ test('the live feed lists a running cloud agent, then a cancel as failed', async
     fs.rmSync(data, { recursive: true, force: true });
   }
 });
+
+test('finished clears that seat cloud mark; a second running id keeps it; a github mark stays', () => {
+  const id = 'bc-531f2033-90e0-595f-87de-8dfe576ec69c';
+  const other = 'bc-aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee';
+  const now = Date.parse('2026-10-20T11:45:00-05:00');
+  const fleet = {
+    seats: {
+      critic: { active: true, working: true, working_via: 'github', last_ct: '2026-10-20T11:20:00-05:00', via: 'github' },
+      forge: { active: true, working: true, working_via: 'cloud', last_ct: '2026-10-20T11:32:00-05:00', via: 'github' },
+    },
+    working: {
+      critic: { via: 'github', since_ct: '2026-10-20T11:20:00-05:00' },
+      forge: { via: 'cloud', since_ct: '2026-10-20T11:32:00-05:00', agent: id },
+    },
+    cloud: { active: true, open_agents: [id, 'bc-abcdef'], working: true },
+  };
+  const finished = applyCloudOwners(fleet, [
+    { bcId: id, seat: 'forge', state: 'finished', updated_ct: '2026-10-20T11:40:00-05:00' },
+  ], now);
+  assert.equal(finished.working.forge, undefined);
+  assert.equal(finished.seats.forge.working, false);
+  assert.equal(finished.seats.forge.working_via, undefined);
+  assert.equal(finished.cloud.working, true);
+  assert.deepEqual(finished.cloud.open_agents, ['bc-abcdef']);
+  assert.equal(finished.working.critic.via, 'github');
+  assert.equal(finished.seats.critic.working_via, 'github');
+  const kept = applyCloudOwners(fleet, [
+    { bcId: id, seat: 'forge', state: 'finished', updated_ct: '2026-10-20T11:40:00-05:00' },
+    { bcId: other, seat: 'forge', state: 'running', updated_ct: '2026-10-20T11:44:00-05:00' },
+  ], now);
+  assert.equal(kept.seats.forge.working, true);
+  assert.equal(kept.working.forge.via, 'cloud');
+  assert.equal(kept.cloud.open_agents.includes(other), true);
+  assert.equal(kept.cloud.open_agents.includes(id), false);
+  assert.equal(kept.working.critic.via, 'github');
+});
+
+test('refreshWorking after finished does not bring the cloud mark back', async () => {
+  const data = fs.mkdtempSync(path.join(os.tmpdir(), 'cloud-board-finish-'));
+  const pw = crypto.randomBytes(8).toString('hex');
+  const criticKey = 'critic-' + crypto.randomBytes(4).toString('hex');
+  const idA = 'bc-11111111-1111-4111-8111-111111111111';
+  const idB = 'bc-22222222-2222-4222-8222-222222222222';
+  const ctx = await boot(data, {
+    MESH_PASSWORD: pw,
+    SESSION_SECRET: crypto.randomBytes(32).toString('hex'),
+    INGEST_SECRET: crypto.randomBytes(32).toString('hex'),
+    CURSOR_WEBHOOK_SECRET: SECRET,
+    SEAT_KEYS: JSON.stringify({ critic: sha(criticKey) }),
+  });
+  const stamp = (plus) => new Date(Date.now() + plus).toISOString();
+  try {
+    const login = await fetch(ctx.base + '/login', {
+      method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'password=' + encodeURIComponent(pw), redirect: 'manual',
+    });
+    const cookie = (login.headers.get('set-cookie') || '').split(';')[0];
+    const post = async (action, agent, plus) => {
+      const posted = await fetch(ctx.base + '/activity', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + criticKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ t_ct: stamp(plus), kind: 'cloud_agent', action, agent }),
+      });
+      assert.equal(posted.status, 202, await posted.clone().text());
+    };
+    const feed = async () => {
+      const res = await fetch(ctx.base + '/live-events.json', { headers: { Cookie: cookie } });
+      assert.equal(res.status, 200);
+      return res.json();
+    };
+    await post('launch', idA, 1000);
+    await post('launch', idB, 2000);
+    let live = await feed();
+    assert.equal(live.fleet.seats.critic.working, true);
+    assert.equal(live.fleet.seats.critic.working_via, 'cloud');
+    await post('finished', idA, 3000);
+    live = await feed();
+    assert.equal(live.fleet.seats.critic.working, true);
+    assert.equal(live.fleet.seats.critic.working_via, 'cloud');
+    assert.equal((live.fleet.cloud.open_agents || []).includes(idB), true);
+    assert.equal((live.fleet.cloud.open_agents || []).includes(idA), false);
+    await post('finished', idB, 4000);
+    live = await feed();
+    assert.equal(live.fleet.working.critic, undefined);
+    assert.equal(live.fleet.seats.critic.working, false);
+    assert.equal(live.fleet.seats.critic.working_via, undefined);
+    assert.equal((live.fleet.cloud.open_agents || []).includes(idB), false);
+  } finally {
+    await stopped(ctx.child);
+    fs.rmSync(data, { recursive: true, force: true });
+  }
+});

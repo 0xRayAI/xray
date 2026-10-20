@@ -45,9 +45,7 @@ def seat_of(name):
 
 PROMPT_RECENT_S = 2 * 3600   # first read: lines newer than this are emitted; older ones seed silently
 WORKING_PROMPT_S = 30 * 60   # spinner: unanswered prompt within this window
-WORKING_CLOUD_S = int(os.environ.get("LIVE_CLOUD_IDLE_S") or 20 * 60)   # kept for callers; an open launch/reply does not
-# expire on this short clock. finished/cancel ends the agent at once.
-CLOUD_STALE_S = 6 * 3600   # a launch/reply with no newer line past six hours is not running
+CLOUD_STALE_S = 6 * 3600   # a launch/reply with no newer line past six hours is not running. finished/cancel ends it at once.
 WORKING_CHECK_S = 30 * 60    # spinner: open PR with queued/in_progress/failing check
 WORKING_ACT_S = 30 * 60      # spinner: open turn/subagent/watcher from remote activity (start/tick, no end yet)
 ACT_SEATS = {"Builder", "Builder-cloud"}        # off-box seats that POST /activity (the server forces the seat from the key)
