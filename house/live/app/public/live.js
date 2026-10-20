@@ -182,6 +182,23 @@
     return own(COLOR, e.from) || [180, 190, 210];
   }
 
+  /* A prompt is one line: "Blaze → forge: <note>". Plumbing labels ("prompt sent", "message") are not the note. */
+  function promptView(e) {
+    if (!e || (e.kind !== 'seat_prompt' && e.kind !== 'prompt_message')) return null;
+    var from = e.from || 'Blaze';
+    var to = e.to || '';
+    var note = typeof e.note === 'string' ? e.note.trim() : '';
+    if (!note && typeof e.label === 'string') {
+      var arrow = e.label.indexOf('\u2192');
+      var colon = arrow === -1 ? -1 : e.label.indexOf(':', arrow);
+      if (colon !== -1) note = e.label.slice(colon + 1).trim();
+    }
+    var line = from + ' \u2192 ' + to + (note ? ': ' + note : '');
+    var cap = 72;
+    var short = line.length > cap ? line.slice(0, cap - 1) + '\u2026' : line;
+    return { from: from, to: to, note: note, line: line, short: short };
+  }
+
   function cleanLabel(s) {
     var out = String(s || '');
     BANNED.forEach(function (b) { out = out.split(b).join('\u2026'); });
@@ -408,7 +425,7 @@
   root.LiveMesh = {
     SOURCES: SOURCES, POLL_MS: POLL_MS, PING_MS: PING_MS, AGENTS: AGENTS, SEAT_NAMES: SEAT_NAMES, COLOR: COLOR,
     LABEL: LABEL, SUB: SUB, SQUARE: SQUARE, HUB: HUB, SATS: SATS, EDGES: EDGES, KIND_WORD: KIND_WORD,
-    resolveNodes: resolveNodes, eventColor: eventColor, cleanLabel: cleanLabel, whoTag: whoTag,
+    resolveNodes: resolveNodes, eventColor: eventColor, cleanLabel: cleanLabel, promptView: promptView, whoTag: whoTag,
     headline: headline, parseT: parseT, mergeEvents: mergeEvents, countUpTo: countUpTo,
     eventsUpTo: eventsUpTo, pingsAt: pingsAt, hotNodes: hotNodes, applyFeed: applyFeed,
     bounds: bounds, fmtCt: fmtCt, ago: ago, feedUrl: feedUrl, fetchFeed: fetchFeed,

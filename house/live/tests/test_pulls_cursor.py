@@ -233,6 +233,24 @@ class PullsCursorBoundary(unittest.TestCase):
         self.assertIn(f"{REPO}#7:merged", col.ev)
         self.assertIn(f"{REPO}#7:open", col.ev)
 
+    def test_merged_day_rewinds_a_fresh_cursor_once(self):
+        col = self._collector()
+        col.st["bf"]["author:seat"] = True
+        col.st["cur"]["pulls"] = "2099-01-01T00:00:00Z"
+        pull = _pull()
+        pull["updated_at"] = "2026-10-20T06:00:00Z"
+        pull["merged_at"] = "2026-10-20T06:00:00Z"
+        pull["state"] = "closed"
+        with mock.patch.dict(uc.NODE_LC, FLEET):
+            col.poll_pulls(Page([pull]))
+        self.assertTrue(col.st["bf"].get("merged:day"))
+        self.assertIn(f"{REPO}#7:merged", col.ev)
+        self.assertLess(col.st["cur"]["pulls"], "2099-01-01T00:00:00Z")
+        etag = col.st["etags"].get("pulls")
+        with mock.patch.dict(uc.NODE_LC, FLEET):
+            col.poll_pulls(Page([pull]))
+        self.assertEqual(col.st["etags"].get("pulls"), etag)
+
 
 def _pull():
     return {

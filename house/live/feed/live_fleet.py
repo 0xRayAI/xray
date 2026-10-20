@@ -46,7 +46,8 @@ def seat_of(name):
 PROMPT_RECENT_S = 2 * 3600   # first read: lines newer than this are emitted; older ones seed silently
 WORKING_PROMPT_S = 30 * 60   # spinner: unanswered prompt within this window
 WORKING_CLOUD_S = int(os.environ.get("LIVE_CLOUD_IDLE_S") or 20 * 60)   # kept for callers; an open launch/reply does not
-# expire on this clock. finished/cancel ends the agent at once. The launching seat stays active while it runs.
+# expire on this short clock. finished/cancel ends the agent at once.
+CLOUD_STALE_S = 6 * 3600   # a launch/reply with no newer line past six hours is not running
 WORKING_CHECK_S = 30 * 60    # spinner: open PR with queued/in_progress/failing check
 WORKING_ACT_S = 30 * 60      # spinner: open turn/subagent/watcher from remote activity (start/tick, no end yet)
 ACT_SEATS = {"Builder", "Builder-cloud"}        # off-box seats that POST /activity (the server forces the seat from the key)
@@ -745,7 +746,8 @@ class Fleet:
                    time_basis="t_ct from the cloud-agents log")
 
     # ---- Lead -> bot messages: an old collector still tails fleet/prompts.jsonl by byte offset, deduped by line hash.
-    # Seats post with live-inbox --prompt. Only t_ct, from and to are used; message text is never read into the feed.
+    # Seats post with live-inbox --prompt. This collector still uses only t_ct, from, and to.
+    # The board `note` field and any message text stay out of this feed.
     def scan_prompts(self):
         f = self.path.parent.parent / "fleet" / "prompts.jsonl"
         if not f.is_file():
@@ -1032,7 +1034,8 @@ class Fleet:
     def cloud_state(self, feed_events, now=None):
         """Active only while a launch/reply has no later finished/cancel. An empty open_agents list is inactive."""
         now = now or time.time()
-        open_ = sorted(a for a, (act, _) in self.cloud.get("agents", {}).items() if act in ("launch", "reply"))
+        open_ = sorted(a for a, (act, t) in self.cloud.get("agents", {}).items()
+                       if act in ("launch", "reply") and now - t <= CLOUD_STALE_S)
         gh = 0
         for e in feed_events:
             if e.get("src_file") == "github-api" and e.get("from") == "CloudAgents":
@@ -1177,7 +1180,7 @@ class Fleet:
                 continue
             working[b] = {"via": "prompt", "since_ct": _ct(pt, self.CT)}
         for agent, (actn, t) in self.cloud.get("agents", {}).items():
-            if actn not in ("launch", "reply"):
+            if actn not in ("launch", "reply") or now - t > CLOUD_STALE_S:
                 continue
             prev = working.get("CloudAgents")
             if not prev or t >= (_ts(prev["since_ct"]) or 0):
@@ -1205,7 +1208,7 @@ class Fleet:
         for agent, (actn, t) in self.cloud.get("agents", {}).items():   # #275, lowest priority: the seat that launched
             by = self.cloud.get("by", {}).get(agent)                       # a running cloud agent counts as working
             b = BOARD.get(by, by)
-            if actn in ("launch", "reply") and b in BOARD_SEATS and b not in working:
+            if actn in ("launch", "reply") and now - t <= CLOUD_STALE_S and b in BOARD_SEATS and b not in working:
                 working[b] = {"via": "cloud", "since_ct": _ct(t, self.CT), "agent": agent}
         return working
 

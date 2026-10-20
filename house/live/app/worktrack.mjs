@@ -448,8 +448,19 @@ export function stampCriticCloud(cards, agents) {
   });
 }
 
+export const CLOUD_STALE_MS = 6 * 60 * 60 * 1000;
+
+function markStaleCloud(rows, now) {
+  return rows.map(row => {
+    if (!row || row.state !== 'running') return row;
+    const t = Date.parse(row.updated_ct);
+    if (!Number.isFinite(t) || now - t <= CLOUD_STALE_MS) return row;
+    return { ...row, state: 'stale' };
+  });
+}
+
 /** One board row per cloud agent. Latest line wins the state; an earlier seat, card, or PR stays. */
-export function boardCloudAgents({ agents = [], activity = [], links = [] } = {}) {
+export function boardCloudAgents({ agents = [], activity = [], links = [], now = Date.now() } = {}) {
   const events = [];
   for (const row of agents || []) {
     if (!row || typeof row !== 'object') continue;
@@ -508,7 +519,7 @@ export function boardCloudAgents({ agents = [], activity = [], links = [] } = {}
     if (!prev.pr && pr) prev.pr = pr;
   }
   const rows = [...by.values()].sort((a, b) => (Date.parse(b.updated_ct) || 0) - (Date.parse(a.updated_ct) || 0) || a.bcId.localeCompare(b.bcId));
-  return foldCloudIds(rows);
+  return markStaleCloud(foldCloudIds(rows), now);
 }
 
 /** True when one id is the other, or one is a bc- prefix of the other (`bc-531f2033` and the full uuid). */

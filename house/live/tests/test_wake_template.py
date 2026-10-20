@@ -182,6 +182,18 @@ class TurnFlag(unittest.TestCase):
         self.assertFalse((run / "fleet" / "prompts.jsonl").exists())
         self.assertFalse((home / "run" / "fleet" / "prompts.jsonl").exists())
 
+    def test_prompt_note_is_one_line(self):
+        proc = self.run_turn("--prompt", "--note", "check the message on the board")
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        hit = self.srv.hits[0]
+        self.assertEqual(hit["body"]["note"], "check the message on the board")
+        self.assertEqual(hit["body"]["from"], "blaze")
+        self.assertEqual(hit["body"]["to"], "forge")
+        self.assert_secret_hidden(proc)
+        bad = self.run_turn("--prompt", "--note", "x" * 241)
+        self.assertNotEqual(bad.returncode, 0)
+        self.assertIn("short plain line", bad.stderr)
+
     def test_prompt_from_override(self):
         proc = self.run_turn("--prompt", "--from", "mill")
         self.assertEqual(proc.returncode, 0, proc.stderr)

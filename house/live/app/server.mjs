@@ -107,7 +107,7 @@ const RL_MAX = 10, RL_WINDOW_MS = 15 * 60 * 1000;
 
 // ---- static files: whitelist loaded into memory at startup ----
 const PUB = path.join(path.dirname(fileURLToPath(import.meta.url)), 'public');
-const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.png': 'image/png', '.svg': 'image/svg+xml', '.ico': 'image/x-icon' };
+const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.png': 'image/png', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.woff2': 'font/woff2' };
 const STATIC = new Map();
 for (const f of fs.readdirSync(PUB)) {
   const ext = path.extname(f);
@@ -1380,6 +1380,7 @@ function applyTrackWorking(fleet, track, now) {
   return f;
 }
 const PARKED_QUEUE = new Set(['herald', 'magnet', 'nibbler', 'sound']);
+const OPEN_ASKS = new Set(['packet', 'dispatch', 'ready', 'critic_fail', 'needs_human', 'issue_comment', 'pr_comment', 'pr_open', 'issue_open', 'comment', 'pr', 'issue']);
 function chicagoDay(ms) {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(ms));
 }
@@ -1395,7 +1396,7 @@ function openQueue(now = Date.now()) {
   const lines = [];
   for (const seat of SEAT_IDS) {
     for (const l of openLines(seat)) {
-      if (!l || l.id == null || queueStale(l, now)) continue;
+      if (!l || l.id == null || queueStale(l, now) || !OPEN_ASKS.has(String(l.type || ''))) continue;
       lines.push({
         id: String(l.id).slice(0, 120), seat,
         title: String(l.title || '').slice(0, 120),
@@ -2353,9 +2354,10 @@ function validFeed(f) {
 const ACT_KINDS = { prompt: ['received', 'sent'], turn: ['start', 'end', 'tick'], subagent: ['start', 'end', 'tick'],
   watcher: ['start', 'end', 'tick'], cloud_agent: ['launch', 'reply', 'finished', 'cancel'],
   agent: ['launch', 'reply', 'finish', 'cancel'] };
-const ACT_FIELDS = new Set(['t_ct', 'kind', 'action', 'to', 'from', 'agent', 'tag', 'seat', 'room', 'pr']);   // seat: optional, must match the token; from: prompt sender (#281); room: optional short name; pr: optional https GitHub pull URL
-const ACT_BANNED = /body|text|message/i;          // no free text of any kind, as a key or inside a value
+const ACT_FIELDS = new Set(['t_ct', 'kind', 'action', 'to', 'from', 'agent', 'tag', 'seat', 'room', 'pr', 'note']);   // seat: optional, must match the token; from: prompt sender (#281); room: optional short name; pr: optional https GitHub pull URL; note: prompt line only
+const ACT_BANNED = /body|text|message/i;          // no free-text key, and no free text inside any value except note
 const ACT_VALUE = /^[A-Za-z0-9 ._:@#+\/-]{1,80}$/;
+const ACT_NOTE = /^[A-Za-z0-9 ._:@#+\/?',;!()\-]{1,240}$/;   // the one capped line a prompt may carry. Keys named body, text, or message stay refused.
 const ACT_AGENT = /^[A-Za-z0-9][A-Za-z0-9_-]{2,40}$/;
 const ACT_RATE = 60, ACT_RATE_MS = 60000, ACT_KEEP = 5000, ACT_MAX_BODY = 1024;
 const ACT_EPOCH = crypto.randomBytes(6).toString('base64url');
@@ -2400,9 +2402,13 @@ function activityEvent(line, opts) {
   const prompt = line.kind === 'prompt';
   const from = prompt ? promptSender(line) : line.seat;
   const to = prompt ? (line.to || line.seat) : (line.to || (line.agent ? 'cloud' : 'Bifrost'));
-  const extra = prompt ? (line.room ? ' · ' + line.room : '') : (line.tag ? ' · ' + line.tag : '');
+  const note = prompt && typeof line.note === 'string' ? line.note : '';
+  const extra = prompt ? '' : (line.tag ? ' · ' + line.tag : '');
+  const label = prompt ? `${from} → ${to}${note ? ': ' + note : ''}` : `${line.seat} ${line.kind} ${line.action}${extra}`;
   const ev = { id: `act:${line.id}`, t_ct: ctOffset(line.t_ct), from, to, kind: `seat_${line.kind}`, direction: 'internal',
-    label: `${prompt ? from : line.seat} ${line.kind} ${line.action}${extra}`, src_file: 'activity', repo: null };
+    label, src_file: 'activity', repo: null };
+  if (note) ev.note = note;
+  if (prompt && line.room) ev.room = line.room;
   if (opts && opts.moves === false) ev.moves = false;
   upsert(ev);
 }
@@ -2582,7 +2588,7 @@ function validActivity(d, now = Date.now()) {
     if (!ACT_FIELDS.has(k)) return 'unknown field';
   }
   for (const k of Object.keys(d)) {
-    if (k === 'pr') continue;
+    if (k === 'pr' || k === 'note') continue;
     const v = d[k];
     if (typeof v !== 'string' || !ACT_VALUE.test(v)) return 'fields must be short plain strings (<= 80 chars)';
     if (ACT_BANNED.test(v)) return 'free text is not accepted';
@@ -2598,6 +2604,10 @@ function validActivity(d, now = Date.now()) {
   if (d.room != null && (d.kind !== 'prompt' || d.room.length > 40)) return 'room is only for prompt (<= 40 chars)';
   if (d.to != null && d.to.length > 40) return 'to too long';
   if (d.from != null && (d.kind !== 'prompt' || d.from.length > 40)) return 'from is only for prompt (<= 40 chars)';
+  if (d.note != null) {
+    if (d.kind !== 'prompt') return 'note is only for prompt (<= 240 chars)';
+    if (typeof d.note !== 'string' || !ACT_NOTE.test(d.note)) return 'note must be a short plain line (<= 240 chars)';
+  }
   if (d.pr != null) {
     if (d.kind !== 'cloud_agent') return 'pr is only for a cloud agent';
     if (!safePrUrl(d.pr)) return 'bad pr';
@@ -2805,7 +2815,7 @@ async function handle(req, res) {
     if (!actRateOk(seat, now)) return json(req, res, 429, { error: 'rate limited (60/min)' }, { 'Retry-After': '60' });
     actSeq++;
     const line = { id: `${ACT_EPOCH}.${actSeq}`, seq: actSeq, seat, t_ct: d.t_ct, kind: d.kind, action: d.action };
-    for (const k of ['to', 'from', 'agent', 'tag', 'room']) if (d[k] != null) line[k] = d[k];
+    for (const k of ['to', 'from', 'agent', 'tag', 'room', 'note']) if (d[k] != null) line[k] = d[k];
     if (d.pr != null) line.pr = safePrUrl(d.pr);
     rememberActivity(line);
     appendArchive('activity', line);
@@ -2832,7 +2842,7 @@ async function handle(req, res) {
       if (!actRateOk(seat, now)) { rejected.push({ n: i + 1, error: 'rate limited' }); return; }
       actSeq++;
       const line = { id: `${ACT_EPOCH}.${actSeq}`, seq: actSeq, seat, t_ct: d.t_ct, kind: d.kind, action: d.action, via: 'ingest' };
-      for (const k of ['to', 'from', 'agent', 'tag', 'room']) if (d[k] != null) line[k] = d[k];
+      for (const k of ['to', 'from', 'agent', 'tag', 'room', 'note']) if (d[k] != null) line[k] = d[k];
       if (d.pr != null) line.pr = safePrUrl(d.pr);
       rememberActivity(line); appendArchive('activity', line); added++;
     });

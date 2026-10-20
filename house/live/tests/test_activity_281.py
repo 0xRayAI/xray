@@ -41,6 +41,16 @@ class Act281(unittest.TestCase):
         self.assertTrue(st["seats"]["Operator"]["active"])
         self.assertEqual(st["seats"]["Operator"]["working_via"], "cloud")
 
+    def test_launcher_idle_after_six_hours(self):
+        f = self.fleet([self.launch(7 * 3600)])
+        w = f.working_state([])
+        self.assertNotIn("Operator", w)
+        self.assertNotIn("CloudAgents", w)
+        st = f.fleet_state([], time.time())
+        self.assertFalse(st["seats"]["Operator"]["active"])
+        self.assertFalse(st["cloud"]["active"])
+        self.assertEqual(st["cloud"]["open_agents"], [])
+
     def test_finished_ends_at_once(self):
         w = self.fleet([self.launch(5 * 60), self.launch(60, action="finished")]).working_state([])
         self.assertNotIn("Operator", w)

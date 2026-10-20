@@ -83,12 +83,12 @@ Turns and owner messages are posted by the seat, with its own key, to `POST /act
 | What | Where | Line |
 |---|---|---|
 | Turn start / end, background task start / end (desktop runs too), watcher start / stop | `POST /activity` | `{"t_ct","seat","kind":"turn"\|"subagent"\|"watcher","action":"start"\|"end","tag"?}` |
-| Owner → seat message, a 1:1 or a room (a pulse) | `POST /activity` via `live-inbox <seat> --prompt --from blaze` (add `--room <name>` in a room) | `{"t_ct","seat","kind":"prompt","action":"sent","from","to","room"?}`. Never the text, never a secret. The seat stays working for 10 minutes. `from: blaze` credits **Blaze** |
+| Owner → seat message, a 1:1 or a room (a pulse) | `POST /activity` via `live-inbox <seat> --prompt --from blaze` (add `--room <name>` in a room, `--note "<line>"` for the words) | `{"t_ct","seat","kind":"prompt","action":"sent","from","to","room"?,"note"?}`. `note` is one line, at most 240 characters. Keys named body, text, or message are refused. The board label is `Blaze → <seat>: <note>`. The seat stays working for 10 minutes. `from: blaze` credits **Blaze** |
 | Cloud agent launch / finish | `fleet/cloud-agents.jsonl` | `{"t_ct","by","action":"launch"\|"reply"\|"finished"\|"cancel","agent","pr"}` |
 
 Seats post those turn and prompt lines with their seat key. A seat counts as active and working while a prompt pulse from the last 10 minutes is open, while it has an open turn or task, or while one of its cloud agents is still running. Pulses never become inbox lines or wakes (see [inbox.md](inbox.md), routing guardrails).
 
-Activity details (#281): a prompt line keeps its sender as `actor` (off-box seats send `from` on `prompt received`). A cloud agent credits the seat that launched it. That seat stays active for as long as the agent's latest line is `launch` or `reply`. `finished` / `cancel` ends it at once. A GitHub event that names the `bc-…` id refreshes the clock. It does not idle the seat while the agent is still open. `live-inbox <seat> --turn start` posts that launch when `CURSOR_AGENT=1` and `CURSOR_CONVERSATION_ID` is the `bc-` id. `live_act` in `paste-block.sh` and `builder-cloud-setup.sh` emits turns, prompts and cloud agents; `tools/live-act-hook.example.sh` wires turn start/end and prompts into an agent hook. Rate limits are the platform's job. Full spec: [`house/burst/ACTIVITY.md`](../../burst/ACTIVITY.md) and [`activity.schema.json`](../../burst/activity.schema.json).
+Activity details (#281): a prompt line keeps its sender as `actor` (off-box seats send `from` on `prompt received`). A cloud agent credits the seat that launched it. That seat stays active while the agent's latest line is `launch` or `reply` and that line is newer than six hours. `finished` / `cancel` ends it at once. A line with no update for more than six hours is `stale` and the seat goes idle. A GitHub event that names the `bc-…` id refreshes the clock. It does not idle the seat while the agent is still inside that six-hour window. `live-inbox <seat> --turn start` posts that launch when `CURSOR_AGENT=1` and `CURSOR_CONVERSATION_ID` is the `bc-` id. `live_act` in `paste-block.sh` and `builder-cloud-setup.sh` emits turns, prompts and cloud agents; `tools/live-act-hook.example.sh` wires turn start/end and prompts into an agent hook. Rate limits are the platform's job. Full spec: [`house/burst/ACTIVITY.md`](../../burst/ACTIVITY.md) and [`activity.schema.json`](../../burst/activity.schema.json).
 
 ## Cloud agents on the board
 
@@ -100,10 +100,10 @@ A cloud agent is its own row on the board, in the `cloud agents` group, not only
 | `seat` | Owning seat. The Cursor webhook seat, else the activity key's seat, else the ARCH1 launch seat |
 | `card` | Linked card `owner/repo#number`, from a GitHub PR url, an activity `tag` of that shape, or the ARCH1 launch card |
 | `pr` | `https://github.com/…/pull/n` when the webhook or a cloud-agent activity line sent one |
-| `state` | `running`, `finished`, or `failed` |
+| `state` | `running`, `finished`, `failed`, or `stale` |
 | `updated_ct` | Last update time |
 
-`running` is a launch, a reply, or a webhook status of created, running, or PR opened. `finished` is a finish. `failed` is a cancel or a webhook status of ERROR, FAILED, TIMED_OUT, or CANCELLED. The newest line sets the state. An earlier seat, card, or PR stays when a later line omits it.
+`running` is a launch, a reply, or a webhook status of created, running, or PR opened, and the last update is inside six hours. `stale` is that same open line once `updated_ct` is more than six hours old. A stale row does not light its seat and does not sit in the open cloud group. `finished` is a finish. `failed` is a cancel or a webhook status of ERROR, FAILED, TIMED_OUT, or CANCELLED. The newest line sets the state. An earlier seat, card, or PR stays when a later line omits it.
 
 Two feeds, the same ones seats already write:
 
@@ -168,7 +168,7 @@ A seat shows ACTIVE when, within the fleet window (`LIVE_WINDOW_MIN`, default 15
 
 - a GitHub event by one of its logins (via the credit map above);
 - an owned box file changed or an activity line (turn, task, watcher) was logged (see Seat activity above);
-- a cloud agent it launched is still running (`launch` or `reply`, no later `finished` or `cancel`);
+- a cloud agent it launched is still running (`launch` or `reply`, no later `finished` or `cancel`, last update inside six hours);
 - a wake to its webhook landed (2xx);
 - it read its inbox (`live-inbox <seat>`);
 - it acked a line (`live-inbox <seat> --ack <id>`, `--ack stale --apply`, `--upto <id>`, or `--ack all`).

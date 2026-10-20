@@ -278,7 +278,8 @@ test('daily cap counts follow-ups and writes one visible beat', async () => {
     assert.equal((await inbox(ctx)).lines.filter(l => l.reason === 'ARCH1 launch cap reached').length, 1);
     const login = await fetch(ctx.base + '/login', { method: 'POST', body: 'password=' + ctx.pw, redirect: 'manual', headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
     const feed = await (await fetch(ctx.base + '/live-events.json', { headers: { Cookie: login.headers.get('set-cookie').split(';')[0] } })).json();
-    assert.ok(feed.queue.some(l => l.seat === 'arch1' && l.type === 'beat'));
+    assert.ok(got.lines.some(l => l.seat === 'arch1' && l.type === 'beat'));
+    assert.ok(!feed.queue.some(l => l.type === 'beat'));
     const hz = await (await fetch(ctx.base + '/healthz')).json();
     assert.equal(hz.arch1_launch.used, 2);
     assert.equal(hz.arch1_launch.cap, 2);

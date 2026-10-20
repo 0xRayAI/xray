@@ -193,8 +193,11 @@ export function cardHistory() {
     const owner = [...arr].reverse().map(row => (typeof row.owner === 'string' ? row.owner : '')).find(Boolean) || '';
     const closed = last.state === 'closed';
     const stamp = cardStamp(last);
+    const beats = arr.flatMap(row => Array.isArray(row.beats) ? row.beats : []);
+    const verb = (last && last.merged_by) || beats.some(b => /merge/i.test(String((b && (b.what || b.kind)) || '')))
+      ? 'merged' : closed ? 'closed' : (typeof last.state === 'string' ? last.state : '');
     cards.push({
-      id: key, owner, state: typeof last.state === 'string' ? last.state : '',
+      id: key, owner, state: typeof last.state === 'string' ? last.state : '', verb,
       opened_ct: opened, closed_ct: closed ? stamp : '',
       title: typeof last.title === 'string' ? last.title : '',
       url: typeof last.url === 'string' ? last.url : '',

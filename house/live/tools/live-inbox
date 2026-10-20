@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""live-inbox <seat> [--peek] | live-inbox <seat> --ack <id|all|stale> [--apply] | live-inbox <seat> --pop <id|all> | live-inbox <seat> --upto <id> | live-inbox <seat> --turn start|end [--tag <tag>] | live-inbox <seat> --prompt [--from <name>] [--room <name>]
+"""live-inbox <seat> [--peek] | live-inbox <seat> --ack <id|all|stale> [--apply] | live-inbox <seat> --pop <id|all> | live-inbox <seat> --upto <id> | live-inbox <seat> --turn start|end [--tag <tag>] | live-inbox <seat> --prompt [--from <name>] [--room <name>] [--note <line>]
 live-inbox <seat> --handoff <to> --pr <owner/repo#n> --kind <ready|critic_fail|live_pass|merge|ci_fail> --sha <head>
 live-inbox <seat> --card <owner/repo#n> --start-after <ISO>
 
@@ -21,7 +21,8 @@ when the key is already there and exits 1 for a new head. The claim is not this 
 --turn start|end posts {kind:turn, action, t_ct, tag?} to POST /activity.
 When CURSOR_AGENT is 1 and CURSOR_CONVERSATION_ID is a bc- id, the same turn also posts
 {kind:cloud_agent, action:launch, agent:<id>} on start. Turn end does not finish the agent.
---prompt posts {t_ct, seat, kind:prompt, action:sent, from, to:seat, room?} to POST /activity. from defaults to blaze.
+--prompt posts {t_ct, seat, kind:prompt, action:sent, from, to:seat, room?, note?} to POST /activity. from defaults to blaze.
+--note is one quoted line, at most 240 characters of letters, digits, spaces, and ._:@#+/?'",;!()-. It is the only prose the board stores. Keys named body, text, or message are refused.
 t_ct is America/Chicago with its offset. Both posts use the seat key. The key is never printed. There is no local file.
 Handoff: POST one packet to /inbox for <to> and print the one-line 1:1 message the seat sends. The same pull request,
 kind and head post the same line id. --sha is required and is a head of 7 to 64 hex digits. A room post is not this command.
@@ -45,7 +46,7 @@ KINDS = ("ready", "critic_fail", "live_pass", "merge", "ci_fail")
 USAGE = ("usage: live-inbox <seat> [--peek] | live-inbox <seat> --ack <id|all|stale> [--apply] | live-inbox <seat> --pop <id|all> | "
          "live-inbox <seat> --upto <id> | live-inbox <seat> --release | "
          "live-inbox <seat> --remember|--repeat --pr <owner/repo#n> --sha <head> --kind <kind> | "
-         "live-inbox <seat> --turn start|end [--tag <tag>] | live-inbox <seat> --prompt [--from <name>] [--room <name>] | "
+         "live-inbox <seat> --turn start|end [--tag <tag>] | live-inbox <seat> --prompt [--from <name>] [--room <name>] [--note <line>] | "
          "live-inbox <seat> --handoff <to> --pr <owner/repo#n> --kind <" + "|".join(KINDS) + "> --sha <head> | "
          "live-inbox <seat> --card <owner/repo#n> --start-after <ISO>")
 TAG = re.compile(r"[A-Za-z0-9 ._:@#+/-]{1,40}")
@@ -89,6 +90,7 @@ turn = take("--turn")
 tag = take("--tag")
 frm = take("--from")
 room = take("--room")
+note = take("--note")
 prompt = "--prompt" in argv
 if prompt:
     argv.remove("--prompt")
@@ -121,7 +123,7 @@ if turn is not None and (busy or turn not in ("start", "end")):
     sys.exit(USAGE)
 if prompt and (ack is not None or handoff_to is not None or card_raw is not None or release or handled_lookup):
     sys.exit(USAGE)
-if (frm is not None or room is not None) and not prompt:
+if (frm is not None or room is not None or note is not None) and not prompt:
     sys.exit(USAGE)
 if prompt and frm is None:
     frm = "blaze"
@@ -131,6 +133,8 @@ if frm is not None and not TAG.fullmatch(frm):
     sys.exit("from must be a short plain id")
 if room is not None and not TAG.fullmatch(room):
     sys.exit("room must be a short plain id")
+if note is not None and not re.fullmatch(r"""[A-Za-z0-9 ._:@#+/?'",;!()-]{1,240}""", note):
+    sys.exit("note must be a short plain line")
 if peek and busy:
     sys.exit(USAGE)
 if sha is not None and handoff_to is None and not handled_lookup:
@@ -390,6 +394,8 @@ if prompt:
     body = {"t_ct": ct_now(), "seat": seat, "kind": "prompt", "action": "sent", "from": frm, "to": seat}
     if room is not None:
         body["room"] = room
+    if note is not None:
+        body["note"] = note
     print(json.dumps(call("POST", "/activity", body)))
     sys.exit(0)
 if turn is not None:
