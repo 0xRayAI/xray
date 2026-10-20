@@ -16,6 +16,14 @@ A short `board` array is the counted header, not the roster. Invalid `LIVE_FLEET
 
 The theme toggle is the last control in the header title row, pushed to the far right.
 
+## Kanban detail
+
+A kanban click and a wave click both call `openCardPop`. That used to fill `#cardPop` from a second field list. The wave card builds its detail with `mountCardDetail`. The dialog now mounts that same function into `#cardPopDetail`, so the timeline, the GitHub issue or pull request link, the linked `bc-` agent link, the packet, the owner, and the status are one render.
+
+## Links
+
+Kanban, wave, and activity anchors that have an `href` use the focus color, an underline, a pointer, and a teal hover. Both themes already define `--focus` and `--teal`.
+
 ## Checks
 
-`node --test` on `presence.test.mjs`, `page.test.mjs`, `board-folds.test.mjs`, and `theme-colors.test.mjs`. The Playwright roster check asserts a count above 3 and that the toggle is the rightmost header control.
+`node --test` on `presence.test.mjs`, `page.test.mjs`, `board-folds.test.mjs`, `theme-colors.test.mjs`, and `kanban-board.test.mjs`. Playwright checks that the roster count is above 3, that the toggle is the rightmost header control, that a kanban click's detail matches the wave card, and that those links look like links in light and dark.

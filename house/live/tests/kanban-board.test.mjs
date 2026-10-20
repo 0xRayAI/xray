@@ -33,9 +33,25 @@ function boardFeed() {
   return {
     generated_at: new Date(now).toISOString(),
     cursor: 'kanban',
-    events: [],
+    events: [{
+      id: 'ev-link-1',
+      t_ct: new Date(now - 5000).toISOString(),
+      kind: 'comment',
+      from: 'blinky',
+      repo: 'example/app',
+      number: 3,
+      label: 'see the pull request',
+      source: 'https://github.com/example/app/pull/3#issuecomment-1',
+    }],
     queue: [],
     track: { items: [] },
+    cloud_agents: [{
+      bcId: 'bc-review-3',
+      seat: 'critic',
+      card: 'example/app#3',
+      state: 'running',
+      updated_ct: new Date(now).toISOString(),
+    }],
     freshness: {
       github_latest_ct: new Date(now).toISOString(),
       cards_at: new Date(now).toISOString(),
@@ -104,19 +120,38 @@ test('kanban renders above activity, opens a card, and keeps the GitHub link on 
     const issue = page.locator('#kanbanBoard [data-stage="open"] a.wgh');
     assert.equal(await issue.getAttribute('href'), 'https://github.com/example/app/issues/1');
 
+    const waveDetail = page.locator('#waveBody .wcard[data-key="example/app#3"] .wdetail');
+    const waveText = (await waveDetail.textContent()).replace(/\s+/g, ' ').trim();
+    const waveHrefs = await waveDetail.locator('a').evaluateAll((els) => els.map((a) => a.getAttribute('href')));
     await page.locator('#kanbanBoard [data-stage="review"] .witem').click();
     await page.waitForFunction(() => document.getElementById('cardPop')?.open);
     const pop = await page.evaluate(() => ({
       title: document.getElementById('cardPopTitle').textContent,
-      beats: document.getElementById('cardPopBeats').textContent,
-      fields: document.getElementById('cardPopFields').textContent,
+      detail: (document.getElementById('cardPopDetail').textContent || '').replace(/\s+/g, ' ').trim(),
+      hrefs: [...document.querySelectorAll('#cardPopDetail a')].map((a) => a.getAttribute('href')),
       card: new URL(location.href).searchParams.get('card'),
     }));
     assert.match(pop.title, /Review me/);
-    assert.match(pop.beats, /opened/);
-    assert.match(pop.fields, /tests green/);
+    assert.match(pop.detail, /opened/);
+    assert.match(pop.detail, /tests green/);
+    assert.match(pop.detail, /mill/);
+    assert.match(pop.detail, /live/);
+    assert.match(pop.detail, /bc-review-3/);
+    assert.equal(pop.detail, waveText);
+    assert.deepEqual(pop.hrefs, waveHrefs);
+    assert.deepEqual(pop.hrefs, [
+      'https://github.com/example/app/pull/3',
+      'https://cursor.com/agents/bc-review-3',
+    ]);
     assert.equal(pop.card, 'example/app#3');
     assert.equal(await page.locator('#cardPop').isVisible(), true);
+
+    await page.keyboard.press('Escape');
+    await page.waitForFunction(() => !document.getElementById('cardPop').open);
+    await page.locator('#waveBody .wcard[data-key="example/app#3"] .witem').click();
+    await page.waitForFunction(() => document.getElementById('cardPop')?.open);
+    const fromWave = await page.locator('#cardPopDetail').evaluate((el) => (el.textContent || '').replace(/\s+/g, ' ').trim());
+    assert.equal(fromWave, waveText);
 
     await page.keyboard.press('Escape');
     await page.waitForFunction(() => !document.getElementById('cardPop').open && !new URL(location.href).searchParams.get('card'));
@@ -126,6 +161,61 @@ test('kanban renders above activity, opens a card, and keeps the GitHub link on 
     assert.match(await page.locator('#cardPopTitle').textContent(), /Open issue/);
     await page.mouse.click(8, 8);
     await page.waitForFunction(() => !document.getElementById('cardPop').open);
+  } finally {
+    if (browser) await browser.close();
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
+async function linkFace(page, selector) {
+  const el = page.locator(selector).first();
+  await el.waitFor({ state: 'visible' });
+  const rest = await el.evaluate((node) => {
+    const cs = getComputedStyle(node);
+    const probe = document.createElement('span');
+    document.body.appendChild(probe);
+    const paint = (value) => { probe.style.color = value; return getComputedStyle(probe).color; };
+    const out = {
+      color: cs.color,
+      focus: paint('var(--focus)'),
+      decoration: cs.textDecorationLine,
+      cursor: cs.cursor,
+    };
+    probe.remove();
+    return out;
+  });
+  await el.hover();
+  const hover = await el.evaluate((node) => getComputedStyle(node).color);
+  return { ...rest, hover };
+}
+
+function assertLink(face, label) {
+  const marked = face.decoration.includes('underline') || face.color === face.focus;
+  assert.equal(marked, true, label + ' ' + JSON.stringify(face));
+  assert.equal(face.cursor, 'pointer', label);
+  assert.notEqual(face.hover, face.color, label + ' hover ' + JSON.stringify(face));
+}
+
+test('kanban, wave, and activity links read as links in both themes', async () => {
+  const server = await serve();
+  const base = `http://127.0.0.1:${server.address().port}/index.html`;
+  let browser;
+  try {
+    browser = await chromium.launch();
+    for (const theme of ['dark', 'light']) {
+      const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+      await page.addInitScript(() => { localStorage.removeItem('bifrost-theme'); });
+      await page.emulateMedia({ colorScheme: theme });
+      await page.goto(base, { waitUntil: 'domcontentloaded' });
+      await page.waitForFunction((want) => document.documentElement.getAttribute('data-theme') === want && document.querySelector('#kanbanBoard a.wgh') && document.querySelector('#log a[href]'), theme);
+      assertLink(await linkFace(page, '#kanbanBoard a.wgh'), theme + ' kanban');
+      assertLink(await linkFace(page, '#waveBody a.wgh'), theme + ' wave');
+      assertLink(await linkFace(page, '#log a[href]'), theme + ' activity');
+      await page.locator('#kanbanBoard [data-stage="review"] .witem').click();
+      await page.waitForFunction(() => document.getElementById('cardPop')?.open);
+      assertLink(await linkFace(page, '#cardPopDetail a.wgh'), theme + ' detail');
+      await page.close();
+    }
   } finally {
     if (browser) await browser.close();
     await new Promise((resolve) => server.close(resolve));
