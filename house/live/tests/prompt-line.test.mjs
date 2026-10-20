@@ -39,3 +39,19 @@ test('prompt events read as Blaze → seat, truncated, with the full note kept',
   assert.ok(wide.line.length > wide.short.length);
   assert.equal(L.promptView({ kind: 'seat_turn', from: 'forge', label: 'forge turn start' }), null);
 });
+
+test('an owner prompt stays one activity line when newer seat turns fill the window', () => {
+  const L = mesh();
+  const events = [{ id: 'p1', kind: 'seat_prompt', from: 'Blaze', to: 'forge', note: 'hello', t_ct: '2026-10-20T16:19:00Z', _t: 1 }];
+  for (let i = 0; i < 20; i++) events.push({ id: 't' + i, kind: 'seat_turn', from: 'forge', to: 'Bifrost', _t: 2 + i });
+  const lines = L.activityLines(events, events.length, 14);
+  assert.equal(lines.filter(e => e.id === 'p1').length, 1);
+  assert.equal(lines[0].id, 'p1');
+  assert.equal(lines.length, 15);
+  const inside = L.activityLines([
+    { id: 'a', kind: 'pr_open', _t: 1 },
+    { id: 'p', kind: 'seat_prompt', from: 'Blaze', to: 'forge', _t: 2 },
+  ], 2, 14);
+  assert.equal(inside.filter(e => e.id === 'p').length, 1);
+  assert.equal(inside.length, 2);
+});

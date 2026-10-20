@@ -1503,8 +1503,9 @@ footer a { color: var(--foot); }
 
   function renderLog(shown) {
     var ul = $('log'); ul.textContent = '';
-    for (var i = shown - 1; i >= Math.max(0, shown - 14); i--) {
-      var e = state.events[i];
+    var lines = L.activityLines ? L.activityLines(state.events, shown, 14) : [];
+    for (var i = lines.length - 1; i >= 0; i--) {
+      var e = lines[i];
       var li = document.createElement('li');
       li.dataset.t = e._t;
       var when = document.createElement('span'); when.className = 'when'; when.textContent = L.fmtCt(e._t).replace(' CT', '');

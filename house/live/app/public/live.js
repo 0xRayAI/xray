@@ -182,6 +182,31 @@
     return own(COLOR, e.from) || [180, 190, 210];
   }
 
+  /* Newest `limit` lines, plus every owner prompt in the shown window. Seat turns fill the
+     tail and would otherwise push a prompt off the 14-line activity log. */
+  function activityLines(events, shown, limit) {
+    var list = events || [];
+    var n = shown == null ? list.length : Math.max(0, Math.min(list.length, shown | 0));
+    var cap = limit > 0 ? limit : 14;
+    var slice = list.slice(0, n);
+    var newest = slice.slice(-cap);
+    var have = {};
+    newest.forEach(function (e) { if (e && e.id) have[e.id] = 1; });
+    var extra = [];
+    slice.forEach(function (e) {
+      if (!e || (e.id && have[e.id])) return;
+      if (e.kind === 'seat_prompt' || e.kind === 'prompt_message') extra.push(e);
+    });
+    if (!extra.length) return newest;
+    return extra.concat(newest).sort(function (a, b) {
+      var at = typeof a._t === 'number' ? a._t : Date.parse(a.t_ct || '');
+      var bt = typeof b._t === 'number' ? b._t : Date.parse(b.t_ct || '');
+      if (isNaN(at)) at = 0;
+      if (isNaN(bt)) bt = 0;
+      return (at - bt) || (String(a.id) < String(b.id) ? -1 : String(a.id) > String(b.id) ? 1 : 0);
+    });
+  }
+
   /* A prompt is one line: "Blaze → forge: <note>". Plumbing labels ("prompt sent", "message") are not the note. */
   function promptView(e) {
     if (!e || (e.kind !== 'seat_prompt' && e.kind !== 'prompt_message')) return null;
@@ -425,7 +450,7 @@
   root.LiveMesh = {
     SOURCES: SOURCES, POLL_MS: POLL_MS, PING_MS: PING_MS, AGENTS: AGENTS, SEAT_NAMES: SEAT_NAMES, COLOR: COLOR,
     LABEL: LABEL, SUB: SUB, SQUARE: SQUARE, HUB: HUB, SATS: SATS, EDGES: EDGES, KIND_WORD: KIND_WORD,
-    resolveNodes: resolveNodes, eventColor: eventColor, cleanLabel: cleanLabel, promptView: promptView, whoTag: whoTag,
+    resolveNodes: resolveNodes, eventColor: eventColor, cleanLabel: cleanLabel, promptView: promptView, activityLines: activityLines, whoTag: whoTag,
     headline: headline, parseT: parseT, mergeEvents: mergeEvents, countUpTo: countUpTo,
     eventsUpTo: eventsUpTo, pingsAt: pingsAt, hotNodes: hotNodes, applyFeed: applyFeed,
     bounds: bounds, fmtCt: fmtCt, ago: ago, feedUrl: feedUrl, fetchFeed: fetchFeed,
