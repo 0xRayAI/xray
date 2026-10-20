@@ -1307,12 +1307,25 @@ class Fleet:
         os.replace(tmp, self.path)
 
 
+def _activity_prompt_file(state_path):
+    """Collector reads LIVE_ACTIVITY. The box reads fleet/remote-activity.jsonl.
+
+    LIVE_MODE=github is the Railway collector. That image never writes remote-activity.jsonl.
+    A set LIVE_ACTIVITY on any other mode stays the box file.
+    """
+    if os.environ.get("LIVE_MODE", "").strip() == "github":
+        env = os.environ.get("LIVE_ACTIVITY", "").strip()
+        if env:
+            return Path(env)
+    return Path(state_path).parent.parent / "fleet" / "remote-activity.jsonl"
+
+
 def activity_prompts(state_path):
-    """Prompt rows from remote-activity.jsonl, re-read every board pass.
+    """Prompt rows re-read every board pass.
 
     The beat uses this list. A prompt sitting only in the card events does not supply time or note.
     """
-    f = Path(state_path).parent.parent / "fleet" / "remote-activity.jsonl"
+    f = _activity_prompt_file(state_path)
     if not f.is_file():
         return []
     try:
