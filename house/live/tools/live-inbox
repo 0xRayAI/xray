@@ -19,6 +19,8 @@ The per-seat cursor `$LIVE_CURSORS/<seat>.txt` stores handled keys `repo#number|
 `--remember --pr <owner/repo#n> --sha <head> --kind <kind>` adds that key. `--repeat` with the same flags exits 0
 when the key is already there and exits 1 for a new head. The claim is not this record.
 --turn start|end posts {kind:turn, action, t_ct, tag?} to POST /activity.
+When CURSOR_AGENT is 1 and CURSOR_CONVERSATION_ID is a bc- id, the same turn also posts
+{kind:cloud_agent, action:launch, agent:<id>} on start. Turn end does not finish the agent.
 --prompt posts {t_ct, seat, kind:prompt, action:sent, from, to:seat, room?} to POST /activity. from defaults to blaze.
 t_ct is America/Chicago with its offset. Both posts use the seat key. The key is never printed. There is no local file.
 Handoff: POST one packet to /inbox for <to> and print the one-line 1:1 message the seat sends. The same pull request,
@@ -47,6 +49,7 @@ USAGE = ("usage: live-inbox <seat> [--peek] | live-inbox <seat> --ack <id|all|st
          "live-inbox <seat> --handoff <to> --pr <owner/repo#n> --kind <" + "|".join(KINDS) + "> --sha <head> | "
          "live-inbox <seat> --card <owner/repo#n> --start-after <ISO>")
 TAG = re.compile(r"[A-Za-z0-9 ._:@#+/-]{1,40}")
+CLOUD_ID = re.compile(r"bc-[A-Za-z0-9_-]{2,40}")
 argv = sys.argv[1:]
 
 
@@ -328,6 +331,14 @@ def release_own(seat):
         handle.close()
 
 
+def cursor_cloud_id():
+    """The running Cursor cloud agent, or empty. A desktop session has no bc- id."""
+    if os.environ.get("CURSOR_AGENT", "").strip() not in ("1", "true", "yes"):
+        return ""
+    raw = os.environ.get("CURSOR_CONVERSATION_ID", "").strip()
+    return raw if CLOUD_ID.fullmatch(raw) else ""
+
+
 def turn_gate(seat, action):
     """True when this owner token may post the turn.
 
@@ -389,6 +400,10 @@ if turn is not None:
     if tag is not None:
         body["tag"] = tag
     print(json.dumps(call("POST", "/activity", body)))
+    agent = cursor_cloud_id()
+    if agent and turn == "start":
+        cloud = {"kind": "cloud_agent", "action": "launch", "agent": agent, "t_ct": ct_now(), "seat": seat}
+        print(json.dumps(call("POST", "/activity", cloud)))
     sys.exit(0)
 if upto is not None:
     print(json.dumps(call("POST", f"/inbox/{seat}/ack", {"upto": upto})))

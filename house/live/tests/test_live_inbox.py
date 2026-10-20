@@ -1,5 +1,5 @@
 """live-inbox --handoff posts one packet and prints one 1:1 line. The same PR and head keep one id."""
-import json, os, subprocess, threading, unittest
+import json, os, shutil, subprocess, threading, unittest
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -38,9 +38,7 @@ class HandoffCommand(unittest.TestCase):
     def tearDown(self):
         self.httpd.shutdown()
         self.httpd.server_close()
-        for p in self.keys.glob("*"):
-            p.unlink()
-        self.keys.rmdir()
+        shutil.rmtree(self.keys, ignore_errors=True)
 
     def run_handoff(self, *args):
         return subprocess.run([str(TOOL), "forge", *args], env=self.env, capture_output=True, text=True)
@@ -76,6 +74,27 @@ class HandoffCommand(unittest.TestCase):
         posted = Inbox.posts[-1]["body"]["lines"][0]
         self.assertEqual(posted["id"], "handoff:0xrayai/xray#22:ready:abc1234")
         self.assertEqual(posted["sha"], "abc1234")
+
+    def test_cloud_turn_start_posts_the_running_agent(self):
+        agent = "bc-531f2033-90e0-595f-87de-8dfe576ec69c"
+        env = {**self.env, "CURSOR_AGENT": "1", "CURSOR_CONVERSATION_ID": agent}
+        Inbox.posts = []
+        r = subprocess.run([str(TOOL), "forge", "--turn", "start"], env=env, capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual([p["path"] for p in Inbox.posts], ["/activity", "/activity"])
+        self.assertEqual(Inbox.posts[0]["body"]["kind"], "turn")
+        self.assertEqual(Inbox.posts[0]["body"]["action"], "start")
+        self.assertEqual(Inbox.posts[1]["body"]["kind"], "cloud_agent")
+        self.assertEqual(Inbox.posts[1]["body"]["action"], "launch")
+        self.assertEqual(Inbox.posts[1]["body"]["agent"], agent)
+        self.assertEqual(Inbox.posts[1]["body"]["seat"], "forge")
+        self.assertNotIn("seat-key-forge", r.stdout + r.stderr)
+        Inbox.posts = []
+        end = subprocess.run([str(TOOL), "forge", "--turn", "end"], env=env, capture_output=True, text=True)
+        self.assertEqual(end.returncode, 0, end.stderr)
+        self.assertEqual(len(Inbox.posts), 1)
+        self.assertEqual(Inbox.posts[0]["body"]["kind"], "turn")
+        self.assertEqual(Inbox.posts[0]["body"]["action"], "end")
 
     def test_same_pr_and_head_is_one_id(self):
         a = self.run_handoff("--handoff", "critic", "--pr", "0xRayAI/xray#9", "--kind", "ready", "--sha", "abcdef0")

@@ -507,7 +507,59 @@ export function boardCloudAgents({ agents = [], activity = [], links = [] } = {}
     if (!prev.card && card) prev.card = card;
     if (!prev.pr && pr) prev.pr = pr;
   }
-  return [...by.values()].sort((a, b) => (Date.parse(b.updated_ct) || 0) - (Date.parse(a.updated_ct) || 0) || a.bcId.localeCompare(b.bcId));
+  const rows = [...by.values()].sort((a, b) => (Date.parse(b.updated_ct) || 0) - (Date.parse(a.updated_ct) || 0) || a.bcId.localeCompare(b.bcId));
+  return foldCloudIds(rows);
+}
+
+/** True when one id is the other, or one is a bc- prefix of the other (`bc-531f2033` and the full uuid). */
+export function cloudIdsAlias(a, b) {
+  const left = String(a || '').trim();
+  const right = String(b || '').trim();
+  if (!AGENT_ID.test(left) || !AGENT_ID.test(right)) return false;
+  if (left === right) return true;
+  const [short, long] = left.length <= right.length ? [left, right] : [right, left];
+  return short.length >= 11 && long.startsWith(short + '-');
+}
+
+/** One row per agent. A short id and its full id fold together. Newest line wins state; a known seat, card, or PR stays. */
+export function foldCloudIds(rows) {
+  const ordered = [...(rows || [])].sort((a, b) => (Date.parse(b && b.updated_ct) || 0) - (Date.parse(a && a.updated_ct) || 0));
+  const folded = [];
+  for (const row of ordered) {
+    if (!row || !AGENT_ID.test(String(row.bcId || ''))) continue;
+    const hit = folded.find(prev => cloudIdsAlias(prev.bcId, row.bcId));
+    if (!hit) { folded.push({ ...row }); continue; }
+    if (!hit.seat && row.seat) hit.seat = row.seat;
+    if (!hit.card && row.card) hit.card = row.card;
+    if (!hit.pr && row.pr) hit.pr = row.pr;
+    if (String(row.bcId).length > String(hit.bcId).length) hit.bcId = row.bcId;
+  }
+  return folded;
+}
+
+/** A running cloud row keeps its owner active. An existing non-cloud working mark keeps its via. */
+export function applyCloudOwners(fleet, rows, now = Date.now()) {
+  const running = (Array.isArray(rows) ? rows : []).filter(row => row && row.state === 'running' && AGENT_ID.test(String(row.bcId || '')));
+  if (!fleet && !running.length) return fleet;
+  const f = fleet
+    ? { ...fleet, seats: { ...(fleet.seats || {}) }, working: { ...(fleet.working || {}) }, cloud: { ...(fleet.cloud || {}) } }
+    : { as_of: new Date(now).toISOString(), window_min: 15, seats: {}, working: {}, cloud: {}, active: 0, total: 0 };
+  const open = new Set([...(Array.isArray(f.cloud.open_agents) ? f.cloud.open_agents : []), ...running.map(row => row.bcId)]);
+  for (const row of running) {
+    const seat = canonSeatToken(row.seat);
+    if (!seat) continue;
+    const src = f.seats[seat] || { active: false, last_ct: row.updated_ct || null, via: null, working: false };
+    const held = f.working[seat];
+    const keepVia = !!(src.working && held && held.via && held.via !== 'cloud');
+    const next = { ...src, active: true, working: true };
+    if (!keepVia) next.working_via = 'cloud';
+    if (!held) f.working[seat] = { via: 'cloud', since_ct: row.updated_ct || src.last_ct || null, agent: row.bcId };
+    f.seats[seat] = next;
+  }
+  f.cloud = { ...f.cloud, active: open.size > 0, open_agents: [...open].sort(), working: open.size > 0 || !!f.cloud.working };
+  f.active = Object.values(f.seats).filter(v => v.active && !v.external).length;
+  if (!fleet) f.total = Object.keys(f.seats).length;
+  return f;
 }
 
 function agentItems(agents) {
