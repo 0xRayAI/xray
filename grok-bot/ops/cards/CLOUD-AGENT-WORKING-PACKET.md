@@ -9,9 +9,9 @@ This file is the whole change. No hook, board, or collector code is edited here.
 - goal: Every Cursor cloud agent on this repo shows on the board as working from the start of its run until the run ends, without a wake prompt and without `live-inbox --turn start`.
 - constraints: Packet only. No code in this PR. Fail open and fast. No key and no network means skip. A short timeout. Never block the agent. The key comes from env only and is never printed. No `Closes`.
 - path: Critic PASS on this packet, then one follow-up implements the files below.
-- acceptance: A cloud agent with `CURSOR_AGENT` set and a `bc-` conversation id posts `launch` once when its loop is actually running, and `finished` when that loop ends. The board row leaves `running`. The seat's cloud working mark drops when that seat has no running row left. A second running agent for the same seat keeps the mark. `LIVE_CLOUD_IDLE_S` is not the clock. Missing key, bad id, HTTP error, and timeout leave the agent unblocked and print no key.
+- acceptance: Launch once while the loop runs. Finished, including error and aborted, posts when it ends and the row leaves running. A second running row keeps the seat mark. The idle clock stays off.
 - gates: Critic packet PASS before any code. A and C wait on the follow-up. B and D stay off.
-- evidence: Cursor hooks doc (2026-10-20, https://cursor.com/docs/hooks.md) cloud support matrix. `src/integrations/cursor/README.md` line 3. `house/live/tools/live-inbox` `cursor_cloud_id`. Board `applyCloudOwners` and `POST /activity`. Collector `WORKING_CLOUD_S` is unread.
+- evidence: Hooks cloud matrix 2026-10-20. src/integrations/cursor/README.md. live-inbox cursor_cloud_id. applyCloudOwners and POST /activity. WORKING_CLOUD_S stays unread.
 - next owner: critic, for packet PASS.
 - escalate: Blaze, if one shared activity key is the wrong seat for the glyph, or if working must stay on across user follow-ups inside one cloud run.
 
@@ -29,11 +29,13 @@ Identity, copied from `cursor_cloud_id()` (`live-inbox` lines 338–343, pattern
 - `CURSOR_CONVERSATION_ID` fullmatches `bc-[A-Za-z0-9_-]{2,40}`.
 - Anything else: skip.
 
-Launch body, once per id until a later stop in that process:
+Launch body, once per id. The dedupe stamp is a file under `.xray/state/cloud-activity/`, because each hook run is a new process:
 
 ```json
-{"kind":"cloud_agent","action":"launch","agent":"<bc-id>","t_ct":"<America/Chicago offset>"}
+{"kind":"cloud_agent","action":"launch","agent":"<bc-id>","t_ct":"<America/Chicago offset>","tag":"<40-hex head>"}
 ```
+
+`tag` is the git head when `git rev-parse` returns 40 hex characters. Omit it when that read fails. The same `tag` goes on `finished`.
 
 Finished body, on `stop`:
 
@@ -43,7 +45,11 @@ Finished body, on `stop`:
 
 Omit `seat`. `POST /activity` stores the seat from the bearer token (`server.mjs` `activitySeatOfKey`, around line 2927). A body seat that does not match the token is 403. Both actions are already legal (`ACT_KINDS.cloud_agent` is `launch`, `reply`, `finished`, `cancel`). `t_ct` is the same offset form `live-inbox` already sends. No `note`, no free-text field.
 
-`stop` statuses `completed`, `aborted`, and `error` all post `finished`. The hook returns `{}` and never `followup_message`. `subagentStop` is not this signal. A child ending is not the parent run ending.
+`stop` statuses `completed`, `aborted`, and `error` all post `finished`. A failed run stays `finished` on the board. It does not post `cancel` and it does not show as `failed`. The hook returns `{}` and never `followup_message`. `subagentStop` is not this signal. A child ending is not the parent run ending.
+
+That `finished` line is `POST /activity` only. It is not an inbox line and its kind is not `run_end`. `run_end` stays the owner's chat flushing one batch. Before `launch`, if a row for that git head is already `running`, the post resumes that same `bc-` id. A second id does not open another running row.
+
+Opening the follow-up pull request uses the seat's GitHub App installation token. `LIVE_ACTIVITY_KEY` and `SEAT_KEYS` stay on `POST /activity` only.
 
 After `finished`, the dedupe stamp for that id is cleared, so the next loop in the same conversation can post `launch` again. Between loops the agent is not working.
 
@@ -139,7 +145,7 @@ The hooks doc env table lists `CURSOR_PROJECT_DIR`, `CURSOR_VERSION`, and others
 
 The hook reads `LIVE_ACTIVITY_KEY` and `LIVE_URL` from the environment only. It does not read `SEAT_KEYS_DIR`, a key file, argv, or stdin. It does not echo the key, the header, or `curl -v`. Curl stderr is discarded. A skip line may say `skipped` and the reason (`no key`, `no network`). It must not include the value.
 
-Unset key, unset URL, 401, 429, 5xx, DNS failure, and timeout: exit 0, stdout `{}`, hook `timeout` 2, client max time 2 seconds. `failClosed` stays off. Rate limit is 60 posts a minute per seat, which is why the dedupe stamp exists.
+Unset key, unset URL, 401, 429, 5xx, DNS failure, and timeout: exit 0, stdout `{}`, hook `timeout` 2, client max time 1 second, under that hook limit. `failClosed` stays off. Rate limit is 60 posts a minute per seat, which is why the dedupe stamp exists.
 
 The key is injected as a Cursor cloud environment secret. It is not committed. This packet does not name a seat and does not contain a key. One key lights one seat's glyph for every cloud agent that posts with it. Each `bc-` id is still its own board row, running then finished. Per-seat glyphs need a different injection later. That later step still cannot print the key, and it still cannot read a key file from this hook.
 

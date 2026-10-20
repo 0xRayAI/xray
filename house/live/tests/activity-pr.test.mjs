@@ -163,6 +163,37 @@ test('a dot-segment pull URL is empty and a dotted repo still cards', () => {
   assert.match(cloudRow, /The pull URL is the row's `pr`\./);
 });
 
+test('a second launch for a running head resumes that id and finished stays off the inbox', async () => {
+  await withServer(async ctx => {
+    const head = 'ab'.repeat(20);
+    const first = await postActivity(ctx, {
+      t_ct: stamp(0), kind: 'cloud_agent', action: 'launch', agent: 'bc-headowner01', tag: head,
+    });
+    assert.equal(first.status, 202, JSON.stringify(first.body));
+    const second = await postActivity(ctx, {
+      t_ct: stamp(1000), kind: 'cloud_agent', action: 'launch', agent: 'bc-headother01', tag: head,
+    });
+    assert.equal(second.status, 202, JSON.stringify(second.body));
+    const cookie = await login(ctx);
+    assert.equal((await rowOf(ctx, cookie, 'bc-headowner01')).state, 'running');
+    assert.equal(await rowOf(ctx, cookie, 'bc-headother01'), undefined);
+    const stray = await postActivity(ctx, {
+      t_ct: stamp(2000), kind: 'cloud_agent', action: 'finished', agent: 'bc-headother01', tag: head,
+    });
+    assert.equal(stray.status, 202, JSON.stringify(stray.body));
+    assert.equal((await rowOf(ctx, cookie, 'bc-headowner01')).state, 'running');
+    assert.equal(await rowOf(ctx, cookie, 'bc-headother01'), undefined);
+    const inbox = await fetch(ctx.base + '/inbox/writer', { headers: { Authorization: 'Bearer ' + KEY } });
+    assert.equal(inbox.status, 200);
+    assert.equal((await inbox.text()).includes('run_end'), false);
+    const done = await postActivity(ctx, {
+      t_ct: stamp(3000), kind: 'cloud_agent', action: 'finished', agent: 'bc-headowner01', tag: head,
+    });
+    assert.equal(done.status, 202, JSON.stringify(done.body));
+    assert.equal((await rowOf(ctx, cookie, 'bc-headowner01')).state, 'finished');
+  });
+});
+
 test('(a) an activity-only URL is shown', async () => {
   await withServer(async ctx => {
     const posted = await postActivity(ctx, {

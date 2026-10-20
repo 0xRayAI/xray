@@ -27,7 +27,7 @@ function line(over = {}) {
     type: over.type || 'dispatch',
     repo: over.repo || '0xRayAI/xray',
     number: over.number ?? 7,
-    sha: 'abc1234',
+    sha: over.sha || 'abc1234',
     title: over.title || 'card work',
     url: over.url || 'https://github.com/0xRayAI/xray/issues/7',
     reason: over.reason || 'new issue, next ARCH1',
@@ -213,6 +213,30 @@ test('a nudge does not launch; a real packet does, once, and the prompt is clean
   } finally { await ctx.stop(); }
 });
 
+test('a running head resumes that bc- id instead of launching another agent', async () => {
+  const ctx = await boot({ ARCH1_LAUNCH_ENABLED: '1', ARCH1_LAUNCH_COOLDOWN_S: '0' });
+  try {
+    const head = 'cd'.repeat(20);
+    const posted = await fetch(ctx.base + '/activity', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + ctx.seatKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        t_ct: new Date().toISOString(),
+        kind: 'cloud_agent',
+        action: 'launch',
+        agent: 'bc-hookagent01',
+        tag: head,
+      }),
+    });
+    assert.equal(posted.status, 202, await posted.text());
+    await postLines(ctx, [line({ id: 'resume-1', type: 'dispatch', number: 81, sha: head })]);
+    await waitCalls(ctx, 1);
+    assert.equal(ctx.calls.length, 1);
+    assert.equal(ctx.calls[0].url, '/v0/agents/bc-hookagent01/followup');
+    assertNoSecrets(ctx.logs.join(''));
+  } finally { await ctx.stop(); }
+});
+
 test('one live agent per card: the next real packet is a follow-up', async () => {
   const ctx = await boot({ ARCH1_LAUNCH_ENABLED: '1', ARCH1_LAUNCH_COOLDOWN_S: '0' });
   try {
@@ -314,6 +338,8 @@ test('webhook signature: bad is 401, FINISHED and ERROR beat once, other statuse
     await settle(300);
     const lines = (await inbox(ctx)).lines.filter(l => l.reason === 'ARCH1 cloud agent FINISHED');
     assert.equal(lines.length, 1);
+    assert.equal(lines[0].type, 'beat');
+    assert.notEqual(lines[0].kind, 'run_end');
     const again = await fetch(ctx.base + '/cursor/webhook', { method: 'POST', body: finished, headers: headers(finished) });
     assert.equal(again.status, 200);
     assert.equal((await again.json()).duplicate, true);

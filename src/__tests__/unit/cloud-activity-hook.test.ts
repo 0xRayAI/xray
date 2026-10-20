@@ -1,4 +1,4 @@
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -13,6 +13,7 @@ const KEY = 'planted-activity-key-9f3a';
 interface Hit {
   body: string;
   auth: string;
+  url: string;
 }
 
 function run(stdin: Record<string, unknown>, env: NodeJS.ProcessEnv) {
@@ -61,7 +62,11 @@ function listen(status: number, hang = false): Promise<{ url: string; hits: Hit[
     const chunks: Buffer[] = [];
     req.on('data', (chunk: Buffer) => chunks.push(chunk));
     req.on('end', () => {
-      hits.push({ body: Buffer.concat(chunks).toString('utf8'), auth: String(req.headers.authorization || '') });
+      hits.push({
+        body: Buffer.concat(chunks).toString('utf8'),
+        auth: String(req.headers.authorization || ''),
+        url: req.url || '',
+      });
       if (hang) return;
       res.writeHead(status, { 'Content-Type': 'application/json' });
       res.end('{"ok":false}');
@@ -166,6 +171,65 @@ describe('cloud activity hook', () => {
     } finally {
       await denied.close();
       await hung.close();
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('resumes the running head and posts finished only to /activity', async () => {
+    const root = mkdtempSync(path.join(tmpdir(), 'cloud-activity-head-'));
+    const init = spawnSync('git', ['init'], { cwd: root, encoding: 'utf8' });
+    expect(init.status).toBe(0);
+    const committed = spawnSync('git', ['-c', 'user.email=t@example.com', '-c', 'user.name=t', 'commit', '--allow-empty', '-m', 't'], {
+      cwd: root,
+      encoding: 'utf8',
+    });
+    expect(committed.status).toBe(0);
+    const head = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' });
+    const sha = (head.stdout || '').trim();
+    expect(sha).toMatch(/^[0-9a-f]{40}$/);
+    const board = await listen(202);
+    const other = 'bc-other-head-agent';
+    const seatKey = 'seat-key-not-for-activity';
+    const appToken = 'ghs_should_not_appear';
+    try {
+      const env = envOf(root, {
+        LIVE_URL: board.url,
+        LIVE_ACTIVITY_KEY: KEY,
+        SEAT_KEYS: seatKey,
+        GITHUB_TOKEN: appToken,
+      });
+      const first = await run({ hook_event_name: 'postToolUse' }, env);
+      expect(first.status).toBe(0);
+      assertQuiet(first.stdout, first.stderr);
+      expect(board.hits).toHaveLength(1);
+      expect(board.hits[0]?.url).toBe('/activity');
+      expect(board.hits[0]?.auth).toBe('Bearer ' + KEY);
+      const launch = JSON.parse(board.hits[0]?.body || '{}') as Record<string, string>;
+      expect(launch).toMatchObject({ kind: 'cloud_agent', action: 'launch', agent: AGENT, tag: sha });
+      expect(launch.seat).toBeUndefined();
+      const blocked = await run({ hook_event_name: 'postToolUse' }, { ...env, CURSOR_CONVERSATION_ID: other });
+      expect(blocked.status).toBe(0);
+      assertQuiet(blocked.stdout, blocked.stderr);
+      expect(board.hits).toHaveLength(1);
+      const stopped = await run({ hook_event_name: 'stop', status: 'error' }, env);
+      expect(stopped.status).toBe(0);
+      assertQuiet(stopped.stdout, stopped.stderr);
+      const finished = JSON.parse(board.hits[1]?.body || '{}') as Record<string, string>;
+      expect(finished).toMatchObject({ kind: 'cloud_agent', action: 'finished', agent: AGENT, tag: sha });
+      expect(finished.action).not.toBe('cancel');
+      const resumed = await run({ hook_event_name: 'sessionStart' }, env);
+      expect(resumed.status).toBe(0);
+      assertQuiet(resumed.stdout, resumed.stderr);
+      const again = JSON.parse(board.hits[2]?.body || '{}') as Record<string, string>;
+      expect(again).toMatchObject({ action: 'launch', agent: AGENT, tag: sha });
+      const text = board.hits.map((hit) => hit.url + hit.body + hit.auth).join('\n') + stopped.stdout + stopped.stderr;
+      expect(text).not.toContain('run_end');
+      expect(text).not.toContain('/inbox');
+      expect(text).not.toContain(seatKey);
+      expect(text).not.toContain(appToken);
+      expect(board.hits.every((hit) => hit.url === '/activity')).toBe(true);
+    } finally {
+      await board.close();
       rmSync(root, { recursive: true, force: true });
     }
   });

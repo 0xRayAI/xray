@@ -26,6 +26,14 @@ class Packet(unittest.TestCase):
         self.assertEqual(p.parse("Packet: goal: ship | acceptance: green | next owner: Builder; escalate: Lead"),
                          {"goal": "ship", "acceptance": "green", "next owner": "Builder", "escalate": "Lead"})
         self.assertEqual(p.parse("no packet here"), {})
+        card = Path(__file__).resolve().parents[3] / "grok-bot" / "ops" / "cards" / "CLOUD-AGENT-WORKING-PACKET.md"
+        fields = p.parse(card.read_text())
+        self.assertLessEqual(len(fields["acceptance"]), 200)
+        self.assertLessEqual(len(fields["evidence"]), 200)
+        self.assertIn("second running row", fields["acceptance"])
+        self.assertIn("idle clock stays off", fields["acceptance"])
+        self.assertIn("error and aborted", fields["acceptance"])
+        self.assertIn("WORKING_CLOUD_S", fields["evidence"])
         self.assertEqual(p.parse("[docs](https://notion.so/x) text\n## Packet\n- Goal: [d](https://notion.so/y) z"), {"goal": "d z"})
 
 

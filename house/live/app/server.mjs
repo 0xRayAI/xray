@@ -973,6 +973,17 @@ function recordArch1Beat(_beat, line) {
 }
 const arch1Launch = createArch1Launch({
   env: process.env, dataDir: STATE_DIR, onBeat: recordArch1Beat,
+  runningId: line => {
+    const repo = String(line && line.repo || '').toLowerCase();
+    const num = Number(line && line.number);
+    const card = repo && Number.isInteger(num) ? repo + '#' + num : '';
+    if (card) {
+      const row = cloudAgentBoard().find(item => item && item.state === 'running' && String(item.card || '').toLowerCase() === card);
+      if (row && row.bcId) return row.bcId;
+    }
+    const sha = String(line && line.sha || '').trim().toLowerCase();
+    return /^[0-9a-f]{40}$/.test(sha) ? runningCloudForHead(sha) : '';
+  },
   ownsCard: line => {
     const repo = String(line && line.repo || '').toLowerCase();
     const num = Number(line && line.number);
@@ -2710,6 +2721,29 @@ function refreshWorking(now = Date.now()) {
   if (JSON.stringify((header.fleet && header.fleet.working) || {}) !== before) { seq++; fullDirty = true; }
 }
 const actHits = new Map();   // seat -> [timestamps]
+function runningCloudForHead(tag) {
+  if (!/^[0-9a-f]{40}$/.test(String(tag || ''))) return '';
+  let id = '';
+  for (const line of activity) {
+    if (!line || (line.kind !== 'cloud_agent' && line.kind !== 'agent')) continue;
+    if (line.tag !== tag) continue;
+    const agent = typeof line.agent === 'string' ? line.agent : '';
+    if (!ACT_AGENT.test(agent)) continue;
+    const action = String(line.action || '');
+    if (action === 'launch' || action === 'reply') id = agent;
+    else if ((action === 'finished' || action === 'finish' || action === 'cancel') && id === agent) id = '';
+  }
+  return id;
+}
+// A finished cloud line stays here. It is not copied onto the inbox as run_end.
+function foldCloudHead(d) {
+  if (!d || (d.kind !== 'cloud_agent' && d.kind !== 'agent') || !/^[0-9a-f]{40}$/.test(d.tag || '')) return { line: d, skip: false };
+  const running = runningCloudForHead(d.tag);
+  if (!running || running === d.agent) return { line: d, skip: false };
+  if (d.action === 'launch') return { line: { ...d, agent: running, action: 'reply' }, skip: false };
+  if (d.action === 'finished' || d.action === 'finish' || d.action === 'cancel') return { line: d, skip: true };
+  return { line: d, skip: false };
+}
 function validActivity(d, now = Date.now()) {
   if (!d || typeof d !== 'object' || Array.isArray(d)) return 'not an object';
   for (const k of Object.keys(d)) {
@@ -2942,10 +2976,13 @@ async function handle(req, res) {
     // optional seat (one line format everywhere): must name the token's own seat; the stored seat comes from the token
     if (d.seat != null && !activitySeatOk(d.seat, seat)) return json(req, res, 403, { error: 'seat mismatch' });
     if (!actRateOk(seat, now)) return json(req, res, 429, { error: 'rate limited (60/min)' }, { 'Retry-After': '60' });
+    const folded = foldCloudHead(d);
+    if (folded.skip) return json(req, res, 202, { ok: true });
+    const src = folded.line;
     actSeq++;
-    const line = { id: `${ACT_EPOCH}.${actSeq}`, seq: actSeq, seat, t_ct: d.t_ct, kind: d.kind, action: d.action };
-    for (const k of ['to', 'from', 'agent', 'tag', 'room', 'note']) if (d[k] != null) line[k] = d[k];
-    if (d.pr != null) line.pr = safePrUrl(d.pr);
+    const line = { id: `${ACT_EPOCH}.${actSeq}`, seq: actSeq, seat, t_ct: src.t_ct, kind: src.kind, action: src.action };
+    for (const k of ['to', 'from', 'agent', 'tag', 'room', 'note']) if (src[k] != null) line[k] = src[k];
+    if (src.pr != null) line.pr = safePrUrl(src.pr);
     rememberActivity(line);
     appendArchive('activity', line);
     activityEvent(line);
@@ -2970,10 +3007,13 @@ async function handle(req, res) {
       if (why) { rejected.push({ n: i + 1, error: why }); return; }
       const seat = displaySeat(id) || id;
       if (!actRateOk(seat, now)) { rejected.push({ n: i + 1, error: 'rate limited' }); return; }
+      const folded = foldCloudHead(d);
+      if (folded.skip) return;
+      const src = folded.line;
       actSeq++;
-      const line = { id: `${ACT_EPOCH}.${actSeq}`, seq: actSeq, seat, t_ct: d.t_ct, kind: d.kind, action: d.action, via: 'ingest' };
-      for (const k of ['to', 'from', 'agent', 'tag', 'room', 'note']) if (d[k] != null) line[k] = d[k];
-      if (d.pr != null) line.pr = safePrUrl(d.pr);
+      const line = { id: `${ACT_EPOCH}.${actSeq}`, seq: actSeq, seat, t_ct: src.t_ct, kind: src.kind, action: src.action, via: 'ingest' };
+      for (const k of ['to', 'from', 'agent', 'tag', 'room', 'note']) if (src[k] != null) line[k] = src[k];
+      if (src.pr != null) line.pr = safePrUrl(src.pr);
       rememberActivity(line); appendArchive('activity', line); observeTurn(id, d.kind, d.action); added++;
     });
     if (added) { seq++; header = mergedHeader(); fullDirty = true; }

@@ -1,9 +1,13 @@
 #!/bin/sh
 # Post {kind:cloud_agent, action:launch|finished} for this bc- agent.
 # Fail open. Always exit 0. Stdout is {}. The key is LIVE_ACTIVITY_KEY from
-# the environment only and is never printed. Stdin is the hook payload, not
-# the key. A file stamp dedupes launch across processes. Curl gives up inside
-# the 2s hook limit.
+# the environment only and is never printed. It is the bearer for POST /activity
+# only. SEAT_KEYS is not read. A pull request uses the seat App token.
+# Stdin is the hook payload, not the key. A file under
+# .xray/state/cloud-activity/ dedupes launch across processes. Curl gives up
+# in 1s, under the 2s hook limit. completed, aborted, and error post finished.
+# That line is not an inbox run_end. A running row for this git head resumes
+# the same bc- id.
 finish() {
   printf '%s\n' '{}'
   exit 0
@@ -59,6 +63,19 @@ if [ -z "$root" ]; then
 fi
 stamp_dir="$root/.xray/state/cloud-activity"
 stamp="$stamp_dir/$id"
+sha=
+if command -v git >/dev/null 2>&1; then
+  sha=$(git -C "$root" rev-parse --verify HEAD 2>/dev/null || true)
+  sha=$(printf '%s' "$sha" | tr -d '[:space:]')
+  printf '%s' "$sha" | grep -Eq '^[0-9a-f]{40}$' || sha=
+fi
+if [ "$action" = launch ] && [ -n "$sha" ] && [ -f "$stamp_dir/head-$sha" ]; then
+  owner=$(head -n 1 "$stamp_dir/head-$sha" 2>/dev/null || true)
+  owner=$(printf '%s' "$owner" | tr -d '[:space:]')
+  if printf '%s' "$owner" | grep -Eq '^bc-[A-Za-z0-9_-]{2,40}$' && [ "$owner" != "$id" ] && [ -f "$stamp_dir/$owner" ]; then
+    finish
+  fi
+fi
 if [ "$action" = launch ] && [ -f "$stamp" ]; then
   finish
 fi
@@ -67,10 +84,17 @@ t_raw=$(TZ=America/Chicago date +%Y-%m-%dT%H:%M:%S%z 2>/dev/null || true)
 t_ct=$(printf '%s' "$t_raw" | sed -E 's/([+-][0-9]{2})([0-9]{2})$/\1:\2/')
 printf '%s' "$t_ct" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}[+-][0-9]{2}:[0-9]{2}$' || finish
 
-body=$(printf '{"kind":"cloud_agent","action":"%s","agent":"%s","t_ct":"%s"}' "$action" "$id" "$t_ct")
+if [ -n "$sha" ]; then
+  body=$(printf '{"kind":"cloud_agent","action":"%s","agent":"%s","t_ct":"%s","tag":"%s"}' "$action" "$id" "$t_ct" "$sha")
+else
+  body=$(printf '{"kind":"cloud_agent","action":"%s","agent":"%s","t_ct":"%s"}' "$action" "$id" "$t_ct")
+fi
 if [ "$action" = launch ]; then
   mkdir -p "$stamp_dir" 2>/dev/null || finish
   : > "$stamp" 2>/dev/null || finish
+  if [ -n "$sha" ]; then
+    printf '%s\n' "$id" > "$stamp_dir/head-$sha" 2>/dev/null || true
+  fi
 fi
 
 base=${url%/}
