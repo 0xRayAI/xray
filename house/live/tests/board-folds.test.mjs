@@ -94,6 +94,35 @@ test('mesh, stats, roster, cards, and activity start open in both themes', async
         assert.notEqual(visible.cards, 'none', `${theme} ${width}`);
         assert.notEqual(visible.log, 'none', `${theme} ${width}`);
         if (width === 1280 && theme === 'dark') {
+          const side = await page.evaluate(() => {
+            const probe = document.createElement('div');
+            document.body.appendChild(probe);
+            const paint = (prop, value) => { probe.style[prop] = value; return getComputedStyle(probe)[prop]; };
+            const read = (id) => {
+              const cs = getComputedStyle(document.getElementById(id));
+              return { bg: cs.backgroundColor, border: cs.borderTopWidth + ' ' + cs.borderTopStyle + ' ' + cs.borderTopColor, open: !document.getElementById(id).classList.contains('collapsed') };
+            };
+            const out = {
+              line: paint('borderTop', '1px solid var(--line)'),
+              openBg: paint('backgroundColor', 'var(--stat-bg)'),
+              hoverBg: paint('backgroundColor', 'var(--log-hover)'),
+              recent: read('cardRecent'), history: read('cardHist'), work: read('trackBox'), queue: read('queueBox'),
+              cloud: read('cloudFold'), stats: read('statsFold'), cards: read('cardsFold'),
+            };
+            probe.remove();
+            return out;
+          });
+          const sections = [side.recent, side.history, side.work, side.queue, side.cloud, side.stats, side.cards];
+          for (const row of sections) assert.equal(row.border, side.line, JSON.stringify(row));
+          for (const row of [side.recent, side.history, side.work, side.queue, side.cloud]) {
+            assert.equal(row.open, false);
+            assert.equal(row.bg, 'rgba(0, 0, 0, 0)');
+          }
+          assert.equal(side.stats.bg, side.openBg);
+          assert.equal(side.cards.bg, side.openBg);
+          await page.hover('#queueBox');
+          const hovered = await page.evaluate(() => getComputedStyle(document.getElementById('queueBox')).backgroundColor);
+          assert.equal(hovered, side.hoverBg);
           const cards = await page.evaluate(() => {
             const body = document.getElementById('waveBody');
             const cs = getComputedStyle(body);

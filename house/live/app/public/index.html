@@ -463,6 +463,10 @@ button.wstat.on { outline: 2px solid var(--focus); background: var(--panel); }
 .fresh.amber .fresh-dot { background: var(--fresh-amber); }
 .fresh.red .fresh-dot { background: var(--fresh-red); }
     #cardRecent, #queueBox, #cardHist, #trackBox, #statsFold, #cardsFold, #cloudFold { margin-top: 8px; }
+    #wave > .fold { border: 1px solid var(--line); border-radius: 8px; background: transparent; padding: 0 8px; }
+    #wave > .fold:not(.collapsed) { background: var(--stat-bg); }
+    #wave > .fold:hover { background: var(--log-hover); }
+    #wave > .fold.collapsed > .fold-head { border-bottom-color: transparent; }
     #cardRecent, #trackBox, #queueBox { flex: 0 1 auto; }
 #cardRecentList, #queueList, #cardHistList { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 #cardRecentList li, #queueList li, #cardHistList li { font-size: 12px; }
