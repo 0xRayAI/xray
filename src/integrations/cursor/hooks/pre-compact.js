@@ -24,6 +24,7 @@ import {
   writeCursorSessionReceipt,
   writeCursorUsageReceipt,
 } from './cursor-usage-receipt.js';
+import { maybeRunReflectionStub } from '../../hooks/pipeline-hook-runtime.mjs';
 
 async function loadPlates() {
   const { existsSync } = await import('node:fs');
@@ -134,6 +135,11 @@ async function main() {
         ...(intent ? { intent } : {}),
       });
       bootPath = writeSessionBoot(root, payload);
+      try {
+        maybeRunReflectionStub(root);
+      } catch {
+        /* reflection is observational; never block compact */
+      }
       stationLine = payload.stationLine;
       const stampedAt = new Date().toISOString();
       const hostProof = eventClass === EVENT_CLASS_HOST;
