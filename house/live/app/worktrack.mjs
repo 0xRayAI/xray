@@ -478,15 +478,95 @@ function linkedCard(value, onBoard) {
   return '';
 }
 
+const BC_MENTION = /\b(bc-[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*)/;
+
+/** bc id anywhere in a turn tag or a branch name, plus the text after it. */
+function cloudMention(text) {
+  const raw = String(text || '');
+  const match = BC_MENTION.exec(raw);
+  if (!match) return null;
+  const id = match[1];
+  const track = raw.slice(match.index + id.length).trim().replace(/^[·:\-]+\s*/, '');
+  return { id, track };
+}
+
+function boardCardKey(repo, number, board) {
+  const num = Number(number);
+  if (!repo || !Number.isInteger(num) || num < 1) return '';
+  const hit = (board || []).find(card => card && String(card.repo || '').toLowerCase() === String(repo).toLowerCase() && Number(card.number) === num && card.key);
+  if (hit) return String(hit.key);
+  const key = `${repo}#${num}`;
+  return CARD_REF.test(key) ? key : '';
+}
+
+/** A turn track is `owner/repo#n`, `#n`, or a bare number that matches one board card. */
+function trackCard(track, board) {
+  const raw = String(track || '').trim();
+  if (!raw) return '';
+  const direct = cardRefOf(raw);
+  if (direct) return direct;
+  const marked = raw.match(/#(\d{1,8})\b/) || raw.match(/^(\d{1,8})(?:\b|[-#])/);
+  if (!marked) return '';
+  const num = Number(marked[1]);
+  const hits = (board || []).filter(card => card && Number(card.number) === num && card.key);
+  if (!hits.length) return '';
+  if (hits.length === 1) return String(hits[0].key);
+  const pr = hits.find(card => card.kind === 'pr' || card.kind === 'packet');
+  return String((pr || hits[0]).key);
+}
+
+function prOfCard(key, board) {
+  const hit = (board || []).find(card => card && String(card.key || '') === key);
+  return hit ? safePrUrl(hit.url) : '';
+}
+
+/** Fill an empty card or PR from a turn tag (`bc-<id> <track>`) or a head_ref that carries the id. */
+function linkCloudCards(rows, { activity = [], events = [], board = [] } = {}) {
+  const list = rows || [];
+  function touch(id, card, pr) {
+    if (!id) return;
+    for (const row of list) {
+      if (!row || !cloudIdsAlias(row.bcId, id)) continue;
+      if (card && !row.card) row.card = card;
+      if (pr && !row.pr) row.pr = pr;
+      if (row.card && !row.pr) {
+        const url = prOfCard(row.card, board);
+        if (url) row.pr = url;
+      }
+    }
+  }
+  const texts = [];
+  for (const row of activity || []) {
+    if (!row || typeof row !== 'object') continue;
+    const tag = typeof row.tag === 'string' ? row.tag : '';
+    const label = typeof row.label === 'string' ? row.label : '';
+    texts.push({ text: tag || label, event: row });
+  }
+  for (const event of events || []) {
+    if (!event || typeof event !== 'object') continue;
+    const blob = [event.head_ref, event.branch, event.ref, event.label, event.title].filter(value => typeof value === 'string').join(' ');
+    if (blob) texts.push({ text: blob, event });
+  }
+  for (const item of texts) {
+    const mention = cloudMention(item.text);
+    if (!mention) continue;
+    const fromEvent = boardCardKey(item.event && item.event.repo, item.event && item.event.number, board);
+    const card = fromEvent || trackCard(mention.track, board);
+    const pr = safePrUrl(item.event && (item.event.source || item.event.url || item.event.pr)) || safePr(item.event && item.event.pr);
+    touch(mention.id, card, pr);
+  }
+  return list;
+}
+
 /** One board row per cloud agent. Latest line wins the state; an earlier seat, card, or PR stays. */
-export function boardCloudAgents({ agents = [], activity = [], links = [], board = [], now = Date.now() } = {}) {
+export function boardCloudAgents({ agents = [], activity = [], links = [], board = [], events = [], now = Date.now() } = {}) {
   const onBoard = boardIds(board);
-  const events = [];
+  const lines = [];
   for (const row of agents || []) {
     if (!row || typeof row !== 'object') continue;
     const state = boardStateOfStatus(row.status);
     if (!state) continue;
-    events.push({
+    lines.push({
       bcId: row.agent,
       seat: row.seat && row.seat !== UNASSIGNED ? row.seat : '',
       pr: typeof row.pr === 'string' ? row.pr : '',
@@ -501,7 +581,7 @@ export function boardCloudAgents({ agents = [], activity = [], links = [], board
     const state = boardStateOfAction(row.action);
     if (!state) continue;
     const tag = typeof row.tag === 'string' ? row.tag : '';
-    events.push({
+    lines.push({
       bcId: row.agent,
       seat: row.seat || row.by || '',
       pr: safePrUrl(row.pr),
@@ -510,9 +590,9 @@ export function boardCloudAgents({ agents = [], activity = [], links = [], board
       updated_ct: typeof row.t_ct === 'string' ? row.t_ct : '',
     });
   }
-  events.sort((a, b) => (Date.parse(a.updated_ct) || 0) - (Date.parse(b.updated_ct) || 0));
+  lines.sort((a, b) => (Date.parse(a.updated_ct) || 0) - (Date.parse(b.updated_ct) || 0));
   const by = new Map();
-  for (const ev of events) {
+  for (const ev of lines) {
     const id = String(ev.bcId || '').trim();
     if (!AGENT_ID.test(id)) continue;
     const prev = by.get(id);
@@ -539,6 +619,7 @@ export function boardCloudAgents({ agents = [], activity = [], links = [], board
     if (!prev.pr && pr) prev.pr = pr;
   }
   const rows = [...by.values()].sort((a, b) => (Date.parse(b.updated_ct) || 0) - (Date.parse(a.updated_ct) || 0) || a.bcId.localeCompare(b.bcId));
+  linkCloudCards(rows, { activity, events, board });
   const flagged = foldCloudIds(rows).map(row => (!row.card && !row.pr ? { ...row, flag: 'card missing' } : row));
   return markStaleCloud(flagged, now);
 }

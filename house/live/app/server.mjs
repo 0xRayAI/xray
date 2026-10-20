@@ -17,7 +17,7 @@ import { seatPresence, presentSeat, foldSeatTouch, fleetConfigOf, configuredRost
 import { parseAllowlist, mergeCards, sourceCardsFrom, projectAllowed, validateItem, workEventToItem, cardNoNudge, workItemNewer } from './source.mjs';
 import { checkRoutesFromDir, readRoutingMap, createLoginResolver, auditLogins } from './routes.mjs';
 import { fingerprint, tripwire, createClock, wakeTitle, mutedSeats, selectStallSeats } from './governor.mjs';
-import { acceptWaveCards, attachPacketCards, burnQuiet, isPlanCard, liveWorkCount, postedCards, retainSeedCards, resolveWaveSeed, scheduleWaves } from './wave-schedule.mjs';
+import { acceptWaveCards, applyBrief, attachPacketCards, burnQuiet, isPlanCard, liveWorkCount, postedCards, retainSeedCards, resolveWaveSeed, scheduleWaves } from './wave-schedule.mjs';
 import { createArch1Launch, ARCH1_CANON, cardKeyOf } from './arch1-launch.mjs';
 import { configureWorkTrack, acceptCursorWebhook, appendWake, applyCloudOwners, boardCloudAgents, canonSeatToken, cloudIdsAlias, cloudTurnId, deriveTrackFromDir, displaySeat, isPacket, loadSeatAgentMap, openCloudTurns, readJsonl, readWakeRows, safePrUrl, seatForAgentId, stampCriticCloud, toToken } from './worktrack.mjs';
 import { wakeConfig, createWakeState, classifyBatch, gateLine, noteSent, releaseDue, publicStats, fullStats, restoreWakeBook, viewLine } from './wake-gate.mjs';
@@ -955,7 +955,7 @@ let githubCardAt = 0;
 try {
   const cardsPath = path.join(STATE_DIR, 'cards.json');
   const parsed = JSON.parse(fs.readFileSync(cardsPath, 'utf8'));
-  bfCards = Array.isArray(parsed.cards) ? parsed.cards : [];
+  bfCards = (Array.isArray(parsed.cards) ? parsed.cards : []).map(applyBrief);
   waveCards = bfCards.slice();
   const u = parsed.updated_ct;
   const t = typeof u === 'number' ? u : Date.parse(String(u ?? ''));
@@ -1075,7 +1075,7 @@ function ensurePacketCard(line) {
     number: Number.isInteger(number) ? number : 0,
     title: String(line.title || '').slice(0, 120), url: String(line.url || '').slice(0, 300),
     owner: String(owner || '').slice(0, 24), stage: 'open', state: 'live',
-    packet: {}, packet_ok: false, missing: ['acceptance', 'next owner'],
+    packet: {}, packet_ok: true, missing: [],
     beats: [], last_beat_t: Date.now(), stall: false,
   }]);
   publishBoard();
@@ -1086,7 +1086,7 @@ function githubEvents() {
 function publishBoard(updatedCt) {
   const merged = mergeCards(waveCards, sourceCardsFrom(itemsFromWork(), { seats: SEAT_IDS }));
   const scheduled = waveBoard(merged);
-  scheduled.cards = attachPacketCards(scheduled.cards, githubEvents());
+  scheduled.cards = attachPacketCards(scheduled.cards, githubEvents()).map(applyBrief);
   const sig = JSON.stringify(scheduled.cards);
   if (sig === boardSig) return;
   boardSig = sig;
@@ -1516,6 +1516,7 @@ function cloudAgentBoard() {
       activity: activityCloudRows(),
       links: arch1CloudLinks(),
       board: bfCards,
+      events: githubEvents(),
     });
   } catch (e) { console.log('cloud agents: ' + ((e && e.message) || 'read failed')); return []; }
 }

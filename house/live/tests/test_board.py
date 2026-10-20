@@ -633,6 +633,73 @@ class Stats(unittest.TestCase):
             Path(named.name).unlink(missing_ok=True)
 
 
+class BriefExempt(unittest.TestCase):
+    """packet_ok was false at live_board.py when acceptance or next owner was missing. That line is the badge."""
+
+    def ev(self, n, kind, ago, **kw):
+        if kind == "pr_open":
+            kw.setdefault("pr_state", "open")
+        return {"id": f"{R}#{n}:{kind}:{ago}", "t_ct": ct(ago), "kind": kind, "repo": R, "number": n,
+                "from": "Builder", "source": f"https://github.com/{R}/pull/{n}", **kw}
+
+    def card(self, evs, number):
+        import live_board
+        cards = {c["number"]: c for c in live_board.model(evs)["cards"] if c.get("repo") == R}
+        return cards[number]
+
+    def test_an_issue_never_needs_a_brief(self):
+        card = self.card([self.ev(41, "issue_open", 60, title="follow-up", pr_state="open")], 41)
+        self.assertEqual(card["kind"], "issue")
+        self.assertTrue(card["packet_ok"])
+        self.assertEqual(card["missing"], [])
+
+    def test_a_release_pr_is_exempt(self):
+        card = self.card([self.ev(490, "pr_open", 60, title="release(grok-bot): 0.1.11")], 490)
+        self.assertTrue(card["packet_ok"])
+        self.assertEqual(card["missing"], [])
+
+    def test_a_body_or_branch_packet_passes_without_acceptance(self):
+        import live_packet
+        body = "Investigation, scope, and the test list are in `PACKET.md`."
+        self.assertTrue(live_packet.carries(body))
+        self.assertEqual(live_packet.parse(body), {})
+        card = self.card([self.ev(493, "pr_open", 60, title="fix(reflection)", packet_file=True)], 493)
+        self.assertTrue(card["packet_ok"])
+        self.assertTrue(card["packet_file"])
+
+    def test_a_plain_pr_still_needs_a_brief(self):
+        card = self.card([self.ev(388, "pr_open", 60, title="docs: seek map")], 388)
+        self.assertFalse(card["packet_ok"])
+        self.assertEqual(card["missing"], ["acceptance", "next owner"])
+
+    def test_a_packet_card_is_exempt(self):
+        import live_board
+        self.assertTrue(live_board.brief_exempt({
+            "key": "0xrayai/xray#485", "kind": "packet", "born": "packet", "title": "handoff critic_fail", "packet": {},
+        }))
+
+    def test_card_fields_marks_packet_md_and_a_branch_file(self):
+        import urllib.error
+        import live_collect
+        fields = live_collect.card_fields({"title": "fix", "state": "open", "body": "See PACKET.md on the branch.", "number": 493})
+        self.assertTrue(fields["packet_file"])
+        self.assertIsNone(fields["packet"])
+
+        class Ok:
+            token = "x"
+            def rest(self, path, params=None, etag=None, essential=False):
+                return 200, {"name": "PACKET.md"}, None, None
+
+        class Missing:
+            token = "x"
+            def rest(self, path, params=None, etag=None, essential=False):
+                raise urllib.error.HTTPError(path, 404, "missing", None, None)
+
+        self.assertTrue(live_collect.packet_file_on_ref(Ok(), "acme/app", "abc"))
+        self.assertFalse(live_collect.packet_file_on_ref(Missing(), "acme/app", "abc"))
+        self.assertFalse(live_collect.packet_file_on_ref(Ok(), "acme/app", ""))
+
+
 class BeatSentence(unittest.TestCase):
     def test_reopen_is_named_in_the_beat_sentence(self):
         board = Path(os.environ.get("MESH_FEED_DIR", HERE.parent / "feed")) / "live_board.py"

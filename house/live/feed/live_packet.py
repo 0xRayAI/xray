@@ -143,6 +143,26 @@ def _flush_field(out, name, lines):
         out.setdefault(name, value)
 
 
+def carries(body):
+    """True when the text is a packet, names PACKET.md, or has a packet heading or Packet: line.
+
+    A parsed field block counts. So does a branch file named in the body. The collector
+    still stores only the sanitized fields, never the body.
+    """
+    text = str(body or "")
+    if not text.strip():
+        return False
+    if parse(text):
+        return True
+    if re.search(r"(?i)\bPACKET\.md\b", text):
+        return True
+    if re.search(r"(?im)^#{1,6}\s*packet\s*$", text):
+        return True
+    if re.search(r"(?im)^\s*\**packet\**\s*:", text):
+        return True
+    return False
+
+
 def parse(body):
     """-> {field: text} for the fields present (cleaned), or {} when the body has no packet."""
     if not body:
