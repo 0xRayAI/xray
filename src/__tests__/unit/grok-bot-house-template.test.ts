@@ -147,10 +147,10 @@ describe('grok-bot house template — USMail docs', () => {
     expect(startAt).toBeGreaterThan(promptAt);
     expect(endAt).toBeGreaterThan(startAt);
     expect(skill).toContain('before the work');
-    expect(skill).toContain('On every exit');
+    expect(skill).toContain('When the cloud finishes or is cancelled');
     expect(skill).toContain('../../OP-PROC.md');
     expect(skill).toContain('https://github.com/0xRayAI/xray/blob/main/house/OP-PROC.md');
-    expect(skill).toContain('one fixed summary the seat wrote, or it is omitted');
+    expect(skill).toContain('An owner message always passes `--note "<gist>"`');
     expect(skill).toContain('stay out of `--note`');
     expect(skill).toContain('does not send a reply whose only job is to mark the turn');
     expect(skill).toContain('Continue the reply');

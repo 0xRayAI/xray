@@ -4,6 +4,16 @@ Every file a new fleet edits to map its seats. Each section shows **ours** (Bifr
 
 Seats (ours): blinky, critic, forge, herald, magnet, nibbler, sound, arch1 (`feed/fleet-roster.json`).
 
+## Board rule
+
+A new fleet reads these before the seat map. Board rule. On every owner message run `live-inbox <seat> --prompt --from owner --note "<gist>"`. Ack a handled line with `live-inbox <seat> --ack <id>`, or `live-inbox <seat> --ack all` once every open line is handled. A cloud agent run uses `live-inbox <seat> --turn start --tag "bc-<first8> <track>"` and `live-inbox <seat> --turn end --tag "bc-<first8>"`. `--from owner` is required today.
+
+Kanban note. The live page shows a read-only kanban above Activity. Columns are open, review, fix, merge, retest, and done. The deep link is `?card=`.
+
+History note. Every activity line is archived to history. The word owner is the owner via LIVE_OWNER or the owner-name.
+
+The public board does not serve the history archive or the kanban yet.
+
 ## inbox-roles.json
 
 `feed/routing/inbox-roles.json` is **our install's config: edit it in place**. The kit defaults other fleets copy live in `feed/routing/inbox.py` and stay untouched (it is vendored; see its header).

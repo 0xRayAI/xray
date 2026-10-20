@@ -4,6 +4,8 @@ A card is one GitHub issue or pull request. A beat is a real event on it. A pack
 
 The live page shows the same cards in a kanban above the activity list. A column is the card's stage (`open`, `review`, `fix`, `merge`, `retest`, `done`). A closed card sits in `done`. A click opens the timeline. The GitHub link is on the card face.
 
+Kanban note. The live page shows a read-only kanban above Activity. Columns are open, review, fix, merge, retest, and done. The deep link is `?card=`. The public board does not serve the history archive or the kanban yet.
+
 When `LIVE_URL` is set, the board seats see is the collector board (`GET /cards`). When `LIVE_URL` is unset, the board is hand-kept `house/WAVEBOARD.md`. `feed/live_mesh.py` runs `feed/live_collect.py` and `feed/live_board.py` every 45 seconds (`LIVE_WATCH_S`, default 45). An empty box board does not replace those cards.
 
 ## Event to card
@@ -86,7 +88,7 @@ Turns and owner messages are posted by the seat, with its own key, to `POST /act
 | What | Where | Line |
 |---|---|---|
 | Turn start / end, background task start / end (desktop runs too), watcher start / stop | `POST /activity` | `{"t_ct","seat","kind":"turn"\|"subagent"\|"watcher","action":"start"\|"end","tag"?}` |
-| Owner → seat message, a 1:1 or a room (a pulse) | `POST /activity` via `live-inbox <seat> --prompt` (no `--from`; `from` is the `name:` line under `## Owner` in `house/HOUSE.md`; a missing line warns and uses owner; add `--room <name>` in a room). `--note` is a seat-written fixed summary or omitted | `{"t_ct","seat","kind":"prompt","action":"sent","from","to","room"?,"note"?}`. `note` is one line, at most 240 characters. Keys named body, text, or message are refused. `name: Blaze` still renders `Blaze → <seat>`. The seat stays working for 10 minutes. |
+| Owner → seat message, a 1:1 or a room (a pulse) | Board rule. On every owner message run `live-inbox <seat> --prompt --from owner --note "<gist>"`. Ack a handled line with `live-inbox <seat> --ack <id>`, or `live-inbox <seat> --ack all` once every open line is handled. A cloud agent run uses `live-inbox <seat> --turn start --tag "bc-<first8> <track>"` and `live-inbox <seat> --turn end --tag "bc-<first8>"`. `--from owner` is required today. Add `--room <name>` in a room. | `{"t_ct","seat","kind":"prompt","action":"sent","from","to","room"?,"note"?}`. `note` is one line, at most 240 characters. Keys named body, text, or message are refused. The rendered sender is the word owner via `LIVE_OWNER` or the owner-name. The seat stays working for 10 minutes. |
 | Cloud agent launch / finish | `fleet/cloud-agents.jsonl` | `{"t_ct","by","action":"launch"\|"reply"\|"finished"\|"cancel","agent","pr"}` |
 
 Seats post those turn and prompt lines with their seat key. A seat counts as active and working while a prompt pulse from the last 10 minutes is open, while it has an open turn or task, or while one of its cloud agents is still running. Pulses never become inbox lines or wakes (see [inbox.md](inbox.md), routing guardrails).
@@ -195,5 +197,7 @@ Until the first card write the light says "Cards still building".
 A webhook fires for the seat that has to act. The line's `seat` wins, then a handoff `to`, then the card owner. An unassigned `issue_open`, or an issue whose `labels` include `P1` or `p1`, wakes forge. Blinky's routed copy is stored and skipped (`fanout`). A `pr_labeled` P1 is not that rule. A `pr_comment` stored for blinky and the author wakes the author (the reason matching "comment on your", otherwise the one seat that is not blinky). Blinky is the extra copy. Another real target on that same comment, such as an @mention, still wakes. A missing or empty `sha` is never a shared sha, so a later issue is not a `repeat_sha`. The same kind to the same seat and `repo#n` inside 900s, with no new sha, is a `cooldown` skip. A new sha inside that window or the rolling 60-minute cap (6 sent wakes) is queued and sent when the window rolls. `flag: hotfix` skips the cap and the per-kind cooldown. Clock wakes (timed run, empty board, plan, nudge L1–L3) still post, including with an empty `lines` array, and they wait out an open turn the same way an inbox line does. `BIFROST_WAKES` of `off`, `0`, `false`, or `no` stores the line and sends nothing. `header.wake_stats` and `/healthz` are counts only. `GET /wake-stats` uses the same key gate as `GET /cards` and adds the last 50 skips plus the queued count.
 
 ## History and the queue
+
+History note. Every activity line is archived to history. The word owner is the owner via LIVE_OWNER or the owner-name.
 
 `GET /history` lists archive days. `GET /history?date=YYYY-MM-DD` returns that day's events. `GET /history/cards` returns the latest version of each card. Card versions are append-only (`key` + stage + state + the card's own update time). A row with no key is not stored. The open queue is a view of unacked inbox lines. Filtering it does not delete the inbox file. Lines older than the live window stay in the daily archive.

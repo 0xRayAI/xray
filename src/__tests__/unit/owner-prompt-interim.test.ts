@@ -71,4 +71,35 @@ describe('owner-prompt interim line', () => {
     }
     expect(skill).not.toContain('Pass no `--from`');
   });
+
+  it('slices the three stale copies to the finish tag without a track', () => {
+    const step3 = readFileSync(path.join(root, 'grok-bot/templates/house/BOARD-PROMPT.md'), 'utf8')
+      .split('\n')
+      .find((row) => row.startsWith('3. ')) ?? '';
+    for (const phrase of [PROMPT, ACK, ACK_ALL, TURN_START, TURN_END]) {
+      expect(step3).toContain(phrase);
+    }
+    expect(step3).not.toContain('--tag wake');
+    expect(step3).not.toContain('with no `--from`');
+    expect(step3).not.toContain('--turn end --tag "bc-<first8> <track>"');
+
+    const mesh = readFileSync(path.join(root, 'grok-bot/templates/house/HOUSE.md'), 'utf8')
+      .split('\n')
+      .find((row) => row.includes('Live mesh')) ?? '';
+    for (const phrase of [PROMPT, ACK, ACK_ALL, TURN_START, TURN_END]) {
+      expect(mesh).toContain(phrase);
+    }
+    expect(mesh).not.toContain('--turn end --tag "bc-<first8> <track>"');
+
+    const skill = readFileSync(path.join(root, 'grok-bot/skills/board-prompt/SKILL.md'), 'utf8');
+    const note = skill.split('## Note')[1]?.split('## When a post fails')[0] ?? '';
+    expect(note).toContain('--note "<gist>"');
+    expect(note).not.toContain('omitting `--note` is the usual post');
+    const step5 = skill.split('\n').find((row) => row.startsWith('5. ')) ?? '';
+    expect(step5).toContain(TURN_END);
+    expect(step5).not.toContain('--turn end --tag "bc-<first8> <track>"');
+    expect(step5).not.toContain('--prompt');
+    expect(step5).not.toContain('--ack');
+    expect(step5).not.toContain('every exit');
+  });
 });

@@ -152,6 +152,12 @@ When `LIVE_URL` is unset, open cards are hand-kept in `house/WAVEBOARD.md`. When
 
 Watchers follow Beats on the repos named in `house/WATCHERS.md`. On new activity they create or bump a card (signal→ticket) with a Done·Verify·Next owner: a Bifrost card when `LIVE_URL` is set, and a card in local `house/WAVEBOARD.md` when `LIVE_URL` is unset. GitHub signals: issue, pull request, review, checks, merge. X signals: mention or reply, only when Dist policy allows that class. Watcher ≠ implementer ≠ Dist — queue only; seats execute; watchers do not ship Dist or merge. Quiet when nothing changed. CoS owns the board digest. Forge owns the engineering cadence. A wake hands off to the owner's chat. It does not launch or resume a cloud agent.
 
+Board rule. On every owner message run `live-inbox <seat> --prompt --from owner --note "<gist>"`. Ack a handled line with `live-inbox <seat> --ack <id>`, or `live-inbox <seat> --ack all` once every open line is handled. A cloud agent run uses `live-inbox <seat> --turn start --tag "bc-<first8> <track>"` and `live-inbox <seat> --turn end --tag "bc-<first8>"`. `--from owner` is required today.
+
+Kanban note. The live page shows a read-only kanban above Activity. Columns are open, review, fix, merge, retest, and done. The deep link is `?card=`.
+
+History note. Every activity line is archived to history. The word owner is the owner via LIVE_OWNER or the owner-name.
+
 ## Ship cadence (proposed 2026-10-13, needs Arch1's approval)
 
 Blaze, 10:36 CT: "this is new ship cadence. understand it document it. live it." Seats run on it now; this section is binding once Arch1 approves.
