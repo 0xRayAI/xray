@@ -9,7 +9,7 @@ set -euo pipefail
 DIR=${SEAT_KEYS_DIR:-/srv/live/run/secrets/seat-keys}
 SERVICE=${LIVE_RAILWAY_SERVICE:-burst-live}
 DEPLOY=${MESH_APP_DEPLOY_DIR:-/srv/live/deploy}
-DEFAULT_SEATS="assistant builder-cloud arch1 forge critic mill blinky herald nibbler sound magnet"   # our 9 + emitter + kit cloud builder
+DEFAULT_SEATS="assistant builder-cloud arch1 forge critic blinky herald nibbler sound magnet"   # our seats + emitter + kit cloud builder
 
 seats_from_json() {
   python3 -c 'import json,sys

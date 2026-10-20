@@ -19,17 +19,17 @@ When `LIVE_URL` is set, the board seats see is the collector board (`GET /cards`
 | `pr_reopen`, `issue_reopen` | Clears closed and stop. The card is live again. |
 | A fleet seat's comment | A comment beat. The author's seat is not the only one that counts. |
 | No beat for 72 hours on an open PR | The card parks. |
-| Handoff packet missing for `NUDGE_L1_S` | Flag `handoff missing`. The owing seat is nudged L1, then L2 after `NUDGE_L2_S`, then L3 after `NUDGE_L3_S`. At L3 the CoS role is woken once to reassign. A room post does not clear it. |
+| Handoff packet missing for `NUDGE_L1_S` | Flag `handoff missing`. The owing seat is nudged L1, then L2 after `NUDGE_L2_S`, then L3 after `NUDGE_L3_S`. CoS is not woken to reassign. A room post does not clear it. |
 
 Stage order is `open` > `review` > `fix` > `merge` > `retest` > `done`. State is `live`, `parked`, or `closed`. PASS at the current head plus green CI moves the card to merge.
 
 ## Nudge ladder
 
-`evalNudges` sends L1 to the next owner, or else the card owner, after `NUDGE_L1_S` (default 3600). L2 goes to the CoS role after `NUDGE_L2_S` (default 1800). L3 repeats to the L1 seat after `NUDGE_L3_S` (default 7200), and on that step the CoS role is woken once to reassign.
+`evalNudges` sends L1 to the next owner, or else the card owner, after `NUDGE_L1_S` (default 3600). L3 repeats to that seat after `NUDGE_L2_S` plus `NUDGE_L3_S` (defaults 1800 and 7200). CoS is not woken to reassign.
 
-A missed handoff is a separate ladder. L1 goes to the owing seat. L2 goes to that same seat. L3 repeats to that seat, and the CoS role is woken once to reassign.
+A missed handoff is a separate ladder. L1 goes to the owing seat. L2 goes to that same seat. L3 repeats to that seat. CoS is not woken to reassign.
 
-An unacked inbox line uses `NUDGE_LINE_S` (default 900) between L1, L2, and L3, all to that seat, and wakes the CoS role at L3. A line on a closed or merged item stays on a plain inbox read and is not nudged.
+An unacked inbox line uses `NUDGE_LINE_S` (default 900) between L1, L2, and L3, all to that seat. A line on a closed or merged item stays on a plain inbox read and is not nudged.
 
 ## Close
 
@@ -127,7 +127,7 @@ Vocabulary: **cards** are the work items (one per PR or issue). **Beats** are re
 
 Each event's `credit` is set by the collector (`feed/live_collect.py` `credit_of`), never blank, first match wins:
 
-1. a `Seat: <seat>` trailer in the commit message (a line on its own, e.g. `Seat: mill`);
+1. a `Seat: <seat>` trailer in the commit message (a line on its own, e.g. `Seat: critic`);
 2. the event's actor / sender login (`actor`, `author`, `sender`, `triggering_actor`, `merged_by`, `user`);
 3. the PR's author (events with a PR number);
 4. the commit author's login for that sha (checks, workflow runs, deploys);
@@ -146,7 +146,7 @@ Our pictures live in `house/live/site/public/avatars/` (copied over the kit page
 | arch1 | `arch1.png` | `docs-site/static/live/bots/minime0x.png` (image reused; the `minime0x[bot]` login runs workflows and credits `github`, not arch1) |
 | Blaze | `blaze.png` | his X profile picture (@Blaze0x1) |
 
-Every other seat (mill, magnet, nibbler, sound) shows the drawn letter badge; there is no 404. To add one: commit a square PNG as `site/public/avatars/<seat>.png`, add `<seat>: '<seat>'` to `L.setAvatars` in `site/public/site-config.js`, and deploy. The kit maps no avatars.
+Every other seat (magnet, nibbler, sound) shows the drawn letter badge; there is no 404. To add one: commit a square PNG as `site/public/avatars/<seat>.png`, add `<seat>: '<seat>'` to `L.setAvatars` in `site/public/site-config.js`, and deploy. The kit maps no avatars.
 
 ## What makes a seat working
 

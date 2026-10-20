@@ -252,7 +252,8 @@ test('the server flags a missed handoff and does not post the packet', async () 
     assert.equal(l2.seat, 'forge');
     await new Promise(r => setTimeout(r, 1200));
     const escalated = await (await fetch(base + '/nudges', { headers: { Authorization: 'Bearer ' + forgeKey } })).json();
-    assert.ok(escalated.nudges.some(n => n.kind === 'reassign' && n.seat === 'blinky' && String(n.id).includes(':handoff:') && !n.closed_at));
+    assert.ok(escalated.nudges.some(n => n.kind === 'handoff' && n.level === 3 && n.seat === 'forge' && !n.closed_at));
+    assert.equal(escalated.nudges.some(n => n.seat === 'blinky' && String(n.id).includes(':handoff:')), false);
     const bad = await fetch(base + '/inbox', { method: 'POST', headers: { Authorization: 'Bearer ' + forgeKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ lines: [{ id: 'not-a-packet', t_ct: new Date().toISOString(), seat: 'critic', from: 'forge', type: 'info', kind: 'ready', repo: '0xRayAI/xray', number: 70, title: 'no', url: '', reason: 'no' }] }) });
     assert.equal(bad.status, 403);
     const shaLess = { id: 'handoff:0xrayai/xray#70:ready:', t_ct: new Date().toISOString(), seat: 'critic', from: 'forge', to: 'critic', type: 'packet', kind: 'ready', repo: '0xRayAI/xray', number: 70, title: 'handoff ready', url: 'https://github.com/0xRayAI/xray/pull/70', reason: 'handoff ready' };

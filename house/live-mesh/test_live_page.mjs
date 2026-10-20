@@ -144,7 +144,7 @@ test('page has no external scripts and no longer depends on the mp4', () => {
 test('seat images map to bots/<seat>.png, rails get none, badges are one letter', () => {
   for (const k of L.BOT_IMAGES) assert.equal(L.botImage(k), `bots/${k}.png`);
   for (const k of ['GitHub', 'X', 'mymuse.house', 'constructor', 'stranger']) assert.equal(L.botImage(k), null);
-  assert.equal(L.badgeLetter('mill'), 'M');
+  assert.equal(L.badgeLetter('magnet'), 'M');
   assert.equal(L.badgeLetter('critic'), 'C');
   assert.equal(L.badgeLetter('mymuse.house'), 'M');
   const bots = path.join(liveDir, 'bots');
@@ -264,10 +264,10 @@ test('check 3: no packets or dots without real traffic; faint idle wire flow all
   assert.equal(L.pingsAt(ev, quietT, 1100).length, 0);
   assert.equal(L.orbitStep(16, L.pingsAt(ev, quietT, 1100), false), 0);
   assert.equal(L.pulse(-1, false), 0);
-  const frozen = { glow: L.wireGlow(0, 0.3, true), bob: [...L.bob('mill', 0, true)] };
+  const frozen = { glow: L.wireGlow(0, 0.3, true), bob: [...L.bob('herald', 0, true)] };
   assert.deepEqual(frozen, { glow: null, bob: [0, 0] });
   for (const t of [0, 16, 1000, 60000]) {
-    assert.deepEqual([...L.bob('mill', t, true)], frozen.bob);
+    assert.deepEqual([...L.bob('herald', t, true)], frozen.bob);
     assert.equal(L.wireGlow(t, 0.3, true), frozen.glow);
   }
   const page = readFileSync(path.join(liveDir, 'index.html'), 'utf8');
@@ -310,8 +310,7 @@ test('image seats draw bare (no ring); only letter seats keep circle + ring; bla
   assert.match(html, /#blackout \{ color: #ffb347; font-weight: 700;/);
 });
 
-test('glyph seats: mill is the gear, nibbler the earthworm; no letter seats left but the fallback stays', () => {
-  assert.equal(L.GLYPH.mill, '\u2699\uFE0F');
+test('glyph seats: nibbler is the earthworm; no letter seats left but the fallback stays', () => {
   assert.equal(L.GLYPH.nibbler, '\u{1FAB1}');
   const lettered = [...L.SEAT_NAMES].filter((k) => !L.GLYPH[k] && !L.BOT_IMAGES.includes(k));
   assert.deepEqual(lettered, [], 'every seat has an image or a glyph');
@@ -331,18 +330,18 @@ test('nibbler seat: on the mesh and strip, wired to X and blinky, its events lan
   assert.deepEqual(edges, ['nibbler-X', 'blinky-nibbler']);
   assert.deepEqual([...L.resolveNodes({ kind: 'comment', from: 'nibbler', to: 'GitHub' })], ['nibbler', 'GitHub']);
   assert.equal(L.whoTag({ kind: 'comment', from: 'nibbler' }), 'NIBBLER');
-  assert.equal(L.SEAT_NAMES.length, 7);
-  assert.equal(L.fleetLine({ nibbler: 1 }), 'Fleet: 1 live / 6 idle');
+  assert.equal(L.SEAT_NAMES.length, 6);
+  assert.equal(L.fleetLine({ nibbler: 1 }), 'Fleet: 1 live / 5 idle');
 });
 
 test('push and feed_push ride from the seat to GitHub with their own words', () => {
-  assert.deepEqual([...L.resolveNodes({ kind: 'push', from: 'mill', to: 'GitHub' })], ['mill', 'GitHub']);
-  assert.deepEqual([...L.resolveNodes({ kind: 'feed_push', from: 'mill', to: 'GitHub' })], ['mill', 'GitHub']);
+  assert.deepEqual([...L.resolveNodes({ kind: 'push', from: 'forge', to: 'GitHub' })], ['forge', 'GitHub']);
+  assert.deepEqual([...L.resolveNodes({ kind: 'feed_push', from: 'forge', to: 'GitHub' })], ['forge', 'GitHub']);
   assert.deepEqual([...L.resolveNodes({ kind: 'push', from: 'someone', to: 'GitHub' })], ['GitHub', 'forge'], 'unknown pusher falls back to the GitHub rail');
   assert.equal(L.KIND_WORD.push, 'push');
   assert.equal(L.KIND_WORD.feed_push, 'live-wire push');
   assert.deepEqual([...L.eventColor({ kind: 'push', from: 'forge' })], [...L.COLOR.forge]);
-  assert.deepEqual([...L.eventColor({ kind: 'feed_push', from: 'mill' })], [88, 210, 180]);
+  assert.deepEqual([...L.eventColor({ kind: 'feed_push', from: 'forge' })], [88, 210, 180]);
   assert.equal(L.headline({ repo: '0xRayAI/xray', kind: 'feed_push' }), 'xray \u00b7 live-wire push');
 });
 
@@ -353,12 +352,12 @@ test('the pill is feed freshness and working is not in the fleet count', () => {
   assert.equal(L.freshnessLabel(now - 30_000, now), 'LIVE');
   assert.equal(L.BURST_POLL_MS, 10000);
   const hot = { forge: 1 };
-  assert.equal(L.fleetLine(hot), 'Fleet: 1 live / 6 idle');
+  assert.equal(L.fleetLine(hot), 'Fleet: 1 live / 5 idle');
   const until = new Date(now + 60_000).toISOString();
-  const working = L.seatWorking({ mill: until, forge: new Date(now - 1000).toISOString() }, now);
-  assert.equal(working.mill, 1);
+  const working = L.seatWorking({ herald: until, forge: new Date(now - 1000).toISOString() }, now);
+  assert.equal(working.herald, 1);
   assert.equal(working.forge, undefined);
-  assert.equal(L.fleetLine(hot), 'Fleet: 1 live / 6 idle', 'a working seat is not added to N of M');
+  assert.equal(L.fleetLine(hot), 'Fleet: 1 live / 5 idle', 'a working seat is not added to N of M');
 });
 
 test('a cursor poll treats 304 as unchanged and 409 as a full refetch', async () => {

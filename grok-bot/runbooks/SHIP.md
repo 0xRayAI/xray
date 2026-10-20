@@ -13,7 +13,7 @@ Rules: pack [OP-PROC](../OP-PROC.md) (Seat identity, Branch + PR always). After 
 8. **Two hats:** a merge, deploy or receipt rule the ship seat follows or hears is written into this runbook, OP-PROC or the lexicon on the next wave; a chat-only rule counts as missing.
 9. Merges, deploys and outside writes go out from the ship seat's 1:1, never a group room.
 
-The ship seat also takes dev cards when the implementer is full; the reviewer still reviews its heads.
+The ship seat also takes dev cards when the cloud agent is full; the reviewer still reviews its heads.
 
 ## Hotfix
 

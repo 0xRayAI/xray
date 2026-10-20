@@ -29,7 +29,7 @@ The chain, end to end:
 
 Register only when `CURSOR_WEBHOOK_SECRET` is at least 32 characters. The launch sends that secret to Cursor with the webhook URL (`<base>/cursor/webhook`). Cursor signs each delivery. The server rejects a bad or missing `X-Webhook-Signature` with `401` before it writes. A verified delivery that is a new agent status appends `agents.jsonl` and republishes the header, so `applyTrackWorking` can show the seat working while the agent runs.
 
-`SEAT_AGENT_MAP` example: `{"bc-mill0001":"mill","bc-nib*":"nibbler"}`.
+`SEAT_AGENT_MAP` example: `{"bc-forge0001":"forge","bc-nib*":"nibbler"}`.
 
 ## GitHub actor to seat
 

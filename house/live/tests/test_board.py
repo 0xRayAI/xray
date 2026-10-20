@@ -249,22 +249,21 @@ class Model(unittest.TestCase):
         self.assertEqual((c["stage"], c["state"]), ("done", "closed"))
         self.assertNotIn("nudge_to", c)
 
-    def test_mill_owns_a_card_forge_opened(self):
+    def test_git_author_named_mill_is_not_a_seat(self):
         import live_collect as uc
-        self.assertEqual(uc.commit_login({"author": {"name": "mill", "user": None}}), "git:mill")
-        self.assertEqual(uc.rest_author_login({"author": None, "commit": {"author": {"name": "mill"}}}), "git:mill")
-        self.assertEqual((uc.node("git:mill"), uc.credit("git:mill")), ("mill", "mill"))
+        self.assertIsNone(uc.commit_login({"author": {"name": "mill", "user": None}}))
+        self.assertIsNone(uc.rest_author_login({"author": None, "commit": {"author": {"name": "mill"}}}))
         self.assertIsNone(uc.commit_login({"author": {"name": "Someone", "user": None}}))
         issue = self.ev(294, "issue_open", 5000, title="board", **{"from": "forge"})
         alone = {c["number"]: c for c in self.w.model([issue])["cards"] if not c.get("pinned")}
         self.assertEqual(alone[294]["owner"], "forge")
-        commit = dict(self.ev(303, "pr_commit", 800, message="land the wave #294"), **{"from": "mill", "credit": "mill", "author": "mill"})
+        commit = dict(self.ev(303, "pr_commit", 800, message="land the wave #294"), **{"from": "forge", "credit": "forge", "author": "forge"})
         later = self.ev(294, "issue_comment", 100, **{"from": "forge"})
         cards = {c["number"]: c for c in self.w.model([
             issue, self.ev(303, "pr_open", 2000, title="pr", **{"from": "forge"}), commit, later,
         ])["cards"] if not c.get("pinned")}
-        self.assertEqual(cards[294]["owner"], "mill")
-        self.assertEqual(cards[303]["owner"], "mill")
+        self.assertEqual(cards[294]["owner"], "forge")
+        self.assertEqual(cards[303]["owner"], "forge")
 
     def test_shipped_closes_list_closes_those_cards_and_refs_stay_open(self):
         import live_collect as uc

@@ -1,19 +1,19 @@
 /* Bifrost overlay (our install only; app/deploy.sh copies house/live/site/public/ over the kit public/).
-   The strip is blinky, critic, forge and mill. Arch1 stays on the canvas as an outside party.
+   The strip is blinky, critic, and forge. Arch1 stays on the canvas as an outside party.
    herald, magnet, nibbler and sound are parked and are not drawn. Blaze is the owner node.
    No Lead / Others node (unknown senders go to GitHub's node). No product node: burst-live IS the Bifrost board, never a node on it (Blaze 2026-10-14). */
 (function (L) {
   'use strict';
   function reset(obj, next) { Object.keys(obj).forEach(function (k) { delete obj[k]; }); for (var k in next) obj[k] = next[k]; }
-  var STRIP = ['blinky', 'critic', 'forge', 'mill'];
-  var ROLE = { blinky: 'chief of staff', critic: 'reviewer', forge: 'eng primary', mill: 'implementer', arch1: 'outside party' };
+  var STRIP = ['blinky', 'critic', 'forge'];
+  var ROLE = { blinky: 'chief of staff', critic: 'reviewer', forge: 'eng primary', arch1: 'outside party' };
   L.AGENTS.splice.apply(L.AGENTS, [0, L.AGENTS.length].concat(STRIP.map(function (s) { return [s, ROLE[s]]; })));
   L.SEAT_NAMES.splice.apply(L.SEAT_NAMES, [0, L.SEAT_NAMES.length].concat(STRIP));
-  // 920 x 400 canvas: the four seats plus Arch1 on the top row, rails in the middle.
+  // 920 x 400 canvas: the three seats plus Arch1 on the top row, rails in the middle.
   // CloudAgents is the cursor cloud-agent circle (kit position). Pings land on it, not on GitHub.
-  reset(L.SATS, { blinky: [90, 55], critic: [250, 55], forge: [410, 55], mill: [570, 55], arch1: [820, 55],
+  reset(L.SATS, { blinky: [90, 55], critic: [250, 55], forge: [410, 55], arch1: [820, 55],
     GitHub: [110, 200], Blaze: [300, 200], Railway: [690, 200], CloudAgents: [150, 330], Assistant: [840, 335] });
-  var C = { blinky: [88, 210, 180], critic: [255, 150, 90], forge: [255, 140, 70], mill: [190, 170, 120], arch1: [255, 120, 100],
+  var C = { blinky: [88, 210, 180], critic: [255, 150, 90], forge: [255, 140, 70], arch1: [255, 120, 100],
     GitHub: [200, 210, 230], Blaze: [255, 120, 60], Railway: [170, 130, 255], CloudAgents: [130, 190, 255], Assistant: [116, 170, 156] };
   reset(L.COLOR, C);
   var LAB = { Blaze: 'Blaze', GitHub: 'GitHub', Railway: 'Railway', Assistant: 'Assistant', arch1: 'Arch1', CloudAgents: 'Cloud agents' };

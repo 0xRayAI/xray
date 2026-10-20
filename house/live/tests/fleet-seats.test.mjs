@@ -6,7 +6,7 @@ import { spawn } from 'node:child_process';
 import crypto from 'node:crypto'; import path from 'node:path'; import fs from 'node:fs'; import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 const APP = process.env.MESH_APP_DIR || path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app');
-const SEATS = ['arch1', 'forge', 'critic', 'mill', 'blinky', 'herald', 'nibbler', 'sound', 'magnet'];
+const SEATS = ['arch1', 'forge', 'critic', 'blinky', 'herald', 'nibbler', 'sound', 'magnet'];
 let PORT = 0, BASE = '';
 const KEY = Object.fromEntries(SEATS.map(s => [s, s + '-' + crypto.randomBytes(8).toString('hex')]));
 const INGEST = crypto.randomBytes(32).toString('hex'), H = k => crypto.createHash('sha256').update(k).digest('hex');

@@ -6,8 +6,8 @@ sys.path.insert(0, str(FEED))
 import inbox_pass, inbox  # noqa: E402,F401  (inbox_pass adds extra_seats routing)
 
 ROLES = json.loads((FEED / "routing" / "inbox-roles.json").read_text())
-SEATS = ["arch1", "forge", "critic", "mill", "blinky", "herald", "nibbler", "sound", "magnet"]
-ASKS = {"forge": "@forge merge ask #262", "critic": "@critic re-Light please", "mill": "@mill rebase ask #263",
+SEATS = ["arch1", "forge", "critic", "blinky", "herald", "nibbler", "sound", "magnet"]
+ASKS = {"forge": "@forge merge ask #262", "critic": "@critic re-Light please",
         "blinky": "@blinky board update", "herald": "@herald Dist post", "nibbler": "@nibbler take a look",
         "sound": "@sound check this", "magnet": "@magnet hangar listing", "arch1": "@arch10x deep-review #262"}
 
@@ -42,7 +42,7 @@ class FleetSeats(unittest.TestCase):
         self.assertIn("critic", seats("review wanted", kind="review_requested"))
 
     def test_aliases(self):
-        for name, sid in {"forge": "forge", "critic": "critic", "mill": "mill", "blinky": "blinky", "herald": "herald",
+        for name, sid in {"forge": "forge", "critic": "critic", "blinky": "blinky", "herald": "herald",
                           "Nibbler": "nibbler", "sound": "sound", "magnet": "magnet", "arch1": "arch1"}.items():
             self.assertEqual(inbox_pass.aliases_of(ROLES).get(name), sid, name)
 
@@ -85,11 +85,11 @@ class FleetSeats(unittest.TestCase):
         self.assertTrue(all("merged PR" in l["reason"] for l in lines), lines)
         self.assertEqual(seats("x review comment · xray #266", watch=True, kind="review_comment", to="critic"), ["blinky", "critic"])
 
-    def test_mill_targeted_events_land_in_mill_inbox(self):
+    def test_mill_asks_land_in_forge_inbox(self):
         for label, kind in [("@mill please take #287", "issue_comment"), ("implement ask · xray #290", "pr_comment"),
                             ("dev ask: CI job for house/live", "issue_open"), ("mill wave 4 · xray #291", "issue_comment")]:
-            self.assertIn("mill", seats(label, kind=kind), label)
-        self.assertNotIn("mill", seats("unrelated comment", kind="issue_comment"))
+            self.assertIn("forge", seats(label, kind=kind), label)
+            self.assertNotIn("mill", seats(label, kind=kind), label)
 
     def test_issue_comment_reaches_issue_author_seat(self):
         self.assertEqual(seats("x comment · xray issue #9", watch=True, kind="issue_comment", to="forge"), ["blinky", "forge"])
@@ -99,7 +99,7 @@ class FleetSeats(unittest.TestCase):
 
     def test_issue_comment_reaches_blinky_and_body_mentions_route(self):
         self.assertEqual(seats("x comment · xray issue #9", watch=True, kind="issue_comment"), ["blinky"])
-        self.assertEqual(seats("x comment · xray issue #9", watch=True, kind="issue_comment", mentions=["mill"]), ["blinky", "mill"])
+        self.assertEqual(seats("x comment · xray issue #9", watch=True, kind="issue_comment", mentions=["mill"]), ["blinky", "forge"])
         self.assertIn("forge", seats("xray #9 opened", kind="issue_open", mentions=["forge"]))
 
     def test_own_comment_not_routed_to_self_and_one_line_per_seat(self):
@@ -111,12 +111,12 @@ class FleetSeats(unittest.TestCase):
 
 class FleetRoster(unittest.TestCase):
     """burst-live roster is committed (fleet-roster.json + fleet-nodes.json, shipped by deploy.sh), never a hand-set var."""
-    ROSTER = ["blinky", "critic", "forge", "mill", "herald", "magnet", "nibbler", "sound", "arch1"]
+    ROSTER = ["blinky", "critic", "forge", "herald", "magnet", "nibbler", "sound", "arch1"]
 
     def test_roster_is_the_nine_seats_and_blaze_is_not_one(self):
         import live_fleet
         seats, fold, board = live_fleet.load_seat_config(str(FEED / "fleet-roster.json"))
-        self.assertEqual(board, ["blinky", "critic", "forge", "mill"])
+        self.assertEqual(board, ["blinky", "critic", "forge"])
         self.assertEqual(sorted(seats), sorted(self.ROSTER))
         raw = json.loads((FEED / "fleet-roster.json").read_text())
         self.assertEqual(raw["outside"], ["arch1"])
@@ -228,11 +228,14 @@ class Guardrails275(unittest.TestCase):
                                     "t_ct": "2026-10-13T05:00:00-05:00", "id": "c-" + login, "author": login, "from": "critic"}, ROLES)
             info = [l for l in closed if l.get("type") == "info"]
             self.assertEqual(info, [], login)
-        os.environ["SEAT_BOTS"] = json.dumps({"mill": "mill0x[bot]"})
+        os.environ["SEAT_BOTS"] = json.dumps({"magnet": "magnet0x[bot]", "mill": "mill0x[bot]"})
         try:
             hit = inbox._direct({"kind": "pr_close", "label": "closed", "repo": "example-org/x", "number": 14,
-                                 "t_ct": "2026-10-13T05:00:00-05:00", "id": "c-mill-bot", "author": "mill0x[bot]", "from": "critic"}, ROLES)
-            self.assertEqual([(l["seat"], l["reason"]) for l in hit if l.get("type") == "info"], [("mill", "your PR closed")])
+                                 "t_ct": "2026-10-13T05:00:00-05:00", "id": "c-magnet-bot", "author": "magnet0x[bot]", "from": "critic"}, ROLES)
+            self.assertEqual([(l["seat"], l["reason"]) for l in hit if l.get("type") == "info"], [("magnet", "your PR closed")])
+            gone = inbox._direct({"kind": "pr_close", "label": "closed", "repo": "example-org/x", "number": 16,
+                                  "t_ct": "2026-10-13T05:00:00-05:00", "id": "c-mill-bot", "author": "mill0x[bot]", "from": "critic"}, ROLES)
+            self.assertEqual([l for l in gone if l.get("type") == "info"], [])
             bare = inbox._direct({"kind": "pr_close", "label": "closed", "repo": "example-org/x", "number": 15,
                                   "t_ct": "2026-10-13T05:00:00-05:00", "id": "c-mill-bare", "author": "mill", "from": "critic"}, ROLES)
             self.assertEqual([l for l in bare if l.get("type") == "info"], [])

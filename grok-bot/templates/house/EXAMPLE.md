@@ -2,7 +2,7 @@
 
 Name your seats anything.
 
-- coordinator = blinky
+- coordinator = blinky (wave plan, burn, Lane H and Dist packets, onboarding)
 - implementer + publisher = forge
 - reviewer = critic
 - public-posts specialist = herald

@@ -36,7 +36,7 @@ This cadence is how the room decides spend. It is not the Confer feature, which 
 14. Errors to GENESIS. Every confirmed error gets a GENESIS entry the same day it is confirmed.
 
 ## Board
-0. A beat is a real event: a Blaze message, a PR push, a cloud round starting or finishing, a critic verdict, a merge, a deploy, a live proof. Every beat ends with its board row changed in that same turn. A beat that doesn't touch the board hasn't landed. The seat that produced the beat posts one line in the room; CoS turns it into the row change.
+0. A beat is a real event: a Blaze message, a PR push, a cloud round starting or finishing, a critic verdict, a merge, a deploy, a live proof. Every beat ends with its board row changed in that same turn. A beat that doesn't touch the board hasn't landed. The seat that produced the beat updates its card. Bifrost holds the board.
 - Drift check (rule 0a). Cadence owner is CoS. A drift check runs weekdays at 10:45, 12:45, 2:45 and 4:45 CT. It compares every In work and Review row to real PR heads, merges and cloud status, fixes the row, and posts in the eng room only when a row was off. It says nothing when the rows match. Any rule practiced twice goes into OP-PROC the same day (Twice to disk); the 5:35 PM digest flags any that didn't.
 1. The board is a ranked roadmap, not a receipt log. Every receipt updates its card and the next-move ranking in the same turn.
 2. Order: card first, then handoff file, then a room post that cites the card.
@@ -44,7 +44,7 @@ This cadence is how the room decides spend. It is not the Confer feature, which 
 4. Status index at the top: In work, Waiting on Blaze, Backlog, Paused, Verify.
 5. Daily work history is append-only, newest entry first.
 6. Staleness: a card with no movement is flagged after 2 working days and escalated to Blaze after 5.
-7. When a phase closes, CoS starts the next non-capital phase immediately.
+7. When a phase closes, blinky plans the next wave, carded on Bifrost.
 8. Enforcement (P2 code, separate PR): `grok-bot board check` wired into `doctor`, fails closed offline, flags missed routine heartbeats.
 
 ## RACI (who does what)

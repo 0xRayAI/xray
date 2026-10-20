@@ -32,7 +32,7 @@ Humans: same path; start at `README.md`.
 ## Rules
 - Chat “done” is not proof — keep inventory, inspect `ok`, txs, curls.
 - Friend test any public copy ([GIBBERISH-CHECK.md](https://github.com/0xRayAI/xray/blob/main/grok-bot/ops/GIBBERISH-CHECK.md)).
-- Coordinator routes; implementer executes; do not ask the coordinator to mint/deploy for you.
+- Coordinator keeps the four CoS duties (wave plan, burn, Lane H and Dist packets, onboarding). The cloud agent executes. Do not ask the coordinator to mint/deploy for you.
 - This package **orchestrates**. It does not replace `0xray` or Groover.
 
 ## Adjust from plant (monitor)

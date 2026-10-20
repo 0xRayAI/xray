@@ -321,7 +321,7 @@ test('GET /ingest/events: ingest secret only; events since the cursor', async ()
   assert.deepEqual(b.events.map(e => e.id), ['ie2']);
 });
 
-test('nudges: L1 to next owner after 60 min quiet, L2 to blinky (CoS) 30 min later, one open per card per level, a beat closes; per-seat auth', async () => {
+test('nudges: L1 to next owner after 60 min quiet, no L2 to blinky, one open per card, a beat closes; per-seat auth', async () => {
   const H = k => ({ headers: k ? { Authorization: 'Bearer ' + k } : {} });
   const now = Date.now(), R = 'example-org/app';
   const card = (n, quietMin, extra = {}) => ({ key: R + '#' + n, kind: 'pr', repo: R, number: n, title: 'card ' + n, url: 'https://github.com/' + R + '/pull/' + n,
@@ -336,22 +336,22 @@ test('nudges: L1 to next owner after 60 min quiet, L2 to blinky (CoS) 30 min lat
   assert.deepEqual(ns.map(n => [n.card.split('#')[1], n.level, n.seat]).sort(), [['901', 1, 'critic'], ['904', 1, 'builder'], ['905', 1, 'forge']]);   // retest -> Tester
   await push([A, B, C, D]);   // 905 done (tick / fixed / resolved) -> its nudge closes before any L2
   assert.ok((await (await fetch(BASE + '/nudges', H(OKEY))).json()).nudges.filter(n => n.kind !== 'silent').find(n => n.card.endsWith('#905')).closed_at);   // timing: B (10 min) and parked C get none
-  await new Promise(r => setTimeout(r, 1200));                                       // L2 window (NUDGE_L2_S=1)
+  await new Promise(r => setTimeout(r, 1200));                                       // L2 window (NUDGE_L2_S=1): no CoS nudge
   ns = (await (await fetch(BASE + '/nudges', H(OKEY))).json()).nudges.filter(n => n.kind !== 'silent');
-  assert.deepEqual(ns.filter(n => n.level === 2).map(n => [n.card.split('#')[1], n.seat]).sort(), [['901', 'blinky'], ['904', 'blinky']]);   // none for closed 905
+  assert.deepEqual(ns.filter(n => n.level === 2 || n.seat === 'blinky'), []);
   await push([A, B, C, D]); await fetch(BASE + '/nudges', H(OKEY));
   ns = (await (await fetch(BASE + '/nudges', H(OKEY))).json()).nudges.filter(n => n.kind !== 'silent');
-  assert.equal(ns.length, 5);                                                          // dedupe: one per card per level
-  const since = (await (await fetch(BASE + '/nudges?since=' + encodeURIComponent(ns[2].id), H(OKEY))).json()).nudges.filter(n => n.kind !== 'silent');
+  assert.equal(ns.length, 3);                                                          // 901, 904, and closed 905
+  const since = (await (await fetch(BASE + '/nudges?since=' + encodeURIComponent(ns[0].id), H(OKEY))).json()).nudges.filter(n => n.kind !== 'silent');
   assert.equal(since.length, 2);
   const cards = await (await fetch(BASE + '/cards?seat=critic', H(CKEY))).json();
   assert.deepEqual(cards.cards.map(c => c.number), [901]);                             // next owner Reviewer
-  assert.deepEqual(cards.cards[0].beats.filter(b => b.nudge).map(b => b.what), ['nudge L1 → critic', 'nudge L2 → blinky']);
+  assert.deepEqual(cards.cards[0].beats.filter(b => b.nudge).map(b => b.what), ['nudge L1 → critic']);
   assert.equal((await fetch(BASE + '/cards?seat=coord', H(CKEY))).status, 403);
   assert.equal((await fetch(BASE + '/cards?seat=critic', H())).status, 401);
   assert.equal((await (await fetch(BASE + '/cards?seat=critic', H(OKEY))).json()).cards.length, 1);
   const feedNow = await (await fetch(BASE + '/live-events.json', { headers: { Cookie: cookie } })).json();
-  assert.ok(feedNow.board.cards.find(c => c.number === 901).nudge === 2);      // the page sees nudge beats
+  assert.equal(feedNow.board.cards.find(c => c.number === 901).nudge, 1);      // the page sees the L1 nudge beat
   const A2 = { ...A, last_beat_t: now, beats: [...A.beats, { t: now, what: 'pushed', id: 'b2' }] };   // a real beat
   await push([A2, B, C, D]);
   ns = (await (await fetch(BASE + '/nudges', H(OKEY))).json()).nudges.filter(n => n.kind !== 'silent');
@@ -368,7 +368,7 @@ test('nudges: L1 to next owner after 60 min quiet, L2 to blinky (CoS) 30 min lat
   assert.deepEqual((await (await fetch(BASE + '/inbox/critic?since=L-c1', H(CKEY))).json()).lines, []);
 });
 
-test('silent seat: >2h without activity while owning live work -> fleet seat silent + one blinky (CoS) nudge per quiet stretch', async () => {
+test('silent seat: >2h without activity while owning live work -> fleet seat silent + one nudge on that seat per quiet stretch', async () => {
   const H = { headers: { Authorization: 'Bearer ' + OKEY } }, now = Date.now(), R = 'example-org/app';
   const iso = ms => new Date(ms).toISOString();
   const c = { key: R + '#950', kind: 'pr', repo: R, number: 950, title: 'x', url: '', owner: 'Lead', stage: 'review', state: 'live',
@@ -379,7 +379,7 @@ test('silent seat: >2h without activity while owning live work -> fleet seat sil
   const silent = async () => (await (await fetch(BASE + '/nudges', H)).json()).nudges.filter(n => n.kind === 'silent' && n.about === 'critic');
   await push(now - 3 * 3600e3, now - 3 * 3600e3);          // Reviewer owns #950 (next owner) and is quiet 3h; Tester owns nothing
   let s = await silent();
-  assert.deepEqual(s.map(n => [n.about, n.seat, n.level, !!n.closed_at]), [['critic', 'blinky', 2, false]]);
+  assert.deepEqual(s.map(n => [n.about, n.seat, n.level, !!n.closed_at]), [['critic', 'critic', 2, false]]);
   const f = await (await fetch(BASE + '/live-events.json', { headers: { Cookie: cookie } })).json();
   assert.equal(f.fleet.seats.Reviewer.silent, true); assert.ok(!f.fleet.seats.Tester.silent); assert.ok(!f.fleet.seats.Lead.silent);   // humans never
   await push(now - 3 * 3600e3, now - 3 * 3600e3); s = await silent();

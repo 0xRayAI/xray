@@ -725,7 +725,7 @@ class Fleet:
         if t is None or action not in CLOUD_ACTIONS or not CLOUD_AGENT_ID.fullmatch(agent):
             return
         by = str(d.get("by", ""))
-        by = by if by in CLOUD_SEATS else (seat_of(by) or "Others")   # #275: fleet seats (forge, mill, ...) too
+        by = by if by in CLOUD_SEATS else (seat_of(by) or "Others")   # #275: fleet seats (forge, critic, ...) too
         repo = re.sub(r"[^A-Za-z0-9._-]", "", str(d.get("repo", "")).split("/")[-1])[:32] or "repo"
         tag = re.sub(r"\s+", " ", str(d.get("tag", ""))).strip()[:40] or "-"
         prev = self.cloud["agents"].get(agent)

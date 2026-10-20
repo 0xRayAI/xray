@@ -1,6 +1,6 @@
 import { listenPort } from './free-port.mjs';
-// Nudge ownership: the owning seat is woken L1 -> L3; at L3 with no move the CoS role (routing seats.coord, not a
-// name) is woken too, to reassign. A stalled-board timed run also tells the CoS role.
+// Nudge ownership: the owning seat is woken L1 -> L3. The CoS role is not woken to reassign.
+// An empty board still wakes the coord seat once.
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
@@ -29,12 +29,12 @@ PORT = await listenPort(srv); BASE = `http://127.0.0.1:${PORT}`;   // #304: port
 after(async () => { srv.kill(); await new Promise(r => srv.exitCode != null || srv.signalCode ? r() : srv.once('exit', r)); sink.close(); fs.rmSync(DATA, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 }); fs.rmSync(ROUTE, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 }); });
 const until = async fn => { for (let i = 0; i < 150 && !fn(); i++) await new Promise(r => setTimeout(r, 100)); return fn(); };
 
-test('owner is nudged L1 -> L3, then the CoS role is woken to reassign (once)', async () => {
-  assert.ok(await until(() => got.some(g => g.path === '/critic' && /L3 no move on forge: reassign/.test(g.body.reason))), logs);
+test('owner is nudged L1 -> L3 and the coord seat is not woken to reassign', async () => {
+  assert.ok(await until(() => got.filter(g => g.path === '/forge' && /^nudge L3/.test(g.body.reason)).length >= 1), logs);
   const levels = got.filter(g => g.path === '/forge').map(g => (/^nudge (L\d)/.exec(g.body.reason) || [])[1]).filter(Boolean);
   assert.deepEqual(levels.slice(0, 3), ['L1', 'L2', 'L3']);
   await new Promise(r => setTimeout(r, 1500));
-  assert.equal(got.filter(g => g.path === '/critic' && /reassign/.test(g.body.reason)).length, 1);
+  assert.equal(got.filter(g => g.path === '/critic' && /reassign/.test(g.body.reason)).length, 0);
   assert.ok(levels.length <= 3 && got.filter(g => g.path === '/forge' && /^nudge L/.test(g.body.reason)).length === 3, 'stops after L3');
 });
 
