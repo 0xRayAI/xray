@@ -11,12 +11,13 @@ The rules for the turn are [grok-bot/OP-PROC.md](../../OP-PROC.md) and the house
 
 ## Order
 
-1. Owner message only: `live-inbox <seat> --prompt`. Pass no `--from`. `from` is the `name:` in house config. Add `--room <name>` when that owner message was in a room. A seat DM and a room message from anyone else do not post `--prompt`.
-2. Always, before the work: `live-inbox <seat> --turn start --tag wake`. A webhook wake skips this post. WAKE-ROUTINE step 0 is that one start.
-3. The work.
-4. On every exit, including an early return and an error: `live-inbox <seat> --turn end --tag wake`. A webhook wake skips this post. The WAKE-ROUTINE EXIT trap is that one end.
+1. Owner message only: `live-inbox <seat> --prompt --from owner --note "<gist>"`. Add `--room <name>` when that owner message was in a room. A seat DM and a room message from anyone else do not post `--prompt`.
+2. After handling any inbox line, ack it with `live-inbox <seat> --ack <id>` or `--ack all`.
+3. When you launch or resume a cloud agent, before the work: `live-inbox <seat> --turn start --tag "bc-<first8> <track>"`. A webhook wake skips this post. WAKE-ROUTINE step 0 is that one start.
+4. The work.
+5. On every exit, including an early return and an error, when it finishes or is cancelled: `live-inbox <seat> --turn end --tag "bc-<first8>"`. A webhook wake skips this post. The WAKE-ROUTINE EXIT trap is that one end.
 
-`--tag` is the word `wake`. A webhook wake uses WAKE-ROUTINE for its one `--prompt`, its `--turn start`, and its `--turn end`, and does not also run this skill. A chat turn uses this skill and does not also run step 0.
+A webhook wake uses WAKE-ROUTINE for its one `--prompt`, its `--turn start`, and its `--turn end`, and does not also run this skill. A chat turn uses this skill and does not also run step 0.
 
 ## Note
 

@@ -140,9 +140,9 @@ describe('grok-bot house template — USMail docs', () => {
     expect(skill).toContain('from the owner');
     expect(skill).toContain('a seat DM');
     expect(skill).toContain('or in a room');
-    const promptAt = skill.indexOf('live-inbox <seat> --prompt');
-    const startAt = skill.indexOf('live-inbox <seat> --turn start --tag wake');
-    const endAt = skill.indexOf('live-inbox <seat> --turn end --tag wake');
+    const promptAt = skill.indexOf('live-inbox <seat> --prompt --from owner --note "<gist>"');
+    const startAt = skill.indexOf('live-inbox <seat> --turn start --tag "bc-<first8> <track>"');
+    const endAt = skill.indexOf('live-inbox <seat> --turn end --tag "bc-<first8>"');
     expect(promptAt).toBeGreaterThan(-1);
     expect(startAt).toBeGreaterThan(promptAt);
     expect(endAt).toBeGreaterThan(startAt);

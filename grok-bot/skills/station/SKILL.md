@@ -13,7 +13,7 @@ One boot hook. Light on an owner message. Full after a summary, a wake, or a gat
 
 On any owner message:
 
-1. Post `live-inbox <seat> --prompt`. Do not send message text. `from` is the `name:` line in `house/HOUSE.md`.
+1. On every owner message, first run `live-inbox <seat> --prompt --from owner --note "<gist>"`; after handling any inbox line (in chat or on a wake), ack it right away with `live-inbox <seat> --ack <id>` (or `--ack all` once everything open is handled); when you launch or resume a cloud agent run `live-inbox <seat> --turn start --tag "bc-<first8> <track>"`; when it finishes or is cancelled run `live-inbox <seat> --turn end --tag "bc-<first8>"`. No exceptions for short turns. The gist is not the message text.
 2. Read `.xray/state/STATION.md`.
 
 Light does not read the pack.
