@@ -116,6 +116,77 @@ class Act281(unittest.TestCase):
         self.assertEqual(ok["from"], "Coord")
         self.assertIsNone(push_payload.act_line({"t_ct": ct(0), "seat": "Builder", "kind": "turn", "action": "start", "from": "Coord"}))
 
+    def test_act_line_keeps_prompt_id_and_note_for_a_separate_list(self):
+        raw = {"t_ct": ct(0), "seat": "Builder", "kind": "prompt", "action": "received",
+               "from": "Ada", "id": "ada.9", "note": "fixed summary", "seq": 4}
+        ok = push_payload.act_line(raw)
+        self.assertEqual(ok["id"], "ada.9")
+        self.assertEqual(ok["note"], "fixed summary")
+        self.assertNotIn("seq", ok)
+        dropped = push_payload.act_line({**raw, "id": "has space", "note": "bad\nnote"})
+        self.assertIsNotNone(dropped)
+        self.assertNotIn("id", dropped)
+        self.assertNotIn("note", dropped)
+        turn = push_payload.act_line({"t_ct": ct(0), "seat": "Builder", "kind": "turn", "action": "start", "id": "ada.9", "note": "fixed summary"})
+        self.assertIsNotNone(turn)
+        self.assertNotIn("id", turn)
+        self.assertNotIn("note", turn)
+        f = self.fleet(remote=[ok])
+        rows = live_fleet.activity_prompts(f.path)
+        self.assertEqual(rows, [{"id": "ada.9", "t_ct": ok["t_ct"], "kind": "prompt", "from": "Ada", "note": "fixed summary"}])
+        msgs = [e for e in f.events.values() if e["kind"] == "prompt_message"]
+        self.assertEqual(len(msgs), 1)
+        self.assertNotEqual(msgs[0]["id"], "ada.9")
+        self.assertEqual(msgs[0].get("activity_id"), "ada.9")
+        self.assertEqual(msgs[0].get("note"), "fixed summary")
+
+    def test_collector_prompts_come_from_live_activity(self):
+        import live_board
+        decoy = {"t_ct": ct(30), "seat": "Builder", "kind": "prompt", "action": "sent",
+                 "from": "Ada", "id": "box.1", "note": "box note"}
+        f = self.fleet(remote=[decoy])
+        root = f.path.parent.parent
+        live_dir = root / "live"
+        live_dir.mkdir()
+        live = live_dir / "activity.jsonl"
+        row = {"id": "ada.9", "seq": 7, "seat": "Builder", "t_ct": ct(120), "kind": "prompt",
+               "action": "sent", "from": "Ada", "note": "fixed summary", "room": "owner"}
+        live.write_text(json.dumps({"t_ct": ct(90), "seat": "Builder", "kind": "turn", "action": "start"}) + "\n"
+                        + json.dumps(row) + "\n", encoding="utf-8")
+        self.assertNotEqual(live.resolve(), (root / "fleet" / "remote-activity.jsonl").resolve())
+        saved = {k: os.environ.get(k) for k in ("LIVE_MODE", "LIVE_ACTIVITY")}
+        try:
+            os.environ["LIVE_ACTIVITY"] = str(live)
+            os.environ.pop("LIVE_MODE", None)
+            box = live_fleet.activity_prompts(f.path)
+            self.assertEqual([r["id"] for r in box], ["box.1"])
+            self.assertEqual(box[0]["note"], "box note")
+            os.environ["LIVE_MODE"] = "github"
+            rows = live_fleet.activity_prompts(f.path)
+            self.assertEqual(rows, [{"id": "ada.9", "t_ct": row["t_ct"], "kind": "prompt", "from": "Ada", "note": "fixed summary"}])
+            os.environ["LIVE_ACTIVITY"] = str(live_dir / "missing-activity.jsonl")
+            self.assertEqual(live_fleet.activity_prompts(f.path), [])
+        finally:
+            for k, v in saved.items():
+                if v is None:
+                    os.environ.pop(k, None)
+                else:
+                    os.environ[k] = v
+        opened = {"id": "example-org/app#70:issue_open", "t_ct": ct(60), "kind": "issue_open",
+                  "body": "Prompt: ada.9\n", "prompt": "ada.9"}
+        card = {"_beats": []}
+        live_board.prepend_owner_prompt(card, opened, rows, set())
+        beat = card["_beats"][0]
+        self.assertEqual(beat["what"], "owner prompt")
+        self.assertEqual(beat["id"], "ada.9")
+        self.assertEqual(beat["note"], "fixed summary")
+        self.assertEqual(beat["t"], int(live_board._t(row) * 1000))
+        self.assertNotEqual(beat["t"], int(live_board._t(opened) * 1000))
+        empty = {"_beats": []}
+        live_board.prepend_owner_prompt(empty, opened, [], set())
+        self.assertNotIn("note", empty["_beats"][0])
+        self.assertEqual(empty["_beats"][0]["t"], int(live_board._t(opened) * 1000))
+
 
 if __name__ == "__main__":
     unittest.main()

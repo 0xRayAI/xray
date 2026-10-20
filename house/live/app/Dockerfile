@@ -7,6 +7,8 @@ WORKDIR /app
 COPY package.json server.mjs presence.mjs source.mjs archive.mjs origin.mjs routes.mjs governor.mjs arch1-launch.mjs worktrack.mjs handoff.mjs wave-schedule.mjs bifrost-waves.json chicago-stamp.mjs pr-batch.mjs wake-gate.mjs ./
 COPY public ./public
 COPY collector ./collector
+# deploy.sh writes this one-line file from the house config name:. LIVE_OWNER overrides it.
+COPY owner-name ./owner-name
 # collector/ is assembled by deploy.sh (assemble-collector.sh); only its README is in git (#292)
 RUN test -f collector/upstream/fetch_feed.py && test -f collector/live_mesh.py || { \
       echo "ERROR: collector/ is not assembled. Deploy only via house/live/app/deploy.sh (see collector/README.md)." >&2; exit 1; }

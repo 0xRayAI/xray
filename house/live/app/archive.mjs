@@ -67,6 +67,11 @@ export function project(kind, row) {
   return out;
 }
 
+/** Byte length of the daily archived line, including the trailing newline. */
+export function archivedLineBytes(kind, row) {
+  return Buffer.byteLength(JSON.stringify(project(kind, row)) + '\n');
+}
+
 function timeMs(row) {
   for (const c of [row.t_ct, row.closed_at, row.updated_ct]) {
     const t = typeof c === 'number' ? c : Date.parse(c || '');

@@ -9,6 +9,7 @@ When `LIVE_URL` is set, the board seats see is the collector board (`GET /cards`
 | Collector event | On the card |
 |---|---|
 | `pr_open`, `pr_ready` | Beat `opened`. The card is live. |
+| `Prompt: <id>` on the new issue or PR | Beat `owner prompt`, then `opened`. The first beat uses the prompt's time and the stored note. A second card that repeats the id does not take it. |
 | `pr_draft` | The card parks at once. |
 | `review` `APPROVED`, or `critic_pass` | Beat `Reviewer PASS`. |
 | `review` `CHANGES_REQUESTED`, or `critic_fail` | Beat `Reviewer FAIL`. Stage moves to fix. |
@@ -83,12 +84,12 @@ Turns and owner messages are posted by the seat, with its own key, to `POST /act
 | What | Where | Line |
 |---|---|---|
 | Turn start / end, background task start / end (desktop runs too), watcher start / stop | `POST /activity` | `{"t_ct","seat","kind":"turn"\|"subagent"\|"watcher","action":"start"\|"end","tag"?}` |
-| Owner → seat message, a 1:1 or a room (a pulse) | `POST /activity` via `live-inbox <seat> --prompt --from blaze` (add `--room <name>` in a room, `--note "<line>"` for the words) | `{"t_ct","seat","kind":"prompt","action":"sent","from","to","room"?,"note"?}`. `note` is one line, at most 240 characters. Keys named body, text, or message are refused. The board label is `Blaze → <seat>: <note>`. The seat stays working for 10 minutes. `from: blaze` credits **Blaze** |
+| Owner → seat message, a 1:1 or a room (a pulse) | `POST /activity` via `live-inbox <seat> --prompt` (no `--from`; `from` is `name:` in house config; add `--room <name>` in a room). `--note` is a seat-written fixed summary or omitted | `{"t_ct","seat","kind":"prompt","action":"sent","from","to","room"?,"note"?}`. `note` is one line, at most 240 characters. Keys named body, text, or message are refused. `name: Blaze` still renders `Blaze → <seat>`. The seat stays working for 10 minutes. |
 | Cloud agent launch / finish | `fleet/cloud-agents.jsonl` | `{"t_ct","by","action":"launch"\|"reply"\|"finished"\|"cancel","agent","pr"}` |
 
 Seats post those turn and prompt lines with their seat key. A seat counts as active and working while a prompt pulse from the last 10 minutes is open, while it has an open turn or task, or while one of its cloud agents is still running. Pulses never become inbox lines or wakes (see [inbox.md](inbox.md), routing guardrails).
 
-Activity details (#281): a prompt line keeps its sender as `actor` (off-box seats send `from` on `prompt received`). A cloud agent credits the seat that launched it. That seat stays active while the agent's latest line is `launch` or `reply` and that line is newer than six hours. `finished` / `cancel` ends it at once. A line with no update for more than six hours is `stale` and the seat goes idle. A GitHub event that names the `bc-…` id refreshes the clock. It does not idle the seat while the agent is still inside that six-hour window. `live-inbox <seat> --turn start` posts that launch when `CURSOR_AGENT=1` and `CURSOR_CONVERSATION_ID` is the `bc-` id. `live_act` in `paste-block.sh` and `builder-cloud-setup.sh` emits turns, prompts and cloud agents; `tools/live-act-hook.example.sh` wires turn start/end and prompts into an agent hook. Rate limits are the platform's job. Full spec: [`house/burst/ACTIVITY.md`](../../burst/ACTIVITY.md) and [`activity.schema.json`](../../burst/activity.schema.json).
+Activity details (#281): a prompt line keeps its sender as `actor` (off-box seats send `from` on `prompt received`). A cloud agent credits the seat that launched it. That seat stays active while the agent's latest line is `launch` or `reply` and that line is newer than six hours. `finished` / `cancel` ends it at once. A line with no update for more than six hours is `stale` and the seat goes idle. A GitHub event that names the `bc-…` id refreshes the clock. It does not idle the seat while the agent is still inside that six-hour window. `live-inbox <seat> --turn start` posts `kind: turn` only, including inside a cloud agent. Cloud launch and finish come from the cloud-agent hooks. `live_act` in `paste-block.sh` and `builder-cloud-setup.sh` emits turns, prompts and cloud agents; `tools/live-act-hook.example.sh` wires turn start/end and prompts into an agent hook. Rate limits are the platform's job. Full spec: [`house/burst/ACTIVITY.md`](../../burst/ACTIVITY.md) and [`activity.schema.json`](../../burst/activity.schema.json).
 
 ## Cloud agents on the board
 

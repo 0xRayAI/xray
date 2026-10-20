@@ -37,7 +37,10 @@ class WakeTemplate(unittest.TestCase):
             self.assertIn(want, last.lower())
 
     def test_turn_start_and_turn_end_on_every_exit(self):
-        self.assertRegex(self.steps[0], r"live-inbox <seat> --prompt --from blaze")
+        self.assertRegex(self.steps[0], r"live-inbox <seat> --prompt")
+        self.assertNotIn("--from blaze", self.steps[0])
+        self.assertNotIn("--from blaze", self.text)
+        self.assertIn("trap 'live-inbox <seat> --turn end --tag wake; live-inbox <seat> --release' EXIT", self.text)
         self.assertLess(self.steps[0].index("--prompt"), self.steps[0].index("--turn start"))
         self.assertRegex(self.steps[0], r"live-inbox <seat> --turn start --tag wake")
         self.assertIn("--room", self.steps[0])
@@ -46,6 +49,8 @@ class WakeTemplate(unittest.TestCase):
         self.assertIn("1:1", low)
         self.assertIn("room", low)
         self.assertRegex(self.steps[-1], r"live-inbox <seat> --turn end --tag wake")
+        self.assertEqual(self.steps[-1].count("--turn end"), 1)
+        self.assertIn("trap", self.steps[-1].lower())
         end = self.steps[-1].lower()
         self.assertIn("every exit", end)
         for phrase in ("empty inbox", "early return", "error"):
@@ -97,7 +102,8 @@ class Handler(BaseHTTPRequestHandler):
         n = int(self.headers.get("Content-Length") or 0)
         raw = self.rfile.read(n).decode()
         self.server.hits.append({"path": self.path, "auth": self.headers.get("Authorization"), "body": json.loads(raw)})
-        out = b'{"ok":true}'
+        reply = getattr(self.server, "reply", {"ok": True})
+        out = json.dumps(reply).encode()
         self.send_response(202)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(out)))
@@ -119,11 +125,14 @@ class TurnFlag(unittest.TestCase):
         self.keys.mkdir()
         self.secret = "bifrost-seat-key-9f3c7a\n"
         (self.keys / "forge.key").write_text(self.secret)
+        self.house = Path(self.tmp.name) / "HOUSE.md"
+        self.house.write_text("## Owner\nname: Ada\n", encoding="utf-8")
         self.env = {
             "PATH": os.environ["PATH"],
             "LIVE_URL": f"http://127.0.0.1:{self.srv.server_address[1]}",
             "SEAT_KEYS_DIR": str(self.keys),
             "LIVE_CURSORS": str(Path(self.tmp.name) / "cursors"),
+            "HOUSE": str(self.house),
         }
 
     def tearDown(self):
@@ -187,9 +196,10 @@ class TurnFlag(unittest.TestCase):
         self.assertEqual(list(hit["body"]), ["t_ct", "seat", "kind", "action", "from", "to", "room"])
         self.assertEqual(hit["body"]["kind"], "prompt")
         self.assertEqual(hit["body"]["action"], "sent")
-        self.assertEqual(hit["body"]["from"], "blaze")
+        self.assertEqual(hit["body"]["from"], "Ada")
         self.assertEqual(hit["body"]["to"], "forge")
         self.assertEqual(hit["body"]["seat"], "forge")
+        self.assertNotIn("note", hit["body"])
         self.assertEqual(hit["body"]["room"], "ops")
         self.assert_chicago(hit["body"]["t_ct"])
         self.assert_secret_hidden(proc)
@@ -201,12 +211,18 @@ class TurnFlag(unittest.TestCase):
         self.assertEqual(proc.returncode, 0, proc.stderr)
         hit = self.srv.hits[0]
         self.assertEqual(hit["body"]["note"], "check the message on the board")
-        self.assertEqual(hit["body"]["from"], "blaze")
+        self.assertEqual(hit["body"]["from"], "Ada")
         self.assertEqual(hit["body"]["to"], "forge")
         self.assert_secret_hidden(proc)
+        before = len(self.srv.hits)
         bad = self.run_turn("--prompt", "--note", "x" * 241)
         self.assertNotEqual(bad.returncode, 0)
         self.assertIn("short plain line", bad.stderr)
+        self.assertEqual(len(self.srv.hits), before)
+        broken = self.run_turn("--prompt", "--note", "line\nwith a break")
+        self.assertNotEqual(broken.returncode, 0)
+        self.assertEqual(len(self.srv.hits), before)
+        self.assertNotIn("blaze", (broken.stdout + broken.stderr).lower())
 
     def test_prompt_from_override(self):
         proc = self.run_turn("--prompt", "--from", "mill")
@@ -215,6 +231,28 @@ class TurnFlag(unittest.TestCase):
         self.assertEqual(hit["body"]["from"], "mill")
         self.assertNotIn("room", hit["body"])
         self.assert_secret_hidden(proc)
+
+    def test_prompt_prints_ok_and_id_only(self):
+        self.srv.reply = {"ok": True, "id": "ada.9", "key": self.secret.strip(), "token": "planted-token"}
+        self.env["PLANTED_KEY"] = "planted-token"
+        proc = self.run_turn("--prompt")
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        body = json.loads(proc.stdout)
+        self.assertEqual(set(body), {"ok", "id"})
+        self.assertEqual(body, {"ok": True, "id": "ada.9"})
+        self.assertNotIn("planted-token", proc.stdout + proc.stderr)
+        self.assert_secret_hidden(proc)
+        self.assertEqual(self.srv.hits[0]["body"]["from"], "Ada")
+
+    def test_missing_name_exits_2_and_posts_nothing(self):
+        missing = Path(self.tmp.name) / "missing.md"
+        self.env["HOUSE"] = str(missing)
+        proc = self.run_turn("--prompt")
+        self.assertEqual(proc.returncode, 2, proc.stderr)
+        self.assertIn(f"missing name: in {missing}", proc.stderr)
+        self.assertEqual(self.srv.hits, [])
+        blob = (proc.stdout + proc.stderr).lower()
+        self.assertNotIn("blaze", blob)
 
 
 if __name__ == "__main__":

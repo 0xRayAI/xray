@@ -132,14 +132,14 @@ test('a 39-character owner still cards and a 40-character hyphenated owner is em
 
 test('cloud-agents field lists name pr inside the braces and the parentheses', () => {
   const lines = fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'docs', 'board.md'), 'utf8').split('\n');
-  const brace = lines[86].match(/\{[^}]*\}/);
-  assert.ok(brace, 'line 87 brace list');
+  const brace = lines[87].match(/\{[^}]*\}/);
+  assert.ok(brace, 'cloud-agent brace list');
   assert.match(brace[0], /"pr"/);
-  const paren = lines[110].match(/\([^)]*\)/);
-  assert.ok(paren, 'line 111 parenthetical');
+  const paren = lines[111].match(/\([^)]*\)/);
+  assert.ok(paren, 'cloud-agent parenthetical');
   assert.match(paren[0], /`pr`/);
-  assert.match(lines[112], /six fields/);
-  const rows = lines.slice(98, 104);
+  assert.match(lines[113], /six fields/);
+  const rows = lines.slice(99, 105);
   assert.equal(rows.length, 6);
   assert.deepEqual(
     rows.map((row) => (row.match(/`([^`]+)`/) || [])[1]),

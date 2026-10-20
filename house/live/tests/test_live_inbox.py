@@ -75,19 +75,16 @@ class HandoffCommand(unittest.TestCase):
         self.assertEqual(posted["id"], "handoff:0xrayai/xray#22:ready:abc1234")
         self.assertEqual(posted["sha"], "abc1234")
 
-    def test_cloud_turn_start_posts_the_running_agent(self):
+    def test_cloud_turn_posts_kind_turn_only(self):
         agent = "bc-531f2033-90e0-595f-87de-8dfe576ec69c"
         env = {**self.env, "CURSOR_AGENT": "1", "CURSOR_CONVERSATION_ID": agent}
         Inbox.posts = []
         r = subprocess.run([str(TOOL), "forge", "--turn", "start"], env=env, capture_output=True, text=True)
         self.assertEqual(r.returncode, 0, r.stderr)
-        self.assertEqual([p["path"] for p in Inbox.posts], ["/activity", "/activity"])
+        self.assertEqual([p["path"] for p in Inbox.posts], ["/activity"])
         self.assertEqual(Inbox.posts[0]["body"]["kind"], "turn")
         self.assertEqual(Inbox.posts[0]["body"]["action"], "start")
-        self.assertEqual(Inbox.posts[1]["body"]["kind"], "cloud_agent")
-        self.assertEqual(Inbox.posts[1]["body"]["action"], "launch")
-        self.assertEqual(Inbox.posts[1]["body"]["agent"], agent)
-        self.assertEqual(Inbox.posts[1]["body"]["seat"], "forge")
+        self.assertNotIn("cloud_agent", json.dumps(Inbox.posts))
         self.assertNotIn("seat-key-forge", r.stdout + r.stderr)
         Inbox.posts = []
         end = subprocess.run([str(TOOL), "forge", "--turn", "end"], env=env, capture_output=True, text=True)

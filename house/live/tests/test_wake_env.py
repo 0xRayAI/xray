@@ -71,18 +71,19 @@ class WakeEnvFreshShell(unittest.TestCase):
         self.assertIn("export LIVE_URL=", bash_block())
         self.assertIn("export LIVE_CURSORS=", bash_block())
         self.assertIn("live-inbox <seat>", bash_block())
-        self.assertIn("trap 'live-inbox <seat> --release' EXIT", bash_block())
+        self.assertIn("trap 'live-inbox <seat> --turn end --tag wake; live-inbox <seat> --release' EXIT", bash_block())
         r = self.sh(script, OUT=str(recorded))
         self.assertEqual(r.returncode, 0, r.stderr + r.stdout)
         rows = recorded.read_text().splitlines()
-        self.assertGreaterEqual(len(rows), 10, rows)
+        self.assertGreaterEqual(len(rows), 15, rows)
         url, cursors, keys, wake_run, args = rows[:5]
         self.assertEqual(url, "https://burst-live-production.up.railway.app")
         self.assertEqual(cursors, str(self.home / ".burst" / "cursors"))
         self.assertEqual(keys, str(self.home / ".burst" / "seat-keys"))
         self.assertRegex(wake_run, r"^\d+$")
         self.assertEqual(args, "forge")
-        self.assertEqual(rows[9], "forge --release")
+        self.assertEqual(rows[9], "forge --turn end --tag wake")
+        self.assertEqual(rows[14], "forge --release")
 
     def test_documented_ack_runs_with_seat(self):
         text = TEMPLATE.read_text()

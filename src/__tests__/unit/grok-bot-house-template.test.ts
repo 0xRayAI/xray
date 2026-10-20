@@ -84,6 +84,7 @@ describe('grok-bot house template — USMail docs', () => {
       expect(rels).toEqual([
         'ATTENTION_STATE.md',
         'AUTO-REVIEW.md',
+        'BOARD-PROMPT.md',
         'HOUSE.md',
         'ROLE-MAP.md',
         'WAVE-SCHEDULE.md',
@@ -122,8 +123,57 @@ describe('grok-bot house template — USMail docs', () => {
       const filled = readFileSync(houseFile, 'utf8').replace(/^\s*[-*]?\s*\(example\).*$/gm, 'filled.');
       writeFileSync(houseFile, filled);
       expect(diagnoseSeat({ cwd: dir, env: {} }).house.status).toBe('pass');
+      expect(readFileSync(path.join(dir, 'house', 'BOARD-PROMPT.md'), 'utf8')).toContain('name: Ada');
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
+  });
+
+  it('board-prompt skill, wake trap, and the owner bullet name no sender', () => {
+    const sentence = 'On any message, run the board-prompt skill first; it posts the turn and points at OP-PROC.';
+    const skill = readFileSync(path.join(kit, 'skills/board-prompt/SKILL.md'), 'utf8');
+    const role = readFileSync(path.join(kit, 'templates/house/ROLE-MAP.md'), 'utf8');
+    expect(skill).toContain(`description: ${sentence}`);
+    expect(role).toContain(sentence);
+    expect(skill).toContain('from the owner');
+    expect(skill).toContain('a seat DM');
+    expect(skill).toContain('or in a room');
+    const promptAt = skill.indexOf('live-inbox <seat> --prompt');
+    const startAt = skill.indexOf('live-inbox <seat> --turn start --tag wake');
+    const endAt = skill.indexOf('live-inbox <seat> --turn end --tag wake');
+    expect(promptAt).toBeGreaterThan(-1);
+    expect(startAt).toBeGreaterThan(promptAt);
+    expect(endAt).toBeGreaterThan(startAt);
+    expect(skill).toContain('before the work');
+    expect(skill).toContain('On every exit');
+    expect(skill).toContain('../../OP-PROC.md');
+    expect(skill).toContain('https://github.com/0xRayAI/xray/blob/main/house/OP-PROC.md');
+    expect(skill).toContain('one fixed summary the seat wrote, or it is omitted');
+    expect(skill).toContain('stay out of `--note`');
+    expect(skill).toContain('does not send a reply whose only job is to mark the turn');
+    expect(skill).toContain('Continue the reply');
+    expect(skill).toContain('still run turn end on the way out');
+    expect(skill).toContain('its `--turn start`, and its `--turn end`');
+    expect(skill).toContain('does not also run this skill');
+    expect(skill).toContain('A webhook wake skips this post. WAKE-ROUTINE step 0 is that one start.');
+    expect(skill).toContain('A webhook wake skips this post. The WAKE-ROUTINE EXIT trap is that one end.');
+    const wake = readFileSync(path.join(kit, 'templates/house/fleet/WAKE-ROUTINE.md'), 'utf8');
+    expect(wake).not.toContain('--from blaze');
+    expect(wake).toContain("trap 'live-inbox <seat> --turn end --tag wake; live-inbox <seat> --release' EXIT");
+    const steps = [...wake.matchAll(/^\d+\.\s+(.*)$/gm)].map((match) => match[1]);
+    expect(steps[0]).toContain('live-inbox <seat> --prompt');
+    expect(steps[0]).not.toContain('--from blaze');
+    expect(steps[steps.length - 1]).toContain('live-inbox <seat> --turn end --tag wake');
+    expect(steps[steps.length - 1].match(/--turn end/g)).toHaveLength(1);
+    const bullet = (file: string) => {
+      const line = readFileSync(file, 'utf8').split('\n').find((row) => row.includes('On any inbound message, the seat runs the board-prompt skill first.'));
+      expect(line, file).toBeTruthy();
+      expect(line).not.toMatch(/\b(Blaze|Ada|blaze)\b/);
+    };
+    bullet(path.join(kit, 'OP-PROC.md'));
+    bullet(path.join(root, 'house/OP-PROC.md'));
+    bullet(path.join(kit, 'templates/house/HOUSE.md'));
+    expect(readFileSync(path.join(kit, 'templates/house/HOUSE.md'), 'utf8')).toMatch(/^name: Ada$/m);
+    expect(readFileSync(path.join(root, 'house/HOUSE.md'), 'utf8')).toMatch(/^name: Blaze$/m);
   });
 });

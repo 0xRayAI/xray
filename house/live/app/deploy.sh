@@ -36,6 +36,22 @@ if [ "${MESH_SEED_STORE:-0}" = 1 ]; then
     rm -rf "$DST/collector/seed"; echo "seed holds a token-like string; refusing" >&2; exit 1; fi
   echo "seed: $(du -sh "$DST/collector/seed" | cut -f1) (one-time)"
 fi
+# One line, the house config name:. Empty when that line is missing, so the image COPY still succeeds.
+HOUSE_FILE=""
+if [ -n "${HOUSE:-}" ] && [ -f "$HOUSE" ]; then
+  HOUSE_FILE="$HOUSE"
+elif [ -f "$APP/../../HOUSE.md" ]; then
+  HOUSE_FILE="$APP/../../HOUSE.md"
+fi
+owner_name=""
+if [ -n "$HOUSE_FILE" ]; then
+  owner_name="$("$APP/owner-name.sh" "$HOUSE_FILE" || true)"
+fi
+if [[ "$owner_name" =~ ^[A-Za-z0-9\ ._:@#+/-]{1,40}$ ]]; then
+  printf '%s\n' "$owner_name" > "$DST/owner-name"
+else
+  : > "$DST/owner-name"
+fi
 cd "$DST"
 st="$(railway status 2>/dev/null || true)"; grep -q "$PROJECT" <<<"$st" || { echo "deploy dir is not linked to $PROJECT; refusing" >&2; exit 1; }
 railway up --service "$SERVICE" --detach

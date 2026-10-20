@@ -3,6 +3,8 @@
 ## Owner
 (example) Ada — the human who decides money, credentials, deletes, and taste.
 
+name: Ada
+
 ## Seats
 (example) Coordinator. Never deploys, publishes, or spends. Implementer and publisher. Reviewer. Never merges. Public-posts specialist. Never invents the words. Listings. Audio.
 
@@ -28,6 +30,7 @@ Optional. Delete this section if your house has no code loop. Defaults from [opp
 - Issue-sweep cursor: `house/watchers/issue-sweep-last.txt`, one UTC ISO-8601 time of the last sweep, rewritten after each sweep.
 - Live mesh (requires 0xRayAI/xray#248): `fleet/activity.jsonl` start/end lines `{t_ct, seat, kind, action, tag}` for every subagent or executor run (`subagent`), turn (`turn`) and watcher run (`watcher`), shown as working until the matching end, 60-minute cap. Box file lines must carry `seat` (seat id, or a display name in the seats config `aliases`). On `POST /activity`, `seat` is optional and must match the app token, or the post is refused; use seat ids there. An owner prompt is `live-inbox <seat> --prompt` (add `--room <name>` in a room). That posts `{t_ct, seat, kind: "prompt", action: "sent", from, to, room?}` to `/activity` (never text) and keeps `seat` working for 10 minutes. A pulse still inside those 10 minutes survives a turn end. `fleet.missing_activity` on the feed lists seats that pulsed in the last 60 minutes with no activity line. Cloud agents go in `fleet/cloud-agents.jsonl`: `{t_ct, seat, kind: "cloud_agent", action: "launch|reply|finished|cancel", agent, tag}`.
 - Wake on Grok: nothing injects the station card, so the Bifrost inbox wake is the suit's hook; the wake routine ([fleet/WAKE-ROUTINE.md](fleet/WAKE-ROUTINE.md)) reads STATION.md then NOTES.md first and updates NOTES.md last. No separate hook or watcher.
+- On any inbound message, the seat runs the board-prompt skill first. It links `grok-bot/OP-PROC.md` and the house overlay as the rules for the turn. An owner message posts one `live-inbox <seat> --prompt` with no `--from`. Every message then posts `--turn start --tag wake`, does the work, and posts `--turn end --tag wake` on every exit, including the EXIT trap. `--note` is a seat-written fixed summary or omitted, and it never carries message text. A prompt that spawns an issue or PR is that card's first beat.
 - Deep burn: one cloud agent per repo area with fixed file ownership, at most 4 at once, in waves.
 
 ## Roster

@@ -367,6 +367,14 @@ class DeployKit(unittest.TestCase):
             self.assertIn(f, dep); self.assertIn(f, dock)
         for f in __import__("re").findall(r'"\$APP"/([\w.-]+)', dep):
             self.assertTrue((self.APP / f).exists(), f"deploy.sh copies missing {f}")
+        self.assertIn("COPY owner-name", dock)
+        self.assertIn('"$DST/owner-name"', dep)
+        self.assertNotIn("Blaze", (self.APP / "owner-name.sh").read_text())
+        self.assertNotIn("Blaze", dep)
+        house = Path(tempfile.mkdtemp()) / "HOUSE.md"
+        house.write_text("## Notes\nname: Other\n\n## Owner\nname: Ada\n\n## Later\nname: Zed\n", encoding="utf-8")
+        out = __import__("subprocess").run(["bash", str(self.APP / "owner-name.sh"), str(house)], capture_output=True, text=True, check=True)
+        self.assertEqual(out.stdout, "Ada\n")
 
     def test_server_passes_fleet_env_to_collector(self):
         src = (self.APP / "server.mjs").read_text()

@@ -788,7 +788,7 @@ class Fleet:
         self.seeded.add("prompts")
 
     def _prompt_line(self, d, h, first, now, src="fleet/prompts"):
-        """One prompts line: only t_ct, from, to (also used for remote activity kind=prompt)."""
+        """One prompts line: t_ct, from, to. A remote prompt also carries activity_id and note."""
         t = _ts(d.get("t_ct"))
         if t is None:
             return
@@ -804,11 +804,14 @@ class Fleet:
             pending[to] = max(pending.get(to, 0), t)
         if first and now - t > PROMPT_RECENT_S:
             return                           # history: seed silently
+        aid = d.get("id") if isinstance(d.get("id"), str) and d.get("id") else None
+        note = d.get("note") if isinstance(d.get("note"), str) and d.get("note") else None
         self._emit(f"prompt:{h}", t, frm, to, "prompt_message", "message", src, actor=frm,   # #281: keep the sender
-                   time_basis="t_ct from the prompts log")
+                   activity_id=aid, note=note, time_basis="t_ct from the prompts log")
 
     # ---- Off-box seats (Builder on its own machine): fleet/remote-activity.jsonl, written by the box pusher from the
-    # mesh app's write-only POST /activity. Only t_ct, seat, kind, action, to, agent, tag, and pr are used.
+    # mesh app's write-only POST /activity. t_ct, seat, kind, action, to, from, agent, tag, and pr are used.
+    # A prompt also keeps id and note so the board can place that beat from activity_prompts.
     #   prompt received        -> Lead -> seat message (seat working until it acts again), same pulse as live-inbox --prompt
     #   prompt sent (to=X)     -> seat -> X message (X working until it acts), same pulse as live-inbox --prompt
     #   cloud_agent            -> exactly a cloud-agents.jsonl line with by = seat
@@ -911,9 +914,11 @@ class Fleet:
             st = A.setdefault("seat_t", {})
             st[seat] = max(st.get(seat, 0), t)
             if kind == "prompt" and action == "received":
-                self._prompt_line({"t_ct": d["t_ct"], "from": d.get("from") or "Lead", "to": seat}, h, first, now, "remote/activity")
+                self._prompt_line({"t_ct": d["t_ct"], "from": d.get("from") or "Lead", "to": seat,
+                                   "id": d.get("id"), "note": d.get("note")}, h, first, now, "remote/activity")
             elif kind == "prompt" and action == "sent":
-                self._prompt_line({"t_ct": d["t_ct"], "from": seat, "to": d.get("to")}, h, first, now, "remote/activity")
+                self._prompt_line({"t_ct": d["t_ct"], "from": seat, "to": d.get("to"),
+                                   "id": d.get("id"), "note": d.get("note")}, h, first, now, "remote/activity")
             elif kind == "cloud_agent":
                 self._cloud_line({"t_ct": d["t_ct"], "by": seat, "action": action, "agent": d.get("agent"),
                                   "tag": d.get("tag"), "pr": d.get("pr")}, first, now, "remote/activity")
@@ -1300,3 +1305,50 @@ class Fleet:
                                    "seat_mtime": self.seat_mtime, "cloud": self.cloud,
                                    "prompts": self.prompts, "activity": self.activity, "local_act": self.local_act, "work": self.work}))
         os.replace(tmp, self.path)
+
+
+def _activity_prompt_file(state_path):
+    """Collector reads LIVE_ACTIVITY. The box reads fleet/remote-activity.jsonl.
+
+    LIVE_MODE=github is the Railway collector. That image never writes remote-activity.jsonl.
+    A set LIVE_ACTIVITY on any other mode stays the box file.
+    """
+    if os.environ.get("LIVE_MODE", "").strip() == "github":
+        env = os.environ.get("LIVE_ACTIVITY", "").strip()
+        if env:
+            return Path(env)
+    return Path(state_path).parent.parent / "fleet" / "remote-activity.jsonl"
+
+
+def activity_prompts(state_path):
+    """Prompt rows re-read every board pass.
+
+    The beat uses this list. A prompt sitting only in the card events does not supply time or note.
+    """
+    f = _activity_prompt_file(state_path)
+    if not f.is_file():
+        return []
+    try:
+        text = f.read_text(encoding="utf-8")
+    except OSError:
+        return []
+    rows = []
+    for raw in text.splitlines():
+        raw = raw.strip()
+        if not raw:
+            continue
+        try:
+            d = json.loads(raw)
+        except ValueError:
+            continue
+        if not isinstance(d, dict) or d.get("kind") != "prompt":
+            continue
+        pid = d.get("id")
+        if not isinstance(pid, str) or not pid:
+            continue
+        row = {"id": pid, "t_ct": d.get("t_ct"), "kind": "prompt", "from": d.get("from") or ""}
+        note = d.get("note")
+        if isinstance(note, str) and note:
+            row["note"] = note
+        rows.append(row)
+    return rows

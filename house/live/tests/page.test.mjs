@@ -259,7 +259,8 @@ test('pre-alpha naming: page is 🌈 Live board, Spectrum pill, panel 🌊 Board
 });
 test('board stats strip: 24h counts + open now from feed.board.stats, textContent only', () => {
   assert.match(html, /<div class="wave-stats" id="waveStats"/);
-  for (const k of ['issues_opened_24h', 'issues_closed_24h', 'prs_opened_24h', 'prs_merged_24h', 'prs_closed_unmerged_24h', 'open_total']) assert.match(html, new RegExp('S\\.' + k));
+  for (const k of ['issues_opened_24h', 'issues_closed_24h', 'prs_opened_24h', 'prs_merged_24h', 'prs_closed_unmerged_24h', 'owner_prompts_24h', 'owner_prompts_24h_ids', 'owner_prompts_24h_bytes', 'open_total']) assert.match(html, new RegExp('S\\.' + k));
+  assert.match(html, /'owner prompts'/);
   assert.match(html, /wb\.stats = r\.feed\.board\.stats \|\| null/);
 });
 test('silent seat: amber "silent 2h" on node and chip from fleet.seats[name].silent, never while working', () => {
@@ -497,6 +498,8 @@ test('resume at the live edge rewinds before frame, so frame does not goLive()',
 
 test('wave count tiles title the 24h ids, capped at 20', () => {
   assert.match(html, /d\.title = idTitle\(x\[2\]\)/);
+  assert.match(html, /b\.note/);
+  assert.match(html, /note\.slice\(0, 72\)/);
   assert.match(html, /issues_opened_24h_ids/);
   assert.doesNotMatch(html, /state\.t \+ 250 \* speed/);
   const fn = html.match(/function idTitle\(ids\) \{[\s\S]*?\n    \}/);

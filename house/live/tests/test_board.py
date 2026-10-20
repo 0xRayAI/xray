@@ -128,6 +128,26 @@ class Model(unittest.TestCase):
         md = (self.root / "BOARD.md").read_text()
         self.assertIn("## Pinned", md); self.assertIn("STALL 60m+", md); self.assertIn("no packet", md)
 
+    def test_prompt_stamp_is_the_first_beat_once(self):
+        prompt = {"id": "ada.9", "t_ct": ct(120), "kind": "prompt", "from": "Ada", "note": "fixed summary"}
+        body = "Prompt: ada.9\n\ngoal: ship\n"
+        opened = self.ev(70, "issue_open", 60, title="from prompt", body=body, pr_state="open")
+        second = self.ev(71, "pr_open", 30, title="second", body=body)
+        cards = {c["number"]: c for c in self.w.model([opened, second], prompts=[prompt])["cards"] if c.get("repo") == R}
+        self.assertEqual([b["what"] for b in cards[70]["beats"]][:2], ["owner prompt", "opened"])
+        self.assertEqual(cards[70]["beats"][0]["id"], "ada.9")
+        self.assertEqual(cards[70]["beats"][0]["note"], "fixed summary")
+        self.assertEqual(cards[70]["beats"][0]["t"], int(self.w._t(prompt) * 1000))
+        self.assertNotEqual(cards[70]["beats"][0]["t"], cards[70]["beats"][1]["t"])
+        self.assertEqual([b["what"] for b in cards[71]["beats"]], ["opened"])
+        hidden = [c for c in self.w.model([prompt, opened])["cards"] if c.get("number") == 70][0]
+        beat = [b for b in hidden["beats"] if b["what"] == "owner prompt"][0]
+        opened_beat = [b for b in hidden["beats"] if b["what"] == "opened"][0]
+        self.assertNotIn("note", beat)
+        self.assertEqual(beat["t"], opened_beat["t"])
+        plain = [c for c in self.w.model([self.ev(72, "issue_open", 20, title="plain", pr_state="open")])["cards"] if c.get("number") == 72][0]
+        self.assertEqual([b["what"] for b in plain["beats"]], ["opened"])
+
     def test_owner_comment_is_a_beat_other_comments_are_not(self):
         evs = [self.ev(8, "pr_open", 9000, title="x"), self.ev(8, "merged", 8000),
                dict(self.ev(8, "pr_comment", 600), **{"from": "Operator"}),          # e.g. ops-app's nudge comment
@@ -421,6 +441,10 @@ class CollectorCapture(unittest.TestCase):
         f = uc.card_fields({"title": "t", "state": "open", "labels": [{"name": "S2"}], "body": "secret prose\n## Packet\n- Goal: g\n- Next owner: Reviewer"})
         self.assertEqual(f["packet"], {"goal": "g", "next owner": "Reviewer"})
         self.assertNotIn("secret", json.dumps(f))
+        stamped = uc.card_fields({"title": "t", "state": "open", "body": "Prompt: ada.9\nsecret prose"})
+        self.assertEqual(stamped["prompt"], "ada.9")
+        self.assertNotIn("body", stamped)
+        self.assertNotIn("secret", json.dumps(stamped))
 
 
 class ShipBeats(unittest.TestCase):
@@ -453,7 +477,8 @@ class Stats(unittest.TestCase):
                                         "prs_opened_24h_ids": [f"{R}#10", f"{R}#11", f"{R}#12"],
                                         "prs_merged_24h_ids": [f"{R}#11"],
                                         "prs_closed_unmerged_24h_ids": [f"{R}#12"],
-                                        "open_total_ids": [f"{R}#1", f"{R}#3", f"{R}#10", f"{R}#13"]})
+                                        "open_total_ids": [f"{R}#1", f"{R}#3", f"{R}#10", f"{R}#13"],
+                                        "owner_prompts_24h": 0, "owner_prompts_24h_ids": [], "owner_prompts_24h_bytes": 0})
 
     def test_24h_count_equals_len_ids(self):
         import live_board as w
@@ -475,6 +500,54 @@ class Stats(unittest.TestCase):
         self.assertEqual(got["prs_merged_24h_ids"], [f"{R}#20"])
         self.assertEqual(got["prs_closed_unmerged_24h"], 0)
         self.assertEqual(got["prs_closed_unmerged_24h_ids"], [])
+
+    def test_owner_prompts_count_ids_and_bytes(self):
+        import live_board as w
+        ada = {"id": "ada.1", "t_ct": ct(100), "kind": "prompt", "from": "Ada", "action": "sent", "note": "fixed summary"}
+        ada2 = {"id": "ada.2", "t_ct": ct(50), "kind": "prompt", "from": "Ada", "action": "sent"}
+        old = {"id": "ada.old", "t_ct": ct(90000), "kind": "prompt", "from": "Ada", "action": "sent"}
+        other = {"id": "mill.1", "t_ct": ct(40), "kind": "prompt", "from": "mill", "action": "sent"}
+        house = tempfile.TemporaryDirectory()
+        path = Path(house.name) / "HOUSE.md"
+        path.write_text("## Owner\nname: Ada\n", encoding="utf-8")
+        os.environ["HOUSE"] = str(path)
+        try:
+            got = w.stats([ada, old, other, ada2])
+            apart = w.stats([], prompts=[ada, ada2])
+        finally:
+            os.environ.pop("HOUSE", None)
+            house.cleanup()
+        self.assertEqual(got["owner_prompts_24h"], 2)
+        self.assertEqual(got["owner_prompts_24h_ids"], ["ada.1", "ada.2"])
+        self.assertEqual(got["owner_prompts_24h_bytes"], w.archived_bytes(ada) + w.archived_bytes(ada2))
+        self.assertNotIn("fixed summary", " ".join(got["owner_prompts_24h_ids"]))
+        self.assertEqual(apart["owner_prompts_24h_ids"], ["ada.1", "ada.2"])
+
+    def test_owner_name_reads_env_then_file_then_house(self):
+        import live_board as w
+        os.environ.pop("LIVE_OWNER", None)
+        os.environ.pop("LIVE_OWNER_FILE", None)
+        os.environ.pop("HOUSE", None)
+        house = tempfile.TemporaryDirectory()
+        named = tempfile.NamedTemporaryFile("w", delete=False, encoding="utf-8")
+        try:
+            Path(house.name, "HOUSE.md").write_text("## Owner\nname: Ada\n", encoding="utf-8")
+            os.environ["HOUSE"] = str(Path(house.name, "HOUSE.md"))
+            self.assertEqual(w.owner_name(), "Ada")
+            named.write("Nia\n")
+            named.close()
+            os.environ["LIVE_OWNER_FILE"] = named.name
+            self.assertEqual(w.owner_name(), "Nia")
+            os.environ["LIVE_OWNER"] = "Ada"
+            self.assertEqual(w.owner_name(), "Ada")
+            os.environ["LIVE_OWNER"] = "not a name!"
+            self.assertEqual(w.owner_name(), "Nia")
+        finally:
+            os.environ.pop("LIVE_OWNER", None)
+            os.environ.pop("LIVE_OWNER_FILE", None)
+            os.environ.pop("HOUSE", None)
+            house.cleanup()
+            Path(named.name).unlink(missing_ok=True)
 
 
 class BeatSentence(unittest.TestCase):
