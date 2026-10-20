@@ -93,8 +93,18 @@ test('status grouping is the default and the toggle switches to by-agent', async
     await page.goto(base, { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => document.querySelector('#waveBody .wcard'));
     if (await page.evaluate(() => document.querySelector('[data-fold="cards"]').classList.contains('collapsed'))) {
-      await page.click('[data-fold="cards"] > .fold-head');
+      await page.click('[data-fold="cards"] .fold-head');
     }
+    const place = await page.evaluate(() => {
+      const btn = document.getElementById('cardGroup');
+      const bar = btn.closest('.fold-bar');
+      const b = btn.getBoundingClientRect();
+      const p = bar.getBoundingClientRect();
+      return { bw: b.width, pw: p.width, right: b.right, pright: p.right, inHeader: bar.contains(btn) };
+    });
+    assert.equal(place.inHeader, true);
+    assert.ok(place.bw < place.pw / 2, JSON.stringify(place));
+    assert.ok(place.right >= place.pright - 2, JSON.stringify(place));
     const status = await page.evaluate(sections);
     assert.equal(status.mode, 'status');
     assert.equal(status.pressed, 'false');
@@ -131,7 +141,7 @@ test('status grouping is the default and the toggle switches to by-agent', async
     assert.equal(await page.evaluate(() => localStorage.getItem('bifrost-card-group')), 'agent');
 
     if (await page.evaluate(() => document.querySelector('[data-fold="cards"]').classList.contains('collapsed'))) {
-      await page.click('[data-fold="cards"] > .fold-head');
+      await page.click('[data-fold="cards"] .fold-head');
     }
     await page.click('#cardGroup');
     await page.waitForFunction(() => document.getElementById('waveBody').dataset.group === 'status');
