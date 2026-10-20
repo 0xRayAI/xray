@@ -52,6 +52,59 @@ test('a push sets branch and a matching pr_open rewrites the holding key', () =>
   assert.equal(stay[0].alias, undefined);
 });
 
+test('a collector commit and pr_open leave one card per id', () => {
+  const sha = 'ab' + 'c'.repeat(38);
+  const held = { key: 'packet:line-9', born: 'packet', repo: 'acme/app', number: 0, state: 'live', title: 'hold', owner: 'forge' };
+  const opened = { key: 'acme/app#9', repo: 'acme/app', number: 9, state: 'live', title: 'opened' };
+  const events = [
+    { kind: 'commit', repo: 'acme/app', sha, branches: ['main', 'cursor/hold'], src_file: 'github-api' },
+    { kind: 'pr_open', repo: 'Acme/App', number: 9, base: 'main', sha, source: 'https://github.com/acme/app/pull/9' },
+  ];
+  const cards = attachPacketCards([held, opened], events);
+  const keys = cards.map(card => card.key);
+  assert.equal(keys.length, 1);
+  assert.equal(keys[0], 'acme/app#9');
+  assert.equal(new Set(keys).size, keys.length);
+  assert.equal(cards[0].alias, 'packet:line-9');
+  assert.equal(cards[0].branch, 'cursor/hold');
+  const script = `
+import json, os
+from pathlib import Path
+root = Path(os.environ["MESH_RUN"])
+(root / "live").mkdir(parents=True)
+held = [{"key":"packet:line-9","born":"packet","repo":"acme/app","number":0,"state":"live","title":"hold","owner":"forge","last_beat_t":1}]
+(root / "live" / "cards.json").write_text(json.dumps({"cards": held}))
+import live_board
+sha = ${JSON.stringify(sha)}
+evs = [
+  {"id":"c","t_ct":"2026-10-20T12:00:00-05:00","kind":"commit","repo":"acme/app","sha":sha,"branches":["main","cursor/hold"],"from":"forge","src_file":"github-api"},
+  {"id":"o","t_ct":"2026-10-20T12:01:00-05:00","kind":"pr_open","repo":"acme/app","number":9,"base":"main","sha":sha,"source":"https://github.com/acme/app/pull/9","from":"forge","title":"held","pr_state":"open"},
+]
+def one(cards):
+    keys = [c["key"] for c in cards]
+    assert keys.count("acme/app#9") == 1, keys
+    assert "packet:line-9" not in keys, keys
+    assert len(keys) == len(set(keys)), keys
+    card = next(c for c in cards if c["key"] == "acme/app#9")
+    assert card.get("alias") == "packet:line-9", card
+    assert card.get("branch") == "cursor/hold", card
+one(live_board.run(evs, write=False, held=held)["cards"])
+one(live_board.run(evs, write=False)["cards"])
+print("ok")
+`;
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-held-'));
+  try {
+    const ran = spawnSync('python3', ['-c', script], {
+      cwd: FEED,
+      env: { ...process.env, PYTHONPATH: FEED, PYTHONDONTWRITEBYTECODE: '1', MESH_RUN: dir },
+      encoding: 'utf8',
+    });
+    assert.equal(ran.status, 0, ran.stderr || ran.stdout);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test('the collector model rewrites a held card the same way', () => {
   const script = `
 import live_board

@@ -317,13 +317,75 @@ function refName(value) {
   return text.replace(/^refs\/heads\//, '').slice(0, 200);
 }
 
-function branchOf(event) {
+function branchNames(event) {
+  if (!event || typeof event !== 'object') return [];
+  const names = [];
+  const add = (value) => {
+    const name = refName(value);
+    if (name && !names.includes(name)) names.push(name);
+  };
+  add(event.branch);
+  add(event.head_ref);
+  add(event.ref);
+  if (Array.isArray(event.branches)) {
+    for (const name of event.branches) add(name);
+  }
+  return names;
+}
+
+function shaOf(event) {
   if (!event || typeof event !== 'object') return '';
-  return refName(event.branch) || refName(event.head_ref) || refName(event.ref);
+  return String(event.sha || event.head_sha || '').trim().toLowerCase().replace(/[^0-9a-f]/g, '');
+}
+
+function branchOf(event) {
+  const names = branchNames(event);
+  return names[0] || '';
 }
 
 function headOf(event) {
-  return branchOf(event) || refName(event.head);
+  return branchOf(event) || refName(event && event.head);
+}
+
+function shaBranchIndex(events) {
+  const found = new Map();
+  for (const event of events) {
+    const sha = shaOf(event);
+    const names = branchNames(event);
+    if (!sha || !names.length) continue;
+    const bucket = found.get(sha) || [];
+    for (const name of names) if (!bucket.includes(name)) bucket.push(name);
+    found.set(sha, bucket);
+  }
+  return found;
+}
+
+function baseBySha(events) {
+  const found = new Map();
+  for (const event of events) {
+    if (!event || event.kind !== 'pr_open') continue;
+    const sha = shaOf(event);
+    const base = refName(event.base);
+    if (!sha || !base) continue;
+    const skip = found.get(sha) || new Set();
+    skip.add(base);
+    found.set(sha, skip);
+  }
+  return found;
+}
+
+function chosenBranch(event, bases) {
+  const names = branchNames(event);
+  if (!names.length) return '';
+  const skip = bases.get(shaOf(event));
+  return names.find((name) => !skip || !skip.has(name)) || names[0];
+}
+
+function prMatches(card, event, shaBranches) {
+  if (!event || event.kind !== 'pr_open' || !positiveEvent(event) || !card.branch) return false;
+  if (headOf(event) === card.branch) return true;
+  const sha = shaOf(event);
+  return !!(sha && (shaBranches.get(sha) || []).includes(card.branch));
 }
 
 function positiveEvent(event) {
@@ -347,15 +409,17 @@ function eventTouches(card, event, list) {
   return false;
 }
 
-/** Write a push ref onto a held card. A later pr_open with the same head rewrites a holding key. */
+/** Write a commit or push ref onto a held card. A later pr_open with the same sha rewrites a holding key. */
 export function attachPacketCards(cards, events) {
   const list = (Array.isArray(cards) ? cards : []).filter((card) => card && typeof card === 'object').map((card) => ({ ...card }));
   const evs = Array.isArray(events) ? events : [];
+  const bases = baseBySha(evs);
+  const shaBranches = shaBranchIndex(evs);
   for (const card of list) {
     if (card.branch) continue;
     for (const event of evs) {
       if (!event || event.kind === 'pr_open' || event.kind === 'issue_open') continue;
-      const branch = branchOf(event);
+      const branch = chosenBranch(event, bases);
       if (!branch || !eventTouches(card, event, list)) continue;
       card.branch = branch;
       break;
@@ -365,7 +429,7 @@ export function attachPacketCards(cards, events) {
   for (const card of list) {
     const key = String(card.key || '');
     if (!key.toLowerCase().startsWith('packet:') || !card.branch || gone.has(card)) continue;
-    const hit = evs.find((event) => event && event.kind === 'pr_open' && headOf(event) === card.branch && positiveEvent(event));
+    const hit = evs.find((event) => prMatches(card, event, shaBranches));
     if (!hit) continue;
     const nextKey = String(hit.repo).toLowerCase() + '#' + Number(hit.number);
     const existing = list.find((other) => other !== card && !gone.has(other) && String(other.key || '').toLowerCase() === nextKey);

@@ -299,14 +299,92 @@ def _ref_name(value):
     return text[:200]
 
 
-def _branch_of(event):
+def _branch_names(event):
+    """Branch refs on a collector event. A commit carries branches (a list); a push carries branch."""
+    if not isinstance(event, dict):
+        return []
+    names = []
+
+    def add(value):
+        name = _ref_name(value)
+        if name and name not in names:
+            names.append(name)
+
+    add(event.get("branch"))
+    add(event.get("head_ref"))
+    add(event.get("ref"))
+    branches = event.get("branches")
+    if isinstance(branches, list):
+        for name in branches:
+            add(name)
+    return names
+
+
+def _sha_of(event):
     if not isinstance(event, dict):
         return ""
-    return _ref_name(event.get("branch")) or _ref_name(event.get("head_ref")) or _ref_name(event.get("ref"))
+    raw = event.get("sha") or event.get("head_sha") or ""
+    return re.sub(r"[^0-9a-f]", "", str(raw).lower())
+
+
+def _branch_of(event):
+    names = _branch_names(event)
+    return names[0] if names else ""
 
 
 def _head_of(event):
     return _branch_of(event) or _ref_name(event.get("head") if isinstance(event, dict) else "")
+
+
+def _sha_branch_index(events):
+    found = {}
+    for event in events:
+        sha = _sha_of(event)
+        names = _branch_names(event)
+        if not sha or not names:
+            continue
+        bucket = found.setdefault(sha, [])
+        for name in names:
+            if name not in bucket:
+                bucket.append(name)
+    return found
+
+
+def _base_by_sha(events):
+    """pr_open.base is the target ref, not the head branch."""
+    found = {}
+    for event in events:
+        if not isinstance(event, dict) or event.get("kind") != "pr_open":
+            continue
+        sha = _sha_of(event)
+        base = _ref_name(event.get("base"))
+        if not sha or not base:
+            continue
+        found.setdefault(sha, set()).add(base)
+    return found
+
+
+def _chosen_branch(event, bases):
+    names = _branch_names(event)
+    if not names:
+        return ""
+    skip = bases.get(_sha_of(event), ())
+    for name in names:
+        if name not in skip:
+            return name
+    return names[0]
+
+
+def _pr_matches(card, event, sha_branches):
+    if not isinstance(event, dict) or event.get("kind") != "pr_open" or not _positive_event(event):
+        return False
+    branch = card.get("branch")
+    if not branch:
+        return False
+    if _head_of(event) == branch:
+        return True
+    sha = _sha_of(event)
+    return bool(sha) and branch in sha_branches.get(sha, ())
 
 
 def _positive_event(event):
@@ -344,16 +422,22 @@ def _event_touches(card, event, cards):
 
 
 def attach_held(held, events):
-    """Copy a push ref onto a card the server already holds. A matching pr_open rewrites a holding key."""
+    """Copy a commit or push ref onto a card the server already holds.
+
+    A commit carries branches plus sha. pr_open carries base (the target) plus sha.
+    The same sha, or a head ref equal to the card branch, rewrites a holding key.
+    """
     cards = [dict(card) for card in (held or []) if isinstance(card, dict)]
     evs = [event for event in (events or []) if isinstance(event, dict)]
+    bases = _base_by_sha(evs)
+    sha_branches = _sha_branch_index(evs)
     for card in cards:
         if card.get("branch"):
             continue
         for event in evs:
             if event.get("kind") in ("pr_open", "issue_open"):
                 continue
-            branch = _branch_of(event)
+            branch = _chosen_branch(event, bases)
             if not branch or not _event_touches(card, event, cards):
                 continue
             card["branch"] = branch
@@ -363,7 +447,7 @@ def attach_held(held, events):
         key = str(card.get("key") or "")
         if not key.lower().startswith("packet:") or not card.get("branch") or id(card) in gone:
             continue
-        hit = next((event for event in evs if event.get("kind") == "pr_open" and _head_of(event) == card["branch"] and _positive_event(event)), None)
+        hit = next((event for event in evs if _pr_matches(card, event, sha_branches)), None)
         if not hit:
             continue
         next_key = f"{str(hit['repo']).lower()}#{int(hit['number'])}"
@@ -873,10 +957,33 @@ def write_md(m, now=None, force=False):
         return False
 
 
-def run(extra_events=None, write=True, prompts=None):
+def held_from_disk():
+    """Packet cards the server already wrote, so a collector pass can attach them."""
+    raw = os.environ.get("LIVE_HELD_CARDS", "").strip()
+    path = Path(raw) if raw else RUN / "live" / "cards.json"
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    cards = data.get("cards") if isinstance(data, dict) else data
+    if not isinstance(cards, list):
+        return None
+    held = []
+    for card in cards:
+        if not isinstance(card, dict) or str(card.get("state") or "").lower() == "closed":
+            continue
+        key = str(card.get("key") or "").lower()
+        if key.startswith("packet:") or card.get("born") == "packet":
+            held.append(card)
+    return held or None
+
+
+def run(extra_events=None, write=True, prompts=None, held=None):
     """One feed pass: model for the page header, coord stall lines, BOARD.md (debounced). Never raises."""
     try:
-        m = model(extra_events, prompts=prompts)
+        if held is None:
+            held = held_from_disk()
+        m = model(extra_events, prompts=prompts, held=held)
         if write and os.environ.get("LIVE_BOARD_LOCAL") == "1":   # retired: the server holds cards + nudges
             stall_lines(m)
             write_md(m)

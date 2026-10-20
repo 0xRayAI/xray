@@ -36,6 +36,32 @@ class Packet(unittest.TestCase):
         self.assertIn("WORKING_CLOUD_S", fields["evidence"])
         self.assertEqual(p.parse("[docs](https://notion.so/x) text\n## Packet\n- Goal: [d](https://notion.so/y) z"), {"goal": "d z"})
 
+    def test_pr_packet_subsections_keep_scope_acceptance_and_next_owner(self):
+        """PR 477's ## Packet ends at ### Scope unless subsections stay inside the block."""
+        import live_packet as p
+        body = (
+            "## Packet\n\n"
+            "Taken from packet #471 (`grok-bot/ops/packets/PACKET-CARD-REQUIRED.md`).\n\n"
+            "### Scope\n\n"
+            "Every packet has a card on the Bifrost wave board, and a cloud agent does not run without one.\n\n"
+            "### Acceptance\n\n"
+            "One card per id. A commit branches list plus sha, and a pr_open with that sha and base, "
+            "rewrites the holding key. The launch still refuses a missing card id.\n\n"
+            "### Next owner\n\n"
+            "reviewer\n\n"
+            "### Files\n\n"
+            "- `house/live/app/server.mjs` — postSeatLines calls ensurePacketCard.\n\n"
+            "## Notes\n\n"
+            "- acceptance: not this\n"
+        )
+        fields = p.parse(body)
+        self.assertEqual(fields["goal"], "Every packet has a card on the Bifrost wave board, and a cloud agent does not run without one.")
+        self.assertIn("One card per id", fields["acceptance"])
+        self.assertEqual(fields["next owner"], "reviewer")
+        self.assertNotIn("not this", fields["acceptance"])
+        self.assertNotIn("server.mjs", fields["goal"])
+        self.assertNotIn("files", fields)
+
     def test_kanban_packet_is_packet_ok(self):
         import live_packet as p
         body = (Path(__file__).resolve().parents[3] / "grok-bot" / "ops" / "packets" / "PACKET-KANBAN.md").read_text()
