@@ -414,4 +414,21 @@ class Stats(unittest.TestCase):
                e(12, "pr_open", 9000, pr_state="closed"), e(12, "pr_close", 8000), e(13, "pr_open", 300000, pr_state="open"),
                e(14, "pr_open", 300000)]                                    # pre-capture: state unknown, not counted open
         self.assertEqual(w.stats(evs), {"issues_opened_24h": 1, "issues_closed_24h": 1, "prs_opened_24h": 3, "prs_merged_24h": 1,
-                                        "prs_closed_unmerged_24h": 1, "issues_open": 2, "prs_open": 2, "open_total": 4})
+                                        "prs_closed_unmerged_24h": 1, "issues_open": 2, "prs_open": 2, "open_total": 4,
+                                        "issues_opened_24h_ids": [f"{R}#1"],
+                                        "issues_closed_24h_ids": [f"{R}#2"],
+                                        "prs_opened_24h_ids": [f"{R}#10", f"{R}#11", f"{R}#12"],
+                                        "prs_merged_24h_ids": [f"{R}#11"],
+                                        "prs_closed_unmerged_24h_ids": [f"{R}#12"]})
+
+    def test_24h_count_equals_len_ids(self):
+        import live_board as w
+        e = lambda n, k, ago, **kw: {"id": f"{n}:{k}", "t_ct": ct(ago), "kind": k, "repo": R, "number": n, **kw}
+        evs = [e(1, "issue_open", 3600, pr_state="open"), e(2, "issue_open", 90000, pr_state="open"), e(2, "issue_close", 600),
+               e(3, "issue_open", 200000, pr_state="open"),
+               e(10, "pr_open", 100, pr_state="open"), e(11, "pr_open", 5000, pr_state="closed"), e(11, "merged", 4000),
+               e(12, "pr_open", 9000, pr_state="closed"), e(12, "pr_close", 8000), e(13, "pr_open", 300000, pr_state="open"),
+               e(14, "pr_open", 300000)]
+        got = w.stats(evs)
+        for key in ("issues_opened_24h", "issues_closed_24h", "prs_opened_24h", "prs_merged_24h", "prs_closed_unmerged_24h"):
+            self.assertEqual(got[key], len(got[key + "_ids"]))
