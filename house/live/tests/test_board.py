@@ -419,7 +419,8 @@ class Stats(unittest.TestCase):
                                         "issues_closed_24h_ids": [f"{R}#2"],
                                         "prs_opened_24h_ids": [f"{R}#10", f"{R}#11", f"{R}#12"],
                                         "prs_merged_24h_ids": [f"{R}#11"],
-                                        "prs_closed_unmerged_24h_ids": [f"{R}#12"]})
+                                        "prs_closed_unmerged_24h_ids": [f"{R}#12"],
+                                        "open_total_ids": [f"{R}#1", f"{R}#3", f"{R}#10", f"{R}#13"]})
 
     def test_24h_count_equals_len_ids(self):
         import live_board as w
@@ -430,7 +431,7 @@ class Stats(unittest.TestCase):
                e(12, "pr_open", 9000, pr_state="closed"), e(12, "pr_close", 8000), e(13, "pr_open", 300000, pr_state="open"),
                e(14, "pr_open", 300000)]
         got = w.stats(evs)
-        for key in ("issues_opened_24h", "issues_closed_24h", "prs_opened_24h", "prs_merged_24h", "prs_closed_unmerged_24h"):
+        for key in ("issues_opened_24h", "issues_closed_24h", "prs_opened_24h", "prs_merged_24h", "prs_closed_unmerged_24h", "open_total"):
             self.assertEqual(got[key], len(got[key + "_ids"]))
 
     def test_pr_close_with_merged_at_counts_as_merged(self):

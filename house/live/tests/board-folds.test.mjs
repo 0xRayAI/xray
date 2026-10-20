@@ -151,3 +151,63 @@ test('mesh, stats, roster, cards, and activity start open in both themes', async
     await new Promise((resolve) => server.close(resolve));
   }
 });
+
+test('roster seat headers toggle and stay compact while the roster starts open', async () => {
+  const server = await serve();
+  const base = `http://127.0.0.1:${server.address().port}/index.html`;
+  let browser;
+  try {
+    browser = await chromium.launch();
+    const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    await page.addInitScript(() => {
+      localStorage.removeItem('bifrost-folds');
+      localStorage.removeItem('bifrost-activity');
+    });
+    await page.route('**/site-config.js', (route) => route.fulfill({
+      contentType: 'text/javascript',
+      path: path.join(path.dirname(PUB), '..', 'site', 'public', 'site-config.js'),
+    }));
+    await page.goto(base, { waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(() => document.querySelectorAll('#seatGrid .seat').length === 4);
+    const before = await page.evaluate(() => {
+      const panel = document.getElementById('seats').getBoundingClientRect().width;
+      const grid = document.getElementById('seatGrid').getBoundingClientRect().width;
+      const seats = [...document.querySelectorAll('#seatGrid .seat')].map((el) => {
+        const box = el.getBoundingClientRect();
+        return { name: el.querySelector('.nm').textContent, w: box.width, y: box.y, open: el.getAttribute('aria-expanded') };
+      });
+      return {
+        panel, grid, seats,
+        rosterOpen: !document.getElementById('seats').classList.contains('collapsed'),
+      };
+    });
+    assert.equal(before.rosterOpen, true);
+    assert.deepEqual(before.seats.map((seat) => seat.name), ['BLINKY', 'CRITIC', 'FORGE', 'MILL']);
+    assert.ok(before.seats.every((seat) => seat.open === 'false'));
+    assert.ok(before.seats.every((seat) => Math.abs(seat.y - before.seats[0].y) < 2), JSON.stringify(before.seats));
+    assert.ok(before.seats.every((seat) => seat.w < before.grid / 2 && seat.w < before.panel / 2), JSON.stringify(before));
+    const blinky = page.locator('#seatGrid .seat', { hasText: 'BLINKY' });
+    await blinky.click();
+    const opened = await blinky.evaluate((el) => ({
+      open: el.getAttribute('aria-expanded'),
+      role: (el.querySelector('.role') || {}).textContent || '',
+      w: el.getBoundingClientRect().width,
+      panel: document.getElementById('seats').getBoundingClientRect().width,
+    }));
+    assert.equal(opened.open, 'true');
+    assert.equal(opened.role, 'chief of staff');
+    assert.ok(opened.w < opened.panel / 2, JSON.stringify(opened));
+    assert.equal(await page.locator('#seatGrid .seat', { hasText: 'CRITIC' }).getAttribute('aria-expanded'), 'false');
+    await blinky.click();
+    const closed = await blinky.evaluate((el) => ({
+      open: el.getAttribute('aria-expanded'),
+      role: el.querySelector('.role') ? 'present' : '',
+    }));
+    assert.equal(closed.open, 'false');
+    assert.equal(closed.role, '');
+    assert.equal(await page.locator('#seats').evaluate((el) => el.classList.contains('collapsed')), false);
+  } finally {
+    if (browser) await browser.close();
+    await new Promise((resolve) => server.close(resolve));
+  }
+});

@@ -547,7 +547,9 @@ class RepoCollector:
         st, data, etag, nxt = c.rest(path, dict(params, per_page=100), etag=self.st["etags"].get(key), essential=essential)
         self._etag_new = etag
         if st == 304:
+            self._paged_status = "not_modified"
             return
+        self._paged_status = "done"
         pages = 1
         while True:
             items = data if isinstance(data, list) else (data or {}).get(params.get("_list_key", "workflow_runs"), [])
@@ -558,6 +560,7 @@ class RepoCollector:
             if not nxt or pages >= max_pages:
                 if nxt and pages >= max_pages:
                     self._etag_new = None
+                    self._paged_status = "capped"
                 return
             st, data, _, nxt = c.rest(nxt, essential=essential)
             pages += 1
@@ -863,13 +866,13 @@ class RepoCollector:
         elif not self.st["bf"].get("merged:day"):
             self.st["bf"]["merged:day"] = True
         # One-time: merges whose actor maps to Others were dropped by put(). Rewalk the open window.
-        if cur and not self.st["bf"].get("merged:actor"):
+        # merged:actor is that rewalk's cursor. A short pass (page cap or error) must not set it,
+        # or the next pass will not rewind and a merge behind the new pulls cursor is skipped for good.
+        actor_rewalk = not self.st["bf"].get("merged:actor")
+        if cur and actor_rewalk:
             back = (datetime.now(timezone.utc) - timedelta(hours=36)).strftime("%Y-%m-%dT%H:%M:%SZ")
             cur = min(cur, back)
             self.st["etags"].pop("pulls", None)
-            self.st["bf"]["merged:actor"] = True
-        elif not self.st["bf"].get("merged:actor"):
-            self.st["bf"]["merged:actor"] = True
         newest = cur
         # Replay a pull that shares the cursor second. put() is idempotent.
         # Instant compare, not text: <= skips that sibling, and +00:00 / -05:00 sort before Z.
@@ -916,6 +919,8 @@ class RepoCollector:
         self.st["cur"]["pulls"] = newest
         if self._etag_new:
             self.st["etags"]["pulls"] = self._etag_new
+        if actor_rewalk and getattr(self, "_paged_status", None) == "done":
+            self.st["bf"]["merged:actor"] = True
 
     def enrich_prs(self, c, limit=20):
         todo = list(self.st.get("enrich", {}).keys())[:limit]
