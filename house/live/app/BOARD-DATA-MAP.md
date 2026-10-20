@@ -51,7 +51,7 @@ The page now paints those rows with `.wcard` (owner edge, verb, Chicago time). `
 
 | Field | Source | Transform | UI | Expected | Status |
 |---|---|---|---|---|---|
-| seat chip | `L.AGENTS` + `L.seatView` | name in `.nm`, state word in visually hidden `.st` | dot + name | pulse (`.dot.blink`, 1.1s) while working, dim (`.seat.idle`) while idle, ellipsis on the name. `prefers-reduced-motion` sets the blink animation to none | PASS |
+| seat chip | `L.AGENTS` + `L.seatView` | name in `.nm`, `title` is the full label. No `.st`, no role line, no ACTIVE/IDLE/WORKING/LIVE text | dot + name | a lit seat pulses the dot (2.8s, opacity 1 to 0.62). An idle seat stays dim and still. A long name truncates with an ellipsis and the full name is the hover title | PASS `tests/board-face.test.mjs` |
 | activity | live events, or `GET /history?date=` | shared fold, collapsed unless `localStorage bifrost-folds` says open. Activity also writes `bifrost-activity` | `#activity` | collapsed by default, `#log` max-height 16rem, overflow auto, date `<select id="historyDay">`, times in CT | PASS |
 | folds | mesh, stats, roster, cards, cloud, recent, history, work, queue, activity | one `.fold` / `.fold-head` / `.fold-body`, `data-fold`, `localStorage bifrost-folds` | header toggle, count in `.fold-sum` | collapsed on first load. Open body max-height 16rem and scrolls, except the mesh body, which stays uncapped so the rewind slider stays inside `#meshPanel` | PASS `tests/board-folds.test.mjs` |
 | rewind | `#slider` | inside `#meshPanel` | range | the slider box sits inside the mesh panel box | PASS |

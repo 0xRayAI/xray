@@ -116,7 +116,18 @@ test('the board face keeps the contract in both themes', async () => {
       const mesh = document.getElementById('meshPanel').getBoundingClientRect();
       const slider = document.getElementById('slider').getBoundingClientRect();
       const names = [...document.querySelectorAll('.seat .nm')].map(el => el.textContent);
-      const st = getComputedStyle(document.querySelector('.seat .st'));
+      const roster = [...document.querySelectorAll('#seatGrid .seat')].map(el => {
+        const nm = el.querySelector('.nm');
+        const cs = getComputedStyle(nm);
+        return {
+          text: (el.textContent || '').replace(/\s+/g, ' ').trim(),
+          title: nm.title,
+          ellipsis: cs.textOverflow,
+          nowrap: cs.whiteSpace,
+          idle: el.classList.contains('idle'),
+          pulse: el.querySelector('.dot').classList.contains('blink'),
+        };
+      });
       const activity = document.getElementById('activity');
       const log = getComputedStyle(document.getElementById('log'));
       const recent = text('#cardRecentList');
@@ -129,7 +140,7 @@ test('the board face keeps the contract in both themes', async () => {
       return {
         openCloud, doneCloud, waiting, mergedParent: mergedCard && mergedCard.parentElement.className,
         sliderInside: slider.top >= mesh.top - 1 && slider.bottom <= mesh.bottom + 1 && slider.left >= mesh.left - 1 && slider.right <= mesh.right + 1,
-        names, stClipped: st.position === 'absolute',
+        names, roster,
         activityCollapsed: activity.classList.contains('collapsed'),
         logDisplay: log.display, logMax: log.maxHeight, logOverflow: log.overflowY,
         recent, track, queue, tiles, edge, mill, ids,
@@ -145,7 +156,28 @@ test('the board face keeps the contract in both themes', async () => {
     assert.match(face.mergedParent, /done/);
     assert.equal(face.sliderInside, true);
     assert.ok(face.names.every(name => !name.includes('·')));
-    assert.equal(face.stClipped, true);
+    assert.ok(face.roster.length > 0);
+    const stateWord = /\b(active|idle|working|live|silent)\b/i;
+    for (const row of face.roster) {
+      assert.equal(row.text, row.title.toUpperCase());
+      assert.equal(row.ellipsis, 'ellipsis');
+      assert.equal(row.nowrap, 'nowrap');
+      assert.doesNotMatch(row.text, stateWord);
+      assert.equal(row.pulse, !row.idle);
+    }
+    const clipped = await page.evaluate(() => {
+      const nm = document.querySelector('#seatGrid .nm');
+      const saved = { text: nm.textContent, title: nm.title };
+      const full = 'A VERY LONG SEAT NAME THAT MUST TRUNCATE ON THE ROSTER';
+      nm.textContent = full;
+      nm.title = full;
+      const out = { title: nm.title, clipped: nm.scrollWidth > nm.clientWidth + 1, text: nm.parentElement.textContent.trim() };
+      nm.textContent = saved.text;
+      nm.title = saved.title;
+      return out;
+    });
+    assert.equal(clipped.title, clipped.text);
+    assert.equal(clipped.clipped, true);
     assert.equal(face.activityCollapsed, true);
     assert.equal(face.logDisplay, 'none');
     assert.match(face.recent, /merged/);
@@ -220,6 +252,35 @@ test('the board face keeps the contract in both themes', async () => {
     assert.equal(opened.stored, 'open');
     assert.equal(opened.max, '256px');
     assert.equal(opened.overflow, 'auto');
+  } finally {
+    if (browser) await browser.close();
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
+test('the roster renders no state text', async () => {
+  const server = await serve();
+  const base = `http://127.0.0.1:${server.address().port}/index.html`;
+  let browser;
+  try {
+    browser = await chromium.launch();
+    const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    await page.goto(base, { waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(() => document.querySelector('#seatGrid .seat'));
+    const head = page.locator('[data-fold="roster"].collapsed > .fold-head');
+    if (await head.count()) await head.click();
+    const rows = await page.evaluate(() => [...document.querySelectorAll('#seatGrid .seat')].map(el => ({
+      text: (el.textContent || '').replace(/\s+/g, ' ').trim(),
+      html: el.innerHTML,
+      title: el.querySelector('.nm').title,
+    })));
+    assert.ok(rows.length > 0);
+    for (const row of rows) {
+      assert.equal(row.html.includes('class="st"'), false);
+      assert.equal(row.text, row.title.toUpperCase());
+      assert.doesNotMatch(row.text, /\b(active|idle|working|live|silent)\b/i);
+      assert.doesNotMatch(row.text, /·/);
+    }
   } finally {
     if (browser) await browser.close();
     await new Promise((resolve) => server.close(resolve));

@@ -376,8 +376,8 @@ header { animation: rise .6s ease-out both; }
 .pill.behind { border-color: var(--behind-edge); color: var(--behind-fg); background: var(--behind-bg); }
 .pill.behind::before { color: var(--behind-dot); animation: none; }
 .seat { position: relative; }
-.seat .dot.blink { animation: live-blink 1.1s ease-in-out infinite; }
-@keyframes live-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
+.seat .dot.blink { animation: live-blink 2.8s ease-in-out infinite; }
+@keyframes live-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.62; } }
 @media (prefers-reduced-motion: reduce) { .seat .dot.blink { animation: none; } }
 #mesh { opacity: 0; transition: opacity 1.2s ease-out; background: var(--plate); }
 #mesh.in { opacity: 1; }
@@ -401,9 +401,7 @@ header h1 span { color: var(--dim); font-size: 13px; font-weight: 400; letter-sp
 .seat > span { min-width: 0; overflow: hidden; }
 .seat.idle { opacity: .45; }
 .dot { width: 14px; height: 14px; border-radius: 50%; background: var(--dot-off); flex: none; }
-.seat .nm { font-weight: 700; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.seat .st { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
-.seat.live .st { color: var(--text); }
+.seat .nm { min-width: 0; flex: 1; font-weight: 700; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lens-head { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 12px; color: var(--dim); align-items: center; }
 #head { color: var(--teal); font-weight: 700; font-size: 15px; }
 #headTime { color: var(--dim); font-size: 12px; font-family: "JetBrains Mono", ui-monospace, monospace; }
@@ -690,11 +688,14 @@ footer a { color: var(--foot); }
   L.AGENTS.forEach(function (a) {
     var el = document.createElement('div');
     el.className = 'seat';
-    el.innerHTML = '<span class="dot"></span><span><div class="nm"></div><div class="st"></div></span>';
-    el.querySelector('.nm').textContent = String(L.LABEL[a[0]] || a[0]).toUpperCase();
-    el.querySelector('.nm').style.color = rgb(L.COLOR[a[0]]);
+    var label = String(L.LABEL[a[0]] || a[0]);
+    el.innerHTML = '<span class="dot"></span><span class="nm"></span>';
+    var nm = el.querySelector('.nm');
+    nm.textContent = label.toUpperCase();
+    nm.title = label;
+    nm.style.color = rgb(L.COLOR[a[0]]);
     $('seatGrid').appendChild(el);
-    seatEls[a[0]] = { el: el, dot: el.querySelector('.dot'), st: el.querySelector('.st'), role: a[1] };
+    seatEls[a[0]] = { el: el, dot: el.querySelector('.dot') };
   });
   var rosterSum = $('rosterSum'); if (rosterSum) rosterSum.textContent = String(L.AGENTS.length);
   var meshSum = $('meshSum'); if (meshSum) meshSum.textContent = String(Object.keys(L.SATS).length);
@@ -756,12 +757,6 @@ footer a { color: var(--foot); }
     var f = window.LIVE_FLEET, name = k === 'blinky' ? 'Coord' : k;
     if (k === 'CloudAgents') return !!(f && f.cloud && f.cloud.working);
     return !!(f && ((f.working && f.working[name]) || (f.seats && f.seats[name] && f.seats[name].working)));
-  }
-  function fleetWorkingOn(k) {   // 'working on <packet>' from the server's work tracking, else ''
-    var f = window.LIVE_FLEET, names = (f && f.seat_display) || {};
-    var name = Object.prototype.hasOwnProperty.call(names, k) ? names[k] : k;
-    var seat = f && f.seats && (f.seats[k] || f.seats[name] || f.seats[String(name).toLowerCase()]);
-    return seat && typeof seat.working_on === 'string' ? seat.working_on : '';
   }
   // Live queue: new ids wait here until the view is live, then flash in time order (late ones tagged)
   var LATE_MS = 2 * 60 * 1000, CATCHUP_MS = 30 * 60 * 1000, BATCH_MS = 9000;
@@ -1395,18 +1390,13 @@ footer a { color: var(--foot); }
       s.el.classList.toggle('idle', !on);
       s.dot.style.background = on ? rgb(c) : cssVar('--dot-off');
       s.dot.style.boxShadow = on ? '0 0 0 2px ' + cssVar('--ring-gap') + ', 0 0 0 4px ' + rgb(c) : 'none';
-      s.st.textContent = s.role + ' · ' + v.word;   // WORKING > LIVE > ACTIVE > IDLE (one state)
-      var won = fleetWorkingOn(a[0]);
-      if (won.indexOf('working on ') === 0) s.st.textContent += ' · ' + won;
-      var sil = !v.blink && fleetSilent(a[0]); if (sil) s.st.textContent += ' · silent 2h';
+      var sil = !v.blink && fleetSilent(a[0]);
       s.el.classList.toggle('silent', sil); if (sil) s.dot.style.background = cssVar('--silent-ink');
       var spinning = v.blink;
       s.el.classList.toggle('working', spinning);
-      // header chip: the existing status dot blinks in the seat color while working; the canvas node shows
-      // the rolling-sheen 'working' label from the same state
-      s.dot.classList.toggle('blink', spinning);
+      // A lit seat pulses the dot. An idle seat stays dim and still.
+      s.dot.classList.toggle('blink', on);
       if (spinning) s.dot.style.background = rgb(c);
-      if (spinning) s.el.setAttribute('aria-label', a[0] + ' working'); else s.el.removeAttribute('aria-label');
     });
     var logKey = shown + ':' + state.events.length;
     if (logKey !== lastLogKey) { lastLogKey = logKey; renderLog(shown); }

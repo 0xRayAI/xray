@@ -131,7 +131,7 @@ test('wave header says building with no stamp and empty when the board has zero 
 test('working: canvas label keeps the rolling sheen; header chip blinks its EXISTING dot in the seat color', () => {
   assert.match(html, /function fleetWorking\(k\)/);
   assert.match(html, /seat-color sheen sweeping/);                       // canvas, under the node icon
-  assert.match(html, /s\.dot\.classList\.toggle\('blink', spinning\)/);
+  assert.match(html, /s\.dot\.classList\.toggle\('blink', on\)/);
   assert.match(html, /if \(spinning\) s\.dot\.style\.background = rgb\(c\)/);
   assert.match(html, /\.seat \.dot\.blink \{ animation: live-blink/);
   assert.match(html, /prefers-reduced-motion: reduce\) \{ \.seat \.dot\.blink \{ animation: none/);
@@ -155,7 +155,7 @@ test('one seat state: header text, dot and node label all come from L.seatView(s
   // the page derives chip text, dot and node from that one state (no other source of truth left)
   assert.match(html, /function seatState\(k, hot\) \{ return L\.seatState\(fleetWorking\(k\), !!\(hot && hot\[k\]\), fleetActive\(k\)\); \}/);
   assert.match(html, /v = L\.seatView\(seatState\(a\[0\], hot\)\), on = v\.lit;/);
-  assert.match(html, /s\.st\.textContent = s\.role \+ ' · ' \+ v\.word;/);
+  assert.doesNotMatch(html, /s\.st/);
   assert.match(html, /var spinning = v\.blink;/);
   assert.match(html, /var nv = L\.seatView\(seatState\(key, hot\)\); nodeView\[key\] = nv;/);
   assert.match(html, /drawNode\(key, nv\.lit, fs, pul, nv\.nodeWorking, nowWall\);/);
@@ -270,7 +270,9 @@ test('silent seat: amber "silent 2h" on node and chip from fleet.seats[name].sil
   assert.match(html, /return !!\(f && f\.seats && f\.seats\[name\] && f\.seats\[name\]\.silent\);/);
   assert.match(html, /var silentNow = !spinning && fleetSilent\(key\);/);
   assert.match(html, /ctx\.fillText\('silent 2h', x, top\)/);
-  assert.match(html, /var sil = !v\.blink && fleetSilent\(a\[0\]\); if \(sil\) s\.st\.textContent \+= ' · silent 2h';/);
+  assert.match(html, /var sil = !v\.blink && fleetSilent\(a\[0\]\);/);
+  assert.match(html, /if \(sil\) s\.dot\.style\.background = cssVar\('--silent-ink'\)/);
+  assert.doesNotMatch(html, /textContent \+= ' · silent 2h'/);
 });
 
 // ---- lap2 UI review: helpers + our overlay ------------------------------------------------------------------------
