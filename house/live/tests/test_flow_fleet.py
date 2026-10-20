@@ -362,9 +362,12 @@ class WorkingSpinnerTest(unittest.TestCase):
             # Operator answered Lead's prompt (sent + cloud by): no longer 'prompt'; it SENT a pulse 30 s ago, so the
             # fail-safe rule keeps it working (via pulse) for 10 min after that, then it stops
             self.assertEqual(fs["seats"]["Operator"]["working_via"], "pulse")
-            # #275: then its own open cloud agent (bc-spin0001) keeps it working until the 60 min cloud window ends
-            self.assertEqual(f.fleet_state([], now + 11 * 60)["seats"]["Operator"]["working_via"], "cloud")
-            self.assertFalse(f.fleet_state([], now + 61 * 60)["seats"]["Operator"]["working"])
+            # an open cloud agent keeps the launching seat working and active after the old 20 min clock
+            later = f.fleet_state([], now + 11 * 60)
+            self.assertEqual(later["seats"]["Operator"]["working_via"], "cloud")
+            held = f.fleet_state([], now + 61 * 60)
+            self.assertEqual(held["seats"]["Operator"]["working_via"], "cloud")
+            self.assertTrue(held["seats"]["Operator"]["active"])
             self.assertTrue(fs["cloud"]["working"] and fs["working"]["CloudAgents"]["via"] == "cloud")
             self.assertEqual(fs["active"], sum(1 for v in fs["seats"].values() if v["active"]))  # working not counted
             self.assertNotIn(SECRET[3], json.dumps(fs) + (root / "feed/fleet-state.json").read_text())
@@ -568,11 +571,12 @@ class RemoteActivityTest(unittest.TestCase):
             ev = [e for e in f.scan() if e["kind"] == "subagent_start"]
             self.assertEqual([(e["from"], e["to"]) for e in ev], [("Builder", "Reviewer")])
             self.assertEqual(f.fleet_state([], now)["working"]["Builder"]["via"], "subagent")
-            # stale open items stop spinning after 30 min
-            # #281: one cloud window: the launcher stays working until 20 min after the agent's last line, then idles
-            # (the open subagent's 30 min window outlasts it here, so both are past at +31 min)
+            # the open subagent stops at 30 min; the still-open cloud agent keeps Builder active
             self.assertEqual(live_fleet.WORKING_CLOUD_S, 20 * 60)
-            self.assertFalse(f.fleet_state([], now + 31 * 60)["seats"]["Builder"]["working"])
+            held = f.fleet_state([], now + 31 * 60)
+            self.assertEqual(held["working"]["Builder"]["via"], "cloud")
+            self.assertTrue(held["seats"]["Builder"]["active"])
+            self.assertIn("bc-1234abcd", held["cloud"]["open_agents"])
 
 
 class LabWorkTest(unittest.TestCase):

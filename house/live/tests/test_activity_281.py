@@ -32,10 +32,24 @@ class Act281(unittest.TestCase):
         w = self.fleet([self.launch(10 * 60)]).working_state([])
         self.assertEqual(w.get("Operator", {}).get("agent"), "bc-abc12345")
 
-    def test_launcher_idle_after_window(self):
-        w = self.fleet([self.launch(25 * 60)]).working_state([])
+    def test_launcher_stays_active_while_the_agent_runs(self):
+        f = self.fleet([self.launch(25 * 60)])
+        w = f.working_state([])
+        self.assertEqual(w.get("Operator", {}).get("agent"), "bc-abc12345")
+        self.assertIn("CloudAgents", w)
+        st = f.fleet_state([], time.time())
+        self.assertTrue(st["seats"]["Operator"]["active"])
+        self.assertEqual(st["seats"]["Operator"]["working_via"], "cloud")
+
+    def test_launcher_idle_after_six_hours(self):
+        f = self.fleet([self.launch(7 * 3600)])
+        w = f.working_state([])
         self.assertNotIn("Operator", w)
         self.assertNotIn("CloudAgents", w)
+        st = f.fleet_state([], time.time())
+        self.assertFalse(st["seats"]["Operator"]["active"])
+        self.assertFalse(st["cloud"]["active"])
+        self.assertEqual(st["cloud"]["open_agents"], [])
 
     def test_finished_ends_at_once(self):
         w = self.fleet([self.launch(5 * 60), self.launch(60, action="finished")]).working_state([])
@@ -80,6 +94,16 @@ class Act281(unittest.TestCase):
         self.assertIsNone(pr_of("bc-ddd44444"))
         self.assertIsNone(pr_of("bc-eee55555"))
         self.assertEqual(pr_of("bc-fff66666"), good)
+
+    def test_operator_cloud_line_is_not_dropped(self):
+        f = self.fleet(remote=[{
+            "t_ct": ct(30), "seat": "Operator", "kind": "cloud_agent", "action": "launch", "agent": "bc-forge0001",
+        }])
+        st = f.fleet_state([], time.time())
+        self.assertIn("bc-forge0001", st["cloud"]["open_agents"])
+        self.assertTrue(st["seats"]["Operator"]["active"])
+        self.assertEqual(st["seats"]["Operator"]["working_via"], "cloud")
+        self.assertEqual(st["cloud"]["active"], True)
 
     def test_prompt_keeps_sender(self):
         f = self.fleet(remote=[{"t_ct": ct(30), "seat": "Builder", "kind": "prompt", "action": "received", "from": "Coord"},

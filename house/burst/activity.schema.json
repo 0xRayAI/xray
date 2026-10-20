@@ -41,6 +41,12 @@
       "pattern": "^[A-Za-z0-9 ._:@#+/\\-]{1,40}$",
       "description": "prompt only: a short room name, at most 40 characters. Never the message text."
     },
+    "note": {
+      "type": "string",
+      "maxLength": 240,
+      "pattern": "^[A-Za-z0-9 ._:@#+/?'\",;!()\\-]{1,240}$",
+      "description": "prompt only: the one line the board shows, at most 240 characters. Keys named body, text, or message stay refused."
+    },
     "agent": {
       "type": "string",
       "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{2,40}$"
@@ -64,7 +70,7 @@
     },
     {
       "if": { "not": { "properties": { "kind": { "const": "prompt" } }, "required": ["kind"] } },
-      "then": { "properties": { "room": false, "from": false } }
+      "then": { "properties": { "room": false, "from": false, "note": false } }
     },
     {
       "if": { "properties": { "kind": { "const": "turn" } }, "required": ["kind"] },

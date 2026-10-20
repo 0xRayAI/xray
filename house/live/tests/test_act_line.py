@@ -43,6 +43,12 @@ class ActLinePr(unittest.TestCase):
         self.assertEqual(long["pr"], f"https://github.com/acme/{repo100}/pull/1")
         self.assertIsNone(push_payload.act_line({**BASE, "pr": f"https://github.com/acme/{repo101}/pull/1"}))
 
+    def test_forge_cloud_agent_is_kept(self):
+        line = push_payload.act_line({**BASE, "seat": "forge", "agent": "bc-531f2033-90e0-595f-87de-8dfe576ec69c"})
+        self.assertEqual(line["seat"], "forge")
+        self.assertEqual(line["agent"], "bc-531f2033-90e0-595f-87de-8dfe576ec69c")
+        self.assertIsNone(push_payload.act_line({**BASE, "seat": "forge", "kind": "turn", "action": "start"}))
+
     def test_omitted_pr_stays_off_the_line(self):
         line = push_payload.act_line(dict(BASE))
         self.assertIsNotNone(line)

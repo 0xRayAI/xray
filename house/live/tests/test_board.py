@@ -433,6 +433,15 @@ class Stats(unittest.TestCase):
         for key in ("issues_opened_24h", "issues_closed_24h", "prs_opened_24h", "prs_merged_24h", "prs_closed_unmerged_24h"):
             self.assertEqual(got[key], len(got[key + "_ids"]))
 
+    def test_pr_close_with_merged_at_counts_as_merged(self):
+        import live_board as w
+        e = lambda n, k, ago, **kw: {"id": f"{n}:{k}", "t_ct": ct(ago), "kind": k, "repo": R, "number": n, **kw}
+        evs = [e(20, "pr_open", 1000, pr_state="closed"), e(20, "pr_close", 800, merged_at="2026-10-20T06:00:00-05:00")]
+        got = w.stats(evs)
+        self.assertEqual(got["prs_merged_24h_ids"], [f"{R}#20"])
+        self.assertEqual(got["prs_closed_unmerged_24h"], 0)
+        self.assertEqual(got["prs_closed_unmerged_24h_ids"], [])
+
 
 class BeatSentence(unittest.TestCase):
     def test_reopen_is_named_in_the_beat_sentence(self):

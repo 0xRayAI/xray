@@ -8,14 +8,14 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { configureWorkTrack, acceptCursorWebhook, boardCloudAgents, classifyCursor, criticCloudId, deriveTrackFromDir, readJsonl, stampCriticCloud } from '../app/worktrack.mjs';
+import { configureWorkTrack, acceptCursorWebhook, applyCloudOwners, boardCloudAgents, classifyCursor, criticCloudId, deriveTrackFromDir, readJsonl, stampCriticCloud } from '../app/worktrack.mjs';
 import { listenPort } from './free-port.mjs';
 
 const APP = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app', 'server.mjs');
 const PAGE = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app', 'public', 'index.html');
 const SECRET = 'cursor-webhook-secret-test-fixture-32';
 
-configureWorkTrack({ seatIds: ['critic', 'arch1', 'mill'] });
+configureWorkTrack({ seatIds: ['critic', 'arch1', 'mill', 'forge'] });
 
 test('a PR keeps one critic cloud id and a new head resumes it', () => {
   const card = '0xRayAI/xray#399';
@@ -81,6 +81,63 @@ test('ERROR is a failed cloud agent, not a finish', () => {
   assert.equal(classifyCursor({ id: 'bc-run00001', status: 'RUNNING' }).status, 'running');
 });
 
+test('a running cloud agent makes its owner seat active and the row shows its status', () => {
+  const id = 'bc-531f2033-90e0-595f-87de-8dfe576ec69c';
+  const rows = boardCloudAgents({
+    activity: [
+      { kind: 'cloud_agent', action: 'launch', agent: 'bc-531f2033', seat: 'forge', t_ct: '2026-10-20T11:00:00-05:00' },
+      { kind: 'cloud_agent', action: 'launch', agent: id, seat: '', t_ct: '2026-10-20T11:32:00-05:00' },
+    ],
+  });
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].bcId, id);
+  assert.equal(rows[0].seat, 'forge');
+  assert.equal(rows[0].state, 'running');
+  const fleet = {
+    seats: {
+      critic: { active: true, working: true, working_via: 'github', last_ct: '2026-10-20T11:20:00-05:00', via: 'github' },
+      forge: { active: false, working: false, last_ct: '2026-10-20T06:18:00-05:00', via: 'github' },
+    },
+    working: { critic: { via: 'github', since_ct: '2026-10-20T11:20:00-05:00' } },
+    cloud: { active: false, open_agents: [], working: false },
+  };
+  const next = applyCloudOwners(fleet, rows, Date.parse('2026-10-20T11:40:00-05:00'));
+  assert.equal(next.seats.forge.active, true);
+  assert.equal(next.seats.forge.working, true);
+  assert.equal(next.seats.forge.working_via, 'cloud');
+  assert.equal(next.working.forge.via, 'cloud');
+  assert.equal(next.working.forge.agent, id);
+  assert.equal(next.seats.critic.working_via, 'github');
+  assert.equal(next.working.critic.via, 'github');
+  assert.equal(next.cloud.active, true);
+  assert.ok(next.cloud.open_agents.includes(id));
+});
+
+test('a running row with no update for more than 6h is stale and does not light its seat', () => {
+  const now = Date.parse('2026-10-20T11:40:00-05:00');
+  const old = ['bc-8450c4aa-ed0a-5fb3-9748-f09a044c848f', 'bc-72f1b3b2-a56e-5ce3-9162-76f264e06aea'];
+  const rows = boardCloudAgents({
+    activity: [
+      { kind: 'cloud_agent', action: 'launch', agent: old[0], seat: 'forge', t_ct: '2026-10-18T17:30:55-05:00' },
+      { kind: 'cloud_agent', action: 'launch', agent: old[1], seat: 'forge', t_ct: '2026-10-15T04:18:10-05:00' },
+      { kind: 'cloud_agent', action: 'launch', agent: 'bc-fresh00001', seat: 'forge', t_ct: '2026-10-20T06:00:00-05:00' },
+    ],
+    now,
+  });
+  assert.equal(rows.find(row => row.bcId === 'bc-fresh00001').state, 'running');
+  for (const id of old) assert.equal(rows.find(row => row.bcId === id).state, 'stale');
+  const fleet = { seats: { forge: { active: false, working: false, via: 'github' } }, working: {}, cloud: { active: false, open_agents: [], working: false } };
+  const next = applyCloudOwners(fleet, rows, now);
+  assert.equal(next.seats.forge.active, true);
+  assert.equal(next.seats.forge.working, true);
+  assert.equal(next.working.forge.agent, 'bc-fresh00001');
+  const ghosts = applyCloudOwners(fleet, rows.filter(row => row.state === 'stale'), now);
+  assert.equal(ghosts.seats.forge.active, false);
+  assert.equal(ghosts.seats.forge.working, false);
+  assert.equal(ghosts.cloud.active, false);
+  assert.deepEqual(ghosts.cloud.open_agents, []);
+});
+
 test('a later cancel keeps the seat and linked card and marks the row failed', () => {
   const rows = boardCloudAgents({
     agents: [{
@@ -109,6 +166,7 @@ test('an older finish does not reopen a newer launch, and a launch link fills a 
     ],
     links: [{ bcId: 'bc-arch00001', card: '0xrayai/xray#320', seat: 'arch1', state: 'running', updated_ct: '2026-10-15T15:01:00Z' }],
     agents: [{ agent: 'bc-arch00001', status: 'running', seat: 'unassigned', t_ct: '2026-10-15T15:00:00Z' }],
+    now: Date.parse('2026-10-15T16:00:00Z'),
   });
   const older = rows.find(row => row.bcId === 'bc-old000001');
   const launched = rows.find(row => row.bcId === 'bc-arch00001');
@@ -221,6 +279,11 @@ test('the live feed lists a running cloud agent, then a cancel as failed', async
     assert.equal(row.seat, 'critic');
     assert.equal(row.state, 'running');
     assert.equal(row.card, 'acme/app#15');
+    assert.equal(live.fleet.seats.critic.active, true);
+    assert.equal(live.fleet.seats.critic.working, true);
+    assert.equal(live.fleet.seats.critic.working_via, 'cloud');
+    assert.ok(live.fleet.cloud.open_agents.includes('bc-board0001'));
+    assert.equal(live.fleet.cloud.active, true);
     assert.equal(row.pr, 'https://github.com/acme/app/pull/15');
     assert.ok(row.updated_ct);
     const stamp = new Date(Date.now() + 2000).toISOString();

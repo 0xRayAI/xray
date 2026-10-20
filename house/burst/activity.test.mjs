@@ -20,7 +20,10 @@ test('a turn start is stored under the seat the caller names', () => {
 });
 
 test('free text and unknown fields are refused', () => {
-  assert.equal(validActivity({ t_ct: '2026-10-09T14:00:00Z', kind: 'turn', action: 'start', note: 'hello' }, now), 'unknown field');
+  assert.equal(validActivity({ t_ct: '2026-10-09T14:00:00Z', kind: 'turn', action: 'start', note: 'hello' }, now), 'note is only for prompt (<= 240 chars)');
+  assert.equal(validActivity({ t_ct: '2026-10-09T14:00:00Z', kind: 'prompt', action: 'sent', from: 'blaze', to: 'forge', note: 'check the message on the board' }, now), null);
+  assert.equal(validActivity({ t_ct: '2026-10-09T14:00:00Z', kind: 'prompt', action: 'sent', from: 'blaze', to: 'forge', note: 'n'.repeat(241) }, now), 'note must be a short plain line (<= 240 chars)');
+  assert.equal(validActivity({ t_ct: '2026-10-09T14:00:00Z', kind: 'prompt', action: 'sent', message: 'hidden' }, now), 'free-text fields are not accepted');
   assert.equal(validActivity({ t_ct: '2026-10-09T14:00:00Z', kind: 'turn', action: 'start', tag: 'see the body' }, now), 'free text is not accepted');
 });
 

@@ -97,6 +97,11 @@ try {
   for (const [scheme, width, height] of cases) {
     const page = await browser.newPage({ viewport: { width, height }, colorScheme: scheme, deviceScaleFactor: 1 });
     await page.goto(base + '/index.html', { waitUntil: 'domcontentloaded' });
+    await page.evaluate(() => {
+      const head = document.querySelector('[data-fold="mesh"].collapsed > .fold-head');
+      if (head) head.click();
+      window.dispatchEvent(new Event('resize'));
+    });
     await page.addStyleTag({ content: SKEW });
     await page.waitForFunction(() => {
       const pill = document.getElementById('spectrumPill');
@@ -134,6 +139,11 @@ try {
 
   const off = await browser.newPage({ viewport: { width: 1440, height: 900 }, colorScheme: 'dark' });
   await off.goto(base + '/index.html?spectrum=0&replay=0', { waitUntil: 'domcontentloaded' });
+  await off.evaluate(() => {
+    const head = document.querySelector('[data-fold="mesh"].collapsed > .fold-head');
+    if (head) head.click();
+    window.dispatchEvent(new Event('resize'));
+  });
   await off.addStyleTag({ content: SKEW });
   await off.waitForTimeout(400);
   const flags = await off.evaluate(() => ({

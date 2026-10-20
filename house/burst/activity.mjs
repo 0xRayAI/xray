@@ -13,7 +13,7 @@ export const ACT_KINDS = {
   retest: ['start', 'end', 'pass', 'fail'],
   deploy: ['start', 'end', 'pass', 'fail', 'cancel'],
 };
-const ACT_FIELDS = new Set(['t_ct', 'kind', 'action', 'to', 'from', 'agent', 'tag', 'seat', 'room', 'pr']);
+const ACT_FIELDS = new Set(['t_ct', 'kind', 'action', 'to', 'from', 'agent', 'tag', 'seat', 'room', 'pr', 'note']);
 // GitHub owner: letters, digits, single hyphens, not at either end, 39 characters.
 // The {0,38} group counts "-b" as one repeat, so the lookahead counts characters.
 // Repo may contain a dot, at most 100 characters. A segment of "." or ".." is not a name.
@@ -22,6 +22,7 @@ const GH_REPO = '(?![A-Za-z0-9._-]{101})[A-Za-z0-9_](?:[A-Za-z0-9._-]*[A-Za-z0-9
 const PR_URL = new RegExp('^https://github\\.com/' + GH_OWNER + '/' + GH_REPO + '/pull/\\d{1,8}$');
 const ACT_BANNED = /body|text|message/i;
 const ACT_VALUE = /^[A-Za-z0-9 ._:@#+\/-]{1,80}$/;
+const ACT_NOTE = /^[A-Za-z0-9 ._:@#+\/?',;!()\-]{1,240}$/;
 const ACT_AGENT = /^[A-Za-z0-9][A-Za-z0-9_-]{2,40}$/;
 const ACT_SEAT = /^[A-Za-z0-9][A-Za-z0-9_-]{1,40}$/;
 
@@ -32,7 +33,7 @@ export function validActivity(d, now = Date.now()) {
     if (!ACT_FIELDS.has(k)) return 'unknown field';
   }
   for (const k of Object.keys(d)) {
-    if (k === 'pr') continue;
+    if (k === 'pr' || k === 'note') continue;
     const v = d[k];
     if (typeof v !== 'string') return 'fields must be short plain strings';
     if (k === 'tag' && v.length > 80) return 'tag too long';
@@ -51,6 +52,10 @@ export function validActivity(d, now = Date.now()) {
   if (d.agent != null && !ACT_AGENT.test(d.agent)) return 'bad agent id';
   if (d.room != null && d.kind !== 'prompt') return 'room is only for prompt (<= 40 chars)';
   if (d.from != null && d.kind !== 'prompt') return 'from is only for prompt (<= 40 chars)';
+  if (d.note != null) {
+    if (d.kind !== 'prompt') return 'note is only for prompt (<= 240 chars)';
+    if (typeof d.note !== 'string' || !ACT_NOTE.test(d.note)) return 'note must be a short plain line (<= 240 chars)';
+  }
   if (d.pr != null) {
     if (d.kind !== 'cloud_agent') return 'pr is only for a cloud agent';
     if (typeof d.pr !== 'string' || d.pr.length > 300) return 'bad pr';

@@ -12,7 +12,7 @@ Lab runs / calls: tester -> instance -> tester (dev.example.com, labtest, app.ex
 Operator:  Railway deploys it triggers / approvals: Operator -> Railway -> host;  live-mesh commits: Operator -> GitHub
 Coord:       house files / house commits: Coord -> product node
 Cloud agents: writes by cursoragent -> GitHub; cloud-agents.jsonl launch/reply -> Cloud agents, finished -> <by>
-Prompts: <from> -> <to> (label 'message'; never any text; any seat). Seats post with live-inbox --prompt. An old collector still reads prompts.jsonl.
+Prompts: <from> -> <to> (label 'message'; this flow never copies note or message text; any seat). Seats post with live-inbox --prompt. An old collector still reads prompts.jsonl. The node board is the path that keeps `note`.
 Board view (apply): the three product instances collapse into one product node (site.json "node") and QaOne / QA two
 fold into "QA"; the instance (dev / labtest / prod) and the seat (qa-one / qa-two) become short label tags.
 A hop list that collapses to the product node alone (a /health change) is shown as Railway -> product node.

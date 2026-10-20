@@ -77,7 +77,10 @@ PR_URL = re.compile(
 
 def act_line(d):
     """Re-validate a pulled line (defense in depth); returns the normalized line or None."""
-    if not isinstance(d, dict) or d.get("seat") not in ACT_SEATS or d.get("kind") not in ACT_KINDS:
+    seat = d.get("seat") if isinstance(d, dict) else None
+    kind = d.get("kind") if isinstance(d, dict) else None
+    seat_ok = kind == "cloud_agent" and isinstance(seat, str) and re.fullmatch(r"[A-Za-z][A-Za-z0-9_-]{1,40}", seat)
+    if not isinstance(d, dict) or kind not in ACT_KINDS or not (seat_ok or seat in ACT_SEATS):
         return None
     if d.get("action") not in ACT_KINDS[d["kind"]] or not ACT_T.fullmatch(str(d.get("t_ct", ""))):
         return None

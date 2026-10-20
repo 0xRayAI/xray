@@ -29,7 +29,7 @@ function boardFeed() {
     });
   }
   const queue = [];
-  for (let i = 0; i < 40; i++) queue.push({ id: `q${i}`, type: 'line', seat: 'blinky', title: `waiting ${i} ${'reply '.repeat(12)}` });
+  for (let i = 0; i < 40; i++) queue.push({ id: `q${i}`, type: 'packet', seat: 'blinky', title: `waiting ${i} ${'reply '.repeat(12)}`, t_ct: new Date(now - i * 60000).toISOString() });
   const items = [];
   for (let i = 0; i < 24; i++) items.push({ lane: 'lane', label: 'track', title: `work ${i} ${'item '.repeat(8)}` });
   return {
@@ -84,6 +84,8 @@ test('desktop wave body keeps a visible card when forty cards sit above a long q
       const el = document.getElementById('waveBody');
       return el && el.querySelector('.wcard');
     }, null, { timeout: 8000 });
+    const cardsHead = page.locator('#cardsFold.collapsed > .fold-head');
+    if (await cardsHead.count()) await cardsHead.click();
     const metrics = await page.evaluate(() => {
       const el = document.getElementById('waveBody');
       const card = el.querySelector('.wcard');

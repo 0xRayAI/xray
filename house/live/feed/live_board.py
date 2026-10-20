@@ -513,6 +513,9 @@ def stats(evs, now=None):
         elif k == "merged":
             merged[key] = e; closed[key] = e
         if k == "pr_close":
+            if e.get("merged_at") or e.get("merged") is True:
+                merged[key] = e
+                closed[key] = e
             unmerged[key] = e
     is_pr = lambda key: opened.get(key, {}).get("kind") == "pr_open" or key in merged or key in unmerged
     iss = [k for k in opened if not is_pr(k)]

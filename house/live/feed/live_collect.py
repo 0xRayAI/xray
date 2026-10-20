@@ -838,6 +838,15 @@ class RepoCollector:
             author_seat = True
         elif not self.st["bf"].get("author:seat"):
             self.st["bf"]["author:seat"] = True
+        # One-time: pulls merged while the cursor sat past them never stored a merged event.
+        # Rewind 36h so the open 24h window is walked again. put() is idempotent.
+        if cur and not self.st["bf"].get("merged:day"):
+            back = (datetime.now(timezone.utc) - timedelta(hours=36)).strftime("%Y-%m-%dT%H:%M:%SZ")
+            cur = min(cur, back)
+            self.st["etags"].pop("pulls", None)
+            self.st["bf"]["merged:day"] = True
+        elif not self.st["bf"].get("merged:day"):
+            self.st["bf"]["merged:day"] = True
         newest = cur
         # Replay a pull that shares the cursor second. put() is idempotent.
         # Instant compare, not text: <= skips that sibling, and +00:00 / -05:00 sort before Z.
