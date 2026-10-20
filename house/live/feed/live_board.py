@@ -12,7 +12,7 @@ HOLD   = the owner posts a comment whose first line is 'Held: <reason>' (optiona
          Repos in NO_NUDGE_REPOS (unset means none) stay visible and are never stalled or nudged.
 PACKET = goal, constraints, path, acceptance, evidence, next owner, escalate. Missing acceptance or next owner ->
          amber 'no packet'. Evidence fills from the latest beat (CI url, Reviewer verdict url, merge sha, retest tick).
-BEAT   = one real event: PR opened/pushed, Reviewer verdict, CI result, merge, merge-queue.md tick, Lead message, blocker.
+BEAT   = one real event: PR opened/pushed, Reviewer verdict, CI result, merge, reopen, merge-queue.md tick, Lead message, blocker.
          A watcher run whose start and end fall in the same second is never a beat.
 STALL  = a live card with no beat for 60 min (red on the page; one line to fleet/inbox/coord.jsonl per stalled beat).
 Also writes house/BOARD.md from the same model at most once a minute; board-static.md items are pinned cards."""

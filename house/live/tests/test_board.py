@@ -432,3 +432,13 @@ class Stats(unittest.TestCase):
         got = w.stats(evs)
         for key in ("issues_opened_24h", "issues_closed_24h", "prs_opened_24h", "prs_merged_24h", "prs_closed_unmerged_24h"):
             self.assertEqual(got[key], len(got[key + "_ids"]))
+
+
+class BeatSentence(unittest.TestCase):
+    def test_reopen_is_named_in_the_beat_sentence(self):
+        board = Path(os.environ.get("MESH_FEED_DIR", HERE.parent / "feed")) / "live_board.py"
+        beat = next(ln for ln in board.read_text().splitlines() if ln.startswith("BEAT"))
+        self.assertIn("reopen", beat)
+        proc = HERE.parents[2] / "grok-bot" / "OP-PROC.md"
+        line = next(ln for ln in proc.read_text().splitlines() if ln.startswith("- **Beat:**"))
+        self.assertIn("a reopen", line.split("CI stays", 1)[0])
