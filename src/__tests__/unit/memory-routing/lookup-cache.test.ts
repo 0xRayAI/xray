@@ -94,7 +94,9 @@ describe('organ file cache', () => {
     };
 
     resetOrganFileCacheStats();
-    const first = provider.getTaskConfidence?.(task);
+    const now = new Date('2026-10-16T12:00:00.000Z');
+    const later = new Date('2026-12-15T12:00:00.000Z');
+    const first = provider.getTaskConfidence?.(task, now);
     const firstAgent = provider.selectAgent(caps, ['routing'], 10, task.description);
     expect(first?.matchedSignals).toContain('seam-lookup-marker');
     expect(first?.recommendedAgent).toBe('architect');
@@ -102,10 +104,14 @@ describe('organ file cache', () => {
     const warmed = organFileCacheStats();
     expect(warmed.hits).toBeGreaterThan(0);
 
-    const second = provider.getTaskConfidence?.(task);
+    const second = provider.getTaskConfidence?.(task, now);
     const secondAgent = provider.selectAgent(caps, ['routing'], 10, task.description);
     expect(second).toEqual(first);
     expect(secondAgent).toBe(firstAgent);
+    const aged = provider.getTaskConfidence?.(task, later);
+    expect(aged?.matchedSignals).toEqual(first?.matchedSignals);
+    expect(aged?.avgConfidence).toBeLessThan(first?.avgConfidence ?? 1);
+    expect(provider.getTaskConfidence?.(task, later)).toEqual(aged);
     const repeated = organFileCacheStats();
     expect(repeated.misses).toBe(warmed.misses);
     expect(repeated.hits).toBeGreaterThan(warmed.hits);
@@ -118,7 +124,7 @@ describe('organ file cache', () => {
       lastRun: '2026-10-02T12:01:00.000Z',
     }));
     expect(readSessions()).toEqual(['seam-session-next']);
-    expect(provider.getTaskConfidence?.(task)).toEqual(first);
+    expect(provider.getTaskConfidence?.(task, now)).toEqual(first);
     expect(provider.selectAgent(caps, ['routing'], 10, task.description)).toBe(firstAgent);
 
     writeFileSync(signalsFile, signalFile(0.2));

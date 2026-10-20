@@ -83,8 +83,6 @@ test('stale feed on disk does not kill a fresh collector; a real stall still doe
   child.stdout.on('data', d => { logs += d; });
   child.stderr.on('data', d => { logs += d; });
   try {
-    // collector: started is logged before the listen callback. Wait until both
-    // lines are present. A fixed sleep can land after the stall limit.
     let port = null;
     for (let i = 0; i < 80 && !(port && /collector: started/.test(logs)); i++) {
       port = /listening on :(\d+)/.exec(logs);
@@ -95,7 +93,7 @@ test('stale feed on disk does not kill a fresh collector; a real stall still doe
     assert.ok(port, logs);
     const base = `http://127.0.0.1:${port[1]}`;
     const early = await (await fetch(base + '/healthz')).json();
-    if (!/feed loop stalled/.test(logs)) assert.equal(early.stalled, false);
+    assert.equal(early.stalled, false);
     let body = null;
     for (let i = 0; i < 40 && !/feed loop stalled/.test(logs); i++) await new Promise(r => setTimeout(r, 250));
     assert.match(logs, /feed loop stalled \d+s; restarting/);
