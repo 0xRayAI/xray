@@ -17,7 +17,7 @@ description: >-
 Lane B does **not** waive Lane H. Human audience → H.
 
 ## HARD GATE (Lane H)
-Before material H send: `ops/GIBBERISH-CHECK.md` + proof line. Stamp-only PASS invalid. Herald/critic/forge/CoS refuse H-jargon.
+Before material H send: `ops/GIBBERISH-CHECK.md` + proof line. Stamp-only PASS invalid. Herald/critic/forge/CoS refuse H-jargon. Blinky writes the Lane H friend-test plus Dist packets. Herald posts those words.
 
 ## Lane B (experiment)
 Use Meaningful Compression / synaptical concurrency dense form. Prefer one short beat over essays. Seat stamps OK (`SEAT-STAMPS.md`). Still refuse pure noise.

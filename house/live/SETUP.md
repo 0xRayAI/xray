@@ -34,7 +34,7 @@ Logins map to seats in the committed `feed/fleet-nodes.json`, which beats the `L
 | Seat | Credential |
 |---|---|
 | builder | its builder-app installation token (`ghs_…`, verified with GitHub; unchanged) |
-| forge, critic, mill, blinky, herald, nibbler, sound, magnet | a per-seat key: `Authorization: Bearer <key>`. Our 9 seats (with arch1 below); routes: [route table](docs/inbox.md#server-routing) |
+| forge, critic, blinky, herald, nibbler, sound, magnet | a per-seat key: `Authorization: Bearer <key>`. Our 8 seats (with arch1 below); routes: [route table](docs/inbox.md#server-routing) |
 
 Keys live only on the box: `$SEAT_KEYS_DIR/<seat>.key` (default `~/.burst/seat-keys`; dir 0700, files 0600). The
 server holds only their SHA-256 hashes, in the Railway variable `SEAT_KEYS` (JSON `{seat: sha256hex}`).
@@ -43,10 +43,9 @@ Rotate: `feed/seat_keys.sh mint` (writes new keys, never prints them) then `feed
 
 | builder-cloud | a per-seat key (file `seat-keys/builder-cloud`, no `.key` suffix), seat display `Builder-cloud`: the cloud Builder. `POST /activity` (as `Builder-cloud`, own board node), `GET /inbox/builder-cloud` = every Builder line (merge-ready, Reviewer PASS) mirrored server-side + nudges to Builder (`type: nudge`), `GET /cards?seat=builder-cloud` = Builder's cards. Helper: `tools/builder-cloud-setup.sh` (key from env `LIVE_KEY`) |
 | arch1 | a per-seat key (`seat-keys/arch1.key`): the Arch1 deep-review seat. `GET /inbox/arch1` = deep-review asks and Gate B runs (routed by needles in `feed/routing/inbox-roles.json` extra_seats); read with `tools/live-inbox arch1`, ack with the commands in the list below. Arch1 receives its key file from Blaze in a 1:1 chat, never in a room or repo |
-| forge | a per-seat key (`seat-keys/forge.key`). `GET /inbox/forge` = merge / deploy / Gate B run asks (`@forge`, `merge ask`, `deploy ask`, `run gate b`) and merges into main or bifrost/main; read with `tools/live-inbox forge`. Key delivered 1:1 by Blaze, never in room/repo |
+| forge | a per-seat key (`seat-keys/forge.key`). `GET /inbox/forge` = merge / deploy / Gate B run asks, and implement / rebase / dev asks (`@forge`, `@mill`, `implement ask`, `rebase ask`, `mill wave`); read with `tools/live-inbox forge`. Forge launches the cloud agent that writes code and opens the PR, and forge merges. Key delivered 1:1 by Blaze, never in room/repo |
 | critic | a per-seat key (`seat-keys/critic.key`). `GET /inbox/critic` = review requests and Light / Strict / re-Light asks (`@critic`, `light ask`, `strict ask`, `re-light`); read with `tools/live-inbox critic`. Key delivered 1:1 by Blaze, never in room/repo |
-| mill | a per-seat key (`seat-keys/mill.key`). `GET /inbox/mill` = implement / rebase asks (`@mill`, `implement ask`, `rebase ask`); read with `tools/live-inbox mill`. Key delivered 1:1 by Blaze, never in room/repo |
-| blinky | a per-seat key (`seat-keys/blinky.key`). `GET /inbox/blinky` = CoS / board asks (`@blinky`); read with `tools/live-inbox blinky`. Key delivered 1:1 by Blaze, never in room/repo |
+| blinky | a per-seat key (`seat-keys/blinky.key`). `GET /inbox/blinky` = the four CoS duties (`@blinky`): plan the next wave, burn pacing, Lane H friend-test plus Dist packets, and seat onboarding. Read with `tools/live-inbox blinky`. Key delivered 1:1 by Blaze, never in room/repo |
 | herald | a per-seat key (`seat-keys/herald.key`). `GET /inbox/herald` = Dist asks (`@herald`); read with `tools/live-inbox herald`. Key delivered 1:1 by Blaze, never in room/repo |
 | nibbler | a per-seat key (`seat-keys/nibbler.key`). `GET /inbox/nibbler` = asks to `@nibbler`; read with `tools/live-inbox nibbler`. Key delivered 1:1 by Blaze, never in room/repo |
 | sound | a per-seat key (`seat-keys/sound.key`). `GET /inbox/sound` = asks to `@sound`; read with `tools/live-inbox sound`. Key delivered 1:1 by Blaze, never in room/repo |
@@ -101,7 +100,7 @@ in-process by the builder-app wrapper's `mint_token.token()`, never printed).
 
 ## Silent seats
 A bot seat with no activity / prompt / beat for > 2 h (`SILENT_S`, default 7200) while it owns live work (owner, next
-owner or retest owner of a live card, or an open nudge) shows amber `silent 2h` on its node and chip, and blinky (CoS) gets one
+owner or retest owner of a live card, or an open nudge) shows amber `silent 2h` on its node and chip, and that seat gets one
 nudge (`kind: silent`, `about: <seat>`) per quiet stretch. Humans (Lead) are never flagged.
 
 ## Fleet setup

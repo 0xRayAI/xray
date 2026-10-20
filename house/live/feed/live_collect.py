@@ -123,7 +123,7 @@ SEAT_TRAILER_RE = re.compile(r"(?im)^Seat:\s*([a-z0-9-]{2,16})\s*$")
 
 
 # Git author names that are seats. A mapped login still wins; forge0x1[bot] stays forge.
-SEAT_GIT_NAMES = frozenset({"blinky", "critic", "forge", "mill", "arch1", "herald", "magnet", "nibbler", "sound"})
+SEAT_GIT_NAMES = frozenset({"blinky", "critic", "forge", "arch1", "herald", "magnet", "nibbler", "sound"})
 
 
 def seat_trailer(msg: str | None) -> str | None:

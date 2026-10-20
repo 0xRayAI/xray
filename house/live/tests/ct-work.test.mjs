@@ -14,7 +14,7 @@ async function boot(data, ingest) {
   const child = spawn(process.execPath, [path.join(APP, 'server.mjs')], {
     env: {
       PORT: '0', LIVE_PUBLIC: '1', COLLECTOR: 'on', SERVER_ROUTING: 'off',
-      LIVE_NODE_MAP: '{"mill0x[bot]":"mill"}',
+      LIVE_NODE_MAP: '{"sound0x[bot]":"sound"}',
       PATH: process.env.PATH, MESH_DATA_DIR: data,
       SESSION_SECRET: crypto.randomBytes(32).toString('hex'),
       INGEST_SECRET: ingest,
@@ -90,7 +90,7 @@ test('a close or merge clears that seat working_on and leaves a different open i
     events: [
       { id: 'c341', t_ct: now, kind: 'pr_comment', repo: '0xRayAI/xray', number: 341, from: 'forge', actor: 'forge0x1[bot]', label: 'forge note' },
       { id: 'c7', t_ct: now, kind: 'issue_comment', repo: 'example/repo', number: 7, from: 'critic', actor: 'critic0x[bot]', label: 'critic note' },
-      { id: 'c8', t_ct: now, kind: 'pr_comment', repo: 'example/repo', number: 8, from: 'mill', actor: 'mill0x[bot]', label: 'mill note' },
+      { id: 'c8', t_ct: now, kind: 'pr_comment', repo: 'example/repo', number: 8, from: 'sound', actor: 'sound0x[bot]', label: 'sound note' },
     ],
   }));
   const ingest = crypto.randomBytes(32).toString('hex');
@@ -101,14 +101,14 @@ test('a close or merge clears that seat working_on and leaves a different open i
       live = await (await fetch(srv.base + '/live-events.json')).json();
       const forge = live.fleet && live.fleet.seats && live.fleet.seats.forge;
       const critic = live.fleet && live.fleet.seats && live.fleet.seats.critic;
-      const mill = live.fleet && live.fleet.seats && live.fleet.seats.mill;
-      if (forge && forge.working_on === '0xRayAI/xray#341' && critic && critic.working_on === 'example/repo#7' && mill && mill.working_on === 'example/repo#8') break;
+      const sound = live.fleet && live.fleet.seats && live.fleet.seats.sound;
+      if (forge && forge.working_on === '0xRayAI/xray#341' && critic && critic.working_on === 'example/repo#7' && sound && sound.working_on === 'example/repo#8') break;
       await new Promise(r => setTimeout(r, 50));
     }
     assert.equal(live.fleet.seats.forge.working_on, '0xRayAI/xray#341');
     assert.equal(live.fleet.working.forge.working_on, '0xRayAI/xray#341');
     assert.equal(live.fleet.seats.critic.working_on, 'example/repo#7');
-    assert.equal(live.fleet.seats.mill.working_on, 'example/repo#8');
+    assert.equal(live.fleet.seats.sound.working_on, 'example/repo#8');
     const posted = await fetch(srv.base + '/ingest', {
       method: 'POST',
       headers: { Authorization: 'Bearer ' + ingest, 'Content-Type': 'application/json' },
@@ -126,8 +126,8 @@ test('a close or merge clears that seat working_on and leaves a different open i
     assert.equal(live.fleet.working.forge.working_on, undefined);
     assert.equal(live.fleet.seats.critic.working_on, undefined);
     assert.equal(live.fleet.working.critic.working_on, undefined);
-    assert.equal(live.fleet.seats.mill.working_on, 'example/repo#8');
-    assert.equal(live.fleet.working.mill.working_on, 'example/repo#8');
+    assert.equal(live.fleet.seats.sound.working_on, 'example/repo#8');
+    assert.equal(live.fleet.working.sound.working_on, 'example/repo#8');
   } finally {
     await stop(srv.child);
     fs.rmSync(data, { recursive: true, force: true });

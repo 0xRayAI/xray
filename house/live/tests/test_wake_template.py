@@ -79,6 +79,18 @@ class WakeTemplate(unittest.TestCase):
         self.assertIn("pushes its branch only", cloud.lower())
         self.assertIn("never opens a pull request or an issue", cloud.lower())
 
+    def test_cos_seat_does_not_post_a_handoff(self):
+        handoff = self.steps[3]
+        self.assertIn(
+            "The CoS seat does not post a handoff. The CoS seat only acks a dev line and sends no message about it.",
+            handoff,
+        )
+        self.assertIn("live-inbox <seat> --handoff", handoff)
+        self.assertIn("critic_fail", handoff)
+        self.assertNotIn("The board does every", handoff)
+        self.assertNotIn("merge go", handoff)
+        self.assertNotIn("re-check", handoff)
+
 
 class Handler(BaseHTTPRequestHandler):
     def do_POST(self):

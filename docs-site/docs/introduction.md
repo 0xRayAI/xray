@@ -57,7 +57,7 @@ Every code change is checked against a **69-term Codex**, deliberated by **3 spe
 
 | Version | Highlights |
 |---------|------------|
-| **4.1.0** | Bifrost is the collector board. A cloud agent is a board row. A stuck card's L2 nudge goes to the CoS role. Goggles views one plane. The card is in LENS.md. A search runs inside that card. |
+| **4.1.0** | Bifrost is the collector board. A cloud agent is a board row. A stuck card's L1 stays with the owner. Goggles views one plane. The card is in LENS.md. A search runs inside that card. |
 | **4.0.43** | Confer completes only on a real PASS. Cursor gate events fail closed, except EACCES when a cloud wrapper cannot write dest. |
 | **4.0.42** | Confer votes. Burst runs the swarm. |
 | **4.0.9** | Mill target: postinstall does not mill npm global prefix or `_npx` as a consumer. Isolated HOME skips machine `~/.grok`. |

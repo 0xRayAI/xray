@@ -199,7 +199,7 @@ const W = `http://127.0.0.1:${sink.address().port}`;
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-gate-'));
 const ING = crypto.randomBytes(32).toString('hex');
 const FKEY = 'forge-key-' + crypto.randomBytes(6).toString('hex');
-const hooks = ['forge', 'blinky', 'mill', 'critic'].map(s => [s, { url: `${W}/${s}` }]);
+const hooks = ['forge', 'blinky', 'herald', 'critic'].map(s => [s, { url: `${W}/${s}` }]);
 let logs = '';
 const srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], {
   env: {
@@ -207,7 +207,7 @@ const srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], {
     MESH_PASSWORD: 'pw-' + crypto.randomBytes(4).toString('hex'),
     SESSION_SECRET: crypto.randomBytes(32).toString('hex'),
     SEAT_WEBHOOKS: JSON.stringify(Object.fromEntries(hooks)),
-    WAKE_KEY_FORGE: 'kf', WAKE_KEY_BLINKY: 'kb', WAKE_KEY_MILL: 'km', WAKE_KEY_CRITIC: 'kc',
+    WAKE_KEY_FORGE: 'kf', WAKE_KEY_BLINKY: 'kb', WAKE_KEY_HERALD: 'kh', WAKE_KEY_CRITIC: 'kc',
     WAKE_BATCH_S: '0', WAKE_STAGGER_MS: '0', WAKE_COALESCE_MS: '20', WAKE_RETRY_MS: '10', LIVE_TURN_OPEN_MIN: '0',
     SEAT_KEYS: JSON.stringify({ forge: crypto.createHash('sha256').update(FKEY).digest('hex') }),
   },
@@ -262,10 +262,10 @@ test('server: a pr_comment wakes the author and the mention, not blinky', async 
   const lines = [
     row({ id, seat: 'blinky', type: 'pr_comment', number: 21, reason: 'comment watch' }),
     row({ id, seat: 'forge', type: 'pr_comment', number: 21, reason: 'comment on your PR' }),
-    row({ id, seat: 'mill', type: 'pr_comment', number: 21, reason: 'mention @mill' }),
+    row({ id, seat: 'herald', type: 'pr_comment', number: 21, reason: 'mention @herald' }),
   ];
   assert.equal((await post(lines)).status, 200);
-  assert.ok(await until(() => got.some(g => g.path === '/forge' && g.body.inbox_id === id) && got.some(g => g.path === '/mill' && g.body.inbox_id === id)), logs);
+  assert.ok(await until(() => got.some(g => g.path === '/forge' && g.body.inbox_id === id) && got.some(g => g.path === '/herald' && g.body.inbox_id === id)), logs);
   assert.equal(got.some(g => g.path === '/blinky' && g.body.inbox_id === id), false);
 });
 

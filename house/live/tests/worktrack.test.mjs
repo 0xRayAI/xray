@@ -148,7 +148,7 @@ test('bad signature is rejected; replays and out-of-order deliveries do not dupl
     SESSION_SECRET: crypto.randomBytes(32).toString('hex'),
     INGEST_SECRET: crypto.randomBytes(32).toString('hex'),
     CURSOR_WEBHOOK_SECRET: SECRET,
-    SEAT_AGENT_MAP: JSON.stringify({ 'bc-mill0001': 'mill', 'bc-nib*': 'nibbler' }),
+    SEAT_AGENT_MAP: JSON.stringify({ 'bc-sound0001': 'sound', 'bc-nib*': 'nibbler' }),
   });
   const file = path.join(data, 'live', 'agents.jsonl');
   try {
@@ -205,14 +205,14 @@ test('bad signature is rejected; replays and out-of-order deliveries do not dupl
     assert.equal(card[0].pr, pr);
     assert.equal(card[0].working, false);
 
-    await post('bc-mill0001', { id: 'bc-mill0001', status: 'RUNNING', summary: 'mapped' }, 'ch-1');
+    await post('bc-sound0001', { id: 'bc-sound0001', status: 'RUNNING', summary: 'mapped' }, 'ch-1');
     await post('bc-nib0001', { id: 'bc-nib0001', status: 'CREATED', summary: 'prefix' }, 'lab-1');
     view = await trackOf(ctx.base, cookie);
-    assert.equal(view.items.find(item => item.agent === 'bc-mill0001').lane, 'mill');
+    assert.equal(view.items.find(item => item.agent === 'bc-sound0001').lane, 'sound');
     assert.equal(view.items.find(item => item.agent === 'bc-nib0001').lane, 'nibbler');
     lines = fs.readFileSync(file, 'utf8').trim().split('\n');
     const before = lines.length;
-    await post('bc-mill0001', { id: 'bc-mill0001', status: 'RUNNING', summary: 'mapped' }, 'ch-1');
+    await post('bc-sound0001', { id: 'bc-sound0001', status: 'RUNNING', summary: 'mapped' }, 'ch-1');
     lines = fs.readFileSync(file, 'utf8').trim().split('\n');
     assert.equal(lines.length, before);
     assert.equal(JSON.parse(lines[0]).agent, 'bc-order0001');

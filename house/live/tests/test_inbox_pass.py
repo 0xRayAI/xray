@@ -81,7 +81,7 @@ class InboxPass(unittest.TestCase):
             feed.write_text(json.dumps({"events": [seed, dict(cm, mentions=["arch10x"])]}))   # a mention removed: nothing
             self.assertEqual(self.run_pass(env, "pass"), "0 0")
 
-    def test_pr_open_mention_and_terminal_op_deploy_wake_mill_and_forge(self):
+    def test_pr_open_mention_and_terminal_op_deploy_wake_forge(self):
         with tempfile.TemporaryDirectory() as d:
             run = Path(d); (run / "feed").mkdir(); (run / "fleet").mkdir()
             env = dict(os.environ, MESH_RUN=str(run), LIVE_BOARD="off")
@@ -101,7 +101,8 @@ class InboxPass(unittest.TestCase):
             self.run_pass(env, "pass")
             box = run / "feed" / "inbox-spool"
             rd = lambda s: [json.loads(x) for x in (box / f"{s}.jsonl").read_text().splitlines()] if (box / f"{s}.jsonl").exists() else []
-            self.assertTrue(any("9" in str(l.get("number")) or "#9" in str(l.get("id")) for l in rd("mill")))
+            self.assertTrue(any("9" in str(l.get("number")) or "#9" in str(l.get("id")) for l in rd("forge")))
+            self.assertFalse(rd("mill"))
             self.assertTrue(any(l.get("id") == "op:rw:abcd1234:SUCCESS" for l in rd("forge")))
             self.assertFalse(any(l.get("id") == "op:rw:abcd1234:BUILDING" for l in rd("forge")))
 

@@ -117,7 +117,7 @@ describe('core seat ids and served ct stamps', () => {
     assert.equal(ev.credit, 'lead');
   });
 
-  test('T2 card L2 escalation uses the routing coord seat', async () => {
+  test('T2 a stalled card nudges its owner and does not escalate to the coord seat', async () => {
     const now = Date.now();
     const card = {
       key: 'example-org/app#11',
@@ -150,10 +150,13 @@ describe('core seat ids and served ct stamps', () => {
     assert.equal(pushed.status, 200, logs.slice(-400));
     await new Promise((r) => setTimeout(r, 1200));
     const body = await (await fetch(base + '/nudges', auth(OPS_KEY))).json();
-    const l2 = (body.nudges || []).find((n) => n.card === 'example-org/app#11' && n.level === 2);
-    assert.ok(l2, 'L2 nudge missing: ' + JSON.stringify(body.nudges || []).slice(0, 400));
-    assert.equal(l2.seat, 'lead');
-    assert.equal(l2.via, 'escalation');
+    const rows = (body.nudges || []).filter((n) => n.card === 'example-org/app#11');
+    const l2 = rows.find((n) => n.level === 2);
+    assert.equal(l2, undefined, 'card L2 is not a coord wake: ' + JSON.stringify(rows).slice(0, 400));
+    const l1 = rows.find((n) => n.level === 1 && !n.closed_at);
+    assert.ok(l1, 'L1 nudge missing: ' + JSON.stringify(rows).slice(0, 400));
+    assert.equal(l1.seat, 'critic');
+    assert.equal(l1.via, 'card owner');
   });
 
   test('T3 cards privileges follow the routing coord and operator seats', async () => {
@@ -232,7 +235,7 @@ describe('core seat ids and served ct stamps', () => {
     }
   });
 
-  test('T7 a silent seat nudge goes to the routing coord seat', async () => {
+  test('T7 a silent seat nudge stays on that seat', async () => {
     const pushed = await fetch(base + '/ingest', {
       method: 'POST',
       headers: { Authorization: 'Bearer ' + INGEST, 'Content-Type': 'application/json' },
@@ -271,7 +274,7 @@ describe('core seat ids and served ct stamps', () => {
     const body = await (await fetch(base + '/nudges', auth(OPS_KEY))).json();
     const silent = (body.nudges || []).find((n) => n.kind === 'silent' && n.about === 'critic');
     assert.ok(silent, 'silent nudge missing: ' + JSON.stringify(body.nudges || []).slice(0, 500));
-    assert.equal(silent.seat, 'lead');
+    assert.equal(silent.seat, 'critic');
     assert.equal(silent.via, 'silent seat');
     assert.match(silent.t_ct, CT);
     assert.equal(silent.t_ct.endsWith('Z'), false);
@@ -346,7 +349,7 @@ describe('core seat defaults when routing is absent', () => {
     assert.equal((await inboxIds(base, OPS_KEY, 'ops')).includes('ex-default-operator'), false);
   });
 
-  test('D2 a silent seat nudge stays on blinky', async () => {
+  test('D2 a silent seat nudge stays on that seat', async () => {
     const pushed = await fetch(base + '/ingest', {
       method: 'POST',
       headers: { Authorization: 'Bearer ' + INGEST, 'Content-Type': 'application/json' },
@@ -385,7 +388,7 @@ describe('core seat defaults when routing is absent', () => {
     const body = await (await fetch(base + '/nudges', auth(FORGE_KEY))).json();
     const silent = (body.nudges || []).find((n) => n.kind === 'silent' && n.about === 'critic');
     assert.ok(silent, 'silent nudge missing: ' + JSON.stringify(body.nudges || []).slice(0, 500));
-    assert.equal(silent.seat, 'blinky');
+    assert.equal(silent.seat, 'critic');
     assert.match(silent.t_ct, CT);
   });
 });

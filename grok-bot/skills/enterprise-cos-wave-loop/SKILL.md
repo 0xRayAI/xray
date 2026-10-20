@@ -1,8 +1,8 @@
 ---
 name: Enterprise CoS wave loop
 description: >-
-  use this when the coordinator runs the wave loop — digest, board, next step;
-  ASSIGN DON'T DO (card best seat); HARD friend-test on H lane; CoS never
+  use this when the coordinator runs the wave loop — plan the next wave, pace
+  burn, Lane H friend-test plus Dist packets, onboard seats; CoS never
   launches CloudAgent; quiet on repeat acks; wake hygiene HARD (Blaze poke > stale intake)
 ---
 # Coordinator wave loop
@@ -10,13 +10,13 @@ description: >-
 ## Save compute
 `ops/LEAN-COMPUTE.md` — Light / Normal / Strict · quiet on repeat acks; wake hygiene HARD (Blaze poke > stale intake) · fit for purpose · friend test OS docs.
 
-## ASSIGN, DON'T DO (HARD)
-Blinky **routes**. The **best seat** executes. CoS does not do their job.
+## Four duties (HARD)
+Blinky does not route dev work. Bifrost keeps the board, the inbox, and wave timing.
 
-1. Name outcome + acceptance  
-2. Card best seat (`SEATS.md` table: forge / critic / herald / magnet / risk…)  
-3. Take receipt — no mid-run puppeteer  
-4. Unblock with info or Blaze capital ask — still don't take their tools  
+1. Plan the next wave at each close. The plan card is on Bifrost.
+2. Pace burn. Do not launch when the day is over pace. At or above 75% weekly burn, the empty-board wake and the plan card stay quiet.
+3. Lane H friend-test plus Dist packets. Herald posts those words and does not invent them.
+4. Onboard a seat, including suit fitting. List a finished or idle seat. Blaze deletes it.
 
 **Fatal:** CoS implement, CloudAgent launch, Dist browser-post, “just finish it myself.”
 
@@ -31,13 +31,13 @@ Lane B (bot-internal) may stay compressed; human audience → H.
 ## Cloud vs seats (HARD)
 `ops/CLOUD-CONTINUITY.md` + `ops/SEATS.md`.
 
-**Fatal defect:** coordinator launching, resuming, replying to, or dumping eng Cursor clouds (`CloudAgent`) instead of carding forge.
+**Fatal defect:** coordinator launching, resuming, replying to, or dumping eng Cursor clouds (`CloudAgent`). Forge launches the cloud agent.
 
-**Do:** card forge with goal · repo · resume `bc-…` if any · acceptance · constraints. Board the track. Take the receipt.
+**Do:** the four duties above. Dev talk is Blaze and forge. The cos-forge 1:1 carries the printed `live-inbox` handoff line. A room post is not a handoff.
 
-**Do not:** implement, deploy, mint, public Dist post, spend, or puppeteer the cloud mid-run.
+**Do not:** implement, deploy, mint, public Dist post, spend, assign dev work, or puppeteer the cloud mid-run.
 
-This is **ops/skill law**, not a suit `PreToolUse` deny. Grok Bot chat has no hook path; costume PPE is theater. Mill suits stay on eng seats.
+This is **ops/skill law**, not a suit `PreToolUse` deny. Grok Bot chat has no hook path; costume PPE is theater. The mill plant stays on the suit.
 
 ## When a teammate messages you
 1. Read the substance.

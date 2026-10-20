@@ -14,7 +14,7 @@ async function boot(data) {
   const child = spawn(process.execPath, [path.join(APP, 'server.mjs')], {
     env: {
       PORT: '0', LIVE_PUBLIC: '1', COLLECTOR: 'on', SERVER_ROUTING: 'off',
-      LIVE_NODE_MAP: '{"mill0x[bot]":"mill"}',
+      LIVE_NODE_MAP: '{"sound0x[bot]":"sound"}',
       PATH: process.env.PATH, MESH_DATA_DIR: data,
       SESSION_SECRET: crypto.randomBytes(32).toString('hex'),
       INGEST_SECRET: crypto.randomBytes(32).toString('hex'),
@@ -138,8 +138,8 @@ test('an issue close, a PR close, and a merge clear working_on; an open item sta
       { id: 'x340', t_ct: now, kind: 'issue_close', repo: '0xRayAI/xray', number: 340, from: 'forge', actor: 'forge0x1[bot]', label: 'closed #340' },
       { id: 'c341', t_ct: now, kind: 'pr_comment', repo: '0xRayAI/xray', number: 341, from: 'critic', actor: 'critic0x[bot]', label: 'critic note' },
       { id: 'm341', t_ct: now, kind: 'merged', repo: '0xRayAI/xray', number: 341, from: 'critic', actor: 'critic0x[bot]', label: 'merged #341' },
-      { id: 'c7', t_ct: now, kind: 'pr_comment', repo: 'example/repo', number: 7, from: 'mill', actor: 'mill0x[bot]', label: 'mill note' },
-      { id: 'x7', t_ct: now, kind: 'pr_close', repo: 'example/repo', number: 7, from: 'mill', actor: 'mill0x[bot]', label: 'closed #7' },
+      { id: 'c7', t_ct: now, kind: 'pr_comment', repo: 'example/repo', number: 7, from: 'sound', actor: 'sound0x[bot]', label: 'sound note' },
+      { id: 'x7', t_ct: now, kind: 'pr_close', repo: 'example/repo', number: 7, from: 'sound', actor: 'sound0x[bot]', label: 'closed #7' },
       { id: 'c8', t_ct: now, kind: 'pr_comment', repo: 'example/repo', number: 8, from: 'herald', actor: 'herald0x[bot]', label: 'herald note' },
     ],
   });
@@ -156,8 +156,8 @@ test('an issue close, a PR close, and a merge clear working_on; an open item sta
     assert.equal(live.fleet.working.forge && live.fleet.working.forge.working_on, undefined);
     assert.equal(live.fleet.seats.critic.working_on, undefined);
     assert.equal(live.fleet.working.critic && live.fleet.working.critic.working_on, undefined);
-    assert.equal(live.fleet.seats.mill.working_on, undefined);
-    assert.equal(live.fleet.working.mill && live.fleet.working.mill.working_on, undefined);
+    assert.equal(live.fleet.seats.sound.working_on, undefined);
+    assert.equal(live.fleet.working.sound && live.fleet.working.sound.working_on, undefined);
     assert.equal(live.fleet.seats.herald.working_on, 'example/repo#8');
     assert.equal(live.fleet.working.herald.working_on, 'example/repo#8');
   } finally {

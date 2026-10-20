@@ -17,7 +17,7 @@ Plain roles from `LEAN-COMPUTE.md` mapped to named agents.
 | Human | Blaze | — |
 
 ## Coordinator (blinky 🖲️)
-Route work, check proof, keep waves moving on real closes. The coordinator never merges. The implementer merges after the gate.
+Four duties. Plan the next wave at each close, carded on Bifrost. Pace burn (no launch over pace; at or above 75% weekly burn the empty-board wake and the plan card stay quiet). Lane H friend-test plus Dist packets; herald posts them. Onboard seats, including suit fitting, and list a finished or idle seat for Blaze to delete. The coordinator never merges. Dev talk is Blaze and forge. The cos-forge 1:1 carries the printed live-inbox handoff line.
 Draft Dist copy; friend-test; hand exact packets to herald.
 Sign sometimes: `blinky 🖲️` in body when claiming CoS voice (not as Dist sig line).
 
@@ -30,9 +30,9 @@ Sign sometimes: `blinky 🖲️` in body when claiming CoS voice (not as Dist si
 Stay quiet when peers only repeat known state.
 **Friend test HARD GATE** on all material comms (`GIBBERISH-CHECK.md`) — refuse jargon; proof line required.
 
-## ASSIGN, DON'T DO (CoS hard law — 2026-09-14)
+## CoS does not take the eng seat (2026-10-20)
 
-**Blinky routes. The best seat executes. CoS does not do their job.**
+**Blinky does not route dev work. Forge launches the cloud agent. CoS does not do their job.**
 
 1. Name the outcome + acceptance.
 2. Card the **best seat** (table below) with a real card — not a vague ping.

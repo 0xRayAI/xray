@@ -42,7 +42,6 @@ FT, FH, FB, FS, FX = font(22, True), font(16, True), font(14, False), font(13, F
 
 AGENTS = [
     ("blinky", "CoS", (88, 210, 180)),
-    ("mill", "Eng Dev", (120, 220, 140)),
     ("forge", "merge", (110, 170, 255)),
     ("critic", "gate", (255, 150, 90)),
     ("herald", "voice", (200, 140, 255)),
@@ -50,29 +49,29 @@ AGENTS = [
 ]
 SEAT_NAMES = {a[0] for a in AGENTS}
 COLOR = {
-    "blinky": (88, 210, 180), "mill": (120, 220, 140), "forge": (110, 170, 255),
+    "blinky": (88, 210, 180), "forge": (110, 170, 255),
     "critic": (255, 150, 90), "herald": (200, 140, 255), "minime0x": (255, 180, 100),
     "GitHub": (200, 210, 230), "X": (140, 180, 255), "mymuse.house": (255, 200, 90),
     "Blaze0x1": (255, 120, 100), "grok": (180, 190, 200),
 }
-LABEL = {"blinky": "blinky", "mill": "mill", "forge": "forge", "critic": "critic", "herald": "herald",
+LABEL = {"blinky": "blinky", "forge": "forge", "critic": "critic", "herald": "herald",
          "minime0x": "minime0x", "GitHub": "GitHub", "X": "X", "mymuse.house": "mymuse"}
-SUB = {"blinky": "CoS seat", "mill": "Eng Dev", "forge": "continuity", "critic": "gate",
+SUB = {"blinky": "CoS seat", "forge": "continuity", "critic": "gate",
        "herald": "replies", "minime0x": "muse bot", "GitHub": "PRs", "X": "@0xRayAI", "mymuse.house": "live site"}
 SQUARE = {"GitHub", "X", "mymuse.house"}
 WHO_LOG = {"mymuse.house": "MYMUSE", "Blaze0x1": "BLAZE", "minime0x": "MINIME", "GitHub": "GITHUB",
-           "grok": "GROK", "blinky": "BLINKY", "mill": "MILL", "forge": "FORGE", "critic": "CRITIC",
+           "grok": "GROK", "blinky": "BLINKY", "forge": "FORGE", "critic": "CRITIC",
            "herald": "HERALD", "X": "X"}
 HUB = (640, 310)
-SATS = {"blinky": (220, 200), "mill": (360, 160), "forge": (520, 160), "critic": (680, 160),
+SATS = {"blinky": (220, 200), "forge": (520, 160), "critic": (680, 160),
         "herald": (220, 380), "minime0x": (360, 440), "GitHub": (980, 200), "X": (980, 320),
         "mymuse.house": (980, 440)}
 EDGES = [
-    ("blinky", "forge"), ("blinky", "critic"), ("blinky", "herald"), ("blinky", "mill"),
-    ("mill", "forge"), ("forge", "critic"), ("minime0x", "GitHub"), ("forge", "GitHub"),
-    ("mill", "GitHub"), ("critic", "GitHub"), ("herald", "X"), ("blinky", "X"),
+    ("blinky", "forge"), ("blinky", "critic"), ("blinky", "herald"),
+    ("forge", "critic"), ("minime0x", "GitHub"), ("forge", "GitHub"),
+    ("critic", "GitHub"), ("herald", "X"), ("blinky", "X"),
     ("GitHub", "mymuse.house"), ("mymuse.house", "blinky"), ("minime0x", "critic"),
-    ("forge", "mymuse.house"), ("critic", "mill"), ("critic", "forge"),
+    ("forge", "mymuse.house"), ("critic", "forge"),
 ]
 ALIAS = {"Blaze0x1": "X", "grok": "X"}
 GIT_KINDS = {"pr_open", "pr_update", "pr_close", "merged", "fix", "supersede", "review", "comment",

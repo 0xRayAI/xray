@@ -55,22 +55,21 @@ test('new events route by inbox-roles.json rules and wake the seat', async () =>
   writeFeed([...old, ...fresh]);
   assert.ok(await until(() => /route: pass 2 \d+/.test(logs)), logs);
   const ids = s => inbox(s).map(l => l.id).sort();
-  assert.deepEqual(ids('forge'), [`${R}#5:comment:1`]);                         // PR author, merged PR
-  assert.match(inbox('forge')[0].reason, /comment on your PR \(merged PR\)/);
-  assert.deepEqual(ids('mill'), [`${R}#5:comment:1`]);                          // @mill from the body (handle only)
+  assert.deepEqual(ids('forge'), [`${R}#5:comment:1`]);                         // PR author, and @mill retargeted to forge
+  assert.match(inbox('forge')[0].reason, /comment on your PR \(merged PR\)|implement|rebase|dev ask|@mill|cloud agent/);
+  assert.deepEqual(ids('mill'), []);                                            // mill is not a seat
   assert.deepEqual(ids('blinky'), [`${R}#5:comment:1`, `${R}#6:comment:2`]);    // comment watch
   assert.deepEqual(ids('critic'), []);                                           // own action never routed back
-  assert.ok(!JSON.stringify(['forge', 'mill', 'blinky'].map(inbox)).includes('SECRET'), 'body copied');
-  assert.ok(await until(() => new Set(wakes.map(w => w.path)).size === 3), JSON.stringify(wakes));
-  assert.deepEqual([...new Set(wakes.map(w => w.path))].sort(), ['/blinky', '/forge', '/mill']);
+  assert.ok(!JSON.stringify(['forge', 'blinky'].map(inbox)).includes('SECRET'), 'body copied');
+  assert.ok(await until(() => new Set(wakes.map(w => w.path)).size === 2), JSON.stringify(wakes));
+  assert.deepEqual([...new Set(wakes.map(w => w.path))].sort(), ['/blinky', '/forge']);
   assert.equal(wakes.find(w => w.path === '/forge').auth, 'Bearer kf');
 });
 
 test('#275: WAKE_KEY_<SEAT> works without key_env (key_env still wins); /healthz has wakes + liveness ages, no url or key', async () => {
-  assert.equal(wakes.find(w => w.path === '/mill').auth, 'Bearer km');
   assert.equal(wakes.find(w => w.path === '/forge').auth, 'Bearer kf');
   const h = await (await fetch(`http://127.0.0.1:${srvPort}/healthz`)).json();
-  assert.deepEqual(h.wakes, { forge: 'ok', critic: 'no_key', mill: 'ok', blinky: 'ok' });
+  assert.deepEqual(h.wakes, { forge: 'ok', critic: 'no_key', blinky: 'ok' });
   for (const k of ['box_age', 'collector_age', 'card_age']) assert.ok(k in h, k);
   assert.equal(h.box_age, null);   // no box push in this test
   assert.ok(Number.isInteger(h.collector_age) && h.collector_age >= 0);
@@ -79,7 +78,7 @@ test('#275: WAKE_KEY_<SEAT> works without key_env (key_env still wins); /healthz
 });
 
 test('same events again, and after a restart: nothing routed twice, no second wake', async () => {
-  const before = wakes.length, n = ['forge', 'mill', 'blinky'].map(s => inbox(s).length);
+  const before = wakes.length, n = ['forge', 'blinky'].map(s => inbox(s).length);
   writeFeed([...old, ...fresh]);
   assert.ok(await until(() => count(/route: pass 0 0/) >= 2), logs);
   await stop(); start();
@@ -87,7 +86,7 @@ test('same events again, and after a restart: nothing routed twice, no second wa
   writeFeed([...old, ...fresh]);
   assert.ok(await until(() => count(/route: pass 0 0/) >= 2), logs);
   await sleep(300);
-  assert.deepEqual(['forge', 'mill', 'blinky'].map(s => inbox(s).length), n);
+  assert.deepEqual(['forge', 'blinky'].map(s => inbox(s).length), n);
   assert.equal(wakes.length, before);
   const next = { id: `${R}#5:comment:3`, t_ct: ct(5), kind: 'pr_comment', repo: R, number: 5, label: 'comment on #5', from: 'blinky', to: 'forge' };
   writeFeed([...old, ...fresh, next]);
@@ -100,11 +99,11 @@ test('same events again, and after a restart: nothing routed twice, no second wa
 test('a stored-but-unmarked line (crash between store and sent) is not stored or woken twice', async () => {
   const st = path.join(DATA, 'route', 'inbox-state.json'); const s = JSON.parse(fs.readFileSync(st, 'utf8'));
   s.sent = []; fs.writeFileSync(st, JSON.stringify(s));
-  const before = wakes.length, n = ['forge', 'mill', 'blinky'].map(x => inbox(x).length);
+  const before = wakes.length, n = ['forge', 'blinky'].map(x => inbox(x).length);
   await stop(); start();
   assert.ok(await until(() => /route: pass 0 0/.test(logs)), logs);
   await sleep(300);
-  assert.deepEqual(['forge', 'mill', 'blinky'].map(x => inbox(x).length), n);
+  assert.deepEqual(['forge', 'blinky'].map(x => inbox(x).length), n);
   assert.equal(wakes.length, before);
 });
 

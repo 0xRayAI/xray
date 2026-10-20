@@ -10,14 +10,14 @@ This file is the mill-seat inventory. The CoS decision is the amendment. No code
 
 ## Packet
 
-- goal: Retire the CoS role (blinky) and the mill seat. Eng-loop duties sit on the Bifrost board and collector. Forge owns release and inbound triage, and launches the cloud agent that implements.
-- constraints: Packet only. Do not edit OP-PROC, the house layer, live docs, the lexicon, plates, skills, or templates in this PR. Do not retire the mill plant (foundry mill+inspect). Do not decide the open questions. No secrets.
-- path: Critic PASS on this packet, then one follow-up that edits the files below to match the tables.
-- acceptance: Every in-scope CoS and mill-seat reference is in the tables with a replacement, or in Open questions. The new inbound-triage rule is stated. Plant hits are listed as out of this retirement.
-- gates: Critic packet PASS is the gate before any code. The @arch10x comment is a fleet-wide read, not the gate. This PR is docs-only; A and C wait on the follow-up. B and D stay off.
-- evidence: Read pack OP-PROC, house/OP-PROC, WAKE-ROUTINE, house/live docs, LEXICON, bifrost plate, CADENCE, the runbooks, the seat skills and house templates, wave-schedule.mjs, fleet-roster.json, critic review 5575662717 at `84e6533`, and review 5575857672 at `df7d42f`. Checked `server.mjs:159`, `:283`, `:618`, `:637`, `:658`, `:897`, `:944`, `:1041`, `:1048`, `:1055`, `:1126`, `:1397-1403`, `:1455`, `:1493`, `:2947`, `governor.mjs:100-102`, and `inbox-roles.json:110-122`.
-- next owner: critic for packet PASS. Follow-up code waits on that PASS.
-- escalate: Blaze, for the open questions only.
+- goal: Retire the mill seat. Blinky stays on the narrower CoS role in COS-NARROW-ROLE-PACKET.md. Forge launches the cloud agent that writes code and opens the PR.
+- constraints: Do not retire blinky or the mill plant. Do not hand triage, the empty-board wake, or the clock to forge. Do not decide the open questions. No secrets.
+- path: The amendment packet is the CoS decision. This file's mill-seat rows still apply where they do not conflict with that packet.
+- acceptance: Mill-seat references have a replacement. CoS stays. The plan-next-wave card is the wave decision. Plant hits stay out of this retirement.
+- gates: Critic packet PASS on the amendment is the gate. The @arch10x comment is a read, not the gate. A and C wait on the code follow-up. B and D stay off.
+- evidence: Read COS-NARROW-ROLE-PACKET.md, pack OP-PROC, house/OP-PROC, COORDINATOR.md, and the bifrost plate. CoS pins live in the amendment.
+- next owner: The code follow-up applies the amendment. Critic already PASSed that packet.
+- escalate: Blaze, for the open mill questions only.
 
 Plates read: `docs-site/docs/plates/bifrost.md`, `docs-site/docs/plates/lens-gate.md`, `docs-site/docs/plates/record-map.md`.
 

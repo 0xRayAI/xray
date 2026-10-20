@@ -91,7 +91,7 @@ ROSTER = HERE / "fleet-roster.json"
 
 
 def our_seats():
-    """Our 9 seats (feed/fleet-roster.json "seats"); every routed line must land on one of them."""
+    """Our seats (feed/fleet-roster.json "seats"); every routed line must land on one of them."""
     return {str(s) for s in (_load(ROSTER, {}).get("seats") or []) if isinstance(s, str)}
 
 
@@ -217,7 +217,7 @@ def _direct_all(event, roles):
             if line:
                 out.append(line)
     ours = our_seats()
-    if ours:   # a line to a seat outside our 9 (unknown, sample, unkeyed) is read by nobody: drop it, fall back below
+    if ours:   # a line to a seat outside ours (unknown, sample, unkeyed) is read by nobody: drop it, fall back below
         out = [l for l in out if l.get("seat") in ours]
     fb = roles.get("fallback") or {}
     if fb.get("seat") and kind in ACTIONABLE and all(l.get("seat") in (fb.get("from") or []) for l in out):

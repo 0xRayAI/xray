@@ -280,7 +280,7 @@ function postInbox({ secret, headerSecret, body, lines }) {
 // ---- Live board: the server is the source of truth for seat inboxes, cards and nudges ---------------------------------
 // Seat auth: Builder = its builder-app installation token (ghVerify, unchanged); every other seat = its own key, checked
 // against SEAT_KEYS (Railway variable, JSON seat -> sha256 hex of the key; the keys themselves live only on the box).
-// Our 9 seats (feed/fleet-roster.json) plus the kit's builder / builder-cloud plumbing (installation-token auth, mirror);
+// Our 8 seats (feed/fleet-roster.json) plus the kit's builder / builder-cloud plumbing (installation-token auth, mirror);
 // no route writes to builder. The kit's sample seats (reviewer, tester, qa, coord, operator, triager, ...) are gone: their
 // jobs map to ours (coord -> the CoS role, operator / tester / qa -> the operator role, reviewer -> critic).
 // canonSeat and seatIdOf read those roles. The worktrack alias stores the seat strings
@@ -306,7 +306,7 @@ const OPERATOR_NAMES = new Set(['operator', 'tester', 'qa', 'lab']);
 // LIVE_SEAT_IDS (comma list) replaces the fleet's seat ids; builder / builder-cloud are kit plumbing and always kept.
 const SEAT_IDS = process.env.LIVE_SEAT_IDS
   ? [...new Set(['builder', 'builder-cloud', ...process.env.LIVE_SEAT_IDS.split(',').map(x => x.trim().toLowerCase()).filter(x => /^[a-z0-9][a-z0-9_-]{0,31}$/.test(x))])]
-  : ['builder', 'builder-cloud', 'arch1', 'forge', 'critic', 'mill', 'blinky', 'herald', 'nibbler', 'sound', 'magnet'];
+  : ['builder', 'builder-cloud', 'arch1', 'forge', 'critic', 'blinky', 'herald', 'nibbler', 'sound', 'magnet'];
 function canonSeat(name) {
   const id = String(name || '').toLowerCase();
   if (SEAT_IDS.includes(id)) return id;
@@ -773,18 +773,13 @@ function nudgeLines(now) {
       number: Number.isInteger(l.number) ? l.number : 0, title: String(l.title || '').slice(0, 120), url: String(l.url || '').slice(0, 300),
       stage: '', level: lvl, seat, via: 'unacked line', line: String(l.id).slice(0, 300), since: new Date(t).toISOString() });
     noteWake(seat, { ...l, reason: (`nudge L${lvl}: ` + (l.reason || '')).slice(0, 300) });
-    const cos = cosSeat();
-    if (lvl === 3 && cos && cos !== seat) {   // L3 with no move: the CoS role gets it too, to reassign
-      nudges.push({ ...nudges[nudges.length - 1], id: `${base}:L3cos`, kind: 'reassign', seat: cos, about: seat, via: 'L3: reassign' });
-      noteWake(cos, { ...l, id: `${base}:L3cos`, seat: cos, reason: `L3 no move on ${seat}: reassign`.slice(0, 300) });
-    }
     changed = true;
   }
   for (const n of nudges) if ((n.kind === 'line' || (n.kind === 'reassign' && n.line_key)) && !n.closed_at && !open.has(n.line_key)) { n.closed_at = new Date(now).toISOString(); changed = true; }
   return changed;
 }
 // Seat nudges (same path): a seat with no route (startup route check) and a configured seat whose wake went quiet
-// (no good wake within BIFROST_WAKE_QUIET_MINUTES) each hold one open nudge to the CoS on the board until fixed.
+// (no good wake within BIFROST_WAKE_QUIET_MINUTES) each hold one open nudge on that seat until fixed. Not a CoS wake.
 function nudgeSeats(now) {
   let changed = false;
   const want = new Map();
@@ -794,7 +789,7 @@ function nudgeSeats(now) {
   for (const [seat, v] of Object.entries(w)) if (v.quiet) want.set(`nudge:quiet:${seat}:${v.last_ok || 'boot'}`, { seat, kind: 'quiet', via: 'wake quiet' });
   for (const [id, x] of want) if (!nudges.some(n => n.id === id)) {
     nudges.push({ id, kind: x.kind, t: now, t_ct: ctStamp(now), card: '', repo: '', number: 0, title: `${x.seat}: ${x.via}`, url: '',
-      stage: '', level: 1, seat: cosSeat(), about: x.seat, via: x.via });
+      stage: '', level: 1, seat: x.seat, about: x.seat, via: x.via });
     changed = true;
   }
   for (const n of nudges) if ((n.kind === 'unrouted' || n.kind === 'quiet') && !n.closed_at && !want.has(n.id)) { n.closed_at = new Date(now).toISOString(); changed = true; }
@@ -1204,17 +1199,10 @@ function evalNudges(now = Date.now()) {
     else if (!l1.closed_at && l1.seat !== tgt) {
       l1.closed_at = new Date(now).toISOString(); changed = true;
       if (!l1s.some(n => n.seat === tgt)) { mk(1, tgt, via, id(1) + ':' + tgt); l1 = nudges[nudges.length - 1]; } }
-    if (l1 && !has(2) && now - l1.t >= NUDGE_L2_MS) mk(2, cosSeat(), 'escalation');
-    const l2 = has(2);
-    if (l2 && !l2.closed_at) {
+    if (l1 && !l1.closed_at && now - l1.t >= NUDGE_L2_MS + NUDGE_L3_MS) {
       const reps = nudges.filter(n => n.card === c.key && n.level === 3 && n.beat_t === c.last_beat_t && !n.closed_at);
-      const prev = reps.length ? reps[reps.length - 1].t : l2.t;
-      if (now - prev >= NUDGE_L3_MS) {
-        mk(3, tgt, 'repeat', `nudge:${c.key}:L3:${c.last_beat_t}:${reps.length + 1}`);
-        const cos = cosSeat();   // L3 with no move: the CoS role also gets it, to reassign (once per card stretch)
-        const rid = `nudge:${c.key}:L3cos:${c.last_beat_t}`;
-        if (cos && cos !== tgt && !nudges.some(n => n.id === rid)) { mk(3, cos, 'L3: reassign', rid); nudges[nudges.length - 1].kind = 'reassign'; }
-      }
+      const prev = reps.length ? reps[reps.length - 1].t : l1.t + NUDGE_L2_MS;
+      if (now - prev >= NUDGE_L3_MS) mk(3, tgt, 'repeat', `nudge:${c.key}:L3:${c.last_beat_t}:${reps.length + 1}`);
     }
   }
   if (nudgeLines(now)) changed = true;
@@ -1224,8 +1212,8 @@ function evalNudges(now = Date.now()) {
   return changed;
 }
 // A handoff event with no /inbox packet to the routed next seat within NUDGE_L1_S is `handoff missing`.
-// The owing seat is nudged L1, then L2 after NUDGE_L2_S, then L3 after NUDGE_L3_S. At L3 the CoS role
-// is woken once. Room posts are not lines here, so they never clear the miss. This does not post a packet.
+// The owing seat is nudged L1, then L2 after NUDGE_L2_S, then L3 after NUDGE_L3_S. Room posts are not
+// lines here, so they never clear the miss. This does not post a packet.
 let handoffRolesCache = null;
 function handoffConfig() {
   if (handoffRolesCache) return handoffRolesCache;
@@ -1282,13 +1270,6 @@ function evalHandoffs(now) {
           changed = true;
         }
       }
-      const cos = cosSeat();
-      const cosId = `${base}:L3cos`;
-      if (cos && cos !== ob.owes && !nudges.some(n => n.id === cosId)) {
-        nudges.push({ ...l2, id: cosId, kind: 'reassign', t: now, t_ct: ctStamp(now), level: 3, seat: cos, via: 'L3: reassign', about: ob.owes });
-        changed = true;
-        noteWake(cos, { id: cosId, type: 'nudge', repo: ob.repo, number: ob.number, title: 'handoff missing', reason: `L3 handoff missing on ${ob.owes}` });
-      }
     }
   }
   for (const n of nudges) {
@@ -1301,8 +1282,8 @@ function evalHandoffs(now) {
   return changed;
 }
 // SILENT SEAT: no activity / prompt / beat line for > 2 h (merged fleet last_ct) while the seat owns live work (a live
-// card where it is owner, next owner or retest owner, or an open nudge to it) -> fleet.seats[name].silent and one
-// nudge to Coord per seat per quiet stretch (keyed by the seat's last_ct; closes when the seat acts or owns nothing).
+// card where it is owner, next owner or retest owner, or an open nudge to it) -> fleet.seats[name].silent and
+// one nudge on that seat per quiet stretch (keyed by the seat's last_ct; closes when the seat acts or owns nothing). Not a CoS wake.
 const SILENT_MS = (Number(process.env.SILENT_S) || 7200) * 1000;
 function evalSilent(fleet, now = Date.now()) {
   if (!fleet || !fleet.seats) return false;
@@ -1327,7 +1308,7 @@ function evalSilent(fleet, now = Date.now()) {
     const nid = `silent:${id}:${last}`;
     if (nudges.some(n => n.id === nid)) continue;
     nudges.push({ id: nid, kind: 'silent', t: now, t_ct: ctStamp(now), card: '', repo: '', number: 0,
-      title: `${name} silent 2h while owning live work`, url: '', stage: '', level: 2, seat: cosSeat(), via: 'silent seat', about: id, beat_t: last });
+      title: `${name} silent 2h while owning live work`, url: '', stage: '', level: 2, seat: id, via: 'silent seat', about: id, beat_t: last });
     changed = true;
   }
   if (changed) saveNudges();
@@ -1610,11 +1591,6 @@ function wakeRun(run) {
       : `timed run (${run.reason}): move your open work or post your blocker in one line by ${by}`;
     noteWake(seat, { id: `clock:${run.started_at}:${seat}`, type: 'timed_run', title: wakeTitle(run, seat, n), reason });
   }
-  const cos = cosSeat();
-  if (run.reason !== 'empty' && cos && !(cos in run.deadlines)) {   // the CoS role owns the board: told about every stall run
-    noteWake(cos, { id: `clock:${run.started_at}:cos`, type: 'timed_run', title: 'board stalled',
-      reason: `board stalled: timed run on ${Object.keys(run.deadlines).join(', ')}, ends ${run.ends_at}` });
-  }
   console.log(`clock: ${run.reason} run started, ${Object.keys(run.deadlines).length} seat(s), ends ${run.ends_at}`);
 }
 function moveFp() { return fingerprint([...evs.values()].map(v => v.e).filter(e => e && e.moves !== false), { acks: Object.values(inboxAcks).reduce((n, a) => n + (a ? a.length : 0), 0) }); }
@@ -1648,7 +1624,7 @@ function governorRun(now = Date.now()) {
 // and a cloud agent's bc- id (SEAT_AGENT_MAP, or the id in the branch or comment) onto the seat.
 // The mark expires on the same clock as an open turn (TURN_OPEN_MS / LIVE_TURN_OPEN_MIN).
 const GH_WORK_KINDS = new Set(['pr_comment', 'issue_comment', 'review_comment', 'pr_review', 'review', 'pr_open', 'pr_commit', 'pr_force_push', 'push']);
-const SEAT_GIT_NAMES = ['blinky', 'critic', 'forge', 'mill', 'arch1', 'herald', 'magnet', 'nibbler', 'sound'];
+const SEAT_GIT_NAMES = ['blinky', 'critic', 'forge', 'arch1', 'herald', 'magnet', 'nibbler', 'sound'];
 const BC_ID = /\b(bc-[a-z0-9]+(?:-[a-z0-9]+)*)\b/i;
 const ghWork = new Map();   // seat -> { at, on, t_ct }
 let loginToSeat = null;

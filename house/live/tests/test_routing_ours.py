@@ -1,5 +1,5 @@
-"""Routing lands on our 9 seats only (lap 2 P1: issue #281 routed to the kit's sample 'triager', an inbox nobody reads).
-(a) every seat reference in feed/routing/inbox-roles.json is one of our 9 (fleet-roster.json); kit role rules map to ours
+"""Routing lands on our seats only (lap 2 P1: issue #281 routed to the kit's sample 'triager', an inbox nobody reads).
+(a) every seat reference in feed/routing/inbox-roles.json is one of ours (fleet-roster.json); kit role rules map to ours
 (b) a GitHub issue-opened event lands in blinky's inbox  (c) pr-opened and new-head events land in critic's inbox
 (d) a line routed to an unknown seat falls back to blinky."""
 import json, os, sys, tempfile, unittest
@@ -31,7 +31,7 @@ def deliver(events, roles=ROLES):
 
 class EverySeatIsOurs(unittest.TestCase):
     def test_roster_is_our_nine(self):
-        self.assertEqual(OURS, {"blinky", "critic", "forge", "mill", "arch1", "herald", "magnet", "nibbler", "sound"})
+        self.assertEqual(OURS, {"blinky", "critic", "forge", "arch1", "herald", "magnet", "nibbler", "sound"})
 
     def test_every_seat_reference(self):
         refs = [("mirror_seat", ROLES["mirror_seat"]), ("fallback.seat", ROLES["fallback"]["seat"])]
@@ -47,7 +47,7 @@ class EverySeatIsOurs(unittest.TestCase):
             if not rule.get("off"):
                 refs.append(("seats." + role + ".seat", rule.get("seat")))
         bad = [(where, s) for where, s in refs if s not in OURS]
-        self.assertEqual(bad, [], "seat references outside our 9")
+        self.assertEqual(bad, [], "seat references outside our seats")
 
     def test_server_and_key_defaults_name_no_sample_seat(self):
         src = (FEED.parent / "app" / "server.mjs").read_text()

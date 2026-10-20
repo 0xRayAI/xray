@@ -280,9 +280,9 @@ function loadCfg(withSite) {
   if (withSite) new Function('window', fs.readFileSync(path.join(APP, '..', 'site', 'public', 'site-config.js'), 'utf8'))({ LiveMesh: L });
   return L;
 }
-test('our overlay: strip is blinky, critic, forge, mill; Arch1 is outside; parked seats are not drawn', () => {
+test('our overlay: strip is blinky, critic, forge; Arch1 is outside; parked seats are not drawn', () => {
   const L = loadCfg(true);
-  const strip = ['blinky', 'critic', 'forge', 'mill'];
+  const strip = ['blinky', 'critic', 'forge'];
   assert.deepEqual(L.SEAT_NAMES, strip); assert.deepEqual(L.AGENTS.map(a => a[0]), strip);
   for (const s of strip) assert.ok(s in L.SATS, s);
   assert.equal(L.SUB.arch1, 'outside party'); assert.equal(L.LABEL.arch1, 'Arch1'); assert.ok('arch1' in L.SATS);

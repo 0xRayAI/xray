@@ -22,13 +22,12 @@ Linked from `house/live/docs/fleet-setup.md`.
 4. For an image, ship a square 96 x 96 PNG at `site/public/avatars/<seat>.png` and add it to `L.setAvatars`. An image wins over glyph and mark.
 5. Check the map in the browser (Playwright screenshot); a missing PNG must fall back, not 404-break.
 
-## Our 9 seats
+## Our 8 seats
 | Seat | Mark | Renders as today |
 |---|---|---|
 | blinky | 🖲️ | avatar `blinky.png` |
 | critic | ✶ | avatar `critic.png` |
 | forge | 🔥 | avatar `forge.png` |
-| mill | ⚙ | glyph |
 | arch1 | avatar (minime0x) | avatar `arch1.png` |
 | herald | 📡 | avatar `herald.png` |
 | magnet | ☄️ | glyph |

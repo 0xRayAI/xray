@@ -187,12 +187,12 @@ test('a saved wake is last_ok after restart; a seat that never woke stays null',
   const data = fs.mkdtempSync(path.join(os.tmpdir(), 'board-wake-'));
   const iso = '2026-10-14T17:40:00.000Z';
   fs.mkdirSync(path.join(data, 'live'), { recursive: true });
-  fs.writeFileSync(path.join(data, 'live', 'wake-ok.json'), JSON.stringify({ forge: iso, mill: iso }));
+  fs.writeFileSync(path.join(data, 'live', 'wake-ok.json'), JSON.stringify({ forge: iso, sound: iso }));
   const srv = start(data, {
     COLLECTOR: 'off', SERVER_ROUTING: 'off',
     SEAT_WEBHOOKS: JSON.stringify({
       forge: { url: 'http://127.0.0.1:9/forge' },
-      mill: { url: 'http://127.0.0.1:9/mill' },
+      sound: { url: 'http://127.0.0.1:9/sound' },
       critic: { url: 'http://127.0.0.1:9/critic' },
     }),
   });
@@ -202,7 +202,7 @@ test('a saved wake is last_ok after restart; a seat that never woke stays null',
     const cookie = (login.headers.get('set-cookie') || '').split(';')[0];
     const w = (await (await fetch(srv.base + '/live-events.json', { headers: { Cookie: cookie } })).json()).wakes;
     assert.equal(w.forge.last_ok, iso);
-    assert.equal(w.mill.last_ok, iso);
+    assert.equal(w.sound.last_ok, iso);
     assert.equal(w.critic.last_ok, null);
   } finally {
     await stop(srv.child);
@@ -221,8 +221,8 @@ test('the open queue hides parked seats and arch10x lines from a previous Chicag
     await ready(srv.base, srv.logs);
     const lines = [
       { id: 'parked-herald', t_ct: new Date(now).toISOString(), seat: 'herald', type: 'issue', repo: 'example/repo', number: 1, title: 'verify herald', url: 'https://github.com/example/repo/issues/1', reason: 'parked' },
-      { id: 'arch-old', t_ct: new Date(old).toISOString(), seat: 'mill', type: 'issue_comment', repo: 'example/repo', number: 269, title: 'arch10x[bot] comment on 269', url: 'https://github.com/example/repo/issues/269', reason: 'comment' },
-      { id: 'arch-today', t_ct: new Date(now - 60000).toISOString(), seat: 'mill', type: 'issue_comment', repo: 'example/repo', number: 310, title: 'arch10x[bot] comment today', url: 'https://github.com/example/repo/issues/310', reason: 'comment' },
+      { id: 'arch-old', t_ct: new Date(old).toISOString(), seat: 'critic', type: 'issue_comment', repo: 'example/repo', number: 269, title: 'arch10x[bot] comment on 269', url: 'https://github.com/example/repo/issues/269', reason: 'comment' },
+      { id: 'arch-today', t_ct: new Date(now - 60000).toISOString(), seat: 'critic', type: 'issue_comment', repo: 'example/repo', number: 310, title: 'arch10x[bot] comment today', url: 'https://github.com/example/repo/issues/310', reason: 'comment' },
       { id: 'forge-live', t_ct: new Date(now - 30000).toISOString(), seat: 'forge', type: 'pr', repo: 'example/repo', number: 9, title: 'Needs a look', url: 'https://github.com/example/repo/pull/9', reason: 'review' },
     ];
     const posted = await fetch(srv.base + '/inbox', { method: 'POST', headers: { 'X-Live-Ingest': srv.ingest, 'Content-Type': 'application/json' }, body: JSON.stringify({ lines }) });
@@ -236,7 +236,7 @@ test('the open queue hides parked seats and arch10x lines from a previous Chicag
     assert.ok(!ids.includes('parked-herald'));
     assert.ok(!ids.includes('arch-old'));
     assert.ok(fs.readFileSync(path.join(data, 'live', 'inbox', 'herald.jsonl'), 'utf8').includes('parked-herald'));
-    assert.ok(fs.readFileSync(path.join(data, 'live', 'inbox', 'mill.jsonl'), 'utf8').includes('arch-old'));
+    assert.ok(fs.readFileSync(path.join(data, 'live', 'inbox', 'critic.jsonl'), 'utf8').includes('arch-old'));
   } finally {
     await stop(srv.child);
     fs.rmSync(data, { recursive: true, force: true });

@@ -197,7 +197,7 @@ test('roster chips show the role on load and leave status to the dot', async () 
       path: path.join(path.dirname(PUB), '..', 'site', 'public', 'site-config.js'),
     }));
     await page.goto(base, { waitUntil: 'domcontentloaded' });
-    await page.waitForFunction(() => document.querySelectorAll('#seatGrid .seat').length === 4);
+    await page.waitForFunction(() => document.querySelectorAll('#seatGrid .seat').length === 3);
     const before = await page.evaluate(() => {
       const panel = document.getElementById('seats').getBoundingClientRect().width;
       const grid = document.getElementById('seatGrid').getBoundingClientRect().width;
@@ -220,8 +220,8 @@ test('roster chips show the role on load and leave status to the dot', async () 
     });
     assert.equal(before.rosterOpen, true);
     assert.ok(before.nodes.includes('CloudAgents'));
-    assert.deepEqual(before.seats.map((seat) => seat.name), ['BLINKY', 'CRITIC', 'FORGE', 'MILL']);
-    assert.deepEqual(before.seats.map((seat) => seat.role), ['chief of staff', 'reviewer', 'eng primary', 'implementer']);
+    assert.deepEqual(before.seats.map((seat) => seat.name), ['BLINKY', 'CRITIC', 'FORGE']);
+    assert.deepEqual(before.seats.map((seat) => seat.role), ['chief of staff', 'reviewer', 'eng primary']);
     assert.ok(before.seats.every((seat) => seat.tag === 'DIV'));
     assert.ok(before.seats.every((seat) => Math.abs(seat.y - before.seats[0].y) < 2), JSON.stringify(before.seats));
     assert.ok(before.seats.every((seat) => seat.w > 80 && seat.w < before.panel / 2), JSON.stringify(before));
