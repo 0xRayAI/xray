@@ -223,23 +223,17 @@ test('ambient Replay loop: dimmed overlay every 10 s, visual only, toggle + ?rep
   const body = html.split('function ambientPings(nowWall) {')[1].split('function draw(')[0];
   assert.doesNotMatch(body, /state\.(live|t|generatedAt)\s*=|speed\s*=|replay\s*=|rewindTo|goLive|fetch|setInterval|setTimeout|flashes/);
 });
-test('Live board: rainbow trail only on replay pings, REPLAY tag beside (never replacing) the pill, reduced motion off', () => {
-  assert.match(html, /<span class="pill" id="pill">LIVE<\/span><span class="spec-tag" id="specTag" aria-hidden="true">\u{1FA9E} REPLAY<\/span>/u);
-  assert.match(html, /\.spec-tag \{[^}]*opacity: 0;[^}]*transition: opacity \.3s/);
-  assert.match(html, /prefers-reduced-motion: reduce\) \{ \.spec-tag, \.spec-tag\.on \{ transition: none; \} \}/);
-  assert.match(html, /var tagOn = !!ambient && !replay;/);
+test('Live board: rainbow trail only on replay pings, Spectrum pill, no replay chip', () => {
+  assert.match(html, /<span class="pill" id="pill">LIVE<\/span><span class="spectrum-pill" id="spectrumPill" hidden>Spectrum<\/span>/);
+  assert.doesNotMatch(html, /id="specTag"|class="spec-tag"/);
   assert.match(html, /if \(spectrumOn\) \{ ghosts\.forEach\(function \(g\) \{ g\.live = true; \}\); if \(replay \|\| playing\) pings\.forEach/);
   assert.match(html, /if \(pk\.live\) replayTrail\(a, m, b, p, nowWall\);\n      else for \(var k = 5;/);
-  // the tag code never writes the pill
-  const tag = html.split('var tagOn =')[1].split('\n')[1];
-  assert.doesNotMatch(tag, /pill/);
-  // live flashes never get the trail
   assert.doesNotMatch(html.split('function playFresh() {')[1].split('function currentPings')[0], /replayTrail/);
 });
 test('working-gone regression: Replay / ambient / Live board code never touches working state or seat chips', () => {
   const grab = (a, b) => html.split(a)[1].split(b)[0];
   const parts = [grab('function startReplay() {', '\n  }\n'), grab('function replayTrail(', 'function ambientPings'),
-    grab('function ambientPings(nowWall) {', 'function draw('), grab('var tagOn =', '    pings.forEach(drawPing);')];
+    grab('function ambientPings(nowWall) {', 'function draw('), grab('if (spectrumOn)', '    pings.forEach(drawPing);')];
   for (const p of parts) assert.doesNotMatch(p, /working|LIVE_FLEET|seatEls|seatState|chipView|nodeView|\.seat\b/);
   // seat state still derives from the fleet only (not the replay clock)
   assert.match(html, /function seatState\(k, hot\) \{ return L\.seatState\(fleetWorking\(k\), !!\(hot && hot\[k\]\), fleetActive\(k\)\); \}/);
@@ -254,11 +248,11 @@ test('board panel: split 2/3 + 1/3, model from feed.board, textContent only, glo
   assert.doesNotMatch(js, /innerHTML|fetch\(|setInterval|setTimeout/);
   assert.match(js, /wbSafeUrl/);
 });
-test('pre-alpha naming: page is 🌈 Live board, replay tag 🪞 REPLAY, panel 🌊 Board', () => {
+test('pre-alpha naming: page is 🌈 Live board, Spectrum pill, panel 🌊 Board', () => {
   assert.match(html, /<title>\u{1F308} Live board/u);
   assert.match(html, /<h1>\u{1F308} Live board<\/h1>/u);
-  assert.match(html, /id="specTag" aria-hidden="true">\u{1FA9E} REPLAY</u);
-  assert.doesNotMatch(html, /\u{1F308} REPLAY/u);
+  assert.match(html, /id="spectrumPill" hidden>Spectrum</);
+  assert.doesNotMatch(html, /id="specTag"/);
   assert.match(html, /<b>\u{1F30A} Board<\/b>/u);
 });
 test('board stats strip: 24h counts + open now from feed.board.stats, textContent only', () => {
@@ -345,10 +339,10 @@ test('board: review cards also wait on the review seat; grouping by seat; board 
   assert.equal(L.boardAt(cards, null), cards);
   assert.match(html, /var cards = L\.boardAt\(wb\.allCards \|\| wb\.cards, asOf\);/);
 });
-test('packets: longer flight, halo + path so a hop is visible seat to seat; one REPLAY badge', () => {
+test('packets: longer flight, halo + path so a hop is visible seat to seat', () => {
   assert.match(html, /var FLASH_MS = 2600/);
   assert.match(html, /arc\(q\[0\], q\[1\], 18, 0, 7\)/);
-  assert.match(html, /var tagOn = !!ambient && !replay;/);
+  assert.doesNotMatch(html, /id="specTag"/);
 });
 
 test('Play starts a replay; live is not playing, so the clock is not frozen at now', async () => {

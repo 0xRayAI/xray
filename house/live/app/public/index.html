@@ -411,16 +411,11 @@ canvas { display: block; width: 100%; height: auto; }
 .mesh-controls { border: 0; background: transparent; margin: 8px 0 0; padding: 0; }
 .mesh-legend { color: var(--dim); font-size: 11px; margin: 6px 0 0; display: flex; flex-wrap: wrap; gap: 8px; }
 .mesh-legend span { border-bottom: 1px dotted var(--dim); cursor: help; }
-.spec-tag { display: inline-block; flex: none; margin-left: 6px; font-size: 11px; font-weight: 700; letter-spacing: .08em; padding: 3px 8px; border-radius: 999px;
-  color: var(--on); border: 1px solid var(--spectrum-edge); background: var(--spectrum-bg);
-  opacity: 0; visibility: hidden; transition: opacity .3s ease, visibility 0s linear .3s; pointer-events: none; }
-.spec-tag.on { opacity: 1; visibility: visible; transition: opacity .3s ease; }
 .spectrum-pill { display: inline-block; flex: none; font-size: 11px; font-weight: 700; letter-spacing: .08em; padding: 3px 8px; border-radius: 999px;
   color: var(--on); border: 1px solid var(--spectrum-edge); background: var(--spectrum-bg); }
 .spectrum-meter { display: inline-flex; align-items: flex-end; gap: 2px; height: 16px; flex: none; }
 .spectrum-pill[hidden], .spectrum-meter[hidden] { display: none !important; }
 .spectrum-meter i { display: block; width: 3px; border-radius: 1px; }
-@media (prefers-reduced-motion: reduce) { .spec-tag, .spec-tag.on { transition: none; } }
 @media (prefers-reduced-motion: reduce) { .spectrum-meter i { transition: none; } }
 main { max-width: 1560px; }
 .split { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 12px; align-items: start; }
@@ -531,7 +526,7 @@ footer a { color: var(--foot); }
 <body>
 <main>
   <header>
-    <div class="title"><h1>🌈 Live board</h1><button id="themeToggle" type="button" aria-label="Color theme">☀</button><span class="pill" id="pill">LIVE</span><span class="spec-tag" id="specTag" aria-hidden="true">🪞 REPLAY</span><span class="spectrum-pill" id="spectrumPill" hidden>Spectrum</span><span class="spectrum-meter" id="spectrumMeter" hidden aria-hidden="true"></span></div>
+    <div class="title"><h1>🌈 Live board</h1><button id="themeToggle" type="button" aria-label="Color theme">☀</button><span class="pill" id="pill">LIVE</span><span class="spectrum-pill" id="spectrumPill" hidden>Spectrum</span><span class="spectrum-meter" id="spectrumMeter" hidden aria-hidden="true"></span></div>
     <p class="status" id="status">Loading…</p>
     <p class="fresh" id="fresh"><span class="fresh-dot"></span><span id="freshText">Loading…</span></p>
     <div hidden><canvas id="mark" width="112" height="44"></canvas><b id="fleet"></b><span id="blackout"></span></div>
@@ -840,7 +835,6 @@ footer a { color: var(--foot); }
       ctx.beginPath(); ctx.arc(tq[0], tq[1], stop.radius, 0, 7); ctx.fill();
     }
   }
-  var specTagOn = false;
   function ambientPings(nowWall) {
     if (!ambientOn || !state.live || replay || document.hidden) { ambient = null; ambientNext = nowWall + AMBIENT_EVERY_MS; return []; }
     if (!ambient) {
@@ -1021,8 +1015,6 @@ footer a { color: var(--foot); }
     });
     // pings in flight: dimmed ambient replay underneath, real live pings on top at full brightness
     var ghosts = ambientPings(nowWall); ambientStats.drawing = ghosts.length;
-    var tagOn = !!ambient && !replay;   // ambient loop only: a replay pass already says REPLAY on the pill (no duplicate badge)
-    if (tagOn !== specTagOn) { specTagOn = tagOn; $('specTag').classList.toggle('on', tagOn); }
     if (spectrumOn) { ghosts.forEach(function (g) { g.live = true; }); if (replay || playing) pings.forEach(function (g) { g.live = true; }); }
     if (ghosts.length) { ctx.globalAlpha = AMBIENT_ALPHA; ghosts.forEach(drawPing); ctx.globalAlpha = 1; }
     pings.forEach(drawPing);
