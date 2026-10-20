@@ -199,7 +199,9 @@ class PullsCursorBoundary(unittest.TestCase):
         with mock.patch.object(uc.RepoCollector, "paged", capped), mock.patch.dict(uc.NODE_LC, FLEET):
             col.poll_pulls(C())
             col.poll_pulls(C())
-        self.assertEqual(seen, [f"/repos/{REPO}/pulls", f"/repos/{REPO}/pulls"])
+        pulls = f"/repos/{REPO}/pulls"
+        packet = f"/repos/{REPO}/contents/PACKET.md"
+        self.assertEqual(seen, [pulls, packet, pulls, packet])
         self.assertIn(f"{REPO}#7:open", col.ev)
         self.assertNotIn(f"{REPO}#8:open", col.ev)
         self.assertNotIn("pulls", col.st["etags"])
