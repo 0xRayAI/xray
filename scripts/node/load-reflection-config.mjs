@@ -16,7 +16,7 @@ const root = process.env.PROJECT_ROOT || process.cwd();
 const configPath = join(root, '.xray', 'features.json');
 
 let mode = 'minimal';
-let commitThreshold = 50;
+let commitThreshold = 25;
 let daysThreshold = 14;
 let autoGenerate = false;
 let promptUser = true;
