@@ -11,7 +11,7 @@ if ! [[ "$seat" =~ ^[a-z0-9-]{2,16}$ ]]; then
   exit 2
 fi
 interval="${INBOX_WATCH_INTERVAL:-60}"
-: "${LIVE_URL:=https://burst-live-production.up.railway.app}"
+: "${LIVE_URL:=https://bifrost.0xray.dev}"
 : "${SEAT_KEYS_DIR:=$HOME/.burst/seat-keys}"
 : "${LIVE_CURSORS:=$HOME/.burst/cursors}"
 export LIVE_URL SEAT_KEYS_DIR LIVE_CURSORS

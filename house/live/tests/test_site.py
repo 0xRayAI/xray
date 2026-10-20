@@ -20,7 +20,7 @@ class Site(unittest.TestCase):
         title, brand, node, dev, app, prod, health = probe(None)
         self.assertEqual((title, brand, node), ("Bifrost live fleet", "Bifrost", "Bifrost"))
         self.assertEqual({dev, app, prod}, {"burst-live"})
-        self.assertEqual(health, ["https://burst-live-production.up.railway.app/healthz"])
+        self.assertEqual(health, ["https://bifrost.0xray.dev/healthz"])
         raw = (FEED / "site.json").read_text()
         self.assertNotIn("example.com", raw); self.assertNotIn("Example", raw)
 

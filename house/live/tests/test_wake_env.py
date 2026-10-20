@@ -52,7 +52,7 @@ class WakeEnvFreshShell(unittest.TestCase):
     def test_template_ships_export_with_defaults(self):
         line = export_line()
         self.assertTrue(line, "WAKE-ROUTINE.md has no ```bash export line")
-        for want in ("PATH=", "https://burst-live-production.up.railway.app", "SEAT_KEYS_DIR=", "LIVE_CURSORS=", ".burst/bin"):
+        for want in ("PATH=", "https://bifrost.0xray.dev", "SEAT_KEYS_DIR=", "LIVE_CURSORS=", ".burst/bin"):
             self.assertIn(want, line)
 
     def test_wake_commands_run_in_fresh_shell(self):
@@ -77,7 +77,7 @@ class WakeEnvFreshShell(unittest.TestCase):
         rows = recorded.read_text().splitlines()
         self.assertGreaterEqual(len(rows), 15, rows)
         url, cursors, keys, wake_run, args = rows[:5]
-        self.assertEqual(url, "https://burst-live-production.up.railway.app")
+        self.assertEqual(url, "https://bifrost.0xray.dev")
         self.assertEqual(cursors, str(self.home / ".burst" / "cursors"))
         self.assertEqual(keys, str(self.home / ".burst" / "seat-keys"))
         self.assertRegex(wake_run, r"^\d+$")
@@ -96,7 +96,7 @@ class WakeEnvFreshShell(unittest.TestCase):
         r = self.sh(script, OUT=str(recorded))
         self.assertEqual(r.returncode, 0, r.stderr + r.stdout)
         url, cursors, keys, args = recorded.read_text().splitlines()
-        self.assertEqual(url, "https://burst-live-production.up.railway.app")
+        self.assertEqual(url, "https://bifrost.0xray.dev")
         self.assertEqual(cursors, str(self.home / ".burst" / "cursors"))
         self.assertEqual(keys, str(self.home / ".burst" / "seat-keys"))
         self.assertEqual(args, "forge --ack line-1")

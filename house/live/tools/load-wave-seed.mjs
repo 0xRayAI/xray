@@ -6,7 +6,13 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { cardsFromSeed, postedCards, seedWaves } from '../app/wave-schedule.mjs';
 
-const LIVE_HOST = 'burst-live-production.up.railway.app';
+// The public board is https://bifrost.0xray.dev.
+// burst-live-production.up.railway.app is the direct service behind that host.
+// A seed apply to either hits production.
+const LIVE_HOSTS = new Set([
+  'bifrost.0xray.dev',
+  'burst-live-production.up.railway.app',
+]);
 const DEFAULT_SEED = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app', 'bifrost-waves.json');
 
 function arg(name, argv) {
@@ -25,7 +31,7 @@ export function refuseLiveApply(url, applyFlag) {
   if (applyFlag === '1') return '';
   let host = '';
   try { host = new URL(url).host; } catch { return 'LIVE_URL is not a URL'; }
-  if (host === LIVE_HOST) return 'refusing to post the seed to the live board';
+  if (LIVE_HOSTS.has(host)) return 'refusing to post the seed to the live board';
   return '';
 }
 

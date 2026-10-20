@@ -10,7 +10,7 @@ set -u
 SEAT="${1:-arch1}"
 INTERVAL="${2:-60}"
 case "$INTERVAL" in ''|*[!0-9]*) echo "live-inbox-watch: interval must be whole seconds" >&2; exit 2 ;; esac
-export LIVE_URL="${LIVE_URL:-https://burst-live-production.up.railway.app}"
+export LIVE_URL="${LIVE_URL:-https://bifrost.0xray.dev}"
 export SEAT_KEYS_DIR="${SEAT_KEYS_DIR:-$HOME/.burst/seat-keys}"
 export LIVE_CURSORS="${LIVE_CURSORS:-$HOME/.burst/cursors}"
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

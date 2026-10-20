@@ -219,7 +219,7 @@ Arch1 runs in Grok CLI on Blaze's Mac. Grok CLI has no webhook receiver, so `SEA
 
 **Getting woken (host monitor, every ~60s).** The Mac has no public URL, so a webhook would need a tunnel; we use no tunnel and no webhook. Arch1 polls locally, and the Grok session hears a line only when the host's internal monitor is running the script. A launchd job is not that path.
 
-Arch1's watcher is `tools/inbox-watch.sh` (default seat `arch1`, every 60 seconds). It runs `live-inbox <seat>`. A failed poll prints `FAIL` once per distinct error. New inbox output prints `ACTION_REQUIRED` and the lines. The first time work appears it posts `live-inbox <seat> --turn start --tag wake`. When a later poll is empty it posts `live-inbox <seat> --turn end` once. It never acks and never prints the key. `live-inbox arch1` reads and never acks (`--peek` is the same), so repeated polls are harmless; ack only after the receipt (below). The script never starts the work. The Grok turn that sees the printed line does. Defaults, set only to override: `LIVE_URL` = `https://burst-live-production.up.railway.app`, `SEAT_KEYS_DIR` = `~/.burst/seat-keys`, `LIVE_CURSORS` = `~/.burst/cursors`.
+Arch1's watcher is `tools/inbox-watch.sh` (default seat `arch1`, every 60 seconds). It runs `live-inbox <seat>`. A failed poll prints `FAIL` once per distinct error. New inbox output prints `ACTION_REQUIRED` and the lines. The first time work appears it posts `live-inbox <seat> --turn start --tag wake`. When a later poll is empty it posts `live-inbox <seat> --turn end` once. It never acks and never prints the key. `live-inbox arch1` reads and never acks (`--peek` is the same), so repeated polls are harmless; ack only after the receipt (below). The script never starts the work. The Grok turn that sees the printed line does. Defaults, set only to override: `LIVE_URL` = `https://bifrost.0xray.dev`, `SEAT_KEYS_DIR` = `~/.burst/seat-keys`, `LIVE_CURSORS` = `~/.burst/cursors`.
 
 Install from main:
 
@@ -243,7 +243,7 @@ Run: `~/.burst/bin/inbox-watch.sh arch1`
 **Exception to the no-local-watchers rule.** This poll is an approved exception, approved by Blaze on 2026-10-13 at 11:52 CT. The approval covers Arch1's inbox poll on Blaze's Mac.
 
 **Variables (names only; required, set by the WAKE-ROUTINE export line).**
-- `LIVE_URL=https://burst-live-production.up.railway.app`
+- `LIVE_URL=https://bifrost.0xray.dev`
 - `SEAT_KEYS_DIR=~/.burst/seat-keys`
 - `LIVE_CURSORS=~/.burst/cursors`
 
