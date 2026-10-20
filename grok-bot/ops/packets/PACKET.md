@@ -1,5 +1,7 @@
 # Packet: owner sign-in under the mesh
 
+> 0xRay house example — not the general procedure. Your team’s rules live in `house/` after `grok-bot house init`.
+
 Packet only. No code in this change. The word on the board is owner.
 
 ## Packet
