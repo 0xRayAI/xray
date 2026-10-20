@@ -39,3 +39,11 @@ Kanban, wave, and activity anchors that have an `href` use the focus color, an u
 ## Checks
 
 `node --test` on `presence.test.mjs`, `page.test.mjs`, `board-folds.test.mjs`, `board-group.test.mjs`, `theme-colors.test.mjs`, and `kanban-board.test.mjs`. Playwright checks that the roster count is above 3, that the theme toggle is the rightmost header control, that a kanban click's detail matches the wave card, that those links look like links in light and dark, that the grouping control is right-aligned and narrower than its header, that in the dark theme a wave card's hover and open backgrounds both differ from the resting card, and that the band under the mesh is at most 24px.
+
+## Turn state
+
+Forge lit during a cloud run because `applyStoredActivity` treated every open turn as the seat's turn. On main, `house/live/app/server.mjs:2711` built the turn key with `kind === 'turn' ? '-'`, so the tag `bc-9748f0dc track` was discarded and the line shared `forge:turn:-`. The open-key loop at `server.mjs:2734` then set `fleet.working.forge`.
+
+Critic lit because a running cloud row's seat is canonicalized, then stamped working. `house/live/app/server.mjs:292` sets `REVIEW` to `'critic'`, and `server.mjs:306` maps `reviewer: REVIEW`. `canonSeatToken` at `house/live/app/worktrack.mjs:39` resolves that alias. On main, `applyCloudOwners` at `worktrack.mjs:599` set that seat `working: true` and `working_via: 'cloud'`. The `bc-` tag is not parsed into a seat. `applyTrackWorking` at `server.mjs:1514` copied the same owner off an agent item.
+
+A cloud turn (`bc-<id>` or `bc-<id> <track>`) now marks that agent on its own card and on the cloud-agent node. The posting seat stays idle unless its own turn is open (no `bc-` tag). A row seated `reviewer` does not light critic. A woken packet and a GitHub mark still light their seat.

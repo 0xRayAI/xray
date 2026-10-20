@@ -569,8 +569,51 @@ export function foldCloudIds(rows) {
   return folded;
 }
 
-/** A running cloud row keeps its owner active. An existing non-cloud working mark keeps its via.
- * A finished or failed row leaves open_agents. A seat loses a cloud mark when it has no running row left. */
+const CLOUD_TURN_ID = /^bc-[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*/;
+
+/** The bc id at the start of a cloud turn tag (`bc-<id>` or `bc-<id> <track>`). A seat turn has none. */
+export function cloudTurnId(tag) {
+  const match = CLOUD_TURN_ID.exec(String(tag || '').trim());
+  return match ? match[0] : '';
+}
+
+function cloudAliasKey(open, id) {
+  for (const key of open.keys()) if (cloudIdsAlias(key, id)) return key;
+  return '';
+}
+
+/** Open cloud turns. A start opens the bc id. An end closes that id. The seat on the line is not the agent. */
+export function openCloudTurns(lines, now = Date.now()) {
+  const open = new Map();
+  for (const line of lines || []) {
+    if (!line || line.kind !== 'turn') continue;
+    const id = cloudTurnId(line.tag);
+    if (!id) continue;
+    const t = Date.parse(line.t_ct || '');
+    if (!Number.isFinite(t) || t > now + 300000) continue;
+    const hit = cloudAliasKey(open, id);
+    if (line.action === 'end') {
+      if (hit && t >= open.get(hit)) open.delete(hit);
+      continue;
+    }
+    if (line.action === 'tick') {
+      if (hit) open.set(hit, Math.max(open.get(hit), t));
+      continue;
+    }
+    const keep = hit && hit.length >= id.length ? hit : id;
+    const at = Math.max(hit ? open.get(hit) : 0, t);
+    if (hit && hit !== keep) open.delete(hit);
+    open.set(keep, at);
+  }
+  return [...open.entries()]
+    .filter(([, t]) => now - t <= CLOUD_STALE_MS)
+    .map(([bcId, t]) => ({ bcId, updated_ct: new Date(t).toISOString() }))
+    .sort((a, b) => a.bcId.localeCompare(b.bcId));
+}
+
+/** A running cloud row is working on its own id. It does not mark the launching seat.
+ * `reviewer` canonicalizes to critic, so a row seat of reviewer must not light critic either.
+ * A finished or failed row leaves open_agents. A cloud via mark on a seat is dropped. */
 export function applyCloudOwners(fleet, rows, now = Date.now()) {
   const list = Array.isArray(rows) ? rows : [];
   const running = list.filter(row => row && row.state === 'running' && AGENT_ID.test(String(row.bcId || '')));
@@ -578,37 +621,18 @@ export function applyCloudOwners(fleet, rows, now = Date.now()) {
   const f = fleet
     ? { ...fleet, seats: { ...(fleet.seats || {}) }, working: { ...(fleet.working || {}) }, cloud: { ...(fleet.cloud || {}) } }
     : { as_of: new Date(now).toISOString(), window_min: 15, seats: {}, working: {}, cloud: {}, active: 0, total: 0 };
-  const nonRunning = new Set();
-  const seatRunning = new Map();
-  const seatsOnBoard = new Set();
+  const nonRunning = [];
   for (const row of list) {
     if (!row || !AGENT_ID.test(String(row.bcId || ''))) continue;
-    const id = String(row.bcId);
-    const seat = canonSeatToken(row.seat);
-    if (seat) seatsOnBoard.add(seat);
-    if (row.state === 'running') {
-      if (seat) seatRunning.set(seat, true);
-    } else nonRunning.add(id);
+    if (row.state !== 'running') nonRunning.push(String(row.bcId));
   }
   const open = new Set(
     (Array.isArray(f.cloud.open_agents) ? f.cloud.open_agents : [])
       .map(id => String(id))
-      .filter(id => id && !nonRunning.has(id)),
+      .filter(id => id && !nonRunning.some(gone => cloudIdsAlias(gone, id))),
   );
   for (const row of running) open.add(String(row.bcId));
-  for (const row of running) {
-    const seat = canonSeatToken(row.seat);
-    if (!seat) continue;
-    const src = f.seats[seat] || { active: false, last_ct: row.updated_ct || null, via: null, working: false };
-    const held = f.working[seat];
-    const keepVia = !!(src.working && held && held.via && held.via !== 'cloud');
-    const next = { ...src, active: true, working: true };
-    if (!keepVia) next.working_via = 'cloud';
-    if (!held) f.working[seat] = { via: 'cloud', since_ct: row.updated_ct || src.last_ct || null, agent: row.bcId };
-    f.seats[seat] = next;
-  }
-  for (const seat of seatsOnBoard) {
-    if (seatRunning.get(seat)) continue;
+  for (const seat of new Set([...Object.keys(f.working), ...Object.keys(f.seats)])) {
     const held = f.working[seat];
     const src = f.seats[seat];
     const cloudWork = !!(held && held.via === 'cloud');
