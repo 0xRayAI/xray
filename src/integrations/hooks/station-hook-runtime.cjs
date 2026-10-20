@@ -1174,6 +1174,8 @@ const STOCK_STATION_PREFIXES = [
   "sleeve:",
   "notes:",
   "plane:",
+  "skills:",
+  "keys:",
   "judgement:",
   "payments:",
 ];
@@ -1330,8 +1332,50 @@ function withOneNotesLine(stockMd, existingMd) {
   return rows.join("\n");
 }
 
+function latestLabeledLine(existingMd, label) {
+  const prefix = String(label || "");
+  const lines = String(existingMd || "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith(prefix));
+  return lines.length ? lines[lines.length - 1] : "";
+}
+
+function withOneLabeledLine(stockMd, existingMd, label) {
+  const stock = String(stockMd || "");
+  if (stock.split(/\r?\n/).some((row) => row.startsWith(label))) return stock;
+  const kept = latestLabeledLine(existingMd, label);
+  if (!kept) return stock;
+  const rows = stock.split(/\r?\n/);
+  const at = rows.findIndex((row) => row.startsWith("Payments:"));
+  if (at >= 0) rows.splice(at, 0, kept);
+  else rows.splice(Math.min(rows.length, 12), 0, kept);
+  return rows.join("\n");
+}
+
+const FLEET_PLANES = new Set(["core", "integration", "ecosystem", "distribution", "live"]);
+
+function withFleetPlane(stockMd, existingMd) {
+  const kept = latestLabeledLine(existingMd, "Plane:");
+  if (!kept) return String(stockMd || "");
+  const value = kept.slice("Plane:".length).trim().toLowerCase();
+  if (!FLEET_PLANES.has(value)) return String(stockMd || "");
+  const rows = String(stockMd || "").split(/\r?\n/);
+  const at = rows.findIndex((row) => row.startsWith("Plane:"));
+  if (at >= 0) rows[at] = kept;
+  else rows.splice(Math.min(rows.length, 12), 0, kept);
+  return rows.join("\n");
+}
+
 function mergeStationMarkdown(stockMd, existingMd) {
-  const stockWithFresh = withOneNotesLine(withOneFreshLine(stockMd, existingMd), existingMd);
+  const stockWithFresh = withFleetPlane(
+    withOneLabeledLine(
+      withOneLabeledLine(withOneNotesLine(withOneFreshLine(stockMd, existingMd), existingMd), existingMd, "Skills:"),
+      existingMd,
+      "Keys:",
+    ),
+    existingMd,
+  );
   const preserved = extractPreservedStationLines(existingMd);
   if (!preserved.length) return stockWithFresh;
   const stock = stockWithFresh;

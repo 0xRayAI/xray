@@ -94,7 +94,7 @@ A chat line reaches the board only when a seat posts it. The server does not rea
 
 | Step | File:line | What is stored |
 |---|---|---|
-| CLI | `tools/live-inbox` 393–399 | `POST /activity` with `t_ct`, `seat` (the key’s seat), `kind: prompt`, `action: sent`, `from` (default `blaze`, 126–129), `to` (the seat), optional `room` (≤40, plain id), optional `note` (one quoted line) |
+| CLI | `tools/live-inbox` 393–399 | `POST /activity` with `t_ct`, `seat` (the key’s seat), `kind: prompt`, `action: sent`, `from` (default is the `name:` line in HOUSE.md), `to` (the seat), optional `room` (≤40, plain id), optional `note` (one quoted line) |
 | Auth and shape | `app/server.mjs` 2793–2822, `validActivity` 2584–2610 | Seat comes from the key. `ACT_MAX_BODY` is 1024. `ACT_KEEP` is 5000 lines. Keys matching `body`, `text`, or `message` are refused (`ACT_BANNED`, 2358). Every field except `note` and `pr` is `ACT_VALUE`: 1–80 of `[A-Za-z0-9 ._:@#+/-]` and must not contain those three words |
 | The line | `note` only, `ACT_NOTE` 2360 | Prompt only. 1–240 of letters, digits, space, and `._:@#+/?'",;!()-`. A sentence may contain the word “message”. A turn with `note` is refused. `room` is a short name, not the words |
 | Stored row | `server.mjs` 2817–2821 | `id`, `seq`, `seat`, `t_ct`, `kind`, `action`, plus `to`, `from`, `room`, `note` when sent. Appended to `activity.jsonl` |

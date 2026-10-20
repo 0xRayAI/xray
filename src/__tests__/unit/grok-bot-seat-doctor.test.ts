@@ -670,7 +670,7 @@ describe('grok-bot seat doctor — cadence warnings', () => {
   function cadenceHouse(dir: string): void {
     writeHouse(
       dir,
-      '# House\n\n## Owner\nAda.\n\n## Cadence\nOptional. Delete this section if your house has no code loop.\n',
+      '# House\n\n## Owner\nname: Ada\nAda.\n\n## Cadence\nOptional. Delete this section if your house has no code loop.\n',
     );
   }
 
@@ -799,7 +799,7 @@ describe('grok-bot seat doctor — cadence warnings', () => {
     const dir = scratch();
     try {
       planted(dir);
-      writeHouse(dir, '# House\n\n## Owner\nAda.\n');
+      writeHouse(dir, '# House\n\n## Owner\nname: Ada\nAda.\n');
       writeLog(dir, 'stall-sweep.log', '2020-01-01T00:00:00Z quiet\n');
       writeSuitCodex(dir, 69, '2026-08-24');
       writeInstalledCodex(dir, 70, '2026-10-01');
@@ -817,7 +817,7 @@ describe('grok-bot seat doctor — cadence warnings', () => {
   it('does not hint migrate when the house has no watchers directory', () => {
     const dir = scratch();
     try {
-      writeHouse(dir, '# House\n\n## Owner\nAda.\n');
+      writeHouse(dir, '# House\n\n## Owner\nname: Ada\nAda.\n');
       expect(warningsOf(dir)).toEqual([]);
     } finally {
       rmSync(dir, { recursive: true, force: true });
@@ -910,6 +910,98 @@ describe('grok-bot seat doctor — goggles stays on', () => {
       const report = diagnoseSeat({ cwd: dir, home: dir });
       expect(report.plant.ok).toBe(true);
       expect(formatDoctor(report)).toContain('Goggles: on');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('grok-bot seat doctor — station boot warnings', () => {
+  function filledHouse(dir: string): void {
+    mkdirSync(path.join(dir, 'house'), { recursive: true });
+    writeFileSync(
+      path.join(dir, 'house', 'HOUSE.md'),
+      '# House\n\nOP-PROC: grok-bot/OP-PROC.md\n\n## Owner\nname: owner\nowner.\n',
+    );
+  }
+
+  function plant(dir: string): void {
+    writeSeat(dir);
+    plantMillInspect(dir);
+    filledHouse(dir);
+  }
+
+  it('warns on a broken profile and a thin station card without failing the plant', () => {
+    const dir = scratch();
+    try {
+      plant(dir);
+      const profile = path.join(dir, 'profile.json');
+      writeFileSync(profile, `${JSON.stringify({ title: 'seat', description: 'hello' })}\n`);
+      const state = path.join(dir, '.xray', 'state');
+      mkdirSync(state, { recursive: true });
+      const notes = path.join(state, 'NOTES.md');
+      const station = path.join(state, 'STATION.md');
+      writeFileSync(notes, 'Point: work\n');
+      writeFileSync(station, 'Plane: core\n');
+      const newer = new Date();
+      const older = new Date(newer.getTime() - 60_000);
+      utimesSync(station, older, older);
+      utimesSync(notes, newer, newer);
+      const report = diagnoseSeat({ cwd: dir, home: dir, env: { GROK_BOT_PROFILE: profile } });
+      expect(report.house.status).toBe('pass');
+      expect(report.ok).toBe(true);
+      expect(report.plant.ok).toBe(true);
+      const warnings = report.house.warnings ?? [];
+      expect(warnings).toContain('profile.json title lacks the station hook');
+      expect(warnings).toContain('profile.json description does not open with the BOOT line');
+      expect(warnings).toContain('STATION.md is older than NOTES.md');
+      expect(warnings).toContain('STATION.md has no Skills: line');
+      expect(warnings).toContain('STATION.md has no Keys: line');
+      const printed = formatDoctor(report);
+      expect(printed).toMatch(/Plant: PASS/);
+      expect(printed).toMatch(/House: WARN — profile.json title lacks the station hook/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('stays quiet when the profile hook and the station lines are present', () => {
+    const dir = scratch();
+    try {
+      plant(dir);
+      const profile = path.join(dir, 'profile.json');
+      writeFileSync(
+        profile,
+        `${JSON.stringify({
+          title: 'You are forge, implementer on the core plane. Run the station skill first (suit /suits/forge).',
+          description: 'BOOT: on an owner message, run the station skill first.',
+        })}\n`,
+      );
+      const state = path.join(dir, '.xray', 'state');
+      mkdirSync(state, { recursive: true });
+      const station = path.join(state, 'STATION.md');
+      writeFileSync(station, 'Plane: core\nSkills: station\nKeys: gh-forge\n');
+      const report = diagnoseSeat({ cwd: dir, home: dir, env: { GROK_BOT_PROFILE: profile } });
+      expect(report.ok).toBe(true);
+      expect(report.house.status).toBe('pass');
+      expect(report.house.warnings ?? []).toEqual([]);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('warns when HOUSE.md has no name: under Owner and does not fail the plant', () => {
+    const dir = scratch();
+    try {
+      plant(dir);
+      writeFileSync(path.join(dir, 'house', 'HOUSE.md'), '# House\n\nname: elsewhere\n\n## Owner\nThe owner decides.\n');
+      const report = diagnoseSeat({ cwd: dir, home: dir });
+      expect(report.house.status).toBe('pass');
+      expect(report.ok).toBe(true);
+      expect(report.plant.ok).toBe(true);
+      expect(report.house.warnings ?? []).toContain('HOUSE.md has no name: under ## Owner');
+      expect(formatDoctor(report)).toMatch(/House: PASS/);
+      expect(formatDoctor(report)).toMatch(/House: WARN — HOUSE.md has no name: under ## Owner/);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

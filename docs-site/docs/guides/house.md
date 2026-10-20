@@ -7,7 +7,7 @@ sidebar_label: Set up a house
 
 The operating page is the same for every team. Yours is `house/HOUSE.md`: owner, seats, public voice, allowed repos, ask first, and the board. Those six headings win over the general page. Start at the [operating procedure](https://github.com/0xRayAI/xray/blob/main/grok-bot/OP-PROC.md), follow the [setup-house](https://github.com/0xRayAI/xray/blob/main/grok-bot/skills/setup-house/SKILL.md) skill, and keep the [house plate](../plates/house.md) as the stamp.
 
-These steps match `@0xray/grok-bot` 0.1.10 (`grok-bot/lib/seat-doctor.cjs`).
+These steps match `grok-bot/lib/seat-doctor.cjs`. The kit version on npm is 0.1.10 until the owner GO for 0.2.0. Docs for this suit are https://docs.0xray.dev/. The public board is https://bifrost.0xray.dev.
 
 ## Copy the template
 
@@ -25,6 +25,9 @@ That copies every file in `templates/house/` into `./house` except `EXAMPLE.md`.
 - `bifrost-waves.json` (empty wave list)
 - `AUTO-REVIEW.md`
 - `ROLE-MAP.md`
+- `STATION-BOOT.md` (adoption and migration from 0.1.10)
+- `fleet/WAKE-ROUTINE.md`
+- `fleet/TRACKS.md`
 
 A first run prints `copied templates/house to <project>/house` and exits 0.
 
@@ -134,6 +137,20 @@ With `GROK_BOT_HOUSE` pointing at that directory, the same line says `(via GROK_
 
 The process exits 0 when the house check is not FAIL and mill plus inspect are fastened on that project. A missing `house/HOUSE.md` warns `house is not enabled here`. That is not a broken suit on a chat that can stop a tool. Grok Bot is the chat that needs the house. The warning does not by itself fail a fastened seat. On an empty directory the plant stays `Plant: FAIL — mill+inspect not fastened`, so doctor still exits 1 after the house line is PASS. Fasten mill and inspect, then run doctor again.
 
+## Station boot
+
+`HOUSE.md` ships with `OP-PROC: grok-bot/OP-PROC.md` and an `## Owner` example `name: Ada`. The `name:` line under `## Owner` is the prompt sender. Replace `Ada` with the name in house config. A missing `name:` warns and `live-inbox --prompt` uses `from=owner`. `OP-PROC:` is the procedure file Full depth reads. Point it at a house overlay when the fleet has one.
+
+Each new seat runs `seat-label` in its own chat. The label is `You are <seat>, <role> on the <plane> plane. Run the station skill first (suit <suit path>).` Planes are core, integration, ecosystem, distribution, and live. The call is `UpdateProfile` with `title` only. `profile.json` `description` opens with the BOOT line. The same run writes `Plane:` and `Skills:` on `.xray/state/STATION.md`. `Keys:` is `gh-<seat>`, never a secret. One seat does not label another.
+
+`~/bin/gh-<seat>` mints a fresh GitHub App token on every call. Plain `gh` is not the seat. A seat with no App hands the branch and the PR body to a seat that has one.
+
+`grok-bot doctor` warns, and does not fail the plant, when `HOUSE.md` has no `name:` under `## Owner`, when `profile.json` `title` lacks `Run the station skill first`, when `description` does not open with `BOOT:`, when `.xray/state/STATION.md` is older than `.xray/state/NOTES.md`, or when `Skills:` or `Keys:` is missing. Set `GROK_BOT_PROFILE` to a `profile.json` outside the project when the seat keeps it elsewhere.
+
+The board posts every pull-request handoff and every review handoff. The coordinator acks only dev lines. Do not launch or resume a cloud agent when the card id is missing. On the way out write the card title, url, owner seat, stage, and state.
+
+Existing fleets follow [the migration](https://github.com/0xRayAI/xray/blob/main/grok-bot/templates/house/STATION-BOOT.md). `house init` does not overwrite a `HOUSE.md` you already filled.
+
 ## Every wake
 
-Read `.xray/state/STATION.md` first. When `LIVE_URL` is unset, read `house/WAVEBOARD.md` and `house/ATTENTION_STATE.md`. When `LIVE_URL` is set, read Bifrost cards (`GET /cards`) and `house/ATTENTION_STATE.md`. If a house file is missing, use the same name under `templates/house/`. The setup-house skill tells every seat to read `house/` on its next wake. One card, one owner. For the six headings, `HOUSE.md` is the copy that wins.
+Read `.xray/state/STATION.md` first. Light on an owner message is `live-inbox <seat> --prompt`, then that card. Full after a summary, a wake, or a gate also reads the `OP-PROC:` file, the newest two NOTES entries, `house/fleet/TRACKS.md`, open cards, and `Skills:`. When `LIVE_URL` is unset, read `house/WAVEBOARD.md` and `house/ATTENTION_STATE.md`. When `LIVE_URL` is set, read Bifrost cards (`GET /cards`) and `house/ATTENTION_STATE.md`. If a house file is missing, use the same name under `templates/house/`. The setup-house skill tells every seat to read `house/` on its next wake. One card, one owner. For the six headings, `HOUSE.md` is the copy that wins.

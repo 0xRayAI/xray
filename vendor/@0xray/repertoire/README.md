@@ -32,7 +32,7 @@ npx repertoire-verify-suit    # 30-check harness from any consumer project root
 
 Includes 3.5.0 delegation gate + PostToolUse assertions (steps 11–13). Full harness: clone this repo and `npm run confirm:suit`. Quick check: `npx 0xray health`.
 
-Default operating model: **`autonomy-command`** — lead dev, phased todos, subagent dispatch, per-suite test triage. See [AGENTS.md](AGENTS.md) and [xray autonomy guide](https://0xrayai.github.io/xray/docs/guides/autonomy-command).
+Default operating model: **`autonomy-command`** — lead dev, phased todos, subagent dispatch, per-suite test triage. See [AGENTS.md](AGENTS.md) and [xray autonomy guide](https://docs.0xray.dev/docs/guides/autonomy-command).
 
 ## MCP server (Hermes, Grok, OpenCode)
 

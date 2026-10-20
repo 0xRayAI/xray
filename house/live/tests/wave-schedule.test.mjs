@@ -188,6 +188,7 @@ test('the load command prints the seed and refuses the live board', () => {
   assert.equal(refused.status, 2);
   assert.match(refused.stderr, /refusing to post the seed to the live board/);
   assert.equal(refuseLiveApply('https://burst-live-production.up.railway.app', ''), 'refusing to post the seed to the live board');
+  assert.equal(refuseLiveApply('https://bifrost.0xray.dev', ''), 'refusing to post the seed to the live board');
   assert.equal(refuseLiveApply('http://127.0.0.1:9', ''), '');
 });
 

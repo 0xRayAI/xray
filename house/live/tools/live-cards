@@ -3,7 +3,7 @@
 line, with nudge beats. Key: ~/.burst/seat-keys/<seat>.key (SEAT_KEYS_DIR; never printed); LIVE_URL defaults to burst-live."""
 import json, os, re, sys, urllib.error, urllib.parse, urllib.request
 from pathlib import Path
-URL = os.environ.get("LIVE_URL", "https://burst-live-production.up.railway.app").rstrip("/")
+URL = os.environ.get("LIVE_URL", "https://bifrost.0xray.dev").rstrip("/")
 KEYS = Path(os.environ.get("SEAT_KEYS_DIR", "~/.burst/seat-keys")).expanduser()
 if len(sys.argv) != 2 or not re.fullmatch(r"[a-z0-9-]{2,16}", sys.argv[1]):
     sys.exit("usage: live-cards <seat>")

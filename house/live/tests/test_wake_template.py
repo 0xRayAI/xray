@@ -254,6 +254,24 @@ class TurnFlag(unittest.TestCase):
         blob = (proc.stdout + proc.stderr).lower()
         self.assertNotIn("blaze", blob)
 
+    def test_missing_name_line_warns_and_uses_owner(self):
+        self.house.write_text("## Owner\nThe owner decides.\n", encoding="utf-8")
+        proc = self.run_turn("--prompt")
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertIn("using from=owner", proc.stderr)
+        self.assertEqual(self.srv.hits[0]["body"]["from"], "owner")
+        self.assertEqual(len(self.srv.hits), 1)
+
+    def test_prompt_reads_repo_house(self):
+        repo_house = Path(__file__).resolve().parents[3] / "house" / "HOUSE.md"
+        text = repo_house.read_text(encoding="utf-8")
+        self.assertRegex(text, r"(?m)^name:\s*owner\s*$")
+        self.env["HOUSE"] = str(repo_house)
+        proc = self.run_turn("--prompt")
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertNotIn("no name:", proc.stderr)
+        self.assertEqual(self.srv.hits[0]["body"]["from"], "owner")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -160,10 +160,10 @@ Full catalog in root **`SKILLS.md`** (shipped on postinstall). **`orchestrator`*
 
 | Topic | URL |
 |-------|-----|
-| Getting started | https://0xrayai.github.io/xray/docs/guides/getting-started |
-| Platform integrations | https://0xrayai.github.io/xray/docs/guides/integrations |
-| Features since 3.1 | https://0xrayai.github.io/xray/docs/guides/features-since-3.1 |
-| AsideContext | https://0xrayai.github.io/xray/docs/guides/aside-context |
-| Memory routing | https://0xrayai.github.io/xray/docs/guides/memory-routing |
-| Repertoire | https://0xrayai.github.io/xray/docs/guides/repertoire |
-| Autonomy command | https://0xrayai.github.io/xray/docs/guides/autonomy-command |
+| Getting started | https://docs.0xray.dev/docs/guides/getting-started |
+| Platform integrations | https://docs.0xray.dev/docs/guides/integrations |
+| Features since 3.1 | https://docs.0xray.dev/docs/guides/features-since-3.1 |
+| AsideContext | https://docs.0xray.dev/docs/guides/aside-context |
+| Memory routing | https://docs.0xray.dev/docs/guides/memory-routing |
+| Repertoire | https://docs.0xray.dev/docs/guides/repertoire |
+| Autonomy command | https://docs.0xray.dev/docs/guides/autonomy-command |

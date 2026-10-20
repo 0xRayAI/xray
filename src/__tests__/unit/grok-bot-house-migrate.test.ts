@@ -208,7 +208,7 @@ describe('board when Bifrost is not configured', () => {
     expect(boardSurface({})).toEqual({ board: 'waveboard', read: 'house/WAVEBOARD.md' });
     expect(boardSurface({ LIVE_URL: '' })).toEqual({ board: 'waveboard', read: 'house/WAVEBOARD.md' });
     expect(boardSurface({ LIVE_URL: '   ' })).toEqual({ board: 'waveboard', read: 'house/WAVEBOARD.md' });
-    expect(boardSurface({ LIVE_URL: 'https://burst-live-production.up.railway.app' })).toEqual({
+    expect(boardSurface({ LIVE_URL: 'https://bifrost.0xray.dev' })).toEqual({
       board: 'bifrost',
       read: 'GET /cards',
     });
@@ -217,7 +217,7 @@ describe('board when Bifrost is not configured', () => {
       const unset = diagnoseSeat({ cwd: dir, env: {} });
       expect(unset.board).toEqual({ board: 'waveboard', read: 'house/WAVEBOARD.md' });
       expect(formatDoctor(unset as { ok: boolean; next: string[] })).toContain('Board: house/WAVEBOARD.md');
-      const set = diagnoseSeat({ cwd: dir, env: { LIVE_URL: 'https://burst-live-production.up.railway.app' } });
+      const set = diagnoseSeat({ cwd: dir, env: { LIVE_URL: 'https://bifrost.0xray.dev' } });
       expect(formatDoctor(set as { ok: boolean; next: string[] })).toContain('Board: GET /cards');
     } finally {
       rmSync(dir, { recursive: true, force: true });

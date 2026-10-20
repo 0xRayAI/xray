@@ -1,0 +1,39 @@
+---
+name: station
+description: >
+  BOOT: on any owner message, after a summary, or on a wake, run the station
+  skill first (suit <path>, seat <seat>).
+---
+
+# Station
+
+One boot hook. Light on an owner message. Full after a summary, a wake, or a gate.
+
+## Light
+
+On any owner message:
+
+1. Post `live-inbox <seat> --prompt`. Do not send message text. `from` is the `name:` line in `house/HOUSE.md`.
+2. Read `.xray/state/STATION.md`.
+
+Light does not read the pack.
+
+## Full
+
+After a summary, a wake, or a gate, also read:
+
+- the file named by the `OP-PROC:` line in `house/HOUSE.md`
+- the newest two entries in `.xray/state/NOTES.md`
+- `house/fleet/TRACKS.md`
+- open board cards (`house/WAVEBOARD.md` when `LIVE_URL` is unset, `GET /cards` when it is set)
+- the `Skills:` line on `.xray/state/STATION.md`
+
+## During the work
+
+Each step posts one activity line. Each cloud launch is written to `house/fleet/TRACKS.md` in that same step.
+
+## Way out
+
+Update STATION `Judgement:`, the card metadata (title, url, owner seat, stage, state), TRACKS, and the closing activity line.
+
+The owner's chat does not launch or resume a cloud agent when the card id is missing. The board posts every pull-request handoff and every review handoff. The coordinator acks only dev lines.

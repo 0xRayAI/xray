@@ -15,8 +15,8 @@ Rules it serves: pack [OP-PROC](../OP-PROC.md) (**Two loops**, **Routing**, Bran
 - Every item on the wave points at its GitHub issue or PR comment. Work with no GitHub record is not work.
 
 ## 2. Local commits only; the shipping seat pushes
-- The cloud agent commits. Forge pushes with the forge App. Do not keep a mill git identity.
-- Never push, never open the PR, never comment as a personal login. The shipping seat (publisher) pushes as its App.
+- The cloud agent commits. Forge pushes with the forge App through `~/bin/gh-<seat>`, never plain `gh`. Do not keep a mill git identity.
+- Never push, never open the PR, never comment as a personal login. The shipping seat (publisher) pushes through `~/bin/gh-<seat>`, never plain `gh`.
 - One commit per coherent change, message `<area>: <what changed and why>`. Never commit secrets, wake URLs or keys.
 
 ## 3. Tests plus docs check

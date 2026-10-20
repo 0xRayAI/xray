@@ -87,9 +87,11 @@ describe('grok-bot house template — USMail docs', () => {
         'BOARD-PROMPT.md',
         'HOUSE.md',
         'ROLE-MAP.md',
+        'STATION-BOOT.md',
         'WAVE-SCHEDULE.md',
         'WAVEBOARD.md',
         'bifrost-waves.json',
+        'fleet/TRACKS.md',
         'fleet/WAKE-ROUTINE.md',
         'fleet/activity.jsonl',
         'fleet/prompts.jsonl',
@@ -174,6 +176,6 @@ describe('grok-bot house template — USMail docs', () => {
     bullet(path.join(root, 'house/OP-PROC.md'));
     bullet(path.join(kit, 'templates/house/HOUSE.md'));
     expect(readFileSync(path.join(kit, 'templates/house/HOUSE.md'), 'utf8')).toMatch(/^name: Ada$/m);
-    expect(readFileSync(path.join(root, 'house/HOUSE.md'), 'utf8')).toMatch(/^name: Blaze$/m);
+    expect(readFileSync(path.join(root, 'house/HOUSE.md'), 'utf8')).toMatch(/^name: owner$/m);
   });
 });

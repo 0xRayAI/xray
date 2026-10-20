@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+Ship as 0.2.0 after the owner GO. The package version stays 0.1.10 until that GO. `scripts/foundry/release.mjs` stamps `0xray`, not this kit.
+
+- Station boot. Each seat's profile title is `You are <seat>, <role> on the <plane> plane. Run the station skill first (suit <suit path>).` The description opens with the BOOT line. Planes are core, integration, ecosystem, distribution, and live.
+- Skills `station`, `seat-label`, and `seat-github-key`. `seat-label` runs in that seat's own chat (`UpdateProfile` title only, then `profile.json`). `~/bin/gh-<seat>` mints a fresh App token every call and never prints the token or the PEM.
+- `HOUSE.md` carries `name:` and `OP-PROC:`. The station line template adds `Plane:`, `Skills:`, and `Keys:`. `house/fleet/TRACKS.md` is written when a cloud launches. Adoption and migration from 0.1.10 live in `templates/house/STATION-BOOT.md`.
+- The board posts every pull-request handoff and every review handoff. The coordinator acks only dev lines. A cloud launch needs a card id. The way out writes card title, url, owner seat, stage, and state.
+- `grok-bot doctor` warns, and does not fail the plant, when `profile.json` lacks the station hook, when STATION.md is older than NOTES.md, or when `Skills:` or `Keys:` is missing.
+- Public board: https://bifrost.0xray.dev. Docs: https://docs.0xray.dev/.
+
 ## 0.1.10
 
 - House template `## Cadence` (optional; delete it when the house has no code loop) and starter files: `watchers/merge-queue.md`, `watchers/review-sent.log` and `watchers/stall-sweep.log` (written by `house init`, not shipped as files), `watchers/issue-sweep-last.txt`, `watchers/waveboard-static.md`, `fleet/activity.jsonl`, and `fleet/prompts.jsonl` (a starter file; seats post prompts with `live-inbox <seat> --prompt`). The cadence doc link stays absolute: https://github.com/0xRayAI/xray/blob/main/docs/opproc-cadence.md

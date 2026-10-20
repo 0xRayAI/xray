@@ -235,7 +235,7 @@ Full skill mapping: [SKILLS.md](SKILLS.md).
 | Bifrost board | `docs-site/docs/plates/bifrost.md` |
 | Seat wake | `grok-bot/templates/house/fleet/WAKE-ROUTINE.md` |
 | Fleet lexicon | `grok-bot/LEXICON.md` |
-| Docusaurus site | https://0xrayai.github.io/xray/ |
+| Docusaurus site | https://docs.0xray.dev/ |
 
 ## Live board
 

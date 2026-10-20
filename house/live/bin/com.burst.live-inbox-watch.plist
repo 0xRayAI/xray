@@ -12,7 +12,7 @@
   </array>
   <key>EnvironmentVariables</key>
   <dict>
-    <key>LIVE_URL</key><string>https://burst-live-production.up.railway.app</string>
+    <key>LIVE_URL</key><string>https://bifrost.0xray.dev</string>
     <key>SEAT_KEYS_DIR</key><string>/Users/USERNAME/.burst/seat-keys</string>
     <key>LIVE_CURSORS</key><string>/Users/USERNAME/.burst/cursors</string>
     <key>PATH</key><string>/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin</string>

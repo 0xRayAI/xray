@@ -32,7 +32,7 @@ class InboxWatch(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertEqual(r.stdout, "")
         self.assertIn("arch1", calls.splitlines()[0])
-        self.assertIn("URL=https://burst-live-production.up.railway.app", calls)
+        self.assertIn("URL=https://bifrost.0xray.dev", calls)
         self.assertIn("/.burst/seat-keys", calls)
         self.assertIn("/.burst/cursors", calls)
         self.assertNotIn("--ack", calls)

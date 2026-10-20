@@ -4,9 +4,9 @@ import Layout from '@theme/Layout';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 
 /**
- * GitHub Pages project site is https://0xrayai.github.io/xray/.
- * A client router redirect to an origin-absolute /docs path hits the
- * org root and 404s. Meta refresh + real <a href> stay under baseUrl.
+ * Site root stays a short hop to the docs routes.
+ * Docs stay under /docs so older docs.0xray.dev/docs/* links keep working.
+ * Meta refresh + a real link stay under baseUrl.
  */
 export default function Home() {
   const dest = useBaseUrl('/docs/');
@@ -14,7 +14,7 @@ export default function Home() {
     <Layout title="0xRay" description="A suit that survives the context window">
       <Head>
         <meta httpEquiv="refresh" content={`0;url=${dest}`} />
-        <link rel="canonical" href="https://0xrayai.github.io/xray/docs/" />
+        <link rel="canonical" href="https://docs.0xray.dev/docs/" />
       </Head>
       <main style={{ padding: '2rem' }}>
         <p>
