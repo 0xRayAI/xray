@@ -397,6 +397,22 @@ export function scheduleWaves(incoming, seed, opts = {}) {
   return { cards, planDue, changed: stamp(cards) !== stamp(incoming) };
 }
 
+/**
+ * Empty incoming cards do not replace a non-empty board while the collector is
+ * stalled or the feed file is older than the stall window. A missing file is age 0.
+ * A non-empty incoming list still replaces. A fresh empty board still clears.
+ */
+export function acceptWaveCards(incoming, existing, opts = {}) {
+  const next = Array.isArray(incoming) ? incoming : [];
+  const prior = Array.isArray(existing) ? existing : [];
+  if (next.length > 0 || prior.length === 0) return next;
+  const windowMs = Number(opts.stallWindowMs);
+  const age = Number(opts.feedAgeMs);
+  const staleFile = Number.isFinite(age) && Number.isFinite(windowMs) && age > windowMs;
+  if (opts.stalled || staleFile) return prior;
+  return next;
+}
+
 /** House file first (OP-PROC). The bundled copy beside the server is what the image can read. */
 export function resolveWaveSeed(appDir, env = {}, exists = () => false) {
   if (env.BIFROST_WAVE_SEED) return env.BIFROST_WAVE_SEED;

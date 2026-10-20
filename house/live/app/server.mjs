@@ -17,7 +17,7 @@ import { seatPresence, presentSeat, foldSeatTouch, fleetConfigOf, readWakeOk, wr
 import { parseAllowlist, mergeCards, sourceCardsFrom, projectAllowed, validateItem, workEventToItem, cardNoNudge, workItemNewer } from './source.mjs';
 import { checkRoutesFromDir, readRoutingMap, createLoginResolver, auditLogins } from './routes.mjs';
 import { fingerprint, tripwire, createClock, wakeTitle, mutedSeats, selectStallSeats } from './governor.mjs';
-import { burnQuiet, isPlanCard, liveWorkCount, postedCards, retainSeedCards, resolveWaveSeed, scheduleWaves } from './wave-schedule.mjs';
+import { acceptWaveCards, burnQuiet, isPlanCard, liveWorkCount, postedCards, retainSeedCards, resolveWaveSeed, scheduleWaves } from './wave-schedule.mjs';
 import { createArch1Launch, ARCH1_CANON } from './arch1-launch.mjs';
 import { configureWorkTrack, acceptCursorWebhook, appendWake, boardCloudAgents, canonSeatToken, deriveTrackFromDir, displaySeat, loadSeatAgentMap, readJsonl, readWakeRows, safePrUrl, seatForAgentId, stampCriticCloud, toToken } from './worktrack.mjs';
 const COLLECTOR_DIR_EARLY = () => path.join(path.dirname(fileURLToPath(import.meta.url)), 'collector');
@@ -954,10 +954,16 @@ function publishBoard(updatedCt) {
 function setCards(wb) {
   if (!wb || !Array.isArray(wb.cards)) return;
   const sliced = wb.cards.slice(0, 200);
-  const sig = JSON.stringify(sliced);
+  const kept = acceptWaveCards(sliced, waveCards, {
+    stalled: feedStalled(),
+    feedAgeMs: feedFileAgeMs(),
+    stallWindowMs: watchLimitMs(),
+  });
+  if (kept === waveCards) return;
+  const sig = JSON.stringify(kept);
   if (sig === waveSig) return;
   waveSig = sig;
-  waveCards = sliced;
+  waveCards = kept;
   publishBoard(wb.updated_ct);
 }
 function holdOwner(c) {
@@ -1996,6 +2002,14 @@ function feedStalled(now = Date.now()) {
   const tick = stallTick();
   if (!tick) return false;
   return now - tick > watchLimitMs();
+}
+function feedFileAgeMs(now = Date.now()) {
+  try {
+    const age = now - fs.statSync(GH_FEED).mtimeMs;
+    return age > 0 ? age : 0;
+  } catch {
+    return 0;
+  }
 }
 function feedHealthLine(why) {
   upsert({ id: 'health:feed-loop', t_ct: ctStamp(Date.now()), from: 'watchdog', to: 'GitHub', kind: 'health_fail',
