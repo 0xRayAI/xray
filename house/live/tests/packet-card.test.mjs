@@ -13,6 +13,7 @@ import { listenPort } from './free-port.mjs';
 
 const APP = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app', 'server.mjs');
 const FEED = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'feed');
+const COLLECTOR = JSON.parse(fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'fixtures', 'collector-held-pr.json'), 'utf8'));
 
 test('card ids share number >= 1, and a collector list keeps a packet card', () => {
   assert.equal(cardKeyOf({ repo: 'Acme/App', number: 2, id: 'line-2' }), 'acme/app#2');
@@ -53,56 +54,68 @@ test('a push sets branch and a matching pr_open rewrites the holding key', () =>
 });
 
 test('a collector commit, pr_commit, and pr_open leave one card per id', () => {
-  const mainSha = 'a'.repeat(40);
-  const sha = 'b'.repeat(40);
+  const events = COLLECTOR.one;
   const held = { key: 'packet:line-9', born: 'packet', repo: 'acme/app', number: 0, state: 'live', title: 'hold', owner: 'forge' };
+  const commits = events.filter(event => event.kind === 'commit');
+  assert.equal(commits.length, 1);
+  assert.deepEqual(commits[0].branches, ['main']);
+  const prCommit = events.find(event => event.kind === 'pr_commit');
+  const prOpen = events.find(event => event.kind === 'pr_open');
+  assert.equal(prCommit.number, 9);
+  assert.equal(prCommit.sha, prOpen.sha);
+  assert.equal(Object.hasOwn(prCommit, 'branch'), false);
+  assert.equal(Object.hasOwn(prCommit, 'branches'), false);
+  assert.equal(prOpen.base, 'main');
+  assert.equal(prOpen.sha, prCommit.sha);
+  const stamped = attachPacketCards([held], commits);
+  assert.equal(stamped[0].key, 'packet:line-9');
+  assert.equal(stamped[0].branch, undefined);
   const opened = { key: 'acme/app#9', repo: 'acme/app', number: 9, state: 'live', title: 'opened' };
-  const events = [
-    { kind: 'commit', repo: 'acme/app', sha: mainSha, branches: ['main'], src_file: 'github-api' },
-    { kind: 'commit', repo: 'acme/app', sha, branches: ['cursor/hold'], src_file: 'github-api' },
-    { kind: 'pr_commit', repo: 'acme/app', sha, number: 9, src_file: 'github-api' },
-    { kind: 'pr_open', repo: 'Acme/App', number: 9, base: 'main', sha, source: 'https://github.com/acme/app/pull/9' },
-  ];
   const cards = attachPacketCards([held, opened], events);
-  const keys = cards.map(card => card.key);
-  assert.equal(keys.length, 1);
-  assert.equal(keys[0], 'acme/app#9');
-  assert.equal(new Set(keys).size, keys.length);
+  assert.deepEqual(cards.map(card => card.key), ['acme/app#9']);
   assert.equal(cards[0].alias, 'packet:line-9');
-  assert.equal(cards[0].branch, 'cursor/hold');
+  assert.equal(cards[0].branch, prOpen.head_ref);
+  const alone = attachPacketCards([held], events);
+  assert.equal(alone.length, 1);
+  assert.equal(alone[0].key, 'acme/app#9');
+  assert.equal(alone[0].alias, 'packet:line-9');
+  assert.equal(alone[0].branch, prOpen.head_ref);
+  const both = attachPacketCards([
+    held,
+    { key: 'acme/app#9', repo: 'acme/app', number: 9, state: 'live', title: 'opened' },
+    { key: 'acme/app#10', repo: 'acme/app', number: 10, state: 'live', title: 'other' },
+  ], COLLECTOR.two);
+  assert.deepEqual(both.map(card => card.key).sort(), ['acme/app#10', 'acme/app#9', 'packet:line-9']);
+  assert.equal(both.every(card => card.alias == null), true);
   const script = `
 import json, os
 from pathlib import Path
 root = Path(os.environ["MESH_RUN"])
 (root / "live").mkdir(parents=True)
+events = json.loads(Path(os.environ["FIXTURE_EVENTS"]).read_text())
 held = [{"key":"packet:line-9","born":"packet","repo":"acme/app","number":0,"state":"live","title":"hold","owner":"forge","last_beat_t":1}]
 (root / "live" / "cards.json").write_text(json.dumps({"cards": held}))
 import live_board
-main_sha = ${JSON.stringify(mainSha)}
-sha = ${JSON.stringify(sha)}
-evs = [
-  {"id":"a","t_ct":"2026-10-20T11:59:00-05:00","kind":"commit","repo":"acme/app","sha":main_sha,"branches":["main"],"from":"forge","src_file":"github-api"},
-  {"id":"c","t_ct":"2026-10-20T12:00:00-05:00","kind":"commit","repo":"acme/app","sha":sha,"branches":["cursor/hold"],"from":"forge","src_file":"github-api"},
-  {"id":"p","t_ct":"2026-10-20T12:00:00-05:00","kind":"pr_commit","repo":"acme/app","sha":sha,"number":9,"from":"forge","src_file":"github-api"},
-  {"id":"o","t_ct":"2026-10-20T12:01:00-05:00","kind":"pr_open","repo":"acme/app","number":9,"base":"main","sha":sha,"source":"https://github.com/acme/app/pull/9","from":"forge","title":"held","pr_state":"open"},
-]
 def one(cards):
     keys = [c["key"] for c in cards]
     assert keys.count("acme/app#9") == 1, keys
     assert "packet:line-9" not in keys, keys
     assert len(keys) == len(set(keys)), keys
     card = next(c for c in cards if c["key"] == "acme/app#9")
+    head_ref = next(e.get("head_ref") for e in events if e.get("kind") == "pr_open")
     assert card.get("alias") == "packet:line-9", card
-    assert card.get("branch") == "cursor/hold", card
-one(live_board.run(evs, write=False, held=held)["cards"])
-one(live_board.run(evs, write=False)["cards"])
+    assert card.get("branch") == head_ref, card
+one(live_board.run(events, write=False, held=held)["cards"])
+one(live_board.run(events, write=False)["cards"])
 print("ok")
 `;
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-held-'));
   try {
+    const eventsFile = path.join(dir, 'events.json');
+    fs.writeFileSync(eventsFile, JSON.stringify(events));
     const ran = spawnSync('python3', ['-c', script], {
       cwd: FEED,
-      env: { ...process.env, PYTHONPATH: FEED, PYTHONDONTWRITEBYTECODE: '1', MESH_RUN: dir },
+      env: { ...process.env, PYTHONPATH: FEED, PYTHONDONTWRITEBYTECODE: '1', MESH_RUN: dir, FIXTURE_EVENTS: eventsFile },
       encoding: 'utf8',
     });
     assert.equal(ran.status, 0, ran.stderr || ran.stdout);
@@ -189,41 +202,27 @@ test('a packet post creates one card, and no activity line carries card', async 
     body = await cards();
     assert.equal((body.cards || []).some(card => card.key === 'packet:hold-1'), true);
     assert.equal((body.cards || []).some(card => card.key === '0xrayai/xray#0'), false);
-    const t = new Date().toISOString();
     fs.mkdirSync(path.join(data, 'feed'), { recursive: true });
-    const mainSha = 'a'.repeat(40);
-    const headSha = 'b'.repeat(40);
-    const commitEvents = [
-      { id: 'commit-main', t_ct: t, kind: 'commit', repo: '0xRayAI/xray', sha: mainSha, branches: ['main'], from: 'forge' },
-      { id: 'commit-head', t_ct: t, kind: 'commit', repo: '0xRayAI/xray', sha: headSha, branches: ['cursor/card-required'], from: 'forge' },
-      { id: 'pr-commit-1', t_ct: t, kind: 'pr_commit', repo: '0xRayAI/xray', sha: headSha, number: 471, from: 'forge' },
-    ];
-    fs.writeFileSync(path.join(data, 'feed', 'github-events.json'), JSON.stringify({
-      generated_at: t,
-      events: commitEvents,
-    }));
-    let branched = null;
-    for (let i = 0; i < 20; i++) {
-      body = await cards();
-      branched = (body.cards || []).find(card => card.key === 'packet:hold-1');
-      if (branched && branched.branch === 'cursor/card-required') break;
-      await new Promise(r => setTimeout(r, 200));
-    }
-    assert.equal(branched && branched.branch, 'cursor/card-required', logs);
+    const commitEvents = COLLECTOR.xray;
+    const prCommit = commitEvents.find(event => event.kind === 'pr_commit');
+    const prOpen = commitEvents.find(event => event.kind === 'pr_open');
+    assert.equal(prOpen.base, 'main');
+    assert.equal(prOpen.sha, prCommit.sha);
+    assert.equal(Object.hasOwn(prCommit, 'branches'), false);
+    assert.equal(commitEvents.some(event => event.kind === 'commit' && (event.branches || []).some(name => name !== 'main' && name !== 'develop')), false);
     fs.writeFileSync(path.join(data, 'feed', 'github-events.json'), JSON.stringify({
       generated_at: new Date().toISOString(),
-      events: commitEvents.concat([
-        { id: 'pr-1', t_ct: new Date().toISOString(), kind: 'pr_open', repo: '0xRayAI/xray', number: 471, base: 'main', sha: headSha, source: 'https://github.com/0xRayAI/xray/pull/471' },
-      ]),
+      events: commitEvents,
     }));
     let attached = null;
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 30; i++) {
       body = await cards();
       attached = (body.cards || []).find(card => card.key === '0xrayai/xray#471');
       if (attached && attached.alias === 'packet:hold-1') break;
       await new Promise(r => setTimeout(r, 200));
     }
     assert.equal(attached && attached.alias, 'packet:hold-1', JSON.stringify(body.cards));
+    assert.equal(attached && attached.branch, prOpen.head_ref);
     assert.equal((body.cards || []).some(card => card.key === 'packet:hold-1'), false);
     const refused = await fetch(base + '/activity', {
       method: 'POST', headers: { ...auth, 'Content-Type': 'application/json' },

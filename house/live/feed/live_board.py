@@ -407,8 +407,16 @@ def _sha_linked(event, card, links):
     return True
 
 
+def _feature_branch(card):
+    """A develop or main stamp is the merge base, not the PR head."""
+    branch = _ref_name(card.get("branch") if isinstance(card, dict) else "")
+    if not branch or branch in ("develop", "main"):
+        return ""
+    return branch
+
+
 def _branch_for(card, events, cards, bases, links):
-    """Prefer the commit whose sha a pr_commit names. The first touching commit is the fallback."""
+    """Prefer a non-base ref whose sha a pr_commit names. A base commit is not the head."""
     touching = []
     for event in events:
         if event.get("kind") in ("pr_open", "issue_open"):
@@ -417,21 +425,30 @@ def _branch_for(card, events, cards, bases, links):
         if not branch or not _event_touches(card, event, cards):
             continue
         touching.append((event, branch))
-    for event, branch in touching:
-        if _sha_linked(event, card, links):
+    linked = [(event, branch) for event, branch in touching if _sha_linked(event, card, links)]
+    pool = linked or touching
+    for _event, branch in pool:
+        if branch not in ("develop", "main"):
             return branch
-    return touching[0][1] if touching else ""
+    return ""
 
 
-def _pr_matches(card, event, sha_branches, links):
+def _agreed_open(event, links):
+    """pr_open and pr_commit name the same repo, number, and sha."""
     if not isinstance(event, dict) or event.get("kind") != "pr_open" or not _positive_event(event):
         return False
-    branch = card.get("branch")
-    if not branch:
-        return False
     sha = _sha_of(event)
-    named = _head_of(event) == branch
-    by_sha = bool(sha) and branch in sha_branches.get(sha, ())
+    if not sha:
+        return False
+    repo = str(event.get("repo") or "").lower()
+    number = int(event["number"])
+    return any(linked_repo == repo and linked_number == number for linked_repo, linked_number in links.get(sha, ()))
+
+
+def _branch_hit(event, sha_branches, links, feature):
+    sha = _sha_of(event)
+    named = _head_of(event) == feature
+    by_sha = bool(sha) and feature in sha_branches.get(sha, ())
     if not named and not by_sha:
         return False
     pairs = links.get(sha, ())
@@ -440,6 +457,43 @@ def _pr_matches(card, event, sha_branches, links):
     repo = str(event.get("repo") or "").lower()
     number = int(event["number"])
     return any(linked_repo == repo and linked_number == number for linked_repo, linked_number in pairs)
+
+
+def _join_event(card, events, sha_branches, links, cards):
+    """One pr_open for this holding card.
+
+    A feature branch already on the card picks the open whose head matches.
+    With no feature branch, pr_open and pr_commit must share one number and sha.
+    """
+    feature = _feature_branch(card)
+    hits = []
+    agreed = []
+    for event in events:
+        if not isinstance(event, dict) or event.get("kind") != "pr_open" or not _positive_event(event):
+            continue
+        if not _event_touches(card, event, cards):
+            continue
+        if feature and _branch_hit(event, sha_branches, links, feature):
+            hits.append(event)
+        if _agreed_open(event, links):
+            agreed.append(event)
+    if hits:
+        return hits[0]
+    numbers = {(str(event.get("repo") or "").lower(), int(event["number"])) for event in agreed}
+    if not feature and len(numbers) == 1:
+        return agreed[0]
+    return None
+
+
+def _branch_from_open(event):
+    ref = _ref_name(event.get("head_ref") if isinstance(event, dict) else "")
+    if ref:
+        return ref
+    head = _head_of(event)
+    base = _ref_name(event.get("base") if isinstance(event, dict) else "")
+    if head and head != base:
+        return head
+    return ""
 
 
 def _positive_event(event):
@@ -477,12 +531,12 @@ def _event_touches(card, event, cards):
 
 
 def attach_held(held, events):
-    """Copy a commit ref onto a card the server already holds.
+    """Rewrite a holding card onto the PR that pr_open and pr_commit share.
 
-    A commit carries branches plus sha. pr_commit carries sha plus number.
-    pr_open carries base (the target) plus sha. The sha a pr_commit names
-    sets the branch. That same sha, or a head ref equal to the card branch,
-    rewrites a holding key.
+    commit_event names only develop and main. pr_commit carries sha plus
+    number. pr_open carries base plus that sha, and the head ref poll_pulls
+    stored. That number and sha become one card. A feature branch already on
+    the card still selects its own head.
     """
     cards = [dict(card) for card in (held or []) if isinstance(card, dict)]
     evs = [event for event in (events or []) if isinstance(event, dict)]
@@ -498,22 +552,26 @@ def attach_held(held, events):
     gone = set()
     for card in cards:
         key = str(card.get("key") or "")
-        if not key.lower().startswith("packet:") or not card.get("branch") or id(card) in gone:
+        if not key.lower().startswith("packet:") or id(card) in gone:
             continue
-        hit = next((event for event in evs if _pr_matches(card, event, sha_branches, links)), None)
+        hit = _join_event(card, evs, sha_branches, links, cards)
         if not hit:
             continue
         next_key = f"{str(hit['repo']).lower()}#{int(hit['number'])}"
+        branch = _feature_branch(card) or _branch_from_open(hit) or _ref_name(card.get("branch"))
         existing = next((other for other in cards if other is not card and id(other) not in gone and str(other.get("key") or "").lower() == next_key), None)
         if existing is not None:
             existing.setdefault("alias", key)
-            existing.setdefault("branch", card["branch"])
+            if branch and not _feature_branch(existing):
+                existing["branch"] = branch
             gone.add(id(card))
             continue
         card["alias"] = key
         card["key"] = next_key
         card["repo"] = hit["repo"]
         card["number"] = int(hit["number"])
+        if branch:
+            card["branch"] = branch
         url = hit.get("url") or hit.get("source") or ""
         if url:
             card["url"] = str(url)[:300]

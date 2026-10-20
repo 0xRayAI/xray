@@ -406,6 +406,14 @@ function shaLinked(event, card, links) {
   return true;
 }
 
+const BASE_NAMES = new Set(['develop', 'main']);
+
+function featureBranch(card) {
+  const branch = refName(card && card.branch);
+  if (!branch || BASE_NAMES.has(branch)) return '';
+  return branch;
+}
+
 function branchFor(card, events, list, bases, links) {
   const touching = [];
   for (const event of events) {
@@ -414,19 +422,52 @@ function branchFor(card, events, list, bases, links) {
     if (!branch || !eventTouches(card, event, list)) continue;
     touching.push([event, branch]);
   }
-  const linked = touching.find(([event]) => shaLinked(event, card, links));
-  return linked ? linked[1] : (touching[0] ? touching[0][1] : '');
+  const linked = touching.filter(([event]) => shaLinked(event, card, links));
+  const pool = linked.length ? linked : touching;
+  const feature = pool.find(([, branch]) => !BASE_NAMES.has(branch));
+  return feature ? feature[1] : '';
 }
 
-function prMatches(card, event, shaBranches, links) {
-  if (!event || event.kind !== 'pr_open' || !positiveEvent(event) || !card.branch) return false;
+function agreedOpen(event, links) {
+  if (!event || event.kind !== 'pr_open' || !positiveEvent(event)) return false;
   const sha = shaOf(event);
-  const named = headOf(event) === card.branch;
-  const bySha = !!(sha && (shaBranches.get(sha) || []).includes(card.branch));
+  if (!sha) return false;
+  return (links.get(sha) || []).includes(String(event.repo || '').toLowerCase() + '#' + Number(event.number));
+}
+
+function branchHit(event, shaBranches, links, feature) {
+  const sha = shaOf(event);
+  const named = headOf(event) === feature;
+  const bySha = !!(sha && (shaBranches.get(sha) || []).includes(feature));
   if (!named && !bySha) return false;
   const pairs = links.get(sha) || [];
   if (!pairs.length) return true;
   return pairs.includes(String(event.repo || '').toLowerCase() + '#' + Number(event.number));
+}
+
+function joinEvent(card, events, shaBranches, links, list) {
+  const feature = featureBranch(card);
+  const hits = [];
+  const agreed = [];
+  for (const event of events) {
+    if (!event || event.kind !== 'pr_open' || !positiveEvent(event)) continue;
+    if (!eventTouches(card, event, list)) continue;
+    if (feature && branchHit(event, shaBranches, links, feature)) hits.push(event);
+    if (agreedOpen(event, links)) agreed.push(event);
+  }
+  if (hits.length) return hits[0];
+  const numbers = new Set(agreed.map((event) => String(event.repo || '').toLowerCase() + '#' + Number(event.number)));
+  if (!feature && numbers.size === 1) return agreed[0];
+  return null;
+}
+
+function branchFromOpen(event) {
+  const ref = refName(event && event.head_ref);
+  if (ref) return ref;
+  const head = headOf(event);
+  const base = refName(event && event.base);
+  if (head && head !== base) return head;
+  return '';
 }
 
 function positiveEvent(event) {
@@ -450,7 +491,7 @@ function eventTouches(card, event, list) {
   return false;
 }
 
-/** Write a commit ref onto a held card. pr_commit picks the sha. pr_open with that sha rewrites a holding key. */
+/** Rewrite a holding card onto the PR that pr_open and pr_commit share. */
 export function attachPacketCards(cards, events) {
   const list = (Array.isArray(cards) ? cards : []).filter((card) => card && typeof card === 'object').map((card) => ({ ...card }));
   const evs = Array.isArray(events) ? events : [];
@@ -465,14 +506,15 @@ export function attachPacketCards(cards, events) {
   const gone = new Set();
   for (const card of list) {
     const key = String(card.key || '');
-    if (!key.toLowerCase().startsWith('packet:') || !card.branch || gone.has(card)) continue;
-    const hit = evs.find((event) => prMatches(card, event, shaBranches, links));
+    if (!key.toLowerCase().startsWith('packet:') || gone.has(card)) continue;
+    const hit = joinEvent(card, evs, shaBranches, links, list);
     if (!hit) continue;
     const nextKey = String(hit.repo).toLowerCase() + '#' + Number(hit.number);
+    const branch = featureBranch(card) || branchFromOpen(hit) || refName(card.branch);
     const existing = list.find((other) => other !== card && !gone.has(other) && String(other.key || '').toLowerCase() === nextKey);
     if (existing) {
       if (!existing.alias) existing.alias = key;
-      if (!existing.branch) existing.branch = card.branch;
+      if (branch && !featureBranch(existing)) existing.branch = branch;
       gone.add(card);
       continue;
     }
@@ -480,6 +522,7 @@ export function attachPacketCards(cards, events) {
     card.key = nextKey;
     card.repo = String(hit.repo);
     card.number = Number(hit.number);
+    if (branch) card.branch = branch;
     const url = typeof hit.url === 'string' ? hit.url : (typeof hit.source === 'string' ? hit.source : '');
     if (url) card.url = url.slice(0, 300);
     if (card.kind === 'packet') card.kind = 'pr';
