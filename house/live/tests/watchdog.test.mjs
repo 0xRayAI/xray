@@ -55,3 +55,55 @@ test('hung feed loop restarts and is visible on the board and on healthz', async
     fs.rmSync(bin, { recursive: true, force: true });
   }
 });
+
+test('stale feed on disk does not kill a fresh collector; a real stall still does', async () => {
+  const data = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-watch-stale-'));
+  const bin = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-py-'));
+  fs.writeFileSync(path.join(bin, 'python3'), '#!/bin/sh\nsleep 60\n');
+  fs.chmodSync(path.join(bin, 'python3'), 0o755);
+  const feed = path.join(data, 'feed', 'github-events.json');
+  fs.mkdirSync(path.dirname(feed), { recursive: true });
+  fs.writeFileSync(feed, JSON.stringify({
+    generated_at: '2020-01-01T00:00:00Z',
+    events: [{ id: 'e1', t_ct: '2020-01-01T00:00:00Z', kind: 'note' }],
+  }));
+  const old = new Date(Date.now() - 10 * 60 * 1000);
+  fs.utimesSync(feed, old, old);
+  const child = spawn(process.execPath, [path.join(APP, 'server.mjs')], {
+    env: {
+      PORT: '0', LIVE_PUBLIC: '1', PATH: bin + ':' + (process.env.PATH || ''),
+      MESH_DATA_DIR: data, GITHUB_READ_TOKEN: 'token-for-watchdog',
+      COLLECTOR_WATCH_S: '1', COLLECTOR_WATCHDOG_N: '3',
+      SESSION_SECRET: crypto.randomBytes(32).toString('hex'),
+      INGEST_SECRET: crypto.randomBytes(32).toString('hex'),
+    },
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  let logs = '';
+  child.stdout.on('data', d => { logs += d; });
+  child.stderr.on('data', d => { logs += d; });
+  try {
+    for (let i = 0; i < 40 && !/collector: started/.test(logs); i++) await new Promise(r => setTimeout(r, 100));
+    assert.match(logs, /collector: started/);
+    const port = /listening on :(\d+)/.exec(logs);
+    assert.ok(port, logs);
+    const base = `http://127.0.0.1:${port[1]}`;
+    await new Promise(r => setTimeout(r, 1200));
+    assert.doesNotMatch(logs, /feed loop stalled/);
+    const early = await (await fetch(base + '/healthz')).json();
+    assert.equal(early.stalled, false);
+    let body = null;
+    for (let i = 0; i < 40 && !/feed loop stalled/.test(logs); i++) await new Promise(r => setTimeout(r, 250));
+    assert.match(logs, /feed loop stalled \d+s; restarting/);
+    const age = Number(/feed loop stalled (\d+)s; restarting/.exec(logs)[1]);
+    assert.ok(age < 30, `stall age ${age}s is the on-disk file, not this start`);
+    body = await (await fetch(base + '/healthz')).json();
+    assert.equal(body.stalled, true);
+  } finally {
+    const done = new Promise(r => child.once('exit', r));
+    child.kill();
+    await done;
+    fs.rmSync(data, { recursive: true, force: true });
+    fs.rmSync(bin, { recursive: true, force: true });
+  }
+});

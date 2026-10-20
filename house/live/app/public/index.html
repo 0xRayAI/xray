@@ -81,7 +81,7 @@
     .wstat b { color: #e6ecff; font-size: 14px; } .wstat small { color: #8fa3c6; font-size: 9px; text-align: center; line-height: 1.1; }
     .wstat.total { border-color: #3b82f6; }
     @media (max-width: 900px) { .wave.collapsed .wave-stats { display: none; } }
-    .wave-body { overflow-y: auto; margin-top: 6px; padding-right: 2px; }
+    .wave-body { flex: 1 1 auto; min-height: 220px; overflow-y: auto; margin-top: 6px; padding-right: 2px; }
     .wgroup { margin: 8px 0 4px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: #8fa3c6; }
     .wcards { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
     .wcard { border: 1px solid #22304a; border-left: 3px solid #3b82f6; border-radius: 8px; padding: 6px 8px; background: #0b1120; font-size: 12px; cursor: pointer; }
@@ -127,6 +127,7 @@
     .fresh.amber .fresh-dot { background: #f5b942; }
     .fresh.red .fresh-dot { background: #ff5a4f; }
     #cardRecent, #queueBox, #cardHist { margin-top: 8px; border-top: 1px solid #111a2a; padding-top: 6px; }
+    #cardRecent, #trackBox, #queueBox { flex: 0 1 auto; max-height: 8.5rem; overflow: auto; }
     #cardRecentList, #queueList, #cardHistList { list-style: none; margin: 4px 0 0; padding: 0; }
     #cardRecentList li, #queueList li, #cardHistList li { padding: 3px 0; border-top: 1px solid #111a2a; font-size: 12px; }
     #trackList { list-style: none; margin: 4px 0 0; padding: 0; max-height: 280px; overflow-y: auto; }

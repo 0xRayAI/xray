@@ -17,7 +17,7 @@ import { seatPresence, presentSeat, foldSeatTouch, fleetConfigOf, readWakeOk, wr
 import { parseAllowlist, mergeCards, sourceCardsFrom, projectAllowed, validateItem, workEventToItem, cardNoNudge, workItemNewer } from './source.mjs';
 import { checkRoutesFromDir, readRoutingMap, createLoginResolver, auditLogins } from './routes.mjs';
 import { fingerprint, tripwire, createClock, wakeTitle, mutedSeats, selectStallSeats } from './governor.mjs';
-import { burnQuiet, isPlanCard, liveWorkCount, postedCards, retainSeedCards, resolveWaveSeed, scheduleWaves } from './wave-schedule.mjs';
+import { acceptWaveCards, burnQuiet, isPlanCard, liveWorkCount, postedCards, retainSeedCards, resolveWaveSeed, scheduleWaves } from './wave-schedule.mjs';
 import { createArch1Launch, ARCH1_CANON } from './arch1-launch.mjs';
 import { configureWorkTrack, acceptCursorWebhook, appendWake, boardCloudAgents, canonSeatToken, deriveTrackFromDir, displaySeat, loadSeatAgentMap, readJsonl, readWakeRows, safePrUrl, seatForAgentId, stampCriticCloud, toToken } from './worktrack.mjs';
 const COLLECTOR_DIR_EARLY = () => path.join(path.dirname(fileURLToPath(import.meta.url)), 'collector');
@@ -954,10 +954,16 @@ function publishBoard(updatedCt) {
 function setCards(wb) {
   if (!wb || !Array.isArray(wb.cards)) return;
   const sliced = wb.cards.slice(0, 200);
-  const sig = JSON.stringify(sliced);
+  const kept = acceptWaveCards(sliced, waveCards, {
+    stalled: feedStalled(),
+    feedAgeMs: feedFileAgeMs(),
+    stallWindowMs: watchLimitMs(),
+  });
+  if (kept === waveCards) return;
+  const sig = JSON.stringify(kept);
   if (sig === waveSig) return;
   waveSig = sig;
-  waveCards = sliced;
+  waveCards = kept;
   publishBoard(wb.updated_ct);
 }
 function holdOwner(c) {
@@ -1848,7 +1854,7 @@ async function startCollector() {
   const args = ['-B', '-u', script, '--out', GH_FEED, '--watch', process.env.COLLECTOR_WATCH_S || '45',
     '--repos', ...collector.repos, '--deploy-repo', '', '--health', healthArg];
   const child = spawn('python3', args, { env, stdio: ['ignore', 'pipe', 'pipe'] });
-  collector.pid = child.pid; collector.child = child; collector.startedAt = Date.now(); collector.watchKilled = false;
+  collector.pid = child.pid; collector.child = child; collector.startedAt = Date.now(); collector.loopAt = 0; collector.watchKilled = false;
   console.log(`collector: started pid ${child.pid}`);
   for (const st of [child.stdout, child.stderr]) {
     let buf = '';
@@ -1986,12 +1992,24 @@ function watchLimitMs() {
   const mult = Number.isFinite(n) && n > 0 ? n : 3;
   return interval * mult;
 }
+function stallTick() {
+  // On-disk mtime from before this process is not a completed loop. Later of start and last loop.
+  return Math.max(collector.startedAt || 0, collector.loopAt || 0);
+}
 function feedStalled(now = Date.now()) {
   if (process.env.COLLECTOR === 'off' || !process.env.GITHUB_READ_TOKEN) return false;
   if (!collector.child && !collector.watchKilled) return false;
-  const tick = collector.lastWrite || collector.startedAt || 0;
+  const tick = stallTick();
   if (!tick) return false;
   return now - tick > watchLimitMs();
+}
+function feedFileAgeMs(now = Date.now()) {
+  try {
+    const age = now - fs.statSync(GH_FEED).mtimeMs;
+    return age > 0 ? age : 0;
+  } catch {
+    return 0;
+  }
 }
 function feedHealthLine(why) {
   upsert({ id: 'health:feed-loop', t_ct: ctStamp(Date.now()), from: 'watchdog', to: 'GitHub', kind: 'health_fail',
@@ -2002,8 +2020,7 @@ function feedHealthLine(why) {
 function watchFeed() {
   if (!feedStalled() || collector.watchKilled || !collector.child) return;
   collector.watchKilled = true;
-  const tick = collector.lastWrite || collector.startedAt || Date.now();
-  const age = Math.round((Date.now() - tick) / 1000);
+  const age = Math.round((Date.now() - stallTick()) / 1000);
   feedHealthLine(`feed loop stalled ${age}s; restarting`);
   try { collector.child.kill('SIGTERM'); } catch { /* exit handler restarts the loop */ }
 }
@@ -2073,6 +2090,7 @@ function readCollectorFeed() {   // every 2 s: ingest the collector's file when 
   let f; try { f = JSON.parse(fs.readFileSync(GH_FEED, 'utf8')); } catch { return; }   // mid-replace: next tick
   if (!validFeed(f)) { collector.sig = sig; console.log('collector: feed file invalid; ignored'); return; }
   collector.sig = sig; collector.lastWrite = st.mtimeMs;   // quiet file: age is the file's age, including across a redeploy
+  if (collector.startedAt && st.mtimeMs >= collector.startedAt) collector.loopAt = st.mtimeMs;
   collector.watchKilled = false;
   if (evs.has('health:feed-loop')) { evs.delete('health:feed-loop'); fullDirty = true; }
   repoTimes(f);

@@ -10,7 +10,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { createClock, wakeTitle } from '../app/governor.mjs';
 import { listenPort } from './free-port.mjs';
 import { loadSeedFile, refuseLiveApply } from '../tools/load-wave-seed.mjs';
-import { PLAN_EXPIRE_MS, PLAN_FLAG, PLAN_TITLE, cardClosed, cardsFromSeed, liveWorkCount, postedCards, resolveWaveSeed, scheduleWaves } from '../app/wave-schedule.mjs';
+import { PLAN_EXPIRE_MS, PLAN_FLAG, PLAN_TITLE, acceptWaveCards, cardClosed, cardsFromSeed, liveWorkCount, postedCards, resolveWaveSeed, scheduleWaves } from '../app/wave-schedule.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const APP = path.join(HERE, '..', 'app');
@@ -255,6 +255,20 @@ async function bootPlanBoard(burn) {
     fs.rmSync(route, { recursive: true, force: true });
   }
 }
+
+test('empty cards do not replace a board while the collector is stalled or the feed is older than the stall window', () => {
+  const prior = [{ key: 'a' }];
+  const empty = [];
+  const windowMs = 1000;
+  assert.equal(acceptWaveCards(empty, prior, { stalled: true, feedAgeMs: 0, stallWindowMs: windowMs }), prior);
+  assert.equal(acceptWaveCards(empty, prior, { stalled: false, feedAgeMs: 1001, stallWindowMs: windowMs }), prior);
+  assert.deepEqual(acceptWaveCards(empty, prior, { stalled: false, feedAgeMs: 0, stallWindowMs: windowMs }), []);
+  assert.deepEqual(acceptWaveCards(empty, prior, { stalled: false, feedAgeMs: windowMs, stallWindowMs: windowMs }), []);
+  const next = [{ key: 'b' }];
+  assert.equal(acceptWaveCards(next, prior, { stalled: true, feedAgeMs: 5000, stallWindowMs: windowMs }), next);
+  assert.deepEqual(acceptWaveCards([], [], { stalled: true, feedAgeMs: 5000, stallWindowMs: windowMs }), []);
+  assert.deepEqual(acceptWaveCards(empty, prior, { stalled: false }), []);
+});
 
 test('a plan-only board at BIFROST_WEEKLY_BURN=0.75 does not wake blinky', async () => {
   const quietBoard = { openCards: 0, openSeats: [], coord: 'blinky', planDue: false, burnQuiet: true };
