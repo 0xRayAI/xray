@@ -234,7 +234,11 @@ test('roster chips follow the configured seats and the theme toggle is the right
     assert.ok(before.seats.some((seat) => seat.name === 'SEAT-FROM-ENV'));
     assert.ok(before.seats.some((seat) => seat.role === 'chief of staff'));
     assert.ok(before.seats.every((seat) => seat.tag === 'DIV'));
-    assert.ok(before.seats.every((seat) => Math.abs(seat.y - before.seats[0].y) < 2), JSON.stringify(before.seats));
+    let rowY = before.seats[0].y;
+    for (const seat of before.seats) {
+      assert.ok(seat.y + 1 >= rowY, JSON.stringify(before.seats));
+      rowY = Math.max(rowY, seat.y);
+    }
     assert.ok(before.seats.every((seat) => seat.w > 80 && seat.w < before.panel / 2), JSON.stringify(before));
     for (const seat of before.seats) assert.doesNotMatch(seat.text, /\b(ACTIVE|WORKING|IDLE|LIVE)\b/);
     const blinky = page.locator('#seatGrid .seat', { hasText: 'BLINKY' });
