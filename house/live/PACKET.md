@@ -48,6 +48,12 @@ Critic lit because a running cloud row's seat is canonicalized, then stamped wor
 
 A cloud turn (`bc-<id>` or `bc-<id> <track>`) now marks that agent on its own card and on the cloud-agent node. The posting seat stays idle unless its own turn is open (no `bc-` tag). A row seated `reviewer` does not light critic. A woken packet and a GitHub mark still light their seat.
 
+## Wave card detail
+
+`#486` (`c5874959e`) replaced the wave click. Before that, `house/live/app/public/index.html` set `wb.open[k]` and toggled `.open`, and `.wcard.open .wdetail` showed the timeline. On main `0965e9737` the listener calls `openFromCardKey`, and `openCardPop` fills the dialog without setting `wb.open`. `.wdetail` stays `display: none`, so the expanded timeline, links, packet, owner, and status never appear. Kanban still opens that dialog.
+
+The wave click toggles `.open` again. `mountCardDetail` is the only renderer: the expanded wave card and the kanban dialog both receive the same card.
+
 ## Brief badge
 
 The badge is `packet_ok === false`. `house/live/feed/live_board.py` set that from `missing = [f for f in ("acceptance", "next owner") if not pk.get(f)]` and then `packet_ok=not missing`. The packet dict comes only from the PR or issue body (`live_collect.card_fields` → `live_packet.parse`). An issue body has no packet, so all 36 issues on the live board were false. Packet card `#485` is born in `ensurePacketCard` (`house/live/app/server.mjs`) with `packet: {}` and `packet_ok: false`. PR `#493` names `PACKET.md` on the branch and the body parser returns `{}`. Release PR `#490` (`release(grok-bot): 0.1.11`, follow-up issue `#491`) has no packet. PR `#388` has neither a packet block nor `PACKET.md` on the branch, so it still needs a brief.
