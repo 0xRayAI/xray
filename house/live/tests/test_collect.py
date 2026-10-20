@@ -474,6 +474,74 @@ class StoredNodeMap(unittest.TestCase):
         self.assertEqual(out.stdout.split(), ["w", "x", "z", "Maker", "GitHub", "Maker"])
 
 
+class StoredCiLoad(unittest.TestCase):
+    """A stored CI event whose actor is outside LIVE_NODE_MAP stays on disk across load and save."""
+
+    def test_cursor_bot_ci_event_survives_load_and_save(self):
+        stored = {
+            "id": "acme-org/app:run:9",
+            "t_ct": "2026-10-14T07:00:00-05:00",
+            "from": "CI",
+            "to": "GitHub",
+            "kind": "workflow_run",
+            "direction": "internal",
+            "label": "run ci",
+            "source": "https://github.com/acme-org/app/actions/runs/9",
+            "src_file": "github-api",
+            "repo": "acme-org/app",
+            "actor": "cursor[bot]",
+            "credit": "github",
+        }
+        code = (
+            "stored = json.loads(%r)\n"
+            "d = Path(tempfile.mkdtemp())\n"
+            "(d / 'app.json').write_text(json.dumps({'events': {stored['id']: stored}}))\n"
+            "rc = c.RepoCollector('acme-org/app', d, FF(), lambda m: None)\n"
+            "rc.save()\n"
+            "disk = json.loads((d / 'app.json').read_text())['events'].get(stored['id'])\n"
+            "print(json.dumps({'node': c.node('cursor[bot]'), 'mem': rc.ev.get(stored['id']), 'disk': disk}))\n"
+        ) % json.dumps(stored)
+        out = json.loads(_sub(code, HUMAN_ALIASES=""))
+        self.assertEqual(out["node"], "Others")   # cursor[bot] is absent from LIVE_NODE_MAP
+        self.assertEqual(out["mem"], stored)
+        self.assertEqual(out["disk"], stored)
+
+    def test_ci_kind_is_not_relabeled_to_others(self):
+        stored = {
+            "id": "acme-org/app:checkrun:3",
+            "from": "Builder",
+            "to": "GitHub",
+            "kind": "check_run",
+            "actor": "cursor[bot]",
+            "label": "lint",
+            "credit": "github",
+        }
+        code = (
+            "stored = json.loads(%r)\n"
+            "d = Path(tempfile.mkdtemp())\n"
+            "(d / 'app.json').write_text(json.dumps({'events': {stored['id']: stored}}))\n"
+            "rc = c.RepoCollector('acme-org/app', d, FF(), lambda m: None)\n"
+            "print(json.dumps(rc.ev.get(stored['id'])))\n"
+        ) % json.dumps(stored)
+        self.assertEqual(json.loads(_sub(code, HUMAN_ALIASES="")), stored)
+
+    def test_load_logs_a_stored_event_it_drops(self):
+        code = (
+            "d = Path(tempfile.mkdtemp())\n"
+            "(d / 'app.json').write_text(json.dumps({'events': {"
+            "'x': {'id': 'x', 'from': 'Others', 'to': 'GitHub', 'actor': 'stranger', 'kind': 'commit'},"
+            "'y': {'id': 'y', 'from': 'Builder', 'to': 'GitHub', 'kind': 'commit'}}}))\n"
+            "logs = []\n"
+            "rc = c.RepoCollector('acme-org/app', d, FF(), logs.append)\n"
+            "print(json.dumps({'kept': sorted(rc.ev), 'logs': logs}))\n"
+        )
+        out = json.loads(_sub(code))
+        self.assertEqual(out["kept"], ["y"])
+        self.assertEqual(len(out["logs"]), 1)
+        self.assertIn("dropped", out["logs"][0])
+        self.assertIn("x", out["logs"][0])
+
+
 class GithubModeBoard(unittest.TestCase):
     def test_github_mode_builds_board_from_events(self):
         code = (

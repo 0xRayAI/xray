@@ -43,6 +43,7 @@ def critic_logins() -> set[str]:
 
 CRITIC_LOGINS = critic_logins()   # critic verdict comments become critic_* beats
 CI_FAIL = {"failure", "timed_out", "cancelled", "startup_failure", "action_required"}
+CI_KINDS = frozenset({"workflow_run", "check_suite", "check_run", "ci_pass", "ci_fail"})
 PUSH_SKIP_BRANCHES = {"live-wire"}
 
 
@@ -436,7 +437,9 @@ class RepoCollector:
             if not login and isinstance(e.get("author"), str) and e.get("author"):
                 login = e.get("author")
             # A later LIVE_NODE_MAP must relabel events already stored. Incremental polls only rewrite changed items.
-            if login and e.get("from") not in ("GitHub", "Example", live_site.SITE["node"]):
+            # CI is a fixed node (same as GitHub): the actor started the run and is not the mesh label.
+            if (login and e.get("from") not in ("GitHub", "Example", "CI", live_site.SITE["node"])
+                    and e.get("kind") not in CI_KINDS):
                 e["from"] = node(login)
             pass
             if e.get("from") == "Others" and CLOUD_AGENT_RE.match(str(e.get("actor") or e.get("author") or "")):
@@ -445,7 +448,14 @@ class RepoCollector:
                 if isinstance(e.get(k), str) and (BRAND_RE.search(e[k]) or EMAIL_RE.search(e[k])):
                     e[k] = brand(e[k])
         if not SHOW_UNMAPPED:   # stored events from before the filter
-            self.ev = {k: e for k, e in self.ev.items() if "Others" not in (e.get("from"), e.get("to"))}
+            kept = {}
+            for k, e in self.ev.items():
+                if "Others" in (e.get("from"), e.get("to")):
+                    self.log(f"{self.short}: load dropped stored event {k} "
+                             f"(kind={e.get('kind')} from={e.get('from')} to={e.get('to')})")
+                    continue
+                kept[k] = e
+            self.ev = kept
         self.st: dict = s.get("state", {})
         for k, v in (("etags", {}), ("cur", {}), ("prs", {}), ("ci", {}), ("reviewer", {}), ("bf", {}),
                      ("branch_shas", {}), ("tag_time", {}), ("gaps", {})):
