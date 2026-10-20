@@ -9,4 +9,4 @@ MESH_APP_DIR="$PWD/app" node --test tests/arch1.test.mjs tests/fleet-seats.test.
 node tests/spectrum-aspect.mjs
 python3 -B tools/bifrost-init --check   # every roster seat has a route; no rule targets a seat outside the fleet (#294)
 python3 -B tools/bifrost-check --dry-run --only routing,deliver-sim,edit-sim,tripwire,lexicon,names   # post-deploy rules that need no live write (critic runbook)
-PYTHONDONTWRITEBYTECODE=1 python3 -B -m unittest tests/test_merge_replay.py tests/test_pulls_cursor.py
+PYTHONDONTWRITEBYTECODE=1 python3 -B -m unittest tests/test_merge_replay.py tests/test_pulls_cursor.py tests/test_act_line.py

@@ -67,6 +67,11 @@ ACT_VALUE = re.compile(r"[A-Za-z0-9 ._:@#+/-]{1,80}")
 ACT_BANNED = re.compile(r"body|text|message", re.I)
 ACT_AGENT = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]{2,40}")
 ACT_T = re.compile(r"\d{4}-\d\d-\d\dT\d\d:\d\d(:\d\d(\.\d{1,6})?)?([+-]\d\d:\d\d|Z)")
+# Same owner/repo rules as the board. A dotted repo stays. "." and ".." do not.
+PR_URL = re.compile(
+    r"https://github\.com/[A-Za-z0-9](?:-[A-Za-z0-9]|[A-Za-z0-9]){0,38}"
+    r"/[A-Za-z0-9_](?:[A-Za-z0-9._-]*[A-Za-z0-9_])?/pull/\d{1,8}"
+)
 
 
 def act_line(d):
@@ -89,6 +94,11 @@ def act_line(d):
         return None
     if d["kind"] == "cloud_agent" and "agent" not in out:
         return None
+    if "pr" in d:
+        pr = d.get("pr")
+        if d["kind"] != "cloud_agent" or not isinstance(pr, str) or len(pr) > 300 or not PR_URL.fullmatch(pr.strip()):
+            return None
+        out["pr"] = pr.strip()
     return out
 
 
