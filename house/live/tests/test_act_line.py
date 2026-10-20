@@ -28,10 +28,14 @@ class ActLinePr(unittest.TestCase):
 
     def test_39_character_owner_is_kept_and_40_character_hyphenated_owner_is_dropped(self):
         owner39 = "a" * 39
+        owner39h = "a" + ("-b" * 19)
         owner40 = "a" + ("-b" * 19) + "c"
+        self.assertEqual(len(owner39h), 39)
         self.assertEqual(len(owner40), 40)
         kept = push_payload.act_line({**BASE, "pr": f"https://github.com/{owner39}/app/pull/1"})
         self.assertEqual(kept["pr"], f"https://github.com/{owner39}/app/pull/1")
+        hyphen = push_payload.act_line({**BASE, "pr": f"https://github.com/{owner39h}/app/pull/1"})
+        self.assertEqual(hyphen["pr"], f"https://github.com/{owner39h}/app/pull/1")
         self.assertIsNone(push_payload.act_line({**BASE, "pr": f"https://github.com/{owner40}/app/pull/1"}))
         repo100 = "r" + ("e" * 99)
         repo101 = "r" + ("e" * 100)

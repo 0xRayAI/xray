@@ -12,6 +12,7 @@ from datetime import datetime
 from pathlib import Path
 
 import deploy_status
+import push_payload
 
 WS = Path(os.environ.get("LIVE_FLEET_ROOT", "/srv"))
 LABQA, LABTEST, HOUSE = WS / "qa", WS / "labtest", WS / "fleet-house" / "house"
@@ -195,6 +196,16 @@ def bug_id(name):
 def run_seat(name):
     m = re.match(r"(?:lab-)?(tester|qa-one|qa-two)-", name)
     return SEAT_OF[m[1]] if m else None
+
+
+def _cloud_pr(value):
+    """Strip a pull URL. Keep it only when it fullmatches push_payload.PR_URL."""
+    if not isinstance(value, str):
+        return None
+    text = value.strip()
+    if not push_payload.PR_URL.fullmatch(text):
+        return None
+    return text
 
 
 class Fleet:
@@ -674,7 +685,8 @@ class Fleet:
             self.seeded.add(name)
 
     # ---- Cloud agents: fleet/cloud-agents.jsonl (appended by the Operator), tailed by byte offset.
-    # Only t_ct, by, action, agent, repo, tag are used; any other field is ignored.
+    # t_ct, by, action, agent, repo, and tag are used. pr is stripped and kept only when it
+    # fullmatches push_payload.PR_URL; a non-string or a bad value is dropped. Any other field is ignored.
     def scan_cloud(self):
         f = self.path.parent.parent / "fleet" / "cloud-agents.jsonl"
         if not f.is_file():
@@ -730,6 +742,7 @@ class Fleet:
         frm, to = ("CloudAgents", by) if action == "finished" else (by, "CloudAgents")
         self._emit(f"cloud:{agent}:{action}:{int(t)}", t, frm, to, f"cloud_{action}", f"{action} · {tag} · {repo}",
                    src, agent=agent, by=by, action=action, repo_short=repo, cloud_tag=tag,
+                   pr=_cloud_pr(d.get("pr")),
                    time_basis="t_ct from the cloud-agents log")
 
     # ---- Lead -> bot messages: an old collector still tails fleet/prompts.jsonl by byte offset, deduped by line hash.
@@ -796,7 +809,7 @@ class Fleet:
                    time_basis="t_ct from the prompts log")
 
     # ---- Off-box seats (Builder on its own machine): fleet/remote-activity.jsonl, written by the box pusher from the
-    # mesh app's write-only POST /activity. Only t_ct, seat, kind, action, to, agent, tag are used.
+    # mesh app's write-only POST /activity. Only t_ct, seat, kind, action, to, agent, tag, and pr are used.
     #   prompt received        -> Lead -> seat message (seat working until it acts again), same pulse as live-inbox --prompt
     #   prompt sent (to=X)     -> seat -> X message (X working until it acts), same pulse as live-inbox --prompt
     #   cloud_agent            -> exactly a cloud-agents.jsonl line with by = seat
@@ -893,7 +906,7 @@ class Fleet:
                 self._prompt_line({"t_ct": d["t_ct"], "from": seat, "to": d.get("to")}, h, first, now, "remote/activity")
             elif kind == "cloud_agent":
                 self._cloud_line({"t_ct": d["t_ct"], "by": seat, "action": action, "agent": d.get("agent"),
-                                  "tag": d.get("tag")}, first, now, "remote/activity")
+                                  "tag": d.get("tag"), "pr": d.get("pr")}, first, now, "remote/activity")
             elif kind in ACT_WORK_KINDS and action in ("start", "tick", "end"):
                 ident = re.sub(r"[^A-Za-z0-9_-]", "", str(d.get("agent") or d.get("tag") or "-"))[:40] or "-"
                 key = f"{seat}:{kind}:{ident}"
