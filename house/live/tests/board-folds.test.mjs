@@ -142,6 +142,24 @@ test('mesh, stats, roster, cards, and activity start open in both themes', async
           assert.ok(cards.min >= 220, JSON.stringify(cards));
           assert.ok(cards.height > 256, JSON.stringify(cards));
           assert.equal(cards.wave, '720px');
+          const band = await page.evaluate(() => {
+            const meshEl = document.getElementById('meshPanel');
+            const ping = document.getElementById('agentPing');
+            const kanbanEl = document.getElementById('kanban');
+            const mesh = meshEl.getBoundingClientRect();
+            const kanban = kanbanEl.getBoundingClientRect();
+            const following = Node.DOCUMENT_POSITION_FOLLOWING;
+            return {
+              gap: kanban.top - mesh.bottom,
+              hidden: ping.hidden,
+              between: (meshEl.compareDocumentPosition(ping) & following) !== 0
+                && (ping.compareDocumentPosition(kanbanEl) & following) !== 0,
+            };
+          });
+          assert.equal(band.hidden, true);
+          assert.equal(band.between, true);
+          assert.ok(band.gap <= 24, JSON.stringify(band));
+          assert.ok(band.gap >= 0, JSON.stringify(band));
         }
         await page.close();
       }

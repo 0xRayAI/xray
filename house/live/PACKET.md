@@ -26,7 +26,11 @@ A kanban click and a wave click both call `openCardPop`. That used to fill `#car
 
 ## Card hover and open
 
-Wave cards use `--card-hover` and `--card-open`. Dark lifts the card from `#0b1120` to `#1a2744` on hover and `#243656` when it is open. Light uses `#e7eef8` and `#d5e2f4`. The title row is transparent, so the card fill shows through.
+Wave cards use `--card-hover` and `--card-open`. Dark lifts the card from `#0b1120` to `#1a2744` on hover and `#243656` when it is open. Light uses `#e7eef8` and `#d5e2f4`. The title row uses those same fills.
+
+## Mesh gap
+
+`#agentPing` sits under the mesh and above the kanban. It stays hidden while it has no content, so it takes no height. The kanban fills the column under the mesh instead of leaving the board's 720px row empty on the left. A later sign-in card can append into `#agentPing` and the slot shows itself.
 
 ## Links
 
@@ -34,4 +38,4 @@ Kanban, wave, and activity anchors that have an `href` use the focus color, an u
 
 ## Checks
 
-`node --test` on `presence.test.mjs`, `page.test.mjs`, `board-folds.test.mjs`, `board-group.test.mjs`, `theme-colors.test.mjs`, and `kanban-board.test.mjs`. Playwright checks that the roster count is above 3, that the theme toggle is the rightmost header control, that a kanban click's detail matches the wave card, that those links look like links in light and dark, that the grouping control is right-aligned and narrower than its header, and that in the dark theme a wave card's hover and open backgrounds both differ from the resting card.
+`node --test` on `presence.test.mjs`, `page.test.mjs`, `board-folds.test.mjs`, `board-group.test.mjs`, `theme-colors.test.mjs`, and `kanban-board.test.mjs`. Playwright checks that the roster count is above 3, that the theme toggle is the rightmost header control, that a kanban click's detail matches the wave card, that those links look like links in light and dark, that the grouping control is right-aligned and narrower than its header, that in the dark theme a wave card's hover and open backgrounds both differ from the resting card, and that the band under the mesh is at most 24px.

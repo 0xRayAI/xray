@@ -414,7 +414,9 @@ canvas { display: block; width: 100%; height: auto; }
 @media (prefers-reduced-motion: reduce) { .spectrum-meter i { transition: none; } }
 main { max-width: 1560px; }
 .split { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 12px; align-items: start; }
-.split > .panel { margin: 0; min-width: 0; }
+.split-main { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.split > .panel, .split-main > .panel { margin: 0; min-width: 0; }
+#agentPing[hidden], #agentPing:empty { display: none; }
 .wave { display: flex; flex-direction: column; height: 720px; max-height: 720px; overflow: hidden; isolation: isolate; }
 .wave-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 12px; color: var(--dim); }
 .wave-head b { color: var(--head-strong); font-size: 13px; letter-spacing: .04em; }
@@ -585,6 +587,7 @@ footer a { color: var(--foot); }
   </section>
 
   <div class="split">
+  <div class="split-main">
   <section class="panel fold" id="meshPanel" data-fold="mesh">
     <button class="fold-head" type="button" aria-expanded="true"><span>Mesh</span><span class="fold-sum" id="meshSum"></span></button>
     <div class="fold-body">
@@ -611,6 +614,12 @@ footer a { color: var(--foot); }
         </div>
     </div>
   </section>
+  <div id="agentPing" hidden></div>
+  <section class="panel kanban fold" id="kanban" data-fold="kanban" aria-label="Kanban">
+    <button class="fold-head" type="button" aria-expanded="true" aria-controls="kanbanBoard"><span>Kanban</span><span class="fold-sum" id="kanbanSum"></span></button>
+    <div class="fold-body kanban-board" id="kanbanBoard"></div>
+  </section>
+  </div>
   <aside class="panel wave" id="wave" aria-label="Board (read-only)">
     <div class="wave-head"><b>🌊 Board</b><span id="waveCount"></span><button id="waveToggle" type="button" aria-expanded="true" aria-controls="waveBody">Hide</button></div>
     <div class="fold" data-fold="stats" id="statsFold">
@@ -653,12 +662,6 @@ footer a { color: var(--foot); }
   </aside>
   </div>
 
-
-
-  <section class="panel kanban fold" id="kanban" data-fold="kanban" aria-label="Kanban">
-    <button class="fold-head" type="button" aria-expanded="true" aria-controls="kanbanBoard"><span>Kanban</span><span class="fold-sum" id="kanbanSum"></span></button>
-    <div class="fold-body kanban-board" id="kanbanBoard"></div>
-  </section>
   <dialog id="cardPop" aria-labelledby="cardPopTitle">
     <div class="card-pop">
       <div class="card-pop-bar"><h2 id="cardPopTitle"></h2><button id="cardPopClose" type="button">Close</button></div>
@@ -2091,6 +2094,15 @@ footer a { color: var(--foot); }
     saveFold(fold.getAttribute('data-fold'), open);
   });
   applyFolds();
+  (function () {
+    var slot = $('agentPing');
+    if (!slot || !window.MutationObserver) return;
+    var sync = function () {
+      slot.hidden = slot.childElementCount === 0 && !String(slot.textContent || '').trim();
+    };
+    sync();
+    new MutationObserver(sync).observe(slot, { childList: true, subtree: true, characterData: true });
+  })();
   (function () {
     var btn = $('themeToggle');
     if (!btn) return;
