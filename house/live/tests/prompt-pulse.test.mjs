@@ -12,10 +12,12 @@ const APP = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app')
 const KEY = 'forge-prompt-' + crypto.randomBytes(8).toString('hex');
 
 function start(data) {
+  const house = path.join(data, 'HOUSE.md');
+  fs.writeFileSync(house, '## Owner\nname: Blaze\n');
   const child = spawn(process.execPath, [path.join(APP, 'server.mjs')], {
     env: {
       PORT: '0', COLLECTOR: 'off', LIVE_PUBLIC: '1', SERVER_ROUTING: 'off',
-      PATH: process.env.PATH, MESH_DATA_DIR: data,
+      PATH: process.env.PATH, MESH_DATA_DIR: data, HOUSE: house,
       SESSION_SECRET: crypto.randomBytes(32).toString('hex'),
       INGEST_SECRET: crypto.randomBytes(32).toString('hex'),
       SEAT_KEYS: JSON.stringify({ forge: crypto.createHash('sha256').update(KEY).digest('hex') }),
@@ -59,7 +61,14 @@ test('a prompt pulse keeps the seat working for 10 minutes and credits Blaze', a
   try {
     if (!base) throw new Error(srv.logs());
     const old = await post(base, { t_ct: stamp(11 * 60 * 1000), seat: 'forge', kind: 'prompt', action: 'sent', from: 'blaze', to: 'forge' });
-    assert.equal(old.status, 202, await old.text());
+    const oldText = await old.text();
+    assert.equal(old.status, 202, oldText);
+    const oldBody = JSON.parse(oldText);
+    assert.deepEqual(Object.keys(oldBody).sort(), ['id', 'ok']);
+    assert.equal(oldBody.ok, true);
+    assert.equal(typeof oldBody.id, 'string');
+    assert.ok(oldBody.id.length > 0);
+    assert.equal(oldText.includes(KEY), false);
     let live = await (await fetch(base + '/live-events.json')).json();
     assert.notEqual(live.fleet.seats.forge.working, true);
     assert.equal(live.fleet.working && live.fleet.working.forge, undefined);

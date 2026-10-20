@@ -1428,6 +1428,7 @@ function mergedHeader(now = Date.now()) {
   h.track = trackView(now);   // Cursor agents, packets, wakes and blockers rebuilt from the volume
   h.cloud_agents = cloudAgentBoard();   // first-class board rows: bcId, seat, card, state, last update
   if (h.board) {
+    h.board.stats = { ...(h.board.stats || {}), ...ownerPromptStats(now) };
     h.board.cloud_agents = h.cloud_agents;
     if (Array.isArray(h.board.cards)) h.board.cards = stampCriticCloud(h.board.cards, h.cloud_agents);
   }
@@ -2523,10 +2524,47 @@ function ctOffset(t) {
   return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}:${parts.second}${off < 0 ? '-' : '+'}${String(a / 60 | 0).padStart(2, '0')}:${String(a % 60).padStart(2, '0')}`;
 }
 // Seat activity becomes a live board event (seat to seat traffic), not just a fleet flag (hotfix: board was GitHub-only).
+function ownerName() {
+  const raw = String(process.env.HOUSE || '').trim();
+  let file = '';
+  if (raw) {
+    const p = path.resolve(raw);
+    try { if (fs.existsSync(p) && fs.statSync(p).isFile()) file = p; } catch { file = ''; }
+  }
+  if (!file) {
+    const dir = process.env.LIVE_HOUSE || path.join(process.cwd(), 'house');
+    const candidate = path.join(dir, 'HOUSE.md');
+    if (fs.existsSync(candidate)) file = candidate;
+  }
+  if (!file) return '';
+  let text = '';
+  try { text = fs.readFileSync(file, 'utf8'); } catch { return ''; }
+  const section = /(?:^|\n)## Owner\n([\s\S]*?)(?:\n## |$)/.exec(text);
+  const found = /^name:\s*(\S.*?)\s*$/m.exec(section ? section[1] : '');
+  return found ? found[1].trim() : '';
+}
 function promptSender(line) {
   const raw = String(line.from || '').trim();
-  if (!raw || /^blaze$/i.test(raw)) return 'Blaze';
+  const name = ownerName();
+  if (name && (!raw || raw.toLowerCase() === name.toLowerCase())) return name;
   return raw;
+}
+function ownerPromptStats(now = Date.now()) {
+  const owner = ownerName().toLowerCase();
+  const rows = [];
+  if (owner) {
+    for (const line of activity) {
+      if (!line || line.kind !== 'prompt') continue;
+      if (String(line.from || '').trim().toLowerCase() !== owner) continue;
+      const t = Date.parse(line.t_ct || '');
+      if (!Number.isFinite(t) || now - t > 86400000 || t > now + 300000) continue;
+      rows.push(line);
+    }
+  }
+  rows.sort((a, b) => Date.parse(a.t_ct || '') - Date.parse(b.t_ct || ''));
+  let bytes = 0;
+  for (const line of rows) bytes += Buffer.byteLength(JSON.stringify(line) + '\n');
+  return { owner_prompts_24h: rows.length, owner_prompts_24h_ids: rows.map(l => l.id), owner_prompts_24h_bytes: bytes };
 }
 function activityEvent(line, opts) {
   const prompt = line.kind === 'prompt';
@@ -2995,7 +3033,9 @@ async function handle(req, res) {
     activityEvent(line);
     observeTurn(seat, d.kind, d.action);
     seq++; header = mergedHeader(); fullDirty = true;
-    return json(req, res, 202, { ok: true });
+    const receipt = { ok: true };
+    if (d.kind === 'prompt') receipt.id = line.id;
+    return json(req, res, 202, receipt);
   }
 
   if (p === '/activity/ingest') {   // box uploader (X-Live-Ingest = ingest secret): a JSONL batch of activity lines for any fleet seat

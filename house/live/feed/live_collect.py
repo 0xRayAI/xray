@@ -240,13 +240,26 @@ RESOLVED_RE = re.compile(r"\b(resolved|superseded|fixed (?:in|by) #\d+|nothing (
                          r"no (?:further )?action (?:needed|required)|can be closed)\b", re.I)
 
 
+PROMPT_STAMP = re.compile(r"(?m)^Prompt:\s*([A-Za-z0-9][A-Za-z0-9._:-]{0,79})\s*$")
+
+
+def prompt_stamp(body):
+    """The activity id on a `Prompt: <id>` line. The rest of the body stays unstored."""
+    found = PROMPT_STAMP.search(str(body or ""))
+    return found.group(1) if found else ""
+
+
 def card_fields(x) -> dict:
     """Board card fields from a PR / issue object this pass already fetched: branded title, state, labels and
     the packet block (sanitized, <= 200 chars a field). The body itself is discarded here, never stored."""
-    return {"title": brand(x.get("title") or "")[:120], "pr_state": x.get("state"), "closed_at": x.get("closed_at"),
-            "labels": [lb.get("name") for lb in (x.get("labels") or []) if isinstance(lb, dict) and lb.get("name")][:8],
-            "packet": live_packet.parse(x.get("body")) or None,
-            "fixes": closing_numbers(x.get("body"), x.get("number"))}
+    fields = {"title": brand(x.get("title") or "")[:120], "pr_state": x.get("state"), "closed_at": x.get("closed_at"),
+              "labels": [lb.get("name") for lb in (x.get("labels") or []) if isinstance(lb, dict) and lb.get("name")][:8],
+              "packet": live_packet.parse(x.get("body")) or None,
+              "fixes": closing_numbers(x.get("body"), x.get("number"))}
+    pid = prompt_stamp(x.get("body"))
+    if pid:
+        fields["prompt"] = pid
+    return fields
 
 
 def open_numbers(c, repos, max_pages=20):

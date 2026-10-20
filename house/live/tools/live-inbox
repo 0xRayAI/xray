@@ -9,7 +9,7 @@ A read claims each open line for this wake. The owner token is WAKE_RUN, or this
 The claim key is the pull request, the head sha, and the kind. A second run whose lines are already claimed prints
 nothing and exits 0. Only the owner token may release that claim or post its turn end. A losing run's --turn start
 and its --turn end post nothing and leave the claim file unchanged. `--release` drops this token's claims and posts
-nothing. The wake trap runs it on any shell exit, not only `--turn end`, so a still-waiting stop does not hide lines.
+nothing. The wake trap posts `--turn end` and then runs `--release` on any shell exit, so a crash still closes the turn.
 A read never acks. The ack is the receipt (the pop) and a seat sends it after it handles the line, with
 --ack or --pop <id> (one line) or --ack all / --pop all (everything open). --ack stale lists lines with a close or merge
 event, or a closed or done card, and does not ack them. A missing card stays. --ack stale --apply acks the ids just listed.
@@ -19,9 +19,8 @@ The per-seat cursor `$LIVE_CURSORS/<seat>.txt` stores handled keys `repo#number|
 `--remember --pr <owner/repo#n> --sha <head> --kind <kind>` adds that key. `--repeat` with the same flags exits 0
 when the key is already there and exits 1 for a new head. The claim is not this record.
 --turn start|end posts {kind:turn, action, t_ct, tag?} to POST /activity.
-When CURSOR_AGENT is 1 and CURSOR_CONVERSATION_ID is a bc- id, the same turn also posts
-{kind:cloud_agent, action:launch, agent:<id>} on start. Turn end does not finish the agent.
---prompt posts {t_ct, seat, kind:prompt, action:sent, from, to:seat, room?, note?} to POST /activity. from defaults to blaze.
+A turn inside a cloud agent posts that same kind:turn line and does not post cloud_agent launch.
+--prompt posts {t_ct, seat, kind:prompt, action:sent, from, to:seat, room?, note?} to POST /activity. from defaults to the name: line in house config.
 --note is one quoted line, at most 240 characters of letters, digits, spaces, and ._:@#+/?'",;!()-. It is the only prose the board stores. Keys named body, text, or message are refused.
 t_ct is America/Chicago with its offset. Both posts use the seat key. The key is never printed. There is no local file.
 Handoff: POST one packet to /inbox for <to> and print the one-line 1:1 message the seat sends. The same pull request,
@@ -50,7 +49,6 @@ USAGE = ("usage: live-inbox <seat> [--peek] | live-inbox <seat> --ack <id|all|st
          "live-inbox <seat> --handoff <to> --pr <owner/repo#n> --kind <" + "|".join(KINDS) + "> --sha <head> | "
          "live-inbox <seat> --card <owner/repo#n> --start-after <ISO>")
 TAG = re.compile(r"[A-Za-z0-9 ._:@#+/-]{1,40}")
-CLOUD_ID = re.compile(r"bc-[A-Za-z0-9_-]{2,40}")
 argv = sys.argv[1:]
 
 
@@ -125,8 +123,41 @@ if prompt and (ack is not None or handoff_to is not None or card_raw is not None
     sys.exit(USAGE)
 if (frm is not None or room is not None or note is not None) and not prompt:
     sys.exit(USAGE)
+def house_path():
+    raw = os.environ.get("HOUSE", "").strip()
+    if raw:
+        return Path(raw).expanduser()
+    return Path("house") / "HOUSE.md"
+
+
+def owner_from_house():
+    """The name: line under ## Owner. Missing file or line exits 2 and names the file."""
+    path = house_path()
+    if not path.is_file():
+        print(f"live-inbox: missing name: in {path}", file=sys.stderr)
+        sys.exit(2)
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError:
+        print(f"live-inbox: missing name: in {path}", file=sys.stderr)
+        sys.exit(2)
+    section = ""
+    for part in re.split(r"(?m)^##\s+", text):
+        if part.startswith("Owner"):
+            section = part
+            break
+    found = re.search(r"(?m)^name:\s*(\S.*?)\s*$", section)
+    if not found:
+        print(f"live-inbox: missing name: in {path}", file=sys.stderr)
+        sys.exit(2)
+    name = found.group(1).strip()
+    if not TAG.fullmatch(name):
+        sys.exit("from must be a short plain id")
+    return name
+
+
 if prompt and frm is None:
-    frm = "blaze"
+    frm = owner_from_house()
 if tag is not None and not TAG.fullmatch(tag):
     sys.exit("tag must be a short plain id")
 if frm is not None and not TAG.fullmatch(frm):
@@ -335,14 +366,6 @@ def release_own(seat):
         handle.close()
 
 
-def cursor_cloud_id():
-    """The running Cursor cloud agent, or empty. A desktop session has no bc- id."""
-    if os.environ.get("CURSOR_AGENT", "").strip() not in ("1", "true", "yes"):
-        return ""
-    raw = os.environ.get("CURSOR_CONVERSATION_ID", "").strip()
-    return raw if CLOUD_ID.fullmatch(raw) else ""
-
-
 def turn_gate(seat, action):
     """True when this owner token may post the turn.
 
@@ -396,20 +419,23 @@ if prompt:
         body["room"] = room
     if note is not None:
         body["note"] = note
-    print(json.dumps(call("POST", "/activity", body)))
+    posted = call("POST", "/activity", body)
+    receipt = {"ok": True}
+    if isinstance(posted, dict):
+        receipt["ok"] = bool(posted.get("ok", True))
+        if posted.get("id") is not None:
+            receipt["id"] = posted["id"]
+    print(json.dumps(receipt))
     sys.exit(0)
 if turn is not None:
     # A wake that lost the lines does not start a turn and does not end the winner's claim.
+    # kind: turn only. Cloud launch and finish stay on the cloud-agent hooks.
     if not turn_gate(seat, turn):
         sys.exit(0)
     body = {"kind": "turn", "action": turn, "t_ct": ct_now()}
     if tag is not None:
         body["tag"] = tag
     print(json.dumps(call("POST", "/activity", body)))
-    agent = cursor_cloud_id()
-    if agent and turn == "start":
-        cloud = {"kind": "cloud_agent", "action": "launch", "agent": agent, "t_ct": ct_now(), "seat": seat}
-        print(json.dumps(call("POST", "/activity", cloud)))
     sys.exit(0)
 if upto is not None:
     print(json.dumps(call("POST", f"/inbox/{seat}/ack", {"upto": upto})))

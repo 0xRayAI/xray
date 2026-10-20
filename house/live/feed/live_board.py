@@ -53,6 +53,38 @@ def _ct(ts):
     return datetime.fromtimestamp(ts, CT).strftime("%-I:%M %p CT") if ts else ""
 
 
+PROMPT_STAMP = re.compile(r"(?m)^Prompt:\s*([A-Za-z0-9][A-Za-z0-9._:-]{0,79})\s*$")
+
+
+def prompt_stamp(body):
+    found = PROMPT_STAMP.search(str(body or ""))
+    return found.group(1) if found else ""
+
+
+def stored_prompt(evs, pid):
+    for e in evs:
+        if str(e.get("kind") or "") not in ("prompt", "seat_prompt"):
+            continue
+        eid = str(e.get("id") or "")
+        if eid == pid or eid == f"act:{pid}":
+            return e
+    return None
+
+
+def prepend_owner_prompt(card, event, evs, used):
+    """One earlier beat when the open event carries Prompt: <id>. A repeated id does not mark a second card."""
+    pid = str(event.get("prompt") or "") or prompt_stamp(event.get("body"))
+    if not pid or pid in used:
+        return
+    used.add(pid)
+    src = stored_prompt(evs, pid)
+    beat = {"t": int((_t(src) if src else _t(event)) * 1000), "what": "owner prompt", "url": "", "id": pid, "_ev": ""}
+    note = str((src or {}).get("note") or "")
+    if note:
+        beat["note"] = note
+    card["_beats"].append(beat)
+
+
 def beat_of(e):
     """-> short beat word, or None. Only real events that move a card."""
     k = str(e.get("kind") or "")
@@ -281,6 +313,7 @@ def model(extra_events=None, now=None):
                     "packet": pk, "_closed": e.get("pr_state") == "closed", "_closed_t": _t({"t_ct": e.get("closed_at")}) if e.get("closed_at") else 0,
                     "_draft": bool(e.get("draft")), "_beats": [], "_stop": False, "_known": "pr_state" in e}
     _claim_owners(cards, evs, sha_num)             # mill (trailer, credit, or git name) takes a card forge opened
+    used_prompts = set()
     merged_keys = {_key(e, sha_num) for e in evs if e.get("kind") == "merged"}
     fixed_by = {}                                          # card key -> "#P" when a merged PR says it fixes / supersedes it
     for e in evs:
@@ -343,6 +376,8 @@ def model(extra_events=None, now=None):
             if c["_closed"] and not c.get("_merged_t") and c["_closed_t"] and _t(e) >= c["_closed_t"]:
                 c["_stop"] = True
             continue
+        if w == "opened" and kind in ("pr_open", "issue_open"):
+            prepend_owner_prompt(c, e, evs, used_prompts)
         b = {"t": int(_t(e) * 1000), "what": w, "url": live_packet.clean(e.get("source") or "")[:160] if w.startswith(("CI", "Reviewer")) else "",
              "id": e["id"], "_ev": _evidence(e, w)}
         sha = re.sub(r"[^0-9a-f]", "", str(e.get("sha") or e.get("head_sha") or "").lower())[:7]
@@ -547,7 +582,71 @@ def stats(evs, now=None):
            "issues_open": len(open_issues), "prs_open": len(open_prs),
            "open_total_ids": [sid(repo, number) for repo, number in open_issues + open_prs]}
     out["open_total"] = out["issues_open"] + out["prs_open"]
+    prompts = owner_prompt_rows(evs, now)
+    out["owner_prompts_24h"] = len(prompts)
+    out["owner_prompts_24h_ids"] = [activity_id(e) for e in prompts]
+    out["owner_prompts_24h_bytes"] = sum(archived_bytes(e) for e in prompts)
     return out
+
+
+def owner_name():
+    """The name: line under ## Owner. Empty when the house file has no such line."""
+    raw = os.environ.get("HOUSE", "").strip()
+    path = None
+    if raw:
+        candidate = Path(raw).expanduser()
+        if candidate.is_file():
+            path = candidate
+    if path is None:
+        for candidate in (HOUSE / "HOUSE.md", Path("house") / "HOUSE.md"):
+            if candidate.is_file():
+                path = candidate
+                break
+    if path is None:
+        return ""
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError:
+        return ""
+    section = ""
+    for part in re.split(r"(?m)^##\s+", text):
+        if part.startswith("Owner"):
+            section = part
+            break
+    found = re.search(r"(?m)^name:\s*(\S.*?)\s*$", section)
+    return found.group(1).strip() if found else ""
+
+
+def activity_id(e):
+    eid = str(e.get("id") or "")
+    if eid.startswith("act:"):
+        return eid[4:]
+    return eid
+
+
+def archived_bytes(e):
+    """Byte size of the archived JSON line. An integer bytes field is that size already."""
+    if isinstance(e.get("bytes"), int):
+        return e["bytes"]
+    raw = json.dumps(e, ensure_ascii=False, separators=(",", ":")) + "\n"
+    return len(raw.encode("utf-8"))
+
+
+def owner_prompt_rows(evs, now):
+    owner = owner_name().casefold()
+    if not owner:
+        return []
+    rows = []
+    for e in evs:
+        if str(e.get("kind") or "") not in ("prompt", "seat_prompt"):
+            continue
+        if str(e.get("from") or "").casefold() != owner:
+            continue
+        if now - _t(e) > 86400:
+            continue
+        rows.append(e)
+    rows.sort(key=lambda e: (_t(e), activity_id(e)))
+    return rows
 
 
 def stall_lines(m, now=None):

@@ -28,6 +28,8 @@ OP-PROC is **layered**: pack base (`grok-bot/OP-PROC.md`) then this house file (
 - **Seat computer dead.** If the seat Shell fails (ENOENT, bash missing, or the computer is dead), try **Update Grok Bot's Computer** (box reboot) first. Do not Escalate until that has been tried.
 - Retire a seat that has merged, been idle three days, or finished. CoS lists it. Blaze deletes it. Do not route work to it.
 
+- On any inbound message, the seat runs the board-prompt skill first. It links `grok-bot/OP-PROC.md` and the house overlay as the rules for the turn. An owner message posts one `live-inbox <seat> --prompt` with no `--from`. Every message then posts `--turn start --tag wake`, does the work, and posts `--turn end --tag wake` on every exit, including the EXIT trap. `--note` is a seat-written fixed summary or omitted, and it never carries message text. A prompt that spawns an issue or PR is that card's first beat.
+
 ## 2. One owner per job
 
 - Pack roles map here: **mill** = implementer, **forge** = publisher/merge seat, **critic** = reviewer.
