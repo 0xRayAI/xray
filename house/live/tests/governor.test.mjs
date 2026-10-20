@@ -28,7 +28,7 @@ const srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], { env: { POR
   SESSION_SECRET: crypto.randomBytes(32).toString('hex'), INGEST_SECRET: crypto.randomBytes(32).toString('hex'), MESH_DATA_DIR: DATA,
   SEAT_WEBHOOKS: JSON.stringify({ forge: { url: `${W}/forge` }, critic: { url: `${W}/critic` } }), WAKE_KEY_FORGE: 'wk', WAKE_KEY_CRITIC: 'wk',
   SEAT_KEYS: JSON.stringify({ forge: crypto.createHash('sha256').update(FKEY).digest('hex') }),
-  WAKE_RETRY_MS: '10', WAKE_STAGGER_MS: '0', WAKE_DEBOUNCE_S: '0',
+  WAKE_RETRY_MS: '10', WAKE_STAGGER_MS: '0', WAKE_DEBOUNCE_S: '0', LIVE_TURN_OPEN_MIN: '0',
   NUDGE_LINE_S: '8',   // wide window: a loaded box (#304 parallel runs) delays wakes by seconds
   BIFROST_TICK_S: '0.2', BIFROST_WAKE_QUIET_MINUTES: '0.001',
   BIFROST_ROUTING_DIR: ROUTE, BIFROST_CLOCK_SEATS: 'forge', BIFROST_ROSTER: path.join(ROUTE, 'roster.json') }, stdio: ['ignore', 'pipe', 'pipe'] });

@@ -87,6 +87,91 @@ class CreditNeverBlank(unittest.TestCase):
             self.assertTrue(all(e.get("credit") for e in col2.ev.values()))
 
 
+class StoredCiUnmappedActor(unittest.TestCase):
+    """A stored CI event whose actor is an unmapped bot must survive the next load and save."""
+
+    def _ff(self):
+        from zoneinfo import ZoneInfo
+        return type("FF", (), {"CT": ZoneInfo("America/Chicago")})()
+
+    def test_cursor_bot_ci_survives_load_and_save(self):
+        self.enterContext(mock.patch.object(uc, "SHOW_UNMAPPED", False))
+        removed = uc.NODE_LC.pop("cursor[bot]", None)
+        self.addCleanup(lambda: removed is not None and uc.NODE_LC.__setitem__("cursor[bot]", removed))
+        self.assertNotIn("cursor[bot]", uc.NODE_LC)
+        self.assertEqual(uc.node("cursor[bot]"), "Others")
+        eid = "acme/app:run:453"
+        event = {
+            "id": eid,
+            "t_ct": "2026-10-20T08:00:00-05:00",
+            "from": "CI",
+            "to": "GitHub",
+            "kind": "workflow_run",
+            "direction": "internal",
+            "label": "run ci · main · success",
+            "source": "https://github.com/acme/app/actions/runs/453",
+            "src_file": "github-api",
+            "repo": "acme/app",
+            "actor": "cursor[bot]",
+            "status": "completed",
+            "conclusion": "success",
+        }
+        with tempfile.TemporaryDirectory() as d:
+            store = Path(d)
+            path = store / "app.json"
+            path.write_text(json.dumps({"events": {eid: dict(event)}, "state": {}}))
+            logs = []
+            col = uc.RepoCollector("acme/app", store, self._ff(), logs.append)
+            self.assertIn(eid, col.ev)
+            self.assertEqual(col.ev[eid]["from"], "CI")
+            self.assertEqual(col.ev[eid]["actor"], "cursor[bot]")
+            self.assertEqual(col.ev[eid]["kind"], "workflow_run")
+            col.save()
+            saved = json.loads(path.read_text())["events"][eid]
+            self.assertEqual({k: saved[k] for k in event}, event)
+            self.assertEqual(saved["from"], "CI")
+            self.assertFalse(any("drop stored" in line and eid in line for line in logs))
+
+    def test_ci_kind_is_not_relabeled(self):
+        self.enterContext(mock.patch.object(uc, "SHOW_UNMAPPED", False))
+        removed = uc.NODE_LC.pop("cursor[bot]", None)
+        self.addCleanup(lambda: removed is not None and uc.NODE_LC.__setitem__("cursor[bot]", removed))
+        eid = "acme/app:checkrun:9"
+        event = {
+            "id": eid, "t_ct": "2026-10-20T08:00:00-05:00", "from": "Runner", "to": "GitHub",
+            "kind": "check_run", "label": "lint success", "source": "u", "src_file": "github-api",
+            "repo": "acme/app", "actor": "cursor[bot]",
+        }
+        with tempfile.TemporaryDirectory() as d:
+            store = Path(d)
+            (store / "app.json").write_text(json.dumps({"events": {eid: event}, "state": {}}))
+            col = uc.RepoCollector("acme/app", store, self._ff(), lambda *a: None)
+            self.assertEqual(col.ev[eid]["from"], "Runner")
+            col.save()
+            saved = json.loads((store / "app.json").read_text())["events"][eid]
+            self.assertEqual(saved["from"], "Runner")
+            self.assertEqual(saved["actor"], "cursor[bot]")
+
+    def test_load_logs_a_stored_event_it_drops(self):
+        self.enterContext(mock.patch.object(uc, "SHOW_UNMAPPED", False))
+        eid = "acme/app:commit:abc"
+        event = {
+            "id": eid, "t_ct": "2026-10-20T08:00:00-05:00", "from": "Others", "to": "GitHub",
+            "kind": "commit", "label": "outside", "source": "u", "src_file": "github-api",
+            "repo": "acme/app", "actor": "outsider",
+        }
+        with tempfile.TemporaryDirectory() as d:
+            store = Path(d)
+            path = store / "app.json"
+            path.write_text(json.dumps({"events": {eid: event}, "state": {}}))
+            logs = []
+            col = uc.RepoCollector("acme/app", store, self._ff(), logs.append)
+            self.assertNotIn(eid, col.ev)
+            self.assertTrue(any("drop stored" in line and eid in line for line in logs))
+            col.save()
+            self.assertNotIn(eid, json.loads(path.read_text())["events"])
+
+
 class SeatTrailer(unittest.TestCase):
     def test_trailer_overrides_login_map(self):
         self.assertEqual(uc.seat_trailer("fix x\n\nbody\nSeat: mill\n"), "mill")
@@ -585,6 +670,57 @@ class CardLifecycle(unittest.TestCase):
         self.assertEqual(merged["from"], "critic")
         self.assertEqual(merged["author"], "forge0x1[bot]")
         self.assertEqual(merged["merged_by"], "critic0x[bot]")
+
+    def test_unmapped_merger_still_counts(self):
+        """cursor[bot] maps to Others. The merge is still stored and counted."""
+        from datetime import timedelta, timezone
+        import live_board
+        self.enterContext(mock.patch.object(uc, "SHOW_UNMAPPED", False))
+        removed = uc.NODE_LC.pop("cursor[bot]", None)
+        self.addCleanup(lambda: removed is not None and uc.NODE_LC.__setitem__("cursor[bot]", removed))
+        self.assertEqual(uc.node("cursor[bot]"), "Others")
+        col = _collector("example-org/app")
+        now = datetime.now(timezone.utc).replace(microsecond=0)
+        merged_at = (now - timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        updated_at = (now - timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        created_at = (now - timedelta(hours=5)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        pull = self._pull(number=407, updated_at=updated_at, created_at=created_at, merged_at=merged_at,
+                          merged_by={"login": "cursor[bot]"},
+                          html_url="https://github.com/example-org/app/pull/407",
+                          user={"login": "forge0x1[bot]"})
+
+        class C:
+            token = "t"
+            def rest(self, path, params=None, etag=None, essential=True):
+                return 200, [pull], "etag", None
+
+        col.st["cur"]["pulls"] = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+        col.st["bf"]["merged:day"] = True
+        col.st["bf"]["author:seat"] = True
+        with mock.patch.dict(uc.NODE_LC, {"forge0x1[bot]": "forge"}):
+            uc.NODE_LC.pop("cursor[bot]", None)
+            col.poll_pulls(C())
+            eid = "example-org/app#407:merged"
+            self.assertIn(eid, col.ev)
+            merged = col.ev[eid]
+            self.assertEqual(merged["actor"], "cursor[bot]")
+            self.assertEqual(merged["merged_by"], "cursor[bot]")
+            self.assertEqual(merged["from"], "GitHub")
+            self.assertEqual(uc.fleet_only([merged]), [merged])
+            counted = live_board.stats(list(col.ev.values()))
+            self.assertEqual(counted["prs_merged_24h"], 1)
+            self.assertIn("example-org/app#407", counted["prs_merged_24h_ids"])
+            self.assertTrue(col.st["bf"].get("merged:actor"))
+            old_id = "acme/app#407:merged"
+            old = {"id": old_id, "t_ct": merged["t_ct"], "from": "Others", "to": "GitHub", "kind": "merged",
+                   "label": "merged", "source": "u", "src_file": "github-api", "repo": "acme/app",
+                   "number": 407, "actor": "cursor[bot]", "merged_by": "cursor[bot]"}
+            with tempfile.TemporaryDirectory() as d:
+                store = Path(d)
+                (store / "app.json").write_text(json.dumps({"events": {old_id: old}, "state": {}}))
+                loaded = uc.RepoCollector("acme/app", store, type("FF", (), {"CT": col.CT})(), lambda *_a: None)
+                self.assertEqual(loaded.ev[old_id]["from"], "GitHub")
+                self.assertEqual(loaded.ev[old_id]["actor"], "cursor[bot]")
 
     def _pull(self, **over):
         p = {"number": 8, "user": {"login": "forge0x1[bot]"}, "updated_at": "2026-10-14T17:00:00Z",

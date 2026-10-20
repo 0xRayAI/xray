@@ -397,21 +397,16 @@ canvas { display: block; width: 100%; height: auto; }
 .mesh-controls { border: 0; background: transparent; margin: 8px 0 0; padding: 0; }
 .mesh-legend { color: var(--dim); font-size: 11px; margin: 6px 0 0; display: flex; flex-wrap: wrap; gap: 8px; }
 .mesh-legend span { border-bottom: 1px dotted var(--dim); cursor: help; }
-.spec-tag { display: inline-block; flex: none; margin-left: 6px; font-size: 11px; font-weight: 700; letter-spacing: .08em; padding: 3px 8px; border-radius: 999px;
-  color: var(--on); border: 1px solid var(--spectrum-edge); background: var(--spectrum-bg);
-  opacity: 0; visibility: hidden; transition: opacity .3s ease, visibility 0s linear .3s; pointer-events: none; }
-.spec-tag.on { opacity: 1; visibility: visible; transition: opacity .3s ease; }
 .spectrum-pill { display: inline-block; flex: none; font-size: 11px; font-weight: 700; letter-spacing: .08em; padding: 3px 8px; border-radius: 999px;
   color: var(--on); border: 1px solid var(--spectrum-edge); background: var(--spectrum-bg); }
 .spectrum-meter { display: inline-flex; align-items: flex-end; gap: 2px; height: 16px; flex: none; }
 .spectrum-pill[hidden], .spectrum-meter[hidden], #pill[hidden] { display: none !important; }
 .spectrum-meter i { display: block; width: 3px; border-radius: 1px; }
-@media (prefers-reduced-motion: reduce) { .spec-tag, .spec-tag.on { transition: none; } }
 @media (prefers-reduced-motion: reduce) { .spectrum-meter i { transition: none; } }
 main { max-width: 1560px; }
 .split { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 12px; align-items: start; }
 .split > .panel { margin: 0; min-width: 0; }
-.wave { display: flex; flex-direction: column; max-height: 720px; overflow: hidden; isolation: isolate; }
+.wave { display: flex; flex-direction: column; height: 720px; max-height: 720px; overflow: hidden; isolation: isolate; }
 .wave-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 12px; color: var(--dim); }
 .wave-head b { color: var(--head-strong); font-size: 13px; letter-spacing: .04em; }
 #waveToggle { display: none; }
@@ -459,7 +454,7 @@ button.wstat.on { outline: 2px solid var(--focus); background: var(--panel); }
 .wcard.glow { animation: wglow 2.6s ease-out; }
 @keyframes wglow { 0% { box-shadow: 0 0 0 2px var(--glow), 0 0 18px var(--glow); } 100% { box-shadow: none; } }
 @media (prefers-reduced-motion: reduce) { .wcard.glow { animation: none; outline: 2px solid var(--glow); } }
-@media (max-width: 900px) { .split { grid-template-columns: 1fr; } #waveToggle { display: inline-block; } .wave.collapsed .wave-body { display: none; } .wave { max-height: none; } }
+@media (max-width: 900px) { .split { grid-template-columns: 1fr; } #waveToggle { display: inline-block; } .wave.collapsed .wave-body { display: none; } .wave { height: auto; max-height: none; } }
 .fresh { display: inline-flex; align-items: center; gap: 6px; margin: 0 0 8px; font-weight: 600; }
 .fresh-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--fresh-idle); flex: none; }
 .fresh.green .fresh-dot { background: var(--fresh-green); }
@@ -489,6 +484,8 @@ button:hover { border-color: var(--control-hover); }
     .fold-body { max-height: var(--fold-cap, 16rem); overflow: auto; }
     .fold.collapsed .fold-body { display: none; }
     #meshPanel > .fold-body { max-height: none; overflow: visible; }
+    #cardsFold:not(.collapsed) { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+    #waveBody { max-height: none; flex: 1 1 auto; min-height: 220px; overflow-y: auto; }
 #log { list-style: none; margin: 0; padding: 0; max-height: 16rem; overflow: auto; }
 #log li { display: grid; grid-template-columns: 14ch 7ch 1fr; gap: 8px; padding: 3px 0; border-top: 1px solid var(--hairline); cursor: pointer; }
 #log li:first-child { border-top: 0; }
@@ -515,20 +512,20 @@ footer a { color: var(--foot); }
 <body>
 <main>
   <header>
-    <div class="title"><h1>🌈 Live board</h1><button id="themeToggle" type="button" aria-label="Color theme">☀</button><span class="pill" id="pill">LIVE</span><span class="spec-tag" id="specTag" aria-hidden="true">🪞 REPLAY</span><span class="spectrum-pill" id="spectrumPill" hidden>Spectrum</span><span class="spectrum-meter" id="spectrumMeter" hidden aria-hidden="true"></span></div>
+    <div class="title"><h1>🌈 Live board</h1><button id="themeToggle" type="button" aria-label="Color theme">☀</button><span class="pill" id="pill">LIVE</span><span class="spectrum-pill" id="spectrumPill" hidden>Spectrum</span><span class="spectrum-meter" id="spectrumMeter" hidden aria-hidden="true"></span></div>
     <p class="status" id="status">Loading…</p>
     <p class="fresh" id="fresh"><span class="fresh-dot"></span><span id="freshText">Loading…</span></p>
     <div hidden><canvas id="mark" width="112" height="44"></canvas><b id="fleet"></b><span id="blackout"></span></div>
   </header>
 
-  <section class="panel seats fold collapsed" id="seats" data-fold="roster" aria-label="Seats">
-    <button class="fold-head" type="button" aria-expanded="false"><span>Roster</span><span class="fold-sum" id="rosterSum"></span></button>
+  <section class="panel seats fold" id="seats" data-fold="roster" aria-label="Seats">
+    <button class="fold-head" type="button" aria-expanded="true"><span>Roster</span><span class="fold-sum" id="rosterSum"></span></button>
     <div class="fold-body" id="seatGrid"></div>
   </section>
 
   <div class="split">
-  <section class="panel fold collapsed" id="meshPanel" data-fold="mesh">
-    <button class="fold-head" type="button" aria-expanded="false"><span>Mesh</span><span class="fold-sum" id="meshSum"></span></button>
+  <section class="panel fold" id="meshPanel" data-fold="mesh">
+    <button class="fold-head" type="button" aria-expanded="true"><span>Mesh</span><span class="fold-sum" id="meshSum"></span></button>
     <div class="fold-body">
     <div class="lens-head">
       <span>THE LENS · PING-PONG VOLLEY</span>
@@ -553,14 +550,14 @@ footer a { color: var(--foot); }
         </div>
     </div>
   </section>
-  <aside class="panel wave collapsed" id="wave" aria-label="Board (read-only)">
-    <div class="wave-head"><b>🌊 Board</b><span id="waveCount"></span><button id="waveToggle" type="button" aria-expanded="false" aria-controls="waveBody">Show</button></div>
-    <div class="fold collapsed" data-fold="stats" id="statsFold">
-      <button class="fold-head" type="button" aria-expanded="false"><span>Stats</span><span class="fold-sum" id="statsSum"></span></button>
+  <aside class="panel wave" id="wave" aria-label="Board (read-only)">
+    <div class="wave-head"><b>🌊 Board</b><span id="waveCount"></span><button id="waveToggle" type="button" aria-expanded="true" aria-controls="waveBody">Hide</button></div>
+    <div class="fold" data-fold="stats" id="statsFold">
+      <button class="fold-head" type="button" aria-expanded="true"><span>Stats</span><span class="fold-sum" id="statsSum"></span></button>
       <div class="fold-body"><div class="wave-stats" id="waveStats" aria-label="last 24 h and open now"></div></div>
     </div>
-    <div class="fold collapsed" data-fold="cards" id="cardsFold">
-      <button class="fold-head" type="button" aria-expanded="false"><span>Cards</span><span class="fold-sum" id="cardsSum"></span></button>
+    <div class="fold" data-fold="cards" id="cardsFold">
+      <button class="fold-head" type="button" aria-expanded="true"><span>Cards</span><span class="fold-sum" id="cardsSum"></span></button>
       <div class="fold-body wave-body" id="waveBody"></div>
     </div>
     <div class="fold collapsed" data-fold="cloud" id="cloudFold">
@@ -589,8 +586,8 @@ footer a { color: var(--foot); }
 
 
 
-  <section class="panel activity fold collapsed" id="activity" data-fold="activity" aria-label="Activity">
-    <button id="activityToggle" class="fold-head" type="button" aria-expanded="false" aria-controls="log"><span id="activityLabel">Activity</span><span class="fold-sum" id="activitySum"></span></button>
+  <section class="panel activity fold" id="activity" data-fold="activity" aria-label="Activity">
+    <button id="activityToggle" class="fold-head" type="button" aria-expanded="true" aria-controls="log"><span id="activityLabel">Activity</span><span class="fold-sum" id="activitySum"></span></button>
     <select id="historyDay" aria-label="History day"></select>
     <ul id="log" class="fold-body"></ul>
   </section>
@@ -824,7 +821,6 @@ footer a { color: var(--foot); }
       ctx.beginPath(); ctx.arc(tq[0], tq[1], stop.radius, 0, 7); ctx.fill();
     }
   }
-  var specTagOn = false;
   function ambientPings(nowWall) {
     if (!ambientOn || !state.live || replay || document.hidden) { ambient = null; ambientNext = nowWall + AMBIENT_EVERY_MS; return []; }
     if (!ambient) {
@@ -1005,8 +1001,6 @@ footer a { color: var(--foot); }
     });
     // pings in flight: dimmed ambient replay underneath, real live pings on top at full brightness
     var ghosts = ambientPings(nowWall); ambientStats.drawing = ghosts.length;
-    var tagOn = !!ambient && !replay;   // ambient loop only; playback does not add a second badge
-    if (tagOn !== specTagOn) { specTagOn = tagOn; $('specTag').classList.toggle('on', tagOn); }
     if (spectrumOn) { ghosts.forEach(function (g) { g.live = true; }); if (replay || playing) pings.forEach(function (g) { g.live = true; }); }
     if (ghosts.length) { ctx.globalAlpha = AMBIENT_ALPHA; ghosts.forEach(drawPing); ctx.globalAlpha = 1; }
     pings.forEach(drawPing);
@@ -1679,15 +1673,19 @@ footer a { color: var(--foot); }
   function foldSum(id, text) {
     var el = $(id); if (el) el.textContent = text;
   }
+  var FOLD_OPEN = { mesh: 1, stats: 1, roster: 1, cards: 1, activity: 1 };
   function applyFolds() {
     if (!document.querySelectorAll) return;
     var saved = foldSaved();
+    var legacy = '';
+    try { legacy = localStorage.getItem('bifrost-activity') || ''; } catch (e) {}
     if (saved.activity == null) {
-      try { if (localStorage.getItem('bifrost-activity') === 'open') saved.activity = 'open'; } catch (e) {}
+      if (legacy === 'open') saved.activity = 'open';
+      else if (legacy === 'collapsed') saved.activity = 'closed';
     }
     document.querySelectorAll('[data-fold]').forEach(function (fold) {
       var id = fold.getAttribute('data-fold');
-      var open = saved[id] === 'open';
+      var open = saved[id] === 'closed' ? false : saved[id] === 'open' ? true : !!FOLD_OPEN[id];
       fold.classList.toggle('collapsed', !open);
       var btn = fold.querySelector('.fold-head');
       if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');

@@ -43,6 +43,7 @@ def critic_logins() -> set[str]:
 
 CRITIC_LOGINS = critic_logins()   # critic verdict comments become critic_* beats
 CI_FAIL = {"failure", "timed_out", "cancelled", "startup_failure", "action_required"}
+CI_KINDS = frozenset({"workflow_run", "check_suite", "check_run", "ci_pass", "ci_fail"})
 PUSH_SKIP_BRANCHES = {"live-wire"}
 
 
@@ -436,16 +437,28 @@ class RepoCollector:
             if not login and isinstance(e.get("author"), str) and e.get("author"):
                 login = e.get("author")
             # A later LIVE_NODE_MAP must relabel events already stored. Incremental polls only rewrite changed items.
-            if login and e.get("from") not in ("GitHub", "Example", live_site.SITE["node"]):
+            # "CI" is a fixed node, same as GitHub. CI kinds stay put too: the actor is who
+            # triggered the run, and an unmapped bot must not turn that event into Others.
+            if (login and e.get("from") not in ("GitHub", "Example", "CI", live_site.SITE["node"])
+                    and e.get("kind") not in CI_KINDS):
                 e["from"] = node(login)
-            pass
             if e.get("from") == "Others" and CLOUD_AGENT_RE.match(str(e.get("actor") or e.get("author") or "")):
                 e["from"] = "CloudAgents"   # cloud-agent writes stored before the Cloud agents node existed
+            # A merge is a fact about the pull. An unmapped merger (cursor[bot] -> Others) must not drop it.
+            if e.get("kind") == "merged" and e.get("from") == "Others":
+                e["from"] = "GitHub"
             for k in ("label", "message"):
                 if isinstance(e.get(k), str) and (BRAND_RE.search(e[k]) or EMAIL_RE.search(e[k])):
                     e[k] = brand(e[k])
         if not SHOW_UNMAPPED:   # stored events from before the filter
-            self.ev = {k: e for k, e in self.ev.items() if "Others" not in (e.get("from"), e.get("to"))}
+            kept = {}
+            for k, e in self.ev.items():
+                if "Others" not in (e.get("from"), e.get("to")):
+                    kept[k] = e
+                    continue
+                self.log(f"{self.short}: drop stored event {k} kind={e.get('kind')} "
+                         f"from={e.get('from')} to={e.get('to')} actor={e.get('actor') or e.get('author') or ''}")
+            self.ev = kept
         self.st: dict = s.get("state", {})
         for k, v in (("etags", {}), ("cur", {}), ("prs", {}), ("ci", {}), ("reviewer", {}), ("bf", {}),
                      ("branch_shas", {}), ("tag_time", {}), ("gaps", {})):
@@ -468,6 +481,8 @@ class RepoCollector:
     def put(self, eid, t, frm, to, kind, label, source, number=None, **extra):
         if not t:
             return
+        if kind == "merged" and frm == "Others":
+            frm = "GitHub"   # count the merge; the actor login stays on the event
         if not SHOW_UNMAPPED and "Others" in (frm, to):
             self.ev.pop(eid, None)
             return
@@ -847,6 +862,14 @@ class RepoCollector:
             self.st["bf"]["merged:day"] = True
         elif not self.st["bf"].get("merged:day"):
             self.st["bf"]["merged:day"] = True
+        # One-time: merges whose actor maps to Others were dropped by put(). Rewalk the open window.
+        if cur and not self.st["bf"].get("merged:actor"):
+            back = (datetime.now(timezone.utc) - timedelta(hours=36)).strftime("%Y-%m-%dT%H:%M:%SZ")
+            cur = min(cur, back)
+            self.st["etags"].pop("pulls", None)
+            self.st["bf"]["merged:actor"] = True
+        elif not self.st["bf"].get("merged:actor"):
+            self.st["bf"]["merged:actor"] = True
         newest = cur
         # Replay a pull that shares the cursor second. put() is idempotent.
         # Instant compare, not text: <= skips that sibling, and +00:00 / -05:00 sort before Z.

@@ -101,6 +101,7 @@ test('the board face keeps the contract in both themes', async () => {
     await page.goto(base, { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => document.querySelector('#waveBody .wcard'), null, { timeout: 8000 });
     await page.waitForFunction(() => (document.querySelector('#cardRecentList') || {}).textContent.includes('merged'), null, { timeout: 8000 });
+    await page.screenshot({ path: path.join(ART, 'board-open-desktop.png'), fullPage: true });
     for (const id of ['mesh', 'stats', 'roster', 'cards', 'cloud', 'recent', 'history', 'work', 'queue']) {
       const head = page.locator(`[data-fold="${id}"].collapsed > .fold-head`);
       if (await head.count()) await head.click();
@@ -178,8 +179,10 @@ test('the board face keeps the contract in both themes', async () => {
     });
     assert.equal(clipped.title, clipped.text);
     assert.equal(clipped.clipped, true);
-    assert.equal(face.activityCollapsed, true);
-    assert.equal(face.logDisplay, 'none');
+    assert.equal(face.activityCollapsed, false);
+    assert.notEqual(face.logDisplay, 'none');
+    assert.equal(face.logMax, '256px');
+    assert.equal(face.logOverflow, 'auto');
     assert.match(face.recent, /merged/);
     assert.match(face.recent, /CT/);
     assert.match(face.recent, /forge/);
@@ -235,23 +238,19 @@ test('the board face keeps the contract in both themes', async () => {
     assert.equal(await page.evaluate(() => localStorage.getItem('bifrost-theme')), 'light');
 
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.click('#waveToggle');
+    if (await page.locator('#wave.collapsed').count()) await page.click('#waveToggle');
     await page.screenshot({ path: path.join(ART, 'board-mobile-light.png'), fullPage: true });
     await page.click('#themeToggle');
     await page.waitForFunction(() => document.documentElement.getAttribute('data-theme') === 'dark');
     await page.screenshot({ path: path.join(ART, 'board-mobile-dark.png'), fullPage: true });
 
     await page.click('#activityToggle');
-    const opened = await page.evaluate(() => ({
+    const closedAct = await page.evaluate(() => ({
       collapsed: document.getElementById('activity').classList.contains('collapsed'),
       stored: localStorage.getItem('bifrost-activity'),
-      max: getComputedStyle(document.getElementById('log')).maxHeight,
-      overflow: getComputedStyle(document.getElementById('log')).overflowY,
     }));
-    assert.equal(opened.collapsed, false);
-    assert.equal(opened.stored, 'open');
-    assert.equal(opened.max, '256px');
-    assert.equal(opened.overflow, 'auto');
+    assert.equal(closedAct.collapsed, true);
+    assert.equal(closedAct.stored, 'collapsed');
   } finally {
     if (browser) await browser.close();
     await new Promise((resolve) => server.close(resolve));
