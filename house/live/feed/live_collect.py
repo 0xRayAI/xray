@@ -292,6 +292,44 @@ def iso_ct(t: str, CT) -> str:
     return datetime.fromisoformat(t.replace("Z", "+00:00")).astimezone(CT).isoformat()
 
 
+def gh_time(t):
+    """UTC instant for a GitHub timestamp. Z and a numeric offset of the same second match.
+    Unparseable or naive values are None so a cursor compare does not skip them."""
+    if not isinstance(t, str) or not t:
+        return None
+    raw = t[:-1] + "+00:00" if t.endswith("Z") else t
+    try:
+        dt = datetime.fromisoformat(raw)
+    except ValueError:
+        return None
+    if dt.tzinfo is None:
+        return None
+    return dt.astimezone(timezone.utc)
+
+
+def gh_before(t, cur) -> bool:
+    """True when t is strictly earlier than cur. A sibling in the cursor second is not before."""
+    if cur is None:
+        return False
+    a, b = gh_time(t), gh_time(cur)
+    if a is None or b is None:
+        return False
+    return a < b
+
+
+def gh_after(t, newest) -> bool:
+    """True when t is strictly later than newest. A missing newest accepts any parsed t."""
+    a = gh_time(t)
+    if a is None:
+        return False
+    if newest is None:
+        return True
+    b = gh_time(newest)
+    if b is None:
+        return True
+    return a > b
+
+
 class RateLow(Exception):
     pass
 
@@ -486,7 +524,9 @@ class RepoCollector:
 
     def paged(self, c, path, params, key, stop=None, essential=True, max_pages=400):
         """Page 1 with ETag (key); then follow Link next until stop(item) is True. Yields items.
-        Sets self._etag_new to the page-1 ETag to commit once the caller has processed everything."""
+        Sets self._etag_new to the page-1 ETag to commit once the caller has processed everything.
+        A walk that hits max_pages with a next link still set clears that etag: saving it would
+        304 the rest of a same-second tie that did not fit in the cap."""
         st, data, etag, nxt = c.rest(path, dict(params, per_page=100), etag=self.st["etags"].get(key), essential=essential)
         self._etag_new = etag
         if st == 304:
@@ -499,6 +539,8 @@ class RepoCollector:
                     return
                 yield it
             if not nxt or pages >= max_pages:
+                if nxt and pages >= max_pages:
+                    self._etag_new = None
                 return
             st, data, _, nxt = c.rest(nxt, essential=essential)
             pages += 1
@@ -749,6 +791,13 @@ class RepoCollector:
                  base=base, actor=login or None, sha=head, author=login or None,
                  draft=p.get("draft"), mentions=mentions(p.get("body")), **card_fields(p))
 
+    def _try_pull_card(self, p):
+        """Write the open card. A bad created_at must not skip the merger stamp or the rest of the batch."""
+        try:
+            self.ensure_pull_card(p)
+        except (ValueError, TypeError, KeyError, AttributeError):
+            return
+
     def backfill_mergers(self, c, limit=20):
         """GET /pulls/{n} and stamp merged_by.login. The author is never the stamp. A list payload often omits it."""
         if not getattr(c, "token", None):
@@ -767,7 +816,7 @@ class RepoCollector:
             except (urllib.error.URLError, http.client.HTTPException, TimeoutError, OSError, ValueError, KeyError, TypeError):
                 continue
             if isinstance(data, dict):
-                self.ensure_pull_card(data)
+                self._try_pull_card(data)
             login = ((data or {}).get("merged_by") or {}).get("login") if isinstance(data, dict) else None
             if login:
                 self._stamp_merger(int(n), login)
@@ -789,9 +838,9 @@ class RepoCollector:
             self.st["bf"]["author:seat"] = True
         newest = cur
         # Replay a pull that shares the cursor second. put() is idempotent.
-        # Stopping on <= skips that pull, and the page-1 ETag then answers 304 forever.
+        # Instant compare, not text: <= skips that sibling, and +00:00 / -05:00 sort before Z.
         for p in self.paged(c, f"/repos/{self.repo}/pulls", {"state": "all", "sort": "updated", "direction": "desc"},
-                            "pulls", stop=lambda p: cur is not None and p["updated_at"] < cur):
+                            "pulls", stop=lambda p: gh_before(p.get("updated_at"), cur)):
             n = p["number"]
             # A pull with user null is still a card. Subscripting it raised TypeError, which run()
             # does not catch, so every later pull on the page was dropped and the cursor never moved.
@@ -825,9 +874,10 @@ class RepoCollector:
                          f"merged {self.short} #{n} → {p['base']['ref']}", url, n, **extra)
             if prev_head and head and prev_head != head:
                 self.pr_commit_event(n, head, p["updated_at"], p.get("title") or "", login)
+                self.st.setdefault("enrich", {})[str(n)] = True
             if author_seat or (self.st["bf"].get("prs:done") and prev.get("updated_at") != p["updated_at"]):
                 self.st.setdefault("enrich", {})[str(n)] = True
-            if newest is None or p["updated_at"] > newest:
+            if gh_after(p.get("updated_at"), newest):
                 newest = p["updated_at"]
         self.st["cur"]["pulls"] = newest
         if self._etag_new:
@@ -857,8 +907,34 @@ class RepoCollector:
                         "unassigned": "unassigned", "milestoned": "milestoned", "demilestoned": "demilestoned",
                         "reopened": "reopen", "renamed": "edit"}
 
+    def _open_from_merged(self, n, e, actor, url):
+        """A pull seen only as a merged issue event still gets its :open card.
+        _stamp_merger drops need_merger, so the backfill path never fetches it."""
+        iss = e.get("issue") if isinstance(e.get("issue"), dict) else {}
+        user = iss.get("user") if isinstance(iss.get("user"), dict) else None
+        if user is None and isinstance(actor, str) and actor:
+            user = {"login": actor}
+        pr = (self.st.get("prs") or {}).get(str(n)) or {}
+        head = pr.get("head")
+        base = pr.get("base")
+        self._try_pull_card({
+            "number": n,
+            "user": user,
+            "created_at": iss.get("created_at") or e.get("created_at"),
+            "updated_at": iss.get("updated_at"),
+            "html_url": url or iss.get("html_url"),
+            "title": iss.get("title") or "",
+            "head": {"sha": head} if isinstance(head, str) and head else None,
+            "base": {"ref": base} if isinstance(base, str) and base else None,
+            "draft": iss.get("draft"),
+            "state": iss.get("state"),
+            "body": iss.get("body"),
+            "labels": iss.get("labels"),
+        })
+
     def _record_merged_event(self, n, e, actor, url):
         """Store the merged beat from an issue event when pulls have not stored merged_at yet."""
+        self._open_from_merged(n, e, actor, url)
         created = e.get("created_at")
         pr = self.st.setdefault("prs", {}).setdefault(str(n), {})
         if created and not pr.get("merged_at"):
@@ -879,32 +955,39 @@ class RepoCollector:
         if actor:
             self._stamp_merger(n, actor)
 
-    def _forget_merge_close(self, n, when):
-        """Drop the pr_close written for this merge before merged_at was stored.
+    def _reopened_between(self, number, close_at, merge_at) -> bool:
+        """True when a reopen sits strictly after this close and at or before the merge."""
+        try:
+            number = int(number)
+        except (TypeError, ValueError):
+            return False
+        for ev in self.ev.values():
+            if ev.get("kind") != "pr_reopen" or ev.get("number") != number:
+                continue
+            ts = gh_time(ev.get("t_ct"))
+            if ts is not None and close_at < ts <= merge_at:
+                return True
+        return False
 
-        A close more than 30s from the merge stays. That is the same window the
-        closed handler uses to tell a merge from an unmerged close.
-        """
+    def _is_merge_echo(self, number, close_raw, merge_raw) -> bool:
+        """A close within 30s of the merge is the merge's own closed event.
+        A close that precedes a reopen is history and stays."""
+        close_at, merge_at = gh_time(close_raw), gh_time(merge_raw)
+        if close_at is None or merge_at is None:
+            return False
+        if abs((close_at - merge_at).total_seconds()) >= 30:
+            return False
+        return not self._reopened_between(number, close_at, merge_at)
+
+    def _forget_merge_close(self, n, when):
+        """Drop the pr_close that echoes this merge. A close more than 30s away stays.
+        A close that precedes a reopen also stays."""
         if not isinstance(when, str) or not when:
             return
-        try:
-            merge_ts = datetime.fromisoformat(when.replace("Z", "+00:00")).timestamp()
-        except ValueError:
-            return
         number = int(n)
-        drop = []
-        for eid, ev in self.ev.items():
-            if ev.get("kind") != "pr_close" or ev.get("number") != number:
-                continue
-            raw = ev.get("t_ct")
-            if not isinstance(raw, str):
-                continue
-            try:
-                close_ts = datetime.fromisoformat(raw).timestamp()
-            except ValueError:
-                continue
-            if abs(close_ts - merge_ts) < 30:
-                drop.append(eid)
+        drop = [eid for eid, ev in self.ev.items()
+                if ev.get("kind") == "pr_close" and ev.get("number") == number
+                and self._is_merge_echo(number, ev.get("t_ct"), when)]
         for eid in drop:
             self.ev.pop(eid, None)
 
@@ -926,9 +1009,8 @@ class RepoCollector:
             if ev == "closed":
                 if is_pr:
                     pr = self.st["prs"].get(str(n), {})
-                    if pr.get("merged_at") and abs(datetime.fromisoformat(pr["merged_at"].replace("Z", "+00:00")).timestamp()
-                                                   - datetime.fromisoformat(e["created_at"].replace("Z", "+00:00")).timestamp()) < 30:
-                        continue   # the merge itself (emitted as 'merged')
+                    if pr.get("merged_at") and self._is_merge_echo(n, e.get("created_at"), pr.get("merged_at")):
+                        continue   # the close that echoes the merge, not an earlier close before a reopen
                     author = (self.st["prs"].get(str(n)) or {}).get("author")
                     self.put(eid, e["created_at"], frm, "GitHub", "pr_close", f"closed {tag} unmerged", url, n,
                              actor=actor, author=author)
@@ -982,8 +1064,8 @@ class RepoCollector:
         cur = self.st["cur"].get("issues")
         newest = cur
         for i in self.paged(c, f"/repos/{self.repo}/issues", {"state": "all", "sort": "updated", "direction": "desc"},
-                            "issues", stop=lambda i: cur is not None and i["updated_at"] <= cur):
-            if newest is None or i["updated_at"] > newest:
+                            "issues", stop=lambda i: gh_before(i.get("updated_at"), cur)):
+            if gh_after(i.get("updated_at"), newest):
                 newest = i["updated_at"]
             if "pull_request" in i:
                 continue
@@ -1006,8 +1088,8 @@ class RepoCollector:
             self.st["bf"]["comments:critic3"] = True
         newest = self.st["cur"].get("comments")
         for cm in self.paged(c, f"/repos/{self.repo}/issues/comments", {"sort": "updated", "direction": "desc"},
-                             "comments", stop=lambda x: cur is not None and x["updated_at"] <= cur):
-            if newest is None or cm["updated_at"] > newest:
+                             "comments", stop=lambda x: gh_before(x.get("updated_at"), cur)):
+            if gh_after(cm.get("updated_at"), newest):
                 newest = cm["updated_at"]
             n = int(cm["issue_url"].rsplit("/", 1)[1])
             is_pr = "/pull/" in cm["html_url"]
@@ -1050,8 +1132,8 @@ class RepoCollector:
         cur = self.st["cur"].get("rcomments")
         newest = cur
         for cm in self.paged(c, f"/repos/{self.repo}/pulls/comments", {"sort": "updated", "direction": "desc"},
-                             "rcomments", stop=lambda x: cur is not None and x["updated_at"] <= cur):
-            if newest is None or cm["updated_at"] > newest:
+                             "rcomments", stop=lambda x: gh_before(x.get("updated_at"), cur)):
+            if gh_after(cm.get("updated_at"), newest):
                 newest = cm["updated_at"]
             n = int(cm["pull_request_url"].rsplit("/", 1)[1])
             login = (cm.get("user") or {}).get("login")
@@ -1081,9 +1163,9 @@ class RepoCollector:
             if isinstance(head, str) and head:
                 known.add(head)
         for e in self.paged(c, f"/repos/{self.repo}/events", {}, "pushes",
-                            stop=lambda ev: cur is not None and str(ev.get("created_at") or "") <= cur):
+                            stop=lambda ev: gh_before(ev.get("created_at"), cur)):
             t = e.get("created_at")
-            if t and (newest is None or t > newest):
+            if gh_after(t, newest):
                 newest = t
             if e.get("type") != "PushEvent":
                 continue
