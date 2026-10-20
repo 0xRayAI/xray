@@ -67,7 +67,7 @@
     @media (prefers-reduced-motion: reduce) { .spec-tag, .spec-tag.on { transition: none; } }
     @media (prefers-reduced-motion: reduce) { .spectrum-meter i { transition: none; } }
     @media (prefers-color-scheme: light) {
-      :root { --bg: #f4f6fb; --panel: #ffffff; --line: #d5dbe8; --dim: #4c5670; --text: #1a1d27; --teal: #0e7c66; }
+      #mesh { background: #f4f6fb; }
     }
     main { max-width: 1560px; }
     .split { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 12px; align-items: start; }
@@ -400,14 +400,35 @@
   // Ambient Replay loop: dimmed overlay replay on its own clock; never changes live state, pill, counts or seats
   var AMBIENT_EVERY_MS = 10000, AMBIENT_MS = 5000, AMBIENT_WINDOW_MS = 5 * 60 * 1000, AMBIENT_ALPHA = 0.4;
   var ambientOn = !reduced && !/[?&]replay=0(&|$)/.test(location.search);
-  var spectrumOn = L.spectrumEnabled(L.SPECTRUM, location.search, reduced);
+  var spectrumOn = false;
+  function readSpectrum() { spectrumOn = L.spectrumEnabled(L.SPECTRUM, location.search, reduced); }
+  readSpectrum();
   var ambient = null, ambientNext = 0, ambientStats = window.LIVE_AMBIENT = { passes: 0, on: ambientOn };
+  function plateChannels(bg) {
+    var s = String(bg || '').trim().toLowerCase(), m, hex, a;
+    if (!s || s === 'transparent') return null;
+    m = /^rgba?\(\s*([0-9.]+%?)\s*[, ]\s*([0-9.]+%?)\s*[, ]\s*([0-9.]+%?)(?:\s*[,/]\s*([0-9.]+%?))?\s*\)$/.exec(s);
+    if (m) {
+      a = m[4] == null ? 1 : (m[4].slice(-1) === '%' ? parseFloat(m[4]) / 100 : Number(m[4]));
+      if (!(a > 0)) return null;
+      return [m[1], m[2], m[3]].map(function (v) {
+        return v.slice(-1) === '%' ? parseFloat(v) * 2.55 : Number(v);
+      });
+    }
+    m = /^#([0-9a-f]{3,8})$/.exec(s);
+    if (!m) return null;
+    hex = m[1];
+    if (hex.length === 3 || hex.length === 4) hex = hex.replace(/./g, function (c) { return c + c; });
+    if (hex.length !== 6 && hex.length !== 8) return null;
+    if (hex.length === 8 && parseInt(hex.slice(6), 16) === 0) return null;
+    return [parseInt(hex.slice(0, 2), 16), parseInt(hex.slice(2, 4), 16), parseInt(hex.slice(4, 6), 16)];
+  }
   function plateLight() {
-    var bg = '', m, lum;
-    try { bg = getComputedStyle(document.body).backgroundColor || ''; } catch (e) { bg = ''; }
-    m = /rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)/.exec(bg);
-    if (!m) return false;
-    lum = (0.2126 * Number(m[1]) + 0.7152 * Number(m[2]) + 0.0722 * Number(m[3])) / 255;
+    var bg = '', ch, lum;
+    try { bg = getComputedStyle($('mesh')).backgroundColor || ''; } catch (e) { bg = ''; }
+    ch = plateChannels(bg);
+    if (!ch) return false;
+    lum = (0.2126 * ch[0] + 0.7152 * ch[1] + 0.0722 * ch[2]) / 255;
     return lum > 0.6;
   }
   // Replayed packets (manual playback, the opening burst, and the loop) leave a 12-stop rainbow trail on the curved lane.
@@ -964,7 +985,7 @@
   $('live').addEventListener('click', goLive);
   $('ambient').checked = ambientOn; $('ambient').disabled = reduced;
   if (reduced) $('ambient').parentNode.title = 'Replay loop is off (reduced motion)';
-  $('ambient').addEventListener('change', function (ev) { ambientOn = ambientStats.on = !reduced && ev.target.checked; ambient = null; });
+  $('ambient').addEventListener('change', function (ev) { ambientOn = ambientStats.on = !reduced && ev.target.checked; ambient = null; readSpectrum(); });
   $('play').addEventListener('click', function () {
     endReplay();
     if (state.live) { rewindTo(Date.now()); playing = false; return; }

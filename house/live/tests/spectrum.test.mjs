@@ -114,3 +114,20 @@ test('spectrum defaults on; ?spectrum=0 opts out; ?replay=0 still only gates the
   assert.equal(L.spectrumShows(true, { playing: false, replay: false, ambient: false }), false);
   assert.equal(L.spectrumShows(false, { playing: true, replay: true, ambient: true }), false);
 });
+
+test('a set falsy spectrum flag is off, including 0', () => {
+  assert.equal(L.spectrumEnabled(0, '', false), false);
+  assert.equal(L.spectrumEnabled(0, '?replay=1', false), false);
+  assert.equal(L.spectrumEnabled('', '', false), false);
+  assert.equal(L.spectrumEnabled(null, '', false), false);
+  assert.equal(L.spectrumEnabled(false, '', false), false);
+  assert.equal(L.spectrumEnabled(undefined, '', false), true);
+  assert.equal(L.spectrumEnabled(true, '?spectrum=1', false), true);
+});
+
+test('the replay toggle re-reads the spectrum flag', () => {
+  const handler = html.match(/\$\('ambient'\)\.addEventListener\('change', function \(ev\) \{([^}]*)\}\);/);
+  assert.ok(handler, 'ambient change handler');
+  assert.match(handler[1], /readSpectrum\(\)/);
+  assert.match(html, /function readSpectrum\(\) \{ spectrumOn = L\.spectrumEnabled\(L\.SPECTRUM, location\.search, reduced\); \}/);
+});

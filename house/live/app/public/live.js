@@ -320,15 +320,16 @@
     return h + 'h ' + (m % 60) + 'm ago';
   }
 
-  /* Spectrum stream. Curved lanes stay. The meter and the trail are on unless the
-     flag is false, the page is ?spectrum=0, or the viewer asked for reduced motion. */
+  /* Spectrum stream. Curved lanes stay. The meter and the trail are on unless a
+     set flag is falsy, the page is ?spectrum=0, or the viewer asked for reduced motion.
+     A missing flag stays on. */
   var METER_BARS = 14, TRAIL_STOPS = 12;
   function hueOf(n) {
     var h = Math.round(n) % 360;
     return h < 0 ? h + 360 : h;
   }
   function spectrumEnabled(flag, search, reduced) {
-    if (reduced || flag === false) return false;
+    if (reduced || (flag !== undefined && !flag)) return false;
     return !/[?&]spectrum=0(&|$)/.test(String(search || ''));
   }
   function spectrumShows(enabled, mode) {
