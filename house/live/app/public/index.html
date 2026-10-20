@@ -445,7 +445,7 @@ button.wstat.on { outline: 2px solid var(--focus); background: var(--panel); }
 .wcard.parked { opacity: .8; }
 .wcard.closed { opacity: .55; }
 .wcard .wtop { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
-.wcard .witem { color: var(--card-title); font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .wcard .witem { color: var(--card-title); background: var(--card); font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wcard .wage { color: var(--card-age); white-space: nowrap; font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; }
 .wcard .wmeta { color: var(--card-meta); margin-top: 4px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .wbadge { font-size: 10px; padding: 1px 6px; border-radius: 999px; border: 1px solid var(--badge-edge); color: var(--badge-fg); background: var(--stat-bg); }
@@ -481,8 +481,8 @@ button.wstat.on { outline: 2px solid var(--focus); background: var(--panel); }
 .fresh.green .fresh-dot { background: var(--fresh-green); }
 .fresh.amber .fresh-dot { background: var(--fresh-amber); }
 .fresh.red .fresh-dot { background: var(--fresh-red); }
-#cardRecent, #queueBox, #cardHist { margin-top: 8px; border-top: 1px solid var(--hairline); padding-top: 6px; }
-#cardRecent, #trackBox, #queueBox { flex: 0 1 auto; max-height: 8.5rem; overflow: auto; }
+    #cardRecent, #queueBox, #cardHist, #trackBox, #statsFold, #cardsFold, #cloudFold { margin-top: 8px; }
+    #cardRecent, #trackBox, #queueBox { flex: 0 1 auto; }
 #cardRecentList, #queueList, #cardHistList { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 #cardRecentList li, #queueList li, #cardHistList li { font-size: 12px; }
 #trackList { list-style: none; margin: 4px 0 0; padding: 0; }
@@ -499,7 +499,12 @@ button:hover { border-color: var(--control-hover); }
 #live.on::before { content: "\25CF  "; color: var(--pill-live); }
 #slider { flex: 1 1 160px; accent-color: var(--teal); min-width: 0; }
 #tLabel { font-variant-numeric: tabular-nums; color: var(--dim); font-size: 12px; min-width: 15ch; font-family: "JetBrains Mono", ui-monospace, monospace; }
-.activity.collapsed #log { display: none; }
+    .activity.collapsed #log { display: none; }
+    .fold-head { display: flex; align-items: center; gap: 8px; width: 100%; background: transparent; color: var(--text); border: 0; border-bottom: 1px solid var(--hairline); padding: 6px 2px; font: inherit; font-weight: 650; text-align: left; cursor: pointer; }
+    .fold-sum { margin-left: auto; color: var(--dim); font-weight: 450; font-size: 12px; }
+    .fold-body { max-height: var(--fold-cap, 16rem); overflow: auto; }
+    .fold.collapsed .fold-body { display: none; }
+    #meshPanel > .fold-body { max-height: none; overflow: visible; }
 #log { list-style: none; margin: 0; padding: 0; max-height: 16rem; overflow: auto; }
 #log li { display: grid; grid-template-columns: 14ch 7ch 1fr; gap: 8px; padding: 3px 0; border-top: 1px solid var(--hairline); cursor: pointer; }
 #log li:first-child { border-top: 0; }
@@ -532,10 +537,15 @@ footer a { color: var(--foot); }
     <div hidden><canvas id="mark" width="112" height="44"></canvas><b id="fleet"></b><span id="blackout"></span></div>
   </header>
 
-  <section class="panel seats" id="seats" aria-label="Seats"></section>
+  <section class="panel seats fold collapsed" id="seats" data-fold="roster" aria-label="Seats">
+    <button class="fold-head" type="button" aria-expanded="false"><span>Roster</span><span class="fold-sum" id="rosterSum"></span></button>
+    <div class="fold-body" id="seatGrid"></div>
+  </section>
 
   <div class="split">
-  <section class="panel" id="meshPanel">
+  <section class="panel fold collapsed" id="meshPanel" data-fold="mesh">
+    <button class="fold-head" type="button" aria-expanded="false"><span>Mesh</span><span class="fold-sum" id="meshSum"></span></button>
+    <div class="fold-body">
     <div class="lens-head">
       <span>THE LENS · PING-PONG VOLLEY</span>
       <span class="legend">pings = handoffs + pushes · circles = seats · squares = rails</span>
@@ -557,34 +567,48 @@ footer a { color: var(--foot); }
       <input id="slider" type="range" min="0" max="1" step="1000" value="1" aria-label="Timeline">
       <span id="tLabel"></span>
         </div>
+    </div>
   </section>
   <aside class="panel wave collapsed" id="wave" aria-label="Board (read-only)">
     <div class="wave-head"><b>🌊 Board</b><span id="waveCount"></span><button id="waveToggle" type="button" aria-expanded="false" aria-controls="waveBody">Show</button></div>
-    <div class="wave-stats" id="waveStats" aria-label="last 24 h and open now"></div>
-    <div class="wave-body" id="waveBody"></div>
-    <div id="cardRecent" aria-label="Recent card changes">
-      <div class="lens-head"><b>Recent changes</b><button id="cardHistAll" type="button">See all history</button></div>
-      <ul id="cardRecentList"></ul>
+    <div class="fold collapsed" data-fold="stats" id="statsFold">
+      <button class="fold-head" type="button" aria-expanded="false"><span>Stats</span><span class="fold-sum" id="statsSum"></span></button>
+      <div class="fold-body"><div class="wave-stats" id="waveStats" aria-label="last 24 h and open now"></div></div>
     </div>
-    <div id="cardHist" hidden>
-      <ul id="cardHistList"></ul>
+    <div class="fold collapsed" data-fold="cards" id="cardsFold">
+      <button class="fold-head" type="button" aria-expanded="false"><span>Cards</span><span class="fold-sum" id="cardsSum"></span></button>
+      <div class="fold-body wave-body" id="waveBody"></div>
     </div>
-    <div id="trackBox" aria-label="Work">
-      <div class="lens-head"><b id="trackLabel">Work</b></div>
-      <ul id="trackList"></ul>
+    <div class="fold collapsed" data-fold="cloud" id="cloudFold">
+      <button class="fold-head" type="button" aria-expanded="false"><span>Cloud</span><span class="fold-sum" id="cloudSum"></span></button>
+      <div class="fold-body" id="cloudBody"></div>
     </div>
-    <div id="queueBox" aria-label="Open queue">
-      <div class="lens-head"><b id="queueLabel">Queue · waiting for a reply</b></div>
-      <ul id="queueList"></ul>
+    <div class="fold collapsed" id="cardRecent" data-fold="recent" aria-label="Recent card changes">
+      <button class="fold-head" type="button" aria-expanded="false"><span>Recent changes</span><span class="fold-sum" id="recentSum"></span></button>
+      <button id="cardHistAll" type="button">See all history</button>
+      <div class="fold-body"><ul id="cardRecentList"></ul></div>
+    </div>
+    <div class="fold collapsed" id="cardHist" data-fold="history">
+      <button class="fold-head" type="button" aria-expanded="false"><span>History</span><span class="fold-sum" id="historySum"></span></button>
+      <div class="fold-body"><ul id="cardHistList"></ul></div>
+    </div>
+    <div class="fold collapsed" id="trackBox" data-fold="work" aria-label="Work">
+      <button class="fold-head" type="button" aria-expanded="false"><span id="trackLabel">Work</span><span class="fold-sum" id="workSum"></span></button>
+      <div class="fold-body"><ul id="trackList"></ul></div>
+    </div>
+    <div class="fold collapsed" id="queueBox" data-fold="queue" aria-label="Open queue">
+      <button class="fold-head" type="button" aria-expanded="false"><span id="queueLabel">Queue</span><span class="fold-sum" id="queueSum"></span></button>
+      <div class="fold-body"><ul id="queueList"></ul></div>
     </div>
   </aside>
   </div>
 
 
 
-  <section class="panel activity collapsed" id="activity" aria-label="Activity">
-    <div class="lens-head"><span id="activityLabel">Activity</span><button id="activityToggle" type="button" aria-expanded="false" aria-controls="log">Show</button><select id="historyDay" aria-label="History day"></select></div>
-    <ul id="log"></ul>
+  <section class="panel activity fold collapsed" id="activity" data-fold="activity" aria-label="Activity">
+    <button id="activityToggle" class="fold-head" type="button" aria-expanded="false" aria-controls="log"><span id="activityLabel">Activity</span><span class="fold-sum" id="activitySum"></span></button>
+    <select id="historyDay" aria-label="History day"></select>
+    <ul id="log" class="fold-body"></ul>
   </section>
 
   <footer id="siteFoot"></footer>
@@ -669,9 +693,11 @@ footer a { color: var(--foot); }
     el.innerHTML = '<span class="dot"></span><span><div class="nm"></div><div class="st"></div></span>';
     el.querySelector('.nm').textContent = String(L.LABEL[a[0]] || a[0]).toUpperCase();
     el.querySelector('.nm').style.color = rgb(L.COLOR[a[0]]);
-    $('seats').appendChild(el);
+    $('seatGrid').appendChild(el);
     seatEls[a[0]] = { el: el, dot: el.querySelector('.dot'), st: el.querySelector('.st'), role: a[1] };
   });
+  var rosterSum = $('rosterSum'); if (rosterSum) rosterSum.textContent = String(L.AGENTS.length);
+  var meshSum = $('meshSum'); if (meshSum) meshSum.textContent = String(Object.keys(L.SATS).length);
 
   function fitCanvas() {
     var dpr = window.devicePixelRatio || 1;
@@ -849,12 +875,25 @@ footer a { color: var(--foot); }
   function wbAge(t) { if (!t) return '—'; var m = Math.max(0, Math.round((Date.now() - t) / 60000)); return m < 60 ? m + 'm' : m < 2880 ? Math.round(m / 60) + 'h' : Math.round(m / 1440) + 'd'; }
   function wbEl(tag, cls, text) { var el = document.createElement(tag); if (cls) el.className = cls; if (text != null) el.textContent = text; return el; }
   function wbSafeUrl(u) { return /^https:\/\/([a-z0-9-]+\.)*(github\.com|railway\.app|railway\.com|live\.ai)(\/|$)/i.test(u || '') ? u : ''; }
+  function seatSlug(name) {
+    return String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  }
   function seatInk(name) {
     if (!name) return null;
+    var slug = seatSlug(name);
+    var raw = slug ? cssVar('--seat-' + slug) : '';
+    var parts = raw.split(/[,\s]+/).map(Number).filter(function (n) { return n === n; });
+    if (parts.length >= 3) return parts.slice(0, 3);
     return L.COLOR[name] || L.COLOR[String(name).toLowerCase()] || null;
   }
   function paintEdge(el, name) {
-    var col = seatInk(name); if (col) el.style.borderLeftColor = rgb(col);
+    var slug = seatSlug(name);
+    if (slug && cssVar('--seat-' + slug)) {
+      el.style.borderLeftColor = 'rgb(var(--seat-' + slug + '))';
+      return;
+    }
+    var col = seatInk(name);
+    if (col) el.style.borderLeftColor = rgb(col);
   }
   function laneBucket(c) {
     var cloud = null;
@@ -1116,6 +1155,7 @@ footer a { color: var(--foot); }
     var k = wb.stamp + ':' + (wb.statFilter || '') + ':' + Math.floor(Date.now() / 30000) + ':' + (asOf == null ? 'live' : Math.floor(asOf / 60000));
     if (!force && k === wb.key) return; wb.key = k;
     var body = $('waveBody'); body.textContent = ''; wb.byKey = {};
+    var cloudBody = $('cloudBody'); if (cloudBody) cloudBody.textContent = '';
     var S = wb.stats, strip = $('waveStats'); strip.textContent = '';
     function idTitle(ids) {
       if (!ids || !ids.length) return '';
@@ -1226,21 +1266,21 @@ footer a { color: var(--foot); }
     var clouds = wb.cloudAgents || [];
     var runningCloud = clouds.filter(function (a) { return a && a.state === 'running'; });
     var doneCloud = clouds.filter(function (a) { return a && a.state !== 'running'; });
-    if (runningCloud.length) {
-      body.appendChild(wbEl('div', 'wgroup', 'cloud agents (' + runningCloud.length + ')'));
+    if (cloudBody && runningCloud.length) {
+      cloudBody.appendChild(wbEl('div', 'wgroup', 'cloud agents (' + runningCloud.length + ')'));
       var cu = wbEl('ul', 'wcards cloud');
       runningCloud.forEach(function (a) { cu.appendChild(cloudCard(a)); });
-      body.appendChild(cu);
+      cloudBody.appendChild(cu);
     }
-    if (doneCloud.length) {
+    if (cloudBody && doneCloud.length) {
       var co = !!wb.cloudDoneOpen;
       var ch = wbEl('button', 'donehead', 'cloud done (' + doneCloud.length + ')');
       ch.type = 'button'; ch.setAttribute('aria-expanded', co ? 'true' : 'false');
       ch.addEventListener('click', function (ev) { ev.stopPropagation(); wb.cloudDoneOpen = !wb.cloudDoneOpen; wb.key = ''; renderWave(true); });
-      body.appendChild(ch);
+      cloudBody.appendChild(ch);
       var cd = wbEl('ul', co ? 'wcards cloud-done' : 'wcards cloud-done collapsed');
       doneCloud.forEach(function (a) { cd.appendChild(cloudCard(a)); });
-      body.appendChild(cd);
+      cloudBody.appendChild(cd);
     }
     if (inWork.length) {
       body.appendChild(wbEl('div', 'wgroup', 'in work (' + inWork.length + ')'));
@@ -1297,6 +1337,10 @@ footer a { color: var(--foot); }
     else if (!wb.cards.length && !cloudN) waveHead.textContent = 'empty';
     else if (!wb.cards.length) waveHead.textContent = cloudN + ' cloud';
     else waveHead.textContent = live + ' live' + (held ? ' · ' + held + ' held' : '') + (stalls ? ' · ' + stalls + ' stalled' : '') + cloudBit;
+    var cardsSum = $('cardsSum'); if (cardsSum) cardsSum.textContent = waveHead.textContent;
+    var statsSum = $('statsSum'); if (statsSum) statsSum.textContent = S && S.open_total != null ? String(S.open_total) + ' open' : '';
+    var cloudSum = $('cloudSum'); if (cloudSum) cloudSum.textContent = String((wb.cloudAgents || []).length);
+    applyFolds();
   }
 
   var lastText = 0, lastLogKey = '';
@@ -1309,7 +1353,7 @@ footer a { color: var(--foot); }
     trackState.stamp = stamp;
     ul.textContent = '';
     var items = (track.items || []).filter(function (it) { return it && it.phase !== 'acked' && it.label !== 'acked'; });
-    if (!items.length) { ul.appendChild(wbEl('li', '', 'No open work')); return; }
+    if (!items.length) { ul.appendChild(wbEl('li', '', 'No open work')); foldSum('workSum', '0'); return; }
     var lanes = {}, order = [];
     items.forEach(function (it) {
       var names = it.lanes && it.lanes.length ? it.lanes : [it.lane || ''];
@@ -1334,6 +1378,7 @@ footer a { color: var(--foot); }
       });
     });
     if (!ul.childNodes.length) ul.appendChild(wbEl('li', '', 'No open work'));
+    foldSum('workSum', String(items.length));
   }
   function updateText(nowWall, hot) {
     renderWave();
@@ -1442,6 +1487,7 @@ footer a { color: var(--foot); }
       }
       ul.appendChild(li);
     }
+    foldSum('activitySum', String(ul.children.length));
   }
 
   function goLive() { endReplay(); state.live = true; setTimeout(playFresh, 0); playing = false; releaseLive = false; state.t = Date.now(); lastText = 0; }
@@ -1523,7 +1569,7 @@ footer a { color: var(--foot); }
     var asks = { packet: 1, dispatch: 1, ready: 1, critic_fail: 1, needs_human: 1, issue_comment: 1, pr_comment: 1, pr_open: 1, issue_open: 1, comment: 1, pr: 1, issue: 1 };
     var rows = (lines || []).filter(function (l) { return l && asks[l.type]; });
     if (lab) lab.textContent = 'Queue · open asks';
-    if (!rows.length) { ul.appendChild(wbEl('li', '', 'No open asks')); return; }
+    if (!rows.length) { ul.appendChild(wbEl('li', '', 'No open asks')); foldSum('queueSum', '0'); return; }
     rows.forEach(function (l) {
       var li = wbEl('li', 'wcard');
       paintEdge(li, l.seat);
@@ -1531,6 +1577,7 @@ footer a { color: var(--foot); }
       li.appendChild(wbEl('span', '', [l.seat || '—', l.type || '', l.title || l.id || '', age].filter(Boolean).join(' · ')));
       ul.appendChild(li);
     });
+    foldSum('queueSum', String(rows.length));
   }
   var cardHistRows = [], cardHistOn = false;
   function recentState(s) {
@@ -1567,14 +1614,16 @@ footer a { color: var(--foot); }
     var ul = $('cardRecentList'); if (!ul) return;
     ul.textContent = '';
     var rows = cardHistRows.filter(function (c) { return c && c.state && c.state !== 'live' && c.state !== 'open'; }).slice(0, 5);
-    if (!rows.length) { ul.appendChild(wbEl('li', '', 'No recent changes')); return; }
+    if (!rows.length) { ul.appendChild(wbEl('li', '', 'No recent changes')); foldSum('recentSum', '0'); return; }
     rows.forEach(function (c) { ul.appendChild(historyCard(c)); });
+    foldSum('recentSum', String(rows.length));
   }
   function renderCardHist() {
     var ul = $('cardHistList'); if (!ul) return;
     ul.textContent = '';
-    if (!cardHistRows.length) { ul.appendChild(wbEl('li', '', 'No cards')); return; }
+    if (!cardHistRows.length) { ul.appendChild(wbEl('li', '', 'No cards')); foldSum('historySum', '0'); return; }
     cardHistRows.forEach(function (c) { ul.appendChild(historyCard(c)); });
+    foldSum('historySum', String(cardHistRows.length));
   }
   function loadCardHist() {
     fetch('/history/cards', { headers: { Accept: 'application/json' } }).then(function (r) {
@@ -1589,9 +1638,13 @@ footer a { color: var(--foot); }
   }
   var histBtn = $('cardHistAll');
   if (histBtn) histBtn.addEventListener('click', function () {
-    cardHistOn = !cardHistOn;
-    var box = $('cardHist'); if (box) box.hidden = !cardHistOn;
-    var recent = $('cardRecent'); if (recent) recent.hidden = cardHistOn;
+    cardHistOn = true;
+    var box = $('cardHist');
+    if (!box) return;
+    box.classList.remove('collapsed');
+    var head = box.querySelector('.fold-head');
+    if (head) head.setAttribute('aria-expanded', 'true');
+    saveFold('history', true);
   });
   function loadHistoryDays() {
     var sel = $('historyDay'); if (!sel) return;
@@ -1636,23 +1689,45 @@ footer a { color: var(--foot); }
       }).catch(function () {});
     });
   }
-  (function () {
-    var box = $('activity'), btn = $('activityToggle');
-    if (!box || !btn) return;
-    var open = false;
-    try { open = localStorage.getItem('bifrost-activity') === 'open'; } catch (e) { open = false; }
-    function paint(on) {
-      box.classList.toggle('collapsed', !on);
-      btn.textContent = on ? 'Hide' : 'Show';
-      btn.setAttribute('aria-expanded', on ? 'true' : 'false');
+  function foldSaved() {
+    try { return JSON.parse(localStorage.getItem('bifrost-folds') || '{}'); } catch (e) { return {}; }
+  }
+  function saveFold(id, open) {
+    var saved = foldSaved();
+    saved[id] = open ? 'open' : 'closed';
+    try { localStorage.setItem('bifrost-folds', JSON.stringify(saved)); } catch (e) {}
+    if (id === 'activity') {
+      try { localStorage.setItem('bifrost-activity', open ? 'open' : 'collapsed'); } catch (e2) {}
     }
-    paint(open);
-    btn.addEventListener('click', function () {
-      var on = box.classList.contains('collapsed');
-      paint(on);
-      try { localStorage.setItem('bifrost-activity', on ? 'open' : 'collapsed'); } catch (e2) {}
+  }
+  function foldSum(id, text) {
+    var el = $(id); if (el) el.textContent = text;
+  }
+  function applyFolds() {
+    if (!document.querySelectorAll) return;
+    var saved = foldSaved();
+    if (saved.activity == null) {
+      try { if (localStorage.getItem('bifrost-activity') === 'open') saved.activity = 'open'; } catch (e) {}
+    }
+    document.querySelectorAll('[data-fold]').forEach(function (fold) {
+      var id = fold.getAttribute('data-fold');
+      var open = saved[id] === 'open';
+      fold.classList.toggle('collapsed', !open);
+      var btn = fold.querySelector('.fold-head');
+      if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
     });
-  })();
+  }
+  document.addEventListener('click', function (ev) {
+    var btn = ev.target.closest('.fold-head');
+    if (!btn || btn.id === 'cardHistAll') return;
+    var fold = btn.closest('[data-fold]');
+    if (!fold) return;
+    var open = fold.classList.contains('collapsed');
+    fold.classList.toggle('collapsed', !open);
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    saveFold(fold.getAttribute('data-fold'), open);
+  });
+  applyFolds();
   (function () {
     var btn = $('themeToggle');
     if (!btn) return;

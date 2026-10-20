@@ -92,16 +92,24 @@ test('the board face keeps the contract in both themes', async () => {
   try {
     browser = await chromium.launch();
     const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1 });
-    await page.addInitScript(() => localStorage.removeItem('bifrost-theme'));
+    await page.addInitScript(() => {
+      if (sessionStorage.getItem('bifrost-theme-cleared')) return;
+      localStorage.removeItem('bifrost-theme');
+      sessionStorage.setItem('bifrost-theme-cleared', '1');
+    });
     await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'reduce' });
     await page.goto(base, { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => document.querySelector('#waveBody .wcard'), null, { timeout: 8000 });
     await page.waitForFunction(() => (document.querySelector('#cardRecentList') || {}).textContent.includes('merged'), null, { timeout: 8000 });
+    for (const id of ['mesh', 'stats', 'roster', 'cards', 'cloud', 'recent', 'history', 'work', 'queue']) {
+      const head = page.locator(`[data-fold="${id}"].collapsed > .fold-head`);
+      if (await head.count()) await head.click();
+    }
 
     const face = await page.evaluate(() => {
       const text = (sel) => (document.querySelector(sel) || {}).textContent || '';
-      const openCloud = text('#waveBody .wcards.cloud');
-      const doneCloud = text('#waveBody .wcards.cloud-done');
+      const openCloud = text('#cloudBody .wcards.cloud');
+      const doneCloud = text('#cloudBody .wcards.cloud-done');
       const waiting = [...document.querySelectorAll('#waveBody .wsub')].map(el => el.textContent);
       const mergedCard = document.querySelector('#waveBody .wcard[data-key="example/app#2"]');
       const openCard = document.querySelector('#waveBody .wcard[data-key="example/app#3"]');

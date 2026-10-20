@@ -18,7 +18,7 @@ The page reads `GET /live-events.json`. Production numbers below are the feed at
 
 | Field | Source | Transform | UI | Expected | Live | Status |
 |---|---|---|---|---|---|---|
-| owner | card `owner`, else packet `next owner` | `cardSeat` | left edge `border-left-color` from `--seat-<owner>` / `L.COLOR` | edge is the owner, not the state | state-colored edge | PASS in this page. Production still has the old CSS until deploy |
+| owner | card `owner`, else packet `next owner` | `cardSeat` then `paintEdge` | left edge `rgb(var(--seat-<slug>))` when that token exists, else `L.COLOR` | mill is `214, 196, 140` in dark and `92, 68, 16` in light. The kit color map drops mill, so a missing token used to leave `.wcard` on `--card-edge` `#3b82f6` | state-colored edge | PASS `tests/board-face.test.mjs`. Production still has the old CSS until deploy |
 | state | card `state` | badge `.wbadge.state` | badge text | state is a badge | state was the edge color | PASS in this page |
 | stage done or state closed | card | `laneBucket` → `done` | collapsed “done” | not in an open waiting group | mixed | PASS |
 | cloud `finished`/`failed`/`stale` and the PR is merged or closed | `cloud_agents[].card` | `laneBucket` | done | out of Open | finished rows sat in the open cloud group | PASS |
@@ -52,7 +52,8 @@ The page now paints those rows with `.wcard` (owner edge, verb, Chicago time). `
 | Field | Source | Transform | UI | Expected | Status |
 |---|---|---|---|---|---|
 | seat chip | `L.AGENTS` + `L.seatView` | name in `.nm`, state word in visually hidden `.st` | dot + name | pulse (`.dot.blink`, 1.1s) while working, dim (`.seat.idle`) while idle, ellipsis on the name. `prefers-reduced-motion` sets the blink animation to none | PASS |
-| activity | live events, or `GET /history?date=` | collapsed unless `localStorage bifrost-activity=open` | `#activity` | collapsed by default, `#log` max-height 16rem, overflow auto, date `<select id="historyDay">`, times in CT | PASS |
+| activity | live events, or `GET /history?date=` | shared fold, collapsed unless `localStorage bifrost-folds` says open. Activity also writes `bifrost-activity` | `#activity` | collapsed by default, `#log` max-height 16rem, overflow auto, date `<select id="historyDay">`, times in CT | PASS |
+| folds | mesh, stats, roster, cards, cloud, recent, history, work, queue, activity | one `.fold` / `.fold-head` / `.fold-body`, `data-fold`, `localStorage bifrost-folds` | header toggle, count in `.fold-sum` | collapsed on first load. Open body max-height 16rem and scrolls, except the mesh body, which stays uncapped so the rewind slider stays inside `#meshPanel` | PASS `tests/board-folds.test.mjs` |
 | rewind | `#slider` | inside `#meshPanel` | range | the slider box sits inside the mesh panel box | PASS |
 
 ## Cloud rows

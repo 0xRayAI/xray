@@ -84,6 +84,8 @@ test('desktop wave body keeps a visible card when forty cards sit above a long q
       const el = document.getElementById('waveBody');
       return el && el.querySelector('.wcard');
     }, null, { timeout: 8000 });
+    const cardsHead = page.locator('#cardsFold.collapsed > .fold-head');
+    if (await cardsHead.count()) await cardsHead.click();
     const metrics = await page.evaluate(() => {
       const el = document.getElementById('waveBody');
       const card = el.querySelector('.wcard');
