@@ -459,8 +459,28 @@ function markStaleCloud(rows, now) {
   });
 }
 
+function boardIds(board) {
+  const ids = new Set();
+  for (const card of board || []) {
+    const key = typeof card === 'string' ? card : (card && card.key);
+    if (typeof key === 'string' && key) ids.add(key.toLowerCase());
+  }
+  return ids;
+}
+
+function linkedCard(value, onBoard) {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  if (CARD_REF.test(raw)) return raw;
+  const fromUrl = cardRefOf(raw);
+  if (fromUrl) return fromUrl;
+  if (onBoard.has(raw.toLowerCase())) return raw;
+  return '';
+}
+
 /** One board row per cloud agent. Latest line wins the state; an earlier seat, card, or PR stays. */
-export function boardCloudAgents({ agents = [], activity = [], links = [], now = Date.now() } = {}) {
+export function boardCloudAgents({ agents = [], activity = [], links = [], board = [], now = Date.now() } = {}) {
+  const onBoard = boardIds(board);
   const events = [];
   for (const row of agents || []) {
     if (!row || typeof row !== 'object') continue;
@@ -506,7 +526,7 @@ export function boardCloudAgents({ agents = [], activity = [], links = [], now =
     const id = String(link.bcId || link.agent || '').trim();
     if (!AGENT_ID.test(id)) continue;
     const seat = canonSeatToken(link.seat) || '';
-    const card = CARD_REF.test(String(link.card || '')) ? String(link.card) : cardRefOf(link.card) || cardRefOf(link.pr);
+    const card = linkedCard(link.card, onBoard) || linkedCard(link.pr, onBoard);
     const pr = safePr(link.pr);
     const prev = by.get(id);
     if (!prev) {
@@ -519,7 +539,8 @@ export function boardCloudAgents({ agents = [], activity = [], links = [], now =
     if (!prev.pr && pr) prev.pr = pr;
   }
   const rows = [...by.values()].sort((a, b) => (Date.parse(b.updated_ct) || 0) - (Date.parse(a.updated_ct) || 0) || a.bcId.localeCompare(b.bcId));
-  return markStaleCloud(foldCloudIds(rows), now);
+  const flagged = foldCloudIds(rows).map(row => (!row.card && !row.pr ? { ...row, flag: 'card missing' } : row));
+  return markStaleCloud(flagged, now);
 }
 
 /** True when one id is the other, or one is a bc- prefix of the other (`bc-531f2033` and the full uuid). */

@@ -307,7 +307,87 @@ function expirePlan(card, now) {
   return { ...card, state: 'closed', stage: 'done', flag: 'expired', last_beat_t: now };
 }
 
-/** Keep a plan card and loaded wave cards the collector does not send. Earlier cards win on key. */
+export function isPacketBorn(card) {
+  return !!(card && (card.born === 'packet' || String(card.key || '').toLowerCase().startsWith('packet:')));
+}
+
+function refName(value) {
+  const text = String(value || '').trim();
+  if (!text) return '';
+  return text.replace(/^refs\/heads\//, '').slice(0, 200);
+}
+
+function branchOf(event) {
+  if (!event || typeof event !== 'object') return '';
+  return refName(event.branch) || refName(event.head_ref) || refName(event.ref);
+}
+
+function headOf(event) {
+  return branchOf(event) || refName(event.head);
+}
+
+function positiveEvent(event) {
+  const number = Number(event && event.number);
+  return !!(event && event.repo && Number.isInteger(number) && number >= 1);
+}
+
+function eventTouches(card, event, list) {
+  if (!event || typeof event !== 'object') return false;
+  const key = String(card.key || '').toLowerCase();
+  const named = String(event.card || '').trim().toLowerCase();
+  if (named && named === key) return true;
+  const repo = String(event.repo || '').toLowerCase();
+  const number = Number(event.number);
+  const cardRepo = String(card.repo || '').toLowerCase();
+  if (repo && repo === cardRepo && Number.isInteger(number) && number >= 1 && Number(card.number) === number) return true;
+  if (!named && key.startsWith('packet:') && repo && repo === cardRepo) {
+    const only = list.filter((other) => String(other.key || '').toLowerCase().startsWith('packet:') && String(other.repo || '').toLowerCase() === repo);
+    return only.length === 1 && only[0] === card;
+  }
+  return false;
+}
+
+/** Write a push ref onto a held card. A later pr_open with the same head rewrites a holding key. */
+export function attachPacketCards(cards, events) {
+  const list = (Array.isArray(cards) ? cards : []).filter((card) => card && typeof card === 'object').map((card) => ({ ...card }));
+  const evs = Array.isArray(events) ? events : [];
+  for (const card of list) {
+    if (card.branch) continue;
+    for (const event of evs) {
+      if (!event || event.kind === 'pr_open' || event.kind === 'issue_open') continue;
+      const branch = branchOf(event);
+      if (!branch || !eventTouches(card, event, list)) continue;
+      card.branch = branch;
+      break;
+    }
+  }
+  const gone = new Set();
+  for (const card of list) {
+    const key = String(card.key || '');
+    if (!key.toLowerCase().startsWith('packet:') || !card.branch || gone.has(card)) continue;
+    const hit = evs.find((event) => event && event.kind === 'pr_open' && headOf(event) === card.branch && positiveEvent(event));
+    if (!hit) continue;
+    const nextKey = String(hit.repo).toLowerCase() + '#' + Number(hit.number);
+    const existing = list.find((other) => other !== card && !gone.has(other) && String(other.key || '').toLowerCase() === nextKey);
+    if (existing) {
+      if (!existing.alias) existing.alias = key;
+      if (!existing.branch) existing.branch = card.branch;
+      gone.add(card);
+      continue;
+    }
+    card.alias = key;
+    card.key = nextKey;
+    card.repo = String(hit.repo);
+    card.number = Number(hit.number);
+    const url = typeof hit.url === 'string' ? hit.url : (typeof hit.source === 'string' ? hit.source : '');
+    if (url) card.url = url.slice(0, 300);
+    if (card.kind === 'packet') card.kind = 'pr';
+    card.last_beat_t = Date.now();
+  }
+  return list.filter((card) => !gone.has(card));
+}
+
+/** Keep a plan card, a packet-born card, and loaded wave cards the collector does not send. Earlier cards win on key. */
 export function retainSeedCards(collector, prior, seedCards) {
   const base = Array.isArray(collector) ? collector.slice() : [];
   const have = new Set(base.map(cardKey).filter(Boolean));
@@ -315,7 +395,7 @@ export function retainSeedCards(collector, prior, seedCards) {
   for (const card of extras) {
     const key = cardKey(card);
     if (!key || have.has(key)) continue;
-    if (!isPlanCard(card) && !card.wave && card.kind !== 'wave' && card.kind !== 'plan') continue;
+    if (!isPlanCard(card) && !card.wave && card.kind !== 'wave' && card.kind !== 'plan' && !isPacketBorn(card)) continue;
     base.push(card);
     have.add(key);
   }

@@ -292,7 +292,122 @@ def _keep_push(beats, limit):
     return window
 
 
-def model(extra_events=None, now=None, prompts=None):
+def _ref_name(value):
+    text = str(value or "").strip()
+    if text.startswith("refs/heads/"):
+        text = text[len("refs/heads/"):]
+    return text[:200]
+
+
+def _branch_of(event):
+    if not isinstance(event, dict):
+        return ""
+    return _ref_name(event.get("branch")) or _ref_name(event.get("head_ref")) or _ref_name(event.get("ref"))
+
+
+def _head_of(event):
+    return _branch_of(event) or _ref_name(event.get("head") if isinstance(event, dict) else "")
+
+
+def _positive_event(event):
+    if not isinstance(event, dict) or not event.get("repo"):
+        return False
+    try:
+        return int(event.get("number")) >= 1
+    except (TypeError, ValueError):
+        return False
+
+
+def _event_touches(card, event, cards):
+    if not isinstance(event, dict):
+        return False
+    key = str(card.get("key") or "").lower()
+    named = str(event.get("card") or "").strip().lower()
+    if named and named == key:
+        return True
+    repo = str(event.get("repo") or "").lower()
+    card_repo = str(card.get("repo") or "").lower()
+    try:
+        number = int(event.get("number"))
+    except (TypeError, ValueError):
+        number = None
+    try:
+        card_number = int(card.get("number"))
+    except (TypeError, ValueError):
+        card_number = None
+    if repo and repo == card_repo and number is not None and number >= 1 and card_number == number:
+        return True
+    if not named and key.startswith("packet:") and repo and repo == card_repo:
+        only = [c for c in cards if str(c.get("key") or "").lower().startswith("packet:") and str(c.get("repo") or "").lower() == repo]
+        return len(only) == 1 and only[0] is card
+    return False
+
+
+def attach_held(held, events):
+    """Copy a push ref onto a card the server already holds. A matching pr_open rewrites a holding key."""
+    cards = [dict(card) for card in (held or []) if isinstance(card, dict)]
+    evs = [event for event in (events or []) if isinstance(event, dict)]
+    for card in cards:
+        if card.get("branch"):
+            continue
+        for event in evs:
+            if event.get("kind") in ("pr_open", "issue_open"):
+                continue
+            branch = _branch_of(event)
+            if not branch or not _event_touches(card, event, cards):
+                continue
+            card["branch"] = branch
+            break
+    gone = set()
+    for card in cards:
+        key = str(card.get("key") or "")
+        if not key.lower().startswith("packet:") or not card.get("branch") or id(card) in gone:
+            continue
+        hit = next((event for event in evs if event.get("kind") == "pr_open" and _head_of(event) == card["branch"] and _positive_event(event)), None)
+        if not hit:
+            continue
+        next_key = f"{str(hit['repo']).lower()}#{int(hit['number'])}"
+        existing = next((other for other in cards if other is not card and id(other) not in gone and str(other.get("key") or "").lower() == next_key), None)
+        if existing is not None:
+            existing.setdefault("alias", key)
+            existing.setdefault("branch", card["branch"])
+            gone.add(id(card))
+            continue
+        card["alias"] = key
+        card["key"] = next_key
+        card["repo"] = hit["repo"]
+        card["number"] = int(hit["number"])
+        url = hit.get("url") or hit.get("source") or ""
+        if url:
+            card["url"] = str(url)[:300]
+    return [card for card in cards if id(card) not in gone]
+
+
+def _merge_attached(cards, attached, now):
+    by = {}
+    order = []
+    for card in cards:
+        by[str(card.get("key") or "").lower()] = card
+        order.append(card)
+    for card in attached:
+        key = str(card.get("key") or "").lower()
+        if key in by:
+            dest = by[key]
+            if card.get("branch") and not dest.get("branch"):
+                dest["branch"] = card["branch"]
+            if card.get("alias") and not dest.get("alias"):
+                dest["alias"] = card["alias"]
+            continue
+        if not card.get("last_beat_t"):
+            card["last_beat_t"] = int(now * 1000)
+        if not card.get("state"):
+            card["state"] = "live"
+        order.append(card)
+        by[key] = card
+    return order
+
+
+def model(extra_events=None, now=None, prompts=None, held=None):
     now = now or time.time()
     evs = _events(extra_events)
     sha_num = {}
@@ -503,8 +618,11 @@ def model(extra_events=None, now=None, prompts=None):
     out = [c for c in out if c["state"] == "closed" or (c["last_beat_t"] and now - c["last_beat_t"] / 1000 < 14 * 86400)]
     rank = {"live": 0, "held": 0, "parked": 1, "closed": 2}
     out.sort(key=lambda c: (rank[c["state"]], STAGES.index(c["stage"]), -c["last_beat_t"]))
+    cards = pinned() + out[:MAX_CARDS]
+    if held:
+        cards = _merge_attached(cards, attach_held(held, evs), now)
     return {"updated_ct": datetime.fromtimestamp(now, CT).isoformat(timespec="seconds"),
-            "stages": list(STAGES), "stats": stats(evs, now, prompt_rows), "cards": pinned() + out[:MAX_CARDS]}
+            "stages": list(STAGES), "stats": stats(evs, now, prompt_rows), "cards": cards}
 
 
 def reconcile(wave, open_now, now=None):
