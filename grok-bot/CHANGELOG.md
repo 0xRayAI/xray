@@ -4,6 +4,11 @@
 
 Ship as 0.2.0 after the owner GO. The package version stays 0.1.10 until that GO. `scripts/foundry/release.mjs` stamps `0xray`, not this kit.
 
+- Board rule. On every owner message run `live-inbox <seat> --prompt --from owner --note "<gist>"`. Ack a handled line with `live-inbox <seat> --ack <id>`, or `live-inbox <seat> --ack all` once every open line is handled. A cloud agent run uses `live-inbox <seat> --turn start --tag "bc-<first8> <track>"` and `live-inbox <seat> --turn end --tag "bc-<first8>"`. `--from owner` is required today.
+- Kanban note. The live page shows a read-only kanban above Activity. Columns are open, review, fix, merge, retest, and done. The deep link is `?card=`.
+- History note. Every activity line is archived to history. The word owner is the owner via LIVE_OWNER or the owner-name.
+- A real owner-chat source is not in this release. The public board does not serve the history archive or the kanban yet.
+
 - Station boot. Each seat's profile title is `You are <seat>, <role> on the <plane> plane. Run the station skill first (suit <suit path>).` The description opens with the BOOT line. Planes are core, integration, ecosystem, distribution, and live.
 - Skills `station`, `seat-label`, and `seat-github-key`. `seat-label` runs in that seat's own chat (`UpdateProfile` title only, then `profile.json`). `~/bin/gh-<seat>` mints a fresh App token every call and never prints the token or the PEM.
 - `HOUSE.md` carries `name:` and `OP-PROC:`. The station line template adds `Plane:`, `Skills:`, and `Keys:`. `house/fleet/TRACKS.md` is written when a cloud launches. Adoption and migration from 0.1.10 live in `templates/house/STATION-BOOT.md`.

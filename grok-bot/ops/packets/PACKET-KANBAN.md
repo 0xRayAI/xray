@@ -43,7 +43,7 @@ A click on a card, on the wave list and on the kanban, opens one modal with that
 
 Every issue and PR card on both views shows a GitHub link on the card face, visible while the modal is closed. The link is `c.url` when that is an https GitHub issue or pull. Otherwise it is `https://github.com/<repo>/pull/<number>` or `.../issues/<number>` from `kind`. It opens in a new tab (`target=_blank`, `rel=noopener`). A click on the link does not open the modal. A pinned card with no repo and number has no such link. A cloud row shows the same face link when its `pr` is a GitHub pull URL.
 
-A signed-in user can drag a card into another column. Anonymous viewers and the password session can see the board and cannot drag.
+Drag did not ship. The shipped kanban is read-only. Anonymous viewers and the password session can see the board.
 
 ### 24h tiles
 

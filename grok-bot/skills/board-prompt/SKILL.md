@@ -15,13 +15,19 @@ The rules for the turn are [grok-bot/OP-PROC.md](../../OP-PROC.md) and the house
 2. After handling any inbox line, ack it with `live-inbox <seat> --ack <id>` or `--ack all`.
 3. When you launch or resume a cloud agent, before the work: `live-inbox <seat> --turn start --tag "bc-<first8> <track>"`. A webhook wake skips this post. WAKE-ROUTINE step 0 is that one start.
 4. The work.
-5. On every exit, including an early return and an error, when it finishes or is cancelled: `live-inbox <seat> --turn end --tag "bc-<first8>"`. A webhook wake skips this post. The WAKE-ROUTINE EXIT trap is that one end.
+5. When the cloud finishes or is cancelled: `live-inbox <seat> --turn end --tag "bc-<first8>"`. A webhook wake skips this post. The WAKE-ROUTINE EXIT trap is that one end.
 
 A webhook wake uses WAKE-ROUTINE for its one `--prompt`, its `--turn start`, and its `--turn end`, and does not also run this skill. A chat turn uses this skill and does not also run step 0.
 
 ## Note
 
-`--note` is either one fixed summary the seat wrote, or it is omitted. Omitting `--note` is the usual post. A DM, a room post, and any inbound message text stay out of `--note`, out of `--tag`, and out of every other field. A fixed summary stays inside the plain-line cap (1–240 characters). A note outside that charset is refused and posts nothing, so omit `--note` when there is no fixed summary and the prompt still posts.
+An owner message always passes `--note "<gist>"`. `<gist>` is one short summary the seat wrote, inside the plain-line cap (1–240 characters). The gist is not the message text. A DM, a room post, and any inbound message text stay out of `--note`, out of `--tag`, and out of every other field. A note outside that charset is refused and posts nothing.
+
+Board rule. On every owner message run `live-inbox <seat> --prompt --from owner --note "<gist>"`. Ack a handled line with `live-inbox <seat> --ack <id>`, or `live-inbox <seat> --ack all` once every open line is handled. A cloud agent run uses `live-inbox <seat> --turn start --tag "bc-<first8> <track>"` and `live-inbox <seat> --turn end --tag "bc-<first8>"`. `--from owner` is required today.
+
+Kanban note. The live page shows a read-only kanban above Activity. Columns are open, review, fix, merge, retest, and done. The deep link is `?card=`.
+
+History note. Every activity line is archived to history. The word owner is the owner via LIVE_OWNER or the owner-name.
 
 ## When a post fails
 
