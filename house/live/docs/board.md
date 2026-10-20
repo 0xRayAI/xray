@@ -73,7 +73,7 @@ The command is stored on the server and wins over the comment while that store e
 
 ## Layout
 
-The page groups cards that a seat is working on, then pinned cards, then one group per seat. Issues whose title names a pull request in the same repo fold under that pull request. A run of more than three loose issues collapses to one line.
+The page groups cards that a seat is working on, then pinned cards, then the rest by status (waiting, in review, on hold, parked, done). The Cards control “By agent” switches that list to one group per seat, with status under the seat. Issues whose title names a pull request in the same repo fold under that pull request. A run of more than three loose issues collapses to one line.
 
 ## Ghost cards
 

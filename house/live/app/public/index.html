@@ -515,6 +515,9 @@ button:hover { border-color: var(--control-hover); }
     #meshPanel > .fold-body { max-height: none; overflow: visible; }
     #cardsFold:not(.collapsed) { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
     #waveBody { max-height: none; flex: 1 1 auto; min-height: 220px; overflow-y: auto; }
+    #cardGroup { margin: 6px 0 0; font-size: 11px; padding: 3px 8px; }
+    #cardsFold.collapsed > #cardGroup { display: none; }
+    #cardGroup[aria-pressed="true"] { border-color: var(--teal); }
 #log { list-style: none; margin: 0; padding: 0; max-height: 16rem; overflow: auto; }
 #log li { display: grid; grid-template-columns: 14ch 7ch 1fr; gap: 8px; padding: 3px 0; border-top: 1px solid var(--hairline); cursor: pointer; }
 #log li:first-child { border-top: 0; }
@@ -587,6 +590,7 @@ footer a { color: var(--foot); }
     </div>
     <div class="fold" data-fold="cards" id="cardsFold">
       <button class="fold-head" type="button" aria-expanded="true"><span>Cards</span><span class="fold-sum" id="cardsSum"></span></button>
+      <button id="cardGroup" type="button" aria-pressed="false" title="Group cards by agent">By agent</button>
       <div class="fold-body wave-body" id="waveBody"></div>
     </div>
     <div class="fold collapsed" data-fold="cloud" id="cloudFold">
@@ -887,8 +891,8 @@ footer a { color: var(--foot); }
     return fixPings(L.pingsAt(state.events, ambient.from + k * (ambient.end - ambient.from), L.PING_MS * ambient.sp));
   }
   // 🌊 Board panel: cards / packets / beats from the feed header (feed.board, built by the feed pass from the
-  // same events; read-only). Grouped by stage; click a card for its packet and last 5 beats; a related live beat glows it.
-  var wb = { cards: [], cloudAgents: [], stamp: '', key: '', open: {}, byKey: {}, glows: 0, kidsOpen: {}, pinsOpen: false, issuesOpen: {}, doneOpen: {}, statFilter: '', cloudDoneOpen: false };
+  // same events; read-only). Grouped by status unless the Cards toggle is by agent. Click a card for its packet and last 5 beats; a related live beat glows it.
+  var wb = { cards: [], cloudAgents: [], stamp: '', key: '', open: {}, byKey: {}, glows: 0, kidsOpen: {}, pinsOpen: false, issuesOpen: {}, doneOpen: {}, statFilter: '', cloudDoneOpen: false, group: 'status' };
   window.LIVE_WAVE = wb;
   var WB_PACKET = ['goal', 'constraints', 'path', 'acceptance', 'evidence', 'next owner', 'escalate'];
   var WB_BEAT_KINDS = /^(pr_open|issue_open|pr_commit|pr_force_push|pr_update|critic_|merged|lab_retest_|check_run|workflow_run|ci_)/;
@@ -1284,11 +1288,20 @@ footer a { color: var(--foot); }
     return fleetWorking(cardSeat(c));
   }
 
+  function readCardGroup() {
+    try { return localStorage.getItem('bifrost-card-group') === 'agent' ? 'agent' : 'status'; } catch (e) { return 'status'; }
+  }
+  function paintCardGroup() {
+    var btn = $('cardGroup'); if (!btn) return;
+    btn.setAttribute('aria-pressed', readCardGroup() === 'agent' ? 'true' : 'false');
+  }
   function renderWave(force) {
+    wb.group = readCardGroup();
+    paintCardGroup();
     var asOf = state.live ? null : state.t;   // rewound / replay: the board shows the cards as of the timeline
-    var k = wb.stamp + ':' + (wb.statFilter || '') + ':' + Math.floor(Date.now() / 30000) + ':' + (asOf == null ? 'live' : Math.floor(asOf / 60000));
+    var k = wb.stamp + ':' + wb.group + ':' + (wb.statFilter || '') + ':' + Math.floor(Date.now() / 30000) + ':' + (asOf == null ? 'live' : Math.floor(asOf / 60000));
     if (!force && k === wb.key) return; wb.key = k;
-    var body = $('waveBody'); body.textContent = ''; wb.byKey = {};
+    var body = $('waveBody'); body.textContent = ''; body.dataset.group = wb.group; wb.byKey = {};
     var cloudBody = $('cloudBody'); if (cloudBody) cloudBody.textContent = '';
     var S = wb.stats, strip = $('waveStats'); strip.textContent = '';
     function idTitle(ids) {
@@ -1491,41 +1504,57 @@ footer a { color: var(--foot); }
       var pu = wbEl('ul', collapsed ? 'wcards pins collapsed' : 'wcards pins');
       pins.forEach(function (c) { pu.appendChild(card(c)); }); body.appendChild(pu);
     }
-    var seats = [], bySeat = {};
-    if (!countedView) L.boardGroups(wb.cards.filter(function (c) { return !(c.pinned || cardWorking(c) || LK.child[c.key]); }), cardSeat).forEach(function (g) {
-      seats.push(g.name); bySeat[g.name] = g.cards;
-    });
-    seats.sort(function (a, b) { return String(L.LABEL[a] || a).localeCompare(String(L.LABEL[b] || b)); });
-      var bucketName = { waiting: 'waiting on this seat', review: 'in review', held: 'on hold', parked: 'parked' };
-    seats.forEach(function (s) {
-      var buckets = { waiting: [], review: [], held: [], parked: [], done: [] };
-      bySeat[s].forEach(function (c) { buckets[c._bucket || L.cardBucket(c)].push(c); });
-      if (!(buckets.waiting.length || buckets.review.length || buckets.held.length || buckets.parked.length || buckets.done.length)) return;
-      body.appendChild(wbEl('div', 'wgroup', L.LABEL[s] || s));
-      ['waiting', 'review', 'held', 'parked'].forEach(function (b) {
-        var cs = buckets[b].sort(byBeat); if (!cs.length) return;
-        body.appendChild(wbEl('div', 'wsub', bucketName[b] + ' (' + cs.length + ')'));
-        var prs = cs.filter(function (c) { return c.kind !== 'issue'; }), iss = cs.filter(function (c) { return c.kind === 'issue'; });
-        if (prs.length) { var ul = wbEl('ul', 'wcards'); prs.forEach(function (c) { put(ul, c); }); body.appendChild(ul); }
-        if (!iss.length) return;
-        if (iss.length <= 3) { var su = wbEl('ul', 'wcards'); iss.forEach(function (c) { put(su, c); }); body.appendChild(su); return; }
-        var ik = s + ':' + b, io = !!wb.issuesOpen[ik];
-        var ih = wbEl('button', 'isshead', (io ? '\u25BE ' : '\u25B8 ') + iss.length + ' open issues');
-        ih.type = 'button'; ih.setAttribute('aria-expanded', io ? 'true' : 'false');
-        ih.addEventListener('click', function (ev) { ev.stopPropagation(); wb.issuesOpen[ik] = !wb.issuesOpen[ik]; wb.key = ''; renderWave(true); });
-        body.appendChild(ih);
-        var iu = wbEl('ul', io ? 'wcards issues' : 'wcards issues collapsed'); iss.forEach(function (c) { put(iu, c); }); body.appendChild(iu);
+    var rest = wb.cards.filter(function (c) { return !(c.pinned || cardWorking(c) || LK.child[c.key]); });
+    var bucketName = { waiting: 'waiting on this seat', review: 'in review', held: 'on hold', parked: 'parked' };
+    var statusName = { waiting: 'waiting', review: 'in review', held: 'on hold', parked: 'parked' };
+    function paintOpen(cs, ik, sub) {
+      if (!cs.length) return;
+      if (sub) body.appendChild(wbEl('div', 'wsub', sub));
+      var prs = cs.filter(function (c) { return c.kind !== 'issue'; }), iss = cs.filter(function (c) { return c.kind === 'issue'; });
+      if (prs.length) { var ul = wbEl('ul', 'wcards'); prs.forEach(function (c) { put(ul, c); }); body.appendChild(ul); }
+      if (!iss.length) return;
+      if (iss.length <= 3) { var su = wbEl('ul', 'wcards'); iss.forEach(function (c) { put(su, c); }); body.appendChild(su); return; }
+      var io = !!wb.issuesOpen[ik];
+      var ih = wbEl('button', 'isshead', (io ? '\u25BE ' : '\u25B8 ') + iss.length + ' open issues');
+      ih.type = 'button'; ih.setAttribute('aria-expanded', io ? 'true' : 'false');
+      ih.addEventListener('click', function (ev) { ev.stopPropagation(); wb.issuesOpen[ik] = !wb.issuesOpen[ik]; wb.key = ''; renderWave(true); });
+      body.appendChild(ih);
+      var iu = wbEl('ul', io ? 'wcards issues' : 'wcards issues collapsed'); iss.forEach(function (c) { put(iu, c); }); body.appendChild(iu);
+    }
+    function paintDone(cs, key) {
+      if (!cs.length) return;
+      var open = !!wb.doneOpen[key];
+      var dh = wbEl('button', 'donehead', 'done (' + cs.length + ')');
+      dh.type = 'button'; dh.setAttribute('aria-expanded', open ? 'true' : 'false');
+      dh.addEventListener('click', function (ev) { ev.stopPropagation(); wb.doneOpen[key] = !wb.doneOpen[key]; wb.key = ''; renderWave(true); });
+      body.appendChild(dh);
+      var du = wbEl('ul', open ? 'wcards done' : 'wcards done collapsed');
+      cs.sort(byBeat).forEach(function (c) { du.appendChild(card(c)); }); body.appendChild(du);
+    }
+    if (!countedView && wb.group === 'agent') {
+      var seats = [], bySeat = {};
+      L.boardGroups(rest, cardSeat).forEach(function (g) { seats.push(g.name); bySeat[g.name] = g.cards; });
+      seats.sort(function (a, b) { return String(L.LABEL[a] || a).localeCompare(String(L.LABEL[b] || b)); });
+      seats.forEach(function (s) {
+        var buckets = { waiting: [], review: [], held: [], parked: [], done: [] };
+        bySeat[s].forEach(function (c) { buckets[c._bucket || L.cardBucket(c)].push(c); });
+        if (!(buckets.waiting.length || buckets.review.length || buckets.held.length || buckets.parked.length || buckets.done.length)) return;
+        body.appendChild(wbEl('div', 'wgroup', L.LABEL[s] || s));
+        ['waiting', 'review', 'held', 'parked'].forEach(function (b) {
+          paintOpen(buckets[b].sort(byBeat), s + ':' + b, bucketName[b] + ' (' + buckets[b].length + ')');
+        });
+        paintDone(buckets.done, s);
       });
-      if (buckets.done.length) {
-        var open = !!wb.doneOpen[s];
-        var dh = wbEl('button', 'donehead', 'done (' + buckets.done.length + ')');
-        dh.type = 'button'; dh.setAttribute('aria-expanded', open ? 'true' : 'false');
-        dh.addEventListener('click', function (ev) { ev.stopPropagation(); wb.doneOpen[s] = !wb.doneOpen[s]; wb.key = ''; renderWave(true); });
-        body.appendChild(dh);
-        var du = wbEl('ul', open ? 'wcards done' : 'wcards done collapsed');
-        buckets.done.sort(byBeat).forEach(function (c) { du.appendChild(card(c)); }); body.appendChild(du);
-      }
-    });
+    } else if (!countedView) {
+      var byStatus = { waiting: [], review: [], held: [], parked: [], done: [] };
+      rest.forEach(function (c) { byStatus[c._bucket || L.cardBucket(c)].push(c); });
+      ['waiting', 'review', 'held', 'parked'].forEach(function (b) {
+        var cs = byStatus[b].sort(byBeat); if (!cs.length) return;
+        body.appendChild(wbEl('div', 'wgroup', statusName[b] + ' (' + cs.length + ')'));
+        paintOpen(cs, 'status:' + b, '');
+      });
+      paintDone(byStatus.done, 'status');
+    }
     var waveHead = $('waveCount');
     var cloudN = (wb.cloudAgents || []).filter(function (a) { return a && a.state === 'running'; }).length;
     var cloudBit = cloudN ? ' · ' + cloudN + ' cloud' : '';
@@ -1928,6 +1957,13 @@ footer a { color: var(--foot); }
       if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
     });
   }
+  var cardGroupBtn = $('cardGroup');
+  if (cardGroupBtn) cardGroupBtn.addEventListener('click', function () {
+    var next = readCardGroup() === 'agent' ? 'status' : 'agent';
+    try { localStorage.setItem('bifrost-card-group', next); } catch (e) {}
+    wb.key = '';
+    renderWave(true);
+  });
   document.addEventListener('click', function (ev) {
     var btn = ev.target.closest('.fold-head');
     if (!btn || btn.id === 'cardHistAll' || btn.id === 'waveHistBack') return;
