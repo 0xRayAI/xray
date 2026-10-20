@@ -7,14 +7,14 @@ description: On any message, run the board-prompt skill first; it posts the turn
 
 Run this skill once, before other work, on any inbound message: from the owner, from another seat (a seat DM), or in a room.
 
-The rules for the turn are [grok-bot/OP-PROC.md](../../OP-PROC.md) and the house overlay [house/OP-PROC.md](../../../house/OP-PROC.md).
+The rules for the turn are [grok-bot/OP-PROC.md](../../OP-PROC.md) and the house overlay [house/OP-PROC.md](https://github.com/0xRayAI/xray/blob/main/house/OP-PROC.md).
 
 ## Order
 
 1. Owner message only: `live-inbox <seat> --prompt`. Pass no `--from`. `from` is the `name:` in house config. Add `--room <name>` when that owner message was in a room. A seat DM and a room message from anyone else do not post `--prompt`.
-2. Always, before the work: `live-inbox <seat> --turn start --tag wake`.
+2. Always, before the work: `live-inbox <seat> --turn start --tag wake`. A webhook wake skips this post. WAKE-ROUTINE step 0 is that one start.
 3. The work.
-4. On every exit, including an early return and an error: `live-inbox <seat> --turn end --tag wake`.
+4. On every exit, including an early return and an error: `live-inbox <seat> --turn end --tag wake`. A webhook wake skips this post. The WAKE-ROUTINE EXIT trap is that one end.
 
 `--tag` is the word `wake`. A webhook wake uses WAKE-ROUTINE for its one `--prompt`, its `--turn start`, and its `--turn end`, and does not also run this skill. A chat turn uses this skill and does not also run step 0.
 

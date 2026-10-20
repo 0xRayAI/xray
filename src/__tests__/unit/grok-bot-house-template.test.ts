@@ -147,7 +147,7 @@ describe('grok-bot house template — USMail docs', () => {
     expect(skill).toContain('before the work');
     expect(skill).toContain('On every exit');
     expect(skill).toContain('../../OP-PROC.md');
-    expect(skill).toContain('../../../house/OP-PROC.md');
+    expect(skill).toContain('https://github.com/0xRayAI/xray/blob/main/house/OP-PROC.md');
     expect(skill).toContain('one fixed summary the seat wrote, or it is omitted');
     expect(skill).toContain('stay out of `--note`');
     expect(skill).toContain('does not send a reply whose only job is to mark the turn');
@@ -155,6 +155,8 @@ describe('grok-bot house template — USMail docs', () => {
     expect(skill).toContain('still run turn end on the way out');
     expect(skill).toContain('its `--turn start`, and its `--turn end`');
     expect(skill).toContain('does not also run this skill');
+    expect(skill).toContain('A webhook wake skips this post. WAKE-ROUTINE step 0 is that one start.');
+    expect(skill).toContain('A webhook wake skips this post. The WAKE-ROUTINE EXIT trap is that one end.');
     const wake = readFileSync(path.join(kit, 'templates/house/fleet/WAKE-ROUTINE.md'), 'utf8');
     expect(wake).not.toContain('--from blaze');
     expect(wake).toContain("trap 'live-inbox <seat> --turn end --tag wake; live-inbox <seat> --release' EXIT");
