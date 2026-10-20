@@ -161,6 +161,14 @@ Within that day:
 
 The note on the card is the prompt count, the ack count, the tile's byte total, and whether steps 1–3 matched. That note is the evidence. It is not a gate on this packet PR.
 
+## Interim
+
+Until that puller is live, each seat follows one line. It is in `grok-bot/OP-PROC.md`, `house/OP-PROC.md`, the house template cadence in `grok-bot/templates/house/HOUSE.md`, `grok-bot/templates/house/fleet/WAKE-ROUTINE.md`, and step 1 of `grok-bot/skills/station/SKILL.md`:
+
+On every owner message, first run `live-inbox <seat> --prompt --note "<gist>"`; when you launch or resume a cloud agent run `live-inbox <seat> --turn start --tag "bc-<first8> <track>"`; when it finishes or is cancelled run `live-inbox <seat> --turn end --tag "bc-<first8>"`. No exceptions for short turns.
+
+`live-inbox` has no `--act` flag. The gist is a short summary, not the message text. The one-day measurement still starts only after the puller is live, on a seat that is not running this line.
+
 ## Out of scope
 
 The #474 turn posts, the EXIT trap, the owner-prompts tile, and the `Prompt: <id>` beat stay. A handled GitHub line, a handoff, and `--ack stale` / `--upto` / `--ack all` stay a seat receipt. This follow-up does not edit `session-start.js` to call the box uploader, does not revive `push_to_host.sh`, does not treat a turn as a prompt, and does not treat a turn tagged `ack` as the logged ack.

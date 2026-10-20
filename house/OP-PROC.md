@@ -29,6 +29,7 @@ OP-PROC is **layered**: pack base (`grok-bot/OP-PROC.md`) then this house file (
 - Park a seat that has merged, been idle three days, or finished. CoS lists it. Blaze deletes it. Do not route work to it.
 
 - On any inbound message, the seat runs the board-prompt skill first. It links `grok-bot/OP-PROC.md` and the house overlay as the rules for the turn. An owner message posts one `live-inbox <seat> --prompt` with no `--from`. Every message then posts `--turn start --tag wake`, does the work, and posts `--turn end --tag wake` on every exit, including the EXIT trap. `--note` is a seat-written fixed summary or omitted, and it never carries message text. A prompt that spawns an issue or PR is that card's first beat.
+- Until the server records the owner prompt and its ack, this is the line: On every owner message, first run `live-inbox <seat> --prompt --note "<gist>"`; when you launch or resume a cloud agent run `live-inbox <seat> --turn start --tag "bc-<first8> <track>"`; when it finishes or is cancelled run `live-inbox <seat> --turn end --tag "bc-<first8>"`. No exceptions for short turns.
 
 ## 2. One owner per job
 
