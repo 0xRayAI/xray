@@ -2,34 +2,51 @@
 
 Packet only. No code in this change.
 
+## Core
+
+The root bug is that card metadata is not maintained. `owner`, `status`, `acceptance`, `evidence`, `next owner`, `blockers`, `branch/head`, and `CI` are derived on every `live_board.model` pass from source events, then derived again when those events change. A field is not written by hand and left. A value a replay of the events would not produce is underivable.
+
+- `status`, `evidence`, `blockers` — GitHub PR, review, and CI events. `review` with `CHANGES_REQUESTED` is the beat and the blocker `changes requested`, not `Reviewer FAIL`, and the stage is `fix`.
+- `branch/head` — the newest PR push (`head` sha, and branch when the event carries one).
+- `CI` — the newest CI conclusion on the card.
+- `acceptance` — the linked packet only. That is the card packet's `acceptance`, else the PR body's `## Packet` acceptance, else the packet the card or PR names. The body is not stored.
+- `owner` — the cloud-agent start/stop hooks (#472). A `cloud_agent` event with `action` `launch` or `finished` sets `owner` to that event's `agent` (`bcId`). The newest launch on the card wins. A `finished` for that agent leaves the same `bcId`. The critic login is never the owner.
+- `next owner` — the review verdict. `changes requested` names the fixer, the owner the #472 hook set on that card, not the review author.
+
+`state` (`live`, `held`, `parked`, `closed`) stays a badge. It is not one of these fields. A drag does not write `status` on the card. It appends a `board_status` event, and the next pass derives `status` from it. A newer GitHub event that moves stage still wins.
+
+## Board check
+
+Every issue and PR card gets `field_check`: a list of `{field, why}` with `why` of `missing` or `underivable`. Missing means the field is empty. Underivable means the stored value is not what a replay produces, including a hand-set `next owner` or an owner of critic while the hook names a `bcId`. An empty list is a maintained card. The wave face and the kanban face show the same flag. The check does not fill a field to clear itself. `— missing —` is not a value. When the events can fill the field, the field is filled. When they cannot, the flag is the signal.
+
 ## Scope
 
-A kanban of the cards the wave board already serves. `house/live/feed/live_board.py` builds them, the server puts them on `feed.board`, and `house/live/app/public/index.html` draws them. Columns are the existing stages `open`, `review`, `fix`, `merge`, `retest`, `done` (`STAGES`, also `board.stages`). The owner's "backlog → active" example is a drag from `open` to `review`. `state` stays a badge (`live`, `held`, `parked`, `closed`), not a second set of columns. Closed cards sit in `done`.
+A kanban of those cards. Columns are the derived stages `open`, `review`, `fix`, `merge`, `retest`, `done` (`STAGES`, also `board.stages`). The owner's "backlog → active" example is a drag from `open` to `review`. Closed cards sit in `done`.
 
-A click on a card, on the wave list and on the kanban, opens one modal with that card's timeline (the beats on the card, including a status move). This replaces the in-place `.wdetail` expand on both views. Esc closes the modal. A click on the backdrop closes it. The URL carries `?card=` plus the card key (`repo#number`, encoded), so a reload or a shared link opens that same modal on either view. Closing clears the param. A finished drag does not open the modal.
+A click on a card, on the wave list and on the kanban, opens one modal with that card's timeline and the derived fields. This replaces the in-place `.wdetail` expand on both views. Esc closes the modal. A click on the backdrop closes it. The URL carries `?card=` plus the card key (`repo#number`, encoded). Closing clears the param. A finished drag does not open the modal.
 
 Every issue and PR card on both views shows a GitHub link on the card face, visible while the modal is closed. The link is `c.url` when that is an https GitHub issue or pull. Otherwise it is `https://github.com/<repo>/pull/<number>` or `.../issues/<number>` from `kind`. It opens in a new tab (`target=_blank`, `rel=noopener`). A click on the link does not open the modal. A pinned card with no repo and number has no such link. A cloud row shows the same face link when its `pr` is a GitHub pull URL.
 
-A signed-in user can drag a card into another column. The drop is saved as one status-change event on that card's timeline. The next feed paint places the card in the new column. Anonymous viewers and the password session can see the board and cannot drag.
+A signed-in user can drag a card into another column. Anonymous viewers and the password session can see the board and cannot drag.
 
 ### 24h tiles
 
-The six buttons in `#waveStats` stay the filter they are now: `issues_opened_24h`, `issues_closed_24h`, `prs_opened_24h`, `prs_merged_24h`, `prs_closed_unmerged_24h`, and `open_total`, matched by `*_ids` (open now = not `closed` and not stage `done`). A Kanban control beside that strip switches the card list to columns of the same filtered set (`wb.statFilter`). A tile click while the kanban is up repaints the columns. Empty columns stay visible so they can receive a drop.
+The six buttons in `#waveStats` stay the filter they are now: `issues_opened_24h`, `issues_closed_24h`, `prs_opened_24h`, `prs_merged_24h`, `prs_closed_unmerged_24h`, and `open_total`, matched by `*_ids`. A Kanban control beside that strip switches the card list to columns of the same filtered set. A tile click while the kanban is up repaints the columns. Empty columns stay visible so they can receive a drop.
 
 ## Files to touch
 
-- `house/live/app/public/index.html` — columns, the shared timeline modal, the face GitHub link, drag, Kanban control next to the tiles.
-- `house/live/app/public/live-config.js` — pure helper that places a card in a stage column. `board_status` is already a kind word ("board").
-- `house/live/app/server.mjs` — `POST /cards/status` and the sign-in session. Password `POST /login` and `mesh_session` stay as they are.
-- `house/live/feed/live_board.py` — status events, and the card-detail rules below. `CHANGES_REQUESTED` is the beat `changes requested`, which still moves the stage to `fix`.
-- `house/live/feed/live_packet.py` — acceptance from the PR body, then from the linked packet, when the card copy is empty. The body is still not stored.
-- `house/live/docs/board.md` — the `CHANGES_REQUESTED` row.
+- `house/live/feed/live_board.py` — derive the eight fields on every pass, and set `field_check`.
+- `house/live/feed/live_packet.py` — acceptance from the linked packet only. The body is not stored.
+- `house/live/app/public/index.html` — columns, the shared modal, the face GitHub link, the field-check flag, drag, Kanban control next to the tiles.
+- `house/live/app/public/live-config.js` — pure helper that places a card in the derived stage column.
+- `house/live/app/server.mjs` — `POST /cards/status` appends the event and does not write `status` on the card. Password `POST /login` and `mesh_session` stay.
+- `house/live/docs/board.md` — the derived fields, the check, and the `CHANGES_REQUESTED` row.
 - `house/live/tests/test_board.py`, `house/live/tests/server-route.test.mjs`, and a new Playwright file under `house/live/tests/`.
-- `docs-site/docs/plates/bifrost.md` — the column view, the timeline modal, the face GitHub link, the drag beat, and the card-detail rules.
+- `docs-site/docs/plates/bifrost.md` — the column view, the modal, the face link, and the field check.
 
 OAuth modules: see the open question. Do not add an npm dependency with a guessed name.
 
-## Data model for status moves
+## Status event
 
 A card is still one GitHub issue or PR, key `repo#number`. A move does not edit GitHub.
 
@@ -43,7 +60,7 @@ Append-only JSONL on the volume, beside `cards.json`:
 - `by` — the signed-in subject
 - beat `what` — `status <from> → <to>`
 
-`live_board.model` appends that beat to the card. If it is the newest stage-moving beat, `stage` becomes `to_stage`. A later GitHub beat that already changes stage (reviewer verdict, merge, close) still wins when it is newer. The event does not set `closed`, `held`, or `parked`, and it does not clear stall, nudge, or the tripwire. The collector pass must keep the event, or the column snaps back.
+The collector pass must keep the event, or the next derivation snaps the column back. The event does not set `closed`, `held`, or `parked`, and it does not clear stall, nudge, or the tripwire.
 
 `POST /cards/status` body: `{ repo, number, to_stage }`. Same column is a no-op and writes nothing. Unknown stage, missing card, or a pinned card is rejected. The response includes the new beat.
 
@@ -57,38 +74,37 @@ The board server calls that same refresh before it accepts a drag. The browser t
 
 Open question: there is no published npm package name to depend on. Confirm whether to copy those two bedrock modules or to publish and name a package. Do not invent a package name.
 
-## Card detail
-
-Same fields on a wave card and a kanban card, including the timeline modal. From the owner's screenshot of #474, a `CHANGES_REQUESTED` review.
-
-After that review the stage is still `fix`. `owner` and `next owner` are the seat or cloud agent doing the fix, not critic. The cloud agent is the linked `bcId` on that card whose seat is not critic (a running agent wins, otherwise the newest). `critic_bc` is not that id. With no such agent, use the seat that opened the card, or the next owner from before the review, when that seat is not critic. When the bcId or that seat is known, the detail does not show `— missing —`.
-
-`acceptance` is the packet field. When the card's copy is empty, fill it from the PR body's `## Packet` acceptance, then from the linked packet the card or PR names. `— missing —` only when none of those have it.
-
-The beat for `review` with `CHANGES_REQUESTED` is `changes requested`, not `Reviewer FAIL`. That word is what moves the stage to `fix`. `Reviewer PASS` stays.
-
 ## Plates and docs
 
-- `docs-site/docs/plates/bifrost.md` — kanban is a column view of the collector board. A card click opens the timeline modal (`?card=`). A drag is a timeline beat, not a GitHub edit. The GitHub link sits on the card face. After changes requested, owner and next owner are the fixer, and the beat reads `changes requested`.
+- `docs-site/docs/plates/bifrost.md` — kanban is a column view of derived status. A card click opens the timeline modal (`?card=`). A drag is an event, then a re-derived status. The GitHub link sits on the card face. `field_check` is the maintenance flag.
 - `grok-bot/OP-PROC.md` — the beat line's `CHANGES_REQUESTED` parenthetical becomes `changes requested`. A status move is still not a beat that moves stall or nudge.
 
 ## Tests
 
-- `house/live/tests/test_board.py` — a `board_status` event becomes a beat and sets `stage` only while it is newest. A newer merge still ends the card. The existing `CHANGES_REQUESTED` case updates with the three card-detail checks: the beat is `changes requested` and the stage is `fix`; `owner` and `next owner` are the fixture worker `bcId`, not critic, and are not `— missing —`; `acceptance` matches the PR body packet, and a second case matches the linked packet when the body has none.
-- `house/live/tests/server-route.test.mjs` — `POST /cards/status` rejects a missing session, a pinned card, and a same-column drop. A signed-in drop appends one event.
+The earlier per-field fixes are tests that a replay derives the field.
+
+- `house/live/tests/test_board.py`
+  - A `cloud_agent` launch (#472) for `bc-id` on the card, then `review` `CHANGES_REQUESTED`: `owner` is `bc-id`, not critic. A later `finished` for that agent leaves `owner` as `bc-id`.
+  - That review sets `next owner` to that fixer, not the critic login. The beat is `changes requested` and the stage is `fix`. Not `Reviewer FAIL`.
+  - `acceptance` equals the linked packet. A second case reads it from the PR body's `## Packet` when that is the linked packet. No other string is written into the field.
+  - `evidence`, `blockers`, `head`, and `CI` match the GitHub events in the fixture. A hand-set `next owner` with no verdict is `underivable`.
+  - `field_check` is empty when every field replays. It flags `missing` when the packet has no acceptance, and `underivable` when a stored owner is critic while the hook names `bc-id`.
+  - A `board_status` event re-derives `status` only while it is the newest stage move. A newer merge still ends the card.
+- `house/live/tests/server-route.test.mjs` — `POST /cards/status` rejects a missing session, a pinned card, and a same-column drop. A signed-in drop appends one event and does not write `status` on the stored card.
 - Live Playwright, new file `house/live/tests/kanban-drag.test.mjs`, same shape as `board-panel.test.mjs` (`node:test` + Playwright chromium against the app page). Individually runnable: `node --test house/live/tests/kanban-drag.test.mjs`.
-  - Drag a fixture card from the `open` column to `review` with a real pointer. The timeline modal shows `status open → review`. Reload. The card is still in `review`. The drag itself does not leave the modal open.
-  - Timeline modal, both views: a click on a wave-list card and a click on a kanban card each open the dialog with that card's beats, and neither card expands `.wdetail` in place. Esc closes and clears `?card=`. A backdrop click closes and clears it. Loading `?card=` with that key opens the same modal.
-  - GitHub link, both views: while the modal is closed, the wave-list card and the kanban card each show a link to that PR or issue. The link has `target=_blank` and `rel=noopener`. Activating it does not open the modal.
-  - Card detail, both views: the modal shows `changes requested`, the worker `bcId` as owner and next owner, and the acceptance from the fixture packet. It does not show `Reviewer FAIL`, critic as owner or next owner, or `— missing —` for those fields.
+  - Drag a fixture card from `open` to `review` with a real pointer. After the next paint the card is in `review` because status was re-derived. Reload. It stays. The drag does not leave the modal open.
+  - Timeline modal, both views: a click opens the dialog with that card's beats and derived fields, and neither card expands `.wdetail` in place. Esc closes and clears `?card=`. A backdrop click closes and clears it. Loading `?card=` opens the same modal.
+  - GitHub link, both views: while the modal is closed, each card shows a link to that PR or issue with `target=_blank` and `rel=noopener`. Activating it does not open the modal.
+  - Card fields, both views: the fixture shows `changes requested`, owner `bc-id`, next owner that fixer, and the packet acceptance. `field_check` is empty. It does not show `Reviewer FAIL`, critic as owner or next owner, or `— missing —` for a field the events can fill. A card with no packet acceptance shows the missing flag on both views.
 
 ## Out of scope
 
-- GitHub state, labels, comments, merge, or close.
+- Editing GitHub state, labels, comments, merge, or close. The board reads those events.
 - Seat keys, inbox, wakes, nudges, tripwire, clock.
 - The mesh canvas, roster, and activity log.
 - Replacing the password gate or public-mode reads.
 - Cloud-agent rows as draggable cards.
 - Publishing an npm package.
-- A second status vocabulary (`backlog`, `active`) beside `stage`.
+- A second status vocabulary (`backlog`, `active`) beside derived stage.
 - Keeping the in-place `.wdetail` expand as a second timeline.
+- Hand-filling a field so the check goes quiet.
