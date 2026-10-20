@@ -2,18 +2,18 @@ import { DEFAULT_PROMOTION_MIN_CONFIDENCE, } from '../registry/CuratedSignalsMan
 import { effectiveSignalConfidence, meetsConfidenceGate } from '../registry/confidence-decay.js';
 export const DEFAULT_MIN_CONFIDENCE_GATE = DEFAULT_PROMOTION_MIN_CONFIDENCE;
 export const TRAP_CAPABLE_AGENTS = ['architect', 'security-auditor', 'researcher'];
-export function resolveSignalConfidence(signalName, signalsManager, metadataConfidence) {
+export function resolveSignalConfidence(signalName, signalsManager, metadataConfidence, now = new Date()) {
     if (typeof metadataConfidence === 'number') {
         return metadataConfidence;
     }
     const signal = signalsManager.getByName(signalName);
-    const decayed = signal ? effectiveSignalConfidence(signal) : null;
+    const decayed = signal ? effectiveSignalConfidence(signal, { now }) : null;
     if (decayed) {
         return decayed.effectiveConfidence;
     }
     return null;
 }
-export function getConfidenceForTask(task, signalsManager) {
+export function getConfidenceForTask(task, signalsManager, now = new Date()) {
     const text = `${task.description} ${task.type}`;
     const textMatches = signalsManager.matchByText(text, 2);
     const trapDetected = /TYPE:\s*ontological-trap/i.test(text) ||
@@ -34,7 +34,7 @@ export function getConfidenceForTask(task, signalsManager) {
                 staleDays: 0,
             };
         }
-        const decayed = effectiveSignalConfidence(match.signal);
+        const decayed = effectiveSignalConfidence(match.signal, { now });
         if (!decayed)
             return null;
         return {

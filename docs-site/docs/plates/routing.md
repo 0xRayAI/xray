@@ -5,7 +5,7 @@ sidebar_label: Routing
 
 # Routing
 
-Task text becomes an agent. `scoreAndRoute` scores the work, then `routeToAgent` picks the tier agent. Repertoire may replace that agent when a law matches. Naming no plane stops before that pick and returns nobody.
+Task text becomes an agent. `scoreAndRoute` scores the work, then `routeToAgent` picks the tier agent. Repertoire may replace that agent when a law matches. A look that names no plane stops before that pick and returns nobody. One card attaches its first file. Two names stay quiet.
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -30,8 +30,9 @@ Task text becomes an agent. `scoreAndRoute` scores the work, then `routeToAgent`
 │                              v                              │
 │   ┌──────────────────────────────────────────────────────┐  │
 │   │ lensPlane                                            │  │
-│   │ no plane named stops here and the agent is empty     │  │
-│   │ one plane attaches that file                         │  │
+│   │ a look with no plane stops; agent is empty           │  │
+│   │ one card attaches its first file                     │  │
+│   │ two names stay quiet and attach no file              │  │
 │   └──────────────────────────┬───────────────────────────┘  │
 │                              v                              │
 │   ┌──────────────────────────────────────────────────────┐  │

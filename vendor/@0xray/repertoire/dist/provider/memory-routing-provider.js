@@ -160,7 +160,7 @@ export class RepertoireMemoryRoutingProvider {
             context: toRoutingContext(resolved.repertoireContext),
         };
     }
-    getTaskConfidence(task) {
+    getTaskConfidence(task, now) {
         const repTask = {
             id: task.id,
             description: task.description,
@@ -170,7 +170,7 @@ export class RepertoireMemoryRoutingProvider {
             estimatedComplexity: task.estimatedComplexity,
             metadata: task.metadata,
         };
-        const context = this.service.orchestratorBridge.getConfidenceForTask(repTask);
+        const context = this.service.orchestratorBridge.getConfidenceForTask(repTask, now);
         return {
             signals: context.signals.map((entry) => ({
                 name: entry.name,
