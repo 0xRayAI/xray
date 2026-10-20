@@ -169,6 +169,41 @@ class PullsCursorBoundary(unittest.TestCase):
             col.poll_pulls(C())
         self.assertIn(f"{REPO}#8:open", col.ev)
 
+    def test_capped_tie_restarts_at_page_one_and_leaves_the_tail(self):
+        """Two polls that both hit the cap restart at page 1. The tail stays out until a poll fits."""
+        col = self._collector()
+        col.st["bf"]["author:seat"] = True
+        col.st["cur"]["pulls"] = WHEN
+        first = _pull()
+        tail = _pull()
+        tail["number"] = 8
+        tail["html_url"] = f"https://github.com/{REPO}/pull/8"
+        tail["head"] = {"sha": "e" * 40}
+        nxt = "https://example.test/page-2"
+        seen = []
+
+        class C:
+            token = "t"
+
+            def rest(self, path, params=None, etag=None, essential=True):
+                seen.append(path)
+                if path == nxt:
+                    return 200, [tail], None, None
+                return 200, [first], "page-1", nxt
+
+        real = uc.RepoCollector.paged
+
+        def capped(self, c, path, params, key, stop=None, essential=True, max_pages=400):
+            return real(self, c, path, params, key, stop=stop, essential=essential, max_pages=1)
+
+        with mock.patch.object(uc.RepoCollector, "paged", capped), mock.patch.dict(uc.NODE_LC, FLEET):
+            col.poll_pulls(C())
+            col.poll_pulls(C())
+        self.assertEqual(seen, [f"/repos/{REPO}/pulls", f"/repos/{REPO}/pulls"])
+        self.assertIn(f"{REPO}#7:open", col.ev)
+        self.assertNotIn(f"{REPO}#8:open", col.ev)
+        self.assertNotIn("pulls", col.st["etags"])
+
     def test_same_second_head_change_sets_enrich(self):
         col = self._collector()
         col.st["bf"]["author:seat"] = True

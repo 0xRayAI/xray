@@ -96,6 +96,7 @@ test('spectrum defaults on; ?spectrum=0 opts out; ?replay=0 still only gates the
   assert.match(html, /id="spectrumMeter"/);
   assert.match(html, /L\.spectrumMeter\(/);
   assert.match(html, /L\.spectrumTrail\(/);
+  assert.match(html, /canvas\.dataset\.spectrumTrail = '1'/);
   assert.match(html, /L\.aspectFit\(canvas\.width, canvas\.height, W, H\)/);
   assert.match(html, /L\.packetCore\(light\)/);
   assert.match(html, /quadraticCurveTo\(m\[0\], m\[1\], b\[0\], b\[1\]\)/);
@@ -123,6 +124,12 @@ test('a set falsy spectrum flag is off, including 0', () => {
   assert.equal(L.spectrumEnabled(false, '', false), false);
   assert.equal(L.spectrumEnabled(undefined, '', false), true);
   assert.equal(L.spectrumEnabled(true, '?spectrum=1', false), true);
+});
+
+test('the board manual names a falsy spectrum flag and no spectrum plate', () => {
+  const manual = fs.readFileSync(path.join(ROOT, 'docs', 'board.md'), 'utf8');
+  assert.match(manual, /A set falsy `LiveMesh\.SPECTRUM` \(`0`, `''`, `null`, `false`\) turns the stream off, and a missing flag leaves it on\./);
+  assert.match(manual, /Plates read: none \(no spectrum plate\)/);
 });
 
 test('the replay toggle re-reads the spectrum flag', () => {

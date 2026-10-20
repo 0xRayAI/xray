@@ -241,6 +241,7 @@
   if ($('siteFoot')) $('siteFoot').textContent = L.SITE_FOOT || '';
   var state = { events: [], live: true, t: Date.now(), generatedAt: null };
   var playing = false, speed = 600, source = '', fetchError = '', lastFrame = performance.now();
+  var releaseLive = false;   // the frame after a cap may reach now
   var orbit = 0, lastDraw = null, dragging = false;
   var flashes = [];            // live-mode pings: { e, start } in wall ms
   var mem = {};                // fetchFeed etag / rate-limit memory
@@ -434,6 +435,7 @@
   // Replayed packets (manual playback, the opening burst, and the loop) leave a 12-stop rainbow trail on the curved lane.
   function replayTrail(a, m, b, p, nowWall) {
     var light = plateLight(), stops = L.spectrumTrail(p, nowWall, light), i, stop, tq;
+    if (stops.length) canvas.dataset.spectrumTrail = '1';
     for (i = stops.length - 1; i >= 0; i--) {
       stop = stops[i]; tq = bez(a, m, b, stop.t);
       ctx.fillStyle = 'hsla(' + stop.hue + ',95%,' + stop.lightness + '%,' + stop.alpha + ')';
@@ -986,7 +988,7 @@
     }
   }
 
-  function goLive() { endReplay(); state.live = true; setTimeout(playFresh, 0); playing = false; state.t = Date.now(); lastText = 0; }
+  function goLive() { endReplay(); state.live = true; setTimeout(playFresh, 0); playing = false; releaseLive = false; state.t = Date.now(); lastText = 0; }
   function rewindTo(t) { endReplay(); state.live = false; flashes = []; state.t = t; lastText = 0; }
 
   $('live').addEventListener('click', goLive);
@@ -995,18 +997,18 @@
   $('ambient').addEventListener('change', function (ev) { ambientOn = ambientStats.on = !reduced && ev.target.checked; ambient = null; readSpectrum(); });
   $('play').addEventListener('click', function () {
     if (state.live) { if (!reduced) startReplay(); lastText = 0; return; }
-    if (playing) { playing = false; lastText = 0; return; }
+    if (playing) { playing = false; releaseLive = false; lastText = 0; return; }
     if (reduced) { lastText = 0; return; }
     /* A pause parked within 2s of now would let the next frame snap live. Rewind into the
        canned replay. Further behind continues from state.t. The 250ms frame cap times speed
        is 2.5 min at 600× and 15 min at 3600×, so it is not this distance. */
     if (state.t + 2000 >= Date.now()) { if (!startReplay()) { lastText = 0; return; } }
-    playing = true; lastText = 0;
+    playing = true; releaseLive = false; lastText = 0;
   });
   $('speed').addEventListener('change', function (ev) { endReplay(); speed = Number(ev.target.value) || 600; });
   $('slider').addEventListener('input', function (ev) {
     var v = Number(ev.target.value), b = L.bounds(state.events, Date.now());
-    if (L.sliderAction(v, b) === 'live') goLive(); else { rewindTo(v); playing = true; }
+    if (L.sliderAction(v, b) === 'live') goLive(); else { rewindTo(v); playing = true; releaseLive = false; }
   });
   $('slider').addEventListener('pointerdown', function () { dragging = true; });
   window.addEventListener('pointerup', function () { dragging = false; });
@@ -1020,7 +1022,17 @@
     var dt = Math.min(250, nowWall - lastFrame); lastFrame = nowWall;
     if (playing && (replay || !state.live)) {
       if (replay) state.live = false;
-      state.t += dt * speed;
+      var step = dt * speed;
+      if (!replay) {
+        /* 600× turns one 250ms frame into 2.5 min (15 min at 3600×). A continue
+           that started outside the 2s band must not reach now on that frame.
+           The cap parks 2s short. The next frame may reach now; capping again
+           would stay 2s behind for as long as the wall clock moves. */
+        var room = Date.now() - state.t - 2000;
+        if (releaseLive) releaseLive = false;
+        else if (room > 0 && step > room) { step = room; releaseLive = true; }
+      }
+      state.t += step;
       if (state.t >= Date.now() || (replay && state.t >= replay.end)) goLive();
     } else if (state.live) state.t = Date.now();
     try {

@@ -145,7 +145,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Install Playwright chromium
+        # Same package install as Quality Checks (npm ci --ignore-scripts). That does not download a browser.
+        run: npm ci --ignore-scripts && npx playwright install --with-deps chromium
       - name: house/live tests
+        env:
+          SPECTRUM_OUT: ${{ runner.temp }}/spectrum
         run: bash house/live/tests/run_tests.sh
       - name: house/live-mesh tests
         run: cd house/live-mesh && python3 -m unittest -q test_fetch_feed test_tripwire_push
