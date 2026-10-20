@@ -416,6 +416,30 @@
     return base + (base.indexOf('?') < 0 ? '?' : '&') + 't=' + Math.floor(nowMs / 1000);
   }
 
+  /* Chip list from the feed. Names come from roster (strings or {name, role}).
+     An empty or missing roster leaves the caller on whatever strip it already drew. */
+  function rosterEntries(feed) {
+    var raw = feed && feed.roster;
+    if (!Array.isArray(raw)) return null;
+    var roles = feed && feed.roster_roles && typeof feed.roster_roles === 'object' ? feed.roster_roles : {};
+    var out = [], seen = {};
+    raw.forEach(function (item) {
+      var name = '', role = '';
+      if (typeof item === 'string') name = item;
+      else if (item && typeof item === 'object') {
+        name = item.name || item.seat || '';
+        role = item.role || '';
+      }
+      name = String(name || '').trim();
+      if (!name || seen[name.toLowerCase()]) return;
+      seen[name.toLowerCase()] = 1;
+      if (!role && roles[name] != null) role = String(roles[name]);
+      else if (!role && roles[name.toLowerCase()] != null) role = String(roles[name.toLowerCase()]);
+      out.push([name, String(role || '')]);
+    });
+    return out.length ? out : null;
+  }
+
   /* One poll. mem carries { etag, apiBlockedUntil } between polls. Resolves to
      { source, feed } (feed null on a 304) or rejects when every source fails. */
   function fetchFeed(fetchFn, nowMs, mem) {
@@ -453,7 +477,7 @@
     resolveNodes: resolveNodes, eventColor: eventColor, cleanLabel: cleanLabel, promptView: promptView, activityLines: activityLines, whoTag: whoTag,
     headline: headline, parseT: parseT, mergeEvents: mergeEvents, countUpTo: countUpTo,
     eventsUpTo: eventsUpTo, pingsAt: pingsAt, hotNodes: hotNodes, applyFeed: applyFeed,
-    bounds: bounds, fmtCt: fmtCt, ago: ago, feedUrl: feedUrl, fetchFeed: fetchFeed,
+    bounds: bounds, fmtCt: fmtCt, ago: ago, feedUrl: feedUrl, fetchFeed: fetchFeed, rosterEntries: rosterEntries,
     own: own, botImage: botImage, badgeLetter: badgeLetter, bob: bob, pulse: pulse, entry: entry,
     ENTRY_MS: ENTRY_MS, PULSE_MS: PULSE_MS, MARK: MARK, markCells: markCells,
     isPlaying: isPlaying, sliderAction: sliderAction, edgeTraffic: edgeTraffic, orbitStep: orbitStep,

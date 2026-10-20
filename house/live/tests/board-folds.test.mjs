@@ -6,6 +6,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
+import { configuredRoster } from '../app/presence.mjs';
+
+const FEED = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'feed');
+const ROSTER = configuredRoster({
+  LIVE_FLEET_SEATS: JSON.stringify({ seats: ['seat-from-env', 'forge', 'critic', 'blinky'] }),
+}, [FEED]);
 
 const PUB = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app', 'public');
 const OPEN = ['mesh', 'stats', 'roster', 'cards', 'activity'];
@@ -20,6 +26,8 @@ function serve() {
     queue: [],
     track: { items: [] },
     cloud_agents: [],
+    roster: ROSTER.names,
+    roster_roles: ROSTER.roles,
     board: { updated_ct: new Date().toISOString(), cards: [], stats: { open_total: 0 } },
   });
   return new Promise((resolve) => {
@@ -181,7 +189,7 @@ test('mesh, stats, roster, cards, and activity start open in both themes', async
   }
 });
 
-test('roster chips show the role on load and leave status to the dot', async () => {
+test('roster chips follow the configured seats and the theme toggle is the rightmost header control', async () => {
   const server = await serve();
   const base = `http://127.0.0.1:${server.address().port}/index.html`;
   let browser;
@@ -197,7 +205,7 @@ test('roster chips show the role on load and leave status to the dot', async () 
       path: path.join(path.dirname(PUB), '..', 'site', 'public', 'site-config.js'),
     }));
     await page.goto(base, { waitUntil: 'domcontentloaded' });
-    await page.waitForFunction(() => document.querySelectorAll('#seatGrid .seat').length === 3);
+    await page.waitForFunction((n) => document.querySelectorAll('#seatGrid .seat').length === n, ROSTER.names.length);
     const before = await page.evaluate(() => {
       const panel = document.getElementById('seats').getBoundingClientRect().width;
       const grid = document.getElementById('seatGrid').getBoundingClientRect().width;
@@ -219,9 +227,12 @@ test('roster chips show the role on load and leave status to the dot', async () 
       };
     });
     assert.equal(before.rosterOpen, true);
+    assert.ok(before.seats.length > 3, JSON.stringify(before.seats));
     assert.ok(before.nodes.includes('CloudAgents'));
-    assert.deepEqual(before.seats.map((seat) => seat.name), ['BLINKY', 'CRITIC', 'FORGE']);
-    assert.deepEqual(before.seats.map((seat) => seat.role), ['chief of staff', 'reviewer', 'eng primary']);
+    assert.deepEqual(before.seats.map((seat) => seat.name), ROSTER.names.map((name) => name.toUpperCase()));
+    assert.deepEqual(before.seats.map((seat) => seat.role), ROSTER.names.map((name) => ROSTER.roles[name] || ''));
+    assert.ok(before.seats.some((seat) => seat.name === 'SEAT-FROM-ENV'));
+    assert.ok(before.seats.some((seat) => seat.role === 'chief of staff'));
     assert.ok(before.seats.every((seat) => seat.tag === 'DIV'));
     assert.ok(before.seats.every((seat) => Math.abs(seat.y - before.seats[0].y) < 2), JSON.stringify(before.seats));
     assert.ok(before.seats.every((seat) => seat.w > 80 && seat.w < before.panel / 2), JSON.stringify(before));
@@ -235,6 +246,23 @@ test('roster chips show the role on load and leave status to the dot', async () 
     assert.equal(after.tag, 'DIV');
     assert.equal(after.role, 'chief of staff');
     assert.equal(await page.locator('#seats').evaluate((el) => el.classList.contains('collapsed')), false);
+    const toggle = await page.evaluate(() => {
+      const button = document.getElementById('themeToggle');
+      const header = document.querySelector('header');
+      const rows = [...header.querySelectorAll('.title > *')].filter((el) => getComputedStyle(el).display !== 'none');
+      const controls = [...header.querySelectorAll('button, a, input, select')];
+      const box = button.getBoundingClientRect();
+      const maxRow = Math.max(...rows.map((el) => el.getBoundingClientRect().right));
+      const maxControl = Math.max(...controls.map((el) => el.getBoundingClientRect().right));
+      return {
+        last: rows[rows.length - 1] === button,
+        rightOfRow: box.right >= maxRow - 1,
+        rightOfControls: box.right >= maxControl - 1,
+      };
+    });
+    assert.equal(toggle.last, true);
+    assert.equal(toggle.rightOfRow, true);
+    assert.equal(toggle.rightOfControls, true);
   } finally {
     if (browser) await browser.close();
     await new Promise((resolve) => server.close(resolve));

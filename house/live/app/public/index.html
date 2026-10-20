@@ -351,6 +351,7 @@ body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 "In
 main { max-width: 1100px; margin: 0 auto; padding: 12px; }
 header { animation: rise .6s ease-out both; }
 .title { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+#themeToggle { margin-left: auto; flex: none; }
 #mark { width: 112px; height: 44px; flex: none; }
 .pill { display: inline-block; width: 11ch; text-align: center; white-space: nowrap; flex: none; font-size: 11px; font-weight: 700; letter-spacing: .08em; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--teal); color: var(--pill-fg); background: var(--pill-bg); }
 .pill::before { content: "\25CF  "; color: var(--pill-live); animation: blink 1.6s ease-in-out infinite; }
@@ -541,7 +542,7 @@ footer a { color: var(--foot); }
 <body>
 <main>
   <header>
-    <div class="title"><h1>🌈 Live board</h1><button id="themeToggle" type="button" aria-label="Color theme">☀</button><span class="pill" id="pill">LIVE</span><span class="spectrum-pill" id="spectrumPill" hidden>Spectrum</span><span class="spectrum-meter" id="spectrumMeter" hidden aria-hidden="true"></span></div>
+    <div class="title"><h1>🌈 Live board</h1><span class="pill" id="pill">LIVE</span><span class="spectrum-pill" id="spectrumPill" hidden>Spectrum</span><span class="spectrum-meter" id="spectrumMeter" hidden aria-hidden="true"></span><button id="themeToggle" type="button" aria-label="Color theme">☀</button></div>
     <p class="status" id="status">Loading…</p>
     <p class="fresh" id="fresh"><span class="fresh-dot"></span><span id="freshText">Loading…</span></p>
     <div hidden><canvas id="mark" width="112" height="44"></canvas><b id="fleet"></b><span id="blackout"></span></div>
@@ -714,21 +715,46 @@ footer a { color: var(--foot); }
   paintSeatColors();
 
   // seats strip: name plus role. The dot is the status; the chip does not print ACTIVE / WORKING / IDLE.
+  // The list is the feed roster when the server sends one. A missing roster keeps the strip already installed.
   var seatEls = {};
-  L.AGENTS.forEach(function (a) {
-    var el = document.createElement('div');
-    el.className = 'seat';
-    var label = String(L.LABEL[a[0]] || a[0]);
-    el.innerHTML = '<span class="dot"></span><span class="seat-copy"><span class="nm"></span><span class="role"></span></span>';
-    var nm = el.querySelector('.nm');
-    nm.textContent = label.toUpperCase();
-    nm.title = label;
-    nm.style.color = rgb(L.COLOR[a[0]]);
-    el.querySelector('.role').textContent = String(a[1] || '');
-    $('seatGrid').appendChild(el);
-    seatEls[a[0]] = { el: el, dot: el.querySelector('.dot') };
-  });
-  var rosterSum = $('rosterSum'); if (rosterSum) rosterSum.textContent = String(L.AGENTS.length);
+  function seatColor(name) {
+    var c = L.COLOR[name];
+    if (c && c.length >= 3) return c;
+    var h = 0, s = String(name);
+    for (var i = 0; i < s.length; i++) h = (h * 33 + s.charCodeAt(i)) >>> 0;
+    var next = [70 + (h % 150), 80 + ((h >>> 8) % 130), 100 + ((h >>> 16) % 130)];
+    L.COLOR[name] = next;
+    return next;
+  }
+  function paintRoster(entries) {
+    if (!entries || !entries.length) return;
+    var sig = entries.map(function (a) { return a[0] + '\n' + (a[1] || ''); }).join('\n');
+    if (sig === paintRoster.sig) return;
+    paintRoster.sig = sig;
+    L.AGENTS.splice(0, L.AGENTS.length);
+    L.SEAT_NAMES.splice(0, L.SEAT_NAMES.length);
+    var grid = $('seatGrid');
+    grid.textContent = '';
+    seatEls = {};
+    entries.forEach(function (a) {
+      L.AGENTS.push(a);
+      L.SEAT_NAMES.push(a[0]);
+      if (!L.LABEL[a[0]]) L.LABEL[a[0]] = a[0];
+      var el = document.createElement('div');
+      el.className = 'seat';
+      var label = String(L.LABEL[a[0]] || a[0]);
+      el.innerHTML = '<span class="dot"></span><span class="seat-copy"><span class="nm"></span><span class="role"></span></span>';
+      var nm = el.querySelector('.nm');
+      nm.textContent = label.toUpperCase();
+      nm.title = label;
+      nm.style.color = rgb(seatColor(a[0]));
+      el.querySelector('.role').textContent = String(a[1] || '');
+      grid.appendChild(el);
+      seatEls[a[0]] = { el: el, dot: el.querySelector('.dot') };
+    });
+    var sum = $('rosterSum'); if (sum) sum.textContent = String(L.AGENTS.length);
+  }
+  paintRoster(L.AGENTS.map(function (a) { return [a[0], a[1] || '']; }));
   var meshSum = $('meshSum'); if (meshSum) meshSum.textContent = String(Object.keys(L.SATS).length);
 
   function fitCanvas() {
@@ -1979,6 +2005,10 @@ footer a { color: var(--foot); }
       source = r.source; fetchError = '';
       if (!r.feed) return;
       feedLoaded = true;
+      if (L.rosterEntries) {
+        var rosterRows = L.rosterEntries(r.feed);
+        if (rosterRows) paintRoster(rosterRows);
+      }
       if (r.feed.freshness) {
         light.dataAt = Date.parse(r.feed.freshness.github_latest_ct || '') || 0;
         light.cardsAt = Date.parse(r.feed.freshness.cards_at || '') || 0;
