@@ -2570,9 +2570,9 @@ function activityEvent(line, opts) {
   if (prompt && line.room) ev.room = line.room;
   if (opts && opts.moves === false) ev.moves = false;
   upsert(ev);
-  // /history reads the events archive. A prompt lives there as the same seat_prompt line the feed draws.
-  // The activity archive keeps kind "prompt", and that store is not what the board or /history shows.
-  if (prompt) appendArchive('events', ev);
+  // /history reads the events archive: every seat activity line (prompt, turn, ack, cloud) lands there as the
+  // same seat_<kind> event the feed draws, so live history and the spectrum show it. Replay on boot skips it.
+  if (!(opts && opts.replay)) appendArchive('events', ev);
 }
 function serverActivity(seat, kind, action, tag, opts) {
   if (!seat) return;
@@ -2583,7 +2583,7 @@ function serverActivity(seat, kind, action, tag, opts) {
   seq++; header = mergedHeader(); fullDirty = true;
 }
 loadActivity();
-for (const l of activity.slice(-500)) if (Date.now() - Date.parse(l.t_ct || '') < 86400000) activityEvent(l);
+for (const l of activity.slice(-500)) if (Date.now() - Date.parse(l.t_ct || '') < 86400000) activityEvent(l, { replay: true });
 loadPersistedWakes();
 activityReady = true;
 function loadPersistedWakes() {   // last wake per seat survives a restart (wakes.jsonl is append-only)
