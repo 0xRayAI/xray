@@ -2563,6 +2563,7 @@ function validActivity(d, now = Date.now()) {
     if (!ACT_FIELDS.has(k)) return 'unknown field';
   }
   for (const k of Object.keys(d)) {
+    if (k === 'pr') continue;
     const v = d[k];
     if (typeof v !== 'string' || !ACT_VALUE.test(v)) return 'fields must be short plain strings (<= 80 chars)';
     if (ACT_BANNED.test(v)) return 'free text is not accepted';
@@ -2579,7 +2580,7 @@ function validActivity(d, now = Date.now()) {
   if (d.to != null && d.to.length > 40) return 'to too long';
   if (d.from != null && (d.kind !== 'prompt' || d.from.length > 40)) return 'from is only for prompt (<= 40 chars)';
   if (d.pr != null) {
-    if (d.kind !== 'cloud_agent' && d.kind !== 'agent') return 'pr is only for a cloud agent';
+    if (d.kind !== 'cloud_agent') return 'pr is only for a cloud agent';
     if (!safePrUrl(d.pr)) return 'bad pr';
   }
   return null;

@@ -52,7 +52,7 @@
     },
     "pr": {
       "type": "string",
-      "maxLength": 80,
+      "maxLength": 300,
       "pattern": "^https://github\\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/pull/[0-9]{1,8}$",
       "description": "Optional https GitHub pull URL on a cloud agent line. A card ref stays on tag."
     }

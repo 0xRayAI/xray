@@ -14,6 +14,8 @@ const APP = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app',
 const KEY = 'writer-key';
 const ACME = 'https://github.com/acme/app/pull/15';
 const WIDGETS = 'https://github.com/example-org/widgets/pull/4';
+const LONG = 'https://github.com/acme/' + 'a'.repeat(50) + '/pull/15';
+const BANNED = 'https://github.com/acme/message/pull/15';
 
 function sha(s) { return crypto.createHash('sha256').update(s).digest('hex'); }
 function sign(hookSecret, body) { return 'sha256=' + crypto.createHmac('sha256', hookSecret).update(body).digest('hex'); }
@@ -98,7 +100,7 @@ async function withServer(fn) {
   }
 }
 
-test('(a) an activity-only cloud agent keeps its pull URL', async () => {
+test('(a) an activity-only URL is shown', async () => {
   await withServer(async ctx => {
     const posted = await postActivity(ctx, {
       t_ct: stamp(0), kind: 'cloud_agent', action: 'launch', agent: 'bc-actonly01', pr: ACME,
@@ -111,30 +113,7 @@ test('(a) an activity-only cloud agent keeps its pull URL', async () => {
   });
 });
 
-test('(b) an http pull URL is refused', async () => {
-  await withServer(async ctx => {
-    const posted = await postActivity(ctx, {
-      t_ct: stamp(0), kind: 'cloud_agent', action: 'launch', agent: 'bc-actonly01',
-      pr: 'http://github.com/acme/app/pull/15',
-    });
-    assert.equal(posted.status, 422);
-    assert.equal(posted.body.error, 'bad pr');
-  });
-});
-
-test('(c) javascript and data URLs are refused', async () => {
-  await withServer(async ctx => {
-    for (const pr of ['javascript:alert', 'data:image/png']) {
-      const posted = await postActivity(ctx, {
-        t_ct: stamp(0), kind: 'cloud_agent', action: 'launch', agent: 'bc-actonly01', pr,
-      });
-      assert.equal(posted.status, 422, pr);
-      assert.equal(posted.body.error, 'bad pr', pr);
-    }
-  });
-});
-
-test('(d) a card tag stays on the card and a later line keeps the pull URL', async () => {
+test('(b) a webhook URL is replaced by a later activity URL', async () => {
   await withServer(async ctx => {
     const payload = {
       id: 'bc-prlink01', status: 'RUNNING', metadata: { seat: 'writer' },
@@ -151,27 +130,86 @@ test('(d) a card tag stays on the card and a later line keeps the pull URL', asy
       body: raw,
     });
     assert.equal(hooked.status, 200, await hooked.clone().text());
-    const linked = await postActivity(ctx, {
-      t_ct: stamp(2000), kind: 'cloud_agent', action: 'launch', agent: 'bc-prlink01',
-      tag: 'example-org/widgets#9', pr: WIDGETS,
-    });
-    assert.equal(linked.status, 202, JSON.stringify(linked.body));
     const cookie = await login(ctx);
     let row = await rowOf(ctx, cookie, 'bc-prlink01');
-    assert.equal(row.card, 'example-org/widgets#9');
-    assert.equal(row.pr, WIDGETS);
-    const later = await postActivity(ctx, {
-      t_ct: stamp(4000), kind: 'cloud_agent', action: 'reply', agent: 'bc-prlink01',
+    assert.equal(row.pr, ACME);
+    const posted = await postActivity(ctx, {
+      t_ct: stamp(2000), kind: 'cloud_agent', action: 'launch', agent: 'bc-prlink01', pr: WIDGETS,
     });
-    assert.equal(later.status, 202, JSON.stringify(later.body));
+    assert.equal(posted.status, 202, JSON.stringify(posted.body));
     row = await rowOf(ctx, cookie, 'bc-prlink01');
     assert.equal(row.pr, WIDGETS);
-    const cardRef = await postActivity(ctx, {
-      t_ct: stamp(6000), kind: 'cloud_agent', action: 'reply', agent: 'bc-prlink01', pr: 'acme/app#15',
+  });
+});
+
+test('(c) a later tag-only row leaves the URL in place', async () => {
+  await withServer(async ctx => {
+    const posted = await postActivity(ctx, {
+      t_ct: stamp(0), kind: 'cloud_agent', action: 'launch', agent: 'bc-actonly01', pr: WIDGETS,
     });
-    assert.equal(cardRef.status, 422);
-    assert.equal(cardRef.body.error, 'bad pr');
-    row = await rowOf(ctx, cookie, 'bc-prlink01');
+    assert.equal(posted.status, 202, JSON.stringify(posted.body));
+    const cookie = await login(ctx);
+    const tagged = await postActivity(ctx, {
+      t_ct: stamp(2000), kind: 'cloud_agent', action: 'reply', agent: 'bc-actonly01', tag: 'acme/app#15',
+    });
+    assert.equal(tagged.status, 202, JSON.stringify(tagged.body));
+    const row = await rowOf(ctx, cookie, 'bc-actonly01');
+    assert.ok(row, 'activity row missing');
     assert.equal(row.pr, WIDGETS);
+    assert.equal(row.card, 'acme/app#15');
+  });
+});
+
+test('(d) a non-github pull URL is refused and the board pr stays empty', async () => {
+  await withServer(async ctx => {
+    const launched = await postActivity(ctx, {
+      t_ct: stamp(0), kind: 'cloud_agent', action: 'launch', agent: 'bc-actonly01',
+    });
+    assert.equal(launched.status, 202, JSON.stringify(launched.body));
+    const posted = await postActivity(ctx, {
+      t_ct: stamp(2000), kind: 'cloud_agent', action: 'reply', agent: 'bc-actonly01',
+      pr: 'https://evil.railway.app/x',
+    });
+    assert.equal(posted.status, 422, JSON.stringify(posted.body));
+    assert.equal(posted.body.error, 'bad pr');
+    const row = await rowOf(ctx, await login(ctx), 'bc-actonly01');
+    assert.ok(row, 'activity row missing');
+    assert.equal(row.pr, '');
+  });
+});
+
+test('(e) an over-80 GitHub pull URL is kept', async () => {
+  await withServer(async ctx => {
+    assert.ok(LONG.length > 80, String(LONG.length));
+    const posted = await postActivity(ctx, {
+      t_ct: stamp(0), kind: 'cloud_agent', action: 'launch', agent: 'bc-actonly01', pr: LONG,
+    });
+    assert.equal(posted.status, 202, JSON.stringify(posted.body));
+    const row = await rowOf(ctx, await login(ctx), 'bc-actonly01');
+    assert.ok(row, 'activity row missing');
+    assert.equal(row.pr, LONG);
+  });
+});
+
+test('(f) a GitHub pull URL containing a banned word is kept', async () => {
+  await withServer(async ctx => {
+    const posted = await postActivity(ctx, {
+      t_ct: stamp(0), kind: 'cloud_agent', action: 'launch', agent: 'bc-actonly01', pr: BANNED,
+    });
+    assert.equal(posted.status, 202, JSON.stringify(posted.body));
+    const row = await rowOf(ctx, await login(ctx), 'bc-actonly01');
+    assert.ok(row, 'activity row missing');
+    assert.equal(row.pr, BANNED);
+  });
+});
+
+test('(g) a pull files suffix is refused', async () => {
+  await withServer(async ctx => {
+    const posted = await postActivity(ctx, {
+      t_ct: stamp(0), kind: 'cloud_agent', action: 'launch', agent: 'bc-actonly01',
+      pr: 'https://github.com/acme/app/pull/15/files',
+    });
+    assert.equal(posted.status, 422, JSON.stringify(posted.body));
+    assert.equal(posted.body.error, 'bad pr');
   });
 });

@@ -674,7 +674,7 @@ class Fleet:
             self.seeded.add(name)
 
     # ---- Cloud agents: fleet/cloud-agents.jsonl (appended by the Operator), tailed by byte offset.
-    # Only t_ct, by, action, agent, repo, tag, and an https GitHub pull URL in pr are used; any other field is ignored.
+    # Only t_ct, by, action, agent, repo, tag are used; any other field is ignored.
     def scan_cloud(self):
         f = self.path.parent.parent / "fleet" / "cloud-agents.jsonl"
         if not f.is_file():
@@ -728,17 +728,9 @@ class Fleet:
         if first and now - t > CLOUD_RECENT_S:
             return                           # history: seed silently
         frm, to = ("CloudAgents", by) if action == "finished" else (by, "CloudAgents")
-        pr = str(d.get("pr") or "").strip()
-        if not re.match(r"^https://github\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/pull/\d{1,8}(?:/|[?#]|$)", pr):
-            pr = ""
-        else:
-            pr = pr[:300]
-        extra = {"agent": agent, "by": by, "action": action, "repo_short": repo, "cloud_tag": tag,
-                 "time_basis": "t_ct from the cloud-agents log"}
-        if pr:
-            extra["pr"] = pr
         self._emit(f"cloud:{agent}:{action}:{int(t)}", t, frm, to, f"cloud_{action}", f"{action} · {tag} · {repo}",
-                   src, **extra)
+                   src, agent=agent, by=by, action=action, repo_short=repo, cloud_tag=tag,
+                   time_basis="t_ct from the cloud-agents log")
 
     # ---- Lead -> bot messages: an old collector still tails fleet/prompts.jsonl by byte offset, deduped by line hash.
     # Seats post with live-inbox --prompt. Only t_ct, from and to are used; message text is never read into the feed.
@@ -901,7 +893,7 @@ class Fleet:
                 self._prompt_line({"t_ct": d["t_ct"], "from": seat, "to": d.get("to")}, h, first, now, "remote/activity")
             elif kind == "cloud_agent":
                 self._cloud_line({"t_ct": d["t_ct"], "by": seat, "action": action, "agent": d.get("agent"),
-                                  "tag": d.get("tag"), "pr": d.get("pr")}, first, now, "remote/activity")
+                                  "tag": d.get("tag")}, first, now, "remote/activity")
             elif kind in ACT_WORK_KINDS and action in ("start", "tick", "end"):
                 ident = re.sub(r"[^A-Za-z0-9_-]", "", str(d.get("agent") or d.get("tag") or "-"))[:40] or "-"
                 key = f"{seat}:{kind}:{ident}"
