@@ -45,6 +45,8 @@ A new pull request starts packet-first: a short packet (scope, files, plates and
 
 A cloud agent is its own board row (`cloud_agents`, also copied onto `board.cloud_agents`): `bcId`, owning seat, linked card, `pr`, and state `running`, `finished`, or `failed`. The Cursor webhook and seat activity `kind: cloud_agent` feed that row. The pull URL is the row's `pr`.
 
+A packet post creates the card; the chat refuses a missing card id; the cloud agent pushes; the seat App opens the pull request; the server attaches both; the activity line gains no new field.
+
 Code lives under `house/live/` (collector, board, inbox routing, server). `house/live/feed/live_mesh.py` runs the collector and the board. `house/live-mesh/fetch_feed.py` is the upstream feed the deploy assembles. Deploy only via `house/live/app/deploy.sh`. A Railway build straight from git stops in the Dockerfile with `ERROR: collector/ is not assembled`. The plate that belongs here is house.
 
 stamped · 0xray 4.1.0

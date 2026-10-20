@@ -41,8 +41,8 @@ export function realPacketKind(line) {
 export function cardKeyOf(line) {
   const repo = String(line && line.repo || '').toLowerCase();
   const number = Number(line && line.number);
-  if (repo && Number.isInteger(number)) return repo + '#' + number;
-  return 'line:' + String(line && line.id || '').slice(0, 120);
+  if (repo && Number.isInteger(number) && number >= 1) return repo + '#' + number;
+  return 'packet:' + String(line && line.id || '').slice(0, 120);
 }
 
 export function launchEnabled(env) {
@@ -97,7 +97,7 @@ export function launchPrompt(line, env = {}) {
     'You are ARCH1, the cloud seat.',
     'A real packet landed in your inbox.',
     'Read the inbox, do this card\'s work, and ack the line when the work is done.',
-    'Card: ' + plain(line.repo, 200) + '#' + (Number.isInteger(line.number) ? line.number : 0),
+    'Card: ' + (Number.isInteger(line.number) && line.number >= 1 ? plain(line.repo, 200) + '#' + line.number : cardKeyOf(line)),
     'Type: ' + kind,
     'Title: ' + plain(line.title, 120),
     'Reason: ' + plain(line.reason, 160),
@@ -188,7 +188,7 @@ function usedOn(state, day) {
 
 const DEAD_STATUS = new Set(['ERROR', 'TIMED_OUT', 'TIMEOUT', 'EXPIRED', 'CANCELLED']);
 
-export function createArch1Launch({ env, dataDir, now = () => Date.now(), onBeat = () => {}, fetchImpl = globalThis.fetch, ownsCard }) {
+export function createArch1Launch({ env, dataDir, now = () => Date.now(), onBeat = () => {}, fetchImpl = globalThis.fetch, ownsCard, cardOnBoard }) {
   const file = path.join(dataDir, 'arch1-launch.json');
   const state = loadState(file);
   const enabled = launchEnabled(env);
@@ -349,11 +349,16 @@ export function createArch1Launch({ env, dataDir, now = () => Date.now(), onBeat
     const kind = realPacketKind(line);
     if (!kind || !isArch1Seat(line.seat)) return;
     if (!enabled) return;
-    if (kind === 'critic_fail' && !arch1Owns(line)) return;
     const at = now();
     const day = chicagoDay(at) || 'unknown';
     roll(day);
     const card = cardKeyOf(line);
+    if (typeof cardOnBoard === 'function' && cardOnBoard(card) !== true) {
+      const seen = state.beats.some(b => b.what === 'card missing' && b.card === card);
+      if (!seen) rememberBeat(line, 'card missing', 'arch1-miss:' + card.slice(0, 120));
+      return;
+    }
+    if (kind === 'critic_fail' && !arch1Owns(line)) return;
     const row = rowOf(card);
     if (!opts.queued && cooling(row, at)) { queuePending(card, line); return; }
     if (state.count >= cap) {

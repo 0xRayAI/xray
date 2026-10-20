@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 
 const APP = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app');
 
-function start(data) {
+function start(data, extra = {}) {
   const password = 'pw-' + crypto.randomBytes(8).toString('hex');
   const child = spawn(process.execPath, [path.join(APP, 'server.mjs')], {
     env: {
@@ -18,6 +18,7 @@ function start(data) {
       SESSION_SECRET: crypto.randomBytes(32).toString('hex'),
       INGEST_SECRET: crypto.randomBytes(32).toString('hex'),
       MESH_PASSWORD: password,
+      ...extra,
     },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
@@ -139,16 +140,18 @@ test('a card-worthy event ahead of the card clock is a stall', async () => {
   }));
   const srv = start(data);
   try {
-    let health;
+    let health, res;
     for (let i = 0; i < 40; i++) {
       const base = srv.baseOf();
       if (base) {
-        health = await (await fetch(base + '/healthz')).json();
+        res = await fetch(base + '/healthz');
+        health = await res.json();
         if (typeof health.data_age === 'number') break;
       }
       await new Promise(r => setTimeout(r, 100));
     }
     assert.equal(health.cards_behind, true, JSON.stringify(health));
+    assert.equal(res.status, 503);
   } finally {
     const done = new Promise(r => srv.child.once('exit', r));
     srv.child.kill();
@@ -324,6 +327,54 @@ test('card clock inside the lag window stays caught up', async () => {
       await new Promise(r => setTimeout(r, 100));
     }
     assert.equal(body.cards_behind, false, JSON.stringify(body));
+  } finally {
+    const done = new Promise(r => srv.child.once('exit', r));
+    srv.child.kill();
+    await done;
+    fs.rmSync(data, { recursive: true, force: true });
+  }
+});
+
+test('a holding card and a card-missing flag leave /healthz at 200', async () => {
+  const data = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-lag-hold-'));
+  const now = new Date().toISOString();
+  fs.mkdirSync(path.join(data, 'live'), { recursive: true });
+  fs.mkdirSync(path.join(data, 'feed'), { recursive: true });
+  fs.writeFileSync(path.join(data, 'live', 'cards.json'), JSON.stringify({
+    updated_ct: now,
+    cards: [
+      { key: 'acme/one#4', repo: 'acme/one', number: 4, state: 'live', title: 't', stage: 'review', kind: 'pr' },
+      { key: 'packet:line-1', born: 'packet', repo: 'acme/one', number: 0, state: 'live', title: 'hold', stage: 'open', kind: 'packet', owner: 'forge' },
+    ],
+  }));
+  fs.writeFileSync(path.join(data, 'live', 'activity.jsonl'), JSON.stringify({
+    kind: 'cloud_agent', action: 'launch', agent: 'bc-missing01', seat: 'forge', t_ct: now,
+  }) + '\n');
+  fs.writeFileSync(path.join(data, 'feed', 'github-events.json'), JSON.stringify({
+    generated_at: now,
+    events: [{ id: 'open', t_ct: now, kind: 'pr_open', repo: 'acme/one', number: 4 }],
+  }));
+  const srv = start(data, { LIVE_PUBLIC: '1' });
+  try {
+    let health, res, live, cards;
+    for (let i = 0; i < 40; i++) {
+      const base = srv.baseOf();
+      if (base) {
+        res = await fetch(base + '/healthz');
+        health = await res.json();
+        if (typeof health.data_age === 'number') {
+          live = await (await fetch(base + '/live-events.json')).json();
+          cards = await (await fetch(base + '/cards')).json();
+          if ((live.cloud_agents || []).some(row => row.bcId === 'bc-missing01')) break;
+        }
+      }
+      await new Promise(r => setTimeout(r, 100));
+    }
+    const row = (live.cloud_agents || []).find(item => item.bcId === 'bc-missing01');
+    assert.equal(row.flag, 'card missing');
+    assert.equal(health.cards_behind, false, JSON.stringify(health));
+    assert.equal(res.status, 200);
+    assert.ok((cards.cards || []).some(card => card.key === 'packet:line-1'));
   } finally {
     const done = new Promise(r => srv.child.once('exit', r));
     srv.child.kill();

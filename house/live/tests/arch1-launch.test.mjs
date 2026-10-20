@@ -31,6 +31,7 @@ function line(over = {}) {
     title: over.title || 'card work',
     url: over.url || 'https://github.com/0xRayAI/xray/issues/7',
     reason: over.reason || 'new issue, next ARCH1',
+    ...(over.to ? { to: over.to } : {}),
   };
 }
 
@@ -368,7 +369,7 @@ test('a Critic FAIL launches only when the board card is ARCH1-owned', async () 
     await postLines(ctx, [
       line({ id: 'own-forge', type: 'critic_fail', reason: 'critic FAIL', number: 71 }),
       line({ id: 'own-builder', type: 'critic_fail', reason: 'critic FAIL', number: 72 }),
-      line({ id: 'own-missing', type: 'critic_fail', reason: 'critic FAIL', number: 70 }),
+      line({ id: 'own-missing', type: 'critic_fail', reason: 'critic FAIL', number: 70, to: 'forge' }),
     ]);
     await settle(500);
     assert.equal(ctx.calls.length, 0);
@@ -476,5 +477,39 @@ test('a Critic FAIL the board does not own never spends the cap', async () => {
     await launch.consider(line({ id: 'o3', type: 'critic_fail', reason: 'critic FAIL', number: 73 }));
     assert.deepEqual(calls, ['http://cursor.test/v0/agents', 'http://cursor.test/v0/agents']);
     assert.equal(launch.health().used, 2);
+  } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('a missing card is not a launch, and a holding card launches under packet:<id>', async () => {
+  const calls = [];
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-a1c-'));
+  const onBoard = new Set(['0xrayai/xray#11', 'packet:hold-1']);
+  const launch = createArch1Launch({
+    ...launchEnv(dir, { ARCH1_LAUNCH_COOLDOWN_S: '0' }),
+    cardOnBoard: key => onBoard.has(key),
+    fetchImpl: async (url, init) => {
+      calls.push({ url, body: JSON.parse(init.body) });
+      return { ok: true, status: 200, text: async () => JSON.stringify({ id: 'bc-card0001' }) };
+    },
+  });
+  try {
+    await launch.consider(line({ id: 'miss-1', type: 'dispatch', number: 9 }));
+    await launch.consider(line({ id: 'miss-fail', type: 'critic_fail', reason: 'critic FAIL', number: 8 }));
+    await launch.consider(line({ id: 'zero-off', type: 'dispatch', number: 0 }));
+    assert.equal(calls.length, 0);
+    const beats = launch.cardBeats().filter(b => b.what === 'card missing');
+    assert.ok(beats.some(b => b.card === '0xrayai/xray#9'));
+    assert.ok(beats.some(b => b.card === '0xrayai/xray#8'));
+    assert.ok(beats.some(b => b.card === 'packet:zero-off'));
+    assert.equal(beats.some(b => b.card === '0xrayai/xray#0'), false);
+    await launch.consider(line({ id: 'go-11', type: 'dispatch', number: 11 }));
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].url, 'http://cursor.test/v0/agents');
+    await launch.consider(line({ id: 'hold-1', type: 'dispatch', number: 0 }));
+    assert.equal(calls.length, 2);
+    assert.match(calls[1].body.prompt.text, /Card: packet:hold-1/);
+    assert.match(calls[1].body.prompt.text, /Push the branch only\. Never open a pull request or an issue\./);
+    assert.equal(calls[1].body.prompt.text.includes('#0'), false);
+    assert.match(calls[1].body.name, /packet:hold-1/);
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 });

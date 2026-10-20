@@ -43,3 +43,71 @@ test('an empty board (no open cards) wakes the CoS role with pull-next-work, onc
   await new Promise(r => setTimeout(r, 2000));   // well inside the 6 s window
   assert.equal(got.filter(g => g.path === '/critic' && /board empty/.test(g.body.reason)).length, 1, 'once per window');
 });
+
+test('a live packet card and a holding card nudge L1, and a pull request attach closes the holding nudge', async () => {
+  const data = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-esc-card-'));
+  const forgeKey = 'forge-' + crypto.randomBytes(4).toString('hex');
+  const ingest = crypto.randomBytes(32).toString('hex');
+  const child = spawn(process.execPath, [path.join(APP, 'server.mjs')], {
+    env: {
+      PORT: '0', PATH: process.env.PATH, COLLECTOR: 'on', SERVER_ROUTING: 'off', MESH_DATA_DIR: data,
+      SESSION_SECRET: crypto.randomBytes(32).toString('hex'), INGEST_SECRET: ingest,
+      MESH_PASSWORD: 'pw-' + crypto.randomBytes(8).toString('hex'),
+      SEAT_KEYS: JSON.stringify({ forge: crypto.createHash('sha256').update(forgeKey).digest('hex') }),
+      NUDGE_L1_S: '1', BIFROST_TICK_S: '0.2', ARCH1_LAUNCH_ENABLED: '0',
+    },
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  let logs = '';
+  child.stdout.on('data', d => { logs += d; });
+  child.stderr.on('data', d => { logs += d; });
+  const port = await listenPort(child);
+  const base = `http://127.0.0.1:${port}`;
+  const auth = { Authorization: 'Bearer ' + forgeKey };
+  const line = (id, number) => ({
+    id, t_ct: new Date().toISOString(), seat: 'forge', type: 'packet', repo: 'example-org/x', number,
+    title: id, url: 'https://github.com/example-org/x/issues/' + number, reason: 'packet',
+  });
+  try {
+    const posted = await fetch(base + '/inbox', {
+      method: 'POST', headers: { 'X-Live-Ingest': ingest, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lines: [line('live-nudge', 15), line('hold-nudge', 0)] }),
+    });
+    assert.equal(posted.status, 200, await posted.text());
+    const openNudge = async (card) => {
+      for (let i = 0; i < 40; i++) {
+        const body = await (await fetch(base + '/nudges', { headers: auth })).json();
+        const hit = (body.nudges || []).find(n => n.card === card && n.level === 1 && !n.closed_at);
+        if (hit) return hit;
+        await new Promise(r => setTimeout(r, 150));
+      }
+      return null;
+    };
+    assert.ok(await openNudge('example-org/x#15'), logs);
+    assert.equal((await openNudge('packet:hold-nudge')).seat, 'forge');
+    fs.mkdirSync(path.join(data, 'feed'), { recursive: true });
+    const t = new Date().toISOString();
+    fs.writeFileSync(path.join(data, 'feed', 'github-events.json'), JSON.stringify({
+      generated_at: t,
+      events: [
+        { id: 'push-hold', t_ct: t, kind: 'push', repo: 'example-org/x', branch: 'cursor/hold-nudge', card: 'packet:hold-nudge' },
+        { id: 'pr-hold', t_ct: t, kind: 'pr_open', repo: 'example-org/x', number: 88, head: 'cursor/hold-nudge', url: 'https://github.com/example-org/x/pull/88' },
+      ],
+    }));
+    let closed = false;
+    for (let i = 0; i < 30; i++) {
+      const cards = await (await fetch(base + '/cards?seat=forge', { headers: auth })).json();
+      const nudges = await (await fetch(base + '/nudges', { headers: auth })).json();
+      const card = (cards.cards || []).find(c => c.key === 'example-org/x#88');
+      const nudge = (nudges.nudges || []).find(n => n.card === 'packet:hold-nudge' && n.level === 1);
+      if (card && card.alias === 'packet:hold-nudge' && nudge && nudge.closed_at) { closed = true; break; }
+      await new Promise(r => setTimeout(r, 200));
+    }
+    assert.equal(closed, true, logs);
+  } finally {
+    const done = new Promise(r => child.exitCode != null || child.signalCode ? r() : child.once('exit', r));
+    child.kill();
+    await done;
+    fs.rmSync(data, { recursive: true, force: true });
+  }
+});

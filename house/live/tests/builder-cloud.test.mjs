@@ -59,7 +59,7 @@ test('cards + nudges: Builder cards visible to builder-cloud; a nudge to builder
     headers: { ...A(INGEST), 'Content-Type': 'application/json' } });
   assert.equal(r.status, 200);
   const cs = await (await fetch(BASE + '/cards?seat=builder-cloud', { headers: A(AKEY) })).json();
-  assert.deepEqual(cs.cards.map(c => c.number), [9]);
+  assert.deepEqual(cs.cards.map(c => c.number), [9, 7]);
   const inb = (await (await fetch(BASE + '/inbox/builder-cloud', { headers: A(AKEY) })).json()).lines.filter(l => l.type === 'nudge');
   assert.equal(inb.length, 1); assert.equal(inb[0].number, 9); assert.match(inb[0].reason, /^nudge L1/);
 });

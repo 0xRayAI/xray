@@ -17,9 +17,9 @@ import { seatPresence, presentSeat, foldSeatTouch, fleetConfigOf, readWakeOk, wr
 import { parseAllowlist, mergeCards, sourceCardsFrom, projectAllowed, validateItem, workEventToItem, cardNoNudge, workItemNewer } from './source.mjs';
 import { checkRoutesFromDir, readRoutingMap, createLoginResolver, auditLogins } from './routes.mjs';
 import { fingerprint, tripwire, createClock, wakeTitle, mutedSeats, selectStallSeats } from './governor.mjs';
-import { acceptWaveCards, burnQuiet, isPlanCard, liveWorkCount, postedCards, retainSeedCards, resolveWaveSeed, scheduleWaves } from './wave-schedule.mjs';
-import { createArch1Launch, ARCH1_CANON } from './arch1-launch.mjs';
-import { configureWorkTrack, acceptCursorWebhook, appendWake, applyCloudOwners, boardCloudAgents, canonSeatToken, deriveTrackFromDir, displaySeat, loadSeatAgentMap, readJsonl, readWakeRows, safePrUrl, seatForAgentId, stampCriticCloud, toToken } from './worktrack.mjs';
+import { acceptWaveCards, attachPacketCards, burnQuiet, isPlanCard, liveWorkCount, postedCards, retainSeedCards, resolveWaveSeed, scheduleWaves } from './wave-schedule.mjs';
+import { createArch1Launch, ARCH1_CANON, cardKeyOf } from './arch1-launch.mjs';
+import { configureWorkTrack, acceptCursorWebhook, appendWake, applyCloudOwners, boardCloudAgents, canonSeatToken, deriveTrackFromDir, displaySeat, isPacket, loadSeatAgentMap, readJsonl, readWakeRows, safePrUrl, seatForAgentId, stampCriticCloud, toToken } from './worktrack.mjs';
 import { wakeConfig, createWakeState, classifyBatch, gateLine, noteSent, releaseDue, publicStats, fullStats, restoreWakeBook, viewLine } from './wake-gate.mjs';
 const COLLECTOR_DIR_EARLY = () => path.join(path.dirname(fileURLToPath(import.meta.url)), 'collector');
 import { initArchive, appendArchive, backfillArchive, readArchive, validArchiveDate, KINDS as ARCHIVE_KINDS, cardHistory, archiveDays } from './archive.mjs';
@@ -226,7 +226,11 @@ function ingestSrc(n, events, hdr, remove = null) {   // remove === null -> full
   }
   for (const e of events) appendArchive('events', e);
   for (const e of events) if (e && CI_KINDS.has(e.kind)) noteCi(e);
-  if (n === 'github') recomputeGithubDataAt();
+  if (n === 'github') {
+    recomputeGithubDataAt();
+    const packetHeld = bfCards.some(c => c && (c.born === 'packet' || String(c.key || '').toLowerCase().startsWith('packet:')));
+    if (packetHeld && !(S.header && S.header.board)) publishBoard();
+  }
   header = mergedHeader(); fullDirty = true;
 }
 const ingestFull = f => ingestSrc('box', f.events, headerOf(f));
@@ -906,6 +910,7 @@ function postSeatLines(parsed, onlySeat) {
     arr.push(stored); touched.add(s); added++; fresh.push(stored);
     if (s === 'builder') { const c = seatInbox['builder-cloud']; if (!c.some(x => x.id === l.id)) { const copy = { ...stored, seat: 'builder-cloud' }; c.push(copy); touched.add('builder-cloud'); fresh.push(copy); } } }
   for (const s of touched) saveSeatInbox(s);
+  for (const l of fresh) ensurePacketCard(l);
   for (const l of fresh) void arch1Launch.consider(l);
   if (fresh.length) { try { offerLines(fresh); } catch { /* keep the inbox write */ } }
   return { status: 200, added, rejected: refs };
@@ -982,6 +987,7 @@ const arch1Launch = createArch1Launch({
     const id = seatIdOf(card.owner);
     return id === 'arch1' || id === 'lead';
   },
+  cardOnBoard: key => bfCards.some(c => c && String(c.key || '').toLowerCase() === String(key || '').toLowerCase()),
 });
 try { nudges = fs.readFileSync(path.join(STATE_DIR, 'nudges.jsonl'), 'utf8').split('\n').filter(Boolean).map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean); } catch {}
 initArchive(process.env.MESH_DATA_DIR || '/data');
@@ -1050,9 +1056,30 @@ function notePonder(card) {
     fs.appendFileSync(file, JSON.stringify({ ...row, t_ct: new Date().toISOString() }) + '\n');
   } catch (e) { console.log('ponder: ' + ((e && e.code) || 'write')); }
 }
+function ensurePacketCard(line) {
+  if (!isPacket(line)) return;
+  const key = cardKeyOf(line);
+  if (!key || key === 'packet:') return;
+  if (bfCards.some(c => c && String(c.key || '').toLowerCase() === key.toLowerCase())) return;
+  const number = Number(line.number);
+  const owner = typeof line.to === 'string' && line.to ? line.to : line.seat;
+  bfCards = bfCards.concat([{
+    key, born: 'packet', kind: 'packet', repo: String(line.repo || ''),
+    number: Number.isInteger(number) ? number : 0,
+    title: String(line.title || '').slice(0, 120), url: String(line.url || '').slice(0, 300),
+    owner: String(owner || '').slice(0, 24), stage: 'open', state: 'live',
+    packet: {}, packet_ok: false, missing: ['acceptance', 'next owner'],
+    beats: [], last_beat_t: Date.now(), stall: false,
+  }]);
+  publishBoard();
+}
+function githubEvents() {
+  try { return [...SRCS.github.evs.values()]; } catch { return []; }
+}
 function publishBoard(updatedCt) {
   const merged = mergeCards(waveCards, sourceCardsFrom(itemsFromWork(), { seats: SEAT_IDS }));
   const scheduled = waveBoard(merged);
+  scheduled.cards = attachPacketCards(scheduled.cards, githubEvents());
   const sig = JSON.stringify(scheduled.cards);
   if (sig === boardSig) return;
   boardSig = sig;
@@ -1477,6 +1504,7 @@ function cloudAgentBoard() {
       agents: readJsonl(path.join(STATE_DIR, 'agents.jsonl')),
       activity: activityCloudRows(),
       links: arch1CloudLinks(),
+      board: bfCards,
     });
   } catch (e) { console.log('cloud agents: ' + ((e && e.message) || 'read failed')); return []; }
 }

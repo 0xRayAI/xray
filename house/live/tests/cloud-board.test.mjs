@@ -304,3 +304,51 @@ test('the live feed lists a running cloud agent, then a cancel as failed', async
     fs.rmSync(data, { recursive: true, force: true });
   }
 });
+
+test('a launch-file packet id on the board keeps card, and a webhook pull URL still fills pr', () => {
+  const held = boardCloudAgents({
+    links: [{ bcId: 'bc-hold00001', card: 'packet:line-1', seat: 'arch1', state: 'running', updated_ct: '2026-10-20T12:00:00-05:00' }],
+    board: [{ key: 'packet:line-1' }],
+  });
+  assert.equal(held[0].card, 'packet:line-1');
+  assert.equal(held[0].flag, undefined);
+  const missing = boardCloudAgents({
+    links: [{ bcId: 'bc-hold00002', card: 'packet:missing', seat: 'arch1', state: 'running', updated_ct: '2026-10-20T12:00:00-05:00' }],
+    board: [],
+  });
+  assert.equal(missing[0].card, '');
+  assert.equal(missing[0].flag, 'card missing');
+  const pulled = boardCloudAgents({
+    agents: [{ agent: 'bc-pr0000001', status: 'running', pr: 'https://github.com/acme/app/pull/15', t_ct: '2026-10-20T12:00:00Z' }],
+  });
+  assert.equal(pulled[0].pr, 'https://github.com/acme/app/pull/15');
+  assert.equal(pulled[0].flag, undefined);
+});
+
+test('an activity body that includes card is rejected', async () => {
+  const data = fs.mkdtempSync(path.join(os.tmpdir(), 'cloud-board-card-'));
+  const pw = crypto.randomBytes(8).toString('hex');
+  const criticKey = 'critic-' + crypto.randomBytes(4).toString('hex');
+  const ctx = await boot(data, {
+    MESH_PASSWORD: pw,
+    SESSION_SECRET: crypto.randomBytes(32).toString('hex'),
+    INGEST_SECRET: crypto.randomBytes(32).toString('hex'),
+    SEAT_KEYS: JSON.stringify({ critic: sha(criticKey) }),
+  });
+  try {
+    const posted = await fetch(ctx.base + '/activity', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + criticKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        t_ct: new Date().toISOString(), kind: 'cloud_agent', action: 'launch', agent: 'bc-hold00001', card: 'packet:line-1',
+      }),
+    });
+    const body = await posted.json();
+    assert.equal(posted.status, 422);
+    assert.equal(body.error, 'unknown field');
+    assert.equal(fs.existsSync(path.join(data, 'live', 'activity.jsonl')), false);
+  } finally {
+    await stopped(ctx.child);
+    fs.rmSync(data, { recursive: true, force: true });
+  }
+});
