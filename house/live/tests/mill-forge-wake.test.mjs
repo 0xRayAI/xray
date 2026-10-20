@@ -27,7 +27,7 @@ const child = spawn(process.execPath, [path.join(APP, 'server.mjs')], {
     PORT: '0', PATH: process.env.PATH, MESH_DATA_DIR: DATA, INGEST_SECRET: secret,
     SESSION_SECRET: crypto.randomBytes(32).toString('hex'),
     MESH_PASSWORD: 'pw-' + crypto.randomBytes(8).toString('hex'),
-    SEAT_WEBHOOKS: JSON.stringify(hooks), K_MILL: 'km', K_FORGE: 'kf', WAKE_DEBOUNCE_S: '0',
+    SEAT_WEBHOOKS: JSON.stringify(hooks), K_MILL: 'km', K_FORGE: 'kf', WAKE_DEBOUNCE_S: '0', LIVE_TURN_OPEN_MIN: '0',
   },
   stdio: ['ignore', 'pipe', 'pipe'],
 });

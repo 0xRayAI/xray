@@ -187,6 +187,10 @@ The light at the top uses two times from the feed `freshness` object. Served `_c
 
 Until the first card write the light says "Cards still building".
 
+## Wake gate
+
+A webhook fires for the seat that has to act. The line's `seat` wins, then a handoff `to`, then the card owner. An unassigned `issue_open`, or an issue whose `labels` include `P1` or `p1`, wakes forge. Blinky's routed copy is stored and skipped (`fanout`). A `pr_labeled` P1 is not that rule. A `pr_comment` stored for blinky and the author wakes the author (the reason matching "comment on your", otherwise the one seat that is not blinky). Blinky is the extra copy. Another real target on that same comment, such as an @mention, still wakes. A missing or empty `sha` is never a shared sha, so a later issue is not a `repeat_sha`. The same kind to the same seat and `repo#n` inside 900s, with no new sha, is a `cooldown` skip. A new sha inside that window or the rolling 60-minute cap (6 sent wakes) is queued and sent when the window rolls. `flag: hotfix` skips the cap and the per-kind cooldown. Clock wakes (timed run, empty board, plan, nudge L1–L3) still post, including with an empty `lines` array, and they wait out an open turn the same way an inbox line does. `BIFROST_WAKES` of `off`, `0`, `false`, or `no` stores the line and sends nothing. `header.wake_stats` and `/healthz` are counts only. `GET /wake-stats` uses the same key gate as `GET /cards` and adds the last 50 skips plus the queued count.
+
 ## History and the queue
 
 `GET /history` lists archive days. `GET /history?date=YYYY-MM-DD` returns that day's events. `GET /history/cards` returns the latest version of each card. Card versions are append-only (`key` + stage + state + the card's own update time). A row with no key is not stored. The open queue is a view of unacked inbox lines. Filtering it does not delete the inbox file. Lines older than the live window stay in the daily archive.
