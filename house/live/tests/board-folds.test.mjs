@@ -240,3 +240,58 @@ test('roster chips show the role on load and leave status to the dot', async () 
     await new Promise((resolve) => server.close(resolve));
   }
 });
+
+test('see all history sits in the recent header and replaces the side pane', async () => {
+  const server = await serve();
+  const base = `http://127.0.0.1:${server.address().port}/index.html`;
+  let browser;
+  try {
+    browser = await chromium.launch();
+    const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    await page.goto(base, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('#cardHistAll');
+    const place = await page.evaluate(() => {
+      const btn = document.getElementById('cardHistAll');
+      const sum = document.getElementById('recentSum');
+      const bar = document.querySelector('#cardRecent > .fold-bar');
+      const btnBox = btn.getBoundingClientRect();
+      const sumBox = sum.getBoundingClientRect();
+      return {
+        inBar: bar.contains(btn) && bar.contains(sum),
+        rightOfCount: btnBox.left >= sumBox.right - 1,
+        recentOpen: !document.getElementById('cardRecent').classList.contains('collapsed'),
+      };
+    });
+    assert.equal(place.inBar, true);
+    assert.equal(place.rightOfCount, true);
+    assert.equal(place.recentOpen, false);
+    await page.click('#cardHistAll');
+    const opened = await page.evaluate(() => {
+      const wave = document.getElementById('wave');
+      const shown = [...wave.children].filter((el) => getComputedStyle(el).display !== 'none').map((el) => el.id);
+      const back = getComputedStyle(document.getElementById('waveHistBack'));
+      return {
+        hist: wave.classList.contains('hist-open'),
+        shown,
+        back: back.display,
+        recentOpen: !document.getElementById('cardRecent').classList.contains('collapsed'),
+      };
+    });
+    assert.equal(opened.hist, true);
+    assert.deepEqual(opened.shown, ['cardHist']);
+    assert.notEqual(opened.back, 'none');
+    assert.equal(opened.recentOpen, false);
+    await page.click('#waveHistBack');
+    const closed = await page.evaluate(() => {
+      const wave = document.getElementById('wave');
+      const shown = [...wave.children].filter((el) => getComputedStyle(el).display !== 'none').map((el) => el.id);
+      return { hist: wave.classList.contains('hist-open'), shown };
+    });
+    assert.equal(closed.hist, false);
+    assert.ok(closed.shown.includes('statsFold') && closed.shown.includes('cardsFold') && closed.shown.includes('cardRecent'));
+    assert.equal(await page.locator('#waveHistBack').evaluate((el) => getComputedStyle(el).display), 'none');
+  } finally {
+    if (browser) await browser.close();
+    await new Promise((resolve) => server.close(resolve));
+  }
+});

@@ -103,7 +103,7 @@ test('the board face keeps the contract in both themes', async () => {
     await page.waitForFunction(() => (document.querySelector('#cardRecentList') || {}).textContent.includes('merged'), null, { timeout: 8000 });
     await page.screenshot({ path: path.join(ART, 'board-open-desktop.png'), fullPage: true });
     for (const id of ['mesh', 'stats', 'roster', 'cards', 'cloud', 'recent', 'history', 'work', 'queue']) {
-      const head = page.locator(`[data-fold="${id}"].collapsed > .fold-head`);
+      const head = page.locator(`[data-fold="${id}"].collapsed .fold-head`);
       if (await head.count()) await head.click();
     }
 
