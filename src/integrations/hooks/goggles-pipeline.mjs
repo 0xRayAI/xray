@@ -850,13 +850,22 @@ function researchCall(toolName, text) {
   return /^read_file$/i.test(tool) && !opensLensFile(spoken);
 }
 
+/** One card that is not already one of the four plane names. Two names stay quiet. */
+function oneCardLine(text) {
+  const named = cardsNamed(intentWords(text)).filter((name) => !CARD_PLANES.includes(name));
+  if (named.length !== 1) return '';
+  return hintLine(named[0]);
+}
+
 export function lensPlane(text) {
-  const hint = suitHint(String(text || ''));
+  const spoken = String(text || '');
+  const hint = suitHint(spoken);
   if (hint === 'Name one plane.') return { stop: true, files: [] };
-  if (!hint || hint.includes('\n')) return { stop: false, files: [] };
-  const mark = hint.indexOf(': ');
+  const line = hint || oneCardLine(spoken);
+  if (!line || line.includes('\n')) return { stop: false, files: [] };
+  const mark = line.indexOf(': ');
   if (mark < 0) return { stop: false, files: [] };
-  const files = hint.slice(mark + 2).split(',').map((part) => part.trim()).filter(Boolean);
+  const files = line.slice(mark + 2).split(',').map((part) => part.trim()).filter(Boolean);
   return { stop: false, files };
 }
 

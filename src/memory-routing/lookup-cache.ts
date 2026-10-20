@@ -1,5 +1,5 @@
 import { statSync } from 'node:fs';
-import type { MemoryRoutingProvider } from './types.js';
+import type { MemoryOrchestrationTask, MemoryRoutingProvider, MemoryTaskConfidence } from './types.js';
 
 /**
  * Parsed organ files stay in memory until size or mtimeNs changes.
@@ -86,6 +86,48 @@ function bindStore(store: unknown): void {
   };
 }
 
+function signalsFilePath(provider: MemoryRoutingProvider): string {
+  const signals = (provider as { service?: { signalsManager?: { filePath?: unknown } } }).service?.signalsManager;
+  return signals && typeof signals.filePath === 'string' ? signals.filePath : '';
+}
+
+function taskStamp(task: MemoryOrchestrationTask): string {
+  return `${task.id}\0${task.type}\0${task.description}`;
+}
+
+/**
+ * Decay uses the wall clock, so two lookups of one unchanged signals file
+ * differ in the 11th digit. Repeat the stored confidence until that file changes.
+ */
+function bindConfidenceMemo(provider: MemoryRoutingProvider): void {
+  const original = provider.getTaskConfidence;
+  if (typeof original !== 'function') return;
+  const filePath = signalsFilePath(provider);
+  if (!filePath) return;
+
+  let stamp: FileStamp | null = null;
+  let key = '';
+  let cached: MemoryTaskConfidence | undefined;
+
+  provider.getTaskConfidence = (task: MemoryOrchestrationTask): MemoryTaskConfidence => {
+    const before = stampFile(filePath);
+    const nextKey = taskStamp(task);
+    if (cached && stamp && sameStamp(stamp, before) && key === nextKey) return cached;
+    const value = original.call(provider, task);
+    const after = stampFile(filePath);
+    if (sameStamp(before, after)) {
+      cached = value;
+      stamp = after;
+      key = nextKey;
+    } else {
+      cached = undefined;
+      stamp = null;
+      key = '';
+    }
+    return value;
+  };
+}
+
 /** Attach the file cache to a loaded Repertoire provider. Other providers are left alone. */
 export function bindOrganFileCache(provider: MemoryRoutingProvider): void {
   const service = (provider as { service?: unknown }).service;
@@ -93,4 +135,5 @@ export function bindOrganFileCache(provider: MemoryRoutingProvider): void {
   const row = service as { signalsManager?: unknown; stateManager?: unknown };
   bindStore(row.signalsManager);
   bindStore(row.stateManager);
+  bindConfidenceMemo(provider);
 }

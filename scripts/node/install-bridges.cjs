@@ -634,6 +634,35 @@ function listTreeFiles(root) {
   return files;
 }
 
+/** Catalog SKILL.md files syncBuiltinSkills copies onto a mill plugin. */
+function catalogSkillBodies(packageRoot) {
+  const bodies = new Map();
+  const dirs = [path.join(packageRoot, "dist", "skills"), path.join(packageRoot, "src", "skills")];
+  const sourceDir = dirs.find((dir) => fs.existsSync(dir));
+  if (!sourceDir) return bodies;
+  let names;
+  try {
+    names = fs.readdirSync(sourceDir, { withFileTypes: true });
+  } catch {
+    return bodies;
+  }
+  for (const entry of names) {
+    let linkedDir = false;
+    if (entry.isSymbolicLink()) {
+      try {
+        linkedDir = fs.statSync(path.join(sourceDir, entry.name)).isDirectory();
+      } catch {
+        linkedDir = false;
+      }
+    }
+    if (!entry.isDirectory() && !linkedDir) continue;
+    const skillMd = path.join(sourceDir, entry.name, "SKILL.md");
+    if (!fs.existsSync(skillMd)) continue;
+    bodies.set(`skills/${entry.name}/SKILL.md`, fs.readFileSync(skillMd));
+  }
+  return bodies;
+}
+
 /** Dest already holds the post-patch plugin, so a repeat wear must not rm+cp it. */
 function grokPluginSettled(sourceDir, dest, packageRoot, targetDir) {
   const sourceFiles = listTreeFiles(sourceDir);
@@ -652,6 +681,9 @@ function grokPluginSettled(sourceDir, dest, packageRoot, targetDir) {
     }
   }
   const ignoreCatalog = !plantIncludesMill(targetDir, packageRoot);
+  if (!ignoreCatalog) {
+    for (const [rel, body] of catalogSkillBodies(packageRoot)) desired.set(rel, body);
+  }
   const wanted = ignoreCatalog ? dropPluginSkillFiles(desired) : desired;
   const have = ignoreCatalog ? dropPluginSkillFiles(destFiles) : destFiles;
   if (wanted.size !== have.size) return false;
