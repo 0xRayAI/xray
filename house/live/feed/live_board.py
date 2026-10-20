@@ -375,16 +375,71 @@ def _chosen_branch(event, bases):
     return names[0]
 
 
-def _pr_matches(card, event, sha_branches):
+def _pr_links(events):
+    """pr_commit maps a sha to (repo, number). A commit has no number of its own."""
+    found = {}
+    for event in events:
+        if not isinstance(event, dict) or event.get("kind") != "pr_commit":
+            continue
+        sha = _sha_of(event)
+        repo = str(event.get("repo") or "").lower()
+        if not sha or not repo or not _positive_event(event):
+            continue
+        pair = (repo, int(event["number"]))
+        bucket = found.setdefault(sha, [])
+        if pair not in bucket:
+            bucket.append(pair)
+    return found
+
+
+def _sha_linked(event, card, links):
+    sha = _sha_of(event)
+    repo = str(card.get("repo") or "").lower()
+    numbers = [number for (linked_repo, number) in links.get(sha, ()) if linked_repo == repo]
+    if not numbers:
+        return False
+    try:
+        card_number = int(card.get("number"))
+    except (TypeError, ValueError):
+        card_number = None
+    if card_number is not None and card_number >= 1 and card_number not in numbers:
+        return False
+    return True
+
+
+def _branch_for(card, events, cards, bases, links):
+    """Prefer the commit whose sha a pr_commit names. The first touching commit is the fallback."""
+    touching = []
+    for event in events:
+        if event.get("kind") in ("pr_open", "issue_open"):
+            continue
+        branch = _chosen_branch(event, bases)
+        if not branch or not _event_touches(card, event, cards):
+            continue
+        touching.append((event, branch))
+    for event, branch in touching:
+        if _sha_linked(event, card, links):
+            return branch
+    return touching[0][1] if touching else ""
+
+
+def _pr_matches(card, event, sha_branches, links):
     if not isinstance(event, dict) or event.get("kind") != "pr_open" or not _positive_event(event):
         return False
     branch = card.get("branch")
     if not branch:
         return False
-    if _head_of(event) == branch:
-        return True
     sha = _sha_of(event)
-    return bool(sha) and branch in sha_branches.get(sha, ())
+    named = _head_of(event) == branch
+    by_sha = bool(sha) and branch in sha_branches.get(sha, ())
+    if not named and not by_sha:
+        return False
+    pairs = links.get(sha, ())
+    if not pairs:
+        return True
+    repo = str(event.get("repo") or "").lower()
+    number = int(event["number"])
+    return any(linked_repo == repo and linked_number == number for linked_repo, linked_number in pairs)
 
 
 def _positive_event(event):
@@ -422,32 +477,30 @@ def _event_touches(card, event, cards):
 
 
 def attach_held(held, events):
-    """Copy a commit or push ref onto a card the server already holds.
+    """Copy a commit ref onto a card the server already holds.
 
-    A commit carries branches plus sha. pr_open carries base (the target) plus sha.
-    The same sha, or a head ref equal to the card branch, rewrites a holding key.
+    A commit carries branches plus sha. pr_commit carries sha plus number.
+    pr_open carries base (the target) plus sha. The sha a pr_commit names
+    sets the branch. That same sha, or a head ref equal to the card branch,
+    rewrites a holding key.
     """
     cards = [dict(card) for card in (held or []) if isinstance(card, dict)]
     evs = [event for event in (events or []) if isinstance(event, dict)]
     bases = _base_by_sha(evs)
     sha_branches = _sha_branch_index(evs)
+    links = _pr_links(evs)
     for card in cards:
         if card.get("branch"):
             continue
-        for event in evs:
-            if event.get("kind") in ("pr_open", "issue_open"):
-                continue
-            branch = _chosen_branch(event, bases)
-            if not branch or not _event_touches(card, event, cards):
-                continue
+        branch = _branch_for(card, evs, cards, bases, links)
+        if branch:
             card["branch"] = branch
-            break
     gone = set()
     for card in cards:
         key = str(card.get("key") or "")
         if not key.lower().startswith("packet:") or not card.get("branch") or id(card) in gone:
             continue
-        hit = next((event for event in evs if _pr_matches(card, event, sha_branches)), None)
+        hit = next((event for event in evs if _pr_matches(card, event, sha_branches, links)), None)
         if not hit:
             continue
         next_key = f"{str(hit['repo']).lower()}#{int(hit['number'])}"

@@ -52,12 +52,15 @@ test('a push sets branch and a matching pr_open rewrites the holding key', () =>
   assert.equal(stay[0].alias, undefined);
 });
 
-test('a collector commit and pr_open leave one card per id', () => {
-  const sha = 'ab' + 'c'.repeat(38);
+test('a collector commit, pr_commit, and pr_open leave one card per id', () => {
+  const mainSha = 'a'.repeat(40);
+  const sha = 'b'.repeat(40);
   const held = { key: 'packet:line-9', born: 'packet', repo: 'acme/app', number: 0, state: 'live', title: 'hold', owner: 'forge' };
   const opened = { key: 'acme/app#9', repo: 'acme/app', number: 9, state: 'live', title: 'opened' };
   const events = [
-    { kind: 'commit', repo: 'acme/app', sha, branches: ['main', 'cursor/hold'], src_file: 'github-api' },
+    { kind: 'commit', repo: 'acme/app', sha: mainSha, branches: ['main'], src_file: 'github-api' },
+    { kind: 'commit', repo: 'acme/app', sha, branches: ['cursor/hold'], src_file: 'github-api' },
+    { kind: 'pr_commit', repo: 'acme/app', sha, number: 9, src_file: 'github-api' },
     { kind: 'pr_open', repo: 'Acme/App', number: 9, base: 'main', sha, source: 'https://github.com/acme/app/pull/9' },
   ];
   const cards = attachPacketCards([held, opened], events);
@@ -75,9 +78,12 @@ root = Path(os.environ["MESH_RUN"])
 held = [{"key":"packet:line-9","born":"packet","repo":"acme/app","number":0,"state":"live","title":"hold","owner":"forge","last_beat_t":1}]
 (root / "live" / "cards.json").write_text(json.dumps({"cards": held}))
 import live_board
+main_sha = ${JSON.stringify(mainSha)}
 sha = ${JSON.stringify(sha)}
 evs = [
-  {"id":"c","t_ct":"2026-10-20T12:00:00-05:00","kind":"commit","repo":"acme/app","sha":sha,"branches":["main","cursor/hold"],"from":"forge","src_file":"github-api"},
+  {"id":"a","t_ct":"2026-10-20T11:59:00-05:00","kind":"commit","repo":"acme/app","sha":main_sha,"branches":["main"],"from":"forge","src_file":"github-api"},
+  {"id":"c","t_ct":"2026-10-20T12:00:00-05:00","kind":"commit","repo":"acme/app","sha":sha,"branches":["cursor/hold"],"from":"forge","src_file":"github-api"},
+  {"id":"p","t_ct":"2026-10-20T12:00:00-05:00","kind":"pr_commit","repo":"acme/app","sha":sha,"number":9,"from":"forge","src_file":"github-api"},
   {"id":"o","t_ct":"2026-10-20T12:01:00-05:00","kind":"pr_open","repo":"acme/app","number":9,"base":"main","sha":sha,"source":"https://github.com/acme/app/pull/9","from":"forge","title":"held","pr_state":"open"},
 ]
 def one(cards):
@@ -185,11 +191,16 @@ test('a packet post creates one card, and no activity line carries card', async 
     assert.equal((body.cards || []).some(card => card.key === '0xrayai/xray#0'), false);
     const t = new Date().toISOString();
     fs.mkdirSync(path.join(data, 'feed'), { recursive: true });
+    const mainSha = 'a'.repeat(40);
+    const headSha = 'b'.repeat(40);
+    const commitEvents = [
+      { id: 'commit-main', t_ct: t, kind: 'commit', repo: '0xRayAI/xray', sha: mainSha, branches: ['main'], from: 'forge' },
+      { id: 'commit-head', t_ct: t, kind: 'commit', repo: '0xRayAI/xray', sha: headSha, branches: ['cursor/card-required'], from: 'forge' },
+      { id: 'pr-commit-1', t_ct: t, kind: 'pr_commit', repo: '0xRayAI/xray', sha: headSha, number: 471, from: 'forge' },
+    ];
     fs.writeFileSync(path.join(data, 'feed', 'github-events.json'), JSON.stringify({
       generated_at: t,
-      events: [
-        { id: 'push-1', t_ct: t, kind: 'push', repo: '0xRayAI/xray', branch: 'cursor/card-required', card: 'packet:hold-1' },
-      ],
+      events: commitEvents,
     }));
     let branched = null;
     for (let i = 0; i < 20; i++) {
@@ -201,10 +212,9 @@ test('a packet post creates one card, and no activity line carries card', async 
     assert.equal(branched && branched.branch, 'cursor/card-required', logs);
     fs.writeFileSync(path.join(data, 'feed', 'github-events.json'), JSON.stringify({
       generated_at: new Date().toISOString(),
-      events: [
-        { id: 'push-1', t_ct: t, kind: 'push', repo: '0xRayAI/xray', branch: 'cursor/card-required', card: 'packet:hold-1' },
-        { id: 'pr-1', t_ct: new Date().toISOString(), kind: 'pr_open', repo: '0xRayAI/xray', number: 471, head: 'cursor/card-required', url: 'https://github.com/0xRayAI/xray/pull/471' },
-      ],
+      events: commitEvents.concat([
+        { id: 'pr-1', t_ct: new Date().toISOString(), kind: 'pr_open', repo: '0xRayAI/xray', number: 471, base: 'main', sha: headSha, source: 'https://github.com/0xRayAI/xray/pull/471' },
+      ]),
     }));
     let attached = null;
     for (let i = 0; i < 20; i++) {

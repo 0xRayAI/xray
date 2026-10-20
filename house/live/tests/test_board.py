@@ -89,6 +89,44 @@ class Packet(unittest.TestCase):
         self.assertIn("does not run `--exit`", body)
 
 
+class AttachHeld(unittest.TestCase):
+    def test_commit_pr_commit_and_pr_open_leave_one_card(self):
+        """A main commit listed first must not win. pr_commit names the head sha."""
+        import importlib
+        import live_board
+        main_sha = "a" * 40
+        sha = "b" * 40
+        held = [{"key": "packet:line-9", "born": "packet", "repo": "acme/app", "number": 0,
+                 "state": "live", "title": "hold", "owner": "forge", "last_beat_t": 1}]
+        evs = [
+            {"id": "a", "t_ct": ct(40), "kind": "commit", "repo": "acme/app", "sha": main_sha,
+             "branches": ["main"], "from": "forge"},
+            {"id": "c", "t_ct": ct(30), "kind": "commit", "repo": "acme/app", "sha": sha,
+             "branches": ["cursor/hold"], "from": "forge"},
+            {"id": "p", "t_ct": ct(30), "kind": "pr_commit", "repo": "acme/app", "sha": sha, "number": 9, "from": "forge"},
+            {"id": "o", "t_ct": ct(20), "kind": "pr_open", "repo": "Acme/App", "number": 9, "base": "main",
+             "sha": sha, "source": "https://github.com/acme/app/pull/9", "from": "forge", "title": "held", "pr_state": "open"},
+        ]
+        with tempfile.TemporaryDirectory() as root:
+            live = Path(root) / "live"
+            live.mkdir()
+            (live / "cards.json").write_text(json.dumps({"cards": held}))
+            with mock.patch.dict(os.environ, {"MESH_RUN": root, "LIVE_HELD_CARDS": ""}):
+                board = importlib.reload(live_board)
+
+                def one(cards):
+                    keys = [c["key"] for c in cards]
+                    self.assertEqual(keys.count("acme/app#9"), 1, keys)
+                    self.assertNotIn("packet:line-9", keys)
+                    self.assertEqual(len(keys), len(set(keys)))
+                    card = next(c for c in cards if c["key"] == "acme/app#9")
+                    self.assertEqual(card.get("alias"), "packet:line-9")
+                    self.assertEqual(card.get("branch"), "cursor/hold")
+
+                one(board.run(evs, write=False, held=held)["cards"])
+                one(board.run(evs, write=False)["cards"])
+
+
 class Model(unittest.TestCase):
     def setUp(self):
         self.d = tempfile.TemporaryDirectory(); root = Path(self.d.name)
