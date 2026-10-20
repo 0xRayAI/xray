@@ -3415,16 +3415,18 @@ function githubFeedEvents() {
   }
 }
 backfillArchive({ inboxes: seatInbox, extraInbox: inboxLines, nudges, acks: inboxAcks, cards: bfCards, events: githubFeedEvents() });
-server.listen(PORT, () => console.log(`live mesh listening on :${server.address().port} (${PUBLIC ? 'public: no password, no masking' : 'gated'})`));
+server.listen(PORT, () => {
+  console.log(`live mesh listening on :${server.address().port} (${PUBLIC ? 'public: no password, no masking' : 'gated'})`);
+  // The stall clock starts once the port is open, so a slow bind is not a stall.
+  if (process.env.COLLECTOR !== 'off') {
+    readCollectorFeed();
+    setInterval(readCollectorFeed, 2000).unref();
+    const watchEvery = Math.min(5000, Math.max(500, (Number(process.env.COLLECTOR_WATCH_S) || 45) * 1000));
+    setInterval(watchFeed, watchEvery).unref();
+    startCollector().catch(e => console.log("collector: start failed " + String(e.message).slice(0, 80)));
+  }
+});
 for (const sig of ['SIGTERM', 'SIGINT']) process.on(sig, () => { stopping = true; server.close(() => process.exit(0)); setTimeout(() => process.exit(0), 5000).unref(); });
-// started last: the feed validators above are initialized by now
-if (process.env.COLLECTOR !== 'off') {
-  readCollectorFeed();            // warm start from the volume before the first pass
-  setInterval(readCollectorFeed, 2000).unref();
-  const watchEvery = Math.min(5000, Math.max(500, (Number(process.env.COLLECTOR_WATCH_S) || 45) * 1000));
-  setInterval(watchFeed, watchEvery).unref();   // hung feed loop: N x COLLECTOR_WATCH_S, then restart
-  startCollector().catch(e => console.log("collector: start failed " + String(e.message).slice(0, 80)));
-}
 readJiraFeed();
 setInterval(readJiraFeed, 2000).unref();
 startJira();

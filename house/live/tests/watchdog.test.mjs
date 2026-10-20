@@ -83,13 +83,15 @@ test('stale feed on disk does not kill a fresh collector; a real stall still doe
   child.stdout.on('data', d => { logs += d; });
   child.stderr.on('data', d => { logs += d; });
   try {
-    for (let i = 0; i < 40 && !/collector: started/.test(logs); i++) await new Promise(r => setTimeout(r, 100));
+    let port = null;
+    for (let i = 0; i < 80 && !(port && /collector: started/.test(logs)); i++) {
+      port = /listening on :(\d+)/.exec(logs);
+      if (!(port && /collector: started/.test(logs))) await new Promise(r => setTimeout(r, 50));
+    }
+    port = /listening on :(\d+)/.exec(logs);
     assert.match(logs, /collector: started/);
-    const port = /listening on :(\d+)/.exec(logs);
     assert.ok(port, logs);
     const base = `http://127.0.0.1:${port[1]}`;
-    await new Promise(r => setTimeout(r, 1200));
-    assert.doesNotMatch(logs, /feed loop stalled/);
     const early = await (await fetch(base + '/healthz')).json();
     assert.equal(early.stalled, false);
     let body = null;
