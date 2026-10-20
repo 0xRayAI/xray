@@ -14,7 +14,11 @@ export const ACT_KINDS = {
   deploy: ['start', 'end', 'pass', 'fail', 'cancel'],
 };
 const ACT_FIELDS = new Set(['t_ct', 'kind', 'action', 'to', 'from', 'agent', 'tag', 'seat', 'room', 'pr']);
-const PR_URL = /^https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/pull\/\d{1,8}$/;
+// GitHub owner: letters, digits, single hyphens, not at either end, at most 39.
+// Repo may contain a dot. A segment of "." or ".." is not a name.
+const GH_OWNER = '[A-Za-z0-9](?:-[A-Za-z0-9]|[A-Za-z0-9]){0,38}';
+const GH_REPO = '[A-Za-z0-9_](?:[A-Za-z0-9._-]*[A-Za-z0-9_])?';
+const PR_URL = new RegExp('^https://github\\.com/' + GH_OWNER + '/' + GH_REPO + '/pull/\\d{1,8}$');
 const ACT_BANNED = /body|text|message/i;
 const ACT_VALUE = /^[A-Za-z0-9 ._:@#+\/-]{1,80}$/;
 const ACT_AGENT = /^[A-Za-z0-9][A-Za-z0-9_-]{2,40}$/;
@@ -62,6 +66,7 @@ export function acceptLine(lines, d, seat, now = Date.now()) {
     return { ok: false, status: 403, error: 'seat mismatch' };
   }
   const line = { ...d, seat, by: seat, seq: lines.length + 1 };
+  if (typeof line.pr === 'string') line.pr = line.pr.trim();
   lines.push(line);
   return { ok: true, seq: line.seq };
 }

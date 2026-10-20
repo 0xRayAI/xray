@@ -99,7 +99,7 @@ A cloud agent is its own row on the board, in the `cloud agents` group, not only
 | `bcId` | Agent id (`bc-…` or the same id the webhook stored) |
 | `seat` | Owning seat. The Cursor webhook seat, else the activity key's seat, else the ARCH1 launch seat |
 | `card` | Linked card `owner/repo#number`, from a GitHub PR url, an activity `tag` of that shape, or the ARCH1 launch card |
-| `pr` | `https://github.com/…/pull/n` when the webhook sent one |
+| `pr` | `https://github.com/…/pull/n` when the webhook or a cloud-agent activity line sent one |
 | `state` | `running`, `finished`, or `failed` |
 | `updated_ct` | Last update time |
 
@@ -108,7 +108,7 @@ A cloud agent is its own row on the board, in the `cloud agents` group, not only
 Two feeds, the same ones seats already write:
 
 1. `POST /cursor/webhook` appends `agents.jsonl` after the signature check.
-2. `POST /activity` with `kind` `cloud_agent` or `agent` and `action` `launch`, `reply`, `finished`, or `cancel`. `tag` may be `owner/repo#number`. This is the same line a `fleet/cloud-agents.jsonl` row carries (`t_ct`, `by`, `action`, `agent`, `tag`).
+2. `POST /activity` with `kind` `cloud_agent` or `agent` and `action` `launch`, `reply`, `finished`, or `cancel`. `tag` may be `owner/repo#number`. `pr` may be the pull URL. This is the same line a `fleet/cloud-agents.jsonl` row carries (`t_ct`, `by`, `action`, `agent`, `tag`).
 
 An ARCH1 launch file row with an `agentId` fills the seat and card when the log has not named them yet. A running row shows a spinner. Open the row for the five fields. A `pr` url is a GitHub link.
 
