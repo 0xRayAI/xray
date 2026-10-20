@@ -2,10 +2,11 @@
 Holds: a Held: comment, or a GitHub label in GITHUB_HOLD_LABEL (default on-hold).
 NO_NUDGE_REPOS (unset means none) stay on the board and are never nudged.
 
-A packet is 7 fields: goal, constraints, path, acceptance, evidence, next owner, escalate. Two forms:
-  ## Packet                         single line:
-  - Goal: ...                       Packet: goal: ... | constraints: ... | acceptance: ... | next owner: ...
-  - Next owner: ...                 (';' also separates fields)
+A packet is 7 fields: goal, constraints, path, acceptance, evidence, next owner, escalate. Three forms:
+  ## Packet                         ### Scope / ### Acceptance / ### Next owner
+  - Goal: ...                       (Scope fills goal; ### stays inside the packet)
+  single line: Packet: goal: ... | acceptance: ... | next owner: ...
+                                    (';' also separates fields)
 Every field: emails -> [email], links whose host is not GitHub, Railway or example.com are stripped, <= 200 chars."""
 import os
 import re
@@ -13,7 +14,7 @@ from urllib.parse import urlparse
 
 FIELDS = ("goal", "constraints", "path", "acceptance", "evidence", "next owner", "escalate")
 ALIAS = {"next": "next owner", "next_owner": "next owner", "owner": "next owner", "constraint": "constraints",
-         "accept": "acceptance", "done when": "acceptance", "escalation": "escalate"}
+         "accept": "acceptance", "done when": "acceptance", "escalation": "escalate", "scope": "goal"}
 MAX = 200
 EMAIL = re.compile(r"[\w.+-]+@[\w-]+(\.[\w-]+)+")
 URL = re.compile(r"https?://[^\s)>\]]+")
@@ -123,18 +124,49 @@ def _key(k):
     return k if k in FIELDS else None
 
 
+def _packet_block(text):
+    """The packet section through the next heading at the same or higher level. ### stays inside."""
+    found = re.search(r"^(#{1,6})\s*packet\s*$", text, re.I | re.M)
+    if not found:
+        return ""
+    level = len(found.group(1))
+    rest = text[found.end():]
+    end = re.search(rf"(?m)^#{{1,{level}}}\s+\S", rest)
+    return rest[:end.start()] if end else rest
+
+
+def _flush_field(out, name, lines):
+    if not name:
+        return
+    value = clean(" ".join(lines))
+    if value:
+        out.setdefault(name, value)
+
+
 def parse(body):
     """-> {field: text} for the fields present (cleaned), or {} when the body has no packet."""
     if not body:
         return {}
     text = str(body).replace("\r\n", "\n")
     out = {}
-    m = re.search(r"^#{1,4}\s*packet\s*$(.*?)(?=^#{1,4}\s|\Z)", text, re.I | re.M | re.S)
-    if m:
-        for line in m.group(1).splitlines():
+    block = _packet_block(text)
+    if block:
+        current, buf = None, []
+        for line in block.splitlines():
+            heading = re.match(r"^\s*(#{1,6})\s+(.+?)\s*$", line)
+            if heading:
+                _flush_field(out, current, buf)
+                current, buf = _key(re.sub(r":\s*$", "", heading.group(2).strip())), []
+                continue
             lm = re.match(r"^\s*(?:[-*]\s*)?(?:\*\*)?([A-Za-z _]{3,20}?)(?:\*\*)?\s*:\s*(.+)$", line)
             if lm and _key(lm.group(1)) and lm.group(2).strip():
+                _flush_field(out, current, buf)
+                current, buf = None, []
                 out.setdefault(_key(lm.group(1)), clean(lm.group(2)))
+                continue
+            if current is not None:
+                buf.append(line)
+        _flush_field(out, current, buf)
     if not out:
         sm = re.search(r"^\s*\**packet\**\s*:\s*(.+)$", text, re.I | re.M)
         if sm:

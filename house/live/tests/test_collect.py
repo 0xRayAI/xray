@@ -999,6 +999,71 @@ class CardLifecycle(unittest.TestCase):
         self.assertEqual(hit["kind"], "pr_commit")
         self.assertEqual(hit["sha"], second)
 
+    def test_pull_open_records_the_head_ref(self):
+        col = _collector("acme/app")
+        sha = "b" * 40
+        ref = "cursor/hold"
+        pulls = [self._pull(number=9, merged_at=None, state="open", head={"sha": sha, "ref": ref},
+                            html_url="https://github.com/acme/app/pull/9", title="held")]
+
+        class C:
+            token = "t"
+            def rest(self, path, params=None, etag=None, essential=True):
+                return 200, pulls, "etag", None
+
+        with mock.patch.dict(uc.NODE_LC, {"forge0x1[bot]": "forge"}):
+            col.commit_event("a" * 40, "2026-10-20T16:00:00Z", "on main", "forge0x1[bot]", "main")
+            col.poll_pulls(C())
+        opened = col.ev["acme/app#9:open"]
+        self.assertEqual(opened["kind"], "pr_open")
+        self.assertEqual(opened["sha"], sha)
+        self.assertEqual(opened["base"], "main")
+        self.assertEqual(opened["head_ref"], ref)
+        self.assertNotIn("branches", opened)
+        commit = col.ev["acme/app:commit:" + ("a" * 40)]
+        self.assertEqual(commit["branches"], ["main"])
+
+    def test_copied_fixture_matches_collector_output(self):
+        """house/live/tests/fixtures/collector-held-pr.json is RepoCollector output, not a hand-built event."""
+        copied = json.loads((HERE / "fixtures" / "collector-held-pr.json").read_text())
+        fresh = {}
+        stamp = {"updated_at": "2026-10-20T16:06:00Z", "created_at": "2026-10-20T16:06:00Z",
+                 "merged_at": None, "state": "open", "title": "held", "draft": False, "body": "", "labels": []}
+        for name, repo, pulls in (
+            ("one", "acme/app", [self._pull(number=9, html_url="https://github.com/acme/app/pull/9",
+                                            head={"sha": "b" * 40, "ref": "cursor/hold"}, **stamp)]),
+            ("two", "acme/app", [
+                self._pull(number=9, html_url="https://github.com/acme/app/pull/9",
+                           head={"sha": "b" * 40, "ref": "cursor/hold"}, **stamp),
+                self._pull(number=10, html_url="https://github.com/acme/app/pull/10",
+                           head={"sha": "c" * 40, "ref": "cursor/other"}, **stamp),
+            ]),
+            ("xray", "0xRayAI/xray", [self._pull(number=471, html_url="https://github.com/0xRayAI/xray/pull/471",
+                                                 head={"sha": "b" * 40, "ref": "cursor/card-required"}, **stamp)]),
+        ):
+            col = _collector(repo)
+            class C:
+                token = "t"
+                def rest(self, path, params=None, etag=None, essential=True):
+                    return 200, pulls, "etag", None
+            with mock.patch.dict(uc.NODE_LC, {"forge0x1[bot]": "forge"}):
+                col.commit_event("a" * 40, "2026-10-20T16:00:00Z", "on main", "forge0x1[bot]", "main")
+                for pull in pulls:
+                    col.pr_commit_event(pull["number"], pull["head"]["sha"], "2026-10-20T16:05:00Z",
+                                        pull.get("title") or "head", "forge0x1[bot]")
+                col.poll_pulls(C())
+            fresh[name] = list(col.ev.values())
+            for event in fresh[name]:
+                if event.get("kind") == "pr_commit":
+                    self.assertNotIn("branch", event)
+                    self.assertNotIn("branches", event)
+                    self.assertIn("sha", event)
+                    self.assertIn("number", event)
+                if event.get("kind") == "pr_open":
+                    self.assertEqual(event.get("base"), "main")
+                    self.assertEqual(event.get("sha"), next(p["head"]["sha"] for p in pulls if p["number"] == event["number"]))
+        self.assertEqual(fresh, {key: copied[key] for key in ("one", "two", "xray")})
+
     def test_workflow_run_emits_ci_fail_with_the_pr_number(self):
         col = _collector()
         run = {"id": 9, "name": "ci", "head_branch": "feat", "status": "completed", "conclusion": "failure",

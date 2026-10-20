@@ -36,6 +36,32 @@ class Packet(unittest.TestCase):
         self.assertIn("WORKING_CLOUD_S", fields["evidence"])
         self.assertEqual(p.parse("[docs](https://notion.so/x) text\n## Packet\n- Goal: [d](https://notion.so/y) z"), {"goal": "d z"})
 
+    def test_pr_packet_subsections_keep_scope_acceptance_and_next_owner(self):
+        """PR 477's ## Packet ends at ### Scope unless subsections stay inside the block."""
+        import live_packet as p
+        body = (
+            "## Packet\n\n"
+            "Taken from packet #471 (`grok-bot/ops/packets/PACKET-CARD-REQUIRED.md`).\n\n"
+            "### Scope\n\n"
+            "Every packet has a card on the Bifrost wave board, and a cloud agent does not run without one.\n\n"
+            "### Acceptance\n\n"
+            "One card per id. A commit branches list plus sha, and a pr_open with that sha and base, "
+            "rewrites the holding key. The launch still refuses a missing card id.\n\n"
+            "### Next owner\n\n"
+            "reviewer\n\n"
+            "### Files\n\n"
+            "- `house/live/app/server.mjs` — postSeatLines calls ensurePacketCard.\n\n"
+            "## Notes\n\n"
+            "- acceptance: not this\n"
+        )
+        fields = p.parse(body)
+        self.assertEqual(fields["goal"], "Every packet has a card on the Bifrost wave board, and a cloud agent does not run without one.")
+        self.assertIn("One card per id", fields["acceptance"])
+        self.assertEqual(fields["next owner"], "reviewer")
+        self.assertNotIn("not this", fields["acceptance"])
+        self.assertNotIn("server.mjs", fields["goal"])
+        self.assertNotIn("files", fields)
+
     def test_kanban_packet_is_packet_ok(self):
         import live_packet as p
         body = (Path(__file__).resolve().parents[3] / "grok-bot" / "ops" / "packets" / "PACKET-KANBAN.md").read_text()
@@ -61,6 +87,63 @@ class Packet(unittest.TestCase):
         self.assertIn("`--exit`, then `--turn end --tag wake`, then `--release`", body)
         self.assertIn("exits 0 and posts nothing", body)
         self.assertIn("does not run `--exit`", body)
+
+
+def _collector_fixture():
+    """Events copied from RepoCollector. pr_open has base and the head sha. pr_commit has sha and number."""
+    return json.loads((HERE / "fixtures" / "collector-held-pr.json").read_text())
+
+
+class AttachHeld(unittest.TestCase):
+    def test_commit_pr_commit_and_pr_open_leave_one_card(self):
+        """A main commit listed first must not win. pr_commit and pr_open share number and sha."""
+        import importlib
+        import live_board
+        evs = _collector_fixture()["one"]
+        commits = [e for e in evs if e.get("kind") == "commit"]
+        self.assertEqual(len(commits), 1)
+        self.assertEqual(commits[0].get("branches"), ["main"])
+        pr_commit = next(e for e in evs if e.get("kind") == "pr_commit")
+        pr_open = next(e for e in evs if e.get("kind") == "pr_open")
+        self.assertEqual(pr_commit.get("number"), 9)
+        self.assertNotIn("branch", pr_commit)
+        self.assertNotIn("branches", pr_commit)
+        self.assertEqual(pr_open.get("base"), "main")
+        self.assertEqual(pr_open.get("sha"), pr_commit.get("sha"))
+        repo = "acme/app"
+        held = [{"key": "packet:line-9", "born": "packet", "repo": repo, "number": 0,
+                 "state": "live", "title": "hold", "owner": "forge", "last_beat_t": 1}]
+        with tempfile.TemporaryDirectory() as root:
+            live = Path(root) / "live"
+            live.mkdir()
+            (live / "cards.json").write_text(json.dumps({"cards": held}))
+            with mock.patch.dict(os.environ, {"MESH_RUN": root, "LIVE_HELD_CARDS": ""}):
+                board = importlib.reload(live_board)
+
+                def one(cards):
+                    keys = [c["key"] for c in cards]
+                    self.assertEqual(keys.count("acme/app#9"), 1, keys)
+                    self.assertNotIn("packet:line-9", keys)
+                    self.assertEqual(len(keys), len(set(keys)))
+                    card = next(c for c in cards if c["key"] == "acme/app#9")
+                    self.assertEqual(card.get("alias"), "packet:line-9")
+                    self.assertEqual(card.get("branch"), pr_open.get("head_ref"))
+
+                one(board.run(evs, write=False, held=held)["cards"])
+                one(board.run(evs, write=False)["cards"])
+
+    def test_two_collector_pulls_do_not_pick_a_packet(self):
+        import importlib
+        import live_board
+        repo = "acme/app"
+        evs = _collector_fixture()["two"]
+        held = [{"key": "packet:line-9", "born": "packet", "repo": repo, "number": 0,
+                 "state": "live", "title": "hold", "owner": "forge", "last_beat_t": 1}]
+        board = importlib.reload(live_board)
+        cards = board.attach_held(held, evs)
+        self.assertEqual([c["key"] for c in cards], ["packet:line-9"])
+        self.assertNotIn("alias", cards[0])
+        self.assertNotIn("branch", cards[0])
 
 
 class Model(unittest.TestCase):
