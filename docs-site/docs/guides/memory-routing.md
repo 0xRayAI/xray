@@ -37,6 +37,8 @@ In `.xray/features.json` or `xray/features.json` (validated by `features.schema.
 }
 ```
 
+Automatic reflections from a TUI or a bot land in `feedbackDir` as one markdown file. That directory is the seat suit. npm pack excludes it. The writer does not run synthesis or Confer. It is due after 25 commits since the `head:` recorded in the last file.
+
 ### Provider options
 
 | `provider` | Use case |
