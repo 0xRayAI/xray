@@ -2,9 +2,11 @@
 
 > 0xRay house example — not the general procedure. Your team’s rules live in `house/` after `grok-bot house init`.
 
-CoS (blinky, the coordinator) is dead weight on the eng loop. Bifrost already does handoffs, the review queue, wakes, and receipts. The mill seat (eng implementer) is dead weight too: forge launches the cloud agent that writes code and opens the PR.
+> Amended by `COS-NARROW-ROLE-PACKET.md`. Blinky stays. CoS rows below that retire blinky, delete the coordinator, or hand the empty-board wake, the clock, or wave planning to forge are not the live decision. The mill-seat half still stands.
 
-This file is the whole change. No other file is edited here.
+The mill seat (eng implementer) is dead weight: forge launches the cloud agent that writes code and opens the PR. CoS stays, on the narrower role in the amendment packet.
+
+This file is the mill-seat inventory. The CoS decision is the amendment. No code is edited here.
 
 ## Packet
 
