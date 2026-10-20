@@ -157,6 +157,8 @@ test('one seat state: header text, dot and node label all come from L.seatView(s
   assert.match(html, /v = L\.seatView\(seatState\(a\[0\], hot\)\), on = v\.lit;/);
   assert.doesNotMatch(html, /s\.st/);
   assert.match(html, /var spinning = v\.blink;/);
+  assert.match(html, /el\.querySelector\('\.role'\)\.textContent = String\(a\[1\] \|\| ''\)/);
+  assert.doesNotMatch(html, /createElement\('button'\)[\s\S]{0,80}className = 'seat'/);
   assert.match(html, /var nv = L\.seatView\(seatState\(key, hot\)\); nodeView\[key\] = nv;/);
   assert.match(html, /drawNode\(key, nv\.lit, fs, pul, nv\.nodeWorking, nowWall\);/);
   assert.doesNotMatch(html, /hot\[a\[0\]\] \? 'LIVE'/);         // the old split derivation is gone
@@ -300,6 +302,12 @@ test('our overlay: strip is blinky, critic, forge, mill; Arch1 is outside; parke
   assert.ok(!ev[2].hops || ev[2].hops.length < 2);   // one hop is a self-pulse; the kit draws a ring
   assert.deepEqual(ev[3].hops, ['GitHub', 'Railway']);
   assert.ok('Blaze' in L.SATS); assert.equal(L.LABEL.Blaze, 'Blaze');
+  assert.deepEqual(L.SATS.CloudAgents, [150, 330]);
+  assert.equal(L.LABEL.CloudAgents, 'Cloud agents');
+  assert.equal(L.SUB.CloudAgents, 'cursor agents');
+  assert.deepEqual(L.COLOR.CloudAgents, [130, 190, 255]);
+  assert.ok(L.EDGES.some((e) => e[0] === 'CloudAgents' && e[1] === 'GitHub'));
+  for (const n of ['CloudAgents', 'Cloud agents', 'cursoragent']) assert.equal(L.liveNodeKey(n, null), 'CloudAgents', n);
   for (const n of ['Blaze', 'Blaze0x1', 'htafolla', 'Lead']) assert.equal(L.liveNodeKey(n, null), 'Blaze', n);
   assert.equal(L.botImage('arch1'), 'avatars/arch1.png');
   for (const x of Object.values(L.SATS)) assert.ok(x[0] >= 80 && x[0] <= 840, String(x));

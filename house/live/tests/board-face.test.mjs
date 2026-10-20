@@ -119,10 +119,13 @@ test('the board face keeps the contract in both themes', async () => {
       const names = [...document.querySelectorAll('.seat .nm')].map(el => el.textContent);
       const roster = [...document.querySelectorAll('#seatGrid .seat')].map(el => {
         const nm = el.querySelector('.nm');
+        const role = el.querySelector('.role');
         const cs = getComputedStyle(nm);
         return {
+          tag: el.tagName,
           text: (el.textContent || '').replace(/\s+/g, ' ').trim(),
           title: nm.title,
+          role: role ? role.textContent : '',
           ellipsis: cs.textOverflow,
           nowrap: cs.whiteSpace,
           idle: el.classList.contains('idle'),
@@ -160,9 +163,12 @@ test('the board face keeps the contract in both themes', async () => {
     assert.ok(face.roster.length > 0);
     const stateWord = /\b(active|idle|working|live|silent)\b/i;
     for (const row of face.roster) {
-      assert.equal(row.text, row.title.toUpperCase());
+      assert.equal(row.tag, 'DIV');
+      assert.equal(row.text, row.title.toUpperCase() + row.role);
+      assert.ok(row.role);
       assert.equal(row.ellipsis, 'ellipsis');
       assert.equal(row.nowrap, 'nowrap');
+      assert.doesNotMatch(row.role, stateWord);
       assert.doesNotMatch(row.text, stateWord);
       assert.equal(row.pulse, !row.idle);
     }
@@ -172,7 +178,7 @@ test('the board face keeps the contract in both themes', async () => {
       const full = 'A VERY LONG SEAT NAME THAT MUST TRUNCATE ON THE ROSTER';
       nm.textContent = full;
       nm.title = full;
-      const out = { title: nm.title, clipped: nm.scrollWidth > nm.clientWidth + 1, text: nm.parentElement.textContent.trim() };
+      const out = { title: nm.title, clipped: nm.scrollWidth > nm.clientWidth + 1, text: nm.textContent.trim() };
       nm.textContent = saved.text;
       nm.title = saved.title;
       return out;
@@ -269,14 +275,19 @@ test('the roster renders no state text', async () => {
     const head = page.locator('[data-fold="roster"].collapsed > .fold-head');
     if (await head.count()) await head.click();
     const rows = await page.evaluate(() => [...document.querySelectorAll('#seatGrid .seat')].map(el => ({
+      tag: el.tagName,
       text: (el.textContent || '').replace(/\s+/g, ' ').trim(),
       html: el.innerHTML,
       title: el.querySelector('.nm').title,
+      role: (el.querySelector('.role') || {}).textContent || '',
     })));
     assert.ok(rows.length > 0);
     for (const row of rows) {
+      assert.equal(row.tag, 'DIV');
       assert.equal(row.html.includes('class="st"'), false);
-      assert.equal(row.text, row.title.toUpperCase());
+      assert.equal(row.text, row.title.toUpperCase() + row.role);
+      assert.ok(row.role);
+      assert.doesNotMatch(row.role, /\b(active|idle|working|live|silent)\b/i);
       assert.doesNotMatch(row.text, /\b(active|idle|working|live|silent)\b/i);
       assert.doesNotMatch(row.text, /·/);
     }

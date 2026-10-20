@@ -10,26 +10,28 @@
   L.AGENTS.splice.apply(L.AGENTS, [0, L.AGENTS.length].concat(STRIP.map(function (s) { return [s, ROLE[s]]; })));
   L.SEAT_NAMES.splice.apply(L.SEAT_NAMES, [0, L.SEAT_NAMES.length].concat(STRIP));
   // 920 x 400 canvas: the four seats plus Arch1 on the top row, rails in the middle.
+  // CloudAgents is the cursor cloud-agent circle (kit position). Pings land on it, not on GitHub.
   reset(L.SATS, { blinky: [90, 55], critic: [250, 55], forge: [410, 55], mill: [570, 55], arch1: [820, 55],
-    GitHub: [110, 200], Blaze: [300, 200], Railway: [690, 200], Assistant: [840, 335] });
+    GitHub: [110, 200], Blaze: [300, 200], Railway: [690, 200], CloudAgents: [150, 330], Assistant: [840, 335] });
   var C = { blinky: [88, 210, 180], critic: [255, 150, 90], forge: [255, 140, 70], mill: [190, 170, 120], arch1: [255, 120, 100],
-    GitHub: [200, 210, 230], Blaze: [255, 120, 60], Railway: [170, 130, 255], Assistant: [116, 170, 156] };
+    GitHub: [200, 210, 230], Blaze: [255, 120, 60], Railway: [170, 130, 255], CloudAgents: [130, 190, 255], Assistant: [116, 170, 156] };
   reset(L.COLOR, C);
-  var LAB = { Blaze: 'Blaze', GitHub: 'GitHub', Railway: 'Railway', Assistant: 'Assistant', arch1: 'Arch1' };
+  var LAB = { Blaze: 'Blaze', GitHub: 'GitHub', Railway: 'Railway', Assistant: 'Assistant', arch1: 'Arch1', CloudAgents: 'Cloud agents' };
   STRIP.forEach(function (s) { LAB[s] = s; });
   reset(L.LABEL, LAB);
-  var SUB = { Blaze: 'owner', GitHub: 'PRs · commits · checks', Railway: 'deploys', Assistant: 'MCP calls', arch1: 'outside party' };
+  var SUB = { Blaze: 'owner', GitHub: 'PRs · commits · checks', Railway: 'deploys', Assistant: 'MCP calls', arch1: 'outside party', CloudAgents: 'cursor agents' };
   STRIP.forEach(function (s) { SUB[s] = ROLE[s]; });
   reset(L.SUB, SUB);
   reset(L.SQUARE, { GitHub: 1, Railway: 1 });
   L.EDGES.splice.apply(L.EDGES, [0, L.EDGES.length].concat(STRIP.map(function (s) { return [s, 'GitHub']; }),
-    [['arch1', 'GitHub'], ['Blaze', 'GitHub'], ['GitHub', 'Railway']]));
+    [['arch1', 'GitHub'], ['Blaze', 'GitHub'], ['GitHub', 'Railway'], ['CloudAgents', 'GitHub']]));
   // feed names -> our nodes: each drawn seat is its own node; Blaze / Lead / unknown senders / CI fold into GitHub
   var NK = L.NODE_KEY;
   STRIP.forEach(function (s) { NK[s] = s; });
   NK.arch1 = 'arch1';
   NK.Coord = 'blinky'; NK.Blaze = 'Blaze'; NK.Blaze0x1 = 'Blaze'; NK.htafolla = 'Blaze'; NK.Lead = 'Blaze'; NK['lead-alt'] = 'Blaze'; NK['lead-login'] = 'Blaze';
-  NK.Others = 'GitHub'; NK.other = 'GitHub'; NK.CI = 'GitHub'; NK.CloudAgents = 'GitHub'; NK['Cloud agents'] = 'GitHub';
+  NK.Others = 'GitHub'; NK.other = 'GitHub'; NK.CI = 'GitHub';
+  NK.CloudAgents = 'CloudAgents'; NK['Cloud agents'] = 'CloudAgents'; NK.cursoragent = 'CloudAgents';
   // burst-live IS the board: no node for it. Events to/from the board (its own deploys, /health, turn lines) are
   // dropped before the kit maps them, so nothing falls back to GitHub; hops through it are skipped.
   var BOARD = { Bifrost: 1, 'burst-live': 1, 'mymuse.house': 1 };

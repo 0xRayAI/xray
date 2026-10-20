@@ -152,7 +152,7 @@ test('mesh, stats, roster, cards, and activity start open in both themes', async
   }
 });
 
-test('roster seat headers toggle and stay compact while the roster starts open', async () => {
+test('roster chips show the role on load and leave status to the dot', async () => {
   const server = await serve();
   const base = `http://127.0.0.1:${server.address().port}/index.html`;
   let browser;
@@ -174,37 +174,37 @@ test('roster seat headers toggle and stay compact while the roster starts open',
       const grid = document.getElementById('seatGrid').getBoundingClientRect().width;
       const seats = [...document.querySelectorAll('#seatGrid .seat')].map((el) => {
         const box = el.getBoundingClientRect();
-        return { name: el.querySelector('.nm').textContent, w: box.width, y: box.y, open: el.getAttribute('aria-expanded') };
+        return {
+          tag: el.tagName,
+          name: el.querySelector('.nm').textContent,
+          role: (el.querySelector('.role') || {}).textContent || '',
+          text: (el.textContent || '').replace(/\s+/g, ' ').trim(),
+          w: box.width,
+          y: box.y,
+        };
       });
+      const nodes = Object.keys(window.LiveMesh.SATS);
       return {
-        panel, grid, seats,
+        panel, grid, seats, nodes,
         rosterOpen: !document.getElementById('seats').classList.contains('collapsed'),
       };
     });
     assert.equal(before.rosterOpen, true);
+    assert.ok(before.nodes.includes('CloudAgents'));
     assert.deepEqual(before.seats.map((seat) => seat.name), ['BLINKY', 'CRITIC', 'FORGE', 'MILL']);
-    assert.ok(before.seats.every((seat) => seat.open === 'false'));
+    assert.deepEqual(before.seats.map((seat) => seat.role), ['chief of staff', 'reviewer', 'eng primary', 'implementer']);
+    assert.ok(before.seats.every((seat) => seat.tag === 'DIV'));
     assert.ok(before.seats.every((seat) => Math.abs(seat.y - before.seats[0].y) < 2), JSON.stringify(before.seats));
-    assert.ok(before.seats.every((seat) => seat.w < before.grid / 2 && seat.w < before.panel / 2), JSON.stringify(before));
+    assert.ok(before.seats.every((seat) => seat.w > 80 && seat.w < before.panel / 2), JSON.stringify(before));
+    for (const seat of before.seats) assert.doesNotMatch(seat.text, /\b(ACTIVE|WORKING|IDLE|LIVE)\b/);
     const blinky = page.locator('#seatGrid .seat', { hasText: 'BLINKY' });
     await blinky.click();
-    const opened = await blinky.evaluate((el) => ({
-      open: el.getAttribute('aria-expanded'),
+    const after = await blinky.evaluate((el) => ({
+      tag: el.tagName,
       role: (el.querySelector('.role') || {}).textContent || '',
-      w: el.getBoundingClientRect().width,
-      panel: document.getElementById('seats').getBoundingClientRect().width,
     }));
-    assert.equal(opened.open, 'true');
-    assert.equal(opened.role, 'chief of staff');
-    assert.ok(opened.w < opened.panel / 2, JSON.stringify(opened));
-    assert.equal(await page.locator('#seatGrid .seat', { hasText: 'CRITIC' }).getAttribute('aria-expanded'), 'false');
-    await blinky.click();
-    const closed = await blinky.evaluate((el) => ({
-      open: el.getAttribute('aria-expanded'),
-      role: el.querySelector('.role') ? 'present' : '',
-    }));
-    assert.equal(closed.open, 'false');
-    assert.equal(closed.role, '');
+    assert.equal(after.tag, 'DIV');
+    assert.equal(after.role, 'chief of staff');
     assert.equal(await page.locator('#seats').evaluate((el) => el.classList.contains('collapsed')), false);
   } finally {
     if (browser) await browser.close();
