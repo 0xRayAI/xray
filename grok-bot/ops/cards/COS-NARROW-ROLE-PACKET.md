@@ -23,7 +23,7 @@ CoS (blinky) stays. The eng-loop work #411 took off CoS stays off CoS: board own
 
 Dev talk goes between Blaze and forge directly. The cos-forge 1:1 carries the printed `live-inbox` handoff line. A room post is not a handoff.
 
-The mill seat still goes. forge launches the cloud agent that writes code and opens the PR, and forge merges. A seat still never merges code it wrote. The foundry mill plant (mill+inspect) stays. Suit fitting uses that plant.
+The mill seat still goes. forge launches the cloud agent that writes the code and pushes the branch. forge opens the PR through its App and merges. A seat still never merges code it wrote. The foundry mill plant (mill+inspect) stays. Suit fitting uses that plant.
 
 ## Kept
 
@@ -54,7 +54,7 @@ Not reassigned here, and not a reason to retire blinky: the sweep backstop for d
 
 OP-PROC:
 
-- `grok-bot/OP-PROC.md` — narrow the coordinator. Keep the mill-seat split (cloud agent writes and opens; forge merges; mill+inspect fasten stays).
+- `grok-bot/OP-PROC.md` — narrow the coordinator. Keep the mill-seat split (cloud agent writes and pushes; forge opens through its App and merges; mill+inspect fasten stays).
 - `house/OP-PROC.md` — drop "CoS assigns" and "forge does not implement". Keep blinky on the four duties. Mill implements → the cloud agent.
 
 Seat descriptions:

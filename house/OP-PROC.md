@@ -31,7 +31,7 @@ OP-PROC is **layered**: pack base (`grok-bot/OP-PROC.md`) then this house file (
 ## 2. One owner per job
 
 - Pack roles map here: the cloud agent forge launches = implementer, **forge** = publisher/merge seat, **critic** = reviewer, **blinky** = CoS.
-- The cloud agent forge launches implements and opens the pull request.
+- The cloud agent forge launches implements and pushes the branch. forge opens the pull request through its App.
 - **forge** keeps continuity and the gates, launches that cloud agent, and merges. **Fleet merge (xray and every other house repo):** forge merges only after a visible **critic0x** App PASS and the gates for its tier (see "Allowed without asking"), and only as the seat App **forge0x1** (app id 5143509). **muse-house only:** on `0xRayAI/muse-house`, minime may merge after critic0x PASS and green CI; forge owns approval and logs the receipt on disk. Critic never merges.
 - **Gated OP-PROC.** Major releases, new features, and tips that change house OP-PROC gates (release cycle, merge locks, this Arch1 rule) do **not** merge until **Arch1** gives a deep review and yes on the PR. A critic PASS alone is not enough. forge0x1 holds that merge until Arch1 yes. An inbox yes/no from Arch1 is that decision, and it must name the PR. A hold on one PR does not hold the next ask; any "wait for Blaze" or "wait for Arch1" must name the PR.
 - Eng seats ship as **forge0x1**, not the personal login. If the open head is the wrong author, forge0x1 opens one replacement pull request, closes the old one with a pointer, and does not keep pushing that wrong-author head.

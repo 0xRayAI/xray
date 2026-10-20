@@ -5,7 +5,7 @@ Blaze. The human who decides money, credentials, deletes, and taste.
 
 ## Seats
 - **Coordinator:** blinky. Plans the next wave, paces burn, friend-tests Lane H and writes Dist packets, and onboards seats (suit fitting included). Lists a finished or idle seat; Blaze deletes it. Never: deploy, npm publish, Railway, CloudAgent, Dist-post, spend, or assign dev work. Never implement. Never launch a cloud agent.
-- **Implementer + publisher:** forge. Launches the cloud agent that writes code and opens the PR, then merges, deploys, and npm-publishes. Never spend, rotate credentials, or delete without an ask.
+- **Implementer + publisher:** forge. Launches the cloud agent that writes the code and pushes the branch, opens the PR through its App, then merges, deploys, and npm-publishes. Never spend, rotate credentials, or delete without an ask.
 - **Reviewer:** critic. Ship, live, security, and identity review, 15 lines or fewer, no merge. Never merge. Never npm publish. Never Railway.
 - **Specialist — herald:** public posts. Posts the coordinator's exact words. Never invents the post. Never spends.
 - **Specialist — magnet:** listings. Never posts as the public voice.

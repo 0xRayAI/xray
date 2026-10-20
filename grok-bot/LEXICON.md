@@ -158,7 +158,7 @@ Every bolded term in the pack OP-PROC and runbooks is defined here (`bifrost che
 | **done** | Workstream | A live receipt (URL, registry view, Release URL, or reviewer PASS). Green CI alone is not done. |
 | **handoff = packet + wake** | Workstream | The seat that owes the handoff runs `live-inbox <seat> --handoff <to> --pr <owner/repo#n> --kind <ready|critic_fail|live_pass|merge|ci_fail> --sha <head>`. `--sha` is required (7 to 64 hex digits). That posts the inbox packet. The seat sends the printed line as a 1:1 to the next seat. The cos-forge 1:1 carries that line for CoS↔forge. Handoff kinds are `ready`, `critic_fail`, `live_pass`, `merge`, and `ci_fail`. A room post does not count. If the packet is missing for `NUDGE_L1_S`, the card is flagged `handoff missing` and the owing seat is nudged L1 through L3. |
 | **room post** | Workstream | A message in a group room. Seats may not ack there (they might or might not), so the receipt cannot be relied on. A room post is never a handoff and never a wake, even when it names the next seat, and even from the CoS role. |
-| **implementer** | Workstream | The cloud agent forge launches. It writes code and opens PRs. Forge merges. |
+| **implementer** | Workstream | The cloud agent forge launches. It writes the code and pushes the branch. Forge opens the PR through its App and merges. |
 | **publisher** | Workstream | The ship seat: keeps continuity and gates, merges and deploys after review (ours: forge). |
 | **reviewer** | Workstream | Writes PASS or FAIL, never merges; runs `bifrost check` after deploy (ours: critic). |
 | **review** | Workstream | The reviewer's pass tier: Light / Normal / Strict, chosen by scope. |
