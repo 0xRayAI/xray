@@ -1,6 +1,5 @@
 # House
 
-name: owner
 OP-PROC: grok-bot/OP-PROC.md
 
 ## Owner

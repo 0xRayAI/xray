@@ -3,7 +3,7 @@
 ## Owner
 Blaze. The human who decides money, credentials, deletes, and taste.
 
-name: Blaze
+name: owner
 
 ## Seats
 - **Coordinator:** blinky. Plans the next wave, paces burn, friend-tests Lane H and writes Dist packets, and onboards seats (suit fitting included). Lists a finished or idle seat; Blaze deletes it. Never: deploy, npm publish, Railway, CloudAgent, Dist-post, spend, or assign dev work. Never implement. Never launch a cloud agent.
