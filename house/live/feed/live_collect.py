@@ -155,6 +155,35 @@ CREDIT_ALIAS = {"ci": "github", "github": "github", "blaze0x1": "Blaze", "blaze"
 LOGIN_KEYS = ("actor", "author", "sender", "triggering_actor", "merged_by", "user")
 
 
+_CI_FROM_SKIP = frozenset({"", "Others", "GitHub", "CI", "Example"})
+
+
+def ci_from_seat(event) -> str | None:
+    """Seat for a CI row's from/who. The actor wins, then the app slug (with and without [bot]).
+
+    An unmapped login (cursor[bot], github-actions) stays None so the row keeps GitHub or CI
+    and is not dropped. #492 only rewrote from=Others."""
+    if not isinstance(event, dict):
+        return None
+    logins: list[str] = []
+    for key in ("actor", "author", "sender", "triggering_actor"):
+        val = event.get(key)
+        if isinstance(val, str) and val.strip():
+            logins.append(val.strip())
+    app = event.get("app")
+    if isinstance(app, str) and app.strip():
+        slug = app.strip()
+        logins.append(slug)
+        if not slug.lower().endswith("[bot]"):
+            logins.append(slug + "[bot]")
+    for login in logins:
+        mapped = node(login)
+        if mapped in _CI_FROM_SKIP or mapped == live_site.SITE["node"]:
+            continue
+        return mapped
+    return None
+
+
 def node(login: str | None) -> str:
     """Mesh node for an actor. Unknown actors (e.g. Tester's new App) are kept as 'Others' + actor=login.
     A git author whose name is a seat (no User login) is that seat, not Others."""
@@ -249,13 +278,36 @@ def prompt_stamp(body):
     return found.group(1) if found else ""
 
 
+BC_ID_RE = re.compile(
+    r"\bbc-(?:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|[0-9a-f]{8,12})\b", re.I)
+
+
+def cloud_ids_in(text) -> list[str] | None:
+    """Cloud agent ids in a PR body. The body itself is not stored."""
+    found: list[str] = []
+    seen: set[str] = set()
+    for match in BC_ID_RE.finditer(str(text or "")):
+        cid = match.group(0).lower()
+        if cid in seen:
+            continue
+        seen.add(cid)
+        found.append(cid)
+        if len(found) == 8:
+            break
+    return found or None
+
+
 def card_fields(x) -> dict:
     """Board card fields from a PR / issue object this pass already fetched: branded title, state, labels and
     the packet block (sanitized, <= 200 chars a field). The body itself is discarded here, never stored."""
+    body = x.get("body")
     fields = {"title": brand(x.get("title") or "")[:120], "pr_state": x.get("state"), "closed_at": x.get("closed_at"),
               "labels": [lb.get("name") for lb in (x.get("labels") or []) if isinstance(lb, dict) and lb.get("name")][:8],
-              "packet": live_packet.parse(x.get("body")) or None,
-              "fixes": closing_numbers(x.get("body"), x.get("number"))}
+              "packet": live_packet.parse(body) or None,
+              "fixes": closing_numbers(body, x.get("number"))}
+    ids = cloud_ids_in(body)
+    if ids:
+        fields["bc_ids"] = ids
     pid = prompt_stamp(x.get("body"))
     if pid:
         fields["prompt"] = pid
@@ -460,6 +512,12 @@ class RepoCollector:
                         e["from"] = "CI" if mapped == "Others" else mapped
                 else:
                     e["from"] = node(login)
+            # #492 stopped at from=Others. A CI row already stored as GitHub or CI still shows that
+            # node. The actor or the app names the seat (forge0x1[bot] -> forge). cursor[bot] does not.
+            if e.get("kind") in CI_KINDS and e.get("from") in ("GitHub", "Example", "CI", live_site.SITE["node"]):
+                seat = ci_from_seat(e)
+                if seat:
+                    e["from"] = seat
             if e.get("from") == "Others" and CLOUD_AGENT_RE.match(str(e.get("actor") or e.get("author") or "")):
                 e["from"] = "CloudAgents"   # cloud-agent writes stored before the Cloud agents node existed
             # A merge is a fact about the pull. An unmapped merger (cursor[bot] -> Others) must not drop it.
@@ -516,6 +574,12 @@ class RepoCollector:
                 e[k] = v
         self._index_sha(e)
         e["credit"] = self.credit_of(e)
+        if kind in CI_KINDS:
+            seat = ci_from_seat(e)
+            if seat:
+                e["from"] = seat
+                if e.get("to") == seat:
+                    e["to"] = "GitHub"
         self.ev[eid] = e
 
     def _index_sha(self, e):   # sha -> (commit author login, Seat: trailer) for check / workflow / deploy fallbacks
@@ -885,6 +949,13 @@ class RepoCollector:
             self.st["bf"]["merged:day"] = True
         elif not self.st["bf"].get("merged:day"):
             self.st["bf"]["merged:day"] = True
+        # One-time: pulls updated before bc ids were copied off the body never stored them.
+        # Rewind a week so a cloud row can match the PR footer or the head ref. put() is idempotent.
+        bc_rewalk = not self.st["bf"].get("bc:body")
+        if cur and bc_rewalk:
+            back = (datetime.now(timezone.utc) - timedelta(days=7)).strftime("%Y-%m-%dT%H:%M:%SZ")
+            cur = min(cur, back)
+            self.st["etags"].pop("pulls", None)
         # One-time: merges whose actor maps to Others were dropped by put(). Rewalk the open window.
         # merged:actor is that rewalk's cursor. A short pass (page cap or error) must not set it,
         # or the next pass will not rewind and a merge behind the new pulls cursor is skipped for good.
@@ -943,6 +1014,8 @@ class RepoCollector:
             self.st["etags"]["pulls"] = self._etag_new
         if actor_rewalk and getattr(self, "_paged_status", None) == "done":
             self.st["bf"]["merged:actor"] = True
+        if bc_rewalk and getattr(self, "_paged_status", None) == "done":
+            self.st["bf"]["bc:body"] = True
 
     def enrich_prs(self, c, limit=20):
         todo = list(self.st.get("enrich", {}).keys())[:limit]
@@ -1297,7 +1370,7 @@ class RepoCollector:
                              r.get("updated_at") or r.get("run_started_at") or r["created_at"], "CI", "GitHub", ck,
                              f"{'CI pass' if ck == 'ci_pass' else 'CI fail'} {brand(r['name'])} · {self.short} #{num}",
                              r["html_url"], int(num), conclusion=r.get("conclusion"), head_sha=r.get("head_sha"),
-                             name=brand(r["name"]))
+                             name=brand(r["name"]), actor=(r.get("actor") or {}).get("login"))
                 if NO_CHECKS and r.get("check_suite_id"):
                     self.suite_from_run(r)
                 recent = r.get("head_sha") and time.time() - datetime.fromisoformat(

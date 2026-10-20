@@ -1528,8 +1528,19 @@ footer a { color: var(--foot); }
       var want = cardPopKey();
       if (want && $('cardPop') && !$('cardPop').open) openCardPop(want);
     }
-    function card(c) {
-      var li = wbEl('li', 'wcard ' + (c.state || 'live') + (c.packet_ok === false && !c.pinned ? ' nopacket' : '') + (c.stall ? ' stall' : '') + (wb.open[c.key] ? ' open' : ''));
+    function wbNeedsBrief(c) {
+      if (!c || c.pinned || c.kind !== 'pr') return false;
+      var pk = c.packet || {};
+      var authored = pk.goal || pk.constraints || pk.path || pk.acceptance || pk.escalate;
+      var title = String(c.title || '');
+      var alias = String(c.alias || '').toLowerCase();
+      var packetPr = /^packet\b/i.test(title) || /\bpacket\s*:/i.test(title) || alias.indexOf('packet:') === 0 || !!authored;
+      if (!packetPr) return false;
+      return !(pk.acceptance && pk['next owner']);
+    }
+  function card(c) {
+      var brief = wbNeedsBrief(c);
+      var li = wbEl('li', 'wcard ' + (c.state || 'live') + (brief ? ' nopacket' : '') + (c.stall ? ' stall' : '') + (wb.open[c.key] ? ' open' : ''));
       li.dataset.key = c.key; wb.byKey[c.key] = li; paintEdge(li, cardSeat(c));
       var top = wbEl('div', 'wtop');
       var it = wbEl('span', 'witem', (c.number ? '#' + c.number + ' ' : '') + cleanTitle(c)); it.title = (c.repo ? c.repo + ' #' + c.number + ' ' : '') + (c.title || '');
@@ -1539,7 +1550,7 @@ footer a { color: var(--foot); }
       meta.appendChild(wbEl('span', '', (c.owner || '—') + ' · ' + (c.pinned ? (c.section || 'pinned') : (c.stage || 'open'))));
       meta.appendChild(wbEl('span', 'wbadge state', c.state || 'live'));
       if (c.pinned) meta.appendChild(wbEl('span', 'wbadge pin', 'pinned'));
-      else if (c.packet_ok === false) meta.appendChild(wbEl('span', 'wbadge', 'needs a brief'));
+      else if (brief) meta.appendChild(wbEl('span', 'wbadge', 'needs a brief'));
       if (c.state === 'held') meta.appendChild(wbEl('span', 'wbadge held', 'On hold'));
       if (c.start_after) meta.appendChild(wbEl('span', 'wbadge', 'start after ' + c.start_after));
       if (c.stall) meta.appendChild(wbEl('span', 'wbadge stall', 'quiet 60 min+'));

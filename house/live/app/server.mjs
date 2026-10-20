@@ -23,6 +23,8 @@ import { configureWorkTrack, acceptCursorWebhook, appendWake, applyCloudOwners, 
 import { wakeConfig, createWakeState, classifyBatch, gateLine, noteSent, releaseDue, publicStats, fullStats, restoreWakeBook, viewLine } from './wake-gate.mjs';
 const COLLECTOR_DIR_EARLY = () => path.join(path.dirname(fileURLToPath(import.meta.url)), 'collector');
 import { initArchive, appendArchive, backfillArchive, readArchive, validArchiveDate, KINDS as ARCHIVE_KINDS, cardHistory, archiveDays, archivedLineBytes } from './archive.mjs';
+import { creditCiFrom, loadCiNodes } from './ci-credit.mjs';
+const CI_NODES = loadCiNodes();
 import { pinnedOrigin } from './origin.mjs';
 import { missingHandoffs } from './handoff.mjs';
 import { clockStamp, writeStartAfter } from './chicago-stamp.mjs';
@@ -1075,7 +1077,7 @@ function ensurePacketCard(line) {
     number: Number.isInteger(number) ? number : 0,
     title: String(line.title || '').slice(0, 120), url: String(line.url || '').slice(0, 300),
     owner: String(owner || '').slice(0, 24), stage: 'open', state: 'live',
-    packet: {}, packet_ok: false, missing: ['acceptance', 'next owner'],
+    packet: {}, packet_ok: true, missing: [],
     beats: [], last_beat_t: Date.now(), stall: false,
   }]);
   publishBoard();
@@ -1501,6 +1503,20 @@ function arch1CloudLinks() {
   } catch { /* no launch file */ }
   return links;
 }
+function readTracks() {
+  const here = path.dirname(fileURLToPath(import.meta.url));
+  const candidates = [
+    process.env.LIVE_TRACKS,
+    process.env.LIVE_HOUSE ? path.join(process.env.LIVE_HOUSE, 'fleet', 'TRACKS.md') : '',
+    path.join(here, '..', '..', '..', 'grok-bot', 'templates', 'house', 'fleet', 'TRACKS.md'),
+  ].filter(Boolean);
+  for (const file of candidates) {
+    try {
+      if (fs.existsSync(file)) return fs.readFileSync(file, 'utf8');
+    } catch { /* the next path */ }
+  }
+  return '';
+}
 function cloudAgentBoard() {
   try {
     return boardCloudAgents({
@@ -1508,6 +1524,8 @@ function cloudAgentBoard() {
       activity: activityCloudRows(),
       links: arch1CloudLinks(),
       board: bfCards,
+      events: githubEvents(),
+      tracks: readTracks(),
     });
   } catch (e) { console.log('cloud agents: ' + ((e && e.message) || 'read failed')); return []; }
 }
@@ -2996,7 +3014,7 @@ async function handle(req, res) {
     const date = url.searchParams.get('date') || '';
     if (!date) return json(req, res, 200, { days: archiveDays() });
     if (!validArchiveDate(date)) return json(req, res, 400, { error: 'bad date' });
-    return json(req, res, 200, { date, events: readArchive(date, 'events').lines });
+    return json(req, res, 200, { date, events: readArchive(date, 'events').lines.map((row) => creditCiFrom(row, CI_NODES)) });
   }
   if (p === '/robots.txt' && (m === 'GET' || m === 'HEAD')) return send(req, res, 200, 'text/plain; charset=utf-8', 'User-agent: *\nDisallow: /\n');
 

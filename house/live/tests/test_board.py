@@ -197,7 +197,7 @@ class Model(unittest.TestCase):
         self.assertEqual((a["stage"], a["state"], a["packet_ok"]), ("fix", "live", True))
         self.assertTrue(a["stall"])                                                              # 65 min, no beat
         self.assertEqual(a["packet"]["evidence"], "https://github.com/ci/1")                    # from the latest beat
-        self.assertEqual((b["stage"], b["packet_ok"], b["missing"], b["packet"]["next owner"]), ("merge", False, ["acceptance"], "Builder"))   # PASS + green CI: Builder merges
+        self.assertEqual((b["stage"], b["packet_ok"], b["missing"], b["packet"]["next owner"]), ("merge", True, [], "Builder"))   # plain PR: PASS sets next owner, no brief badge
         self.assertEqual([x["what"] for x in b["beats"]], ["opened", "Reviewer PASS"])            # idle watcher: no beat
         self.assertFalse(b["stall"])
         self.assertEqual((d["stage"], d["state"]), ("done", "closed"))
@@ -209,7 +209,25 @@ class Model(unittest.TestCase):
         self.assertEqual((line["seat"], line["type"], line["number"]), ("coord", "stall", 1))
         self.assertTrue(self.w.write_md(m, force=True)); self.assertFalse(self.w.write_md(m))  # once a minute
         md = (self.root / "BOARD.md").read_text()
-        self.assertIn("## Pinned", md); self.assertIn("STALL 60m+", md); self.assertIn("no packet", md)
+        self.assertIn("## Pinned", md); self.assertIn("STALL 60m+", md); self.assertNotIn("no packet", md)
+
+    def test_live_cards_need_a_brief_only_on_a_packet_pr(self):
+        shape = json.loads((HERE / "fixtures" / "brief-cards.json").read_text())
+        for card in shape["issues"] + [shape["plain_pr"], shape["packet_card"], shape["packet_pr_done"]]:
+            self.assertFalse(self.w.needs_brief(card["kind"], card["title"], card.get("alias"), card.get("packet"), card.get("packet")), card["key"])
+        bare = shape["packet_pr_open"]
+        self.assertTrue(self.w.needs_brief(bare["kind"], bare["title"], "", bare.get("packet"), bare.get("packet")))
+        evs = [self.ev(498, "issue_open", 60, title=shape["issues"][0]["title"], pr_state="open"),
+               self.ev(388, "pr_open", 60, title=shape["plain_pr"]["title"]),
+               self.ev(700, "pr_open", 60, title=bare["title"]),
+               self.ev(495, "pr_open", 60, title=shape["packet_pr_done"]["title"], packet=shape["packet_pr_done"]["packet"])]
+        cards = {c["number"]: c for c in self.w.model(evs)["cards"] if c.get("repo") == R}
+        self.assertTrue(cards[498]["packet_ok"])
+        self.assertEqual(cards[498]["kind"], "issue")
+        self.assertTrue(cards[388]["packet_ok"])
+        self.assertFalse(cards[700]["packet_ok"])
+        self.assertEqual(cards[700]["missing"], ["acceptance", "next owner"])
+        self.assertTrue(cards[495]["packet_ok"])
 
     def test_prompt_stamp_is_the_first_beat_once(self):
         prompt = {"id": "ada.9", "t_ct": ct(120), "kind": "prompt", "from": "Ada", "note": "fixed summary"}
@@ -528,6 +546,14 @@ class CollectorCapture(unittest.TestCase):
         self.assertEqual(stamped["prompt"], "ada.9")
         self.assertNotIn("body", stamped)
         self.assertNotIn("secret", json.dumps(stamped))
+        linked = uc.card_fields({
+            "title": "t", "state": "open",
+            "body": "see https://cursor.com/agents/bc-22f1b70d-a78d-5505-8ee0-9714f6ca1e99\nsecret prose",
+        })
+        self.assertEqual(linked["bc_ids"], ["bc-22f1b70d-a78d-5505-8ee0-9714f6ca1e99"])
+        self.assertEqual(uc.cloud_ids_in("bc-f35e4c51 bc-f0dc0299"), ["bc-f35e4c51", "bc-f0dc0299"])
+        self.assertNotIn("secret", json.dumps(linked))
+        self.assertNotIn("cursor.com", json.dumps(linked))
 
 
 class ShipBeats(unittest.TestCase):

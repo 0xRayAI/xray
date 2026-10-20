@@ -10,8 +10,9 @@ CARD   = one GitHub issue or PR (repo#number): title, url, owner seat, stage (op
 HOLD   = the owner posts a comment whose first line is 'Held: <reason>' (optional until:), or the issue / PR
          carries a label in GITHUB_HOLD_LABEL (default on-hold). A Parked: comment still parks and wins over a hold.
          Repos in NO_NUDGE_REPOS (unset means none) stay visible and are never stalled or nudged.
-PACKET = goal, constraints, path, acceptance, evidence, next owner, escalate. Missing acceptance or next owner ->
-         amber 'no packet'. Evidence fills from the latest beat (CI url, Reviewer verdict url, merge sha, retest tick).
+PACKET = goal, constraints, path, acceptance, evidence, next owner, escalate. Evidence fills from the latest
+         beat (CI url, Reviewer verdict url, merge sha, retest tick). Amber 'needs a brief' is only a packet PR
+         that has no acceptance or next owner. Issues, packet cards, and other PRs do not show it.
 BEAT   = one real event: PR opened/pushed, Reviewer verdict, CI result, merge, reopen, merge-queue.md tick, Lead message, blocker.
          A watcher run whose start and end fall in the same second is never a beat.
 STALL  = a live card with no beat for 60 min (red on the page; one line to fleet/inbox/coord.jsonl per stalled beat).
@@ -39,6 +40,25 @@ MAX_CARDS = 40
 # parked: a parked/blocked/waiting label, a draft PR quiet for 7 days, or an issue quiet for 24 h (backlog, no stall).
 # The hold label (default on-hold) is a hold, not a park.
 PARKED = re.compile(r"\b(parked|blocked|waiting|icebox)\b", re.I)
+_PACKET_TITLE = re.compile(r"(?i)(?:^packet\b|\bpacket\s*:)")
+
+
+def needs_brief(kind, title, alias, body_packet, filled) -> bool:
+    """True only for a packet PR that still lacks acceptance or next owner.
+
+    Issues never need a brief. A packet card (kind packet) does not. A PR needs one when its title,
+    its packet: alias, or a packet field from the body (not beat evidence, not a model-filled next
+    owner) says it is a packet, and acceptance or next owner is still empty.
+    """
+    if kind != "pr":
+        return False
+    body = body_packet if isinstance(body_packet, dict) else {}
+    authored = any(body.get(f) for f in live_packet.FIELDS if f != "evidence")
+    alias_text = str(alias or "").lower()
+    if not (_PACKET_TITLE.search(str(title or "")) or alias_text.startswith("packet:") or authored):
+        return False
+    pk = filled if isinstance(filled, dict) else {}
+    return not pk.get("acceptance") or not pk.get("next owner")
 _last_md = [0.0]
 
 
@@ -758,12 +778,12 @@ def model(extra_events=None, now=None, prompts=None, held=None):
         c.pop("_draft", None); c.pop("_parked_c", None); c.pop("_draft_park", None)
         c.pop("_stop", None); c.pop("_merged_t", None)
         state = "closed" if closed else "parked" if parked else "live"
+        body_packet = {f: v for f, v in dict(c.get("packet") or {}).items() if v}
         pk = dict(c["packet"])
         if not pk.get("evidence"):
             ev = next((b["_ev"] for b in reversed(beats) if b["_ev"]), "")
             if ev:
                 pk["evidence"] = ev
-        missing = [f for f in ("acceptance", "next owner") if not pk.get(f)]
         last_t = last["t"] / 1000 if last else 0
         stall = state == "live" and bool(last_t) and now - last_t > STALL_S
         heads = [b["sha"] for b in beats if b["what"] == "pushed" and b.get("sha")]
@@ -801,11 +821,12 @@ def model(extra_events=None, now=None, prompts=None, held=None):
         if live_packet.repo_no_nudge(c.get("repo")):
             c.pop("nudge_to", None); c.pop("nudge_via", None)
             stall = False
-        missing = [f for f in ("acceptance", "next owner") if not pk.get(f)]
+        want_brief = needs_brief(c["kind"], c.get("title"), c.get("alias"), body_packet, pk)
+        missing = [f for f in ("acceptance", "next owner") if not pk.get(f)] if want_brief else []
         if resolved:
             c["resolved"] = resolved
         shown = _keep_push(beats, 5)
-        c.update(stage=stage, state=state, packet=pk, packet_ok=not missing, missing=missing,
+        c.update(stage=stage, state=state, packet=pk, packet_ok=not want_brief, missing=missing,
                  beats=[{k: v for k, v in b.items() if not k.startswith("_")} for b in shown],
                  last_beat_t=int(last_t * 1000), stall=stall, closed_t=int(closed_t * 1000) if closed else 0)
         out.append(c)
