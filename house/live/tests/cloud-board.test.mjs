@@ -88,6 +88,7 @@ test('a running cloud agent stays on its own id and the row shows its status', (
       { kind: 'cloud_agent', action: 'launch', agent: 'bc-531f2033', seat: 'forge', t_ct: '2026-10-20T11:00:00-05:00' },
       { kind: 'cloud_agent', action: 'launch', agent: id, seat: '', t_ct: '2026-10-20T11:32:00-05:00' },
     ],
+    now: Date.parse('2026-10-20T11:40:00-05:00'),
   });
   assert.equal(rows.length, 1);
   assert.equal(rows[0].bcId, id);
