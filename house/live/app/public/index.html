@@ -1132,6 +1132,41 @@ footer a { color: var(--foot); }
     ctx.fillStyle = cssVar('--label-sub'); ctx.font = 11 * fs + 'px "Inter", system-ui, sans-serif'; ctx.fillText(sub, lx, top + (title ? 17 : 3) * fs);
   }
 
+  function statIdOf(e) {
+    if (!e || e.repo == null || e.number == null || e.number === '') return '';
+    var n = Number(e.number);
+    if (n !== n) return '';
+    return String(e.repo).toLowerCase() + '#' + n;
+  }
+  function cardForCountedId(id, pool) {
+    var key = String(id || '').toLowerCase();
+    var found = null;
+    (pool || []).forEach(function (c) {
+      if (found) return;
+      var cardKey = String(c.key || '').toLowerCase();
+      var repoKey = String(c.repo || '').toLowerCase() + '#' + Number(c.number);
+      if (cardKey === key || repoKey === key) found = c;
+    });
+    if (found) return found;
+    var ev = null;
+    (state.events || []).forEach(function (e) {
+      if (statIdOf(e) !== key) return;
+      if (!ev || (e._t || 0) >= (ev._t || 0)) ev = e;
+    });
+    var bits = key.split('#');
+    var number = Number(bits.pop());
+    var repo = bits.join('#');
+    var kindName = ev ? String(ev.kind || '') : '';
+    var closed = kindName === 'merged' || kindName === 'issue_close' || kindName === 'pr_close';
+    var t = ev && ev._t ? ev._t : 0;
+    return {
+      key: key, repo: repo, number: number, kind: kindName.indexOf('issue') === 0 ? 'issue' : 'pr',
+      title: ev && ev.label ? ev.label : key, owner: ev && ev.from ? ev.from : '',
+      state: closed ? 'closed' : 'live', stage: closed ? 'done' : 'open', packet_ok: true,
+      last_beat_t: t, beats: ev ? [{ t: t, what: kindName || 'event' }] : [],
+      merged_by: ev && ev.merged_by, url: ev && ev.source
+    };
+  }
   function cardWorking(c) {
     if (!c || c.pinned || c._bucket === 'done' || c._agentDone || c.state === 'closed' || c.state === 'parked' || c.state === 'held' || c.stage === 'done') return false;
     return fleetWorking(cardSeat(c));
@@ -1161,13 +1196,11 @@ footer a { color: var(--foot); }
       d.addEventListener('click', function () { wb.statFilter = wb.statFilter === key ? '' : key; wb.key = ''; renderWave(true); });
       strip.appendChild(d); });
     var cards = L.boardAt(wb.allCards || wb.cards, asOf);
+    var countedIds = wb.statFilter && S ? S[wb.statFilter + '_ids'] : null;
+    var countedView = Array.isArray(countedIds);
     if (wb.statFilter && S) {
-      if (wb.statFilter === 'open_total') cards = cards.filter(function (c) { return c.state !== 'closed' && c.stage !== 'done'; });
-      else {
-        var idset = {};
-        (S[wb.statFilter + '_ids'] || []).forEach(function (id) { idset[String(id).toLowerCase()] = 1; });
-        cards = cards.filter(function (c) { return idset[String(c.key || '').toLowerCase()] || idset[String((c.repo || '') + '#' + c.number).toLowerCase()]; });
-      }
+      if (countedView) cards = countedIds.map(function (id) { return cardForCountedId(id, cards); });
+      else if (wb.statFilter === 'open_total') cards = cards.filter(function (c) { return c.state !== 'closed' && c.stage !== 'done'; });
     }
     cards.forEach(function (c) { c._bucket = laneBucket(c); });
     wb.cards = cards;
@@ -1269,11 +1302,16 @@ footer a { color: var(--foot); }
       doneCloud.forEach(function (a) { cd.appendChild(cloudCard(a)); });
       cloudBody.appendChild(cd);
     }
-    if (inWork.length) {
+    if (countedView) {
+      var statUl = wbEl('ul', 'wcards stat');
+      wb.cards.forEach(function (c) { statUl.appendChild(card(c)); });
+      body.appendChild(statUl);
+    }
+    if (!countedView && inWork.length) {
       body.appendChild(wbEl('div', 'wgroup', 'in work (' + inWork.length + ')'));
       var wu = wbEl('ul', 'wcards'); inWork.forEach(function (c) { if (!LK.child[c.key]) put(wu, c); }); body.appendChild(wu);
     }
-    if (pins.length) {
+    if (!countedView && pins.length) {
       var collapsed = inWork.length && !wb.pinsOpen;
       var head = wbEl('button', 'pinhead', 'pinned (' + pins.length + ')');
       head.type = 'button'; head.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
@@ -1283,7 +1321,7 @@ footer a { color: var(--foot); }
       pins.forEach(function (c) { pu.appendChild(card(c)); }); body.appendChild(pu);
     }
     var seats = [], bySeat = {};
-    L.boardGroups(wb.cards.filter(function (c) { return !(c.pinned || cardWorking(c) || LK.child[c.key]); }), cardSeat).forEach(function (g) {
+    if (!countedView) L.boardGroups(wb.cards.filter(function (c) { return !(c.pinned || cardWorking(c) || LK.child[c.key]); }), cardSeat).forEach(function (g) {
       seats.push(g.name); bySeat[g.name] = g.cards;
     });
     seats.sort(function (a, b) { return String(L.LABEL[a] || a).localeCompare(String(L.LABEL[b] || b)); });
