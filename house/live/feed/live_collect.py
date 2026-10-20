@@ -444,6 +444,9 @@ class RepoCollector:
                 e["from"] = node(login)
             if e.get("from") == "Others" and CLOUD_AGENT_RE.match(str(e.get("actor") or e.get("author") or "")):
                 e["from"] = "CloudAgents"   # cloud-agent writes stored before the Cloud agents node existed
+            # A merge is a fact about the pull. An unmapped merger (cursor[bot] -> Others) must not drop it.
+            if e.get("kind") == "merged" and e.get("from") == "Others":
+                e["from"] = "GitHub"
             for k in ("label", "message"):
                 if isinstance(e.get(k), str) and (BRAND_RE.search(e[k]) or EMAIL_RE.search(e[k])):
                     e[k] = brand(e[k])
@@ -478,6 +481,8 @@ class RepoCollector:
     def put(self, eid, t, frm, to, kind, label, source, number=None, **extra):
         if not t:
             return
+        if kind == "merged" and frm == "Others":
+            frm = "GitHub"   # count the merge; the actor login stays on the event
         if not SHOW_UNMAPPED and "Others" in (frm, to):
             self.ev.pop(eid, None)
             return
@@ -857,6 +862,14 @@ class RepoCollector:
             self.st["bf"]["merged:day"] = True
         elif not self.st["bf"].get("merged:day"):
             self.st["bf"]["merged:day"] = True
+        # One-time: merges whose actor maps to Others were dropped by put(). Rewalk the open window.
+        if cur and not self.st["bf"].get("merged:actor"):
+            back = (datetime.now(timezone.utc) - timedelta(hours=36)).strftime("%Y-%m-%dT%H:%M:%SZ")
+            cur = min(cur, back)
+            self.st["etags"].pop("pulls", None)
+            self.st["bf"]["merged:actor"] = True
+        elif not self.st["bf"].get("merged:actor"):
+            self.st["bf"]["merged:actor"] = True
         newest = cur
         # Replay a pull that shares the cursor second. put() is idempotent.
         # Instant compare, not text: <= skips that sibling, and +00:00 / -05:00 sort before Z.

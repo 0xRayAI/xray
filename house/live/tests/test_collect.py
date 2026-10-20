@@ -671,6 +671,57 @@ class CardLifecycle(unittest.TestCase):
         self.assertEqual(merged["author"], "forge0x1[bot]")
         self.assertEqual(merged["merged_by"], "critic0x[bot]")
 
+    def test_unmapped_merger_still_counts(self):
+        """cursor[bot] maps to Others. The merge is still stored and counted."""
+        from datetime import timedelta, timezone
+        import live_board
+        self.enterContext(mock.patch.object(uc, "SHOW_UNMAPPED", False))
+        removed = uc.NODE_LC.pop("cursor[bot]", None)
+        self.addCleanup(lambda: removed is not None and uc.NODE_LC.__setitem__("cursor[bot]", removed))
+        self.assertEqual(uc.node("cursor[bot]"), "Others")
+        col = _collector("example-org/app")
+        now = datetime.now(timezone.utc).replace(microsecond=0)
+        merged_at = (now - timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        updated_at = (now - timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        created_at = (now - timedelta(hours=5)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        pull = self._pull(number=407, updated_at=updated_at, created_at=created_at, merged_at=merged_at,
+                          merged_by={"login": "cursor[bot]"},
+                          html_url="https://github.com/example-org/app/pull/407",
+                          user={"login": "forge0x1[bot]"})
+
+        class C:
+            token = "t"
+            def rest(self, path, params=None, etag=None, essential=True):
+                return 200, [pull], "etag", None
+
+        col.st["cur"]["pulls"] = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+        col.st["bf"]["merged:day"] = True
+        col.st["bf"]["author:seat"] = True
+        with mock.patch.dict(uc.NODE_LC, {"forge0x1[bot]": "forge"}):
+            uc.NODE_LC.pop("cursor[bot]", None)
+            col.poll_pulls(C())
+            eid = "example-org/app#407:merged"
+            self.assertIn(eid, col.ev)
+            merged = col.ev[eid]
+            self.assertEqual(merged["actor"], "cursor[bot]")
+            self.assertEqual(merged["merged_by"], "cursor[bot]")
+            self.assertEqual(merged["from"], "GitHub")
+            self.assertEqual(uc.fleet_only([merged]), [merged])
+            counted = live_board.stats(list(col.ev.values()))
+            self.assertEqual(counted["prs_merged_24h"], 1)
+            self.assertIn("example-org/app#407", counted["prs_merged_24h_ids"])
+            self.assertTrue(col.st["bf"].get("merged:actor"))
+            old_id = "acme/app#407:merged"
+            old = {"id": old_id, "t_ct": merged["t_ct"], "from": "Others", "to": "GitHub", "kind": "merged",
+                   "label": "merged", "source": "u", "src_file": "github-api", "repo": "acme/app",
+                   "number": 407, "actor": "cursor[bot]", "merged_by": "cursor[bot]"}
+            with tempfile.TemporaryDirectory() as d:
+                store = Path(d)
+                (store / "app.json").write_text(json.dumps({"events": {old_id: old}, "state": {}}))
+                loaded = uc.RepoCollector("acme/app", store, type("FF", (), {"CT": col.CT})(), lambda *_a: None)
+                self.assertEqual(loaded.ev[old_id]["from"], "GitHub")
+                self.assertEqual(loaded.ev[old_id]["actor"], "cursor[bot]")
+
     def _pull(self, **over):
         p = {"number": 8, "user": {"login": "forge0x1[bot]"}, "updated_at": "2026-10-14T17:00:00Z",
              "created_at": "2026-10-14T12:00:00Z", "html_url": "https://github.com/example-org/app/pull/8",
