@@ -6,8 +6,8 @@ const config: Config = {
   title: 'xray',
   tagline: '0xRay 4.0 — a suit that survives the context window. Three-subsystem autonomous engine. The suit is the wear.',
   favicon: 'img/favicon.png',
-  url: 'https://0xrayai.github.io',
-  baseUrl: '/xray/',
+  url: 'https://docs.0xray.dev',
+  baseUrl: '/',
   organizationName: '0xRayAI',
   projectName: 'xray',
   onBrokenLinks: 'warn',
@@ -19,7 +19,7 @@ const config: Config = {
         docs: {
           sidebarPath: './sidebars.ts',
           editUrl: 'https://github.com/0xRayAI/xray/tree/main/docs-site/',
-          routeBasePath: 'docs',
+          routeBasePath: '/',
           exclude: [
             'archive/**',
             '**/*.json',
@@ -52,7 +52,7 @@ const config: Config = {
       },
       items: [
         {
-          to: '/docs/',
+          to: '/',
           label: 'Docs',
           position: 'left',
         },
@@ -74,7 +74,7 @@ const config: Config = {
         {
           title: 'Docs',
           items: [
-            { label: 'Documentation', to: '/docs/' },
+            { label: 'Documentation', to: '/' },
             { label: 'GitHub', href: 'https://github.com/0xRayAI/xray' },
           ],
         },

@@ -288,7 +288,7 @@ npx 0xray health
 
 ## Resources
 
-- **[Docs](https://0xrayai.github.io/xray/)** — Full documentation site
+- **[Docs](https://docs.0xray.dev/)** — Full documentation site
 - **[Self-Hosting Dynamo](./guides/self-hosting-dynamo.md)** — External governance service
 - **[GitHub](https://github.com/0xRayAI/xray)** — Source code, issues, discussions
 - **[npm](https://www.npmjs.com/package/0xray)** — Package registry

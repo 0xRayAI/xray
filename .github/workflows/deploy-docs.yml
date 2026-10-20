@@ -34,6 +34,7 @@ jobs:
         run: node scripts/foundry/docs-build.mjs
       - uses: actions/upload-pages-artifact@v3
         with:
+          # docs-site/static/CNAME (docs.0xray.dev) is copied into this build root
           path: docs-site/build
 
   deploy:
