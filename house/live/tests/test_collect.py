@@ -172,6 +172,48 @@ class StoredCiUnmappedActor(unittest.TestCase):
             self.assertNotIn(eid, json.loads(path.read_text())["events"])
 
 
+class StoredCiOthersReclaim(unittest.TestCase):
+    """Fixture: CI rows already stored as Others. Unmapped must not be dropped; a mapped actor is reclaimed."""
+
+    def _load(self, env):
+        fixture = HERE / "fixtures" / "ci_others_store.json"
+        code = (
+            "import json,sys,tempfile; from pathlib import Path; sys.path.insert(0,%r); import live_collect as c\n"
+            "raw=json.loads(Path(%r).read_text()); d=Path(tempfile.mkdtemp()); p=d/'app.json'; p.write_text(json.dumps(raw))\n"
+            "logs=[]; rc=c.RepoCollector('acme/app', d, type('FF',(),{'CT':None})(), logs.append); rc.save()\n"
+            "saved=json.loads(p.read_text())['events']\n"
+            "print(json.dumps({'ids':sorted(rc.ev),'drop':(rc.ev.get('acme/app:run:drop') or {}).get('from'),"
+            "'reclaim':(rc.ev.get('acme/app:run:reclaim') or {}).get('from'),"
+            "'saved_drop':(saved.get('acme/app:run:drop') or {}).get('from'),"
+            "'saved_reclaim':(saved.get('acme/app:run:reclaim') or {}).get('from'),"
+            "'drops':[x for x in logs if 'drop stored' in x]}))"
+        ) % (str(FEED_DIR), str(fixture))
+        out = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        return json.loads(out.stdout)
+
+    def test_fixture_drop_and_reclaim(self):
+        base = dict(os.environ)
+        base.pop("LIVE_NODE_MAP", None)
+        base.pop("LIVE_SHOW_UNMAPPED", None)
+        dropped = self._load(base)
+        self.assertEqual(dropped["ids"], ["acme/app:run:drop", "acme/app:run:reclaim"])
+        self.assertEqual(dropped["drop"], "CI")
+        self.assertEqual(dropped["reclaim"], "CI")
+        self.assertEqual(dropped["saved_drop"], "CI")
+        self.assertEqual(dropped["saved_reclaim"], "CI")
+        self.assertEqual(dropped["drops"], [])
+
+        mapped = dict(base, LIVE_NODE_MAP='{"reclaim-bot[bot]":"forge"}')
+        got = self._load(mapped)
+        self.assertEqual(got["ids"], ["acme/app:run:drop", "acme/app:run:reclaim"])
+        self.assertEqual(got["drop"], "CI")
+        self.assertEqual(got["saved_drop"], "CI")
+        self.assertEqual(got["reclaim"], "forge")
+        self.assertEqual(got["saved_reclaim"], "forge")
+        self.assertEqual(got["drops"], [])
+
+
 class SeatTrailer(unittest.TestCase):
     def test_trailer_overrides_login_map(self):
         self.assertEqual(uc.seat_trailer("fix x\n\nbody\nSeat: mill\n"), "mill")
