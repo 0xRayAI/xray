@@ -114,32 +114,42 @@ function runHook(
 }
 
 describe('Cursor cloud hooks adapter', () => {
-  it('ships version-1 project + consumer templates without sessionStart', () => {
+  it('ships version-1 project hooks with cloud activity and a consumer template without it', () => {
     const template = JSON.parse(readFileSync(templateHooks, 'utf8')) as {
       version: number;
-      hooks: Record<string, Array<{ command: string }>>;
+      hooks: Record<string, Array<{ command: string; timeout?: number; failClosed?: boolean }>>;
     };
     const repo = JSON.parse(readFileSync(repoHooks, 'utf8')) as {
       version: number;
-      hooks: Record<string, Array<{ command: string }>>;
+      hooks: Record<string, Array<{ command: string; timeout?: number; failClosed?: boolean }>>;
     };
     expect(template.version).toBe(1);
     expect(repo.version).toBe(1);
     expect(existsSync(path.join(packageRoot, '.cursor/hooks/xray-cloud-hook.sh'))).toBe(true);
     expect(existsSync(path.join(packageRoot, '.cursor/hooks/pre-tool-use.sh'))).toBe(true);
+    expect(existsSync(path.join(packageRoot, '.cursor/hooks/cloud-activity.sh'))).toBe(true);
     for (const cmd of Object.values(repo.hooks).flat().map((h) => h.command)) {
       expect(cmd).toMatch(/^\.cursor\/hooks\/[\w.-]+\.sh$/);
       expect(cmd).not.toMatch(/XRAY_AI_PATH=/);
       expect(cmd).not.toContain('invoke-probe.sh');
     }
     for (const hooks of [template.hooks, repo.hooks]) {
-      expect(hooks.sessionStart).toBeUndefined();
       expect(hooks.preToolUse?.[0]?.command).toBe('.cursor/hooks/pre-tool-use.sh');
       expect(hooks.preCompact?.[0]?.command).toBe('.cursor/hooks/pre-compact.sh');
       expect(hooks.afterFileEdit?.[0]?.command).toBe('.cursor/hooks/after-file-edit.sh');
       expect(hooks.beforeShellExecution?.[0]?.command).toBe('.cursor/hooks/before-shell-execution.sh');
       expect(hooks.beforeReadFile?.[0]?.command).toBe('.cursor/hooks/before-read-file.sh');
     }
+    expect(template.hooks.sessionStart).toBeUndefined();
+    expect(template.hooks.postToolUse).toBeUndefined();
+    expect(template.hooks.stop).toBeUndefined();
+    const poster = { command: '.cursor/hooks/cloud-activity.sh', timeout: 2 };
+    expect(repo.hooks.sessionStart?.[0]).toEqual(poster);
+    expect(repo.hooks.postToolUse?.[0]).toEqual(poster);
+    expect(repo.hooks.stop?.[0]).toEqual(poster);
+    expect(repo.hooks.sessionStart?.[0]?.failClosed).toBeUndefined();
+    expect(repo.hooks.postToolUse?.[0]?.failClosed).toBeUndefined();
+    expect(repo.hooks.stop?.[0]?.failClosed).toBeUndefined();
   });
 
   it('preToolUse strips Hold npm from Durable and keeps the rest of the card', () => {

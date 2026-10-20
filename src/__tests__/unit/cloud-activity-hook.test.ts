@@ -1,0 +1,172 @@
+import { spawn } from 'node:child_process';
+import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { describe, expect, it } from 'vitest';
+
+const script = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../../.cursor/hooks/cloud-activity.sh');
+const AGENT = 'bc-531f2033-90e0-595f-87de-8dfe576ec69c';
+const KEY = 'planted-activity-key-9f3a';
+
+interface Hit {
+  body: string;
+  auth: string;
+}
+
+function run(stdin: Record<string, unknown>, env: NodeJS.ProcessEnv) {
+  const started = Date.now();
+  return new Promise<{ status: number | null; stdout: string; stderr: string; elapsed: number }>((resolve, reject) => {
+    const child = spawn('/bin/sh', [script], { env });
+    let stdout = '';
+    let stderr = '';
+    const timer = setTimeout(() => {
+      child.kill();
+      reject(new Error('hook exceeded 4s'));
+    }, 4000);
+    child.stdout.on('data', (chunk: Buffer) => { stdout += chunk.toString('utf8'); });
+    child.stderr.on('data', (chunk: Buffer) => { stderr += chunk.toString('utf8'); });
+    child.on('error', (err) => { clearTimeout(timer); reject(err); });
+    child.on('close', (status) => {
+      clearTimeout(timer);
+      resolve({ status, stdout, stderr, elapsed: Date.now() - started });
+    });
+    child.stdin.end(JSON.stringify(stdin));
+  });
+}
+
+function envOf(root: string, extra: Record<string, string> = {}): NodeJS.ProcessEnv {
+  return {
+    PATH: process.env.PATH || '/usr/bin:/bin',
+    CURSOR_PROJECT_DIR: root,
+    CURSOR_AGENT: '1',
+    CURSOR_CONVERSATION_ID: AGENT,
+    ...extra,
+  };
+}
+
+function assertQuiet(stdout: string, stderr: string) {
+  const out = stdout + stderr;
+  expect(out).not.toContain(KEY);
+  expect(out).not.toContain('Authorization');
+  expect(out).not.toContain('Bearer');
+  expect(stdout.trim()).toBe('{}');
+  expect(stdout).not.toContain('followup_message');
+}
+
+function listen(status: number, hang = false): Promise<{ url: string; hits: Hit[]; close: () => Promise<void> }> {
+  const hits: Hit[] = [];
+  const server = createServer((req: IncomingMessage, res: ServerResponse) => {
+    const chunks: Buffer[] = [];
+    req.on('data', (chunk: Buffer) => chunks.push(chunk));
+    req.on('end', () => {
+      hits.push({ body: Buffer.concat(chunks).toString('utf8'), auth: String(req.headers.authorization || '') });
+      if (hang) return;
+      res.writeHead(status, { 'Content-Type': 'application/json' });
+      res.end('{"ok":false}');
+    });
+  });
+  return new Promise((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(0, '127.0.0.1', () => {
+      const addr = server.address();
+      if (!addr || typeof addr === 'string') {
+        reject(new Error('no port'));
+        return;
+      }
+      resolve({
+        url: `http://127.0.0.1:${addr.port}`,
+        hits,
+        close: () => new Promise((done) => {
+          server.closeAllConnections();
+          server.close(() => done());
+        }),
+      });
+    });
+  });
+}
+
+describe('cloud activity hook', () => {
+  it('posts launch once per session and finished for every stop status', async () => {
+    const root = mkdtempSync(path.join(tmpdir(), 'cloud-activity-'));
+    const board = await listen(202);
+    try {
+      const env = envOf(root, { LIVE_URL: board.url, LIVE_ACTIVITY_KEY: KEY });
+      const first = await run({ hook_event_name: 'postToolUse', tool_input: { command: KEY } }, env);
+      expect(first.status).toBe(0);
+      assertQuiet(first.stdout, first.stderr);
+      const second = await run({ hook_event_name: 'postToolUse' }, env);
+      expect(second.status).toBe(0);
+      assertQuiet(second.stdout, second.stderr);
+      expect(board.hits).toHaveLength(1);
+      const launch = JSON.parse(board.hits[0]?.body || '{}') as Record<string, string>;
+      expect(launch).toMatchObject({ kind: 'cloud_agent', action: 'launch', agent: AGENT });
+      expect(launch.seat).toBeUndefined();
+      expect(launch.t_ct).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$/);
+      expect(board.hits[0]?.auth).toBe('Bearer ' + KEY);
+      for (const status of ['completed', 'aborted', 'error']) {
+        const stopped = await run({ hook_event_name: 'stop', status }, env);
+        expect(stopped.status).toBe(0);
+        assertQuiet(stopped.stdout, stopped.stderr);
+        const again = await run({ hook_event_name: 'sessionStart' }, env);
+        expect(again.status).toBe(0);
+        assertQuiet(again.stdout, again.stderr);
+      }
+      const actions = board.hits.map((hit) => (JSON.parse(hit.body) as { action: string }).action);
+      expect(actions).toEqual(['launch', 'finished', 'launch', 'finished', 'launch', 'finished', 'launch']);
+      for (const hit of board.hits) expect(hit.body).not.toContain(KEY);
+    } finally {
+      await board.close();
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('fails open on 401, timeout, a refused port, and missing env without printing the key', async () => {
+    const root = mkdtempSync(path.join(tmpdir(), 'cloud-activity-fail-'));
+    const denied = await listen(401);
+    const hung = await listen(200, true);
+    try {
+      const deniedRun = await run({ hook_event_name: 'sessionStart' }, envOf(root, { LIVE_URL: denied.url, LIVE_ACTIVITY_KEY: KEY }));
+      expect(deniedRun.status).toBe(0);
+      expect(deniedRun.status).not.toBe(2);
+      assertQuiet(deniedRun.stdout, deniedRun.stderr);
+      expect(denied.hits).toHaveLength(1);
+
+      const slowRoot = mkdtempSync(path.join(tmpdir(), 'cloud-activity-slow-'));
+      const started = Date.now();
+      const timed = await run({ hook_event_name: 'postToolUse' }, envOf(slowRoot, { LIVE_URL: hung.url, LIVE_ACTIVITY_KEY: KEY }));
+      expect(timed.status).toBe(0);
+      expect(Date.now() - started).toBeLessThan(2000);
+      assertQuiet(timed.stdout, timed.stderr);
+      rmSync(slowRoot, { recursive: true, force: true });
+
+      const refusedRoot = mkdtempSync(path.join(tmpdir(), 'cloud-activity-refused-'));
+      const refused = await run(
+        { hook_event_name: 'postToolUse' },
+        envOf(refusedRoot, { LIVE_URL: 'http://127.0.0.1:9', LIVE_ACTIVITY_KEY: KEY }),
+      );
+      rmSync(refusedRoot, { recursive: true, force: true });
+      expect(refused.status).toBe(0);
+      assertQuiet(refused.stdout, refused.stderr);
+
+      const missing = [
+        envOf(root, { LIVE_ACTIVITY_KEY: KEY }),
+        envOf(root, { LIVE_URL: denied.url }),
+        envOf(root, { LIVE_URL: denied.url, LIVE_ACTIVITY_KEY: KEY, CURSOR_AGENT: '' }),
+        envOf(root, { LIVE_URL: denied.url, LIVE_ACTIVITY_KEY: KEY, CURSOR_CONVERSATION_ID: 'not-a-cloud-id' }),
+      ];
+      const before = denied.hits.length;
+      for (const env of missing) {
+        const skipped = await run({ hook_event_name: 'postToolUse', tool_input: { note: KEY } }, env);
+        expect(skipped.status).toBe(0);
+        assertQuiet(skipped.stdout, skipped.stderr);
+      }
+      expect(denied.hits).toHaveLength(before);
+    } finally {
+      await denied.close();
+      await hung.close();
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+});

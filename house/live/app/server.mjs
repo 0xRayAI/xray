@@ -1968,7 +1968,7 @@ async function startCollector() {
   if (process.env.RAILWAY_POLL_S) env.RAILWAY_POLL_S = process.env.RAILWAY_POLL_S;
   if (process.env.GITHUB_HOLD_LABEL) env.GITHUB_HOLD_LABEL = process.env.GITHUB_HOLD_LABEL;
   if (process.env.NO_NUDGE_REPOS != null) env.NO_NUDGE_REPOS = process.env.NO_NUDGE_REPOS;
-  for (const k of ['UPSTREAM_REPO', 'UPSTREAM_PINNED', 'UPSTREAM_REPOS', 'XRAY_REPO', 'XRAY_OURS', 'SEAT_PRESENCE', 'LIVE_NODE_MAP', 'LIVE_BRAND', 'LIVE_BRAND_RE', 'LIVE_SHOW_UNMAPPED', 'LIVE_FLEET_SEATS', 'HUMAN_ALIASES', 'LIVE_CLOUD_IDLE_S']) if (process.env[k] != null) env[k] = process.env[k];
+  for (const k of ['UPSTREAM_REPO', 'UPSTREAM_PINNED', 'UPSTREAM_REPOS', 'XRAY_REPO', 'XRAY_OURS', 'SEAT_PRESENCE', 'LIVE_NODE_MAP', 'LIVE_BRAND', 'LIVE_BRAND_RE', 'LIVE_SHOW_UNMAPPED', 'LIVE_FLEET_SEATS', 'HUMAN_ALIASES']) if (process.env[k] != null) env[k] = process.env[k];
   Object.assign(env, fleetConfig(process.env));
   const healthArg = env.LIVE_HEALTH_URLS.split(/\s+/).filter(Boolean)[0] || '';
   const args = ['-B', '-u', script, '--out', GH_FEED, '--watch', process.env.COLLECTOR_WATCH_S || '45',
@@ -2583,7 +2583,9 @@ function markTime(row) {
   return tsOf(row && (row.since_ct || row.t_ct));
 }
 // An end drops a mark at or before that end. A newer mark stays only while it is
-// inside TURN_OPEN_MS. A running cloud agent stays. A mark with no time stays.
+// inside TURN_OPEN_MS. A cloud mark stays through this pass so a still-running
+// agent is not cleared by the turn. applyCloudOwners drops it when that seat
+// has no running row, including on refreshWorking. A mark with no time stays.
 // endAt 0 is an open turn past the window, not an end.
 function spareTurnMark(row, endAt, now = Date.now()) {
   if (row && row.via === 'cloud') return true;
@@ -2700,8 +2702,11 @@ function applyStoredActivity(fleet, now) {
 function refreshWorking(now = Date.now()) {
   if (!header || !header.fleet) return;
   const before = JSON.stringify(header.fleet.working || {});
-  const fleet = applyStoredActivity(header.fleet, now);
-  if (fleet) header.fleet = stampClockTree(clearClosedWork(fleet));
+  let fleet = applyStoredActivity(header.fleet, now);
+  if (fleet) fleet = clearClosedWork(fleet);
+  const cleared = applyCloudOwners(fleet, header.cloud_agents || [], now);
+  if (cleared) fleet = cleared;
+  if (fleet) header.fleet = stampClockTree(fleet);
   if (JSON.stringify((header.fleet && header.fleet.working) || {}) !== before) { seq++; fullDirty = true; }
 }
 const actHits = new Map();   // seat -> [timestamps]

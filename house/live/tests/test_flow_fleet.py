@@ -586,7 +586,6 @@ class RemoteActivityTest(unittest.TestCase):
             self.assertEqual([(e["from"], e["to"]) for e in ev], [("Builder", "Reviewer")])
             self.assertEqual(f.fleet_state([], now)["working"]["Builder"]["via"], "subagent")
             # the open subagent stops at 30 min; the still-open cloud agent keeps Builder active
-            self.assertEqual(live_fleet.WORKING_CLOUD_S, 20 * 60)
             held = f.fleet_state([], now + 31 * 60)
             self.assertEqual(held["working"]["Builder"]["via"], "cloud")
             self.assertTrue(held["seats"]["Builder"]["active"])

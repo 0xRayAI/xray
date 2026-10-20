@@ -47,6 +47,7 @@ rerun_*/
 .xray/state/cursor-hook-wear/
 .xray/state/cursor-hook.log
 .xray/state/cursor-receipts/
+.xray/state/cloud-activity/
 .xray/state/session-capture-stamp.json
 .xray/state/MEMORY-SEAL.md
 .xray/state/WATCHER.md

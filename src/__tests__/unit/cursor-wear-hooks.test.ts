@@ -32,9 +32,24 @@ const bridges = require(path.join(repoRoot, 'scripts/node/install-bridges.cjs'))
   installCursorBridge: (target: string, packageRoot: string, log?: () => void) => string | null;
   isXrayHookCommand: (command: string) => boolean;
   CURSOR_HOOK_EVENTS: Array<[string, string]>;
+  mergeCloudSafeCursorHooks: (existing: { version?: number; hooks?: Record<string, unknown> }) => {
+    hooks: Record<string, Array<{ command: string; timeout?: number }>>;
+  };
+  mergeInstalledCursorHooks: (
+    existing: { version?: number; hooks?: Record<string, unknown> },
+    xrayByEvent: Record<string, Array<{ command: string }>>,
+  ) => { hooks: Record<string, Array<{ command: string; timeout?: number }>> };
 };
 
-const { wearCursorHooks, unwearCursorHooks, installCursorBridge, isXrayHookCommand, CURSOR_HOOK_EVENTS } = bridges;
+const {
+  wearCursorHooks,
+  unwearCursorHooks,
+  installCursorBridge,
+  isXrayHookCommand,
+  CURSOR_HOOK_EVENTS,
+  mergeCloudSafeCursorHooks,
+  mergeInstalledCursorHooks,
+} = bridges;
 
 const EVENT_JS: Record<string, string> = {
   preToolUse: 'pre-tool-use.js',
@@ -911,5 +926,29 @@ describe('cursor wear wires installed dist hooks', () => {
     } finally {
       rmSync(project, { recursive: true, force: true });
     }
+  });
+
+  it('keeps sessionStart, postToolUse, and stop across both hook merges', () => {
+    const poster = { command: '.cursor/hooks/cloud-activity.sh', timeout: 2 };
+    const existing = {
+      version: 1,
+      hooks: {
+        preToolUse: [{ command: '.cursor/hooks/pre-tool-use.sh', failClosed: true }],
+        sessionStart: [poster],
+        postToolUse: [poster],
+        stop: [poster],
+      },
+    };
+    const safe = mergeCloudSafeCursorHooks(existing);
+    expect(safe.hooks.sessionStart[0]).toEqual(poster);
+    expect(safe.hooks.postToolUse[0]).toEqual(poster);
+    expect(safe.hooks.stop[0]).toEqual(poster);
+    expect(safe.hooks.preToolUse[0]?.command).toBe('.cursor/hooks/pre-tool-use.sh');
+    const installed = mergeInstalledCursorHooks(existing, {
+      preToolUse: [{ command: 'node_modules/0xray/dist/integrations/cursor/hooks/pre-tool-use.sh' }],
+    });
+    expect(installed.hooks.sessionStart[0]).toEqual(poster);
+    expect(installed.hooks.postToolUse[0]).toEqual(poster);
+    expect(installed.hooks.stop[0]).toEqual(poster);
   });
 });

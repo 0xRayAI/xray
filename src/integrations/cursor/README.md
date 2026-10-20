@@ -1,6 +1,6 @@
 # Cursor cloud hooks (0xRay)
 
-Thin adapter. Repo `.cursor/hooks.json` (schema **version 1**) calls 0xRay gates and the Station PreCompact writer. **sessionStart is not used** — managed Cursor cloud does not fire it.
+Thin adapter. Repo `.cursor/hooks.json` (schema **version 1**) calls 0xRay gates and the Station PreCompact writer. `sessionStart` is registered for desktop and a self-hosted pool claim. Managed cloud launch is `postToolUse`, and `stop` posts `finished`.
 
 Repertoire is preferred (vendored, dest = named laws). Station + Codex gates still run if memory-routing is explicitly off — that is fallback, not the preferred brain.
 
