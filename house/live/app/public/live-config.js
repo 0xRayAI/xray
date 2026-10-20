@@ -216,4 +216,6 @@
     if (c.stage === 'review') return 'review';
     return 'waiting';
   };
+  // Spectrum stream defaults on. The page also honors ?spectrum=0 and reduced motion.
+  L.SPECTRUM = true;
 })(window.LiveMesh);

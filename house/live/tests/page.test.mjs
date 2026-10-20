@@ -228,7 +228,7 @@ test('Live board: rainbow trail only on replay pings, REPLAY tag beside (never r
   assert.match(html, /\.spec-tag \{[^}]*opacity: 0;[^}]*transition: opacity \.3s/);
   assert.match(html, /prefers-reduced-motion: reduce\) \{ \.spec-tag, \.spec-tag\.on \{ transition: none; \} \}/);
   assert.match(html, /var tagOn = !!ambient && !replay;/);
-  assert.match(html, /if \(!reduced\) \{ ghosts\.forEach\(function \(g\) \{ g\.live = true; \}\); if \(replay\) pings\.forEach/);
+  assert.match(html, /if \(spectrumOn\) \{ ghosts\.forEach\(function \(g\) \{ g\.live = true; \}\); if \(replay \|\| playing\) pings\.forEach/);
   assert.match(html, /if \(pk\.live\) replayTrail\(a, m, b, p, nowWall\);\n      else for \(var k = 5;/);
   // the tag code never writes the pill
   const tag = html.split('var tagOn =')[1].split('\n')[1];
