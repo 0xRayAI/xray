@@ -1,12 +1,17 @@
 # Changelog
 
-## Unreleased
+## 0.1.11 — 2026-10-20
 
-Ship as 0.2.0 after the owner GO. The package version stays 0.1.10 until that GO. `scripts/foundry/release.mjs` stamps `0xray`, not this kit.
-
+- Seats post owner prompts to the board (#484). Board rule. On every owner message run `live-inbox <seat> --prompt --from owner --note "<gist>"`. Ack a handled line with `live-inbox <seat> --ack <id>`, or `live-inbox <seat> --ack all` once every open line is handled. A cloud agent run uses `live-inbox <seat> --turn start --tag "bc-<first8> <track>"` and `live-inbox <seat> --turn end --tag "bc-<first8>"`. `--from owner` is required today.
+- Every activity line goes to history, and the word owner is recognized (#485). History note. Every activity line is archived to history. The word owner is the owner via LIVE_OWNER or the owner-name.
+- The live page shows a read-only kanban above Activity (#486). Kanban note. The live page shows a read-only kanban above Activity. Columns are open, review, fix, merge, retest, and done. The deep link is `?card=`.
+- A board card for every packet and every cloud agent (#477). A packet post creates the card. The id is `repo#number`, or `packet:<line id>` until a pull request attaches. A cloud agent does not run without that card id. The cloud agent pushes its branch. The seat App opens the pull request. The server attaches both.
+- Cards group by status by default, with a by-seat toggle (#457). Default groups are waiting, in review, on hold, parked, and done. By agent restores one group per seat. The choice is kept across a reload.
+- Board docs sweep, with migration steps (#487). The seat files share one owner-prompt line. Adoption and migration from 0.1.10 live in `templates/house/STATION-BOOT.md`. `house init` does not overwrite a house file the fleet already has.
+- A real owner-chat source is not in this release. The public board does not serve the history archive or the kanban yet.
 - Station boot. Each seat's profile title is `You are <seat>, <role> on the <plane> plane. Run the station skill first (suit <suit path>).` The description opens with the BOOT line. Planes are core, integration, ecosystem, distribution, and live.
 - Skills `station`, `seat-label`, and `seat-github-key`. `seat-label` runs in that seat's own chat (`UpdateProfile` title only, then `profile.json`). `~/bin/gh-<seat>` mints a fresh App token every call and never prints the token or the PEM.
-- `HOUSE.md` carries `name:` and `OP-PROC:`. The station line template adds `Plane:`, `Skills:`, and `Keys:`. `house/fleet/TRACKS.md` is written when a cloud launches. Adoption and migration from 0.1.10 live in `templates/house/STATION-BOOT.md`.
+- `HOUSE.md` carries `name:` and `OP-PROC:`. The station line template adds `Plane:`, `Skills:`, and `Keys:`. `house/fleet/TRACKS.md` is written when a cloud launches.
 - The board posts every pull-request handoff and every review handoff. The coordinator acks only dev lines. A cloud launch needs a card id. The way out writes card title, url, owner seat, stage, and state.
 - `grok-bot doctor` warns, and does not fail the plant, when `profile.json` lacks the station hook, when STATION.md is older than NOTES.md, or when `Skills:` or `Keys:` is missing.
 - Public board: https://bifrost.0xray.dev. Docs: https://docs.0xray.dev/.

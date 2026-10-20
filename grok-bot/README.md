@@ -16,7 +16,7 @@ Board: `house/WAVEBOARD.md` when `LIVE_URL` is unset, and Bifrost cards (`GET /c
 | `house/watchers/issue-sweep-last.txt` | Issue-sweep cursor (one UTC time) |
 | `house/watchers/waveboard-static.md` | Notes beside the hand-kept board. Not merged into `house/WAVEBOARD.md` |
 | `house/fleet/activity.jsonl` | Live-mesh activity (`BURST_ACTIVITY`) |
-| owner prompt | `live-inbox <seat> --prompt` posts to `/activity` |
+| owner prompt | Board rule. On every owner message run `live-inbox <seat> --prompt --from owner --note "<gist>"`. Ack a handled line with `live-inbox <seat> --ack <id>`, or `live-inbox <seat> --ack all` once every open line is handled. A cloud agent run uses `live-inbox <seat> --turn start --tag "bc-<first8> <track>"` and `live-inbox <seat> --turn end --tag "bc-<first8>"`. `--from owner` is required today. Kanban note. The live page shows a read-only kanban above Activity. Columns are open, review, fix, merge, retest, and done. The deep link is `?card=`. History note. Every activity line is archived to history. The word owner is the owner via LIVE_OWNER or the owner-name. |
 Complete setup path for **Grok Bot agents** on the 0xRay mill.
 
 Agents: read `llms.txt` → `AGENTS.md` → run skills in `SKILLS.md` (**one suit per key agent**).  

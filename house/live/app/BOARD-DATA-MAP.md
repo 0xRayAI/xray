@@ -24,6 +24,7 @@ The page reads `GET /live-events.json`. Production numbers below are the feed at
 | cloud `finished`/`failed`/`stale` and the PR is merged or closed | `cloud_agents[].card` | `laneBucket` | done | out of Open | finished rows sat in the open cloud group | PASS |
 | cloud finished and the PR is still open | same | `laneBucket` → `review` | “in review” | not in Open waiting | same | PASS |
 | empty seat group | `L.boardGroups` | skip when every bucket is empty | no `.wgroup` with nothing under it | no empty header | empty headers existed | PASS |
+| group | card bucket, else seat | default `status`. `#cardGroup` stores `bifrost-card-group` `agent` | `.wgroup` is the status. By agent, `.wgroup` is the seat and `.wsub` is the status | status on first load. The toggle switches to one group per seat | seat groups were the only layout | PASS `tests/board-group.test.mjs` |
 
 ## Recent changes and history
 
@@ -53,7 +54,7 @@ The page now paints those rows with `.wcard` (owner edge, verb, Chicago time). `
 |---|---|---|---|---|---|
 | seat chip | `L.AGENTS` + `L.seatView` | name in `.nm`, `title` is the full label. No `.st`, no role line, no ACTIVE/IDLE/WORKING/LIVE text | dot + name | a lit seat pulses the dot (2.8s, opacity 1 to 0.62). An idle seat stays dim and still. A long name truncates with an ellipsis and the full name is the hover title | PASS `tests/board-face.test.mjs` |
 | activity | live events, or `GET /history?date=` | shared fold. Open unless `bifrost-folds.activity` is `closed`, or the older `bifrost-activity` value is `collapsed`. A toggle still writes both keys | `#activity` | open on first load, `#log` max-height 16rem, overflow auto, date `<select id="historyDay">`, times in CT | PASS |
-| folds | mesh, stats, roster, cards, cloud, recent, history, work, queue, activity | one `.fold` / `.fold-head` / `.fold-body`, `data-fold`, `localStorage bifrost-folds` | header toggle, count in `.fold-sum` | mesh, stats, roster, cards, and activity are open on first load, on desktop and mobile, in both themes. A stored `open` or `closed` still wins. The other sections stay collapsed until opened. An open body max-height is 16rem and scrolls, except the mesh body and `#waveBody`. The card list flexes to fill the 720px wave (`min-height` 220px, no 16rem cap) | PASS `tests/board-folds.test.mjs` |
+| folds | mesh, stats, roster, cards, cloud, recent, history, work, queue, activity, kanban | one `.fold` / `.fold-head` / `.fold-body`, `data-fold`, `localStorage bifrost-folds` | header toggle, count in `.fold-sum` | mesh, stats, roster, cards, and activity are open on first load, on desktop and mobile, in both themes. A stored `open` or `closed` still wins. The other sections stay collapsed until opened. An open body max-height is 16rem and scrolls, except the mesh body and `#waveBody`. The card list flexes to fill the 720px wave (`min-height` 220px, no 16rem cap) | PASS `tests/board-folds.test.mjs` |
 | rewind | `#slider` | inside `#meshPanel` | range | the slider box sits inside the mesh panel box | PASS |
 
 ## Cloud rows

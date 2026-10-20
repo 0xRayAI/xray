@@ -4,6 +4,16 @@ Every file a new fleet edits to map its seats. Each section shows **ours** (Bifr
 
 Seats (ours): blinky, critic, forge, herald, magnet, nibbler, sound, arch1 (`feed/fleet-roster.json`).
 
+## Board rule
+
+A new fleet reads these before the seat map. Board rule. On every owner message run `live-inbox <seat> --prompt --from owner --note "<gist>"`. Ack a handled line with `live-inbox <seat> --ack <id>`, or `live-inbox <seat> --ack all` once every open line is handled. A cloud agent run uses `live-inbox <seat> --turn start --tag "bc-<first8> <track>"` and `live-inbox <seat> --turn end --tag "bc-<first8>"`. `--from owner` is required today.
+
+Kanban note. The live page shows a read-only kanban above Activity. Columns are open, review, fix, merge, retest, and done. The deep link is `?card=`.
+
+History note. Every activity line is archived to history. The word owner is the owner via LIVE_OWNER or the owner-name.
+
+The public board does not serve the history archive or the kanban yet.
+
 ## inbox-roles.json
 
 `feed/routing/inbox-roles.json` is **our install's config: edit it in place**. The kit defaults other fleets copy live in `feed/routing/inbox.py` and stay untouched (it is vendored; see its header).
@@ -27,7 +37,7 @@ Seats (ours): blinky, critic, forge, herald, magnet, nibbler, sound, arch1 (`fee
 
 `feed/fleet-nodes.json` maps a GitHub login to the seat credited for its events (ours: `forge0x1[bot]` -> forge, `critic0x[bot]` -> critic, `htafolla` / `Blaze0x1` -> Blaze, `github-actions[bot]` -> CI, ...). A commit's `Seat:` trailer credits that seat even when the author login is shared.
 
-Precedence (`feed/live_collect.py`): `LIVE_NODE_MAP` env (JSON, set from this file) merges **over** the template `NODE` defaults; logins in neither are dropped, not published as Others. Kit default: no file, template `NODE` only. A later `LIVE_NODE_MAP` relabels stored events. A commit with no GitHub User whose git author name is a seat name (`SEAT_GIT_NAMES`) credits that seat; a GitHub login that merely equals a seat name (e.g. `arch1`, `blinky`) is a stranger and stays Others.
+Precedence (`feed/live_collect.py`): `LIVE_NODE_MAP` env (JSON, set from this file) merges **over** the template `NODE` defaults; logins in neither are dropped, not published as Others. Kit default: no file, template `NODE` only. A later `LIVE_NODE_MAP` relabels stored events. A CI-kind row stored as `Others` is not deleted: it returns to `CI` until that actor is in the map, then it takes the mapped node. `from` `CI` itself is not rewritten. A commit with no GitHub User whose git author name is a seat name (`SEAT_GIT_NAMES`) credits that seat; a GitHub login that merely equals a seat name (e.g. `arch1`, `blinky`) is a stranger and stays Others.
 
 ## fleet-roster.json
 

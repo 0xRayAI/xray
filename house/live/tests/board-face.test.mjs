@@ -95,6 +95,7 @@ test('the board face keeps the contract in both themes', async () => {
     await page.addInitScript(() => {
       if (sessionStorage.getItem('bifrost-theme-cleared')) return;
       localStorage.removeItem('bifrost-theme');
+      localStorage.removeItem('bifrost-card-group');
       sessionStorage.setItem('bifrost-theme-cleared', '1');
     });
     await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'reduce' });
@@ -111,7 +112,7 @@ test('the board face keeps the contract in both themes', async () => {
       const text = (sel) => (document.querySelector(sel) || {}).textContent || '';
       const openCloud = text('#cloudBody .wcards.cloud');
       const doneCloud = text('#cloudBody .wcards.cloud-done');
-      const waiting = [...document.querySelectorAll('#waveBody .wsub')].map(el => el.textContent);
+      const waiting = [...document.querySelectorAll('#waveBody .wgroup, #waveBody .wsub')].map(el => el.textContent);
       const mergedCard = document.querySelector('#waveBody .wcard[data-key="example/app#2"]');
       const openCard = document.querySelector('#waveBody .wcard[data-key="example/app#3"]');
       const mesh = document.getElementById('meshPanel').getBoundingClientRect();
