@@ -7,7 +7,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { initArchive, readArchive, project, validArchiveDate, appendArchive, loadedArchiveDays } from '../app/archive.mjs';
+import { initArchive, readArchive, project, validArchiveDate, appendArchive, loadedArchiveDays, archivedLineBytes } from '../app/archive.mjs';
 
 const APP = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app');
 
@@ -39,6 +39,10 @@ test('project strips body; truncated last line is skipped; a bad calendar date i
   assert.equal(validArchiveDate('2024-02-29'), true);
   assert.equal(validArchiveDate('2026-1-01'), false);
   assert.equal(validArchiveDate('2026-10-13'), true);
+  const activity = { id: 'e.1', seq: 1, seat: 'forge', t_ct: '2026-10-20T10:00:00-05:00', kind: 'prompt', action: 'sent', from: 'Ada', to: 'forge', note: 'fixed summary', room: 'ops' };
+  assert.equal(project('activity', activity).note, undefined);
+  assert.equal(archivedLineBytes('activity', activity), Buffer.byteLength(JSON.stringify(project('activity', activity)) + '\n'));
+  assert.notEqual(archivedLineBytes('activity', activity), Buffer.byteLength(JSON.stringify(activity) + '\n'));
   fs.rmSync(data, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 });
 });
 

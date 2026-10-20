@@ -1258,7 +1258,11 @@ footer a { color: var(--foot); }
       }
       if (!c.pinned) det.appendChild(dl);
       var ol = wbEl('ol', 'wbeats');
-      (c.beats || []).slice(-5).forEach(function (b) { ol.appendChild(wbEl('li', b.nudge ? 'nudge' : '', (b.nudge ? '\u23F0 ' : '') + wbCt(b.t) + ' · ' + b.what)); });
+      (c.beats || []).slice(-5).forEach(function (b) {
+        var note = b.note ? String(b.note) : '';
+        if (note.length > 72) note = note.slice(0, 72);
+        ol.appendChild(wbEl('li', b.nudge ? 'nudge' : '', (b.nudge ? '\u23F0 ' : '') + wbCt(b.t) + ' · ' + b.what + (note ? ' · ' + note : '')));
+      });
       if ((c.beats || []).length) det.appendChild(ol);
       var u = wbSafeUrl(c.url); if (u) { var a = wbEl('a', '', 'open on GitHub'); a.href = u; a.target = '_blank'; a.rel = 'noopener'; a.addEventListener('click', function (ev) { ev.stopPropagation(); }); det.appendChild(a); }
       li.appendChild(det);

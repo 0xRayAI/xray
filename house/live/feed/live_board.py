@@ -71,13 +71,16 @@ def stored_prompt(evs, pid):
     return None
 
 
-def prepend_owner_prompt(card, event, evs, used):
-    """One earlier beat when the open event carries Prompt: <id>. A repeated id does not mark a second card."""
+def prepend_owner_prompt(card, event, prompts, used):
+    """One earlier beat when the open event carries Prompt: <id>. A repeated id does not mark a second card.
+
+    Time and note come only from the prompts list. A prompt row that exists only among the card events is ignored.
+    """
     pid = str(event.get("prompt") or "") or prompt_stamp(event.get("body"))
     if not pid or pid in used:
         return
     used.add(pid)
-    src = stored_prompt(evs, pid)
+    src = stored_prompt(prompts or [], pid)
     beat = {"t": int((_t(src) if src else _t(event)) * 1000), "what": "owner prompt", "url": "", "id": pid, "_ev": ""}
     note = str((src or {}).get("note") or "")
     if note:
@@ -289,7 +292,7 @@ def _keep_push(beats, limit):
     return window
 
 
-def model(extra_events=None, now=None):
+def model(extra_events=None, now=None, prompts=None):
     now = now or time.time()
     evs = _events(extra_events)
     sha_num = {}
@@ -314,6 +317,7 @@ def model(extra_events=None, now=None):
                     "_draft": bool(e.get("draft")), "_beats": [], "_stop": False, "_known": "pr_state" in e}
     _claim_owners(cards, evs, sha_num)             # mill (trailer, credit, or git name) takes a card forge opened
     used_prompts = set()
+    prompt_rows = list(prompts or [])
     merged_keys = {_key(e, sha_num) for e in evs if e.get("kind") == "merged"}
     fixed_by = {}                                          # card key -> "#P" when a merged PR says it fixes / supersedes it
     for e in evs:
@@ -377,7 +381,7 @@ def model(extra_events=None, now=None):
                 c["_stop"] = True
             continue
         if w == "opened" and kind in ("pr_open", "issue_open"):
-            prepend_owner_prompt(c, e, evs, used_prompts)
+            prepend_owner_prompt(c, e, prompt_rows, used_prompts)
         b = {"t": int(_t(e) * 1000), "what": w, "url": live_packet.clean(e.get("source") or "")[:160] if w.startswith(("CI", "Reviewer")) else "",
              "id": e["id"], "_ev": _evidence(e, w)}
         sha = re.sub(r"[^0-9a-f]", "", str(e.get("sha") or e.get("head_sha") or "").lower())[:7]
@@ -500,7 +504,7 @@ def model(extra_events=None, now=None):
     rank = {"live": 0, "held": 0, "parked": 1, "closed": 2}
     out.sort(key=lambda c: (rank[c["state"]], STAGES.index(c["stage"]), -c["last_beat_t"]))
     return {"updated_ct": datetime.fromtimestamp(now, CT).isoformat(timespec="seconds"),
-            "stages": list(STAGES), "stats": stats(evs, now), "cards": pinned() + out[:MAX_CARDS]}
+            "stages": list(STAGES), "stats": stats(evs, now, prompt_rows), "cards": pinned() + out[:MAX_CARDS]}
 
 
 def reconcile(wave, open_now, now=None):
@@ -530,7 +534,7 @@ def reconcile(wave, open_now, now=None):
     return n
 
 
-def stats(evs, now=None):
+def stats(evs, now=None, prompts=None):
     """Board stats strip, from the same feed events (no GitHub calls): last 24 h + open now."""
     now = now or time.time()
     day = lambda e: now - _t(e) <= 86400
@@ -582,15 +586,37 @@ def stats(evs, now=None):
            "issues_open": len(open_issues), "prs_open": len(open_prs),
            "open_total_ids": [sid(repo, number) for repo, number in open_issues + open_prs]}
     out["open_total"] = out["issues_open"] + out["prs_open"]
-    prompts = owner_prompt_rows(evs, now)
-    out["owner_prompts_24h"] = len(prompts)
-    out["owner_prompts_24h_ids"] = [activity_id(e) for e in prompts]
-    out["owner_prompts_24h_bytes"] = sum(archived_bytes(e) for e in prompts)
+    prompt_rows = owner_prompt_rows(evs, now, prompts)
+    out["owner_prompts_24h"] = len(prompt_rows)
+    out["owner_prompts_24h_ids"] = [activity_id(e) for e in prompt_rows]
+    out["owner_prompts_24h_bytes"] = sum(archived_bytes(e) for e in prompt_rows)
     return out
 
 
+OWNER_NAME = re.compile(r"[A-Za-z0-9 ._:@#+/-]{1,40}")
+
+
+def _owner_token(text):
+    line = ""
+    if text:
+        parts = str(text).splitlines()
+        line = parts[0].strip() if parts else ""
+    return line if line and OWNER_NAME.fullmatch(line) else ""
+
+
 def owner_name():
-    """The name: line under ## Owner. Empty when the house file has no such line."""
+    """Configured owner. LIVE_OWNER, then LIVE_OWNER_FILE, then the name: line under ## Owner."""
+    env = _owner_token(os.environ.get("LIVE_OWNER", ""))
+    if env:
+        return env
+    named = os.environ.get("LIVE_OWNER_FILE", "").strip()
+    if named:
+        try:
+            got = _owner_token(Path(named).read_text(encoding="utf-8"))
+        except OSError:
+            got = ""
+        if got:
+            return got
     raw = os.environ.get("HOUSE", "").strip()
     path = None
     if raw:
@@ -632,14 +658,19 @@ def archived_bytes(e):
     return len(raw.encode("utf-8"))
 
 
-def owner_prompt_rows(evs, now):
+def owner_prompt_rows(evs, now, prompts=None):
     owner = owner_name().casefold()
     if not owner:
         return []
     rows = []
-    for e in evs:
+    seen = set()
+    for e in list(prompts or []) + list(evs):
         if str(e.get("kind") or "") not in ("prompt", "seat_prompt"):
             continue
+        eid = activity_id(e)
+        if eid in seen:
+            continue
+        seen.add(eid)
         if str(e.get("from") or "").casefold() != owner:
             continue
         if now - _t(e) > 86400:
@@ -724,10 +755,10 @@ def write_md(m, now=None, force=False):
         return False
 
 
-def run(extra_events=None, write=True):
+def run(extra_events=None, write=True, prompts=None):
     """One feed pass: model for the page header, coord stall lines, BOARD.md (debounced). Never raises."""
     try:
-        m = model(extra_events)
+        m = model(extra_events, prompts=prompts)
         if write and os.environ.get("LIVE_BOARD_LOCAL") == "1":   # retired: the server holds cards + nudges
             stall_lines(m)
             write_md(m)

@@ -7,28 +7,36 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { archivedLineBytes } from '../app/archive.mjs';
 
 const APP = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app');
 const KEY = 'forge-prompt-' + crypto.randomBytes(8).toString('hex');
 
-function start(data) {
-  const house = path.join(data, 'HOUSE.md');
-  fs.writeFileSync(house, '## Owner\nname: Blaze\n');
+function start(data, extra = {}) {
+  const ingest = crypto.randomBytes(32).toString('hex');
+  const env = {
+    PORT: '0', COLLECTOR: 'off', LIVE_PUBLIC: '1', SERVER_ROUTING: 'off',
+    PATH: process.env.PATH, MESH_DATA_DIR: data,
+    SESSION_SECRET: crypto.randomBytes(32).toString('hex'),
+    INGEST_SECRET: ingest,
+    SEAT_KEYS: JSON.stringify({ forge: crypto.createHash('sha256').update(KEY).digest('hex') }),
+    ...extra,
+  };
+  if (extra.HOUSE === '') delete env.HOUSE;
+  else if (!env.HOUSE && !env.LIVE_OWNER && !env.LIVE_OWNER_FILE) {
+    const house = path.join(data, 'HOUSE.md');
+    fs.writeFileSync(house, '## Owner\nname: Blaze\n');
+    env.HOUSE = house;
+  }
   const child = spawn(process.execPath, [path.join(APP, 'server.mjs')], {
-    env: {
-      PORT: '0', COLLECTOR: 'off', LIVE_PUBLIC: '1', SERVER_ROUTING: 'off',
-      PATH: process.env.PATH, MESH_DATA_DIR: data, HOUSE: house,
-      SESSION_SECRET: crypto.randomBytes(32).toString('hex'),
-      INGEST_SECRET: crypto.randomBytes(32).toString('hex'),
-      SEAT_KEYS: JSON.stringify({ forge: crypto.createHash('sha256').update(KEY).digest('hex') }),
-    },
+    env,
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   let logs = '';
   child.stdout.on('data', d => { logs += d; });
   child.stderr.on('data', d => { logs += d; });
   const baseOf = () => { const m = /listening on :(\d+)/.exec(logs); return m ? `http://127.0.0.1:${m[1]}` : null; };
-  return { child, baseOf, logs: () => logs };
+  return { child, baseOf, logs: () => logs, ingest };
 }
 
 async function stop(child) {
@@ -107,6 +115,80 @@ test('a prompt pulse keeps the seat working for 10 minutes and credits Blaze', a
     assert.equal(turned.status, 422);
     const longRoom = await post(base, { t_ct: stamp(0), seat: 'forge', kind: 'prompt', action: 'sent', from: 'blaze', to: 'forge', room: 'r'.repeat(41) });
     assert.equal(longRoom.status, 422);
+  } finally {
+    await stop(srv.child);
+    fs.rmSync(data, { recursive: true, force: true });
+  }
+});
+
+async function up(extra) {
+  const data = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-prompt-'));
+  const env = { ...extra };
+  if (env.HOUSE === '' && !env.LIVE_HOUSE) env.LIVE_HOUSE = data;
+  const srv = start(data, env);
+  let base = null;
+  for (let i = 0; i < 50 && !base; i++) {
+    base = srv.baseOf();
+    if (!base) await new Promise(r => setTimeout(r, 50));
+  }
+  if (!base) {
+    await stop(srv.child);
+    fs.rmSync(data, { recursive: true, force: true });
+    throw new Error(srv.logs());
+  }
+  return { data, srv, base };
+}
+
+test('LIVE_OWNER names the sender and the prompt tile when the image has no HOUSE.md', async () => {
+  const { data, srv, base } = await up({ LIVE_OWNER: 'Ada' });
+  try {
+    const t_ct = stamp(0);
+    const posted = await post(base, { t_ct, seat: 'forge', kind: 'prompt', action: 'sent', from: 'ada', to: 'forge', note: 'fixed summary' });
+    const text = await posted.text();
+    assert.equal(posted.status, 202, text);
+    const body = JSON.parse(text);
+    assert.deepEqual(Object.keys(body).sort(), ['id', 'ok']);
+    const ingest = await fetch(base + '/ingest', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + srv.ingest, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        events: [{ id: 'e1', t_ct, kind: 'note' }],
+        board: { stats: { owner_prompts_24h: 9, owner_prompts_24h_bytes: 1 }, cards: [] },
+      }),
+    });
+    assert.equal(ingest.status, 200, await ingest.text());
+    const live = await (await fetch(base + '/live-events.json')).json();
+    const pulses = live.events.filter(e => e.kind === 'seat_prompt');
+    assert.equal(pulses.length, 1);
+    assert.equal(pulses[0].from, 'Ada');
+    const stats = live.board.stats;
+    assert.equal(stats.owner_prompts_24h, 1);
+    assert.deepEqual(stats.owner_prompts_24h_ids, [body.id]);
+    const line = { id: body.id, seq: 1, seat: 'forge', t_ct, kind: 'prompt', action: 'sent', to: 'forge', from: 'ada', note: 'fixed summary' };
+    assert.equal(stats.owner_prompts_24h_bytes, archivedLineBytes('activity', line));
+    assert.notEqual(stats.owner_prompts_24h_bytes, Buffer.byteLength(JSON.stringify(line) + '\n'));
+  } finally {
+    await stop(srv.child);
+    fs.rmSync(data, { recursive: true, force: true });
+  }
+});
+
+test('a missing owner name leaves the collector prompt counts in place', async () => {
+  const { data, srv, base } = await up({ HOUSE: '' });
+  try {
+    const ingest = await fetch(base + '/ingest', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + srv.ingest, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        events: [{ id: 'e1', t_ct: stamp(0), kind: 'note' }],
+        board: { stats: { owner_prompts_24h: 9, owner_prompts_24h_ids: ['kept'], owner_prompts_24h_bytes: 12 }, cards: [] },
+      }),
+    });
+    assert.equal(ingest.status, 200, await ingest.text());
+    const live = await (await fetch(base + '/live-events.json')).json();
+    assert.equal(live.board.stats.owner_prompts_24h, 9);
+    assert.deepEqual(live.board.stats.owner_prompts_24h_ids, ['kept']);
+    assert.equal(live.board.stats.owner_prompts_24h_bytes, 12);
   } finally {
     await stop(srv.child);
     fs.rmSync(data, { recursive: true, force: true });

@@ -153,6 +153,8 @@ describe('grok-bot house template — USMail docs', () => {
     expect(skill).toContain('does not send a reply whose only job is to mark the turn');
     expect(skill).toContain('Continue the reply');
     expect(skill).toContain('still run turn end on the way out');
+    expect(skill).toContain('its `--turn start`, and its `--turn end`');
+    expect(skill).toContain('does not also run this skill');
     const wake = readFileSync(path.join(kit, 'templates/house/fleet/WAKE-ROUTINE.md'), 'utf8');
     expect(wake).not.toContain('--from blaze');
     expect(wake).toContain("trap 'live-inbox <seat> --turn end --tag wake; live-inbox <seat> --release' EXIT");

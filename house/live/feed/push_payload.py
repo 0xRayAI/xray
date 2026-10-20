@@ -73,6 +73,8 @@ PR_URL = re.compile(
     r"https://github\.com/(?![A-Za-z0-9-]{40})[A-Za-z0-9](?:-[A-Za-z0-9]|[A-Za-z0-9]){0,38}"
     r"/(?![A-Za-z0-9._-]{101})[A-Za-z0-9_](?:[A-Za-z0-9._-]*[A-Za-z0-9_])?/pull/\d{1,8}"
 )
+ACT_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9._:-]{0,79}")
+ACT_NOTE = re.compile(r"""[A-Za-z0-9 ._:@#+/?'",;!()-]{1,240}""")
 
 
 def act_line(d):
@@ -103,6 +105,13 @@ def act_line(d):
         if d["kind"] != "cloud_agent" or not isinstance(pr, str) or len(pr) > 300 or not PR_URL.fullmatch(pr.strip()):
             return None
         out["pr"] = pr.strip()
+    if d.get("kind") == "prompt":
+        pid = d.get("id")
+        if isinstance(pid, str) and ACT_ID.fullmatch(pid):
+            out["id"] = pid
+        note = d.get("note")
+        if isinstance(note, str) and ACT_NOTE.fullmatch(note):
+            out["note"] = note
     return out
 
 

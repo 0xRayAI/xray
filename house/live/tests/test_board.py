@@ -131,13 +131,20 @@ class Model(unittest.TestCase):
     def test_prompt_stamp_is_the_first_beat_once(self):
         prompt = {"id": "ada.9", "t_ct": ct(120), "kind": "prompt", "from": "Ada", "note": "fixed summary"}
         body = "Prompt: ada.9\n\ngoal: ship\n"
-        evs = [prompt, self.ev(70, "issue_open", 60, title="from prompt", body=body, pr_state="open"),
-               self.ev(71, "pr_open", 30, title="second", body=body)]
-        cards = {c["number"]: c for c in self.w.model(evs)["cards"] if c.get("repo") == R}
+        opened = self.ev(70, "issue_open", 60, title="from prompt", body=body, pr_state="open")
+        second = self.ev(71, "pr_open", 30, title="second", body=body)
+        cards = {c["number"]: c for c in self.w.model([opened, second], prompts=[prompt])["cards"] if c.get("repo") == R}
         self.assertEqual([b["what"] for b in cards[70]["beats"]][:2], ["owner prompt", "opened"])
         self.assertEqual(cards[70]["beats"][0]["id"], "ada.9")
         self.assertEqual(cards[70]["beats"][0]["note"], "fixed summary")
+        self.assertEqual(cards[70]["beats"][0]["t"], int(self.w._t(prompt) * 1000))
+        self.assertNotEqual(cards[70]["beats"][0]["t"], cards[70]["beats"][1]["t"])
         self.assertEqual([b["what"] for b in cards[71]["beats"]], ["opened"])
+        hidden = [c for c in self.w.model([prompt, opened])["cards"] if c.get("number") == 70][0]
+        beat = [b for b in hidden["beats"] if b["what"] == "owner prompt"][0]
+        opened_beat = [b for b in hidden["beats"] if b["what"] == "opened"][0]
+        self.assertNotIn("note", beat)
+        self.assertEqual(beat["t"], opened_beat["t"])
         plain = [c for c in self.w.model([self.ev(72, "issue_open", 20, title="plain", pr_state="open")])["cards"] if c.get("number") == 72][0]
         self.assertEqual([b["what"] for b in plain["beats"]], ["opened"])
 
@@ -507,6 +514,7 @@ class Stats(unittest.TestCase):
         os.environ["HOUSE"] = str(path)
         try:
             got = w.stats([ada, old, other, ada2])
+            apart = w.stats([], prompts=[ada, ada2])
         finally:
             os.environ.pop("HOUSE", None)
             house.cleanup()
@@ -514,6 +522,33 @@ class Stats(unittest.TestCase):
         self.assertEqual(got["owner_prompts_24h_ids"], ["ada.1", "ada.2"])
         self.assertEqual(got["owner_prompts_24h_bytes"], w.archived_bytes(ada) + w.archived_bytes(ada2))
         self.assertNotIn("fixed summary", " ".join(got["owner_prompts_24h_ids"]))
+        self.assertEqual(apart["owner_prompts_24h_ids"], ["ada.1", "ada.2"])
+
+    def test_owner_name_reads_env_then_file_then_house(self):
+        import live_board as w
+        os.environ.pop("LIVE_OWNER", None)
+        os.environ.pop("LIVE_OWNER_FILE", None)
+        os.environ.pop("HOUSE", None)
+        house = tempfile.TemporaryDirectory()
+        named = tempfile.NamedTemporaryFile("w", delete=False, encoding="utf-8")
+        try:
+            Path(house.name, "HOUSE.md").write_text("## Owner\nname: Ada\n", encoding="utf-8")
+            os.environ["HOUSE"] = str(Path(house.name, "HOUSE.md"))
+            self.assertEqual(w.owner_name(), "Ada")
+            named.write("Nia\n")
+            named.close()
+            os.environ["LIVE_OWNER_FILE"] = named.name
+            self.assertEqual(w.owner_name(), "Nia")
+            os.environ["LIVE_OWNER"] = "Ada"
+            self.assertEqual(w.owner_name(), "Ada")
+            os.environ["LIVE_OWNER"] = "not a name!"
+            self.assertEqual(w.owner_name(), "Nia")
+        finally:
+            os.environ.pop("LIVE_OWNER", None)
+            os.environ.pop("LIVE_OWNER_FILE", None)
+            os.environ.pop("HOUSE", None)
+            house.cleanup()
+            Path(named.name).unlink(missing_ok=True)
 
 
 class BeatSentence(unittest.TestCase):

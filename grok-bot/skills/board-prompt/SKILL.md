@@ -16,7 +16,7 @@ The rules for the turn are [grok-bot/OP-PROC.md](../../OP-PROC.md) and the house
 3. The work.
 4. On every exit, including an early return and an error: `live-inbox <seat> --turn end --tag wake`.
 
-`--tag` is the word `wake`. A webhook wake uses WAKE-ROUTINE step 0 for its one `--prompt` and does not also run this skill's `--prompt`. A chat turn uses this skill and does not also run step 0.
+`--tag` is the word `wake`. A webhook wake uses WAKE-ROUTINE for its one `--prompt`, its `--turn start`, and its `--turn end`, and does not also run this skill. A chat turn uses this skill and does not also run step 0.
 
 ## Note
 

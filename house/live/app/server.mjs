@@ -22,7 +22,7 @@ import { createArch1Launch, ARCH1_CANON } from './arch1-launch.mjs';
 import { configureWorkTrack, acceptCursorWebhook, appendWake, applyCloudOwners, boardCloudAgents, canonSeatToken, cloudIdsAlias, deriveTrackFromDir, displaySeat, loadSeatAgentMap, readJsonl, readWakeRows, safePrUrl, seatForAgentId, stampCriticCloud, toToken } from './worktrack.mjs';
 import { wakeConfig, createWakeState, classifyBatch, gateLine, noteSent, releaseDue, publicStats, fullStats, restoreWakeBook, viewLine } from './wake-gate.mjs';
 const COLLECTOR_DIR_EARLY = () => path.join(path.dirname(fileURLToPath(import.meta.url)), 'collector');
-import { initArchive, appendArchive, backfillArchive, readArchive, validArchiveDate, KINDS as ARCHIVE_KINDS, cardHistory, archiveDays } from './archive.mjs';
+import { initArchive, appendArchive, backfillArchive, readArchive, validArchiveDate, KINDS as ARCHIVE_KINDS, cardHistory, archiveDays, archivedLineBytes } from './archive.mjs';
 import { pinnedOrigin } from './origin.mjs';
 import { missingHandoffs } from './handoff.mjs';
 import { clockStamp, writeStartAfter } from './chicago-stamp.mjs';
@@ -1427,8 +1427,8 @@ function mergedHeader(now = Date.now()) {
   const af = applyStoredActivity(h.fleet, now); if (af) h.fleet = af;   // open turns and tasks (activity.jsonl)
   h.track = trackView(now);   // Cursor agents, packets, wakes and blockers rebuilt from the volume
   h.cloud_agents = cloudAgentBoard();   // first-class board rows: bcId, seat, card, state, last update
-  if (h.board) {
-    h.board.stats = { ...(h.board.stats || {}), ...ownerPromptStats(now) };
+    if (h.board) {
+    if (ownerName()) h.board.stats = { ...(h.board.stats || {}), ...ownerPromptStats(now) };
     h.board.cloud_agents = h.cloud_agents;
     if (Array.isArray(h.board.cards)) h.board.cards = stampCriticCloud(h.board.cards, h.cloud_agents);
   }
@@ -2524,7 +2524,22 @@ function ctOffset(t) {
   return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}:${parts.second}${off < 0 ? '-' : '+'}${String(a / 60 | 0).padStart(2, '0')}:${String(a % 60).padStart(2, '0')}`;
 }
 // Seat activity becomes a live board event (seat to seat traffic), not just a fleet flag (hotfix: board was GitHub-only).
+const OWNER_NAME = /^[A-Za-z0-9 ._:@#+\/-]{1,40}$/;
+function ownerFromLine(text) {
+  const line = String(text || '').split(/\r?\n/, 1)[0].trim();
+  return OWNER_NAME.test(line) ? line : '';
+}
 function ownerName() {
+  const env = ownerFromLine(process.env.LIVE_OWNER || '');
+  if (env) return env;
+  const named = String(process.env.LIVE_OWNER_FILE || '').trim();
+  const ownerFile = named || path.join(process.cwd(), 'owner-name');
+  try {
+    if (fs.existsSync(ownerFile) && fs.statSync(ownerFile).isFile()) {
+      const got = ownerFromLine(fs.readFileSync(ownerFile, 'utf8'));
+      if (got) return got;
+    }
+  } catch { /* fall through to HOUSE.md */ }
   const raw = String(process.env.HOUSE || '').trim();
   let file = '';
   if (raw) {
@@ -2563,7 +2578,7 @@ function ownerPromptStats(now = Date.now()) {
   }
   rows.sort((a, b) => Date.parse(a.t_ct || '') - Date.parse(b.t_ct || ''));
   let bytes = 0;
-  for (const line of rows) bytes += Buffer.byteLength(JSON.stringify(line) + '\n');
+  for (const line of rows) bytes += archivedLineBytes('activity', line);
   return { owner_prompts_24h: rows.length, owner_prompts_24h_ids: rows.map(l => l.id), owner_prompts_24h_bytes: bytes };
 }
 function activityEvent(line, opts) {

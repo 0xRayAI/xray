@@ -116,6 +116,30 @@ class Act281(unittest.TestCase):
         self.assertEqual(ok["from"], "Coord")
         self.assertIsNone(push_payload.act_line({"t_ct": ct(0), "seat": "Builder", "kind": "turn", "action": "start", "from": "Coord"}))
 
+    def test_act_line_keeps_prompt_id_and_note_for_a_separate_list(self):
+        raw = {"t_ct": ct(0), "seat": "Builder", "kind": "prompt", "action": "received",
+               "from": "Ada", "id": "ada.9", "note": "fixed summary", "seq": 4}
+        ok = push_payload.act_line(raw)
+        self.assertEqual(ok["id"], "ada.9")
+        self.assertEqual(ok["note"], "fixed summary")
+        self.assertNotIn("seq", ok)
+        dropped = push_payload.act_line({**raw, "id": "has space", "note": "bad\nnote"})
+        self.assertIsNotNone(dropped)
+        self.assertNotIn("id", dropped)
+        self.assertNotIn("note", dropped)
+        turn = push_payload.act_line({"t_ct": ct(0), "seat": "Builder", "kind": "turn", "action": "start", "id": "ada.9", "note": "fixed summary"})
+        self.assertIsNotNone(turn)
+        self.assertNotIn("id", turn)
+        self.assertNotIn("note", turn)
+        f = self.fleet(remote=[ok])
+        rows = live_fleet.activity_prompts(f.path)
+        self.assertEqual(rows, [{"id": "ada.9", "t_ct": ok["t_ct"], "kind": "prompt", "from": "Ada", "note": "fixed summary"}])
+        msgs = [e for e in f.events.values() if e["kind"] == "prompt_message"]
+        self.assertEqual(len(msgs), 1)
+        self.assertNotEqual(msgs[0]["id"], "ada.9")
+        self.assertEqual(msgs[0].get("activity_id"), "ada.9")
+        self.assertEqual(msgs[0].get("note"), "fixed summary")
+
 
 if __name__ == "__main__":
     unittest.main()

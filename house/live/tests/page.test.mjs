@@ -498,6 +498,8 @@ test('resume at the live edge rewinds before frame, so frame does not goLive()',
 
 test('wave count tiles title the 24h ids, capped at 20', () => {
   assert.match(html, /d\.title = idTitle\(x\[2\]\)/);
+  assert.match(html, /b\.note/);
+  assert.match(html, /note\.slice\(0, 72\)/);
   assert.match(html, /issues_opened_24h_ids/);
   assert.doesNotMatch(html, /state\.t \+ 250 \* speed/);
   const fn = html.match(/function idTitle\(ids\) \{[\s\S]*?\n    \}/);
