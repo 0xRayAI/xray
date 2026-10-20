@@ -141,6 +141,8 @@ test('prompt names the inbox and the ack, and drops anything that looks like a s
   assert.match(text, /ack the line/);
   assert.match(text, /\/inbox\/arch1/);
   assert.match(text, /house\/live\/tools\/arch1-tui-harness\.sh/);
+  assert.match(text, /Push the branch only/);
+  assert.match(text, /Never open a pull request or an issue/);
   assert.equal(text.includes(KEY), false);
   assert.equal(text.includes(SECRET), false);
   assert.equal(text.includes('user:token'), false);

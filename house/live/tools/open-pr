@@ -1,0 +1,172 @@
+#!/usr/bin/env node
+// Opens one pull request with a GitHub App installation token minted in memory.
+// Never reads SEAT_KEYS, the Bifrost activity key, or GITHUB_TOKEN. Never prints a key, token, or PEM.
+// With no App token, exits non-zero and prints a handoff (branch + body) for forge.
+
+const USAGE = 'usage: open-pr --repo <owner/name> --head <branch> [--base <branch>] --title <title> (--body <text> | --body-file <path>)\n';
+
+function take(argv, flag) {
+  const i = argv.indexOf(flag);
+  if (i === -1) return null;
+  const value = argv[i + 1];
+  if (!value || value.startsWith('--')) return '';
+  argv.splice(i, 2);
+  return value;
+}
+
+function parseArgs(argv) {
+  const args = argv.slice();
+  const repo = take(args, '--repo');
+  const head = take(args, '--head');
+  const base = take(args, '--base');
+  const title = take(args, '--title');
+  const body = take(args, '--body');
+  const bodyFile = take(args, '--body-file');
+  if (args.length > 0) return { error: USAGE };
+  if (!repo || !head || !title || (body === null && bodyFile === null) || (body !== null && bodyFile !== null)) {
+    return { error: USAGE };
+  }
+  if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repo)) return { error: USAGE };
+  if (!/^[A-Za-z0-9][A-Za-z0-9._/-]{0,199}$/.test(head)) return { error: USAGE };
+  const baseRef = base === null ? 'main' : base;
+  if (!/^[A-Za-z0-9][A-Za-z0-9._/-]{0,199}$/.test(baseRef)) return { error: USAGE };
+  if (!title.trim() || title.length > 256 || /[\r\n]/.test(title)) return { error: USAGE };
+  return { spec: { repo, head, base: baseRef, title, body, bodyFile } };
+}
+
+function handoff(spec, fs) {
+  let body = spec.body === null ? '' : spec.body;
+  if (spec.bodyFile !== null) {
+    try {
+      body = fs.readFileSync(spec.bodyFile, 'utf8');
+    } catch {
+      process.stderr.write('open-pr: body file is not readable\n');
+      process.exit(1);
+    }
+  }
+  process.stdout.write(
+    `handoff for forge\nrepo: ${spec.repo}\nbranch: ${spec.head}\nbase: ${spec.base}\ntitle: ${spec.title}\nbody:\n${body.endsWith('\n') ? body : `${body}\n`}`,
+  );
+}
+
+function apiBase() {
+  const raw = (process.env.GITHUB_API_URL || 'https://api.github.com').trim().replace(/\/$/, '');
+  let url;
+  try {
+    url = new URL(raw);
+  } catch {
+    return '';
+  }
+  if (url.username || url.password) return '';
+  if (url.protocol !== 'https:' && url.protocol !== 'http:') return '';
+  return url.origin;
+}
+
+function appMaterial() {
+  const appId = (process.env.GITHUB_APP_ID || '').trim();
+  const installId = (process.env.GITHUB_APP_INSTALLATION_ID || '').trim();
+  const raw = process.env.GITHUB_APP_PRIVATE_KEY || '';
+  if (!/^\d{1,20}$/.test(appId) || !/^\d{1,20}$/.test(installId) || !raw.trim()) return null;
+  const marked = raw.match(/-----BEGIN ([A-Z ]+)-----([\s\S]*?)-----END \1-----/);
+  if (!marked) return null;
+  const folded = marked[2].replace(/\s+/g, '').match(/.{1,64}/g);
+  if (!folded) return null;
+  const pem = `-----BEGIN ${marked[1]}-----\n${folded.join('\n')}\n-----END ${marked[1]}-----\n`;
+  return { appId, installId, pem };
+}
+
+async function mintToken(crypto, api, material, repoName) {
+  try {
+    const b = (obj) => Buffer.from(JSON.stringify(obj)).toString('base64url');
+    const now = Math.floor(Date.now() / 1000);
+    const unsigned = `${b({ alg: 'RS256', typ: 'JWT' })}.${b({ iat: now - 60, exp: now + 540, iss: material.appId })}`;
+    const jwt = `${unsigned}.${crypto.createSign('RSA-SHA256').update(unsigned).sign(material.pem, 'base64url')}`;
+    const res = await fetch(`${api}/app/installations/${material.installId}/access_tokens`, {
+      method: 'POST',
+      redirect: 'error',
+      signal: AbortSignal.timeout(20000),
+      headers: {
+        Authorization: `Bearer ${jwt}`,
+        Accept: 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+        'Content-Type': 'application/json',
+        'User-Agent': 'open-pr',
+      },
+      body: JSON.stringify({ permissions: { pull_requests: 'write' }, repositories: [repoName] }),
+    });
+    const json = await res.json().catch(() => null);
+    if (!res.ok || !json || typeof json.token !== 'string' || !json.token) return '';
+    return json.token;
+  } catch {
+    return '';
+  }
+}
+
+async function openPull(api, token, spec) {
+  let held = token;
+  try {
+    const res = await fetch(`${api}/repos/${spec.repo}/pulls`, {
+      method: 'POST',
+      redirect: 'error',
+      signal: AbortSignal.timeout(20000),
+      headers: {
+        Authorization: `Bearer ${held}`,
+        Accept: 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+        'Content-Type': 'application/json',
+        'User-Agent': 'open-pr',
+      },
+      body: JSON.stringify({ title: spec.title, head: spec.head, base: spec.base, body: spec.body }),
+    });
+    const json = await res.json().catch(() => null);
+    if (!res.ok || !json || typeof json.html_url !== 'string' || !json.html_url) return '';
+    return json.html_url;
+  } catch {
+    return '';
+  } finally {
+    held = '';
+  }
+}
+
+async function main() {
+  const crypto = await import('node:crypto');
+  const fs = await import('node:fs');
+  const parsed = parseArgs(process.argv.slice(2));
+  if (parsed.error) {
+    process.stderr.write(parsed.error);
+    process.exit(2);
+  }
+  const spec = parsed.spec;
+  if (spec.bodyFile !== null) {
+    try {
+      spec.body = fs.readFileSync(spec.bodyFile, 'utf8');
+    } catch {
+      process.stderr.write('open-pr: body file is not readable\n');
+      process.exit(1);
+    }
+  }
+  const api = apiBase();
+  const material = appMaterial();
+  const repoName = spec.repo.split('/')[1];
+  let token = api && material ? await mintToken(crypto, api, material, repoName) : '';
+  if (!token) {
+    handoff(spec, fs);
+    process.exit(1);
+  }
+  let url = '';
+  try {
+    url = await openPull(api, token, spec);
+  } finally {
+    token = '';
+  }
+  if (!url) {
+    handoff(spec, fs);
+    process.exit(1);
+  }
+  process.stdout.write(`${url}\n`);
+}
+
+main().catch(() => {
+  process.stderr.write('open-pr: failed\n');
+  process.exit(1);
+});
