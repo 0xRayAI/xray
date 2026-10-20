@@ -52,8 +52,8 @@ The page now paints those rows with `.wcard` (owner edge, verb, Chicago time). `
 | Field | Source | Transform | UI | Expected | Status |
 |---|---|---|---|---|---|
 | seat chip | `L.AGENTS` + `L.seatView` | name in `.nm`, `title` is the full label. No `.st`, no role line, no ACTIVE/IDLE/WORKING/LIVE text | dot + name | a lit seat pulses the dot (2.8s, opacity 1 to 0.62). An idle seat stays dim and still. A long name truncates with an ellipsis and the full name is the hover title | PASS `tests/board-face.test.mjs` |
-| activity | live events, or `GET /history?date=` | shared fold, collapsed unless `localStorage bifrost-folds` says open. Activity also writes `bifrost-activity` | `#activity` | collapsed by default, `#log` max-height 16rem, overflow auto, date `<select id="historyDay">`, times in CT | PASS |
-| folds | mesh, stats, roster, cards, cloud, recent, history, work, queue, activity | one `.fold` / `.fold-head` / `.fold-body`, `data-fold`, `localStorage bifrost-folds` | header toggle, count in `.fold-sum` | collapsed on first load. Open body max-height 16rem and scrolls, except the mesh body, which stays uncapped so the rewind slider stays inside `#meshPanel` | PASS `tests/board-folds.test.mjs` |
+| activity | live events, or `GET /history?date=` | shared fold. Open unless `bifrost-folds.activity` is `closed`, or the older `bifrost-activity` value is `collapsed`. A toggle still writes both keys | `#activity` | open on first load, `#log` max-height 16rem, overflow auto, date `<select id="historyDay">`, times in CT | PASS |
+| folds | mesh, stats, roster, cards, cloud, recent, history, work, queue, activity | one `.fold` / `.fold-head` / `.fold-body`, `data-fold`, `localStorage bifrost-folds` | header toggle, count in `.fold-sum` | mesh, stats, cards, and activity are open on first load, on desktop and mobile, in both themes. A stored `open` or `closed` still wins. The other sections stay collapsed until opened. An open body max-height is 16rem and scrolls, except the mesh body, which stays uncapped so the rewind slider stays inside `#meshPanel` | PASS `tests/board-folds.test.mjs` |
 | rewind | `#slider` | inside `#meshPanel` | range | the slider box sits inside the mesh panel box | PASS |
 
 ## Cloud rows
@@ -108,6 +108,6 @@ Until a seat posts `--note`, the board can show `Blaze → forge` and cannot sho
 
 ## Contract
 
-`tests/board-face.test.mjs` loads a fixture and checks: merged tile matches its id list and filters the board, a finished-and-merged card is under done, a stale cloud row is not in the open cloud group, an acked lane has no header, the queue drops nudges, the log has no duplicate rows, the slider is inside the mesh panel, activity starts collapsed, and both themes clear 4.5:1 on body text and card titles.
+`tests/board-face.test.mjs` loads a fixture and checks: merged tile matches its id list and filters the board, a finished-and-merged card is under done, a stale cloud row is not in the open cloud group, an acked lane has no header, the queue drops nudges, the log has no duplicate rows, the slider is inside the mesh panel, activity starts open, and both themes clear 4.5:1 on body text and card titles.
 
 `tests/test_board.py` `test_pr_close_with_merged_at_counts_as_merged` checks the merged-versus-unmerged split. `tests/test_activity_281.py` `test_launcher_idle_after_six_hours` checks the stale cloud window.

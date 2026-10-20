@@ -1,4 +1,4 @@
-// Every board section starts collapsed, opens from its header, and remembers that.
+// Mesh, stats, cards, and activity start open. A saved collapse still wins.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
@@ -8,7 +8,8 @@ import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 
 const PUB = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app', 'public');
-const IDS = ['mesh', 'stats', 'roster', 'cards', 'cloud', 'recent', 'history', 'work', 'queue', 'activity'];
+const OPEN = ['mesh', 'stats', 'cards', 'activity'];
+const CLOSED = ['roster', 'cloud', 'recent', 'history', 'work', 'queue'];
 
 function serve() {
   const types = { '.html': 'text/html', '.js': 'text/javascript', '.json': 'application/json' };
@@ -37,60 +38,108 @@ function serve() {
   });
 }
 
-test('board sections start collapsed and keep one shared open state', async () => {
+function readFolds(ids) {
+  return ids.map((id) => {
+    const fold = document.querySelector(`[data-fold="${id}"]`);
+    const body = fold.querySelector('.fold-body');
+    const head = fold.querySelector('.fold-head');
+    return {
+      id,
+      collapsed: fold.classList.contains('collapsed'),
+      expanded: head.getAttribute('aria-expanded'),
+      shown: getComputedStyle(body).display,
+    };
+  });
+}
+
+test('mesh, stats, cards, and activity start open in both themes', async () => {
   const server = await serve();
   const base = `http://127.0.0.1:${server.address().port}/index.html`;
   let browser;
   try {
     browser = await chromium.launch();
     for (const width of [1280, 390]) {
-      const page = await browser.newPage({ viewport: { width, height: width === 390 ? 844 : 800 } });
-      await page.addInitScript(() => {
-        if (sessionStorage.getItem('folds-cleared')) return;
-        localStorage.removeItem('bifrost-folds');
-        localStorage.removeItem('bifrost-activity');
-        sessionStorage.setItem('folds-cleared', '1');
-      });
-      await page.goto(base, { waitUntil: 'domcontentloaded' });
-      await page.waitForFunction(() => document.querySelectorAll('[data-fold]').length >= 10);
-      const start = await page.evaluate((ids) => ids.map((id) => {
-        const fold = document.querySelector(`[data-fold="${id}"]`);
-        const body = fold.querySelector('.fold-body');
-        const head = fold.querySelector('.fold-head');
-        return {
-          id,
-          collapsed: fold.classList.contains('collapsed'),
-          expanded: head.getAttribute('aria-expanded'),
-          shown: getComputedStyle(body).display,
-        };
-      }), IDS);
-      for (const row of start) {
-        assert.equal(row.collapsed, true, row.id);
-        assert.equal(row.expanded, 'false', row.id);
-        assert.equal(row.shown, 'none', row.id);
+      for (const theme of ['dark', 'light']) {
+        const page = await browser.newPage({ viewport: { width, height: width === 390 ? 844 : 800 } });
+        await page.addInitScript(() => {
+          if (sessionStorage.getItem('folds-cleared')) return;
+          localStorage.removeItem('bifrost-folds');
+          localStorage.removeItem('bifrost-activity');
+          localStorage.removeItem('bifrost-theme');
+          sessionStorage.setItem('folds-cleared', '1');
+        });
+        await page.emulateMedia({ colorScheme: theme });
+        await page.goto(base, { waitUntil: 'domcontentloaded' });
+        await page.waitForFunction((want) => document.documentElement.getAttribute('data-theme') === want && document.querySelectorAll('[data-fold]').length >= 10, theme);
+        const rows = await page.evaluate(readFolds, OPEN.concat(CLOSED));
+        const byId = Object.fromEntries(rows.map((row) => [row.id, row]));
+        for (const id of OPEN) {
+          assert.equal(byId[id].collapsed, false, `${theme} ${width} ${id}`);
+          assert.equal(byId[id].expanded, 'true', `${theme} ${width} ${id}`);
+          assert.notEqual(byId[id].shown, 'none', `${theme} ${width} ${id}`);
+        }
+        for (const id of CLOSED) {
+          assert.equal(byId[id].collapsed, true, `${theme} ${width} ${id}`);
+          assert.equal(byId[id].expanded, 'false', `${theme} ${width} ${id}`);
+          assert.equal(byId[id].shown, 'none', `${theme} ${width} ${id}`);
+        }
+        const visible = await page.evaluate(() => ({
+          wave: document.getElementById('wave').classList.contains('collapsed'),
+          stats: getComputedStyle(document.getElementById('waveStats')).display,
+          cards: getComputedStyle(document.getElementById('waveBody')).display,
+          log: getComputedStyle(document.getElementById('log')).display,
+        }));
+        assert.equal(visible.wave, false, `${theme} ${width}`);
+        assert.notEqual(visible.stats, 'none', `${theme} ${width}`);
+        assert.notEqual(visible.cards, 'none', `${theme} ${width}`);
+        assert.notEqual(visible.log, 'none', `${theme} ${width}`);
+        if (width === 1280 && theme === 'dark') {
+          const cards = await page.evaluate(() => {
+            const cs = getComputedStyle(document.querySelector('[data-fold="cards"] .fold-body'));
+            return { max: cs.maxHeight, overflow: cs.overflowY };
+          });
+          assert.equal(cards.max, '256px');
+          assert.equal(cards.overflow, 'auto');
+        }
+        await page.close();
       }
-      await page.click('[data-fold="cards"] > .fold-head');
-      const open = await page.evaluate(() => {
-        const fold = document.querySelector('[data-fold="cards"]');
-        const body = fold.querySelector('.fold-body');
-        const cs = getComputedStyle(body);
-        return {
-          collapsed: fold.classList.contains('collapsed'),
-          expanded: fold.querySelector('.fold-head').getAttribute('aria-expanded'),
-          max: cs.maxHeight,
-          overflow: cs.overflowY,
-          stored: JSON.parse(localStorage.getItem('bifrost-folds') || '{}').cards,
-        };
-      });
-      assert.equal(open.collapsed, false);
-      assert.equal(open.expanded, 'true');
-      assert.equal(open.max, '256px');
-      assert.equal(open.overflow, 'auto');
-      assert.equal(open.stored, 'open');
-      await page.reload({ waitUntil: 'domcontentloaded' });
-      await page.waitForFunction(() => document.querySelector('[data-fold="cards"]') && !document.querySelector('[data-fold="cards"]').classList.contains('collapsed'));
-      await page.close();
     }
+
+    const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    await page.addInitScript(() => {
+      if (sessionStorage.getItem('folds-cleared')) return;
+      localStorage.removeItem('bifrost-folds');
+      localStorage.removeItem('bifrost-activity');
+      sessionStorage.setItem('folds-cleared', '1');
+    });
+    await page.goto(base, { waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(() => document.querySelector('[data-fold="cards"]') && !document.querySelector('[data-fold="cards"]').classList.contains('collapsed'));
+    await page.evaluate(() => {
+      localStorage.setItem('bifrost-folds', JSON.stringify({ cards: 'closed', stats: 'closed' }));
+      localStorage.removeItem('bifrost-activity');
+    });
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(() => document.querySelector('[data-fold="mesh"]'));
+    const saved = await page.evaluate(readFolds, ['mesh', 'stats', 'cards', 'activity']);
+    const savedBy = Object.fromEntries(saved.map((row) => [row.id, row]));
+    assert.equal(savedBy.cards.collapsed, true);
+    assert.equal(savedBy.stats.collapsed, true);
+    assert.equal(savedBy.mesh.collapsed, false);
+    assert.equal(savedBy.activity.collapsed, false);
+    await page.evaluate(() => {
+      localStorage.removeItem('bifrost-folds');
+      localStorage.setItem('bifrost-activity', 'collapsed');
+    });
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(() => document.querySelector('[data-fold="activity"]').classList.contains('collapsed'));
+    const legacy = await page.evaluate(readFolds, ['mesh', 'stats', 'cards', 'activity']);
+    const legacyBy = Object.fromEntries(legacy.map((row) => [row.id, row]));
+    assert.equal(legacyBy.activity.collapsed, true);
+    assert.equal(legacyBy.activity.shown, 'none');
+    assert.equal(legacyBy.mesh.collapsed, false);
+    assert.equal(legacyBy.stats.collapsed, false);
+    assert.equal(legacyBy.cards.collapsed, false);
+    await page.close();
   } finally {
     if (browser) await browser.close();
     await new Promise((resolve) => server.close(resolve));

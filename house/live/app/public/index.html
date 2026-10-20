@@ -541,8 +541,8 @@ footer a { color: var(--foot); }
   </section>
 
   <div class="split">
-  <section class="panel fold collapsed" id="meshPanel" data-fold="mesh">
-    <button class="fold-head" type="button" aria-expanded="false"><span>Mesh</span><span class="fold-sum" id="meshSum"></span></button>
+  <section class="panel fold" id="meshPanel" data-fold="mesh">
+    <button class="fold-head" type="button" aria-expanded="true"><span>Mesh</span><span class="fold-sum" id="meshSum"></span></button>
     <div class="fold-body">
     <div class="lens-head">
       <span>THE LENS · PING-PONG VOLLEY</span>
@@ -567,14 +567,14 @@ footer a { color: var(--foot); }
         </div>
     </div>
   </section>
-  <aside class="panel wave collapsed" id="wave" aria-label="Board (read-only)">
-    <div class="wave-head"><b>🌊 Board</b><span id="waveCount"></span><button id="waveToggle" type="button" aria-expanded="false" aria-controls="waveBody">Show</button></div>
-    <div class="fold collapsed" data-fold="stats" id="statsFold">
-      <button class="fold-head" type="button" aria-expanded="false"><span>Stats</span><span class="fold-sum" id="statsSum"></span></button>
+  <aside class="panel wave" id="wave" aria-label="Board (read-only)">
+    <div class="wave-head"><b>🌊 Board</b><span id="waveCount"></span><button id="waveToggle" type="button" aria-expanded="true" aria-controls="waveBody">Hide</button></div>
+    <div class="fold" data-fold="stats" id="statsFold">
+      <button class="fold-head" type="button" aria-expanded="true"><span>Stats</span><span class="fold-sum" id="statsSum"></span></button>
       <div class="fold-body"><div class="wave-stats" id="waveStats" aria-label="last 24 h and open now"></div></div>
     </div>
-    <div class="fold collapsed" data-fold="cards" id="cardsFold">
-      <button class="fold-head" type="button" aria-expanded="false"><span>Cards</span><span class="fold-sum" id="cardsSum"></span></button>
+    <div class="fold" data-fold="cards" id="cardsFold">
+      <button class="fold-head" type="button" aria-expanded="true"><span>Cards</span><span class="fold-sum" id="cardsSum"></span></button>
       <div class="fold-body wave-body" id="waveBody"></div>
     </div>
     <div class="fold collapsed" data-fold="cloud" id="cloudFold">
@@ -603,8 +603,8 @@ footer a { color: var(--foot); }
 
 
 
-  <section class="panel activity fold collapsed" id="activity" data-fold="activity" aria-label="Activity">
-    <button id="activityToggle" class="fold-head" type="button" aria-expanded="false" aria-controls="log"><span id="activityLabel">Activity</span><span class="fold-sum" id="activitySum"></span></button>
+  <section class="panel activity fold" id="activity" data-fold="activity" aria-label="Activity">
+    <button id="activityToggle" class="fold-head" type="button" aria-expanded="true" aria-controls="log"><span id="activityLabel">Activity</span><span class="fold-sum" id="activitySum"></span></button>
     <select id="historyDay" aria-label="History day"></select>
     <ul id="log" class="fold-body"></ul>
   </section>
@@ -1693,15 +1693,19 @@ footer a { color: var(--foot); }
   function foldSum(id, text) {
     var el = $(id); if (el) el.textContent = text;
   }
+  var FOLD_OPEN = { mesh: 1, stats: 1, cards: 1, activity: 1 };
   function applyFolds() {
     if (!document.querySelectorAll) return;
     var saved = foldSaved();
+    var legacy = '';
+    try { legacy = localStorage.getItem('bifrost-activity') || ''; } catch (e) {}
     if (saved.activity == null) {
-      try { if (localStorage.getItem('bifrost-activity') === 'open') saved.activity = 'open'; } catch (e) {}
+      if (legacy === 'open') saved.activity = 'open';
+      else if (legacy === 'collapsed') saved.activity = 'closed';
     }
     document.querySelectorAll('[data-fold]').forEach(function (fold) {
       var id = fold.getAttribute('data-fold');
-      var open = saved[id] === 'open';
+      var open = saved[id] === 'closed' ? false : saved[id] === 'open' ? true : !!FOLD_OPEN[id];
       fold.classList.toggle('collapsed', !open);
       var btn = fold.querySelector('.fold-head');
       if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
