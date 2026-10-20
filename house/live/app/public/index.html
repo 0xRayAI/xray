@@ -26,10 +26,6 @@
   --pill-bg: #12382f;
   --pill-live: #ff5a4f;
   --pill-off-bg: #10182a;
-  --replay-fg: #d9d2ff;
-  --replay-bg: #1c1838;
-  --replay-edge: #6d5bd0;
-  --replay-dot: #a99bff;
   --behind-fg: #ffd38a;
   --behind-bg: #2a1f0c;
   --behind-edge: #b07a20;
@@ -138,10 +134,6 @@
   --pill-bg: #d7f6ee;
   --pill-live: #c24134;
   --pill-off-bg: #eef1f7;
-  --replay-fg: #3b2f86;
-  --replay-bg: #ece8ff;
-  --replay-edge: #6d5bd0;
-  --replay-dot: #5b4db8;
   --behind-fg: #7a4b00;
   --behind-bg: #fff1d6;
   --behind-edge: #b07a20;
@@ -251,10 +243,6 @@
   --pill-bg: #d7f6ee;
   --pill-live: #c24134;
   --pill-off-bg: #eef1f7;
-  --replay-fg: #3b2f86;
-  --replay-bg: #ece8ff;
-  --replay-edge: #6d5bd0;
-  --replay-dot: #5b4db8;
   --behind-fg: #7a4b00;
   --behind-bg: #fff1d6;
   --behind-edge: #b07a20;
@@ -371,8 +359,6 @@ header { animation: rise .6s ease-out both; }
 #blackout { color: var(--warn); font-weight: 700; font-size: 13px; letter-spacing: .02em; }
 .pill.off { border-color: var(--line); color: var(--dim); background: var(--pill-off-bg); }
 .pill.off::before { color: var(--dim); animation: none; }
-.pill.replay { border-color: var(--replay-edge); color: var(--replay-fg); background: var(--replay-bg); }
-.pill.replay::before { color: var(--replay-dot); }
 .pill.behind { border-color: var(--behind-edge); color: var(--behind-fg); background: var(--behind-bg); }
 .pill.behind::before { color: var(--behind-dot); animation: none; }
 .seat { position: relative; }
@@ -418,7 +404,7 @@ canvas { display: block; width: 100%; height: auto; }
 .spectrum-pill { display: inline-block; flex: none; font-size: 11px; font-weight: 700; letter-spacing: .08em; padding: 3px 8px; border-radius: 999px;
   color: var(--on); border: 1px solid var(--spectrum-edge); background: var(--spectrum-bg); }
 .spectrum-meter { display: inline-flex; align-items: flex-end; gap: 2px; height: 16px; flex: none; }
-.spectrum-pill[hidden], .spectrum-meter[hidden] { display: none !important; }
+.spectrum-pill[hidden], .spectrum-meter[hidden], #pill[hidden] { display: none !important; }
 .spectrum-meter i { display: block; width: 3px; border-radius: 1px; }
 @media (prefers-reduced-motion: reduce) { .spec-tag, .spec-tag.on { transition: none; } }
 @media (prefers-reduced-motion: reduce) { .spectrum-meter i { transition: none; } }
@@ -1019,7 +1005,7 @@ footer a { color: var(--foot); }
     });
     // pings in flight: dimmed ambient replay underneath, real live pings on top at full brightness
     var ghosts = ambientPings(nowWall); ambientStats.drawing = ghosts.length;
-    var tagOn = !!ambient && !replay;   // ambient loop only: a replay pass already says REPLAY on the pill (no duplicate badge)
+    var tagOn = !!ambient && !replay;   // ambient loop only; playback does not add a second badge
     if (tagOn !== specTagOn) { specTagOn = tagOn; $('specTag').classList.toggle('on', tagOn); }
     if (spectrumOn) { ghosts.forEach(function (g) { g.live = true; }); if (replay || playing) pings.forEach(function (g) { g.live = true; }); }
     if (ghosts.length) { ctx.globalAlpha = AMBIENT_ALPHA; ghosts.forEach(drawPing); ctx.globalAlpha = 1; }
@@ -1400,6 +1386,8 @@ footer a { color: var(--foot); }
     });
     var logKey = shown + ':' + state.events.length;
     if (logKey !== lastLogKey) { lastLogKey = logKey; renderLog(shown); }
+    var spectrumUp = !!($('spectrumPill') && !$('spectrumPill').hidden);
+    $('pill').hidden = spectrumUp && (playing || replay);
     if (nowWall - lastText < 500) return;
     lastText = nowWall;
     var now = Date.now(), b = L.bounds(state.events, now);
@@ -1409,7 +1397,6 @@ footer a { color: var(--foot); }
     $('tLabel').textContent = state.live ? 'now · ' + L.fmtCt(now) : L.fmtCt(state.t);
     $('live').classList.toggle('on', state.live);
     $('pill').textContent = (function () {
-      if (replay) return 'REPLAY';
       if (!state.live) return 'REWOUND';
       if (!state.generatedAt) return 'building';
       var age = (now - state.generatedAt) / 1000;
@@ -1417,9 +1404,8 @@ footer a { color: var(--foot); }
       var m = Math.max(1, Math.round(age / 60));
       return 'behind ' + m + ' min';
     })();
-    var behind = state.live && !replay && state.generatedAt && (now - state.generatedAt) > 90000;
-    $('pill').classList.toggle('off', !state.live && !replay && !behind);
-    $('pill').classList.toggle('replay', !!replay);
+    var behind = state.live && state.generatedAt && (now - state.generatedAt) > 90000;
+    $('pill').classList.toggle('off', !state.live && !behind);
     $('pill').classList.toggle('behind', !!behind);
     $('fleet').textContent = L.fleetLine(hot);
     var clk = window.LIVE_CLOCK;   // governor timed run (header.clock): countdown until a seat moves

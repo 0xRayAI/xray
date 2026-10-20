@@ -132,6 +132,18 @@ test('the board manual names a falsy spectrum flag and no spectrum plate', () =>
   assert.match(manual, /Plates read: none \(no spectrum plate\)/);
 });
 
+test('playback hides the live pill while the spectrum pill is visible', () => {
+  assert.match(html, /var spectrumUp = !!\(\$\('spectrumPill'\) && !\$\('spectrumPill'\)\.hidden\);/);
+  assert.match(html, /\$\('pill'\)\.hidden = spectrumUp && \(playing \|\| replay\);/);
+  assert.match(html, /#pill\[hidden\] \{ display: none !important; \}/);
+  assert.doesNotMatch(html, /\.pill\.replay/);
+  assert.doesNotMatch(html, /--replay-/);
+  assert.doesNotMatch(html, /classList\.toggle\('replay'/);
+  assert.doesNotMatch(html, /return 'REPLAY'/);
+  assert.match(html, /id="play"/);
+  assert.match(html, /> Replay loop<\/label>/);
+});
+
 test('the replay toggle re-reads the spectrum flag', () => {
   const handler = html.match(/\$\('ambient'\)\.addEventListener\('change', function \(ev\) \{([^}]*)\}\);/);
   assert.ok(handler, 'ambient change handler');
