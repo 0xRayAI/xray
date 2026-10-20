@@ -292,7 +292,317 @@ def _keep_push(beats, limit):
     return window
 
 
-def model(extra_events=None, now=None, prompts=None):
+def _ref_name(value):
+    text = str(value or "").strip()
+    if text.startswith("refs/heads/"):
+        text = text[len("refs/heads/"):]
+    return text[:200]
+
+
+def _branch_names(event):
+    """Branch refs on a collector event. A commit carries branches (a list); a push carries branch."""
+    if not isinstance(event, dict):
+        return []
+    names = []
+
+    def add(value):
+        name = _ref_name(value)
+        if name and name not in names:
+            names.append(name)
+
+    add(event.get("branch"))
+    add(event.get("head_ref"))
+    add(event.get("ref"))
+    branches = event.get("branches")
+    if isinstance(branches, list):
+        for name in branches:
+            add(name)
+    return names
+
+
+def _sha_of(event):
+    if not isinstance(event, dict):
+        return ""
+    raw = event.get("sha") or event.get("head_sha") or ""
+    return re.sub(r"[^0-9a-f]", "", str(raw).lower())
+
+
+def _branch_of(event):
+    names = _branch_names(event)
+    return names[0] if names else ""
+
+
+def _head_of(event):
+    return _branch_of(event) or _ref_name(event.get("head") if isinstance(event, dict) else "")
+
+
+def _sha_branch_index(events):
+    found = {}
+    for event in events:
+        sha = _sha_of(event)
+        names = _branch_names(event)
+        if not sha or not names:
+            continue
+        bucket = found.setdefault(sha, [])
+        for name in names:
+            if name not in bucket:
+                bucket.append(name)
+    return found
+
+
+def _base_by_sha(events):
+    """pr_open.base is the target ref, not the head branch."""
+    found = {}
+    for event in events:
+        if not isinstance(event, dict) or event.get("kind") != "pr_open":
+            continue
+        sha = _sha_of(event)
+        base = _ref_name(event.get("base"))
+        if not sha or not base:
+            continue
+        found.setdefault(sha, set()).add(base)
+    return found
+
+
+def _chosen_branch(event, bases):
+    names = _branch_names(event)
+    if not names:
+        return ""
+    skip = bases.get(_sha_of(event), ())
+    for name in names:
+        if name not in skip:
+            return name
+    return names[0]
+
+
+def _pr_links(events):
+    """pr_commit maps a sha to (repo, number). A commit has no number of its own."""
+    found = {}
+    for event in events:
+        if not isinstance(event, dict) or event.get("kind") != "pr_commit":
+            continue
+        sha = _sha_of(event)
+        repo = str(event.get("repo") or "").lower()
+        if not sha or not repo or not _positive_event(event):
+            continue
+        pair = (repo, int(event["number"]))
+        bucket = found.setdefault(sha, [])
+        if pair not in bucket:
+            bucket.append(pair)
+    return found
+
+
+def _sha_linked(event, card, links):
+    sha = _sha_of(event)
+    repo = str(card.get("repo") or "").lower()
+    numbers = [number for (linked_repo, number) in links.get(sha, ()) if linked_repo == repo]
+    if not numbers:
+        return False
+    try:
+        card_number = int(card.get("number"))
+    except (TypeError, ValueError):
+        card_number = None
+    if card_number is not None and card_number >= 1 and card_number not in numbers:
+        return False
+    return True
+
+
+def _feature_branch(card):
+    """A develop or main stamp is the merge base, not the PR head."""
+    branch = _ref_name(card.get("branch") if isinstance(card, dict) else "")
+    if not branch or branch in ("develop", "main"):
+        return ""
+    return branch
+
+
+def _branch_for(card, events, cards, bases, links):
+    """Prefer a non-base ref whose sha a pr_commit names. A base commit is not the head."""
+    touching = []
+    for event in events:
+        if event.get("kind") in ("pr_open", "issue_open"):
+            continue
+        branch = _chosen_branch(event, bases)
+        if not branch or not _event_touches(card, event, cards):
+            continue
+        touching.append((event, branch))
+    linked = [(event, branch) for event, branch in touching if _sha_linked(event, card, links)]
+    pool = linked or touching
+    for _event, branch in pool:
+        if branch not in ("develop", "main"):
+            return branch
+    return ""
+
+
+def _agreed_open(event, links):
+    """pr_open and pr_commit name the same repo, number, and sha."""
+    if not isinstance(event, dict) or event.get("kind") != "pr_open" or not _positive_event(event):
+        return False
+    sha = _sha_of(event)
+    if not sha:
+        return False
+    repo = str(event.get("repo") or "").lower()
+    number = int(event["number"])
+    return any(linked_repo == repo and linked_number == number for linked_repo, linked_number in links.get(sha, ()))
+
+
+def _branch_hit(event, sha_branches, links, feature):
+    sha = _sha_of(event)
+    named = _head_of(event) == feature
+    by_sha = bool(sha) and feature in sha_branches.get(sha, ())
+    if not named and not by_sha:
+        return False
+    pairs = links.get(sha, ())
+    if not pairs:
+        return True
+    repo = str(event.get("repo") or "").lower()
+    number = int(event["number"])
+    return any(linked_repo == repo and linked_number == number for linked_repo, linked_number in pairs)
+
+
+def _join_event(card, events, sha_branches, links, cards):
+    """One pr_open for this holding card.
+
+    A feature branch already on the card picks the open whose head matches.
+    With no feature branch, pr_open and pr_commit must share one number and sha.
+    """
+    feature = _feature_branch(card)
+    hits = []
+    agreed = []
+    for event in events:
+        if not isinstance(event, dict) or event.get("kind") != "pr_open" or not _positive_event(event):
+            continue
+        if not _event_touches(card, event, cards):
+            continue
+        if feature and _branch_hit(event, sha_branches, links, feature):
+            hits.append(event)
+        if _agreed_open(event, links):
+            agreed.append(event)
+    if hits:
+        return hits[0]
+    numbers = {(str(event.get("repo") or "").lower(), int(event["number"])) for event in agreed}
+    if not feature and len(numbers) == 1:
+        return agreed[0]
+    return None
+
+
+def _branch_from_open(event):
+    ref = _ref_name(event.get("head_ref") if isinstance(event, dict) else "")
+    if ref:
+        return ref
+    head = _head_of(event)
+    base = _ref_name(event.get("base") if isinstance(event, dict) else "")
+    if head and head != base:
+        return head
+    return ""
+
+
+def _positive_event(event):
+    if not isinstance(event, dict) or not event.get("repo"):
+        return False
+    try:
+        return int(event.get("number")) >= 1
+    except (TypeError, ValueError):
+        return False
+
+
+def _event_touches(card, event, cards):
+    if not isinstance(event, dict):
+        return False
+    key = str(card.get("key") or "").lower()
+    named = str(event.get("card") or "").strip().lower()
+    if named and named == key:
+        return True
+    repo = str(event.get("repo") or "").lower()
+    card_repo = str(card.get("repo") or "").lower()
+    try:
+        number = int(event.get("number"))
+    except (TypeError, ValueError):
+        number = None
+    try:
+        card_number = int(card.get("number"))
+    except (TypeError, ValueError):
+        card_number = None
+    if repo and repo == card_repo and number is not None and number >= 1 and card_number == number:
+        return True
+    if not named and key.startswith("packet:") and repo and repo == card_repo:
+        only = [c for c in cards if str(c.get("key") or "").lower().startswith("packet:") and str(c.get("repo") or "").lower() == repo]
+        return len(only) == 1 and only[0] is card
+    return False
+
+
+def attach_held(held, events):
+    """Rewrite a holding card onto the PR that pr_open and pr_commit share.
+
+    commit_event names only develop and main. pr_commit carries sha plus
+    number. pr_open carries base plus that sha, and the head ref poll_pulls
+    stored. That number and sha become one card. A feature branch already on
+    the card still selects its own head.
+    """
+    cards = [dict(card) for card in (held or []) if isinstance(card, dict)]
+    evs = [event for event in (events or []) if isinstance(event, dict)]
+    bases = _base_by_sha(evs)
+    sha_branches = _sha_branch_index(evs)
+    links = _pr_links(evs)
+    for card in cards:
+        if card.get("branch"):
+            continue
+        branch = _branch_for(card, evs, cards, bases, links)
+        if branch:
+            card["branch"] = branch
+    gone = set()
+    for card in cards:
+        key = str(card.get("key") or "")
+        if not key.lower().startswith("packet:") or id(card) in gone:
+            continue
+        hit = _join_event(card, evs, sha_branches, links, cards)
+        if not hit:
+            continue
+        next_key = f"{str(hit['repo']).lower()}#{int(hit['number'])}"
+        branch = _feature_branch(card) or _branch_from_open(hit) or _ref_name(card.get("branch"))
+        existing = next((other for other in cards if other is not card and id(other) not in gone and str(other.get("key") or "").lower() == next_key), None)
+        if existing is not None:
+            existing.setdefault("alias", key)
+            if branch and not _feature_branch(existing):
+                existing["branch"] = branch
+            gone.add(id(card))
+            continue
+        card["alias"] = key
+        card["key"] = next_key
+        card["repo"] = hit["repo"]
+        card["number"] = int(hit["number"])
+        if branch:
+            card["branch"] = branch
+        url = hit.get("url") or hit.get("source") or ""
+        if url:
+            card["url"] = str(url)[:300]
+    return [card for card in cards if id(card) not in gone]
+
+
+def _merge_attached(cards, attached, now):
+    by = {}
+    order = []
+    for card in cards:
+        by[str(card.get("key") or "").lower()] = card
+        order.append(card)
+    for card in attached:
+        key = str(card.get("key") or "").lower()
+        if key in by:
+            dest = by[key]
+            if card.get("branch") and not dest.get("branch"):
+                dest["branch"] = card["branch"]
+            if card.get("alias") and not dest.get("alias"):
+                dest["alias"] = card["alias"]
+            continue
+        if not card.get("last_beat_t"):
+            card["last_beat_t"] = int(now * 1000)
+        if not card.get("state"):
+            card["state"] = "live"
+        order.append(card)
+        by[key] = card
+    return order
+
+
+def model(extra_events=None, now=None, prompts=None, held=None):
     now = now or time.time()
     evs = _events(extra_events)
     sha_num = {}
@@ -503,8 +813,11 @@ def model(extra_events=None, now=None, prompts=None):
     out = [c for c in out if c["state"] == "closed" or (c["last_beat_t"] and now - c["last_beat_t"] / 1000 < 14 * 86400)]
     rank = {"live": 0, "held": 0, "parked": 1, "closed": 2}
     out.sort(key=lambda c: (rank[c["state"]], STAGES.index(c["stage"]), -c["last_beat_t"]))
+    cards = pinned() + out[:MAX_CARDS]
+    if held:
+        cards = _merge_attached(cards, attach_held(held, evs), now)
     return {"updated_ct": datetime.fromtimestamp(now, CT).isoformat(timespec="seconds"),
-            "stages": list(STAGES), "stats": stats(evs, now, prompt_rows), "cards": pinned() + out[:MAX_CARDS]}
+            "stages": list(STAGES), "stats": stats(evs, now, prompt_rows), "cards": cards}
 
 
 def reconcile(wave, open_now, now=None):
@@ -755,10 +1068,33 @@ def write_md(m, now=None, force=False):
         return False
 
 
-def run(extra_events=None, write=True, prompts=None):
+def held_from_disk():
+    """Packet cards the server already wrote, so a collector pass can attach them."""
+    raw = os.environ.get("LIVE_HELD_CARDS", "").strip()
+    path = Path(raw) if raw else RUN / "live" / "cards.json"
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    cards = data.get("cards") if isinstance(data, dict) else data
+    if not isinstance(cards, list):
+        return None
+    held = []
+    for card in cards:
+        if not isinstance(card, dict) or str(card.get("state") or "").lower() == "closed":
+            continue
+        key = str(card.get("key") or "").lower()
+        if key.startswith("packet:") or card.get("born") == "packet":
+            held.append(card)
+    return held or None
+
+
+def run(extra_events=None, write=True, prompts=None, held=None):
     """One feed pass: model for the page header, coord stall lines, BOARD.md (debounced). Never raises."""
     try:
-        m = model(extra_events, prompts=prompts)
+        if held is None:
+            held = held_from_disk()
+        m = model(extra_events, prompts=prompts, held=held)
         if write and os.environ.get("LIVE_BOARD_LOCAL") == "1":   # retired: the server holds cards + nudges
             stall_lines(m)
             write_md(m)

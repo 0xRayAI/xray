@@ -307,7 +307,231 @@ function expirePlan(card, now) {
   return { ...card, state: 'closed', stage: 'done', flag: 'expired', last_beat_t: now };
 }
 
-/** Keep a plan card and loaded wave cards the collector does not send. Earlier cards win on key. */
+export function isPacketBorn(card) {
+  return !!(card && (card.born === 'packet' || String(card.key || '').toLowerCase().startsWith('packet:')));
+}
+
+function refName(value) {
+  const text = String(value || '').trim();
+  if (!text) return '';
+  return text.replace(/^refs\/heads\//, '').slice(0, 200);
+}
+
+function branchNames(event) {
+  if (!event || typeof event !== 'object') return [];
+  const names = [];
+  const add = (value) => {
+    const name = refName(value);
+    if (name && !names.includes(name)) names.push(name);
+  };
+  add(event.branch);
+  add(event.head_ref);
+  add(event.ref);
+  if (Array.isArray(event.branches)) {
+    for (const name of event.branches) add(name);
+  }
+  return names;
+}
+
+function shaOf(event) {
+  if (!event || typeof event !== 'object') return '';
+  return String(event.sha || event.head_sha || '').trim().toLowerCase().replace(/[^0-9a-f]/g, '');
+}
+
+function branchOf(event) {
+  const names = branchNames(event);
+  return names[0] || '';
+}
+
+function headOf(event) {
+  return branchOf(event) || refName(event && event.head);
+}
+
+function shaBranchIndex(events) {
+  const found = new Map();
+  for (const event of events) {
+    const sha = shaOf(event);
+    const names = branchNames(event);
+    if (!sha || !names.length) continue;
+    const bucket = found.get(sha) || [];
+    for (const name of names) if (!bucket.includes(name)) bucket.push(name);
+    found.set(sha, bucket);
+  }
+  return found;
+}
+
+function baseBySha(events) {
+  const found = new Map();
+  for (const event of events) {
+    if (!event || event.kind !== 'pr_open') continue;
+    const sha = shaOf(event);
+    const base = refName(event.base);
+    if (!sha || !base) continue;
+    const skip = found.get(sha) || new Set();
+    skip.add(base);
+    found.set(sha, skip);
+  }
+  return found;
+}
+
+function chosenBranch(event, bases) {
+  const names = branchNames(event);
+  if (!names.length) return '';
+  const skip = bases.get(shaOf(event));
+  return names.find((name) => !skip || !skip.has(name)) || names[0];
+}
+
+function prLinks(events) {
+  const found = new Map();
+  for (const event of events) {
+    if (!event || event.kind !== 'pr_commit' || !positiveEvent(event)) continue;
+    const sha = shaOf(event);
+    const repo = String(event.repo || '').toLowerCase();
+    if (!sha || !repo) continue;
+    const bucket = found.get(sha) || [];
+    const pair = repo + '#' + Number(event.number);
+    if (!bucket.includes(pair)) bucket.push(pair);
+    found.set(sha, bucket);
+  }
+  return found;
+}
+
+function shaLinked(event, card, links) {
+  const numbers = (links.get(shaOf(event)) || [])
+    .filter((pair) => pair.startsWith(String(card.repo || '').toLowerCase() + '#'))
+    .map((pair) => Number(pair.slice(pair.lastIndexOf('#') + 1)));
+  if (!numbers.length) return false;
+  const cardNumber = Number(card.number);
+  if (Number.isInteger(cardNumber) && cardNumber >= 1 && !numbers.includes(cardNumber)) return false;
+  return true;
+}
+
+const BASE_NAMES = new Set(['develop', 'main']);
+
+function featureBranch(card) {
+  const branch = refName(card && card.branch);
+  if (!branch || BASE_NAMES.has(branch)) return '';
+  return branch;
+}
+
+function branchFor(card, events, list, bases, links) {
+  const touching = [];
+  for (const event of events) {
+    if (!event || event.kind === 'pr_open' || event.kind === 'issue_open') continue;
+    const branch = chosenBranch(event, bases);
+    if (!branch || !eventTouches(card, event, list)) continue;
+    touching.push([event, branch]);
+  }
+  const linked = touching.filter(([event]) => shaLinked(event, card, links));
+  const pool = linked.length ? linked : touching;
+  const feature = pool.find(([, branch]) => !BASE_NAMES.has(branch));
+  return feature ? feature[1] : '';
+}
+
+function agreedOpen(event, links) {
+  if (!event || event.kind !== 'pr_open' || !positiveEvent(event)) return false;
+  const sha = shaOf(event);
+  if (!sha) return false;
+  return (links.get(sha) || []).includes(String(event.repo || '').toLowerCase() + '#' + Number(event.number));
+}
+
+function branchHit(event, shaBranches, links, feature) {
+  const sha = shaOf(event);
+  const named = headOf(event) === feature;
+  const bySha = !!(sha && (shaBranches.get(sha) || []).includes(feature));
+  if (!named && !bySha) return false;
+  const pairs = links.get(sha) || [];
+  if (!pairs.length) return true;
+  return pairs.includes(String(event.repo || '').toLowerCase() + '#' + Number(event.number));
+}
+
+function joinEvent(card, events, shaBranches, links, list) {
+  const feature = featureBranch(card);
+  const hits = [];
+  const agreed = [];
+  for (const event of events) {
+    if (!event || event.kind !== 'pr_open' || !positiveEvent(event)) continue;
+    if (!eventTouches(card, event, list)) continue;
+    if (feature && branchHit(event, shaBranches, links, feature)) hits.push(event);
+    if (agreedOpen(event, links)) agreed.push(event);
+  }
+  if (hits.length) return hits[0];
+  const numbers = new Set(agreed.map((event) => String(event.repo || '').toLowerCase() + '#' + Number(event.number)));
+  if (!feature && numbers.size === 1) return agreed[0];
+  return null;
+}
+
+function branchFromOpen(event) {
+  const ref = refName(event && event.head_ref);
+  if (ref) return ref;
+  const head = headOf(event);
+  const base = refName(event && event.base);
+  if (head && head !== base) return head;
+  return '';
+}
+
+function positiveEvent(event) {
+  const number = Number(event && event.number);
+  return !!(event && event.repo && Number.isInteger(number) && number >= 1);
+}
+
+function eventTouches(card, event, list) {
+  if (!event || typeof event !== 'object') return false;
+  const key = String(card.key || '').toLowerCase();
+  const named = String(event.card || '').trim().toLowerCase();
+  if (named && named === key) return true;
+  const repo = String(event.repo || '').toLowerCase();
+  const number = Number(event.number);
+  const cardRepo = String(card.repo || '').toLowerCase();
+  if (repo && repo === cardRepo && Number.isInteger(number) && number >= 1 && Number(card.number) === number) return true;
+  if (!named && key.startsWith('packet:') && repo && repo === cardRepo) {
+    const only = list.filter((other) => String(other.key || '').toLowerCase().startsWith('packet:') && String(other.repo || '').toLowerCase() === repo);
+    return only.length === 1 && only[0] === card;
+  }
+  return false;
+}
+
+/** Rewrite a holding card onto the PR that pr_open and pr_commit share. */
+export function attachPacketCards(cards, events) {
+  const list = (Array.isArray(cards) ? cards : []).filter((card) => card && typeof card === 'object').map((card) => ({ ...card }));
+  const evs = Array.isArray(events) ? events : [];
+  const bases = baseBySha(evs);
+  const shaBranches = shaBranchIndex(evs);
+  const links = prLinks(evs);
+  for (const card of list) {
+    if (card.branch) continue;
+    const branch = branchFor(card, evs, list, bases, links);
+    if (branch) card.branch = branch;
+  }
+  const gone = new Set();
+  for (const card of list) {
+    const key = String(card.key || '');
+    if (!key.toLowerCase().startsWith('packet:') || gone.has(card)) continue;
+    const hit = joinEvent(card, evs, shaBranches, links, list);
+    if (!hit) continue;
+    const nextKey = String(hit.repo).toLowerCase() + '#' + Number(hit.number);
+    const branch = featureBranch(card) || branchFromOpen(hit) || refName(card.branch);
+    const existing = list.find((other) => other !== card && !gone.has(other) && String(other.key || '').toLowerCase() === nextKey);
+    if (existing) {
+      if (!existing.alias) existing.alias = key;
+      if (branch && !featureBranch(existing)) existing.branch = branch;
+      gone.add(card);
+      continue;
+    }
+    card.alias = key;
+    card.key = nextKey;
+    card.repo = String(hit.repo);
+    card.number = Number(hit.number);
+    if (branch) card.branch = branch;
+    const url = typeof hit.url === 'string' ? hit.url : (typeof hit.source === 'string' ? hit.source : '');
+    if (url) card.url = url.slice(0, 300);
+    if (card.kind === 'packet') card.kind = 'pr';
+    card.last_beat_t = Date.now();
+  }
+  return list.filter((card) => !gone.has(card));
+}
+
+/** Keep a plan card, a packet-born card, and loaded wave cards the collector does not send. Earlier cards win on key. */
 export function retainSeedCards(collector, prior, seedCards) {
   const base = Array.isArray(collector) ? collector.slice() : [];
   const have = new Set(base.map(cardKey).filter(Boolean));
@@ -315,7 +539,7 @@ export function retainSeedCards(collector, prior, seedCards) {
   for (const card of extras) {
     const key = cardKey(card);
     if (!key || have.has(key)) continue;
-    if (!isPlanCard(card) && !card.wave && card.kind !== 'wave' && card.kind !== 'plan') continue;
+    if (!isPlanCard(card) && !card.wave && card.kind !== 'wave' && card.kind !== 'plan' && !isPacketBorn(card)) continue;
     base.push(card);
     have.add(key);
   }

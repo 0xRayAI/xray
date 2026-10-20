@@ -815,13 +815,15 @@ class RepoCollector:
             return
         user = p.get("user") if isinstance(p.get("user"), dict) else {}
         login = user.get("login") or ""
-        head = (p.get("head") or {}).get("sha") if isinstance(p.get("head"), dict) else None
+        head_obj = p.get("head") if isinstance(p.get("head"), dict) else {}
+        head = head_obj.get("sha") if isinstance(head_obj.get("sha"), str) else None
+        head_ref = head_obj.get("ref").strip() if isinstance(head_obj.get("ref"), str) and head_obj.get("ref").strip() else None
         url = p.get("html_url") or f"https://github.com/{self.repo}/pull/{n}"
         created = p.get("created_at") or p.get("updated_at")
         base = (p.get("base") or {}).get("ref") if isinstance(p.get("base"), dict) else None
         self.put(eid, created, node(login) if login else "GitHub", "GitHub", "pr_open",
                  f"{self.short} #{n} opened · {p.get('title') or ''}", url, n,
-                 base=base, actor=login or None, sha=head, author=login or None,
+                 base=base, actor=login or None, sha=head, head_ref=head_ref, author=login or None,
                  draft=p.get("draft"), mentions=mentions(p.get("body")), **card_fields(p))
 
     def _try_pull_card(self, p):
@@ -898,13 +900,15 @@ class RepoCollector:
             login = user.get("login") or ""
             prev = self.st["prs"].get(str(n), {})
             prev_head = prev.get("head")
-            head = (p.get("head") or {}).get("sha")
+            head_obj = p.get("head") if isinstance(p.get("head"), dict) else {}
+            head = head_obj.get("sha") if isinstance(head_obj.get("sha"), str) else None
+            head_ref = head_obj.get("ref").strip() if isinstance(head_obj.get("ref"), str) and head_obj.get("ref").strip() else None
             self.st["prs"][str(n)] = {"author": login or None, "updated_at": p["updated_at"], "head": head,
                                       "merged_at": p.get("merged_at"), "state": p["state"], "base": p["base"]["ref"]}
             url = p["html_url"]
             self.put(f"{self.repo}#{n}:open", p["created_at"], node(login) if login else "GitHub", "GitHub", "pr_open",
                      f"{self.short} #{n} opened · {p['title']}", url, n, base=p["base"]["ref"], actor=login or None,
-                     sha=head, author=login or None,
+                     sha=head, head_ref=head_ref, author=login or None,
                      draft=p.get("draft"), mentions=mentions(p.get("body")), **card_fields(p))
             if p.get("merged_at"):
                 listed = p.get("merged_by") if isinstance(p.get("merged_by"), dict) else None
