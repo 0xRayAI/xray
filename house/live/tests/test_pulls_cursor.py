@@ -3,6 +3,7 @@
 put() is idempotent. Stopping on <= skips that pull, and the page-1 ETag
 then answers 304 forever. The compare is an instant, not the timestamp text.
 """
+import json
 import os
 import sys
 import tempfile
@@ -46,6 +47,7 @@ class PullsCursorBoundary(unittest.TestCase):
     def test_pull_sharing_the_cursor_second_is_replayed(self):
         col = self._collector()
         col.st["bf"]["author:seat"] = True
+        col.st["bf"]["bc:body"] = True
         col.st["cur"]["pulls"] = WHEN
         pull = _pull()
 
@@ -60,6 +62,7 @@ class PullsCursorBoundary(unittest.TestCase):
     def test_cursor_moves_to_newest_updated_at(self):
         col = self._collector()
         col.st["bf"]["author:seat"] = True
+        col.st["bf"]["bc:body"] = True
         col.st["cur"]["pulls"] = "2026-10-14T16:00:00Z"
         newer = "2026-10-14T18:00:00Z"
         pull = _pull()
@@ -71,6 +74,7 @@ class PullsCursorBoundary(unittest.TestCase):
     def test_plus_offset_same_instant_is_not_before_z(self):
         col = self._collector()
         col.st["bf"]["author:seat"] = True
+        col.st["bf"]["bc:body"] = True
         col.st["cur"]["pulls"] = WHEN
         pull = _pull()
         pull["updated_at"] = SAME
@@ -82,6 +86,7 @@ class PullsCursorBoundary(unittest.TestCase):
     def test_later_offset_is_not_skipped(self):
         col = self._collector()
         col.st["bf"]["author:seat"] = True
+        col.st["bf"]["bc:body"] = True
         col.st["cur"]["pulls"] = WHEN
         later = "2026-10-14T17:00:00-05:00"
         pull = _pull()
@@ -139,6 +144,7 @@ class PullsCursorBoundary(unittest.TestCase):
     def test_tie_past_page_cap_does_not_save_etag(self):
         col = self._collector()
         col.st["bf"]["author:seat"] = True
+        col.st["bf"]["bc:body"] = True
         col.st["cur"]["pulls"] = WHEN
         first = _pull()
         tail = _pull()
@@ -173,6 +179,7 @@ class PullsCursorBoundary(unittest.TestCase):
         """Two polls that both hit the cap restart at page 1. The tail stays out until a poll fits."""
         col = self._collector()
         col.st["bf"]["author:seat"] = True
+        col.st["bf"]["bc:body"] = True
         col.st["cur"]["pulls"] = WHEN
         first = _pull()
         tail = _pull()
@@ -207,6 +214,7 @@ class PullsCursorBoundary(unittest.TestCase):
     def test_same_second_head_change_sets_enrich(self):
         col = self._collector()
         col.st["bf"]["author:seat"] = True
+        col.st["bf"]["bc:body"] = True
         col.st["bf"]["prs:done"] = True
         col.st["cur"]["pulls"] = WHEN
         col.st["prs"]["7"] = {
@@ -223,6 +231,7 @@ class PullsCursorBoundary(unittest.TestCase):
     def test_merged_pull_sharing_the_cursor_second_is_replayed(self):
         col = self._collector()
         col.st["bf"]["author:seat"] = True
+        col.st["bf"]["bc:body"] = True
         col.st["cur"]["pulls"] = WHEN
         pull = _pull()
         pull["merged_at"] = WHEN
@@ -236,6 +245,7 @@ class PullsCursorBoundary(unittest.TestCase):
     def test_merged_day_rewinds_a_fresh_cursor_once(self):
         col = self._collector()
         col.st["bf"]["author:seat"] = True
+        col.st["bf"]["bc:body"] = True
         col.st["cur"]["pulls"] = "2099-01-01T00:00:00Z"
         pull = _pull()
         pull["updated_at"] = "2026-10-20T06:00:00Z"
@@ -250,6 +260,35 @@ class PullsCursorBoundary(unittest.TestCase):
         with mock.patch.dict(uc.NODE_LC, FLEET):
             col.poll_pulls(Page([pull]))
         self.assertEqual(col.st["etags"].get("pulls"), etag)
+
+    def test_bc_body_rewinds_once_and_stores_the_full_id(self):
+        """A cursor already past the PR still rewalks one week and keeps the agent id, not the body."""
+        col = self._collector()
+        col.st["bf"]["author:seat"] = True
+        col.st["bf"]["merged:day"] = True
+        col.st["bf"]["merged:actor"] = True
+        col.st["cur"]["pulls"] = "2099-01-01T00:00:00Z"
+        pull = _pull()
+        pull["updated_at"] = "2026-10-20T06:00:00Z"
+        pull["head"] = {"sha": "b" * 40, "ref": "cursor/live-coord-operator-routing-1e99"}
+        pull["body"] = "Receipt\n\nhttps://cursor.com/agents/bc-22f1b70d-a78d-5505-8ee0-9714f6ca1e99\nsecret prose"
+        with mock.patch.dict(uc.NODE_LC, FLEET):
+            col.poll_pulls(Page([pull]))
+        opened = col.ev[f"{REPO}#7:open"]
+        self.assertEqual(opened["bc_ids"], ["bc-22f1b70d-a78d-5505-8ee0-9714f6ca1e99"])
+        self.assertEqual(opened["head_ref"], "cursor/live-coord-operator-routing-1e99")
+        self.assertNotIn("body", opened)
+        self.assertNotIn("secret", json.dumps(opened))
+        self.assertTrue(col.st["bf"].get("bc:body"))
+        col.st["cur"]["pulls"] = "2099-01-01T00:00:00Z"
+        older = _pull()
+        older["number"] = 8
+        older["updated_at"] = "2026-10-01T00:00:00Z"
+        older["html_url"] = f"https://github.com/{REPO}/pull/8"
+        with mock.patch.dict(uc.NODE_LC, FLEET):
+            col.poll_pulls(Page([older]))
+        self.assertNotIn(f"{REPO}#8:open", col.ev)
+        self.assertEqual(col.st["cur"]["pulls"], "2099-01-01T00:00:00Z")
 
 
 def _pull():
