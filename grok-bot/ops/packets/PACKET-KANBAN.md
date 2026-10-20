@@ -4,26 +4,25 @@ Packet only. No code in this change.
 
 ## Core
 
-The root bug is that card metadata is not maintained. `owner`, `status`, `acceptance`, `evidence`, `next owner`, `blockers`, `branch/head`, and `CI` are derived on every `live_board.model` pass from source events, then derived again when those events change. A field is not written by hand and left. A value a replay of the events would not produce is underivable.
+The root bug is that card metadata is not maintained. The primary path is the last agent or seat that touched the card. On the way out it writes `owner`, `next owner`, `acceptance`, `evidence`, and `blockers`.
 
-- `status`, `evidence`, `blockers` — GitHub PR, review, and CI events. `review` with `CHANGES_REQUESTED` is the beat and the blocker `changes requested`, not `Reviewer FAIL`, and the stage is `fix`.
-- `branch/head` — the newest PR push (`head` sha, and branch when the event carries one).
-- `CI` — the newest CI conclusion on the card.
-- `acceptance` — the linked packet only. That is the card packet's `acceptance`, else the PR body's `## Packet` acceptance, else the packet the card or PR names. The body is not stored.
-- `owner` — the cloud-agent start/stop hooks (#472). A `cloud_agent` event with `action` `launch` or `finished` sets `owner` to that event's `agent` (`bcId`). The newest launch on the card wins. A `finished` for that agent leaves the same `bcId`. The critic login is never the owner.
-- `next owner` — the review verdict. `changes requested` names the fixer, the owner the #472 hook set on that card, not the review author.
+That write is one cheap command, the same shape as the other `live-inbox` posts. It does not read GitHub.
 
-`state` (`live`, `held`, `parked`, `closed`) stays a badge. It is not one of these fields. A drag does not write `status` on the card. It appends a `board_status` event, and the next pass derives `status` from it. A newer GitHub event that moves stage still wins.
+`live-inbox <seat> --card <owner/repo#n> --exit --owner <seat|bcId> --next <seat|bcId> --acceptance <line> --evidence <line> --blockers <line>`
 
-## Board check
+One `POST /activity`, the seat's own key, kind `card_exit`. Each value is one line of at most 200 characters. The shared skill `grok-bot/skills/board-prompt/SKILL.md` runs this on every exit, before `live-inbox <seat> --turn end`. `grok-bot/OP-PROC.md` carries the same line. After `REQUEST_CHANGES` the exit writes `owner` and `next owner` as the fixer (`bcId` or seat), not critic, `acceptance` from the linked packet, and `blockers` as `changes requested`.
 
-Every issue and PR card gets `field_check`: a list of `{field, why}` with `why` of `missing` or `underivable`. Missing means the field is empty. Underivable means the stored value is not what a replay produces, including a hand-set `next owner` or an owner of critic while the hook names a `bcId`. An empty list is a maintained card. The wave face and the kanban face show the same flag. The check does not fill a field to clear itself. `— missing —` is not a value. When the events can fill the field, the field is filled. When they cannot, the flag is the signal.
+Backstop only. GitHub events set `status`, `CI`, and `head`. A `review` of `CHANGES_REQUESTED` sets the status beat to `changes requested` and the stage to `fix`, not `Reviewer FAIL`. Cloud-agent start/stop (#472) sets `owner` when the exit step left it empty. These events do not write `next owner`, `acceptance`, `evidence`, or `blockers`.
+
+After `--turn end` or a cloud `finished` with no `--exit` on that card, `field_check` lists each of the five exit fields still empty (`why: missing`). The wave face and the kanban face show the same flag. The check does not fill a field. `status`, `CI`, and `head` are not an exit miss. `— missing —` is not a stored value.
+
+`state` (`live`, `held`, `parked`, `closed`) stays a badge. A drag appends a `board_status` event. The next pass sets `status` from it. A newer GitHub event that moves stage still wins.
 
 ## Scope
 
 A kanban of those cards. Columns are the derived stages `open`, `review`, `fix`, `merge`, `retest`, `done` (`STAGES`, also `board.stages`). The owner's "backlog → active" example is a drag from `open` to `review`. Closed cards sit in `done`.
 
-A click on a card, on the wave list and on the kanban, opens one modal with that card's timeline and the derived fields. This replaces the in-place `.wdetail` expand on both views. Esc closes the modal. A click on the backdrop closes it. The URL carries `?card=` plus the card key (`repo#number`, encoded). Closing clears the param. A finished drag does not open the modal.
+A click on a card, on the wave list and on the kanban, opens one modal with that card's timeline and these fields. This replaces the in-place `.wdetail` expand on both views. Esc closes the modal. A click on the backdrop closes it. The URL carries `?card=` plus the card key (`repo#number`, encoded). Closing clears the param. A finished drag does not open the modal.
 
 Every issue and PR card on both views shows a GitHub link on the card face, visible while the modal is closed. The link is `c.url` when that is an https GitHub issue or pull. Otherwise it is `https://github.com/<repo>/pull/<number>` or `.../issues/<number>` from `kind`. It opens in a new tab (`target=_blank`, `rel=noopener`). A click on the link does not open the modal. A pinned card with no repo and number has no such link. A cloud row shows the same face link when its `pr` is a GitHub pull URL.
 
@@ -35,12 +34,13 @@ The six buttons in `#waveStats` stay the filter they are now: `issues_opened_24h
 
 ## Files to touch
 
-- `house/live/feed/live_board.py` — derive the eight fields on every pass, and set `field_check`.
-- `house/live/feed/live_packet.py` — acceptance from the linked packet only. The body is not stored.
+- `house/live/tools/live-inbox` — the `--exit` command above. One activity post, no GitHub read.
+- `grok-bot/skills/board-prompt/SKILL.md` — one line on every exit, before `--turn end`.
+- `house/live/feed/live_board.py` — apply `card_exit` to the five fields. Events set only `status`, `CI`, `head`, and `owner` when the exit left it empty. Set `field_check` after an exit with no `--exit`.
 - `house/live/app/public/index.html` — columns, the shared modal, the face GitHub link, the field-check flag, drag, Kanban control next to the tiles.
 - `house/live/app/public/live-config.js` — pure helper that places a card in the derived stage column.
 - `house/live/app/server.mjs` — `POST /cards/status` appends the event and does not write `status` on the card. Password `POST /login` and `mesh_session` stay.
-- `house/live/docs/board.md` — the derived fields, the check, and the `CHANGES_REQUESTED` row.
+- `house/live/docs/board.md` — the exit step, the mechanical backstop, and the `CHANGES_REQUESTED` row.
 - `house/live/tests/test_board.py`, `house/live/tests/server-route.test.mjs`, and a new Playwright file under `house/live/tests/`.
 - `docs-site/docs/plates/bifrost.md` — the column view, the modal, the face link, and the field check.
 
@@ -76,26 +76,24 @@ Open question: there is no published npm package name to depend on. Confirm whet
 
 ## Plates and docs
 
-- `docs-site/docs/plates/bifrost.md` — kanban is a column view of derived status. A card click opens the timeline modal (`?card=`). A drag is an event, then a re-derived status. The GitHub link sits on the card face. `field_check` is the maintenance flag.
-- `grok-bot/OP-PROC.md` — the beat line's `CHANGES_REQUESTED` parenthetical becomes `changes requested`. A status move is still not a beat that moves stall or nudge.
+- `docs-site/docs/plates/bifrost.md` — kanban is a column view of status. A card click opens the timeline modal (`?card=`). A drag is an event, then a new status. The GitHub link sits on the card face. The exit step maintains the card. `field_check` flags an exit that skipped it.
+- `grok-bot/OP-PROC.md` — one line: the last agent or seat runs the `--exit` command before turn end. The beat line's `CHANGES_REQUESTED` parenthetical becomes `changes requested`. A status move is still not a beat that moves stall or nudge.
 
 ## Tests
 
-The earlier per-field fixes are tests that a replay derives the field.
+The earlier per-field fixes are tests of this exit step. The event path is only the backstop.
 
 - `house/live/tests/test_board.py`
-  - A `cloud_agent` launch (#472) for `bc-id` on the card, then `review` `CHANGES_REQUESTED`: `owner` is `bc-id`, not critic. A later `finished` for that agent leaves `owner` as `bc-id`.
-  - That review sets `next owner` to that fixer, not the critic login. The beat is `changes requested` and the stage is `fix`. Not `Reviewer FAIL`.
-  - `acceptance` equals the linked packet. A second case reads it from the PR body's `## Packet` when that is the linked packet. No other string is written into the field.
-  - `evidence`, `blockers`, `head`, and `CI` match the GitHub events in the fixture. A hand-set `next owner` with no verdict is `underivable`.
-  - `field_check` is empty when every field replays. It flags `missing` when the packet has no acceptance, and `underivable` when a stored owner is critic while the hook names `bc-id`.
-  - A `board_status` event re-derives `status` only while it is the newest stage move. A newer merge still ends the card.
+  - A `card_exit` after `REQUEST_CHANGES` sets `owner` and `next owner` to the fixer `bc-id`, not critic, `acceptance` to the linked packet's acceptance, `evidence` to that line, and `blockers` to `changes requested`. Not `— missing —`.
+  - With no `card_exit`, the review still sets the status beat to `changes requested` and the stage to `fix`. `head` and `CI` follow their events. A cloud launch or finished (#472) sets `owner` only while the exit left it empty. `next owner`, `acceptance`, `evidence`, and `blockers` stay empty.
+  - After `--turn end` or cloud `finished` with no `--exit`, `field_check` flags those empty exit fields. It is empty when `--exit` ran.
+  - A `board_status` event sets `status` only while it is the newest stage move. A newer merge still ends the card.
 - `house/live/tests/server-route.test.mjs` — `POST /cards/status` rejects a missing session, a pinned card, and a same-column drop. A signed-in drop appends one event and does not write `status` on the stored card.
 - Live Playwright, new file `house/live/tests/kanban-drag.test.mjs`, same shape as `board-panel.test.mjs` (`node:test` + Playwright chromium against the app page). Individually runnable: `node --test house/live/tests/kanban-drag.test.mjs`.
   - Drag a fixture card from `open` to `review` with a real pointer. After the next paint the card is in `review` because status was re-derived. Reload. It stays. The drag does not leave the modal open.
   - Timeline modal, both views: a click opens the dialog with that card's beats and derived fields, and neither card expands `.wdetail` in place. Esc closes and clears `?card=`. A backdrop click closes and clears it. Loading `?card=` opens the same modal.
   - GitHub link, both views: while the modal is closed, each card shows a link to that PR or issue with `target=_blank` and `rel=noopener`. Activating it does not open the modal.
-  - Card fields, both views: the fixture shows `changes requested`, owner `bc-id`, next owner that fixer, and the packet acceptance. `field_check` is empty. It does not show `Reviewer FAIL`, critic as owner or next owner, or `— missing —` for a field the events can fill. A card with no packet acceptance shows the missing flag on both views.
+  - Card fields, both views: the fixture's exit shows `changes requested`, owner `bc-id`, next owner that fixer, and the packet acceptance. `field_check` is empty. It does not show `Reviewer FAIL` or critic as owner or next owner. A card whose exit posted no `--exit` shows the missing flag on both views.
 
 ## Out of scope
 
@@ -107,4 +105,4 @@ The earlier per-field fixes are tests that a replay derives the field.
 - Publishing an npm package.
 - A second status vocabulary (`backlog`, `active`) beside derived stage.
 - Keeping the in-place `.wdetail` expand as a second timeline.
-- Hand-filling a field so the check goes quiet.
+- The check filling a field the exit step left empty.
