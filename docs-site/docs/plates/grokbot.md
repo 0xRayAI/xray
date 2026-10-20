@@ -40,4 +40,4 @@ Give your bots a house: shared rules, one board for the work, and memory that st
 
 When `LIVE_URL` is unset, the board is hand-kept `house/WAVEBOARD.md`. When `LIVE_URL` is set, the fleet's board, seat inboxes and wake webhooks run on [Bifrost](./bifrost.md) at https://bifrost.0xray.dev (`GET /cards`). Each seat runs the station skill first. Docs are https://docs.0xray.dev/.
 
-stamped · 0xray 4.1.0 · @0xray/grok-bot 0.1.8
+stamped · 0xray 4.1.0 · @0xray/grok-bot 0.1.10

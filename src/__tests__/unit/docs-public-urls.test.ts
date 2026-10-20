@@ -26,7 +26,6 @@ const SKIP_DIRS = new Set([
   'dist',
   'build',
   '.docusaurus',
-  'vendor',
   '.opencode',
   '.xray',
 ]);
@@ -47,6 +46,7 @@ function walk(dir: string, out: string[]): void {
 function isDoc(file: string): boolean {
   const rel = path.relative(root, file).split(path.sep).join('/');
   if (rel === 'src/__tests__/unit/docs-public-urls.test.ts') return false;
+  if (path.basename(file) === '_redirects') return true;
   if (rel.endsWith('.md') || rel.endsWith('.mdx') || rel.endsWith('.txt')) return true;
   if (rel.startsWith('docs-site/') && (rel.endsWith('.ts') || rel.endsWith('.tsx'))) return true;
   if (rel === 'AGENTS.md' || rel === 'AGENTS-consumer.md') return true;
@@ -80,6 +80,19 @@ describe('docs check', () => {
     const config = readFileSync(path.join(root, 'docs-site/docusaurus.config.ts'), 'utf8');
     expect(config).toContain("routeBasePath: 'docs'");
     expect(config).not.toContain("routeBasePath: '/'");
+  });
+
+  it('scans redirects, the live mesh readme, and vendored repertoire', () => {
+    const files: string[] = [];
+    walk(root, files);
+    const rels = files
+      .filter((file) => isDoc(file))
+      .map((file) => path.relative(root, file).split(path.sep).join('/'));
+    expect(rels).toContain('docs-site/static/_redirects');
+    expect(rels).toContain('house/live-mesh/README.md');
+    expect(rels.some((rel) => rel.startsWith('vendor/@0xray/repertoire/') && rel.endsWith('.md'))).toBe(true);
+    const redirects = readFileSync(path.join(root, 'docs-site/static/_redirects'), 'utf8');
+    expect(redirects).not.toContain('/xray/docs');
   });
 
   it('rejects the old docs host, a dropped /docs prefix, and the old board host in docs', () => {

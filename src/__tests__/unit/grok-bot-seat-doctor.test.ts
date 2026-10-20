@@ -670,7 +670,7 @@ describe('grok-bot seat doctor — cadence warnings', () => {
   function cadenceHouse(dir: string): void {
     writeHouse(
       dir,
-      '# House\n\n## Owner\nAda.\n\n## Cadence\nOptional. Delete this section if your house has no code loop.\n',
+      '# House\n\n## Owner\nname: Ada\nAda.\n\n## Cadence\nOptional. Delete this section if your house has no code loop.\n',
     );
   }
 
@@ -799,7 +799,7 @@ describe('grok-bot seat doctor — cadence warnings', () => {
     const dir = scratch();
     try {
       planted(dir);
-      writeHouse(dir, '# House\n\n## Owner\nAda.\n');
+      writeHouse(dir, '# House\n\n## Owner\nname: Ada\nAda.\n');
       writeLog(dir, 'stall-sweep.log', '2020-01-01T00:00:00Z quiet\n');
       writeSuitCodex(dir, 69, '2026-08-24');
       writeInstalledCodex(dir, 70, '2026-10-01');
@@ -817,7 +817,7 @@ describe('grok-bot seat doctor — cadence warnings', () => {
   it('does not hint migrate when the house has no watchers directory', () => {
     const dir = scratch();
     try {
-      writeHouse(dir, '# House\n\n## Owner\nAda.\n');
+      writeHouse(dir, '# House\n\n## Owner\nname: Ada\nAda.\n');
       expect(warningsOf(dir)).toEqual([]);
     } finally {
       rmSync(dir, { recursive: true, force: true });
@@ -921,7 +921,7 @@ describe('grok-bot seat doctor — station boot warnings', () => {
     mkdirSync(path.join(dir, 'house'), { recursive: true });
     writeFileSync(
       path.join(dir, 'house', 'HOUSE.md'),
-      '# House\n\nname: owner\nOP-PROC: grok-bot/OP-PROC.md\n\n## Owner\nowner.\n',
+      '# House\n\nOP-PROC: grok-bot/OP-PROC.md\n\n## Owner\nname: owner\nowner.\n',
     );
   }
 
@@ -985,6 +985,23 @@ describe('grok-bot seat doctor — station boot warnings', () => {
       expect(report.ok).toBe(true);
       expect(report.house.status).toBe('pass');
       expect(report.house.warnings ?? []).toEqual([]);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('warns when HOUSE.md has no name: under Owner and does not fail the plant', () => {
+    const dir = scratch();
+    try {
+      plant(dir);
+      writeFileSync(path.join(dir, 'house', 'HOUSE.md'), '# House\n\nname: elsewhere\n\n## Owner\nThe owner decides.\n');
+      const report = diagnoseSeat({ cwd: dir, home: dir });
+      expect(report.house.status).toBe('pass');
+      expect(report.ok).toBe(true);
+      expect(report.plant.ok).toBe(true);
+      expect(report.house.warnings ?? []).toContain('HOUSE.md has no name: under ## Owner');
+      expect(formatDoctor(report)).toMatch(/House: PASS/);
+      expect(formatDoctor(report)).toMatch(/House: WARN — HOUSE.md has no name: under ## Owner/);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

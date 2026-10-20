@@ -1,7 +1,1 @@
-# GitHub Pages compatible redirects (use 301 for permanent redirect)
-/docs/introduction /xray/docs/introduction 301
-/docs/guides/getting-started /xray/docs/guides/getting-started 301
-/docs/architecture /xray/docs/architecture 301
-/docs/agents /xray/docs/agents 301
-/docs/ /xray/docs/ 301
-/docs/* /xray/docs/:splat 301
+# Docs routes stay on this host. GitHub Pages does not apply this file.

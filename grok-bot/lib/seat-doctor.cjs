@@ -397,6 +397,18 @@ function readProfile(cwd, env) {
   return null;
 }
 
+function ownerNameWarning(text) {
+  let section = '';
+  for (const part of String(text || '').split(/(?:^|\n)##\s+/)) {
+    if (part.startsWith('Owner')) {
+      section = part;
+      break;
+    }
+  }
+  if (/^name:\s*\S/m.test(section)) return null;
+  return 'HOUSE.md has no name: under ## Owner';
+}
+
 function stationBootWarnings(cwd, env) {
   const warnings = [];
   const profile = readProfile(cwd, env);
@@ -458,6 +470,8 @@ function inspectHouseFile(file, via, ctx = {}) {
     };
   }
   const warnings = cadenceWarnings(file, text, cwd, env, now).concat(stationBootWarnings(cwd, env));
+  const ownerName = ownerNameWarning(text);
+  if (ownerName) warnings.push(ownerName);
   const exampleSibling = path.join(path.dirname(file), 'EXAMPLE.md');
   const scope = scopeFromHouseText(text);
   if (fs.existsSync(exampleSibling)) {

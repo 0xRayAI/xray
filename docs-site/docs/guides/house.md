@@ -145,7 +145,7 @@ Each new seat runs `seat-label` in its own chat. The label is `You are <seat>, <
 
 `~/bin/gh-<seat>` mints a fresh GitHub App token on every call. Plain `gh` is not the seat. A seat with no App hands the branch and the PR body to a seat that has one.
 
-`grok-bot doctor` warns, and does not fail the plant, when `profile.json` `title` lacks `Run the station skill first`, when `description` does not open with `BOOT:`, when `.xray/state/STATION.md` is older than `.xray/state/NOTES.md`, or when `Skills:` or `Keys:` is missing. Set `GROK_BOT_PROFILE` to a `profile.json` outside the project when the seat keeps it elsewhere.
+`grok-bot doctor` warns, and does not fail the plant, when `HOUSE.md` has no `name:` under `## Owner`, when `profile.json` `title` lacks `Run the station skill first`, when `description` does not open with `BOOT:`, when `.xray/state/STATION.md` is older than `.xray/state/NOTES.md`, or when `Skills:` or `Keys:` is missing. Set `GROK_BOT_PROFILE` to a `profile.json` outside the project when the seat keeps it elsewhere.
 
 The board posts every pull-request handoff and every review handoff. The coordinator acks only dev lines. Do not launch or resume a cloud agent when the card id is missing. On the way out write the card title, url, owner seat, stage, and state.
 
