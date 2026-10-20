@@ -722,6 +722,97 @@ class CardLifecycle(unittest.TestCase):
                 self.assertEqual(loaded.ev[old_id]["from"], "GitHub")
                 self.assertEqual(loaded.ev[old_id]["actor"], "cursor[bot]")
 
+    def test_hop_pass_does_not_drop_an_unmapped_merge(self):
+        """The hop pass used to rewrite a stored GitHub merge back to Others, and fleet_only dropped #407."""
+        import live_board
+        import live_flow
+        self.enterContext(mock.patch.object(uc, "SHOW_UNMAPPED", False))
+        removed = uc.NODE_LC.pop("cursor[bot]", None)
+        self.addCleanup(lambda: removed is not None and uc.NODE_LC.__setitem__("cursor[bot]", removed))
+        col, pull = self._cursor_merge()
+
+        class C:
+            token = "t"
+            def rest(self, path, params=None, etag=None, essential=True):
+                return 200, [pull], "etag", None
+
+        with mock.patch.dict(uc.NODE_LC, {"forge0x1[bot]": "forge"}):
+            uc.NODE_LC.pop("cursor[bot]", None)
+            col.poll_pulls(C())
+            copied = [dict(e) for e in col.ev.values()]
+            live_flow.Flow({"example-org/app": col}, uc.node).apply(copied)
+            kept = uc.fleet_only(copied)
+            merged = next(e for e in kept if e["id"] == "example-org/app#407:merged")
+            self.assertEqual(merged["from"], "GitHub")
+            self.assertNotIn("Others", merged.get("hops") or [])
+            counted = live_board.stats(kept)
+            self.assertEqual(counted["prs_merged_24h"], 1)
+            self.assertIn("example-org/app#407", counted["prs_merged_24h_ids"])
+
+    def test_merged_actor_cursor_waits_until_the_rewalk_finishes(self):
+        """A short pass must not set merged:actor, or the pulls cursor moves past #407 for good."""
+        from datetime import timedelta, timezone
+        self.enterContext(mock.patch.object(uc, "SHOW_UNMAPPED", False))
+        removed = uc.NODE_LC.pop("cursor[bot]", None)
+        self.addCleanup(lambda: removed is not None and uc.NODE_LC.__setitem__("cursor[bot]", removed))
+        col, pull = self._cursor_merge()
+        now = datetime.now(timezone.utc).replace(microsecond=0)
+        ahead = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+        newer_at = (now - timedelta(minutes=5)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        newer = self._pull(number=500, updated_at=newer_at, created_at=newer_at, merged_at=None, state="open")
+        col.st["cur"]["pulls"] = ahead
+        seen = []
+
+        class Short:
+            token = "t"
+            def rest(self, path, params=None, etag=None, essential=True):
+                seen.append(path)
+                if path == "page-2":
+                    return 200, [pull], "etag2", None
+                return 200, [newer], "etag", "page-2"
+
+        orig = col.paged
+        def one_page(*args, **kwargs):
+            kwargs["max_pages"] = 1
+            return orig(*args, **kwargs)
+
+        with mock.patch.dict(uc.NODE_LC, {"forge0x1[bot]": "forge"}):
+            uc.NODE_LC.pop("cursor[bot]", None)
+            col.paged = one_page
+            col.poll_pulls(Short())
+            col.paged = orig
+            self.assertFalse(col.st["bf"].get("merged:actor"))
+            self.assertNotIn("example-org/app#407:merged", col.ev)
+            self.assertEqual(col.st["cur"]["pulls"], newer_at)
+            self.assertNotIn("page-2", seen)
+
+            class Full:
+                token = "t"
+                def rest(self, path, params=None, etag=None, essential=True):
+                    return 200, [newer, pull], "etag", None
+
+            col.poll_pulls(Full())
+            self.assertTrue(col.st["bf"].get("merged:actor"))
+            self.assertEqual(col.ev["example-org/app#407:merged"]["from"], "GitHub")
+            self.assertEqual(col.ev["example-org/app#407:merged"]["actor"], "cursor[bot]")
+
+    def _cursor_merge(self):
+        """#407 merged by cursor[bot], inside the open window, with the pulls cursor already past it."""
+        from datetime import timedelta, timezone
+        col = _collector("example-org/app")
+        now = datetime.now(timezone.utc).replace(microsecond=0)
+        merged_at = (now - timedelta(hours=20)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        updated_at = (now - timedelta(hours=18)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        created_at = (now - timedelta(hours=22)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        pull = self._pull(number=407, updated_at=updated_at, created_at=created_at, merged_at=merged_at,
+                          merged_by={"login": "cursor[bot]"},
+                          html_url="https://github.com/example-org/app/pull/407",
+                          user={"login": "forge0x1[bot]"})
+        col.st["cur"]["pulls"] = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+        col.st["bf"]["merged:day"] = True
+        col.st["bf"]["author:seat"] = True
+        return col, pull
+
     def _pull(self, **over):
         p = {"number": 8, "user": {"login": "forge0x1[bot]"}, "updated_at": "2026-10-14T17:00:00Z",
              "created_at": "2026-10-14T12:00:00Z", "html_url": "https://github.com/example-org/app/pull/8",

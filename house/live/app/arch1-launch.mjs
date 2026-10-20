@@ -109,6 +109,7 @@ export function launchPrompt(line, env = {}) {
     'TUI bar: when the card asks for the local ARCH1 retirement proof, run house/live/tools/arch1-tui-harness.sh.',
     'That script installs OpenCode, OpenClaw, Hermes, Grok CLI, and the Cursor agent CLI, then runs the 0xRay .cjs and .mjs harnesses.',
     'Post the log it writes. The log names the xray commit. Do not put credentials in the log.',
+    'Push the branch only. Never open a pull request or an issue.',
   ].join('\n');
 }
 

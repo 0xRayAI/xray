@@ -521,8 +521,15 @@ def stats(evs, now=None):
     iss = [k for k in opened if not is_pr(k)]
     prs = [k for k in opened if is_pr(k)]
 
+    def sid(repo, number) -> str:
+        """Same repo#number shape as a card key, so a tile click can find the card or the event."""
+        try:
+            return f"{str(repo).lower()}#{int(number)}"
+        except (TypeError, ValueError):
+            return f"{repo}#{number}"
+
     def window_ids(rows):
-        ids = [f"{repo}#{number}" for (repo, number), e in rows if day(e)]
+        ids = [sid(repo, number) for (repo, number), e in rows if day(e)]
         return len(ids), ids
 
     issues_opened_n, issues_opened_ids = window_ids((k, opened[k]) for k in iss)
@@ -530,13 +537,15 @@ def stats(evs, now=None):
     prs_opened_n, prs_opened_ids = window_ids((k, opened[k]) for k in prs)
     prs_merged_n, prs_merged_ids = window_ids(merged.items())
     prs_unmerged_n, prs_unmerged_ids = window_ids((k, e) for k, e in unmerged.items() if k not in merged)
+    open_issues = [k for k in iss if k not in closed and "pr_state" in opened[k]]
+    open_prs = [k for k in prs if k not in closed and "pr_state" in opened[k]]
     out = {"issues_opened_24h": issues_opened_n, "issues_opened_24h_ids": issues_opened_ids,
            "issues_closed_24h": issues_closed_n, "issues_closed_24h_ids": issues_closed_ids,
            "prs_opened_24h": prs_opened_n, "prs_opened_24h_ids": prs_opened_ids,
            "prs_merged_24h": prs_merged_n, "prs_merged_24h_ids": prs_merged_ids,
            "prs_closed_unmerged_24h": prs_unmerged_n, "prs_closed_unmerged_24h_ids": prs_unmerged_ids,
-           "issues_open": sum(1 for k in iss if k not in closed and "pr_state" in opened[k]),
-           "prs_open": sum(1 for k in prs if k not in closed and "pr_state" in opened[k])}
+           "issues_open": len(open_issues), "prs_open": len(open_prs),
+           "open_total_ids": [sid(repo, number) for repo, number in open_issues + open_prs]}
     out["open_total"] = out["issues_open"] + out["prs_open"]
     return out
 
