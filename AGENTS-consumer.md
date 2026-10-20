@@ -179,10 +179,10 @@ Full catalog in root **`SKILLS.md`**. Wear does not write a consumer-root `SKILL
 
 | Topic | URL |
 |-------|-----|
-| Getting started | https://docs.0xray.dev/guides/getting-started |
-| Platform integrations | https://docs.0xray.dev/guides/integrations |
-| Features since 3.1 | https://docs.0xray.dev/guides/features-since-3.1 |
-| AsideContext | https://docs.0xray.dev/guides/aside-context |
-| Memory routing | https://docs.0xray.dev/guides/memory-routing |
-| Repertoire | https://docs.0xray.dev/guides/repertoire |
-| Autonomy command | https://docs.0xray.dev/guides/autonomy-command |
+| Getting started | https://docs.0xray.dev/docs/guides/getting-started |
+| Platform integrations | https://docs.0xray.dev/docs/guides/integrations |
+| Features since 3.1 | https://docs.0xray.dev/docs/guides/features-since-3.1 |
+| AsideContext | https://docs.0xray.dev/docs/guides/aside-context |
+| Memory routing | https://docs.0xray.dev/docs/guides/memory-routing |
+| Repertoire | https://docs.0xray.dev/docs/guides/repertoire |
+| Autonomy command | https://docs.0xray.dev/docs/guides/autonomy-command |

@@ -686,7 +686,7 @@ const config: Config = {
         docs: {
           sidebarPath: './sidebars.ts',
           editUrl: 'https://github.com/0xRayAI/xray/tree/main/',
-          routeBasePath: '/',
+          routeBasePath: 'docs',
           showLastUpdateTime: true,
           showLastUpdateAuthor: true,
         },

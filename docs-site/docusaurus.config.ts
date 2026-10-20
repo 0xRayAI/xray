@@ -19,7 +19,7 @@ const config: Config = {
         docs: {
           sidebarPath: './sidebars.ts',
           editUrl: 'https://github.com/0xRayAI/xray/tree/main/docs-site/',
-          routeBasePath: '/',
+          routeBasePath: 'docs',
           exclude: [
             'archive/**',
             '**/*.json',
@@ -52,7 +52,7 @@ const config: Config = {
       },
       items: [
         {
-          to: '/',
+          to: '/docs/',
           label: 'Docs',
           position: 'left',
         },
@@ -74,7 +74,7 @@ const config: Config = {
         {
           title: 'Docs',
           items: [
-            { label: 'Documentation', to: '/' },
+            { label: 'Documentation', to: '/docs/' },
             { label: 'GitHub', href: 'https://github.com/0xRayAI/xray' },
           ],
         },

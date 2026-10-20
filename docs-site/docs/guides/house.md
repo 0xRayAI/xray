@@ -139,7 +139,7 @@ The process exits 0 when the house check is not FAIL and mill plus inspect are f
 
 ## Station boot
 
-`HOUSE.md` ships with `name: owner` and `OP-PROC: grok-bot/OP-PROC.md`. `name:` is the prompt sender. `OP-PROC:` is the procedure file Full depth reads. Replace `owner` with the name in house config. Point `OP-PROC:` at a house overlay when the fleet has one.
+`HOUSE.md` ships with `OP-PROC: grok-bot/OP-PROC.md` and an `## Owner` example `name: Ada`. The `name:` line under `## Owner` is the prompt sender. Replace `Ada` with the name in house config. A missing `name:` warns and `live-inbox --prompt` uses `from=owner`. `OP-PROC:` is the procedure file Full depth reads. Point it at a house overlay when the fleet has one.
 
 Each new seat runs `seat-label` in its own chat. The label is `You are <seat>, <role> on the <plane> plane. Run the station skill first (suit <suit path>).` Planes are core, integration, ecosystem, distribution, and live. The call is `UpdateProfile` with `title` only. `profile.json` `description` opens with the BOOT line. The same run writes `Plane:` and `Skills:` on `.xray/state/STATION.md`. `Keys:` is `gh-<seat>`, never a secret. One seat does not label another.
 

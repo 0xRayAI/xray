@@ -128,9 +128,9 @@ GitHub Pages serves one snapshot, not a socket. The public page lags the box by 
 
 | | |
 |---|---|
-| Page | https://0xrayai.github.io/xray/live/ |
-| Feed | https://0xrayai.github.io/xray/live/live-events.json |
-| Clip | https://0xrayai.github.io/xray/live/mesh-live.mp4 |
+| Page | https://docs.0xray.dev/live/ |
+| Feed | https://docs.0xray.dev/live/live-events.json |
+| Clip | https://docs.0xray.dev/live/mesh-live.mp4 |
 
 `tripwire_push.py` checks every **5 minutes**. It hashes the local feed and pushes only when that hash changes. The JSON hash is the events payload, so a `generated_at` rewrite does not push. The mp4 hash is the file bytes. Actions runs only after that push. Unchanged ticks stay on the box.
 

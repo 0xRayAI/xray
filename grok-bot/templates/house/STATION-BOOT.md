@@ -2,7 +2,7 @@
 
 Another fleet does this in order after `grok-bot house init`.
 
-1. Set `name:` in `house/HOUSE.md` to the owner name the board should show. Set `OP-PROC:` to that fleet’s procedure file. The pack default is `grok-bot/OP-PROC.md`.
+1. Set `name:` under `## Owner` in `house/HOUSE.md` to the owner name the board should show. A missing line warns and the prompt uses `from=owner`. Set `OP-PROC:` to that fleet’s procedure file. The pack default is `grok-bot/OP-PROC.md`.
 2. Each new seat runs `seat-label` in its own chat. The skill fills `You are <seat>, <role> on the <plane> plane. Run the station skill first (suit <suit path>).` Planes are core, integration, ecosystem, distribution, and live. It calls `UpdateProfile` with `title` only. One seat does not label another.
 3. Wear `@0xray/grok-bot` so `station`, `seat-github-key`, and `seat-label` are on the seat. The profile description opens with one line: `BOOT: on any owner message, after a summary, or on a wake, run the station skill first (suit <path>, seat <seat>).`
 4. `seat-label` writes `Plane:` and `Skills:` on `.xray/state/STATION.md`. `Keys:` names `gh-<seat>` only.
@@ -17,10 +17,10 @@ Another fleet does this in order after `grok-bot house init`.
 
 From `@0xray/grok-bot` 0.1.10. `house init` will not overwrite a house file you already have. Do these by hand.
 
-1. Add `name: owner` and `OP-PROC: grok-bot/OP-PROC.md` to `house/HOUSE.md`. Point `OP-PROC:` at the fleet overlay when there is one. Replace `owner` with the name in house config.
+1. Add `name:` under `## Owner` in `house/HOUSE.md`, and `OP-PROC: grok-bot/OP-PROC.md`. Point `OP-PROC:` at the fleet overlay when there is one. Replace the example name with the name in house config. A missing `name:` warns and the prompt uses `from=owner`.
 2. Each existing seat runs `seat-label` in that seat’s own chat.
 3. Install `~/bin/gh-<seat>` and stop using plain `gh`.
-4. Point the wake at `house/fleet/WAKE-ROUTINE.md`. Drop a hardcoded `--from` name. `from` is the `name:` line.
+4. Point the wake at `house/fleet/WAKE-ROUTINE.md`. Drop a hardcoded `--from` name. `from` is the `name:` line under `## Owner`.
 5. Copy `fleet/TRACKS.md` with `grok-bot house init --migrate` when that file is missing.
 6. Put `Plane:`, `Skills:`, and `Keys:` on `.xray/state/STATION.md`. `Keys:` is `gh-<seat>`, never a secret.
 7. Stop sending pull-request and review handoffs as direct messages. The board posts them. The coordinator acks only dev lines.

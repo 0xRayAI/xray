@@ -5,7 +5,8 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const OLD_BOARD = 'burst-live-production.up.railway.app';
-const OLD_DOCS = '0xrayai.github.io/xray/docs';
+const OLD_DOCS = '0xrayai.github.io/xray';
+const DROPPED_DOCS_PREFIX = 'https://docs.0xray.dev/guides/';
 
 const SETUP_DOCS = [
   'grok-bot/README.md',
@@ -27,6 +28,7 @@ const SKIP_DIRS = new Set([
   '.docusaurus',
   'vendor',
   '.opencode',
+  '.xray',
 ]);
 
 function walk(dir: string, out: string[]): void {
@@ -74,7 +76,13 @@ describe('docs check', () => {
     expect(docs).toContain('BOOT:');
   });
 
-  it('rejects the old docs host and the old board host in docs', () => {
+  it('keeps docs routes under /docs', () => {
+    const config = readFileSync(path.join(root, 'docs-site/docusaurus.config.ts'), 'utf8');
+    expect(config).toContain("routeBasePath: 'docs'");
+    expect(config).not.toContain("routeBasePath: '/'");
+  });
+
+  it('rejects the old docs host, a dropped /docs prefix, and the old board host in docs', () => {
     const files: string[] = [];
     walk(root, files);
     const hits: string[] = [];
@@ -83,6 +91,7 @@ describe('docs check', () => {
       const text = readFileSync(file, 'utf8');
       const rel = path.relative(root, file).split(path.sep).join('/');
       if (text.includes(OLD_DOCS)) hits.push(`${rel} has ${OLD_DOCS}`);
+      if (text.includes(DROPPED_DOCS_PREFIX)) hits.push(`${rel} has ${DROPPED_DOCS_PREFIX}`);
       if (text.includes(OLD_BOARD)) hits.push(`${rel} has ${OLD_BOARD}`);
     }
     expect(hits).toEqual([]);
