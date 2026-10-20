@@ -110,7 +110,7 @@ Two feeds, the same ones seats already write:
 1. `POST /cursor/webhook` appends `agents.jsonl` after the signature check.
 2. `POST /activity` with `kind` `cloud_agent` or `agent` and `action` `launch`, `reply`, `finished`, or `cancel`. `tag` may be `owner/repo#number`. `pr` may be the pull URL. This is the same line a `fleet/cloud-agents.jsonl` row carries (`t_ct`, `by`, `action`, `agent`, `tag`, `pr`).
 
-An ARCH1 launch file row with an `agentId` fills the seat and card when the log has not named them yet. A running row shows a spinner. Open the row for the five fields. A `pr` url is a GitHub link.
+An ARCH1 launch file row with an `agentId` fills the seat and card when the log has not named them yet. A running row shows a spinner. Open the row for the six fields. A `pr` url is a GitHub link.
 
 Vocabulary: **cards** are the work items (one per PR or issue). **Beats** are real events on a card, and they reset its idle clock. **Pulses** are liveness signals only. **Packets** are tracked asks in an inbox, and **acks** close them. **Nudges** are packets the server creates after 60 min with no beat. **Wakes** are content-free webhook doorbells that follow packets. **Seat status** is the working or idle light.
 

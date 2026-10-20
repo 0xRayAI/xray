@@ -50,6 +50,37 @@ class Act281(unittest.TestCase):
         ev = {"id": "o/r#9:open", "t_ct": ct(120), "from": "GitHub", "kind": "pr_open", "label": "r #9 opened · cursor/bc-abc12345"}
         self.assertEqual(f.working_state([ev]).get("Operator", {}).get("agent"), "bc-abc12345")
 
+    def test_cloud_pr_is_stripped_and_kept_only_on_a_full_match(self):
+        good = "https://github.com/acme/app/pull/15"
+        owner40 = "a" + ("-b" * 19) + "c"
+        bad = "https://github.com/" + owner40 + "/app/pull/1"
+        f = self.fleet(
+            [
+                {**self.launch(40), "pr": "  " + good + "  "},
+                {**self.launch(30, agent="bc-bbb22222"), "pr": bad},
+                {**self.launch(20, agent="bc-ccc33333"), "pr": "https://github.com/../../pull/1"},
+                {**self.launch(10, agent="bc-ddd44444"), "pr": 15},
+                self.launch(5, agent="bc-eee55555"),
+            ],
+            remote=[{
+                "t_ct": ct(15), "seat": "Builder", "kind": "cloud_agent", "action": "launch",
+                "agent": "bc-fff66666", "pr": good,
+            }],
+        )
+
+        def pr_of(agent):
+            for event in f.events.values():
+                if event.get("agent") == agent:
+                    return event.get("pr")
+            self.fail("no event for " + agent)
+
+        self.assertEqual(pr_of("bc-abc12345"), good)
+        self.assertIsNone(pr_of("bc-bbb22222"))
+        self.assertIsNone(pr_of("bc-ccc33333"))
+        self.assertIsNone(pr_of("bc-ddd44444"))
+        self.assertIsNone(pr_of("bc-eee55555"))
+        self.assertEqual(pr_of("bc-fff66666"), good)
+
     def test_prompt_keeps_sender(self):
         f = self.fleet(remote=[{"t_ct": ct(30), "seat": "Builder", "kind": "prompt", "action": "received", "from": "Coord"},
                                {"t_ct": ct(20), "seat": "Builder", "kind": "prompt", "action": "sent", "to": "Reviewer"}])

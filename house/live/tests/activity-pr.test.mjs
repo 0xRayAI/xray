@@ -103,13 +103,18 @@ async function withServer(fn) {
 
 test('a 39-character owner still cards and a 40-character hyphenated owner is empty', () => {
   const owner39 = 'a'.repeat(39);
+  const owner39h = 'a' + '-b'.repeat(19);
   const owner40 = 'a' + '-b'.repeat(19) + 'c';
   assert.equal(owner39.length, 39);
+  assert.equal(owner39h.length, 39);
   assert.equal(owner40.length, 40);
   const ok = 'https://github.com/' + owner39 + '/app/pull/1';
+  const hyphenOk = 'https://github.com/' + owner39h + '/app/pull/1';
   const bad = 'https://github.com/' + owner40 + '/app/pull/1';
   assert.equal(safePrUrl(ok), ok);
   assert.equal(cardRefOf(ok), owner39 + '/app#1');
+  assert.equal(safePrUrl(hyphenOk), hyphenOk);
+  assert.equal(cardRefOf(hyphenOk), owner39h + '/app#1');
   assert.equal(safePrUrl(bad), '');
   assert.equal(cardRefOf(bad), '');
   const repo100 = 'r' + 'e'.repeat(99);
@@ -129,6 +134,13 @@ test('cloud-agents field lists name pr inside the braces and the parentheses', (
   const paren = lines[110].match(/\([^)]*\)/);
   assert.ok(paren, 'line 111 parenthetical');
   assert.match(paren[0], /`pr`/);
+  assert.match(lines[112], /six fields/);
+  const rows = lines.slice(98, 104);
+  assert.equal(rows.length, 6);
+  assert.deepEqual(
+    rows.map((row) => (row.match(/`([^`]+)`/) || [])[1]),
+    ['bcId', 'seat', 'card', 'pr', 'state', 'updated_ct'],
+  );
 });
 
 test('a dot-segment pull URL is empty and a dotted repo still cards', () => {
@@ -144,6 +156,11 @@ test('a dot-segment pull URL is empty and a dotted repo still cards', () => {
   const plate = fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'docs-site', 'docs', 'plates', 'bifrost.md'), 'utf8');
   assert.match(plate, /pull URL/);
   assert.match(plate, /The pull URL is the row's `pr`/);
+  const cloudRow = plate.split('\n')[45];
+  const fieldList = cloudRow.split('The pull URL')[0];
+  assert.match(fieldList, /`pr`/);
+  assert.match(cloudRow, /The Cursor webhook and seat activity `kind: cloud_agent` feed that row\./);
+  assert.match(cloudRow, /The pull URL is the row's `pr`\./);
 });
 
 test('(a) an activity-only URL is shown', async () => {
