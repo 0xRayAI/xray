@@ -49,6 +49,12 @@
       "type": "string",
       "maxLength": 80,
       "pattern": "^[A-Za-z0-9 ._:@#+/\\-]{1,80}$"
+    },
+    "pr": {
+      "type": "string",
+      "maxLength": 80,
+      "pattern": "^https://github\\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/pull/[0-9]{1,8}$",
+      "description": "Optional https GitHub pull URL on a cloud agent line. A card ref stays on tag."
     }
   },
   "allOf": [
@@ -78,6 +84,10 @@
         "required": ["agent"],
         "properties": { "action": { "enum": ["launch", "reply", "finished", "cancel"] } }
       }
+    },
+    {
+      "if": { "not": { "properties": { "kind": { "const": "cloud_agent" } }, "required": ["kind"] } },
+      "then": { "properties": { "pr": false } }
     },
     {
       "if": { "properties": { "kind": { "const": "lab_run" } }, "required": ["kind"] },

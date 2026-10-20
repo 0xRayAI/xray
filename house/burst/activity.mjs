@@ -13,7 +13,8 @@ export const ACT_KINDS = {
   retest: ['start', 'end', 'pass', 'fail'],
   deploy: ['start', 'end', 'pass', 'fail', 'cancel'],
 };
-const ACT_FIELDS = new Set(['t_ct', 'kind', 'action', 'to', 'from', 'agent', 'tag', 'seat', 'room']);
+const ACT_FIELDS = new Set(['t_ct', 'kind', 'action', 'to', 'from', 'agent', 'tag', 'seat', 'room', 'pr']);
+const PR_URL = /^https:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\/pull\/\d{1,8}(?:\/|\?|#|$)/;
 const ACT_BANNED = /body|text|message/i;
 const ACT_VALUE = /^[A-Za-z0-9 ._:@#+\/-]{1,80}$/;
 const ACT_AGENT = /^[A-Za-z0-9][A-Za-z0-9_-]{2,40}$/;
@@ -44,6 +45,10 @@ export function validActivity(d, now = Date.now()) {
   if (d.agent != null && !ACT_AGENT.test(d.agent)) return 'bad agent id';
   if (d.room != null && d.kind !== 'prompt') return 'room is only for prompt (<= 40 chars)';
   if (d.from != null && d.kind !== 'prompt') return 'from is only for prompt (<= 40 chars)';
+  if (d.pr != null) {
+    if (d.kind !== 'cloud_agent') return 'pr is only for a cloud agent';
+    if (!PR_URL.test(String(d.pr).trim())) return 'bad pr';
+  }
   return null;
 }
 

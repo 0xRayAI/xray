@@ -405,6 +405,13 @@ function safePr(value) {
   return '';
 }
 
+/** https GitHub pull URL only. A card ref stays on tag. javascript:, data:, and http: are empty. */
+export function safePrUrl(value) {
+  const raw = String(value || '').trim();
+  if (!PR_URL.test(raw)) return '';
+  return raw.slice(0, 300);
+}
+
 /** The critic cloud id for one PR. A running agent wins, then the newest. A failed id is used only when it is the only one. */
 export function criticCloudId(cardKey, agents) {
   const key = String(cardKey || '').trim().toLowerCase();
@@ -459,7 +466,7 @@ export function boardCloudAgents({ agents = [], activity = [], links = [] } = {}
     events.push({
       bcId: row.agent,
       seat: row.seat || row.by || '',
-      pr: '',
+      pr: safePrUrl(row.pr),
       card: CARD_REF.test(tag) ? tag : '',
       state,
       updated_ct: typeof row.t_ct === 'string' ? row.t_ct : '',

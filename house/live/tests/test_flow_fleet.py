@@ -294,6 +294,30 @@ class CloudAgentsTest(unittest.TestCase):
             self.assertNotIn("CloudAgents", f.fleet_state(gh, now)["seats"])     # not one of the counted bots
             self.assertFalse(f.fleet_state(gh, now)["cloud"]["active"])
 
+    def test_cloud_line_keeps_a_github_pull_url(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            (root / "fleet").mkdir(); (root / "feed").mkdir()
+            log = root / "fleet" / "cloud-agents.jsonl"
+            iso = lambda t: datetime.fromtimestamp(t, CT).replace(microsecond=0).isoformat()
+            now = time.time()
+            line = lambda **k: json.dumps(k) + "\n"
+            url = "https://github.com/acme/app/pull/15"
+            log.write_text(
+                line(t_ct=iso(now - 30), by="Writer", action="launch", agent="bc-prlink01",
+                     repo="example-org/widgets", tag="example-org/widgets#9", pr=url)
+                + line(t_ct=iso(now - 20), by="Writer", action="launch", agent="bc-badhttp01",
+                       repo="example-org/widgets", tag="note", pr="http://github.com/acme/app/pull/15")
+                + line(t_ct=iso(now - 10), by="Writer", action="launch", agent="bc-baddata01",
+                       repo="example-org/widgets", tag="note", pr="javascript:alert"))
+            live_fleet.WS, live_fleet.OP_REPO = root, root / "none"
+            live_fleet.HOUSE, live_fleet.LABTEST, live_fleet.LABQA = root / "h", root / "l", root / "q"
+            f = live_fleet.Fleet(root / "feed" / "fleet-state.json", CT)
+            ev = {e["agent"]: e for e in f.scan() if e["kind"] == "cloud_launch"}
+            self.assertEqual(ev["bc-prlink01"]["pr"], url)
+            self.assertNotIn("pr", ev["bc-badhttp01"])
+            self.assertNotIn("pr", ev["bc-baddata01"])
+
     def test_cloud_inactive_when_open_agents_empty(self):
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)
