@@ -221,7 +221,10 @@ test('a stale head is not resumed and the new run can finish', async () => {
     assert.equal((await rowOf(ctx, cookie, 'bc-stalehead01')).state, 'stale');
     assert.equal((await rowOf(ctx, cookie, 'bc-livehead001')).state, 'running');
     const working = await boardOf(ctx, cookie);
-    assert.equal(working.fleet.working.writer.via, 'cloud');
+    assert.equal(working.fleet.working.writer, undefined);
+    assert.equal(working.fleet.cloud.working, true);
+    assert.equal((working.fleet.cloud.open_agents || []).includes('bc-livehead001'), true);
+    assert.equal((working.fleet.cloud.open_agents || []).includes('bc-stalehead01'), false);
     const done = await postActivity(ctx, {
       t_ct: stamp(1000), kind: 'cloud_agent', action: 'finished', agent: 'bc-livehead001', tag: head,
     });
@@ -230,6 +233,8 @@ test('a stale head is not resumed and the new run can finish', async () => {
     assert.equal((await rowOf(ctx, cookie, 'bc-livehead001')).state, 'finished');
     const cleared = await boardOf(ctx, cookie);
     assert.equal(cleared.fleet.working.writer, undefined);
+    assert.equal((cleared.fleet.cloud.open_agents || []).includes('bc-livehead001'), false);
+    assert.equal((cleared.fleet.cloud.open_agents || []).includes('bc-stalehead01'), false);
     const inbox = await fetch(ctx.base + '/inbox/writer', { headers: { Authorization: 'Bearer ' + KEY } });
     assert.equal(inbox.status, 200);
     assert.equal((await inbox.text()).includes('run_end'), false);
