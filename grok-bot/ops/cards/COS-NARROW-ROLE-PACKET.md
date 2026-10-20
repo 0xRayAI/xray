@@ -77,7 +77,7 @@ House docs:
 - `house/live/app/server.mjs`, `governor.mjs`, `wave-schedule.mjs` — drop the L2/L3 wakes above. Leave the plan path on blinky (`waveBoard` at `:1033`, card seed at `:3099`, `seats.coord`). Drop mill from seat lists. Keep blinky. `governor.mjs` and `wave-schedule.mjs` keep the coord argument.
 - `house/live/feed/fleet-roster.json`, `inbox-roles.json` — delete mill. Keep blinky. Keep `seats.coord`.
 - `docs-site/static/live/live.js`, `live-events.json`, `grok-bot/skills/draw-seat-emoji/SKILL.md` — delete the mill seat marks. Keep blinky.
-- `grok-bot/templates/house/fleet/WAKE-ROUTINE.md` — the board does every PR and review handoff. The CoS seat only acks a dev line and sends no message about it.
+- `grok-bot/templates/house/fleet/WAKE-ROUTINE.md` — the CoS seat does not post a handoff. It only acks a dev line and sends no message about it.
 
 ## Tests and checks
 
