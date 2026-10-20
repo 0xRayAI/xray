@@ -2537,7 +2537,7 @@ function ownerName() {
 function promptSender(line) {
   const raw = String(line.from || '').trim();
   const name = ownerName();
-  if (name && (!raw || raw.toLowerCase() === name.toLowerCase())) return name;
+  if (name && (!raw || raw.toLowerCase() === 'owner' || raw.toLowerCase() === name.toLowerCase())) return name;   // --from owner is the generic alias
   return raw;
 }
 function ownerPromptStats(now = Date.now()) {
@@ -2546,7 +2546,8 @@ function ownerPromptStats(now = Date.now()) {
   if (owner) {
     for (const line of activity) {
       if (!line || line.kind !== 'prompt') continue;
-      if (String(line.from || '').trim().toLowerCase() !== owner) continue;
+      const fr = String(line.from || '').trim().toLowerCase();
+      if (fr !== owner && fr !== 'owner' && fr !== '') continue;
       const t = Date.parse(line.t_ct || '');
       if (!Number.isFinite(t) || now - t > 86400000 || t > now + 300000) continue;
       rows.push(line);
