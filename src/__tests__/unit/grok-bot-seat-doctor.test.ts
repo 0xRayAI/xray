@@ -16,12 +16,7 @@ const {
   runDoctorCli,
   PLANT_URLS,
 } = requireCjs(path.join(root, 'grok-bot', 'lib', 'seat-doctor.cjs')) as {
-  diagnoseSeat: (opts?: {
-    cwd?: string;
-    home?: string;
-    env?: Record<string, string>;
-    pulls?: Array<{ author?: string; type?: string; repo?: string; number?: number; state?: string }>;
-  }) => {
+  diagnoseSeat: (opts?: { cwd?: string; home?: string; env?: Record<string, string> }) => {
     ok: boolean;
     cwd: string;
     seat: { name: string | null; version: string | null } | null;
@@ -406,63 +401,6 @@ describe('grok-bot seat doctor — CLI', () => {
       const r = runBin(['doctor', '--cwd', dir, '--home', dir], dir);
       expect(r.status).toBe(1);
       expect(r.stdout).toMatch(/delete it/);
-    } finally {
-      rmSync(dir, { recursive: true, force: true });
-    }
-  });
-
-  it('fails when an open pull request is authored by a personal account', () => {
-    const dir = scratch();
-    try {
-      writeSeat(dir);
-      plantMillInspect(dir);
-      mkdirSync(path.join(dir, 'house'));
-      writeFileSync(path.join(dir, 'house', 'HOUSE.md'), '# House\n\n## Owner\nfilled.\n');
-      const app = diagnoseSeat({
-        cwd: dir,
-        home: dir,
-        env: {},
-        pulls: [{ author: 'seat-app[bot]', repo: 'org/app', number: 4, state: 'open' }],
-      });
-      expect(app.house.status).toBe('pass');
-      const typedBot = diagnoseSeat({
-        cwd: dir,
-        home: dir,
-        env: {},
-        pulls: [{ author: 'seat-app', type: 'Bot', repo: 'org/app', number: 5, state: 'open' }],
-      });
-      expect(typedBot.house.status).toBe('pass');
-      const closed = diagnoseSeat({
-        cwd: dir,
-        home: dir,
-        env: {},
-        pulls: [{ author: 'some-user', repo: 'org/app', number: 8, state: 'closed' }],
-      });
-      expect(closed.house.status).toBe('pass');
-      const report = diagnoseSeat({
-        cwd: dir,
-        home: dir,
-        env: {},
-        pulls: [{ author: 'some-user', repo: 'org/app', number: 9, state: 'open' }],
-      });
-      expect(report.house.status).toBe('fail');
-      expect(report.ok).toBe(false);
-      expect(report.house.detail).toBe(
-        'open PR #9 authored by a personal account (some-user); seats must open PRs through their GitHub App',
-      );
-      expect(formatDoctor(report)).toMatch(
-        /House: FAIL — .+ — open PR #9 authored by a personal account \(some-user\); seats must open PRs through their GitHub App/,
-      );
-      const typedUser = diagnoseSeat({
-        cwd: dir,
-        home: dir,
-        env: {},
-        pulls: [{ author: 'seat-app[bot]', type: 'User', repo: 'org/app', number: 11, state: 'open' }],
-      });
-      expect(typedUser.house.status).toBe('fail');
-      expect(typedUser.house.detail).toBe(
-        'open PR #11 authored by a personal account (seat-app[bot]); seats must open PRs through their GitHub App',
-      );
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

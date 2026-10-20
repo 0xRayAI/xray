@@ -1,6 +1,5 @@
 'use strict';
 
-const { spawnSync } = require('child_process');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -441,133 +440,10 @@ function inspectHouseFile(file, via, ctx = {}) {
       warnings,
     };
   }
-  return flagPersonalPulls({ status: 'pass', file, via, detail: file, scope, warnings }, text, ctx);
+  return { status: 'pass', file, via, detail: file, scope, warnings };
 }
 
-function allowedRepos(text) {
-  const match = /^## Allowed[^\n]*\n/m.exec(text);
-  if (!match) return [];
-  const rest = text.slice(match.index + match[0].length);
-  const next = rest.search(/^## /m);
-  const body = next === -1 ? rest : rest.slice(0, next);
-  const repos = [];
-  const re = /`([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+)`/g;
-  let found = re.exec(body);
-  while (found) {
-    repos.push(found[1]);
-    found = re.exec(body);
-  }
-  return repos;
-}
-
-function appAuthor(pr) {
-  const type = typeof pr.type === 'string' ? pr.type : '';
-  if (type) return type === 'Bot';
-  const author = typeof pr.author === 'string' ? pr.author : '';
-  return /\[bot\]$/i.test(author);
-}
-
-function personalPullLines(pulls) {
-  const lines = [];
-  for (const pr of pulls) {
-    if (!pr || typeof pr !== 'object') continue;
-    const state = typeof pr.state === 'string' ? pr.state.toLowerCase() : 'open';
-    if (state !== 'open') continue;
-    if (appAuthor(pr)) continue;
-    const number = Number.isInteger(pr.number) ? pr.number : 0;
-    if (!number) continue;
-    const login = typeof pr.author === 'string' && pr.author ? pr.author : 'unknown';
-    lines.push(`open PR #${number} authored by a personal account (${login})`);
-  }
-  return lines;
-}
-
-function defaultListOpenPulls(repos) {
-  const script = [
-    'const repos = ' + JSON.stringify(repos) + ';',
-    'const pulls = [];',
-    'const errors = [];',
-    'for (const repo of repos) {',
-    '  try {',
-    '    const res = await fetch("https://api.github.com/repos/" + repo + "/pulls?state=open&per_page=100", {',
-    '      headers: { Accept: "application/vnd.github+json", "User-Agent": "grok-bot-doctor" },',
-    '      redirect: "error",',
-    '      signal: AbortSignal.timeout(12000),',
-    '    });',
-    '    if (!res.ok) throw new Error("HTTP " + res.status);',
-    '    const body = await res.json();',
-    '    if (!Array.isArray(body)) throw new Error("not a list");',
-    '    for (const pr of body) {',
-    '      const author = pr && pr.user && typeof pr.user.login === "string" ? pr.user.login : "";',
-    '      const type = pr && pr.user && typeof pr.user.type === "string" ? pr.user.type : "";',
-    '      const number = Number.isInteger(pr.number) ? pr.number : 0;',
-    '      if (author && number) pulls.push({ repo, number, author, type, state: "open" });',
-    '    }',
-    '  } catch (err) {',
-    '    errors.push(repo + " " + (err && err.message ? String(err.message).slice(0, 80) : "failed"));',
-    '  }',
-    '}',
-    'process.stdout.write(JSON.stringify({ pulls, errors }));',
-  ].join('\n');
-  const run = spawnSync(process.execPath, ['--input-type=module', '-e', script], {
-    encoding: 'utf8',
-    timeout: 20000,
-    env: { PATH: process.env.PATH || '' },
-  });
-  if (run.error) throw run.error;
-  if (run.status !== 0) throw new Error((run.stderr || 'pull list failed').trim().slice(0, 120));
-  let parsed;
-  try {
-    parsed = JSON.parse(run.stdout || '{}');
-  } catch {
-    throw new Error('pull list was not JSON');
-  }
-  const pulls = Array.isArray(parsed.pulls) ? parsed.pulls : [];
-  const errors = Array.isArray(parsed.errors) ? parsed.errors : [];
-  if (errors.length > 0) {
-    const err = new Error(errors.join('; ').slice(0, 120));
-    err.pulls = pulls;
-    throw err;
-  }
-  return pulls;
-}
-
-function personalFail(result, lines) {
-  return {
-    status: 'fail',
-    file: result.file,
-    via: result.via,
-    detail: `${lines.join('; ')}; seats must open PRs through their GitHub App`,
-    scope: result.scope,
-    warnings: result.warnings,
-  };
-}
-
-function flagPersonalPulls(result, text, ctx) {
-  if (result.status !== 'pass') return result;
-  let pulls = ctx && ctx.pulls;
-  if (!Array.isArray(pulls)) {
-    const repos = allowedRepos(text);
-    if (repos.length === 0) return result;
-    try {
-      const list = ctx && typeof ctx.listOpenPulls === 'function' ? ctx.listOpenPulls : defaultListOpenPulls;
-      pulls = list(repos);
-    } catch (err) {
-      const partial = err && Array.isArray(err.pulls) ? err.pulls : [];
-      const lines = personalPullLines(partial);
-      if (lines.length > 0) return personalFail(result, lines);
-      const message = err instanceof Error ? err.message : 'pull list failed';
-      result.warnings.push(`open PR author check skipped (${message.slice(0, 120)})`);
-      return result;
-    }
-  }
-  const lines = personalPullLines(pulls);
-  if (lines.length === 0) return result;
-  return personalFail(result, lines);
-}
-
-function probeHouse(cwd, env, extra) {
-  const ctx = { cwd, env, ...(extra || {}) };
+function probeHouse(cwd, env) {
   const raw = env && typeof env.GROK_BOT_HOUSE === 'string' ? env.GROK_BOT_HOUSE.trim() : '';
   if (raw) {
     const file = fileFromHouseEnv(raw);
@@ -581,7 +457,7 @@ function probeHouse(cwd, env, extra) {
         warnings: [],
       };
     }
-    return inspectHouseFile(file, 'GROK_BOT_HOUSE', ctx);
+    return inspectHouseFile(file, 'GROK_BOT_HOUSE', { cwd, env });
   }
   const walked = walkForHouse(cwd);
   if (!walked) {
@@ -593,7 +469,7 @@ function probeHouse(cwd, env, extra) {
       warnings: [],
     };
   }
-  return inspectHouseFile(walked, 'walk-up', ctx);
+  return inspectHouseFile(walked, 'walk-up', { cwd, env });
 }
 
 function isFile(file) {
@@ -871,7 +747,7 @@ function diagnoseSeat(opts = {}) {
   const goggles = probeGoggles(cwd, inventoryPresent);
   const plantOk = Boolean(seat) && mill && inspect && installed && deadHooks.length === 0 && goggles.status !== 'off';
   const env = opts.env || process.env;
-  const house = probeHouse(cwd, env, { pulls: opts.pulls, listOpenPulls: opts.listOpenPulls });
+  const house = probeHouse(cwd, env);
   const report = {
     ok: plantOk && house.status !== 'fail',
     cwd,
