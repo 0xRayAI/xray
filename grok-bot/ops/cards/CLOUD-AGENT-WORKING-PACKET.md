@@ -2,7 +2,7 @@
 
 > 0xRay house example — not the general procedure. Your team’s rules live in `house/` after `grok-bot house init`.
 
-This file is the whole change. No hook, board, or collector code is edited here.
+This card is the spec. The follow-up edits the hook, the board, and the collector.
 
 ## Packet
 
@@ -47,7 +47,7 @@ Omit `seat`. `POST /activity` stores the seat from the bearer token (`server.mjs
 
 `stop` statuses `completed`, `aborted`, and `error` all post `finished`. A failed run stays `finished` on the board. It does not post `cancel` and it does not show as `failed`. The hook returns `{}` and never `followup_message`. `subagentStop` is not this signal. A child ending is not the parent run ending.
 
-That `finished` line is `POST /activity` only. It is not an inbox line and its kind is not `run_end`. `run_end` stays the owner's chat flushing one batch. Before `launch`, if a row for that git head is already `running`, the post resumes that same `bc-` id. A second id does not open another running row.
+That `finished` line is `POST /activity` only. It is not an inbox line and its kind is not `run_end`. `run_end` stays the owner's chat flushing one batch. Before `launch`, the board row for that git head has to be `running`. A stale row is not resumed. A `running` row keeps that same `bc-` id. A second id does not open another running row. The launch stamp is written only after `POST /activity` returns 202, so a timeout or any other status is retried.
 
 Opening the follow-up pull request uses the seat's GitHub App installation token. `LIVE_ACTIVITY_KEY` and `SEAT_KEYS` stay on `POST /activity` only.
 
@@ -78,7 +78,7 @@ Wear already keeps events outside the five shipped names (`mergeCloudSafeCursorH
 
 ## Files
 
-Not this PR. The follow-up edits these:
+The follow-up edits these:
 
 - `.cursor/hooks.json` — add `sessionStart`, `postToolUse`, and `stop`, command `.cursor/hooks/cloud-activity.sh`, `timeout` 2, no `failClosed`. Leave the five shipped commands as they are. Do not attach this script to `preToolUse`, `beforeShellExecution`, `beforeReadFile`, or `beforeSubmitPrompt`.
 - `.cursor/hooks/cloud-activity.sh` — new. Relative path. No `XRAY_AI_PATH=` prefix. Reads stdin and discards it. Posts or skips. Always exits 0. Stdout is `{}`.

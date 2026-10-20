@@ -237,6 +237,30 @@ test('a running head resumes that bc- id instead of launching another agent', as
   } finally { await ctx.stop(); }
 });
 
+test('a stale head is not resumed', async () => {
+  const ctx = await boot({ ARCH1_LAUNCH_ENABLED: '1', ARCH1_LAUNCH_COOLDOWN_S: '0' });
+  try {
+    const head = 'ab'.repeat(20);
+    const posted = await fetch(ctx.base + '/activity', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + ctx.seatKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        t_ct: new Date(Date.now() - 7 * 60 * 60 * 1000).toISOString(),
+        kind: 'cloud_agent',
+        action: 'launch',
+        agent: 'bc-staleagent1',
+        tag: head,
+      }),
+    });
+    assert.equal(posted.status, 202, await posted.text());
+    await postLines(ctx, [line({ id: 'stale-1', type: 'dispatch', number: 91, sha: head })]);
+    await waitCalls(ctx, 1);
+    assert.equal(ctx.calls.length, 1);
+    assert.equal(ctx.calls[0].url, '/v0/agents');
+    assertNoSecrets(ctx.logs.join(''));
+  } finally { await ctx.stop(); }
+});
+
 test('one live agent per card: the next real packet is a follow-up', async () => {
   const ctx = await boot({ ARCH1_LAUNCH_ENABLED: '1', ARCH1_LAUNCH_COOLDOWN_S: '0' });
   try {

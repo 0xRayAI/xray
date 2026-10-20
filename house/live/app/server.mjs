@@ -19,7 +19,7 @@ import { checkRoutesFromDir, readRoutingMap, createLoginResolver, auditLogins } 
 import { fingerprint, tripwire, createClock, wakeTitle, mutedSeats, selectStallSeats } from './governor.mjs';
 import { acceptWaveCards, burnQuiet, isPlanCard, liveWorkCount, postedCards, retainSeedCards, resolveWaveSeed, scheduleWaves } from './wave-schedule.mjs';
 import { createArch1Launch, ARCH1_CANON } from './arch1-launch.mjs';
-import { configureWorkTrack, acceptCursorWebhook, appendWake, applyCloudOwners, boardCloudAgents, canonSeatToken, deriveTrackFromDir, displaySeat, loadSeatAgentMap, readJsonl, readWakeRows, safePrUrl, seatForAgentId, stampCriticCloud, toToken } from './worktrack.mjs';
+import { configureWorkTrack, acceptCursorWebhook, appendWake, applyCloudOwners, boardCloudAgents, canonSeatToken, cloudIdsAlias, deriveTrackFromDir, displaySeat, loadSeatAgentMap, readJsonl, readWakeRows, safePrUrl, seatForAgentId, stampCriticCloud, toToken } from './worktrack.mjs';
 import { wakeConfig, createWakeState, classifyBatch, gateLine, noteSent, releaseDue, publicStats, fullStats, restoreWakeBook, viewLine } from './wake-gate.mjs';
 const COLLECTOR_DIR_EARLY = () => path.join(path.dirname(fileURLToPath(import.meta.url)), 'collector');
 import { initArchive, appendArchive, backfillArchive, readArchive, validArchiveDate, KINDS as ARCHIVE_KINDS, cardHistory, archiveDays } from './archive.mjs';
@@ -982,7 +982,8 @@ const arch1Launch = createArch1Launch({
       if (row && row.bcId) return row.bcId;
     }
     const sha = String(line && line.sha || '').trim().toLowerCase();
-    return /^[0-9a-f]{40}$/.test(sha) ? runningCloudForHead(sha) : '';
+    if (!/^[0-9a-f]{40}$/.test(sha)) return '';
+    return runningCloudForHead(sha);
   },
   ownsCard: line => {
     const repo = String(line && line.repo || '').toLowerCase();
@@ -2733,7 +2734,10 @@ function runningCloudForHead(tag) {
     if (action === 'launch' || action === 'reply') id = agent;
     else if ((action === 'finished' || action === 'finish' || action === 'cancel') && id === agent) id = '';
   }
-  return id;
+  if (!id) return '';
+  const row = cloudAgentBoard().find(item => item && cloudIdsAlias(item.bcId, id));
+  if (!row || row.state !== 'running') return '';
+  return row.bcId;
 }
 // A finished cloud line stays here. It is not copied onto the inbox as run_end.
 function foldCloudHead(d) {

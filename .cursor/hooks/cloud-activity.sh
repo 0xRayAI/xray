@@ -4,10 +4,11 @@
 # the environment only and is never printed. It is the bearer for POST /activity
 # only. SEAT_KEYS is not read. A pull request uses the seat App token.
 # Stdin is the hook payload, not the key. A file under
-# .xray/state/cloud-activity/ dedupes launch across processes. Curl gives up
-# in 1s, under the 2s hook limit. completed, aborted, and error post finished.
-# That line is not an inbox run_end. A running row for this git head resumes
-# the same bc- id.
+# .xray/state/cloud-activity/ dedupes launch across processes. The stamp is
+# written only after POST /activity returns 202. Curl gives up in 1s, under
+# the 2s hook limit. completed, aborted, and error post finished. That line
+# is not an inbox run_end. A fresh stamp for this git head skips a second id.
+# A stamp older than 6h is stale and is not resumed.
 finish() {
   printf '%s\n' '{}'
   exit 0
@@ -69,14 +70,21 @@ if command -v git >/dev/null 2>&1; then
   sha=$(printf '%s' "$sha" | tr -d '[:space:]')
   printf '%s' "$sha" | grep -Eq '^[0-9a-f]{40}$' || sha=
 fi
+fresh_stamp() {
+  mtime=$(stat -c %Y "$1" 2>/dev/null || true)
+  now=$(date +%s 2>/dev/null || true)
+  case "$mtime" in ''|*[!0-9]*) return 1 ;; esac
+  case "$now" in ''|*[!0-9]*) return 1 ;; esac
+  [ $((now - mtime)) -le 21600 ]
+}
 if [ "$action" = launch ] && [ -n "$sha" ] && [ -f "$stamp_dir/head-$sha" ]; then
   owner=$(head -n 1 "$stamp_dir/head-$sha" 2>/dev/null || true)
   owner=$(printf '%s' "$owner" | tr -d '[:space:]')
-  if printf '%s' "$owner" | grep -Eq '^bc-[A-Za-z0-9_-]{2,40}$' && [ "$owner" != "$id" ] && [ -f "$stamp_dir/$owner" ]; then
+  if printf '%s' "$owner" | grep -Eq '^bc-[A-Za-z0-9_-]{2,40}$' && [ "$owner" != "$id" ] && fresh_stamp "$stamp_dir/$owner"; then
     finish
   fi
 fi
-if [ "$action" = launch ] && [ -f "$stamp" ]; then
+if [ "$action" = launch ] && fresh_stamp "$stamp"; then
   finish
 fi
 
@@ -89,22 +97,25 @@ if [ -n "$sha" ]; then
 else
   body=$(printf '{"kind":"cloud_agent","action":"%s","agent":"%s","t_ct":"%s"}' "$action" "$id" "$t_ct")
 fi
-if [ "$action" = launch ]; then
-  mkdir -p "$stamp_dir" 2>/dev/null || finish
-  : > "$stamp" 2>/dev/null || finish
-  if [ -n "$sha" ]; then
-    printf '%s\n' "$id" > "$stamp_dir/head-$sha" 2>/dev/null || true
-  fi
-fi
 
 base=${url%/}
-curl -sS --max-time 1 --connect-timeout 1 -o /dev/null \
+code=$(curl -sS --max-time 1 --connect-timeout 1 -o /dev/null -w '%{http_code}' \
   -X POST \
   -H 'Content-Type: application/json' \
   -H "Authorization: Bearer ${key}" \
   --data-binary "$body" \
-  "${base}/activity" >/dev/null 2>&1 || true
-
+  "${base}/activity" 2>/dev/null || true)
+case "$code" in
+  202) ;;
+  *) code= ;;
+esac
+if [ "$action" = launch ] && [ "$code" = 202 ]; then
+  mkdir -p "$stamp_dir" 2>/dev/null || true
+  : > "$stamp" 2>/dev/null || true
+  if [ -n "$sha" ]; then
+    printf '%s\n' "$id" > "$stamp_dir/head-$sha" 2>/dev/null || true
+  fi
+fi
 if [ "$action" = finished ]; then
   rm -f "$stamp" 2>/dev/null || true
 fi

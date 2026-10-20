@@ -1,6 +1,6 @@
 import { spawn, spawnSync } from 'node:child_process';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync, utimesSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -137,6 +137,10 @@ describe('cloud activity hook', () => {
       expect(deniedRun.status).not.toBe(2);
       assertQuiet(deniedRun.stdout, deniedRun.stderr);
       expect(denied.hits).toHaveLength(1);
+      const deniedAgain = await run({ hook_event_name: 'postToolUse' }, envOf(root, { LIVE_URL: denied.url, LIVE_ACTIVITY_KEY: KEY }));
+      expect(deniedAgain.status).toBe(0);
+      assertQuiet(deniedAgain.stdout, deniedAgain.stderr);
+      expect(denied.hits).toHaveLength(2);
 
       const slowRoot = mkdtempSync(path.join(tmpdir(), 'cloud-activity-slow-'));
       const started = Date.now();
@@ -144,6 +148,9 @@ describe('cloud activity hook', () => {
       expect(timed.status).toBe(0);
       expect(Date.now() - started).toBeLessThan(2000);
       assertQuiet(timed.stdout, timed.stderr);
+      const timedAgain = await run({ hook_event_name: 'postToolUse' }, envOf(slowRoot, { LIVE_URL: hung.url, LIVE_ACTIVITY_KEY: KEY }));
+      expect(timedAgain.status).toBe(0);
+      expect(hung.hits).toHaveLength(2);
       rmSync(slowRoot, { recursive: true, force: true });
 
       const refusedRoot = mkdtempSync(path.join(tmpdir(), 'cloud-activity-refused-'));
@@ -228,6 +235,36 @@ describe('cloud activity hook', () => {
       expect(text).not.toContain(seatKey);
       expect(text).not.toContain(appToken);
       expect(board.hits.every((hit) => hit.url === '/activity')).toBe(true);
+    } finally {
+      await board.close();
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('retries a launch that did not land and does not resume a stale head stamp', async () => {
+    const root = mkdtempSync(path.join(tmpdir(), 'cloud-activity-stale-'));
+    expect(spawnSync('git', ['init'], { cwd: root, encoding: 'utf8' }).status).toBe(0);
+    expect(spawnSync('git', ['-c', 'user.email=t@example.com', '-c', 'user.name=t', 'commit', '--allow-empty', '-m', 't'], {
+      cwd: root,
+      encoding: 'utf8',
+    }).status).toBe(0);
+    const board = await listen(202);
+    const other = 'bc-other-head-agent';
+    try {
+      const env = envOf(root, { LIVE_URL: board.url, LIVE_ACTIVITY_KEY: KEY });
+      const first = await run({ hook_event_name: 'postToolUse' }, env);
+      expect(first.status).toBe(0);
+      assertQuiet(first.stdout, first.stderr);
+      expect(board.hits).toHaveLength(1);
+      const stamp = path.join(root, '.xray/state/cloud-activity', AGENT);
+      const old = new Date(Date.now() - 7 * 60 * 60 * 1000);
+      utimesSync(stamp, old, old);
+      const next = await run({ hook_event_name: 'postToolUse' }, { ...env, CURSOR_CONVERSATION_ID: other });
+      expect(next.status).toBe(0);
+      assertQuiet(next.stdout, next.stderr);
+      expect(board.hits).toHaveLength(2);
+      const launch = JSON.parse(board.hits[1]?.body || '{}') as Record<string, string>;
+      expect(launch).toMatchObject({ kind: 'cloud_agent', action: 'launch', agent: other });
     } finally {
       await board.close();
       rmSync(root, { recursive: true, force: true });
