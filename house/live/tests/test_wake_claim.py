@@ -58,6 +58,9 @@ class ConcurrentClaim(unittest.TestCase):
             "SEAT_KEYS_DIR": str(self.keys),
             "LIVE_CURSORS": str(self.cur),
         }
+        # A cloud agent session sets these. Turn start would also post a cloud_agent launch.
+        self.env_base.pop("CURSOR_AGENT", None)
+        self.env_base.pop("CURSOR_CONVERSATION_ID", None)
 
     def tearDown(self):
         self.httpd.shutdown()
