@@ -382,13 +382,14 @@ header h1 span { color: var(--dim); font-size: 13px; font-weight: 400; letter-sp
 .status .err { color: var(--danger); }
 .note { color: var(--dim); font-size: 12px; margin: 2px 0 10px; }
 .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; margin-bottom: 8px; }
-#seatGrid { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-.seat { display: inline-flex; gap: 8px; align-items: center; width: max-content; max-width: 16rem; flex: none; }
-button.seat { background: transparent; border: 0; padding: 0; color: inherit; font: inherit; }
+#seatGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr)); gap: 6px; }
+.seat { display: flex; gap: 8px; align-items: center; min-width: 0; }
+.seat-copy { min-width: 0; overflow: hidden; display: flex; flex-direction: column; }
 .seat.idle { opacity: .45; }
 .dot { width: 14px; height: 14px; border-radius: 50%; background: var(--dot-off); flex: none; }
-.seat .nm { min-width: 0; max-width: 8rem; flex: 0 1 auto; font-weight: 700; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.seat .role { color: var(--dim); font-size: 11px; font-weight: 450; white-space: nowrap; }
+.seat .nm { min-width: 0; font-weight: 700; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.seat .role { color: var(--dim); font-size: 11px; font-weight: 450; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.seat.live .role { color: var(--text); }
 .lens-head { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 12px; color: var(--dim); align-items: center; }
 #head { color: var(--teal); font-weight: 700; font-size: 15px; }
 #headTime { color: var(--dim); font-size: 12px; font-family: "JetBrains Mono", ui-monospace, monospace; }
@@ -462,6 +463,20 @@ button.wstat.on { outline: 2px solid var(--focus); background: var(--panel); }
 .fresh.amber .fresh-dot { background: var(--fresh-amber); }
 .fresh.red .fresh-dot { background: var(--fresh-red); }
     #cardRecent, #queueBox, #cardHist, #trackBox, #statsFold, #cardsFold, #cloudFold { margin-top: 8px; }
+    #wave > .fold { border: 1px solid var(--line); border-radius: 8px; background: transparent; padding: 0 8px; }
+    #wave > .fold:not(.collapsed) { background: var(--stat-bg); }
+    #wave > .fold:hover { background: var(--log-hover); }
+    #wave > .fold.collapsed > .fold-head { border-bottom-color: transparent; }
+    #cardRecent > .fold-bar, #cardHist > .fold-bar { display: flex; align-items: center; gap: 6px; border-bottom: 1px solid var(--hairline); }
+    #cardRecent > .fold-bar > .fold-head, #cardHist > .fold-bar > .fold-head { flex: 1 1 auto; width: auto; min-width: 0; border-bottom: 0; }
+    #wave > #cardRecent.collapsed > .fold-bar, #wave > #cardHist.collapsed > .fold-bar { border-bottom-color: transparent; }
+    #cardHistAll, #waveHistBack { flex: none; white-space: nowrap; font-size: 11px; font-weight: 650; padding: 3px 8px; background: transparent; color: var(--text); border: 1px solid var(--line); border-radius: 6px; }
+    #cardHistAll:hover, #waveHistBack:hover { background: var(--log-hover); }
+    #waveHistBack { display: none; }
+    #wave.hist-open > :not(#cardHist) { display: none; }
+    #wave.hist-open > #cardHist { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; margin-top: 0; }
+    #wave.hist-open > #cardHist > .fold-body { display: block; max-height: none; flex: 1 1 auto; min-height: 0; overflow: auto; }
+    #wave.hist-open #waveHistBack { display: inline-flex; }
     #cardRecent, #trackBox, #queueBox { flex: 0 1 auto; }
 #cardRecentList, #queueList, #cardHistList { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 #cardRecentList li, #queueList li, #cardHistList li { font-size: 12px; }
@@ -502,6 +517,7 @@ button:hover { border-color: var(--control-hover); }
 footer { color: var(--dim); font-size: 12px; }
 footer a { color: var(--foot); }
 @media (max-width: 720px) {
+  #seatGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .fleet { white-space: normal; }
   .wave-stats { grid-template-columns: repeat(3, 1fr); }
   #log li { grid-template-columns: 12ch 1fr; }
@@ -565,12 +581,17 @@ footer a { color: var(--foot); }
       <div class="fold-body" id="cloudBody"></div>
     </div>
     <div class="fold collapsed" id="cardRecent" data-fold="recent" aria-label="Recent card changes">
-      <button class="fold-head" type="button" aria-expanded="false"><span>Recent changes</span><span class="fold-sum" id="recentSum"></span></button>
-      <button id="cardHistAll" type="button">See all history</button>
+      <div class="fold-bar">
+        <button class="fold-head" type="button" aria-expanded="false"><span>Recent changes</span><span class="fold-sum" id="recentSum"></span></button>
+        <button id="cardHistAll" type="button">See all history</button>
+      </div>
       <div class="fold-body"><ul id="cardRecentList"></ul></div>
     </div>
     <div class="fold collapsed" id="cardHist" data-fold="history">
-      <button class="fold-head" type="button" aria-expanded="false"><span>History</span><span class="fold-sum" id="historySum"></span></button>
+      <div class="fold-bar">
+        <button id="waveHistBack" type="button">← Back</button>
+        <button class="fold-head" type="button" aria-expanded="false"><span>History</span><span class="fold-sum" id="historySum"></span></button>
+      </div>
       <div class="fold-body"><ul id="cardHistList"></ul></div>
     </div>
     <div class="fold collapsed" id="trackBox" data-fold="work" aria-label="Work">
@@ -666,29 +687,18 @@ footer a { color: var(--foot); }
   }
   paintSeatColors();
 
-  // seats strip
+  // seats strip: name plus role. The dot is the status; the chip does not print ACTIVE / WORKING / IDLE.
   var seatEls = {};
   L.AGENTS.forEach(function (a) {
-    var el = document.createElement('button');
-    el.type = 'button';
+    var el = document.createElement('div');
     el.className = 'seat';
-    el.setAttribute('aria-expanded', 'false');
     var label = String(L.LABEL[a[0]] || a[0]);
-    el.innerHTML = '<span class="dot"></span><span class="nm"></span>';
+    el.innerHTML = '<span class="dot"></span><span class="seat-copy"><span class="nm"></span><span class="role"></span></span>';
     var nm = el.querySelector('.nm');
     nm.textContent = label.toUpperCase();
     nm.title = label;
     nm.style.color = rgb(L.COLOR[a[0]]);
-    el.addEventListener('click', function () {
-      var open = el.getAttribute('aria-expanded') === 'true';
-      var role = el.querySelector('.role');
-      if (open) { if (role) role.remove(); el.setAttribute('aria-expanded', 'false'); return; }
-      role = document.createElement('span');
-      role.className = 'role';
-      role.textContent = String(a[1] || '');
-      el.appendChild(role);
-      el.setAttribute('aria-expanded', 'true');
-    });
+    el.querySelector('.role').textContent = String(a[1] || '');
     $('seatGrid').appendChild(el);
     seatEls[a[0]] = { el: el, dot: el.querySelector('.dot') };
   });
@@ -1493,8 +1503,9 @@ footer a { color: var(--foot); }
 
   function renderLog(shown) {
     var ul = $('log'); ul.textContent = '';
-    for (var i = shown - 1; i >= Math.max(0, shown - 14); i--) {
-      var e = state.events[i];
+    var lines = L.activityLines ? L.activityLines(state.events, shown, 14) : [];
+    for (var i = lines.length - 1; i >= 0; i--) {
+      var e = lines[i];
       var li = document.createElement('li');
       li.dataset.t = e._t;
       var when = document.createElement('span'); when.className = 'when'; when.textContent = L.fmtCt(e._t).replace(' CT', '');
@@ -1656,15 +1667,29 @@ footer a { color: var(--foot); }
       renderCardHist();
     }).catch(function () {});
   }
-  var histBtn = $('cardHistAll');
-  if (histBtn) histBtn.addEventListener('click', function () {
-    cardHistOn = true;
+  function showCardHist(on) {
+    cardHistOn = !!on;
+    var wave = $('wave');
     var box = $('cardHist');
+    if (wave) wave.classList.toggle('hist-open', cardHistOn);
     if (!box) return;
-    box.classList.remove('collapsed');
-    var head = box.querySelector('.fold-head');
-    if (head) head.setAttribute('aria-expanded', 'true');
-    saveFold('history', true);
+    if (cardHistOn) {
+      box.classList.remove('collapsed');
+      var head = box.querySelector('.fold-head');
+      if (head) head.setAttribute('aria-expanded', 'true');
+    }
+  }
+  var histBtn = $('cardHistAll');
+  if (histBtn) histBtn.addEventListener('click', function (ev) {
+    ev.preventDefault();
+    ev.stopPropagation();
+    showCardHist(true);
+  });
+  var histBack = $('waveHistBack');
+  if (histBack) histBack.addEventListener('click', function (ev) {
+    ev.preventDefault();
+    ev.stopPropagation();
+    showCardHist(false);
   });
   function loadHistoryDays() {
     var sel = $('historyDay'); if (!sel) return;
@@ -1743,9 +1768,10 @@ footer a { color: var(--foot); }
   }
   document.addEventListener('click', function (ev) {
     var btn = ev.target.closest('.fold-head');
-    if (!btn || btn.id === 'cardHistAll') return;
+    if (!btn || btn.id === 'cardHistAll' || btn.id === 'waveHistBack') return;
     var fold = btn.closest('[data-fold]');
     if (!fold) return;
+    if (fold.id === 'cardHist' && $('wave') && $('wave').classList.contains('hist-open')) return;
     var open = fold.classList.contains('collapsed');
     fold.classList.toggle('collapsed', !open);
     btn.setAttribute('aria-expanded', open ? 'true' : 'false');

@@ -94,6 +94,35 @@ test('mesh, stats, roster, cards, and activity start open in both themes', async
         assert.notEqual(visible.cards, 'none', `${theme} ${width}`);
         assert.notEqual(visible.log, 'none', `${theme} ${width}`);
         if (width === 1280 && theme === 'dark') {
+          const side = await page.evaluate(() => {
+            const probe = document.createElement('div');
+            document.body.appendChild(probe);
+            const paint = (prop, value) => { probe.style[prop] = value; return getComputedStyle(probe)[prop]; };
+            const read = (id) => {
+              const cs = getComputedStyle(document.getElementById(id));
+              return { bg: cs.backgroundColor, border: cs.borderTopWidth + ' ' + cs.borderTopStyle + ' ' + cs.borderTopColor, open: !document.getElementById(id).classList.contains('collapsed') };
+            };
+            const out = {
+              line: paint('borderTop', '1px solid var(--line)'),
+              openBg: paint('backgroundColor', 'var(--stat-bg)'),
+              hoverBg: paint('backgroundColor', 'var(--log-hover)'),
+              recent: read('cardRecent'), history: read('cardHist'), work: read('trackBox'), queue: read('queueBox'),
+              cloud: read('cloudFold'), stats: read('statsFold'), cards: read('cardsFold'),
+            };
+            probe.remove();
+            return out;
+          });
+          const sections = [side.recent, side.history, side.work, side.queue, side.cloud, side.stats, side.cards];
+          for (const row of sections) assert.equal(row.border, side.line, JSON.stringify(row));
+          for (const row of [side.recent, side.history, side.work, side.queue, side.cloud]) {
+            assert.equal(row.open, false);
+            assert.equal(row.bg, 'rgba(0, 0, 0, 0)');
+          }
+          assert.equal(side.stats.bg, side.openBg);
+          assert.equal(side.cards.bg, side.openBg);
+          await page.hover('#queueBox');
+          const hovered = await page.evaluate(() => getComputedStyle(document.getElementById('queueBox')).backgroundColor);
+          assert.equal(hovered, side.hoverBg);
           const cards = await page.evaluate(() => {
             const body = document.getElementById('waveBody');
             const cs = getComputedStyle(body);
@@ -152,7 +181,7 @@ test('mesh, stats, roster, cards, and activity start open in both themes', async
   }
 });
 
-test('roster seat headers toggle and stay compact while the roster starts open', async () => {
+test('roster chips show the role on load and leave status to the dot', async () => {
   const server = await serve();
   const base = `http://127.0.0.1:${server.address().port}/index.html`;
   let browser;
@@ -174,38 +203,93 @@ test('roster seat headers toggle and stay compact while the roster starts open',
       const grid = document.getElementById('seatGrid').getBoundingClientRect().width;
       const seats = [...document.querySelectorAll('#seatGrid .seat')].map((el) => {
         const box = el.getBoundingClientRect();
-        return { name: el.querySelector('.nm').textContent, w: box.width, y: box.y, open: el.getAttribute('aria-expanded') };
+        return {
+          tag: el.tagName,
+          name: el.querySelector('.nm').textContent,
+          role: (el.querySelector('.role') || {}).textContent || '',
+          text: (el.textContent || '').replace(/\s+/g, ' ').trim(),
+          w: box.width,
+          y: box.y,
+        };
       });
+      const nodes = Object.keys(window.LiveMesh.SATS);
       return {
-        panel, grid, seats,
+        panel, grid, seats, nodes,
         rosterOpen: !document.getElementById('seats').classList.contains('collapsed'),
       };
     });
     assert.equal(before.rosterOpen, true);
+    assert.ok(before.nodes.includes('CloudAgents'));
     assert.deepEqual(before.seats.map((seat) => seat.name), ['BLINKY', 'CRITIC', 'FORGE', 'MILL']);
-    assert.ok(before.seats.every((seat) => seat.open === 'false'));
+    assert.deepEqual(before.seats.map((seat) => seat.role), ['chief of staff', 'reviewer', 'eng primary', 'implementer']);
+    assert.ok(before.seats.every((seat) => seat.tag === 'DIV'));
     assert.ok(before.seats.every((seat) => Math.abs(seat.y - before.seats[0].y) < 2), JSON.stringify(before.seats));
-    assert.ok(before.seats.every((seat) => seat.w < before.grid / 2 && seat.w < before.panel / 2), JSON.stringify(before));
+    assert.ok(before.seats.every((seat) => seat.w > 80 && seat.w < before.panel / 2), JSON.stringify(before));
+    for (const seat of before.seats) assert.doesNotMatch(seat.text, /\b(ACTIVE|WORKING|IDLE|LIVE)\b/);
     const blinky = page.locator('#seatGrid .seat', { hasText: 'BLINKY' });
     await blinky.click();
-    const opened = await blinky.evaluate((el) => ({
-      open: el.getAttribute('aria-expanded'),
+    const after = await blinky.evaluate((el) => ({
+      tag: el.tagName,
       role: (el.querySelector('.role') || {}).textContent || '',
-      w: el.getBoundingClientRect().width,
-      panel: document.getElementById('seats').getBoundingClientRect().width,
     }));
-    assert.equal(opened.open, 'true');
-    assert.equal(opened.role, 'chief of staff');
-    assert.ok(opened.w < opened.panel / 2, JSON.stringify(opened));
-    assert.equal(await page.locator('#seatGrid .seat', { hasText: 'CRITIC' }).getAttribute('aria-expanded'), 'false');
-    await blinky.click();
-    const closed = await blinky.evaluate((el) => ({
-      open: el.getAttribute('aria-expanded'),
-      role: el.querySelector('.role') ? 'present' : '',
-    }));
-    assert.equal(closed.open, 'false');
-    assert.equal(closed.role, '');
+    assert.equal(after.tag, 'DIV');
+    assert.equal(after.role, 'chief of staff');
     assert.equal(await page.locator('#seats').evaluate((el) => el.classList.contains('collapsed')), false);
+  } finally {
+    if (browser) await browser.close();
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
+test('see all history sits in the recent header and replaces the side pane', async () => {
+  const server = await serve();
+  const base = `http://127.0.0.1:${server.address().port}/index.html`;
+  let browser;
+  try {
+    browser = await chromium.launch();
+    const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    await page.goto(base, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('#cardHistAll');
+    const place = await page.evaluate(() => {
+      const btn = document.getElementById('cardHistAll');
+      const sum = document.getElementById('recentSum');
+      const bar = document.querySelector('#cardRecent > .fold-bar');
+      const btnBox = btn.getBoundingClientRect();
+      const sumBox = sum.getBoundingClientRect();
+      return {
+        inBar: bar.contains(btn) && bar.contains(sum),
+        rightOfCount: btnBox.left >= sumBox.right - 1,
+        recentOpen: !document.getElementById('cardRecent').classList.contains('collapsed'),
+      };
+    });
+    assert.equal(place.inBar, true);
+    assert.equal(place.rightOfCount, true);
+    assert.equal(place.recentOpen, false);
+    await page.click('#cardHistAll');
+    const opened = await page.evaluate(() => {
+      const wave = document.getElementById('wave');
+      const shown = [...wave.children].filter((el) => getComputedStyle(el).display !== 'none').map((el) => el.id);
+      const back = getComputedStyle(document.getElementById('waveHistBack'));
+      return {
+        hist: wave.classList.contains('hist-open'),
+        shown,
+        back: back.display,
+        recentOpen: !document.getElementById('cardRecent').classList.contains('collapsed'),
+      };
+    });
+    assert.equal(opened.hist, true);
+    assert.deepEqual(opened.shown, ['cardHist']);
+    assert.notEqual(opened.back, 'none');
+    assert.equal(opened.recentOpen, false);
+    await page.click('#waveHistBack');
+    const closed = await page.evaluate(() => {
+      const wave = document.getElementById('wave');
+      const shown = [...wave.children].filter((el) => getComputedStyle(el).display !== 'none').map((el) => el.id);
+      return { hist: wave.classList.contains('hist-open'), shown };
+    });
+    assert.equal(closed.hist, false);
+    assert.ok(closed.shown.includes('statsFold') && closed.shown.includes('cardsFold') && closed.shown.includes('cardRecent'));
+    assert.equal(await page.locator('#waveHistBack').evaluate((el) => getComputedStyle(el).display), 'none');
   } finally {
     if (browser) await browser.close();
     await new Promise((resolve) => server.close(resolve));

@@ -2541,6 +2541,9 @@ function activityEvent(line, opts) {
   if (prompt && line.room) ev.room = line.room;
   if (opts && opts.moves === false) ev.moves = false;
   upsert(ev);
+  // /history reads the events archive. A prompt lives there as the same seat_prompt line the feed draws.
+  // The activity archive keeps kind "prompt", and that store is not what the board or /history shows.
+  if (prompt) appendArchive('events', ev);
 }
 function serverActivity(seat, kind, action, tag, opts) {
   if (!seat) return;

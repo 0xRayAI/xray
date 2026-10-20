@@ -84,6 +84,12 @@ test('a prompt pulse keeps the seat working for 10 minutes and credits Blaze', a
     assert.equal(noted.length, 1);
     assert.equal(noted[0].label, 'Blaze → forge: check the message on the board');
     assert.equal(noted[0].note, 'check the message on the board');
+    const day = new Date().toISOString().slice(0, 10);
+    const hist = await (await fetch(base + '/history?date=' + day)).json();
+    const logged = (hist.events || []).filter(e => e.kind === 'seat_prompt' && e.label === 'Blaze → forge: check the message on the board');
+    assert.equal(logged.length, 1);
+    assert.equal(logged[0].from, 'Blaze');
+    assert.equal(logged[0].to, 'forge');
     const longNote = await post(base, { t_ct: stamp(0), seat: 'forge', kind: 'prompt', action: 'sent', from: 'blaze', to: 'forge', note: 'n'.repeat(241) });
     assert.equal(longNote.status, 422);
     const banned = await post(base, { t_ct: stamp(0), seat: 'forge', kind: 'prompt', action: 'sent', from: 'blaze', to: 'forge', message: 'hidden' });
