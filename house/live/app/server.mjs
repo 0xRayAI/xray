@@ -2537,7 +2537,7 @@ function ownerName() {
 function promptSender(line) {
   const raw = String(line.from || '').trim();
   const name = ownerName();
-  if (name && (!raw || raw.toLowerCase() === name.toLowerCase())) return name;
+  if (name && (!raw || raw.toLowerCase() === 'owner' || raw.toLowerCase() === name.toLowerCase())) return name;   // --from owner is the generic alias
   return raw;
 }
 function ownerPromptStats(now = Date.now()) {
@@ -2546,7 +2546,8 @@ function ownerPromptStats(now = Date.now()) {
   if (owner) {
     for (const line of activity) {
       if (!line || line.kind !== 'prompt') continue;
-      if (String(line.from || '').trim().toLowerCase() !== owner) continue;
+      const fr = String(line.from || '').trim().toLowerCase();
+      if (fr !== owner && fr !== 'owner' && fr !== '') continue;
       const t = Date.parse(line.t_ct || '');
       if (!Number.isFinite(t) || now - t > 86400000 || t > now + 300000) continue;
       rows.push(line);
@@ -2570,9 +2571,9 @@ function activityEvent(line, opts) {
   if (prompt && line.room) ev.room = line.room;
   if (opts && opts.moves === false) ev.moves = false;
   upsert(ev);
-  // /history reads the events archive. A prompt lives there as the same seat_prompt line the feed draws.
-  // The activity archive keeps kind "prompt", and that store is not what the board or /history shows.
-  if (prompt) appendArchive('events', ev);
+  // /history reads the events archive: every seat activity line (prompt, turn, ack, cloud) lands there as the
+  // same seat_<kind> event the feed draws, so live history and the spectrum show it. Replay on boot skips it.
+  if (!(opts && opts.replay)) appendArchive('events', ev);
 }
 function serverActivity(seat, kind, action, tag, opts) {
   if (!seat) return;
@@ -2583,7 +2584,7 @@ function serverActivity(seat, kind, action, tag, opts) {
   seq++; header = mergedHeader(); fullDirty = true;
 }
 loadActivity();
-for (const l of activity.slice(-500)) if (Date.now() - Date.parse(l.t_ct || '') < 86400000) activityEvent(l);
+for (const l of activity.slice(-500)) if (Date.now() - Date.parse(l.t_ct || '') < 86400000) activityEvent(l, { replay: true });
 loadPersistedWakes();
 activityReady = true;
 function loadPersistedWakes() {   // last wake per seat survives a restart (wakes.jsonl is append-only)
