@@ -49,6 +49,20 @@ function serve() {
   });
 }
 
+// Seat fills cross a rainbow cutoff. replayTrail sets this mark when it paints.
+// ?spectrum=0 never calls that paint, so the opt-out does not pass the check.
+function sampleInk() {
+  const c = document.getElementById('mesh');
+  const ctx = c.getContext('2d');
+  const corner = ctx.getImageData(2, 2, 1, 1).data;
+  const data = ctx.getImageData(0, 0, c.width, c.height).data;
+  let white = 0;
+  for (let i = 0; i < data.length; i += 4) {
+    if (data[i] > 248 && data[i + 1] > 248 && data[i + 2] > 248) white++;
+  }
+  return { white, corner: [corner[0], corner[1], corner[2]], trail: c.dataset.spectrumTrail || '' };
+}
+
 async function measure(page) {
   await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
   return page.evaluate(() => {
@@ -102,23 +116,10 @@ try {
       await page.waitForTimeout(1200);
     }
     const m = await measure(page);
-    const ink = await page.evaluate(() => {
-      const c = document.getElementById('mesh');
-      const ctx = c.getContext('2d');
-      const corner = ctx.getImageData(2, 2, 1, 1).data;
-      const data = ctx.getImageData(0, 0, c.width, c.height).data;
-      let white = 0, rainbow = 0;
-      for (let i = 0; i < data.length; i += 4) {
-        const r = data[i], g = data[i + 1], b = data[i + 2];
-        if (r > 248 && g > 248 && b > 248) white++;
-        const max = Math.max(r, g, b), min = Math.min(r, g, b);
-        if (max - min > 70 && max > 150 && min < 120) rainbow++;
-      }
-      return { white, rainbow, corner: [corner[0], corner[1], corner[2]] };
-    });
+    const ink = await page.evaluate(sampleInk);
     if (scheme === 'dark' && (ink.corner[0] > 30 || ink.white < 1)) throw new Error('dark plate ' + JSON.stringify(ink));
     if (scheme === 'light' && ink.corner[0] < 220) throw new Error('light plate ' + JSON.stringify(ink));
-    if (ink.rainbow < 30) throw new Error(scheme + ' trail pixels ' + ink.rainbow);
+    if (ink.trail !== '1') throw new Error(scheme + ' trail did not paint');
     const shot = path.join(OUT, scheme + '-' + width + 'x' + height + '.png');
     await page.screenshot({ path: shot });
     if (!(m.clientWidth > 0 && m.clientHeight > 0)) throw new Error(scheme + ' canvas has no box');
@@ -144,6 +145,8 @@ try {
   if (flags.ambient) throw new Error('?replay=0 left the replay loop checked');
   const m = await measure(off);
   if (Math.abs(m.ratio - 1) > 0.01) throw new Error('opt-out aspect ' + m.ratio);
+  const offInk = await off.evaluate(sampleInk);
+  if (offInk.trail) throw new Error('opt-out already paints the trail');
   const optShot = path.join(OUT, 'opt-out-spectrum0-replay0-1440x900.png');
   await off.screenshot({ path: optShot });
   results.push({ scheme: 'dark', width: 1440, height: 900, query: '?spectrum=0&replay=0', ratio: m.ratio, shot: optShot, flags });

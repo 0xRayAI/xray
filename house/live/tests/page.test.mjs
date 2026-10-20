@@ -449,6 +449,14 @@ test('resume at the live edge rewinds before frame, so frame does not goLive()',
   assert.equal(cont.playing, true, '60s behind at 600× continues');
   assert.equal(cont.replay, false, '60s behind does not start the canned replay');
   assert.equal(cont.t, behind);
+  page.frame(at + 2000);
+  const stepped = page.snap();
+  assert.equal(stepped.live, false, 'one capped frame at 600× does not go live from 60s behind');
+  assert.equal(stepped.playing, true);
+  assert.equal(stepped.replay, false);
+  assert.ok(stepped.t > behind, 'the frame advances the playhead');
+  assert.ok(stepped.t < Date.now(), 'the frame does not reach now');
+  assert.ok(stepped.t - behind < 250 * 600, 'the 2.5 min step is cut short of now');
 
   const far = at - (15 * 60 * 1000 - 1000);
   page.pauseAt(far, ev, 3600);

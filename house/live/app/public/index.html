@@ -434,6 +434,7 @@
   // Replayed packets (manual playback, the opening burst, and the loop) leave a 12-stop rainbow trail on the curved lane.
   function replayTrail(a, m, b, p, nowWall) {
     var light = plateLight(), stops = L.spectrumTrail(p, nowWall, light), i, stop, tq;
+    if (stops.length) canvas.dataset.spectrumTrail = '1';
     for (i = stops.length - 1; i >= 0; i--) {
       stop = stops[i]; tq = bez(a, m, b, stop.t);
       ctx.fillStyle = 'hsla(' + stop.hue + ',95%,' + stop.lightness + '%,' + stop.alpha + ')';
@@ -1020,7 +1021,14 @@
     var dt = Math.min(250, nowWall - lastFrame); lastFrame = nowWall;
     if (playing && (replay || !state.live)) {
       if (replay) state.live = false;
-      state.t += dt * speed;
+      var step = dt * speed;
+      if (!replay) {
+        /* 600× turns one 250ms frame into 2.5 min (15 min at 3600×). A continue
+           that started outside the 2s band must not reach now on that frame. */
+        var room = Date.now() - state.t - 2000;
+        if (room > 0 && step > room) step = room;
+      }
+      state.t += step;
       if (state.t >= Date.now() || (replay && state.t >= replay.end)) goLive();
     } else if (state.live) state.t = Date.now();
     try {

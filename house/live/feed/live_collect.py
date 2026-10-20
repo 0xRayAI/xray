@@ -526,7 +526,9 @@ class RepoCollector:
         """Page 1 with ETag (key); then follow Link next until stop(item) is True. Yields items.
         Sets self._etag_new to the page-1 ETag to commit once the caller has processed everything.
         A walk that hits max_pages with a next link still set clears that etag: saving it would
-        304 the rest of a same-second tie that did not fit in the cap."""
+        304 the rest of a same-second tie that did not fit in the cap. The next poll starts at page 1
+        again. While the tie stays longer than the cap, that restart refetches the same pages and
+        the tail stays out until a poll fits inside the cap."""
         st, data, etag, nxt = c.rest(path, dict(params, per_page=100), etag=self.st["etags"].get(key), essential=essential)
         self._etag_new = etag
         if st == 304:
