@@ -172,7 +172,6 @@ Railway service (`server.mjs`):
 | `COLLECTOR_STALE_S` | optional | default 180. Collector feed file older than this sets `feed_quiet` and `ok` false (HTTP 503) |
 | `CARD_BEHIND_S` | optional | default 180. `cards_behind` (and `ok` false) when the board file lags card-moving data by more than this, or when the card clock lags ingest by more than this |
 | `LIVE_RAILWAY_TARGETS` | set on deploy | JSON `[[project_name, project_id, service, [envs]]]`. Project burst-live, service burst-live, environment production: `[["burst-live","<Railway project id for burst-live>","burst-live",["production"]]]`. Use the Railway project id |
-| `LIVE_CLOUD_IDLE_S` | set on deploy | `1200` (20 minutes). A cloud agent stays working this long after its last line |
 | `HUMAN_ALIASES` | set on deploy | `htafolla`. Comma or space separated human GitHub logins. Each maps to Blaze |
 | `UPSTREAM_REPO` | leave for Blaze | one public repo for the upstream watcher. Leave unset until Blaze names it. Also listed below |
 | `COLLECTOR_WATCHDOG_N` | optional | default 3. Restart the feed loop after N missed `COLLECTOR_WATCH_S` ticks. In-process; no second Railway service |
@@ -213,7 +212,7 @@ The board seats see is the collector board: the `board` object `feed/live_board.
 
 Collector child: its env is built from scratch by the server and holds only `GH_TOKEN` (= `GITHUB_READ_TOKEN`), `HOME`,
 `PATH`, `TZ`, `LIVE_MODE=github`, `LIVE_NO_CHECKS=1`, `LIVE_HEALTH_URLS` (from `COLLECTOR_HEALTH_URLS`, empty when unset), `LIVE_MESH_SRC`, and, only when you set them,
-`GITHUB_HOLD_LABEL`, `NO_NUDGE_REPOS`, `UPSTREAM_REPO`, `UPSTREAM_PINNED`, `XRAY_REPO`, `XRAY_OURS`, `SEAT_PRESENCE`, `LIVE_NODE_MAP`, `LIVE_BRAND`, `LIVE_BRAND_RE`, `LIVE_SHOW_UNMAPPED`, `LIVE_FLEET_SEATS`, `HUMAN_ALIASES`, `LIVE_CLOUD_IDLE_S`.
+`GITHUB_HOLD_LABEL`, `NO_NUDGE_REPOS`, `UPSTREAM_REPO`, `UPSTREAM_PINNED`, `XRAY_REPO`, `XRAY_OURS`, `SEAT_PRESENCE`, `LIVE_NODE_MAP`, `LIVE_BRAND`, `LIVE_BRAND_RE`, `LIVE_SHOW_UNMAPPED`, `LIVE_FLEET_SEATS`, `HUMAN_ALIASES`.
 It never sees the password, session secret, ingest secret, seat hashes, or the Jira token.
 The child `--health` argument is the first URL in `COLLECTOR_HEALTH_URLS`, or empty. There is no example host.
 

@@ -77,7 +77,10 @@ class Flow:
         if k == "merged":
             base = e.get("base")
             tail = [RW, self.host(e.get("repo"), base=base)] if base in ("develop", "main") else []
-            return [actor, GH] + tail
+            # A stored merge whose actor is GitHub is an unmapped merger (cursor[bot] -> Others, kept as GitHub).
+            # The re-apply fallback above would demote that to Others, and fleet_only would drop the merge.
+            merger = frm if frm not in (None, "Others") else GH
+            return [merger, GH] + tail
         if k == "op_deploy":
             return ["Operator", RW] + ([e["instance"]] if e.get("instance") else [])
         if k == "op_commit":

@@ -48,6 +48,9 @@ class FlowTest(unittest.TestCase):
         self.assertEqual(self.hops(kind="critic_pass", number=7), ["Reviewer", "GitHub", "Builder"])
         self.assertEqual(self.hops(kind="merged", base="develop", **{"from": "Builder"}),
                          ["Builder", "GitHub", "Railway", "dev.example.com"])
+        stored = self.hops(kind="merged", base="main", **{"from": "GitHub", "actor": "cursor[bot]"})
+        self.assertEqual(stored[0], "GitHub")
+        self.assertNotIn("Others", stored)
         self.assertEqual(self.hops(kind="merged", base="main", **{"from": "Lead"})[-1], "app.example.com")
         self.assertEqual(self.hops(kind="deploy", sha="m1"), ["Railway", "app.example.com"])   # main-only SHA
         self.assertEqual(self.hops(kind="deploy", sha="d1"), ["Railway", "dev.example.com"])   # shared with develop
@@ -84,6 +87,17 @@ class FlowTest(unittest.TestCase):
         self.assertEqual((e[0]["from"], e[0]["to"], e[0]["hops"]), ("GitHub", "Builder", ["GitHub", "Builder"]))
         for x in e[1:]:
             self.assertEqual((x["from"], x["to"], x["hops"]), ("GitHub", "GitHub", ["GitHub"]))   # GitHub-only pulse
+
+    def test_hop_pass_keeps_a_stored_merge_actor(self):
+        """GitHub on a stored merge is the unmapped merger. The hop pass must not demote it to Others."""
+        e = {"id": "example-org/app#407:merged", "kind": "merged", "from": "GitHub", "to": "GitHub",
+             "base": "main", "repo": self.R, "actor": "cursor[bot]", "src_file": "github-api",
+             "label": "merged app #407"}
+        self.f.apply([e])
+        self.f.apply([e])
+        self.assertEqual(e["from"], "GitHub")
+        self.assertNotIn("Others", (e["from"], e["to"]))
+        self.assertNotIn("Others", e["hops"])
 
 
 class FleetTest(unittest.TestCase):
@@ -572,7 +586,6 @@ class RemoteActivityTest(unittest.TestCase):
             self.assertEqual([(e["from"], e["to"]) for e in ev], [("Builder", "Reviewer")])
             self.assertEqual(f.fleet_state([], now)["working"]["Builder"]["via"], "subagent")
             # the open subagent stops at 30 min; the still-open cloud agent keeps Builder active
-            self.assertEqual(live_fleet.WORKING_CLOUD_S, 20 * 60)
             held = f.fleet_state([], now + 31 * 60)
             self.assertEqual(held["working"]["Builder"]["via"], "cloud")
             self.assertTrue(held["seats"]["Builder"]["active"])

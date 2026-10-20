@@ -57,9 +57,9 @@ const historyCards = {
   cards: [{ id: 'example/app#2', owner: 'forge', state: 'closed', verb: 'merged', title: 'Merged one', number: 2, updated_ct: '2026-10-20T07:00:00-05:00', closed_ct: '2026-10-20T07:00:00-05:00' }],
 };
 
-function serve() {
+function serve(payload) {
   const types = { '.html': 'text/html', '.js': 'text/javascript', '.json': 'application/json', '.png': 'image/png', '.woff2': 'font/woff2' };
-  const body = JSON.stringify(feed());
+  const body = JSON.stringify(payload || feed());
   return new Promise((resolve) => {
     const server = http.createServer((req, res) => {
       const url = new URL(req.url, 'http://127.0.0.1');
@@ -280,6 +280,81 @@ test('the roster renders no state text', async () => {
       assert.doesNotMatch(row.text, /\b(active|idle|working|live|silent)\b/i);
       assert.doesNotMatch(row.text, /·/);
     }
+  } finally {
+    if (browser) await browser.close();
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
+function statFeed() {
+  const now = Date.now();
+  const iso = (ms) => new Date(ms).toISOString();
+  const ev = (id, kind, number, ago, extra) => Object.assign({
+    id, t_ct: iso(now - ago), kind, from: 'forge', to: 'GitHub', repo: 'Example/App', number,
+    label: kind + ' Example/App#' + number,
+  }, extra);
+  return {
+    generated_at: iso(now),
+    cursor: 'stat-tiles',
+    events: [
+      ev('o1', 'issue_open', 1, 1000),
+      ev('c1', 'issue_close', 2, 2000),
+      ev('p1', 'pr_open', 10, 3000),
+      ev('m1', 'merged', 11, 4000, { merged_by: 'cursor[bot]' }),
+      ev('u1', 'pr_close', 12, 5000),
+    ],
+    queue: [],
+    track: { items: [] },
+    cloud_agents: [],
+    fleet: { seats: {} },
+    board: {
+      updated_ct: iso(now),
+      stats: {
+        issues_opened_24h: 1, issues_opened_24h_ids: ['Example/App#1'],
+        issues_closed_24h: 1, issues_closed_24h_ids: ['Example/App#2'],
+        prs_opened_24h: 2, prs_opened_24h_ids: ['Example/App#10', 'Example/App#11'],
+        prs_merged_24h: 1, prs_merged_24h_ids: ['Example/App#11'],
+        prs_closed_unmerged_24h: 1, prs_closed_unmerged_24h_ids: ['Example/App#12'],
+        issues_open: 1, prs_open: 1, open_total: 2,
+        open_total_ids: ['Example/App#1', 'Example/App#10'],
+      },
+      cards: [
+        { key: 'example/app#1', repo: 'Example/App', number: 1, kind: 'issue', state: 'live', stage: 'open', title: 'Opened issue', owner: 'forge', packet_ok: true, last_beat_t: now - 1000, beats: [{ t: now - 1000, what: 'opened' }] },
+        { key: 'example/app#10', repo: 'Example/App', number: 10, kind: 'pr', state: 'live', stage: 'open', title: 'Opened PR', owner: 'forge', packet_ok: true, last_beat_t: now - 3000, beats: [{ t: now - 3000, what: 'opened' }] },
+      ],
+    },
+  };
+}
+
+test('each stat tile lists the items its count includes', async () => {
+  const server = await serve(statFeed());
+  const base = `http://127.0.0.1:${server.address().port}/index.html`;
+  let browser;
+  try {
+    browser = await chromium.launch();
+    const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto(base, { waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(() => document.querySelectorAll('#waveStats .wstat').length === 6, null, { timeout: 8000 });
+    const head = page.locator('[data-fold="stats"].collapsed > .fold-head, [data-fold="cards"].collapsed > .fold-head');
+    const n = await head.count();
+    for (let i = 0; i < n; i++) await head.nth(i).click();
+    const rows = await page.evaluate(() => {
+      return [...document.querySelectorAll('#waveStats .wstat')].map((tile) => {
+        tile.click();
+        const keys = [...document.querySelectorAll('#waveBody .wcards.stat .wcard')].map(el => el.dataset.key);
+        return { label: tile.querySelector('small').textContent, count: Number(tile.querySelector('b').textContent), keys };
+      });
+    });
+    assert.equal(rows.length, 6);
+    for (const row of rows) assert.equal(row.keys.length, row.count, row.label);
+    const byLabel = Object.fromEntries(rows.map(row => [row.label, row.keys]));
+    assert.deepEqual(byLabel['issues opened 24h'], ['example/app#1']);
+    assert.deepEqual(byLabel['issues closed 24h'], ['example/app#2']);
+    assert.deepEqual(byLabel['PRs opened 24h'], ['example/app#10', 'example/app#11']);
+    assert.deepEqual(byLabel['PRs merged 24h'], ['example/app#11']);
+    assert.deepEqual(byLabel['PRs closed unmerged 24h'], ['example/app#12']);
+    assert.deepEqual(byLabel['open now'], ['example/app#1', 'example/app#10']);
   } finally {
     if (browser) await browser.close();
     await new Promise((resolve) => server.close(resolve));

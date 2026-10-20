@@ -109,6 +109,7 @@ export function launchPrompt(line, env = {}) {
     'TUI bar: when the card asks for the local ARCH1 retirement proof, run house/live/tools/arch1-tui-harness.sh.',
     'That script installs OpenCode, OpenClaw, Hermes, Grok CLI, and the Cursor agent CLI, then runs the 0xRay .cjs and .mjs harnesses.',
     'Post the log it writes. The log names the xray commit. Do not put credentials in the log.',
+    'Push the branch only. Never open a pull request or an issue.',
   ].join('\n');
 }
 
@@ -187,7 +188,7 @@ function usedOn(state, day) {
 
 const DEAD_STATUS = new Set(['ERROR', 'TIMED_OUT', 'TIMEOUT', 'EXPIRED', 'CANCELLED']);
 
-export function createArch1Launch({ env, dataDir, now = () => Date.now(), onBeat = () => {}, fetchImpl = globalThis.fetch, ownsCard }) {
+export function createArch1Launch({ env, dataDir, now = () => Date.now(), onBeat = () => {}, fetchImpl = globalThis.fetch, ownsCard, runningId }) {
   const file = path.join(dataDir, 'arch1-launch.json');
   const state = loadState(file);
   const enabled = launchEnabled(env);
@@ -365,14 +366,21 @@ export function createArch1Launch({ env, dataDir, now = () => Date.now(), onBeat
     const prompt = launchPrompt(line, env);
     const held = rowOf(card);
     const liveId = held && held.status === 'live' && AGENT_ID.test(String(held.agentId || '')) ? held.agentId : '';
-    if (liveId) {
-      const followed = await postApi('/v0/agents/' + encodeURIComponent(liveId) + '/followup', { prompt: { text: prompt } });
+    let resumeId = liveId;
+    if (!resumeId && typeof runningId === 'function') {
+      try {
+        const found = String(runningId(line) || '');
+        if (AGENT_ID.test(found)) resumeId = found;
+      } catch { /* board unread: a new agent is still allowed */ }
+    }
+    if (resumeId) {
+      const followed = await postApi('/v0/agents/' + encodeURIComponent(resumeId) + '/followup', { prompt: { text: prompt } });
       if (!followed.ok) {
         touch(card, at, { agentId: '', status: 'error' });
         persist();
         console.log('arch1 launch: follow-up http ' + (followed.status || 0));
       } else {
-        touch(card, at, { agentId: liveId, status: 'live', pending: null });
+        touch(card, at, { agentId: resumeId, status: 'live', pending: null });
         state.count += 1;
         persist();
         console.log('arch1 launch: follow-up');
