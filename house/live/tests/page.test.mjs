@@ -377,7 +377,8 @@ test('resume at the live edge rewinds before frame, so frame does not goLive()',
     `__host.page = {
       frame: frame,
       clickPlay: function () { document.getElementById('play').dispatch('click'); },
-      pauseAt: function (t, events) { state.live = false; state.t = t; playing = false; replay = null; speed = 600; state.events = events; },
+      pauseAt: function (t, events, spd) { state.live = false; state.t = t; playing = false; replay = null; speed = spd || 600; reduced = false; state.events = events; },
+      setReduced: function (on) { reduced = !!on; },
       snap: function () { return { live: state.live, t: state.t, playing: playing, replay: !!replay }; }
     };
     setInterval(poll, L.POLL_MS);
@@ -439,6 +440,53 @@ test('resume at the live edge rewinds before frame, so frame does not goLive()',
   assert.equal(snap.playing, true);
   assert.ok(snap.replay, 'resume within one capped frame of now starts a replay');
   assert.ok(snap.t < at, 'frame advanced the rewound playhead, it did not jump to now');
+
+  const behind = at - 60 * 1000;
+  const ev = [{ id: 'e1', _t: behind, from: 'forge', to: 'GitHub', label: 'example-org/app#4 opened' }];
+  page.pauseAt(behind, ev, 600);
+  page.clickPlay();
+  const cont = page.snap();
+  assert.equal(cont.playing, true, '60s behind at 600× continues');
+  assert.equal(cont.replay, false, '60s behind does not start the canned replay');
+  assert.equal(cont.t, behind);
+
+  const far = at - (15 * 60 * 1000 - 1000);
+  page.pauseAt(far, ev, 3600);
+  page.clickPlay();
+  const fast = page.snap();
+  assert.equal(fast.playing, true, 'just under 15 min behind at 3600× continues');
+  assert.equal(fast.replay, false);
+  assert.equal(fast.t, far);
+
+  page.pauseAt(behind, ev, 600);
+  page.setReduced(true);
+  page.clickPlay();
+  page.frame(at + 1000);
+  const quiet = page.snap();
+  assert.equal(quiet.playing, false, 'reduced motion does not start the resume');
+  assert.equal(quiet.live, false, 'reduced motion does not go live on the next frame');
+  assert.equal(quiet.replay, false);
+
+  page.pauseAt(at, []);
+  page.clickPlay();
+  page.frame(at + 1000);
+  const empty = page.snap();
+  assert.equal(empty.playing, false, 'startReplay with no events does not set playing');
+  assert.equal(empty.live, false);
+  assert.equal(empty.replay, false);
+});
+
+test('wave count tiles title the 24h ids, capped at 20', () => {
+  assert.match(html, /d\.title = idTitle\(x\[2\]\)/);
+  assert.match(html, /issues_opened_24h_ids/);
+  assert.doesNotMatch(html, /state\.t \+ 250 \* speed/);
+  const fn = html.match(/function idTitle\(ids\) \{[\s\S]*?\n    \}/);
+  assert.ok(fn, 'idTitle is in the page');
+  const idTitle = new Function(`${fn[0]}; return idTitle;`)();
+  assert.equal(idTitle(['acme/app#1', 'acme/app#2']), 'acme/app#1, acme/app#2');
+  const ids = Array.from({ length: 22 }, (_, i) => `acme/app#${i + 1}`);
+  assert.equal(idTitle(ids), `${ids.slice(0, 20).join(', ')} +2 more`);
+  assert.equal(idTitle([]), '');
 });
 
 test('kit live-config carries no install brand (no Example / example.com); product names come from the feed header', () => {

@@ -459,9 +459,16 @@
     if (!force && k === wb.key) return; wb.key = k;
     var body = $('waveBody'); body.textContent = ''; wb.byKey = {};
     var S = wb.stats, strip = $('waveStats'); strip.textContent = '';
-    if (S) [['issues opened', S.issues_opened_24h], ['issues closed', S.issues_closed_24h], ['PRs opened', S.prs_opened_24h],
-      ['PRs merged', S.prs_merged_24h], ['PRs closed unmerged', S.prs_closed_unmerged_24h], ['open now', S.open_total]].forEach(function (x, i) {
-      var d = wbEl('span', 'wstat' + (i === 5 ? ' total' : '')); d.appendChild(wbEl('b', '', String(x[1] == null ? '–' : x[1]))); d.appendChild(wbEl('small', '', x[0] + (i < 5 ? ' 24h' : ''))); strip.appendChild(d); });
+    function idTitle(ids) {
+      if (!ids || !ids.length) return '';
+      var shown = ids.slice(0, 20);
+      var extra = ids.length - shown.length;
+      return shown.join(', ') + (extra > 0 ? ' +' + extra + ' more' : '');
+    }
+    if (S) [['issues opened', S.issues_opened_24h, S.issues_opened_24h_ids], ['issues closed', S.issues_closed_24h, S.issues_closed_24h_ids],
+      ['PRs opened', S.prs_opened_24h, S.prs_opened_24h_ids], ['PRs merged', S.prs_merged_24h, S.prs_merged_24h_ids],
+      ['PRs closed unmerged', S.prs_closed_unmerged_24h, S.prs_closed_unmerged_24h_ids], ['open now', S.open_total]].forEach(function (x, i) {
+      var d = wbEl('span', 'wstat' + (i === 5 ? ' total' : '')); d.appendChild(wbEl('b', '', String(x[1] == null ? '–' : x[1]))); d.appendChild(wbEl('small', '', x[0] + (i < 5 ? ' 24h' : ''))); if (x[2] && x[2].length) d.title = idTitle(x[2]); strip.appendChild(d); });
     var cards = L.boardAt(wb.allCards || wb.cards, asOf);
     wb.cards = cards;
     var head0 = $('waveCount'); if (head0) head0.dataset.asof = asOf == null ? '' : L.fmtCt(asOf);
@@ -926,9 +933,11 @@
   $('play').addEventListener('click', function () {
     if (state.live) { if (!reduced) startReplay(); lastText = 0; return; }
     if (playing) { playing = false; lastText = 0; return; }
-    /* A pause at the live edge leaves t at now. The next frame adds at most 250ms * speed
-       (2.5 min at 600×) and goLive() snaps back. Rewind into a replay before that jump. */
-    if (state.t + 250 * speed >= Date.now()) { if (!reduced) startReplay(); }
+    if (reduced) { lastText = 0; return; }
+    /* A pause parked within 2s of now would let the next frame snap live. Rewind into the
+       canned replay. Further behind continues from state.t. The 250ms frame cap times speed
+       is 2.5 min at 600× and 15 min at 3600×, so it is not this distance. */
+    if (state.t + 2000 >= Date.now()) { if (!startReplay()) { lastText = 0; return; } }
     playing = true; lastText = 0;
   });
   $('speed').addEventListener('change', function (ev) { endReplay(); speed = Number(ev.target.value) || 600; });
