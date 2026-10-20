@@ -246,6 +246,24 @@ class Model(unittest.TestCase):
         md = (self.root / "BOARD.md").read_text()
         self.assertIn("## Pinned", md); self.assertIn("STALL 60m+", md); self.assertIn("no packet", md)
 
+    def test_live_cards_need_a_brief_only_on_a_packet_pr(self):
+        shape = json.loads((HERE / "fixtures" / "brief-cards.json").read_text())
+        evs = [self.ev(498, "issue_open", 60, title=shape["issues"][0]["title"], pr_state="open"),
+               self.ev(388, "pr_open", 60, title=shape["plain_pr"]["title"]),
+               self.ev(700, "pr_open", 60, title=shape["packet_pr_open"]["title"]),
+               self.ev(495, "pr_open", 60, title=shape["packet_pr_done"]["title"], packet=shape["packet_pr_done"]["packet"]),
+               self.ev(485, "pr_open", 60, title=shape["packet_card"]["title"])]
+        cards = {c["number"]: c for c in self.w.model(evs)["cards"] if c.get("repo") == R}
+        self.assertTrue(cards[498]["packet_ok"])
+        self.assertEqual(cards[498]["kind"], "issue")
+        self.assertTrue(cards[388]["packet_ok"])
+        self.assertTrue(cards[485]["packet_ok"])
+        self.assertFalse(cards[700]["packet_ok"])
+        self.assertEqual(cards[700]["missing"], ["PACKET.md"])
+        # A filled acceptance does not clear the badge. PACKET.md does.
+        self.assertFalse(cards[495]["packet_ok"])
+        self.assertEqual(cards[495]["missing"], ["PACKET.md"])
+
     def test_prompt_stamp_is_the_first_beat_once(self):
         prompt = {"id": "ada.9", "t_ct": ct(120), "kind": "prompt", "from": "Ada", "note": "fixed summary"}
         body = "Prompt: ada.9\n\ngoal: ship\n"
@@ -762,6 +780,14 @@ class CollectorCapture(unittest.TestCase):
         self.assertEqual(stamped["prompt"], "ada.9")
         self.assertNotIn("body", stamped)
         self.assertNotIn("secret", json.dumps(stamped))
+        linked = uc.card_fields({
+            "title": "t", "state": "open",
+            "body": "see https://cursor.com/agents/bc-22f1b70d-a78d-5505-8ee0-9714f6ca1e99\nsecret prose",
+        })
+        self.assertEqual(linked["bc_ids"], ["bc-22f1b70d-a78d-5505-8ee0-9714f6ca1e99"])
+        self.assertEqual(uc.cloud_ids_in("bc-f35e4c51 bc-f0dc0299"), ["bc-f35e4c51", "bc-f0dc0299"])
+        self.assertNotIn("secret", json.dumps(linked))
+        self.assertNotIn("cursor.com", json.dumps(linked))
 
 
 class ShipBeats(unittest.TestCase):

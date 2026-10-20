@@ -27,12 +27,14 @@ const COLLECTOR_DIR_EARLY = () => path.join(path.dirname(fileURLToPath(import.me
 import { initArchive, appendArchive, backfillArchive, readArchive, validArchiveDate, KINDS as ARCHIVE_KINDS, cardHistory, archiveDays, archivedLineBytes, appendTransition, transitionFromEvent, queryTransitions, exportTransitions, archiveRoot, setArchiveSink, foldCardRows, useCardRows, reloadCardRows, adoptFoldedCards, adoptCardBook } from './archive.mjs';
 import { openHistory } from './history-store.mjs';
 import { oversizedCardDays, compactOversized } from './compact-cards.mjs';
+import { creditCiFrom, loadCiNodes } from './ci-credit.mjs';
 import { pinnedOrigin } from './origin.mjs';
 import { missingHandoffs, hotfixMergeLine, isHotfixTitle, isMergeHandoff, validMergeReview } from './handoff.mjs';
 import { clockStamp, writeStartAfter } from './chicago-stamp.mjs';
 import { createBatch } from './pr-batch.mjs';
 import { idsToAck } from './ci-clear.mjs';
 import { stationDue } from './station-tick.mjs';
+const CI_NODES = loadCiNodes();
 const batch = createBatch();
 
 const PORT = process.env.PORT === '0' ? 0 : (Number(process.env.PORT) || 8080);   // PORT=0: the OS picks a free port (tests); the log line names it
@@ -3989,14 +3991,19 @@ async function warmHistory() {
   }
 }
 
+function creditHistory(rows) {
+  if (!Array.isArray(rows)) return [];
+  return rows.map((row) => creditCiFrom(row, CI_NODES));
+}
+
 async function historyEvents(date) {
   if (historyStore && historyState.loaded) {
     try {
       const rows = await historyStore.readEvents(date);
-      if (rows) return rows;
+      if (rows) return creditHistory(rows);
     } catch { historyState.redis = 'down'; }
   }
-  return readArchive(date, 'events').lines;
+  return creditHistory(readArchive(date, 'events').lines);
 }
 
 async function openMesh() {

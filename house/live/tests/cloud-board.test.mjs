@@ -458,6 +458,35 @@ test('refreshWorking after finished does not bring the cloud mark back', async (
   }
 });
 
+test('live cloud rows link by TRACKS, the PR body, or the branch', () => {
+  const shape = JSON.parse(fs.readFileSync(new URL('./fixtures/cloud-link.json', import.meta.url), 'utf8'));
+  const rows = boardCloudAgents({
+    agents: shape.agents,
+    tracks: shape.tracks,
+    events: shape.events,
+    now: Date.parse('2026-10-20T22:00:00Z'),
+  });
+  const by = Object.fromEntries(rows.map(row => [row.bcId, row]));
+  assert.equal(by['bc-22f1b70d-a78d-5505-8ee0-9714f6ca1e99'].card, '0xRayAI/xray#429');
+  assert.equal(by['bc-22f1b70d-a78d-5505-8ee0-9714f6ca1e99'].pr, 'https://github.com/0xRayAI/xray/pull/429');
+  assert.equal(by['bc-22f1b70d-a78d-5505-8ee0-9714f6ca1e99'].flag, undefined);
+  assert.equal(by['bc-8450c4aa-ed0a-5fb3-9748-f09a044c848f'].card, '0xRayAI/xray#396');
+  assert.equal(by['bc-8450c4aa-ed0a-5fb3-9748-f09a044c848f'].flag, undefined);
+  assert.equal(by['bc-f35e4c51'].card, '0xRayAI/xray#410');
+  assert.equal(by['bc-f35e4c51'].url, 'https://github.com/0xRayAI/xray/pull/410');
+  assert.equal(by['bc-f35e4c51'].pr, '');
+  assert.equal(by['bc-f0dc0299'].card, '0xRayAI/xray#360');
+  assert.equal(by['bc-f0dc0299'].flag, undefined);
+  const orphan = boardCloudAgents({
+    agents: [{ agent: 'bc-00000000-0000-4000-8000-000000000000', status: 'finished', t_ct: '2026-10-20T12:00:00Z' }],
+    tracks: shape.tracks,
+    events: shape.events,
+  });
+  assert.equal(orphan[0].card, '');
+  assert.equal(orphan[0].flag, undefined);
+  assert.equal(orphan[0].label, 'no card');
+});
+
 test('a launch-file packet id on the board keeps card, and a webhook pull URL still fills pr', () => {
   const held = boardCloudAgents({
     links: [{ bcId: 'bc-hold00001', card: 'packet:line-1', seat: 'arch1', state: 'running', updated_ct: '2026-10-20T12:00:00-05:00' }],
