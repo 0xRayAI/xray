@@ -95,11 +95,16 @@ test('mesh, stats, cards, and activity start open in both themes', async () => {
         assert.notEqual(visible.log, 'none', `${theme} ${width}`);
         if (width === 1280 && theme === 'dark') {
           const cards = await page.evaluate(() => {
-            const cs = getComputedStyle(document.querySelector('[data-fold="cards"] .fold-body'));
-            return { max: cs.maxHeight, overflow: cs.overflowY };
+            const body = document.getElementById('waveBody');
+            const cs = getComputedStyle(body);
+            const wave = getComputedStyle(document.getElementById('wave'));
+            return { max: cs.maxHeight, flex: cs.flexGrow, min: parseFloat(cs.minHeight), height: body.clientHeight, wave: wave.height };
           });
-          assert.equal(cards.max, '256px');
-          assert.equal(cards.overflow, 'auto');
+          assert.equal(cards.max, 'none');
+          assert.equal(cards.flex, '1');
+          assert.ok(cards.min >= 220, JSON.stringify(cards));
+          assert.ok(cards.height > 256, JSON.stringify(cards));
+          assert.equal(cards.wave, '720px');
         }
         await page.close();
       }

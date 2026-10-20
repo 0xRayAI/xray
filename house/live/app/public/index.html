@@ -425,7 +425,7 @@ canvas { display: block; width: 100%; height: auto; }
 main { max-width: 1560px; }
 .split { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 12px; align-items: start; }
 .split > .panel { margin: 0; min-width: 0; }
-.wave { display: flex; flex-direction: column; max-height: 720px; overflow: hidden; isolation: isolate; }
+.wave { display: flex; flex-direction: column; height: 720px; max-height: 720px; overflow: hidden; isolation: isolate; }
 .wave-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 12px; color: var(--dim); }
 .wave-head b { color: var(--head-strong); font-size: 13px; letter-spacing: .04em; }
 #waveToggle { display: none; }
@@ -473,7 +473,7 @@ button.wstat.on { outline: 2px solid var(--focus); background: var(--panel); }
 .wcard.glow { animation: wglow 2.6s ease-out; }
 @keyframes wglow { 0% { box-shadow: 0 0 0 2px var(--glow), 0 0 18px var(--glow); } 100% { box-shadow: none; } }
 @media (prefers-reduced-motion: reduce) { .wcard.glow { animation: none; outline: 2px solid var(--glow); } }
-@media (max-width: 900px) { .split { grid-template-columns: 1fr; } #waveToggle { display: inline-block; } .wave.collapsed .wave-body { display: none; } .wave { max-height: none; } }
+@media (max-width: 900px) { .split { grid-template-columns: 1fr; } #waveToggle { display: inline-block; } .wave.collapsed .wave-body { display: none; } .wave { height: auto; max-height: none; } }
 .fresh { display: inline-flex; align-items: center; gap: 6px; margin: 0 0 8px; font-weight: 600; }
 .fresh-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--fresh-idle); flex: none; }
 .fresh.green .fresh-dot { background: var(--fresh-green); }
@@ -503,6 +503,8 @@ button:hover { border-color: var(--control-hover); }
     .fold-body { max-height: var(--fold-cap, 16rem); overflow: auto; }
     .fold.collapsed .fold-body { display: none; }
     #meshPanel > .fold-body { max-height: none; overflow: visible; }
+    #cardsFold:not(.collapsed) { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+    #waveBody { max-height: none; flex: 1 1 auto; min-height: 220px; overflow-y: auto; }
 #log { list-style: none; margin: 0; padding: 0; max-height: 16rem; overflow: auto; }
 #log li { display: grid; grid-template-columns: 14ch 7ch 1fr; gap: 8px; padding: 3px 0; border-top: 1px solid var(--hairline); cursor: pointer; }
 #log li:first-child { border-top: 0; }
