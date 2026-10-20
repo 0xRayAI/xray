@@ -439,9 +439,77 @@ class Model(unittest.TestCase):
         finally:
             os.environ.pop("NO_NUDGE_REPOS", None)
 
-    def test_closed_drops_after_24h(self):
-        evs = [self.ev(5, "pr_open", 200000, title="old"), self.ev(5, "merged", 190000), self.ev(5, "lab_retest_pass", 180000)]
-        self.assertEqual([c for c in self.w.model(evs)["cards"] if not c.get("pinned")], [])
+    def test_closed_stays_for_7_days_then_drops(self):
+        kept = [c for c in self.w.model([
+            self.ev(5, "pr_open", 6 * 86400, title="week"), self.ev(5, "merged", 5 * 86400),
+        ])["cards"] if not c.get("pinned")]
+        self.assertEqual(len(kept), 1)
+        self.assertEqual((kept[0]["state"], kept[0]["stage"]), ("closed", "done"))
+        gone = [c for c in self.w.model([
+            self.ev(6, "pr_open", 9 * 86400, title="gone"), self.ev(6, "merged", 8 * 86400),
+        ])["cards"] if not c.get("pinned")]
+        self.assertEqual(gone, [])
+
+    def test_full_live_board_keeps_recently_merged_cards(self):
+        """GET /cards was pin + 40 live/parked and zero closed. Merged rows stay for 7 days."""
+        live = json.loads((HERE / "fixtures" / "live-cards.json").read_text())
+        spec = json.loads((HERE / "fixtures" / "closed-column.json").read_text())
+        self.assertEqual(live["source"], "https://bifrost.0xray.dev/cards")
+        self.assertGreaterEqual(sum(1 for c in live["cards"] if c.get("kind") in ("issue", "pr")), self.w.MAX_CARDS)
+        evs, opened, parked = [], set(), 0
+        for card in live["cards"]:
+            if card.get("kind") not in ("issue", "pr") or card.get("repo") != "0xRayAI/xray":
+                continue
+            n = int(card["number"])
+            opened.add(n)
+            kind = "issue_open" if card["kind"] == "issue" else "pr_open"
+            row = {
+                "id": f"live:{card['key']}:{kind}", "t_ct": ct(7200), "kind": kind, "repo": card["repo"],
+                "number": n, "title": card["title"], "from": "forge", "pr_state": "open",
+                "source": card.get("url") or f"https://github.com/{card['repo']}/pull/{n}",
+            }
+            if card["kind"] == "issue" and parked < 15:
+                row["labels"] = ["parked"]
+                parked += 1
+            evs.append(row)
+        for n in range(901, 907):
+            evs.append({
+                "id": f"0xRayAI/xray#{n}:issue_open", "t_ct": ct(3600), "kind": "issue_open",
+                "repo": "0xRayAI/xray", "number": n, "title": f"open filler {n}", "from": "forge",
+                "pr_state": "open", "source": f"https://github.com/0xRayAI/xray/issues/{n}",
+            })
+        for row in spec["merged"]:
+            repo, n = row["repo"], int(row["number"])
+            if n not in opened:
+                evs.append({
+                    "id": f"{repo}#{n}:pr_open", "t_ct": ct(row["opened_ago_s"]), "kind": "pr_open",
+                    "repo": repo, "number": n, "title": row["title"], "from": row.get("from") or "forge",
+                    "pr_state": "open", "source": row.get("url") or f"https://github.com/{repo}/pull/{n}",
+                })
+            evs.append({
+                "id": f"{repo}#{n}:merged", "t_ct": ct(row["merged_ago_s"]), "kind": "merged",
+                "repo": repo, "number": n, "from": row.get("from") or "forge",
+                "source": f"https://github.com/{repo}/pull/{n}",
+            })
+        cards = self.w.model(evs)["cards"]
+        self.assertEqual(sum(1 for c in cards if c.get("pinned")), 1)
+        body = [c for c in cards if not c.get("pinned")]
+        open_cards = [c for c in body if c["state"] != "closed"]
+        self.assertEqual(len(open_cards), self.w.MAX_CARDS)
+        self.assertTrue(any(c["state"] == "live" for c in open_cards))
+        self.assertTrue(any(c["state"] == "parked" for c in open_cards))
+        by_num = {c["number"]: c for c in body}
+        for row in spec["merged"]:
+            n = int(row["number"])
+            if row["merged_ago_s"] > self.w.CLOSED_KEEP_S:
+                self.assertNotIn(n, by_num)
+                continue
+            self.assertIn(n, by_num)
+            self.assertTrue(by_num[n]["state"] == "closed" or by_num[n]["stage"] == "done")
+            self.assertEqual(by_num[n]["repo"], "0xRayAI/xray")
+            self.assertEqual((by_num[n]["state"], by_num[n]["stage"]), ("closed", "done"))
+        self.assertEqual(self.w.CLOSED_KEEP_S, 7 * 86400)
+        self.assertEqual(len(body), self.w.MAX_CARDS + sum(1 for row in spec["merged"] if row["merged_ago_s"] <= self.w.CLOSED_KEEP_S))
 
     def test_review_approved_or_changes_requested_is_a_reviewer_beat(self):
         ok = self.card([self.ev(60, "pr_open", 4000, title="r"), self.ev(60, "review", 3000, state="APPROVED"),

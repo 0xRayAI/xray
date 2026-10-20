@@ -6,7 +6,7 @@ the collector pass already writes (live_collect.card_fields: title, state, label
 
 CARD   = one GitHub issue or PR (repo#number): title, url, owner seat, stage (open > review > fix > merge > retest >
          done), state (live | held | parked | closed). A merge, an issue close, or a PR close sets state closed
-         and stage done. A failed retest after merge needs a new issue. Closed cards drop off 24 h after closing.
+         and stage done. A failed retest after merge needs a new issue. Closed cards stay on the board for 7 days, outside the open-card cap, then drop off.
 HOLD   = the owner posts a comment whose first line is 'Held: <reason>' (optional until:), or the issue / PR
          carries a label in GITHUB_HOLD_LABEL (default on-hold). A Parked: comment still parks and wins over a hold.
          Repos in NO_NUDGE_REPOS (unset means none) stay visible and are never stalled or nudged.
@@ -34,7 +34,7 @@ MD = Path(os.environ.get("LIVE_BOARD", HOUSE / "BOARD.md"))
 STATIC = Path(os.environ.get("LIVE_BOARD_STATIC", HOUSE / "watchers" / "board-static.md"))
 STAGES = ("open", "review", "fix", "merge", "retest", "done")
 STALL_S = 60 * 60
-CLOSED_KEEP_S = 24 * 3600
+CLOSED_KEEP_S = 7 * 86400
 PR_PARK_S = 72 * 3600   # a live PR with no beat for 72 h parks
 MD_EVERY_S = 60
 MAX_CARDS = 40
@@ -711,7 +711,7 @@ def model(extra_events=None, now=None, prompts=None, held=None):
                 else:
                     w = "comment"
         if not w and is_comment and (c["_closed"] or c.get("_merged_t")):
-            # a comment on a merged or closed card is a beat: the card stays on the board (24 h from the comment)
+            # a comment on a merged or closed card is a beat: the card stays on the board (7 days from the comment)
             w = "comment after merge" if c.get("_merged_t") else "comment after close"
         if w and c.get("_merged_t") and not w.startswith(("retest", "owner", "comment")):
             continue                                       # after the merge only merge-queue.md ticks move the card
@@ -772,7 +772,7 @@ def model(extra_events=None, now=None, prompts=None, held=None):
         if closed and last and last["what"].startswith(("comment", "owner")):
             closed_t = max(closed_t or 0, last["t"] / 1000)   # a late comment keeps the closed card visible
         if closed and closed_t and now - closed_t > CLOSED_KEEP_S:
-            continue                                       # closed cards drop off after 24 h
+            continue                                       # closed cards drop off after 7 days
         quiet = bool(last) and now - last["t"] / 1000 > 86400
         pr_quiet = c["kind"] == "pr" and bool(last) and now - last["t"] / 1000 > PR_PARK_S
         parked = (not closed) and (c.pop("_parked_c", False) or c.pop("_draft_park", False) or pr_quiet or (c["kind"] == "issue" and quiet) or any(PARKED.search(x) for x in c["labels"]) or (c.pop("_draft") and (not last or now - last["t"] / 1000 > 7 * 86400)))
@@ -840,11 +840,15 @@ def model(extra_events=None, now=None, prompts=None, held=None):
                  beats=[{k: v for k, v in b.items() if not k.startswith("_")} for b in shown],
                  last_beat_t=int(last_t * 1000), stall=stall, closed_t=int(closed_t * 1000) if closed else 0)
         out.append(c)
-    # only cards with recent life make the board: live/parked with a beat in 14 days, or closed in the last 24 h
+    # only cards with recent life make the board: live/parked with a beat in 14 days, or closed in the last 7 days
     out = [c for c in out if c["state"] == "closed" or (c["last_beat_t"] and now - c["last_beat_t"] / 1000 < 14 * 86400)]
     rank = {"live": 0, "held": 0, "parked": 1, "closed": 2}
     out.sort(key=lambda c: (rank[c["state"]], STAGES.index(c["stage"]), -c["last_beat_t"]))
-    cards = pinned() + out[:MAX_CARDS]
+    # Closed cards sort last. A full live/parked board used to slice every one of them
+    # off /cards (pin + 40 open, Closed column 0). The cap is for open work.
+    open_cards = [c for c in out if c["state"] != "closed"]
+    closed_cards = [c for c in out if c["state"] == "closed"]
+    cards = pinned() + open_cards[:MAX_CARDS] + closed_cards
     if held:
         cards = _merge_attached(cards, attach_held(held, evs), now)
     return {"updated_ct": datetime.fromtimestamp(now, CT).isoformat(timespec="seconds"),
@@ -1088,7 +1092,7 @@ def write_md(m, now=None, force=False):
         L.append("")
     closed = [c for c in m["cards"] if c["state"] == "closed"]
     if closed:
-        L += ["## Closed (last 24 h)", ""] + [f"- {c['repo'].split('/')[-1]} #{c['number']} {c['title']}" for c in closed] + [""]
+        L += ["## Closed (last 7 days)", ""] + [f"- {c['repo'].split('/')[-1]} #{c['number']} {c['title']}" for c in closed] + [""]
     try:
         MD.parent.mkdir(parents=True, exist_ok=True)
         tmp = MD.with_suffix(f".md.{os.getpid()}.tmp")
