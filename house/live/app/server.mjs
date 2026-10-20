@@ -13,7 +13,7 @@ import net from 'node:net';
 import zlib from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
-import { seatPresence, presentSeat, foldSeatTouch, fleetConfigOf, readWakeOk, writeWakeOk } from './presence.mjs';
+import { seatPresence, presentSeat, foldSeatTouch, fleetConfigOf, configuredRoster, readWakeOk, writeWakeOk } from './presence.mjs';
 import { parseAllowlist, mergeCards, sourceCardsFrom, projectAllowed, validateItem, workEventToItem, cardNoNudge, workItemNewer } from './source.mjs';
 import { checkRoutesFromDir, readRoutingMap, createLoginResolver, auditLogins } from './routes.mjs';
 import { fingerprint, tripwire, createClock, wakeTitle, mutedSeats, selectStallSeats } from './governor.mjs';
@@ -1453,6 +1453,15 @@ function mergedHeader(now = Date.now()) {
     cards_at: cardsAt ? new Date(cardsAt).toISOString() : null,
   });
   h.queue = openQueue();
+  // Chips read this list. It is the seat config union, not the board subset and not a fixed strip.
+  const roster = configuredRoster(process.env, [
+    COLLECTOR_DIR_EARLY(),
+    path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'feed'),
+  ]);
+  if (roster.names.length) {
+    h.roster = roster.names;
+    h.roster_roles = roster.roles;
+  }
   return h;
 }
 function closedCardKeys() {

@@ -281,11 +281,11 @@ function loadCfg(withSite) {
   if (withSite) new Function('window', fs.readFileSync(path.join(APP, '..', 'site', 'public', 'site-config.js'), 'utf8'))({ LiveMesh: L });
   return L;
 }
-test('our overlay: strip is blinky, critic, forge; Arch1 is outside; parked seats are not drawn', () => {
+test('our overlay does not install a fixed roster strip; the canvas still draws its nodes', () => {
   const L = loadCfg(true);
-  const strip = ['blinky', 'critic', 'forge'];
-  assert.deepEqual(L.SEAT_NAMES, strip); assert.deepEqual(L.AGENTS.map(a => a[0]), strip);
-  for (const s of strip) assert.ok(s in L.SATS, s);
+  assert.deepEqual(L.SEAT_NAMES, []);
+  assert.deepEqual(L.AGENTS, []);
+  for (const s of ['blinky', 'critic', 'forge']) assert.ok(s in L.SATS, s);
   assert.equal(L.SUB.arch1, 'outside party'); assert.equal(L.LABEL.arch1, 'Arch1'); assert.ok('arch1' in L.SATS);
   for (const parked of ['herald', 'magnet', 'nibbler', 'sound']) assert.ok(!(parked in L.SATS), parked);
   for (const k of ['Lead', 'X', 'Builder', 'Reviewer', 'Operator', 'Tester', 'QA']) assert.ok(!(k in L.SATS), k);
@@ -313,6 +313,23 @@ test('our overlay: strip is blinky, critic, forge; Arch1 is outside; parked seat
   assert.equal(L.botImage('arch1'), 'avatars/arch1.png');
   for (const x of Object.values(L.SATS)) assert.ok(x[0] >= 80 && x[0] <= 840, String(x));
   assert.match(L.SITE_FOOT, /Bifrost/);
+});
+test('rosterEntries reads the feed roster and its roles, and ignores a missing list', () => {
+  const live = fs.readFileSync(path.join(APP, 'public', 'live.js'), 'utf8');
+  const g = {};
+  new Function('globalThis', live)(g);
+  const entries = g.LiveMesh.rosterEntries({
+    roster: ['alpha', 'beta', 'alpha', { name: 'gamma', role: 'gate' }],
+    roster_roles: { beta: 'voice' },
+  });
+  assert.deepEqual(entries, [['alpha', ''], ['beta', 'voice'], ['gamma', 'gate']]);
+  assert.equal(g.LiveMesh.rosterEntries({ seats: ['alpha', 'beta', 'gamma', 'delta'] }), null);
+  assert.equal(g.LiveMesh.rosterEntries({}), null);
+  assert.match(html, /L\.rosterEntries\(r\.feed\)/);
+  assert.match(html, /margin-left: auto/);
+  assert.match(html, /id="themeToggle"/);
+  const title = html.slice(html.indexOf('<div class="title">'), html.indexOf('</div>', html.indexOf('<div class="title">')));
+  assert.ok(title.indexOf('id="pill"') < title.indexOf('id="themeToggle"'));
 });
 test('kit without overlay: template roles kept, no avatars mapped (no 404s), empty footer', () => {
   const L = loadCfg(false);

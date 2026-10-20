@@ -101,6 +101,24 @@ test('the board face keeps the contract in both themes', async () => {
     await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'reduce' });
     await page.goto(base, { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => document.querySelector('#waveBody .wcard'), null, { timeout: 8000 });
+    const card = page.locator('#waveBody .wcard[data-key="example/app#3"]');
+    const restBg = await card.evaluate((el) => getComputedStyle(el).backgroundColor);
+    await card.hover();
+    const hoverBg = await card.evaluate((el) => getComputedStyle(el).backgroundColor);
+    await card.evaluate((el) => el.classList.add('open'));
+    const openBg = await card.evaluate((el) => getComputedStyle(el).backgroundColor);
+    await card.evaluate((el) => el.classList.remove('open'));
+    const gap = (a, b) => {
+      const n = (s) => (String(s).match(/[\d.]+/g) || []).slice(0, 3).map(Number);
+      const [ar, ag, ab] = n(a);
+      const [br, bgc, bb] = n(b);
+      return Math.abs(ar - br) + Math.abs(ag - bgc) + Math.abs(ab - bb);
+    };
+    assert.equal(await page.evaluate(() => document.documentElement.getAttribute('data-theme')), 'dark');
+    assert.ok(gap(hoverBg, restBg) >= 24, JSON.stringify({ restBg, hoverBg }));
+    assert.ok(gap(openBg, restBg) >= 24, JSON.stringify({ restBg, openBg }));
+    assert.notEqual(hoverBg, restBg);
+    assert.notEqual(openBg, restBg);
     await page.waitForFunction(() => (document.querySelector('#cardRecentList') || {}).textContent.includes('merged'), null, { timeout: 8000 });
     await page.screenshot({ path: path.join(ART, 'board-open-desktop.png'), fullPage: true });
     for (const id of ['mesh', 'stats', 'roster', 'cards', 'cloud', 'recent', 'history', 'work', 'queue']) {
