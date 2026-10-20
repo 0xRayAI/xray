@@ -24,6 +24,7 @@ The page reads `GET /live-events.json`. Production numbers below are the feed at
 | cloud `finished`/`failed`/`stale` and the PR is merged or closed | `cloud_agents[].card` | `laneBucket` | done | out of Open | finished rows sat in the open cloud group | PASS |
 | cloud finished and the PR is still open | same | `laneBucket` → `review` | “in review” | not in Open waiting | same | PASS |
 | empty seat group | `L.boardGroups` | skip when every bucket is empty | no `.wgroup` with nothing under it | no empty header | empty headers existed | PASS |
+| group | card bucket, else seat | default `status`. `#cardGroup` stores `bifrost-card-group` `agent` | `.wgroup` is the status. By agent, `.wgroup` is the seat and `.wsub` is the status | status on first load. The toggle switches to one group per seat | seat groups were the only layout | PASS `tests/board-group.test.mjs` |
 
 ## Recent changes and history
 
