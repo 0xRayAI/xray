@@ -748,6 +748,49 @@ function renderFmPluck(sampleRate, freq, opts) {
   return normalizePeak(out, 1);
 }
 
+/**
+ * Short filtered pluck. A soft body plus a broad 1.7–4.3 kHz formant
+ * that dies in about 50 ms. Three slight detunes. No FM ping, no held tone.
+ */
+function renderFilterPluck(sampleRate, freq, opts) {
+  const decay = opts && opts.decay != null ? opts.decay : 0.055;
+  const dur = opts && opts.dur != null ? opts.dur : 0.15;
+  const n = Math.floor(dur * sampleRate);
+  const out = new Float64Array(n);
+  const ratios = [-5, 0, 5].map((cents) => Math.pow(2, cents / 1200));
+  const upper = [];
+  for (let k = 2; k <= 18; k++) {
+    const partial = freq * k;
+    if (partial >= 1700 && partial <= 4300) upper.push(k);
+  }
+  const phases = [0, 0, 0];
+  for (let i = 0; i < n; i++) {
+    const t = i / sampleRate;
+    const attack = t < 0.0055 ? t / 0.0055 : 1;
+    const bodyEnv = Math.exp(-t / decay) * attack;
+    const presEnv = Math.exp(-t / 0.05) * attack;
+    let body = 0;
+    let pres = 0;
+    let presW = 0;
+    for (let v = 0; v < ratios.length; v++) {
+      const phase = phases[v];
+      body += Math.sin(phase) + 0.48 * Math.sin(phase * 2 + 0.8) + 0.22 * Math.sin(phase * 3 + 1.7);
+      for (let p = 0; p < upper.length; p++) {
+        const partial = freq * upper[p] * ratios[v];
+        const x = (partial - 2800) / 1200;
+        const amp = Math.exp(-0.5 * x * x);
+        pres += amp * Math.sin(phase * upper[p] + upper[p] * 0.9);
+        presW += amp;
+      }
+      phases[v] += (2 * Math.PI * freq * ratios[v]) / sampleRate;
+    }
+    body /= ratios.length * 1.7;
+    if (presW > 0) pres /= presW;
+    out[i] = body * bodyEnv + pres * presEnv * 1.05;
+  }
+  return normalizePeak(applyBiquad(out, "highpass", 140, 0.707, sampleRate), 1);
+}
+
 /** Warm stab: a few harmonics, one fixed lowpass, short decay. */
 function renderWarmStab(sampleRate, freqs, opts) {
   const dur = opts && opts.dur != null ? opts.dur : 0.2;
@@ -996,6 +1039,7 @@ module.exports = {
   renderHatFm,
   renderHatSoft,
   renderFmPluck,
+  renderFilterPluck,
   renderWarmStab,
   renderPadSteady,
   duckGain,

@@ -1,6 +1,6 @@
 {
   "bed": "BED-MAGNETIC-MOVES-v9",
-  "note": "One-shots only. No stems from released songs, and no reference audio. Each file in this folder is a short mono 44.1 kHz excerpt of the named source, with a short fade so the hit does not carry the room. The license below is the license of that source. v9 uses the kick file as the beater on the mill's 44 Hz body, and uses the hat and clap files as those voices. The bass, plucks, and stabs stay the mill voices.",
+  "note": "One-shots only. No stems from released songs, and no reference audio. Each file in this folder is a short mono 44.1 kHz excerpt of the named source, with a short fade so the hit does not carry the room. The license below is the license of that source. v9 uses the kick file as the beater on the mill's 44 Hz body, and uses the hat and clap files as those voices. v7d uses the closed and open hat files. The bass, plucks, and stabs stay the mill voices.",
   "samples": [
     {
       "id": "kick",
