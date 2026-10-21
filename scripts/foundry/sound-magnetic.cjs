@@ -33,6 +33,11 @@
  * v7c keeps v7, including its bass. From 7.0 s it overlays the v8lib
  * Elementary sub and harmonic mid, split and phase-aligned so they
  * fuse with that bass. loadBed("v7c") is the entry.
+ *
+ * v7d is v7c with two voices replaced. Hats are the CC0 closed and open
+ * samples, highpassed, with a little timing and velocity movement.
+ * The pluck is a short filtered harmonic tone on the same notes and rhythm.
+ * loadBed("v7d") is the entry.
  */
 
 const fs = require("node:fs");
@@ -284,14 +289,16 @@ function renderPlucks(n, short, tone) {
   const bright = tone === true;
   const dark = tone === "low";
   const voice = (midi) => {
-    const key = `${short ? "s" : "l"}${bright ? "b" : ""}${dark ? "d" : ""}${midi}`;
+    const key = `${short ? "s" : "l"}${bright ? "b" : ""}${dark ? "d" : ""}${tone === "filter" ? "f" : ""}${midi}`;
     if (!cache.has(key)) {
       const freq = P.midiHz(midi);
       cache.set(
         key,
-        short
-          ? P.renderFmPluck(SR, freq, { decay: 0.045, dur: 0.14, moving: true, bright, dark })
-          : P.renderFmPluck(SR, freq),
+        tone === "filter"
+          ? P.renderFilterPluck(SR, freq)
+          : short
+            ? P.renderFmPluck(SR, freq, { decay: 0.045, dur: 0.14, moving: true, bright, dark })
+            : P.renderFmPluck(SR, freq),
       );
     }
     return cache.get(key);
@@ -617,6 +624,7 @@ const BED_NAMES = {
   v7: "BED-MAGNETIC-MOVES-v7",
   v7b: "BED-MAGNETIC-MOVES-v7b",
   v7c: "BED-MAGNETIC-MOVES-v7c",
+  v7d: "BED-MAGNETIC-MOVES-v7d",
   v9: "BED-MAGNETIC-MOVES-v9",
 };
 
@@ -632,6 +640,9 @@ function renderBed(variant) {
   }
   if (variant === "v7c") {
     throw new Error("BED-MAGNETIC-MOVES-v7c renders through loadBed");
+  }
+  if (variant === "v7d") {
+    throw new Error("BED-MAGNETIC-MOVES-v7d renders through loadBed");
   }
   const v7 = variant === "v7";
   const v6 = variant === "v6" || v7;
@@ -835,7 +846,7 @@ function measureBed(bed) {
   const lowWindows = { body: [5.5, 7.65], across: [5.5, 15.4], final: [17.55, 19.4] };
   const pad = stemReport(bed.stems.pad, padWindows);
   const sub = stemReport(bed.stems.sub, lowWindows);
-  const mid = bed.variant === "v4b" || bed.variant === "v5b" || bed.variant === "v6" || bed.variant === "v7" || bed.variant === "v7b" || bed.variant === "v7c" || bed.variant === "v9"
+  const mid = bed.variant === "v4b" || bed.variant === "v5b" || bed.variant === "v6" || bed.variant === "v7" || bed.variant === "v7b" || bed.variant === "v7c" || bed.variant === "v7d" || bed.variant === "v9"
     ? stemReport(bed.stems.mid, lowWindows)
     : null;
   const lufs = P.integratedLufs(bed.left, bed.right, bed.sampleRate);
@@ -1051,6 +1062,72 @@ function v9Hits() {
     hatClosed: shapeHit(cc0Hit("hat-closed.wav"), 0.018, 0.007, 3200, 0.002),
     hatOpen: shapeHit(cc0Hit("hat-open.wav"), 0.042, 0.014, 2600, 0.003),
   };
+}
+
+function unitFrac(seed) {
+  const x = Math.sin(seed) * 43758.5453;
+  return x - Math.floor(x);
+}
+
+/** CC0 hat with its own decay. The highpass takes off the pitched body. */
+function cc0HatVoice(file, highpassHz) {
+  const raw = cc0Hit(file);
+  const count = raw.length;
+  const fadeN = Math.max(8, Math.floor(0.004 * SR));
+  const out = new Float64Array(count);
+  for (let i = 0; i < count; i++) {
+    const t = i / SR;
+    const attack = t < 0.0005 ? t / 0.0005 : 1;
+    const tail = i > count - fadeN ? (count - i) / fadeN : 1;
+    out[i] = raw[i] * attack * tail;
+  }
+  const high = P.applyBiquad(
+    P.applyBiquad(out, "highpass", highpassHz, 0.707, SR),
+    "highpass",
+    highpassHz,
+    0.707,
+    SR,
+  );
+  return P.normalizePeak(high, 1);
+}
+
+function placeCc0Hats(n) {
+  const closedHit = cc0HatVoice("hat-closed.wav", 4000);
+  const openHit = cc0HatVoice("hat-open.wav", 3200);
+  const closed = P.silence(n);
+  const open = P.silence(n);
+  const hats = times(CUES.hats, BEAT / 2, SECONDS - 0.02, inBody);
+  for (let i = 0; i < hats.length; i++) {
+    const isOpen = hats[i] >= CUES.peak && hats[i] < CUES.cut && i % 4 === 2;
+    const base = isOpen ? 0.85 : 0.55;
+    const grid = base * (0.75 + 0.25 * ((i % 4) / 3));
+    const human = 0.9 + 0.2 * unitFrac(i * 12.9898);
+    const jitter = (unitFrac(i * 78.233) * 2 - 1) * 0.0022;
+    const when = Math.max(CUES.hats, hats[i] + jitter);
+    P.addAt(isOpen ? open : closed, isOpen ? openHit : closedHit, when * SR, grid * human);
+  }
+  const hat = P.silence(n);
+  sum(hat, closed, 1);
+  sum(hat, open, 1);
+  return { hat, closed, open };
+}
+
+function scaleBuf(src, gain) {
+  const out = new Float64Array(src.length);
+  for (let i = 0; i < src.length; i++) out[i] = src[i] * gain;
+  return out;
+}
+
+function matchStem(next, ref, t0, t1) {
+  const nextRms = rangeRms(next, t0, t1);
+  const refRms = rangeRms(ref, t0, t1);
+  let scale = nextRms > 1e-8 && refRms > 0 ? refRms / nextRms : 1;
+  const nextPeak = rangePeak(next, t0, t1);
+  const refPeak = rangePeak(ref, t0, t1);
+  if (nextPeak > 1e-8 && refPeak > 0 && nextPeak * scale > refPeak * P.dbLin(6)) {
+    scale = (refPeak * P.dbLin(6)) / nextPeak;
+  }
+  return scale;
 }
 
 async function renderV9() {
@@ -1426,9 +1503,13 @@ async function renderV7b() {
   };
 }
 
-async function renderV7c() {
+async function renderV7c(spec) {
+  const swap = spec || {};
   const v7 = renderBed("v7");
   const n = v7.stems.sub.length;
+  const hat = swap.hat || v7.stems.hat;
+  const pluck = swap.pluck || v7.stems.pluck;
+  const variant = swap.variant || "v7c";
   const g = v7.gains;
   const elem = await import("./sound-elementary.mjs");
   const lib = await elem.renderLibBass(n, SR);
@@ -1492,7 +1573,7 @@ async function renderV7c() {
     mid[i] += high[i] * highScale;
   }
   const send = P.silence(n);
-  sum(send, v7.stems.pluck, 0.55);
+  sum(send, pluck, 0.55);
   sum(send, v7.stems.stab, 0.7);
   const room = P.shortReverb(send, SR, 0.16, 3200);
   const wide = mixWide(
@@ -1502,8 +1583,8 @@ async function renderV7c() {
       bass: mid,
       kick: v7.stems.kick,
       clap: v7.stems.clap,
-      hat: v7.stems.hat,
-      pluck: v7.stems.pluck,
+      hat,
+      pluck,
       stab: v7.stems.stab,
       room,
     },
@@ -1517,8 +1598,8 @@ async function renderV7c() {
   const glued = P.glueStereo(wide.left, wide.right, SR, -12, 1.5, 0.03, 0.18);
   const fitted = P.fitLoudness(glued.left, glued.right, SR, -15, -1.4);
   return {
-    variant: "v7c",
-    name: BED_NAMES.v7c,
+    variant,
+    name: BED_NAMES[variant],
     sampleRate: SR,
     seconds: n / SR,
     left: fitted.left,
@@ -1534,16 +1615,6 @@ async function renderV7c() {
     patterned: true,
     wide: true,
     padMode: "low",
-    sources: {
-      sub: "v7",
-      mid: "v7",
-      pad: "v7",
-      kick: "v7",
-      clap: "v7",
-      hat: "v7",
-      pluck: "v7",
-      stab: "v7",
-    },
     overlay: {
       entrySec: OVERLAY_ENTRY,
       fadeSec: OVERLAY_FADE,
@@ -1557,23 +1628,55 @@ async function renderV7c() {
       notesAligned: aligned.notesAligned,
       layered: ["v8lib elementary sub", "v8lib elementary mid"],
     },
+    ...(swap.voiceMatch ? { voiceMatch: swap.voiceMatch } : {}),
+    sources: {
+      sub: "v7",
+      mid: "v7",
+      pad: "v7",
+      kick: "v7",
+      clap: "v7",
+      hat: swap.hatSource || "v7",
+      pluck: swap.pluckSource || "v7",
+      stab: "v7",
+    },
     stems: {
       pad: v7.stems.pad,
       sub,
       mid,
       kick: v7.stems.kick,
       clap: v7.stems.clap,
-      hat: v7.stems.hat,
-      pluck: v7.stems.pluck,
+      hat,
+      pluck,
       stab: v7.stems.stab,
+      ...(swap.hatClosed ? { hatClosed: swap.hatClosed, hatOpen: swap.hatOpen } : {}),
     },
   };
+}
+
+async function renderV7d() {
+  const v7 = renderBed("v7");
+  const n = v7.stems.pad.length;
+  const hats = placeCc0Hats(n);
+  const rawPluck = renderPlucks(n, true, "filter");
+  const hatScale = matchStem(hats.hat, v7.stems.hat, CUES.hats, 15.4);
+  const pluckScale = matchStem(rawPluck, v7.stems.pluck, CUES.air, 15.4);
+  return renderV7c({
+    variant: "v7d",
+    hat: scaleBuf(hats.hat, hatScale),
+    hatClosed: scaleBuf(hats.closed, hatScale),
+    hatOpen: scaleBuf(hats.open, hatScale),
+    pluck: scaleBuf(rawPluck, pluckScale),
+    hatSource: "v8lib-cc0",
+    pluckSource: "mill-filter-pluck",
+    voiceMatch: { hatScale, pluckScale },
+  });
 }
 
 async function loadBed(variant) {
   if (variant === "v9") return renderV9();
   if (variant === "v7b") return renderV7b();
   if (variant === "v7c") return renderV7c();
+  if (variant === "v7d") return renderV7d();
   return renderBed(variant);
 }
 
@@ -1586,13 +1689,13 @@ function argValue(argv, name) {
 async function cli(argv) {
   const variant = argv[0];
   if (!BED_NAMES[variant]) {
-    process.stderr.write("Usage: sound bed <v4a|v4b|v5a|v5b|v6|v7|v7b|v7c|v9> --out wav [--mp3 file] [--metrics file]\n");
+    process.stderr.write("Usage: sound bed <v4a|v4b|v5a|v5b|v6|v7|v7b|v7c|v7d|v9> --out wav [--mp3 file] [--metrics file]\n");
     return 1;
   }
   const bed = await loadBed(variant);
   const metrics = measureBed(bed);
   if (bed.wide) {
-    const priorVariant = variant === "v7b" || variant === "v7c" || variant === "v9" ? "v7" : variant === "v7" ? "v6" : "v5b";
+    const priorVariant = variant === "v7b" || variant === "v7c" || variant === "v7d" || variant === "v9" ? "v7" : variant === "v7" ? "v6" : "v5b";
     const prior = measureBed(await loadBed(priorVariant));
     metrics.compare = {
       against: prior.name,
