@@ -54,6 +54,9 @@ class WakeEnvFreshShell(unittest.TestCase):
         self.assertNotIn("LIVE_INBOX_BIN", block)
         self.assertIn('export LIVE_CURSORS="$HOME/.burst/cursors"', block)
         self.assertNotIn("LIVE_CURSORS:-", block)
+        self.assertIn('"$INBOX" --migrate-cursors', block)
+        self.assertIn("/home/box/burst-run/cursors", block)
+        self.assertIn("/workspace/.cursors", block)
         self.assertIn("https://bifrost.0xray.dev", export_line())
         self.assertIn("SEAT_KEYS_DIR=", export_line())
 
@@ -107,6 +110,40 @@ class WakeEnvFreshShell(unittest.TestCase):
         self.assertEqual(cursors, str(self.home / ".burst" / "cursors"))
         self.assertEqual(keys, str(self.home / ".burst" / "seat-keys"))
         self.assertEqual(args, "forge --ack line-1")
+
+    def test_wake_block_migrates_when_the_seat_file_is_split(self):
+        recorded = self.home / "ran.txt"
+        main = self.home / "main"
+        stub = main / "house" / "live" / "tools" / "live-inbox"
+        stub.parent.mkdir(parents=True)
+        stub.write_text("#!/bin/bash\nprintf '%s\\n' \"$*\" >> \"$OUT\"\n")
+        stub.chmod(0o755)
+        cursors = self.home / ".burst" / "cursors"
+        cursors.mkdir(parents=True)
+        (cursors / "forge.txt").write_text("home\n")
+        workspace = Path("/workspace/.cursors")
+        workspace.mkdir(parents=True, exist_ok=True)
+        stray = workspace / "forge.txt"
+        prior = stray.read_text() if stray.exists() else None
+        stray.write_text("work\n")
+        try:
+            script = bash_block().replace("<seat>", "forge")
+            r = self.sh(script, OUT=str(recorded), XRAY_MAIN=str(main))
+            self.assertEqual(r.returncode, 0, r.stderr + r.stdout)
+            rows = recorded.read_text().splitlines()
+            self.assertEqual(rows[0], "--migrate-cursors")
+            self.assertEqual(rows[1], "forge")
+            self.assertEqual(rows[2], "forge --turn end --tag wake")
+            self.assertEqual(rows[3], "forge --release")
+        finally:
+            if prior is None:
+                stray.unlink(missing_ok=True)
+            else:
+                stray.write_text(prior)
+            try:
+                workspace.rmdir()
+            except OSError:
+                pass
 
     def test_missing_env_fails_loudly(self):
         r = self.sh(f"{TOOL} forge --turn end --tag wake")

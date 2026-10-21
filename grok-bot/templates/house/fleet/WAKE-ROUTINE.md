@@ -6,7 +6,7 @@ The prompt each seat installs as its webhook-triggered Bifrost inbox wake routin
 
 This routine is the Bifrost inbox wake, and it sets `LIVE_URL`. A seat with no `LIVE_URL` does not use it: that seat reads and writes `house/WAVEBOARD.md`.
 
-Env first, on every turn, in the same shell as the commands below. The routine runs `house/live/tools/live-inbox` from the main checkout (`XRAY_MAIN`). It does not run a copied binary, and it does not put `$HOME/.burst/bin` or `LIVE_INBOX_BIN` on `PATH`. The cursor folder is `$HOME/.burst/cursors`. The block sets that folder. It does not keep a pre-set `LIVE_CURSORS`. A missing `LIVE_URL` or `SEAT_KEYS_DIR` exits 2 and names it. Another board may export its own `LIVE_URL` and `SEAT_KEYS_DIR` on the line before the block.
+Env first, on every turn, in the same shell as the commands below. The routine runs `house/live/tools/live-inbox` from the main checkout (`XRAY_MAIN`). It does not run a copied binary, and it does not put `$HOME/.burst/bin` or `LIVE_INBOX_BIN` on `PATH`. The cursor folder is `$HOME/.burst/cursors`. The block sets that folder. It does not keep a pre-set `LIVE_CURSORS`. When `<seat>.txt` is in more than one of `$HOME/.burst/cursors`, `/home/box/burst-run/cursors`, and `/workspace/.cursors`, the block runs `live-inbox --migrate-cursors` once. That unions handled keys into `$HOME/.burst/cursors`, keeps the newest copy of each key, carries `.claims.json` and `.lock` from the newest file, and renames the old files to `*.migrated`. A later split exits 2. A missing `LIVE_URL` or `SEAT_KEYS_DIR` exits 2 and names it. Another board may export its own `LIVE_URL` and `SEAT_KEYS_DIR` on the line before the block.
 
 ```bash
 # The file on main. Not ~/.burst/bin/live-inbox and not a copy under /tmp.
@@ -15,6 +15,15 @@ export LIVE_URL="${LIVE_URL:-https://bifrost.0xray.dev}"
 export SEAT_KEYS_DIR="${SEAT_KEYS_DIR:-$HOME/.burst/seat-keys}"
 export LIVE_CURSORS="$HOME/.burst/cursors"
 export WAKE_RUN="${WAKE_RUN:-$$}"
+n=0
+for d in "$HOME/.burst/cursors" /home/box/burst-run/cursors /workspace/.cursors; do
+  if [ -f "$d/<seat>.txt" ]; then
+    n=$((n + 1))
+  fi
+done
+if [ "$n" -gt 1 ]; then
+  "$INBOX" --migrate-cursors || exit $?
+fi
 trap '"$INBOX" <seat> --turn end --tag wake; "$INBOX" <seat> --release' EXIT
 "$INBOX" <seat>
 ```

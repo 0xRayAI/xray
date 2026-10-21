@@ -47,6 +47,7 @@ class WakeTemplate(unittest.TestCase):
         block = bash.group(1)
         self.assertNotIn("LIVE_INBOX_BIN", block)
         self.assertNotIn("export PATH", block)
+        self.assertIn('"$INBOX" --migrate-cursors', block)
         self.assertIn("does not run a copied binary", self.text)
         self.assertLess(self.steps[0].index("--prompt"), self.steps[0].index("--turn start"))
         self.assertRegex(self.steps[0], r"live-inbox <seat> --turn start --tag wake")
