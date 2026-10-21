@@ -21,6 +21,11 @@ class Watch(unittest.TestCase):
         self.assertTrue(os.access(W, os.X_OK))
         pl = plistlib.loads((LIVE / "bin" / "com.burst.live-inbox-watch.plist").read_bytes())
         self.assertEqual(pl["ProgramArguments"][1:], ["arch1", "60"])
+        self.assertIn("house/live/bin/live-inbox-watch", pl["ProgramArguments"][0])
+        self.assertNotIn(".burst/bin", pl["ProgramArguments"][0])
+        text = W.read_text()
+        self.assertIn("house/live/tools/live-inbox", text)
+        self.assertIn("XRAY_MAIN", text)
 
     def test_prints_asks_never_acks(self):
         r, calls = self.run_with("echo '{\"id\":\"wake-test-1\"}'")

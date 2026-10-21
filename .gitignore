@@ -13,6 +13,7 @@ logs/framework/routing-outcomes.json
 *.tgz
 
 # Runtime state
+.cursors/
 .strray/
 .opencode/.strrayrc.json
 xray/inference/

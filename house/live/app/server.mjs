@@ -8,6 +8,7 @@ let turnRelease = new Map();
 import http from 'node:http';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import net from 'node:net';
 import zlib from 'node:zlib';
@@ -418,9 +419,67 @@ function enqueuePending(seat, line) {
   st.pending.push(viewLine(line));
   armWake(id);
 }
+// Same handled cursor live-inbox reads: $HOME/.burst/cursors/<seat>.txt, keys repo#number|sha|kind.
+// A legacy LIVE_CURSORS value is not that folder. Unset LIVE_CURSORS is the fixed folder.
+function cursorDir() {
+  const home = String(process.env.HOME || '').trim() || os.homedir();
+  const fixed = path.resolve(home, '.burst', 'cursors');
+  const raw = String(process.env.LIVE_CURSORS || '').trim();
+  if (!raw) return fixed;
+  const chosen = path.resolve(raw);
+  if (chosen === fixed) return fixed;
+  const root = String(process.env.LIVE_CURSOR_ROOT || '').trim();
+  const legacy = root
+    ? [path.resolve(root, 'home/box/burst-run/cursors'), path.resolve(root, 'workspace/.cursors')]
+    : [path.resolve('/home/box/burst-run/cursors'), path.resolve('/workspace/.cursors')];
+  if (legacy.includes(chosen)) return fixed;
+  return chosen;
+}
+const handledCache = new Map();
+function handledKeySet(seat) {
+  const name = String(seat || '').toLowerCase();
+  const file = path.join(cursorDir(), name + '.txt');
+  let st;
+  try { st = fs.statSync(file); }
+  catch { handledCache.delete(name); return { raw: new Set(), lower: new Set() }; }
+  const prev = handledCache.get(name);
+  if (prev && prev.mtime === st.mtimeMs && prev.size === st.size && prev.file === file) return prev.keys;
+  const raw = new Set();
+  const lower = new Set();
+  for (const row of fs.readFileSync(file, 'utf8').split('\n')) {
+    const key = row.trim();
+    if (!key) continue;
+    raw.add(key);
+    lower.add(key.toLowerCase());
+  }
+  const keys = { raw, lower };
+  handledCache.set(name, { mtime: st.mtimeMs, size: st.size, file, keys });
+  return keys;
+}
+function lineHandled(seat, line) {
+  if (!line) return false;
+  const keys = handledKeySet(seat);
+  if (!keys.lower.size) return false;
+  const repo = String(line.repo || '').trim().toLowerCase();
+  const number = Number(line.number);
+  const sha = String(line.sha || line.head || '').trim().toLowerCase();
+  const kind = String(line.kind || line.type || '').trim().toLowerCase();
+  if (repo && Number.isInteger(number) && sha && kind && keys.lower.has(`${repo}#${number}|${sha}|${kind}`)) return true;
+  const id = String(line.id || '').trim();
+  if (!id) return false;
+  return keys.raw.has(`id:${id}`) || keys.lower.has(`id:${id.toLowerCase()}`);
+}
+function wakeLineKept(line) {
+  if (!line) return false;
+  const seat = String(line.seat || line.to || '').trim().toLowerCase();
+  if (!seat) return true;
+  if (ackedSet(seat).has(String(line.id || ''))) return false;
+  if (lineHandled(seat, line)) return false;
+  return true;
+}
 function offerLines(lines) {
   const cfg = wakeConfig(process.env);
-  const { wakes, skips } = classifyBatch(lines, { owner: ownerOfLine });
+  const { wakes, skips } = classifyBatch((Array.isArray(lines) ? lines : []).filter(wakeLineKept), { owner: ownerOfLine });
   for (const s of skips) recordSkip(s.seat, s.line, s.reason);
   const now = Date.now();
   for (const w of wakes) {
@@ -759,9 +818,9 @@ async function auditRouting() {
 }
 setTimeout(() => auditRouting().catch(() => {}), 0).unref?.();
 setInterval(() => auditRouting().catch(() => {}), (Number(process.env.BIFROST_ROUTING_AUDIT_S) || 3600) * 1000).unref();
-// Line nudges (part of evalNudges, the one nudge path): an open (unacked, not done) inbox line older than NUDGE_LINE_S
+// Line nudges (part of evalNudges, the one nudge path): an open inbox line older than NUDGE_LINE_S
 // (default 900) gets nudge L1 and a re-wake of its seat; L2 and L3 follow one window apart, then it stops (never loops).
-// Each is a nudge record (kind 'line') on the board. An ack (or the card moving on) closes them.
+// An ack, a handled cursor key, or the card moving on closes them. A handled or acked line gets no L1, L2, or L3.
 const NUDGE_LINE_MS = Math.max(1, Number(process.env.NUDGE_LINE_S) > 0 ? Number(process.env.NUDGE_LINE_S) : 900) * 1000;
 function nudgeLines(now) {
   let changed = false;
@@ -770,6 +829,7 @@ function nudgeLines(now) {
     if (itemClosed(l.repo, l.number)) continue;
     const closedCard = lineCard(l);
     if (closedCard && closedCard.state === 'closed') continue;
+    if (lineHandled(seat, l)) continue;
     const t = Date.parse(l.t_ct);
     if (!Number.isFinite(t) || now - t < NUDGE_LINE_MS) continue;
     const base = `nudge:line:${seat}:${l.id}`; open.add(base);
@@ -1323,6 +1383,7 @@ function evalHandoffs(now) {
   const open = new Set();
   for (const ob of due) {
     if (!SEAT_IDS.includes(ob.owes)) continue;
+    if (lineHandled(ob.owes, { repo: ob.repo, number: ob.number, sha: ob.sha, kind: ob.kind })) continue;
     const held = bfCards.find(c => c && (c.key === ob.key || (String(c.repo || '').toLowerCase() === String(ob.repo || '').toLowerCase() && Number(c.number) === Number(ob.number))));
     if (held && startIsFuture(held, now)) continue;
     const base = `nudge:handoff:${ob.key}:${ob.kind}:${ob.sha}`;
@@ -1331,14 +1392,14 @@ function evalHandoffs(now) {
       nudges.push({ id: base, kind: 'handoff', t: now, t_ct: ctStamp(now), card: ob.key, repo: ob.repo, number: ob.number,
         title: `handoff missing ${ob.kind}`.slice(0, 120), url: '', stage: '', level: 1, seat: ob.owes, via: 'handoff missing', beat_t: ob.since, sha: ob.sha, flag: 'handoff missing' });
       changed = true;
-      noteWake(ob.owes, { id: base, type: 'nudge', repo: ob.repo, number: ob.number, title: 'handoff missing', reason: `handoff missing ${ob.kind}`, sha: ob.sha });
+      noteWake(ob.owes, { id: base, type: 'nudge', kind: ob.kind, repo: ob.repo, number: ob.number, title: 'handoff missing', reason: `handoff missing ${ob.kind}`, sha: ob.sha });
     }
     const l1 = nudges.find(n => n.id === base && !n.closed_at);
     const l2id = `${base}:L2`;
     if (l1 && !nudges.some(n => n.id === l2id) && now - l1.t >= NUDGE_L2_MS) {
       nudges.push({ ...l1, id: l2id, t: now, t_ct: ctStamp(now), level: 2, seat: ob.owes, via: 'escalation' });
       changed = true;
-      noteWake(ob.owes, { id: l2id, type: 'nudge', repo: ob.repo, number: ob.number, title: 'handoff missing', reason: `nudge L2: handoff missing ${ob.kind}`, sha: ob.sha });
+      noteWake(ob.owes, { id: l2id, type: 'nudge', kind: ob.kind, repo: ob.repo, number: ob.number, title: 'handoff missing', reason: `nudge L2: handoff missing ${ob.kind}`, sha: ob.sha });
     }
     const l2 = nudges.find(n => n.id === l2id && !n.closed_at);
     if (l2 && now - l2.t >= NUDGE_L3_MS) {

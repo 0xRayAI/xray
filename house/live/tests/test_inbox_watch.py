@@ -10,6 +10,10 @@ class InboxWatch(unittest.TestCase):
     def test_syntax_and_exec(self):
         subprocess.run(["bash", "-n", str(W)], check=True)
         self.assertTrue(os.access(W, os.X_OK))
+        text = W.read_text()
+        self.assertIn("house/live/tools/live-inbox", text)
+        self.assertIn("XRAY_MAIN", text)
+        self.assertNotIn("command -v live-inbox", text)
 
     def _run(self, body, args, env_extra):
         with tempfile.TemporaryDirectory() as d:

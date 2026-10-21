@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # live-inbox-watch [seat] [interval_s]: poll a seat's inbox for a CLI seat with no webhook (Arch1 on Blaze's Mac).
 # Runs `live-inbox <seat>` every interval (default arch1, 60s) and prints any open asks. Never acks: ack with
-# `live-inbox <seat> --ack <id>` after the PR receipt for that line. `--ack stale` lists settled lines and waits for `--apply`. `--upto <id>` acks the stored prefix, including live lines. `--ack all` acks every open line. Env (defaults): LIVE_URL, SEAT_KEYS_DIR=~/.burst/seat-keys,
-# LIVE_CURSORS=~/.burst/cursors, LIVE_INBOX=live-inbox beside this script. The key is never read or printed here.
+# `live-inbox <seat> --ack <id>` after the PR receipt for that line. `--ack stale` lists settled lines and waits for `--apply`. `--upto <id>` acks the stored prefix, including live lines. `--ack all` acks every open line. Env: LIVE_URL, SEAT_KEYS_DIR=~/.burst/seat-keys.
+# The tool is main's house/live/tools/live-inbox (XRAY_MAIN, or the tools directory beside this script). Not a copy under ~/.burst/bin.
+# The cursor folder rule is grok-bot/OP-PROC.md#cursor-folder. The key is never read or printed here.
 # An approved exception to the no-local-watchers rule (Arch1's inbox poll; approved by Blaze 2026-10-13).
 # Grok hears a printed line only when this script is the host's internal monitor. A launchd job writes
 # ~/.burst/live-inbox-watch.log and does not open the chat. LIVE_WATCH_DELTA=1 prints only when the open set changes.
@@ -12,11 +13,23 @@ INTERVAL="${2:-60}"
 case "$INTERVAL" in ''|*[!0-9]*) echo "live-inbox-watch: interval must be whole seconds" >&2; exit 2 ;; esac
 export LIVE_URL="${LIVE_URL:-https://bifrost.0xray.dev}"
 export SEAT_KEYS_DIR="${SEAT_KEYS_DIR:-$HOME/.burst/seat-keys}"
-export LIVE_CURSORS="${LIVE_CURSORS:-$HOME/.burst/cursors}"
+export LIVE_CURSORS="$HOME/.burst/cursors"
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-INBOX="${LIVE_INBOX:-$HERE/live-inbox}"
-[ -x "$INBOX" ] || INBOX="$(command -v live-inbox || true)"
-[ -n "$INBOX" ] || { echo "live-inbox-watch: live-inbox not found (put it beside this script or on PATH)" >&2; exit 2; }
+if [ -n "${LIVE_INBOX:-}" ]; then
+  INBOX="$LIVE_INBOX"
+elif [ -n "${XRAY_MAIN:-}" ] && [ -x "$XRAY_MAIN/house/live/tools/live-inbox" ]; then
+  INBOX="$XRAY_MAIN/house/live/tools/live-inbox"
+else
+  case "$HERE" in
+    */.burst/bin) echo "live-inbox-watch: set XRAY_MAIN to the main checkout" >&2; exit 2 ;;
+  esac
+  if [ -x "$HERE/../tools/live-inbox" ]; then
+    INBOX="$HERE/../tools/live-inbox"
+  else
+    echo "live-inbox-watch: set XRAY_MAIN to the main checkout" >&2
+    exit 2
+  fi
+fi
 ONCE="${LIVE_WATCH_ONCE:-}"   # set to 1 to poll once and exit (tests)
 MAX="${LIVE_WATCH_MAX:-}"     # stop after this many polls (tests)
 DELTA="${LIVE_WATCH_DELTA:-}" # 1: print an open set only when it changes (host monitor)

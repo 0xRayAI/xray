@@ -16,7 +16,7 @@ A read never acks. The ack is the receipt (the pop) and a seat sends it after it
 event, or a closed or done card, and does not ack them. A missing card stays. --ack stale --apply acks the ids just listed.
 --upto <id> acks the stored prefix through that id. A plain read still shows a merged card until one of those receipts.
 --peek means the same as a plain read.
-The per-seat cursor `$LIVE_CURSORS/<seat>.txt` stores handled keys `repo#number|sha|kind`. A read does not write it.
+The cursor folder rule is grok-bot/OP-PROC.md#cursor-folder.
 `--remember --pr <owner/repo#n> --sha <head> --kind <kind>` adds that key. `--repeat` with the same flags exits 0
 when the key is already there and exits 1 for a new head. The claim is not this record.
 --turn start|end posts {kind:turn, action, t_ct, tag?} to POST /activity.
@@ -29,28 +29,299 @@ kind and head post the same line id. --sha is required and is a head of 7 to 64 
 Date: POST /cards/start-after. --start-after is an ISO time with a numeric offset (Chicago, -05:00 or -06:00). The card
 stays parked until that time, then the server wakes the owning seat. A GitHub comment whose first line is
 `Start after: <ISO>` sets the same field; the command wins while it is stored.
-Env (required, never guessed): LIVE_URL, SEAT_KEYS_DIR (key <seat>.key, never printed), LIVE_CURSORS (cursor <seat>.txt).
-A missing or empty one exits 2 and names it. WAKE-ROUTINE.md ships the export line with the defaults."""
+Env: LIVE_URL and SEAT_KEYS_DIR (key <seat>.key, never printed) are required. A missing or empty one exits 2 and names it.
+LIVE_CURSORS is not required. The cursor folder rule is grok-bot/OP-PROC.md#cursor-folder."""
 import fcntl, json, os, re, sys, time, urllib.error, urllib.parse, urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
-MISSING = [k for k in ("LIVE_URL", "SEAT_KEYS_DIR", "LIVE_CURSORS") if not os.environ.get(k, "").strip()]
+MISSING = [k for k in ("LIVE_URL", "SEAT_KEYS_DIR") if not os.environ.get(k, "").strip()]
 if MISSING:
     print("live-inbox: missing env " + ", ".join(MISSING) + " (run the export line in WAKE-ROUTINE.md first)", file=sys.stderr)
     sys.exit(2)
 URL = os.environ["LIVE_URL"].rstrip("/")
 KEYS = Path(os.environ["SEAT_KEYS_DIR"]).expanduser()
-CUR = Path(os.environ["LIVE_CURSORS"]).expanduser()
+# One folder. These three are the ones seats have written. The tool does not pick among them.
+# LIVE_CURSOR_ROOT is empty in production. A test sets it to a temp dir so the two absolute
+# folders land under that dir. $HOME/.burst/cursors moves with HOME.
+
+
+def norm_dir(path):
+    return Path(path).expanduser().resolve()
+
+
+def fixed_cursors():
+    return Path.home() / ".burst" / "cursors"
+
+
+def legacy_cursor_dirs():
+    """`/home/box/burst-run/cursors` and `/workspace/.cursors`, unless LIVE_CURSOR_ROOT prefixes both."""
+    root = os.environ.get("LIVE_CURSOR_ROOT", "").strip()
+    if not root:
+        return (Path("/home/box/burst-run/cursors"), Path("/workspace/.cursors"))
+    base = Path(root)
+    return (base / "home/box/burst-run/cursors", base / "workspace/.cursors")
+
+
+def known_cursor_dirs():
+    box, work = legacy_cursor_dirs()
+    return (box, fixed_cursors(), work)
+
+
+def resolve_cursor_dir():
+    """The cursor directory. Unset LIVE_CURSORS is the fixed folder. No search of the other two."""
+    fixed = fixed_cursors()
+    raw = os.environ.get("LIVE_CURSORS", "").strip()
+    if not raw:
+        return fixed
+    chosen = Path(raw).expanduser()
+    got = norm_dir(chosen)
+    if got == norm_dir(fixed):
+        return fixed
+    for other in legacy_cursor_dirs():
+        if got == norm_dir(other):
+            print(f"live-inbox: LIVE_CURSORS={chosen} is not the cursor folder; the folder is {fixed}", file=sys.stderr)
+            sys.exit(2)
+    return chosen
+
+
+def refuse_split_cursors(seat):
+    """Exit 2 when this seat's cursor file is in more than one of the three known folders."""
+    found = []
+    seen = set()
+    for folder in known_cursor_dirs():
+        path = folder.expanduser() / f"{seat}.txt"
+        if not path.is_file():
+            continue
+        key = str(norm_dir(path))
+        if key in seen:
+            continue
+        seen.add(key)
+        found.append(str(path))
+    if len(found) > 1:
+        print("live-inbox: " + seat + " cursor file is in more than one folder: " + ", ".join(found), file=sys.stderr)
+        sys.exit(2)
+
+
+SEAT_TXT = re.compile(r"^([a-z0-9-]{2,16})\.txt$")
+SIDECARS = (".claims.json", ".lock")
+
+
+def migrated_path(path):
+    return Path(str(path) + ".migrated")
+
+
+def prefer_fixed(path):
+    return 1 if str(norm_dir(path.parent)) == str(norm_dir(fixed_cursors())) else 0
+
+
+def each_known_file(name):
+    """Existing files of this name in the three folders, one per resolved path."""
+    found = []
+    seen = set()
+    for folder in known_cursor_dirs():
+        path = folder / name
+        if not path.is_file():
+            continue
+        key = str(norm_dir(path))
+        if key in seen:
+            continue
+        seen.add(key)
+        found.append(path)
+    return found
+
+
+def union_keys(entries):
+    """Unique handled keys. The copy from the newest file is the one kept."""
+    ordered = {}
+    ranked = []
+    for path, mtime in entries:
+        ranked.append((mtime, prefer_fixed(path), path))
+    for _mtime, _rank, path in sorted(ranked):
+        for line in path.read_text(encoding="utf-8").splitlines():
+            key = line.strip()
+            if not key:
+                continue
+            if key in ordered:
+                del ordered[key]
+            ordered[key] = key
+    return list(ordered)
+
+
+def newest_sidecar(seat, suffix):
+    best = None
+    for path in each_known_file(f"{seat}{suffix}"):
+        cand = (path.stat().st_mtime_ns, prefer_fixed(path), path)
+        if best is None or cand[:2] >= best[:2]:
+            best = cand
+    return best[2] if best else None
+
+
+def copy_aside(path):
+    """Copy path to *.migrated when that backup is absent. Never clobber an existing backup."""
+    if not path.is_file():
+        return
+    dest = migrated_path(path)
+    if dest.exists():
+        return
+    data = path.read_bytes()
+    tmp = Path(str(dest) + ".tmp")
+    tmp.write_bytes(data)
+    os.replace(tmp, dest)
+
+
+def retire_live(path):
+    """Move a live file aside. An existing *.migrated stays. Matching bytes drop the duplicate."""
+    if not path.is_file():
+        return
+    dest = migrated_path(path)
+    if not dest.exists():
+        path.rename(dest)
+        return
+    try:
+        same = path.read_bytes() == dest.read_bytes()
+    except OSError:
+        same = False
+    if same:
+        path.unlink()
+        return
+    n = 1
+    while True:
+        alt = Path(str(path) + f".migrated.{n}")
+        if not alt.exists():
+            path.rename(alt)
+            return
+        n += 1
+
+
+def write_atomic(path, data):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(path.name + ".tmp")
+    tmp.write_bytes(data)
+    os.replace(tmp, path)
+
+
+def seat_names():
+    """Seat ids that have a live cursor file or a *.txt.migrated backup in a known folder."""
+    found = set()
+    for folder in known_cursor_dirs():
+        if not folder.is_dir():
+            continue
+        try:
+            names = list(folder.iterdir())
+        except OSError as err:
+            print(f"live-inbox: cannot read {folder}: {err}", file=sys.stderr)
+            sys.exit(2)
+        for path in names:
+            if not path.is_file():
+                continue
+            name = path.name
+            seat = ""
+            if name.endswith(".txt.migrated"):
+                seat = name[: -len(".txt.migrated")]
+            else:
+                match = SEAT_TXT.fullmatch(name)
+                seat = match.group(1) if match else ""
+            if seat and SEAT_TXT.fullmatch(seat + ".txt"):
+                found.add(seat)
+    return found
+
+
+def needs_migrate(seat):
+    """True for a live split, a missing fixed file whose keys sit in *.migrated, or a leftover live file beside a backup."""
+    live = each_known_file(f"{seat}.txt")
+    migrated = each_known_file(f"{seat}.txt.migrated")
+    fixed = fixed_cursors() / f"{seat}.txt"
+    if len(live) >= 2:
+        return True
+    if migrated and not fixed.is_file():
+        return True
+    fixed_dir = str(norm_dir(fixed_cursors()))
+    return bool(migrated and any(str(norm_dir(path.parent)) != fixed_dir for path in live))
+
+
+def key_sources(seat):
+    """Live <seat>.txt plus <seat>.txt.migrated, so a crash cannot leave keys only in the backup."""
+    rows = []
+    seen = set()
+    for name in (f"{seat}.txt", f"{seat}.txt.migrated"):
+        for path in each_known_file(name):
+            key = str(norm_dir(path))
+            if key in seen:
+                continue
+            seen.add(key)
+            rows.append((path, path.stat().st_mtime_ns))
+    return rows
+
+
+def migrate_cursors():
+    """Union split seat files into the fixed folder. Write the merged file first, then rename old files."""
+    plans = []
+    for seat in sorted(seat for seat in seat_names() if needs_migrate(seat)):
+        claims = newest_sidecar(seat, ".claims.json")
+        lock = newest_sidecar(seat, ".lock")
+        plans.append({
+            "seat": seat,
+            "lines": union_keys(key_sources(seat)),
+            "live_txt": each_known_file(f"{seat}.txt"),
+            "claims_path": claims,
+            "claims": claims.read_bytes() if claims is not None else None,
+            "lock_path": lock,
+            "lock": lock.read_bytes() if lock is not None else None,
+            "live_claims": each_known_file(f"{seat}.claims.json"),
+            "live_locks": each_known_file(f"{seat}.lock"),
+        })
+    fixed = fixed_cursors()
+    if plans:
+        fixed.mkdir(parents=True, exist_ok=True)
+    for plan in plans:
+        seat = plan["seat"]
+        out = fixed / f"{seat}.txt"
+        if out.is_file():
+            copy_aside(out)
+        lines = plan["lines"]
+        write_atomic(out, (("\n".join(lines) + "\n") if lines else "").encode())
+        if plan["claims"] is not None:
+            dest = fixed / f"{seat}.claims.json"
+            if dest.is_file():
+                copy_aside(dest)
+            write_atomic(dest, plan["claims"])
+        if plan["lock"] is not None:
+            dest = fixed / f"{seat}.lock"
+            if dest.is_file():
+                copy_aside(dest)
+            write_atomic(dest, plan["lock"])
+        for path in plan["live_txt"]:
+            if str(norm_dir(path)) == str(norm_dir(out)):
+                continue
+            retire_live(path)
+        claims_dest = fixed / f"{seat}.claims.json"
+        for path in plan["live_claims"]:
+            if str(norm_dir(path)) == str(norm_dir(claims_dest)):
+                continue
+            retire_live(path)
+        lock_dest = fixed / f"{seat}.lock"
+        for path in plan["live_locks"]:
+            if str(norm_dir(path)) == str(norm_dir(lock_dest)):
+                continue
+            retire_live(path)
+        print(f"migrated {seat} {len(lines)} keys")
+
+
+CUR = resolve_cursor_dir()
 KINDS = ("ready", "critic_fail", "live_pass", "merge", "ci_fail")
 USAGE = ("usage: live-inbox <seat> [--peek] | live-inbox <seat> --ack <id|all|stale> [--apply] | live-inbox <seat> --pop <id|all> | "
          "live-inbox <seat> --upto <id> | live-inbox <seat> --release | "
          "live-inbox <seat> --remember|--repeat --pr <owner/repo#n> --sha <head> --kind <kind> | "
          "live-inbox <seat> --turn start|end [--tag <tag>] | live-inbox <seat> --prompt [--from <name>] [--room <name>] [--note <line>] | "
          "live-inbox <seat> --handoff <to> --pr <owner/repo#n> --kind <" + "|".join(KINDS) + "> --sha <head> | "
-         "live-inbox <seat> --card <owner/repo#n> --start-after <ISO>")
+         "live-inbox <seat> --card <owner/repo#n> --start-after <ISO> | "
+         "live-inbox --migrate-cursors")
 TAG = re.compile(r"[A-Za-z0-9 ._:@#+/-]{1,40}")
 argv = sys.argv[1:]
+if argv == ["--migrate-cursors"]:
+    migrate_cursors()
+    sys.exit(0)
 
 
 def take(flag):
@@ -208,6 +479,7 @@ seat = args[0]
 kf = KEYS / f"{seat}.key"
 if not kf.is_file():
     sys.exit(f"no key for seat {seat!r} (builder reads with its builder-app token on its own Mac)")
+refuse_split_cursors(seat)
 H = {"Authorization": "Bearer " + kf.read_text().strip()}
 
 

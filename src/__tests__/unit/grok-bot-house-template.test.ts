@@ -161,7 +161,12 @@ describe('grok-bot house template — USMail docs', () => {
     expect(boot).toContain('does not also run WAKE-ROUTINE step 0');
     const wake = readFileSync(path.join(kit, 'templates/house/fleet/WAKE-ROUTINE.md'), 'utf8');
     expect(wake).not.toContain('--from blaze');
-    expect(wake).toContain("trap 'live-inbox <seat> --turn end --tag wake; live-inbox <seat> --release' EXIT");
+    expect(wake).toContain('trap \'"$INBOX" <seat> --turn end --tag wake; "$INBOX" <seat> --release\' EXIT');
+    expect(wake).toContain('${XRAY_MAIN:?set XRAY_MAIN to the main checkout}/house/live/tools/live-inbox');
+    const bash = wake.split('```bash\n')[1]?.split('```')[0] ?? '';
+    expect(bash).not.toContain('LIVE_INBOX_BIN');
+    expect(bash).not.toContain('export PATH');
+    expect(wake).toContain('does not run a copied binary');
     const steps = [...wake.matchAll(/^\d+\.\s+(.*)$/gm)].map((match) => match[1]);
     expect(steps[0]).toContain('live-inbox <seat> --prompt');
     expect(steps[0]).not.toContain('--from blaze');
