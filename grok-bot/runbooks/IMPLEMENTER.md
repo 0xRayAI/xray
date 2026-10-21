@@ -4,7 +4,7 @@ Written for the cloud agent forge launches. Forge pushes. Nothing here lives onl
 Rules it serves: pack [OP-PROC](../OP-PROC.md) (**Two loops**, **Routing**, Branch + PR always, Seat identity).
 
 ## 0. Station
-- Wear the latest 0xray suit (re-wear via forge if behind). On wake read `.xray/state/STATION.md` (the ticket the station module writes; never hand-edit it), then `.xray/state/NOTES.md`, and resume. Write NOTES.md before a compact (the PreCompact hook only stamps its pickup line); never commit it. Neither file holds secrets: never keys, tokens or PEM text, only where a secret lives (its env var name).
+- On a wake, follow [Station boot](../OP-PROC.md#station-boot). GitHub calls use [seat-github-key](../skills/seat-github-key/SKILL.md).
 
 ## 0b. Read the plates first
 - Before coding, read the stamped 0xray plates (`docs-site/docs/plates/*.md`) for the area you touch, and list them in the PR body's `Plates read:` field (PR template: `.github/pull_request_template.md` in the repo).

@@ -264,9 +264,9 @@ describe('pipeline plates', () => {
     expect(stamps).not.toContain('**Host Pack**');
     const op = readFileSync(join(process.cwd(), 'grok-bot/OP-PROC.md'), 'utf8').split('\n');
     const opLines = op.at(-1) === '' ? op.length - 1 : op.length;
-    expect(opLines).toBeLessThanOrEqual(75);   // cap raised by Blaze 2026-10-13
-    const npmRow = op.find((line) => line.startsWith('| npm |')) ?? '';
-    const opBody = op.filter((line) => !line.startsWith('| npm |')).join('\n');
+    expect(opLines).toBeLessThanOrEqual(125);   // cap raised by Blaze 2026-10-21
+    const npmRow = op.find((line) => line.includes('id="npm"')) ?? '';
+    const opBody = op.filter((line) => !line.includes('id="npm"')).join('\n');
     expect(npmRow).toMatch(/gate jargon \(Kind 0,/);
     expect(opBody).not.toMatch(/Kind 0|outer plane/i);
     expect(op.join('\n')).not.toMatch(/outer plane/i);

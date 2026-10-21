@@ -29,7 +29,7 @@ Paste as **Allow automatically** rules:
 3. Download SSOT archives from `gist.githubusercontent.com` into the workspace when requested
 4. Post or reply on X as `@0xRayAI` when Dist execute path is active (house Dist exception)
 5. Create public gists for **non-secret** auxiliary files / tarballs only (no tokens)
-6. For 0xRayAI/0xray-moltbook only, merge to main after critic PASS is the deploy (Railway auto-deploys). No other repo.
+6. For 0xRayAI/0xray-moltbook only, merge to main after critic PASS is the deploy (Railway auto-deploys). No other repo. A hotfix is the one exception: it merges only on green CI, never before.
 
 ## Seat App credentials (#291)
 The old Always-allow ban on App PEM use, App token minting and App reviews is **revoked** (#291). A seat may Always-allow
@@ -51,7 +51,7 @@ Auto Review is account-wide. Seat law still applies:
 
 | Action | Who | Gate |
 |--------|-----|------|
-| git push / merge after critic PASS | forge | critic Strict + CI |
+| git push / merge after critic PASS | forge | critic Strict + CI. A hotfix is the one exception: it merges only on green CI, never before. |
 | npm publish | forge | critic PASS + tag; **Ask first** card (Blaze Allow once / Always if desired) |
 | Railway deploy | forge | critic when Strict; **Ask first** card |
 | @0xRayAI Dist | herald | CoS EXECUTE packet + friend-test; Auto Review **Allow** |

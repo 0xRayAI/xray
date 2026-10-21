@@ -16,7 +16,7 @@ Primary scripts for agents. Run in order for **each** key agent.
 | [ship-ready-mill-gate](skills/ship-ready-mill-gate/SKILL.md) | Strict ship checklist. Reviewer proof card is a short note |
 | [codex-fleet-constitution](skills/codex-fleet-constitution/SKILL.md) | Token discipline / fit-for-purpose |
 | [survive-compact](skills/survive-compact/SKILL.md) | After long wakes / before coding — re-read disk; chat may lose early turns |
-| [board-prompt](skills/board-prompt/SKILL.md) | On any inbound message, post the turn before other work, and one owner prompt |
+| [board-prompt](skills/board-prompt/SKILL.md) | Pointer to station. Not a second boot |
 | [setup-house](skills/setup-house/SKILL.md) | No `house/` folder yet — `grok-bot house init` copies `templates/house/` and refuses to overwrite |
 | [station](skills/station/SKILL.md) | Boot hook. Light on an owner message. Full after a summary, a wake, or a gate |
 | [seat-github-key](skills/seat-github-key/SKILL.md) | `~/bin/gh-<seat>` mints a fresh App token every call. Never plain `gh` |
