@@ -10,25 +10,27 @@ description: >
 
 Do this. Do not explore the tree to rediscover it.
 
-Work from a new branch and worktree off current `origin/main`. One plate, one ASCII file. Its X copy is a PNG at `docs-site/static/plates/x/<id>.png`. An X PNG is freely designed in the stamped style and must flow the same as the `.md` plate: same nodes, text, order, edges and layers, checked by the flow-equivalence test in `src/__tests__/unit/plates.test.ts`. Icons, rails, and arrowheads come only from the locked kit. Run that test before the PR.
+Work from a new branch and worktree off current `origin/main`. One plate, one ASCII file. Its X copy is a PNG at `docs-site/static/plates/x/<id>.png`. An X PNG is assembled from the locked kit and must flow the same as the `.md` plate: same nodes, text, order, edges and layers, checked by the flow-equivalence test in `src/__tests__/unit/plates.test.ts`. Every visual part comes from `plates/kit/`. Run that test before the PR.
 
 ## Which kind of plate
 
 There are two kinds of stamped plate.
 
 - **ASCII table plate (for agents).** The box drawing in `docs-site/docs/plates/<id>.md`, made with this skill. Every plate tied to a lens must be this kind. The lens and recall open it, it carries the file:line cites, and it is the source of truth for that plate.
-- **Graphical plate (for X and people).** An X PNG freely designed in the stamped style, drawn only from the locked kit. The frame is heavy riveted dark metal with corner bolts and a cyan inner edge glow. The header is a plaque with the 0xRay mark, a big distressed stencil title, and an optional cyan subtitle on its own line. Steps are rounded brushed-metal cards with a bold caps condensed title and detail lines in a clean condensed sans below. An ordered step gets a number tile and no icon. Every other card gets one hand-drawn icon and no number. Never both. Connectors are the kit's rails and triangular arrowheads. Cyan is the default. Bifrost uses the six rainbow colors. The footer is a recessed banner of cyan text. It must flow the same as the `.md` plate: same nodes, text, order, edges and layers. The flow-equivalence test checks that. It adds no claim the ASCII plate does not have, and a lens never points at it. Width stays 1280. Height grows before any font shrinks. A line is never cut. Commit it as `docs-site/static/plates/x/<id>.png`. Draw it with `grok-bot/skills/draw-stamped-card/recipes/layered-flow/render.py`. The references in `.agents/skills/stamp-plate/refs/` are the stamped frame (`stamped-frame.png`), the flow the markdown already has (`flow-source.png`), and one infographic in that style (`infographic.png`).
+- **Graphical plate (for X and people).** An X PNG assembled from the locked kit, not drawn with ad-hoc shapes. The parts are the riveted frame and corner rivets, the header bar (logo slot, title, subtitle, accent rail), the layer label, the card box, the number tile, the icons, the rail segments, the junctions, the arrowheads, and the footer. The renderer lays those parts out and fills the title, subtitle, card text, and footer from the `.md`. The frame is heavy riveted dark metal with corner rivets and a cyan inner edge. The header holds the 0xRay mark, a big distressed stencil title, and an optional cyan subtitle on its own line under the title. Steps are rounded metal cards with a bold caps condensed title and detail lines in a clean condensed sans below. An ordered step gets a number tile and no icon. Every other card gets one hand-drawn icon and no number. Never both. Connectors are the kit's rails, junctions, and triangular arrowheads. Cyan is the default. Bifrost uses the six rainbow colors on the rails, the arrowheads, and the accent rail. The footer is a recessed banner of cyan text. It must flow the same as the `.md` plate: same nodes, text, order, edges and layers. The flow-equivalence test checks that. It adds no claim the ASCII plate does not have, and a lens never points at it. Width stays 1280. Height grows before any font shrinks. A line is never cut. Commit it as `docs-site/static/plates/x/<id>.png`. Assemble it with `grok-bot/skills/draw-stamped-card/recipes/layered-flow/render.py`. The references in `.agents/skills/stamp-plate/refs/` are the stamped frame (`stamped-frame.png`), the flow the markdown already has (`flow-source.png`), and one infographic in that style (`infographic.png`).
 
 Order: the ASCII plate first, through critic. The graphical plate after, when X or people need it.
 
 ## Plate kit
 
-The X renderer draws icons and connectors only from the locked kit.
+Plates are assembled, not drawn. Every visual part is an approved SVG in `plates/kit/`. `plates/kit.json` lists each part with its sizes and its palette. The renderer only lays the parts out and fills in text from the `.md`. It draws no ad-hoc shapes.
 
-- `plates/icons/icons.json` maps each node kind to exactly one hand-drawn SVG in `plates/icons/`. No emoji and no font glyph is an icon.
-- `plates/kit.json` lists the approved line and arrow: rail width, triangular arrowhead length and half-width, and the fixed palette. Cyan is the default. A title that contains Bifrost uses the six rainbow colors.
+- Parts: `frame`, `rivet`, `header`, `logoSlot`, `title`, `subtitle`, `accentRail`, `layerLabel`, `card`, `numberTile`, `icon`, `rail`, `junction`, `arrowhead`, `footer`.
+- `parts.icon.files` maps each node kind to exactly one hand-drawn SVG in `plates/kit/`. No emoji and no font glyph is an icon.
+- The palette is fixed. Cyan is the default. A title that contains Bifrost uses the six rainbow colors, including the dim glow of each. Rails use the rail width. Arrowheads are triangles of the listed length and half-width.
+- The title and subtitle parts are slots. The renderer fills them with the plate title and the optional subtitle, on their own lines.
 - An ordered step gets a number tile and no icon. Every other card gets that kind's icon and no number. Never both.
-- `src/__tests__/unit/plates.test.ts` fails on an unknown icon kind, a missing SVG, a color or arrow style outside the kit, or a card with both a number and an icon.
+- `src/__tests__/unit/plates.test.ts` fails on an unknown icon kind, a missing SVG, a color or arrow style outside the kit, a card with both a number and an icon, or a shape or color that is not in the kit.
 
 ## Plate
 

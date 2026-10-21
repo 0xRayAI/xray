@@ -1,8 +1,8 @@
 """Stamped infographic X copy of an ASCII plate.
 
-The drawing is free: riveted frame, icon cards, bold caps titles, cyan block
-arrows, numbered processing tiles, footer banner. The flow is not free. Nodes,
-text, order, edges, and layers come from the markdown fence.
+The plate is assembled from the SVGs in plates/kit. This file lays those parts
+out and fills in text from the markdown fence. Nodes, text, order, edges, and
+layers come from that fence.
 
 Usage:
   python3 render.py --plate docs-site/docs/plates/routing.md --out docs-site/static/plates/x/routing.png
@@ -11,7 +11,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import inspect
+import ast
 import json
 import re
 import struct
@@ -37,19 +37,7 @@ HERE = Path(__file__).resolve().parent
 SB = HERE.parent / "bifrost-storyboard"
 sys.path.insert(0, str(HERE.parent.parent / "lib"))
 sys.path.insert(0, str(SB / "lib"))
-import metal_kit  # noqa: E402
-from metal_kit import (  # noqa: E402
-    glow,
-    outer_frame,
-    paint,
-    raised_plaque,
-    recessed_tray,
-    rect_mask as _RECT,
-    to_img,
-)
 from draw_0xray_logo import draw_0xray_logo  # noqa: E402
-
-metal_kit._metal_orig = metal_kit.metal
 
 ROOT = HERE.parents[4]
 PLATES = ROOT / "docs-site/docs/plates"
@@ -59,13 +47,13 @@ SANS = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
 BLACKOPS = str(SB / "assets/fonts/BlackOpsOne-Regular.ttf")
 BARLOW = str(SB / "assets/fonts/BarlowCondensed-Bold.ttf")
 BARLOW_SEMI = str(SB / "assets/fonts/BarlowCondensed-SemiBold.ttf")
-W = 1280
-WELL_L, WELL_R = 56, 1224
 TEXT_KEY = "xray-plate-flow"
 KIT_PATH = ROOT / "plates/kit.json"
-ICONS_DIR = ROOT / "plates/icons"
+KIT_DIR = ROOT / "plates/kit"
 KIT = json.loads(KIT_PATH.read_text(encoding="utf8"))
-ICONS = json.loads((ICONS_DIR / "icons.json").read_text(encoding="utf8"))
+ICONS_DIR = KIT_DIR
+ICONS = KIT["parts"]["icon"]["files"]
+LAYOUT = KIT["layout"]
 
 
 def _rgb(value: list[int]) -> tuple[int, int, int]:
@@ -78,7 +66,7 @@ def palette_color(name: str) -> tuple[int, int, int]:
     if name not in palette or name in {"default", "rainbow"}:
         raise KeyError(name)
     value = palette[name]
-    if not isinstance(value, list):
+    if not isinstance(value, list) or not value or isinstance(value[0], list):
         raise KeyError(name)
     return _rgb(value)
 
@@ -101,49 +89,303 @@ INK = palette_color("ink")
 MUTED = palette_color("muted")
 SHADOW = palette_color("shadow")
 RAINBOW = rainbow_colors()
-RAIL_WIDTH = int(KIT["line"]["railWidth"])
-RAIL_GLOW = int(KIT["line"]["railGlow"])
+RAINBOW_NAMES = ("red", "orange", "yellow", "green", "blue", "violet")
+RAINBOW_DIMS = tuple(f"{name}Dim" for name in RAINBOW_NAMES)
 GLOW_FACTOR = float(KIT["line"]["glowFactor"])
 HEAD_SHAPE = str(KIT["line"]["arrowhead"]["shape"])
-HEAD_LEN = int(KIT["line"]["arrowhead"]["length"])
-HEAD_HALF = int(KIT["line"]["arrowhead"]["halfWidth"])
-HEAD_GLOW_HALF = int(KIT["line"]["arrowhead"]["glowHalfWidth"])
 if HEAD_SHAPE != "triangle":
     raise RuntimeError(f"arrow style outside the kit: {HEAD_SHAPE}")
 if KIT["palette"].get("default") != "cyan":
     raise RuntimeError("default color is outside the kit")
-_POLY = metal_kit.poly_mask
 RAINBOW_ARROWS = False
-# These arrows are drawn, not taken from a font. Barlow has no → glyph.
+# These arrows are placed from the kit, not taken from a font. Barlow has no → glyph.
 INLINE_ARROWS = {
     "→": 1,
     "←": -1,
     "↔": 0,
 }
 _CMAP: dict[str, set[int]] = {}
+_RASTER: dict[tuple[str, str], Image.Image] = {}
+SHAPE_DRAWS = ("line", "rectangle", "rounded_rectangle", "polygon", "ellipse", "arc", "pieslice", "chord")
+SVG_TAGS = {"svg", "g", "rect", "circle", "ellipse", "line", "polyline", "polygon", "title", "desc", "defs"}
 
 
-def bind_canvas(width: int, height: int) -> None:
-    """Tall plates need the real mask size. Quiet grain keeps a 256-color PNG small."""
-    size = (width, height)
+def layout_num(key: str) -> float:
+    return float(LAYOUT[key])
 
-    def rect_mask(box, radius=0, size=size):
-        return _RECT(box, radius, size)
 
-    def poly_mask(pts, size=size):
-        return _POLY(pts, size)
+def part_size(part: str, key: str) -> float:
+    try:
+        return float(KIT["parts"][part]["sizes"][key])
+    except (KeyError, TypeError) as exc:
+        raise KeyError(f"{part}.{key}") from exc
 
-    def metal(h, w, seed, tone=(58, 58, 60), rough=1.0, brushed=False, pits=0.0):
-        return metal_kit._metal_orig(h, w, seed, tone, min(rough, 0.16), brushed, 0.0)
 
-    def scratches(arr, seed, count=160, alpha=0.10):
-        return arr
+W = int(layout_num("width"))
+WELL_L = int(layout_num("wellLeft"))
+WELL_R = int(layout_num("wellRight"))
+RAIL_WIDTH = part_size("rail", "width")
+RAIL_GLOW = part_size("rail", "glow")
+HEAD_LEN = part_size("arrowhead", "length")
+HEAD_HALF = part_size("arrowhead", "halfWidth")
+HEAD_GLOW_HALF = part_size("arrowhead", "glowHalfWidth")
 
-    metal_kit.rect_mask = rect_mask
-    metal_kit.poly_mask = poly_mask
-    metal_kit.metal = metal
-    metal_kit.scratches = scratches
-    metal_kit.W, metal_kit.H = width, height
+
+def _svg_pairs(points: str) -> list[tuple[float, float]]:
+    nums = [float(item) for item in points.replace(",", " ").split()]
+    return list(zip(nums[0::2], nums[1::2]))
+
+
+def _paste(base: Image.Image, sprite: Image.Image, x: int, y: int) -> None:
+    if sprite.width < 1 or sprite.height < 1:
+        return
+    if x >= base.width or y >= base.height:
+        return
+    left = max(0, -x)
+    top = max(0, -y)
+    right = sprite.width - max(0, x + sprite.width - base.width)
+    bottom = sprite.height - max(0, y + sprite.height - base.height)
+    if right <= left or bottom <= top:
+        return
+    if left or top or right < sprite.width or bottom < sprite.height:
+        sprite = sprite.crop((left, top, right, bottom))
+    base.alpha_composite(sprite, (max(0, x), max(0, y)))
+
+
+def _turn_sprite(sprite: Image.Image, turn: str) -> Image.Image:
+    if turn in {"", "right"}:
+        return sprite
+    if turn == "left":
+        return sprite.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+    if turn == "down":
+        return sprite.transpose(Image.Transpose.ROTATE_270)
+    if turn == "up":
+        return sprite.transpose(Image.Transpose.ROTATE_90)
+    raise RuntimeError(f"turn outside the kit: {turn}")
+
+
+def stamp_svg(
+    img: Image.Image,
+    path: Path,
+    box: tuple[float, float, float, float],
+    color: str,
+    turn: str = "",
+    slice_units: float = 0,
+    bands: list[str] | None = None,
+    axis: str = "h",
+) -> None:
+    """Paint one kit SVG into a box. The only place a plate shape is drawn."""
+    palette_color(color)
+    if bands:
+        for name in bands:
+            palette_color(name)
+    root = ET.parse(path).getroot()
+    view = [float(item) for item in root.attrib.get("viewBox", "0 0 24 24").split()]
+    if len(view) != 4:
+        raise RuntimeError(f"viewBox outside the kit: {path.name}")
+    vx, vy, vw, vh = view
+    if vw <= 0 or vh <= 0:
+        raise RuntimeError(f"viewBox outside the kit: {path.name}")
+
+    def resolve(value: str, tint: tuple[int, int, int]) -> tuple[int, int, int] | None:
+        if value in {"", "none"}:
+            return None
+        if value == "currentColor":
+            return tint
+        prefix = "palette:"
+        if value.startswith(prefix):
+            return palette_color(value[len(prefix):])
+        raise RuntimeError(f"color outside the kit: {value}")
+
+    def paint_tree(target: Image.Image, dest: tuple[float, float, float, float], tint_name: str) -> None:
+        tint = palette_color(tint_name)
+        dx0, dy0, dx1, dy1 = dest
+        sx = (dx1 - dx0) / vw
+        sy = (dy1 - dy0) / vh
+        if sx == 0 or sy == 0:
+            return
+        draw = ImageDraw.Draw(target)
+        unit = min(abs(sx), abs(sy))
+
+        def pt(x: float, y: float) -> tuple[float, float]:
+            return (dx0 + (x - vx) * sx, dy0 + (y - vy) * sy)
+
+        def walk(el: ET.Element, fill_v: str, stroke_v: str, sw_v: str) -> None:
+            tag = el.tag.rsplit("}", 1)[-1]
+            if tag not in SVG_TAGS:
+                raise RuntimeError(f"shape outside the kit: {tag}")
+            fill_v = el.attrib.get("fill", fill_v)
+            stroke_v = el.attrib.get("stroke", stroke_v)
+            sw_v = el.attrib.get("stroke-width", sw_v)
+            if "style" in el.attrib:
+                raise RuntimeError(f"color outside the kit: {path.name}")
+            if tag in {"svg", "g"}:
+                for child in list(el):
+                    walk(child, fill_v, stroke_v, sw_v)
+                return
+            if tag in {"title", "desc", "defs"}:
+                return
+            fill = resolve(fill_v, tint)
+            stroke = resolve(stroke_v, tint)
+            if fill is None and stroke is None:
+                return
+            width = max(1, int(round(float(sw_v) * unit)))
+            if tag == "rect":
+                rx = float(el.attrib.get("rx", "0")) * unit
+                x = float(el.attrib.get("x", "0"))
+                y = float(el.attrib.get("y", "0"))
+                rw = float(el.attrib["width"])
+                rh = float(el.attrib["height"])
+                p0, p1 = pt(x, y), pt(x + rw, y + rh)
+                span = (min(p0[0], p1[0]), min(p0[1], p1[1]), max(p0[0], p1[0]), max(p0[1], p1[1]))
+                if rx > 0:
+                    cap = min(rx, abs(span[2] - span[0]) / 2, abs(span[3] - span[1]) / 2)
+                    draw.rounded_rectangle(span, radius=cap, fill=fill, outline=stroke, width=width)
+                else:
+                    draw.rectangle(span, fill=fill, outline=stroke, width=width if stroke else 1)
+                return
+            if tag == "line":
+                draw.line(
+                    [pt(float(el.attrib["x1"]), float(el.attrib["y1"])), pt(float(el.attrib["x2"]), float(el.attrib["y2"]))],
+                    fill=stroke or fill or tint,
+                    width=width,
+                )
+                return
+            if tag == "circle":
+                cx = float(el.attrib["cx"])
+                cy = float(el.attrib["cy"])
+                radius = float(el.attrib["r"])
+                draw.ellipse([pt(cx - radius, cy - radius), pt(cx + radius, cy + radius)], fill=fill, outline=stroke, width=width)
+                return
+            if tag == "ellipse":
+                cx = float(el.attrib["cx"])
+                cy = float(el.attrib["cy"])
+                rx_e = float(el.attrib["rx"])
+                ry_e = float(el.attrib["ry"])
+                draw.ellipse([pt(cx - rx_e, cy - ry_e), pt(cx + rx_e, cy + ry_e)], fill=fill, outline=stroke, width=width)
+                return
+            mapped = [pt(x, y) for x, y in _svg_pairs(el.attrib.get("points", ""))]
+            if len(mapped) < 2:
+                return
+            if tag == "polygon":
+                draw.polygon(mapped, fill=fill, outline=stroke)
+                return
+            draw.line(mapped, fill=stroke or fill or tint, width=width)
+
+        walk(root, root.attrib.get("fill", "none"), root.attrib.get("stroke", "none"), root.attrib.get("stroke-width", "1"))
+
+    def raster(tint_name: str) -> Image.Image:
+        key = (str(path), tint_name)
+        cached = _RASTER.get(key)
+        if cached is not None:
+            return cached
+        scale = 2.0
+        sprite = Image.new("RGBA", (max(1, int(round(vw * scale))), max(1, int(round(vh * scale)))), (0, 0, 0, 0))
+        paint_tree(sprite, (0, 0, sprite.width, sprite.height), tint_name)
+        _RASTER[key] = sprite
+        return sprite
+
+    def nine_slice(sprite: Image.Image, dest: tuple[int, int, int, int]) -> None:
+        x0, y0, x1, y1 = dest
+        dw, dh = x1 - x0, y1 - y0
+        scale = sprite.width / vw
+        src_sl = int(round(slice_units * scale))
+        dst_sl = int(round(slice_units))
+        sw, sh = sprite.size
+        if src_sl < 1 or dst_sl < 1 or dw <= dst_sl * 2 or dh <= dst_sl * 2 or sw <= src_sl * 2 or sh <= src_sl * 2:
+            _paste(img, sprite.resize((dw, dh), Image.Resampling.NEAREST), x0, y0)
+            return
+        sx = (0, src_sl, sw - src_sl, sw)
+        sy = (0, src_sl, sh - src_sl, sh)
+        dx = (x0, x0 + dst_sl, x1 - dst_sl, x1)
+        dy = (y0, y0 + dst_sl, y1 - dst_sl, y1)
+        for iy in range(3):
+            for ix in range(3):
+                crop = sprite.crop((sx[ix], sy[iy], sx[ix + 1], sy[iy + 1]))
+                tw, th = dx[ix + 1] - dx[ix], dy[iy + 1] - dy[iy]
+                if crop.width < 1 or crop.height < 1 or tw < 1 or th < 1:
+                    continue
+                _paste(img, crop.resize((tw, th), Image.Resampling.NEAREST), dx[ix], dy[iy])
+
+    x0, y0, x1, y1 = box
+    if x1 < x0:
+        x0, x1 = x1, x0
+    if y1 < y0:
+        y0, y1 = y1, y0
+    if x1 - x0 < 1 or y1 - y0 < 1:
+        return
+    left, top, right, bot = int(round(x0)), int(round(y0)), int(round(x1)), int(round(y1))
+    if right <= left or bot <= top:
+        return
+    if slice_units > 0:
+        nine_slice(raster(color), (left, top, right, bot))
+        return
+    if bands:
+        pieces = [np.array(raster(name)) for name in bands]
+        merged = pieces[0].copy()
+        count = len(pieces)
+        height, width = merged.shape[0], merged.shape[1]
+        for index, piece in enumerate(pieces):
+            if axis == "v":
+                a = height * index // count
+                b = height * (index + 1) // count
+                if b > a:
+                    merged[a:b, :, :] = piece[a:b, :, :]
+            else:
+                a = width * index // count
+                b = width * (index + 1) // count
+                if b > a:
+                    merged[:, a:b, :] = piece[:, a:b, :]
+        sprite = Image.fromarray(merged, "RGBA")
+        dw, dh = right - left, bot - top
+        if turn in {"up", "down"}:
+            pre = (max(1, dh), max(1, dw))
+        else:
+            pre = (max(1, dw), max(1, dh))
+        sprite = sprite.resize(pre, Image.Resampling.NEAREST)
+        _paste(img, _turn_sprite(sprite, turn), left, top)
+        return
+    if turn:
+        dw, dh = right - left, bot - top
+        if turn in {"up", "down"}:
+            pre_w, pre_h = dh, dw
+        else:
+            pre_w, pre_h = dw, dh
+        temp = Image.new("RGBA", (max(1, pre_w), max(1, pre_h)), (0, 0, 0, 0))
+        paint_tree(temp, (0, 0, temp.width, temp.height), color)
+        _paste(img, _turn_sprite(temp, turn), left, top)
+        return
+    paint_tree(img, (left, top, right, bot), color)
+
+
+def place_part(
+    img: Image.Image,
+    part: str,
+    box: tuple[float, float, float, float],
+    color: str,
+    turn: str = "",
+    kind: str = "",
+    bands: list[str] | None = None,
+    axis: str = "h",
+) -> None:
+    """Lay one approved part into the plate. Text is filled in by the caller."""
+    try:
+        spec = KIT["parts"][part]
+    except KeyError as exc:
+        raise KeyError(f"part outside the kit: {part}") from exc
+    if part == "icon":
+        try:
+            name = spec["files"][kind]
+        except KeyError as exc:
+            raise KeyError(f"unknown icon kind: {kind}") from exc
+    else:
+        name = spec["svg"]
+    if not isinstance(name, str) or name != Path(name).name or not name.endswith(".svg"):
+        raise KeyError(f"part outside the kit: {part}")
+    svg = KIT_DIR / name
+    if not svg.is_file():
+        raise FileNotFoundError(f"missing SVG: {name}")
+    stamp_svg(img, svg, box, color, turn, float(spec["sizes"].get("slice", 0)), bands, axis)
 
 
 def fence_payload(text: str) -> str:
@@ -326,8 +568,8 @@ def run_width(text: str, font: ImageFont.FreeTypeFont) -> float:
     return total
 
 
-def draw_inline_arrow(draw: ImageDraw.ImageDraw, x: float, y: float, font: ImageFont.FreeTypeFont, ch: str) -> float:
-    """Small cyan block arrow standing in for a character the face does not have."""
+def draw_inline_arrow(img: Image.Image, x: float, y: float, font: ImageFont.FreeTypeFont, ch: str) -> float:
+    """Small kit arrow standing in for a character the face does not have."""
     width = inline_arrow_width(font)
     ascent, _descent = font.getmetrics()
     mid = y + ascent * 0.58
@@ -336,25 +578,19 @@ def draw_inline_arrow(draw: ImageDraw.ImageDraw, x: float, y: float, font: Image
     direction = INLINE_ARROWS[ch]
     if direction >= 0:
         shaft = x + width - head
-        draw.rectangle((x, mid - thick, shaft, mid + thick), fill=CYAN_DIM)
-        draw.rectangle((x, mid - thick * 0.55, shaft, mid + thick * 0.55), fill=CYAN)
-        draw.polygon(
-            [(shaft - 1, mid - thick * 2.3), (shaft - 1, mid + thick * 2.3), (x + width, mid)],
-            fill=CYAN,
-        )
+        place_part(img, "rail", (x, mid - thick, shaft, mid + thick), "cyanDim")
+        place_part(img, "rail", (x, mid - thick * 0.55, shaft, mid + thick * 0.55), "cyan")
+        place_part(img, "arrowhead", (shaft, mid - thick * 2.3, x + width, mid + thick * 2.3), "cyan", turn="right")
     if direction <= 0:
         shaft = x + head
-        draw.rectangle((shaft, mid - thick, x + width, mid + thick), fill=CYAN_DIM)
-        draw.rectangle((shaft, mid - thick * 0.55, x + width, mid + thick * 0.55), fill=CYAN)
-        draw.polygon(
-            [(shaft + 1, mid - thick * 2.3), (shaft + 1, mid + thick * 2.3), (x, mid)],
-            fill=CYAN,
-        )
+        place_part(img, "rail", (shaft, mid - thick, x + width, mid + thick), "cyanDim")
+        place_part(img, "rail", (shaft, mid - thick * 0.55, x + width, mid + thick * 0.55), "cyan")
+        place_part(img, "arrowhead", (x, mid - thick * 2.3, shaft, mid + thick * 2.3), "cyan", turn="left")
     return x + width
 
 
 def paint_text(
-    draw: ImageDraw.ImageDraw,
+    img: Image.Image,
     xy: tuple[float, float],
     text: str,
     font: ImageFont.FreeTypeFont,
@@ -362,6 +598,7 @@ def paint_text(
     font_path: str,
 ) -> None:
     ensure_glyphs(font_path, text)
+    draw = ImageDraw.Draw(img)
     x, y = xy
     buf: list[str] = []
 
@@ -377,7 +614,7 @@ def paint_text(
     for ch in text:
         if ch in INLINE_ARROWS:
             flush()
-            x = draw_inline_arrow(draw, x, y, font, ch)
+            x = draw_inline_arrow(img, x, y, font, ch)
         else:
             buf.append(ch)
     flush()
@@ -507,8 +744,8 @@ def card_width(inner: int, count: int, gap: int) -> int:
 
 
 def content_width(width: int, numbered: bool) -> int:
-    badge = 46 if numbered else 36
-    gutter = 18 + badge + 16
+    badge = part_size("numberTile", "advance") if numbered else part_size("icon", "advance")
+    gutter = part_size("card", "padX") + badge + part_size("card", "padRight")
     return max(40, width - gutter)
 
 
@@ -521,9 +758,13 @@ def card_metrics(lines: list[str], width: int, numbered: bool) -> dict:
     wrapped: list[str] = []
     for detail in details:
         wrapped.extend(wrap_lines(detail, body, inner))
-    line_h = title_font.size + 4
-    title_h = max(34, max(1, len(title_lines)) * line_h)
-    height = max(112, 18 + title_h + 8 + len(wrapped) * (body.size + 7) + 18)
+    line_h = title_font.size + int(part_size("card", "titleLead"))
+    title_h = max(int(part_size("card", "titleMin")), max(1, len(title_lines)) * line_h)
+    block = int(part_size("card", "blockPad"))
+    height = max(
+        int(part_size("card", "minHeight")),
+        block + title_h + int(part_size("card", "detailGap")) + len(wrapped) * (body.size + int(part_size("card", "detailLead"))) + block,
+    )
     return {
         "height": height,
         "title_lines": title_lines,
@@ -558,26 +799,27 @@ def visual_rows(rows: list[list[tuple[int, Box]]]) -> list[list[int]]:
 
 def layout(flow: dict, boxes: list[list[Box]], header_bottom: int) -> tuple[int, list[dict], list[dict]]:
     """Place every card. Height grows with the text. Nothing is dropped."""
-    inner = WELL_R - WELL_L - 36
-    y = header_bottom + 22
+    inner = WELL_R - WELL_L - int(layout_num("innerInset"))
+    y = header_bottom + int(layout_num("belowHeader"))
     placed: list[dict] = []
     bands: list[dict] = []
     stacked = all(len(layer["nodes"]) == 1 and not layer["name"] for layer in flow["layers"])
     stack_step = 1
+    row_gap = int(layout_num("rowGap"))
     for li, layer in enumerate(flow["layers"]):
         rows = row_groups(boxes[li])
         numbered = "PROCESSING" in layer["name"].upper() or (stacked and len(flow["layers"]) >= 3)
         groups = visual_rows(rows)
         cols = max(len(group) for group in groups)
         band_top = y
-        cursor = y + 8
+        cursor = y + int(layout_num("bandPad"))
         if layer["name"]:
-            cursor += 28
+            cursor += int(layout_num("labelBlock"))
         row_places: list[list[dict]] = []
         for ri, group in enumerate(groups):
-            gap = 64 if _indexes_have_horizontal(flow, li, group) and len(group) > 1 else 20
+            gap = int(layout_num("arrowGap") if _indexes_have_horizontal(flow, li, group) and len(group) > 1 else layout_num("cardGap"))
             if len(group) == 1 and cols == 1 and not layer["name"]:
-                width = min(920, inner)
+                width = min(int(layout_num("singleMax")), inner)
                 widths = [width]
             else:
                 width = card_width(inner, max(cols, len(group)), gap)
@@ -593,7 +835,7 @@ def layout(flow: dict, boxes: list[list[Box]], header_bottom: int) -> tuple[int,
                 for i, ni in enumerate(group)
             ]
             row_h = max(heights)
-            x = WELL_L + 18 + offset
+            x = WELL_L + int(part_size("card", "padX")) + offset
             cards = []
             for i, ni in enumerate(group):
                 rect = (x, cursor, x + widths[i], cursor + row_h)
@@ -606,23 +848,23 @@ def layout(flow: dict, boxes: list[list[Box]], header_bottom: int) -> tuple[int,
             row_places.append(cards)
             cursor += row_h
             if ri < len(groups) - 1:
-                cursor += 72
-        cursor += 10
+                cursor += row_gap
+        cursor += int(layout_num("bandEnd"))
         bands.append({
             "rect": (WELL_L, band_top, WELL_R, cursor),
             "name": layer["name"],
             "rows": row_places,
         })
         placed.extend(card for row in row_places for card in row)
-        y = cursor + (72 if li < len(flow["layers"]) - 1 else 0)
+        y = cursor + (row_gap if li < len(flow["layers"]) - 1 else 0)
     note_h = 0
     if flow["notes"]:
-        note_font = font_at(BARLOW_SEMI, 18)
+        note_font = font_at(BARLOW_SEMI, int(layout_num("noteSize")))
         for note in flow["notes"]:
-            note_h += 24 * max(1, len(wrap_lines(note, note_font, inner)))
-        note_h += 16
-    foot_top = y + 12 + note_h
-    height = foot_top + 78 + 36
+            note_h += int(layout_num("noteLine")) * max(1, len(wrap_lines(note, note_font, inner)))
+        note_h += int(part_size("header", "after"))
+    foot_top = y + int(layout_num("footGap")) + note_h
+    height = foot_top + int(part_size("footer", "block"))
     return height, bands, placed
 
 
@@ -637,123 +879,96 @@ def _indexes_have_horizontal(flow: dict, layer: int, indexes: list[int]) -> bool
     return False
 
 
-def _shade(color: tuple[int, int, int], factor: float) -> tuple[int, int, int]:
-    return tuple(max(0, min(255, int(channel * factor))) for channel in color)
+def _span_colors(full: bool) -> list[str]:
+    if RAINBOW_ARROWS:
+        return list(RAINBOW_NAMES if full else RAINBOW_DIMS)
+    return ["cyan" if full else "cyanDim"]
 
 
-def _paint_span(draw: ImageDraw.ImageDraw, box: tuple[float, float, float, float], along: str, factor: float) -> None:
+def _paint_span(img: Image.Image, box: tuple[float, float, float, float], along: str, full: bool) -> None:
     x0, y0, x1, y1 = box
-    if not RAINBOW_ARROWS:
-        fill = CYAN if factor >= 1 else CYAN_DIM
-        draw.rectangle((x0, y0, x1, y1), fill=fill)
+    if x1 < x0:
+        x0, x1 = x1, x0
+    if y1 < y0:
+        y0, y1 = y1, y0
+    if x1 - x0 < 1 or y1 - y0 < 1:
+        return
+    names = _span_colors(full)
+    if len(names) == 1:
+        place_part(img, "rail", (x0, y0, x1, y1), names[0])
         return
     if along == "v":
-        span0, span1 = (y0, y1) if y1 >= y0 else (y1, y0)
-    else:
-        span0, span1 = (x0, x1) if x1 >= x0 else (x1, x0)
-    span = max(1.0, span1 - span0)
-    for index, color in enumerate(RAINBOW):
-        a = span0 + span * index / len(RAINBOW)
-        b = span0 + span * (index + 1) / len(RAINBOW)
-        ink = _shade(color, factor)
-        if along == "v":
-            draw.rectangle((x0, a, x1, b), fill=ink)
-        else:
-            draw.rectangle((a, y0, b, y1), fill=ink)
-
-
-def _paint_down_head(draw: ImageDraw.ImageDraw, x: float, top: float, bot: float, half: float, factor: float) -> None:
-    if not RAINBOW_ARROWS:
-        ink = CYAN if factor >= 1 else CYAN_DIM
-        draw.polygon([(x - half, top), (x + half, top), (x, bot)], fill=ink)
+        span = y1 - y0
+        for index, name in enumerate(names):
+            a = y0 + span * index / len(names)
+            b = y0 + span * (index + 1) / len(names)
+            place_part(img, "rail", (x0, a, x1, b), name)
         return
-    span = max(1.0, bot - top)
-    for index, color in enumerate(RAINBOW):
-        a = top + span * index / len(RAINBOW)
-        b = top + span * (index + 1) / len(RAINBOW)
-        wa = half * (1 - (a - top) / span)
-        wb = half * (1 - (b - top) / span)
-        draw.polygon([(x - wa, a), (x + wa, a), (x + wb, b), (x - wb, b)], fill=_shade(color, factor))
+    span = x1 - x0
+    for index, name in enumerate(names):
+        a = x0 + span * index / len(names)
+        b = x0 + span * (index + 1) / len(names)
+        place_part(img, "rail", (a, y0, b, y1), name)
 
 
-def _paint_right_head(draw: ImageDraw.ImageDraw, left: float, right: float, y: float, half: float, factor: float) -> None:
-    if not RAINBOW_ARROWS:
-        ink = CYAN if factor >= 1 else CYAN_DIM
-        draw.polygon([(left, y - half), (left, y + half), (right, y)], fill=ink)
+def _paint_head(img: Image.Image, box: tuple[float, float, float, float], turn: str, full: bool) -> None:
+    names = _span_colors(full)
+    if len(names) == 1:
+        place_part(img, "arrowhead", box, names[0], turn=turn)
         return
-    span = max(1.0, right - left)
-    for index, color in enumerate(RAINBOW):
-        a = left + span * index / len(RAINBOW)
-        b = left + span * (index + 1) / len(RAINBOW)
-        ha = half * (1 - (a - left) / span)
-        hb = half * (1 - (b - left) / span)
-        draw.polygon([(a, y - ha), (a, y + ha), (b, y + hb), (b, y - hb)], fill=_shade(color, factor))
+    place_part(img, "arrowhead", box, names[0], turn=turn, bands=names, axis="h")
 
 
-def _paint_left_head(draw: ImageDraw.ImageDraw, left: float, right: float, y: float, half: float, factor: float) -> None:
-    if not RAINBOW_ARROWS:
-        ink = CYAN if factor >= 1 else CYAN_DIM
-        draw.polygon([(right, y - half), (right, y + half), (left, y)], fill=ink)
-        return
-    span = max(1.0, right - left)
-    for index, color in enumerate(RAINBOW):
-        a = left + span * index / len(RAINBOW)
-        b = left + span * (index + 1) / len(RAINBOW)
-        ha = half * ((a - left) / span)
-        hb = half * ((b - left) / span)
-        draw.polygon([(a, y - ha), (a, y + ha), (b, y + hb), (b, y - hb)], fill=_shade(color, factor))
-
-
-def draw_down_arrow(draw: ImageDraw.ImageDraw, x: float, y0: float, y1: float) -> None:
+def draw_down_arrow(img: Image.Image, x: float, y0: float, y1: float) -> None:
     if y1 < y0 + HEAD_LEN:
         y1 = y0 + HEAD_LEN
     shaft = y1 - HEAD_LEN
-    glow = RAIL_GLOW / 2
-    core = RAIL_WIDTH / 2
-    _paint_span(draw, (x - glow, y0, x + glow, shaft), "v", GLOW_FACTOR)
-    _paint_down_head(draw, x, shaft, y1, HEAD_GLOW_HALF, GLOW_FACTOR)
-    _paint_span(draw, (x - core, y0, x + core, shaft), "v", 1)
-    _paint_down_head(draw, x, shaft, y1, HEAD_HALF, 1)
+    _paint_span(img, (x - RAIL_GLOW / 2, y0, x + RAIL_GLOW / 2, shaft), "v", False)
+    _paint_head(img, (x - HEAD_GLOW_HALF, shaft, x + HEAD_GLOW_HALF, y1), "down", False)
+    _paint_span(img, (x - RAIL_WIDTH / 2, y0, x + RAIL_WIDTH / 2, shaft), "v", True)
+    _paint_head(img, (x - HEAD_HALF, shaft, x + HEAD_HALF, y1), "down", True)
 
 
-def draw_stem(draw: ImageDraw.ImageDraw, x: float, y0: float, y1: float) -> None:
+def draw_stem(img: Image.Image, x: float, y0: float, y1: float) -> None:
     top, bot = sorted((y0, y1))
-    glow = RAIL_GLOW / 2
-    core = RAIL_WIDTH / 2
-    _paint_span(draw, (x - glow, top, x + glow, bot), "v", GLOW_FACTOR)
-    _paint_span(draw, (x - core, top, x + core, bot), "v", 1)
+    _paint_span(img, (x - RAIL_GLOW / 2, top, x + RAIL_GLOW / 2, bot), "v", False)
+    _paint_span(img, (x - RAIL_WIDTH / 2, top, x + RAIL_WIDTH / 2, bot), "v", True)
 
 
-def draw_bar(draw: ImageDraw.ImageDraw, x0: float, x1: float, y: float) -> None:
+def draw_bar(img: Image.Image, x0: float, x1: float, y: float) -> None:
     left, right = sorted((x0, x1))
-    glow = RAIL_GLOW / 2
-    core = RAIL_WIDTH / 2
-    _paint_span(draw, (left, y - glow, right, y + glow), "h", GLOW_FACTOR)
-    _paint_span(draw, (left, y - core, right, y + core), "h", 1)
+    _paint_span(img, (left, y - RAIL_GLOW / 2, right, y + RAIL_GLOW / 2), "h", False)
+    _paint_span(img, (left, y - RAIL_WIDTH / 2, right, y + RAIL_WIDTH / 2), "h", True)
 
 
-def draw_right_arrow(draw: ImageDraw.ImageDraw, x0: float, x1: float, y: float) -> None:
+def draw_right_arrow(img: Image.Image, x0: float, x1: float, y: float) -> None:
     if x1 < x0 + HEAD_LEN:
         x1 = x0 + HEAD_LEN
     head = x1 - HEAD_LEN
-    glow = RAIL_GLOW / 2
-    core = RAIL_WIDTH / 2
-    _paint_span(draw, (x0, y - glow, head, y + glow), "h", GLOW_FACTOR)
-    _paint_right_head(draw, head, x1, y, HEAD_GLOW_HALF, GLOW_FACTOR)
-    _paint_span(draw, (x0, y - core, head, y + core), "h", 1)
-    _paint_right_head(draw, head, x1, y, HEAD_HALF, 1)
+    _paint_span(img, (x0, y - RAIL_GLOW / 2, head, y + RAIL_GLOW / 2), "h", False)
+    _paint_head(img, (head, y - HEAD_GLOW_HALF, x1, y + HEAD_GLOW_HALF), "right", False)
+    _paint_span(img, (x0, y - RAIL_WIDTH / 2, head, y + RAIL_WIDTH / 2), "h", True)
+    _paint_head(img, (head, y - HEAD_HALF, x1, y + HEAD_HALF), "right", True)
 
 
-def draw_left_arrow(draw: ImageDraw.ImageDraw, x0: float, x1: float, y: float) -> None:
+def draw_left_arrow(img: Image.Image, x0: float, x1: float, y: float) -> None:
     """Head at the smaller x."""
     left, right = (x1, x0) if x1 < x0 else (x0, x1)
     head = left + HEAD_LEN
-    glow = RAIL_GLOW / 2
-    core = RAIL_WIDTH / 2
-    _paint_span(draw, (head, y - glow, right, y + glow), "h", GLOW_FACTOR)
-    _paint_left_head(draw, left, head, y, HEAD_GLOW_HALF, GLOW_FACTOR)
-    _paint_span(draw, (head, y - core, right, y + core), "h", 1)
-    _paint_left_head(draw, left, head, y, HEAD_HALF, 1)
+    _paint_span(img, (head, y - RAIL_GLOW / 2, right, y + RAIL_GLOW / 2), "h", False)
+    _paint_head(img, (left, y - HEAD_GLOW_HALF, head, y + HEAD_GLOW_HALF), "left", False)
+    _paint_span(img, (head, y - RAIL_WIDTH / 2, right, y + RAIL_WIDTH / 2), "h", True)
+    _paint_head(img, (left, y - HEAD_HALF, head, y + HEAD_HALF), "left", True)
+
+
+def place_junction(img: Image.Image, x: float, y: float) -> None:
+    size = part_size("junction", "size")
+    box = (x - size / 2, y - size / 2, x + size / 2, y + size / 2)
+    names = _span_colors(True)
+    if len(names) == 1:
+        place_part(img, "junction", box, names[0])
+        return
+    place_part(img, "junction", box, names[0], bands=names, axis="h")
 
 
 def center_bottom(rect: tuple[int, int, int, int]) -> tuple[float, float]:
@@ -764,7 +979,7 @@ def center_top(rect: tuple[int, int, int, int]) -> tuple[float, float]:
     return (rect[0] + rect[2]) / 2, rect[1]
 
 
-def draw_flow_arrows(draw: ImageDraw.ImageDraw, flow: dict, bands: list[dict], font: ImageFont.FreeTypeFont) -> None:
+def draw_flow_arrows(img: Image.Image, flow: dict, bands: list[dict], font: ImageFont.FreeTypeFont) -> None:
     located = {}
     for band in bands:
         for row in band["rows"]:
@@ -784,16 +999,17 @@ def draw_flow_arrows(draw: ImageDraw.ImageDraw, flow: dict, bands: list[dict], f
             continue
         key = (src["layer"], src["row"], dst["layer"], dst["row"], edge["label"])
         groups.setdefault(key, []).append((src, dst))
+    inset = layout_num("arrowInset")
     for (src, dst, _label) in horizontal:
         y = (src["rect"][1] + src["rect"][3]) / 2
-        draw_right_arrow(draw, src["rect"][2] + 4, dst["rect"][0] - 4, y)
+        draw_right_arrow(img, src["rect"][2] + inset, dst["rect"][0] - inset, y)
     for key, pairs in groups.items():
-        _draw_group(draw, pairs, font, key[4])
+        _draw_group(img, pairs, font, key[4])
     for back in backs:
-        _draw_back(draw, back, font)
+        _draw_back(img, back, font)
 
 
-def _draw_group(draw: ImageDraw.ImageDraw, pairs: list, font: ImageFont.FreeTypeFont, label: str) -> None:
+def _draw_group(img: Image.Image, pairs: list, font: ImageFont.FreeTypeFont, label: str) -> None:
     sources = []
     targets = []
     for src, dst in pairs:
@@ -801,6 +1017,11 @@ def _draw_group(draw: ImageDraw.ImageDraw, pairs: list, font: ImageFont.FreeType
             sources.append(src)
         if dst not in targets:
             targets.append(dst)
+    pad = layout_num("arrowInset")
+    slack = layout_num("alignSlack")
+    split = layout_num("busSplit")
+    lx = layout_num("labelX")
+    ly = layout_num("labelY")
     matched = (
         len(sources) == len(targets)
         and len(sources) > 1
@@ -811,56 +1032,68 @@ def _draw_group(draw: ImageDraw.ImageDraw, pairs: list, font: ImageFont.FreeType
         for src, dst in pairs:
             x0, y0 = center_bottom(src["rect"])
             x1, y1 = center_top(dst["rect"])
-            if abs(x0 - x1) < 20:
-                draw_down_arrow(draw, x0, y0 + 4, y1 - 4)
+            if abs(x0 - x1) < slack:
+                draw_down_arrow(img, x0, y0 + pad, y1 - pad)
             else:
                 mid = (y0 + y1) / 2
-                draw_stem(draw, x0, y0 + 4, mid)
-                draw_bar(draw, x0, x1, mid)
-                draw_down_arrow(draw, x1, mid, y1 - 4)
+                draw_stem(img, x0, y0 + pad, mid)
+                draw_bar(img, x0, x1, mid)
+                draw_down_arrow(img, x1, mid, y1 - pad)
+                place_junction(img, x0, mid)
+                place_junction(img, x1, mid)
         return
     bottoms = [center_bottom(card["rect"]) for card in sources]
     tops = [center_top(card["rect"]) for card in targets]
     bus = (max(y for _x, y in bottoms) + min(y for _x, y in tops)) / 2
     if len(targets) == 1 and len(sources) >= 1:
         for x, y in bottoms:
-            draw_stem(draw, x, y + 4, bus)
+            draw_stem(img, x, y + pad, bus)
+            place_junction(img, x, bus)
         if len(sources) > 1:
-            draw_bar(draw, min(x for x, _y in bottoms), max(x for x, _y in bottoms), bus)
+            draw_bar(img, min(x for x, _y in bottoms), max(x for x, _y in bottoms), bus)
         tx, ty = tops[0]
-        draw_down_arrow(draw, tx, bus, ty - 4)
+        draw_down_arrow(img, tx, bus, ty - pad)
+        place_junction(img, tx, bus)
     elif len(sources) == 1:
         sx, sy = bottoms[0]
-        draw_stem(draw, sx, sy + 4, bus)
-        draw_bar(draw, min(sx, min(x for x, _y in tops)), max(sx, max(x for x, _y in tops)), bus)
+        draw_stem(img, sx, sy + pad, bus)
+        draw_bar(img, min(sx, min(x for x, _y in tops)), max(sx, max(x for x, _y in tops)), bus)
+        place_junction(img, sx, bus)
         for x, y in tops:
-            draw_down_arrow(draw, x, bus, y - 4)
+            draw_down_arrow(img, x, bus, y - pad)
+            place_junction(img, x, bus)
     else:
         for x, y in bottoms:
-            draw_stem(draw, x, y + 4, bus - 10)
-        draw_bar(draw, min(x for x, _y in bottoms), max(x for x, _y in bottoms), bus - 10)
+            draw_stem(img, x, y + pad, bus - split)
+            place_junction(img, x, bus - split)
+        draw_bar(img, min(x for x, _y in bottoms), max(x for x, _y in bottoms), bus - split)
         mid_x = sum(x for x, _y in bottoms) / len(bottoms)
-        draw_stem(draw, mid_x, bus - 10, bus + 10)
-        draw_bar(draw, min(x for x, _y in tops), max(x for x, _y in tops), bus + 10)
+        draw_stem(img, mid_x, bus - split, bus + split)
+        place_junction(img, mid_x, bus - split)
+        place_junction(img, mid_x, bus + split)
+        draw_bar(img, min(x for x, _y in tops), max(x for x, _y in tops), bus + split)
         for x, y in tops:
-            draw_down_arrow(draw, x, bus + 10, y - 4)
+            draw_down_arrow(img, x, bus + split, y - pad)
+            place_junction(img, x, bus + split)
     if label:
-        paint_text(draw, (bottoms[0][0] + 16, bus - 18), label, font, INK, BARLOW_SEMI)
+        paint_text(img, (bottoms[0][0] + lx, bus - ly), label, font, INK, BARLOW_SEMI)
 
 
-def _draw_back(draw: ImageDraw.ImageDraw, back: dict, font: ImageFont.FreeTypeFont) -> None:
+def _draw_back(img: Image.Image, back: dict, font: ImageFont.FreeTypeFont) -> None:
     src, dst = back["src"]["rect"], back["dst"]["rect"]
-    rail = min(WELL_R - 18, max(src[2], dst[2]) + 28)
+    rail = min(WELL_R - layout_num("backInset"), max(src[2], dst[2]) + layout_num("backOut"))
     sy = (src[1] + src[3]) / 2
     ty = (dst[1] + dst[3]) / 2
-    draw_stem(draw, rail, ty, sy)
-    draw_bar(draw, src[2], rail, sy)
-    draw_left_arrow(draw, rail, dst[2] + 2, ty)
+    draw_stem(img, rail, ty, sy)
+    draw_bar(img, src[2], rail, sy)
+    draw_left_arrow(img, rail, dst[2] + 2, ty)
+    place_junction(img, rail, sy)
+    place_junction(img, rail, ty)
     label = back["label"]
     if label:
         paint_text(
-            draw,
-            (rail - run_width(label, font) - 8, (sy + ty) / 2 - 18),
+            img,
+            (rail - run_width(label, font) - layout_num("bandPad"), (sy + ty) / 2 - layout_num("labelY")),
             label,
             font,
             INK,
@@ -868,115 +1101,86 @@ def _draw_back(draw: ImageDraw.ImageDraw, back: dict, font: ImageFont.FreeTypeFo
         )
 
 
-def _svg_pairs(points: str) -> list[tuple[float, float]]:
-    nums = [float(item) for item in points.replace(",", " ").split()]
-    return list(zip(nums[0::2], nums[1::2]))
-
-
-def draw_icon(draw: ImageDraw.ImageDraw, kind: str, box: tuple[int, int, int, int], color: tuple[int, int, int]) -> None:
-    """Stroke one kit SVG. The file is the drawing. The kit palette is the ink."""
-    root = ET.parse(icon_file(kind)).getroot()
-    view = [float(item) for item in root.attrib.get("viewBox", "0 0 24 24").split()]
-    vx, vy, vw, vh = view
-    x0, y0, x1, y1 = box
-    sx = (x1 - x0) / vw
-    sy = (y1 - y0) / vh
-
-    def pt(x: float, y: float) -> tuple[float, float]:
-        return (x0 + (x - vx) * sx, y0 + (y - vy) * sy)
-
-    width = max(2, int(round(min(sx, sy) * 1.6)))
-    for el in root.iter():
-        tag = el.tag.rsplit("}", 1)[-1]
-        if tag == "line":
-            draw.line(
-                [pt(float(el.attrib["x1"]), float(el.attrib["y1"])), pt(float(el.attrib["x2"]), float(el.attrib["y2"]))],
-                fill=color,
-                width=width,
-            )
-        elif tag == "circle":
-            cx = float(el.attrib["cx"])
-            cy = float(el.attrib["cy"])
-            radius = float(el.attrib["r"])
-            draw.ellipse([pt(cx - radius, cy - radius), pt(cx + radius, cy + radius)], outline=color, width=width)
-        elif tag == "rect":
-            rx = float(el.attrib["x"])
-            ry = float(el.attrib["y"])
-            rw = float(el.attrib["width"])
-            rh = float(el.attrib["height"])
-            draw.rectangle([pt(rx, ry), pt(rx + rw, ry + rh)], outline=color, width=width)
-        elif tag in {"polyline", "polygon"}:
-            mapped = [pt(x, y) for x, y in _svg_pairs(el.attrib.get("points", ""))]
-            if len(mapped) < 2:
-                continue
-            if tag == "polygon":
-                draw.polygon(mapped, outline=color)
-            else:
-                draw.line(mapped, fill=color, width=width)
-
-
-def draw_cards(draw: ImageDraw.ImageDraw, flow: dict, bands: list[dict]) -> None:
-    label_font = font_at(BARLOW, 18)
+def draw_cards(img: Image.Image, flow: dict, bands: list[dict]) -> None:
+    label_font = font_at(BARLOW, int(layout_num("noteSize")))
     for band in bands:
         rect = band["rect"]
         if band["name"]:
-            paint_text(draw, (rect[0] + 18, rect[1] + 2), band["name"].upper(), label_font, CYAN, BARLOW)
+            bx = rect[0] + part_size("layerLabel", "x")
+            by = rect[1] + part_size("layerLabel", "y")
+            place_part(
+                img,
+                "layerLabel",
+                (bx, by, bx + part_size("layerLabel", "width"), by + part_size("layerLabel", "height")),
+                "cyan",
+            )
+            paint_text(
+                img,
+                (rect[0] + part_size("layerLabel", "textX"), rect[1] + 2),
+                band["name"].upper(),
+                label_font,
+                CYAN,
+                BARLOW,
+            )
         for row in band["rows"]:
             for card in row:
                 lines = flow["layers"][card["layer"]]["nodes"][card["index"]]["lines"]
-                _draw_card(draw, lines, card["rect"], card["number"])
+                _draw_card(img, lines, card["rect"], card["number"])
 
 
 def _draw_card(
-    draw: ImageDraw.ImageDraw,
+    img: Image.Image,
     lines: list[str],
     rect: tuple[int, int, int, int],
     number: str,
 ) -> None:
     x0, y0, x1, y1 = rect
-    draw.rounded_rectangle((x0 - 3, y0 - 3, x1 + 3, y1 + 3), radius=16, outline=CYAN_DIM, width=4)
-    draw.rounded_rectangle(rect, radius=14, outline=CYAN, width=2)
+    place_part(img, "card", rect, "cyan")
     metrics = card_metrics(lines, x1 - x0, bool(number))
     title_lines = metrics["title_lines"]
     title_font = metrics["title_font"]
     body = metrics["body"]
     wrapped = metrics["wrapped"]
-    cursor_x = x0 + 18
+    pad_x = part_size("card", "padX")
+    pad_y = part_size("card", "padY")
+    cursor_x = x0 + pad_x
     mode = badge_plan(number)
     raw_title, _details = title_and_details(lines)
     if mode == "number":
-        tile = (cursor_x, y0 + 16, cursor_x + 36, y0 + 52)
-        draw.rounded_rectangle(tile, 6, outline=CYAN, width=2)
+        side = part_size("numberTile", "size")
+        tile = (cursor_x, y0 + pad_y, cursor_x + side, y0 + pad_y + side)
+        place_part(img, "numberTile", tile, "cyan")
         num_font = fit_width(BARLOW, number, 28, 22, 14)
         nb = num_font.getbbox(number)
         paint_text(
-            draw,
-            (tile[0] + (36 - (nb[2] - nb[0])) / 2, tile[1] + (36 - (nb[3] - nb[1])) / 2 - nb[1]),
+            img,
+            (tile[0] + (side - (nb[2] - nb[0])) / 2, tile[1] + (side - (nb[3] - nb[1])) / 2 - nb[1]),
             number,
             num_font,
             CYAN,
             BARLOW,
         )
-        cursor_x += 46
+        cursor_x += part_size("numberTile", "advance")
     elif mode == "icon":
-        icon = (cursor_x, y0 + 16, cursor_x + 26, y0 + 42)
-        draw_icon(draw, icon_kind(raw_title), icon, CYAN)
-        cursor_x += 36
+        side = part_size("icon", "size")
+        icon = (cursor_x, y0 + pad_y, cursor_x + side, y0 + pad_y + side)
+        place_part(img, "icon", icon, "cyan", kind=icon_kind(raw_title))
+        cursor_x += part_size("icon", "advance")
     else:
         raise RuntimeError("card badge outside the kit")
-    y = y0 + 16
+    y = y0 + pad_y
     drawn: list[str] = []
     for line in title_lines:
-        paint_text(draw, (cursor_x, y), line, title_font, INK, BARLOW)
+        paint_text(img, (cursor_x, y), line, title_font, INK, BARLOW)
         drawn.extend(line.split())
         y += metrics["line_h"]
-    y = y0 + 16 + metrics["title_h"] + 8
+    y = y0 + pad_y + metrics["title_h"] + part_size("card", "detailGap")
     for line in wrapped:
-        if y + body.size > y1 - 6:
+        if y + body.size > y1 - layout_num("arrowInset"):
             raise RuntimeError(f"card clipped text: {line}")
-        paint_text(draw, (cursor_x, y), line, body, MUTED, BARLOW_SEMI)
+        paint_text(img, (cursor_x, y), line, body, MUTED, BARLOW_SEMI)
         drawn.extend(line.split())
-        y += body.size + 7
+        y += body.size + part_size("card", "detailLead")
     if [word.casefold() for word in drawn] != [word.casefold() for word in " ".join(lines).split()]:
         raise RuntimeError(f"card dropped words from {lines[0] if lines else ''}")
 
@@ -1011,21 +1215,31 @@ def read_itxt(path: Path) -> str:
     raise RuntimeError(f"missing {TEXT_KEY} in {path}")
 
 
+def palette_rgbs() -> list[tuple[int, int, int]]:
+    found: list[tuple[int, int, int]] = []
+    for name, value in KIT["palette"].items():
+        if name in {"default", "rainbow"} or not isinstance(value, list) or not value or isinstance(value[0], list):
+            continue
+        color = _rgb(value)
+        if color not in found:
+            found.append(color)
+    for item in KIT["palette"]["rainbow"]:
+        color = _rgb(item)
+        if color not in found:
+            found.append(color)
+    return found
+
+
 def quantize_plate(rgb: Image.Image) -> Image.Image:
-    """256 colors, with the cyan and the six rainbow inks kept intact."""
-    pins: list[tuple[int, int, int]] = [CYAN, CYAN_DIM, INK, MUTED, SHADOW, *RAINBOW]
-    pins.extend(_shade(color, 0.38) for color in RAINBOW)
-    unique: list[tuple[int, int, int]] = []
-    for color in pins:
-        if color not in unique:
-            unique.append(color)
+    """256 colors, with every kit ink kept intact."""
+    unique = palette_rgbs()
     arr = np.asarray(rgb.convert("RGB"))
     sample = arr.copy()
     protected = np.zeros(arr.shape[:2], dtype=bool)
     for color in unique:
         delta = np.abs(arr.astype(np.int16) - np.array(color, dtype=np.int16)).sum(axis=2)
         protected |= delta <= 6
-    sample[protected] = (46, 48, 50)
+    sample[protected] = palette_color("shadow")
     slots = 256 - len(unique)
     rough = Image.fromarray(sample, "RGB").quantize(
         colors=slots, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE,
@@ -1060,76 +1274,91 @@ def render(md_path: Path, out_path: Path) -> None:
     subtitle = lead_line(text)
     stamp = footer_line(text)
     RAINBOW_ARROWS = rainbow_for(title)
-    title_font = fit_width(BLACKOPS, title, W - 64 - 280, 54, 22)
+    side = part_size("header", "side")
+    reserve = part_size("title", "reserve")
+    title_font = fit_width(BLACKOPS, title, W - side - reserve, 54, 22)
     tb = title_font.getbbox(title or " ")
     sub_font = None
     sb = (0, 0, 0, 0)
     sub_gap = 0
     if subtitle:
-        sub_font = fit_width(BARLOW_SEMI, subtitle, W - 64 - 280, 22, 14)
+        sub_font = fit_width(BARLOW_SEMI, subtitle, W - side - reserve, 22, 14)
         sb = sub_font.getbbox(subtitle)
-        sub_gap = 18
-    top_pad = 16
+        sub_gap = part_size("subtitle", "gap")
+    top_pad = part_size("title", "pad")
     title_ink = tb[3] - tb[1]
     text_bottom = top_pad + title_ink + (sub_gap + sb[3] if subtitle else 0)
-    groove_h = 12
-    groove_gap = 14
-    name_top = 56
-    name_h = max(124, int(text_bottom + 16 + groove_gap + groove_h))
-    name = (64, name_top, W - 64, name_top + name_h)
+    groove_h = part_size("accentRail", "height")
+    groove_gap = part_size("accentRail", "gap")
+    name_top = part_size("header", "top")
+    name_h = max(part_size("header", "minHeight"), int(text_bottom + part_size("header", "after") + groove_gap + groove_h))
+    name = (int(side), int(name_top), W - int(side), int(name_top + name_h))
     height, bands, _placed = layout(flow, boxes, name[3])
-    bind_canvas(W, height)
-
-    arr = metal_kit.metal(height, W, 41, (36, 38, 40), 0.12, pits=0.0)
-    arr, _tray = outer_frame(arr, inset=6, band=22, radius=24, bolts=True)
-    arr, _name_m = raised_plaque(arr, name, 7, tone=(58, 60, 64), radius=12, rivet_r=0)
-    groove = (name[0] + 24, name[3] - groove_gap - groove_h, name[2] - 24, name[3] - groove_gap)
-    groove_mask = _RECT(groove, 2, (W, height))
-    arr = glow(arr, groove_mask, CYAN, 5, 0.7)
-    arr = paint(arr, groove_mask, CYAN, 0.9)
-    for band in bands:
-        for row in band["rows"]:
-            for card in row:
-                rect = card["rect"]
-                arr, _cm = raised_plaque(
-                    arr, rect, 200 + card["layer"] * 20 + card["index"],
-                    tone=(64, 68, 74), radius=14, rivet_r=0,
-                    shadow=(4, 5, 6, 0.55), bevel=(2, 1.2, 0.45, 0.55),
-                )
-    foot = (72, height - 92, W - 72, height - 36)
-    arr, _fm = recessed_tray(arr, foot, radius=12, depth=4, soft=2.2, floor_tone=(24, 30, 34), seed=9)
-    img = to_img(arr).convert("RGBA")
-    logo = draw_0xray_logo(188, bg="transparent")
-    img.alpha_composite(logo, (name[0] + 18, name[1] + 16))
-    draw = ImageDraw.Draw(img)
-    tx = name[0] + 220
+    img = Image.new("RGBA", (W, height), (0, 0, 0, 0))
+    place_part(img, "frame", (0, 0, W, height), "metal")
+    rivet = part_size("rivet", "diameter")
+    inset = part_size("rivet", "inset")
+    for rx, ry in (
+        (inset, inset),
+        (W - inset - rivet, inset),
+        (inset, height - inset - rivet),
+        (W - inset - rivet, height - inset - rivet),
+        ((W - rivet) / 2, inset),
+        ((W - rivet) / 2, height - inset - rivet),
+        (inset, (height - rivet) / 2),
+        (W - inset - rivet, (height - rivet) / 2),
+    ):
+        place_part(img, "rivet", (rx, ry, rx + rivet, ry + rivet), "rivet")
+    place_part(img, "header", name, "metalRaised")
+    logo = draw_0xray_logo(int(part_size("logoSlot", "mark")), bg="transparent")
+    slot = (
+        name[0] + part_size("logoSlot", "x"),
+        name[1] + part_size("logoSlot", "y"),
+        name[0] + part_size("logoSlot", "x") + logo.width,
+        name[1] + part_size("logoSlot", "y") + logo.height,
+    )
+    place_part(img, "logoSlot", slot, "shadow")
+    img.alpha_composite(logo, (int(slot[0]), int(slot[1])))
+    tx = name[0] + part_size("title", "x")
     ty = name[1] + top_pad - tb[1]
-    paint_text(draw, (tx + 2, ty + 2), title, title_font, SHADOW, BLACKOPS)
-    paint_text(draw, (tx, ty), title, title_font, INK, BLACKOPS)
+    place_part(img, "title", (tx, ty + tb[1], tx + max(1, tb[2] - tb[0]), ty + tb[3]), "ink")
+    paint_text(img, (tx + 2, ty + 2), title, title_font, SHADOW, BLACKOPS)
+    paint_text(img, (tx, ty), title, title_font, INK, BLACKOPS)
     if subtitle and sub_font is not None:
-        paint_text(draw, (tx, ty + tb[3] + sub_gap), subtitle, sub_font, CYAN, BARLOW_SEMI)
+        sy = ty + tb[3] + sub_gap
+        place_part(img, "subtitle", (tx, sy, tx + max(1, sb[2] - sb[0]), sy + max(1, sb[3] - sb[1])), "cyan")
+        paint_text(img, (tx, sy), subtitle, sub_font, CYAN, BARLOW_SEMI)
+    rail_inset = part_size("accentRail", "inset")
+    groove = (name[0] + rail_inset, name[3] - groove_gap - groove_h, name[2] - rail_inset, name[3] - groove_gap)
     if RAINBOW_ARROWS:
         span = groove[2] - groove[0]
-        for i, color in enumerate(RAINBOW):
-            seg = (groove[0] + span * i / 6, groove[1], groove[0] + span * (i + 1) / 6, groove[3])
-            draw.rectangle(seg, fill=color)
-    label_font = font_at(BARLOW_SEMI, 16)
-    draw_flow_arrows(draw, flow, bands, label_font)
-    draw_cards(draw, flow, bands)
+        for index, name_color in enumerate(RAINBOW_NAMES):
+            seg = (groove[0] + span * index / len(RAINBOW_NAMES), groove[1], groove[0] + span * (index + 1) / len(RAINBOW_NAMES), groove[3])
+            place_part(img, "accentRail", seg, name_color)
+    else:
+        place_part(img, "accentRail", groove, "cyan")
+    label_font = font_at(BARLOW_SEMI, int(part_size("header", "after")))
+    draw_flow_arrows(img, flow, bands, label_font)
+    draw_cards(img, flow, bands)
     if flow["notes"]:
-        note_font = font_at(BARLOW_SEMI, 18)
-        ny = bands[-1]["rect"][3] + 16
+        note_font = font_at(BARLOW_SEMI, int(layout_num("noteSize")))
+        ny = bands[-1]["rect"][3] + part_size("header", "after")
         for note in flow["notes"]:
-            for line in wrap_lines(note, note_font, WELL_R - WELL_L - 36):
-                paint_text(draw, (WELL_L + 12, ny), line, note_font, MUTED, BARLOW_SEMI)
-                ny += 24
-    badge_font = fit_width(BARLOW, stamp, foot[2] - foot[0] - 48, 28, 16)
+            for line in wrap_lines(note, note_font, WELL_R - WELL_L - layout_num("innerInset")):
+                paint_text(img, (WELL_L + layout_num("footGap"), ny), line, note_font, MUTED, BARLOW_SEMI)
+                ny += layout_num("noteLine")
+    foot = (
+        int(part_size("footer", "side")),
+        height - int(part_size("footer", "raise")),
+        W - int(part_size("footer", "side")),
+        height - int(part_size("footer", "bottom")),
+    )
+    place_part(img, "footer", foot, "floor")
+    badge_font = fit_width(BARLOW, stamp, foot[2] - foot[0] - int(part_size("header", "side") * 0.75), 28, 16)
     bb = badge_font.getbbox(stamp or " ")
     bw = bb[2] - bb[0]
     by = foot[1] + (foot[3] - foot[1] - (bb[3] - bb[1])) / 2 - bb[1]
-    paint_text(draw, (foot[0] + (foot[2] - foot[0] - bw) / 2, by), stamp, badge_font, CYAN, BARLOW)
-    draw.rounded_rectangle((40, 40, W - 40, height - 40), radius=18, outline=CYAN_DIM, width=5)
-    draw.rounded_rectangle((44, 44, W - 44, height - 44), radius=16, outline=CYAN, width=2)
+    paint_text(img, (foot[0] + (foot[2] - foot[0] - bw) / 2, by), stamp, badge_font, CYAN, BARLOW)
 
     rgb = img.convert("RGB")
     if rgb.size != (W, height):
@@ -1145,8 +1374,38 @@ def render(md_path: Path, out_path: Path) -> None:
     print(f"{md_path.stem} {W}x{height} {out_path.stat().st_size}", flush=True)
 
 
+def _svg_problems(name: str, text: str) -> list[str]:
+    problems: list[str] = []
+    if "<text" in text or "emoji" in text.lower() or "style=" in text or "rgb(" in text.lower():
+        problems.append(f"{name} color or glyph outside the kit")
+    if re.search(r"#[0-9A-Fa-f]{3,8}", text):
+        problems.append(f"{name} color outside the kit")
+    try:
+        root = ET.fromstring(text)
+    except ET.ParseError:
+        problems.append(f"{name} is outside the kit")
+        return problems
+    for el in root.iter():
+        tag = el.tag.rsplit("}", 1)[-1]
+        if tag not in SVG_TAGS:
+            problems.append(f"{name} shape outside the kit: {tag}")
+        for attr in ("fill", "stroke"):
+            value = el.attrib.get(attr)
+            if value is None or value in {"none", "currentColor"}:
+                continue
+            prefix = "palette:"
+            if value.startswith(prefix):
+                try:
+                    palette_color(value[len(prefix):])
+                except KeyError:
+                    problems.append(f"{name} color outside the kit: {value}")
+                continue
+            problems.append(f"{name} color outside the kit: {value}")
+    return problems
+
+
 def audit_kit() -> list[str]:
-    """Fail closed: unknown kind, missing SVG, a color or arrow outside the kit, both badges."""
+    """Fail closed when a plate uses a shape, part, or color outside the kit."""
     problems: list[str] = []
     if KIT["palette"].get("default") != "cyan":
         problems.append("default color is outside the kit")
@@ -1154,11 +1413,33 @@ def audit_kit() -> list[str]:
         problems.append("rainbow is outside the kit")
     if HEAD_SHAPE != "triangle":
         problems.append(f"arrow style outside the kit: {HEAD_SHAPE}")
+    locked = (
+        ("rail", "width", "railWidth"),
+        ("rail", "glow", "railGlow"),
+    )
+    for part, key, line_key in locked:
+        if part_size(part, key) != float(KIT["line"][line_key]):
+            problems.append(f"{part} {key} outside the kit")
+    for key in ("length", "halfWidth", "glowHalfWidth"):
+        if part_size("arrowhead", key) != float(KIT["line"]["arrowhead"][key]):
+            problems.append(f"arrowhead {key} outside the kit")
     try:
         palette_color("magenta")
         problems.append("accepted a color outside the kit")
     except KeyError:
         pass
+    for index, name in enumerate(RAINBOW_NAMES):
+        try:
+            full = palette_color(name)
+            dim = palette_color(f"{name}Dim")
+        except KeyError:
+            problems.append(f"{name} outside the kit")
+            continue
+        if list(full) != [int(channel) for channel in KIT["palette"]["rainbow"][index]]:
+            problems.append(f"{name} outside the kit")
+        expect = tuple(int(channel * GLOW_FACTOR) for channel in full)
+        if dim != expect:
+            problems.append(f"{name} dim outside the kit")
     try:
         icon_file("not-a-kind")
         problems.append("accepted an unknown icon kind")
@@ -1174,12 +1455,27 @@ def audit_kit() -> list[str]:
         if not svg.is_file():
             problems.append(f"missing SVG: {name}")
             continue
-        text = svg.read_text(encoding="utf8")
-        if "<text" in text or "emoji" in text.lower():
-            problems.append(f"{name} uses a font glyph")
+        problems.extend(_svg_problems(name, svg.read_text(encoding="utf8")))
     for rule in KIT["iconMatch"]:
         if str(rule["kind"]) not in ICONS:
             problems.append(f"unknown icon kind: {rule['kind']}")
+    for part, spec in KIT["parts"].items():
+        if "sizes" not in spec:
+            problems.append(f"{part} has no sizes")
+        if part == "icon":
+            continue
+        name = spec.get("svg")
+        if not isinstance(name, str) or name != Path(name).name or not name.endswith(".svg"):
+            problems.append(f"{part} is not one svg")
+            continue
+        svg = KIT_DIR / name
+        if not svg.is_file():
+            problems.append(f"missing SVG: {name}")
+            continue
+        problems.extend(_svg_problems(name, svg.read_text(encoding="utf8")))
+    head = (KIT_DIR / "arrowhead.svg").read_text(encoding="utf8") if (KIT_DIR / "arrowhead.svg").is_file() else ""
+    if "<polygon" not in head:
+        problems.append("arrow style outside the kit")
     for md in sorted(PLATES.glob("*.md")):
         if md.stem in SKIP:
             continue
@@ -1193,30 +1489,60 @@ def audit_kit() -> list[str]:
                     icon_file(kind)
                 except (KeyError, FileNotFoundError) as exc:
                     problems.append(f"{md.stem}: {exc}")
-    arrow_fns = (
-        _paint_span,
-        _paint_down_head,
-        _paint_right_head,
-        _paint_left_head,
-        draw_down_arrow,
-        draw_stem,
-        draw_bar,
-        draw_right_arrow,
-        draw_left_arrow,
-    )
-    for fn in arrow_fns:
-        source = inspect.getsource(fn)
-        if re.search(r"\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)", source):
-            problems.append(f"{fn.__name__} color outside the kit")
-        if re.search(r"\b\d{2,}\b", source):
-            problems.append(f"{fn.__name__} arrow style outside the kit")
-    card = inspect.getsource(_draw_card)
-    if "badge_plan" not in card or card.count("draw_icon") != 1:
+    source = Path(__file__).read_text(encoding="utf8")
+    tree = ast.parse(source)
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom) and node.module == "metal_kit":
+            problems.append("plate draws outside the kit")
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                if alias.name == "metal_kit":
+                    problems.append("plate draws outside the kit")
+    stamp_span = (0, 0)
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef) and node.name == "stamp_svg":
+            stamp_span = (node.lineno, node.end_lineno or node.lineno)
+    if stamp_span == (0, 0):
+        problems.append("missing kit stamper")
+    palette = set(palette_rgbs())
+    allowed_colors = {
+        name for name, value in KIT["palette"].items()
+        if isinstance(value, list) and value and isinstance(value[0], int)
+    }
+    placed: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr in SHAPE_DRAWS:
+            if not (stamp_span[0] <= node.lineno <= stamp_span[1]):
+                problems.append(f"{node.func.attr} shape outside the kit")
+        if (
+            isinstance(node, ast.Tuple)
+            and len(node.elts) == 3
+            and all(isinstance(item, ast.Constant) and isinstance(item.value, int) for item in node.elts)
+        ):
+            rgb = (int(node.elts[0].value), int(node.elts[1].value), int(node.elts[2].value))
+            if rgb not in palette:
+                problems.append(f"color {rgb} outside the kit")
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "place_part":
+            if len(node.args) >= 2 and isinstance(node.args[1], ast.Constant) and isinstance(node.args[1].value, str):
+                part = node.args[1].value
+                placed.add(part)
+                if part not in KIT["parts"]:
+                    problems.append(f"part {part} outside the kit")
+            if len(node.args) >= 4 and isinstance(node.args[3], ast.Constant) and isinstance(node.args[3].value, str):
+                if node.args[3].value not in allowed_colors:
+                    problems.append(f"color {node.args[3].value} outside the kit")
+    for part in KIT["parts"]:
+        if part not in placed:
+            problems.append(f"part {part} is not assembled")
+    start = source.find("def _draw_card")
+    end = source.find("\ndef ", start + 1)
+    card = source[start:end]
+    if "badge_plan" not in card or card.count('place_part(img, "icon"') != 1 or card.count('place_part(img, "numberTile"') != 1:
         problems.append("card badge is not planned from the kit")
     rest = card.split('if mode == "number":', 1)[1]
     number_branch, icon_and_rest = rest.split('elif mode == "icon":', 1)
     icon_branch = icon_and_rest.split("else:", 1)[0]
-    if "draw_icon" in number_branch or "rounded_rectangle(tile" in icon_branch:
+    if '"icon"' in number_branch or '"numberTile"' in icon_branch:
         problems.append("card has both a number and an icon")
     return problems
 
