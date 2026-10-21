@@ -74,7 +74,9 @@ A click on an activity row opens the seat, the full Central time, the linked car
 
 ## Spectrum trail
 
-A replayed check is stored with both ends on GitHub. The page was folding that ping back into a ring on GitHub after the resolver had already opened a lane to forge, and the rainbow trail returns before it can draw on a ring. A replayed same-node ping now keeps that opened lane when both ends are on the canvas, so the trail draws.
+A replayed check is stored with both ends on GitHub. The page was folding that ping back into a ring on GitHub after the resolver had already opened a lane to forge, and the rainbow trail returns before it can draw on a ring. A replayed same-node ping now keeps that opened lane when both ends are on the canvas, so the trail draws. Trail stops start outside the packet so the comet reads on the plate.
+
+The opening replay is 25 s and starts at the first event inside the 5 minute window. Speed stays at or under 4×, so a tight cluster shows one packet at a time instead of the whole window in 6.5 s. The loop is a 20 s pass and then a 30 s gap, and it pauses while a live packet is in flight.
 
 ## Closed column and history
 

@@ -527,3 +527,48 @@ test('a replayed same-node check paints the spectrum trail', async () => {
     await new Promise((resolve) => server.close(resolve));
   }
 });
+
+test('a tight cluster stays rewound past 8 s and paints the trail within 3 s', async () => {
+  const now = Date.now();
+  const iso = (ms) => new Date(ms).toISOString();
+  const payload = feed();
+  payload.events = [];
+  for (let i = 0; i < 8; i++) {
+    payload.events.push({
+      id: 'hop' + i, t_ct: iso(now - 40000 + i * 5000), kind: 'pr_open',
+      from: 'forge', to: 'GitHub', label: 'opened #' + i, repo: 'example/app', number: 3,
+    });
+  }
+  const overlay = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'site', 'public', 'site-config.js');
+  const server = await serve(payload, { '/site-config.js': overlay });
+  const base = `http://127.0.0.1:${server.address().port}/index.html`;
+  let browser;
+  try {
+    fs.mkdirSync(ART, { recursive: true });
+    browser = await chromium.launch();
+    const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'no-preference' });
+    const t0 = Date.now();
+    await page.goto(base, { waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(() => document.getElementById('mesh').dataset.spectrumTrail === '1', null, { timeout: 3000 });
+    const trailAt = Date.now() - t0;
+    await page.waitForTimeout(Math.max(0, 8000 - (Date.now() - t0)));
+    const face = await page.evaluate(() => ({
+      pill: document.getElementById('pill').textContent,
+      spectrum: document.getElementById('spectrumPill').hidden,
+      bars: document.getElementById('spectrumMeter').children.length,
+      live: document.getElementById('live').classList.contains('on'),
+      trail: document.getElementById('mesh').dataset.spectrumTrail,
+    }));
+    assert.ok(trailAt < 3000, 'trail at ' + trailAt + ' ms');
+    assert.equal(face.trail, '1');
+    assert.equal(face.pill, 'REWOUND');
+    assert.equal(face.spectrum, false);
+    assert.equal(face.bars, 14);
+    assert.equal(face.live, false);
+    await page.screenshot({ path: path.join(ART, 'spectrum-replay-after.png') });
+  } finally {
+    if (browser) await browser.close();
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
