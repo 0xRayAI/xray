@@ -503,7 +503,36 @@ function renderKickClean(sampleRate) {
  * No noise burst and no distortion.
  */
 function renderKickTicked(sampleRate) {
-  const body = renderKickClean(sampleRate);
+  return addKickTick(renderKickClean(sampleRate), sampleRate);
+}
+
+/**
+ * Fuller sine body. The pitch settles near 44 Hz and the decay holds
+ * the fundamental. Still one sine through a lowpass. No click, no distortion.
+ */
+function renderKickFull(sampleRate) {
+  const dur = 0.32;
+  const n = Math.floor(dur * sampleRate);
+  const out = new Float64Array(n);
+  const f0 = 78;
+  const f1 = 44;
+  const drop = 0.035;
+  const lp = makeBiquad("lowpass", 160, 0.707, sampleRate);
+  let phase = 0;
+  for (let i = 0; i < n; i++) {
+    const t = i / sampleRate;
+    const f = t < drop ? f0 * Math.pow(f1 / f0, t / drop) : f1;
+    let env = Math.exp(-t / 0.12);
+    if (t < 0.012) env *= t / 0.012;
+    const tail = dur - t;
+    if (tail < 0.02) env *= tail / 0.02;
+    out[i] = lp.step(Math.sin(phase)) * env;
+    phase += (2 * Math.PI * f) / sampleRate;
+  }
+  return addKickTick(normalizePeak(out, 1), sampleRate);
+}
+
+function addKickTick(body, sampleRate) {
   const dur = 0.004;
   const n = Math.floor(dur * sampleRate);
   const raw = new Float64Array(body.length);
@@ -592,27 +621,33 @@ function renderSnap(sampleRate) {
  * One bass note. Sine sub, optional odd-harmonic mid through a one-pole
  * that opens near 600 Hz and falls toward 180 Hz. The envelope is the note.
  */
-function renderBassNote(sampleRate, freq, withMid) {
-  const dur = 0.06;
+function renderBassNote(sampleRate, freq, withMid, opts) {
+  const dur = opts && opts.dur != null ? opts.dur : 0.06;
+  const decay = opts && opts.decay != null ? opts.decay : 0.022;
   const n = Math.floor(dur * sampleRate);
   const sub = new Float64Array(n);
   const mid = new Float64Array(n);
   let phase = 0;
   let lp = 0;
+  const floor = opts && opts.midFloor != null ? opts.midFloor : 180;
+  const open = opts && opts.midOpen != null ? opts.midOpen : 420;
+  const midGain = opts && opts.midGain != null ? opts.midGain : 0.55;
+  const drift = Boolean(opts && opts.drift);
   for (let i = 0; i < n; i++) {
     const t = i / sampleRate;
     const attack = t < 0.003 ? t / 0.003 : 1;
-    const env = Math.exp(-t / 0.022) * attack;
+    const env = Math.exp(-t / decay) * attack;
+    const f = drift ? freq * Math.pow(0.97, t / dur) : freq;
     const s = Math.sin(phase);
     sub[i] = s * env;
     if (withMid) {
       const sq = s + 0.34 * Math.sin(phase * 3) + 0.16 * Math.sin(phase * 5);
-      const cutoff = 180 + 420 * Math.exp(-t / 0.03);
+      const cutoff = floor + open * Math.exp(-t / 0.03);
       const alpha = 1 - Math.exp((-2 * Math.PI * cutoff) / sampleRate);
       lp += alpha * (sq - lp);
-      mid[i] = lp * env * 0.55;
+      mid[i] = lp * env * midGain;
     }
-    phase += (2 * Math.PI * freq) / sampleRate;
+    phase += (2 * Math.PI * f) / sampleRate;
   }
   return { sub, mid };
 }
@@ -691,9 +726,11 @@ function renderFmPluck(sampleRate, freq, opts) {
     let y;
     if (moving) {
       const bright = Boolean(opts && opts.bright);
-      const cutoff = bright
-        ? 1700 + 2300 * Math.exp(-t / 0.03)
-        : 900 + 1500 * Math.exp(-t / 0.04);
+      const cutoff = opts && opts.dark
+        ? 1100 + 900 * Math.exp(-t / 0.03)
+        : bright
+          ? 1700 + 2300 * Math.exp(-t / 0.03)
+          : 900 + 1500 * Math.exp(-t / 0.04);
       const alpha = 1 - Math.exp((-2 * Math.PI * cutoff) / sampleRate);
       one += alpha * (raw - one);
       y = one;
@@ -947,6 +984,7 @@ module.exports = {
   clamp,
   renderKickClean,
   renderKickTicked,
+  renderKickFull,
   renderClapTonal,
   renderSnap,
   renderBassNote,

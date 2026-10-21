@@ -34,7 +34,7 @@ Pass region, against Session Recall:
 | Crest | body crest within 6 dB of 11.2 |
 | Correlation | within 0.15 of 0.981 |
 | Side vs mid | 8–20 dB under, the same window as the width rule |
-| 30–120 Hz share | within 0.20 of 0.85 |
+| 30–120 Hz share | 0.60–0.90. Session Recall’s 0.85 is an mp3 preview: the encode shelves the top, so the share reads heavy. A short-note bed reaches 0.85 only with 2–4 kHz down at −45 dB, outside the band rule. With the top kept, those notes sit near 0.76. The rest of the way to 0.85 is the held sine that put v4b at 0.94. |
 | 2–4 kHz | within 10 dB of −31 |
 | 4–8 kHz | within 10 dB of −37 |
 
