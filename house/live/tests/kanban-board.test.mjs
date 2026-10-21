@@ -326,7 +326,7 @@ test('column headers stay visible after the card area scrolls', async () => {
   let browser;
   try {
     browser = await chromium.launch();
-    const page = await browser.newPage({ viewport: { width: 1200, height: 900 } });
+    const page = await browser.newPage({ viewport: { width: 1040, height: 900 } });
     await page.goto(base, { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => document.querySelectorAll('#kanbanBoard [data-stage="review"] .wcard').length >= 20, null, { timeout: 8000 });
 
