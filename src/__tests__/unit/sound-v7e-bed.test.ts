@@ -110,6 +110,9 @@ describe("BED-MAGNETIC-MOVES-v7e", () => {
     const attack = hit.subarray(0, Math.floor(0.04 * pro.SAMPLE_RATE));
     expect(sineShare(attack, pro.SAMPLE_RATE, 196)).toBeLessThan(0.3);
     expect(bandShare(attack, pro.SAMPLE_RATE)).toBeGreaterThan(0.4);
+    const body = hit.subarray(Math.floor(0.08 * pro.SAMPLE_RATE), Math.floor(0.15 * pro.SAMPLE_RATE));
+    expect(sineShare(body, pro.SAMPLE_RATE, 196)).toBeGreaterThan(0.4);
+    expect(bandShare(body, pro.SAMPLE_RATE)).toBeLessThan(0.1);
     expect(metrics.pass, metrics.fails.join(", ")).toBe(true);
     expect(metrics.rules.pass, metrics.rules.fails.join(", ")).toBe(true);
     expect(metrics.reference.pass).toBe(true);

@@ -792,9 +792,8 @@ function renderFilterPluck(sampleRate, freq, opts) {
 }
 
 /**
- * Same pluck, with the 1.7–4.3 kHz formant on the attack.
- * The partials are spread through that band so they do not land on one sample.
- * The low body comes in after the attack, so the first 40 ms is the formant.
+ * Same pluck. The 1.7–4.3 kHz formant is the attack.
+ * After 40 ms the 196 Hz body is louder than that formant, so the note arrives.
  */
 function renderFilterPluckAttack(sampleRate, freq) {
   const decay = 0.055;
@@ -823,8 +822,9 @@ function renderFilterPluckAttack(sampleRate, freq) {
     const t = i / sampleRate;
     let presEnv = t < 0.0025 ? t / 0.0025 : 1;
     if (t > 0.02) presEnv *= Math.exp(-(t - 0.02) / 0.04);
-    const bodyIn = t < 0.036 ? 0 : Math.min(1, (t - 0.036) / 0.016);
-    const bodyEnv = Math.exp(-t / decay) * bodyIn;
+    if (t > 0.04) presEnv *= Math.exp(-(t - 0.04) / 0.008);
+    const bodyIn = t < 0.04 ? 0 : Math.min(1, (t - 0.04) / 0.008);
+    const bodyEnv = Math.exp(-Math.max(0, t - 0.04) / decay) * bodyIn;
     let body = 0;
     for (let v = 0; v < ratios.length; v++) {
       const phase = phases[v];
@@ -837,7 +837,7 @@ function renderFilterPluckAttack(sampleRate, freq) {
       const part = partials[p];
       pres += part.amp * Math.sin(2 * Math.PI * part.freq * t + part.phase);
     }
-    out[i] = body * bodyEnv * 0.5 + (pres / presNorm) * presEnv;
+    out[i] = body * bodyEnv + (pres / presNorm) * presEnv;
   }
   return normalizePeak(applyBiquad(out, "highpass", 140, 0.707, sampleRate), 1);
 }
