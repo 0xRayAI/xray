@@ -1,6 +1,7 @@
 ---
 title: Worn turn
 sidebar_label: Worn turn
+plate_type: pipeline
 ---
 
 # Worn turn
@@ -14,7 +15,7 @@ The hook chain on a tool call. It does not replace pre-tool, delegation-gate, le
 │   │ tool name · command · written content · paths        │   │
 │   └──────────────────────────┬───────────────────────────┘   │
 └──────────────────────────────┼───────────────────────────────┘
-                               v
+                               v                                
 ┌──────────────────────────────┼───────────────────────────────┐
 │ PROCESSING LAYER             v                               │
 │   ┌────────────────────────────┐ ┌─────────────────────────┐ │
@@ -26,7 +27,7 @@ The hook chain on a tool call. It does not replace pre-tool, delegation-gate, le
 │   │ repertoireRoute            │ │ a thrown load denies    │ │
 │   └─────────────┬──────────────┘ └────────────┬────────────┘ │
 └─────────────────┼──────────────────────────────┼─────────────┘
-                  v                              v
+                  v                              v              
 ┌─────────────────┼──────────────────────────────┼─────────────┐
 │ OUTPUT LAYER    v                              v             │
 │   ┌──────────────────────────────────────────────────────┐   │

@@ -1,4 +1,5 @@
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { inflateSync } from 'node:zlib';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -271,4 +272,144 @@ describe('pipeline plates', () => {
     expect(opBody).not.toMatch(/Kind 0|outer plane/i);
     expect(op.join('\n')).not.toMatch(/outer plane/i);
   });
+
+  it('keeps lens-card fences rectangular and embeds that fence in the layered-flow PNG', () => {
+    expect(displayWidth('┌┐│─≤→·')).toBe(7);
+    expect(displayWidth('中')).toBe(2);
+    expect(displayWidth('a\u0301')).toBe(1);
+    const version = (JSON.parse(readFileSync(join(process.cwd(), 'package.json'), 'utf8')) as { version: string }).version;
+    for (const id of PLATE_IDS) {
+      const md = readFileSync(join(process.cwd(), 'docs-site/docs/plates', `${id}.md`), 'utf8');
+      const frontmatter = /^---\n([\s\S]*?)\n---/.exec(md)?.[1] ?? '';
+      const plateType = /^plate_type:\s*(.+?)\s*$/m.exec(frontmatter)?.[1] ?? '';
+      expect(plateType, id).toMatch(/^(pipeline|state flow|domain model)$/);
+      const png = join(process.cwd(), 'docs-site/static/plates/x', `${id}.png`);
+      if (NO_LENS_CARD.has(id)) {
+        expect(existsSync(png), id).toBe(false);
+        continue;
+      }
+      expect(md, id).toContain(`stamped · 0xray ${version}`);
+      const body = fenceBody(md);
+      const lines = fenceLines(body);
+      const width = displayWidth(lines[0] ?? '');
+      expect(lines.every((line) => displayWidth(line) === width), id).toBe(true);
+      for (const box of plateBoxes(lines)) {
+        const top = lines[box.top] ?? '';
+        const bot = lines[box.bot] ?? '';
+        expect(top[box.right], `${id} top`).toBe('┐');
+        expect(bot[box.left], `${id} bot`).toBe('└');
+        expect(bot.indexOf('┘', box.left + 1), `${id} corner`).toBe(box.right);
+        for (let row = box.top + 1; row < box.bot; row += 1) {
+          const edge = lines[row] ?? '';
+          expect(LEFT_SIDE.has(edge[box.left] ?? ''), `${id} left ${row}`).toBe(true);
+          expect(RIGHT_EDGE.has(edge[box.right] ?? ''), `${id} right ${row}`).toBe(true);
+        }
+      }
+      expect(pngText(readFileSync(png), 'xray-plate-ascii'), id).toBe(body);
+    }
+  });
 });
+
+const NO_LENS_CARD = new Set(['review', 'goggles', 'suit', 'kits', 'host-pack', 'glossary']);
+const LEFT_SIDE = new Set(['│', '├', '┼']);
+const RIGHT_EDGE = new Set(['│', '┐', '┘', '┤', '┼']);
+
+function isWide(cp: number): boolean {
+  return (
+    (cp >= 0x1100 && cp <= 0x115f) ||
+    (cp >= 0x2329 && cp <= 0x232a) ||
+    (cp >= 0x2e80 && cp <= 0xa4cf && cp !== 0x303f) ||
+    (cp >= 0xac00 && cp <= 0xd7a3) ||
+    (cp >= 0xf900 && cp <= 0xfaff) ||
+    (cp >= 0xfe10 && cp <= 0xfe19) ||
+    (cp >= 0xfe30 && cp <= 0xfe6f) ||
+    (cp >= 0xff00 && cp <= 0xff60) ||
+    (cp >= 0xffe0 && cp <= 0xffe6) ||
+    (cp >= 0x1f300 && cp <= 0x1f64f) ||
+    (cp >= 0x1f900 && cp <= 0x1f9ff) ||
+    (cp >= 0x20000 && cp <= 0x3fffd)
+  );
+}
+
+function isCombining(cp: number): boolean {
+  return (
+    (cp >= 0x0300 && cp <= 0x036f) ||
+    (cp >= 0x1ab0 && cp <= 0x1aff) ||
+    (cp >= 0x1dc0 && cp <= 0x1dff) ||
+    (cp >= 0x20d0 && cp <= 0x20ff) ||
+    (cp >= 0xfe20 && cp <= 0xfe2f)
+  );
+}
+
+function displayWidth(text: string): number {
+  let width = 0;
+  for (const ch of text) {
+    const cp = ch.codePointAt(0) ?? 0;
+    if (isCombining(cp)) continue;
+    width += isWide(cp) ? 2 : 1;
+  }
+  return width;
+}
+
+function fenceBody(md: string): string {
+  const match = /```[^\n]*\n([\s\S]*?)```/.exec(md);
+  if (!match) throw new Error('plate has no code fence');
+  return match[1];
+}
+
+function fenceLines(body: string): string[] {
+  const text = body.endsWith('\n') ? body.slice(0, -1) : body;
+  return text.split('\n');
+}
+
+function plateBoxes(lines: string[]): Array<{ top: number; bot: number; left: number; right: number }> {
+  const found: Array<{ top: number; bot: number; left: number; right: number }> = [];
+  for (let r = 0; r < lines.length; r += 1) {
+    const line = lines[r] ?? '';
+    let c = 0;
+    while (c < line.length) {
+      if (line[c] === '┌') {
+        let k = c + 1;
+        while (k < line.length && line[k] !== '┐' && line[k] !== '┌') k += 1;
+        if (k < line.length && line[k] === '┐') {
+          let rr = r + 1;
+          while (rr < lines.length && LEFT_SIDE.has((lines[rr] ?? '')[c] ?? '')) rr += 1;
+          if (rr < lines.length && (lines[rr] ?? '')[c] === '└') {
+            found.push({ top: r, bot: rr, left: c, right: k });
+            c = k;
+            continue;
+          }
+        }
+      }
+      c += 1;
+    }
+  }
+  return found;
+}
+
+function pngText(buf: Buffer, keyword: string): string | null {
+  const sig = '\x89PNG\r\n\x1a\n';
+  if (buf.toString('ascii', 0, 8) !== sig) throw new Error('not a png');
+  let offset = 8;
+  while (offset + 8 <= buf.length) {
+    const length = buf.readUInt32BE(offset);
+    const type = buf.toString('ascii', offset + 4, offset + 8);
+    const data = buf.subarray(offset + 8, offset + 8 + length);
+    if (type === 'iTXt') {
+      const keyEnd = data.indexOf(0);
+      const key = data.toString('latin1', 0, keyEnd);
+      if (key === keyword) {
+        let cursor = keyEnd + 1;
+        const compressed = data[cursor] === 1;
+        cursor += 2;
+        const langEnd = data.indexOf(0, cursor);
+        cursor = langEnd + 1;
+        const transEnd = data.indexOf(0, cursor);
+        const text = data.subarray(transEnd + 1);
+        return compressed ? inflateSync(text).toString('utf8') : text.toString('utf8');
+      }
+    }
+    offset += 12 + length;
+  }
+  return null;
+}

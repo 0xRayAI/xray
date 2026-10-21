@@ -1,6 +1,7 @@
 ---
 title: Pre tool
 sidebar_label: Pre tool
+plate_type: pipeline
 ---
 
 # Pre tool
@@ -14,7 +15,7 @@ Two host edges join the same fields, run the delegation gate, then one lens deny
 │   │ tool name · command · content · paths                │   │
 │   └──────────────────────────┬───────────────────────────┘   │
 └──────────────────────────────┼───────────────────────────────┘
-                               v
+                               v                                
 ┌──────────────────────────────┼───────────────────────────────┐
 │ PROCESSING LAYER             v                               │
 │   ┌────────────────────────────┐ ┌─────────────────────────┐ │
@@ -23,8 +24,8 @@ Two host edges join the same fields, run the delegation gate, then one lens deny
 │   │ then lensDecision          │ │ then lensBeforeResearch │ │
 │   └─────────────┬──────────────┘ └────────────┬────────────┘ │
 └─────────────────┼──────────────────────────────┼─────────────┘
-                  └──────────────┬───────────────┘
-                                 v
+                  └──────────────┬───────────────┘              
+                                 v                              
 ┌────────────────────────────────┼─────────────────────────────┐
 │ OUTPUT LAYER                   v                             │
 │   ┌──────────────────────────────────────────────────────┐   │
