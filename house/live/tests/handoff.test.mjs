@@ -8,7 +8,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
 import os from 'node:os';
-import { missingHandoffs, packetCovers } from '../app/handoff.mjs';
+import { missingHandoffs, packetCovers, isHotfixTitle, isMergeHandoff, validMergeReview, hotfixMergeLine } from '../app/handoff.mjs';
 import { listenPort } from './free-port.mjs';
 
 const ROLES = {
@@ -280,6 +280,120 @@ test('the server flags a missed handoff and does not post the packet', async () 
     await new Promise(r => setTimeout(r, 1200));
     const nudges = await (await fetch(base + '/nudges', { headers: { Authorization: 'Bearer ' + forgeKey } })).json();
     assert.equal(nudges.nudges.some(n => n.kind === 'handoff' && !n.closed_at), false);
+  } finally {
+    srv.kill();
+    await new Promise(r => srv.exitCode != null || srv.signalCode ? r() : srv.once('exit', r));
+    gh.close();
+    fs.rmSync(data, { recursive: true, force: true });
+  }
+});
+
+test('a hotfix title is only the hotfix: prefix', () => {
+  assert.equal(isHotfixTitle('hotfix: pin the clock'), true);
+  assert.equal(isHotfixTitle('  Hotfix: pin the clock'), true);
+  assert.equal(isHotfixTitle('fix(live): hotfix later'), false);
+  assert.equal(isHotfixTitle(''), false);
+});
+
+test('a hotfix merge line is one reviewer packet, and the review url must match that pull', () => {
+  const head = 'ab' + 'cd'.repeat(19);
+  const line = hotfixMergeLine({ repo: '0xRayAI/xray', number: 80, sha: 'AB' + 'cd'.repeat(19), reviewer: 'Critic', from: 'Forge' });
+  assert.equal(line.seat, 'critic');
+  assert.equal(line.from, 'forge');
+  assert.equal(line.kind, 'merge');
+  assert.equal(line.type, 'packet');
+  assert.equal(line.sha, head);
+  assert.equal(line.id, `handoff:0xrayai/xray#80:merge:${head}`);
+  assert.equal(hotfixMergeLine({ repo: '0xRayAI/xray', number: 80, sha: 'abc', reviewer: 'critic' }), null);
+  assert.equal(isMergeHandoff(line), true);
+  assert.equal(isMergeHandoff({ ...line, kind: 'ready' }), false);
+  const url = 'https://github.com/0xRayAI/xray/pull/80#pullrequestreview-12';
+  assert.equal(validMergeReview(url, line), true);
+  assert.equal(validMergeReview('https://github.com/0xRayAI/xray/pull/81#pullrequestreview-12', line), false);
+  assert.equal(validMergeReview('https://github.com/0xRayAI/xray/pull/80', line), false);
+});
+
+test('merging a hotfix enqueues one critic merge line, and acking it needs the review url', async () => {
+  const app = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app');
+  const data = fs.mkdtempSync(path.join(os.tmpdir(), 'hotfix-merge-'));
+  const forgeKey = 'forge-key-' + crypto.randomBytes(6).toString('hex');
+  const criticKey = 'critic-key-' + crypto.randomBytes(6).toString('hex');
+  const pw = crypto.randomBytes(6).toString('hex');
+  const keys = {
+    forge: crypto.createHash('sha256').update(forgeKey).digest('hex'),
+    critic: crypto.createHash('sha256').update(criticKey).digest('hex'),
+  };
+  const gh = http.createServer((_req, res) => { res.writeHead(404); res.end('{}'); });
+  await new Promise(r => gh.listen(0, '127.0.0.1', r));
+  const srv = spawn(process.execPath, [path.join(app, 'server.mjs')], {
+    env: {
+      PORT: '0', MESH_PASSWORD: pw, SESSION_SECRET: crypto.randomBytes(16).toString('hex'),
+      INGEST_SECRET: crypto.randomBytes(16).toString('hex'), PATH: process.env.PATH, MESH_DATA_DIR: data,
+      SERVER_ROUTING: 'off',
+      GITHUB_API_URL: `http://127.0.0.1:${gh.address().port}`,
+      SEAT_KEYS: JSON.stringify(keys),
+    },
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  const auth = (key, extra = {}) => ({ Authorization: 'Bearer ' + key, ...extra });
+  try {
+    const port = await listenPort(srv);
+    const base = `http://127.0.0.1:${port}`;
+    const head = 'cd'.repeat(20);
+    const openedAt = new Date(Date.now() - 60_000).toISOString();
+    const feed = {
+      title: 't', generated_at: new Date().toISOString(), event_count: 4,
+      events: [
+        { id: 'open-80', t_ct: openedAt, kind: 'pr_open', repo: '0xRayAI/xray', number: 80, sha: 'ab'.repeat(20), title: 'hotfix: pin the clock', actor: 'forge0x1[bot]' },
+        { id: 'merge-80', t_ct: new Date().toISOString(), kind: 'merged', repo: '0xRayAI/xray', number: 80, sha: 'ab'.repeat(20), merge_sha: head, actor: 'forge0x1[bot]' },
+        { id: 'open-81', t_ct: openedAt, kind: 'pr_open', repo: '0xRayAI/xray', number: 81, sha: 'ef'.repeat(20), title: 'fix(live): ordinary repair', actor: 'forge0x1[bot]' },
+        { id: 'merge-81', t_ct: new Date().toISOString(), kind: 'merged', repo: '0xRayAI/xray', number: 81, sha: 'ef'.repeat(20), merge_sha: 'ef'.repeat(20), actor: 'forge0x1[bot]' },
+      ],
+    };
+    const file = path.join(data, 'feed', 'github-events.json');
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, JSON.stringify(feed));
+    let lines = [];
+    for (let i = 0; i < 40; i++) {
+      const body = await (await fetch(base + '/inbox/critic', { headers: auth(criticKey) })).json();
+      lines = body.lines || [];
+      if (lines.some(l => l.number === 80 && l.kind === 'merge')) break;
+      await new Promise(r => setTimeout(r, 200));
+    }
+    assert.equal(lines.filter(l => l.kind === 'merge').length, 1);
+    const merge = lines.find(l => l.number === 80);
+    assert.equal(merge.type, 'packet');
+    assert.equal(merge.from, 'forge');
+    assert.equal(merge.sha, head);
+    assert.equal(merge.id, `handoff:0xrayai/xray#80:merge:${head}`);
+    assert.equal(lines.some(l => l.number === 81), false);
+    const bare = await fetch(base + '/inbox/critic/ack', { method: 'POST', headers: auth(criticKey, { 'Content-Type': 'application/json' }), body: JSON.stringify({ id: merge.id }) });
+    assert.equal(bare.status, 400);
+    assert.equal((await bare.json()).error, 'merge handoff needs a review url');
+    const ready = { id: 'handoff:0xrayai/xray#82:ready:' + '11'.repeat(20), t_ct: new Date().toISOString(), seat: 'critic', from: 'forge', to: 'critic', type: 'packet', kind: 'ready', repo: '0xRayAI/xray', number: 82, sha: '11'.repeat(20), title: 'handoff ready', url: 'https://github.com/0xRayAI/xray/pull/82', reason: 'handoff ready' };
+    const posted = await fetch(base + '/inbox', { method: 'POST', headers: auth(forgeKey, { 'Content-Type': 'application/json' }), body: JSON.stringify({ lines: [ready] }) });
+    assert.equal((await posted.json()).added, 1);
+    const all = await fetch(base + '/inbox/critic/ack', { method: 'POST', headers: auth(criticKey, { 'Content-Type': 'application/json' }), body: JSON.stringify({ all: true }) });
+    assert.equal(all.status, 200);
+    assert.equal((await all.json()).acked, 1);
+    const stale = await fetch(base + '/inbox/critic/ack', { method: 'POST', headers: auth(criticKey, { 'Content-Type': 'application/json' }), body: JSON.stringify({ stale: true }) });
+    assert.equal(stale.status, 200);
+    assert.equal((await stale.json()).acked, 0);
+    const still = await (await fetch(base + '/inbox/critic', { headers: auth(criticKey) })).json();
+    assert.deepEqual(still.lines.map(l => l.id), [merge.id]);
+    const wrong = 'https://github.com/0xRayAI/xray/pull/81#pullrequestreview-554';
+    const denied = await fetch(base + '/inbox/critic/ack', { method: 'POST', headers: auth(criticKey, { 'Content-Type': 'application/json' }), body: JSON.stringify({ id: merge.id, review: wrong }) });
+    assert.equal(denied.status, 400);
+    const review = 'https://github.com/0xRayAI/xray/pull/80#pullrequestreview-554';
+    const ok = await fetch(base + '/inbox/critic/ack', { method: 'POST', headers: auth(criticKey, { 'Content-Type': 'application/json' }), body: JSON.stringify({ id: merge.id, review }) });
+    assert.equal(ok.status, 200);
+    assert.equal((await ok.json()).acked, 1);
+    const gone = await (await fetch(base + '/inbox/critic', { headers: auth(criticKey) })).json();
+    assert.equal(gone.lines.length, 0);
+    const archived = [];
+    const walk = dir => { for (const name of fs.readdirSync(dir)) { const p = path.join(dir, name); if (fs.statSync(p).isDirectory()) walk(p); else if (name === 'acks.jsonl') archived.push(...fs.readFileSync(p, 'utf8').split('\n').filter(Boolean)); } };
+    walk(path.join(data, 'archive'));
+    assert.ok(archived.some(row => row.includes(review)));
   } finally {
     srv.kill();
     await new Promise(r => srv.exitCode != null || srv.signalCode ? r() : srv.once('exit', r));
