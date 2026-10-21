@@ -493,7 +493,7 @@ test('an activity row expands to the full note and collapses again', async () =>
   }
 });
 
-test('a lit seat shows the hot ring across two frames and an idle seat shows none', async () => {
+test('an active seat name rolls across two frames and an idle seat name does not', async () => {
   const payload = feed();
   payload.events = [];
   payload.fleet = {
@@ -509,51 +509,56 @@ test('a lit seat shows the hot ring across two frames and an idle seat shows non
   try {
     browser = await chromium.launch();
     const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1 });
-    await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'reduce' });
+    await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'no-preference' });
     await page.goto(base, { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => {
-      const views = window.LIVE_SEAT_VIEWS && window.LIVE_SEAT_VIEWS.node;
-      return !!(views && views.Reviewer && views.Reviewer.lit === true && views.Tester && views.Tester.lit === false && window.LIVE_FIT);
+      const views = window.LIVE_SEAT_VIEWS && window.LIVE_SEAT_VIEWS.chip;
+      return !!(views && views.Reviewer && views.Reviewer.lit === true && views.Tester && views.Tester.lit === false);
     }, null, { timeout: 8000 });
     const sample = () => page.evaluate(() => {
-      const L = window.LiveMesh;
-      const canvas = document.getElementById('mesh');
-      const ctx = canvas.getContext('2d');
-      const fit = window.LIVE_FIT;
-      const views = window.LIVE_SEAT_VIEWS.node;
-      function hits(key) {
-        const sat = L.SATS[key];
-        const cx = fit.x + sat[0] * fit.scale;
-        const cy = fit.y + sat[1] * fit.scale;
-        let n = 0;
-        for (let deg = 0; deg < 360; deg += 15) {
-          const a = deg * Math.PI / 180;
-          if (Math.sin(a) > 0.15) continue;
-          for (const rad of [23, 28, 33]) {
-            const x = Math.round(cx + Math.cos(a) * rad * fit.scale);
-            const y = Math.round(cy + Math.sin(a) * rad * fit.scale);
-            if (x < 0 || y < 0 || x >= canvas.width || y >= canvas.height) continue;
-            const p = ctx.getImageData(x, y, 1, 1).data;
-            if (p[0] > 40 && p[0] > p[1] + 8 && p[0] > p[2] + 8) n += 1;
-          }
-        }
-        return { key, lit: !!(views[key] && views[key].lit), hits: n };
+      function one(word) {
+        const nm = [...document.querySelectorAll('#seatGrid .nm')].find((el) => el.textContent === word);
+        const seat = nm.closest('.seat');
+        const anims = nm.getAnimations();
+        const a = anims[0];
+        return {
+          live: seat.classList.contains('live'),
+          idle: seat.classList.contains('idle'),
+          count: anims.length,
+          name: a ? a.animationName : '',
+          time: a && a.currentTime != null ? Number(a.currentTime) : null,
+          play: a ? a.playState : '',
+        };
       }
-      return { reviewer: hits('Reviewer'), tester: hits('Tester') };
+      return { reviewer: one('REVIEWER'), tester: one('TESTER') };
     });
     const frame1 = await sample();
-    await page.evaluate(() => new Promise((resolve) => {
-      requestAnimationFrame(() => requestAnimationFrame(resolve));
-    }));
+    await page.evaluate(() => new Promise((resolve) => { setTimeout(resolve, 250); }));
     const frame2 = await sample();
-    assert.equal(frame1.reviewer.lit, true);
-    assert.equal(frame1.tester.lit, false);
-    assert.ok(frame1.reviewer.hits >= 4, JSON.stringify(frame1));
-    assert.equal(frame1.tester.hits, 0, JSON.stringify(frame1));
-    assert.ok(frame2.reviewer.hits >= 4, JSON.stringify(frame2));
-    assert.equal(frame2.tester.hits, 0, JSON.stringify(frame2));
+    assert.equal(frame1.reviewer.live, true, JSON.stringify(frame1));
+    assert.equal(frame1.tester.idle, true, JSON.stringify(frame1));
+    assert.equal(frame1.reviewer.count, 1, JSON.stringify(frame1));
+    assert.equal(frame1.reviewer.name, 'nm-roll');
+    assert.equal(frame1.reviewer.play, 'running');
+    assert.equal(frame1.tester.count, 0, JSON.stringify(frame1));
+    assert.equal(frame2.tester.count, 0, JSON.stringify(frame2));
+    assert.notEqual(frame2.reviewer.time, frame1.reviewer.time, JSON.stringify({ frame1, frame2 }));
     fs.mkdirSync(ART, { recursive: true });
-    await page.locator('#mesh').screenshot({ path: path.join(ART, 'hot-ring-lit.png') });
+    await page.locator('#seats').screenshot({ path: path.join(ART, 'roster-name-roll.png') });
+    await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'reduce' });
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(() => {
+      const views = window.LIVE_SEAT_VIEWS && window.LIVE_SEAT_VIEWS.chip;
+      return !!(views && views.Reviewer && views.Reviewer.lit === true);
+    }, null, { timeout: 8000 });
+    const still = await page.evaluate(() => {
+      const nm = [...document.querySelectorAll('#seatGrid .nm')].find((el) => el.textContent === 'REVIEWER');
+      const cs = getComputedStyle(nm);
+      return { count: nm.getAnimations().length, color: cs.color, image: cs.backgroundImage };
+    });
+    assert.equal(still.count, 0, JSON.stringify(still));
+    assert.equal(still.image, 'none', JSON.stringify(still));
+    assert.match(still.color, /255,\s*176,\s*120/, JSON.stringify(still));
   } finally {
     if (browser) await browser.close();
     await new Promise((resolve) => server.close(resolve));

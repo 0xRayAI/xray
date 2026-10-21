@@ -118,27 +118,6 @@
     if (reduced || !(ageMs >= 0) || ageMs > PULSE_MS) return 0;
     return Math.sin(Math.PI * ageMs / PULSE_MS);
   }
-  /* Lit-seat hot ring. One pass is the flash ring, replayed. The page passes
-     spanMs = 2 * FLASH_MS (5200). p runs 0..1 across that pass and wraps, so
-     the next pass starts on the next frame. Opening frame is the flash
-     strokes: offset k*5, alpha 1/(k+1). Across the pass each stroke spreads
-     by another k*5 and fades to 0. Reduced motion holds that opening frame. */
-  function hotRing(tMs, spanMs, reduced) {
-    var span = spanMs > 0 ? spanMs : 5200;
-    if (reduced) return { p: 0, play: false };
-    var t = Number(tMs);
-    if (!(t >= 0)) t = 0;
-    return { p: (t % span) / span, play: true };
-  }
-  function hotRingStroke(k, ring) {
-    var n = k || 1;
-    var base = 1 / (n + 1);
-    if (!ring || !ring.play) return { grow: 0, alpha: base };
-    var t = Number(ring.p);
-    if (!(t >= 0)) t = 0;
-    if (t > 1) t = 1;
-    return { grow: t * n * 5, alpha: base * (1 - t) };
-  }
   /* Entry: 0..1 ease-out over ENTRY_MS from page start; seats stagger in by index. */
   function entry(elapsedMs, index, reduced) {
     if (reduced) return 1;
@@ -519,7 +498,6 @@
     eventsUpTo: eventsUpTo, pingsAt: pingsAt, hotNodes: hotNodes, applyFeed: applyFeed,
     bounds: bounds, fmtCt: fmtCt, ago: ago, feedUrl: feedUrl, fetchFeed: fetchFeed, rosterEntries: rosterEntries,
     own: own, botImage: botImage, badgeLetter: badgeLetter, bob: bob, pulse: pulse, entry: entry,
-    hotRing: hotRing, hotRingStroke: hotRingStroke,
     ENTRY_MS: ENTRY_MS, PULSE_MS: PULSE_MS, MARK: MARK, markCells: markCells,
     isPlaying: isPlaying, sliderAction: sliderAction, edgeTraffic: edgeTraffic, orbitStep: orbitStep,
     spectrumEnabled: spectrumEnabled, spectrumShows: spectrumShows, spectrumMeter: spectrumMeter,

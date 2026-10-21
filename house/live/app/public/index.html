@@ -405,7 +405,21 @@ header h1 span { color: var(--dim); font-size: 13px; font-weight: 400; letter-sp
 .seat-copy { min-width: 0; overflow: hidden; display: flex; flex-direction: column; }
 .seat.idle { opacity: .45; }
 .dot { width: 14px; height: 14px; border-radius: 50%; background: var(--dot-off); flex: none; }
-.seat .nm { min-width: 0; font-weight: 700; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.seat .nm { min-width: 0; font-weight: 700; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: rgb(var(--nm)); }
+/* The working label's sheen, on the roster name: dim seat color with a full-color band sweeping left to right while .live (seatView.lit). 1.2s is the old canvas travel. */
+.seat.live:not(.silent) .nm {
+  background-image: linear-gradient(90deg, rgba(var(--nm), .45) 0%, rgba(var(--nm), .45) 38%, rgb(var(--nm)) 50%, rgba(var(--nm), .45) 62%, rgba(var(--nm), .45) 100%);
+  background-size: 220% 100%;
+  background-repeat: no-repeat;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: nm-roll 1.2s linear infinite;
+}
+@keyframes nm-roll { from { background-position: 100% 0; } to { background-position: 0% 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .seat.live:not(.silent) .nm { animation: none; background-image: none; color: rgb(var(--nm)); }
+}
 .seat .role { color: var(--dim); font-size: 11px; font-weight: 450; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .seat.live .role { color: var(--text); }
 .lens-head { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 12px; color: var(--dim); align-items: center; }
@@ -629,7 +643,7 @@ footer a { color: var(--foot); }
     <div id="head">&nbsp;</div>
     <div id="headTime">&nbsp;</div>
     <canvas id="mesh" width="920" height="400" aria-label="Mesh of seats and rails with handoff pings"></canvas>
-    <p class="mesh-legend" id="meshLegend"><span title="index.html drawNode. While seatView lit is true, the flash hot ring replays back to back. Three strokes open at r+5, r+10, r+15 with alpha 1/(k+1), then each spreads by p*k*5 and fades by (1-p) across 2 times FLASH_MS, 5200ms (live.js hotRing). Reduced motion draws the opening frame still. A flash from activeSeats draws those opening strokes on top. Letter seats.">Hot ring 5.2s</span><span title="index.html draw. A ping whose source is this node. One sine, PULSE_MS 900, across the flight. Flight is 2600ms, up to 7800ms.">Depart pulse</span><span title="index.html drawPing. from equals to. Radius 24 to 46 and alpha 1 to 0 across that same flight.">One-node ring</span></p>
+    <p class="mesh-legend" id="meshLegend"><span title="index.html drawNode. Hot seat from activeSeats over a handoff or push, or the rewind window. Three strokes. Live duration 2 times FLASH_MS, 5200ms. Letter seats.">Hot ring 5.2s</span><span title="index.html draw. A ping whose source is this node. One sine, PULSE_MS 900, across the flight. Flight is 2600ms, up to 7800ms.">Depart pulse</span><span title="index.html drawPing. from equals to. Radius 24 to 46 and alpha 1 to 0 across that same flight.">One-node ring</span></p>
     </div>
   </section>
   <div id="agentPing" hidden></div>
@@ -803,7 +817,8 @@ footer a { color: var(--foot); }
       var nm = el.querySelector('.nm');
       nm.textContent = label.toUpperCase();
       nm.title = label;
-      nm.style.color = rgb(seatColor(a[0]));
+      var ink = seatColor(a[0]);
+      nm.style.setProperty('--nm', ink[0] + ', ' + ink[1] + ', ' + ink[2]);
       el.querySelector('.role').textContent = String(a[1] || '');
       grid.appendChild(el);
       seatEls[a[0]] = { el: el, dot: el.querySelector('.dot') };
@@ -1319,7 +1334,7 @@ footer a { color: var(--foot); }
       pings.forEach(function (pk) { if (pk.src === key) pul = Math.max(pul, L.pulse(pk.p * L.PULSE_MS, reduced)); });
       ctx.globalAlpha = L.entry(since, i, reduced);
       var nv = L.seatView(seatState(key, hot)); nodeView[key] = nv;   // same state as the header chip
-      drawNode(key, nv.lit, fs, pul, nv.nodeWorking, nowWall, !!(hot && hot[key]));
+      drawNode(key, nv.lit, fs, pul, nv.nodeWorking, nowWall);
 
       ctx.globalAlpha = 1;
     });
@@ -1331,25 +1346,17 @@ footer a { color: var(--foot); }
     ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
   }
 
-  function drawNode(key, isHot, fs, pul, spinning, nowWall, flash) {
+  function drawNode(key, isHot, fs, pul, spinning, nowWall) {
     var xy = pos[key], x = xy[0], y = xy[1], c = L.COLOR[key], sq = !!L.SQUARE[key], r = sq ? 15 : 18 + 3 * pul;
     var img = imgs[key], glyph = L.GLYPH[key], mark = L.MARK_PATH[key];
     var hasImg = !!(img && img.complete && img.naturalWidth);
     var bare = hasImg || (!sq && !!glyph);   // image / glyph nodes: no ring
-    function strokeAt(rr, alpha) {
-      ctx.strokeStyle = rgb(c, alpha); ctx.lineWidth = 2;
-      if (sq) { roundRect(x - rr, y - rr, rr * 2, rr * 2, 6); } else { ctx.beginPath(); ctx.arc(x, y, rr, 0, 7); }
-      ctx.stroke();
-    }
-    if (isHot && !bare) {   // lit seat: the 5.2s flash ring, restarted back to back. Reduced motion is the opening frame.
-      var ring = L.hotRing(nowWall, 2 * FLASH_MS, reduced);
+    if (isHot && !bare) {
       for (var k = 3; k >= 1; k--) {
-        var s = L.hotRingStroke(k, ring);
-        strokeAt(r + k * 5 + s.grow, s.alpha);
+        var rr = r + k * 5; ctx.strokeStyle = rgb(c, 1 / (k + 1)); ctx.lineWidth = 2;
+        if (sq) { roundRect(x - rr, y - rr, rr * 2, rr * 2, 6); } else { ctx.beginPath(); ctx.arc(x, y, rr, 0, 7); }
+        ctx.stroke();
       }
-    }
-    if (flash && !bare) {   // flash from activeSeats, the opening strokes, drawn on top of the loop
-      for (var k2 = 3; k2 >= 1; k2--) strokeAt(r + k2 * 5, 1 / (k2 + 1));
     }
     ctx.fillStyle = cssVar('--node-fill'); ctx.strokeStyle = rgb(c); ctx.lineWidth = isHot ? 3 : 2;
     if (hasImg) {   // avatar: the image as-is, no circle / ring / border / clip
@@ -1776,7 +1783,7 @@ footer a { color: var(--foot); }
       s.dot.style.boxShadow = on ? '0 0 0 2px ' + cssVar('--ring-gap') + ', 0 0 0 4px ' + rgb(c) : 'none';
       var sil = !v.blink && fleetSilent(a[0]);
       s.el.classList.toggle('silent', sil); if (sil) s.dot.style.background = cssVar('--silent-ink');
-      // The mesh hot ring is the active indicator. The roster dot stays a still color.
+      // .live (on) rolls the roster name. The canvas working label is gone. The dot stays a still color.
     });
     var logKey = shown + ':' + state.events.length;
     if (logKey !== lastLogKey) { lastLogKey = logKey; renderLog(shown); }
@@ -2184,7 +2191,10 @@ footer a { color: var(--foot); }
       paintSeatColors();
       L.AGENTS.forEach(function (a) {
         var nm = seatEls[a[0]] && seatEls[a[0]].el.querySelector('.nm');
-        if (nm) nm.style.color = rgb(L.COLOR[a[0]] || [0, 0, 0]);
+        if (nm) {
+          var ink = L.COLOR[a[0]] || [0, 0, 0];
+          nm.style.setProperty('--nm', ink[0] + ', ' + ink[1] + ', ' + ink[2]);
+        }
       });
       paint();
     });

@@ -128,7 +128,7 @@ test('wave header says building with no stamp and empty when the board has zero 
 
 
 
-test('lit seat: hot ring loops; working sheen, roster blink, and name wave are gone', () => {
+test('hot ring stays a one-time flash; the working sheen rolls the roster name while lit', () => {
   assert.match(html, /function fleetWorking\(k\)/);
   assert.doesNotMatch(html, /seat-color sheen sweeping/);
   assert.doesNotMatch(html, /fillText\(wtxt/);
@@ -136,54 +136,16 @@ test('lit seat: hot ring loops; working sheen, roster blink, and name wave are g
   assert.doesNotMatch(html, /classList\.toggle\('working'/);
   assert.doesNotMatch(html, /\.seat \.dot\.blink/);
   assert.doesNotMatch(html, /live-blink/);
-  assert.match(html, /L\.hotRing\(nowWall, 2 \* FLASH_MS, reduced\)/);
-  assert.match(html, /L\.hotRingStroke\(k, ring\)/);
-  assert.doesNotMatch(html, /HOT_RING_MS/);
-  assert.doesNotMatch(html, /hotRingAlpha/);
-  assert.match(html, /if \(isHot && !bare\)/);
-  assert.match(html, /if \(flash && !bare\)/);
-  assert.match(html, /Hot ring 5\.2s/);
+  assert.doesNotMatch(html, /hotRing/);
+  assert.match(html, /var rr = r \+ k \* 5; ctx\.strokeStyle = rgb\(c, 1 \/ \(k \+ 1\)\);/);
+  assert.match(html, /Live duration 2 times FLASH_MS, 5200ms/);
+  assert.match(html, /animation: nm-roll 1\.2s linear infinite/);
+  assert.match(html, /@keyframes nm-roll \{ from \{ background-position: 100% 0; \} to \{ background-position: 0% 0; \} \}/);
+  assert.match(html, /prefers-reduced-motion: reduce\) \{\s*\.seat\.live:not\(\.silent\) \.nm \{ animation: none; background-image: none; color: rgb\(var\(--nm\)\); \}/);
+  assert.match(html, /s\.el\.classList\.toggle\('live', on\)/);
   assert.doesNotMatch(html, /s\.spin/);
   assert.doesNotMatch(html, /\.seat \.spin/);
   assert.doesNotMatch(html, /\u2699/);
-});
-test('hot ring loops while a seat is lit and holds still under reduced motion', async () => {
-  const vm = await import('node:vm');
-  const ctx = { console, URLSearchParams, location: { search: '' }, document: { addEventListener() {} } };
-  ctx.globalThis = ctx;
-  ctx.window = ctx;
-  vm.createContext(ctx);
-  vm.runInContext(fs.readFileSync(path.join(APP, 'public', 'live.js'), 'utf8'), ctx);
-  const L = ctx.LiveMesh;
-  const span = 2 * 2600;
-  assert.equal(L.HOT_RING_MS, undefined);
-  assert.equal(typeof L.hotRingAlpha, 'undefined');
-  const start = L.hotRing(0, span, false);
-  const mid = L.hotRing(span / 2, span, false);
-  const lap = L.hotRing(span, span, false);
-  const again = L.hotRing(span + span / 2, span, false);
-  assert.equal(start.play, true);
-  assert.equal(start.p, 0);
-  assert.ok(Math.abs(mid.p - 0.5) < 1e-9);
-  assert.equal(lap.p, 0);
-  assert.ok(Math.abs(again.p - 0.5) < 1e-9);
-  const held = L.hotRing(span / 2, span, true);
-  assert.equal(held.p, 0);
-  assert.equal(held.play, false);
-  for (const k of [1, 2, 3]) {
-    const open = L.hotRingStroke(k, start);
-    assert.equal(open.grow, 0);
-    assert.equal(open.alpha, 1 / (k + 1));
-    const still = L.hotRingStroke(k, held);
-    assert.equal(still.grow, 0);
-    assert.equal(still.alpha, 1 / (k + 1));
-  }
-  const faded = L.hotRingStroke(2, mid);
-  assert.equal(faded.grow, 5);
-  assert.ok(Math.abs(faded.alpha - (1 / 3) * 0.5) < 1e-9);
-  const end = L.hotRingStroke(3, { p: 1, play: true });
-  assert.equal(end.grow, 15);
-  assert.equal(end.alpha, 0);
 });
 test('one seat state: header text, dot and node label all come from L.seatView(seatState(..)) (working > live > active > idle)', () => {
   const L = { SOURCES: [], AGENTS: [], SEAT_NAMES: [], SATS: {}, COLOR: {}, LABEL: {}, SUB: {}, GLYPH: {}, SQUARE: {},
@@ -206,7 +168,7 @@ test('one seat state: header text, dot and node label all come from L.seatView(s
   assert.match(html, /el\.querySelector\('\.role'\)\.textContent = String\(a\[1\] \|\| ''\)/);
   assert.doesNotMatch(html, /createElement\('button'\)[\s\S]{0,80}className = 'seat'/);
   assert.match(html, /var nv = L\.seatView\(seatState\(key, hot\)\); nodeView\[key\] = nv;/);
-  assert.match(html, /drawNode\(key, nv\.lit, fs, pul, nv\.nodeWorking, nowWall, !!\(hot && hot\[key\]\)\);/);
+  assert.match(html, /drawNode\(key, nv\.lit, fs, pul, nv\.nodeWorking, nowWall\);/);
   assert.doesNotMatch(html, /hot\[a\[0\]\] \? 'LIVE'/);         // the old split derivation is gone
   assert.doesNotMatch(html, /fleetWorking\(key\), nowWall/);
 });
@@ -457,7 +419,7 @@ test('resume at the live edge rewinds before frame, so frame does not goLive()',
   function el(id) {
     const listeners = {};
     const node = {
-      id, style: {}, dataset: {}, textContent: '', innerHTML: '', hidden: false, checked: false, disabled: false,
+      id, style: { setProperty(k, v) { this[k] = v; } }, dataset: {}, textContent: '', innerHTML: '', hidden: false, checked: false, disabled: false,
       value: '600', title: '', clientWidth: 920, width: 920, height: 400,
       classList: { toggle() {}, add() {}, remove() {}, contains() { return false; } },
       appendChild(c) { return c; },
