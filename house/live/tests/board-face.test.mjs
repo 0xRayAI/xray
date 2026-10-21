@@ -236,7 +236,7 @@ test('the board face keeps the contract in both themes', async () => {
     assert.match(face.track, /forge · working · real task/);
     assert.doesNotMatch(face.queue, /nudge/);
     assert.match(face.queue, /forge · packet · needs a review/);
-    assert.ok(face.tiles.some(tile => tile.label.includes('PRs merged') && tile.label.includes('1')));
+    assert.ok(face.tiles.some(tile => tile.label.includes('PRs merged') && tile.label.includes('2')));
     assert.equal(new Set(face.ids).size, face.ids.length);
     const millParts = face.mill.split(/[,\s]+/).filter(Boolean).map(Number);
     assert.match(face.edge, new RegExp(millParts.slice(0, 3).join(',\\s*')));
