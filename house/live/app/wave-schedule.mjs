@@ -14,24 +14,24 @@ export const PLAN_EXPIRE_MS = 7 * 24 * 60 * 60 * 1000;
 
 const WEEKDAY = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
 
-const RELEASE_TITLE = /^release\b/i;
-
-/** Issues never need a brief. A packet card, a release PR, or a carried packet passes. */
+/** The badge is only a packet PR whose PACKET.md is missing. Ordinary PRs pass. */
 export function briefOk(card) {
   if (!card || typeof card !== 'object' || card.pinned) return true;
   const kind = String(card.kind || '');
-  const key = String(card.key || '').toLowerCase();
-  if (kind === 'issue' || kind === 'packet' || card.born === 'packet' || key.startsWith('packet:')) return true;
-  if (kind === 'pr' && RELEASE_TITLE.test(String(card.title || '').trim())) return true;
-  if (card.packet_file) return true;
-  if (String(card.alias || '').toLowerCase().startsWith('packet:')) return true;
-  const pk = card.packet && typeof card.packet === 'object' ? card.packet : {};
-  return !!(pk.acceptance && pk['next owner']);
+  const title = String(card.title || '').trim();
+  const alias = String(card.alias || '').toLowerCase();
+  const packetPr = kind === 'pr' && (/^packet\b/i.test(title) || alias.startsWith('packet:'));
+  if (!packetPr) return true;
+  return !!card.packet_file;
 }
 
-/** packet_ok true and an empty missing list when the card does not need a brief. */
+/** packet_ok follows briefOk. A packet PR with no PACKET.md is false. Everything else is true. */
 export function applyBrief(card) {
-  if (!card || typeof card !== 'object' || !briefOk(card)) return card;
+  if (!card || typeof card !== 'object') return card;
+  if (!briefOk(card)) {
+    if (card.packet_ok === false && Array.isArray(card.missing) && card.missing.includes('PACKET.md')) return card;
+    return { ...card, packet_ok: false, missing: ['PACKET.md'] };
+  }
   if (card.packet_ok === true && (!Array.isArray(card.missing) || card.missing.length === 0)) return card;
   return { ...card, packet_ok: true, missing: [] };
 }
@@ -553,14 +553,21 @@ export function attachPacketCards(cards, events) {
   return list.filter((card) => !gone.has(card));
 }
 
-/** Keep a plan card, a packet-born card, and loaded wave cards the collector does not send. Earlier cards win on key. */
-export function retainSeedCards(collector, prior, seedCards) {
+function packetSettled(card, closed) {
+  if (card.state === 'closed' || card.stage === 'done') return true;
+  return typeof closed === 'function' && closed(card);
+}
+
+/** Keep a plan card, a packet-born card, and loaded wave cards the collector does not send. Earlier cards win on key.
+ * A packet-born card whose item is already closed or merged is not kept. */
+export function retainSeedCards(collector, prior, seedCards, closed) {
   const base = Array.isArray(collector) ? collector.slice() : [];
   const have = new Set(base.map(cardKey).filter(Boolean));
   const extras = [...(Array.isArray(prior) ? prior : []), ...(Array.isArray(seedCards) ? seedCards : [])];
   for (const card of extras) {
     const key = cardKey(card);
     if (!key || have.has(key)) continue;
+    if (isPacketBorn(card) && packetSettled(card, closed)) continue;
     if (!isPlanCard(card) && !card.wave && card.kind !== 'wave' && card.kind !== 'plan' && !isPacketBorn(card)) continue;
     base.push(card);
     have.add(key);
@@ -587,7 +594,7 @@ export function scheduleWaves(incoming, seed, opts = {}) {
   const expireMs = opts.expireMs > 0 ? opts.expireMs : PLAN_EXPIRE_MS;
   const quiet = burnQuiet(opts.weeklyBurn);
   const list = oneWave(
-    retainSeedCards(incoming, opts.prior, []).filter((card) => {
+    retainSeedCards(incoming, opts.prior, [], opts.closed).filter((card) => {
       if (!isPlanCard(card) || !cardClosed(card)) return true;
       return card.flag === 'expired';
     }),

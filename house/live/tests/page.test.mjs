@@ -298,8 +298,9 @@ test('our overlay does not install a fixed roster strip; the canvas still draws 
   const ev = L.applyFeed({}, { events: [{ id: 1, t_ct: '2026-10-13T10:00:00-05:00', from: 'Blaze', to: 'GitHub' },
     { id: 2, t_ct: '2026-10-13T10:01:00-05:00', from: 'Others', to: 'Bifrost' }, { id: 3, t_ct: '2026-10-13T10:02:00-05:00', from: 'forge', to: 'GitHub' },
     { id: 4, t_ct: '2026-10-13T10:03:00-05:00', kind: 'seat_turn', from: 'forge', to: 'Bifrost', hops: ['forge', 'Bifrost'] },
-    { id: 5, t_ct: '2026-10-13T10:04:00-05:00', kind: 'op_deploy', from: 'Operator', to: 'Bifrost', hops: ['Operator', 'Railway', 'Bifrost'] }] }).state.events;
-  assert.deepEqual(ev.map(e => [e.from, e.to]), [['Blaze', 'GitHub'], ['forge', 'GitHub'], ['forge', 'forge'], ['GitHub', 'Railway']]);
+    { id: 5, t_ct: '2026-10-13T10:04:00-05:00', kind: 'op_deploy', from: 'Operator', to: 'Bifrost', hops: ['Operator', 'Railway', 'Bifrost'] },
+    { id: 6, t_ct: '2026-10-13T10:05:00-05:00', kind: 'merged', from: 'forge', to: 'Bifrost', repo: '0xRayAI/xray', number: 485, label: 'merged #485' }] }).state.events;
+  assert.deepEqual(ev.map(e => [e.from, e.to, e.kind || '']), [['Blaze', 'GitHub', ''], ['forge', 'GitHub', ''], ['forge', 'forge', 'seat_turn'], ['GitHub', 'Railway', 'op_deploy'], ['forge', 'GitHub', 'merged']]);
   assert.ok(!ev[2].hops || ev[2].hops.length < 2);   // one hop is a self-pulse; the kit draws a ring
   assert.deepEqual(ev[3].hops, ['GitHub', 'Railway']);
   assert.ok('Blaze' in L.SATS); assert.equal(L.LABEL.Blaze, 'Blaze');
@@ -526,6 +527,28 @@ test('wave count tiles title the 24h ids, capped at 20', () => {
   const ids = Array.from({ length: 22 }, (_, i) => `acme/app#${i + 1}`);
   assert.equal(idTitle(ids), `${ids.slice(0, 20).join(', ')} +2 more`);
   assert.equal(idTitle([]), '');
+});
+
+test('CI who is the credit and the mesh source stays GitHub', async () => {
+  const vm = await import('node:vm');
+  const pub = path.join(APP, 'public');
+  const ctx = { window: {}, console, URLSearchParams, location: { search: '', hash: '', href: 'http://x/' }, document: { addEventListener() {} } };
+  ctx.globalThis = ctx; ctx.window = ctx;
+  vm.createContext(ctx);
+  vm.runInContext(fs.readFileSync(path.join(pub, 'live.js'), 'utf8'), ctx);
+  vm.runInContext(fs.readFileSync(path.join(pub, 'live-config.js'), 'utf8'), ctx);
+  const L = ctx.LiveMesh;
+  const row = (id, credit) => ({ id, t_ct: '2026-10-20T12:00:00-05:00', kind: 'workflow_run', from: 'CI', to: 'GitHub', credit, label: 'run ' + id });
+  const fed = L.applyFeed({ events: [], live: true, t: 0 }, { events: [row('forge-row', 'forge'), row('blaze-row', 'Blaze'), row('gh-row', 'github')] }).state.events;
+  const by = Object.fromEntries(fed.map(e => [e.credit, e]));
+  assert.equal(by.forge.from, 'GitHub');
+  assert.equal(by.forge.credit, 'forge');
+  assert.equal(L.whoTag(by.forge), 'forge');
+  assert.equal(by.Blaze.from, 'GitHub');
+  assert.equal(L.whoTag(by.Blaze), 'Blaze');
+  assert.equal(by.github.from, 'GitHub');
+  assert.equal(L.whoTag(by.github), 'GITHUB');
+  assert.equal(L.whoTag({ kind: 'pr_open', from: 'forge', credit: 'forge' }), 'FORGE');
 });
 
 test('kit live-config carries no install brand (no Example / example.com); product names come from the feed header', () => {

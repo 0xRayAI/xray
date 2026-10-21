@@ -230,9 +230,28 @@
     return out;
   }
 
+  var CI_KIND = { ci_pass: 1, ci_fail: 1, check_run: 1, check_suite: 1, workflow_run: 1, commit_status: 1 };
+  /* CI who is the credit (forge, Blaze). from stays the GitHub/CI source for the mesh. */
   function whoTag(e) {
+    var credit = e && CI_KIND[e.kind] ? String(e.credit || '') : '';
+    if (credit && !/^(github|ci)$/i.test(credit)) return credit;
     var who = e.kind.indexOf('critic_') === 0 ? 'critic' : e.from;
     return own(WHO_LOG, who) || String(who).replace(/^@/, '').toUpperCase().slice(0, 8);
+  }
+
+  /* One activity row, expanded: the seat, the card, the link, and the full note.
+     The row itself keeps the short label. */
+  function activityDetail(e) {
+    if (!e) return null;
+    if (typeof e.kind !== 'string') e = Object.assign({}, e, { kind: '' });
+    var prompt = promptView(e);
+    var note = prompt && prompt.line ? prompt.line : (typeof e.note === 'string' && e.note.trim() ? e.note.trim() : cleanLabel(e.label || ''));
+    var repo = e.repo ? String(e.repo) : '';
+    var num = e.number == null || e.number === '' ? NaN : Number(e.number);
+    var card = repo && num === num ? repo + '#' + num : '';
+    var href = /^https:\/\//.test(e.source || '') ? e.source : (/^https:\/\//.test(e.url || '') ? e.url : '');
+    if (!href && card) href = 'https://github.com/' + repo + '/' + (/issue/.test(e.kind) ? 'issues' : 'pull') + '/' + num;
+    return { seat: whoTag(e), card: card, href: href, note: note, label: cleanLabel(e.label || e.kind || '') };
   }
 
   function headline(e) {
@@ -483,6 +502,7 @@
     isPlaying: isPlaying, sliderAction: sliderAction, edgeTraffic: edgeTraffic, orbitStep: orbitStep,
     spectrumEnabled: spectrumEnabled, spectrumShows: spectrumShows, spectrumMeter: spectrumMeter,
     spectrumTrail: spectrumTrail, packetCore: packetCore, aspectFit: aspectFit,
+    activityDetail: activityDetail,
     GLYPH: GLYPH, MARK_PATH: MARK_PATH, activeSeats: activeSeats, recentItems: recentItems, BOT_IMAGES: BOT_IMAGES, BLACKOUT_UNTIL: BLACKOUT_UNTIL,
     countdown: countdown, blackoutLine: blackoutLine, clockLine: clockLine, fleetLine: fleetLine, wireGlow: wireGlow
   };

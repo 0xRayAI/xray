@@ -26,6 +26,17 @@ test('card ids share number >= 1, and a collector list keeps a packet card', () 
   const replaced = retainSeedCards([{ key: 'packet:abc', title: 'collector', repo: 'acme/app', number: 2 }], [packet], []);
   assert.equal(replaced.length, 1);
   assert.equal(replaced[0].title, 'collector');
+  const ghost = { key: '0xrayai/xray#485', born: 'packet', kind: 'packet', repo: '0xRayAI/xray', number: 485, state: 'live', title: 'handoff critic_fail' };
+  const dropped = retainSeedCards(
+    [{ key: '0xrayai/xray#1', repo: '0xRayAI/xray', number: 1, kind: 'issue', state: 'live', title: 'open' }],
+    [ghost], [], card => Number(card.number) === 485,
+  );
+  assert.equal(dropped.some(card => card.number === 485), false);
+  const openPacket = retainSeedCards(
+    [{ key: '0xrayai/xray#1', repo: '0xRayAI/xray', number: 1, kind: 'issue', state: 'live', title: 'open' }],
+    [ghost], [], () => false,
+  );
+  assert.equal(openPacket.some(card => card.number === 485), true);
 });
 
 test('a push sets branch and a matching pr_open rewrites the holding key', () => {
