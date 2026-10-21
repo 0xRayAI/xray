@@ -320,6 +320,19 @@ function spectralFlatness(samples) {
   return Math.exp(logSum / count) / (arith / count);
 }
 
+function spectralCentroid(samples, sampleRate) {
+  const { mag, n } = spectrumMag(samples);
+  const df = sampleRate / n;
+  let num = 0;
+  let den = 0;
+  for (let k = 1; k < mag.length; k++) {
+    const power = mag[k] * mag[k];
+    num += k * df * power;
+    den += power;
+  }
+  return den > 0 ? num / den : 0;
+}
+
 function peakHz(samples, sampleRate, loHz, hiHz) {
   const { mag, n } = spectrumMag(samples);
   const df = sampleRate / n;
@@ -956,6 +969,7 @@ module.exports = {
   truePeakDb,
   samplePeak,
   spectralFlatness,
+  spectralCentroid,
   peakHz,
   topPeaks,
   slice,

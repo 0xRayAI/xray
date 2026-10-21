@@ -17,6 +17,10 @@ function runCli(args) {
     const magnetic = require("./sound-magnetic.cjs");
     process.exit(magnetic.cli(args.slice(1)));
   }
+  if (args[0] === "gate" || args[0] === "reference") {
+    const reference = require("./sound-reference.cjs");
+    process.exit(reference.cli(args.slice(1)));
+  }
   let cli;
   try {
     cli = require.resolve("@0xray/blip/cli");
