@@ -510,7 +510,7 @@ function renderKickTicked(sampleRate) {
  * Fuller sine body. The pitch settles near 44 Hz and the decay holds
  * the fundamental. Still one sine through a lowpass. No click, no distortion.
  */
-function renderKickFull(sampleRate) {
+function renderKickBody(sampleRate) {
   const dur = 0.32;
   const n = Math.floor(dur * sampleRate);
   const out = new Float64Array(n);
@@ -529,7 +529,11 @@ function renderKickFull(sampleRate) {
     out[i] = lp.step(Math.sin(phase)) * env;
     phase += (2 * Math.PI * f) / sampleRate;
   }
-  return addKickTick(normalizePeak(out, 1), sampleRate);
+  return normalizePeak(out, 1);
+}
+
+function renderKickFull(sampleRate) {
+  return addKickTick(renderKickBody(sampleRate), sampleRate);
 }
 
 function addKickTick(body, sampleRate) {
@@ -984,6 +988,7 @@ module.exports = {
   clamp,
   renderKickClean,
   renderKickTicked,
+  renderKickBody,
   renderKickFull,
   renderClapTonal,
   renderSnap,

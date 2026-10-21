@@ -21,6 +21,11 @@
  * The kick body settles near 44 Hz. Bass notes stay short and
  * move a few percent in pitch. The pad and the plucks sit darker
  * so the upper-mid does not eat the 30–120 Hz share.
+ *
+ * v9 keeps the v7 arrangement and the mill bass, plucks, and stabs.
+ * The pad oscillator is the Elementary saw. The kick keeps the 44 Hz
+ * body and takes its beater from the CC0 kick. Hats and clap are the
+ * CC0 one-shots in cc0/manifest.json. loadBed("v9") is the entry.
  */
 
 const fs = require("node:fs");
@@ -237,14 +242,14 @@ function place(dest, hit, when, gain) {
   for (let i = 0; i < when.length; i++) P.addAt(dest, hit, when[i] * SR, gain);
 }
 
-function renderDrums(n, snap, wide, full) {
+function renderDrums(n, snap, wide, full, hits) {
   const kick = P.silence(n);
   const clap = P.silence(n);
   const hat = P.silence(n);
-  const kickHit = full ? P.renderKickFull(SR) : wide ? P.renderKickTicked(SR) : P.renderKickClean(SR);
-  const clapHit = snap ? P.renderSnap(SR) : P.renderClapTonal(SR);
-  const hatClosed = wide ? P.renderHatSoft(SR, false) : P.renderHatFm(SR, false);
-  const hatOpen = wide ? P.renderHatSoft(SR, true) : P.renderHatFm(SR, true);
+  const kickHit = hits ? hits.kick : full ? P.renderKickFull(SR) : wide ? P.renderKickTicked(SR) : P.renderKickClean(SR);
+  const clapHit = hits ? hits.clap : snap ? P.renderSnap(SR) : P.renderClapTonal(SR);
+  const hatClosed = hits ? hits.hatClosed : wide ? P.renderHatSoft(SR, false) : P.renderHatFm(SR, false);
+  const hatOpen = hits ? hits.hatOpen : wide ? P.renderHatSoft(SR, true) : P.renderHatFm(SR, true);
   const kicks = times(CUES.drop, BEAT, SECONDS - 0.05, inBody);
   const claps = times(CUES.clap, BEAT * 2, SECONDS - 0.05, inBody);
   const hats = times(CUES.hats, BEAT / 2, SECONDS - 0.02, inBody);
@@ -603,11 +608,15 @@ const BED_NAMES = {
   v5b: "BED-MAGNETIC-MOVES-v5b",
   v6: "BED-MAGNETIC-MOVES-v6",
   v7: "BED-MAGNETIC-MOVES-v7",
+  v9: "BED-MAGNETIC-MOVES-v9",
 };
 
 function renderBed(variant) {
   if (!BED_NAMES[variant]) {
     throw new Error(`unknown variant ${variant}`);
+  }
+  if (variant === "v9") {
+    throw new Error("BED-MAGNETIC-MOVES-v9 renders through loadBed");
   }
   const v7 = variant === "v7";
   const v6 = variant === "v6" || v7;
@@ -811,7 +820,7 @@ function measureBed(bed) {
   const lowWindows = { body: [5.5, 7.65], across: [5.5, 15.4], final: [17.55, 19.4] };
   const pad = stemReport(bed.stems.pad, padWindows);
   const sub = stemReport(bed.stems.sub, lowWindows);
-  const mid = bed.variant === "v4b" || bed.variant === "v5b" || bed.variant === "v6" || bed.variant === "v7"
+  const mid = bed.variant === "v4b" || bed.variant === "v5b" || bed.variant === "v6" || bed.variant === "v7" || bed.variant === "v9"
     ? stemReport(bed.stems.mid, lowWindows)
     : null;
   const lufs = P.integratedLufs(bed.left, bed.right, bed.sampleRate);
@@ -897,6 +906,7 @@ function measureBed(bed) {
     rules,
     reference,
     earReady: rules.pass && reference.pass,
+    ...(bed.sources ? { sources: bed.sources } : {}),
     pass: reasons.length === 0,
     fails: reasons,
     wind: {
@@ -941,7 +951,11 @@ function gapReport(bed, pad) {
     bodyCrestDb: round1(P.linDb(peak) - P.linDb(rms)),
     padChordSwingDb: round1(pad.swings.chord.swingDb),
     padBodySwingDb: round1(pad.swings.body.swingDb),
-    padMotionDb: bed.wide ? round1(padMotionDepthDb(bed.padMode)) : null,
+    padMotionDb: bed.padMotionDb != null
+      ? round1(bed.padMotionDb)
+      : bed.wide
+        ? round1(padMotionDepthDb(bed.padMode))
+        : null,
     kickHfDb: round1(P.hfRmsDb(bed.stems.kick, SR, 2000)),
     sideScale: round1(bed.sideScale || 0),
   };
@@ -967,22 +981,154 @@ function padMotionDepthDb(mode) {
   return maxDiff;
 }
 
+function readMonoWav(file) {
+  const buf = fs.readFileSync(file);
+  if (buf.toString("ascii", 0, 4) !== "RIFF") throw new Error(`not a wav: ${file}`);
+  const channels = buf.readUInt16LE(22);
+  const rate = buf.readUInt32LE(24);
+  if (channels !== 1 || rate !== SR) throw new Error(`expected mono ${SR}: ${file}`);
+  const count = Math.floor((buf.length - 44) / 2);
+  const out = new Float64Array(count);
+  for (let i = 0; i < count; i++) out[i] = buf.readInt16LE(44 + i * 2) / 32768;
+  return out;
+}
+
+function cc0Hit(name) {
+  return readMonoWav(path.join(__dirname, "cc0", name));
+}
+
+function shapeHit(raw, durSec, decaySec, highpassHz, holdSec) {
+  const count = Math.min(raw.length, Math.floor(durSec * SR));
+  const hold = holdSec || 0.001;
+  const cut = new Float64Array(count);
+  for (let i = 0; i < count; i++) {
+    const t = i / SR;
+    const attack = t < 0.0004 ? t / 0.0004 : 1;
+    const rel = Math.max(0, t - hold);
+    cut[i] = raw[i] * Math.exp(-rel / decaySec) * attack;
+  }
+  const high = P.applyBiquad(
+    P.applyBiquad(cut, "highpass", highpassHz, 0.707, SR),
+    "highpass",
+    highpassHz,
+    0.707,
+    SR,
+  );
+  return P.normalizePeak(high, 1);
+}
+
+function kickWithCc0Beater() {
+  const body = P.renderKickBody(SR);
+  const beater = shapeHit(cc0Hit("kick.wav"), 0.02, 0.004, 1400, 0.005);
+  const mixed = new Float64Array(body.length);
+  const peak = P.samplePeak(beater);
+  const gain = peak > 0 ? P.dbLin(-8) / peak : 0;
+  for (let i = 0; i < mixed.length; i++) mixed[i] = body[i] + (beater[i] || 0) * gain;
+  return P.normalizePeak(mixed, 1);
+}
+
+function v9Hits() {
+  return {
+    kick: kickWithCc0Beater(),
+    clap: shapeHit(cc0Hit("clap.wav"), 0.038, 0.016, 280, 0.003),
+    hatClosed: shapeHit(cc0Hit("hat-closed.wav"), 0.018, 0.007, 3200, 0.002),
+    hatOpen: shapeHit(cc0Hit("hat-open.wav"), 0.042, 0.014, 2600, 0.003),
+  };
+}
+
+async function renderV9() {
+  const n = Math.round(SECONDS * SR);
+  const elem = await import("./sound-elementary.mjs");
+  const padPack = await elem.renderLowSawPad(n, SR);
+  const pad = padPack.pad;
+  const g = mixGains("v7");
+  const patterned = renderBassPattern(n, true, true);
+  const sub = patterned.sub;
+  const mid = patterned.mid;
+  const bassScale = tameFinal(sub, mid, g.sub, g.mid);
+  const drums = renderDrums(n, true, true, true, v9Hits());
+  const pluck = renderPlucks(n, true, "low");
+  const stab = renderStabs(n, true);
+  const send = P.silence(n);
+  sum(send, pluck, 0.55);
+  sum(send, stab, 0.7);
+  const room = P.shortReverb(send, SR, 0.16, 3200);
+  const wide = mixWide(
+    { pad, sub, bass: mid, kick: drums.kick, clap: drums.clap, hat: drums.hat, pluck, stab, room },
+    g,
+  );
+  for (let i = 0; i < n; i++) {
+    const f = masterFade(i / SR);
+    wide.left[i] *= f;
+    wide.right[i] *= f;
+  }
+  const glued = P.glueStereo(wide.left, wide.right, SR, -12, 1.5, 0.03, 0.18);
+  const fitted = P.fitLoudness(glued.left, glued.right, SR, -15, -1.4);
+  return {
+    variant: "v9",
+    name: BED_NAMES.v9,
+    sampleRate: SR,
+    seconds: n / SR,
+    left: fitted.left,
+    right: fitted.right,
+    lufsFit: fitted.lufs,
+    truePeakFit: fitted.truePeakDb,
+    fitGain: fitted.gain,
+    glueReductionDb: glued.reductionDb,
+    duckDb: 0,
+    gains: g,
+    bassScale,
+    sideScale: wide.sideScale,
+    patterned: true,
+    wide: true,
+    padMode: "saw",
+    padMotionDb: padPack.motionDb,
+    sources: {
+      pad: "v8lib-elementary-blepsaw",
+      kickBeater: "v8lib-cc0-kick",
+      kickBody: "mill",
+      hat: "v8lib-cc0",
+      clap: "v8lib-cc0",
+      sub: "mill",
+      mid: "mill",
+      pluck: "mill",
+      stab: "mill",
+    },
+    stems: {
+      pad,
+      sub,
+      mid,
+      kick: drums.kick,
+      clap: drums.clap,
+      hat: drums.hat,
+      pluck,
+      stab,
+    },
+  };
+}
+
+async function loadBed(variant) {
+  if (variant === "v9") return renderV9();
+  return renderBed(variant);
+}
+
 function argValue(argv, name) {
   const i = argv.indexOf(name);
   if (i < 0 || i + 1 >= argv.length) return "";
   return argv[i + 1];
 }
 
-function cli(argv) {
+async function cli(argv) {
   const variant = argv[0];
   if (!BED_NAMES[variant]) {
-    process.stderr.write("Usage: sound bed <v4a|v4b|v5a|v5b|v6|v7> --out wav [--mp3 file] [--metrics file]\n");
+    process.stderr.write("Usage: sound bed <v4a|v4b|v5a|v5b|v6|v7|v9> --out wav [--mp3 file] [--metrics file]\n");
     return 1;
   }
-  const bed = renderBed(variant);
+  const bed = await loadBed(variant);
   const metrics = measureBed(bed);
   if (bed.wide) {
-    const prior = measureBed(renderBed(variant === "v7" ? "v6" : "v5b"));
+    const priorVariant = variant === "v9" ? "v7" : variant === "v7" ? "v6" : "v5b";
+    const prior = measureBed(await loadBed(priorVariant));
     metrics.compare = {
       against: prior.name,
       before: prior.gaps,
@@ -1040,6 +1186,7 @@ module.exports = {
   PROG,
   DUCK_DB,
   renderBed,
+  loadBed,
   measureBed,
   levelTable,
   padMotionDepthDb,
