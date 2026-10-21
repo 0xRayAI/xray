@@ -402,6 +402,59 @@ function rmsOf(samples, sampleRate, startSec, endSec) {
   return Math.sqrt(acc / part.length);
 }
 
+/** Side energy relative to mid, in dB. Negative means the side is quieter. */
+function sideUnderMidDb(left, right, sampleRate, startSec, endSec) {
+  const i0 = Math.max(0, Math.floor(startSec * sampleRate));
+  const i1 = Math.min(left.length, right.length, Math.floor(endSec * sampleRate));
+  let mid = 0;
+  let side = 0;
+  const n = Math.max(1, i1 - i0);
+  for (let i = i0; i < i1; i++) {
+    const m = (left[i] + right[i]) * 0.5;
+    const s = (left[i] - right[i]) * 0.5;
+    mid += m * m;
+    side += s * s;
+  }
+  return linDb(Math.sqrt(side / n)) - linDb(Math.sqrt(mid / n));
+}
+
+function frameBandMeanSquare(samples, offset, nfft, k0, k1) {
+  const re = new Float64Array(nfft);
+  const im = new Float64Array(nfft);
+  for (let i = 0; i < nfft; i++) re[i] = samples[offset + i];
+  fftInPlace(re, im);
+  let power = 0;
+  const last = Math.min(k1, nfft / 2);
+  for (let k = k0; k <= last; k++) {
+    const mag2 = re[k] * re[k] + im[k] * im[k];
+    const sides = k === 0 || k === nfft / 2 ? 1 : 2;
+    power += sides * mag2;
+  }
+  return power / (nfft * nfft);
+}
+
+/**
+ * RMS of a band, both channels, in dBFS.
+ * Bins are a rectangular DFT so the number can sit next to a spectrum review.
+ */
+function bandRmsDb(left, right, sampleRate, startSec, endSec, loHz, hiHz) {
+  const nfft = 8192;
+  const hop = nfft / 2;
+  const i0 = Math.max(0, Math.floor(startSec * sampleRate));
+  const i1 = Math.min(left.length, right.length, Math.floor(endSec * sampleRate));
+  const k0 = Math.max(0, Math.ceil(loHz / (sampleRate / nfft)));
+  const k1 = Math.min(nfft / 2, Math.floor(hiHz / (sampleRate / nfft)));
+  let acc = 0;
+  let frames = 0;
+  for (let i = i0; i + nfft <= i1; i += hop) {
+    acc += frameBandMeanSquare(left, i, nfft, k0, k1);
+    acc += frameBandMeanSquare(right, i, nfft, k0, k1);
+    frames += 1;
+  }
+  if (!frames) return -240;
+  return linDb(Math.sqrt(acc / (frames * 2)));
+}
+
 function normalizePeak(samples, peak) {
   const current = samplePeak(samples);
   if (current <= 0) return samples;
@@ -429,6 +482,38 @@ function renderKickClean(sampleRate) {
     phase += (2 * Math.PI * f) / sampleRate;
   }
   return normalizePeak(out, 1);
+}
+
+/**
+ * Clean kick plus a pitched tick. The tick is a 2.8 kHz sine, 4 ms,
+ * band-limited to 2–4 kHz, and peaked well under the body.
+ * No noise burst and no distortion.
+ */
+function renderKickTicked(sampleRate) {
+  const body = renderKickClean(sampleRate);
+  const dur = 0.004;
+  const n = Math.floor(dur * sampleRate);
+  const raw = new Float64Array(body.length);
+  const freq = 2800;
+  let phase = 0;
+  for (let i = 0; i < n; i++) {
+    const t = i / sampleRate;
+    const fade = t < 0.00035 ? t / 0.00035 : 1;
+    raw[i] = Math.sin(phase) * Math.exp(-t / 0.0011) * fade;
+    phase += (2 * Math.PI * freq) / sampleRate;
+  }
+  const limited = applyBiquad(
+    applyBiquad(raw, "highpass", 2000, 0.707, sampleRate),
+    "lowpass",
+    4000,
+    0.707,
+    sampleRate,
+  );
+  const peak = samplePeak(limited);
+  const gain = peak > 0 ? dbLin(-20) / peak : 0;
+  const out = new Float64Array(body.length);
+  for (let i = 0; i < out.length; i++) out[i] = body[i] + limited[i] * gain;
+  return out;
 }
 
 /**
@@ -541,6 +626,37 @@ function renderHatFm(sampleRate, open) {
   return normalizePeak(out, 1);
 }
 
+/**
+ * Soft hat. Low FM index, short decay, band-limited.
+ * A tone, not a noise hash.
+ */
+function renderHatSoft(sampleRate, open) {
+  const dur = open ? 0.028 : 0.011;
+  const n = Math.floor(dur * sampleRate);
+  const raw = new Float64Array(n);
+  const carrierHz = open ? 4600 : 5800;
+  const modHz = open ? 6400 : 8100;
+  let carrier = 0;
+  let mod = 0;
+  for (let i = 0; i < n; i++) {
+    const t = i / sampleRate;
+    const fade = t < 0.00045 ? t / 0.00045 : 1;
+    const env = Math.exp(-t / (open ? 0.009 : 0.0035)) * fade;
+    const index = (open ? 0.65 : 0.4) * Math.exp(-t / 0.003);
+    raw[i] = Math.sin(carrier + Math.sin(mod) * index) * env;
+    carrier += (2 * Math.PI * carrierHz) / sampleRate;
+    mod += (2 * Math.PI * modHz) / sampleRate;
+  }
+  const shaped = applyBiquad(
+    applyBiquad(raw, "highpass", 3800, 0.707, sampleRate),
+    "lowpass",
+    7800,
+    0.707,
+    sampleRate,
+  );
+  return normalizePeak(shaped, 1);
+}
+
 /** DX-style pluck. Index falls fast so the tone settles to a sine. No noise. */
 function renderFmPluck(sampleRate, freq, opts) {
   const decay = opts && opts.decay != null ? opts.decay : 0.085;
@@ -561,7 +677,10 @@ function renderFmPluck(sampleRate, freq, opts) {
     const raw = Math.sin(carrier + Math.sin(mod) * index);
     let y;
     if (moving) {
-      const cutoff = 900 + 1500 * Math.exp(-t / 0.04);
+      const bright = Boolean(opts && opts.bright);
+      const cutoff = bright
+        ? 1700 + 2300 * Math.exp(-t / 0.03)
+        : 900 + 1500 * Math.exp(-t / 0.04);
       const alpha = 1 - Math.exp((-2 * Math.PI * cutoff) / sampleRate);
       one += alpha * (raw - one);
       y = one;
@@ -814,10 +933,12 @@ module.exports = {
   midiHz,
   clamp,
   renderKickClean,
+  renderKickTicked,
   renderClapTonal,
   renderSnap,
   renderBassNote,
   renderHatFm,
+  renderHatSoft,
   renderFmPluck,
   renderWarmStab,
   renderPadSteady,
@@ -841,6 +962,8 @@ module.exports = {
   envelopeSwingDb,
   hfRmsDb,
   rmsOf,
+  sideUnderMidDb,
+  bandRmsDb,
   normalizePeak,
   applyBiquad,
   writeWav,

@@ -11,6 +11,11 @@
  * The clap is a harmonic snap 14 dB under the kick.
  * The bass is off-beat 16ths. v5b adds a filtered mid layer.
  * The final section is scaled so it is not louder than the first drop.
+ *
+ * v6 is v5b with the four gaps from the v4 review closed:
+ * width on the musical voices, slow pad motion, a soft pitched
+ * kick tick, and hats that reach the 4–8 kHz band.
+ * Sub and kick stay mono below about 120 Hz.
  */
 
 const fs = require("node:fs");
@@ -95,9 +100,28 @@ function masterFade(t) {
   return 1 - P.smoothstep((t - CUES.fade) / (SECONDS - CUES.fade));
 }
 
-function renderPad(n) {
+function lpCoeffs(cutoff) {
+  const w0 = (2 * Math.PI * cutoff) / SR;
+  const cos = Math.cos(w0);
+  const sin = Math.sin(w0);
+  const alpha = sin / (2 * 0.707);
+  const a0 = 1 + alpha;
+  return {
+    b0: (1 - cos) / 2 / a0,
+    b1: (1 - cos) / a0,
+    b2: (1 - cos) / 2 / a0,
+    a1: (-2 * cos) / a0,
+    a2: (1 - alpha) / a0,
+  };
+}
+
+function renderPad(n, motion) {
   const pad = P.silence(n);
-  const filter = makePadFilter();
+  const filter = motion ? null : makePadFilter();
+  let x1 = 0;
+  let x2 = 0;
+  let y1 = 0;
+  let y2 = 0;
   const xfade = 0.05;
   for (let i = 0; i < n; i++) {
     const t = i / SR;
@@ -108,14 +132,36 @@ function renderPad(n) {
     const usePrev = boundary > 0 && into < xfade;
     const a = usePrev ? Math.cos((into / xfade) * Math.PI * 0.5) : 0;
     const b = usePrev ? Math.sin((into / xfade) * Math.PI * 0.5) : 1;
-    const sample = (a * chordSines(prev, t) + b * chordSines(curr, t)) * padLevel(t);
-    pad[i] = filter.step(sample);
+    const sample = (a * chordSines(prev, t, motion) + b * chordSines(curr, t, motion)) * padLevel(t);
+    if (!motion) {
+      pad[i] = filter.step(sample);
+      continue;
+    }
+    const cutoff = 1200 + 70 * Math.sin(2 * Math.PI * 0.05 * t);
+    const c = lpCoeffs(cutoff);
+    const y = c.b0 * sample + c.b1 * x1 + c.b2 * x2 - c.a1 * y1 - c.a2 * y2;
+    x2 = x1;
+    x1 = sample;
+    y2 = y1;
+    y1 = y;
+    pad[i] = y;
   }
   return pad;
 }
 
-function chordSines(notes, t) {
-  const weights = [1, 0.7, 0.46, 0.28];
+function chordSines(notes, t, motion) {
+  const base = [1, 0.7, 0.46, 0.28];
+  let weights = base;
+  if (motion) {
+    const alt = [0.9, 0.42, 0.66, 0.34];
+    const u = 0.35 - 0.35 * Math.cos(2 * Math.PI * 0.07 * t);
+    weights = [
+      base[0] * (1 - u) + alt[0] * u,
+      base[1] * (1 - u) + alt[1] * u,
+      base[2] * (1 - u) + alt[2] * u,
+      base[3] * (1 - u) + alt[3] * u,
+    ];
+  }
   let mix = 0;
   let norm = 0;
   for (let v = 0; v < notes.length; v++) {
@@ -179,14 +225,14 @@ function place(dest, hit, when, gain) {
   for (let i = 0; i < when.length; i++) P.addAt(dest, hit, when[i] * SR, gain);
 }
 
-function renderDrums(n, snap) {
+function renderDrums(n, snap, wide) {
   const kick = P.silence(n);
   const clap = P.silence(n);
   const hat = P.silence(n);
-  const kickHit = P.renderKickClean(SR);
+  const kickHit = wide ? P.renderKickTicked(SR) : P.renderKickClean(SR);
   const clapHit = snap ? P.renderSnap(SR) : P.renderClapTonal(SR);
-  const hatClosed = P.renderHatFm(SR, false);
-  const hatOpen = P.renderHatFm(SR, true);
+  const hatClosed = wide ? P.renderHatSoft(SR, false) : P.renderHatFm(SR, false);
+  const hatOpen = wide ? P.renderHatSoft(SR, true) : P.renderHatFm(SR, true);
   const kicks = times(CUES.drop, BEAT, SECONDS - 0.05, inBody);
   const claps = times(CUES.clap, BEAT * 2, SECONDS - 0.05, inBody);
   const hats = times(CUES.hats, BEAT / 2, SECONDS - 0.02, inBody);
@@ -208,17 +254,17 @@ function renderDrums(n, snap) {
   return { kick, clap, hat, kicks, claps, hats };
 }
 
-function renderPlucks(n, short) {
+function renderPlucks(n, short, bright) {
   const bus = P.silence(n);
   const cache = new Map();
   const voice = (midi) => {
-    const key = short ? `s${midi}` : String(midi);
+    const key = `${short ? "s" : "l"}${bright ? "b" : ""}${midi}`;
     if (!cache.has(key)) {
       const freq = P.midiHz(midi);
       cache.set(
         key,
         short
-          ? P.renderFmPluck(SR, freq, { decay: 0.045, dur: 0.14, moving: true })
+          ? P.renderFmPluck(SR, freq, { decay: 0.045, dur: 0.14, moving: true, bright: Boolean(bright) })
           : P.renderFmPluck(SR, freq),
       );
     }
@@ -320,7 +366,16 @@ function tameFinal(sub, mid, gs, gm) {
   return scale;
 }
 
-function mixGains(rich, v5) {
+function mixGains(variant) {
+  if (variant === "v6") {
+    const kick = 0.4;
+    return {
+      pad: 0.22, sub: 0.22, mid: 0.22, kick, clap: kick * P.dbLin(-14),
+      hat: 0.42, pluck: 0.26, stab: 0.14, room: 0.09, echo: 0.1,
+    };
+  }
+  const rich = variant === "v4b" || variant === "v5b";
+  const v5 = variant === "v5a" || variant === "v5b";
   if (v5 && rich) {
     const kick = 0.4;
     return {
@@ -372,6 +427,147 @@ function widen(mono, amount) {
   return { left, right };
 }
 
+function highpassed(samples, freq) {
+  return P.applyBiquad(P.applyBiquad(samples, "highpass", freq, 0.707, SR), "highpass", freq, 0.707, SR);
+}
+
+/** Same pitch, two delays, opposite sign. The dry signal stays in the mid. */
+function unisonSide(mono, delayA, delayB) {
+  const hp = highpassed(mono, 180);
+  const a = P.delaySamples(hp, SR, delayA);
+  const b = P.delaySamples(hp, SR, delayB);
+  const side = P.silence(mono.length);
+  for (let i = 0; i < mono.length; i++) side[i] = a[i] * 0.62 - b[i] * 0.38;
+  return side;
+}
+
+/** Hats alternate sides. The mid bus still carries every hit. */
+function hatPingSide(hat) {
+  const hp = highpassed(hat, 300);
+  const side = P.silence(hat.length);
+  const step = Math.max(1, Math.floor((BEAT / 2) * SR));
+  for (let i = 0; i < hat.length; i++) {
+    const sign = Math.floor(i / step) % 2 === 0 ? 1 : -1;
+    side[i] = hp[i] * sign;
+  }
+  return side;
+}
+
+/** Echo bounces left then right. mid is what a mono fold keeps. */
+function pingPong(mono, timeSec, feedback, dampHz) {
+  const d = Math.max(8, Math.floor(timeSec * SR));
+  const bufL = new Float64Array(d);
+  const bufR = new Float64Array(d);
+  let iL = 0;
+  let iR = 0;
+  let lpL = 0;
+  let lpR = 0;
+  const damp = Math.exp((-2 * Math.PI * dampHz) / SR);
+  const left = P.silence(mono.length);
+  const right = P.silence(mono.length);
+  for (let i = 0; i < mono.length; i++) {
+    const dL = bufL[iL];
+    const dR = bufR[iR];
+    lpL = (1 - damp) * dL + damp * lpL;
+    lpR = (1 - damp) * dR + damp * lpR;
+    left[i] = dL;
+    right[i] = dR;
+    bufL[iL] = mono[i] + lpR * feedback;
+    bufR[iR] = lpL * feedback;
+    iL = (iL + 1) % d;
+    iR = (iR + 1) % d;
+  }
+  const mid = P.silence(mono.length);
+  const side = P.silence(mono.length);
+  for (let i = 0; i < mono.length; i++) {
+    mid[i] = (left[i] + right[i]) * 0.5;
+    side[i] = (left[i] - right[i]) * 0.5;
+  }
+  return { mid, side };
+}
+
+function busRms(samples, start, end) {
+  const i0 = Math.max(0, Math.floor(start * SR));
+  const i1 = Math.min(samples.length, Math.floor(end * SR));
+  let acc = 0;
+  const n = Math.max(1, i1 - i0);
+  for (let i = i0; i < i1; i++) acc += samples[i] * samples[i];
+  return Math.sqrt(acc / n);
+}
+
+/**
+ * Center stays intact, so a mono sum is the mid bus.
+ * Side is scaled on the drop to about 14 dB under that mid.
+ */
+function mixWide(parts, g) {
+  const n = parts.pad.length;
+  const mid = P.silence(n);
+  const side = P.silence(n);
+  sum(mid, parts.sub, g.sub);
+  sum(mid, parts.bass, g.mid);
+  sum(mid, parts.kick, g.kick);
+  sum(mid, parts.clap, g.clap);
+  sum(mid, parts.pad, g.pad);
+  sum(side, unisonSide(parts.pad, 0.013, 0.019), g.pad * 0.95);
+  sum(mid, parts.pluck, g.pluck);
+  sum(side, unisonSide(parts.pluck, 0.007, 0.011), g.pluck * 0.9);
+  sum(mid, parts.stab, g.stab);
+  sum(side, unisonSide(parts.stab, 0.011, 0.017), g.stab * 0.85);
+  sum(mid, parts.hat, g.hat);
+  sum(side, hatPingSide(parts.hat), g.hat);
+  sum(mid, parts.room, g.room);
+  sum(side, unisonSide(parts.room, 0.023, 0.031), g.room);
+  const pong = pingPong(parts.pluck, BEAT * 0.75, 0.12, 2400);
+  sum(mid, pong.mid, g.echo);
+  sum(side, pong.side, g.echo * 1.35);
+  const sideHp = highpassed(side, 200);
+  const midR = busRms(mid, 5.5, 15.4);
+  const sideR = busRms(sideHp, 5.5, 15.4);
+  const target = -14;
+  let sideScale = sideR > 1e-8 ? (midR * P.dbLin(target)) / sideR : 0;
+  if (sideScale > 6) sideScale = 6;
+  if (sideScale < 0) sideScale = 0;
+  const left = P.silence(n);
+  const right = P.silence(n);
+  for (let i = 0; i < n; i++) {
+    left[i] = mid[i] + sideHp[i] * sideScale;
+    right[i] = mid[i] - sideHp[i] * sideScale;
+  }
+  return { left, right, sideScale };
+}
+
+function mixNarrow(parts, g) {
+  const n = parts.pad.length;
+  const padW = widen(parts.pad, 0.16);
+  const hatW = panHats(parts.hat);
+  const pluckW = widen(parts.pluck, 0.22);
+  const left = P.silence(n);
+  const right = P.silence(n);
+  sum(left, padW.left, g.pad);
+  sum(right, padW.right, g.pad);
+  sum(left, parts.sub, g.sub);
+  sum(right, parts.sub, g.sub);
+  sum(left, parts.mid, g.mid);
+  sum(right, parts.mid, g.mid);
+  sum(left, parts.kick, g.kick);
+  sum(right, parts.kick, g.kick);
+  sum(left, parts.clap, g.clap);
+  sum(right, parts.clap, g.clap * 0.94);
+  sum(left, hatW.left, g.hat);
+  sum(right, hatW.right, g.hat);
+  sum(left, pluckW.left, g.pluck);
+  sum(right, pluckW.right, g.pluck);
+  sum(left, parts.stab, g.stab);
+  sum(right, parts.stab, g.stab * 0.96);
+  const roomW = widen(parts.room, 0.4);
+  sum(left, roomW.left, g.room);
+  sum(right, roomW.right, g.room);
+  const echoW = widen(parts.echo, 0.35);
+  sum(left, echoW.left, g.echo);
+  sum(right, echoW.right, g.echo);
+  return { left, right };
+}
+
 function sum(into, src, gain) {
   for (let i = 0; i < into.length; i++) into[i] += src[i] * gain;
 }
@@ -381,17 +577,19 @@ const BED_NAMES = {
   v4b: "BED-MAGNETIC-MOVES-v4b",
   v5a: "BED-MAGNETIC-MOVES-v5a",
   v5b: "BED-MAGNETIC-MOVES-v5b",
+  v6: "BED-MAGNETIC-MOVES-v6",
 };
 
 function renderBed(variant) {
   if (!BED_NAMES[variant]) {
     throw new Error(`unknown variant ${variant}`);
   }
-  const rich = variant === "v4b" || variant === "v5b";
-  const v5 = variant === "v5a" || variant === "v5b";
+  const v6 = variant === "v6";
+  const rich = variant === "v4b" || variant === "v5b" || v6;
+  const v5 = variant === "v5a" || variant === "v5b" || v6;
   const n = Math.round(SECONDS * SR);
-  const pad = renderPad(n);
-  const g = mixGains(rich, v5);
+  const pad = renderPad(n, v6);
+  const g = mixGains(variant);
   let sub;
   let mid;
   let bassScale = 1;
@@ -408,8 +606,8 @@ function renderBed(variant) {
     sub = P.applyGain(renderTone(n, bodyEnv, 0), duck);
     mid = rich ? P.applyGain(renderTone(n, bodyEnv, 12), duck) : P.silence(n);
   }
-  const drums = renderDrums(n, v5);
-  const pluck = rich ? renderPlucks(n, v5) : P.silence(n);
+  const drums = renderDrums(n, v5, v6);
+  const pluck = rich ? renderPlucks(n, v5, v6) : P.silence(n);
   const stab = rich ? renderStabs(n, v5) : P.silence(n);
   const send = P.silence(n);
   if (rich) {
@@ -417,35 +615,24 @@ function renderBed(variant) {
     sum(send, stab, 0.7);
   }
   const room = rich ? P.shortReverb(send, SR, v5 ? 0.16 : 0.28, 3200) : P.silence(n);
-  const echo = rich ? P.filteredDelay(pluck, SR, BEAT * 0.75, v5 ? 0.12 : 0.22, 2400) : P.silence(n);
+  const echo = rich && !v6 ? P.filteredDelay(pluck, SR, BEAT * 0.75, v5 ? 0.12 : 0.22, 2400) : P.silence(n);
 
-  const padW = widen(pad, 0.16);
-  const hatW = panHats(drums.hat);
-  const pluckW = widen(pluck, 0.22);
-  const left = P.silence(n);
-  const right = P.silence(n);
-  sum(left, padW.left, g.pad);
-  sum(right, padW.right, g.pad);
-  sum(left, sub, g.sub);
-  sum(right, sub, g.sub);
-  sum(left, mid, g.mid);
-  sum(right, mid, g.mid);
-  sum(left, drums.kick, g.kick);
-  sum(right, drums.kick, g.kick);
-  sum(left, drums.clap, g.clap);
-  sum(right, drums.clap, g.clap * 0.94);
-  sum(left, hatW.left, g.hat);
-  sum(right, hatW.right, g.hat);
-  sum(left, pluckW.left, g.pluck);
-  sum(right, pluckW.right, g.pluck);
-  sum(left, stab, g.stab);
-  sum(right, stab, g.stab * 0.96);
-  const roomW = widen(room, 0.4);
-  sum(left, roomW.left, g.room);
-  sum(right, roomW.right, g.room);
-  const echoW = widen(echo, 0.35);
-  sum(left, echoW.left, g.echo);
-  sum(right, echoW.right, g.echo);
+  let sideScale = 0;
+  let left;
+  let right;
+  if (v6) {
+    const wide = mixWide(
+      { pad, sub, bass: mid, kick: drums.kick, clap: drums.clap, hat: drums.hat, pluck, stab, room },
+      g,
+    );
+    left = wide.left;
+    right = wide.right;
+    sideScale = wide.sideScale;
+  } else {
+    const narrow = mixNarrow({ pad, sub, mid, kick: drums.kick, clap: drums.clap, hat: drums.hat, pluck, stab, room, echo }, g);
+    left = narrow.left;
+    right = narrow.right;
+  }
 
   for (let i = 0; i < n; i++) {
     const f = masterFade(i / SR);
@@ -473,7 +660,9 @@ function renderBed(variant) {
     duckDb,
     gains: g,
     bassScale,
+    sideScale,
     patterned: v5,
+    wide: v6,
     stems: {
       pad,
       sub,
@@ -595,7 +784,9 @@ function measureBed(bed) {
   const lowWindows = { body: [5.5, 7.65], across: [5.5, 15.4], final: [17.55, 19.4] };
   const pad = stemReport(bed.stems.pad, padWindows);
   const sub = stemReport(bed.stems.sub, lowWindows);
-  const mid = bed.variant === "v4b" || bed.variant === "v5b" ? stemReport(bed.stems.mid, lowWindows) : null;
+  const mid = bed.variant === "v4b" || bed.variant === "v5b" || bed.variant === "v6"
+    ? stemReport(bed.stems.mid, lowWindows)
+    : null;
   const lufs = P.integratedLufs(bed.left, bed.right, bed.sampleRate);
   const truePeak = P.truePeakDb(bed.left, bed.right);
   const levels = levelTable(bed);
@@ -630,6 +821,20 @@ function measureBed(bed) {
     if (bassQuietShare < 0.3) fails.push(`bass drone ${bassQuietShare.toFixed(2)}`);
     if (levels.clapUnderKickDb < 8) fails.push(`clap under kick ${levels.clapUnderKickDb}`);
   }
+  const gaps = gapReport(bed, pad);
+  if (bed.wide) {
+    if (!(gaps.sideUnderMidDb <= -8 && gaps.sideUnderMidDb >= -20)) {
+      fails.push(`width ${gaps.sideUnderMidDb}`);
+    }
+    if (gaps.lowSideUnderMidDb > -24) fails.push(`low side ${gaps.lowSideUnderMidDb}`);
+    if (gaps.band4to8After11Db < -47 || gaps.band4to8After11Db > -27) {
+      fails.push(`hats ${gaps.band4to8After11Db}`);
+    }
+    if (gaps.band2to4Db < -38 || gaps.band2to4Db > -24) fails.push(`presence ${gaps.band2to4Db}`);
+    if (gaps.padMotionDb > 1.5) fails.push(`pad motion ${gaps.padMotionDb}`);
+    if (gaps.kickHfDb < -55) fails.push(`kick tick ${gaps.kickHfDb}`);
+    if (levels.clapUnderKickDb < 12) fails.push(`clap under kick ${levels.clapUnderKickDb}`);
+  }
   const reasons = fails;
   return {
     name: bed.name,
@@ -653,6 +858,7 @@ function measureBed(bed) {
     sub,
     mid,
     kickHfDb: P.hfRmsDb(bed.stems.kick, SR, 2000),
+    gaps,
     pass: reasons.length === 0,
     fails: reasons,
     wind: {
@@ -672,6 +878,57 @@ function measureBed(bed) {
   };
 }
 
+function gapReport(bed, pad) {
+  const bodyL = P.slice(bed.left, SR, 5.45, 15.4);
+  const bodyR = P.slice(bed.right, SR, 5.45, 15.4);
+  let peak = 0;
+  let acc = 0;
+  for (let i = 0; i < bodyL.length; i++) {
+    const a = Math.abs(bodyL[i]);
+    const b = Math.abs(bodyR[i]);
+    if (a > peak) peak = a;
+    if (b > peak) peak = b;
+    acc += bodyL[i] * bodyL[i] + bodyR[i] * bodyR[i];
+  }
+  const rms = Math.sqrt(acc / Math.max(1, bodyL.length * 2));
+  const lowL = P.applyBiquad(P.slice(bed.left, SR, 5.5, 15.4), "lowpass", 120, 0.707, SR);
+  const lowR = P.applyBiquad(P.slice(bed.right, SR, 5.5, 15.4), "lowpass", 120, 0.707, SR);
+  return {
+    sideUnderMidDb: round1(P.sideUnderMidDb(bed.left, bed.right, SR, 5.5, 15.4)),
+    lowSideUnderMidDb: round1(P.sideUnderMidDb(lowL, lowR, SR, 0, lowL.length / SR)),
+    band2to4Db: round1(P.bandRmsDb(bed.left, bed.right, SR, 5.5, 15.4, 2000, 4000)),
+    band4to8After11Db: round1(P.bandRmsDb(bed.left, bed.right, SR, 11.05, 15.4, 4000, 8000)),
+    band4to8From11Db: round1(P.bandRmsDb(bed.left, bed.right, SR, 11.05, 21.6, 4000, 8000)),
+    bodyLufs: round1(P.integratedLufs(bodyL, bodyR, SR)),
+    bodyCrestDb: round1(P.linDb(peak) - P.linDb(rms)),
+    padChordSwingDb: round1(pad.swings.chord.swingDb),
+    padBodySwingDb: round1(pad.swings.body.swingDb),
+    padMotionDb: bed.wide ? round1(padMotionDepthDb()) : null,
+    kickHfDb: round1(P.hfRmsDb(bed.stems.kick, SR, 2000)),
+    sideScale: round1(bed.sideScale || 0),
+  };
+}
+
+/** How far the slow pad motion moves the level, against the fixed pad. */
+function padMotionDepthDb() {
+  const n = Math.round(8 * SR);
+  const moving = renderPad(n, true);
+  const fixed = renderPad(n, false);
+  const win = Math.floor(0.25 * SR);
+  let maxDiff = 0;
+  for (let i = SR; i + win < n; i += win) {
+    let movingPower = 0;
+    let fixedPower = 0;
+    for (let j = 0; j < win; j++) {
+      movingPower += moving[i + j] * moving[i + j];
+      fixedPower += fixed[i + j] * fixed[i + j];
+    }
+    const diff = Math.abs(P.linDb(Math.sqrt(movingPower / win)) - P.linDb(Math.sqrt(fixedPower / win)));
+    if (diff > maxDiff) maxDiff = diff;
+  }
+  return maxDiff;
+}
+
 function argValue(argv, name) {
   const i = argv.indexOf(name);
   if (i < 0 || i + 1 >= argv.length) return "";
@@ -681,12 +938,21 @@ function argValue(argv, name) {
 function cli(argv) {
   const variant = argv[0];
   if (!BED_NAMES[variant]) {
-    process.stderr.write("Usage: sound bed <v4a|v4b|v5a|v5b> --out wav [--mp3 file] [--metrics file]\n");
+    process.stderr.write("Usage: sound bed <v4a|v4b|v5a|v5b|v6> --out wav [--mp3 file] [--metrics file]\n");
     return 1;
   }
   const bed = renderBed(variant);
   const metrics = measureBed(bed);
-  if (bed.patterned) {
+  if (bed.wide) {
+    const prior = measureBed(renderBed("v5b"));
+    metrics.compare = {
+      against: prior.name,
+      before: prior.gaps,
+      after: metrics.gaps,
+      levelsBefore: prior.levels,
+      levelsAfter: metrics.levels,
+    };
+  } else if (bed.patterned) {
     const priorVariant = variant === "v5a" ? "v4a" : "v4b";
     const prior = measureBed(renderBed(priorVariant));
     metrics.compare = {
@@ -738,5 +1004,6 @@ module.exports = {
   renderBed,
   measureBed,
   levelTable,
+  padMotionDepthDb,
   cli,
 };
