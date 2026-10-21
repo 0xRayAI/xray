@@ -12,7 +12,7 @@ OP-PROC is **layered**: pack base (`grok-bot/OP-PROC.md`) then this house file (
 - Bifrost routes the inbox. CoS does not assign dev work. A seat stamps **Done**, **Verify**, and **Next** only when the state changed. No stamp and no ping when nothing moved.
 - Message one owner. Do not fan out. Do not post to a room if that would wake every member for no reason.
 - After a real close, blinky plans the next wave, carded on Bifrost. Aim for about two agents awake per real state change.
-- A seat does a small job itself: a check, a rerun, a merge after the gate, a file edit. Blaze's 09:35 CT ruling, 2026-10-21: a small hotfix of a few lines can be deployed directly by forge once tests are green; anything bigger is deployed by a cloud agent. See [Hotfix bypass](../grok-bot/OP-PROC.md#hotfix-bypass) and [Clouds + churn](../grok-bot/OP-PROC.md#clouds-churn).
+- A seat does a small job itself: a check, a rerun, a merge after the gate, a file edit. Deploy: see [Hotfix bypass](../grok-bot/OP-PROC.md#hotfix-bypass).
 - Webhook, `critic_bc`, and who launches a cloud: see [Clouds + churn](../grok-bot/OP-PROC.md#clouds-churn). Before a launch, read `ATTENTION_STATE.md` and do not launch when the day is over pace or weekly burn is at 75% or more, except a hotfix.
 - **Packet-first.** See [Packet-first](../grok-bot/OP-PROC.md#packet-first) and [Green sign-off](../grok-bot/OP-PROC.md#green-sign-off). The owner's chat acts on one flushed `batch` (`run_end` or `ci_pass`), not on each follow-up.
 - **Forward-motion.** See [Forward-motion](../grok-bot/OP-PROC.md#forward-motion). A second FAIL of an original blocker goes to Blaze.
