@@ -27,4 +27,4 @@ What the words mean.
   │ grok-bot · the house companion                             │
   └────────────────────────────────────────────────────────────┘
 ```
-stamped · 0xray 4.1.3
+stamped · 0xray 4.1.0

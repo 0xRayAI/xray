@@ -10,14 +10,14 @@ description: >
 
 Do this. Do not explore the tree to rediscover it.
 
-Work from a new branch and worktree off current `origin/main`. One plate, one ASCII file. Its optional PNG lives at `docs-site/static/plates/x/<id>.png`. Run the test named below before the PR.
+Work from a new branch and worktree off current `origin/main`. One plate, one ASCII file. Its X copy is a `layered-flow` PNG at `docs-site/static/plates/x/<id>.png`, an exact render of that ASCII plate. Run the test named below before the PR.
 
 ## Which kind of plate
 
 There are two kinds of stamped plate.
 
 - **ASCII table plate (for agents).** The box drawing in `docs-site/docs/plates/<id>.md`, made with this skill. Every plate tied to a lens must be this kind. The lens and recall open it, it carries the file:line cites, and it is the source of truth for that plate.
-- **Graphical plate (for X and people).** A PNG drawn with the `draw-stamped-card` skill from an ASCII plate critic already approved. It never adds a claim the ASCII plate does not have, and a lens never points at it. Commit it as `docs-site/static/plates/x/<id>.png`, named for its ASCII plate.
+- **Graphical plate (for X and people).** A `layered-flow` PNG drawn from that ASCII plate. Each outer box is a recessed band. Each inner box is a plaque in the same position and grouping. Each connector (`v`, `→`, `┬`, `┴`) is a drawn arrow. Every line is word for word, symbols included. The width stays 1280. The height grows before any font shrinks. A line is never cut. It adds no claim the ASCII plate does not have, and a lens never points at it. Commit it as `docs-site/static/plates/x/<id>.png`. Draw it with `grok-bot/skills/draw-stamped-card/recipes/layered-flow/render.py`.
 
 Order: the ASCII plate first, through critic. The graphical plate after, when X or people need it.
 
@@ -25,7 +25,7 @@ Order: the ASCII plate first, through critic. The graphical plate after, when X 
 
 1. Add `docs-site/docs/plates/<id>.md`.
    Frontmatter: `title`, `sidebar_label`, `plate_type`.
-   `plate_type` is `state flow`, `domain model`, or omitted for a pipeline.
+   `plate_type` is `pipeline`, `state flow`, or `domain model`.
    The body is a box drawing. A pipeline plate contains the words `INPUT` and `OUTPUT`. A state flow or domain model does not have to.
    End with `stamped · 0xray <version>` using the version already in `package.json`. Do not bump the package.
 2. Add `<id>` in the same position in both id lists:

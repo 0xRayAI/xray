@@ -16,8 +16,8 @@ Give your bots a house: shared rules, one board for the work, and memory that st
   │ · hooks into your AI tools   │     │ · who owns what              │     │ · one card, one owner        │
   │ · wear on, unwear off        │     │ · what needs asking first    │     │ · done means proof           │
   └──────────────────────────────┘     └──────────────────────────────┘     └──────────────────────────────┘
-                  │                                    │                                    │
-                  │                                    │                                    │
+                  │                                    │                                    │               
+                  │                                    │                                    │               
   ┌──────────────────────────────┐     ┌──────────────────────────────┐     ┌──────────────────────────────┐
   │ MEMORY · 0xray (repertoire)  │     │ DOCTOR · grok-bot            │     │ ATTENTION · grok-bot         │
   ├──────────────────────────────┤     ├──────────────────────────────┤     ├──────────────────────────────┤
@@ -25,17 +25,17 @@ Give your bots a house: shared rules, one board for the work, and memory that st
   │ · handed back on the job     │     │ · fails on leftover examples │     │ · ask-first items wait here  │
   │ · ships in the suit          │     │ · says House: PASS when set  │     │ · read right after the board │
   └──────────────────────────────┘     └──────────────────────────────┘     └──────────────────────────────┘
-                  │                                    │                                    │
-                  └────────────────────────────────────┼────────────────────────────────────┘
-                                       ┌───────────────┴──────────────┐
-                                       │ STATION · 0xray              │
-                                       ├──────────────────────────────┤
-                                       │ · the pickup card            │
-                                       │ · read first on every wake   │
-                                       │ · then board, then memory    │
-                                       └──────────────────────────────┘
-
-  code links: suit → memory, house → doctor, memory → station. Other lines show reading order only.
+                  │                                    │                                    │               
+                  └────────────────────────────────────┼────────────────────────────────────┘               
+                                       ┌───────────────┴──────────────┐                                     
+                                       │ STATION · 0xray              │                                     
+                                       ├──────────────────────────────┤                                     
+                                       │ · the pickup card            │                                     
+                                       │ · read first on every wake   │                                     
+                                       │ · then board, then memory    │                                     
+                                       └──────────────────────────────┘                                     
+                                                                                                            
+  code links: suit → memory, house → doctor, memory → station. Other lines show reading order only.         
 ```
 
 When `LIVE_URL` is unset, the board is hand-kept `house/WAVEBOARD.md`. When `LIVE_URL` is set, the fleet's board, seat inboxes and wake webhooks run on [Bifrost](./bifrost.md) at https://bifrost.0xray.dev (`GET /cards`). Each seat runs the station skill first. Docs are https://docs.0xray.dev/.

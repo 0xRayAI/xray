@@ -1,6 +1,7 @@
 ---
 title: Activity log
 sidebar_label: Activity log
+plate_type: pipeline
 ---
 
 # Activity log
@@ -14,7 +15,7 @@ Three paths. They are not one file. The activity logger does not call write-home
 │   │ activity_logging.log_path, or none                   │   │
 │   └──────────────────────────┬───────────────────────────┘   │
 └──────────────────────────────┼───────────────────────────────┘
-                               v
+                               v                                
 ┌──────────────────────────────┼───────────────────────────────┐
 │ PROCESSING LAYER             v                               │
 │   ┌──────────────────────────────────────────────────────┐   │
@@ -23,7 +24,7 @@ Three paths. They are not one file. The activity logger does not call write-home
 │   │ write-home names a third path and does not run here  │   │
 │   └──────────────────────────┬───────────────────────────┘   │
 └──────────────────────────────┼───────────────────────────────┘
-                               v
+                               v                                
 ┌──────────────────────────────┼───────────────────────────────┐
 │ OUTPUT LAYER                 v                               │
 │   ┌────────────────┐ ┌──────────────────┐ ┌───────────────┐  │

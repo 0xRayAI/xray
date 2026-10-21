@@ -56,4 +56,4 @@ A FAIL names the file and a test that fails on the old code. One author fixes th
 
 Forward-motion. Critic FAILs only for wrong live behavior, for security, spend, or on-chain risk, or for a plate or OP-PROC line that would send a seat the wrong way. Anything else is APPROVE plus a linked follow-up issue for the author. A bug fix ships when it fixes the bug and breaks nothing. A feature's rule is written before merge. After round 2, only an original blocker can fail; a new finding is an issue. Doc-only updates: see [Review](https://github.com/0xRayAI/xray/blob/main/grok-bot/OP-PROC.md#review). Critic checks that the words match the code.
 
-stamped · 0xray 4.1.3
+stamped · 0xray 4.1.0
