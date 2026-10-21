@@ -26,6 +26,9 @@
  * The pad oscillator is the Elementary saw. The kick keeps the 44 Hz
  * body and takes its beater from the CC0 kick. Hats and clap are the
  * CC0 one-shots in cc0/manifest.json. loadBed("v9") is the entry.
+ *
+ * v7b is v7 with one substitution: the bass voice is the v8lib
+ * Elementary bass, level-matched to v7. loadBed("v7b") is the entry.
  */
 
 const fs = require("node:fs");
@@ -608,6 +611,7 @@ const BED_NAMES = {
   v5b: "BED-MAGNETIC-MOVES-v5b",
   v6: "BED-MAGNETIC-MOVES-v6",
   v7: "BED-MAGNETIC-MOVES-v7",
+  v7b: "BED-MAGNETIC-MOVES-v7b",
   v9: "BED-MAGNETIC-MOVES-v9",
 };
 
@@ -617,6 +621,9 @@ function renderBed(variant) {
   }
   if (variant === "v9") {
     throw new Error("BED-MAGNETIC-MOVES-v9 renders through loadBed");
+  }
+  if (variant === "v7b") {
+    throw new Error("BED-MAGNETIC-MOVES-v7b renders through loadBed");
   }
   const v7 = variant === "v7";
   const v6 = variant === "v6" || v7;
@@ -820,7 +827,7 @@ function measureBed(bed) {
   const lowWindows = { body: [5.5, 7.65], across: [5.5, 15.4], final: [17.55, 19.4] };
   const pad = stemReport(bed.stems.pad, padWindows);
   const sub = stemReport(bed.stems.sub, lowWindows);
-  const mid = bed.variant === "v4b" || bed.variant === "v5b" || bed.variant === "v6" || bed.variant === "v7" || bed.variant === "v9"
+  const mid = bed.variant === "v4b" || bed.variant === "v5b" || bed.variant === "v6" || bed.variant === "v7" || bed.variant === "v7b" || bed.variant === "v9"
     ? stemReport(bed.stems.mid, lowWindows)
     : null;
   const lufs = P.integratedLufs(bed.left, bed.right, bed.sampleRate);
@@ -907,6 +914,7 @@ function measureBed(bed) {
     reference,
     earReady: rules.pass && reference.pass,
     ...(bed.sources ? { sources: bed.sources } : {}),
+    ...(bed.bassMatch != null ? { bassMatch: bed.bassMatch } : {}),
     pass: reasons.length === 0,
     fails: reasons,
     wind: {
@@ -1107,8 +1115,97 @@ async function renderV9() {
   };
 }
 
+function matchBass(refSub, refMid, sub, mid, gs, gm) {
+  const ref = windowPower(refSub, refMid, gs, gm, 5.5, 15.4);
+  const neu = windowPower(sub, mid, gs, gm, 5.5, 15.4);
+  if (!(ref > 0) || !(neu > 0)) return 1;
+  return Math.sqrt(ref / neu);
+}
+
+async function renderV7b() {
+  const v7 = renderBed("v7");
+  const n = v7.stems.sub.length;
+  const g = v7.gains;
+  const elem = await import("./sound-elementary.mjs");
+  const lib = await elem.renderLibBass(n, SR);
+  const sub = lib.sub;
+  const mid = lib.mid;
+  const bassScale = tameFinal(sub, mid, g.sub, g.mid);
+  const bassMatch = matchBass(v7.stems.sub, v7.stems.mid, sub, mid, g.sub, g.mid);
+  for (let i = 0; i < n; i++) {
+    sub[i] *= bassMatch;
+    mid[i] *= bassMatch;
+  }
+  const send = P.silence(n);
+  sum(send, v7.stems.pluck, 0.55);
+  sum(send, v7.stems.stab, 0.7);
+  const room = P.shortReverb(send, SR, 0.16, 3200);
+  const wide = mixWide(
+    {
+      pad: v7.stems.pad,
+      sub,
+      bass: mid,
+      kick: v7.stems.kick,
+      clap: v7.stems.clap,
+      hat: v7.stems.hat,
+      pluck: v7.stems.pluck,
+      stab: v7.stems.stab,
+      room,
+    },
+    g,
+  );
+  for (let i = 0; i < n; i++) {
+    const fade = masterFade(i / SR);
+    wide.left[i] *= fade;
+    wide.right[i] *= fade;
+  }
+  const glued = P.glueStereo(wide.left, wide.right, SR, -12, 1.5, 0.03, 0.18);
+  const fitted = P.fitLoudness(glued.left, glued.right, SR, -15, -1.4);
+  return {
+    variant: "v7b",
+    name: BED_NAMES.v7b,
+    sampleRate: SR,
+    seconds: n / SR,
+    left: fitted.left,
+    right: fitted.right,
+    lufsFit: fitted.lufs,
+    truePeakFit: fitted.truePeakDb,
+    fitGain: fitted.gain,
+    glueReductionDb: glued.reductionDb,
+    duckDb: 0,
+    gains: g,
+    bassScale,
+    bassMatch,
+    sideScale: wide.sideScale,
+    patterned: true,
+    wide: true,
+    padMode: "low",
+    sources: {
+      sub: "v8lib-elementary",
+      mid: "v8lib-elementary",
+      pad: "v7",
+      kick: "v7",
+      clap: "v7",
+      hat: "v7",
+      pluck: "v7",
+      stab: "v7",
+    },
+    stems: {
+      pad: v7.stems.pad,
+      sub,
+      mid,
+      kick: v7.stems.kick,
+      clap: v7.stems.clap,
+      hat: v7.stems.hat,
+      pluck: v7.stems.pluck,
+      stab: v7.stems.stab,
+    },
+  };
+}
+
 async function loadBed(variant) {
   if (variant === "v9") return renderV9();
+  if (variant === "v7b") return renderV7b();
   return renderBed(variant);
 }
 
@@ -1121,13 +1218,13 @@ function argValue(argv, name) {
 async function cli(argv) {
   const variant = argv[0];
   if (!BED_NAMES[variant]) {
-    process.stderr.write("Usage: sound bed <v4a|v4b|v5a|v5b|v6|v7|v9> --out wav [--mp3 file] [--metrics file]\n");
+    process.stderr.write("Usage: sound bed <v4a|v4b|v5a|v5b|v6|v7|v7b|v9> --out wav [--mp3 file] [--metrics file]\n");
     return 1;
   }
   const bed = await loadBed(variant);
   const metrics = measureBed(bed);
   if (bed.wide) {
-    const priorVariant = variant === "v9" ? "v7" : variant === "v7" ? "v6" : "v5b";
+    const priorVariant = variant === "v7b" || variant === "v9" ? "v7" : variant === "v7" ? "v6" : "v5b";
     const prior = measureBed(await loadBed(priorVariant));
     metrics.compare = {
       against: prior.name,
