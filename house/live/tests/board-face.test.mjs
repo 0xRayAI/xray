@@ -19,6 +19,10 @@ function feed() {
     events: [
       { id: 'e1', t_ct: iso(now - 60000), kind: 'pr_open', from: 'forge', to: 'GitHub', label: 'opened #3', repo: 'example/app', number: 3 },
       { id: 'e2', t_ct: iso(now - 30000), kind: 'merged', from: 'critic', to: 'GitHub', label: 'merged #2', repo: 'example/app', number: 2 },
+      { id: 'e-merge9', t_ct: iso(now - 25000), kind: 'merged', from: 'forge', to: 'Bifrost', label: 'merged #9', repo: 'example/app', number: 9 },
+      { id: 'e-approve9', t_ct: iso(now - 20000), kind: 'critic_pass', from: 'critic', to: 'GitHub', label: 'approved #9', repo: 'example/app', number: 9 },
+      { id: 'ci-forge', t_ct: iso(now - 20000), kind: 'workflow_run', from: 'CI', to: 'GitHub', credit: 'forge', label: 'run tests' },
+      { id: 'ci-blaze', t_ct: iso(now - 10000), kind: 'check_run', from: 'CI', to: 'GitHub', credit: 'Blaze', label: 'run lint' },
     ],
     queue: [
       { id: 'n1', type: 'nudge', seat: 'blinky', title: 'ack the handoff', t_ct: iso(now - 3600000) },
@@ -30,7 +34,8 @@ function feed() {
     ] },
     freshness: { github_latest_ct: iso(now), cards_at: iso(now), github_card_latest_ct: iso(now) },
     cloud_agents: [
-      { bcId: 'bc-fresh00001', seat: 'forge', state: 'running', updated_ct: iso(now - 60000), card: '' },
+      { bcId: 'bc-fresh00001', seat: 'forge', state: 'running', updated_ct: iso(now - 60000), card: '', label: 'no card' },
+      { bcId: 'bc-92de28a2', seat: 'forge', state: 'running', updated_ct: iso(now - 30000), card: '0xRayAI/xray#502', url: 'https://github.com/0xRayAI/xray/pull/502' },
       { bcId: 'bc-8450c4aa-ed0a-5fb3-9748-f09a044c848f', seat: 'forge', state: 'stale', updated_ct: '2026-10-18T17:30:55-05:00', card: 'example/app#3' },
     ],
     fleet: { seats: { forge: { active: true, working: true, working_via: 'cloud' }, blinky: { active: false, working: false }, critic: { active: false, working: false }, mill: { active: false, working: false } }, cloud: { active: true, working: true, open_agents: ['bc-fresh00001'] } },
@@ -40,7 +45,7 @@ function feed() {
         issues_opened_24h: 1, issues_opened_24h_ids: ['example/app#1'],
         issues_closed_24h: 0, issues_closed_24h_ids: [],
         prs_opened_24h: 2, prs_opened_24h_ids: ['example/app#2', 'example/app#3'],
-        prs_merged_24h: 1, prs_merged_24h_ids: ['example/app#2'],
+        prs_merged_24h: 2, prs_merged_24h_ids: ['example/app#2', 'example/app#9'],
         prs_closed_unmerged_24h: 0, prs_closed_unmerged_24h_ids: [],
         issues_open: 1, prs_open: 1, open_total: 2,
       },
@@ -57,15 +62,21 @@ const historyCards = {
   cards: [{ id: 'example/app#2', owner: 'forge', state: 'closed', verb: 'merged', title: 'Merged one', number: 2, updated_ct: '2026-10-20T07:00:00-05:00', closed_ct: '2026-10-20T07:00:00-05:00' }],
 };
 
-function serve(payload) {
+function serve(payload, files) {
   const types = { '.html': 'text/html', '.js': 'text/javascript', '.json': 'application/json', '.png': 'image/png', '.woff2': 'font/woff2' };
   const body = JSON.stringify(payload || feed());
+  const extra = files || {};
   return new Promise((resolve) => {
     const server = http.createServer((req, res) => {
       const url = new URL(req.url, 'http://127.0.0.1');
       if (url.pathname === '/live-events.json') { res.writeHead(200, { 'content-type': 'application/json' }); res.end(body); return; }
       if (url.pathname === '/history/cards') { res.writeHead(200, { 'content-type': 'application/json' }); res.end(JSON.stringify(historyCards)); return; }
       if (url.pathname === '/history') { res.writeHead(200, { 'content-type': 'application/json' }); res.end(JSON.stringify({ days: ['2026-10-20'], events: [] })); return; }
+      if (extra[url.pathname]) {
+        res.writeHead(200, { 'content-type': types[path.extname(extra[url.pathname])] || 'text/javascript' });
+        res.end(fs.readFileSync(extra[url.pathname]));
+        return;
+      }
       const rel = url.pathname === '/' ? '/index.html' : url.pathname;
       const file = path.normalize(path.join(PUB, rel));
       if (!file.startsWith(PUB) || !fs.existsSync(file) || !fs.statSync(file).isFile()) { res.writeHead(404); res.end('missing'); return; }
@@ -134,6 +145,7 @@ test('the board face keeps the contract in both themes', async () => {
       const mergedCard = document.querySelector('#waveBody .wcard[data-key="example/app#2"]');
       const openCard = document.querySelector('#waveBody .wcard[data-key="example/app#3"]');
       const mesh = document.getElementById('meshPanel').getBoundingClientRect();
+      const header = document.querySelector('main > header').getBoundingClientRect();
       const slider = document.getElementById('slider').getBoundingClientRect();
       const names = [...document.querySelectorAll('.seat .nm')].map(el => el.textContent);
       const roster = [...document.querySelectorAll('#seatGrid .seat')].map(el => {
@@ -160,9 +172,18 @@ test('the board face keeps the contract in both themes', async () => {
       const edge = openCard ? getComputedStyle(openCard).borderLeftColor : '';
       const mill = getComputedStyle(document.documentElement).getPropertyValue('--seat-mill').trim();
       const ids = [...document.querySelectorAll('#log li')].map(li => li.textContent);
+      const whos = [...document.querySelectorAll('#log li')].map(li => (li.querySelector('.who') || {}).textContent || '');
+      const linked = document.querySelector('#cloudBody a.wbadge.cloud');
+      const fresh = document.querySelector('#cloudBody .wcard[data-key="bc-fresh00001"]');
       return {
         openCloud, doneCloud, waiting, mergedParent: mergedCard && mergedCard.parentElement.className,
-        sliderInside: slider.top >= mesh.top - 1 && slider.bottom <= mesh.bottom + 1 && slider.left >= mesh.left - 1 && slider.right <= mesh.right + 1,
+        whos,
+        cloudHref: linked ? linked.getAttribute('href') : '',
+        cloudBadge: linked ? linked.textContent : '',
+        freshText: fresh ? fresh.textContent : '',
+        freshBadge: fresh ? fresh.querySelectorAll('a.wbadge.cloud, .wbadge.cloud').length : -1,
+        sliderInside: slider.top >= header.top - 1 && slider.bottom <= header.bottom + 1 && slider.height > 0 && getComputedStyle(document.querySelector('main > header')).position === 'sticky',
+        sliderBox: { top: slider.top, bottom: slider.bottom, height: slider.height, headerTop: header.top, headerBottom: header.bottom, meshTop: mesh.top },
         names, roster,
         activityCollapsed: activity.classList.contains('collapsed'),
         logDisplay: log.display, logMax: log.maxHeight, logOverflow: log.overflowY,
@@ -172,12 +193,20 @@ test('the board face keeps the contract in both themes', async () => {
     });
     assert.equal(face.theme, 'dark');
     assert.match(face.openCloud, /bc-fresh00001/);
+    assert.match(face.openCloud, /no card/);
+    assert.doesNotMatch(face.openCloud, /card missing/);
+    assert.equal(face.freshBadge, 0);
+    assert.match(face.freshText, /no card/);
+    assert.equal(face.cloudBadge, '0xRayAI/xray#502');
+    assert.equal(face.cloudHref, 'https://github.com/0xRayAI/xray/pull/502');
+    assert.ok(face.whos.includes('forge'), JSON.stringify(face.whos));
+    assert.ok(face.whos.includes('Blaze'), JSON.stringify(face.whos));
     assert.doesNotMatch(face.openCloud, /bc-8450c4aa/);
     assert.match(face.doneCloud, /bc-8450c4aa/);
     assert.ok(face.waiting.some(row => row.startsWith('in review')));
     assert.ok(!face.waiting.some(row => row.startsWith('waiting') && face.mergedParent && face.mergedParent.includes('done') === false));
     assert.match(face.mergedParent, /done/);
-    assert.equal(face.sliderInside, true);
+    assert.equal(face.sliderInside, true, JSON.stringify(face.sliderBox));
     assert.ok(face.names.every(name => !name.includes('·')));
     assert.ok(face.roster.length > 0);
     const stateWord = /\b(active|idle|working|live|silent)\b/i;
@@ -215,7 +244,7 @@ test('the board face keeps the contract in both themes', async () => {
     assert.match(face.track, /forge · working · real task/);
     assert.doesNotMatch(face.queue, /nudge/);
     assert.match(face.queue, /forge · packet · needs a review/);
-    assert.ok(face.tiles.some(tile => tile.label.includes('PRs merged') && tile.label.includes('1')));
+    assert.ok(face.tiles.some(tile => tile.label.includes('PRs merged') && tile.label.includes('2')));
     assert.equal(new Set(face.ids).size, face.ids.length);
     const millParts = face.mill.split(/[,\s]+/).filter(Boolean).map(Number);
     assert.match(face.edge, new RegExp(millParts.slice(0, 3).join(',\\s*')));
@@ -228,7 +257,15 @@ test('the board face keeps the contract in both themes', async () => {
       keys: [...document.querySelectorAll('#waveBody .wcard[data-key]')].map(el => el.dataset.key),
     }));
     assert.equal(filtered.pressed, 'true');
-    assert.deepEqual(filtered.keys.filter(k => k.startsWith('example/')), ['example/app#2']);
+    assert.deepEqual(filtered.keys.filter(k => k.startsWith('example/')), ['example/app#2', 'example/app#9']);
+    const mergedNine = await page.evaluate(() => {
+      const el = document.querySelector('#waveBody .wcard[data-key="example/app#9"]');
+      const badge = el && el.querySelector('.wbadge.state');
+      return { state: badge ? badge.textContent : '', text: el ? el.textContent : '' };
+    });
+    assert.equal(mergedNine.state, 'closed');
+    assert.match(mergedNine.text, /merged #9/);
+    assert.doesNotMatch(mergedNine.text, /approved #9/);
 
     const samples = await page.evaluate(() => {
       const pick = (sel) => {
@@ -387,6 +424,69 @@ test('each stat tile lists the items its count includes', async () => {
     assert.deepEqual(byLabel['PRs closed unmerged 24h'], ['example/app#12']);
     assert.deepEqual(byLabel['open now'], ['example/app#1', 'example/app#10']);
     assert.deepEqual(byLabel['owner prompts'], []);
+  } finally {
+    if (browser) await browser.close();
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
+test('an activity row expands to the full note and collapses again', async () => {
+  const now = Date.now();
+  const iso = (ms) => new Date(ms).toISOString();
+  const full = 'FULL NOTE the row keeps closed until the activity item is opened';
+  const longPrompt = 'look at the whole handoff. '.repeat(8).trim();
+  const payload = feed();
+  payload.events = [
+    { id: 'prompt1', t_ct: iso(now - 20000), kind: 'seat_prompt', from: 'Blaze', to: 'forge', note: longPrompt, label: 'Blaze → forge: ' + longPrompt },
+    { id: 'ci1', t_ct: iso(now - 10000), kind: 'workflow_run', from: 'CI', to: 'GitHub', credit: 'Blaze', label: 'run lint', repo: 'example/app', number: 9 },
+    { id: 'note1', t_ct: iso(now - 5000), kind: 'comment', from: 'forge', to: 'GitHub', label: 'short label', note: full, repo: 'example/app', number: 3, source: 'https://github.com/example/app/pull/3' },
+  ];
+  const overlay = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'site', 'public', 'site-config.js');
+  const server = await serve(payload, { '/site-config.js': overlay });
+  const base = `http://127.0.0.1:${server.address().port}/index.html`;
+  let browser;
+  try {
+    browser = await chromium.launch();
+    const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto(base, { waitUntil: 'domcontentloaded' });
+    const row = page.locator('#log li[data-id="note1"]');
+    await row.waitFor({ timeout: 8000 });
+    const note = row.locator('.log-note');
+    assert.equal(await note.isVisible(), false);
+    assert.equal(await row.locator('a').first().textContent(), 'short label');
+    await row.locator('.who').click();
+    assert.equal(await row.getAttribute('aria-expanded'), 'true');
+    assert.equal(await note.isVisible(), true);
+    assert.equal(await note.textContent(), full);
+    fs.mkdirSync(ART, { recursive: true });
+    await row.scrollIntoViewIfNeeded();
+    await row.screenshot({ path: path.join(ART, 'activity-row-open.png') });
+    const meta = await row.locator('.log-meta').textContent();
+    assert.match(meta, /FORGE/);
+    assert.match(meta, /CT/);
+    const card = row.locator('a.log-card');
+    assert.equal(await card.textContent(), 'example/app#3');
+    assert.equal(await card.getAttribute('href'), 'https://github.com/example/app/pull/3');
+    await page.evaluate(() => {
+      document.querySelector('#log li[data-id="note1"] a.log-card').addEventListener('click', (ev) => ev.preventDefault());
+    });
+    await card.click();
+    assert.equal(await row.getAttribute('aria-expanded'), 'true');
+    await note.click();
+    assert.equal(await row.getAttribute('aria-expanded'), 'false');
+    assert.equal(await note.isVisible(), false);
+    const prompt = page.locator('#log li[data-id="prompt1"]');
+    assert.equal(await prompt.locator('.prompt-line').textContent().then(t => t.endsWith('…')), true);
+    assert.equal(await prompt.locator('.log-note').isVisible(), false);
+    await prompt.locator('.when').click();
+    assert.equal(await prompt.locator('.log-note').textContent(), 'Blaze → forge: ' + longPrompt);
+    assert.equal(await row.getAttribute('aria-expanded'), 'false');
+    const ci = page.locator('#log li[data-id="ci1"]');
+    await ci.locator('.who').click();
+    assert.match(await ci.locator('.log-meta').textContent(), /Blaze/);
+    assert.equal(await ci.locator('a.log-card').getAttribute('href'), 'https://github.com/example/app/pull/9');
+    assert.equal(await prompt.getAttribute('aria-expanded'), 'true');
   } finally {
     if (browser) await browser.close();
     await new Promise((resolve) => server.close(resolve));

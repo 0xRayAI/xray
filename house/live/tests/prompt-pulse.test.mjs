@@ -8,6 +8,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { archivedLineBytes } from '../app/archive.mjs';
+import { chicagoDay } from '../app/chicago-stamp.mjs';
 
 const APP = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app');
 const KEY = 'forge-prompt-' + crypto.randomBytes(8).toString('hex');
@@ -101,7 +102,7 @@ test('a prompt pulse keeps the seat working for 10 minutes and credits Blaze', a
     assert.equal(noted.length, 1);
     assert.equal(noted[0].label, 'Blaze → forge: check the message on the board');
     assert.equal(noted[0].note, 'check the message on the board');
-    const day = new Date().toISOString().slice(0, 10);
+    const day = chicagoDay(Date.now());
     const hist = await (await fetch(base + '/history?date=' + day)).json();
     const logged = (hist.events || []).filter(e => e.kind === 'seat_prompt' && e.label === 'Blaze → forge: check the message on the board');
     assert.equal(logged.length, 1);

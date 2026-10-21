@@ -56,10 +56,30 @@ The wave click toggles `.open` again. `mountCardDetail` is the only renderer: th
 
 ## Brief badge
 
-The badge is `packet_ok === false`. `house/live/feed/live_board.py` set that from `missing = [f for f in ("acceptance", "next owner") if not pk.get(f)]` and then `packet_ok=not missing`. The packet dict comes only from the PR or issue body (`live_collect.card_fields` → `live_packet.parse`). An issue body has no packet, so all 36 issues on the live board were false. Packet card `#485` is born in `ensurePacketCard` (`house/live/app/server.mjs`) with `packet: {}` and `packet_ok: false`. PR `#493` names `PACKET.md` on the branch and the body parser returns `{}`. Release PR `#490` (`release(grok-bot): 0.1.11`, follow-up issue `#491`) has no packet. PR `#388` has neither a packet block nor `PACKET.md` on the branch, so it still needs a brief.
+The badge is `packet_ok === false`. It used to come from `missing = [f for f in ("acceptance", "next owner") if not pk.get(f)]`. An issue body has no packet, so every issue on the live board was false. Packet card `#485` is born in `ensurePacketCard` (`house/live/app/server.mjs`). PR `#493` names `PACKET.md` on the branch. Release PR `#490` has no packet.
 
-An issue, a packet card, a title that starts with `release`, a `packet:` alias, or a body or branch that carries a packet (`PACKET.md`, a packet heading, or `Packet:`) is `packet_ok` with an empty `missing` list. The collector records `packet_file` and checks `PACKET.md` at the pull head. A pull that has none of those still needs acceptance and next owner.
+The badge stays only when the card is a packet PR (the title starts with `Packet`, or the alias is `packet:`) and `packet_file` is false. `packet_file` is the body carrying a packet or naming `PACKET.md`, or `PACKET.md` at the pull head. Docs `#388` (`docs: seek map…`, branch `cursor/seek-map-bfe6`) is not a packet PR and has no root `PACKET.md`. Hotfix `#500` (`fix(live): brief only packet PRs…`) is not a packet PR, and root `PACKET.md` is on `cursor/live-brief-ci-credit-69c9`. Neither shows the badge. A `Packet:` title with no file still does. Acceptance and next owner do not drive the badge.
+
+## CI who
+
+`put()` stores CI events with `from` `CI` and `to` `GitHub`. `credit_of` already writes the seat (`forge`, `Blaze`). `applyFeed` maps `CI` and `forge` onto the GitHub node, so the mesh source stays GitHub. The activity and history who label is `whoTag`: for `workflow_run`, `check_run`, `check_suite`, `ci_pass`, `ci_fail`, and `commit_status` it shows that credit. A credit of `github` or `CI` still reads `GITHUB`. A non-CI line from forge still reads `FORGE`.
 
 ## Cloud card link
 
-`boardCloudAgents` flagged `card missing` when both `card` and `pr` were empty (`house/live/app/worktrack.mjs`). It never read a turn tag or a `head_ref`. A `bc-<id> <track>` turn (`#485`, `485`, or `owner/repo#n`) and a branch or `head_ref` that contains the id now fill the card from the board. A finished agent whose pull URL is already set does not get the flag.
+`boardCloudAgents` flagged `card missing` when both `card` and `pr` were empty (`house/live/app/worktrack.mjs`). A `bc-<id> <track>` turn, a branch or `head_ref` that contains the id, and the card cell on `TRACKS.md` (`owner/repo#n` or `packet:…`) fill the card. The page renders that card as `.wbadge.cloud` with the GitHub href. A run with no pull and no named card shows `no card` and does not set the flag.
+
+## Activity row
+
+A click on an activity row opens the seat, the full Central time, the linked card, and the full note under that row. A second click closes it. A link inside the row still opens. The row does not rewind the mesh.
+
+## Closed column and history
+
+`/cards` shows a merged or closed card for 24 hours. Inside that window the card takes a display slot before any parked card. The 40-card cap can still leave it off the board. That card is returned on `settled`. The server writes the final row to `/history` and `/history/cards` with `verb` `merged` when a merged event exists for that repo and number. A packet-born card whose item is merged, including `#485`, is not kept on the board. A later boot does not delete those archive rows. The merged-stat click keeps the merged event when it touches Bifrost, and the card it opens is closed with that merge, not a later approval.
+
+## History transitions
+
+An append-only transitions log is written before the 14-day filter and the 40-card cap. The id is `card|transition|source_id`. Day folders are America/Chicago. `GET /history/transitions` and `GET /history/export?date=` serve that log. `GET /history/cards` returns the latest transition, and `merged` wins over a later live snapshot in `cards.jsonl`. The backfill reads `events.jsonl` since 2026-06-05, appends once per source id, and does not rewrite `cards.jsonl` or clear `.backfill-done`. The ten missing days stay listed in `archive/transitions-backfill.json` until a transition lands on them. Daily files are not deleted. The durable copy is `$MESH_DATA_DIR/archive` on the Railway volume; a volume wipe is the loss.
+
+## Frozen column headers
+
+The page header holds the timeline toolbar, and that pair stays at the top of the page. Each kanban column keeps its status name and count in view. The card list under that header scrolls on its own. The board scrolls sideways, and the headers stay lined up with their columns. On the wave board, the status line (name and count) sticks to the top of the card list while the cards scroll.

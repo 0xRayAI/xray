@@ -156,7 +156,7 @@ Board rule. On every owner message run `live-inbox <seat> --prompt --from owner 
 
 Kanban note. The live page shows a read-only kanban above Activity. Columns are open, review, fix, merge, retest, and done. The deep link is `?card=`.
 
-History note. Every activity line is archived to history. The word owner is the owner via LIVE_OWNER or the owner-name.
+History note. Card transitions are archived even when the card leaves the board. The word owner is the owner via LIVE_OWNER or the owner-name.
 
 ## Ship cadence (proposed 2026-10-13, needs Arch1's approval)
 

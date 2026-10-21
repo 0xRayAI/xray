@@ -233,3 +233,207 @@ test('kanban, wave, and activity links read as links in both themes', async () =
     await new Promise((resolve) => server.close(resolve));
   }
 });
+
+function scrollFeed() {
+  const now = Date.now();
+  const beat = now - 60_000;
+  const cards = [];
+  for (let i = 0; i < 20; i++) {
+    cards.push({
+      key: `example/app#${100 + i}`,
+      repo: 'example/app',
+      number: 100 + i,
+      kind: 'pr',
+      state: 'live',
+      stage: 'review',
+      title: `Review card ${i} ${'line '.repeat(6)}`,
+      owner: 'mill',
+      packet_ok: true,
+      url: `https://github.com/example/app/pull/${100 + i}`,
+      last_beat_t: beat - i,
+      beats: [{ t: beat - i, what: 'opened' }],
+    });
+  }
+  for (let i = 0; i < 8; i++) {
+    cards.push({
+      key: `example/app#${200 + i}`,
+      repo: 'example/app',
+      number: 200 + i,
+      kind: 'pr',
+      state: 'parked',
+      stage: 'open',
+      title: `Parked card ${i}`,
+      owner: 'blinky',
+      packet_ok: true,
+      last_beat_t: beat - i,
+      beats: [{ t: beat - i, what: 'parked' }],
+    });
+  }
+  cards.push({
+    key: 'example/app#9',
+    repo: 'example/app',
+    number: 9,
+    kind: 'pr',
+    state: 'closed',
+    stage: 'done',
+    title: 'Closed card',
+    owner: 'forge',
+    packet_ok: true,
+    last_beat_t: beat,
+    beats: [{ t: beat, what: 'merged' }],
+  });
+  return {
+    generated_at: new Date(now).toISOString(),
+    cursor: 'kanban-scroll',
+    events: [],
+    queue: [],
+    track: { items: [] },
+    freshness: {
+      github_latest_ct: new Date(now).toISOString(),
+      cards_at: new Date(now).toISOString(),
+      github_card_latest_ct: new Date(now).toISOString(),
+    },
+    board: { updated_ct: new Date(now).toISOString(), cards, stats: { open_total: 28 } },
+  };
+}
+
+function serveFeed(feed) {
+  const types = { '.html': 'text/html', '.js': 'text/javascript', '.json': 'application/json' };
+  const body = JSON.stringify(feed);
+  return new Promise((resolve) => {
+    const server = http.createServer((req, res) => {
+      const url = new URL(req.url, 'http://127.0.0.1');
+      if (url.pathname === '/live-events.json') {
+        res.writeHead(200, { 'content-type': 'application/json' });
+        res.end(body);
+        return;
+      }
+      const rel = url.pathname === '/' ? '/index.html' : url.pathname;
+      const file = path.normalize(path.join(PUB, rel));
+      if (!file.startsWith(PUB) || !fs.existsSync(file) || !fs.statSync(file).isFile()) {
+        res.writeHead(404); res.end('missing'); return;
+      }
+      res.writeHead(200, { 'content-type': types[path.extname(file)] || 'application/octet-stream' });
+      res.end(fs.readFileSync(file));
+    });
+    server.listen(0, '127.0.0.1', () => resolve(server));
+  });
+}
+
+test('column headers stay visible after the card area scrolls', async () => {
+  const server = await serveFeed(scrollFeed());
+  const base = `http://127.0.0.1:${server.address().port}/index.html`;
+  let browser;
+  try {
+    browser = await chromium.launch();
+    const page = await browser.newPage({ viewport: { width: 1200, height: 900 } });
+    await page.goto(base, { waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(() => document.querySelectorAll('#kanbanBoard [data-stage="review"] .wcard').length >= 20, null, { timeout: 8000 });
+
+    const scrolled = await page.evaluate(() => {
+      const board = document.getElementById('kanbanBoard');
+      const col = board.querySelector('[data-stage="review"]');
+      const list = col.querySelector('.wcards');
+      const head = col.querySelector('h3');
+      const pageHead = document.querySelector('main > header').getBoundingClientRect();
+      const bar = document.querySelector('main > header .mesh-controls').getBoundingClientRect();
+      const headBefore = head.getBoundingClientRect().top;
+      const cardBefore = list.querySelector('.wcard').getBoundingClientRect().top;
+      const topsBefore = [...board.querySelectorAll('h3')].map((h) => h.getBoundingClientRect().top);
+      list.scrollTop = list.scrollHeight;
+      const headAfter = head.getBoundingClientRect();
+      const cardAfter = list.querySelector('.wcard').getBoundingClientRect().top;
+      const boardBox = board.getBoundingClientRect();
+      const topsAfter = [...board.querySelectorAll('h3')].map((h) => Math.round(h.getBoundingClientRect().top));
+      const pageHeadAfter = document.querySelector('main > header').getBoundingClientRect();
+      const barAfter = document.querySelector('main > header .mesh-controls').getBoundingClientRect();
+      board.scrollLeft = board.scrollWidth;
+      const columns = [...board.querySelectorAll('.kanban-col')].map((node) => {
+        const h = node.querySelector('h3').getBoundingClientRect();
+        const box = node.getBoundingClientRect();
+        return {
+          stage: node.dataset.stage,
+          text: node.querySelector('h3').textContent,
+          headTop: h.top,
+          headLeft: h.left,
+          colLeft: box.left,
+          colRight: box.right,
+          headRight: h.right,
+        };
+      });
+      const done = board.querySelector('[data-stage="done"] h3').getBoundingClientRect();
+      const boardNow = board.getBoundingClientRect();
+      const wave = document.getElementById('waveBody');
+      wave.scrollTop = wave.scrollHeight;
+      const waveBox = wave.getBoundingClientRect();
+      const stuck = [...wave.querySelectorAll('.wgroup')].filter((g) => {
+        const r = g.getBoundingClientRect();
+        return r.top >= waveBox.top - 1 && r.top <= waveBox.top + 8 && r.bottom > waveBox.top + 8;
+      }).map((g) => g.textContent);
+      return {
+        overflowX: board.scrollWidth > board.clientWidth + 8,
+        listScroll: list.scrollTop,
+        cardMoved: cardBefore - cardAfter > 40,
+        headTopDelta: Math.abs(headAfter.top - headBefore),
+        headVisible: headAfter.top >= boardBox.top - 1 && headAfter.bottom <= boardBox.bottom && headAfter.bottom > boardBox.top,
+        topsBefore,
+        topsAfter,
+        pageHeadTop: pageHead.top,
+        pageHeadStill: Math.abs(pageHeadAfter.top - pageHead.top) < 1 && pageHeadAfter.bottom > 0 && pageHeadAfter.top < window.innerHeight,
+        barStill: Math.abs(barAfter.top - bar.top) < 1 && barAfter.bottom > 0 && barAfter.top < window.innerHeight && barAfter.height > 0,
+        columns,
+        doneInBoard: done.left >= boardNow.left - 1 && done.right <= boardNow.right + 2 && done.top >= boardNow.top - 1 && done.bottom <= boardNow.bottom + 1,
+        waveScroll: wave.scrollTop,
+        stuck,
+      };
+    });
+
+    assert.equal(scrolled.overflowX, true, JSON.stringify({ overflowX: scrolled.overflowX }));
+    assert.ok(scrolled.listScroll > 40, JSON.stringify({ listScroll: scrolled.listScroll }));
+    assert.equal(scrolled.cardMoved, true, JSON.stringify({ cardMoved: scrolled.cardMoved }));
+    assert.ok(scrolled.headTopDelta < 1, JSON.stringify({ headTopDelta: scrolled.headTopDelta }));
+    assert.equal(scrolled.headVisible, true, JSON.stringify(scrolled));
+    const spread = Math.max(...scrolled.topsAfter) - Math.min(...scrolled.topsAfter);
+    assert.ok(spread < 2, JSON.stringify(scrolled.topsAfter));
+    assert.equal(scrolled.pageHeadStill, true, JSON.stringify(scrolled));
+    assert.equal(scrolled.barStill, true, JSON.stringify(scrolled));
+    for (const col of scrolled.columns) {
+      assert.match(col.text, /\(\d+\)$/, col.stage);
+      assert.ok(Math.abs(col.headLeft - col.colLeft) < 16, JSON.stringify(col));
+      assert.ok(col.headRight <= col.colRight + 1, JSON.stringify(col));
+    }
+    const aligned = scrolled.columns.map((col) => Math.round(col.headTop));
+    assert.ok(Math.max(...aligned) - Math.min(...aligned) < 2, JSON.stringify(aligned));
+    assert.equal(scrolled.doneInBoard, true, JSON.stringify(scrolled.columns));
+    assert.ok(scrolled.waveScroll > 40, JSON.stringify({ waveScroll: scrolled.waveScroll }));
+    assert.ok(scrolled.stuck.length >= 1, JSON.stringify(scrolled.stuck));
+    assert.match(scrolled.stuck[0], /\(\d+\)/);
+
+    await page.locator('#kanbanBoard').screenshot({ path: '/opt/cursor/artifacts/kanban-column-headers.png' });
+    await page.locator('#wave').screenshot({ path: '/opt/cursor/artifacts/wave-status-header.png' });
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    const pinned = await page.evaluate(() => {
+      const head = document.querySelector('main > header').getBoundingClientRect();
+      const bar = document.querySelector('main > header .mesh-controls').getBoundingClientRect();
+      const h1 = document.querySelector('main > header h1').getBoundingClientRect();
+      return {
+        headTop: head.top,
+        headBottom: head.bottom,
+        barTop: bar.top,
+        barBottom: bar.bottom,
+        h1Top: h1.top,
+        h1Bottom: h1.bottom,
+        view: window.innerHeight,
+      };
+    });
+    assert.ok(pinned.headTop <= 1, JSON.stringify(pinned));
+    assert.ok(pinned.h1Bottom > 0 && pinned.h1Top < pinned.view, JSON.stringify(pinned));
+    assert.ok(pinned.barTop >= pinned.headTop && pinned.barBottom <= pinned.headBottom + 1, JSON.stringify(pinned));
+    assert.ok(pinned.barBottom > 0 && pinned.barTop < pinned.view, JSON.stringify(pinned));
+
+    await page.screenshot({ path: '/opt/cursor/artifacts/kanban-headers-stuck.png', fullPage: false });
+  } finally {
+    if (browser) await browser.close();
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
