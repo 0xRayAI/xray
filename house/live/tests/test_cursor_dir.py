@@ -78,7 +78,7 @@ class CursorDir(unittest.TestCase):
         return subprocess.run(
             [str(TOOL), SEAT, *args],
             env=env,
-            cwd=cwd or "/workspace",
+            cwd=cwd or str(self.home),
             capture_output=True,
             text=True,
         )
@@ -138,7 +138,9 @@ class CursorDir(unittest.TestCase):
         self.assertFalse(self.fixed_file().exists())
 
     def test_relative_workspace_cursors_is_refused(self):
-        r = self.remember(cursors=".cursors", cwd="/workspace")
+        work = self.home / "legacy" / "workspace"
+        work.mkdir(parents=True)
+        r = self.remember(cursors=".cursors", cwd=str(work), root=self.home / "legacy")
         self.assertEqual(r.returncode, 2, r.stdout)
         self.assertIn("not the cursor folder", r.stderr)
 
