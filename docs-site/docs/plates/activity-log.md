@@ -5,34 +5,34 @@ sidebar_label: Activity log
 
 # Activity log
 
-A tool hook appends one JSON line, and reporting, pulse, and monitor read that same file back.
+Three paths. They are not one file. The activity logger does not call write-home (`src/core/activity-logger.ts:18-21`).
 
 ```
-┌────────────────────────────────────────────────────────────┐
-│ INPUT LAYER                                                │
-│   ┌──────────────┐ ┌────────────┐ ┌─────────┐ ┌────────┐ │
-│   │ pipeline hook│ │ grok hook  │ │ hermes  │ │ logger │ │
-│   └──────┬───────┘ └─────┬──────┘ └────┬────┘ └───┬────┘ │
-│          └───────────────┴─────────────┴─────┬────┘      │
-└──────────────────────────────────────────────┼───────────┘
-                                               v
-┌──────────────────────────────────────────────┼───────────┐
-│ PROCESSING LAYER                             v           │
-│   ┌────────────────────────────────────────────────────┐ │
-│   │ append one JSON line                               │ │
-│   └──────────────────────────┬─────────────────────────┘ │
-└──────────────────────────────┼───────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│ INPUT LAYER                                                  │
+│   ┌──────────────────────────────────────────────────────┐   │
+│   │ activity_logging.log_path, or none                   │   │
+│   └──────────────────────────┬───────────────────────────┘   │
+└──────────────────────────────┼───────────────────────────────┘
                                v
-┌──────────────────────────────┼───────────────────────────┐
-│ OUTPUT LAYER                 v                           │
-│   ┌──────────────────────────────────────────────────┐  │
-│   │ .xray/logs/activity.log                          │  │
-│   └──────────────────────────────────────────────────┘  │
-└──────────────────────────────────────────────────────────┘
+┌──────────────────────────────┼───────────────────────────────┐
+│ PROCESSING LAYER             v                               │
+│   ┌──────────────────────────────────────────────────────┐   │
+│   │ initializeActivityLogger                             │   │
+│   │ strip a trailing /logs, else logs/framework          │   │
+│   │ write-home names a third path and does not run here  │   │
+│   └──────────────────────────┬───────────────────────────┘   │
+└──────────────────────────────┼───────────────────────────────┘
+                               v
+┌──────────────────────────────┼───────────────────────────────┐
+│ OUTPUT LAYER                 v                               │
+│   ┌────────────────┐ ┌──────────────────┐ ┌───────────────┐  │
+│   │ .opencode/     │ │ logs/framework/  │ │ .xray/logs/   │  │
+│   │ activity.log   │ │ activity.log     │ │ activity.log  │  │
+│   └────────────────┘ └──────────────────┘ └───────────────┘  │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-Today those writers append `logs/framework/activity.log`. The features default still says `.opencode/logs`. The file they share after the rewire is `.xray/logs/activity.log`.
+`initializeActivityLogger` uses `config.log_path`, and if that is absent it uses `logs/framework` (`src/core/activity-logger.ts:73-81`). Shipped `activity_logging.log_path` is `.opencode/logs` (`xray/features.json:105`). The logger strips a trailing `/logs`, so that value lands in `.opencode/activity.log` (`activity-logger.ts:73-81`). `write-home.cjs` names the home `.xray/logs/activity.log` (`src/integrations/hooks/write-home.cjs:8-13`) and treats both `.opencode/logs` and `logs/framework` as legacy (`:39-48`).
 
-When: on the tool hook, on framework logger flush, and on boot when file logging is on. Why: the report and the pulse read one tail, not a pile of copies.
-
-stamped · 0xray 4.1.0
+stamped · 0xray 4.1.3

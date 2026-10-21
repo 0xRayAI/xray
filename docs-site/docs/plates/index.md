@@ -49,9 +49,9 @@ These eight are the pages the file ref names. Each one is a card. Each card list
 
 ## Fresh line and the gate
 
-[Work fresh](./work-fresh.md) · [Kept line](./kept-line.md) · [Lens gate](./lens-gate.md) · [Pre tool](./pre-tool.md) · [Lens page](./lens-page.md)
+[Work fresh](./work-fresh.md) · [Kept line](./kept-line.md) · [Lens gate](./lens-gate.md) · [Pre tool](./pre-tool.md) · [Worn turn](./worn-turn.md) · [Lens page](./lens-page.md)
 
-These five are the compact path that was opened. Each one is a card. Each card lists one skill.
+These six are the compact path that was opened, plus the hook chain. Each one is a card. Each card lists one skill.
 
 
 ## Spectra

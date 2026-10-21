@@ -671,4 +671,30 @@ describe('goggles plate', () => {
       rmSync(root, { recursive: true, force: true });
     }
   });
+
+  it('opens the as-is v4 cards on the planes the drawings name', () => {
+    const root = mkdtempSync(join(tmpdir(), 'goggles-v4-plates-'));
+    try {
+      const worn = look(['worn-turn'], root).text;
+      expect(worn).toContain('Card: worn-turn');
+      expect(worn).toContain('Plane: integration');
+      expect(worn).toContain('docs-site/docs/plates/worn-turn.md');
+      expect(worn).not.toContain('Stamp:');
+      const bifrost = look(['bifrost'], root).text;
+      expect(bifrost).toContain('Card: bifrost');
+      expect(bifrost).toContain('Plane: ecosystem');
+      expect(bifrost).toContain('docs-site/docs/plates/bifrost.md');
+      const grokbot = look(['grokbot'], root).text;
+      expect(grokbot).toContain('Card: grokbot');
+      expect(grokbot).toContain('Plane: ecosystem');
+      expect(look(['dynamo'], root).text).toContain('Plane: dev');
+      expect(thingOfPath('src/integrations/cursor/hooks/pre-tool-use.js')).toBe('worn-turn');
+      expect(thingOfPath('src/integrations/grok/hooks/pre-tool-use.js')).toBe('pre-tool');
+      expect(thingOfPath('src/integrations/hooks/delegation-gate-runtime.mjs')).toBe('delegation-gate');
+      expect(thingOfPath('src/integrations/governance/governance-client.ts')).toBe('dynamo');
+      expect(thingOfPath('house/live/app/server.mjs')).toBe('bifrost');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
 });
