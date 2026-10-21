@@ -70,6 +70,14 @@ def mentions(body: str | None) -> list | None:
 
 
 SHA_RE = re.compile(r"@\s*`?([0-9a-f]{7,40})\b")
+
+
+def commit_sha(value):
+    """The review's own commit, 7 to 40 hex digits. A missing or short value is not a head."""
+    if not isinstance(value, str):
+        return None
+    got = value.strip()
+    return got if re.fullmatch(r"[0-9a-fA-F]{7,40}", got) else None
 NODE = {"builder-app[bot]": "Builder", "reviewer-app[bot]": "Reviewer", "reviewer-app": "Reviewer", "ops-app[bot]": "Operator",
         "lead-alt": "Lead", "lead-login": "Lead", "github-actions[bot]": "CI"}   # a person can have several logins
 # Per-fleet login -> node map, merged over the template defaults: LIVE_NODE_MAP='{"forge0x1[bot]":"forge"}'
@@ -449,7 +457,7 @@ Q_PRS = """query($owner:String!,$name:String!,$after:String){ rateLimit{cost rem
  repository(owner:$owner,name:$name){ pullRequests(first:10, after:$after, orderBy:{field:CREATED_AT, direction:ASC}){
   totalCount pageInfo{hasNextPage endCursor} nodes{ number
    commits(first:40){ totalCount nodes{ commit{ %s } } }
-   reviews(first:60){ totalCount nodes{ databaseId state submittedAt url author{login __typename} } } } } } }""" % COMMIT_FIELDS
+   reviews(first:60){ totalCount nodes{ databaseId state submittedAt url author{login __typename} commit{ oid } } } } } } }""" % COMMIT_FIELDS
 
 
 class RepoCollector:
@@ -745,8 +753,9 @@ class RepoCollector:
                     self.ci_from_commit_node(cm)
                     self.st["ci"][cm["oid"]]["pr"] = n
                 for r in p["reviews"]["nodes"]:
+                    commit = r.get("commit") if isinstance(r.get("commit"), dict) else {}
                     self.review_event(n, r["databaseId"], r["state"], r.get("submittedAt"), gql_login(r.get("author")),
-                                      r.get("url"))
+                                      r.get("url"), commit.get("oid"))
                 need = p["commits"]["totalCount"] > len(p["commits"]["nodes"]) or \
                     p["reviews"]["totalCount"] > len(p["reviews"]["nodes"])
                 if need:   # page the rest through REST
@@ -773,15 +782,20 @@ class RepoCollector:
                  f"{self.short} #{n} push {sha[:7]} · {m}", f"https://github.com/{self.repo}/pull/{n}/commits/{sha}",
                  n, sha=sha, message=m, author=login, seat_trailer=seat_trailer(msg))
 
-    def review_event(self, n, rid, state, t, login, url):
+    def review_event(self, n, rid, state, t, login, url, posted_sha=None):
+        """Store the review on the commit it was posted on. Never the PR's current head."""
         if not t or state == "PENDING":
             return
+        eid = f"{self.repo}#{n}:review:{rid}"
+        sha = commit_sha(posted_sha)
+        if not sha:
+            prev = self.ev.get(eid)
+            sha = commit_sha(prev.get("sha")) if isinstance(prev, dict) else None
         pr = (self.st.get("prs") or {}).get(str(n), {})
         pr_author = pr.get("author") if isinstance(pr, dict) else None
-        self.put(f"{self.repo}#{n}:review:{rid}", t, node(login), self.pr_node(n), "review",
+        self.put(eid, t, node(login), self.pr_node(n), "review",
                  f"{login or '?'} {state.lower()} · {self.short} #{n}", url or f"https://github.com/{self.repo}/pull/{n}",
-                 n, state=state, actor=login, pr_author=pr_author,
-                 sha=(self.st.get("prs") or {}).get(str(n), {}).get("head"))
+                 n, state=state, actor=login, pr_author=pr_author, sha=sha)
 
     # ---------------------------------------------------------------- incremental (REST)
     def pr_merged(self, n):
@@ -986,7 +1000,7 @@ class RepoCollector:
         for n in todo:
             for r in self._all(c, f"/repos/{self.repo}/pulls/{n}/reviews"):
                 self.review_event(int(n), r["id"], r["state"], r.get("submitted_at"), (r.get("user") or {}).get("login"),
-                                  r.get("html_url"))
+                                  r.get("html_url"), r.get("commit_id"))
             for cm in self._all(c, f"/repos/{self.repo}/pulls/{n}/commits"):
                 d = cm["commit"]["committer"]["date"]
                 self.pr_commit_event(int(n), cm["sha"], d, cm["commit"]["message"], rest_author_login(cm))

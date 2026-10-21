@@ -782,6 +782,47 @@ def _collector(repo="acme/app"):
 class CardLifecycle(unittest.TestCase):
     """Each case fails if its collector fix is reverted."""
 
+    def test_review_keeps_the_commit_it_was_posted_on(self):
+        col = _collector("0xRayAI/xray")
+        col.st.setdefault("prs", {})["556"] = {"head": "0e96754" + "b" * 33, "author": "forge0x1[bot]"}
+        posted = "302086e" + "a" * 33
+        url = "https://github.com/0xRayAI/xray/pull/556#pullrequestreview-1"
+        with mock.patch.dict(uc.NODE_LC, {"critic0x[bot]": "critic", "forge0x1[bot]": "forge"}):
+            col.review_event(556, 1, "APPROVED", "2026-10-21T21:00:00Z", "critic0x[bot]", url, posted)
+            ev = col.ev["0xRayAI/xray#556:review:1"]
+            self.assertEqual(ev["sha"], posted)
+            self.assertNotEqual(ev["sha"], col.st["prs"]["556"]["head"])
+            col.st["prs"]["556"]["head"] = "0e96754" + "c" * 33
+            col.review_event(556, 1, "APPROVED", "2026-10-21T21:00:00Z", "critic0x[bot]", url, posted)
+            self.assertEqual(col.ev["0xRayAI/xray#556:review:1"]["sha"], posted)
+            col.review_event(556, 1, "APPROVED", "2026-10-21T21:00:00Z", "critic0x[bot]", url)
+            self.assertEqual(col.ev["0xRayAI/xray#556:review:1"]["sha"], posted)
+            fresh = _collector("0xRayAI/xray")
+            fresh.st.setdefault("prs", {})["556"] = {"head": "0e96754" + "d" * 33, "author": "forge0x1[bot]"}
+            fresh.review_event(556, 2, "APPROVED", "2026-10-21T21:00:00Z", "critic0x[bot]", url)
+            self.assertNotIn("sha", fresh.ev["0xRayAI/xray#556:review:2"])
+
+    def test_enrich_reads_the_review_commit_id(self):
+        col = _collector("0xRayAI/xray")
+        col.st.setdefault("prs", {})["556"] = {"head": "0e96754" + "d" * 33, "author": "forge0x1[bot]"}
+        col.st["enrich"] = {"556": True}
+        posted = "302086e" + "e" * 33
+        review = {"id": 7, "state": "APPROVED", "submitted_at": "2026-10-21T21:00:00Z",
+                  "user": {"login": "critic0x[bot]"},
+                  "html_url": "https://github.com/0xRayAI/xray/pull/556#pullrequestreview-7",
+                  "commit_id": posted}
+
+        class C:
+            def rest(self, path, params=None):
+                if str(path).endswith("/reviews"):
+                    return 200, [review], None, None
+                return 200, [], None, None
+
+        with mock.patch.dict(uc.NODE_LC, {"critic0x[bot]": "critic", "forge0x1[bot]": "forge"}):
+            col.enrich_prs(C(), limit=5)
+        self.assertEqual(col.ev["0xRayAI/xray#556:review:7"]["sha"], posted)
+        self.assertNotEqual(col.ev["0xRayAI/xray#556:review:7"]["sha"], col.st["prs"]["556"]["head"])
+
     def test_critic_logins_come_from_the_critic_seat(self):
         self.assertIn("critic0x[bot]", uc.CRITIC_LOGINS)
         self.assertIn("critic0x1[bot]", uc.CRITIC_LOGINS)
