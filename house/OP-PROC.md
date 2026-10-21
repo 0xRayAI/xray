@@ -12,7 +12,7 @@ OP-PROC is **layered**: pack base (`grok-bot/OP-PROC.md`) then this house file (
 - Bifrost routes the inbox. CoS does not assign dev work. A seat stamps **Done**, **Verify**, and **Next** only when the state changed. No stamp and no ping when nothing moved.
 - Message one owner. Do not fan out. Do not post to a room if that would wake every member for no reason.
 - After a real close, blinky plans the next wave, carded on Bifrost. Aim for about two agents awake per real state change.
-- A seat does a small job itself: a check, a rerun, a merge after the gate, a file edit. A seat does not deploy from its own computer. A cloud agent deploys. See [Clouds + churn](../grok-bot/OP-PROC.md#clouds-churn).
+- A seat does a small job itself: a check, a rerun, a merge after the gate, a file edit. Blaze's 09:35 CT ruling, 2026-10-21: a small hotfix of a few lines can be deployed directly by forge once tests are green; anything bigger is deployed by a cloud agent. See [Hotfix bypass](../grok-bot/OP-PROC.md#hotfix-bypass) and [Clouds + churn](../grok-bot/OP-PROC.md#clouds-churn).
 - Webhook, `critic_bc`, and who launches a cloud: see [Clouds + churn](../grok-bot/OP-PROC.md#clouds-churn). Before a launch, read `ATTENTION_STATE.md` and do not launch when the day is over pace or weekly burn is at 75% or more, except a hotfix.
 - **Packet-first.** See [Packet-first](../grok-bot/OP-PROC.md#packet-first) and [Green sign-off](../grok-bot/OP-PROC.md#green-sign-off). The owner's chat acts on one flushed `batch` (`run_end` or `ci_pass`), not on each follow-up.
 - **Forward-motion.** See [Forward-motion](../grok-bot/OP-PROC.md#forward-motion). A second FAIL of an original blocker goes to Blaze.
@@ -164,7 +164,7 @@ Not in effect. Arch1, 2026-10-21, on #531: do not run the 2026-10-13 cadence. Gr
 
 ## Hotfix
 
-The rule is [Hotfix bypass](../grok-bot/OP-PROC.md#hotfix-bypass). No merge before CI is green. Merge and deploy on green CI, and critic reviews after the merge. The authority is Blaze's owner ruling, 2026-10-21 08:37 CT. Board fixes follow normal review and are not a hotfix class. The old P1 path (roll back first, then deploy `dev` before merge) is not in effect.
+The rule is [Hotfix bypass](../grok-bot/OP-PROC.md#hotfix-bypass). No merge before CI is green. Merge and deploy on green CI, and critic reviews after the merge. The authority is Blaze's owner ruling, 2026-10-21 08:37 CT. Fix forward, no rollback. Blaze's 09:35 CT ruling, 2026-10-21: "A small hotfix of a few lines can be deployed directly by forge once tests are green; anything bigger is deployed by a cloud agent." Board fixes follow normal review and are not a hotfix class. The old P1 path (roll back first, then deploy `dev` before merge) is not in effect.
 
 **Room vs 1:1 writes.** See [Room vs 1:1 writes](../grok-bot/OP-PROC.md#room-vs-1-1-writes). Never split, rename or rework a command to get past a check.
 
