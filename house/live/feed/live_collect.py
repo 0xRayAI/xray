@@ -518,6 +518,10 @@ class RepoCollector:
             return
         if kind == "merged" and frm == "Others":
             frm = "GitHub"   # count the merge; the actor login stays on the event
+        actor = str(extra.get("actor") or "")
+        if (kind in ("pr_comment", "issue_comment", "review_comment") and actor.lower() == "cursor[bot]"
+                and frm == "Others" and extra.get("mentions")):
+            frm = "GitHub"   # keep the @mention; cursor[bot] stays the actor, not a seat
         if not SHOW_UNMAPPED and "Others" in (frm, to):
             self.ev.pop(eid, None)
             return
@@ -1167,6 +1171,12 @@ class RepoCollector:
             cur = min(cur, back) if cur else cur
             self.st["etags"].pop("comments", None)       # else page 1 answers 304 and nothing is re-read
             self.st["bf"]["comments:critic3"] = True
+        if not self.st["bf"].get("comments:cursorbot"):   # one-time: re-read comments from the start of today
+            start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+            back = start.strftime("%Y-%m-%dT%H:%M:%SZ")
+            cur = min(cur, back) if cur else cur
+            self.st["etags"].pop("comments", None)
+            self.st["bf"]["comments:cursorbot"] = True
         newest = self.st["cur"].get("comments")
         for cm in self.paged(c, f"/repos/{self.repo}/issues/comments", {"sort": "updated", "direction": "desc"},
                              "comments", stop=lambda x: gh_before(x.get("updated_at"), cur)):
