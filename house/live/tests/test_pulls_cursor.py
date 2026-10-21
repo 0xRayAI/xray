@@ -7,6 +7,7 @@ import os
 import sys
 import tempfile
 import unittest
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from unittest import mock
 from zoneinfo import ZoneInfo
@@ -239,9 +240,11 @@ class PullsCursorBoundary(unittest.TestCase):
         col = self._collector()
         col.st["bf"]["author:seat"] = True
         col.st["cur"]["pulls"] = "2099-01-01T00:00:00Z"
+        # The one-time rewind walks the last 36h. A fixed date falls out of that window.
+        merged = (datetime.now(timezone.utc) - timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
         pull = _pull()
-        pull["updated_at"] = "2026-10-20T06:00:00Z"
-        pull["merged_at"] = "2026-10-20T06:00:00Z"
+        pull["updated_at"] = merged
+        pull["merged_at"] = merged
         pull["state"] = "closed"
         with mock.patch.dict(uc.NODE_LC, FLEET):
             col.poll_pulls(Page([pull]))
