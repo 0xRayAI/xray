@@ -644,6 +644,110 @@ class Mentions(unittest.TestCase):
         self.assertIsNone(lc.mentions(None))
 
 
+class CursorBotMentions(unittest.TestCase):
+    """cursor[bot] is unmapped (Others). A comment that @-mentions a seat is kept; a bare one is not."""
+
+    def setUp(self):
+        self.enterContext(mock.patch.object(uc, "SHOW_UNMAPPED", False))
+        removed = uc.NODE_LC.pop("cursor[bot]", None)
+        self.addCleanup(lambda: removed is not None and uc.NODE_LC.__setitem__("cursor[bot]", removed))
+        self.assertEqual(uc.node("cursor[bot]"), "Others")
+
+    def _put(self, col, eid, kind, body, number=508):
+        from datetime import timezone
+        t = datetime.now(timezone.utc).replace(microsecond=0).strftime("%Y-%m-%dT%H:%M:%SZ")
+        col.put(eid, t, uc.node("cursor[bot]"), "Blaze", kind,
+                f"cursor[bot] comment · xray #{number}",
+                f"https://github.com/0xRayAI/xray/pull/{number}#issuecomment-1",
+                number, actor="cursor[bot]", mentions=uc.mentions(body))
+
+    def test_mention_reaches_arch1_inbox(self):
+        col = _collector("0xRayAI/xray")
+        self.addCleanup(col._tmp.cleanup)
+        eid = "0xRayAI/xray#508:comment:6318087435"
+        self._put(col, eid, "pr_comment", "@arch10x Arch1, please review the stems")
+        ev = col.ev[eid]
+        self.assertEqual(ev["from"], "GitHub")
+        self.assertEqual(ev["actor"], "cursor[bot]")
+        self.assertEqual(ev["mentions"], ["arch10x"])
+        for kind in ("issue_comment", "review_comment"):
+            key = f"0xRayAI/xray#508:{kind}"
+            self._put(col, key, kind, "@arch10x again")
+            self.assertEqual(col.ev[key]["from"], "GitHub")
+            self.assertEqual(col.ev[key]["actor"], "cursor[bot]")
+        with tempfile.TemporaryDirectory() as d:
+            run = Path(d)
+            (run / "feed").mkdir()
+            (run / "fleet").mkdir()
+            env = dict(os.environ, MESH_RUN=str(run), LIVE_BOARD="off")
+            feed = run / "feed" / "live-events.json"
+            seed = {"id": "0xRayAI/xray#1:open", "t_ct": "2020-01-01T00:00:00-06:00", "kind": "pr_open",
+                    "repo": "0xRayAI/xray", "number": 1, "label": "old"}
+            feed.write_text(json.dumps({"events": [seed]}))
+            go = lambda: subprocess.run([sys.executable, "-B", str(FEED_DIR / "inbox_pass.py"), "pass"],
+                                        env=env, capture_output=True, text=True, check=True).stdout.strip()
+            self.assertEqual(go(), "0 0")
+            feed.write_text(json.dumps({"events": [seed, ev]}))
+            self.assertNotEqual(go().split()[0], "0")
+            box = run / "feed" / "inbox-spool" / "arch1.jsonl"
+            lines = [json.loads(x) for x in box.read_text().splitlines()]
+            self.assertIn(eid, [line["id"] for line in lines])
+
+    def test_comment_without_mention_is_dropped(self):
+        col = _collector("0xRayAI/xray")
+        self.addCleanup(col._tmp.cleanup)
+        for kind in ("pr_comment", "issue_comment", "review_comment"):
+            eid = f"0xRayAI/xray#508:{kind}:silent"
+            self._put(col, eid, kind, "please look, no handle")
+            self.assertNotIn(eid, col.ev, kind)
+
+    def test_comments_rewind_once_across_today(self):
+        from datetime import timedelta, timezone
+        col = _collector("0xRayAI/xray")
+        self.addCleanup(col._tmp.cleanup)
+        col.st["bf"]["comments:critic3"] = True
+        start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+        comment_at = (start + timedelta(minutes=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        later = (start + timedelta(hours=23)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        col.st["cur"]["comments"] = later
+        col.st["etags"]["comments"] = "W/old"
+        cm = {"id": 6318087435, "issue_url": "https://api.github.com/repos/0xRayAI/xray/issues/508",
+              "html_url": "https://github.com/0xRayAI/xray/pull/508#issuecomment-6318087435",
+              "user": {"login": "cursor[bot]"}, "body": "@arch10x Arch1, please review",
+              "created_at": comment_at, "updated_at": comment_at}
+
+        class C:
+            def __init__(self):
+                self.etag = "missing"
+            def rest(self, path, params=None, etag=None, essential=True):
+                self.etag = etag
+                return 200, [cm], "W/new", None
+
+        client = C()
+        col.poll_comments(client)
+        eid = "0xRayAI/xray#508:comment:6318087435"
+        self.assertIsNone(client.etag)
+        self.assertTrue(col.st["bf"].get("comments:cursorbot"))
+        self.assertEqual(col.ev[eid]["actor"], "cursor[bot]")
+        self.assertEqual(col.ev[eid]["from"], "GitHub")
+        self.assertEqual(col.ev[eid]["mentions"], ["arch10x"])
+        col.st["etags"]["comments"] = "W/keep"
+        col.st["cur"]["comments"] = later
+        cm2 = dict(cm, id=2)
+
+        class C2:
+            def __init__(self):
+                self.etag = "missing"
+            def rest(self, path, params=None, etag=None, essential=True):
+                self.etag = etag
+                return 200, [cm2], "W/keep", None
+
+        again = C2()
+        col.poll_comments(again)
+        self.assertEqual(again.etag, "W/keep")
+        self.assertNotIn("0xRayAI/xray#508:comment:2", col.ev)
+
+
 
 class SeatNameNotLogin(unittest.TestCase):
     """B1 (#326): a GitHub login that equals a seat name is a stranger; only a no-User git name maps to the seat."""
