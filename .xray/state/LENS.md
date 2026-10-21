@@ -117,10 +117,10 @@ Worn:
 Card: governance
 Plane: integration
 From: integration
-Digest: A proposal is deliberated inside the suit, filtered by Dynamo Solar, then merged.
+Digest: Two doors run. One vote comes out.
 Plate: docs-site/docs/plates/governance.md
-Entry: proposal
-Exit: vote · codex decision
+Entry: GovernanceService · inference:run
+Exit: approve / reject / needs_revision
 Files: src/governance/governance-service.ts, src/governance/llm-governance-provider.ts
 Skills: governance, enforcer, dynamo, confer
 Setup:
@@ -228,11 +228,11 @@ Worn:
 Card: activity-log
 Plane: dev
 From: dev
-Digest: A tool hook appends one JSON line, and reporting, pulse, and monitor read that same file back.
+Digest: Three log paths. They are not one file.
 Plate: docs-site/docs/plates/activity-log.md
 Plates: write-home, reporting, suit-organs
-Entry: pipeline hook · grok hook · hermes · logger
-Exit: .xray/logs/activity.log
+Entry: activity_logging.log_path, or none
+Exit: .opencode/activity.log · logs/framework/activity.log · .xray/logs/activity.log
 Files: src/core/activity-logger.ts
 Skills: activity-log, write-home, reporting, suit-organs
 Setup:
@@ -508,11 +508,11 @@ Worn:
 Card: pre-tool
 Plane: integration
 From: integration
-Digest: The tool hook is where the lens gate runs.
+Digest: Two host edges join the same fields, then one lens deny.
 Plate: docs-site/docs/plates/pre-tool.md
 Plates: lens-gate
-Entry: the tool name and its arguments
-Exit: deny when the lens gate denies
+Entry: tool name · command · content · paths
+Exit: deny when the lens denies
 Files: src/integrations/grok/hooks/pre-tool-use.js
 Skills: pre-tool, lens-gate, delegation-gate
 Setup:
@@ -563,11 +563,11 @@ Worn:
 Card: dynamo
 Plane: dev
 From: dev
-Digest: Dynamo is the external governance service.
+Digest: The Dynamo client posts to the resolved base URL.
 Plate: docs-site/docs/plates/dynamo.md
-Entry: a proposal
-Exit: pass, revision, or reject
-Files: docs-site/docs/guides/self-hosting-dynamo.md
+Entry: configured endpoint · else the endpoint env · else PUBLIC_DYNAMO_SSOT
+Exit: the tool result
+Files: src/integrations/governance/governance-client.ts, src/integrations/governance/types.ts, src/integrations/governance/index.ts
 Skills: dynamo, governance, enforcer, confer
 Setup:
 Teardown:
@@ -593,7 +593,7 @@ Digest: The pre-tool gate for every host.
 Plate: docs-site/docs/plates/delegation-gate.md
 Entry: a tool call
 Exit: allow, or deny
-Files: src/nucleus/delegation-gate.ts
+Files: src/nucleus/delegation-gate.ts, src/integrations/hooks/delegation-gate-runtime.mjs
 Skills: delegation-gate, temperament, orchestration, routing
 Setup:
 Teardown:
@@ -628,10 +628,10 @@ Worn:
 Card: inference-cycle
 Plane: dev
 From: dev
-Digest: The inference cycle turns a corpus into a proposal.
+Digest: Six phases. The shipped flag leaves Dynamo off.
 Plate: docs-site/docs/plates/inference-cycle.md
 Entry: a session corpus
-Exit: a governed proposal, or no change
+Exit: a vote · CLI apply and verify only when approved
 Files: src/inference/inference-cycle.ts
 Skills: inference-cycle, inference-files, session-capture, repertoire
 Setup:
@@ -699,6 +699,48 @@ Entry: a synthesis checkpoint
 Exit: skipped, unless it is enabled
 Files: src/nucleus/confer.ts
 Skills: confer, governance, code-review, researcher
+Setup:
+Teardown:
+Worn:
+
+Card: worn-turn
+Plane: integration
+From: integration
+Digest: The hook chain on a tool call.
+Plate: docs-site/docs/plates/worn-turn.md
+Plates: pre-tool, delegation-gate, lens-gate
+Entry: tool name · command · written content · paths
+Exit: allow or deny
+Files: src/integrations/cursor/hooks/pre-tool-use.js, src/integrations/grok/hooks/pre-tool-use.js
+Skills: worn-turn, pre-tool, delegation-gate, lens-gate
+Setup:
+Teardown:
+Worn:
+
+Card: bifrost
+Plane: ecosystem
+From: ecosystem
+Digest: The live board and the nudge path.
+Plate: docs-site/docs/plates/bifrost.md
+Plates: house
+Entry: GitHub · seat · Railway deploys,
+Exit: the board · seat inboxes + · seat presence
+Files: house/live/app/server.mjs, house/live/docs/board.md
+Skills: bifrost, house, record-map
+Setup:
+Teardown:
+Worn:
+
+Card: grokbot
+Plane: ecosystem
+From: ecosystem
+Digest: Give your bots a house: shared rules, one board for the work, and memory that sticks.
+Plate: docs-site/docs/plates/grokbot.md
+Plates: bifrost, house
+Entry: SUIT · 0xray
+Exit: STATION · 0xray
+Files: grok-bot/package.json
+Skills: grokbot, house, bifrost
 Setup:
 Teardown:
 Worn:

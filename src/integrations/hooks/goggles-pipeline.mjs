@@ -168,6 +168,7 @@ export const PATH_OWNER = {
   'src/reporting/framework-reporting-system.ts': 'reporting',
   'src/inference/inference-accumulator.ts': 'inference-files',
   'src/integrations/hooks/goggles-pipeline.mjs': 'lens-gate',
+  'src/integrations/grok/hooks/pre-tool-use.js': 'pre-tool',
 };
 
 function covers(listed, rel) {
@@ -254,7 +255,10 @@ function readHold(root) {
 
 function planeForCard(id) {
   if (CARD_PLANES.includes(id)) return id;
-  for (const file of thingFiles(mapEntry(id))) {
+  const marked = mapEntry(id);
+  const named = marked && typeof marked.plane === 'string' ? marked.plane : '';
+  if (CARD_PLANES.includes(named)) return named;
+  for (const file of thingFiles(marked)) {
     const plane = planeOfPath(file);
     if (plane) return plane;
   }

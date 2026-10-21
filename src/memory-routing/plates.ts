@@ -16,6 +16,7 @@ export const PLATE_IDS = [
   'memory-recall',
   'stamp-plate',
   'house',
+  'bifrost',
   'review',
   'goggles',
   'suit',
@@ -45,6 +46,7 @@ export const PLATE_IDS = [
   'kept-line',
   'lens-gate',
   'pre-tool',
+  'worn-turn',
   'lens-page',
   'centrifuge',
   'ground',
@@ -61,6 +63,7 @@ export const PLATE_IDS = [
   'opencode',
   'consumer-mcp',
   'confer',
+  'grokbot',
 ] as const;
 
 export type PlateId = (typeof PLATE_IDS)[number];

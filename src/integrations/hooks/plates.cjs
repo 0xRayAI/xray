@@ -16,6 +16,7 @@ const PLATE_IDS = Object.freeze([
   "memory-recall",
   "stamp-plate",
   "house",
+  "bifrost",
   "review",
   "goggles",
   "suit",
@@ -45,6 +46,7 @@ const PLATE_IDS = Object.freeze([
   "kept-line",
   "lens-gate",
   "pre-tool",
+  "worn-turn",
   "lens-page",
   "centrifuge",
   "ground",
@@ -61,6 +63,7 @@ const PLATE_IDS = Object.freeze([
   "opencode",
   "consumer-mcp",
   "confer",
+  "grokbot",
 ]);
 
 /** Id token, then extra phrases. Equal top scores recall nothing. */
@@ -113,6 +116,10 @@ const CUES = {
     [/HOUSE\.md/i, 4],
     [/GROK_BOT_HOUSE/i, 4],
     [/setup-house/i, 4],
+  ],
+  bifrost: [
+    [/bifrost plate/i, 6],
+    [/plates\/bifrost/i, 6],
   ],
   review: [
     [/review plate/i, 6],
@@ -240,6 +247,11 @@ const CUES = {
     [/pre tool/i, 6],
     [/plates\/pre-tool/i, 6],
   ],
+  "worn-turn": [
+    [/worn[- ]turn plate/i, 6],
+    [/worn[- ]turn pipeline/i, 6],
+    [/plates\/worn-turn/i, 6],
+  ],
   "lens-page": [
     [/lens page/i, 6],
     [/plates\/lens-page/i, 6],
@@ -318,6 +330,11 @@ const CUES = {
     [/confer plate/i, 6],
     [/confer stays off/i, 5],
     [/plates\/confer/i, 6],
+  ],
+  grokbot: [
+    [/grokbot plate/i, 6],
+    [/grok bot plate/i, 6],
+    [/plates\/grokbot/i, 6],
   ],
 };
 
