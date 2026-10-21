@@ -4,7 +4,7 @@
     "builder": "NIXPACKS",
     "buildCommand": "npm run build",
     "nixpacksConfig": {
-      "nodeVersion": "22"
+      "nodeVersion": "24.22.1"
     }
   },
   "deploy": {

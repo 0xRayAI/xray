@@ -9,6 +9,6 @@
     "start": "node server.mjs"
   },
   "engines": {
-    "node": "20.x"
+    "node": ">=24.22.1"
   }
 }
