@@ -263,3 +263,52 @@ export function missingHandoffs({ events, lines, roles, loginToSeat, now, l1ms }
     .filter(item => item.sha && now - item.since >= wait && !packetCovers(lines, item))
     .map(item => ({ ...item, flag: 'handoff missing' }));
 }
+
+const REPO_RE = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
+const REVIEW_URL = /^https:\/\/github\.com\/([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+)\/pull\/([1-9]\d{0,6})#pullrequestreview-(\d+)$/;
+
+export function isHotfixTitle(title) {
+  return /^hotfix:/i.test(text(title));
+}
+
+export function isMergeHandoff(line) {
+  if (!line || typeof line !== 'object') return false;
+  if (lower(line.kind) !== 'merge') return false;
+  return lower(line.type) === 'packet' || String(line.id || '').includes(':merge:');
+}
+
+export function validMergeReview(url, line) {
+  if (typeof url !== 'string' || !line || typeof line !== 'object') return false;
+  const hit = REVIEW_URL.exec(url);
+  if (!hit) return false;
+  const repo = (hit[1] + '/' + hit[2]).toLowerCase();
+  if (repo !== lower(line.repo)) return false;
+  return Number(hit[3]) === numberOf(line);
+}
+
+export function hotfixMergeLine({ repo, number, sha, reviewer, from, t_ct }) {
+  const raw = text(repo);
+  if (!REPO_RE.test(raw)) return null;
+  const n = Number(number);
+  if (!Number.isInteger(n) || n < 1 || n > 9999999) return null;
+  const head = lower(sha);
+  if (!/^[0-9a-f]{7,64}$/.test(head)) return null;
+  const to = lower(reviewer) || 'critic';
+  const src = lower(from) || 'forge';
+  if (!/^[a-z0-9-]{2,16}$/.test(to) || !/^[a-z0-9-]{2,16}$/.test(src)) return null;
+  return {
+    id: `handoff:${raw.toLowerCase()}#${n}:merge:${head}`,
+    t_ct: text(t_ct) || new Date().toISOString(),
+    seat: to,
+    from: src,
+    to,
+    type: 'packet',
+    kind: 'merge',
+    repo: raw,
+    number: n,
+    sha: head,
+    title: 'handoff merge',
+    url: `https://github.com/${raw}/pull/${n}`,
+    reason: 'handoff merge',
+  };
+}

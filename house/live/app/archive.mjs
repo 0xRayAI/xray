@@ -12,7 +12,7 @@ const FIELDS = {
   cards: ['key', 'repo', 'number', 'title', 'url', 'owner', 'stage', 'state', 'kind', 'verb', 'merged_by', 'labels', 'agents', 'pinned', 'section', 'stall', 'nudge', 'last_beat_t', 'packet_ok', 'waiting', 'packet', 'hold', 'beats', 't_ct', 'updated_ct'],
   inbox: ['t_ct', 'seat', 'type', 'repo', 'number', 'sha', 'title', 'url', 'reason'],
   nudges: ['kind', 't', 't_ct', 'card', 'repo', 'number', 'title', 'url', 'stage', 'level', 'seat', 'via', 'beat_t', 'closed_at', 'about'],
-  acks: ['seat', 'line', 't_ct'],
+  acks: ['seat', 'line', 't_ct', 'review'],
   activity: ['seq', 'seat', 't_ct', 'kind', 'action', 'from', 'to', 'agent', 'tag'],
 };
 

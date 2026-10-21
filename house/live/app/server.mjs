@@ -25,7 +25,7 @@ import { wakeConfig, createWakeState, classifyBatch, gateLine, noteSent, release
 const COLLECTOR_DIR_EARLY = () => path.join(path.dirname(fileURLToPath(import.meta.url)), 'collector');
 import { initArchive, appendArchive, backfillArchive, readArchive, validArchiveDate, KINDS as ARCHIVE_KINDS, cardHistory, archiveDays, archivedLineBytes, appendTransition, transitionFromEvent, queryTransitions, exportTransitions } from './archive.mjs';
 import { pinnedOrigin } from './origin.mjs';
-import { missingHandoffs } from './handoff.mjs';
+import { missingHandoffs, hotfixMergeLine, isHotfixTitle, isMergeHandoff, validMergeReview } from './handoff.mjs';
 import { clockStamp, writeStartAfter } from './chicago-stamp.mjs';
 import { createBatch } from './pr-batch.mjs';
 const batch = createBatch();
@@ -235,6 +235,7 @@ function ingestSrc(n, events, hdr, remove = null) {   // remove === null -> full
     recomputeGithubDataAt();
     const packetHeld = bfCards.some(c => c && (c.born === 'packet' || String(c.key || '').toLowerCase().startsWith('packet:')));
     if (packetHeld && !(S.header && S.header.board)) publishBoard();
+    enqueueHotfixMerges(events);
   }
   header = mergedHeader(); fullDirty = true;
 }
@@ -723,7 +724,7 @@ function scheduledCards(now = Date.now()) {
 // does not hide an unacked line. For reviewer, a Reviewer verdict at the card's current head newer than the line does.
 const inboxAcks = (() => { try { const o = JSON.parse(fs.readFileSync(path.join(STATE_DIR, 'acks.json'), 'utf8')); return o && typeof o === 'object' ? o : {}; } catch { return {}; } })();
 const ackedSet = s => new Set(inboxAcks[s] || []);
-function ackLines(seat, what) {
+function ackLines(seat, what, review) {
   const arr = seatInbox[seat] || [], have = new Set(inboxAcks[seat] || []); let n = 0;
   const at = typeof what === 'object' && what ? arr.findIndex(l => l.id === what.upto) : -1;
   const ids = what === 'all' ? arr.map(l => l.id)
@@ -731,7 +732,20 @@ function ackLines(seat, what) {
     : typeof what === 'object' && what ? (at < 0 ? null : arr.slice(0, at + 1).map(l => l.id))
     : arr.some(l => l.id === what) ? [what] : null;
   if (!ids) return -1;
-  for (const id of ids) if (!have.has(id)) { have.add(id); n++; appendArchive('acks', { seat, line: id, t_ct: ctStamp(Date.now()) }); }
+  const lineOf = id => arr.find(l => l.id === id);
+  const blocked = id => {
+    const line = lineOf(id);
+    return !!(line && isMergeHandoff(line) && !validMergeReview(review, line));
+  };
+  if (typeof what === 'string' && blocked(what)) return -2;
+  for (const id of ids) {
+    if (have.has(id) || blocked(id)) continue;
+    have.add(id); n++;
+    const line = lineOf(id);
+    const row = { seat, line: id, t_ct: ctStamp(Date.now()) };
+    if (line && isMergeHandoff(line)) row.review = review;
+    appendArchive('acks', row);
+  }
   const live = new Set(arr.map(l => l.id)); inboxAcks[seat] = [...have].filter(id => live.has(id)).slice(-6000);
   bfWrite('acks.json', JSON.stringify(inboxAcks)); return n;
 }
@@ -969,9 +983,9 @@ function postSeatLines(parsed, onlySeat) {
     arr.push(stored); touched.add(s); added++; fresh.push(stored);
     if (s === 'builder') { const c = seatInbox['builder-cloud']; if (!c.some(x => x.id === l.id)) { const copy = { ...stored, seat: 'builder-cloud' }; c.push(copy); touched.add('builder-cloud'); fresh.push(copy); } } }
   for (const s of touched) saveSeatInbox(s);
+  if (fresh.length) { try { offerLines(fresh); } catch { /* keep the inbox write */ } }
   for (const l of fresh) ensurePacketCard(l);
   for (const l of fresh) void arch1Launch.consider(l);
-  if (fresh.length) { try { offerLines(fresh); } catch { /* keep the inbox write */ } }
   return { status: 200, added, rejected: refs };
 }
 // ---- Assistant / emitter: the sample MCP server posts one event per tool call / OAuth sign-in (POST /emit, Bearer = the
@@ -1376,6 +1390,35 @@ function inboxPackets() {
   const out = [];
   for (const lines of Object.values(seatInbox)) if (Array.isArray(lines)) out.push(...lines);
   return out;
+}
+function latestPrTitle(repo, number) {
+  const key = String(repo || '').toLowerCase() + '#' + Number(number);
+  let best = '';
+  let when = -1;
+  const src = SRCS.github && SRCS.github.evs;
+  if (!src) return '';
+  for (const e of src.values()) {
+    if (!e || typeof e.title !== 'string' || !e.title.trim()) continue;
+    if ((String(e.repo || '').toLowerCase() + '#' + Number(e.number)) !== key) continue;
+    const t = Date.parse(e.t_ct || '') || 0;
+    if (t >= when) { when = t; best = e.title; }
+  }
+  return best;
+}
+function enqueueHotfixMerges(batch) {
+  if (!Array.isArray(batch) || !batch.length) return;
+  const roles = handoffConfig();
+  const block = roles && roles.handoffs;
+  const reviewer = block && block.reviewer;
+  const from = block && block.merger;
+  const lines = [];
+  for (const e of batch) {
+    if (!e || String(e.kind || '').toLowerCase() !== 'merged') continue;
+    if (!isHotfixTitle(latestPrTitle(e.repo, e.number))) continue;
+    const line = hotfixMergeLine({ repo: e.repo, number: e.number, sha: e.merge_sha || e.sha || '', reviewer, from });
+    if (line) lines.push(line);
+  }
+  if (lines.length) postSeatLines({ lines }, null);
 }
 function evalHandoffs(now) {
   let changed = false;
@@ -3383,8 +3426,11 @@ async function handle(req, res) {
     let d; try { d = JSON.parse((await readBody(req, 4096)).toString('utf8')); } catch { return json(req, res, 400, { error: 'invalid json' }); }
     const what = d && d.all === true ? 'all' : d && d.stale === true ? 'stale' : d && typeof d.id === 'string' && d.id.length <= 300 ? d.id : d && typeof d.upto === 'string' && d.upto.length <= 300 ? { upto: d.upto } : null;
     if (!what) return json(req, res, 400, { error: 'id, upto, stale, or all required' });
-    const n = ackLines(who, what); touchSeat(who); if (n) serverActivity(who, 'turn', 'end', 'ack');
+    const review = d && typeof d.review === 'string' && d.review.length <= 300 ? d.review : '';
+    const n = ackLines(who, what, review); touchSeat(who);
+    if (n === -2) return json(req, res, 400, { error: 'merge handoff needs a review url' });
     if (n < 0) return json(req, res, 404, { error: 'no such line' });
+    if (n) serverActivity(who, 'turn', 'end', 'ack');
     if (n > 0) publishHeader();   // work tracking moves the packet to acked
     return json(req, res, 200, { ok: true, acked: n, open: seatOpenRows(who, false).length });
   }
