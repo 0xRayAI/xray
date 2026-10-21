@@ -33,7 +33,8 @@ function sourceText() {
   return (
     fs.readFileSync(path.join(dir, "sound-pro.cjs"), "utf8") +
     fs.readFileSync(path.join(dir, "sound-magnetic.cjs"), "utf8") +
-    fs.readFileSync(path.join(dir, "sound-elementary.mjs"), "utf8")
+    fs.readFileSync(path.join(dir, "sound-elementary.mjs"), "utf8") +
+    fs.readFileSync(path.join(dir, "sound-lib.mjs"), "utf8")
   );
 }
 

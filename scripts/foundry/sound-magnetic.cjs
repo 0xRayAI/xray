@@ -42,6 +42,10 @@
  * v7e is v7d with two fixes. The open hat is a longer excerpt of the
  * same CC0 recording, so the wash remains after the highpass. The pluck
  * attack is the 1.7–4.3 kHz formant. loadBed("v7e") is the entry.
+ *
+ * v8lib keeps this arrangement and cue map. The musical voices
+ * render in Elementary Audio. The drums are the CC0 one-shots
+ * named in cc0/manifest.json. loadBed("v8lib") is the entry.
  */
 
 const fs = require("node:fs");
@@ -633,6 +637,7 @@ const BED_NAMES = {
   v7d: "BED-MAGNETIC-MOVES-v7d",
   v7e: "BED-MAGNETIC-MOVES-v7e",
   v9: "BED-MAGNETIC-MOVES-v9",
+  v8lib: "BED-MAGNETIC-MOVES-v8lib",
 };
 
 function renderBed(variant) {
@@ -653,6 +658,9 @@ function renderBed(variant) {
   }
   if (variant === "v7e") {
     throw new Error("BED-MAGNETIC-MOVES-v7e renders through loadBed");
+  if (variant === "v8lib") {
+    throw new Error("BED-MAGNETIC-MOVES-v8lib renders through loadBed");
+  }
   }
   const v7 = variant === "v7";
   const v6 = variant === "v6" || v7;
@@ -856,7 +864,7 @@ function measureBed(bed) {
   const lowWindows = { body: [5.5, 7.65], across: [5.5, 15.4], final: [17.55, 19.4] };
   const pad = stemReport(bed.stems.pad, padWindows);
   const sub = stemReport(bed.stems.sub, lowWindows);
-  const mid = bed.variant === "v4b" || bed.variant === "v5b" || bed.variant === "v6" || bed.variant === "v7" || bed.variant === "v7b" || bed.variant === "v7c" || bed.variant === "v7d" || bed.variant === "v7e" || bed.variant === "v9"
+  const mid = bed.variant === "v4b" || bed.variant === "v5b" || bed.variant === "v6" || bed.variant === "v7" || bed.variant === "v7b" || bed.variant === "v7c" || bed.variant === "v7d" || bed.variant === "v7e" || bed.variant === "v9" || bed.variant === "v8lib"
     ? stemReport(bed.stems.mid, lowWindows)
     : null;
   const lufs = P.integratedLufs(bed.left, bed.right, bed.sampleRate);
@@ -945,6 +953,7 @@ function measureBed(bed) {
     ...(bed.sources ? { sources: bed.sources } : {}),
     ...(bed.bassMatch != null ? { bassMatch: bed.bassMatch } : {}),
     ...(bed.overlay ? { overlay: bed.overlay } : {}),
+    ...(bed.library ? { library: bed.library } : {}),
     pass: reasons.length === 0,
     fails: reasons,
     wind: {
@@ -1711,6 +1720,10 @@ async function renderV7e() {
 }
 
 async function loadBed(variant) {
+  if (variant === "v8lib") {
+    const lib = require("./sound-lib.mjs");
+    return lib.renderLibBed();
+  }
   if (variant === "v9") return renderV9();
   if (variant === "v7b") return renderV7b();
   if (variant === "v7c") return renderV7c();
@@ -1728,13 +1741,13 @@ function argValue(argv, name) {
 async function cli(argv) {
   const variant = argv[0];
   if (!BED_NAMES[variant]) {
-    process.stderr.write("Usage: sound bed <v4a|v4b|v5a|v5b|v6|v7|v7b|v7c|v7d|v7e|v9> --out wav [--mp3 file] [--metrics file]\n");
+    process.stderr.write("Usage: sound bed <v4a|v4b|v5a|v5b|v6|v7|v7b|v7c|v7d|v7e|v8lib|v9> --out wav [--mp3 file] [--metrics file]\n");
     return 1;
   }
   const bed = await loadBed(variant);
   const metrics = measureBed(bed);
   if (bed.wide) {
-    const priorVariant = variant === "v7b" || variant === "v7c" || variant === "v7d" || variant === "v7e" || variant === "v9" ? "v7" : variant === "v7" ? "v6" : "v5b";
+    const priorVariant = variant === "v7b" || variant === "v7c" || variant === "v7d" || variant === "v7e" || variant === "v9" || variant === "v8lib" ? "v7" : variant === "v7" ? "v6" : "v5b";
     const prior = measureBed(await loadBed(priorVariant));
     metrics.compare = {
       against: prior.name,
@@ -1743,6 +1756,17 @@ async function cli(argv) {
       levelsBefore: prior.levels,
       levelsAfter: metrics.levels,
     };
+    if (variant === "v8lib") {
+      const brief = (row) => ({ id: row.id, pass: row.pass, detail: row.detail });
+      metrics.compare.rulesBefore = prior.rules.checks.map(brief);
+      metrics.compare.rulesAfter = metrics.rules.checks.map(brief);
+      metrics.compare.referenceBefore = prior.reference.measured;
+      metrics.compare.referenceAfter = metrics.reference.measured;
+      metrics.compare.earReadyBefore = prior.earReady;
+      metrics.compare.earReadyAfter = metrics.earReady;
+      metrics.compare.loudnessBefore = { lufs: prior.lufs, truePeakDb: prior.truePeakDb };
+      metrics.compare.loudnessAfter = { lufs: metrics.lufs, truePeakDb: metrics.truePeakDb };
+    }
   } else if (bed.patterned) {
     const priorVariant = variant === "v5a" ? "v4a" : "v4b";
     const prior = measureBed(renderBed(priorVariant));
