@@ -629,7 +629,7 @@ footer a { color: var(--foot); }
     <div id="head">&nbsp;</div>
     <div id="headTime">&nbsp;</div>
     <canvas id="mesh" width="920" height="400" aria-label="Mesh of seats and rails with handoff pings"></canvas>
-    <p class="mesh-legend" id="meshLegend"><span title="index.html drawNode. While seatView lit is true, three strokes at r+5, r+10, r+15 in the seat color loop (live.js hotRing). Reduced motion draws that ring still. A flash from activeSeats draws the same strokes on top for 2 times FLASH_MS, 5200ms. Letter seats.">Hot ring</span><span title="index.html draw. A ping whose source is this node. One sine, PULSE_MS 900, across the flight. Flight is 2600ms, up to 7800ms.">Depart pulse</span><span title="index.html drawPing. from equals to. Radius 24 to 46 and alpha 1 to 0 across that same flight.">One-node ring</span></p>
+    <p class="mesh-legend" id="meshLegend"><span title="index.html drawNode. While seatView lit is true, the flash hot ring replays back to back. Three strokes open at r+5, r+10, r+15 with alpha 1/(k+1), then each spreads by p*k*5 and fades by (1-p) across 2 times FLASH_MS, 5200ms (live.js hotRing). Reduced motion draws the opening frame still. A flash from activeSeats draws those opening strokes on top. Letter seats.">Hot ring 5.2s</span><span title="index.html draw. A ping whose source is this node. One sine, PULSE_MS 900, across the flight. Flight is 2600ms, up to 7800ms.">Depart pulse</span><span title="index.html drawPing. from equals to. Radius 24 to 46 and alpha 1 to 0 across that same flight.">One-node ring</span></p>
     </div>
   </section>
   <div id="agentPing" hidden></div>
@@ -1336,19 +1336,20 @@ footer a { color: var(--foot); }
     var img = imgs[key], glyph = L.GLYPH[key], mark = L.MARK_PATH[key];
     var hasImg = !!(img && img.complete && img.naturalWidth);
     var bare = hasImg || (!sq && !!glyph);   // image / glyph nodes: no ring
-    function strokeRings(alphaFor) {
+    function strokeAt(rr, alpha) {
+      ctx.strokeStyle = rgb(c, alpha); ctx.lineWidth = 2;
+      if (sq) { roundRect(x - rr, y - rr, rr * 2, rr * 2, 6); } else { ctx.beginPath(); ctx.arc(x, y, rr, 0, 7); }
+      ctx.stroke();
+    }
+    if (isHot && !bare) {   // lit seat: the 5.2s flash ring, restarted back to back. Reduced motion is the opening frame.
+      var ring = L.hotRing(nowWall, 2 * FLASH_MS, reduced);
       for (var k = 3; k >= 1; k--) {
-        var rr = r + k * 5; ctx.strokeStyle = rgb(c, alphaFor(k)); ctx.lineWidth = 2;
-        if (sq) { roundRect(x - rr, y - rr, rr * 2, rr * 2, 6); } else { ctx.beginPath(); ctx.arc(x, y, rr, 0, 7); }
-        ctx.stroke();
+        var s = L.hotRingStroke(k, ring);
+        strokeAt(r + k * 5 + s.grow, s.alpha);
       }
     }
-    if (isHot && !bare) {   // lit seat: the same three strokes, looping. Reduced motion is still.
-      var ring = L.hotRing(nowWall, reduced);
-      strokeRings(function (k) { return L.hotRingAlpha(k, ring); });
-    }
-    if (flash && !bare) {   // flash from activeSeats, drawn on top of the loop
-      strokeRings(function (k) { return 1 / (k + 1); });
+    if (flash && !bare) {   // flash from activeSeats, the opening strokes, drawn on top of the loop
+      for (var k2 = 3; k2 >= 1; k2--) strokeAt(r + k2 * 5, 1 / (k2 + 1));
     }
     ctx.fillStyle = cssVar('--node-fill'); ctx.strokeStyle = rgb(c); ctx.lineWidth = isHot ? 3 : 2;
     if (hasImg) {   // avatar: the image as-is, no circle / ring / border / clip
