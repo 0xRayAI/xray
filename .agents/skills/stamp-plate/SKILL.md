@@ -10,7 +10,7 @@ description: >
 
 Do this. Do not explore the tree to rediscover it.
 
-Work from a new branch and worktree off current `origin/main`. One plate, one file. Run the test named below before the PR.
+Work from a new branch and worktree off current `origin/main`. One plate, one ASCII file. Its optional PNG lives at `docs-site/static/plates/x/<id>.png`. Run the test named below before the PR.
 
 ## Which kind of plate
 
