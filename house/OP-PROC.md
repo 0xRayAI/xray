@@ -164,7 +164,7 @@ Not in effect. Arch1, 2026-10-21, on #531: do not run the 2026-10-13 cadence. Gr
 
 ## Hotfix
 
-The rule is [Hotfix bypass](../grok-bot/OP-PROC.md#hotfix-bypass). No merge before CI is green. Merge and deploy on green CI, and critic reviews after the merge. The authority is Blaze's owner ruling, 2026-10-21 08:37 CT. Fix forward, no rollback. Blaze's 09:35 CT ruling, 2026-10-21: "A small hotfix of a few lines can be deployed directly by forge once tests are green; anything bigger is deployed by a cloud agent." Board fixes follow normal review and are not a hotfix class. The old P1 path (roll back first, then deploy `dev` before merge) is not in effect.
+The rule is [Hotfix bypass](../grok-bot/OP-PROC.md#hotfix-bypass). No merge before CI is green. Merge and deploy on green CI, and critic reviews after the merge. The authority is Blaze's owner ruling, 2026-10-21 08:37 CT. Fix forward, no rollback. Blaze's 09:35 CT ruling, 2026-10-21: "A small hotfix of a few lines can be deployed directly by forge once tests are green; anything bigger is deployed by a cloud agent." Blaze's 09:35 CT ruling, 2026-10-21: board (Bifrost) fixes are a hotfix class. The old P1 path (roll back first, then deploy `dev` before merge) is not in effect.
 
 **Room vs 1:1 writes.** See [Room vs 1:1 writes](../grok-bot/OP-PROC.md#room-vs-1-1-writes). Never split, rename or rework a command to get past a check.
 
