@@ -46,7 +46,8 @@ if MISSING:
 URL = os.environ["LIVE_URL"].rstrip("/")
 KEYS = Path(os.environ["SEAT_KEYS_DIR"]).expanduser()
 # One folder. These three are the ones seats have written. The tool does not pick among them.
-OTHER_CURSORS = (Path("/home/box/burst-run/cursors"), Path("/workspace/.cursors"))
+# LIVE_CURSOR_ROOT is empty in production. A test sets it to a temp dir so the two absolute
+# folders land under that dir. $HOME/.burst/cursors moves with HOME.
 
 
 def norm_dir(path):
@@ -57,8 +58,18 @@ def fixed_cursors():
     return Path.home() / ".burst" / "cursors"
 
 
+def legacy_cursor_dirs():
+    """`/home/box/burst-run/cursors` and `/workspace/.cursors`, unless LIVE_CURSOR_ROOT prefixes both."""
+    root = os.environ.get("LIVE_CURSOR_ROOT", "").strip()
+    if not root:
+        return (Path("/home/box/burst-run/cursors"), Path("/workspace/.cursors"))
+    base = Path(root)
+    return (base / "home/box/burst-run/cursors", base / "workspace/.cursors")
+
+
 def known_cursor_dirs():
-    return (Path("/home/box/burst-run/cursors"), fixed_cursors(), Path("/workspace/.cursors"))
+    box, work = legacy_cursor_dirs()
+    return (box, fixed_cursors(), work)
 
 
 def resolve_cursor_dir():
@@ -71,7 +82,7 @@ def resolve_cursor_dir():
     got = norm_dir(chosen)
     if got == norm_dir(fixed):
         return fixed
-    for other in OTHER_CURSORS:
+    for other in legacy_cursor_dirs():
         if got == norm_dir(other):
             print(f"live-inbox: LIVE_CURSORS={chosen} is not the cursor folder; the folder is {fixed}", file=sys.stderr)
             sys.exit(2)

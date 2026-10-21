@@ -15,8 +15,10 @@ export LIVE_URL="${LIVE_URL:-https://bifrost.0xray.dev}"
 export SEAT_KEYS_DIR="${SEAT_KEYS_DIR:-$HOME/.burst/seat-keys}"
 export LIVE_CURSORS="$HOME/.burst/cursors"
 export WAKE_RUN="${WAKE_RUN:-$$}"
+# LIVE_CURSOR_ROOT is empty here. A test sets it so the two absolute folders are under a temp dir.
+root="${LIVE_CURSOR_ROOT:-}"
 n=0
-for d in "$HOME/.burst/cursors" /home/box/burst-run/cursors /workspace/.cursors; do
+for d in "$HOME/.burst/cursors" "${root}/home/box/burst-run/cursors" "${root}/workspace/.cursors"; do
   if [ -f "$d/<seat>.txt" ]; then
     n=$((n + 1))
   fi

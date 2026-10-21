@@ -121,29 +121,38 @@ class WakeEnvFreshShell(unittest.TestCase):
         cursors = self.home / ".burst" / "cursors"
         cursors.mkdir(parents=True)
         (cursors / "forge.txt").write_text("home\n")
-        workspace = Path("/workspace/.cursors")
-        workspace.mkdir(parents=True, exist_ok=True)
-        stray = workspace / "forge.txt"
-        prior = stray.read_text() if stray.exists() else None
-        stray.write_text("work\n")
-        try:
-            script = bash_block().replace("<seat>", "forge")
-            r = self.sh(script, OUT=str(recorded), XRAY_MAIN=str(main))
-            self.assertEqual(r.returncode, 0, r.stderr + r.stdout)
-            rows = recorded.read_text().splitlines()
-            self.assertEqual(rows[0], "--migrate-cursors")
-            self.assertEqual(rows[1], "forge")
-            self.assertEqual(rows[2], "forge --turn end --tag wake")
-            self.assertEqual(rows[3], "forge --release")
-        finally:
-            if prior is None:
-                stray.unlink(missing_ok=True)
-            else:
-                stray.write_text(prior)
-            try:
-                workspace.rmdir()
-            except OSError:
-                pass
+        legacy = self.home / "legacy"
+        (legacy / "workspace" / ".cursors").mkdir(parents=True)
+        (legacy / "workspace" / ".cursors" / "forge.txt").write_text("work\n")
+        script = bash_block().replace("<seat>", "forge")
+        r = self.sh(script, OUT=str(recorded), XRAY_MAIN=str(main), LIVE_CURSOR_ROOT=str(legacy))
+        self.assertEqual(r.returncode, 0, r.stderr + r.stdout)
+        rows = recorded.read_text().splitlines()
+        self.assertEqual(rows[0], "--migrate-cursors")
+        self.assertEqual(rows[1], "forge")
+        self.assertEqual(rows[2], "forge --turn end --tag wake")
+        self.assertEqual(rows[3], "forge --release")
+
+    def test_migrate_reads_legacy_folders_under_the_root(self):
+        legacy = self.home / "legacy"
+        work = legacy / "workspace" / ".cursors"
+        work.mkdir(parents=True)
+        home_cur = self.home / ".burst" / "cursors"
+        home_cur.mkdir(parents=True)
+        (home_cur / "forge.txt").write_text("0xrayai/xray#1|aaaaaaa|ready\n")
+        (work / "forge.txt").write_text("0xrayai/xray#2|bbbbbbb|ready\n")
+        r = self.sh(
+            f"{TOOL} --migrate-cursors",
+            LIVE_URL="http://127.0.0.1:9",
+            SEAT_KEYS_DIR=str(self.home / ".burst" / "seat-keys"),
+            LIVE_CURSOR_ROOT=str(legacy),
+        )
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("migrated forge 2 keys", r.stdout)
+        self.assertFalse((work / "forge.txt").exists())
+        self.assertTrue((work / "forge.txt.migrated").is_file())
+        text = set((home_cur / "forge.txt").read_text().splitlines())
+        self.assertEqual(text, {"0xrayai/xray#1|aaaaaaa|ready", "0xrayai/xray#2|bbbbbbb|ready"})
 
     def test_missing_env_fails_loudly(self):
         r = self.sh(f"{TOOL} forge --turn end --tag wake")
