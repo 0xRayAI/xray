@@ -232,14 +232,16 @@ function fitLoudness(left, right, sampleRate, targetLufs, ceilingDb) {
   const gLoud = dbLin(targetLufs - lufsIn);
   let L = scale(left, gLoud);
   let R = scale(right, gLoud);
+  let gain = gLoud;
   let tp = truePeakDb(L, R);
   if (tp > ceilingDb) {
     const gCeil = dbLin(ceilingDb - tp);
     L = scale(L, gCeil);
     R = scale(R, gCeil);
+    gain *= gCeil;
     tp = truePeakDb(L, R);
   }
-  return { left: L, right: R, lufs: integratedLufs(L, R, sampleRate), truePeakDb: tp };
+  return { left: L, right: R, lufs: integratedLufs(L, R, sampleRate), truePeakDb: tp, gain };
 }
 
 function fftInPlace(re, im) {
@@ -334,6 +336,22 @@ function peakHz(samples, sampleRate, loHz, hiHz) {
   return bestK * df;
 }
 
+/** Local maxima, loudest first. Bin centres, so a short hit is coarse. */
+function topPeaks(samples, sampleRate, count, loHz, hiHz) {
+  const { mag, n } = spectrumMag(samples);
+  const df = sampleRate / n;
+  const k0 = Math.max(1, Math.floor(loHz / df));
+  const k1 = Math.min(mag.length - 2, Math.ceil(hiHz / df));
+  const peaks = [];
+  for (let k = k0; k <= k1; k++) {
+    if (mag[k] >= mag[k - 1] && mag[k] >= mag[k + 1] && mag[k] > 0) {
+      peaks.push({ hz: k * df, mag: mag[k] });
+    }
+  }
+  peaks.sort((a, b) => b.mag - a.mag);
+  return peaks.slice(0, count);
+}
+
 function slice(samples, sampleRate, startSec, endSec) {
   const i0 = Math.max(0, Math.floor(startSec * sampleRate));
   const i1 = Math.min(samples.length, Math.floor(endSec * sampleRate));
@@ -413,7 +431,11 @@ function renderKickClean(sampleRate) {
   return normalizePeak(out, 1);
 }
 
-/** Tonal clap: short sine partials, no noise burst. */
+/**
+ * v4 clap. Partials at 327, 690, 1240 and 410 Hz are not a harmonic series
+ * (about 2.11×, 3.79× and 1.25×), and the longest one rings for 110 ms.
+ * In a dark mix that stack reads as a cowbell. v5 uses renderSnap.
+ */
 function renderClapTonal(sampleRate) {
   const dur = 0.11;
   const n = Math.floor(dur * sampleRate);
@@ -436,6 +458,65 @@ function renderClapTonal(sampleRate) {
     }
   }
   return normalizePeak(out, 1);
+}
+
+/**
+ * Short filtered snap. One fundamental and its first two harmonics,
+ * a 4 ms flam, and a 12 ms decay. No inharmonic bell partials.
+ */
+function renderSnap(sampleRate) {
+  const dur = 0.04;
+  const n = Math.floor(dur * sampleRate);
+  const raw = new Float64Array(n);
+  const f0 = 210;
+  const harms = [1, 0.45, 0.18];
+  const flam = Math.floor(0.004 * sampleRate);
+  let weight = 0;
+  for (let h = 0; h < harms.length; h++) weight += harms[h];
+  for (let pass = 0; pass < 2; pass++) {
+    const i0 = pass === 0 ? 0 : flam;
+    const amp = pass === 0 ? 1 : 0.45;
+    let phase = 0;
+    for (let i = i0; i < n; i++) {
+      const t = (i - i0) / sampleRate;
+      const fade = t < 0.001 ? t / 0.001 : 1;
+      const env = Math.exp(-t / 0.012) * fade * amp;
+      let mix = 0;
+      for (let h = 0; h < harms.length; h++) mix += harms[h] * Math.sin(phase * (h + 1));
+      raw[i] += (mix / weight) * env;
+      phase += (2 * Math.PI * f0) / sampleRate;
+    }
+  }
+  return normalizePeak(applyBiquad(raw, "lowpass", 700, 0.7, sampleRate), 1);
+}
+
+/**
+ * One bass note. Sine sub, optional odd-harmonic mid through a one-pole
+ * that opens near 600 Hz and falls toward 180 Hz. The envelope is the note.
+ */
+function renderBassNote(sampleRate, freq, withMid) {
+  const dur = 0.06;
+  const n = Math.floor(dur * sampleRate);
+  const sub = new Float64Array(n);
+  const mid = new Float64Array(n);
+  let phase = 0;
+  let lp = 0;
+  for (let i = 0; i < n; i++) {
+    const t = i / sampleRate;
+    const attack = t < 0.003 ? t / 0.003 : 1;
+    const env = Math.exp(-t / 0.022) * attack;
+    const s = Math.sin(phase);
+    sub[i] = s * env;
+    if (withMid) {
+      const sq = s + 0.34 * Math.sin(phase * 3) + 0.16 * Math.sin(phase * 5);
+      const cutoff = 180 + 420 * Math.exp(-t / 0.03);
+      const alpha = 1 - Math.exp((-2 * Math.PI * cutoff) / sampleRate);
+      lp += alpha * (sq - lp);
+      mid[i] = lp * env * 0.55;
+    }
+    phase += (2 * Math.PI * freq) / sampleRate;
+  }
+  return { sub, mid };
 }
 
 /** Metal hat: 2-op sine FM, no noise oscillator. */
@@ -461,20 +542,33 @@ function renderHatFm(sampleRate, open) {
 }
 
 /** DX-style pluck. Index falls fast so the tone settles to a sine. No noise. */
-function renderFmPluck(sampleRate, freq) {
-  const dur = 0.26;
+function renderFmPluck(sampleRate, freq, opts) {
+  const decay = opts && opts.decay != null ? opts.decay : 0.085;
+  const dur = opts && opts.dur != null ? opts.dur : 0.26;
+  const moving = Boolean(opts && opts.moving);
   const n = Math.floor(dur * sampleRate);
   const out = new Float64Array(n);
   const lp = makeBiquad("lowpass", 2600, 0.707, sampleRate);
   let carrier = 0;
   let mod = 0;
+  let one = 0;
   const harmonicity = 2;
   for (let i = 0; i < n; i++) {
     const t = i / sampleRate;
     const fade = t < 0.003 ? t / 0.003 : 1;
-    const env = Math.exp(-t / 0.085) * fade;
+    const env = Math.exp(-t / decay) * fade;
     const index = 4.2 * Math.exp(-t / 0.03);
-    out[i] = lp.step(Math.sin(carrier + Math.sin(mod) * index)) * env;
+    const raw = Math.sin(carrier + Math.sin(mod) * index);
+    let y;
+    if (moving) {
+      const cutoff = 900 + 1500 * Math.exp(-t / 0.04);
+      const alpha = 1 - Math.exp((-2 * Math.PI * cutoff) / sampleRate);
+      one += alpha * (raw - one);
+      y = one;
+    } else {
+      y = lp.step(raw);
+    }
+    out[i] = y * env;
     carrier += (2 * Math.PI * freq) / sampleRate;
     mod += (2 * Math.PI * freq * harmonicity) / sampleRate;
   }
@@ -482,8 +576,9 @@ function renderFmPluck(sampleRate, freq) {
 }
 
 /** Warm stab: a few harmonics, one fixed lowpass, short decay. */
-function renderWarmStab(sampleRate, freqs) {
-  const dur = 0.2;
+function renderWarmStab(sampleRate, freqs, opts) {
+  const dur = opts && opts.dur != null ? opts.dur : 0.2;
+  const decay = opts && opts.decay != null ? opts.decay : 0.065;
   const n = Math.floor(dur * sampleRate);
   const out = new Float64Array(n);
   const lp = makeBiquad("lowpass", 980, 0.75, sampleRate);
@@ -492,7 +587,7 @@ function renderWarmStab(sampleRate, freqs) {
   for (let i = 0; i < n; i++) {
     const t = i / sampleRate;
     const fade = t < 0.004 ? t / 0.004 : 1;
-    const env = Math.exp(-t / 0.065) * fade;
+    const env = Math.exp(-t / decay) * fade;
     let mix = 0;
     for (let v = 0; v < freqs.length; v++) {
       const f = midiHz(freqs[v]);
@@ -720,6 +815,8 @@ module.exports = {
   clamp,
   renderKickClean,
   renderClapTonal,
+  renderSnap,
+  renderBassNote,
   renderHatFm,
   renderFmPluck,
   renderWarmStab,
@@ -739,6 +836,7 @@ module.exports = {
   samplePeak,
   spectralFlatness,
   peakHz,
+  topPeaks,
   slice,
   envelopeSwingDb,
   hfRmsDb,
