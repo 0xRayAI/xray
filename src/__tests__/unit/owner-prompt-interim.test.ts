@@ -58,14 +58,15 @@ describe('owner-prompt interim line', () => {
     for (const rel of inboundFiles) {
       const line = readFileSync(path.join(root, rel), 'utf8')
         .split('\n')
-        .find((row) => row.includes('On any inbound message, the seat runs the board-prompt skill first.')) ?? '';
-      for (const phrase of [PROMPT, ACK, ACK_ALL, TURN_START, TURN_END]) {
-        expect(line, rel).toContain(phrase);
-      }
+        .find((row) => row.includes('runs the station skill first')) ?? '';
+      expect(line, rel).not.toBe('');
+      expect(line, rel).not.toContain('board-prompt skill first');
       expect(line, rel).not.toContain('no `--from`');
     }
 
     const skill = readFileSync(path.join(root, 'grok-bot/skills/board-prompt/SKILL.md'), 'utf8');
+    expect(skill).toContain('../station/SKILL.md');
+    expect(skill).toContain('../../OP-PROC.md#station-boot');
     for (const phrase of [PROMPT, ACK, ACK_ALL, TURN_START, TURN_END]) {
       expect(skill, 'board-prompt').toContain(phrase);
     }
@@ -92,14 +93,13 @@ describe('owner-prompt interim line', () => {
     expect(mesh).not.toContain('--turn end --tag "bc-<first8> <track>"');
 
     const skill = readFileSync(path.join(root, 'grok-bot/skills/board-prompt/SKILL.md'), 'utf8');
-    const note = skill.split('## Note')[1]?.split('## When a post fails')[0] ?? '';
-    expect(note).toContain('--note "<gist>"');
-    expect(note).not.toContain('omitting `--note` is the usual post');
-    const step5 = skill.split('\n').find((row) => row.startsWith('5. ')) ?? '';
-    expect(step5).toContain(TURN_END);
-    expect(step5).not.toContain('--turn end --tag "bc-<first8> <track>"');
-    expect(step5).not.toContain('--prompt');
-    expect(step5).not.toContain('--ack');
-    expect(step5).not.toContain('every exit');
+    expect(skill).toContain('../station/SKILL.md');
+    expect(skill).toContain('#station-boot');
+    expect(skill).toContain('--note "<gist>"');
+    expect(skill).not.toContain('omitting `--note` is the usual post');
+    expect(skill).not.toContain('## Note');
+    expect(skill.split('\n').some((row) => row.startsWith('5. '))).toBe(false);
+    expect(skill).toContain(TURN_END);
+    expect(skill).not.toContain('--turn end --tag "bc-<first8> <track>"');
   });
 });

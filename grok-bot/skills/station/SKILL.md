@@ -21,19 +21,15 @@ Kanban note. The live page shows a read-only kanban above Activity. Columns are 
 
 History note. Every activity line is archived to history. The word owner is the owner via LIVE_OWNER or the owner-name.
 
+Owner-only `--prompt`, `--room`, the 1–240 gist cap, a failed post, `Prompt: <id>`, and the webhook split are [Station boot](../../OP-PROC.md#station-boot).
+
 2. Read `.xray/state/STATION.md`.
 
 Light does not read the pack.
 
 ## Full
 
-After a summary, a wake, or a gate, also read:
-
-- the file named by the `OP-PROC:` line in `house/HOUSE.md`
-- the newest two entries in `.xray/state/NOTES.md`
-- `house/fleet/TRACKS.md`
-- open board cards (`house/WAVEBOARD.md` when `LIVE_URL` is unset, `GET /cards` when it is set)
-- the `Skills:` line on `.xray/state/STATION.md`
+After a summary, a wake, or a gate, read what [Station boot](../../OP-PROC.md#station-boot) names for Full. When `LIVE_URL` is set, the board is Bifrost (`GET /cards`).
 
 ## During the work
 
@@ -41,8 +37,6 @@ Each step posts one activity line. Each cloud launch is written to `house/fleet/
 
 ## Way out
 
-Ask: anything new without a card? Each yes is carded in this turn. The fields are a one-line what, `From:`, `Waiting on:` (a condition, or `nothing`), and `Owner:`. The rule is Fallout in `grok-bot/OP-PROC.md`. The station-card lens is `.agents/skills/station-card/SKILL.md`.
+Ask anything new without a card, then update STATION, the card, TRACKS, and the closing line, as [Station boot](../../OP-PROC.md#station-boot) and [Card](../../OP-PROC.md#card) say.
 
-Update STATION `Judgement:`, the card metadata (title, url, owner seat, stage, state), TRACKS, and the closing activity line.
-
-The owner's chat does not launch or resume a cloud agent when the card id is missing. The board posts every pull-request handoff and every review handoff. The coordinator acks only dev lines.
+Backstop: not built yet. Doctor does not flag a stale STATION or an incomplete card. It warns when `STATION.md` is older than `NOTES.md`, or when `Skills:` or `Keys:` is missing.

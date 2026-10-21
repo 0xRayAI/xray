@@ -49,7 +49,7 @@ The live page draws those cards again as a kanban directly above the activity li
 
 Kanban note. The live page shows a read-only kanban above Activity. Columns are open, review, fix, merge, retest, and done. The deep link is `?card=`.
 
-History note. Card transitions are archived even when the card leaves the board. The word owner is the owner via LIVE_OWNER or the owner-name.
+History note. Every activity line is archived to history. The word owner is the owner via LIVE_OWNER or the owner-name.
 
 Board rule. On every owner message run `live-inbox <seat> --prompt --from owner --note "<gist>"`. Ack a handled line with `live-inbox <seat> --ack <id>`, or `live-inbox <seat> --ack all` once every open line is handled. A cloud agent run uses `live-inbox <seat> --turn start --tag "bc-<first8> <track>"` and `live-inbox <seat> --turn end --tag "bc-<first8>"`. `--from owner` is required today.
 

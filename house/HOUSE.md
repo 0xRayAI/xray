@@ -25,7 +25,7 @@ Git push when forge owns the ship track:
 - `0xRayAI/0xray-moltbook`
 
 Merge-is-deploy, named one by one:
-- `0xRayAI/0xray-moltbook` only: merge to main after critic PASS is the deploy (Railway auto-deploys). No other repo.
+- `0xRayAI/0xray-moltbook` only: merge to main after critic PASS is the deploy (Railway auto-deploys). No other repo. A hotfix is the one exception: it merges only on green CI, never before.
 
 ## Ask first
 1. Publish any package to the npm registry

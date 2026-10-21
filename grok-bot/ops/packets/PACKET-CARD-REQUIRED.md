@@ -10,7 +10,7 @@ This file is the whole change. No board, launch, or collector code is edited her
 - constraints: Packet only. No code here. Say owner. No personal names. No new activity field. The push-only sentence stays. A holding card does not 503 the board.
 - path: This file is the card. After packet PASS, one follow-up edits the files and the sentences below.
 - acceptance: The wake step keeps the push-only sentence, the launch refuses a missing card id, and the three review notes are decided in this file.
-- gates: Card only. B and D stay off. A and C wait on the follow-up. A docs-only change does not wait on CI.
+- gates: Card only. B and D stay off. A and C wait on the follow-up. Doc-only updates: see [Review](../../OP-PROC.md#review).
 - evidence: The review on this packet, the wake template test, cardKeyOf, isPacket, validActivity, and /healthz.
 - next owner: reviewer, for packet PASS.
 - escalate: owner, if a holding card must not be launched until it is repo#number.
