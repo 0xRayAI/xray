@@ -10,7 +10,7 @@ Packet only. No code in this change.
 - constraints: Packet only. No new activity kind or field. ACT_FIELDS stays locked. Say owner. No personal names.
 - path: This file. After packet PASS, one follow-up edits the files named below.
 - acceptance: POST /cards/exit stores the five exit fields under an allowlist and an 80-character cap, and the WAKE-ROUTINE trap runs --exit and exits 0 when the wake has no card.
-- gates: A and C wait on the follow-up. B and D stay off. A docs-only change does not wait on CI.
+- gates: A and C wait on the follow-up. B and D stay off. Doc-only updates: see [Review](../../OP-PROC.md#review).
 - evidence: Review 5588117957. validActivity rejects a kind outside ACT_KINDS. note stays prompt-only.
 - next owner: reviewer, for packet PASS.
 - escalate: owner, if a wake with no card must still record a marker.

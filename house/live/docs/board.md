@@ -4,7 +4,7 @@ A card is one GitHub issue or pull request. A beat is a real event on it. A pack
 
 The live page shows the same cards in a kanban above the activity list. A column is the card's stage (`open`, `review`, `fix`, `merge`, `retest`, `done`). A closed card sits in `done`. A click opens the timeline. The GitHub link is on the card face.
 
-Kanban note. The live page shows a read-only kanban above Activity. Columns are open, review, fix, merge, retest, and done. The column header (stage and count) stays put while the cards under it scroll. The board scrolls sideways, and the headers stay lined up with the columns. The page header and the timeline toolbar stay at the top of the page. The deep link is `?card=`. The public board serves the kanban and GET /history, /history/cards, and /history/transitions.
+Kanban note. The live page shows a read-only kanban above Activity. Columns are open, review, fix, merge, retest, and done. The deep link is `?card=`. The column header (stage and count) stays put while the cards under it scroll. The board scrolls sideways, and the headers stay lined up with the columns. The page header and the timeline toolbar stay at the top of the page. The public board serves the kanban and GET /history, /history/cards, and /history/transitions.
 
 When `LIVE_URL` is set, the board seats see is the collector board (`GET /cards`). When `LIVE_URL` is unset, the board is hand-kept `house/WAVEBOARD.md`. `feed/live_mesh.py` runs `feed/live_collect.py` and `feed/live_board.py` every 45 seconds (`LIVE_WATCH_S`, default 45). An empty box board does not replace those cards.
 
@@ -197,7 +197,7 @@ A webhook fires for the seat that has to act. The line's `seat` wins, then a han
 
 ## History and the queue
 
-History note. Card transitions are archived even when the card leaves the board. The word owner is the owner via LIVE_OWNER or the owner-name.
+History note. Every activity line is archived to history. The word owner is the owner via LIVE_OWNER or the owner-name.
 
 `GET /history` lists archive days. `GET /history?date=YYYY-MM-DD` returns that day's events. `GET /history/cards` returns the latest transition for each card (`state`, `since`, `limit`, `cursor`). `GET /history/transitions` lists the append-only log (`card`, `transition`, `since`, `until`, `limit`, `cursor`). `GET /history/export?date=YYYY-MM-DD` is NDJSON for that Chicago day. `limit` defaults to 200 and stops at 1000. The cursor is the last id returned; the next page starts after it. A bad date is 400. `GET /archive` stays behind the archive key.
 

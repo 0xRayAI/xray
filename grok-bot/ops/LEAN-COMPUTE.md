@@ -8,7 +8,7 @@ Prefer the smallest review that matches risk.
 
 | Level | Use when | Who checks | What to write |
 |-------|----------|------------|---------------|
-| **Light** | Typos, docs-only, chores — no running software change | Implementer. A docs-only change does not wait on CI | Nothing extra |
+| **Light** | Typos, docs-only, chores — no running software change | Implementer. Doc-only updates: see [Review](../OP-PROC.md#review) | Nothing extra |
 | **Normal** | Small bug fixes, thin wiring, **ops/docs mirrors** | Implementer + CI | Short PR note (≤10 lines). **No Reviewer card** |
 | **Strict** | **Ship / live / security / identity only** (publish, live URLs agents must read, credentials) | Reviewer PASS/FAIL | One short proof card (≤15 lines) |
 

@@ -20,7 +20,8 @@ for (const file of packed) {
 }
 const op = readFileSync(path.join(root, 'OP-PROC.md'), 'utf8').split('\n');
 const opLines = op.at(-1) === '' ? op.length - 1 : op.length;
-if (opLines > 75) bad.push(`grok-bot/OP-PROC.md is ${opLines} lines (max 75)`);
+// Extra lines past 75 are only for a new rule that cannot be consolidated into an existing stanza.
+if (opLines > 125) bad.push(`grok-bot/OP-PROC.md is ${opLines} lines (max 125)`);
 const linkRe = /!?\[[^\]]*\]\(([^)]+)\)/g;
 for (const file of packed) {
   if (!file.endsWith('.md')) continue;

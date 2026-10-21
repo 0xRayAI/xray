@@ -99,19 +99,15 @@ describe('board docs sweep', () => {
     expect(line).toContain('--room <name>');
   });
 
-  it('requires a gist in the board-prompt note and keeps step 5 as the cloud finish', () => {
+  it('points board-prompt at station and keeps the board rule', () => {
     const skill = read('grok-bot/skills/board-prompt/SKILL.md');
-    const note = skill.split('## Note')[1]?.split('## When a post fails')[0] ?? '';
-    expect(note).toContain('`--note "<gist>"`');
-    expect(note).not.toContain('omitting `--note` is the usual post');
-
-    const step5 = lineStarting(skill, '5. ');
-    expect(step5).toContain(`live-inbox <seat> ${TURN_END}`);
-    expect(step5).not.toContain(TRACK_FINISH);
-    expect(step5).not.toContain('--prompt');
-    expect(step5).not.toContain('--ack');
-    expect(step5).not.toContain('every exit');
-    expect(skill).toContain('still run turn end on the way out');
+    expect(skill).toContain('../station/SKILL.md');
+    expect(skill).toContain('../../OP-PROC.md#station-boot');
+    expect(skill).toContain(BOARD_RULE);
+    expect(skill).not.toContain('omitting `--note` is the usual post');
+    expect(skill).not.toContain('## Note');
+    expect(lineStarting(skill, '5. ')).toBe('');
+    expect(read('grok-bot/OP-PROC.md')).toContain('still run turn end on the way out');
   });
 
   it('slices the owner-message row, the kanban fold, and the old drag line', () => {
