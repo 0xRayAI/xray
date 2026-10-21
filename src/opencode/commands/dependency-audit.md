@@ -178,7 +178,7 @@ Project-specific settings in `.dependency-audit.json`:
 
 ## Dependencies
 
-- Node.js 18+
+- Node.js 24.22.1+
 - Package managers (npm, yarn, pnpm, pip, cargo, etc.)
 - Security databases (NVD, OSV)
 - Vulnerability scanners (npm audit, safety, cargo audit)

@@ -234,7 +234,7 @@ DEBUG=0xray:* npm start
 #### Dockerfile
 
 ```dockerfile
-FROM node:18-alpine AS base
+FROM node:24.22.1-alpine AS base
 
 # Install dependencies
 WORKDIR /app
@@ -247,7 +247,7 @@ COPY . .
 RUN npm run build
 
 # Production image
-FROM node:18-alpine AS production
+FROM node:24.22.1-alpine AS production
 
 # Install dumb-init for proper signal handling
 RUN apk add --no-cache dumb-init
@@ -343,18 +343,18 @@ docker-compose up -d --scale 0xray=3
 
 ```dockerfile
 # Multi-stage build for optimized image
-FROM node:18-alpine AS deps
+FROM node:24.22.1-alpine AS deps
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci --only=production --no-optional && npm cache clean --force
 
-FROM node:18-alpine AS builder
+FROM node:24.22.1-alpine AS builder
 WORKDIR /app
 COPY . .
 COPY --from=deps /app/node_modules ./node_modules
 RUN npm run build && npm prune --production
 
-FROM node:18-alpine AS runner
+FROM node:24.22.1-alpine AS runner
 WORKDIR /app
 
 # Install security updates

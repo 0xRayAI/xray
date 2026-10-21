@@ -57,6 +57,16 @@ describe('doctor wear proof and goggles', () => {
     expect(on.text).not.toContain('goggles off');
   });
 
+  it('rejects Node below the patched 24.22.1 LTS', () => {
+    const dir = mkdtempSync(path.join(os.tmpdir(), '0xray-doctor-node-'));
+    const stale = runDoctor(dir, 'v24.10.0');
+    expect(stale.text).toContain('Node.js version too old');
+    expect(stale.text).toContain('Upgrade to Node.js 24.22.1+');
+    const patched = runDoctor(dir, 'v24.22.1');
+    expect(patched.text).toContain('✅ Node.js version: v24.22.1');
+    expect(patched.text).not.toContain('Node.js version too old');
+  });
+
   it('says worn inside a git work tree', () => {
     const dir = mkdtempSync(path.join(os.tmpdir(), '0xray-doctor-git-'));
     execFileSync('git', ['init'], { cwd: dir, stdio: 'ignore' });
