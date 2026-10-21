@@ -64,6 +64,7 @@ export const PLATE_IDS = [
   'consumer-mcp',
   'confer',
   'grokbot',
+  'fleet',
 ] as const;
 
 export type PlateId = (typeof PLATE_IDS)[number];
