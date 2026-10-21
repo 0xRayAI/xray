@@ -27,6 +27,7 @@ type Measured = {
   };
   earReady: boolean;
   pass: boolean;
+  fails: string[];
 };
 
 describe('sound rules and reference metrics', () => {
@@ -111,11 +112,31 @@ describe('sound rules and reference metrics', () => {
     expect(v6.reference.measured.lowShare30to120).toBeLessThan(0.65);
     expect(v4.reference.measured.lowShare30to120).toBeGreaterThan(0.9);
     const v4Low = v4.reference.gaps.find((row) => row.id === 'lowShare');
-    expect(v4Low?.pass).toBe(true);
-    expect(v4.reference.fails).toEqual(['sideUnderMid', 'band2to4', 'band4to8']);
+    expect(v4Low?.pass).toBe(false);
+    expect(v4.reference.fails).toEqual(['sideUnderMid', 'lowShare', 'band2to4', 'band4to8']);
     for (const id of ['lufs', 'crest', 'correlation', 'sideUnderMid', 'band2to4', 'band4to8']) {
       expect(v6.reference.gaps.find((row) => row.id === id)?.pass, id).toBe(true);
     }
+  }, 60000);
+
+  it('makes v7 ear-ready without turning the bass into a hum', () => {
+    const v7 = measureBed(renderBed('v7'));
+    expect(v7.pass, v7.fails.join(', ')).toBe(true);
+    expect(v7.rules.pass, v7.rules.fails.join(', ')).toBe(true);
+    expect(v7.reference.pass, v7.reference.fails.join(', ')).toBe(true);
+    expect(v7.earReady).toBe(true);
+    const share = v7.reference.measured.lowShare30to120;
+    expect(share).toBeGreaterThanOrEqual(0.6);
+    expect(share).toBeLessThanOrEqual(0.9);
+    const bass = v7.rules.checks.find((row) => row.id === 'bass');
+    const quiet = bass?.detail.quietShare;
+    expect(typeof quiet).toBe('number');
+    expect(quiet as number).toBeGreaterThan(0.4);
+    const book = JSON.parse(readFileSync(path.join(root, 'scripts/foundry/sound-reference.json'), 'utf8')) as {
+      tolerances: { lowShareLo: number; lowShareHi: number };
+    };
+    expect(book.tolerances.lowShareLo).toBe(0.6);
+    expect(book.tolerances.lowShareHi).toBe(0.9);
   }, 60000);
 
   it('prints pass or fail for every rule and every reference gap', () => {
@@ -136,5 +157,13 @@ describe('sound rules and reference metrics', () => {
     expect(report.reference.pass).toBe(false);
     expect(report.reference.gaps.find((row) => row.id === 'lowShare')?.pass).toBe(false);
     expect(report.earReady).toBe(false);
+    const ready = spawnSync(process.execPath, ['scripts/foundry/sound.mjs', 'gate', 'v7'], {
+      cwd: root,
+      encoding: 'utf8',
+    });
+    expect(ready.status).toBe(0);
+    const v7 = JSON.parse(ready.stdout) as { earReady: boolean; name: string };
+    expect(v7.name).toBe('BED-MAGNETIC-MOVES-v7');
+    expect(v7.earReady).toBe(true);
   }, 60000);
 });

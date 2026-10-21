@@ -92,9 +92,12 @@ function scorePrimary(measured, book) {
     ),
     gap(
       "lowShare",
-      Math.abs(measured.lowShare30to120 - ref.lowShare30to120) <= tol.lowShare,
+      tol.lowShareLo != null && tol.lowShareHi != null
+        ? measured.lowShare30to120 >= tol.lowShareLo && measured.lowShare30to120 <= tol.lowShareHi
+        : Math.abs(measured.lowShare30to120 - ref.lowShare30to120) <= tol.lowShare,
       measured.lowShare30to120,
       ref.lowShare30to120,
+      tol.lowShareLo != null ? { window: [tol.lowShareLo, tol.lowShareHi] } : undefined,
     ),
     gap(
       "band2to4",
@@ -184,6 +187,7 @@ function cli(argv) {
         bed: row.bed,
         ref: row.ref,
         delta: row.delta,
+        ...(row.window ? { window: row.window } : {}),
       })),
     },
     earReady: metrics.earReady,

@@ -2,14 +2,15 @@
   "measuredBy": "Arch1, independent review on PR 508, 2026-10-21T11:07Z",
   "audioStored": false,
   "primary": "session-recall",
-  "note": "Metrics only, from CC0 preview measurements. Never store or mix the audio. Bass and dub loops are stems, not the pass reference. The generic loop preview peaks hot and that peak is not a target.",
+  "note": "Metrics only, from CC0 preview measurements. Never store or mix the audio. Bass and dub loops are stems, not the pass reference. The generic loop preview peaks hot and that peak is not a target. Session Recall's 0.85 low share is an mp3 preview: the encode shelves the top, so the share reads heavier than a full-band master. A short-note bed can print 0.85 only by giving that top away (0.855 with 2-4 kHz at -45 dB, outside the 10 dB band). With the top kept inside the rule, the same short notes sit near 0.76 and the quiet share stays about 0.6. Closing the rest of the gap means lengthening the bass into the held sine that put v4b at 0.94. The pass window is 0.60 to 0.90.",
   "tolerances": {
     "lufsDb": 6,
     "crestDb": 6,
     "correlation": 0.15,
     "sideUnderMidLo": -20,
     "sideUnderMidHi": -8,
-    "lowShare": 0.2,
+    "lowShareLo": 0.6,
+    "lowShareHi": 0.9,
     "bandDb": 10
   },
   "references": [
