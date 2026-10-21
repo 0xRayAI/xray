@@ -71,11 +71,13 @@ Suit lifecycle in this core: `0xray wear`, `0xray validate`, `0xray doctor`. `va
 
 House, goggles, foundry, bifrost, hooks-as-shims, repertoire-as-package, and the docs site do not import the three subsystems upward. No file under `house/` or `grok-bot/lib` imports those three. `server.mjs` does not import `InferenceCycle`, `GovernanceClient`, or `scoreAndRoute`.
 
+The four kits stay Repertoire, Dynamo, Clearing, and Goggles. House, bifrost, and hooks are packages. The words House kit mean the template package `@0xray/house`. That package is not a fifth kit.
+
 | Surface | Paths | Home | Plugs into | Reason |
 | --- | --- | --- | --- | --- |
 | Live board | `house/live/app/server.mjs`, `house/live/feed/live_mesh.py`, `house/live/tools/live-inbox`, wake template, deploy script | `@0xray/bifrost` | module, not core | The board is a client of seats. It does not vote and it does not route the turn. |
 | Burst publisher | `house/live-mesh/fetch_feed.py` build and write | stays inside bifrost | module, not core | The adapter replaces `build` and `write`. Do not make `@0xray/burst`. |
-| House kit | `grok-bot/templates/house`, seat doctor | `@0xray/house` | module, not core | `@0xray/grok-bot` depends on the template. `pulsar-game.mjs` reaches `wave-schedule.mjs`. Depend on the board file. Do not copy it. |
+| House template | `grok-bot/templates/house`, seat doctor | `@0xray/house` | module, not core | House kit means this template package, not a fifth kit. The four kits stay Repertoire, Dynamo, Clearing, and Goggles. House, bifrost, and hooks are packages. `@0xray/grok-bot` depends on the template. `pulsar-game.mjs` reaches `wave-schedule.mjs`. Depend on the board file. Do not copy it. |
 | Grok bot | `grok-bot/` | `@0xray/grok-bot` | module, not core | Seat kit. It wears the suit. It is not the suit. |
 | Repertoire | `vendor/@0xray/repertoire` | `@0xray/repertoire` | Inference | Organ behind `src/memory-routing`. Own package. Move the package to the 0xRayAI org. |
 | Foundry / mill | `scripts/foundry` | `@0xray/foundry` | module, not core | Already that package. A mill seat fastens mill and inspect. A blip seat fastens blip only. A sound seat fastens sound only. |
@@ -83,7 +85,8 @@ House, goggles, foundry, bifrost, hooks-as-shims, repertoire-as-package, and the
 | Goggles | lens, plates reader, `src/integrations/hooks/plates.cjs` | `@0xray/goggles` | External Governance and the engine | `lensBeforeResearch` runs on the turn. The plate reader is input. The gate that consumes the lens stays in core. |
 | Host shims | `.cursor/hooks`, Grok launcher `scripts/mjs/run-grok-hook.mjs` | `@0xray/hooks` | Autonomous Engine | Adapters. The constitution they call stays in core. |
 | Docs site | `docs-site/` | stays in the suit repo until a later cut | module, not core | The manual. Not a runtime subsystem. |
-| Dynamo server | owner-account repo | out of the v5 packages | External Governance | The client stays. The server does not move. |
+| Dynamo server | owner-account repo | out of the v5 packages | External Governance | The client stays. The server does not move. Dynamo stays one of the four kits. |
+| Clearing | hangar kit, owner account | not a package in this split | not a subsystem | Clearing stays the hangar kit. It is not a package in this split, and it is not a subsystem. |
 | Sign-in, xAI | not in this repo | `@0xray/auth-xai` | module, not core | Optional. Wraps bedrock OAuth and Railway refresh. xAI fleets only. Interactive mode in `scripts/node/setup-xai-oauth.mjs` saves local auth and stops. Only `daemonMain` calls `deployToRailway`. |
 | Sign-in, fallback | not in this repo | a small fallback package, name still open | module, not core | Owner token or GitHub, so a non-xAI board can drag a card. |
 | Chat | not in this repo | `@0xray/chat` | module, not core | Provider picker. Optional per board. Keys stay out of the repo. |
@@ -97,7 +100,7 @@ House, goggles, foundry, bifrost, hooks-as-shims, repertoire-as-package, and the
 | --- | --- | --- |
 | `0xray` 5.0.0 | the three subsystems, wear, validate, doctor, the Codex gate, the features loader | stays the suit |
 | `@0xray/bifrost` | server, collector, live-inbox, wake template, deploy script | `house/live/**` |
-| `@0xray/house` | house template and seat doctor | `grok-bot/templates/house/**`, seat-doctor program |
+| `@0xray/house` | the template package (House kit means this package, not a fifth kit) and seat doctor | `grok-bot/templates/house/**`, seat-doctor program |
 | `@0xray/repertoire` | the memory organ | already a package; org move only |
 | `@0xray/foundry` | the mill, release stamp | already `scripts/foundry` |
 | `@0xray/goggles` | lens and plate reader | plate runtime plus the lens the turn calls |
@@ -107,6 +110,8 @@ House, goggles, foundry, bifrost, hooks-as-shims, repertoire-as-package, and the
 | `@0xray/chat` | optional provider picker | new, not in this tree |
 | `@0xray/grok-bot` | seat kit | stays; depends on `@0xray/house` |
 | `@0xray/blip` | product mill | stays an external dependency of foundry |
+
+Clearing is not in this list. It stays the hangar kit.
 
 ## Dependency graph
 
@@ -278,63 +283,63 @@ Only VERIFIED lines drive these. SINGLE notes stay proposals.
 
 ## Fell out
 
-Claims the 1192-file close withdraws, grouped by the fix. Fail-open and exit 0 come first. Each line is a card stub: what it is, the source, what it waits on, and the owner.
+Claims the 1192-file close withdraws, grouped by the fix. Fail-open and exit 0 come first. Each line is a card stub: what it is, the source, what it waits on, and the owner. A stub that waits on sign-off waits on #510, this packet.
 
 ### Fail-open
 
-- The Grok launcher writes allow and exits 0 when the hook file is missing or throws, so the constitution never runs (`scripts/mjs/run-grok-hook.mjs:23-37`, VERIFIED). Source #510. Waits on three-way sign-off of #509, then a code change. Owner: owner.
-- Hermes TypeScript `onPreToolCall` allows the tool when the bridge throws and does not call the delegation gate (`hermes-agent-integration.ts:359-365`, VERIFIED). The Python plugin calls that gate first and can block (`__init__.py:236-238`, VERIFIED). Source #510. Waits on three-way sign-off of #509, then a code change. Owner: owner.
-- A quality-gate BLOCKED line is logged and the Python pre-tool returns without blocking (`__init__.py:286-316`, VERIFIED). Source #510. Waits on three-way sign-off of #509, then a code change. Owner: owner.
+- The Grok launcher writes allow and exits 0 when the hook file is missing or throws, so the constitution never runs (`scripts/mjs/run-grok-hook.mjs:23-37`, VERIFIED). Source #510. Waits on three-way sign-off of #510, this packet, then a code change. Owner: owner.
+- Hermes TypeScript `onPreToolCall` allows the tool when the bridge throws and does not call the delegation gate (`hermes-agent-integration.ts:359-365`, VERIFIED). The Python plugin calls that gate first and can block (`__init__.py:236-238`, VERIFIED). Source #510. Waits on three-way sign-off of #510, this packet, then a code change. Owner: owner.
+- A quality-gate BLOCKED line is logged and the Python pre-tool returns without blocking (`__init__.py:286-316`, VERIFIED). Source #510. Waits on three-way sign-off of #510, this packet, then a code change. Owner: owner.
 
 ### Doctors and other checks that exit 0 on failure
 
-- `0xray doctor` exits 0 when the package is missing or Node is old. It exits 1 only when goggles are off (`doctor.ts:94`, VERIFIED). Source #510. Waits on three-way sign-off of #509, then a code change. Owner: owner.
-- The suit-confirm script exits 0 when every bridge is skipped (`confirm-suit-all.mjs:208-253`, VERIFIED). Source #510. Waits on three-way sign-off of #509, then a code change. Owner: owner.
-- A pipeline run skips a missing pipeline file and can still exit 0. Source #510. Waits on a re-open of that runner, then sign-off of #509. Owner: owner.
-- Cursor wear on a folder that is not a git checkout exits 0 and writes nothing. The consumer wear test leaves the factory hooks file byte-identical. Source #510. Waits on three-way sign-off of #509, then a code change. Owner: owner.
+- `0xray doctor` exits 0 when the package is missing or Node is old. It exits 1 only when goggles are off (`doctor.ts:94`, VERIFIED). Source #510. Waits on three-way sign-off of #510, this packet, then a code change. Owner: owner.
+- The suit-confirm script exits 0 when every bridge is skipped (`confirm-suit-all.mjs:208-253`, VERIFIED). Source #510. Waits on three-way sign-off of #510, this packet, then a code change. Owner: owner.
+- A pipeline run skips a missing pipeline file and can still exit 0. Source #510. Waits on a re-open of that runner, then sign-off of #510, this packet. Owner: owner.
+- Cursor wear on a folder that is not a git checkout exits 0 and writes nothing. The consumer wear test leaves the factory hooks file byte-identical. Source #510. Waits on three-way sign-off of #510, this packet, then a code change. Owner: owner.
 
 ### Tests that assert nothing
 
-- The Hermes plugin test still expects four tools and no delegation-gate call. The live hook calls that command first. Source #510. Waits on three-way sign-off of #509, then a test change. Owner: owner.
-- Archive playbook sections 2 and 3 print OK when the dist file is missing. Source #510. Waits on three-way sign-off of #509, then a test change. Owner: owner.
-- The metamorphosis phase test never asserts the govern mock. Source #510. Waits on three-way sign-off of #509, then a test change. Owner: owner.
-- The `inference:run --no-apply` test only sees an approve vote. Source #510. Waits on three-way sign-off of #509, then a test change. Owner: owner.
-- The concurrent orchestrator test only checks that every task succeeds. It does not prove a cap. Source #510. Waits on three-way sign-off of #509, then a test change. Owner: owner.
-- The codex injector integration test returns undefined on every case, including the case titled as a block. Source #510. Waits on three-way sign-off of #509, then a test change. Owner: owner.
-- The OpenCode integration test installs an inline mock. Source #510. Waits on three-way sign-off of #509, then a test change. Owner: owner.
-- The cycle end-to-end reaches phase complete and does not assert applied. Source #510. Waits on three-way sign-off of #509, then a test change. Owner: owner.
-- The processor-pipeline test locks handler names in a string table. It does not run the server. Source #510. Waits on three-way sign-off of #509, then a test change. Owner: owner.
-- The Hono `govern_proposals` test accepts a governed result or an error string and does not lock the cutoff numbers. Source #510. Waits on three-way sign-off of #509, then a test change. Owner: owner.
-- The nucleus-primary test still requires the MCP symbols and a local boot sequence. The boot pipeline script never imports `BootOrchestrator`. Source #510. Waits on three-way sign-off of #509, then a test change. Owner: owner.
+- The Hermes plugin test still expects four tools and no delegation-gate call. The live hook calls that command first. Source #510. Waits on three-way sign-off of #510, this packet, then a test change. Owner: owner.
+- Archive playbook sections 2 and 3 print OK when the dist file is missing. Source #510. Waits on three-way sign-off of #510, this packet, then a test change. Owner: owner.
+- The metamorphosis phase test never asserts the govern mock. Source #510. Waits on three-way sign-off of #510, this packet, then a test change. Owner: owner.
+- The `inference:run --no-apply` test only sees an approve vote. Source #510. Waits on three-way sign-off of #510, this packet, then a test change. Owner: owner.
+- The concurrent orchestrator test only checks that every task succeeds. It does not prove a cap. Source #510. Waits on three-way sign-off of #510, this packet, then a test change. Owner: owner.
+- The codex injector integration test returns undefined on every case, including the case titled as a block. Source #510. Waits on three-way sign-off of #510, this packet, then a test change. Owner: owner.
+- The OpenCode integration test installs an inline mock. Source #510. Waits on three-way sign-off of #510, this packet, then a test change. Owner: owner.
+- The cycle end-to-end reaches phase complete and does not assert applied. Source #510. Waits on three-way sign-off of #510, this packet, then a test change. Owner: owner.
+- The processor-pipeline test locks handler names in a string table. It does not run the server. Source #510. Waits on three-way sign-off of #510, this packet, then a test change. Owner: owner.
+- The Hono `govern_proposals` test accepts a governed result or an error string and does not lock the cutoff numbers. Source #510. Waits on three-way sign-off of #510, this packet, then a test change. Owner: owner.
+- The nucleus-primary test still requires the MCP symbols and a local boot sequence. The boot pipeline script never imports `BootOrchestrator`. Source #510. Waits on three-way sign-off of #510, this packet, then a test change. Owner: owner.
 
 ### Stale docs
 
 - A gap list says bifrost, grokbot, and worn-turn are missing from `PLATE_IDS`. They are at `plates.cjs:19`, `:66`, and `:49` (VERIFIED). Source #510. Waits on nothing in code. Owner: owner.
 - A gap list says boot and processor have no skill files. Both exist under `.agents/skills/`. Source #510. Waits on nothing in code. Owner: owner.
 - Notes cite `evalNudges` at `server.mjs:1180` and the tripwire default at `:1583`. The function is `:1234` and the 30 minute default is `:1656` (VERIFIED). Source #510. Waits on nothing in code. Owner: owner.
-- The comment above `evalNudges` says level 2 goes to Coord (`server.mjs:1230-1231`, VERIFIED). The loop sends level 1 and repeating level 3 to the same owner (`:1275-1286`, VERIFIED). Source #510. Waits on three-way sign-off of #509, then a comment fix. Owner: owner.
+- The comment above `evalNudges` says level 2 goes to Coord (`server.mjs:1230-1231`, VERIFIED). The loop sends level 1 and repeating level 3 to the same owner (`:1275-1286`, VERIFIED). Source #510. Waits on three-way sign-off of #510, this packet, then a comment fix. Owner: owner.
 - A claim that the server never posts is too wide. The handoff path does not post a packet. Wake delivery does. Arch1 launch posts when its flag is on. Source #510. Waits on nothing in code. Owner: owner.
-- A claim that `station-hook-runtime.cjs` appends `activity.log`. It does not. Source #510. Waits on a docs correction after sign-off of #509. Owner: owner.
-- A v2 deletion title says those dist modules are gone. The vitest file still loads them. Source #510. Waits on three-way sign-off of #509, then a docs correction. Owner: owner.
+- A claim that `station-hook-runtime.cjs` appends `activity.log`. It does not. Source #510. Waits on a docs correction after sign-off of #510, this packet. Owner: owner.
+- A v2 deletion title says those dist modules are gone. The vitest file still loads them. Source #510. Waits on three-way sign-off of #510, this packet, then a docs correction. Owner: owner.
 - A claim that `postinstall` writes the consumer bridges. It links the vendored organ and prints `npx 0xray wear` (`postinstall.cjs:89-92`, VERIFIED). Source #510. Waits on nothing in code. Owner: owner.
-- A claim that status reads `.xray/logs/activity.log`. It reads `logs/framework/activity.log` only. Source #510. Waits on a docs correction after sign-off of #509. Owner: owner.
-- Archive Hermes and OpenClaw scripts are treated as the live contracts. Their root is `docs/archive`. Source #510. Waits on a docs correction after sign-off of #509. Owner: owner.
-- A claim that `tripwire_push.py` is the live governor. The live clock is the server tripwire (`server.mjs:1656`, VERIFIED). Source #510. Waits on a docs correction after sign-off of #509. Owner: owner.
-- A claim that a frontier host always denies a planless spawn. `auto` plus grok allows it and sets `spawn-plan-missing`. Source #510. Waits on a docs correction after sign-off of #509. Owner: owner.
-- A claim that every wear fastens mill and inspect. A blip plant fastens blip only. `worn-host` still requires mill and inspect. Source #510. Waits on a docs correction after sign-off of #509. Owner: owner.
-- A claim that mint always copies the full skill catalog. Only a mill kind does. Source #510. Waits on a docs correction after sign-off of #509. Owner: owner.
-- A claim that the MCP connectivity validator is the seven-server map. It lists 14 dist files and omits the governance server. Source #510. Waits on a docs correction after sign-off of #509. Owner: owner.
-- `publish-agent` is on the help surface as a publisher. The body says coming soon (`publish-agent.ts:221`, VERIFIED). Source #510. Waits on three-way sign-off of #509, then a docs correction. Owner: owner.
-- A claim that `handoff.mjs` posts packets. It computes missing rows. Source #510. Waits on a docs correction after sign-off of #509. Owner: owner.
-- A claim that interactive xAI OAuth deploys to Railway. Only `daemonMain` calls `deployToRailway`. Source #510. Waits on a docs correction after sign-off of #509. Owner: owner.
-- A claim that the fleet roster lock is nine seats. The routing test locks eight names. Blaze is the owner seat, not a roster seat. `arch1` is outside that eight. Herald, magnet, nibbler, and sound are parked. Source #510. Waits on a docs correction after sign-off of #509. Owner: owner.
+- A claim that status reads `.xray/logs/activity.log`. It reads `logs/framework/activity.log` only. Source #510. Waits on a docs correction after sign-off of #510, this packet. Owner: owner.
+- Archive Hermes and OpenClaw scripts are treated as the live contracts. Their root is `docs/archive`. Source #510. Waits on a docs correction after sign-off of #510, this packet. Owner: owner.
+- A claim that `tripwire_push.py` is the live governor. The live clock is the server tripwire (`server.mjs:1656`, VERIFIED). Source #510. Waits on a docs correction after sign-off of #510, this packet. Owner: owner.
+- A claim that a frontier host always denies a planless spawn. `auto` plus grok allows it and sets `spawn-plan-missing`. Source #510. Waits on a docs correction after sign-off of #510, this packet. Owner: owner.
+- A claim that every wear fastens mill and inspect. A blip plant fastens blip only. `worn-host` still requires mill and inspect. Source #510. Waits on a docs correction after sign-off of #510, this packet. Owner: owner.
+- A claim that mint always copies the full skill catalog. Only a mill kind does. Source #510. Waits on a docs correction after sign-off of #510, this packet. Owner: owner.
+- A claim that the MCP connectivity validator is the seven-server map. It lists 14 dist files and omits the governance server. Source #510. Waits on a docs correction after sign-off of #510, this packet. Owner: owner.
+- `publish-agent` is on the help surface as a publisher. The body says coming soon (`publish-agent.ts:221`, VERIFIED). Source #510. Waits on three-way sign-off of #510, this packet, then a docs correction. Owner: owner.
+- A claim that `handoff.mjs` posts packets. It computes missing rows. Source #510. Waits on a docs correction after sign-off of #510, this packet. Owner: owner.
+- A claim that interactive xAI OAuth deploys to Railway. Only `daemonMain` calls `deployToRailway`. Source #510. Waits on a docs correction after sign-off of #510, this packet. Owner: owner.
+- A claim that the fleet roster lock is nine seats. The routing test locks eight names. Blaze is the owner seat, not a roster seat. `arch1` is outside that eight. Herald, magnet, nibbler, and sound are parked. Source #510. Waits on a docs correction after sign-off of #510, this packet. Owner: owner.
 - A claim that the dummy metamorphosis file uses a different matrix. The score function uses the same deltas. The dummy file stays a separate example. Source #510. Waits on nothing in code. Owner: owner.
-- A claim that the nucleus is the sole governance path. The governance server must import `getGovernanceService`. `SelfProposalEngine` imports nucleus `govern-http`. Source #510. Waits on a docs correction after sign-off of #509. Owner: owner.
-- A claim that station heat copies the note onto the card. The card gets the count. The note stays off the card. Source #510. Waits on a docs correction after sign-off of #509. Owner: owner.
-- A claim that Hermes session-start archives every stale plan. A synthesis plan stays. Source #510. Waits on a docs correction after sign-off of #509. Owner: owner.
-- A claim that a loose PASS in consult prose completes the todo. Only `Verdict: PASS` does. Source #510. Waits on a docs correction after sign-off of #509. Owner: owner.
-- A claim that a governance MCP error abstains at confidence 0.5. The cycle test stores reject at confidence 0. Source #510. Waits on a docs correction after sign-off of #509. Owner: owner.
-- A claim that a running cloud agent lights the seat on the served board. `applyCloudOwners` leaves the seat idle. Source #510. Waits on three-way sign-off of #509 before any board change. Owner: owner.
+- A claim that the nucleus is the sole governance path. The governance server must import `getGovernanceService`. `SelfProposalEngine` imports nucleus `govern-http`. Source #510. Waits on a docs correction after sign-off of #510, this packet. Owner: owner.
+- A claim that station heat copies the note onto the card. The card gets the count. The note stays off the card. Source #510. Waits on a docs correction after sign-off of #510, this packet. Owner: owner.
+- A claim that Hermes session-start archives every stale plan. A synthesis plan stays. Source #510. Waits on a docs correction after sign-off of #510, this packet. Owner: owner.
+- A claim that a loose PASS in consult prose completes the todo. Only `Verdict: PASS` does. Source #510. Waits on a docs correction after sign-off of #510, this packet. Owner: owner.
+- A claim that a governance MCP error abstains at confidence 0.5. The cycle test stores reject at confidence 0. Source #510. Waits on a docs correction after sign-off of #510, this packet. Owner: owner.
+- A claim that a running cloud agent lights the seat on the served board. `applyCloudOwners` leaves the seat idle. Source #510. Waits on three-way sign-off of #510, this packet, before any board change. Owner: owner.
 
 ### Other
 
