@@ -627,6 +627,96 @@ def _merge_attached(cards, attached, now):
     return order
 
 
+def _actor(event, card):
+    event = event if isinstance(event, dict) else {}
+    credit = event.get("credit")
+    seat = credit if isinstance(credit, str) and credit else event.get("from") or (card.get("owner") if isinstance(card, dict) else "") or ""
+    login = ""
+    for cand in (event.get("actor"), event.get("author"), event.get("merged_by")):
+        if isinstance(cand, str) and cand.strip():
+            login = cand.strip()
+            break
+        if isinstance(cand, dict) and isinstance(cand.get("login"), str) and cand.get("login").strip():
+            login = cand["login"].strip()
+            break
+    bc = ""
+    bags = [event.get("bc"), event.get("bcId"), event.get("bc_id")]
+    actor = event.get("actor")
+    if isinstance(actor, dict):
+        bags.append(actor.get("bc"))
+    for cand in bags:
+        if isinstance(cand, str) and cand.lower().startswith("bc-"):
+            bc = cand
+            break
+    return {"seat": str(seat)[:80], "login": str(login)[:80], "bc": str(bc)[:80]}
+
+
+def _card_transitions(card, beats, by_id, merged, explicit_close, close_id):
+    """One row per verb, before the 14-day filter and the 40-card cap. A merge keeps its own source id."""
+    rows = []
+    stage = "open" if card.get("kind") == "issue" else "review"
+    state = "live"
+    was_held = False
+
+    def emit(verb, to_state, to_stage, beat, source=None):
+        nonlocal stage, state, was_held
+        sid = source or str((beat or {}).get("id") or "")
+        if not sid:
+            return
+        ev = by_id.get(sid) or {}
+        t = 0
+        if beat and beat.get("t"):
+            t = beat["t"] / 1000
+        elif ev:
+            t = _t(ev)
+        if not t:
+            return
+        title = str(card.get("title") or ev.get("title") or "")[:200]
+        rows.append({
+            "card": str(card.get("key") or "").lower(),
+            "transition": verb,
+            "from_state": state,
+            "to_state": to_state,
+            "from_stage": stage,
+            "to_stage": to_stage,
+            "actor": _actor(ev, card),
+            "t_ct": datetime.fromtimestamp(t, CT).isoformat(timespec="seconds"),
+            "source_id": sid[:200],
+            "packet": title,
+        })
+        state, stage = to_state, to_stage
+
+    for b in beats:
+        what = b.get("what") or ""
+        if what == "opened":
+            emit("opened", "live", "review" if card.get("kind") == "pr" else stage, b)
+            was_held = False
+        elif what == "reopened":
+            emit("reopened", "live", "review" if card.get("kind") == "pr" else "open", b)
+            was_held = False
+        elif what == "parked":
+            emit("parked", "parked", stage, b)
+        elif what == "held":
+            emit("held", "held", stage, b)
+            was_held = True
+        elif what == "merged":
+            if was_held:
+                emit("released", "live", stage, b)
+                was_held = False
+            emit("merged", "closed", "done", b)
+        elif what in ("Reviewer FAIL", "Reviewer HOLD") or what in ("CI failure", "CI timed_out"):
+            if stage != "fix":
+                emit("stage", "closed" if state == "closed" else "live", "fix", b)
+        elif what.startswith("Reviewer PASS") and state != "closed" and stage != "merge":
+            emit("stage", state, "merge", b)
+        elif was_held:
+            emit("released", "live" if state != "closed" else state, stage, b)
+            was_held = False
+    if explicit_close and not merged and not any(r["transition"] == "closed" for r in rows):
+        emit("closed", "closed", "done", None, source=close_id or f"close:{card.get('key')}")
+    return rows
+
+
 def model(extra_events=None, now=None, prompts=None, held=None):
     now = now or time.time()
     evs = _events(extra_events)
@@ -678,6 +768,8 @@ def model(extra_events=None, now=None, prompts=None, held=None):
             c["_draft_park"] = False
         if kind in ("issue_close", "pr_close"):
             c["_closed"], c["_closed_t"] = True, _t(e)
+            if e.get("id") is not None:
+                c["_close_id"] = str(e["id"])
         w = beat_of(e)
         is_comment = e.get("kind") in ("pr_comment", "issue_comment", "pr_review", "review_comment")
         if is_comment and e.get("parked"):                 # Coord rule: a 'Parked:' comment parks the card (no nudges)
@@ -731,7 +823,12 @@ def model(extra_events=None, now=None, prompts=None, held=None):
             mb = e.get("merged_by")
             if isinstance(mb, str) and mb.strip():
                 c["merged_by"] = mb.strip()[:80]
-    out, settled = [], []
+    out, settled, transitions = [], [], []
+    by_id = {}
+    for e in evs:
+        eid = e.get("id")
+        if eid is not None:
+            by_id[str(eid)] = e
     for c in cards.values():
         beats = c.pop("_beats")
         merged = any(b["what"] == "merged" for b in beats)
@@ -834,6 +931,8 @@ def model(extra_events=None, now=None, prompts=None, held=None):
         c.update(stage=stage, state=state, packet=pk, packet_ok=not missing, missing=missing,
                  beats=[{k: v for k, v in b.items() if not k.startswith("_")} for b in shown],
                  last_beat_t=int(last_t * 1000), stall=stall, closed_t=int(closed_t * 1000) if closed else 0)
+        close_id = str(c.pop("_close_id", "") or "")
+        transitions.extend(_card_transitions(c, beats, by_id, merged, explicit_close, close_id))
         if display_drop:
             settled.append(c)                              # off the board; /history still gets this final state
         else:
@@ -851,7 +950,8 @@ def model(extra_events=None, now=None, prompts=None, held=None):
     if held:
         cards = _merge_attached(cards, attach_held(held, evs), now)
     return {"updated_ct": datetime.fromtimestamp(now, CT).isoformat(timespec="seconds"),
-            "stages": list(STAGES), "stats": stats(evs, now, prompt_rows), "cards": cards, "settled": settled}
+            "stages": list(STAGES), "stats": stats(evs, now, prompt_rows), "cards": cards, "settled": settled,
+            "transitions": transitions}
 
 
 def reconcile(wave, open_now, now=None):

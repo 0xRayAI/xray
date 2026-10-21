@@ -22,7 +22,7 @@ import { createArch1Launch, ARCH1_CANON, cardKeyOf } from './arch1-launch.mjs';
 import { configureWorkTrack, acceptCursorWebhook, appendWake, applyCloudOwners, boardCloudAgents, canonSeatToken, cloudIdsAlias, cloudTurnId, deriveTrackFromDir, displaySeat, isPacket, loadSeatAgentMap, openCloudTurns, readJsonl, readWakeRows, safePrUrl, seatForAgentId, stampCriticCloud, toToken } from './worktrack.mjs';
 import { wakeConfig, createWakeState, classifyBatch, gateLine, noteSent, releaseDue, publicStats, fullStats, restoreWakeBook, viewLine } from './wake-gate.mjs';
 const COLLECTOR_DIR_EARLY = () => path.join(path.dirname(fileURLToPath(import.meta.url)), 'collector');
-import { initArchive, appendArchive, backfillArchive, readArchive, validArchiveDate, KINDS as ARCHIVE_KINDS, cardHistory, archiveDays, archivedLineBytes } from './archive.mjs';
+import { initArchive, appendArchive, backfillArchive, readArchive, validArchiveDate, KINDS as ARCHIVE_KINDS, cardHistory, archiveDays, archivedLineBytes, appendTransition, transitionFromEvent, queryTransitions, exportTransitions } from './archive.mjs';
 import { pinnedOrigin } from './origin.mjs';
 import { missingHandoffs } from './handoff.mjs';
 import { clockStamp, writeStartAfter } from './chicago-stamp.mjs';
@@ -224,7 +224,11 @@ function ingestSrc(n, events, hdr, remove = null) {   // remove === null -> full
   if (events.some(e => e && e.kind === 'op_deploy')) {
     for (const n of SRC_PRIO) for (const [id, e] of SRCS[n].evs) if (e && (e.kind === 'deploy' || e.kind === 'deploy_fail') && e.src_file === 'github-api') touch(id);
   }
-  for (const e of events) appendArchive('events', e);
+  for (const e of events) {
+    appendArchive('events', e);
+    const row = transitionFromEvent(e);
+    if (row) appendTransition(row);
+  }
   for (const e of events) if (e && CI_KINDS.has(e.kind)) noteCi(e);
   if (n === 'github') {
     recomputeGithubDataAt();
@@ -1145,8 +1149,14 @@ function publishBoard(updatedCt, settled) {
   }
   recomputeGithubDataAt();
 }
+function takeTransitions(rows) {
+  if (!Array.isArray(rows)) return;
+  for (const row of rows) appendTransition(row);
+}
 function setCards(wb) {
-  if (!wb || !Array.isArray(wb.cards)) return;
+  if (!wb || typeof wb !== 'object') return;
+  takeTransitions(wb.transitions);
+  if (!Array.isArray(wb.cards)) return;
   const stamp = wb.updated_ct || new Date().toISOString();
   const sliced = wb.cards.slice(0, 200);
   const kept = acceptWaveCards(sliced, waveCards, {
@@ -3090,9 +3100,24 @@ async function handle(req, res) {
     if (!validArchiveDate(date) || !ARCHIVE_KINDS.includes(kind)) return json(req, res, 400, { error: 'bad date or kind' });
     return json(req, res, 200, { date, kind, lines: readArchive(date, kind).lines });
   }
-  if ((p === '/history' || p === '/history/cards') && m === 'GET') {
+  if ((p === '/history' || p === '/history/cards' || p === '/history/transitions' || p === '/history/export') && m === 'GET') {
     if (!validSession(req)) return json(req, res, 401, { error: 'unauthorized' });
-    if (p === '/history/cards') return json(req, res, 200, cardHistory());
+    const q = {
+      state: url.searchParams.get('state') || '',
+      card: url.searchParams.get('card') || '',
+      transition: url.searchParams.get('transition') || '',
+      since: url.searchParams.get('since') || '',
+      until: url.searchParams.get('until') || '',
+      limit: url.searchParams.get('limit') || '',
+      cursor: url.searchParams.get('cursor') || '',
+    };
+    if (p === '/history/export') {
+      const date = url.searchParams.get('date') || '';
+      if (!validArchiveDate(date)) return json(req, res, 400, { error: 'bad date' });
+      return send(req, res, 200, 'application/x-ndjson; charset=utf-8', exportTransitions(date));
+    }
+    if (p === '/history/transitions') return json(req, res, 200, queryTransitions(q));
+    if (p === '/history/cards') return json(req, res, 200, cardHistory(q));
     const date = url.searchParams.get('date') || '';
     if (!date) return json(req, res, 200, { days: archiveDays() });
     if (!validArchiveDate(date)) return json(req, res, 400, { error: 'bad date' });

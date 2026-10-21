@@ -4,7 +4,8 @@
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { chooseRepos, itemFromIssue, itemFromPull, loadSeats, parseGhPages, runBackfill } from '../app/history-backfill.mjs';
+import fs from 'node:fs';
+import { chooseRepos, itemFromIssue, itemFromPull, loadSeats, parseGhPages, runBackfill, runTransitionBackfill } from '../app/history-backfill.mjs';
 
 const FEED = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'feed', 'fleet-nodes.json');
 
@@ -71,8 +72,21 @@ async function main() {
   if (!repos.length) throw new Error('no repos');
   if (!opts.data) throw new Error('--data or MESH_DATA_DIR is required');
   const report = await runBackfill({
-    repos, dataDir: opts.data, write: opts.write, fetchItems, seats: loadSeats(FEED),
+    repos, dataDir: opts.data, write: opts.write, fetchItems, seats: loadSeats(FEED), keepItems: true,
   });
+  const items = report.items || [];
+  delete report.items;
+  let collector = [];
+  try {
+    const feed = JSON.parse(fs.readFileSync(path.join(opts.data, 'feed', 'github-events.json'), 'utf8'));
+    if (feed && Array.isArray(feed.events)) collector = feed.events;
+  } catch { /* no collector store */ }
+  const transitions = runTransitionBackfill({
+    dataDir: opts.data, items, collector, write: opts.write,
+  });
+  report.transitions = transitions.rows;
+  report.transitions_appended = transitions.appended;
+  report.unrestored_days = transitions.unrestored;
   console.log(JSON.stringify(report, null, 2));
 }
 

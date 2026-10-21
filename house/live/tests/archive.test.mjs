@@ -7,7 +7,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { initArchive, readArchive, project, validArchiveDate, appendArchive, loadedArchiveDays, archivedLineBytes } from '../app/archive.mjs';
+import { initArchive, readArchive, project, validArchiveDate, appendArchive, appendTransition, cardHistory, loadedArchiveDays, archivedLineBytes, transitionFromEvent } from '../app/archive.mjs';
+import { chicagoDay } from '../app/chicago-stamp.mjs';
 
 const APP = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app');
 
@@ -163,7 +164,7 @@ test('401 without the key; 400 for a bad date or kind; archive survives restart;
     const livePath = path.join(data, 'live', 'inbox', 'builder.jsonl');
     const live = fs.existsSync(livePath) ? fs.readFileSync(livePath, 'utf8') : '';
     assert.ok(!live.includes('old-line'));
-    const day = old.toISOString().slice(0, 10);
+    const day = chicagoDay(old.toISOString());
     const kept = await (await fetch(srv.base + `/archive?date=${day}&kind=inbox`, { headers: { Authorization: 'Bearer ' + key } })).json();
     assert.ok(kept.lines.some(l => l.id === 'old-line'));
     assert.ok(!JSON.stringify(kept.lines).includes('body'));
@@ -171,11 +172,11 @@ test('401 without the key; 400 for a bad date or kind; archive survives restart;
     await stop(srv.child);
     srv = start(data, { ...env, INGEST_SECRET: ingest });
     await srv.ready;
-    const again = await (await fetch(srv.base + `/archive?date=${ghTime.slice(0, 10)}&kind=events`, {
+    const again = await (await fetch(srv.base + `/archive?date=${chicagoDay(ghTime)}&kind=events`, {
       headers: { Authorization: 'Bearer ' + key },
     })).json();
     assert.equal(again.lines.filter(l => l.id === 'gh-seed').length, 1);
-    const box = await (await fetch(srv.base + `/archive?date=${boxTime.slice(0, 10)}&kind=events`, {
+    const box = await (await fetch(srv.base + `/archive?date=${chicagoDay(boxTime)}&kind=events`, {
       headers: { Authorization: 'Bearer ' + key },
     })).json();
     assert.equal(box.lines.filter(l => l.id === 'box-secret').length, 1);
@@ -200,7 +201,7 @@ test('one inbox line id on two seats (builder + builder-cloud) archives both; a 
   assert.equal(appendArchive('inbox', { ...line, seat: 'builder' }), false);
   initArchive(data);   // restart: dedupe survives
   assert.equal(appendArchive('inbox', { ...line, seat: 'builder-cloud' }), false);
-  const seats = readArchive('2026-10-13', 'inbox').lines.map(r => r.seat).sort();
+  const seats = readArchive('2026-10-12', 'inbox').lines.map(r => r.seat).sort();
   assert.deepEqual(seats, ['builder', 'builder-cloud']);
 });
 
@@ -216,4 +217,43 @@ test('#290 startup loads only the newest days; an older day loads on first appen
   assert.equal(appendArchive('events', { id: 'old-2026-09-01', t_ct: '2026-09-01T12:00:00Z' }), false);
   assert.deepEqual(loadedArchiveDays(), ['2026-09-01', '2026-10-12', '2026-10-13']);
   assert.equal(readArchive('2026-09-01', 'events').lines.length, 1);
+});
+
+test('a 19:00 CT event files on that Chicago day, and the same source appends once', () => {
+  const data = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-arch-ct-'));
+  initArchive(data);
+  const boundary = transitionFromEvent({
+    id: 'edge-1900', kind: 'merged', repo: 'Example/Repo', number: 19,
+    t_ct: '2026-10-21T00:00:00Z', title: 'nineteen', body: 'SENTINEL_BODY',
+  });
+  const half = transitionFromEvent({
+    id: 'edge-1930', kind: 'merged', repo: 'Example/Repo', number: 19,
+    t_ct: '2026-10-20T19:30:00-05:00', title: 'half', merged_by: 'forge',
+  });
+  assert.equal(boundary.t_ct, '2026-10-20T19:00:00-05:00');
+  assert.equal(half.t_ct, '2026-10-20T19:30:00-05:00');
+  assert.equal(appendTransition(boundary), true);
+  assert.equal(appendTransition(boundary), false);
+  assert.equal(appendTransition(half), true);
+  assert.equal(appendArchive('events', { id: 'edge-ev', t_ct: '2026-10-21T00:00:00Z', kind: 'push' }), true);
+  const file = path.join(data, 'archive', '2026-10-20', 'transitions.jsonl');
+  const lines = fs.readFileSync(file, 'utf8').trim().split('\n');
+  assert.equal(lines.length, 2);
+  assert.equal(fs.existsSync(path.join(data, 'archive', '2026-10-21', 'transitions.jsonl')), false);
+  assert.ok(!fs.readFileSync(file, 'utf8').includes('SENTINEL_BODY'));
+  assert.equal(readArchive('2026-10-20', 'events').lines.filter(row => row.id === 'edge-ev').length, 1);
+  assert.equal(readArchive('2026-10-21', 'events').lines.length, 0);
+  const index = path.join(data, 'archive', 'transition-index.json');
+  const stamped = JSON.parse(fs.readFileSync(index, 'utf8'));
+  fs.appendFileSync(file, JSON.stringify({
+    id: 'example/repo#19|closed|other', card: 'example/repo#19', transition: 'closed', t_ct: '2026-10-20T21:00:00-05:00', source_id: 'other',
+  }) + '\n');
+  initArchive(data);
+  assert.equal(cardHistory().cards.find(row => row.id === 'example/repo#19').verb, 'merged');
+  fs.rmSync(index);
+  initArchive(data);
+  assert.equal(cardHistory().cards.find(row => row.id === 'example/repo#19').transition, undefined);
+  assert.equal(cardHistory().cards.find(row => row.id === 'example/repo#19').verb, 'merged');
+  assert.equal(stamped.ids.includes('example/repo#19|merged|edge-1900'), true);
+  fs.rmSync(data, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 });
 });

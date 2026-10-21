@@ -2,7 +2,8 @@
 // Dry-run is the default. --write appends through the archive, which refuses an id it already has.
 import fs from 'node:fs';
 import path from 'node:path';
-import { appendArchive, initArchive, recordId } from './archive.mjs';
+import { appendArchive, initArchive, recordId, appendTransition, transitionFromEvent } from './archive.mjs';
+import { chicagoDay } from './chicago-stamp.mjs';
 
 const PARKED = /\b(parked|blocked|waiting|icebox)\b/i;
 const BC_ID = /\b(bc-[a-z0-9]+(?:-[a-z0-9]+)*)\b/gi;
@@ -327,6 +328,7 @@ export async function runBackfill(opts = {}) {
   return {
     dry_run: opts.write !== true,
     repos, errors,
+    ...(opts.keepItems ? { items } : {}),
     cards: plan.cards.length,
     closed_cards: plan.closedCards,
     events: plan.events.length,
@@ -340,4 +342,152 @@ export async function runBackfill(opts = {}) {
 
 export function tally(report) {
   return { cards: report.cards, events: report.events, skipped_cards: report.skipped_cards, skipped_events: report.skipped_events };
+}
+
+// Days the collector store never wrote. Listed until a transition lands on that Chicago date.
+export const MISSING_DAYS = Object.freeze([
+  '2026-08-20', '2026-08-21', '2026-08-22', '2026-08-23', '2026-08-25',
+  '2026-08-27', '2026-08-29', '2026-08-30', '2026-08-31', '2026-09-01',
+]);
+const TRANSITION_SINCE = Date.parse('2026-06-05T00:00:00-05:00');
+
+export function readArchiveEvents(dataDir) {
+  const events = [];
+  const days = [];
+  const root = path.join(dataDir || '', 'archive');
+  let names = [];
+  try { names = fs.readdirSync(root); } catch { return { events, days }; }
+  for (const day of names) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) continue;
+    days.push(day);
+    let text = '';
+    try { text = fs.readFileSync(path.join(root, day, 'events.jsonl'), 'utf8'); } catch { continue; }
+    for (const line of text.split('\n')) {
+      if (!line) continue;
+      try { events.push(JSON.parse(line)); } catch { /* truncated line */ }
+    }
+  }
+  return { events, days };
+}
+
+export function knownTransitionIds(dataDir) {
+  const root = path.join(dataDir || '', 'archive');
+  const index = path.join(root, 'transition-index.json');
+  try {
+    const parsed = JSON.parse(fs.readFileSync(index, 'utf8'));
+    if (Array.isArray(parsed.ids)) return new Set(parsed.ids.filter(id => typeof id === 'string'));
+  } catch { /* rebuild from the log */ }
+  const ids = new Set();
+  let names = [];
+  try { names = fs.readdirSync(root); } catch { return ids; }
+  for (const day of names) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) continue;
+    let text = '';
+    try { text = fs.readFileSync(path.join(root, day, 'transitions.jsonl'), 'utf8'); } catch { continue; }
+    for (const line of text.split('\n')) {
+      if (!line) continue;
+      try {
+        const row = JSON.parse(line);
+        if (row && row.id) ids.add(String(row.id));
+      } catch { /* truncated line */ }
+    }
+  }
+  return ids;
+}
+
+function eventsFromItem(item) {
+  if (!item || typeof item !== 'object') return [];
+  if (item.kind && item.id != null && item.t_ct && item.repo && item.number != null && !item.created_at) return [item];
+  if (!item.repo || !Number.isInteger(Number(item.number))) return [];
+  const number = Number(item.number);
+  const base = {
+    repo: item.repo, number, title: typeof item.title === 'string' ? item.title : '',
+    from: item.user || '', actor: item.user || '', author: item.user || '', credit: item.credit || '',
+  };
+  const out = [];
+  if (item.created_at) {
+    out.push({ ...base, id: `${item.repo}#${number}:open`, kind: item.kind === 'issue' ? 'issue_open' : 'pr_open', t_ct: item.created_at });
+  }
+  if (item.merged_at) {
+    out.push({ ...base, id: `${item.repo}#${number}:merged`, kind: 'merged', t_ct: item.merged_at, merged_by: item.merged_by || '' });
+  } else if (item.closed_at) {
+    out.push({ ...base, id: `${item.repo}#${number}:close`, kind: item.kind === 'issue' ? 'issue_close' : 'pr_close', t_ct: item.closed_at });
+  }
+  return out;
+}
+
+function pickLatest(prev, row) {
+  if (!prev) return row;
+  const prevT = Date.parse(prev.t_ct) || 0;
+  const nextT = Date.parse(row.t_ct) || 0;
+  if (prev.transition === 'merged' && row.transition === 'closed') return prev;
+  if (row.transition === 'reopened' && nextT >= prevT) return row;
+  if (prev.transition === 'merged' && row.transition !== 'merged' && row.transition !== 'reopened') return prev;
+  if (nextT > prevT) return row;
+  if (nextT < prevT) return prev;
+  return row;
+}
+
+export function planTransitionBackfill({ events, days, items, collector, seenIds } = {}) {
+  const seen = new Set(seenIds || []);
+  const rows = [];
+  const latest = new Map();
+  function pushEvent(e) {
+    const t = Date.parse(e && e.t_ct || '');
+    if (!Number.isFinite(t) || t < TRANSITION_SINCE) return;
+    const row = transitionFromEvent(e);
+    if (!row) return;
+    const id = `${row.card}|${row.transition}|${row.source_id}`;
+    if (seen.has(id)) return;
+    seen.add(id);
+    rows.push(row);
+    latest.set(row.card, pickLatest(latest.get(row.card), row));
+  }
+  for (const e of events || []) pushEvent(e);
+  const present = new Set(days || []);
+  const missing = new Set(MISSING_DAYS.filter(day => !present.has(day)));
+  function stillLive(card) {
+    const row = latest.get(card);
+    return !row || (row.transition !== 'merged' && row.transition !== 'closed');
+  }
+  for (const item of [...(items || []), ...(collector || [])]) {
+    for (const e of eventsFromItem(item)) {
+      const peek = transitionFromEvent(e);
+      if (!peek) continue;
+      const day = chicagoDay(e.t_ct);
+      if (!stillLive(peek.card) && !missing.has(day)) continue;
+      pushEvent(e);
+    }
+  }
+  const filled = new Set(rows.map(row => chicagoDay(row.t_ct)).filter(Boolean));
+  const unrestored = MISSING_DAYS.filter(day => !present.has(day) && !filled.has(day));
+  return { rows, unrestored };
+}
+
+export function applyTransitionBackfill(dataDir, plan, opts = {}) {
+  const rows = plan && Array.isArray(plan.rows) ? plan.rows : [];
+  const unrestored = plan && Array.isArray(plan.unrestored) ? plan.unrestored : [];
+  if (!opts.write) return { wrote: false, appended: 0, unrestored };
+  initArchive(dataDir);
+  let appended = 0;
+  for (const row of rows) if (appendTransition(row)) appended++;
+  const file = path.join(dataDir, 'archive', 'transitions-backfill.json');
+  const tmp = file + '.tmp';
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(tmp, JSON.stringify({ unrestored, appended }) + '\n');
+  fs.renameSync(tmp, file);
+  return { wrote: true, appended, unrestored };
+}
+
+export function runTransitionBackfill({ dataDir, items, collector, write } = {}) {
+  const sources = readArchiveEvents(dataDir);
+  const plan = planTransitionBackfill({
+    events: sources.events, days: sources.days, items, collector,
+    seenIds: knownTransitionIds(dataDir),
+  });
+  const applied = applyTransitionBackfill(dataDir, plan, { write: write === true });
+  return {
+    rows: plan.rows.length, unrestored: plan.unrestored,
+    wrote: applied.wrote, appended: applied.appended,
+  };
 }

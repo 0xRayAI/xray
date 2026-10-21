@@ -477,6 +477,22 @@ class Model(unittest.TestCase):
         settled = [c for c in m["settled"] if c["number"] == 90]
         self.assertEqual([(c["state"], c["stage"], c["verb"]) for c in settled], [("closed", "done", "merged")])
 
+    def test_transitions_are_kept_when_the_cap_and_the_14_day_filter_drop_the_card(self):
+        merge = self.ev(90, "merged", 1000)
+        evs = [self.ev(n, "issue_open", 600, title=f"open {n}", pr_state="open") for n in range(1, 46)]
+        evs += [self.ev(90, "pr_open", 5000, title="capped"), merge]
+        evs.append(self.ev(900, "issue_open", 20 * 86400, title="stale", pr_state="open"))
+        m = self.w.model(evs)
+        self.assertNotIn(90, {c["number"] for c in m["cards"]})
+        self.assertNotIn(900, {c["number"] for c in m["cards"] + m["settled"]})
+        merged = [t for t in m["transitions"] if t["card"].endswith("#90") and t["transition"] == "merged"]
+        self.assertEqual(len(merged), 1)
+        self.assertEqual(merged[0]["source_id"], merge["id"])
+        self.assertEqual((merged[0]["to_state"], merged[0]["to_stage"]), ("closed", "done"))
+        self.assertNotIn("body", merged[0])
+        opened = [t for t in m["transitions"] if t["card"].endswith("#900") and t["transition"] == "opened"]
+        self.assertEqual(len(opened), 1)
+
     def test_reconcile_closes_a_merged_packet_card(self):
         wave = {"cards": [
             {"key": f"{R}#485", "kind": "packet", "born": "packet", "state": "live", "repo": R, "number": 485, "stage": "open"},

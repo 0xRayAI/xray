@@ -7,7 +7,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { initArchive, appendArchive, cardHistory } from '../app/archive.mjs';
+import { initArchive, appendArchive, appendTransition, cardHistory } from '../app/archive.mjs';
 
 const APP = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app');
 const html = fs.readFileSync(path.join(APP, 'public', 'index.html'), 'utf8');
@@ -160,7 +160,7 @@ test('a CI push after a merge does not move the card clock; the queue does not d
     const file = path.join(data, 'live', 'inbox', 'forge.jsonl');
     assert.ok(fs.readFileSync(file, 'utf8').includes('line-1'));
     const cards = await (await fetch(srv.base + '/history/cards', { headers: { Cookie: cookie } })).json();
-    assert.ok(cards.cards.some(c => c.id === 'example/repo#7' && c.state === 'live' && !c.closed_ct));
+    assert.ok(cards.cards.some(c => c.id === 'example/repo#7' && c.state === 'closed' && c.verb === 'merged' && c.closed_ct));
   } finally {
     await stop(srv.child);
     fs.rmSync(data, { recursive: true, force: true });
@@ -422,11 +422,57 @@ test('a display drop and a merged packet stay in history, and a restart does not
       assert.equal(after['example/repo#493'].verb, 'merged');
       const still = new Set(archiveCardRows(data).map(row => row.id));
       for (const id of kept) assert.equal(still.has(id), true, id);
+      const listed = await (await fetch(second.srv.base + '/history/transitions?card=example/repo%23485', { headers: { Cookie: second.cookie } })).json();
+      assert.ok(listed.transitions.some(row => row.transition === 'merged' && row.card === 'example/repo#485'));
     } finally {
       await stop(second.srv.child);
     }
   } finally {
     if (first.srv.child.exitCode == null) await stop(first.srv.child);
+    fs.rmSync(data, { recursive: true, force: true });
+  }
+});
+
+test('transition pages do not repeat an id, and export rejects a bad date', async () => {
+  const data = fs.mkdtempSync(path.join(os.tmpdir(), 'board-page-'));
+  initArchive(data);
+  assert.equal(appendArchive('cards', {
+    key: 'example/repo#8', state: 'live', stage: 'review', title: 'Still live',
+    repo: 'example/repo', number: 8, t_ct: '2026-10-21T04:00:00Z', updated_ct: '2026-10-21T04:00:00Z',
+  }), true);
+  assert.equal(appendTransition({
+    card: 'example/repo#8', transition: 'opened', source_id: 'open-8', t_ct: '2026-10-20T12:00:00-05:00',
+    to_state: 'live', to_stage: 'review', actor: { seat: 'forge', login: 'forge', bc: '' }, packet: 'Still live',
+  }), true);
+  assert.equal(appendTransition({
+    card: 'example/repo#8', transition: 'merged', source_id: 'merge-8', t_ct: '2026-10-20T19:00:00-05:00',
+    to_state: 'closed', to_stage: 'done', actor: { seat: 'forge', login: 'forge', bc: 'bc-abc' }, packet: 'Still live',
+  }), true);
+  const srv = start(data, { SERVER_ROUTING: 'off', ARCHIVE_KEY: 'archive-key' });
+  try {
+    await ready(srv.base, srv.logs);
+    const bare = await fetch(srv.base + '/history/transitions');
+    assert.equal(bare.status, 401);
+    const locked = await fetch(srv.base + '/archive?date=2026-10-20&kind=events');
+    assert.equal(locked.status, 401);
+    const login = await fetch(srv.base + '/login', { method: 'POST', redirect: 'manual', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'password=' + encodeURIComponent(srv.password) });
+    const cookie = (login.headers.get('set-cookie') || '').split(';')[0];
+    const bad = await fetch(srv.base + '/history/export?date=2026-02-31', { headers: { Cookie: cookie } });
+    assert.equal(bad.status, 400);
+    const first = await (await fetch(srv.base + '/history/transitions?limit=1', { headers: { Cookie: cookie } })).json();
+    assert.equal(first.transitions.length, 1);
+    const second = await (await fetch(srv.base + '/history/transitions?limit=1&cursor=' + encodeURIComponent(first.transitions[0].id), { headers: { Cookie: cookie } })).json();
+    assert.equal(second.transitions.length, 1);
+    assert.notEqual(second.transitions[0].id, first.transitions[0].id);
+    const cards = await (await fetch(srv.base + '/history/cards?state=merged', { headers: { Cookie: cookie } })).json();
+    const card = cards.cards.find(row => row.id === 'example/repo#8');
+    assert.equal(card.verb, 'merged');
+    assert.equal(card.closed_ct, '2026-10-20T19:00:00-05:00');
+    const exported = await (await fetch(srv.base + '/history/export?date=2026-10-20', { headers: { Cookie: cookie } })).text();
+    assert.ok(exported.includes('example/repo#8|merged|merge-8'));
+    assert.ok(exported.includes('2026-10-20T19:00:00-05:00'));
+  } finally {
+    await stop(srv.child);
     fs.rmSync(data, { recursive: true, force: true });
   }
 });
