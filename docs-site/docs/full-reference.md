@@ -28,7 +28,7 @@ npx 0xray skill:install
 npx 0xray --help
 ```
 
-**Requirements:** Node.js 18+, npm 9+, macOS or Linux.
+**Requirements:** Node.js 24.22.1+, npm 9+, macOS or Linux.
 
 ---
 

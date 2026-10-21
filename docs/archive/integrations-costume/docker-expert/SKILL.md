@@ -90,19 +90,19 @@ You are an advanced Docker containerization expert with comprehensive, practical
 **Key techniques:**
 ```dockerfile
 # Optimized multi-stage pattern
-FROM node:18-alpine AS deps
+FROM node:24.22.1-alpine AS deps
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci --only=production && npm cache clean --force
 
-FROM node:18-alpine AS build
+FROM node:24.22.1-alpine AS build
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
 RUN npm run build && npm prune --production
 
-FROM node:18-alpine AS runtime
+FROM node:24.22.1-alpine AS runtime
 RUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001
 WORKDIR /app
 COPY --from=deps --chown=nextjs:nodejs /app/node_modules ./node_modules
@@ -126,7 +126,7 @@ CMD ["node", "dist/index.js"]
 **Security patterns:**
 ```dockerfile
 # Security-hardened container
-FROM node:18-alpine
+FROM node:24.22.1-alpine
 RUN addgroup -g 1001 -S appgroup && \
     adduser -S appuser -u 1001 -G appgroup
 WORKDIR /app
@@ -224,12 +224,12 @@ secrets:
 **Optimization techniques:**
 ```dockerfile
 # Minimal production image
-FROM gcr.io/distroless/nodejs18-debian11
+FROM node:24.22.1-bookworm-slim
 COPY --from=build /app/dist /app
 COPY --from=build /app/node_modules /app/node_modules
 WORKDIR /app
 EXPOSE 3000
-CMD ["index.js"]
+CMD ["node", "index.js"]
 ```
 
 ### 5. Development Workflow Integration
@@ -300,7 +300,7 @@ docker buildx build --platform linux/amd64,linux/arm64 \
 ### Build Cache Optimization
 ```dockerfile
 # Mount build cache for package managers
-FROM node:18-alpine AS deps
+FROM node:24.22.1-alpine AS deps
 WORKDIR /app
 COPY package*.json ./
 RUN --mount=type=cache,target=/root/.npm \

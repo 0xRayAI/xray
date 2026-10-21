@@ -26,7 +26,7 @@ Before starting, ensure you have:
 
 - [ ] 0xRay Framework development environment set up
 - [ ] Access to the project repository
-- [ ] Node.js 18+ and npm installed
+- [ ] Node.js 24.22.1+ and npm installed
 - [ ] Basic understanding of TypeScript/JavaScript
 
 ---

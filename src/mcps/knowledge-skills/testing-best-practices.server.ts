@@ -983,8 +983,8 @@ class XrayTestingBestPracticesServer extends XrayKnowledgeSkillBase {
     return {
       platform: ciPlatform,
       templates: {
-        "github-actions": `# .github/workflows/ci.yml\nname: CI\non: [push, pull_request]\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v3\n      - uses: actions/setup-node@v3\n        with:\n          node-version: '18'\n      - run: npm ci\n      - run: npm run build\n      - run: npm test`,
-        "gitlab-ci": `# .gitlab-ci.yml\nstages:\n  - test\ntest:\n  stage: test\n  image: node:18\n  script:\n    - npm ci\n    - npm run build\n    - npm test`,
+        "github-actions": `# .github/workflows/ci.yml\nname: CI\non: [push, pull_request]\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v3\n      - uses: actions/setup-node@v3\n        with:\n          node-version: '24.22.1'\n      - run: npm ci\n      - run: npm run build\n      - run: npm test`,
+        "gitlab-ci": `# .gitlab-ci.yml\nstages:\n  - test\ntest:\n  stage: test\n  image: node:24.22.1\n  script:\n    - npm ci\n    - npm run build\n    - npm test`,
       },
     };
   }

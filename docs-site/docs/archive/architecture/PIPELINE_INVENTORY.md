@@ -57,7 +57,7 @@ Tool/hook/action → frameworkLogger.log(...) → append activity.log (with time
 
 **Components/Files** (src/nucleus/ + support):
 - `src/nucleus/kernel.ts` (barrel: handleGovernRequest, thin-dispatch exports, pluginRegistry, SelfProposalEngine type, NUCLEUS_*)
-- `src/nucleus/orchestrator.ts` (NucleusOrchestrator: bootSequence 12 components w/ explicit deps map (configuration→...→framework-hooks), parallel/seq exec, validatePrerequisites (node>=18, dirs, package.json), init* methods (mostly no-op placeholders + counts for agents/MCPs), shutdown, dep validation/circular detect)
+- `src/nucleus/orchestrator.ts` (NucleusOrchestrator: bootSequence 12 components w/ explicit deps map (configuration→...→framework-hooks), parallel/seq exec, validatePrerequisites (node>=24.22.1, dirs, package.json), init* methods (mostly no-op placeholders + counts for agents/MCPs), shutdown, dep validation/circular detect)
 - `src/nucleus/thin-dispatch.ts` (scoreComplexity via ComplexityAnalyzer, routeToAgent via core mappings, scoreAndRoute; logs via frameworkLogger)
 - `src/nucleus/govern-http.ts` (handleGovernRequest pure handler (validate proposals array → getGovernanceService().govern), GovernHTTPAdapter tiny Express /govern)
 - `src/nucleus/plugin-registry.ts` (register/registerToolPlugin for skills + multi-tool (knowledge servers); callSkill/callSkillTool; defaults via default-plugins)
