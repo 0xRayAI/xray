@@ -57,17 +57,25 @@ SKIP = {"review", "goggles", "suit", "kits", "host-pack", "glossary", "index"}
 SANS = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
 BLACKOPS = str(SB / "assets/fonts/BlackOpsOne-Regular.ttf")
 BARLOW = str(SB / "assets/fonts/BarlowCondensed-Bold.ttf")
+BARLOW_SEMI = str(SB / "assets/fonts/BarlowCondensed-SemiBold.ttf")
 W = 1280
-WELL_L, WELL_R = 52, 1228
+WELL_L, WELL_R = 56, 1224
 TEXT_KEY = "xray-plate-flow"
 CYAN = (90, 214, 222)
-CYAN_DIM = (28, 92, 102)
-AMBER = (232, 168, 56)
-GREEN = (78, 196, 128)
-INK = (244, 246, 244)
-MUTED = (198, 204, 208)
+CYAN_DIM = (22, 78, 88)
+INK = (236, 238, 236)
+MUTED = (168, 178, 188)
 SHADOW = (12, 14, 16)
+RAINBOW = (
+    (235, 52, 52),
+    (245, 140, 30),
+    (245, 220, 40),
+    (60, 200, 90),
+    (50, 140, 245),
+    (150, 70, 230),
+)
 _POLY = metal_kit.poly_mask
+RAINBOW_ARROWS = False
 
 
 def bind_canvas(width: int, height: int) -> None:
@@ -157,20 +165,28 @@ def layer_node_boxes(lines: list[str]) -> list[list[Box]]:
     return rows
 
 
-def accent_for(name: str, index: int) -> tuple[int, int, int]:
-    upper = name.upper()
-    if "INPUT" in upper:
-        return CYAN
-    if "PROCESSING" in upper or "PROCESS" in upper:
-        return AMBER
-    if "OUTPUT" in upper:
-        return GREEN
-    cycle = (CYAN, AMBER, GREEN, (150, 170, 210))
-    return cycle[index % len(cycle)]
-
-
-def mix(base: tuple[int, int, int], tint: tuple[int, int, int], amount: float) -> tuple[int, int, int]:
-    return tuple(int(base[i] * (1 - amount) + tint[i] * amount) for i in range(3))
+def lead_line(text: str) -> str:
+    """Short cyan subtitle under the stencil title, when the plate already says it."""
+    parts = text.split("---", 2)
+    body = parts[2] if len(parts) == 3 else text
+    chunk: list[str] = []
+    for line in body.splitlines():
+        if line.startswith("#") or line.startswith("```"):
+            if chunk:
+                break
+            continue
+        if not line.strip():
+            if chunk:
+                break
+            continue
+        chunk.append(line.strip())
+    sentence = " ".join(chunk)
+    dot = sentence.find(". ")
+    if dot != -1:
+        sentence = sentence[:dot + 1]
+    if not sentence or len(sentence) > 68:
+        return ""
+    return sentence
 
 
 def font_at(path: str, size: int) -> ImageFont.FreeTypeFont:
@@ -206,13 +222,21 @@ def wrap_lines(text: str, font: ImageFont.FreeTypeFont, max_w: float) -> list[st
 
 
 def body_font_for(details: list[str], max_w: float) -> ImageFont.FreeTypeFont:
-    size = 18
-    while size > 12:
-        font = font_at(SANS, size)
+    size = 20
+    while size > 13:
+        font = font_at(BARLOW_SEMI, size)
         if all(float(font.getlength(word)) <= max_w for line in details for word in line.split(" ")):
             return font
         size -= 1
-    return font_at(SANS, 12)
+    return font_at(BARLOW_SEMI, 13)
+
+
+def arrow_inks(y: float) -> tuple[tuple[int, int, int], tuple[int, int, int]]:
+    if not RAINBOW_ARROWS:
+        return CYAN, CYAN_DIM
+    color = RAINBOW[int(y / 48) % len(RAINBOW)]
+    dim = tuple(max(0, channel // 3) for channel in color)
+    return color, dim
 
 
 def icon_kind(title: str) -> str:
@@ -246,7 +270,7 @@ def card_width(inner: int, count: int, gap: int) -> int:
 
 
 def content_width(width: int, numbered: bool) -> int:
-    gutter = 16 + (48 if numbered else 0) + 36 + 14
+    gutter = 18 + (46 if numbered else 0) + 36 + 16
     return max(40, width - gutter)
 
 
@@ -254,46 +278,48 @@ def measure_card(lines: list[str], width: int, numbered: bool) -> int:
     inner = content_width(width, numbered)
     title = lines[0].upper() if lines else ""
     details = lines[1:]
-    title_font = fit_width(BARLOW, title, inner, 28, 13)
+    title_font = fit_width(BARLOW, title, inner, 30, 14)
     body = body_font_for(details, inner)
     wrapped: list[str] = []
     for detail in details:
         wrapped.extend(wrap_lines(detail, body, inner))
-    title_h = max(32, title_font.size + 8)
-    return max(108, 14 + title_h + 8 + len(wrapped) * (body.size + 6) + 20)
+    title_h = max(34, title_font.size + 6)
+    return max(112, 18 + title_h + 8 + len(wrapped) * (body.size + 7) + 18)
 
 
-def layout(flow: dict, boxes: list[list[Box]]) -> tuple[int, list[dict], list[dict]]:
+def layout(flow: dict, boxes: list[list[Box]], header_bottom: int) -> tuple[int, list[dict], list[dict]]:
     """Place every card. Height grows with the text. Nothing is dropped."""
     inner = WELL_R - WELL_L - 36
-    y = 188
+    y = header_bottom + 22
     placed: list[dict] = []
     bands: list[dict] = []
+    stacked = all(len(layer["nodes"]) == 1 and not layer["name"] for layer in flow["layers"])
+    stack_step = 1
     for li, layer in enumerate(flow["layers"]):
         rows = row_groups(boxes[li])
-        numbered = "PROCESSING" in layer["name"].upper()
+        numbered = "PROCESSING" in layer["name"].upper() or (stacked and len(flow["layers"]) >= 3)
         multi = max(len(row) for row in rows)
         horizontal = _row_has_horizontal(flow, li, rows)
         band_top = y
-        cursor = y + 16
+        cursor = y + 8
         if layer["name"]:
-            cursor += 30
+            cursor += 28
         row_places: list[list[dict]] = []
         for ri, row in enumerate(rows):
-            gap = 54 if horizontal and len(row) > 1 else 18
+            gap = 64 if horizontal and len(row) > 1 else 20
             if len(row) == 1 and multi == 1 and not layer["name"]:
-                width = min(840, inner)
+                width = min(920, inner)
                 offset = (inner - width) // 2
                 widths = [width]
             elif len(row) == 1 and multi > 1:
-                width = card_width(inner, multi, 18)
+                width = card_width(inner, multi, 20)
                 offset = (inner - width) // 2
                 widths = [width]
             else:
                 offset = 0
                 widths = [card_width(inner, len(row), gap)] * len(row)
             heights = [
-                measure_card(flow["layers"][li]["nodes"][ni]["lines"], widths[i], numbered)
+                measure_card(flow["layers"][li]["nodes"][ni]["lines"], widths[i], numbered and len(row) == 1)
                 for i, (ni, _box) in enumerate(row)
             ]
             row_h = max(heights)
@@ -301,26 +327,29 @@ def layout(flow: dict, boxes: list[list[Box]]) -> tuple[int, list[dict], list[di
             cards = []
             for i, (ni, _box) in enumerate(row):
                 rect = (x, cursor, x + widths[i], cursor + row_h)
-                cards.append({"layer": li, "index": ni, "row": ri, "rect": rect})
+                number = ""
+                if numbered and len(row) == 1:
+                    number = str(stack_step if stacked else ni + 1)
+                    stack_step += 1
+                cards.append({"layer": li, "index": ni, "row": ri, "rect": rect, "number": number})
                 x += widths[i] + gap
             row_places.append(cards)
             cursor += row_h
             if ri < len(rows) - 1:
-                cursor += 58
-        cursor += 16
+                cursor += 72
+        cursor += 10
         bands.append({
             "rect": (WELL_L, band_top, WELL_R, cursor),
             "name": layer["name"],
-            "accent": accent_for(layer["name"], li),
             "rows": row_places,
         })
         placed.extend(card for row in row_places for card in row)
-        y = cursor + (62 if li < len(flow["layers"]) - 1 else 0)
+        y = cursor + (72 if li < len(flow["layers"]) - 1 else 0)
     note_h = 0
     if flow["notes"]:
-        note_font = font_at(SANS, 16)
+        note_font = font_at(BARLOW_SEMI, 18)
         for note in flow["notes"]:
-            note_h += 22 * max(1, len(wrap_lines(note, note_font, inner)))
+            note_h += 24 * max(1, len(wrap_lines(note, note_font, inner)))
         note_h += 16
     foot_top = y + 12 + note_h
     height = foot_top + 78 + 36
@@ -339,46 +368,51 @@ def _row_has_horizontal(flow: dict, layer: int, rows: list[list[tuple[int, Box]]
 
 
 def draw_down_arrow(draw: ImageDraw.ImageDraw, x: float, y0: float, y1: float) -> None:
-    if y1 < y0 + 16:
-        y1 = y0 + 16
-    head_h = 16
+    if y1 < y0 + 22:
+        y1 = y0 + 22
+    ink, dim = arrow_inks((y0 + y1) / 2)
+    head_h = 22
     shaft = y1 - head_h
-    draw.rectangle((x - 9, y0, x + 9, shaft), fill=CYAN_DIM)
-    draw.polygon([(x - 20, shaft), (x + 20, shaft), (x, y1 + 2)], fill=CYAN_DIM)
-    draw.rectangle((x - 5, y0, x + 5, shaft), fill=CYAN)
-    draw.polygon([(x - 13, shaft - 1), (x + 13, shaft - 1), (x, y1)], fill=CYAN)
+    draw.rectangle((x - 14, y0, x + 14, shaft), fill=dim)
+    draw.polygon([(x - 28, shaft - 2), (x + 28, shaft - 2), (x, y1 + 4)], fill=dim)
+    draw.rectangle((x - 8, y0, x + 8, shaft), fill=ink)
+    draw.polygon([(x - 18, shaft - 1), (x + 18, shaft - 1), (x, y1)], fill=ink)
 
 
 def draw_stem(draw: ImageDraw.ImageDraw, x: float, y0: float, y1: float) -> None:
     top, bot = sorted((y0, y1))
-    draw.rectangle((x - 7, top, x + 7, bot), fill=CYAN_DIM)
-    draw.rectangle((x - 4, top, x + 4, bot), fill=CYAN)
+    ink, dim = arrow_inks((top + bot) / 2)
+    draw.rectangle((x - 12, top, x + 12, bot), fill=dim)
+    draw.rectangle((x - 7, top, x + 7, bot), fill=ink)
 
 
 def draw_bar(draw: ImageDraw.ImageDraw, x0: float, x1: float, y: float) -> None:
     left, right = sorted((x0, x1))
-    draw.rectangle((left, y - 7, right, y + 7), fill=CYAN_DIM)
-    draw.rectangle((left, y - 4, right, y + 4), fill=CYAN)
+    ink, dim = arrow_inks(y)
+    draw.rectangle((left, y - 12, right, y + 12), fill=dim)
+    draw.rectangle((left, y - 7, right, y + 7), fill=ink)
 
 
 def draw_right_arrow(draw: ImageDraw.ImageDraw, x0: float, x1: float, y: float) -> None:
-    if x1 < x0 + 16:
-        x1 = x0 + 16
-    head = x1 - 14
-    draw.rectangle((x0, y - 7, head, y + 7), fill=CYAN_DIM)
-    draw.polygon([(head, y - 16), (head, y + 16), (x1 + 2, y)], fill=CYAN_DIM)
-    draw.rectangle((x0, y - 4, head, y + 4), fill=CYAN)
-    draw.polygon([(head - 1, y - 11), (head - 1, y + 11), (x1, y)], fill=CYAN)
+    if x1 < x0 + 22:
+        x1 = x0 + 22
+    ink, dim = arrow_inks(y)
+    head = x1 - 20
+    draw.rectangle((x0, y - 12, head, y + 12), fill=dim)
+    draw.polygon([(head - 2, y - 24), (head - 2, y + 24), (x1 + 4, y)], fill=dim)
+    draw.rectangle((x0, y - 7, head, y + 7), fill=ink)
+    draw.polygon([(head - 1, y - 16), (head - 1, y + 16), (x1, y)], fill=ink)
 
 
 def draw_left_arrow(draw: ImageDraw.ImageDraw, x0: float, x1: float, y: float) -> None:
     """Head at the smaller x."""
     left, right = (x1, x0) if x1 < x0 else (x0, x1)
-    head = left + 14
-    draw.rectangle((head, y - 7, right, y + 7), fill=CYAN_DIM)
-    draw.polygon([(head, y - 16), (head, y + 16), (left - 2, y)], fill=CYAN_DIM)
-    draw.rectangle((head, y - 4, right, y + 4), fill=CYAN)
-    draw.polygon([(head + 1, y - 11), (head + 1, y + 11), (left, y)], fill=CYAN)
+    ink, dim = arrow_inks(y)
+    head = left + 20
+    draw.rectangle((head, y - 12, right, y + 12), fill=dim)
+    draw.polygon([(head + 2, y - 24), (head + 2, y + 24), (left - 4, y)], fill=dim)
+    draw.rectangle((head, y - 7, right, y + 7), fill=ink)
+    draw.polygon([(head + 1, y - 16), (head + 1, y + 16), (left, y)], fill=ink)
 
 
 def center_bottom(rect: tuple[int, int, int, int]) -> tuple[float, float]:
@@ -526,56 +560,50 @@ def draw_glyph(draw: ImageDraw.ImageDraw, kind: str, box: tuple[int, int, int, i
 
 
 def draw_cards(draw: ImageDraw.ImageDraw, flow: dict, bands: list[dict]) -> None:
-    label_font = font_at(BARLOW, 22)
+    label_font = font_at(BARLOW, 18)
     for band in bands:
-        accent = band["accent"]
         rect = band["rect"]
-        draw.rounded_rectangle(rect, radius=16, outline=accent, width=2)
         if band["name"]:
-            draw.text((rect[0] + 18, rect[1] + 8), band["name"].upper(), font=label_font, fill=accent)
-        numbered = "PROCESSING" in band["name"].upper()
-        step = 1
+            draw.text((rect[0] + 18, rect[1] + 2), band["name"].upper(), font=label_font, fill=CYAN)
         for row in band["rows"]:
             for card in row:
                 lines = flow["layers"][card["layer"]]["nodes"][card["index"]]["lines"]
-                _draw_card(draw, lines, card["rect"], accent, f"{step:02d}" if numbered else "")
-                if numbered:
-                    step += 1
+                _draw_card(draw, lines, card["rect"], card["number"])
 
 
 def _draw_card(
     draw: ImageDraw.ImageDraw,
     lines: list[str],
     rect: tuple[int, int, int, int],
-    accent: tuple[int, int, int],
     number: str,
 ) -> None:
     x0, y0, x1, y1 = rect
-    draw.rectangle((x0, y0, x0 + 6, y1), fill=accent)
+    draw.rounded_rectangle((x0 - 3, y0 - 3, x1 + 3, y1 + 3), radius=16, outline=CYAN_DIM, width=4)
+    draw.rounded_rectangle(rect, radius=14, outline=CYAN, width=2)
     title = lines[0].upper() if lines else ""
     details = lines[1:]
-    cursor_x = x0 + 16
+    cursor_x = x0 + 18
     if number:
-        tile = (cursor_x, y0 + 14, cursor_x + 40, y0 + 40)
-        draw.rounded_rectangle(tile, 6, fill=accent)
-        num_font = fit_width(BARLOW, number, 32, 20, 14)
+        tile = (cursor_x, y0 + 16, cursor_x + 36, y0 + 52)
+        draw.rounded_rectangle(tile, 6, outline=CYAN, width=2)
+        num_font = fit_width(BARLOW, number, 28, 22, 14)
         nb = num_font.getbbox(number)
         draw.text(
-            (tile[0] + (40 - (nb[2] - nb[0])) / 2, tile[1] + (26 - (nb[3] - nb[1])) / 2 - nb[1]),
+            (tile[0] + (36 - (nb[2] - nb[0])) / 2, tile[1] + (36 - (nb[3] - nb[1])) / 2 - nb[1]),
             number,
             font=num_font,
-            fill=(16, 18, 20),
+            fill=CYAN,
         )
-        cursor_x += 48
-    icon = (cursor_x, y0 + 14, cursor_x + 28, y0 + 42)
-    draw_glyph(draw, icon_kind(lines[0] if lines else ""), icon, accent)
+        cursor_x += 46
+    icon = (cursor_x, y0 + 16, cursor_x + 26, y0 + 42)
+    draw_glyph(draw, icon_kind(lines[0] if lines else ""), icon, CYAN)
     cursor_x += 36
     inner_w = content_width(x1 - x0, bool(number))
-    title_font = fit_width(BARLOW, title, inner_w, 28, 13)
-    title_h = max(32, title_font.size + 8)
-    draw.text((cursor_x, y0 + 14), title, font=title_font, fill=INK)
+    title_font = fit_width(BARLOW, title, inner_w, 30, 14)
+    title_h = max(34, title_font.size + 6)
+    draw.text((cursor_x, y0 + 16), title, font=title_font, fill=INK)
     body = body_font_for(details, inner_w)
-    y = y0 + 14 + title_h + 8
+    y = y0 + 16 + title_h + 8
     drawn = title.split()
     for detail in details:
         for line in wrap_lines(detail, body, inner_w):
@@ -583,7 +611,7 @@ def _draw_card(
                 raise RuntimeError(f"card clipped text: {detail}")
             draw.text((cursor_x, y), line, font=body, fill=MUTED)
             drawn.extend(line.split())
-            y += body.size + 6
+            y += body.size + 7
     if [word.casefold() for word in drawn] != [word.casefold() for word in " ".join(lines).split()]:
         raise RuntimeError(f"card dropped words from {lines[0] if lines else ''}")
 
@@ -634,70 +662,70 @@ def render(md_path: Path, out_path: Path) -> None:
         for node, box in zip(layer["nodes"], brows):
             if node["lines"] != node_text(lines, box):
                 raise RuntimeError(f"{md_path.name} node text drifted")
+    global RAINBOW_ARROWS
     meta = frontmatter(text)
     title = meta.get("title", md_path.stem).upper()
-    version, suffix = footer_parts(footer_line(text))
-    badge = f"STAMPED {version}".strip()
-    height, bands, _placed = layout(flow, boxes)
+    subtitle = lead_line(text)
+    stamp = footer_line(text)
+    RAINBOW_ARROWS = resolve_accent(title) == "rainbow"
+    name_top = 56
+    name_h = 138 if subtitle else 112
+    name = (64, name_top, W - 64, name_top + name_h)
+    height, bands, _placed = layout(flow, boxes, name[3])
     bind_canvas(W, height)
 
-    arr = metal_kit.metal(height, W, 41, (54, 54, 55), 0.16, pits=0.0)
+    arr = metal_kit.metal(height, W, 41, (36, 38, 40), 0.12, pits=0.0)
     arr, _tray = outer_frame(arr, inset=6, band=22, radius=24, bolts=True)
-    name = (64, 58, W - 64, 166)
-    arr, _name_m = raised_plaque(arr, name, 7, tone=(66, 68, 71), radius=10, rivet_r=0)
-    groove = (name[0] + 220, name[3] - 16, name[2] - 28, name[3] - 10)
+    arr, _name_m = raised_plaque(arr, name, 7, tone=(58, 60, 64), radius=12, rivet_r=0)
+    groove = (name[0] + 24, name[3] - 14, name[2] - 24, name[3] - 8)
     groove_mask = _RECT(groove, 2, (W, height))
-    arr = glow(arr, groove_mask, CYAN, 6, 0.85)
-    arr = paint(arr, groove_mask, CYAN, 0.95)
+    arr = glow(arr, groove_mask, CYAN, 5, 0.7)
+    arr = paint(arr, groove_mask, CYAN, 0.9)
     for band in bands:
-        tone = mix((30, 32, 36), band["accent"], 0.16)
-        arr, _m = recessed_tray(arr, band["rect"], radius=16, depth=4, soft=2.2, floor_tone=tone, seed=80)
         for row in band["rows"]:
             for card in row:
                 rect = card["rect"]
-                rad = max(4, min(10, (rect[2] - rect[0]) // 8, (rect[3] - rect[1]) // 8))
                 arr, _cm = raised_plaque(
                     arr, rect, 200 + card["layer"] * 20 + card["index"],
-                    tone=(72, 74, 78), radius=rad, rivet_r=0,
-                    shadow=(3, 4, 5, 0.6), bevel=(2, 1.2, 0.5, 0.62),
+                    tone=(64, 68, 74), radius=14, rivet_r=0,
+                    shadow=(4, 5, 6, 0.55), bevel=(2, 1.2, 0.45, 0.55),
                 )
-    foot = (64, height - 96, W - 64, height - 32)
-    arr, _fm = raised_plaque(arr, foot, 9, tone=(48, 54, 58), radius=10, rivet_r=0,
-                             shadow=(3, 4, 5, 0.55), bevel=(2, 1.2, 0.5, 0.6))
+    foot = (72, height - 92, W - 72, height - 36)
+    arr, _fm = recessed_tray(arr, foot, radius=12, depth=4, soft=2.2, floor_tone=(24, 30, 34), seed=9)
     img = to_img(arr).convert("RGBA")
-    logo = draw_0xray_logo(200, bg="transparent")
-    img.alpha_composite(logo, (name[0] + 16, name[1] + (108 - logo.size[1]) // 2))
+    logo = draw_0xray_logo(188, bg="transparent")
+    img.alpha_composite(logo, (name[0] + 18, name[1] + 16))
     draw = ImageDraw.Draw(img)
-    title_font = fit_width(BLACKOPS, title, name[2] - name[0] - 430, 52, 18)
+    title_font = fit_width(BLACKOPS, title, name[2] - name[0] - 280, 54, 20)
     tb = title_font.getbbox(title)
-    tx, ty = name[0] + 230, name[1] + 18 - tb[1]
-    draw.text((tx + 1, ty + 1), title, font=title_font, fill=SHADOW)
+    tx, ty = name[0] + 220, name[1] + 18 - tb[1]
+    draw.text((tx + 2, ty + 2), title, font=title_font, fill=SHADOW)
     draw.text((tx, ty), title, font=title_font, fill=INK)
-    plate_font = font_at(BARLOW, 22)
-    draw.text((tx + float(title_font.getlength(title)) + 14, ty + 18), "PLATE", font=plate_font, fill=CYAN)
-    if resolve_accent(title) == "rainbow":
-        colors = ((235, 52, 52), (245, 140, 30), (245, 220, 40), (60, 200, 90), (50, 140, 245), (150, 70, 230))
+    if subtitle:
+        sub_font = fit_width(BARLOW_SEMI, subtitle, name[2] - name[0] - 280, 22, 14)
+        draw.text((tx, ty + (tb[3] - tb[1]) + 8), subtitle, font=sub_font, fill=CYAN)
+    if RAINBOW_ARROWS:
         span = groove[2] - groove[0]
-        for i, color in enumerate(colors):
+        for i, color in enumerate(RAINBOW):
             seg = (groove[0] + span * i / 6, groove[1], groove[0] + span * (i + 1) / 6, groove[3])
             draw.rectangle(seg, fill=color)
-    label_font = font_at(SANS, 15)
+    label_font = font_at(BARLOW_SEMI, 16)
     draw_flow_arrows(draw, flow, bands, label_font)
     draw_cards(draw, flow, bands)
     if flow["notes"]:
-        note_font = font_at(SANS, 16)
-        ny = bands[-1]["rect"][3] + 18
+        note_font = font_at(BARLOW_SEMI, 18)
+        ny = bands[-1]["rect"][3] + 16
         for note in flow["notes"]:
             for line in wrap_lines(note, note_font, WELL_R - WELL_L - 36):
                 draw.text((WELL_L + 12, ny), line, font=note_font, fill=MUTED)
-                ny += 22
-    badge_font = fit_width(BARLOW, badge, 420, 32, 18)
-    bb = badge_font.getbbox(badge)
+                ny += 24
+    badge_font = fit_width(BARLOW, stamp, foot[2] - foot[0] - 48, 28, 16)
+    bb = badge_font.getbbox(stamp or " ")
+    bw = bb[2] - bb[0]
     by = foot[1] + (foot[3] - foot[1] - (bb[3] - bb[1])) / 2 - bb[1]
-    draw.text((foot[0] + 28, by), badge, font=badge_font, fill=CYAN)
-    if suffix:
-        suf_font = font_at(SANS, 16)
-        draw.text((foot[0] + 40 + float(badge_font.getlength(badge)), by + 8), suffix, font=suf_font, fill=MUTED)
+    draw.text((foot[0] + (foot[2] - foot[0] - bw) / 2, by), stamp, font=badge_font, fill=CYAN)
+    draw.rounded_rectangle((40, 40, W - 40, height - 40), radius=18, outline=CYAN_DIM, width=5)
+    draw.rounded_rectangle((44, 44, W - 44, height - 44), radius=16, outline=CYAN, width=2)
 
     rgb = img.convert("RGB")
     if rgb.size != (W, height):
