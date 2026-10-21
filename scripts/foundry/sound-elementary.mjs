@@ -21,9 +21,13 @@ const SR = P.SAMPLE_RATE;
 
 const CUES = {
   air: 2.6,
+  drop: 5.2,
   cut: 15.6,
   final: 17.37,
 };
+
+const BASS_ROOTS = [36, 29, 32, 31];
+const BASS_VEL = [0.8, 1, 0.62, 0.9, 0.7, 0.95, 0.58, 0.84];
 
 const PROG = [
   [60, 63, 67, 72],
@@ -199,4 +203,62 @@ export async function renderLowSawPad(n, sampleRate) {
     synthesis: "@elemaudio/core",
     license: "MIT",
   };
+}
+
+function bassInBody(t) {
+  return (t >= CUES.drop && t < CUES.cut) || t >= CUES.final;
+}
+
+function bassRootAt(t) {
+  const i = Math.floor(t / SEG);
+  return BASS_ROOTS[((i % 4) + 4) % 4];
+}
+
+/** v8lib bass: lowpassed sine sub, and the same sine plus its 3rd and 5th through a falling lowpass. */
+export async function renderLibBass(n, sampleRate) {
+  if (sampleRate !== SR) throw new Error(`bass sample rate ${sampleRate}`);
+  const bassA = filled(n, 0);
+  const bassF = filled(n, P.midiHz(36));
+  const bassC = filled(n, 140);
+  const step = BEAT / 4;
+  let placed = 0;
+  for (let i = 0; ; i++) {
+    const t = CUES.drop + i * step;
+    if (t >= SECONDS - 0.05) break;
+    if (!bassInBody(t) || i % 4 === 0) continue;
+    const vel = BASS_VEL[placed % BASS_VEL.length];
+    placed += 1;
+    const hz = P.midiHz(bassRootAt(t));
+    const i0 = Math.floor(t * SR);
+    const count = Math.floor(0.09 * SR);
+    for (let k = 0; k < count && i0 + k < n; k++) {
+      const time = k / SR;
+      const attack = time < 0.006 ? time / 0.006 : 1;
+      bassA[i0 + k] = Math.exp(-time / 0.04) * attack * vel;
+      bassF[i0 + k] = hz * Math.pow(0.97, time / 0.09);
+      bassC[i0 + k] = 90 + (220 - 90) * Math.exp(-time / 0.03);
+    }
+  }
+  const core = new OfflineRenderer();
+  await core.initialize({
+    numInputChannels: 0,
+    numOutputChannels: 2,
+    sampleRate: SR,
+    blockSize: 128,
+    virtualFileSystem: { bassA, bassF, bassC },
+  });
+  const phase = el.phasor(1 / SECONDS);
+  const amp = el.table({ path: "bassA" }, phase);
+  const freq = el.table({ path: "bassF" }, phase);
+  const tone = el.add(
+    el.cycle(freq),
+    el.mul(0.34, el.cycle(el.mul(3, freq))),
+    el.mul(0.16, el.cycle(el.mul(5, freq))),
+  );
+  const sub = el.mul(amp, el.lowpass(140, 0.7, el.cycle(freq)));
+  const mid = el.mul(amp, el.lowpass(el.table({ path: "bassC" }, phase), 0.7, tone));
+  const outs = [new Float32Array(n), new Float32Array(n)];
+  await core.render(sub, mid);
+  core.process([], outs);
+  return { sub: toFloat64(outs[0]), mid: toFloat64(outs[1]) };
 }
