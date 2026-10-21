@@ -59,6 +59,6 @@ A packet post creates the card; the chat refuses a missing card id; the cloud ag
 
 Code lives under `house/live/` (collector, board, inbox routing, server). `house/live/feed/live_mesh.py` runs the collector and the board. `house/live-mesh/fetch_feed.py` is the upstream feed the deploy assembles. Deploy only via `house/live/app/deploy.sh`. A Railway build straight from git stops in the Dockerfile with `ERROR: collector/ is not assembled`. The plate that belongs here is house.
 
-`evalNudges` is the nudge path (`house/live/app/server.mjs:1180`, named at `:758`). Tripwire minutes default 30 (`server.mjs:1583-1585`). Cloud agents are board rows (`server.mjs:1437-1440`). `LIVE_URL` is `house/live/docs/board.md:9`. The seat doctor reads it (`grok-bot/lib/seat-doctor.cjs:661`). `server.mjs` does not.
+`evalNudges` is the nudge path (`house/live/app/server.mjs:1234`, named at `:762`). Tripwire minutes default 30 (`server.mjs:1656`). Cloud agents are board rows (`server.mjs:1491`, copied onto the board at `:1494`). `LIVE_URL` is `house/live/docs/board.md:9`. The seat doctor reads it (`grok-bot/lib/seat-doctor.cjs:661`). `server.mjs` does not.
 
 stamped · 0xray 4.1.3

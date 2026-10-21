@@ -20,7 +20,7 @@ The hook chain on a tool call. It does not replace pre-tool, delegation-gate, le
 │   ┌────────────────────────────┐ ┌─────────────────────────┐ │
 │   │ Cursor                     │ │ Grok                    │ │
 │   │ empty input deny           │ │ evaluatePreToolGate     │ │
-│   │ evaluatePreToolGate        │ │ Codex 2 and 7 on writes │ │
+│   │ evaluatePreToolGate        │ │ 2+7 on top of 11+29     │ │
 │   │ Codex 11 and 29 on writes  │ │ lensBeforeResearch      │ │
 │   │ lensDecision               │ │ repertoireRoute         │ │
 │   │ repertoireRoute            │ │ a thrown load denies    │ │
