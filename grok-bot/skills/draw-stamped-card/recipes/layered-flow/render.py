@@ -11,11 +11,13 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import inspect
 import json
-import math
+import re
 import struct
 import subprocess
 import sys
+import xml.etree.ElementTree as ET
 import zlib
 from pathlib import Path
 
@@ -45,7 +47,6 @@ from metal_kit import (  # noqa: E402
     rect_mask as _RECT,
     to_img,
 )
-from accent import resolve_accent  # noqa: E402
 from draw_0xray_logo import draw_0xray_logo  # noqa: E402
 
 metal_kit._metal_orig = metal_kit.metal
@@ -61,19 +62,56 @@ BARLOW_SEMI = str(SB / "assets/fonts/BarlowCondensed-SemiBold.ttf")
 W = 1280
 WELL_L, WELL_R = 56, 1224
 TEXT_KEY = "xray-plate-flow"
-CYAN = (90, 214, 222)
-CYAN_DIM = (22, 78, 88)
-INK = (236, 238, 236)
-MUTED = (168, 178, 188)
-SHADOW = (12, 14, 16)
-RAINBOW = (
-    (235, 52, 52),
-    (245, 140, 30),
-    (245, 220, 40),
-    (60, 200, 90),
-    (50, 140, 245),
-    (150, 70, 230),
-)
+KIT_PATH = ROOT / "plates/kit.json"
+ICONS_DIR = ROOT / "plates/icons"
+KIT = json.loads(KIT_PATH.read_text(encoding="utf8"))
+ICONS = json.loads((ICONS_DIR / "icons.json").read_text(encoding="utf8"))
+
+
+def _rgb(value: list[int]) -> tuple[int, int, int]:
+    return (int(value[0]), int(value[1]), int(value[2]))
+
+
+def palette_color(name: str) -> tuple[int, int, int]:
+    """A line or ink color from the kit. Anything else is refused."""
+    palette = KIT["palette"]
+    if name not in palette or name in {"default", "rainbow"}:
+        raise KeyError(name)
+    value = palette[name]
+    if not isinstance(value, list):
+        raise KeyError(name)
+    return _rgb(value)
+
+
+def rainbow_colors() -> tuple[tuple[int, int, int], ...]:
+    colors = tuple(_rgb(item) for item in KIT["palette"]["rainbow"])
+    if len(colors) != 6:
+        raise RuntimeError("rainbow is outside the kit")
+    return colors
+
+
+def rainbow_for(title: str) -> bool:
+    upper = title.upper()
+    return any(str(name).upper() in upper for name in KIT["rainbowTitles"])
+
+
+CYAN = palette_color("cyan")
+CYAN_DIM = palette_color("cyanDim")
+INK = palette_color("ink")
+MUTED = palette_color("muted")
+SHADOW = palette_color("shadow")
+RAINBOW = rainbow_colors()
+RAIL_WIDTH = int(KIT["line"]["railWidth"])
+RAIL_GLOW = int(KIT["line"]["railGlow"])
+GLOW_FACTOR = float(KIT["line"]["glowFactor"])
+HEAD_SHAPE = str(KIT["line"]["arrowhead"]["shape"])
+HEAD_LEN = int(KIT["line"]["arrowhead"]["length"])
+HEAD_HALF = int(KIT["line"]["arrowhead"]["halfWidth"])
+HEAD_GLOW_HALF = int(KIT["line"]["arrowhead"]["glowHalfWidth"])
+if HEAD_SHAPE != "triangle":
+    raise RuntimeError(f"arrow style outside the kit: {HEAD_SHAPE}")
+if KIT["palette"].get("default") != "cyan":
+    raise RuntimeError("default color is outside the kit")
 _POLY = metal_kit.poly_mask
 RAINBOW_ARROWS = False
 # These arrows are drawn, not taken from a font. Barlow has no → glyph.
@@ -416,19 +454,42 @@ def title_layout(title: str, max_w: float) -> tuple[ImageFont.FreeTypeFont, list
 
 
 def icon_kind(title: str) -> str:
+    """The kit's match list. The last empty rule is the fallback kind."""
     text = title.lower()
-    table = (
-        ("doc", ("file", "log", "json", "path", ".md", "write")),
-        ("user", ("agent", "seat", "owner", "user")),
-        ("bars", ("score", "threshold", "heat", "metric")),
-        ("eye", ("lens", "look", "goggle", "visor")),
-        ("branch", ("route", "dispatch", "gate")),
-        ("stack", ("memory", "station", "layer")),
-    )
-    for kind, keys in table:
+    fallback = ""
+    for rule in KIT["iconMatch"]:
+        kind = str(rule["kind"])
+        keys = [str(key) for key in rule["when"]]
+        if not keys:
+            fallback = kind
+            continue
         if any(key in text for key in keys):
+            if kind not in ICONS:
+                raise KeyError(f"unknown icon kind: {kind}")
             return kind
-    return ("dot", "hex", "diamond", "ring")[sum(ord(ch) for ch in title) % 4]
+    if not fallback or fallback not in ICONS:
+        raise KeyError(f"unknown icon kind: {fallback or title}")
+    return fallback
+
+
+def icon_file(kind: str) -> Path:
+    try:
+        name = ICONS[kind]
+    except KeyError as exc:
+        raise KeyError(f"unknown icon kind: {kind}") from exc
+    if not isinstance(name, str):
+        raise KeyError(f"unknown icon kind: {kind}")
+    path = ICONS_DIR / name
+    if not path.is_file():
+        raise FileNotFoundError(f"missing SVG: {name}")
+    return path
+
+
+def badge_plan(number: str) -> str:
+    """Ordered steps are numbered. Every other card is an icon. Never both."""
+    if number:
+        return "number"
+    return "icon"
 
 
 def row_groups(boxes: list[Box]) -> list[list[tuple[int, Box]]]:
@@ -446,7 +507,8 @@ def card_width(inner: int, count: int, gap: int) -> int:
 
 
 def content_width(width: int, numbered: bool) -> int:
-    gutter = 18 + (46 if numbered else 0) + 36 + 16
+    badge = 46 if numbered else 36
+    gutter = 18 + badge + 16
     return max(40, width - gutter)
 
 
@@ -582,7 +644,8 @@ def _shade(color: tuple[int, int, int], factor: float) -> tuple[int, int, int]:
 def _paint_span(draw: ImageDraw.ImageDraw, box: tuple[float, float, float, float], along: str, factor: float) -> None:
     x0, y0, x1, y1 = box
     if not RAINBOW_ARROWS:
-        draw.rectangle((x0, y0, x1, y1), fill=CYAN if factor > 0.7 else CYAN_DIM)
+        fill = CYAN if factor >= 1 else CYAN_DIM
+        draw.rectangle((x0, y0, x1, y1), fill=fill)
         return
     if along == "v":
         span0, span1 = (y0, y1) if y1 >= y0 else (y1, y0)
@@ -601,7 +664,7 @@ def _paint_span(draw: ImageDraw.ImageDraw, box: tuple[float, float, float, float
 
 def _paint_down_head(draw: ImageDraw.ImageDraw, x: float, top: float, bot: float, half: float, factor: float) -> None:
     if not RAINBOW_ARROWS:
-        ink = CYAN if factor > 0.7 else CYAN_DIM
+        ink = CYAN if factor >= 1 else CYAN_DIM
         draw.polygon([(x - half, top), (x + half, top), (x, bot)], fill=ink)
         return
     span = max(1.0, bot - top)
@@ -615,7 +678,7 @@ def _paint_down_head(draw: ImageDraw.ImageDraw, x: float, top: float, bot: float
 
 def _paint_right_head(draw: ImageDraw.ImageDraw, left: float, right: float, y: float, half: float, factor: float) -> None:
     if not RAINBOW_ARROWS:
-        ink = CYAN if factor > 0.7 else CYAN_DIM
+        ink = CYAN if factor >= 1 else CYAN_DIM
         draw.polygon([(left, y - half), (left, y + half), (right, y)], fill=ink)
         return
     span = max(1.0, right - left)
@@ -629,7 +692,7 @@ def _paint_right_head(draw: ImageDraw.ImageDraw, left: float, right: float, y: f
 
 def _paint_left_head(draw: ImageDraw.ImageDraw, left: float, right: float, y: float, half: float, factor: float) -> None:
     if not RAINBOW_ARROWS:
-        ink = CYAN if factor > 0.7 else CYAN_DIM
+        ink = CYAN if factor >= 1 else CYAN_DIM
         draw.polygon([(right, y - half), (right, y + half), (left, y)], fill=ink)
         return
     span = max(1.0, right - left)
@@ -642,46 +705,55 @@ def _paint_left_head(draw: ImageDraw.ImageDraw, left: float, right: float, y: fl
 
 
 def draw_down_arrow(draw: ImageDraw.ImageDraw, x: float, y0: float, y1: float) -> None:
-    if y1 < y0 + 22:
-        y1 = y0 + 22
-    head_h = 22
-    shaft = y1 - head_h
-    _paint_span(draw, (x - 14, y0, x + 14, shaft), "v", 0.38)
-    _paint_down_head(draw, x, shaft - 2, y1 + 4, 28, 0.38)
-    _paint_span(draw, (x - 8, y0, x + 8, shaft), "v", 1.0)
-    _paint_down_head(draw, x, shaft - 1, y1, 18, 1.0)
+    if y1 < y0 + HEAD_LEN:
+        y1 = y0 + HEAD_LEN
+    shaft = y1 - HEAD_LEN
+    glow = RAIL_GLOW / 2
+    core = RAIL_WIDTH / 2
+    _paint_span(draw, (x - glow, y0, x + glow, shaft), "v", GLOW_FACTOR)
+    _paint_down_head(draw, x, shaft, y1, HEAD_GLOW_HALF, GLOW_FACTOR)
+    _paint_span(draw, (x - core, y0, x + core, shaft), "v", 1)
+    _paint_down_head(draw, x, shaft, y1, HEAD_HALF, 1)
 
 
 def draw_stem(draw: ImageDraw.ImageDraw, x: float, y0: float, y1: float) -> None:
     top, bot = sorted((y0, y1))
-    _paint_span(draw, (x - 12, top, x + 12, bot), "v", 0.38)
-    _paint_span(draw, (x - 7, top, x + 7, bot), "v", 1.0)
+    glow = RAIL_GLOW / 2
+    core = RAIL_WIDTH / 2
+    _paint_span(draw, (x - glow, top, x + glow, bot), "v", GLOW_FACTOR)
+    _paint_span(draw, (x - core, top, x + core, bot), "v", 1)
 
 
 def draw_bar(draw: ImageDraw.ImageDraw, x0: float, x1: float, y: float) -> None:
     left, right = sorted((x0, x1))
-    _paint_span(draw, (left, y - 12, right, y + 12), "h", 0.38)
-    _paint_span(draw, (left, y - 7, right, y + 7), "h", 1.0)
+    glow = RAIL_GLOW / 2
+    core = RAIL_WIDTH / 2
+    _paint_span(draw, (left, y - glow, right, y + glow), "h", GLOW_FACTOR)
+    _paint_span(draw, (left, y - core, right, y + core), "h", 1)
 
 
 def draw_right_arrow(draw: ImageDraw.ImageDraw, x0: float, x1: float, y: float) -> None:
-    if x1 < x0 + 22:
-        x1 = x0 + 22
-    head = x1 - 20
-    _paint_span(draw, (x0, y - 12, head, y + 12), "h", 0.38)
-    _paint_right_head(draw, head - 2, x1 + 4, y, 24, 0.38)
-    _paint_span(draw, (x0, y - 7, head, y + 7), "h", 1.0)
-    _paint_right_head(draw, head - 1, x1, y, 16, 1.0)
+    if x1 < x0 + HEAD_LEN:
+        x1 = x0 + HEAD_LEN
+    head = x1 - HEAD_LEN
+    glow = RAIL_GLOW / 2
+    core = RAIL_WIDTH / 2
+    _paint_span(draw, (x0, y - glow, head, y + glow), "h", GLOW_FACTOR)
+    _paint_right_head(draw, head, x1, y, HEAD_GLOW_HALF, GLOW_FACTOR)
+    _paint_span(draw, (x0, y - core, head, y + core), "h", 1)
+    _paint_right_head(draw, head, x1, y, HEAD_HALF, 1)
 
 
 def draw_left_arrow(draw: ImageDraw.ImageDraw, x0: float, x1: float, y: float) -> None:
     """Head at the smaller x."""
     left, right = (x1, x0) if x1 < x0 else (x0, x1)
-    head = left + 20
-    _paint_span(draw, (head, y - 12, right, y + 12), "h", 0.38)
-    _paint_left_head(draw, left - 4, head + 2, y, 24, 0.38)
-    _paint_span(draw, (head, y - 7, right, y + 7), "h", 1.0)
-    _paint_left_head(draw, left, head + 1, y, 16, 1.0)
+    head = left + HEAD_LEN
+    glow = RAIL_GLOW / 2
+    core = RAIL_WIDTH / 2
+    _paint_span(draw, (head, y - glow, right, y + glow), "h", GLOW_FACTOR)
+    _paint_left_head(draw, left, head, y, HEAD_GLOW_HALF, GLOW_FACTOR)
+    _paint_span(draw, (head, y - core, right, y + core), "h", 1)
+    _paint_left_head(draw, left, head, y, HEAD_HALF, 1)
 
 
 def center_bottom(rect: tuple[int, int, int, int]) -> tuple[float, float]:
@@ -796,43 +868,51 @@ def _draw_back(draw: ImageDraw.ImageDraw, back: dict, font: ImageFont.FreeTypeFo
         )
 
 
-def draw_glyph(draw: ImageDraw.ImageDraw, kind: str, box: tuple[int, int, int, int], color: tuple[int, int, int]) -> None:
+def _svg_pairs(points: str) -> list[tuple[float, float]]:
+    nums = [float(item) for item in points.replace(",", " ").split()]
+    return list(zip(nums[0::2], nums[1::2]))
+
+
+def draw_icon(draw: ImageDraw.ImageDraw, kind: str, box: tuple[int, int, int, int], color: tuple[int, int, int]) -> None:
+    """Stroke one kit SVG. The file is the drawing. The kit palette is the ink."""
+    root = ET.parse(icon_file(kind)).getroot()
+    view = [float(item) for item in root.attrib.get("viewBox", "0 0 24 24").split()]
+    vx, vy, vw, vh = view
     x0, y0, x1, y1 = box
-    cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
-    if kind == "doc":
-        draw.rounded_rectangle((x0 + 4, y0 + 2, x1 - 4, y1 - 2), 3, outline=color, width=2)
-        draw.line((x0 + 8, cy - 3, x1 - 8, cy - 3), fill=color, width=2)
-        draw.line((x0 + 8, cy + 3, x1 - 9, cy + 3), fill=color, width=2)
-    elif kind == "user":
-        draw.ellipse((cx - 5, y0 + 3, cx + 5, y0 + 13), outline=color, width=2)
-        draw.arc((x0 + 4, cy, x1 - 4, y1 + 6), 200, 340, fill=color, width=2)
-    elif kind == "bars":
-        for i, h in enumerate((8, 14, 11)):
-            left = x0 + 5 + i * 8
-            draw.rectangle((left, y1 - 4 - h, left + 5, y1 - 4), fill=color)
-    elif kind == "eye":
-        draw.ellipse((x0 + 3, cy - 6, x1 - 3, cy + 6), outline=color, width=2)
-        draw.ellipse((cx - 3, cy - 3, cx + 3, cy + 3), fill=color)
-    elif kind == "branch":
-        draw.line((x0 + 6, y1 - 5, cx, y0 + 5), fill=color, width=2)
-        draw.line((cx, y0 + 5, x1 - 6, cy), fill=color, width=2)
-        draw.line((cx, y0 + 5, x1 - 6, y1 - 5), fill=color, width=2)
-    elif kind == "stack":
-        for i in range(3):
-            top = y0 + 3 + i * 8
-            draw.rounded_rectangle((x0 + 3, top, x1 - 3, top + 5), 2, outline=color, width=2)
-    elif kind == "hex":
-        pts = []
-        for i in range(6):
-            angle = math.radians(60 * i - 30)
-            pts.append((cx + 11 * math.cos(angle), cy + 11 * math.sin(angle)))
-        draw.polygon(pts, outline=color)
-    elif kind == "diamond":
-        draw.polygon([(cx, y0 + 3), (x1 - 4, cy), (cx, y1 - 3), (x0 + 4, cy)], outline=color)
-    elif kind == "ring":
-        draw.ellipse((x0 + 4, y0 + 4, x1 - 4, y1 - 4), outline=color, width=3)
-    else:
-        draw.ellipse((cx - 5, cy - 5, cx + 5, cy + 5), fill=color)
+    sx = (x1 - x0) / vw
+    sy = (y1 - y0) / vh
+
+    def pt(x: float, y: float) -> tuple[float, float]:
+        return (x0 + (x - vx) * sx, y0 + (y - vy) * sy)
+
+    width = max(2, int(round(min(sx, sy) * 1.6)))
+    for el in root.iter():
+        tag = el.tag.rsplit("}", 1)[-1]
+        if tag == "line":
+            draw.line(
+                [pt(float(el.attrib["x1"]), float(el.attrib["y1"])), pt(float(el.attrib["x2"]), float(el.attrib["y2"]))],
+                fill=color,
+                width=width,
+            )
+        elif tag == "circle":
+            cx = float(el.attrib["cx"])
+            cy = float(el.attrib["cy"])
+            radius = float(el.attrib["r"])
+            draw.ellipse([pt(cx - radius, cy - radius), pt(cx + radius, cy + radius)], outline=color, width=width)
+        elif tag == "rect":
+            rx = float(el.attrib["x"])
+            ry = float(el.attrib["y"])
+            rw = float(el.attrib["width"])
+            rh = float(el.attrib["height"])
+            draw.rectangle([pt(rx, ry), pt(rx + rw, ry + rh)], outline=color, width=width)
+        elif tag in {"polyline", "polygon"}:
+            mapped = [pt(x, y) for x, y in _svg_pairs(el.attrib.get("points", ""))]
+            if len(mapped) < 2:
+                continue
+            if tag == "polygon":
+                draw.polygon(mapped, outline=color)
+            else:
+                draw.line(mapped, fill=color, width=width)
 
 
 def draw_cards(draw: ImageDraw.ImageDraw, flow: dict, bands: list[dict]) -> None:
@@ -862,7 +942,9 @@ def _draw_card(
     body = metrics["body"]
     wrapped = metrics["wrapped"]
     cursor_x = x0 + 18
-    if number:
+    mode = badge_plan(number)
+    raw_title, _details = title_and_details(lines)
+    if mode == "number":
         tile = (cursor_x, y0 + 16, cursor_x + 36, y0 + 52)
         draw.rounded_rectangle(tile, 6, outline=CYAN, width=2)
         num_font = fit_width(BARLOW, number, 28, 22, 14)
@@ -876,9 +958,12 @@ def _draw_card(
             BARLOW,
         )
         cursor_x += 46
-    icon = (cursor_x, y0 + 16, cursor_x + 26, y0 + 42)
-    draw_glyph(draw, icon_kind(lines[0] if lines else ""), icon, CYAN)
-    cursor_x += 36
+    elif mode == "icon":
+        icon = (cursor_x, y0 + 16, cursor_x + 26, y0 + 42)
+        draw_icon(draw, icon_kind(raw_title), icon, CYAN)
+        cursor_x += 36
+    else:
+        raise RuntimeError("card badge outside the kit")
     y = y0 + 16
     drawn: list[str] = []
     for line in title_lines:
@@ -974,7 +1059,7 @@ def render(md_path: Path, out_path: Path) -> None:
     title = meta.get("title", md_path.stem).upper()
     subtitle = lead_line(text)
     stamp = footer_line(text)
-    RAINBOW_ARROWS = resolve_accent(title) == "rainbow"
+    RAINBOW_ARROWS = rainbow_for(title)
     title_font = fit_width(BLACKOPS, title, W - 64 - 280, 54, 22)
     tb = title_font.getbbox(title or " ")
     sub_font = None
@@ -1058,6 +1143,82 @@ def render(md_path: Path, out_path: Path) -> None:
     if read_itxt(out_path) != blob:
         raise RuntimeError(f"embedded flow drifted for {md_path.name}")
     print(f"{md_path.stem} {W}x{height} {out_path.stat().st_size}", flush=True)
+
+
+def audit_kit() -> list[str]:
+    """Fail closed: unknown kind, missing SVG, a color or arrow outside the kit, both badges."""
+    problems: list[str] = []
+    if KIT["palette"].get("default") != "cyan":
+        problems.append("default color is outside the kit")
+    if len(KIT["palette"]["rainbow"]) != 6:
+        problems.append("rainbow is outside the kit")
+    if HEAD_SHAPE != "triangle":
+        problems.append(f"arrow style outside the kit: {HEAD_SHAPE}")
+    try:
+        palette_color("magenta")
+        problems.append("accepted a color outside the kit")
+    except KeyError:
+        pass
+    try:
+        icon_file("not-a-kind")
+        problems.append("accepted an unknown icon kind")
+    except KeyError:
+        pass
+    if badge_plan("1") != "number" or badge_plan("") != "icon":
+        problems.append("card badge left the kit")
+    for kind, name in ICONS.items():
+        if not isinstance(name, str) or name != Path(name).name or not name.endswith(".svg"):
+            problems.append(f"icon {kind} is not exactly one svg")
+            continue
+        svg = ICONS_DIR / name
+        if not svg.is_file():
+            problems.append(f"missing SVG: {name}")
+            continue
+        text = svg.read_text(encoding="utf8")
+        if "<text" in text or "emoji" in text.lower():
+            problems.append(f"{name} uses a font glyph")
+    for rule in KIT["iconMatch"]:
+        if str(rule["kind"]) not in ICONS:
+            problems.append(f"unknown icon kind: {rule['kind']}")
+    for md in sorted(PLATES.glob("*.md")):
+        if md.stem in SKIP:
+            continue
+        payload = fence_payload(md.read_text(encoding="utf8"))
+        flow = parse_flow(fence_lines(payload))
+        for layer in flow["layers"]:
+            for node in layer["nodes"]:
+                raw, _rest = title_and_details(node["lines"])
+                try:
+                    kind = icon_kind(raw)
+                    icon_file(kind)
+                except (KeyError, FileNotFoundError) as exc:
+                    problems.append(f"{md.stem}: {exc}")
+    arrow_fns = (
+        _paint_span,
+        _paint_down_head,
+        _paint_right_head,
+        _paint_left_head,
+        draw_down_arrow,
+        draw_stem,
+        draw_bar,
+        draw_right_arrow,
+        draw_left_arrow,
+    )
+    for fn in arrow_fns:
+        source = inspect.getsource(fn)
+        if re.search(r"\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)", source):
+            problems.append(f"{fn.__name__} color outside the kit")
+        if re.search(r"\b\d{2,}\b", source):
+            problems.append(f"{fn.__name__} arrow style outside the kit")
+    card = inspect.getsource(_draw_card)
+    if "badge_plan" not in card or card.count("draw_icon") != 1:
+        problems.append("card badge is not planned from the kit")
+    rest = card.split('if mode == "number":', 1)[1]
+    number_branch, icon_and_rest = rest.split('elif mode == "icon":', 1)
+    icon_branch = icon_and_rest.split("else:", 1)[0]
+    if "draw_icon" in number_branch or "rounded_rectangle(tile" in icon_branch:
+        problems.append("card has both a number and an icon")
+    return problems
 
 
 def main() -> None:

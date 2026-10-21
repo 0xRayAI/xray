@@ -1,0 +1,47 @@
+{
+  "palette": {
+    "default": "cyan",
+    "cyan": [90, 214, 222],
+    "cyanDim": [22, 78, 88],
+    "ink": [236, 238, 236],
+    "muted": [168, 178, 188],
+    "shadow": [12, 14, 16],
+    "rainbow": [
+      [235, 52, 52],
+      [245, 140, 30],
+      [245, 220, 40],
+      [60, 200, 90],
+      [50, 140, 245],
+      [150, 70, 230]
+    ]
+  },
+  "rainbowTitles": ["BIFROST"],
+  "line": {
+    "railWidth": 16,
+    "railGlow": 28,
+    "glowFactor": 0.38,
+    "arrowhead": {
+      "shape": "triangle",
+      "length": 22,
+      "halfWidth": 18,
+      "glowHalfWidth": 28
+    }
+  },
+  "iconMatch": [
+    { "kind": "github", "when": ["github"] },
+    { "kind": "board", "when": ["board", "kanban"] },
+    { "kind": "deploy", "when": ["deploy", "railway", "healthz"] },
+    { "kind": "seat", "when": ["seat", "inbox"] },
+    { "kind": "route", "when": ["route", "dispatch"] },
+    { "kind": "gate", "when": ["gate"] },
+    { "kind": "memory", "when": ["memory", "station", "repertoire", "recall"] },
+    { "kind": "score", "when": ["score", "threshold", "heat", "metric"] },
+    { "kind": "log", "when": ["log"] },
+    { "kind": "file", "when": ["file", ".md", "json", "path", ".xray", "write"] },
+    { "kind": "agent", "when": ["agent"] },
+    { "kind": "context", "when": ["context"] },
+    { "kind": "lens", "when": ["lens", "goggle", "visor"] },
+    { "kind": "note", "when": ["note", "stamp"] },
+    { "kind": "mark", "when": [] }
+  ]
+}

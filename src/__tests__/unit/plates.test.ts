@@ -1,4 +1,5 @@
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { inflateSync } from 'node:zlib';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
@@ -373,6 +374,37 @@ describe('pipeline plates', () => {
       }
     }
     expect(missing).toEqual([]);
+  });
+
+  it('fails when an icon, a line, or a badge leaves the plate kit', () => {
+    const iconsDir = join(process.cwd(), 'plates/icons');
+    const icons = JSON.parse(readFileSync(join(iconsDir, 'icons.json'), 'utf8')) as Record<string, unknown>;
+    const kit = JSON.parse(readFileSync(join(process.cwd(), 'plates/kit.json'), 'utf8')) as {
+      palette: { default: string; rainbow: number[][] };
+      line: { arrowhead: { shape: string } };
+      iconMatch: Array<{ kind: string }>;
+    };
+    expect(kit.palette.default).toBe('cyan');
+    expect(kit.palette.rainbow).toHaveLength(6);
+    expect(kit.line.arrowhead.shape).toBe('triangle');
+    const seen = new Set<string>();
+    for (const [kind, file] of Object.entries(icons)) {
+      expect(typeof file, kind).toBe('string');
+      const name = String(file);
+      expect(name.endsWith('.svg'), kind).toBe(true);
+      expect(existsSync(join(iconsDir, name)), kind).toBe(true);
+      const svg = readFileSync(join(iconsDir, name), 'utf8');
+      expect(svg.includes('<text'), kind).toBe(false);
+      seen.add(kind);
+    }
+    for (const rule of kit.iconMatch) {
+      expect(seen.has(rule.kind), rule.kind).toBe(true);
+    }
+    const report = execFileSync('python3', ['-c', 'import render,json; print(json.dumps(render.audit_kit()))'], {
+      cwd: join(process.cwd(), 'grok-bot/skills/draw-stamped-card/recipes/layered-flow'),
+      encoding: 'utf8',
+    });
+    expect(JSON.parse(report)).toEqual([]);
   });
 });
 
