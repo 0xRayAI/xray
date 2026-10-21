@@ -723,8 +723,8 @@ From: ecosystem
 Digest: The live board and the nudge path.
 Plate: docs-site/docs/plates/bifrost.md
 Plates: house
-Entry: GitHub · seat · Railway deploys,
-Exit: the board · seat inboxes + · seat presence
+Entry: GitHub PR / issue / comment · seat presence + activity · Railway deploys, /healthz probes
+Exit: the board (cards) · seat inboxes + wake webhooks · seat presence + archive
 Files: house/live/app/server.mjs, house/live/docs/board.md
 Skills: bifrost, house, record-map
 Setup:
@@ -737,8 +737,8 @@ From: ecosystem
 Digest: Give your bots a house: shared rules, one board for the work, and memory that sticks.
 Plate: docs-site/docs/plates/grokbot.md
 Plates: bifrost, house
-Entry: SUIT · 0xray
-Exit: STATION · 0xray
+Entry: SUIT · 0xray · HOUSE · grok-bot · WAVEBOARD · grok-bot
+Exit: MEMORY · 0xray (repertoire) · DOCTOR · grok-bot · ATTENTION · grok-bot · STATION · 0xray
 Files: grok-bot/package.json
 Skills: grokbot, house, bifrost
 Setup:

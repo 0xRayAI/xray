@@ -32,4 +32,4 @@ The memory organ matches named laws.
 
 The code is `src/memory-routing`. The worn package is `@0xray/repertoire` 0.2.9. Station is the wake ticket. This organ is the judgment. Do not pin 0.1.8.
 
-stamped · 0xray 4.1.0
+stamped · 0xray 4.1.3
