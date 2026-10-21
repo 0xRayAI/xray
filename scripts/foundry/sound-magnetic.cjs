@@ -29,6 +29,10 @@
  *
  * v7b is v7 with one substitution: the bass voice is the v8lib
  * Elementary bass, level-matched to v7. loadBed("v7b") is the entry.
+ *
+ * v7c keeps v7, including its bass. From 7.0 s it overlays the v8lib
+ * Elementary sub and harmonic mid, split and phase-aligned so they
+ * fuse with that bass. loadBed("v7c") is the entry.
  */
 
 const fs = require("node:fs");
@@ -612,6 +616,7 @@ const BED_NAMES = {
   v6: "BED-MAGNETIC-MOVES-v6",
   v7: "BED-MAGNETIC-MOVES-v7",
   v7b: "BED-MAGNETIC-MOVES-v7b",
+  v7c: "BED-MAGNETIC-MOVES-v7c",
   v9: "BED-MAGNETIC-MOVES-v9",
 };
 
@@ -624,6 +629,9 @@ function renderBed(variant) {
   }
   if (variant === "v7b") {
     throw new Error("BED-MAGNETIC-MOVES-v7b renders through loadBed");
+  }
+  if (variant === "v7c") {
+    throw new Error("BED-MAGNETIC-MOVES-v7c renders through loadBed");
   }
   const v7 = variant === "v7";
   const v6 = variant === "v6" || v7;
@@ -827,7 +835,7 @@ function measureBed(bed) {
   const lowWindows = { body: [5.5, 7.65], across: [5.5, 15.4], final: [17.55, 19.4] };
   const pad = stemReport(bed.stems.pad, padWindows);
   const sub = stemReport(bed.stems.sub, lowWindows);
-  const mid = bed.variant === "v4b" || bed.variant === "v5b" || bed.variant === "v6" || bed.variant === "v7" || bed.variant === "v7b" || bed.variant === "v9"
+  const mid = bed.variant === "v4b" || bed.variant === "v5b" || bed.variant === "v6" || bed.variant === "v7" || bed.variant === "v7b" || bed.variant === "v7c" || bed.variant === "v9"
     ? stemReport(bed.stems.mid, lowWindows)
     : null;
   const lufs = P.integratedLufs(bed.left, bed.right, bed.sampleRate);
@@ -915,6 +923,7 @@ function measureBed(bed) {
     earReady: rules.pass && reference.pass,
     ...(bed.sources ? { sources: bed.sources } : {}),
     ...(bed.bassMatch != null ? { bassMatch: bed.bassMatch } : {}),
+    ...(bed.overlay ? { overlay: bed.overlay } : {}),
     pass: reasons.length === 0,
     fails: reasons,
     wind: {
@@ -1122,6 +1131,220 @@ function matchBass(refSub, refMid, sub, mid, gs, gm) {
   return Math.sqrt(ref / neu);
 }
 
+const OVERLAY_ENTRY = 7;
+const OVERLAY_FADE = 0.072;
+const OVERLAY_SPLIT = 100;
+const OVERLAY_NOTE = 0.09;
+const OVERLAY_LOW_DB = -12;
+const OVERLAY_HIGH_DB = -9;
+
+function eachBassNote(visit) {
+  const step = BEAT / 4;
+  let placed = 0;
+  for (let i = 0; ; i++) {
+    const t = CUES.drop + i * step;
+    if (t >= SECONDS - 0.05) break;
+    if (!inBody(t) || i % 4 === 0) continue;
+    const vel = BASS_VEL[placed % BASS_VEL.length];
+    placed += 1;
+    visit({ t, hz: P.midiHz(chordAt(t).root), vel });
+  }
+}
+
+function clearBeforeEntry(sub, mid) {
+  const enter = Math.floor(OVERLAY_ENTRY * SR);
+  eachBassNote((note) => {
+    if (note.t >= OVERLAY_ENTRY) return;
+    const i0 = Math.max(0, Math.floor(note.t * SR));
+    const i1 = Math.min(sub.length, i0 + Math.ceil(0.1 * SR));
+    sub.fill(0, i0, i1);
+    mid.fill(0, i0, i1);
+  });
+  sub.fill(0, 0, enter);
+  mid.fill(0, 0, enter);
+}
+
+function bestDelay(ref, src, i0, count, half) {
+  let bestD = 0;
+  let best = -Infinity;
+  const score = (d) => {
+    let dot = 0;
+    for (let k = 0; k < count; k++) {
+      const j = i0 + k - d;
+      const s = j >= 0 && j < src.length ? src[j] : 0;
+      dot += ref[i0 + k] * s;
+    }
+    if (dot > best) {
+      best = dot;
+      bestD = d;
+    }
+  };
+  for (let d = -half; d <= half; d += 4) score(d);
+  const coarse = bestD;
+  for (let d = coarse - 4; d <= coarse + 4; d++) {
+    if (d < -half || d > half) continue;
+    score(d);
+  }
+  return bestD;
+}
+
+function noteCorrelation(ref, src, i0, count, delay) {
+  let dot = 0;
+  let a = 0;
+  let b = 0;
+  for (let k = 0; k < count; k++) {
+    const j = i0 + k - delay;
+    const s = j >= 0 && j < src.length ? src[j] : 0;
+    const r = ref[i0 + k];
+    dot += r * s;
+    a += r * r;
+    b += s * s;
+  }
+  const den = Math.sqrt(a * b);
+  return den > 0 ? dot / den : 0;
+}
+
+/** Shift each Elementary note onto v7's sub. The same delay keeps the harmonic mid with it. */
+function alignOverlayNotes(refSub, lowSrc, highSrc) {
+  const low = P.silence(refSub.length);
+  const high = P.silence(refSub.length);
+  const count = Math.floor(OVERLAY_NOTE * SR);
+  const notes = [];
+  eachBassNote((note) => notes.push(note));
+  let corrSum = 0;
+  let corrN = 0;
+  for (let n = 0; n < notes.length; n++) {
+    const note = notes[n];
+    if (note.t < OVERLAY_ENTRY) continue;
+    const i0 = Math.floor(note.t * SR);
+    if (i0 < 0 || i0 + count > refSub.length) continue;
+    const half = Math.max(1, Math.floor(SR / (2 * note.hz)));
+    const delay = bestDelay(refSub, lowSrc, i0, count, half);
+    const corr = noteCorrelation(refSub, lowSrc, i0, count, delay);
+    if (corr > 0) {
+      corrSum += corr;
+      corrN += 1;
+    }
+    const next = n + 1 < notes.length ? Math.floor(notes[n + 1].t * SR) : refSub.length;
+    const span = Math.min(next - i0, Math.floor(0.11 * SR));
+    for (let s = i0; s < i0 + span && s < lowSrc.length; s++) {
+      const dest = s + delay;
+      if (dest < 0 || dest >= low.length || dest >= next) continue;
+      low[dest] += lowSrc[s];
+      high[dest] += highSrc[s];
+    }
+  }
+  return { low, high, alignCorrelation: corrN > 0 ? corrSum / corrN : 0, notesAligned: corrN };
+}
+
+function fadeInAt(buf, startSec, fadeSec) {
+  const i0 = Math.max(0, Math.floor(startSec * SR));
+  const i1 = Math.min(buf.length, Math.floor((startSec + fadeSec) * SR));
+  buf.fill(0, 0, i0);
+  for (let i = i0; i < i1; i++) {
+    buf[i] *= P.smoothstep((i / SR - startSec) / fadeSec);
+  }
+}
+
+function rangeRms(buf, t0, t1) {
+  const i0 = Math.max(0, Math.floor(t0 * SR));
+  const i1 = Math.min(buf.length, Math.floor(t1 * SR));
+  let acc = 0;
+  const n = Math.max(1, i1 - i0);
+  for (let i = i0; i < i1; i++) acc += buf[i] * buf[i];
+  return Math.sqrt(acc / n);
+}
+
+function rangePeak(buf, t0, t1) {
+  const i0 = Math.max(0, Math.floor(t0 * SR));
+  const i1 = Math.min(buf.length, Math.floor(t1 * SR));
+  let peak = 0;
+  for (let i = i0; i < i1; i++) {
+    const a = Math.abs(buf[i]);
+    if (a > peak) peak = a;
+  }
+  return peak;
+}
+
+function heardBass(sub, mid, gs, gm, i) {
+  return sub[i] * gs + mid[i] * gm;
+}
+
+function heardRms(sub, mid, gs, gm, t0, t1) {
+  const i0 = Math.max(0, Math.floor(t0 * SR));
+  const i1 = Math.min(sub.length, Math.floor(t1 * SR));
+  let acc = 0;
+  const n = Math.max(1, i1 - i0);
+  for (let i = i0; i < i1; i++) {
+    const s = heardBass(sub, mid, gs, gm, i);
+    acc += s * s;
+  }
+  return Math.sqrt(acc / n);
+}
+
+function heardPeak(sub, mid, gs, gm, t0, t1) {
+  const i0 = Math.max(0, Math.floor(t0 * SR));
+  const i1 = Math.min(sub.length, Math.floor(t1 * SR));
+  let peak = 0;
+  for (let i = i0; i < i1; i++) {
+    const a = Math.abs(heardBass(sub, mid, gs, gm, i));
+    if (a > peak) peak = a;
+  }
+  return peak;
+}
+
+/** Pull the final overlay down when the combined bass would pass the first drop. */
+function fitOverlayFinal(sub, mid, low, high, gs, gm, lowScale, highScale) {
+  const drop0 = Math.floor(5.4 * SR);
+  const drop1 = Math.floor(7.4 * SR);
+  const fin0 = Math.floor(17 * SR);
+  const fin1 = Math.min(sub.length, Math.floor(19 * SR));
+  let dropAcc = 0;
+  let dropPeak = 0;
+  for (let i = drop0; i < drop1; i++) {
+    const s = heardBass(sub, mid, gs, gm, i) + low[i] * lowScale * gs + high[i] * highScale * gm;
+    dropAcc += s * s;
+    const a = Math.abs(s);
+    if (a > dropPeak) dropPeak = a;
+  }
+  const dropRms = Math.sqrt(dropAcc / Math.max(1, drop1 - drop0));
+  const target = dropRms * P.dbLin(0.15);
+  const peakLimit = dropPeak * P.dbLin(0.7);
+  let vv = 0;
+  let oo = 0;
+  let vo = 0;
+  let peakScale = 1;
+  const n = Math.max(1, fin1 - fin0);
+  for (let i = fin0; i < fin1; i++) {
+    const v = heardBass(sub, mid, gs, gm, i);
+    const o = low[i] * lowScale * gs + high[i] * highScale * gm;
+    vv += v * v;
+    oo += o * o;
+    vo += v * o;
+    if (!(Math.abs(o) > 1e-12)) continue;
+    const cap = Math.abs(v) > peakLimit ? Math.abs(v) : peakLimit;
+    const sHi = (cap - v) / o;
+    const sLo = (-cap - v) / o;
+    const hi = Math.max(sHi, sLo);
+    const lo = Math.min(sHi, sLo);
+    const room = lo <= 0 && hi >= 0 ? Math.min(1, hi) : 0;
+    if (room < peakScale) peakScale = room;
+  }
+  const targetPower = target * target * n;
+  const c = vv - targetPower;
+  let rmsScale = 1;
+  if (oo > 1e-18 && oo + 2 * vo + c > 0) {
+    const disc = vo * vo - oo * c;
+    if (!(disc > 0)) rmsScale = 0;
+    else {
+      const root = Math.sqrt(disc);
+      const hi = Math.max((-vo - root) / oo, (-vo + root) / oo);
+      rmsScale = Math.max(0, Math.min(1, hi));
+    }
+  } else if (c > 0) rmsScale = 0;
+  return Math.max(0, Math.min(1, rmsScale, peakScale));
+}
+
 async function renderV7b() {
   const v7 = renderBed("v7");
   const n = v7.stems.sub.length;
@@ -1203,9 +1426,154 @@ async function renderV7b() {
   };
 }
 
+async function renderV7c() {
+  const v7 = renderBed("v7");
+  const n = v7.stems.sub.length;
+  const g = v7.gains;
+  const elem = await import("./sound-elementary.mjs");
+  const lib = await elem.renderLibBass(n, SR);
+  const bassScale = tameFinal(lib.sub, lib.mid, g.sub, g.mid);
+  clearBeforeEntry(lib.sub, lib.mid);
+  const lowSrc = P.applyBiquad(
+    P.applyBiquad(lib.sub, "lowpass", OVERLAY_SPLIT, 0.707, SR),
+    "lowpass",
+    OVERLAY_SPLIT,
+    0.707,
+    SR,
+  );
+  const highSrc = P.applyBiquad(
+    P.applyBiquad(lib.mid, "highpass", OVERLAY_SPLIT, 0.707, SR),
+    "highpass",
+    OVERLAY_SPLIT,
+    0.707,
+    SR,
+  );
+  const aligned = alignOverlayNotes(v7.stems.sub, lowSrc, highSrc);
+  const low = aligned.low;
+  const high = aligned.high;
+  fadeInAt(low, OVERLAY_ENTRY, OVERLAY_FADE);
+  fadeInAt(high, OVERLAY_ENTRY, OVERLAY_FADE);
+  const cut0 = Math.floor(15.75 * SR);
+  const cut1 = Math.floor(CUES.final * SR);
+  low.fill(0, cut0, cut1);
+  high.fill(0, cut0, cut1);
+  const subR = rangeRms(v7.stems.sub, 7.05, 15.4);
+  const lowR = rangeRms(low, 7.05, 15.4);
+  const lowScale = lowR > 1e-8 ? (subR * P.dbLin(OVERLAY_LOW_DB)) / lowR : 0;
+  const bassR = heardRms(v7.stems.sub, v7.stems.mid, g.sub, g.mid, 7.05, 15.4);
+  const bassP = heardPeak(v7.stems.sub, v7.stems.mid, g.sub, g.mid, 7.05, 15.4);
+  const highR = rangeRms(high, 7.05, 15.4);
+  const highP = rangePeak(high, 7.05, 15.4);
+  let highScale = 0;
+  if (highR > 1e-8 && g.mid > 0 && highR > subR * P.dbLin(-40)) {
+    const byRms = (bassR * P.dbLin(OVERLAY_HIGH_DB)) / (highR * g.mid);
+    const byPeak = highP > 1e-8 ? (bassP * P.dbLin(OVERLAY_HIGH_DB)) / (highP * g.mid) : byRms;
+    highScale = Math.min(byRms, byPeak);
+  }
+  const finalScale = fitOverlayFinal(
+    v7.stems.sub,
+    v7.stems.mid,
+    low,
+    high,
+    g.sub,
+    g.mid,
+    lowScale,
+    highScale,
+  );
+  const fin0 = Math.floor(CUES.final * SR);
+  for (let i = fin0; i < n; i++) {
+    low[i] *= finalScale;
+    high[i] *= finalScale;
+  }
+  const sub = new Float64Array(v7.stems.sub);
+  const mid = new Float64Array(v7.stems.mid);
+  for (let i = 0; i < n; i++) {
+    sub[i] += low[i] * lowScale;
+    mid[i] += high[i] * highScale;
+  }
+  const send = P.silence(n);
+  sum(send, v7.stems.pluck, 0.55);
+  sum(send, v7.stems.stab, 0.7);
+  const room = P.shortReverb(send, SR, 0.16, 3200);
+  const wide = mixWide(
+    {
+      pad: v7.stems.pad,
+      sub,
+      bass: mid,
+      kick: v7.stems.kick,
+      clap: v7.stems.clap,
+      hat: v7.stems.hat,
+      pluck: v7.stems.pluck,
+      stab: v7.stems.stab,
+      room,
+    },
+    g,
+  );
+  for (let i = 0; i < n; i++) {
+    const fade = masterFade(i / SR);
+    wide.left[i] *= fade;
+    wide.right[i] *= fade;
+  }
+  const glued = P.glueStereo(wide.left, wide.right, SR, -12, 1.5, 0.03, 0.18);
+  const fitted = P.fitLoudness(glued.left, glued.right, SR, -15, -1.4);
+  return {
+    variant: "v7c",
+    name: BED_NAMES.v7c,
+    sampleRate: SR,
+    seconds: n / SR,
+    left: fitted.left,
+    right: fitted.right,
+    lufsFit: fitted.lufs,
+    truePeakFit: fitted.truePeakDb,
+    fitGain: fitted.gain,
+    glueReductionDb: glued.reductionDb,
+    duckDb: 0,
+    gains: g,
+    bassScale,
+    sideScale: wide.sideScale,
+    patterned: true,
+    wide: true,
+    padMode: "low",
+    sources: {
+      sub: "v7",
+      mid: "v7",
+      pad: "v7",
+      kick: "v7",
+      clap: "v7",
+      hat: "v7",
+      pluck: "v7",
+      stab: "v7",
+    },
+    overlay: {
+      entrySec: OVERLAY_ENTRY,
+      fadeSec: OVERLAY_FADE,
+      splitHz: OVERLAY_SPLIT,
+      lowAddDb: OVERLAY_LOW_DB,
+      highAddDb: OVERLAY_HIGH_DB,
+      lowScale,
+      highScale,
+      finalScale,
+      alignCorrelation: aligned.alignCorrelation,
+      notesAligned: aligned.notesAligned,
+      layered: ["v8lib elementary sub", "v8lib elementary mid"],
+    },
+    stems: {
+      pad: v7.stems.pad,
+      sub,
+      mid,
+      kick: v7.stems.kick,
+      clap: v7.stems.clap,
+      hat: v7.stems.hat,
+      pluck: v7.stems.pluck,
+      stab: v7.stems.stab,
+    },
+  };
+}
+
 async function loadBed(variant) {
   if (variant === "v9") return renderV9();
   if (variant === "v7b") return renderV7b();
+  if (variant === "v7c") return renderV7c();
   return renderBed(variant);
 }
 
@@ -1218,13 +1586,13 @@ function argValue(argv, name) {
 async function cli(argv) {
   const variant = argv[0];
   if (!BED_NAMES[variant]) {
-    process.stderr.write("Usage: sound bed <v4a|v4b|v5a|v5b|v6|v7|v7b|v9> --out wav [--mp3 file] [--metrics file]\n");
+    process.stderr.write("Usage: sound bed <v4a|v4b|v5a|v5b|v6|v7|v7b|v7c|v9> --out wav [--mp3 file] [--metrics file]\n");
     return 1;
   }
   const bed = await loadBed(variant);
   const metrics = measureBed(bed);
   if (bed.wide) {
-    const priorVariant = variant === "v7b" || variant === "v9" ? "v7" : variant === "v7" ? "v6" : "v5b";
+    const priorVariant = variant === "v7b" || variant === "v7c" || variant === "v9" ? "v7" : variant === "v7" ? "v6" : "v5b";
     const prior = measureBed(await loadBed(priorVariant));
     metrics.compare = {
       against: prior.name,
