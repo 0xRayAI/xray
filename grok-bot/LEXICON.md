@@ -36,7 +36,7 @@ Ops nouns — clocks, tickets, roles, decks. Not products.
 | **beat** | One real event on a card: pull request opened or pushed, review verdict, merge, merge-queue tick, owner message, blocker, or a finished deploy (deploy, deploy_fail). CI stays on the card and is not board traffic. A watcher run whose start and end fall in the same second is not a beat |
 | **wave** | Stretch of beats toward one outcome (ship, dist week, proof) |
 | **board** | `house/WAVEBOARD.md` when `LIVE_URL` is unset. Bifrost (https://bifrost.0xray.dev) when `LIVE_URL` is set. GitHub cards grouped by stage, plus one cloud-agent row per `bcId` (owning seat, linked card, state `running` / `finished` / `failed`, last update). burst-live is the Bifrost board, never a node on it |
-| **card** | One GitHub issue or pull request (`repo#number`): title, url, owner seat, stage (`open` > `review` > `fix` > `merge` > `retest` > `done`), state (`live`, `parked`, or `closed`). A packet post creates it, a cloud agent does not run without its id, the cloud agent pushes, the seat App opens the pull request, and the server attaches both |
+| **card** | One GitHub issue or pull request (`repo#number`): title, url, owner seat, stage (`open` > `review` > `fix` > `merge` > `retest` > `done`), state (`live`, `held`, `parked`, or `closed`). A packet post creates it, a cloud agent does not run without its id, the cloud agent pushes, the seat App opens the pull request, and the server attaches both |
 | **seat** | Named bot role (CoS, forge, critic, herald, magnet…) |
 | **station boot** | Light on an owner message: `live-inbox <seat> --prompt`, then `.xray/state/STATION.md`. Full after a summary, a wake, or a gate also reads the `OP-PROC:` file, the newest two NOTES entries, TRACKS, open cards, and `Skills:` |
 | **station** | "The station card is the one-line ticket at .xray/state/STATION.md." "The station module writes this card." Intent (≤240 chars) and the next cut; heat stamps `Cascade:` and `Sleeve:`. Never hand-edited; read after a compact, and on every wake. "The long body belongs in notes." No secrets, only env var names. (plates: `docs-site/docs/plates/station-card.md`, guide `docs-site/docs/guides/station-vs-repertoire.md`) |
@@ -133,7 +133,7 @@ Don't confuse: watcher ≠ Dist; workstream ≠ product; workstream ≠ planes.
 ## Lexicon add (2026-10-09 — waveboard)
 | Term | Bucket | Plain |
 |------|--------|-------|
-| **card** | Workstream | One GitHub issue or pull request (`repo#number`). Title, url, owner seat, stage (`open` > `review` > `fix` > `merge` > `retest` > `done`), state (`live`, `parked`, or `closed`). |
+| **card** | Workstream | One GitHub issue or pull request (`repo#number`). Title, url, owner seat, stage (`open` > `review` > `fix` > `merge` > `retest` > `done`), state (`live`, `held`, `parked`, or `closed`). |
 | **packet** | Workstream | That card's seven fields. Cap 200 characters. Allowlisted links. Amber `no packet` badge when acceptance or next owner is missing. |
 | **beat** | Workstream | One real event: opened or pushed, review verdict, merge, merge-queue tick, owner message, blocker, or a finished deploy (deploy, deploy_fail). CI stays on the card and is not board traffic. A watcher whose start and end fall in the same second is never a beat. |
 | **deploy stages** | Workstream | The board's phases for one Railway deploy: BUILDING, DEPLOYING, then a terminal status. Stamps are in order (BUILDING <= DEPLOYING <= terminal). Only SUCCESS backfills missed phases; FAILED, SKIPPED and CRASHED show only what was seen. |

@@ -2,7 +2,7 @@
 
 This file is `grok-bot/ops/cloud-memory/PROMPT-FOOTER.md`. Append it to a cloud agent prompt. The rule is Fallout in `grok-bot/OP-PROC.md`.
 
-The seat that launched the cloud logs every owner message as activity before anything else, including a quick follow-up that arrives mid-turn: `live-inbox <seat> --prompt --from owner --note "<gist>"`.
+The seat that launched the cloud logs every owner message as activity before anything else, including a quick follow-up that arrives mid-turn. The command is step 1 of `grok-bot/skills/station/SKILL.md`.
 
 Forge cards each line of the list below before replying.
 
