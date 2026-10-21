@@ -11,6 +11,6 @@
     "check-sources": "node scripts/check-no-baked-token.mjs"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=24.22.1"
   }
 }

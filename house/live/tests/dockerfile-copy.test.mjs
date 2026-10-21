@@ -21,6 +21,13 @@ function localImports(file, seen = new Set()) {
   return seen;
 }
 
+test('Dockerfile pins the patched Node 24 LTS', () => {
+  const docker = fs.readFileSync(path.join(APP, 'Dockerfile'), 'utf8');
+  const pkg = JSON.parse(fs.readFileSync(path.join(APP, 'package.json'), 'utf8'));
+  assert.match(docker, /^FROM node:24\.22\.1-bookworm-slim\s*$/m);
+  assert.equal(pkg.engines.node, '>=24.22.1');
+});
+
 test('Dockerfile COPY names every local module server.mjs imports', () => {
   const docker = fs.readFileSync(path.join(APP, 'Dockerfile'), 'utf8');
   const copy = docker.split('\n').filter(line => /^\s*COPY\s/.test(line)).join('\n');

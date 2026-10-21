@@ -37,7 +37,7 @@ routing:
     confidence: 0.85
 
 dependencies:
-  node: ">=18.0.0"
+  node: ">=24.22.1"
 
 optionalDependencies:
   sharp: "^0.33.0"

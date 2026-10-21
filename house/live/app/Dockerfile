@@ -1,5 +1,5 @@
 # live-mesh: Node server + the read-only GitHub collector (python3 stdlib only; tzdata for zoneinfo)
-FROM node:20-bookworm-slim
+FROM node:24.22.1-bookworm-slim
 RUN apt-get update \
  && apt-get install -y --no-install-recommends python3 tzdata ca-certificates \
  && rm -rf /var/lib/apt/lists/*

@@ -801,7 +801,7 @@ function generatePackageJson() {
         ],
       },
       engines: {
-        node: ">=18.0",
+        node: ">=24.22.1",
       },
     },
     null,
