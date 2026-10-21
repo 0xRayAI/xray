@@ -55,51 +55,6 @@ test('aspect-fit uses one scale and centres wide, tall, and square boxes', () =>
   }
 });
 
-test('replay clock keeps a 40 s cluster to one packet, where 6.5 s over 5 min showed all eight', () => {
-  const now = 1_700_000_000_000;
-  const events = [];
-  for (let i = 0; i < 8; i++) {
-    events.push({ id: 'e' + i, _t: now - 40000 + i * 5000, kind: 'pr_open', from: 'forge', to: 'GitHub' });
-  }
-  const oldFrom = now - 5 * 60 * 1000;
-  const oldEnd = Math.min(now, events[7]._t + 1);
-  const oldSpeed = Math.max(1, (oldEnd - oldFrom) / 6500);
-  const oldFlight = L.PING_MS * oldSpeed;
-  const oldCount = L.pingsAt(events, events[7]._t, oldFlight).length;
-  assert.ok(oldSpeed > 40, 'old speed ' + oldSpeed);
-  assert.equal(oldCount, 8, 'old clock has every packet in flight at once');
-  assert.ok(events[0]._t - oldFrom > 250000, 'old clock plays a long empty lead');
-  const clock = L.replayClock(events, now, {
-    windowMs: 5 * 60 * 1000, durationMs: 25000, maxSpeed: 4, minEvents: 20,
-  });
-  const eventSpan = events[7]._t + 1 - events[0]._t;
-  assert.equal(clock.from, events[0]._t);
-  assert.ok(Math.abs(clock.speed - eventSpan / (25000 - L.PING_MS)) < 1e-9, 'speed ' + clock.speed);
-  assert.ok(clock.speed < 2, 'speed ' + clock.speed);
-  assert.ok(Math.abs((clock.end - clock.from) / clock.speed - 25000) < 1, 'replay lasts about 25 s');
-  assert.ok(clock.end >= events[7]._t + L.PING_MS * clock.speed, 'last packet finishes its flight');
-  const flight = L.PING_MS * clock.speed;
-  assert.ok(flight < 5000, 'in-flight window ' + flight);
-  assert.equal(L.pingsAt(events, events[4]._t, flight).length, 1);
-  const dense = [];
-  for (let i = 0; i < 200; i++) dense.push({ id: 'd' + i, _t: now - 300000 + i * 1500, kind: 'pr_open', from: 'forge', to: 'GitHub' });
-  const capped = L.replayClock(dense, now, {
-    windowMs: 5 * 60 * 1000, durationMs: 25000, maxSpeed: 4, minEvents: 20,
-  });
-  assert.ok(capped.speed <= 4, 'capped speed ' + capped.speed);
-  assert.ok(capped.span <= 25000 * 4 + 1, 'newest tail only');
-  assert.equal(L.replayClock([], now, { windowMs: 1, durationMs: 1, maxSpeed: 4, minEvents: 1 }), null);
-});
-
-test('a same-node replay opens the lane the resolver already chose', () => {
-  const lane = (src, dst, resolved) => L.spectrumLane(src, dst, resolved).join('|');
-  assert.equal(lane('GitHub', 'GitHub', ['GitHub', 'forge']), 'GitHub|forge');
-  assert.equal(lane('forge', 'forge', ['forge', 'GitHub']), 'forge|GitHub');
-  assert.equal(lane('critic', 'forge', ['GitHub', 'forge']), 'critic|forge');
-  assert.equal(lane('GitHub', 'GitHub', ['GitHub', 'GitHub']), 'GitHub|GitHub');
-  assert.equal(lane('GitHub', 'GitHub', null), 'GitHub|GitHub');
-});
-
 test('spectrum meter is 14 bars and the hue moves', () => {
   const a = L.spectrumMeter(0, false);
   const b = L.spectrumMeter(4000, false);
@@ -128,8 +83,6 @@ test('spectrum trail is 12 stops with decreasing alpha, stronger on a light plat
     assert.ok(light[i].lightness < dark[i].lightness);
   }
   assert.ok(later.some((stop, i) => stop.hue !== dark[i].hue), 'trail hue animates');
-  assert.ok(dark[0].radius >= 8, 'trail head sits outside the packet');
-  assert.ok(dark[0].radius > dark[dark.length - 1].radius, 'trail tapers');
   assert.equal(L.packetCore(false), '#ffffff');
   assert.notEqual(L.packetCore(true), '#ffffff');
   assert.match(L.packetCore(true), /^#[0-9a-f]{6}$/);

@@ -311,51 +311,6 @@
     return out;
   }
 
-  /* Opening replay and the dimmed loop share this clock. `from` is the first
-     event inside the window, so the empty lead is not played. Speed stays at
-     or under maxSpeed: a denser window keeps only its newest tail. The playhead
-     runs one packet flight past the last event, so that packet is drawn.
-     A cluster shorter than durationMs plays at 1× and finishes early. */
-  function replayClock(events, nowMs, opts) {
-    var o = opts || {};
-    var windowMs = Number(o.windowMs) || 0;
-    var durationMs = Number(o.durationMs);
-    if (!(durationMs > 0)) durationMs = 1;
-    var maxSpeed = Number(o.maxSpeed);
-    if (!(maxSpeed > 0)) maxSpeed = 4;
-    var minEvents = Number(o.minEvents) > 0 ? Math.floor(Number(o.minEvents)) : 0;
-    var pingMs = Number(o.pingMs);
-    if (!(pingMs > 0)) pingMs = PING_MS;
-    var room = durationMs - pingMs;
-    if (!(room > 0)) room = durationMs;
-    var now = Number(nowMs) || 0;
-    if (!events || !events.length) return null;
-    var shown = countUpTo(events, now);
-    if (!shown) return null;
-    var first = countUpTo(events, now - windowMs);
-    if (first >= shown) {
-      first = Math.max(0, shown - minEvents);
-      if (first >= shown) return null;
-    }
-    var from = events[first]._t;
-    var eventEnd = Math.min(now, events[shown - 1]._t + 1);
-    if (!(eventEnd > from)) eventEnd = from + 1;
-    var eventSpan = eventEnd - from;
-    var cap = maxSpeed * room;
-    if (eventSpan > cap) {
-      var tail = eventEnd - cap, i = first;
-      while (i < shown - 1 && events[i]._t < tail) i++;
-      from = events[i]._t;
-      eventSpan = eventEnd - from;
-      if (!(eventSpan > 0)) eventSpan = 1;
-    }
-    var speed = eventSpan / room;
-    if (speed < 1) speed = 1;
-    if (speed > maxSpeed) speed = maxSpeed;
-    var end = from + eventSpan + pingMs * speed;
-    return { from: from, end: end, speed: speed, span: end - from };
-  }
-
   /* Nodes and seats touched by a set of pings (the "LIVE" glow). */
   function hotNodes(pings) {
     var hot = {};
@@ -452,13 +407,6 @@
     }
     return bars;
   }
-  /* A same-node ping has no curved lane. Replay opens the lane resolveNodes already
-     chose (GitHub → forge for a check) so the rainbow trail still has somewhere to sit. */
-  function spectrumLane(src, dst, resolved) {
-    if (src && dst && src !== dst) return [src, dst];
-    if (resolved && resolved[0] && resolved[1] && resolved[0] !== resolved[1]) return [resolved[0], resolved[1]];
-    return [src, dst];
-  }
   function spectrumTrail(p, nowMs, light) {
     var stops = [], base = light ? 0.98 : 0.9, lit = light ? 46 : 62;
     var head = Number(p) || 0, t = Number(nowMs) || 0, k;
@@ -468,7 +416,7 @@
         hue: hueOf(head * 360 + k * 28 + t * 0.12),
         alpha: (13 - k) / 13 * base,
         lightness: lit,
-        radius: 4 + (13 - k) * 0.85
+        radius: 1.5 + (13 - k) * 0.38
       });
     }
     return stops;
@@ -547,13 +495,13 @@
     LABEL: LABEL, SUB: SUB, SQUARE: SQUARE, HUB: HUB, SATS: SATS, EDGES: EDGES, KIND_WORD: KIND_WORD,
     resolveNodes: resolveNodes, eventColor: eventColor, cleanLabel: cleanLabel, promptView: promptView, activityLines: activityLines, whoTag: whoTag,
     headline: headline, parseT: parseT, mergeEvents: mergeEvents, countUpTo: countUpTo,
-    eventsUpTo: eventsUpTo, pingsAt: pingsAt, replayClock: replayClock, hotNodes: hotNodes, applyFeed: applyFeed,
+    eventsUpTo: eventsUpTo, pingsAt: pingsAt, hotNodes: hotNodes, applyFeed: applyFeed,
     bounds: bounds, fmtCt: fmtCt, ago: ago, feedUrl: feedUrl, fetchFeed: fetchFeed, rosterEntries: rosterEntries,
     own: own, botImage: botImage, badgeLetter: badgeLetter, bob: bob, pulse: pulse, entry: entry,
     ENTRY_MS: ENTRY_MS, PULSE_MS: PULSE_MS, MARK: MARK, markCells: markCells,
     isPlaying: isPlaying, sliderAction: sliderAction, edgeTraffic: edgeTraffic, orbitStep: orbitStep,
     spectrumEnabled: spectrumEnabled, spectrumShows: spectrumShows, spectrumMeter: spectrumMeter,
-    spectrumLane: spectrumLane, spectrumTrail: spectrumTrail, packetCore: packetCore, aspectFit: aspectFit,
+    spectrumTrail: spectrumTrail, packetCore: packetCore, aspectFit: aspectFit,
     activityDetail: activityDetail,
     GLYPH: GLYPH, MARK_PATH: MARK_PATH, activeSeats: activeSeats, recentItems: recentItems, BOT_IMAGES: BOT_IMAGES, BLACKOUT_UNTIL: BLACKOUT_UNTIL,
     countdown: countdown, blackoutLine: blackoutLine, clockLine: clockLine, fleetLine: fleetLine, wireGlow: wireGlow

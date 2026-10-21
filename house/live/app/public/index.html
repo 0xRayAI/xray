@@ -611,7 +611,7 @@ footer a { color: var(--foot); }
         <option value="3600">1 h / s</option>
       </select>
       <button id="live" type="button" class="on">Live</button>
-      <label class="ambient-toggle" title="Replay loop: a 20 s pass, then a gap. Pauses while a live packet is in flight."><input id="ambient" type="checkbox" checked> Replay loop</label>
+      <label class="ambient-toggle" title="Replay loop: every 10 s, replay the last few minutes dimmed (visual only)"><input id="ambient" type="checkbox" checked> Replay loop</label>
       <input id="slider" type="range" min="0" max="1" step="1000" value="1" aria-label="Timeline">
       <span id="tLabel"></span>
         </div>
@@ -706,19 +706,19 @@ footer a { color: var(--foot); }
   var reduced = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   var t0Page = performance.now();
   var pos = {};                // per-frame node positions (SATS + bob)
-  // Replay: the recent window on load, paced so packets stay apart, then go live.
-  var REPLAY_MS = 25000, REPLAY_WINDOW_MS = 5 * 60 * 1000, REPLAY_MIN_EVENTS = 20, REPLAY_MAX_SPEED = 4;
+  // Replay: replay the recent past as a short live on load, then go live (reuses rewindTo/play/goLive)
+  var REPLAY_MS = 6500, REPLAY_WINDOW_MS = 5 * 60 * 1000, REPLAY_MIN_EVENTS = 20;
   var replay = null;         // { speed: the user's speed, restored when the live ends }
   function endReplay() { if (!replay) return; speed = replay.speed; replay = null; lastText = 0; }
   function startReplay() {
-    var clock = L.replayClock(state.events, Date.now(), {
-      windowMs: REPLAY_WINDOW_MS, durationMs: REPLAY_MS, maxSpeed: REPLAY_MAX_SPEED,
-      minEvents: REPLAY_MIN_EVENTS, pingMs: L.PING_MS
-    });
-    if (!clock) return false;
-    rewindTo(clock.from);
-    replay = { speed: speed, end: clock.end };
-    speed = clock.speed; playing = true;
+    var now = Date.now(), shown = L.countUpTo(state.events, now);
+    if (!shown) return false;
+    var from = now - REPLAY_WINDOW_MS;
+    if (shown - L.countUpTo(state.events, from) === 0) from = state.events[Math.max(0, shown - REPLAY_MIN_EVENTS)]._t - 1;
+    var end = Math.min(now, state.events[shown - 1]._t + 1);   // stop at the last replayed event, then go live
+    rewindTo(from);
+    replay = { speed: speed, end: end };
+    speed = Math.max(1, (end - from) / REPLAY_MS); playing = true;
     return true;
   }
 
@@ -892,9 +892,8 @@ footer a { color: var(--foot); }
     return fixPings(L.pingsAt(state.events, state.t, L.PING_MS * speed));
   }
 
-  // Ambient Replay loop: dimmed overlay on its own clock. A pass, then a gap.
-  // Never changes live state, pill, counts or seats. Pauses while a live packet is in flight.
-  var AMBIENT_EVERY_MS = 50000, AMBIENT_MS = 20000, AMBIENT_WINDOW_MS = 5 * 60 * 1000, AMBIENT_ALPHA = 0.4, AMBIENT_GAP_MS = 30000;
+  // Ambient Replay loop: dimmed overlay replay on its own clock; never changes live state, pill, counts or seats
+  var AMBIENT_EVERY_MS = 10000, AMBIENT_MS = 5000, AMBIENT_WINDOW_MS = 5 * 60 * 1000, AMBIENT_ALPHA = 0.4;
   var ambientOn = !reduced && !/[?&]replay=0(&|$)/.test(location.search);
   var spectrumOn = false;
   function readSpectrum() { spectrumOn = L.spectrumEnabled(L.SPECTRUM, location.search, reduced); }
@@ -937,27 +936,17 @@ footer a { color: var(--foot); }
       ctx.beginPath(); ctx.arc(tq[0], tq[1], stop.radius, 0, 7); ctx.fill();
     }
   }
-  function liveInFlight(nowWall) {
-    var i, f, dur;
-    for (i = 0; i < flashes.length; i++) {
-      f = flashes[i]; dur = f.dur || FLASH_MS;
-      if (nowWall >= f.start && nowWall - f.start < dur) return true;
-    }
-    return false;
-  }
   function ambientPings(nowWall) {
     if (!ambientOn || !state.live || replay || document.hidden) { ambient = null; ambientNext = nowWall + AMBIENT_EVERY_MS; return []; }
-    if (liveInFlight(nowWall)) { ambient = null; ambientNext = nowWall + AMBIENT_GAP_MS; return []; }
     if (!ambient) {
       if (nowWall < ambientNext) return [];
       ambientNext = nowWall + AMBIENT_EVERY_MS;
-      var now = Date.now();
-      var clock = L.replayClock(state.events, now, {
-        windowMs: AMBIENT_WINDOW_MS, durationMs: AMBIENT_MS, maxSpeed: REPLAY_MAX_SPEED,
-        minEvents: REPLAY_MIN_EVENTS, pingMs: L.PING_MS
-      });
-      if (!clock) return [];
-      ambient = { from: clock.from, end: clock.end, start: nowWall, sp: clock.speed };
+      var now = Date.now(), shown = L.countUpTo(state.events, now);
+      if (!shown) return [];
+      var from = now - AMBIENT_WINDOW_MS;
+      if (shown - L.countUpTo(state.events, from) === 0) from = state.events[Math.max(0, shown - REPLAY_MIN_EVENTS)]._t - 1;
+      var end = Math.min(now, state.events[shown - 1]._t + 1);
+      ambient = { from: from, end: end, start: nowWall, sp: Math.max(1, (end - from) / AMBIENT_MS) };
       ambientStats.passes++;
     }
     var k = (nowWall - ambient.start) / AMBIENT_MS;
@@ -1283,10 +1272,6 @@ footer a { color: var(--foot); }
     if (ghosts.length) { ctx.globalAlpha = AMBIENT_ALPHA; ghosts.forEach(drawPing); ctx.globalAlpha = 1; }
     pings.forEach(drawPing);
     function drawPing(pk) {
-      if (pk.live && pk.e && pk.src === pk.dst && L.spectrumLane) {
-        var lane = L.spectrumLane(pk.src, pk.dst, L.resolveNodes(pk.e));
-        if (lane[0] !== lane[1] && pos[lane[0]] && pos[lane[1]]) { pk.src = lane[0]; pk.dst = lane[1]; }
-      }
       if (!hasPos(pk.src, 'ping') || !hasPos(pk.dst, 'ping')) return;
       if (pk.src === pk.dst) {   // one-node event (e.g. a check with no PR author): a ring pulse on the node
         var c0 = pos[pk.src]; ctx.strokeStyle = rgb(pk.col, Math.max(0, 1 - pk.p)); ctx.lineWidth = 2.5;
