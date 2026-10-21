@@ -1,5 +1,7 @@
 # Cloud prompt footer
 
+> 0xRay house example — not the general procedure. Your team’s rules live in `house/` after `grok-bot house init`.
+
 This file is `grok-bot/ops/cloud-memory/PROMPT-FOOTER.md`. Append it to a cloud agent prompt. The rule is Fallout in `grok-bot/OP-PROC.md`.
 
 The seat that launched the cloud logs every owner message as activity before anything else, including a quick follow-up that arrives mid-turn. The command is step 1 of `grok-bot/skills/station/SKILL.md`.
