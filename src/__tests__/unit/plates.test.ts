@@ -337,6 +337,9 @@ describe('pipeline plates', () => {
         const raw = readFileSync(png);
         expect(raw.readUInt32BE(16), 'fleet width').toBe(1600);
         expect(raw.readUInt32BE(20), 'fleet height').toBe(1600);
+        const debate = readFileSync(join(process.cwd(), 'docs-site/static/plates/x/v5-confer.png'));
+        expect(debate.readUInt32BE(16), 'v5 debate width').toBe(1600);
+        expect(debate.readUInt32BE(20), 'v5 debate height').toBe(1600);
         expect(flow.layers[3]?.nodes.map((node) => node.lines[0])).toEqual([
           'npm release',
           'Distribution',
