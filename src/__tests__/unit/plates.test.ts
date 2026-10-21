@@ -332,6 +332,48 @@ describe('pipeline plates', () => {
       }
     }
   });
+
+  it('fails when a rendered plate character has no glyph', () => {
+    const fonts = join(
+      process.cwd(),
+      'grok-bot/skills/draw-stamped-card/recipes/bifrost-storyboard/assets/fonts',
+    );
+    const bold = cmapOf(join(fonts, 'BarlowCondensed-Bold.ttf'));
+    const semi = cmapOf(join(fonts, 'BarlowCondensed-SemiBold.ttf'));
+    const stencil = cmapOf(join(fonts, 'BlackOpsOne-Regular.ttf'));
+    const drawn = drawnArrows();
+    expect(drawn.has('→')).toBe(true);
+    expect(bold.has(codePoint('→'))).toBe(false);
+    expect(bold.has(codePoint('·'))).toBe(true);
+    expect(bold.has(codePoint('≤'))).toBe(true);
+    const missing: string[] = [];
+    for (const id of PLATE_IDS) {
+      if (NO_LENS_CARD.has(id)) continue;
+      const md = readFileSync(join(process.cwd(), 'docs-site/docs/plates', `${id}.md`), 'utf8');
+      const frontmatter = /^---\n([\s\S]*?)\n---/.exec(md)?.[1] ?? '';
+      const title = (/^title:\s*(.+)\s*$/m.exec(frontmatter)?.[1] ?? id).toUpperCase();
+      noteMissing(missing, id, 'title', title, stencil, drawn);
+      noteMissing(missing, id, 'subtitle', leadLine(md), semi, drawn);
+      const footer = md.split('\n').find((line) => line.startsWith('stamped')) ?? '';
+      noteMissing(missing, id, 'footer', footer, bold, drawn);
+      const flow = parsePlateFlow(fenceLines(fenceBody(md)));
+      for (const layer of flow.layers) {
+        noteMissing(missing, id, 'layer', layer.name.toUpperCase(), bold, drawn);
+        for (const node of layer.nodes) {
+          const text = node.lines.join(' ');
+          noteMissing(missing, id, 'card', text, bold, drawn);
+          noteMissing(missing, id, 'card', text, semi, drawn);
+        }
+      }
+      for (const edge of flow.edges) {
+        noteMissing(missing, id, 'edge', edge.label, semi, drawn);
+      }
+      for (const note of flow.notes) {
+        noteMissing(missing, id, 'note', note, semi, drawn);
+      }
+    }
+    expect(missing).toEqual([]);
+  });
 });
 
 const NO_LENS_CARD = new Set(['review', 'goggles', 'suit', 'kits', 'host-pack', 'glossary']);
@@ -406,6 +448,125 @@ function plateBoxes(lines: string[]): Array<{ top: number; bot: number; left: nu
         }
       }
       c += 1;
+    }
+  }
+  return found;
+}
+
+function codePoint(ch: string): number {
+  return ch.codePointAt(0) ?? 0;
+}
+
+function drawnArrows(): Set<string> {
+  const src = readFileSync(
+    join(process.cwd(), 'grok-bot/skills/draw-stamped-card/recipes/layered-flow/render.py'),
+    'utf8',
+  );
+  const block = /INLINE_ARROWS\s*=\s*\{([^}]+)\}/.exec(src)?.[1] ?? '';
+  if (!block || !src.includes('def draw_inline_arrow') || !src.includes('def paint_text')) {
+    throw new Error('renderer does not draw the arrow characters');
+  }
+  const arrows = new Set<string>();
+  for (const match of block.matchAll(/"([^"]+)"/g)) {
+    const ch = match[1] ?? '';
+    if (ch) arrows.add(ch);
+  }
+  return arrows;
+}
+
+function leadLine(md: string): string {
+  const parts = md.split('---');
+  const body = parts.length >= 3 ? parts.slice(2).join('---') : md;
+  const chunk: string[] = [];
+  for (const line of body.split('\n')) {
+    if (line.startsWith('#') || line.startsWith('```')) {
+      if (chunk.length) break;
+      continue;
+    }
+    if (!line.trim()) {
+      if (chunk.length) break;
+      continue;
+    }
+    chunk.push(line.trim());
+  }
+  let sentence = chunk.join(' ');
+  const dot = sentence.indexOf('. ');
+  if (dot !== -1) sentence = sentence.slice(0, dot + 1);
+  if (!sentence || sentence.length > 68) return '';
+  return sentence;
+}
+
+function noteMissing(
+  missing: string[],
+  id: string,
+  role: string,
+  text: string,
+  cmap: Set<number>,
+  drawn: Set<string>,
+): void {
+  for (const ch of text) {
+    if (drawn.has(ch) || ch === '\n') continue;
+    const cp = ch.codePointAt(0) ?? 0;
+    if (!cmap.has(cp)) missing.push(`${id} ${role} ${ch}`);
+  }
+}
+
+function cmapOf(path: string): Set<number> {
+  const buf = readFileSync(path);
+  const view = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+  const numTables = view.getUint16(4);
+  let cmapAt = -1;
+  for (let index = 0; index < numTables; index += 1) {
+    const rec = 12 + index * 16;
+    if (buf.toString('ascii', rec, rec + 4) === 'cmap') cmapAt = view.getUint32(rec + 8);
+  }
+  if (cmapAt < 0) throw new Error(`no cmap in ${path}`);
+  const nEnc = view.getUint16(cmapAt + 2);
+  let best = -1;
+  let bestScore = -1;
+  for (let index = 0; index < nEnc; index += 1) {
+    const rec = cmapAt + 4 + index * 8;
+    const platform = view.getUint16(rec);
+    const encoding = view.getUint16(rec + 2);
+    const off = cmapAt + view.getUint32(rec + 4);
+    if (view.getUint16(off) !== 4) continue;
+    const score = (platform === 3 && encoding === 1 ? 100000 : 0) + view.getUint16(off + 2);
+    if (score > bestScore) {
+      bestScore = score;
+      best = off;
+    }
+  }
+  if (best < 0) throw new Error(`no format-4 cmap in ${path}`);
+  const seg = view.getUint16(best + 6) / 2;
+  let pos = best + 14;
+  const end: number[] = [];
+  const start: number[] = [];
+  const delta: number[] = [];
+  const roff: number[] = [];
+  for (let index = 0; index < seg; index += 1) end.push(view.getUint16(pos + index * 2));
+  pos += seg * 2 + 2;
+  for (let index = 0; index < seg; index += 1) start.push(view.getUint16(pos + index * 2));
+  pos += seg * 2;
+  for (let index = 0; index < seg; index += 1) delta.push(view.getInt16(pos + index * 2));
+  pos += seg * 2;
+  const roffPos = pos;
+  for (let index = 0; index < seg; index += 1) roff.push(view.getUint16(pos + index * 2));
+  const found = new Set<number>();
+  for (let index = 0; index < seg; index += 1) {
+    const startCp = start[index] ?? 0;
+    const endCp = end[index] ?? 0;
+    const idDelta = delta[index] ?? 0;
+    const rangeOff = roff[index] ?? 0;
+    for (let cp = startCp; cp <= endCp; cp += 1) {
+      let glyph = 0;
+      if (rangeOff === 0) {
+        glyph = (cp + idDelta) & 0xffff;
+      } else {
+        const gpos = roffPos + index * 2 + rangeOff + 2 * (cp - startCp);
+        glyph = view.getUint16(gpos);
+        if (glyph) glyph = (glyph + idDelta) & 0xffff;
+      }
+      if (glyph) found.add(cp);
     }
   }
   return found;
