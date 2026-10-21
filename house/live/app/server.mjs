@@ -17,7 +17,7 @@ import { seatPresence, presentSeat, foldSeatTouch, fleetConfigOf, configuredRost
 import { parseAllowlist, mergeCards, sourceCardsFrom, projectAllowed, validateItem, workEventToItem, cardNoNudge, workItemNewer } from './source.mjs';
 import { checkRoutesFromDir, readRoutingMap, createLoginResolver, auditLogins } from './routes.mjs';
 import { fingerprint, tripwire, createClock, wakeTitle, mutedSeats, selectStallSeats } from './governor.mjs';
-import { acceptWaveCards, applyBrief, attachPacketCards, burnQuiet, isPlanCard, liveWorkCount, postedCards, retainSeedCards, resolveWaveSeed, scheduleWaves } from './wave-schedule.mjs';
+import { acceptWaveCards, applyBrief, attachPacketCards, burnQuiet, isPacketBorn, isPlanCard, liveWorkCount, postedCards, retainSeedCards, resolveWaveSeed, scheduleWaves } from './wave-schedule.mjs';
 import { createArch1Launch, ARCH1_CANON, cardKeyOf } from './arch1-launch.mjs';
 import { configureWorkTrack, acceptCursorWebhook, appendWake, applyCloudOwners, boardCloudAgents, canonSeatToken, cloudIdsAlias, cloudTurnId, deriveTrackFromDir, displaySeat, isPacket, loadSeatAgentMap, openCloudTurns, readJsonl, readWakeRows, safePrUrl, seatForAgentId, stampCriticCloud, toToken } from './worktrack.mjs';
 import { wakeConfig, createWakeState, classifyBatch, gateLine, noteSent, releaseDue, publicStats, fullStats, restoreWakeBook, viewLine } from './wake-gate.mjs';
@@ -1047,10 +1047,18 @@ function weeklyBurnFraction() {
   if (!Number.isFinite(n) || n < 0) return 0;
   return n > 1 ? n / 100 : n;
 }
+function cardIsClosed(card) {
+  if (!card || card.pinned) return false;
+  if (card.state === 'closed' || card.stage === 'done') return true;
+  const number = Number(card.number);
+  if (!card.repo || !Number.isInteger(number)) return false;
+  return itemClosed(card.repo, number);
+}
 function waveBoard(cards, now = Date.now()) {
   const coord = cosSeat();
-  return scheduleWaves(retainSeedCards(cards, bfCards, seedHold), WAVE_SEED, {
+  return scheduleWaves(retainSeedCards(cards, bfCards, seedHold, cardIsClosed), WAVE_SEED, {
     coord, now, prior: bfCards, weeklyBurn: weeklyBurnFraction(), window: WAVE_SEED.window,
+    closed: cardIsClosed,
   });
 }
 function notePonder(card) {
@@ -1083,7 +1091,45 @@ function ensurePacketCard(line) {
 function githubEvents() {
   try { return [...SRCS.github.evs.values()]; } catch { return []; }
 }
-function publishBoard(updatedCt) {
+function archiveCard(c, stamp) {
+  if (!c || c.kind === 'source' || !c.key) return;
+  const beat = Number(c.last_beat_t);
+  const fromBeat = Number.isFinite(beat) && beat > 0 ? new Date(beat).toISOString() : '';
+  const updated = typeof c.updated_ct === 'string' && c.updated_ct ? c.updated_ct : (fromBeat || stamp);
+  appendArchive('cards', { ...c, t_ct: c.t_ct || updated || stamp, updated_ct: updated });
+}
+function mergedEventFor(card, events) {
+  const repo = String(card && card.repo || '').toLowerCase();
+  const number = Number(card && card.number);
+  if (!repo || !Number.isInteger(number)) return null;
+  return (events || []).find(e => e && e.kind === 'merged' && String(e.repo || '').toLowerCase() === repo && Number(e.number) === number) || null;
+}
+/** Final merged or closed rows the display cap or the 24h window left off the board. The archive stamp is this write, so a newer live snapshot does not stay last. */
+function archiveFinals(settled, stamp) {
+  const events = githubEvents();
+  const rows = [];
+  for (const c of Array.isArray(settled) ? settled : []) if (c && c.key) rows.push(c);
+  for (const c of bfCards) {
+    if (!isPacketBorn(c) || !cardIsClosed(c) || c.state === 'closed') continue;
+    const hit = mergedEventFor(c, events);
+    rows.push({
+      ...c, state: 'closed', stage: 'done', verb: hit ? 'merged' : 'closed',
+      merged_by: hit ? (hit.merged_by || hit.from) : c.merged_by, updated_ct: stamp,
+    });
+  }
+  for (const c of rows) {
+    const hit = mergedEventFor(c, events);
+    const verb = hit ? 'merged' : (c.verb === 'merged' || c.verb === 'closed' ? c.verb : 'closed');
+    archiveCard({
+      ...c, state: 'closed', stage: 'done', verb,
+      merged_by: (hit && (hit.merged_by || hit.from)) || c.merged_by,
+      updated_ct: stamp,
+    }, stamp);
+  }
+}
+function publishBoard(updatedCt, settled) {
+  const stamp = updatedCt || new Date().toISOString();
+  archiveFinals(settled, stamp);
   const merged = mergeCards(waveCards, sourceCardsFrom(itemsFromWork(), { seats: SEAT_IDS }));
   const scheduled = waveBoard(merged);
   scheduled.cards = attachPacketCards(scheduled.cards, githubEvents()).map(applyBrief);
@@ -1091,31 +1137,29 @@ function publishBoard(updatedCt) {
   if (sig === boardSig) return;
   boardSig = sig;
   bfCards = scheduled.cards; cardsAt = Date.now();
-  const stamp = updatedCt || new Date().toISOString();
   bfWrite('cards.json', JSON.stringify({ updated_ct: stamp, cards: bfCards }));
   for (const c of bfCards) {
     if (c && String(c.state || '').toLowerCase() === 'closed') notePonder(c);
     if (!c || c.kind === 'source') continue;
-    const beat = Number(c.last_beat_t);
-    const updated = Number.isFinite(beat) && beat > 0 ? new Date(beat).toISOString() : (typeof c.updated_ct === 'string' ? c.updated_ct : '');
-    appendArchive('cards', { ...c, t_ct: updated || c.t_ct || stamp, updated_ct: updated });
+    archiveCard(c, stamp);
   }
   recomputeGithubDataAt();
 }
 function setCards(wb) {
   if (!wb || !Array.isArray(wb.cards)) return;
+  const stamp = wb.updated_ct || new Date().toISOString();
   const sliced = wb.cards.slice(0, 200);
   const kept = acceptWaveCards(sliced, waveCards, {
     stalled: feedStalled(),
     feedAgeMs: feedFileAgeMs(),
     stallWindowMs: watchLimitMs(),
   });
-  if (kept === waveCards) return;
+  if (kept === waveCards) { archiveFinals(wb.settled, stamp); return; }
   const sig = JSON.stringify(kept);
-  if (sig === waveSig) return;
+  if (sig === waveSig) { archiveFinals(wb.settled, stamp); return; }
   waveSig = sig;
   waveCards = kept;
-  publishBoard(wb.updated_ct);
+  publishBoard(stamp, wb.settled);
 }
 function holdOwner(c) {
   const owner = seatIdOf(c.owner);

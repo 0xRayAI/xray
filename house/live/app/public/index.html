@@ -1399,22 +1399,25 @@ footer a { color: var(--foot); }
       var repoKey = String(c.repo || '').toLowerCase() + '#' + Number(c.number);
       if (cardKey === key || repoKey === key) found = c;
     });
-    if (found) return found;
-    var ev = null;
+    var ev = null, mergedEv = null;
     (state.events || []).forEach(function (e) {
       if (statIdOf(e) !== key) return;
+      if (String(e.kind || '') === 'merged' && (!mergedEv || (e._t || 0) >= (mergedEv._t || 0))) mergedEv = e;
       if (!ev || (e._t || 0) >= (ev._t || 0)) ev = e;
     });
+    var forceMerged = wb.statFilter === 'prs_merged_24h' || !!mergedEv;
+    if (found) return forceMerged ? Object.assign({}, found, { state: 'closed', stage: 'done', verb: 'merged' }) : found;
+    if (mergedEv) ev = mergedEv;
     var bits = key.split('#');
     var number = Number(bits.pop());
     var repo = bits.join('#');
     var kindName = ev ? String(ev.kind || '') : '';
-    var closed = kindName === 'merged' || kindName === 'issue_close' || kindName === 'pr_close';
+    var closed = forceMerged || kindName === 'merged' || kindName === 'issue_close' || kindName === 'pr_close';
     var t = ev && ev._t ? ev._t : 0;
     return {
       key: key, repo: repo, number: number, kind: kindName.indexOf('issue') === 0 ? 'issue' : 'pr',
       title: ev && ev.label ? ev.label : key, owner: ev && ev.from ? ev.from : '',
-      state: closed ? 'closed' : 'live', stage: closed ? 'done' : 'open', packet_ok: true,
+      state: closed ? 'closed' : 'live', stage: closed ? 'done' : 'open', packet_ok: true, verb: forceMerged ? 'merged' : '',
       last_beat_t: t, beats: ev ? [{ t: t, what: kindName || 'event' }] : [],
       merged_by: ev && ev.merged_by, url: ev && ev.source
     };

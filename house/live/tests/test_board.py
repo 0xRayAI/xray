@@ -442,19 +442,53 @@ class Model(unittest.TestCase):
         finally:
             os.environ.pop("NO_NUDGE_REPOS", None)
 
-    def test_closed_stays_for_7_days_then_drops(self):
-        kept = [c for c in self.w.model([
-            self.ev(5, "pr_open", 6 * 86400, title="week"), self.ev(5, "merged", 5 * 86400),
-        ])["cards"] if not c.get("pinned")]
-        self.assertEqual(len(kept), 1)
-        self.assertEqual((kept[0]["state"], kept[0]["stage"]), ("closed", "done"))
-        gone = [c for c in self.w.model([
-            self.ev(6, "pr_open", 9 * 86400, title="gone"), self.ev(6, "merged", 8 * 86400),
-        ])["cards"] if not c.get("pinned")]
-        self.assertEqual(gone, [])
+    def test_display_keeps_24h_and_settled_keeps_the_merge(self):
+        recent = self.w.model([
+            self.ev(5, "pr_open", 6 * 3600, title="today"), self.ev(5, "merged", 5 * 3600),
+        ])
+        shown = [c for c in recent["cards"] if not c.get("pinned")]
+        self.assertEqual([(c["state"], c["stage"], c["verb"]) for c in shown], [("closed", "done", "merged")])
+        self.assertEqual(recent["settled"], [])
+        old = self.w.model([
+            self.ev(6, "pr_open", 3 * 86400, title="yesterday"), self.ev(6, "merged", 2 * 86400),
+        ])
+        self.assertEqual([c for c in old["cards"] if not c.get("pinned")], [])
+        self.assertEqual(len(old["settled"]), 1)
+        row = old["settled"][0]
+        self.assertEqual((row["state"], row["stage"], row["verb"], row["number"]), ("closed", "done", "merged", 6))
+        self.assertEqual(self.w.CLOSED_KEEP_S, 86400)
+
+    def test_closed_slots_come_before_parked(self):
+        evs = [self.ev(n, "issue_open", 3600, title=f"live {n}", pr_state="open") for n in range(1, 31)]
+        evs += [self.ev(n, "issue_open", 3 * 86400, title=f"parked {n}", pr_state="open", labels=["parked"]) for n in range(31, 51)]
+        evs += [self.ev(80, "pr_open", 7200, title="just merged"), self.ev(80, "merged", 1800)]
+        body = [c for c in self.w.model(evs)["cards"] if not c.get("pinned")]
+        self.assertEqual(len(body), self.w.MAX_CARDS)
+        hit = next(c for c in body if c["number"] == 80)
+        self.assertEqual((hit["state"], hit["stage"], hit["verb"]), ("closed", "done", "merged"))
+        self.assertLess(sum(1 for c in body if c["state"] == "parked"), 20)
+        self.assertTrue(any(c["state"] == "parked" for c in body))
+
+    def test_cap_cut_still_settles_the_merge(self):
+        evs = [self.ev(n, "issue_open", 600, title=f"open {n}", pr_state="open") for n in range(1, 46)]
+        evs += [self.ev(90, "pr_open", 5000, title="capped"), self.ev(90, "merged", 1000)]
+        m = self.w.model(evs)
+        self.assertNotIn(90, {c["number"] for c in m["cards"]})
+        settled = [c for c in m["settled"] if c["number"] == 90]
+        self.assertEqual([(c["state"], c["stage"], c["verb"]) for c in settled], [("closed", "done", "merged")])
+
+    def test_reconcile_closes_a_merged_packet_card(self):
+        wave = {"cards": [
+            {"key": f"{R}#485", "kind": "packet", "born": "packet", "state": "live", "repo": R, "number": 485, "stage": "open"},
+            {"key": f"{R}#1", "kind": "issue", "state": "live", "repo": R, "number": 1},
+        ]}
+        n = self.w.reconcile(wave, {R.lower(): {1}})
+        self.assertEqual(n, 1)
+        self.assertEqual((wave["cards"][0]["state"], wave["cards"][0]["stage"]), ("closed", "done"))
+        self.assertEqual(wave["cards"][1]["state"], "live")
 
     def test_full_live_board_keeps_recently_merged_cards(self):
-        """GET /cards was pin + 40 live/parked and zero closed. Merged rows stay for 7 days."""
+        """A full open board used to rank closed last and slice them off. Recent merges take a slot before parked."""
         live = json.loads((HERE / "fixtures" / "live-cards.json").read_text())
         spec = json.loads((HERE / "fixtures" / "closed-column.json").read_text())
         self.assertEqual(live["source"], "https://bifrost.0xray.dev/cards")
@@ -494,25 +528,27 @@ class Model(unittest.TestCase):
                 "repo": repo, "number": n, "from": row.get("from") or "forge",
                 "source": f"https://github.com/{repo}/pull/{n}",
             })
-        cards = self.w.model(evs)["cards"]
+        modeled = self.w.model(evs)
+        cards = modeled["cards"]
         self.assertEqual(sum(1 for c in cards if c.get("pinned")), 1)
         body = [c for c in cards if not c.get("pinned")]
-        open_cards = [c for c in body if c["state"] != "closed"]
-        self.assertEqual(len(open_cards), self.w.MAX_CARDS)
-        self.assertTrue(any(c["state"] == "live" for c in open_cards))
-        self.assertTrue(any(c["state"] == "parked" for c in open_cards))
+        self.assertEqual(len(body), self.w.MAX_CARDS)
+        self.assertTrue(any(c["state"] == "live" for c in body))
+        self.assertTrue(any(c["state"] == "parked" for c in body))
         by_num = {c["number"]: c for c in body}
+        settled = {c["number"]: c for c in modeled["settled"]}
         for row in spec["merged"]:
             n = int(row["number"])
             if row["merged_ago_s"] > self.w.CLOSED_KEEP_S:
                 self.assertNotIn(n, by_num)
+                self.assertIn(n, settled)
+                self.assertEqual((settled[n]["state"], settled[n]["stage"], settled[n]["verb"]), ("closed", "done", "merged"))
                 continue
             self.assertIn(n, by_num)
-            self.assertTrue(by_num[n]["state"] == "closed" or by_num[n]["stage"] == "done")
             self.assertEqual(by_num[n]["repo"], "0xRayAI/xray")
-            self.assertEqual((by_num[n]["state"], by_num[n]["stage"]), ("closed", "done"))
-        self.assertEqual(self.w.CLOSED_KEEP_S, 7 * 86400)
-        self.assertEqual(len(body), self.w.MAX_CARDS + sum(1 for row in spec["merged"] if row["merged_ago_s"] <= self.w.CLOSED_KEEP_S))
+            self.assertEqual((by_num[n]["state"], by_num[n]["stage"], by_num[n]["verb"]), ("closed", "done", "merged"))
+            self.assertNotIn(n, settled)
+        self.assertEqual(self.w.CLOSED_KEEP_S, 86400)
 
     def test_review_approved_or_changes_requested_is_a_reviewer_beat(self):
         ok = self.card([self.ev(60, "pr_open", 4000, title="r"), self.ev(60, "review", 3000, state="APPROVED"),

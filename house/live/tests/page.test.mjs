@@ -298,8 +298,9 @@ test('our overlay does not install a fixed roster strip; the canvas still draws 
   const ev = L.applyFeed({}, { events: [{ id: 1, t_ct: '2026-10-13T10:00:00-05:00', from: 'Blaze', to: 'GitHub' },
     { id: 2, t_ct: '2026-10-13T10:01:00-05:00', from: 'Others', to: 'Bifrost' }, { id: 3, t_ct: '2026-10-13T10:02:00-05:00', from: 'forge', to: 'GitHub' },
     { id: 4, t_ct: '2026-10-13T10:03:00-05:00', kind: 'seat_turn', from: 'forge', to: 'Bifrost', hops: ['forge', 'Bifrost'] },
-    { id: 5, t_ct: '2026-10-13T10:04:00-05:00', kind: 'op_deploy', from: 'Operator', to: 'Bifrost', hops: ['Operator', 'Railway', 'Bifrost'] }] }).state.events;
-  assert.deepEqual(ev.map(e => [e.from, e.to]), [['Blaze', 'GitHub'], ['forge', 'GitHub'], ['forge', 'forge'], ['GitHub', 'Railway']]);
+    { id: 5, t_ct: '2026-10-13T10:04:00-05:00', kind: 'op_deploy', from: 'Operator', to: 'Bifrost', hops: ['Operator', 'Railway', 'Bifrost'] },
+    { id: 6, t_ct: '2026-10-13T10:05:00-05:00', kind: 'merged', from: 'forge', to: 'Bifrost', repo: '0xRayAI/xray', number: 485, label: 'merged #485' }] }).state.events;
+  assert.deepEqual(ev.map(e => [e.from, e.to, e.kind || '']), [['Blaze', 'GitHub', ''], ['forge', 'GitHub', ''], ['forge', 'forge', 'seat_turn'], ['GitHub', 'Railway', 'op_deploy'], ['forge', 'GitHub', 'merged']]);
   assert.ok(!ev[2].hops || ev[2].hops.length < 2);   // one hop is a self-pulse; the kit draws a ring
   assert.deepEqual(ev[3].hops, ['GitHub', 'Railway']);
   assert.ok('Blaze' in L.SATS); assert.equal(L.LABEL.Blaze, 'Blaze');

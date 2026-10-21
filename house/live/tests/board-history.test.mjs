@@ -58,6 +58,22 @@ test('card history keeps a later state and drops a row with no key', () => {
   fs.rmSync(data, { recursive: true, force: true });
 });
 
+test('card history takes verb from the last merged row when no beat names a merge', () => {
+  const data = fs.mkdtempSync(path.join(os.tmpdir(), 'board-verb-'));
+  initArchive(data);
+  const open = { key: 'example/repo#485', state: 'live', stage: 'open', owner: 'forge', title: 'Packet', repo: 'example/repo', number: 485, t_ct: '2026-10-20T12:00:00Z', updated_ct: '2026-10-20T12:00:00Z' };
+  assert.equal(appendArchive('cards', open), true);
+  assert.equal(appendArchive('cards', { ...open, state: 'closed', stage: 'done', verb: 'merged', t_ct: '2026-10-20T18:00:00Z', updated_ct: '2026-10-20T18:00:00Z' }), true);
+  const merged = cardHistory().cards.find(c => c.id === 'example/repo#485');
+  assert.equal(merged.state, 'closed');
+  assert.equal(merged.verb, 'merged');
+  assert.equal(appendArchive('cards', { ...open, state: 'live', stage: 'open', t_ct: '2026-10-21T12:00:00Z', updated_ct: '2026-10-21T12:00:00Z' }), true);
+  const reopened = cardHistory().cards.find(c => c.id === 'example/repo#485');
+  assert.equal(reopened.state, 'live');
+  assert.equal(reopened.verb, 'live');
+  fs.rmSync(data, { recursive: true, force: true });
+});
+
 test('an older card row with no updated_ct fills it from last_beat_t', () => {
   const data = fs.mkdtempSync(path.join(os.tmpdir(), 'board-stamp-'));
   initArchive(data);
@@ -314,6 +330,103 @@ test('a persisted mill ack today marks mill active over a 10/13 github last_ct',
     assert.equal(Date.parse(mill.last_ct), touch);
   } finally {
     await stop(srv.child);
+    fs.rmSync(data, { recursive: true, force: true });
+  }
+});
+
+function archiveCardRows(data) {
+  const root = path.join(data, 'archive');
+  const rows = [];
+  if (!fs.existsSync(root)) return rows;
+  for (const day of fs.readdirSync(root)) {
+    const file = path.join(root, day, 'cards.jsonl');
+    if (!fs.existsSync(file)) continue;
+    for (const line of fs.readFileSync(file, 'utf8').split('\n')) {
+      if (!line) continue;
+      rows.push(JSON.parse(line));
+    }
+  }
+  return rows;
+}
+
+test('a display drop and a merged packet stay in history, and a restart does not prune them', async () => {
+  const data = fs.mkdtempSync(path.join(os.tmpdir(), 'board-keep-'));
+  const now = Date.now();
+  const ghostAt = new Date(now - 2 * 3600 * 1000).toISOString();
+  const mergedAt = new Date(now - 30 * 3600 * 1000).toISOString();
+  const stamp = '2026-10-21T05:00:00.000Z';
+  fs.mkdirSync(path.join(data, 'live'), { recursive: true });
+  fs.mkdirSync(path.join(data, 'feed'), { recursive: true });
+  fs.writeFileSync(path.join(data, 'live', 'cards.json'), JSON.stringify({
+    updated_ct: ghostAt,
+    cards: [{
+      key: 'example/repo#485', born: 'packet', kind: 'packet', repo: 'example/repo', number: 485,
+      title: 'Packet 485', state: 'live', stage: 'open', owner: 'forge', updated_ct: ghostAt, last_beat_t: now - 2 * 3600 * 1000,
+    }],
+  }));
+  fs.writeFileSync(path.join(data, 'feed', 'github-events.json'), JSON.stringify({
+    generated_at: stamp,
+    board: {
+      updated_ct: stamp,
+      cards: [{
+        key: 'example/repo#1', repo: 'example/repo', number: 1, kind: 'issue', state: 'live', stage: 'open',
+        title: 'Open issue', owner: 'forge', last_beat_t: now - 60 * 1000,
+      }],
+      settled: [{
+        key: 'example/repo#493', repo: 'example/repo', number: 493, kind: 'pr', state: 'closed', stage: 'done',
+        verb: 'merged', title: 'Merged 493', owner: 'forge', updated_ct: mergedAt, last_beat_t: now - 30 * 3600 * 1000,
+      }],
+    },
+    events: [
+      { id: 'open-1', t_ct: new Date(now - 60 * 1000).toISOString(), kind: 'issue_open', repo: 'example/repo', number: 1, from: 'forge', title: 'Open issue' },
+      { id: 'merge-485', t_ct: new Date(now - 3 * 3600 * 1000).toISOString(), kind: 'merged', repo: 'example/repo', number: 485, from: 'forge', title: 'Packet 485' },
+      { id: 'merge-493', t_ct: mergedAt, kind: 'merged', repo: 'example/repo', number: 493, from: 'forge', merged_by: 'forge', title: 'Merged 493' },
+    ],
+  }));
+  async function session() {
+    const srv = start(data, { SERVER_ROUTING: 'off' });
+    await ready(srv.base, srv.logs);
+    const login = await fetch(srv.base + '/login', { method: 'POST', redirect: 'manual', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'password=' + encodeURIComponent(srv.password) });
+    const cookie = (login.headers.get('set-cookie') || '').split(';')[0];
+    return { srv, cookie };
+  }
+  const first = await session();
+  try {
+    let hist;
+    let live;
+    for (let i = 0; i < 25; i++) {
+      hist = await (await fetch(first.srv.base + '/history/cards', { headers: { Cookie: first.cookie } })).json();
+      live = await (await fetch(first.srv.base + '/live-events.json', { headers: { Cookie: first.cookie } })).json();
+      const by = Object.fromEntries((hist.cards || []).map(c => [c.id, c]));
+      if (by['example/repo#485'] && by['example/repo#485'].verb === 'merged' && by['example/repo#493'] && by['example/repo#493'].verb === 'merged') break;
+      await new Promise(r => setTimeout(r, 80));
+    }
+    const by = Object.fromEntries(hist.cards.map(c => [c.id, c]));
+    assert.equal(by['example/repo#485'].state, 'closed', first.srv.logs());
+    assert.equal(by['example/repo#485'].verb, 'merged');
+    assert.equal(by['example/repo#493'].state, 'closed');
+    assert.equal(by['example/repo#493'].verb, 'merged');
+    const shown = (live.board && live.board.cards) || [];
+    assert.equal(shown.some(c => c.number === 485 && c.state === 'live'), false);
+    assert.equal(shown.some(c => c.number === 485), false);
+    const kept = archiveCardRows(data).map(row => row.id);
+    assert.ok(kept.some(id => String(id).startsWith('example/repo#485|') && String(id).includes('|closed|')));
+    assert.ok(kept.some(id => String(id).startsWith('example/repo#493|') && String(id).includes('|closed|')));
+    await stop(first.srv.child);
+    const second = await session();
+    try {
+      const again = await (await fetch(second.srv.base + '/history/cards', { headers: { Cookie: second.cookie } })).json();
+      const after = Object.fromEntries(again.cards.map(c => [c.id, c]));
+      assert.equal(after['example/repo#485'].state, 'closed');
+      assert.equal(after['example/repo#485'].verb, 'merged');
+      assert.equal(after['example/repo#493'].verb, 'merged');
+      const still = new Set(archiveCardRows(data).map(row => row.id));
+      for (const id of kept) assert.equal(still.has(id), true, id);
+    } finally {
+      await stop(second.srv.child);
+    }
+  } finally {
+    if (first.srv.child.exitCode == null) await stop(first.srv.child);
     fs.rmSync(data, { recursive: true, force: true });
   }
 });

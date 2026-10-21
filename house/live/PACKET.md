@@ -67,3 +67,7 @@ The badge stays only when the card is a packet PR (the title starts with `Packet
 ## Cloud card link
 
 `boardCloudAgents` flagged `card missing` when both `card` and `pr` were empty (`house/live/app/worktrack.mjs`). A `bc-<id> <track>` turn, a branch or `head_ref` that contains the id, and the card cell on `TRACKS.md` (`owner/repo#n` or `packet:…`) fill the card. The page renders that card as `.wbadge.cloud` with the GitHub href. A run with no pull and no named card shows `no card` and does not set the flag.
+
+## Closed column and history
+
+`/cards` shows a merged or closed card for 24 hours. Inside that window the card takes a display slot before any parked card. The 40-card cap can still leave it off the board. That card is returned on `settled`. The server writes the final row to `/history` and `/history/cards` with `verb` `merged` when a merged event exists for that repo and number. A packet-born card whose item is merged, including `#485`, is not kept on the board. A later boot does not delete those archive rows. The merged-stat click keeps the merged event when it touches Bifrost, and the card it opens is closed with that merge, not a later approval.

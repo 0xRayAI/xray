@@ -19,6 +19,8 @@ function feed() {
     events: [
       { id: 'e1', t_ct: iso(now - 60000), kind: 'pr_open', from: 'forge', to: 'GitHub', label: 'opened #3', repo: 'example/app', number: 3 },
       { id: 'e2', t_ct: iso(now - 30000), kind: 'merged', from: 'critic', to: 'GitHub', label: 'merged #2', repo: 'example/app', number: 2 },
+      { id: 'e-merge9', t_ct: iso(now - 25000), kind: 'merged', from: 'forge', to: 'Bifrost', label: 'merged #9', repo: 'example/app', number: 9 },
+      { id: 'e-approve9', t_ct: iso(now - 20000), kind: 'critic_pass', from: 'critic', to: 'GitHub', label: 'approved #9', repo: 'example/app', number: 9 },
       { id: 'ci-forge', t_ct: iso(now - 20000), kind: 'workflow_run', from: 'CI', to: 'GitHub', credit: 'forge', label: 'run tests' },
       { id: 'ci-blaze', t_ct: iso(now - 10000), kind: 'check_run', from: 'CI', to: 'GitHub', credit: 'Blaze', label: 'run lint' },
     ],
@@ -43,7 +45,7 @@ function feed() {
         issues_opened_24h: 1, issues_opened_24h_ids: ['example/app#1'],
         issues_closed_24h: 0, issues_closed_24h_ids: [],
         prs_opened_24h: 2, prs_opened_24h_ids: ['example/app#2', 'example/app#3'],
-        prs_merged_24h: 1, prs_merged_24h_ids: ['example/app#2'],
+        prs_merged_24h: 2, prs_merged_24h_ids: ['example/app#2', 'example/app#9'],
         prs_closed_unmerged_24h: 0, prs_closed_unmerged_24h_ids: [],
         issues_open: 1, prs_open: 1, open_total: 2,
       },
@@ -247,7 +249,15 @@ test('the board face keeps the contract in both themes', async () => {
       keys: [...document.querySelectorAll('#waveBody .wcard[data-key]')].map(el => el.dataset.key),
     }));
     assert.equal(filtered.pressed, 'true');
-    assert.deepEqual(filtered.keys.filter(k => k.startsWith('example/')), ['example/app#2']);
+    assert.deepEqual(filtered.keys.filter(k => k.startsWith('example/')), ['example/app#2', 'example/app#9']);
+    const mergedNine = await page.evaluate(() => {
+      const el = document.querySelector('#waveBody .wcard[data-key="example/app#9"]');
+      const badge = el && el.querySelector('.wbadge.state');
+      return { state: badge ? badge.textContent : '', text: el ? el.textContent : '' };
+    });
+    assert.equal(mergedNine.state, 'closed');
+    assert.match(mergedNine.text, /merged #9/);
+    assert.doesNotMatch(mergedNine.text, /approved #9/);
 
     const samples = await page.evaluate(() => {
       const pick = (sel) => {

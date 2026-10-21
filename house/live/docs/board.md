@@ -42,7 +42,7 @@ A merge, an issue close, or a pull request close sets the card to done and close
 
 The owner's own comment that the work is resolved also closes the card. A comment from someone else does not.
 
-Every PR comment, review comment and issue comment routes to the comment-watch seat and to the PR or issue author's seat, open, closed or merged. A comment on a merged or closed card is a beat (`comment after merge` / `comment after close`) and keeps the card on the board for 7 days from that comment. Merged and closed cards stay on `/cards` for those 7 days (`state` closed, `stage` done) even when the open board already fills the 40-card cap. A PR or issue whose author is outside the fleet no longer drops its comments.
+Every PR comment, review comment and issue comment routes to the comment-watch seat and to the PR or issue author's seat, open, closed or merged. A comment on a merged or closed card is a beat (`comment after merge` / `comment after close`) and keeps the card on the board for 24 hours from that comment. Inside that window a closed card takes a display slot before any parked card. The 40-card cap can still leave it off `/cards`. That drop does not prune `/history` or `/history/cards`: the final row is archived with `verb` `merged` when the closing event is a merge. A PR or issue whose author is outside the fleet no longer drops its comments.
 
 ## Holds
 

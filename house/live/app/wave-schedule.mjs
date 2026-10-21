@@ -553,14 +553,21 @@ export function attachPacketCards(cards, events) {
   return list.filter((card) => !gone.has(card));
 }
 
-/** Keep a plan card, a packet-born card, and loaded wave cards the collector does not send. Earlier cards win on key. */
-export function retainSeedCards(collector, prior, seedCards) {
+function packetSettled(card, closed) {
+  if (card.state === 'closed' || card.stage === 'done') return true;
+  return typeof closed === 'function' && closed(card);
+}
+
+/** Keep a plan card, a packet-born card, and loaded wave cards the collector does not send. Earlier cards win on key.
+ * A packet-born card whose item is already closed or merged is not kept. */
+export function retainSeedCards(collector, prior, seedCards, closed) {
   const base = Array.isArray(collector) ? collector.slice() : [];
   const have = new Set(base.map(cardKey).filter(Boolean));
   const extras = [...(Array.isArray(prior) ? prior : []), ...(Array.isArray(seedCards) ? seedCards : [])];
   for (const card of extras) {
     const key = cardKey(card);
     if (!key || have.has(key)) continue;
+    if (isPacketBorn(card) && packetSettled(card, closed)) continue;
     if (!isPlanCard(card) && !card.wave && card.kind !== 'wave' && card.kind !== 'plan' && !isPacketBorn(card)) continue;
     base.push(card);
     have.add(key);
@@ -587,7 +594,7 @@ export function scheduleWaves(incoming, seed, opts = {}) {
   const expireMs = opts.expireMs > 0 ? opts.expireMs : PLAN_EXPIRE_MS;
   const quiet = burnQuiet(opts.weeklyBurn);
   const list = oneWave(
-    retainSeedCards(incoming, opts.prior, []).filter((card) => {
+    retainSeedCards(incoming, opts.prior, [], opts.closed).filter((card) => {
       if (!isPlanCard(card) || !cardClosed(card)) return true;
       return card.flag === 'expired';
     }),
