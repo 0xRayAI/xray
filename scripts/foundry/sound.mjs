@@ -13,6 +13,10 @@ export { inspectBed } from "@0xray/blip/sound";
 const require = createRequire(import.meta.url);
 
 function runCli(args) {
+  if (args[0] === "bed") {
+    const magnetic = require("./sound-magnetic.cjs");
+    process.exit(magnetic.cli(args.slice(1)));
+  }
   let cli;
   try {
     cli = require.resolve("@0xray/blip/cli");
