@@ -187,8 +187,9 @@ class Model(unittest.TestCase):
                self.ev(1, "pr_commit", 4000, sha=sha),
                {"id": "cr1", "t_ct": ct(3900), "kind": "check_run", "repo": R, "sha": sha, "conclusion": "failure", "source": "https://github.com/ci/1"},
                self.ev(2, "pr_open", 600, title="fix b"),                                       # ordinary PR: no brief
+               self.ev(2, "pr_commit", 400, sha="ccccccc"),
                self.ev(9, "pr_open", 500, title="Packet: missing file"),                      # packet PR, no PACKET.md
-               self.ev(2, "critic_pass", 300),
+               self.ev(2, "critic_pass", 300, sha="ccccccc"),
                {"id": "w1", "t_ct": ct(100), "kind": "watcher", "repo": R, "number": 2, "start_ct": ct(100), "end_ct": ct(100)},
                self.ev(3, "pr_open", 9000, title="done one"), self.ev(3, "merged", 8000, merge_sha="f00ba12"),
                self.ev(3, "lab_retest_pass", 7000), self.ev(3, "pr_commit", 6000, sha="1111111")]   # after close: ignored
@@ -201,7 +202,7 @@ class Model(unittest.TestCase):
         self.assertEqual((b["stage"], b["packet_ok"], b["missing"], b["packet"]["next owner"]), ("merge", True, [], "Builder"))   # PASS + green CI: Builder merges; a plain PR needs no brief
         bare = c[f"{R}#9".lower()]
         self.assertEqual((bare["packet_ok"], bare["missing"]), (False, ["PACKET.md"]))
-        self.assertEqual([x["what"] for x in b["beats"]], ["opened", "Reviewer PASS"])            # idle watcher: no beat
+        self.assertEqual([x["what"] for x in b["beats"]], ["opened", "pushed", "Reviewer PASS"])  # idle watcher: no beat
         self.assertFalse(b["stall"])
         self.assertEqual((d["stage"], d["state"]), ("done", "closed"))
         self.assertEqual([x["what"] for x in d["beats"]], ["opened", "merged", "retest PASS"])  # stops when closed
@@ -344,16 +345,51 @@ class Model(unittest.TestCase):
         crit = dict(self.ev(40, "critic_pass", 6000), sha="425dc03")
         c = self.card([op, push, ci, crit], 40)
         self.assertEqual((c["stage"], c["nudge_to"], c["packet"]["next owner"]), ("merge", "builder", "Builder"))
-        self.assertEqual(c["reviewer"]["at_head"], True); self.assertEqual(c["head"], "425dc03")
+        self.assertEqual(c["reviewer"]["at_head"], True); self.assertEqual(c["reviewer"]["stale"], False); self.assertEqual(c["head"], "425dc03")
         cb = [b for b in c["beats"] if b.get("kind") == "reviewer verdict"][0]
         self.assertEqual((cb["what"], cb["sha"]), ("Reviewer PASS", "425dc03"))
         newer = dict(self.ev(40, "pr_commit", 5000), sha="bbbbbbb1")             # pushed after the PASS: not at head
         c = self.card([op, push, ci, crit, newer], 40)
-        self.assertFalse(c["reviewer"]["at_head"]); self.assertEqual(c["nudge_to"], "builder")   # never Tester before merge
+        self.assertFalse(c["reviewer"]["at_head"]); self.assertTrue(c["reviewer"]["stale"])
+        self.assertEqual(c["nudge_to"], "builder")   # never Tester before merge
+        self.assertNotEqual(c.get("nudge_via"), "merge (Reviewer PASS at head)")
         self.assertNotEqual(c["packet"]["next owner"], "Builder")
         c = self.card([op, push, ci, crit, self.ev(40, "merged", 4000)], 40)    # merge closes; a later retest needs a new issue
         self.assertEqual((c["stage"], c["state"]), ("done", "closed"))
         self.assertNotIn("nudge_to", c)
+
+    def test_a_verdict_stays_on_its_sha_and_a_new_head_is_not_a_merge(self):
+        posted = "302086e" + "a" * 33
+        op = self.ev(556, "pr_open", 9000, title="board")
+        old = self.ev(556, "pr_commit", 8000, sha="302086e")
+        ci = self.ev(556, "ci_pass", 7000, conclusion="success", sha="302086e")
+        verdict = dict(self.ev(556, "review", 6000), state="APPROVED", sha=posted)
+        c = self.card([op, old, ci, verdict], 556)
+        self.assertEqual((c["reviewer"]["sha"], c["reviewer"]["at_head"], c["reviewer"]["stale"]), ("302086e", True, False))
+        self.assertEqual(c["nudge_via"], "merge (Reviewer PASS at head)")
+        moved = self.ev(556, "pr_commit", 1000, sha="0e96754")
+        c = self.card([op, old, ci, verdict, moved], 556)
+        self.assertEqual(c["head"], "0e96754")
+        self.assertEqual((c["reviewer"]["sha"], c["reviewer"]["at_head"], c["reviewer"]["stale"]), ("302086e", False, True))
+        self.assertNotEqual(c.get("nudge_via"), "merge (Reviewer PASS at head)")
+        self.assertNotEqual(c["packet"].get("next owner"), "Builder")
+        self.assertEqual(c["stage"], "review")
+        bare = self.card([
+            self.ev(557, "pr_open", 9000, title="no sha"),
+            self.ev(557, "pr_commit", 8000, sha="aaaaaaa"),
+            self.ev(557, "ci_pass", 7500, conclusion="success"),
+            dict(self.ev(557, "review", 7000), state="APPROVED"),
+        ], 557)
+        self.assertFalse(bare["reviewer"]["at_head"])
+        self.assertTrue(bare["reviewer"]["stale"])
+        self.assertNotEqual(bare.get("nudge_via"), "merge (Reviewer PASS at head)")
+        short = self.card([
+            self.ev(558, "pr_open", 9000, title="short"),
+            self.ev(558, "pr_commit", 8000, sha="302086e"),
+            dict(self.ev(558, "review", 7000), state="APPROVED", sha="302086"),
+        ], 558)
+        self.assertFalse(short["reviewer"]["at_head"])
+        self.assertTrue(short["reviewer"]["stale"])
 
     def test_git_author_named_mill_is_not_a_seat(self):
         import live_collect as uc
