@@ -300,3 +300,85 @@ describe('BED-MAGNETIC-MOVES v5', () => {
     expect(text).not.toContain('render808');
   });
 });
+
+describe('BED-MAGNETIC-MOVES v6', () => {
+  const pro = load('scripts/foundry/sound-pro.cjs');
+  const magnetic = load('scripts/foundry/sound-magnetic.cjs');
+
+  type Gaps = {
+    sideUnderMidDb: number;
+    lowSideUnderMidDb: number;
+    band2to4Db: number;
+    band4to8After11Db: number;
+    bodyLufs: number;
+    padMotionDb: number | null;
+    kickHfDb: number;
+  };
+
+  const renderBed = magnetic.renderBed as (variant: string) => {
+    stems: { kick: Float64Array };
+    left: Float64Array;
+    right: Float64Array;
+  };
+  const measureBed = magnetic.measureBed as (bed: ReturnType<typeof renderBed>) => {
+    pass: boolean;
+    fails: string[];
+    lufs: number;
+    truePeakDb: number;
+    levels: { clapUnderKickDb: number; '17-19': { bass: number }; '5.4-7.4': { bass: number } };
+    pad: { swings: { chord: { swingDb: number }; body: { swingDb: number } } };
+    gaps: Gaps;
+    bassQuietShare: number | null;
+  };
+
+  it('adds a pitched tick that stays under the kick body', () => {
+    const renderKickClean = pro.renderKickClean as (sr: number) => Float64Array;
+    const renderKickTicked = pro.renderKickTicked as (sr: number) => Float64Array;
+    const linDb = pro.linDb as (lin: number) => number;
+    const clean = renderKickClean(44100);
+    const ticked = renderKickTicked(44100);
+    expect(ticked.length).toBe(clean.length);
+    let tickPeak = 0;
+    let tail = 0;
+    const tailAt = Math.floor(0.008 * 44100);
+    for (let i = 0; i < ticked.length; i++) {
+      const diff = Math.abs(ticked[i] - clean[i]);
+      if (i < tailAt) tickPeak = Math.max(tickPeak, diff);
+      else tail = Math.max(tail, diff);
+    }
+    expect(linDb(tickPeak)).toBeLessThan(-16);
+    expect(linDb(tail)).toBeLessThan(-40);
+    const text = readFileSync(path.join(root, 'scripts/foundry/sound-pro.cjs'), 'utf8');
+    expect(text).toContain('function renderKickTicked');
+    expect(text).toContain('function renderHatSoft');
+    expect(text).not.toContain('noiseLcg');
+    expect(text).not.toContain('kickClick');
+  });
+
+  it('closes the width, pad, kick, and hat gaps on the v5b bed', () => {
+    const v6 = measureBed(renderBed('v6'));
+    const v5 = measureBed(renderBed('v5b'));
+    expect(v6.fails, v6.fails.join(', ')).toEqual([]);
+    expect(v6.pass).toBe(true);
+    expect(v6.lufs).toBeGreaterThanOrEqual(-16);
+    expect(v6.lufs).toBeLessThanOrEqual(-14);
+    expect(v6.truePeakDb).toBeLessThanOrEqual(-1);
+    expect(v6.levels.clapUnderKickDb).toBeGreaterThanOrEqual(12);
+    expect(v6.levels['17-19'].bass).toBeLessThanOrEqual(v6.levels['5.4-7.4'].bass + 0.4);
+    expect(v6.bassQuietShare ?? 0).toBeGreaterThan(0.3);
+    expect(v6.pad.swings.chord.swingDb).toBeLessThan(6);
+    expect(v6.pad.swings.body.swingDb).toBeLessThan(6);
+    expect(v6.gaps.padMotionDb ?? 99).toBeLessThan(1.5);
+    expect(v6.gaps.sideUnderMidDb).toBeLessThanOrEqual(-8);
+    expect(v6.gaps.sideUnderMidDb).toBeGreaterThanOrEqual(-20);
+    expect(v6.gaps.sideUnderMidDb).toBeGreaterThan(v5.gaps.sideUnderMidDb + 6);
+    expect(v6.gaps.lowSideUnderMidDb).toBeLessThanOrEqual(-24);
+    expect(v6.gaps.band4to8After11Db).toBeGreaterThan(-47);
+    expect(v6.gaps.band4to8After11Db).toBeLessThan(-27);
+    expect(v6.gaps.band4to8After11Db).toBeGreaterThan(v5.gaps.band4to8After11Db + 10);
+    expect(v6.gaps.band2to4Db).toBeGreaterThan(v5.gaps.band2to4Db + 6);
+    expect(v6.gaps.kickHfDb).toBeGreaterThan(v5.gaps.kickHfDb + 8);
+    expect(v6.gaps.bodyLufs).toBeGreaterThan(-18);
+    expect(v6.gaps.bodyLufs).toBeLessThan(-12);
+  }, 60000);
+});
