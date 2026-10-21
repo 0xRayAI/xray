@@ -6,8 +6,8 @@ export const KINDS = ['events', 'cards', 'inbox', 'nudges', 'acks', 'activity'];
 const CAP = 300;
 const DROP = /body|text|message|secret|token|password|authorization/i;
 const FIELDS = {
-  events: ['t_ct', 'from', 'to', 'kind', 'direction', 'label', 'source', 'src_file', 'repo', 'number', 'credit', 'status', 'sha', 'actor', 'author'],
-  cards: ['key', 'repo', 'number', 'title', 'url', 'owner', 'stage', 'state', 'kind', 'verb', 'merged_by', 'pinned', 'section', 'stall', 'nudge', 'last_beat_t', 'packet_ok', 'waiting', 'packet', 'hold', 'beats', 't_ct', 'updated_ct'],
+  events: ['t_ct', 'from', 'to', 'kind', 'direction', 'label', 'source', 'src_file', 'repo', 'number', 'credit', 'status', 'sha', 'actor', 'author', 'merged_by'],
+  cards: ['key', 'repo', 'number', 'title', 'url', 'owner', 'stage', 'state', 'kind', 'verb', 'merged_by', 'labels', 'agents', 'pinned', 'section', 'stall', 'nudge', 'last_beat_t', 'packet_ok', 'waiting', 'packet', 'hold', 'beats', 't_ct', 'updated_ct'],
   inbox: ['t_ct', 'seat', 'type', 'repo', 'number', 'sha', 'title', 'url', 'reason'],
   nudges: ['kind', 't', 't_ct', 'card', 'repo', 'number', 'title', 'url', 'stage', 'level', 'seat', 'via', 'beat_t', 'closed_at', 'about'],
   acks: ['seat', 'line', 't_ct'],
@@ -202,6 +202,8 @@ export function cardHistory() {
     const lastVerb = last && (last.verb === 'merged' || last.verb === 'closed') ? last.verb : '';
     const verb = lastVerb || ((last && last.merged_by) || beats.some(b => /merge/i.test(String((b && (b.what || b.kind)) || '')))
       ? 'merged' : closed ? 'closed' : (typeof last.state === 'string' ? last.state : ''));
+    const labels = Array.isArray(last.labels) ? last.labels.filter(s => typeof s === 'string') : [];
+    const agents = Array.isArray(last.agents) ? last.agents.filter(s => typeof s === 'string') : [];
     cards.push({
       id: key, owner, state: typeof last.state === 'string' ? last.state : '', verb,
       opened_ct: opened, closed_ct: closed ? stamp : '',
@@ -209,7 +211,8 @@ export function cardHistory() {
       url: typeof last.url === 'string' ? last.url : '',
       repo: typeof last.repo === 'string' ? last.repo : '',
       number: Number.isInteger(last.number) ? last.number : 0,
-      updated_ct: stamp,
+      updated_ct: stamp, labels, agents,
+      merged_by: typeof last.merged_by === 'string' ? last.merged_by : '',
     });
   }
   const owners = [...new Set(cards.map(c => c.owner).filter(Boolean))].sort();
