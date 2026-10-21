@@ -791,6 +791,57 @@ function renderFilterPluck(sampleRate, freq, opts) {
   return normalizePeak(applyBiquad(out, "highpass", 140, 0.707, sampleRate), 1);
 }
 
+/**
+ * Same pluck, with the 1.7–4.3 kHz formant on the attack.
+ * The partials are spread through that band so they do not land on one sample.
+ * The low body comes in after the attack, so the first 40 ms is the formant.
+ */
+function renderFilterPluckAttack(sampleRate, freq) {
+  const decay = 0.055;
+  const dur = 0.15;
+  const n = Math.floor(dur * sampleRate);
+  const out = new Float64Array(n);
+  const ratios = [-5, 0, 5].map((cents) => Math.pow(2, cents / 1200));
+  const count = 18;
+  const partials = [];
+  let weight = 0;
+  for (let p = 0; p < count; p++) {
+    const u = (p + 0.5) / count;
+    const partial = 1700 * Math.pow(4300 / 1700, u);
+    const x = (partial - 2800) / 900;
+    const amp = Math.exp(-0.5 * x * x);
+    partials.push({
+      freq: partial,
+      amp,
+      phase: (p * 2.399963) % (2 * Math.PI),
+    });
+    weight += amp * amp;
+  }
+  const presNorm = Math.sqrt(weight * 0.5);
+  const phases = [0.2, 1.1, 2.4];
+  for (let i = 0; i < n; i++) {
+    const t = i / sampleRate;
+    let presEnv = t < 0.0025 ? t / 0.0025 : 1;
+    if (t > 0.02) presEnv *= Math.exp(-(t - 0.02) / 0.04);
+    const bodyIn = t < 0.036 ? 0 : Math.min(1, (t - 0.036) / 0.016);
+    const bodyEnv = Math.exp(-t / decay) * bodyIn;
+    let body = 0;
+    for (let v = 0; v < ratios.length; v++) {
+      const phase = phases[v];
+      body += Math.sin(phase) + 0.48 * Math.sin(phase * 2 + 0.8) + 0.22 * Math.sin(phase * 3 + 1.7);
+      phases[v] += (2 * Math.PI * freq * ratios[v]) / sampleRate;
+    }
+    body /= ratios.length * 1.7;
+    let pres = 0;
+    for (let p = 0; p < partials.length; p++) {
+      const part = partials[p];
+      pres += part.amp * Math.sin(2 * Math.PI * part.freq * t + part.phase);
+    }
+    out[i] = body * bodyEnv * 0.5 + (pres / presNorm) * presEnv;
+  }
+  return normalizePeak(applyBiquad(out, "highpass", 140, 0.707, sampleRate), 1);
+}
+
 /** Warm stab: a few harmonics, one fixed lowpass, short decay. */
 function renderWarmStab(sampleRate, freqs, opts) {
   const dur = opts && opts.dur != null ? opts.dur : 0.2;
@@ -1040,6 +1091,7 @@ module.exports = {
   renderHatSoft,
   renderFmPluck,
   renderFilterPluck,
+  renderFilterPluckAttack,
   renderWarmStab,
   renderPadSteady,
   duckGain,
