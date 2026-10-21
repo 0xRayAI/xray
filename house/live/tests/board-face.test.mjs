@@ -218,7 +218,7 @@ test('the board face keeps the contract in both themes', async () => {
       assert.equal(row.nowrap, 'nowrap');
       assert.doesNotMatch(row.role, stateWord);
       assert.doesNotMatch(row.text, stateWord);
-      assert.equal(row.pulse, !row.idle);
+      assert.equal(row.pulse, false);
     }
     const clipped = await page.evaluate(() => {
       const nm = document.querySelector('#seatGrid .nm');
@@ -487,6 +487,78 @@ test('an activity row expands to the full note and collapses again', async () =>
     assert.match(await ci.locator('.log-meta').textContent(), /Blaze/);
     assert.equal(await ci.locator('a.log-card').getAttribute('href'), 'https://github.com/example/app/pull/9');
     assert.equal(await prompt.getAttribute('aria-expanded'), 'true');
+  } finally {
+    if (browser) await browser.close();
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
+test('an active seat name rolls across two frames and an idle seat name does not', async () => {
+  const payload = feed();
+  payload.events = [];
+  payload.fleet = {
+    seats: {
+      Reviewer: { active: true, working: false },
+      Tester: { active: false, working: false },
+    },
+    cloud: { active: false, working: false },
+  };
+  const server = await serve(payload);
+  const base = `http://127.0.0.1:${server.address().port}/index.html?replay=0`;
+  let browser;
+  try {
+    browser = await chromium.launch();
+    const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1 });
+    await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'no-preference' });
+    await page.goto(base, { waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(() => {
+      const views = window.LIVE_SEAT_VIEWS && window.LIVE_SEAT_VIEWS.chip;
+      return !!(views && views.Reviewer && views.Reviewer.lit === true && views.Tester && views.Tester.lit === false);
+    }, null, { timeout: 8000 });
+    const sample = () => page.evaluate(() => {
+      function one(word) {
+        const nm = [...document.querySelectorAll('#seatGrid .nm')].find((el) => el.textContent === word);
+        const seat = nm.closest('.seat');
+        const anims = nm.getAnimations();
+        const a = anims[0];
+        return {
+          live: seat.classList.contains('live'),
+          idle: seat.classList.contains('idle'),
+          count: anims.length,
+          name: a ? a.animationName : '',
+          time: a && a.currentTime != null ? Number(a.currentTime) : null,
+          play: a ? a.playState : '',
+        };
+      }
+      return { reviewer: one('REVIEWER'), tester: one('TESTER') };
+    });
+    const frame1 = await sample();
+    await page.evaluate(() => new Promise((resolve) => { setTimeout(resolve, 250); }));
+    const frame2 = await sample();
+    assert.equal(frame1.reviewer.live, true, JSON.stringify(frame1));
+    assert.equal(frame1.tester.idle, true, JSON.stringify(frame1));
+    assert.equal(frame1.reviewer.count, 1, JSON.stringify(frame1));
+    assert.equal(frame1.reviewer.name, 'nm-roll');
+    assert.equal(frame1.reviewer.play, 'running');
+    assert.equal(frame1.tester.count, 0, JSON.stringify(frame1));
+    assert.equal(frame2.tester.count, 0, JSON.stringify(frame2));
+    assert.notEqual(frame2.reviewer.time, frame1.reviewer.time, JSON.stringify({ frame1, frame2 }));
+    fs.mkdirSync(ART, { recursive: true });
+    await page.locator('#seats').screenshot({ path: path.join(ART, 'roster-name-roll.png') });
+    await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'reduce' });
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(() => {
+      const views = window.LIVE_SEAT_VIEWS && window.LIVE_SEAT_VIEWS.chip;
+      return !!(views && views.Reviewer && views.Reviewer.lit === true);
+    }, null, { timeout: 8000 });
+    const still = await page.evaluate(() => {
+      const nm = [...document.querySelectorAll('#seatGrid .nm')].find((el) => el.textContent === 'REVIEWER');
+      const cs = getComputedStyle(nm);
+      return { count: nm.getAnimations().length, color: cs.color, image: cs.backgroundImage };
+    });
+    assert.equal(still.count, 0, JSON.stringify(still));
+    assert.equal(still.image, 'none', JSON.stringify(still));
+    assert.match(still.color, /255,\s*176,\s*120/, JSON.stringify(still));
   } finally {
     if (browser) await browser.close();
     await new Promise((resolve) => server.close(resolve));

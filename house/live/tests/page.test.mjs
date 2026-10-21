@@ -128,14 +128,22 @@ test('wave header says building with no stamp and empty when the board has zero 
 
 
 
-test('working: canvas label keeps the rolling sheen; header chip blinks its EXISTING dot in the seat color', () => {
+test('hot ring stays a one-time flash; the working sheen rolls the roster name while lit', () => {
   assert.match(html, /function fleetWorking\(k\)/);
-  assert.match(html, /seat-color sheen sweeping/);                       // canvas, under the node icon
-  assert.match(html, /s\.dot\.classList\.toggle\('blink', on\)/);
-  assert.match(html, /if \(spinning\) s\.dot\.style\.background = rgb\(c\)/);
-  assert.match(html, /\.seat \.dot\.blink \{ animation: live-blink/);
-  assert.match(html, /prefers-reduced-motion: reduce\) \{ \.seat \.dot\.blink \{ animation: none/);
-  assert.doesNotMatch(html, /s\.spin/);                                  // no extra element in the chip
+  assert.doesNotMatch(html, /seat-color sheen sweeping/);
+  assert.doesNotMatch(html, /fillText\(wtxt/);
+  assert.doesNotMatch(html, /s\.dot\.classList\.toggle\('blink'/);
+  assert.doesNotMatch(html, /classList\.toggle\('working'/);
+  assert.doesNotMatch(html, /\.seat \.dot\.blink/);
+  assert.doesNotMatch(html, /live-blink/);
+  assert.doesNotMatch(html, /hotRing/);
+  assert.match(html, /var rr = r \+ k \* 5; ctx\.strokeStyle = rgb\(c, 1 \/ \(k \+ 1\)\);/);
+  assert.match(html, /Live duration 2 times FLASH_MS, 5200ms/);
+  assert.match(html, /animation: nm-roll 1\.2s linear infinite/);
+  assert.match(html, /@keyframes nm-roll \{ from \{ background-position: 100% 0; \} to \{ background-position: 0% 0; \} \}/);
+  assert.match(html, /prefers-reduced-motion: reduce\) \{\s*\.seat\.live:not\(\.silent\) \.nm \{ animation: none; background-image: none; color: rgb\(var\(--nm\)\); \}/);
+  assert.match(html, /s\.el\.classList\.toggle\('live', on\)/);
+  assert.doesNotMatch(html, /s\.spin/);
   assert.doesNotMatch(html, /\.seat \.spin/);
   assert.doesNotMatch(html, /\u2699/);
 });
@@ -156,7 +164,7 @@ test('one seat state: header text, dot and node label all come from L.seatView(s
   assert.match(html, /function seatState\(k, hot\) \{ return L\.seatState\(fleetWorking\(k\), !!\(hot && hot\[k\]\), fleetActive\(k\)\); \}/);
   assert.match(html, /v = L\.seatView\(seatState\(a\[0\], hot\)\), on = v\.lit;/);
   assert.doesNotMatch(html, /s\.st/);
-  assert.match(html, /var spinning = v\.blink;/);
+  assert.doesNotMatch(html, /var spinning = v\.blink;/);
   assert.match(html, /el\.querySelector\('\.role'\)\.textContent = String\(a\[1\] \|\| ''\)/);
   assert.doesNotMatch(html, /createElement\('button'\)[\s\S]{0,80}className = 'seat'/);
   assert.match(html, /var nv = L\.seatView\(seatState\(key, hot\)\); nodeView\[key\] = nv;/);
@@ -411,7 +419,7 @@ test('resume at the live edge rewinds before frame, so frame does not goLive()',
   function el(id) {
     const listeners = {};
     const node = {
-      id, style: {}, dataset: {}, textContent: '', innerHTML: '', hidden: false, checked: false, disabled: false,
+      id, style: { setProperty(k, v) { this[k] = v; } }, dataset: {}, textContent: '', innerHTML: '', hidden: false, checked: false, disabled: false,
       value: '600', title: '', clientWidth: 920, width: 920, height: 400,
       classList: { toggle() {}, add() {}, remove() {}, contains() { return false; } },
       appendChild(c) { return c; },

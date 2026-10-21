@@ -52,7 +52,7 @@ The page now paints those rows with `.wcard` (owner edge, verb, Chicago time). `
 
 | Field | Source | Transform | UI | Expected | Status |
 |---|---|---|---|---|---|
-| seat chip | `L.AGENTS` + `L.seatView` | name in `.nm`, `title` is the full label. No `.st`, no role line, no ACTIVE/IDLE/WORKING/LIVE text | dot + name | a lit seat pulses the dot (2.8s, opacity 1 to 0.62). An idle seat stays dim and still. A long name truncates with an ellipsis and the full name is the hover title | PASS `tests/board-face.test.mjs` |
+| seat chip | `L.AGENTS` + `L.seatView` | name in `.nm`, `title` is the full label. No `.st`, no role line, no ACTIVE/IDLE/WORKING/LIVE text | dot + name | a lit seat rolls a seat-color sheen across the name (1.2s) for as long as `seatView.lit`. An idle seat's name stays still. Reduced motion keeps a lit name static and highlighted. The dot does not blink. A long name truncates with an ellipsis and the full name is the hover title | PASS `tests/board-face.test.mjs` |
 | activity | live events, or `GET /history?date=` | shared fold. Open unless `bifrost-folds.activity` is `closed`, or the older `bifrost-activity` value is `collapsed`. A toggle still writes both keys | `#activity` | open on first load, `#log` max-height 16rem, overflow auto, date `<select id="historyDay">`, times in CT | PASS |
 | folds | mesh, stats, roster, cards, cloud, recent, history, work, queue, activity, kanban | one `.fold` / `.fold-head` / `.fold-body`, `data-fold`, `localStorage bifrost-folds` | header toggle, count in `.fold-sum` | mesh, stats, roster, cards, and activity are open on first load, on desktop and mobile, in both themes. A stored `open` or `closed` still wins. The other sections stay collapsed until opened. An open body max-height is 16rem and scrolls, except the mesh body and `#waveBody`. The card list flexes to fill the 720px wave (`min-height` 220px, no 16rem cap) | PASS `tests/board-folds.test.mjs` |
 | rewind | `#slider` | inside `#meshPanel` | range | the slider box sits inside the mesh panel box | PASS |
@@ -73,10 +73,10 @@ These are canvas clocks, not CSS classes added and removed with `setTimeout` or 
 
 | Signal | Where | Trigger | Duration | Keep |
 |---|---|---|---|---|
-| Hot ring | `app/public/index.html` `drawNode`, the `isHot && !bare` strokes | `live.js` `activeSeats` (`live.js` line 266). Live: a flash from `playFresh`. Rewind: `recentItems` inside two ping windows. Letter seats only. Three strokes at r+5, r+10, r+15 | `draw` passes `FLASH_MS` (2600). `activeSeats` keeps the seat while age `< 2 * flightMs`, so 5200ms from the flash start | yes. Legend “Hot ring 5.2s” |
+| Hot ring | `app/public/index.html` `drawNode`, the `isHot && !bare` strokes | `live.js` `activeSeats`. Live: a flash from `playFresh`. Rewind: `recentItems` inside two ping windows. Letter seats only. Three strokes at r+5, r+10, r+15. One-time, not a loop | `draw` passes `FLASH_MS` (2600). `activeSeats` keeps the seat while age `< 2 * flightMs`, so 5200ms from the flash start | yes. Legend “Hot ring 5.2s” |
 | Depart pulse | `index.html` `draw`, `pk.src === key`, then `L.pulse` | a ping whose source is this node. `live.js` `pulse` line 117, `PULSE_MS` 900 | one sine over the flight. Flight is `FLASH_MS` 2600ms, up to 7800ms when the hop list is long (`playFresh` `dur`). Reduced motion returns 0 | yes. Legend “Depart pulse” |
 | One-node ring | `index.html` `drawPing`, `pk.src === pk.dst` | `fixPings` when `from === to` and the hop list is shorter than 2 | alpha 1→0 and radius 24→46 across that same flight | yes. Legend “One-node ring” |
-| Working sheen | `drawNode` spinning label | `seatState === working` | until working clears. Roster `.seat .dot.blink` is 1.1s, infinite, and off under reduced motion | yes. It is the working state, not the brief ring |
+| Roster name roll | roster `.seat.live .nm` | `updateText` toggles `.live` from `L.seatView(seatState(a[0], hot)).lit`. The canvas working label is gone | a seat-color band sweeps the name on a 1.2s loop while the seat is lit and stops when idle. `prefers-reduced-motion` shows that name static and highlighted | yes |
 | Wire glow | `live.js` `wireGlow`, drawn on edges | idle too, an 8s lap | not a node ring | kept on the wires. It is not the node blink |
 | Packet halo | `drawPing` radius 18 | on the packet, not the node | the flight | kept on the packet |
 

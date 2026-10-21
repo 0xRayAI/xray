@@ -369,9 +369,6 @@ header .title { animation: rise .6s ease-out both; }
 .pill.behind { border-color: var(--behind-edge); color: var(--behind-fg); background: var(--behind-bg); }
 .pill.behind::before { color: var(--behind-dot); animation: none; }
 .seat { position: relative; }
-.seat .dot.blink { animation: live-blink 2.8s ease-in-out infinite; }
-@keyframes live-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.62; } }
-@media (prefers-reduced-motion: reduce) { .seat .dot.blink { animation: none; } }
 #mesh { opacity: 0; transition: opacity 1.2s ease-out; background: var(--plate); }
 #mesh.in { opacity: 1; }
 @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
@@ -408,7 +405,21 @@ header h1 span { color: var(--dim); font-size: 13px; font-weight: 400; letter-sp
 .seat-copy { min-width: 0; overflow: hidden; display: flex; flex-direction: column; }
 .seat.idle { opacity: .45; }
 .dot { width: 14px; height: 14px; border-radius: 50%; background: var(--dot-off); flex: none; }
-.seat .nm { min-width: 0; font-weight: 700; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.seat .nm { min-width: 0; font-weight: 700; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: rgb(var(--nm)); }
+/* The working label's sheen, on the roster name: dim seat color with a full-color band sweeping left to right while .live (seatView.lit). 1.2s is the old canvas travel. */
+.seat.live:not(.silent) .nm {
+  background-image: linear-gradient(90deg, rgba(var(--nm), .45) 0%, rgba(var(--nm), .45) 38%, rgb(var(--nm)) 50%, rgba(var(--nm), .45) 62%, rgba(var(--nm), .45) 100%);
+  background-size: 220% 100%;
+  background-repeat: no-repeat;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: nm-roll 1.2s linear infinite;
+}
+@keyframes nm-roll { from { background-position: 100% 0; } to { background-position: 0% 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .seat.live:not(.silent) .nm { animation: none; background-image: none; color: rgb(var(--nm)); }
+}
 .seat .role { color: var(--dim); font-size: 11px; font-weight: 450; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .seat.live .role { color: var(--text); }
 .lens-head { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 12px; color: var(--dim); align-items: center; }
@@ -806,7 +817,8 @@ footer a { color: var(--foot); }
       var nm = el.querySelector('.nm');
       nm.textContent = label.toUpperCase();
       nm.title = label;
-      nm.style.color = rgb(seatColor(a[0]));
+      var ink = seatColor(a[0]);
+      nm.style.setProperty('--nm', ink[0] + ', ' + ink[1] + ', ' + ink[2]);
       el.querySelector('.role').textContent = String(a[1] || '');
       grid.appendChild(el);
       seatEls[a[0]] = { el: el, dot: el.querySelector('.dot') };
@@ -1384,19 +1396,6 @@ footer a { color: var(--foot); }
       ctx.font = '600 10px ui-monospace, SFMono-Regular, Menlo, monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
       ctx.fillStyle = cssVar('--silent-ink'); ctx.fillText('silent 2h', x, top); top += 14;
     }
-    if (spinning) {   // 'working' under the icon: seat-color sheen sweeping L->R
-      ctx.font = '600 10px ui-monospace, SFMono-Regular, Menlo, monospace';
-      ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-      var wtxt = 'working', ww = ctx.measureText(wtxt).width;
-      ctx.fillStyle = rgb(c, 0.45); ctx.fillText(wtxt, x, top);
-      ctx.save();
-      var band = Math.max(10, ww * 0.38), travel = ww + band;
-      var bx = x - ww / 2 + ((nowWall / 1200) % 1) * travel - band;
-      ctx.beginPath(); ctx.rect(bx, top - 1, band, 13); ctx.clip();
-      ctx.fillStyle = rgb(c); ctx.fillText(wtxt, x, top);
-      ctx.restore();
-      top += 14;
-    }
     var lx = L.labelX(x, w, W);   // never clipped at the canvas edge
     ctx.fillStyle = cssVar('--label-fill'); ctx.strokeStyle = silentNow ? cssVar('--silent-ink') : rgb(c); ctx.lineWidth = 2;
     roundRect(lx - w / 2, top, w, h, 6); ctx.fill(); ctx.stroke();
@@ -1784,11 +1783,7 @@ footer a { color: var(--foot); }
       s.dot.style.boxShadow = on ? '0 0 0 2px ' + cssVar('--ring-gap') + ', 0 0 0 4px ' + rgb(c) : 'none';
       var sil = !v.blink && fleetSilent(a[0]);
       s.el.classList.toggle('silent', sil); if (sil) s.dot.style.background = cssVar('--silent-ink');
-      var spinning = v.blink;
-      s.el.classList.toggle('working', spinning);
-      // A lit seat pulses the dot. An idle seat stays dim and still.
-      s.dot.classList.toggle('blink', on);
-      if (spinning) s.dot.style.background = rgb(c);
+      // .live (on) rolls the roster name. The canvas working label is gone. The dot stays a still color.
     });
     var logKey = shown + ':' + state.events.length;
     if (logKey !== lastLogKey) { lastLogKey = logKey; renderLog(shown); }
@@ -2196,7 +2191,10 @@ footer a { color: var(--foot); }
       paintSeatColors();
       L.AGENTS.forEach(function (a) {
         var nm = seatEls[a[0]] && seatEls[a[0]].el.querySelector('.nm');
-        if (nm) nm.style.color = rgb(L.COLOR[a[0]] || [0, 0, 0]);
+        if (nm) {
+          var ink = L.COLOR[a[0]] || [0, 0, 0];
+          nm.style.setProperty('--nm', ink[0] + ', ' + ink[1] + ', ' + ink[2]);
+        }
       });
       paint();
     });
