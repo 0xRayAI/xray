@@ -10,14 +10,14 @@ description: >
 
 Do this. Do not explore the tree to rediscover it.
 
-Work from a new branch and worktree off current `origin/main`. One plate, one ASCII file. Its X copy is a `layered-flow` PNG at `docs-site/static/plates/x/<id>.png`, an exact render of that ASCII plate. Run the test named below before the PR.
+Work from a new branch and worktree off current `origin/main`. One plate, one ASCII file. Its X copy is a PNG at `docs-site/static/plates/x/<id>.png`. An X PNG is freely designed in the stamped style (riveted frame, icon cards with bold caps condensed titles, glowing cyan block arrows, numbered tiles, footer banner) and must flow the same as the `.md` plate: same nodes, text, order, edges and layers, checked by the flow-equivalence test in `src/__tests__/unit/plates.test.ts`. Run that test before the PR.
 
 ## Which kind of plate
 
 There are two kinds of stamped plate.
 
 - **ASCII table plate (for agents).** The box drawing in `docs-site/docs/plates/<id>.md`, made with this skill. Every plate tied to a lens must be this kind. The lens and recall open it, it carries the file:line cites, and it is the source of truth for that plate.
-- **Graphical plate (for X and people).** A `layered-flow` PNG drawn from that ASCII plate. Each outer box is a recessed band. Each inner box is a plaque in the same position and grouping. Each connector (`v`, `→`, `┬`, `┴`) is a drawn arrow. Every line is word for word, symbols included. The width stays 1280. The height grows before any font shrinks. A line is never cut. It adds no claim the ASCII plate does not have, and a lens never points at it. Commit it as `docs-site/static/plates/x/<id>.png`. Draw it with `grok-bot/skills/draw-stamped-card/recipes/layered-flow/render.py`.
+- **Graphical plate (for X and people).** An X PNG freely designed in the stamped style: riveted frame, icon cards with bold caps condensed titles, glowing cyan block arrows, numbered tiles, footer banner. It must flow the same as the `.md` plate: same nodes, text, order, edges and layers. The flow-equivalence test checks that. It adds no claim the ASCII plate does not have, and a lens never points at it. Width stays 1280. Height grows before any font shrinks. A line is never cut. Commit it as `docs-site/static/plates/x/<id>.png`. Draw it with `grok-bot/skills/draw-stamped-card/recipes/layered-flow/render.py`. The references in `.agents/skills/stamp-plate/refs/` are the stamped frame (`stamped-frame.png`), the flow the markdown already has (`flow-source.png`), and one infographic in that style (`infographic.png`).
 
 Order: the ASCII plate first, through critic. The graphical plate after, when X or people need it.
 

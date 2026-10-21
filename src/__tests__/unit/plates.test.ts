@@ -13,6 +13,7 @@ import {
   stampPlateIfMissing,
   type PlateId,
 } from '../../memory-routing/plates.js';
+import { parsePlateFlow } from './plate-flow.js';
 
 const BOX = /[┌┐└┘│─]/;
 
@@ -273,7 +274,7 @@ describe('pipeline plates', () => {
     expect(op.join('\n')).not.toMatch(/outer plane/i);
   });
 
-  it('keeps lens-card fences rectangular and embeds that fence in the layered-flow PNG', () => {
+  it('keeps lens-card fences rectangular and checks the X copy for the same flow', () => {
     expect(displayWidth('┌┐│─≤→·')).toBe(7);
     expect(displayWidth('中')).toBe(2);
     expect(displayWidth('a\u0301')).toBe(1);
@@ -305,7 +306,30 @@ describe('pipeline plates', () => {
           expect(RIGHT_EDGE.has(edge[box.right] ?? ''), `${id} right ${row}`).toBe(true);
         }
       }
-      expect(pngText(readFileSync(png), 'xray-plate-ascii'), id).toBe(body);
+      const embedded = JSON.parse(pngText(readFileSync(png), 'xray-plate-flow') ?? 'null') as ReturnType<typeof parsePlateFlow>;
+      const flow = parsePlateFlow(lines);
+      expect(embedded, id).toEqual(flow);
+      if (id === 'routing') {
+        expect(flow.layers.map((layer) => layer.name)).toEqual(['INPUT LAYER', 'PROCESSING LAYER', 'OUTPUT LAYER']);
+        expect(flow.layers[1]?.nodes.map((node) => node.lines[0])).toEqual([
+          'scoreComplexity',
+          'lensPlane',
+          'routeToAgent',
+          'resolveThinDispatch',
+        ]);
+        expect(flow.layers[2]?.nodes.map((node) => node.lines[0])).toEqual(['agent', 'strategy', 'adjusted score', 'file']);
+        expect(flow.edges.filter((edge) => edge.to[0] === 2 && edge.to[1] === 3)).toEqual([]);
+        expect(flow.edges.filter((edge) => edge.from[0] === 0).map((edge) => edge.to)).toEqual([[1, 0], [1, 0], [1, 0]]);
+      }
+      if (id === 'house') {
+        expect(flow.edges.some((edge) => edge.label === 'house init' && edge.from[0] === 0 && edge.to[0] === 1)).toBe(true);
+        expect(flow.edges.some((edge) => edge.label === 'not yet' && edge.from[0] === 4 && edge.to[0] === 2)).toBe(true);
+      }
+      if (id === 'centrifuge') {
+        expect(flow.notes).toContain('CENTRIFUGE');
+        expect(flow.notes).toContain('the gap stays open');
+        expect(flow.edges.some((edge) => edge.label === 'looks down')).toBe(true);
+      }
     }
   });
 });
