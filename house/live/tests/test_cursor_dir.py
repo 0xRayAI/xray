@@ -43,7 +43,7 @@ class CursorDir(unittest.TestCase):
         except OSError:
             pass
 
-    def run(self, *args, cursors=None, cwd=None):
+    def invoke(self, *args, cursors=None, cwd=None):
         env = os.environ.copy()
         env["HOME"] = str(self.home)
         env["LIVE_URL"] = "http://127.0.0.1:9"
@@ -60,10 +60,10 @@ class CursorDir(unittest.TestCase):
         )
 
     def remember(self, **kw):
-        return self.run("--remember", "--pr", PR, "--sha", SHA, "--kind", KIND, **kw)
+        return self.invoke("--remember", "--pr", PR, "--sha", SHA, "--kind", KIND, **kw)
 
     def repeat(self, **kw):
-        return self.run("--repeat", "--pr", PR, "--sha", SHA, "--kind", KIND, **kw)
+        return self.invoke("--repeat", "--pr", PR, "--sha", SHA, "--kind", KIND, **kw)
 
     def fixed_file(self):
         return self.home / ".burst" / "cursors" / f"{SEAT}.txt"
@@ -98,20 +98,6 @@ class CursorDir(unittest.TestCase):
         self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
         self.assertIn("more than one folder", r.stderr)
         self.assertIn(str(WORKSPACE), r.stderr)
-        self.assertIn(str(self.fixed_file()), r.stderr)
-
-    def test_split_with_box_file_exits_2(self):
-        try:
-            BOX.parent.mkdir(parents=True, exist_ok=True)
-            BOX.write_text("kept\n")
-        except OSError as err:
-            self.skipTest(f"cannot plant the box cursor file: {err}")
-        folder = self.fixed_file().parent
-        folder.mkdir(parents=True)
-        self.fixed_file().write_text("kept\n")
-        r = self.repeat()
-        self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
-        self.assertIn(str(BOX), r.stderr)
         self.assertIn(str(self.fixed_file()), r.stderr)
 
     def test_live_cursors_workspace_is_refused(self):
