@@ -151,9 +151,9 @@ Reading never acks, but a non-empty read is the work. Seats read with `live-inbo
 
 ### Key folder on our box
 
-`LIVE_URL`, `SEAT_KEYS_DIR` and `LIVE_CURSORS` are required: `live-inbox` never guesses, and a missing one exits 2 and names it. Run the export line in `grok-bot/templates/house/fleet/WAKE-ROUTINE.md` first; it puts the installed copy (`~/.burst/bin`, or `LIVE_INBOX_BIN`) on `PATH` and sets the defaults, which are burst-live's; another board sets its own first. On our box the seats keep keys and read positions under `/home/box/burst-run` and set `SEAT_KEYS_DIR` and `LIVE_CURSORS` there before the export line. Never put a key's value in a routine, room or repo.
+`LIVE_URL` and `SEAT_KEYS_DIR` are required. A missing or empty one exits 2 and names it. The cursor folder is `$HOME/.burst/cursors`. The tool does not search `/home/box/burst-run/cursors` or `/workspace/.cursors`. A `LIVE_CURSORS` value that names either of those exits 2. If `<seat>.txt` is in more than one of the three, the tool exits 2 and names the paths. Run the export line in `grok-bot/templates/house/fleet/WAKE-ROUTINE.md` first. It sets that cursor folder even when another folder was already exported. Another board may export its own `LIVE_URL` and `SEAT_KEYS_DIR` on the line before the block. Never put a key's value in a routine, room or repo.
 
-**Tool path.** Use the installed copy (`~/.burst/bin/live-inbox`, or `$LIVE_INBOX_BIN/live-inbox`; on the forge box `/home/box/burst-run/bin/live-inbox`), refreshed from main, never a copy under `/tmp` (it does not survive a restart). The WAKE-ROUTINE export line puts it on `PATH` and sets `SEAT_KEYS_DIR`, `LIVE_CURSORS` and `LIVE_URL`. A wake only counts once the routine reads and acks with no approval card.
+**Tool path.** Run `$XRAY_MAIN/house/live/tools/live-inbox` from the main checkout. Do not run a copied binary. The WAKE-ROUTINE block sets `LIVE_CURSORS` to `$HOME/.burst/cursors`. A wake only counts once the routine reads and acks with no approval card.
 
 ### Reading the inbox after a wake
 

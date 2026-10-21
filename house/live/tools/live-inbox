@@ -16,7 +16,9 @@ A read never acks. The ack is the receipt (the pop) and a seat sends it after it
 event, or a closed or done card, and does not ack them. A missing card stays. --ack stale --apply acks the ids just listed.
 --upto <id> acks the stored prefix through that id. A plain read still shows a merged card until one of those receipts.
 --peek means the same as a plain read.
-The per-seat cursor `$LIVE_CURSORS/<seat>.txt` stores handled keys `repo#number|sha|kind`. A read does not write it.
+The per-seat cursor `$HOME/.burst/cursors/<seat>.txt` stores handled keys `repo#number|sha|kind`. A read does not write it.
+That folder is the only default. The tool does not search `/home/box/burst-run/cursors` or `/workspace/.cursors`.
+A `LIVE_CURSORS` value that names either of those two exits 2. If `<seat>.txt` is in more than one of the three, the tool exits 2 and names them.
 `--remember --pr <owner/repo#n> --sha <head> --kind <kind>` adds that key. `--repeat` with the same flags exits 0
 when the key is already there and exits 1 for a new head. The claim is not this record.
 --turn start|end posts {kind:turn, action, t_ct, tag?} to POST /activity.
@@ -29,19 +31,71 @@ kind and head post the same line id. --sha is required and is a head of 7 to 64 
 Date: POST /cards/start-after. --start-after is an ISO time with a numeric offset (Chicago, -05:00 or -06:00). The card
 stays parked until that time, then the server wakes the owning seat. A GitHub comment whose first line is
 `Start after: <ISO>` sets the same field; the command wins while it is stored.
-Env (required, never guessed): LIVE_URL, SEAT_KEYS_DIR (key <seat>.key, never printed), LIVE_CURSORS (cursor <seat>.txt).
-A missing or empty one exits 2 and names it. WAKE-ROUTINE.md ships the export line with the defaults."""
+Env: LIVE_URL and SEAT_KEYS_DIR (key <seat>.key, never printed) are required. A missing or empty one exits 2 and names it.
+The cursor folder is `$HOME/.burst/cursors` unless LIVE_CURSORS names some other directory.
+LIVE_CURSORS may not name `/home/box/burst-run/cursors` or `/workspace/.cursors`. WAKE-ROUTINE.md ships the export line."""
 import fcntl, json, os, re, sys, time, urllib.error, urllib.parse, urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
-MISSING = [k for k in ("LIVE_URL", "SEAT_KEYS_DIR", "LIVE_CURSORS") if not os.environ.get(k, "").strip()]
+MISSING = [k for k in ("LIVE_URL", "SEAT_KEYS_DIR") if not os.environ.get(k, "").strip()]
 if MISSING:
     print("live-inbox: missing env " + ", ".join(MISSING) + " (run the export line in WAKE-ROUTINE.md first)", file=sys.stderr)
     sys.exit(2)
 URL = os.environ["LIVE_URL"].rstrip("/")
 KEYS = Path(os.environ["SEAT_KEYS_DIR"]).expanduser()
-CUR = Path(os.environ["LIVE_CURSORS"]).expanduser()
+# One folder. These three are the ones seats have written. The tool does not pick among them.
+OTHER_CURSORS = (Path("/home/box/burst-run/cursors"), Path("/workspace/.cursors"))
+
+
+def norm_dir(path):
+    return Path(path).expanduser().resolve()
+
+
+def fixed_cursors():
+    return Path.home() / ".burst" / "cursors"
+
+
+def known_cursor_dirs():
+    return (Path("/home/box/burst-run/cursors"), fixed_cursors(), Path("/workspace/.cursors"))
+
+
+def resolve_cursor_dir():
+    """The cursor directory. Unset LIVE_CURSORS is the fixed folder. No search of the other two."""
+    fixed = fixed_cursors()
+    raw = os.environ.get("LIVE_CURSORS", "").strip()
+    if not raw:
+        return fixed
+    chosen = Path(raw).expanduser()
+    got = norm_dir(chosen)
+    if got == norm_dir(fixed):
+        return fixed
+    for other in OTHER_CURSORS:
+        if got == norm_dir(other):
+            print(f"live-inbox: LIVE_CURSORS={chosen} is not the cursor folder; the folder is {fixed}", file=sys.stderr)
+            sys.exit(2)
+    return chosen
+
+
+def refuse_split_cursors(seat):
+    """Exit 2 when this seat's cursor file is in more than one of the three known folders."""
+    found = []
+    seen = set()
+    for folder in known_cursor_dirs():
+        path = folder.expanduser() / f"{seat}.txt"
+        if not path.is_file():
+            continue
+        key = str(norm_dir(path))
+        if key in seen:
+            continue
+        seen.add(key)
+        found.append(str(path))
+    if len(found) > 1:
+        print("live-inbox: " + seat + " cursor file is in more than one folder: " + ", ".join(found), file=sys.stderr)
+        sys.exit(2)
+
+
+CUR = resolve_cursor_dir()
 KINDS = ("ready", "critic_fail", "live_pass", "merge", "ci_fail")
 USAGE = ("usage: live-inbox <seat> [--peek] | live-inbox <seat> --ack <id|all|stale> [--apply] | live-inbox <seat> --pop <id|all> | "
          "live-inbox <seat> --upto <id> | live-inbox <seat> --release | "
@@ -208,6 +262,7 @@ seat = args[0]
 kf = KEYS / f"{seat}.key"
 if not kf.is_file():
     sys.exit(f"no key for seat {seat!r} (builder reads with its builder-app token on its own Mac)")
+refuse_split_cursors(seat)
 H = {"Authorization": "Bearer " + kf.read_text().strip()}
 
 

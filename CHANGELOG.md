@@ -6,6 +6,8 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+- The seat cursor folder is `$HOME/.burst/cursors`. `live-inbox` does not search `/home/box/burst-run/cursors` or `/workspace/.cursors`. A `LIVE_CURSORS` value that names either of those exits 2. A seat file in more than one of the three exits 2. The wake runs `$XRAY_MAIN/house/live/tools/live-inbox` and sets that folder.
+
 - Docs. The house guide and the bifrost plate carry the board rule, the kanban note, and the history note. Board rule. On every owner message run `live-inbox <seat> --prompt --from owner --note "<gist>"`. Ack a handled line with `live-inbox <seat> --ack <id>`, or `live-inbox <seat> --ack all` once every open line is handled. A cloud agent run uses `live-inbox <seat> --turn start --tag "bc-<first8> <track>"` and `live-inbox <seat> --turn end --tag "bc-<first8>"`. `--from owner` is required today. Kanban note. The live page shows a read-only kanban above Activity. Columns are open, review, fix, merge, retest, and done. The deep link is `?card=`. History note. Every activity line is archived to history. The word owner is the owner via LIVE_OWNER or the owner-name. The public board does not serve the history archive or the kanban yet.
 
 ### 4.1.3 notes
