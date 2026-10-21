@@ -160,6 +160,7 @@ test('the board face keeps the contract in both themes', async () => {
           ellipsis: cs.textOverflow,
           nowrap: cs.whiteSpace,
           idle: el.classList.contains('idle'),
+          working: el.classList.contains('working'),
           pulse: el.querySelector('.dot').classList.contains('blink'),
         };
       });
@@ -218,7 +219,7 @@ test('the board face keeps the contract in both themes', async () => {
       assert.equal(row.nowrap, 'nowrap');
       assert.doesNotMatch(row.role, stateWord);
       assert.doesNotMatch(row.text, stateWord);
-      assert.equal(row.pulse, !row.idle);
+      assert.equal(row.pulse, row.working);
     }
     const clipped = await page.evaluate(() => {
       const nm = document.querySelector('#seatGrid .nm');

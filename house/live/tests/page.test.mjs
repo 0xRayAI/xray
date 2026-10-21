@@ -128,13 +128,18 @@ test('wave header says building with no stamp and empty when the board has zero 
 
 
 
-test('working: canvas label keeps the rolling sheen; header chip blinks its EXISTING dot in the seat color', () => {
+test('working: the name keeps the rolling sheen; header chip blinks its EXISTING dot in the seat color', () => {
   assert.match(html, /function fleetWorking\(k\)/);
-  assert.match(html, /seat-color sheen sweeping/);                       // canvas, under the node icon
-  assert.match(html, /s\.dot\.classList\.toggle\('blink', on\)/);
+  assert.match(html, /seat-color sheen sweeping L->R across the name while working/);
+  assert.match(html, /live-blink 1\.1s ease-in-out infinite/);
+  assert.match(html, /50% \{ opacity: 0\.2; \}/);
+  assert.match(html, /s\.dot\.classList\.toggle\('blink', spinning\)/);
+  assert.match(html, /if \(spinning\) s\.el\.setAttribute\('aria-label', a\[0\] \+ ' working'\)/);
   assert.match(html, /if \(spinning\) s\.dot\.style\.background = rgb\(c\)/);
   assert.match(html, /\.seat \.dot\.blink \{ animation: live-blink/);
   assert.match(html, /prefers-reduced-motion: reduce\) \{ \.seat \.dot\.blink \{ animation: none/);
+  assert.doesNotMatch(html, /wtxt = 'working'|fillText\('working'/);
+  assert.doesNotMatch(html, /s\.dot\.classList\.toggle\('blink', on\)/);
   assert.doesNotMatch(html, /s\.spin/);                                  // no extra element in the chip
   assert.doesNotMatch(html, /\.seat \.spin/);
   assert.doesNotMatch(html, /\u2699/);
