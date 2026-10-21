@@ -27,6 +27,7 @@ describe('pipeline plates', () => {
       'memory-recall',
       'stamp-plate',
       'house',
+      'bifrost',
       'review',
       'goggles',
       'suit',
@@ -56,6 +57,7 @@ describe('pipeline plates', () => {
       'kept-line',
       'lens-gate',
       'pre-tool',
+      'worn-turn',
       'lens-page',
       'centrifuge',
       'ground',
@@ -72,6 +74,7 @@ describe('pipeline plates', () => {
       'opencode',
       'consumer-mcp',
       'confer',
+      'grokbot',
     ]);
     for (const id of PLATE_IDS) {
       const plate = loadPlate(id);
@@ -226,6 +229,9 @@ describe('pipeline plates', () => {
     expect(recallPlate('opencode plate')?.id).toBe('opencode');
     expect(recallPlate('consumer mcp')?.id).toBe('consumer-mcp');
     expect(recallPlate('confer plate')?.id).toBe('confer');
+    expect(recallPlate('worn turn plate')?.id).toBe('worn-turn');
+    expect(recallPlate('bifrost plate')?.id).toBe('bifrost');
+    expect(recallPlate('grokbot plate')?.id).toBe('grokbot');
     expect(recallPlate('repertoire')).toBeNull();
     expect(recallPlate('dynamo')).toBeNull();
     expect(recallPlate('foundry')).toBeNull();
