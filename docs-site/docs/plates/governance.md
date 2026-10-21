@@ -5,49 +5,42 @@ sidebar_label: Governance
 
 # Governance
 
-A proposal is deliberated inside the suit, filtered by Dynamo Solar, then merged. The vote is approve, reject, or needs_revision. The PreToolUse codex gate stands beside the vote.
+Two doors run today. One vote comes out: approve, reject, or needs_revision. The PreToolUse gate stands beside that vote. It is delegation-gate, not a step inside `govern()`.
 
 ```
-┌────────────────────────────────────────────────────────────┐
-│ INPUT LAYER                                                │
-│                                                            │
-│   ┌────────────────────────────────────────────────────┐  │
-│   │ proposal                                           │  │
-│   │ title · description · type                         │  │
-│   └──────────────────────────┬─────────────────────────┘  │
-└──────────────────────────────┼────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│ INPUT LAYER                                                  │
+│   ┌────────────────────────────┐ ┌─────────────────────────┐ │
+│   │ GovernanceService          │ │ inference:run           │ │
+│   └─────────────┬──────────────┘ └────────────┬────────────┘ │
+└─────────────────┼──────────────────────────────┼─────────────┘
+                  v                              v
+┌─────────────────┼──────────────────────────────┼─────────────┐
+│ PROCESSING LAYER  v                            v             │
+│   ┌──────────────────────────────────────────────────────┐   │
+│   │ door A: code-review, security-audit, researcher      │   │
+│   │ Dynamo when require external stays true              │   │
+│   │ a lens mismatch downgrades approve                   │   │
+│   └──────────────────────────┬───────────────────────────┘   │
+│                              v                               │
+│   ┌──────────────────────────────────────────────────────┐   │
+│   │ door B: local matrix. Dynamo is not called           │   │
+│   └──────────────────────────┬───────────────────────────┘   │
+│   ┌──────────────────────────┼───────────────────────────┐   │
+│   │ delegation-gate          │  beside the vote          │   │
+│   └──────────────────────────┼───────────────────────────┘   │
+└──────────────────────────────┼───────────────────────────────┘
                                v
-┌──────────────────────────────┼────────────────────────────┐
-│ PROCESSING LAYER             v                            │
-│   ┌────────────────────────────────────────────────────┐  │
-│   │ internal deliberation                              │  │
-│   │ code-review · security-audit · researcher          │  │
-│   └──────────────────────────┬─────────────────────────┘  │
-│                              v                            │
-│   ┌────────────────────────────────────────────────────┐  │
-│   │ external filter                                    │  │
-│   │ Dynamo Solar SSOT                                  │  │
-│   └──────────────────────────┬─────────────────────────┘  │
-│                              v                            │
-│   ┌────────────────────────────────────────────────────┐  │
-│   │ merge                                              │  │
-│   │ governance-core weighted vote · decision matrix    │  │
-│   └──────────────────────────┬─────────────────────────┘  │
-│                              │                            │
-│   ┌──────────────────────────┼─────────────────────────┐  │
-│   │ PreToolUse gate          │                         │  │
-│   │ Codex 11 · 29 · 69       │  beside the vote        │  │
-│   └──────────────────────────┼─────────────────────────┘  │
-└──────────────────────────────┼────────────────────────────┘
-                               v
-┌──────────────────────────────┼────────────────────────────┐
-│ OUTPUT LAYER                 v                            │
-│   ┌──────────────────────┐      ┌──────────────────────┐ │
-│   │ vote                 │      │ codex decision       │ │
-│   │ approve / reject /   │      │ allow / deny         │ │
-│   │ needs_revision       │      │                      │ │
-│   └──────────────────────┘      └──────────────────────┘ │
-└────────────────────────────────────────────────────────────┘
+┌──────────────────────────────┼───────────────────────────────┐
+│ OUTPUT LAYER                 v                               │
+│   ┌──────────────────────────────────────────────────────┐   │
+│   │ approve / reject / needs_revision                    │   │
+│   └──────────────────────────────────────────────────────┘   │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-stamped · 0xray 4.1.0
+`GovernanceService` calls `code-review`, `security-audit`, and `researcher` (`src/governance/governance-service.ts:163-168`). `resolveRequireExternalDynamo` defaults to true (`:134-149`) unless the caller passes the flag, `XRAY_LOCAL_MODE` is set, or features say otherwise. A lens mismatch downgrades an approve to `needs_revision` (`:243-252`).
+
+`inference:run` does not use that default. With shipped `inference_governance.enabled` false (`xray/features.json:199-200`), `governProposals` returns `governWithLocalMatrix` (`src/inference/inference-cycle.ts:406-407`, `:445-460`). The comment in that function says Dynamo is not called.
+
+stamped · 0xray 4.1.3

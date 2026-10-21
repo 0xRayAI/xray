@@ -53,10 +53,12 @@ History note. Every activity line is archived to history. The word owner is the 
 
 Board rule. On every owner message run `live-inbox <seat> --prompt --from owner --note "<gist>"`. Ack a handled line with `live-inbox <seat> --ack <id>`, or `live-inbox <seat> --ack all` once every open line is handled. A cloud agent run uses `live-inbox <seat> --turn start --tag "bc-<first8> <track>"` and `live-inbox <seat> --turn end --tag "bc-<first8>"`. `--from owner` is required today.
 
-The public board does not serve the history archive or the kanban yet.
+The public board serves the kanban and GET /history, /history/cards, and /history/transitions.
 
 A packet post creates the card; the chat refuses a missing card id; the cloud agent pushes; the seat App opens the pull request; the server attaches both; the activity line gains no new field.
 
 Code lives under `house/live/` (collector, board, inbox routing, server). `house/live/feed/live_mesh.py` runs the collector and the board. `house/live-mesh/fetch_feed.py` is the upstream feed the deploy assembles. Deploy only via `house/live/app/deploy.sh`. A Railway build straight from git stops in the Dockerfile with `ERROR: collector/ is not assembled`. The plate that belongs here is house.
 
-stamped · 0xray 4.1.0
+`evalNudges` is the nudge path (`house/live/app/server.mjs:1234`, named at `:762`). Tripwire minutes default 30 (`server.mjs:1656`). Cloud agents are board rows (`server.mjs:1491`, copied onto the board at `:1494`). `LIVE_URL` is `house/live/docs/board.md:9`. The seat doctor reads it (`grok-bot/lib/seat-doctor.cjs:661`). `server.mjs` does not.
+
+stamped · 0xray 4.1.3

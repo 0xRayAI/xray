@@ -91,6 +91,7 @@ const sidebars: SidebarsConfig = {
         'plates/kept-line',
         'plates/lens-gate',
         'plates/pre-tool',
+        'plates/worn-turn',
         'plates/lens-page',
         'plates/centrifuge',
         'plates/ground',

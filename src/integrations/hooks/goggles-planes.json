@@ -208,6 +208,15 @@
     "skills": "pre-tool, lens-gate, delegation-gate",
     "plates": ["lens-gate"]
   },
+  "worn-turn": {
+    "plane": "integration",
+    "files": [
+      "src/integrations/cursor/hooks/pre-tool-use.js",
+      "src/integrations/grok/hooks/pre-tool-use.js"
+    ],
+    "skills": "worn-turn, pre-tool, delegation-gate, lens-gate",
+    "plates": ["pre-tool", "delegation-gate", "lens-gate"]
+  },
   "lens-page": {
     "files": ["src/integrations/hooks/goggles-pipeline.mjs"],
     "mark": "export function formatCardPane",
@@ -225,7 +234,12 @@
     "skills": "repertoire, memory-recall, record-map, governance"
   },
   "dynamo": {
-    "file": "docs-site/docs/guides/self-hosting-dynamo.md",
+    "plane": "dev",
+    "files": [
+      "src/integrations/governance/governance-client.ts",
+      "src/integrations/governance/types.ts",
+      "src/integrations/governance/index.ts"
+    ],
     "skills": "dynamo, governance, enforcer, confer"
   },
   "foundry": {
@@ -234,7 +248,10 @@
     "skills": "foundry, npm-publish, suit-wear, package-face, consumer-mcp"
   },
   "delegation-gate": {
-    "file": "src/nucleus/delegation-gate.ts",
+    "files": [
+      "src/nucleus/delegation-gate.ts",
+      "src/integrations/hooks/delegation-gate-runtime.mjs"
+    ],
     "skills": "delegation-gate, temperament, orchestration, routing"
   },
   "temperament": {
@@ -269,5 +286,17 @@
   "confer": {
     "file": "src/nucleus/confer.ts",
     "skills": "confer, governance, code-review, researcher"
+  },
+  "bifrost": {
+    "plane": "ecosystem",
+    "files": ["house/live/app/server.mjs", "house/live/docs/board.md"],
+    "skills": "bifrost, house, record-map",
+    "plates": ["house"]
+  },
+  "grokbot": {
+    "plane": "ecosystem",
+    "files": ["grok-bot/package.json"],
+    "skills": "grokbot, house, bifrost",
+    "plates": ["bifrost", "house"]
   }
 }

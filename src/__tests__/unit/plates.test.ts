@@ -27,6 +27,7 @@ describe('pipeline plates', () => {
       'memory-recall',
       'stamp-plate',
       'house',
+      'bifrost',
       'review',
       'goggles',
       'suit',
@@ -56,6 +57,7 @@ describe('pipeline plates', () => {
       'kept-line',
       'lens-gate',
       'pre-tool',
+      'worn-turn',
       'lens-page',
       'centrifuge',
       'ground',
@@ -72,6 +74,7 @@ describe('pipeline plates', () => {
       'opencode',
       'consumer-mcp',
       'confer',
+      'grokbot',
     ]);
     for (const id of PLATE_IDS) {
       const plate = loadPlate(id);
@@ -226,6 +229,9 @@ describe('pipeline plates', () => {
     expect(recallPlate('opencode plate')?.id).toBe('opencode');
     expect(recallPlate('consumer mcp')?.id).toBe('consumer-mcp');
     expect(recallPlate('confer plate')?.id).toBe('confer');
+    expect(recallPlate('worn turn plate')?.id).toBe('worn-turn');
+    expect(recallPlate('bifrost plate')?.id).toBe('bifrost');
+    expect(recallPlate('grokbot plate')?.id).toBe('grokbot');
     expect(recallPlate('repertoire')).toBeNull();
     expect(recallPlate('dynamo')).toBeNull();
     expect(recallPlate('foundry')).toBeNull();
@@ -258,9 +264,9 @@ describe('pipeline plates', () => {
     expect(stamps).not.toContain('**Host Pack**');
     const op = readFileSync(join(process.cwd(), 'grok-bot/OP-PROC.md'), 'utf8').split('\n');
     const opLines = op.at(-1) === '' ? op.length - 1 : op.length;
-    expect(opLines).toBeLessThanOrEqual(75);   // cap raised by Blaze 2026-10-13
-    const npmRow = op.find((line) => line.startsWith('| npm |')) ?? '';
-    const opBody = op.filter((line) => !line.startsWith('| npm |')).join('\n');
+    expect(opLines).toBeLessThanOrEqual(125);   // cap raised by Blaze 2026-10-21
+    const npmRow = op.find((line) => line.includes('id="npm"')) ?? '';
+    const opBody = op.filter((line) => !line.includes('id="npm"')).join('\n');
     expect(npmRow).toMatch(/gate jargon \(Kind 0,/);
     expect(opBody).not.toMatch(/Kind 0|outer plane/i);
     expect(op.join('\n')).not.toMatch(/outer plane/i);

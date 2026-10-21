@@ -161,6 +161,15 @@ class Guardrails275(unittest.TestCase):
         lines = inbox._direct(self.ev("issue_comment", "@arch10x deep-review"), roles)
         self.assertEqual(sorted(l["seat"] for l in lines), ["arch1"])
 
+    def test_self_loop_guard_unchanged(self):
+        """A seat's own @mention still stays out of that seat's inbox. cursor[bot] is not arch1."""
+        own = self.routed(self.ev("pr_comment", "arch reply", mentions=["arch10x"],
+                                  actor="arch10x[bot]", **{"from": "arch1"}))
+        self.assertNotIn("arch1", own)
+        asked = self.routed(self.ev("pr_comment", "cloud ask", mentions=["arch10x"],
+                                    actor="cursor[bot]", **{"from": "GitHub"}))
+        self.assertIn("arch1", asked)
+
     def test_no_self_wake_by_bot_login(self):
         self.assertNotIn("forge", self.routed(self.ev("pr_comment", "@forge merge ask", actor="forge0x1[bot]")))
         os.environ["SEAT_BOTS"] = json.dumps({"mill": ["mill-bot"]})

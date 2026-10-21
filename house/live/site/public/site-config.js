@@ -51,6 +51,7 @@
       if (!seat || boardEnd(seat)) return null;
       return Object.assign({}, e, { from: seat, to: seat, hops: [seat] });
     }
+    if (kind === 'merged' || kind === 'pr_close' || kind === 'issue_close') return e;
     if (DEPLOY[kind]) {
       var rail = hops.filter(function (h) { return h && !boardEnd(h); }).map(function (h) { return h === 'Operator' ? 'GitHub' : h; });
       if (rail.indexOf('GitHub') < 0) rail.unshift('GitHub');

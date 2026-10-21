@@ -10,7 +10,16 @@ description: >
 
 Do this. Do not explore the tree to rediscover it.
 
-Work from a new branch and worktree off current `origin/main`. One plate, one file. Run the test named below before the PR.
+Work from a new branch and worktree off current `origin/main`. One plate, one ASCII file. Its optional PNG lives at `docs-site/static/plates/x/<id>.png`. Run the test named below before the PR.
+
+## Which kind of plate
+
+There are two kinds of stamped plate.
+
+- **ASCII table plate (for agents).** The box drawing in `docs-site/docs/plates/<id>.md`, made with this skill. Every plate tied to a lens must be this kind. The lens and recall open it, it carries the file:line cites, and it is the source of truth for that plate.
+- **Graphical plate (for X and people).** A PNG drawn with the `draw-stamped-card` skill from an ASCII plate critic already approved. It never adds a claim the ASCII plate does not have, and a lens never points at it. Commit it as `docs-site/static/plates/x/<id>.png`, named for its ASCII plate.
+
+Order: the ASCII plate first, through critic. The graphical plate after, when X or people need it.
 
 ## Plate
 

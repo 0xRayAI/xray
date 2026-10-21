@@ -451,7 +451,8 @@ test('a launch-file packet id on the board keeps card, and a webhook pull URL st
     board: [],
   });
   assert.equal(missing[0].card, '');
-  assert.equal(missing[0].flag, 'card missing');
+  assert.equal(missing[0].flag, undefined);
+  assert.equal(missing[0].label, 'no card');
   const pulled = boardCloudAgents({
     agents: [{ agent: 'bc-pr0000001', status: 'running', pr: 'https://github.com/acme/app/pull/15', t_ct: '2026-10-20T12:00:00Z' }],
   });

@@ -5,31 +5,34 @@ sidebar_label: Pre tool
 
 # Pre tool
 
-The tool hook is where the lens gate runs.
+Two host edges join the same fields, run the delegation gate, then one lens deny.
 
 ```
-┌────────────────────────────────────────────────────────────┐
-│ INPUT LAYER                                                │
-│   ┌────────────────────────────────────────────────────┐   │
-│   │ the tool name and its arguments                       │   │
-│   └──────────────────────────┬─────────────────────────┘   │
-└──────────────────────────────┼─────────────────────────────┘
-             v
-┌────────────┼───────────────────────────────────────────────┐
-│ PROCESSING LAYER                                            │
-│   ┌────────────────────────────────────────────────────┐   │
-│   │ join the command, the content, and the paths          │   │
-│   └──────────────────────────┬─────────────────────────┘   │
-└──────────────────────────────┼─────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│ INPUT LAYER                                                  │
+│   ┌──────────────────────────────────────────────────────┐   │
+│   │ tool name · command · content · paths                │   │
+│   └──────────────────────────┬───────────────────────────┘   │
+└──────────────────────────────┼───────────────────────────────┘
                                v
-┌──────────────────────────────┼─────────────────────────────┐
-│ OUTPUT LAYER                 v                             │
-│   ┌────────────────────────────────────────────────────┐   │
-│   │ deny when the lens gate denies                        │   │
-│   └────────────────────────────────────────────────────┘   │
-└────────────────────────────────────────────────────────────┘
+┌──────────────────────────────┼───────────────────────────────┐
+│ PROCESSING LAYER             v                               │
+│   ┌────────────────────────────┐ ┌─────────────────────────┐ │
+│   │ Cursor edge                │ │ Grok edge               │ │
+│   │ evaluatePreToolGate        │ │ evaluatePreToolGate     │ │
+│   │ then lensDecision          │ │ then lensBeforeResearch │ │
+│   └─────────────┬──────────────┘ └────────────┬────────────┘ │
+└─────────────────┼──────────────────────────────┼─────────────┘
+                  └──────────────┬───────────────┘
+                                 v
+┌────────────────────────────────┼─────────────────────────────┐
+│ OUTPUT LAYER                   v                             │
+│   ┌──────────────────────────────────────────────────────┐   │
+│   │ deny when the lens denies                            │   │
+│   └──────────────────────────────────────────────────────┘   │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-pre-tool-use.js joins the command, the written content, and the paths, then calls lensBeforeResearch. A deny ends the hook. The plate that belongs here is lens-gate.
+Both hosts run `evaluatePreToolGate` before the lens. Cursor joins the command, the written content, and the paths, then calls `lensDecision` (`src/integrations/cursor/hooks/pre-tool-use.js:114-118`) after the gate (`:99-107`). Grok joins the same fields and calls `lensBeforeResearch` (`src/integrations/grok/hooks/pre-tool-use.js:84-90`) after the gate (`:60`). A deny ends the hook (`cursor :116-117`, `grok :86-87`). The plate that belongs here is lens-gate.
 
-stamped · 0xray 4.1.0
+stamped · 0xray 4.1.3

@@ -4,7 +4,7 @@ A card is one GitHub issue or pull request. A beat is a real event on it. A pack
 
 The live page shows the same cards in a kanban above the activity list. A column is the card's stage (`open`, `review`, `fix`, `merge`, `retest`, `done`). A closed card sits in `done`. A click opens the timeline. The GitHub link is on the card face.
 
-Kanban note. The live page shows a read-only kanban above Activity. Columns are open, review, fix, merge, retest, and done. The deep link is `?card=`. The public board does not serve the history archive or the kanban yet.
+Kanban note. The live page shows a read-only kanban above Activity. Columns are open, review, fix, merge, retest, and done. The deep link is `?card=`. The column header (stage and count) stays put while the cards under it scroll. The board scrolls sideways, and the headers stay lined up with the columns. The page header and the timeline toolbar stay at the top of the page. The public board serves the kanban and GET /history, /history/cards, and /history/transitions.
 
 When `LIVE_URL` is set, the board seats see is the collector board (`GET /cards`). When `LIVE_URL` is unset, the board is hand-kept `house/WAVEBOARD.md`. `feed/live_mesh.py` runs `feed/live_collect.py` and `feed/live_board.py` every 45 seconds (`LIVE_WATCH_S`, default 45). An empty box board does not replace those cards.
 
@@ -42,7 +42,7 @@ A merge, an issue close, or a pull request close sets the card to done and close
 
 The owner's own comment that the work is resolved also closes the card. A comment from someone else does not.
 
-Every PR comment, review comment and issue comment routes to the comment-watch seat and to the PR or issue author's seat, open, closed or merged. A comment on a merged or closed card is a beat (`comment after merge` / `comment after close`) and keeps the card on the board for 24 h from that comment. A PR or issue whose author is outside the fleet no longer drops its comments.
+Every PR comment, review comment and issue comment routes to the comment-watch seat and to the PR or issue author's seat, open, closed or merged. A comment on a merged or closed card is a beat (`comment after merge` / `comment after close`) and keeps the card on the board for 24 hours from that comment. Inside that window a closed card takes a display slot before any parked card. The 40-card cap can still leave it off `/cards`. That drop does not prune `/history` or `/history/cards`: the final row is archived with `verb` `merged` when the closing event is a merge. `tools/backfill-history.mjs` rebuilds rows the archive never received. It reads GitHub issues and pull requests for `0xRayAI/xray` and the other repos the board tracks, keeps labels and linked `bc-` agents, and skips an event or card the archive already has. The default is a dry-run. `--write` appends. A PR or issue whose author is outside the fleet no longer drops its comments.
 
 ## Holds
 
@@ -75,7 +75,7 @@ The command is stored on the server and wins over the comment while that store e
 
 ## Layout
 
-The page groups cards that a seat is working on, then pinned cards, then the rest by status (waiting, in review, on hold, parked, done). The Cards control “By agent” switches that list to one group per seat, with status under the seat. Issues whose title names a pull request in the same repo fold under that pull request. A run of more than three loose issues collapses to one line.
+The page groups cards that a seat is working on, then pinned cards, then the rest by status (waiting, in review, on hold, parked, done). A status header (name and count) sticks to the top of the card list. The Cards control “By agent” switches that list to one group per seat, with status under the seat. Issues whose title names a pull request in the same repo fold under that pull request. A run of more than three loose issues collapses to one line.
 
 ## Ghost cards
 
@@ -199,4 +199,12 @@ A webhook fires for the seat that has to act. The line's `seat` wins, then a han
 
 History note. Every activity line is archived to history. The word owner is the owner via LIVE_OWNER or the owner-name.
 
-`GET /history` lists archive days. `GET /history?date=YYYY-MM-DD` returns that day's events. `GET /history/cards` returns the latest version of each card. Card versions are append-only (`key` + stage + state + the card's own update time). A row with no key is not stored. The open queue is a view of unacked inbox lines. Filtering it does not delete the inbox file. Lines older than the live window stay in the daily archive.
+`GET /history` lists archive days. `GET /history?date=YYYY-MM-DD` returns that day's events. `GET /history/cards` returns the latest transition for each card (`state`, `since`, `limit`, `cursor`). `GET /history/transitions` lists the append-only log (`card`, `transition`, `since`, `until`, `limit`, `cursor`). `GET /history/export?date=YYYY-MM-DD` is NDJSON for that Chicago day. `limit` defaults to 200 and stops at 1000. The cursor is the last id returned; the next page starts after it. A bad date is 400. `GET /archive` stays behind the archive key.
+
+A transition is written before the 14-day filter and the 40-card cap. The id is `card|transition|source_id`. The same source event appends once. A reopen is a new source id. Verbs are `opened`, `stage`, `parked`, `held`, `released`, `merged`, `closed`, and `reopened`. `merged` wins when the source kind is `merged`. The record holds the card id, the verb, from/to state and stage, `actor.seat`, `actor.login`, `actor.bc`, `t_ct` with a Chicago offset, the source event id, and a packet snapshot of at most 200 characters. It does not store a message body. Day folders use the Chicago date, so 19:30 CT stays on that Chicago day.
+
+Nothing in the log is deleted. Boot rebuilds `card -> latest` from the log when `transition-index.json` is missing. The event seen-set still loads only the newest warm days. Card versions in `cards.jsonl` stay append-only (`key` + stage + state + the card's own update time). A row with no key is not stored.
+
+The durable path is `$MESH_DATA_DIR/archive` on the Railway volume. Events are about 1.9 MB a day. Transitions are smaller. A finished month may be copied to `archive/segments/YYYY-MM/*.jsonl.gz`; a segment has to replay equal to the daily files. This does not delete the daily files. A volume snapshot or an off-box copy is the spare. A volume wipe is the loss. Count and duration are the inference fields (stage cycle time, rounds before merge, seat load per Chicago day, nudge to the next transition, cloud duration per card through `actor.bc`). There is no dollar field.
+
+The open queue is a view of unacked inbox lines. Filtering it does not delete the inbox file. Lines older than the live window stay in the daily archive.
