@@ -45,6 +45,20 @@
       "excerpt": "48 kHz stereo flac summed to mono, resampled to 44.1 kHz, 57 ms from the attack, with a decay so the open hat is a short accent and not the full cymbal wash."
     },
     {
+      "id": "hat-open-wash",
+      "role": "open hat",
+      "file": "hat-open-wash.wav",
+      "title": "mid_hh_open_vl1_rr1.flac",
+      "author": "Versilian Studios and Karoryfer Samples",
+      "sourceUrl": "https://github.com/sfzinstruments/virtuosity_drums/blob/master/Samples/mid/hh/mid_hh_open_vl1_rr1.flac",
+      "mediaUrl": "https://raw.githubusercontent.com/sfzinstruments/virtuosity_drums/master/Samples/mid/hh/mid_hh_open_vl1_rr1.flac",
+      "blobSha": "f6883ca809cf7dc7783be474120f0f977b2b1f70",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://github.com/sfzinstruments/virtuosity_drums/blob/master/LICENSE",
+      "licenseEvidence": "Same CC0 LICENSE and the same open-hat recording as hat-open. v7e uses a longer excerpt of that file.",
+      "excerpt": "48 kHz stereo flac summed to mono, resampled to 44.1 kHz, 460 ms from just before the attack, with a short fade at the end. The cymbal wash is kept."
+    },
+    {
       "id": "clap",
       "role": "clap",
       "file": "clap.wav",
