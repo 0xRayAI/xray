@@ -388,8 +388,8 @@ function plateBoxes(lines: string[]): Array<{ top: number; bot: number; left: nu
 }
 
 function pngText(buf: Buffer, keyword: string): string | null {
-  const sig = '\x89PNG\r\n\x1a\n';
-  if (buf.toString('ascii', 0, 8) !== sig) throw new Error('not a png');
+  const sig = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  if (!buf.subarray(0, 8).equals(sig)) throw new Error('not a png');
   let offset = 8;
   while (offset + 8 <= buf.length) {
     const length = buf.readUInt32BE(offset);
