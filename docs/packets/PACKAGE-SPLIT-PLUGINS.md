@@ -2,134 +2,213 @@
 
 Packet only. No code in this change. The word for the human is **owner**.
 
-This file is a skeleton. The **Subsystem** and **Core** sections are **pending research**. Five researchers debate on the pull request for up to three rounds. When that debate is done, `[v5-packet]` posts one conjoin comment and folds that picture into this file.
+Owner GO 2026-10-21 10:32 CT. This file is the fold. The generalist close read 1192 of 1192 files on tree `4fffb6cce`. That close stays internal. This packet summarizes it. It does not paste it.
+
+Cites below were re-checked on this branch after it merged `origin/main` (`02a5ce6b`). A cite marked VERIFIED was opened in this working tree for this fold. The same lines hold on `4fffb6cce` for the files checked there.
 
 ## Packet
 
-- goal: Split fleet infra out of this monorepo into `@0xray` packages and a provider-agnostic plugin model, shipped as 0xray 5.0.0.
-- constraints: Packet only. No code. Say owner. No personal names. Issue 495 stays open. Subsystem and core stay pending until the conjoin.
-- path: `docs/packets/PACKAGE-SPLIT-PLUGINS.md`. Researchers debate on the draft. One conjoin fills the pending sections.
-- acceptance: The filled packet names packages and paths, the dependency graph, the plugin contract, config defaults, migration order, the 4.x to 5 guide, versioning, tests, risks, and the core map.
-- gates: This docs PR carries C only, and only once the packet is filled. B and D stay off. The v5 publish gates are below and are not this PR.
-- evidence: Pending the conjoin. The skeleton is this file.
-- next owner: the five researchers, then `[v5-packet]` for the conjoin.
+- goal: Ship 0xray 5.0.0 as the three-subsystem core with modules plugged in, and split fleet pieces into @0xray packages plus sign-in and chat slots.
+- constraints: Packet only. No code in this change. Say owner. No personal names. Issue 495 stays open. chrono and jelly stay on the owner account.
+- path: docs/packets/PACKAGE-SPLIT-PLUGINS.md. This fold fills Subsystem, Core, and the module map from the 1192-file close.
+- acceptance: Core is Inference, External Governance, and the Autonomous Engine, plus wear, validate, doctor, and the Codex gate. Modules, packages, and fell-out cards are named.
+- gates: This docs pull request carries gate C only. B and D stay off. The 5.0.0 publish gates below are not this pull request.
+- evidence: Generalist close, 1192 of 1192 files, tree 4fffb6cce. Lines marked VERIFIED were re-opened on this tree.
+- next owner: forge (@forge0x1), critic (@critic0x), and Arch1 (@arch10x), for three-way sign-off.
 - escalate: the owner, if forge, critic, and Arch1 do not all sign off.
 
 Plates read: `docs-site/docs/plates/bifrost.md`, `docs-site/docs/plates/house.md`, `docs-site/docs/plates/record-map.md`, `docs-site/docs/plates/foundry.md`, `docs-site/docs/plates/repertoire.md`.
 
-## Research
+## What the skeleton had wrong
 
-Debate on the pull request. Every comment is posted as forge0x1. Start the comment with the handle. A comment @mentions the party it addresses.
+The skeleton left Subsystem and Core as pending research, and it left the config file and the Foundry name undecided. The close settles those.
 
-| Handle | Role |
-| --- | --- |
-| `[v5-inference]` | Subsystem: Inference |
-| `[v5-governance]` | Subsystem: External Governance |
-| `[v5-engine]` | Subsystem: Autonomous Engine |
-| `[v5-generalist-1]` | Generalist 1 |
-| `[v5-generalist-2]` | Generalist 2 |
-| `[v5-packet]` | Moderator. Conjoins when the debate is done. |
-
-Up to 3 rounds. Read these before arguing what is core:
-
-- `docs-site/docs/introduction.md`
-- `docs-site/docs/architecture/v3-from-v2.md`
-- `docs/reflections/what-is-v3.md`
-- `docs/archive/architecture/subsystem-map.md`
-
-`[v5-packet]` then posts one conjoin: what is agreed, what is resolved and why, what is still open. That comment @mentions @forge0x1, @critic0x, and @arch10x. The same picture is folded into this file. Subsystem and Core stay pending until that fold.
-
-## Locked decisions
-
-These are owner decisions. Research maps the tree onto them. It does not reopen them.
-
-- Frame: **0xray 5.0.0**, a major breaking release.
-- 0xray leans on xAI and stays provider-agnostic.
-- `@0xray/bifrost` owns the live board: server, collector, live-inbox, wake template, deploy script. Each install pins the version it runs.
-- The core defines a sign-in plugin slot and a chat plugin slot. House config turns them on through `features` and `plugins`. Propose one of `config.json` or `features.json`. The default is no sign-in and no chat, so the board stays read-only.
-- `@0xray/repertoire` moves from the owner account to the 0xRayAI org.
-- `@0xray/auth-xai` is optional. It wraps the bedrock xAI OAuth package and refreshes tokens on Railway. Fleets on xAI are the only users.
-- Kanban drag-and-drop (a status change saved on the card timeline) needs some sign-in plugin. It does not need xAI.
-- A simple fallback sign-in (owner token or GitHub) lets a non-xAI board drag cards.
-- `@0xray/chat` is the provider picker ported from jelly: pick a provider, set your own key. Optional per board. Bot chat is per board.
-- Proposed, and decided in the filled packet: `@0xray/goggles`, `@0xray/hooks` (`.cursor` hooks), `@0xray/house` (the house template `@0xray/grok-bot` depends on).
-- chrono and jelly stay on the owner account. They are out of scope.
-- Inventory the whole repo, including the Foundry/mill contracts and their CI jobs `Foundry mill` and `Validate mill contract`, goggles, hooks, the house template, reflection and repertoire hooks, docs-site, and the rest. For each row, propose core or its own `@0xray` package (for example `@0xray/foundry` or `@0xray/mill`) with a one-line reason.
-- v5 core is the three subsystems (Inference, External Governance, the Autonomous Engine) plus the suit lifecycle (wear, validate, doctor) and the Codex gate that wears them. Bifrost, foundry/mill, goggles, hooks, house, chat, and the auth plugins are modules around that core.
-- Map each inventory row to the subsystem it plugs into, or to `module, not core`.
-- The plugin and config loader belongs to External Governance. It is part of that subsystem.
-- Migration order: bifrost, then auth-xai, then the fallback sign-in, then chat, then the rest.
-- Issue 495, the sign-in card packet, is reworked so the card sits on the sign-in plugin slot. This packet leaves 495 open.
-- `@0xray/grok-bot` and the new packages are versioned against v5. The filled packet says how.
-- Release gates for the 5.0.0 publish: the tarball is proven on a 4.x suit; every seat posts install, wear, validate, and doctor receipts; forge, critic, and Arch1 all sign off.
-
-## Subsystem
-
-pending research
+- Core is the three subsystems that already exist, plus suit wear, validate, and doctor, plus the Codex gate that wears them. Nothing in the close adds a fourth subsystem.
+- The plugin and config loader stays inside External Governance. It is not its own subsystem.
+- The config file is `features.json`. `config.json` overlaps token caps. COALESCE those caps into `features.json`, then drop `config.json`.
+- Keep the package name `@0xray/foundry`. Do not rename it to `@0xray/mill`.
+- `@0xray/repertoire` stays its own package. It is the memory organ Inference calls through `src/memory-routing`. Do not fold the organ into the core package. Root `package.json` does not declare it. `postinstall` only links the vendored tree.
+- Sign-in and chat slots are new. They are not `src/nucleus/plugin-registry.ts`, not `.xray/plugins`, and not `/login`.
+- `@0xray/hooks` may hold host shims. The constitution stays in core. Cursor and Grok hooks call `evaluatePreToolGate`, then a Codex check, then the lens, then `repertoireRoute`. Pulling that gate out of core takes the Codex check off the turn.
+- `postinstall` does not write consumer bridges. VERIFIED `scripts/node/postinstall.cjs:89-92`: it links vendored `@0xray/repertoire` and prints `npx 0xray wear`. Wear writes the bridges.
+- `govern-and-apply` calls `governExternalProposals` and does not apply. Apply stays on the CLI cycle when a proposal was approved.
+- Shipped `inference_governance.enabled` is false. VERIFIED `xray/features.json:200`. The cycle then uses the local matrix. The Dynamo client stays in External Governance and stays dormant. Dormant is not unused. Do not vendor the server. The server repo stays on the owner account.
+- `getLevelFromScore` never reads the `enterprise` field. VERIFIED `src/delegation/complexity-core.ts:141-148`. `xray/features.json:148` sets `enterprise` to 100. `DEFAULT_THRESHOLDS.enterprise` is 75 (`complexity-core.ts:90`) and is also unread. The cuts the function uses are 15, 25, and 50 (`:87-89`). A score above 50 is enterprise.
+- Cutoff literals are `0.92/0.95`, `0.82/0.88`, and `0.75/0.80`. VERIFIED `src/governance/governance-core.ts:105-110`. `PHI` and `TAU` are not those cutoffs.
+- `resolveDynamoBaseUrl` prefers config, then `GOVERNANCE_ENDPOINT`, then `PUBLIC_DYNAMO_SSOT`. VERIFIED `src/integrations/governance/types.ts:77` is that public origin.
 
 ## Core
 
-pending research
+### Inference
 
-## Inventory
+`src/inference` plus the Repertoire organ behind `src/memory-routing`. `InferenceCycle` phases run on `inference:run`. With the shipped flag false, that cycle stays on the local matrix. The turn hooks do not construct `InferenceCycle`.
 
-pending research
+Plugs in here: repertoire (its own package), session capture, the inference corpus under `docs/inference`, state under `.xray/inference`.
+
+### External Governance
+
+A mix, one subsystem.
+
+- In-repo `GovernanceService`, `governance-core`, and `CodexPolicyService`.
+- The constitution inside `src/nucleus/delegation-gate.ts` (Codex 11, 29, 69, 70, and a destructive shell). It sits beside the vote. It is not inside `govern()`.
+- `GovernanceClient` posts `{baseUrl}/call_connected_tool`. On the shipped flag the client is dormant.
+- The features loader, `src/core/features-config.ts`, lives here. `xray/features.json` is data. The loader is core.
+- `src/enforcement` is the worn `xray-enforcer` server. It stays in this subsystem. One reader of `xray/codex.json` is enough. An empty codex load returns 60 and `is_fallback` true. That 60 is not the worn 70.
+
+Two doors. The service calls code-review, security-audit, and the research skill. `inference:run` with the flag off uses `governWithLocalMatrix`. The MCP tool returns a vote. The governance server imports `getGovernanceService`. `SelfProposalEngine` imports nucleus `govern-http`. The nucleus is not the sole path.
+
+`checkProposal` sends `fix` and `guard` to `evaluate_governance` with an empty review list. Other types go to `govern_with_solar`. `applyDecisionLogic` ignores the configured confidence cutoffs. Local confer abstains and labels `UNREVIEWED`. It does not call the client. COALESCE that request shape before the client is turned on. If the live schema requires one review, the dormant call fails on first use.
+
+### Autonomous Engine
+
+`thinDispatch`, the orchestrator MCP, the delegation gate, asides, confer, and synthesis. `scoreAndRoute` uses the cuts above, not `features.json` `enterprise` 100. Default confer is off. Shipped `synthesis.enabled` is false (`xray/features.json:174`). When synthesis is due on the guided path, `evaluateSynthesisGate` denies `govern-and-apply` and allows `analyze-complexity`. A frontier profile skips that deny on a write. `confer-switch` does not edit the synthesis block.
+
+`evaluatePreToolGate` runs station heat, then the constitution, then synthesis and pending delegations unless ceremony is lite, then the spawn plan. A frontier spawn with no plan is allow plus warn (`spawn-plan-missing`). A guided host, and Hermes on `auto`, still deny that spawn. A Hermes write that breaks the type rule is gate `codex-11` even on a frontier profile.
+
+Suit lifecycle in this core: `0xray wear`, `0xray validate`, `0xray doctor`. `validate` is the closed wear check. KEEP doctor and validate. Stop advertising `fix`. `install`, `init`, and `fix` print that nothing was written. `credible-init` always prints that the pod is not implemented.
+
+## Modules, not core
+
+House, goggles, foundry, bifrost, hooks-as-shims, repertoire-as-package, and the docs site do not import the three subsystems upward. No file under `house/` or `grok-bot/lib` imports those three. `server.mjs` does not import `InferenceCycle`, `GovernanceClient`, or `scoreAndRoute`.
 
 | Surface | Paths | Home | Plugs into | Reason |
 | --- | --- | --- | --- | --- |
-| pending research | pending research | pending research | pending research | pending research |
+| Live board | `house/live/app/server.mjs`, `house/live/feed/live_mesh.py`, `house/live/tools/live-inbox`, wake template, deploy script | `@0xray/bifrost` | module, not core | The board is a client of seats. It does not vote and it does not route the turn. |
+| Burst publisher | `house/live-mesh/fetch_feed.py` build and write | stays inside bifrost | module, not core | The adapter replaces `build` and `write`. Do not make `@0xray/burst`. |
+| House kit | `grok-bot/templates/house`, seat doctor | `@0xray/house` | module, not core | `@0xray/grok-bot` depends on the template. `pulsar-game.mjs` reaches `wave-schedule.mjs`. Depend on the board file. Do not copy it. |
+| Grok bot | `grok-bot/` | `@0xray/grok-bot` | module, not core | Seat kit. It wears the suit. It is not the suit. |
+| Repertoire | `vendor/@0xray/repertoire` | `@0xray/repertoire` | Inference | Organ behind `src/memory-routing`. Own package. Move the package to the 0xRayAI org. |
+| Foundry / mill | `scripts/foundry` | `@0xray/foundry` | module, not core | Already that package. A mill seat fastens mill and inspect. A blip seat fastens blip only. A sound seat fastens sound only. |
+| Product mill | dependency `@0xray/blip` | stays `@0xray/blip` | module, not core | Foundry depends on it. Do not merge it with a hangar tool that shares the name. |
+| Goggles | lens, plates reader, `src/integrations/hooks/plates.cjs` | `@0xray/goggles` | External Governance and the engine | `lensBeforeResearch` runs on the turn. The plate reader is input. The gate that consumes the lens stays in core. |
+| Host shims | `.cursor/hooks`, Grok launcher `scripts/mjs/run-grok-hook.mjs` | `@0xray/hooks` | Autonomous Engine | Adapters. The constitution they call stays in core. |
+| Docs site | `docs-site/` | stays in the suit repo until a later cut | module, not core | The manual. Not a runtime subsystem. |
+| Dynamo server | owner-account repo | out of the v5 packages | External Governance | The client stays. The server does not move. |
+| Sign-in, xAI | not in this repo | `@0xray/auth-xai` | module, not core | Optional. Wraps bedrock OAuth and Railway refresh. xAI fleets only. Interactive mode in `scripts/node/setup-xai-oauth.mjs` saves local auth and stops. Only `daemonMain` calls `deployToRailway`. |
+| Sign-in, fallback | not in this repo | a small fallback package, name still open | module, not core | Owner token or GitHub, so a non-xAI board can drag a card. |
+| Chat | not in this repo | `@0xray/chat` | module, not core | Provider picker. Optional per board. Keys stay out of the repo. |
+| Codex file | `xray/codex.json` | core, External Governance | External Governance | Worn 70-term file. The gate that enforces it stays in core. |
+
+`xray/routing-mappings.json` is a keyword map `AgentDelegator` reads. It is not `getAgentForTier` and it is not the board's `inbox-roles.json`. COALESCE it into one engine table. Do not merge it into the board. `xray/integrations.json` and `workflow_state.json` had no live reader in the close. RIP as unused data is fair. That RIP is SINGLE until those files are re-opened. It does not move a package.
 
 ## Packages
 
-pending research
-
-The filled section names what each package owns, including the file paths that move. The locked set is `@0xray/bifrost`, `@0xray/repertoire`, `@0xray/auth-xai`, the fallback sign-in package, `@0xray/chat`, and the proposed `@0xray/goggles`, `@0xray/hooks`, and `@0xray/house`, plus Foundry/mill and whatever else the inventory moves.
+| Package | Owns | Moves |
+| --- | --- | --- |
+| `0xray` 5.0.0 | the three subsystems, wear, validate, doctor, the Codex gate, the features loader | stays the suit |
+| `@0xray/bifrost` | server, collector, live-inbox, wake template, deploy script | `house/live/**` |
+| `@0xray/house` | house template and seat doctor | `grok-bot/templates/house/**`, seat-doctor program |
+| `@0xray/repertoire` | the memory organ | already a package; org move only |
+| `@0xray/foundry` | the mill, release stamp | already `scripts/foundry` |
+| `@0xray/goggles` | lens and plate reader | plate runtime plus the lens the turn calls |
+| `@0xray/hooks` | host shims only | `.cursor/hooks` adapters and the Grok launcher |
+| `@0xray/auth-xai` | optional xAI sign-in | new, not in this tree |
+| fallback sign-in | optional non-xAI sign-in | new, name open |
+| `@0xray/chat` | optional provider picker | new, not in this tree |
+| `@0xray/grok-bot` | seat kit | stays; depends on `@0xray/house` |
+| `@0xray/blip` | product mill | stays an external dependency of foundry |
 
 ## Dependency graph
 
-pending research
+```
+0xray 5.0.0
+  Inference --calls--> @0xray/repertoire
+  External Governance --client--> Dynamo server (owner account, not a package)
+  External Governance --reads--> xray/features.json, xray/codex.json
+  Autonomous Engine --calls--> evaluatePreToolGate (in core)
+@0xray/hooks --imports--> Autonomous Engine
+@0xray/goggles --read by--> the turn, after the gate
+@0xray/foundry --depends--> @0xray/blip
+@0xray/house --depends--> @0xray/bifrost (wave-schedule, do not copy)
+@0xray/grok-bot --depends--> @0xray/house
+@0xray/bifrost --optional--> @0xray/auth-xai | fallback sign-in | @0xray/chat
+```
+
+Core does not import bifrost, house, foundry, or the docs site. Default plugins are off, so a board with no sign-in plugin stays read-only.
 
 ## Plugin interface
 
-pending research
+House config enables slots through `features.json` `plugins`. Default: no sign-in, no chat.
 
-The filled contract covers three things. Sign-in identifies the user and answers can-write. Chat sends and streams. Keys stay out of the repo.
+Sign-in:
+
+- `identify(request) -> { id, label } | null`
+- `canWrite(user, card) -> boolean`
+- Kanban drag-and-drop needs some sign-in plugin. It does not need xAI.
+- No tokens in the repo. Refresh lives in the plugin process.
+
+Chat:
+
+- `send(message) -> reply`
+- `stream(message) -> chunks`
+- The fleet sets the provider and the key in the host env. The key is not committed.
+
+Both slots are off until `plugins.sign_in` or `plugins.chat` names an installed package.
 
 ## Config schema
 
-pending research
+One file: `xray/features.json`, copied to `.xray/features.json` by wear.
 
-One file, `features.json` or `config.json`. Defaults: no sign-in plugin, no chat plugin.
+```json
+{
+  "plugins": {
+    "sign_in": null,
+    "chat": null
+  }
+}
+```
+
+`null` means the slot is off. A string is the package name. `inference_governance.enabled` stays false until a fleet opts in. `synthesis.enabled` stays false. `goggles.enabled` stays true. Doctor already exits 1 when goggles are off, and that is the only failure it exits on today.
+
+Token caps that still live in `config.json` move into `features.json` in the same change that drops `config.json`.
 
 ## Migration order
 
-1. bifrost
-2. auth-xai
-3. fallback sign-in
-4. chat
-5. the rest
-
-Per-step tests and the docs-check for each step: pending research
+1. **bifrost.** Move the live board. Pin the version in each install. Docs-check: setup, WAKE-ROUTINE, and the bifrost plate name the package. Test: the server still does not import `InferenceCycle`, `GovernanceClient`, or `scoreAndRoute`.
+2. **auth-xai.** Optional plugin. Docs-check: only xAI fleets enable it. Test: default `plugins.sign_in` is null, and a null slot cannot drag a card.
+3. **fallback sign-in.** Owner token or GitHub. Docs-check: a non-xAI board can drag a card only after this slot is set. Test: `canWrite` is false when the slot is null.
+4. **chat.** Optional. Docs-check: keys are env, not files. Test: default `plugins.chat` is null and the board exposes no send.
+5. **the rest.** house, goggles, hooks (shims only), foundry stays put, repertoire org move. Docs-check: OP-PROC, onboarding, CHANGELOG, docs-site, the house template. Test: wear, validate, and doctor receipts on a 4.x suit before the major is published. `postinstall` still only links and prints wear.
 
 ## Fleet migration
 
-pending research
+Sweep, in this order, after the package that step moves:
 
-The docs sweep names setup, the house template, onboarding, OP-PROC, WAKE-ROUTINE, docs-site, CHANGELOG, and the migration steps.
+- setup and onboarding
+- `grok-bot/templates/house` and WAKE-ROUTINE
+- `grok-bot/OP-PROC.md`
+- docs-site guides and the plates listed below
+- CHANGELOG and a 4.x to 5 page
+
+Each sweep says the same package name the step just moved. A page that still says the board, the organ, or the mill lives inside the suit is stale for that step.
 
 ## What breaks for 4.x fleets
 
-pending research
+- The board is read-only until a sign-in plugin is configured. Drag-and-drop stops for fleets that had an implicit write.
+- `npx 0xray wear` remains the step that writes bridges. An install that expected `postinstall` to write them still has to wear.
+- A blip seat fastens blip only. A sound seat fastens sound only. A doc that says every wear fastens mill and inspect is wrong for those seats.
+- `govern-and-apply` still does not apply. A caller that treated the tool name as apply was already wrong on 4.x.
+- `features.json` `enterprise: 100` does not change routing. It does not start changing routing in 5.0.0 either, until the cuts are one table.
+- The Dynamo server URL is not pinned inside the suit. Turning the flag on without a configured endpoint uses the public origin in `types.ts:77`.
 
 ## 4.x to 5 migration guide
 
-pending research
+1. Stay on 4.x wear until the tarball drill passes.
+2. Pin `@0xray/bifrost` to the version the fleet runs. Point `LIVE_URL` at that install.
+3. Leave `plugins.sign_in` and `plugins.chat` null. Confirm the board is read-only.
+4. Fleets that drag cards install either `@0xray/auth-xai` or the fallback, and set `plugins.sign_in`.
+5. Fleets that want chat set `plugins.chat` and the provider key in the host env.
+6. Run wear, then validate, then doctor. Save the three receipts per seat.
+7. Do not copy `wave-schedule.mjs` into the house kit. Depend on bifrost.
+8. Do not vendor the Dynamo server. Keep the client dormant until `inference_governance.enabled` is set on purpose.
 
 ## Versioning against v5
 
-pending research
-
-`0xray` is 5.0.0. How `@0xray/grok-bot` and each new package pin that line is pending research.
+- `0xray` is **5.0.0**.
+- New packages in this split (`bifrost`, `house`, `goggles`, `hooks`, `auth-xai`, the fallback, `chat`) publish **5.0.0** in the same release train and declare a peer on `0xray` `^5.0.0`.
+- `@0xray/grok-bot` and `@0xray/foundry` keep their own version lines. Each declares a peer on `0xray` `^5.0.0` when it is tested against that suit. `@0xray/grok-bot` also depends on `@0xray/house` at the 5.0.0 line.
+- `@0xray/repertoire` keeps its own version. The org move does not reset it. The suit keeps linking the vendored build until the org package is the one wear resolves.
+- `@0xray/blip` stays an external dependency of foundry.
 
 ## Release gates
 
@@ -139,19 +218,146 @@ For the 5.0.0 publish, after this packet is signed off:
 - Every seat posts install, wear, validate, and doctor receipts.
 - Three-way sign-off: forge (@forge0x1), critic (@critic0x), Arch1 (@arch10x).
 
-This pull request is the packet. It does not publish.
+This pull request is the packet. It does not publish. Gate C is the docs check on this file. B and D stay off.
+
+Doctor receipts are not a green bar today. `runDoctor` returns exit code 1 only when goggles are off. VERIFIED `src/cli/commands/doctor.ts:94`. A missing install still exits 0. The fell-out card for that exit is a gate on the publish, not a reason to treat a 0 as healthy.
 
 ## Tests and docs-check
 
-pending research
+This pull request adds no tests. The checks below are the ones each migration step must grow.
+
+- Default `plugins.sign_in` and `plugins.chat` are null.
+- `postinstall` does not write `.mcp.json`.
+- Doctor exit code matches the defect it claims. Until the fell-out card lands, a receipt must include the text, not only the exit code.
+- Plate ids in `src/integrations/hooks/plates.cjs` match the plates the manual draws.
+- Docs-check: no page sends a fleet to `@0xray/mill`, to a fourth subsystem, or to a sign-in slot named `/login`.
+
+## Plates and lenses
+
+Listed only. Nothing here draws or stamps a plate. Drawing waits until critic PASSes this packet.
+
+Redraw, from the close, per subsystem:
+
+- Inference: inference-cycle. Six phases. Say the shipped flag leaves Dynamo off. Say `govern-and-apply` does not apply.
+- External Governance: governance (two doors), dynamo (the client only; the server is not a package), delegation-gate (beside the vote, not inside `govern()`).
+- Autonomous Engine: routing, orchestration, confer (default off), synthesis (shipped flag false), temperament (missing config stays guided; frontier spawn is warn).
+- Modules: activity-log (three homes: shipped `activity_logging.log_path` is `.opencode/logs` at `xray/features.json:105`; `write-home` names `.xray/logs/activity.log`; status reads `logs/framework/activity.log`), worn-turn (the hook chain, not a replacement for the gate), bifrost, house, repertoire, foundry, grokbot.
+
+On this tree, `PLATE_IDS` already contains `bifrost` (`plates.cjs:19`), `worn-turn` (`:49`), `repertoire` (`:54`), `dynamo` (`:55`), `foundry` (`:56`), and `grokbot` (`:66`). VERIFIED. Do not file those as missing. Boot and processor skills exist under `.agents/skills/`. Do not file those as missing.
+
+New, after the slots exist and critic has PASSed: one plate for the sign-in slot and one plate for the chat slot. Not before.
+
+Retired: none from this close. Do not retire a plate because an older gap list omitted it.
+
+## Verdicts
+
+Only VERIFIED lines drive these. SINGLE notes stay proposals.
+
+- INTEGRATE the Dynamo client in External Governance. KEEP the server on the owner account. VERIFIED `types.ts:77`, `features.json:200`.
+- COALESCE `config.json` token caps into `features.json`, then drop `config.json`. The overlap is the close. The file pair was not re-opened line by line here, so the drop waits on that re-open before code.
+- COALESCE routing cuts onto the three numbers `getLevelFromScore` reads. VERIFIED `complexity-core.ts:141-148`.
+- INTEGRATE repertoire as a package plugged into Inference. Do not merge it into `0xray`.
+- INTEGRATE foundry under its current name. A rename to mill is withdrawn.
+- RIP of `xray/integrations.json` and `workflow_state.json` is SINGLE. Not a code change in this packet.
+- The pre-tool gate stays in core. Host shims are the only move into `@0xray/hooks`.
 
 ## Risks
 
-pending research
+- Fail-open hooks and doctors that exit 0 are in the 4.x tree. Copying them into a package copies the hole. The cards below are the list.
+- Splitting the delegation gate into `@0xray/hooks` takes Codex enforcement off the turn.
+- Turning `inference_governance.enabled` on without a review in the `fix` and `guard` request fails on first use if the schema requires one review.
+- Two doctors disagree. `doctor.ts` and the seat doctor are different programs. A fleet receipt that treats them as one check will lie.
+- A public bifrost deploy serves history. The close reports `validSession` true in public mode. That stays SINGLE until re-opened. Do not treat it as a signed verdict.
+- `KernelOrchestrator.performDelegation` is a stub in the close. SINGLE. Do not describe the nucleus as the sole governance path while the governance server still imports the service.
 
 ## Open questions
 
-pending research
+- Package name for the fallback sign-in. Owner token and GitHub are the behavior. The name is not locked.
+- Whether `@0xray/goggles` takes the plate markdown or only the reader. The manual can stay in the suit repo for 5.0.0.
+- Issue 495 stays open. Its card is reworked onto the sign-in slot after this packet is signed. This file does not close it.
+
+## Fell out
+
+Claims the 1192-file close withdraws, grouped by the fix. Fail-open and exit 0 come first. Each line is a card stub: what it is, the source, what it waits on, and the owner.
+
+### Fail-open
+
+- The Grok launcher writes allow and exits 0 when the hook file is missing or throws, so the constitution never runs (`scripts/mjs/run-grok-hook.mjs:23-37`, VERIFIED). Source #510. Waits on three-way sign-off of #509, then a code change. Owner: owner.
+- Hermes TypeScript `onPreToolCall` allows the tool when the bridge throws and does not call the delegation gate (`hermes-agent-integration.ts:359-365`, VERIFIED). The Python plugin calls that gate first and can block (`__init__.py:236-238`, VERIFIED). Source #510. Waits on three-way sign-off of #509, then a code change. Owner: owner.
+- A quality-gate BLOCKED line is logged and the Python pre-tool returns without blocking (`__init__.py:286-316`, VERIFIED). Source #510. Waits on three-way sign-off of #509, then a code change. Owner: owner.
+
+### Doctors and other checks that exit 0 on failure
+
+- `0xray doctor` exits 0 when the package is missing or Node is old. It exits 1 only when goggles are off (`doctor.ts:94`, VERIFIED). Source #510. Waits on three-way sign-off of #509, then a code change. Owner: owner.
+- The suit-confirm script exits 0 when every bridge is skipped (`confirm-suit-all.mjs:208-253`, VERIFIED). Source #510. Waits on three-way sign-off of #509, then a code change. Owner: owner.
+- A pipeline run skips a missing pipeline file and can still exit 0. Source #510. Waits on a re-open of that runner, then sign-off of #509. Owner: owner.
+- Cursor wear on a folder that is not a git checkout exits 0 and writes nothing. The consumer wear test leaves the factory hooks file byte-identical. Source #510. Waits on three-way sign-off of #509, then a code change. Owner: owner.
+
+### Tests that assert nothing
+
+- The Hermes plugin test still expects four tools and no delegation-gate call. The live hook calls that command first. Source #510. Waits on three-way sign-off of #509, then a test change. Owner: owner.
+- Archive playbook sections 2 and 3 print OK when the dist file is missing. Source #510. Waits on three-way sign-off of #509, then a test change. Owner: owner.
+- The metamorphosis phase test never asserts the govern mock. Source #510. Waits on three-way sign-off of #509, then a test change. Owner: owner.
+- The `inference:run --no-apply` test only sees an approve vote. Source #510. Waits on three-way sign-off of #509, then a test change. Owner: owner.
+- The concurrent orchestrator test only checks that every task succeeds. It does not prove a cap. Source #510. Waits on three-way sign-off of #509, then a test change. Owner: owner.
+- The codex injector integration test returns undefined on every case, including the case titled as a block. Source #510. Waits on three-way sign-off of #509, then a test change. Owner: owner.
+- The OpenCode integration test installs an inline mock. Source #510. Waits on three-way sign-off of #509, then a test change. Owner: owner.
+- The cycle end-to-end reaches phase complete and does not assert applied. Source #510. Waits on three-way sign-off of #509, then a test change. Owner: owner.
+- The processor-pipeline test locks handler names in a string table. It does not run the server. Source #510. Waits on three-way sign-off of #509, then a test change. Owner: owner.
+- The Hono `govern_proposals` test accepts a governed result or an error string and does not lock the cutoff numbers. Source #510. Waits on three-way sign-off of #509, then a test change. Owner: owner.
+- The nucleus-primary test still requires the MCP symbols and a local boot sequence. The boot pipeline script never imports `BootOrchestrator`. Source #510. Waits on three-way sign-off of #509, then a test change. Owner: owner.
+
+### Stale docs
+
+- A gap list says bifrost, grokbot, and worn-turn are missing from `PLATE_IDS`. They are at `plates.cjs:19`, `:66`, and `:49` (VERIFIED). Source #510. Waits on nothing in code. Owner: owner.
+- A gap list says boot and processor have no skill files. Both exist under `.agents/skills/`. Source #510. Waits on nothing in code. Owner: owner.
+- Notes cite `evalNudges` at `server.mjs:1180` and the tripwire default at `:1583`. The function is `:1234` and the 30 minute default is `:1656` (VERIFIED). Source #510. Waits on nothing in code. Owner: owner.
+- The comment above `evalNudges` says level 2 goes to Coord (`server.mjs:1230-1231`, VERIFIED). The loop sends level 1 and repeating level 3 to the same owner (`:1275-1286`, VERIFIED). Source #510. Waits on three-way sign-off of #509, then a comment fix. Owner: owner.
+- A claim that the server never posts is too wide. The handoff path does not post a packet. Wake delivery does. Arch1 launch posts when its flag is on. Source #510. Waits on nothing in code. Owner: owner.
+- A claim that `station-hook-runtime.cjs` appends `activity.log`. It does not. Source #510. Waits on a docs correction after sign-off of #509. Owner: owner.
+- A v2 deletion title says those dist modules are gone. The vitest file still loads them. Source #510. Waits on three-way sign-off of #509, then a docs correction. Owner: owner.
+- A claim that `postinstall` writes the consumer bridges. It links the vendored organ and prints `npx 0xray wear` (`postinstall.cjs:89-92`, VERIFIED). Source #510. Waits on nothing in code. Owner: owner.
+- A claim that status reads `.xray/logs/activity.log`. It reads `logs/framework/activity.log` only. Source #510. Waits on a docs correction after sign-off of #509. Owner: owner.
+- Archive Hermes and OpenClaw scripts are treated as the live contracts. Their root is `docs/archive`. Source #510. Waits on a docs correction after sign-off of #509. Owner: owner.
+- A claim that `tripwire_push.py` is the live governor. The live clock is the server tripwire (`server.mjs:1656`, VERIFIED). Source #510. Waits on a docs correction after sign-off of #509. Owner: owner.
+- A claim that a frontier host always denies a planless spawn. `auto` plus grok allows it and sets `spawn-plan-missing`. Source #510. Waits on a docs correction after sign-off of #509. Owner: owner.
+- A claim that every wear fastens mill and inspect. A blip plant fastens blip only. `worn-host` still requires mill and inspect. Source #510. Waits on a docs correction after sign-off of #509. Owner: owner.
+- A claim that mint always copies the full skill catalog. Only a mill kind does. Source #510. Waits on a docs correction after sign-off of #509. Owner: owner.
+- A claim that the MCP connectivity validator is the seven-server map. It lists 14 dist files and omits the governance server. Source #510. Waits on a docs correction after sign-off of #509. Owner: owner.
+- `publish-agent` is on the help surface as a publisher. The body says coming soon (`publish-agent.ts:221`, VERIFIED). Source #510. Waits on three-way sign-off of #509, then a docs correction. Owner: owner.
+- A claim that `handoff.mjs` posts packets. It computes missing rows. Source #510. Waits on a docs correction after sign-off of #509. Owner: owner.
+- A claim that interactive xAI OAuth deploys to Railway. Only `daemonMain` calls `deployToRailway`. Source #510. Waits on a docs correction after sign-off of #509. Owner: owner.
+- A claim that the fleet roster lock is nine seats. The routing test locks eight names. Blaze is the owner seat, not a roster seat. `arch1` is outside that eight. Herald, magnet, nibbler, and sound are parked. Source #510. Waits on a docs correction after sign-off of #509. Owner: owner.
+- A claim that the dummy metamorphosis file uses a different matrix. The score function uses the same deltas. The dummy file stays a separate example. Source #510. Waits on nothing in code. Owner: owner.
+- A claim that the nucleus is the sole governance path. The governance server must import `getGovernanceService`. `SelfProposalEngine` imports nucleus `govern-http`. Source #510. Waits on a docs correction after sign-off of #509. Owner: owner.
+- A claim that station heat copies the note onto the card. The card gets the count. The note stays off the card. Source #510. Waits on a docs correction after sign-off of #509. Owner: owner.
+- A claim that Hermes session-start archives every stale plan. A synthesis plan stays. Source #510. Waits on a docs correction after sign-off of #509. Owner: owner.
+- A claim that a loose PASS in consult prose completes the todo. Only `Verdict: PASS` does. Source #510. Waits on a docs correction after sign-off of #509. Owner: owner.
+- A claim that a governance MCP error abstains at confidence 0.5. The cycle test stores reject at confidence 0. Source #510. Waits on a docs correction after sign-off of #509. Owner: owner.
+- A claim that a running cloud agent lights the seat on the served board. `applyCloudOwners` leaves the seat idle. Source #510. Waits on three-way sign-off of #509 before any board change. Owner: owner.
+
+### Other
+
+- `language-detector.ts` and `import-resolver.ts` were marked still on hold. The close counted both end to end. Source #510. Waits on nothing. Owner: owner.
+- A running coverage line said 447. The corrected base is 448, and the written line already includes it. Source #510. Waits on nothing. Owner: owner.
+- A claim that `working.py` was only a test lock. The source is read. `fetch_feed.py` calls it. Source #510. Waits on nothing in code. Owner: owner.
+
+## Research handles
+
+The close is one generalist answer to the docs, satellites, house, and runtime notes. Those four stay inputs. No new handle. The five subsystem handles and the four stack handles posted their rounds on the draft. This fold is the picture those rounds were waiting on. It is not a fourth subsystem and it is not a new package.
+
+| Handle | Role |
+| --- | --- |
+| `[v5-inference]` | Subsystem: Inference |
+| `[v5-governance]` | Subsystem: External Governance |
+| `[v5-engine]` | Subsystem: Autonomous Engine |
+| `[v5-generalist-1]` | Generalist. The 1192-file close summarized here. |
+| `[v5-generalist-2]` | Generalist |
+| `[v5-house]` | house, Bifrost, grok-bot |
+| `[v5-runtime]` | the rest of src, hooks, scripts, CI |
+| `[v5-docs]` | docs, plates, lenses, tests |
+| `[v5-satellites]` | repertoire, the Dynamo server, bedrock OAuth |
+| `[v5-packet]` | This fold |
 
 ## Sign-off
 
@@ -159,4 +365,4 @@ pending research
 - [ ] critic (@critic0x)
 - [ ] Arch1 (@arch10x)
 
-Forge records its sign-off as a forge0x1 comment. Each comment @mentions the party it addresses.
+Forge records its sign-off as a forge0x1 comment. Each comment @mentions the party it addresses. The checklist stays open until those three comments exist.
