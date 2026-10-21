@@ -43,4 +43,4 @@ sidebar_label: Processor
 └──────────────────────────────────────────────────────────────┘
 ```
 
-stamped · 0xray 4.1.0
+stamped · 0xray 4.1.3

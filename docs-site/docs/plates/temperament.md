@@ -32,4 +32,4 @@ Ceremony scales by host.
 
 The module is `src/nucleus/suit-temperament.ts`. A missing `suit_temperament` stays guided. Frontier warns when a spawn has no plan. Guided and strict deny that spawn. Codex stays on. The guide is `docs-site/docs/guides/v3-temperament.md`.
 
-stamped · 0xray 4.1.0
+stamped · 0xray 4.1.3

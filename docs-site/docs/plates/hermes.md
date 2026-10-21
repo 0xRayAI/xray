@@ -32,4 +32,4 @@ Hermes wears the suit through its bridge.
 
 The host pack names Hermes. This card is `src/integrations/hermes-agent`. The bridge is `bridge.mjs`.
 
-stamped · 0xray 4.1.0
+stamped · 0xray 4.1.3

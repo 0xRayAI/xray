@@ -60,4 +60,4 @@ Task text becomes an agent. `scoreAndRoute` scores the work, then `routeToAgent`
 └──────────────────────────────────────────────────────────────┘
 ```
 
-stamped · 0xray 4.1.0
+stamped · 0xray 4.1.3

@@ -32,4 +32,4 @@ stampNotesPickup writes one pickup line and leaves the rest of NOTES.md alone.
 
 The comment on the function is one pickup line. There is no check that the working notes are present. The plate that belongs here is notes-page.
 
-stamped · 0xray 4.1.0
+stamped · 0xray 4.1.3
