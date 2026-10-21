@@ -193,3 +193,110 @@ describe('BED-MAGNETIC-MOVES v4', () => {
     }
   }, 30000);
 });
+
+describe('BED-MAGNETIC-MOVES v5', () => {
+  const pro = load('scripts/foundry/sound-pro.cjs');
+  const magnetic = load('scripts/foundry/sound-magnetic.cjs');
+
+  type Levels = {
+    clapUnderKickDb: number;
+    '7-9': { clap: number; kick: number; bass: number; sub: number; mid: number };
+    '17-19': { bass: number; bassPeak: number; sub: number; mid: number };
+    '5.4-7.4': { bass: number; bassPeak: number };
+  };
+
+  type Metrics = {
+    pass: boolean;
+    fails: string[];
+    lufs: number;
+    truePeakDb: number;
+    seconds: number;
+    bassQuietShare: number | null;
+    levels: Levels;
+    pad: { swings: { chord: { swingDb: number }; body: { swingDb: number }; final: { swingDb: number } } };
+  };
+
+  const renderBed = magnetic.renderBed as (variant: string) => {
+    stems: { pluck: Float64Array; stab: Float64Array; sub: Float64Array };
+  };
+  const measureBed = magnetic.measureBed as (bed: ReturnType<typeof renderBed>) => Metrics;
+
+  it('keeps the snap harmonic, short, and free of the bell partial', () => {
+    const renderSnap = pro.renderSnap as (sr: number) => Float64Array;
+    const topPeaks = pro.topPeaks as (
+      samples: Float64Array,
+      sr: number,
+      count: number,
+      lo: number,
+      hi: number,
+    ) => { hz: number; mag: number }[];
+    const linDb = pro.linDb as (lin: number) => number;
+    const samplePeak = pro.samplePeak as (samples: Float64Array) => number;
+    const snap = renderSnap(44100);
+    const peaks = topPeaks(snap, 44100, 4, 80, 2000);
+    expect(peaks[0].hz).toBeGreaterThan(180);
+    expect(peaks[0].hz).toBeLessThan(250);
+    expect(peaks.some((peak) => peak.hz > 380 && peak.hz < 700)).toBe(true);
+    expect(peaks.some((peak) => peak.hz > 250 && peak.hz < 320)).toBe(false);
+    const peak = samplePeak(snap);
+    const tailStart = Math.floor(0.035 * 44100);
+    let tail = 0;
+    for (let i = tailStart; i < snap.length; i++) tail = Math.max(tail, Math.abs(snap[i]));
+    expect(linDb(tail / Math.max(peak, 1e-12))).toBeLessThan(-18);
+    expect(snap.length / 44100).toBeLessThan(0.05);
+  });
+
+  it('puts the clean snap under the kick and shortens the 7–9 s clap', () => {
+    const v5 = measureBed(renderBed('v5a'));
+    const v4 = measureBed(renderBed('v4a'));
+    expect(v5.fails, v5.fails.join(', ')).toEqual([]);
+    expect(v5.pass).toBe(true);
+    expect(v5.lufs).toBeGreaterThanOrEqual(-16);
+    expect(v5.lufs).toBeLessThanOrEqual(-14);
+    expect(v5.truePeakDb).toBeLessThanOrEqual(-1);
+    expect(v5.seconds).toBeCloseTo(22.87, 5);
+    expect(v5.pad.swings.body.swingDb).toBeLessThan(6);
+    expect(v5.pad.swings.chord.swingDb).toBeLessThan(6);
+    expect(v5.pad.swings.final.swingDb).toBeLessThan(6);
+    expect(v5.levels.clapUnderKickDb).toBeGreaterThanOrEqual(10);
+    expect(v5.levels['7-9'].clap).toBeLessThan(v4.levels['7-9'].clap);
+    expect(v5.levels['7-9'].clap).toBeLessThan(v5.levels['7-9'].kick - 8);
+    expect(v5.bassQuietShare).not.toBeNull();
+    expect(v5.bassQuietShare ?? 0).toBeGreaterThan(0.3);
+    expect(v5.levels['17-19'].bass).toBeLessThanOrEqual(v5.levels['5.4-7.4'].bass + 0.4);
+    expect(v5.levels['17-19'].bass).toBeLessThan(v4.levels['17-19'].bass);
+  }, 60000);
+
+  it('rebuilds the rich final bass as notes instead of a hum', () => {
+    const v5 = measureBed(renderBed('v5b'));
+    const v4 = measureBed(renderBed('v4b'));
+    expect(v5.fails, v5.fails.join(', ')).toEqual([]);
+    expect(v5.pass).toBe(true);
+    expect(v5.lufs).toBeGreaterThanOrEqual(-16);
+    expect(v5.lufs).toBeLessThanOrEqual(-14);
+    expect(v5.truePeakDb).toBeLessThanOrEqual(-1);
+    expect(v5.levels.clapUnderKickDb).toBeGreaterThanOrEqual(10);
+    expect(v5.levels['17-19'].bass).toBeLessThanOrEqual(v5.levels['5.4-7.4'].bass + 0.4);
+    expect(v5.levels['17-19'].bassPeak).toBeLessThanOrEqual(v5.levels['5.4-7.4'].bassPeak + 1);
+    expect(v5.levels['17-19'].bass).toBeLessThan(v4.levels['17-19'].bass);
+    expect(v5.levels['17-19'].mid).toBeGreaterThan(-80);
+    expect(v4.levels['17-19'].sub - v5.levels['17-19'].sub).toBeGreaterThan(3);
+    expect(v5.bassQuietShare ?? 0).toBeGreaterThan(0.3);
+    const rms = (samples: Float64Array) => {
+      let acc = 0;
+      for (let i = 0; i < samples.length; i++) acc += samples[i] * samples[i];
+      return Math.sqrt(acc / samples.length);
+    };
+    expect(rms(renderBed('v5b').stems.pluck)).toBeGreaterThan(0);
+    expect(rms(renderBed('v5a').stems.pluck)).toBe(0);
+  }, 90000);
+
+  it('does not add a noise layer to the v5 voices', () => {
+    const text = readFileSync(path.join(root, 'scripts/foundry/sound-pro.cjs'), 'utf8');
+    expect(text).toContain('function renderSnap');
+    expect(text).toContain('function renderBassNote');
+    expect(text).not.toContain('noiseLcg');
+    expect(text).not.toContain('kickClick');
+    expect(text).not.toContain('render808');
+  });
+});
