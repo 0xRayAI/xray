@@ -43,7 +43,7 @@ house/live/tools/bifrost-check --repo <org>/<sandbox> --target https://<bifrost-
 3. When a PR adds a rule that overlaps an existing one, name the pair in the review (it feeds the next **boil-up**).
 4. Read the PR body's `Plates read:` field and note any gap (a plate for the touched area that is not listed) in the review. Not a gate: an empty field alone never fails a PR, there is no CI check, and critic blocks only if the diff contradicts a stamped plate.
 5. `bifrost check` waits one collector poll before editing (`--edit-delay`, default poll + 5 s = 50 s), so call an edit line missing only after that poll.
-6. **Forward-motion.** FAIL only for wrong live behavior, for security, spend, or on-chain risk, or for a plate or OP-PROC line that would send a seat the wrong way. Anything else is APPROVE plus a linked issue for the author. After round 2, only an original blocker can FAIL. A docs-only PR does not wait on CI; check that the words match the code.
+6. **Forward-motion.** FAIL only for wrong live behavior, for security, spend, or on-chain risk, or for a plate or OP-PROC line that would send a seat the wrong way. Anything else is APPROVE plus a linked issue for the author. After round 2, only an original blocker can FAIL. Doc-only updates: see [Review](../OP-PROC.md#review). Check that the words match the code.
 
 A FAIL goes back on the wave with its OP-PROC line.
 
