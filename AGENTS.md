@@ -239,7 +239,7 @@ Full skill mapping: [SKILLS.md](SKILLS.md).
 
 ## Live board
 
-When `LIVE_URL` is set, the board seats see is the collector board (`house/live/feed/live_mesh.py`). When `LIVE_URL` is unset, the board is hand-kept `house/WAVEBOARD.md`. A cloud agent is a board row (`bcId`, owning seat, linked card, state `running`, `finished`, or `failed`). The seat wake is `grok-bot/templates/house/fleet/WAKE-ROUTINE.md`: `live-inbox <seat> --turn start` on every turn, and `--turn end` on every exit. `live-inbox` requires `LIVE_URL`, `SEAT_KEYS_DIR`, and `LIVE_CURSORS`. A missing or empty one exits 2 and names it. A stuck card sends L1 to the next owner or the card owner, and L3 repeats to that seat. An unacked line and a missing handoff stay on that seat through L3. CoS is not woken to reassign.
+When `LIVE_URL` is set, the board seats see is the collector board (`house/live/feed/live_mesh.py`). When `LIVE_URL` is unset, the board is hand-kept `house/WAVEBOARD.md`. A cloud agent is a board row (`bcId`, owning seat, linked card, state `running`, `finished`, or `failed`). The seat wake is `grok-bot/templates/house/fleet/WAKE-ROUTINE.md`: `live-inbox <seat> --turn start` on every turn, and `--turn end` on every exit. `live-inbox` requires `LIVE_URL` and `SEAT_KEYS_DIR`. A missing or empty one exits 2 and names it. `LIVE_CURSORS` is not required. The cursor folder rule is `grok-bot/OP-PROC.md#cursor-folder`. A stuck card sends L1 to the next owner or the card owner, and L3 repeats to that seat. An unacked line and a missing handoff stay on that seat through L3. CoS is not woken to reassign.
 
 ## Release artifacts
 

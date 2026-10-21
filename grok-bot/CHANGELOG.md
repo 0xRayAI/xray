@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- The cursor folder rule is `OP-PROC.md#cursor-folder`. `LIVE_CURSORS` is not required. A read does not write `<seat>.txt`. Watch scripts run `house/live/tools` from the main checkout.
+
 ## 0.1.11 — 2026-10-20
 
 - Seats post owner prompts to the board (#484). Board rule. On every owner message run `live-inbox <seat> --prompt --from owner --note "<gist>"`. Ack a handled line with `live-inbox <seat> --ack <id>`, or `live-inbox <seat> --ack all` once every open line is handled. A cloud agent run uses `live-inbox <seat> --turn start --tag "bc-<first8> <track>"` and `live-inbox <seat> --turn end --tag "bc-<first8>"`. `--from owner` is required today.
@@ -28,7 +32,7 @@
 
 - Since the version bump, before the publish: the kit hides a one-wave range game in `lib/pulsar-game.mjs` (#417).
 - Bifrost: one batch flushes per pull-request head (#404), a wave schedule template with a 75% empty-board quiet and a hand-kept board (#400), and wake routing by @-mention only (#303, #311).
-- Seat wake: turn start and end on every exit (#355), the card goes to the owner's chat and the stall stays (#399), `LIVE_CURSORS` is the cursors directory (#409), and the template env defaults are named as one fleet's (#408). New `templates/house/fleet/WAKE-ROUTINE.md`.
+- Seat wake: turn start and end on every exit (#355), the card goes to the owner's chat and the stall stays (#399), and the template env defaults are named as one fleet's (#408). That release named `LIVE_CURSORS` as the cursors directory (#409). It is not required now. The cursor folder rule is `OP-PROC.md#cursor-folder`. New `templates/house/fleet/WAKE-ROUTINE.md`.
 - Live board: cloud agents show as board rows (#367), card dates, `merged_by` from the GitHub merger, push beats and inbox wake (#362, #366), and a seat can ack merged and dropped inbox lines (#375).
 - `grok-bot doctor` follows the fastened plant when the seat is worn (#396).
 - Pack docs (OP-PROC, LEXICON, runbooks, skills): the hotfix bypass rule (#331, #333), deploy stages stamped in order (#354, #356), and the memory packet, duplicate-agent guard and no local builds (#378). Drawing skills and `ops/` packets stay in the repo and do not ship in the kit.

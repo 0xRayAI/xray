@@ -3,7 +3,7 @@
 ## Who fixes stopped work
 
 - **Bifrost owns the board.** `seats.coord` stays blinky. blinky plans the next wave. Bifrost routes the inbox and keeps wave timing.
-- **Nudge.** One path: `evalNudges` in `app/server.mjs`. A live card with no beat sends L1 to the next owner, or else the card owner. L3 repeats to that seat. CoS is not woken to reassign. An unacked inbox line steps L1, L2, and L3 on that same seat. A missed handoff is a separate ladder: the card is flagged `handoff missing`, and the owing seat is nudged L1, then L2, then L3. A room post does not clear it.
+- **Nudge.** One path: `evalNudges` in `app/server.mjs`. A live card with no beat sends L1 to the next owner, or else the card owner. L3 repeats to that seat. CoS is not woken to reassign. An unacked inbox line steps L1, L2, and L3 on that same seat. A line the seat already acked, or whose handled key is already in the [cursor folder](../../../grok-bot/OP-PROC.md#cursor-folder), gets no L1, L2, or L3. A missed handoff is a separate ladder: the card is flagged `handoff missing`, and the owing seat is nudged L1, then L2, then L3. A room post does not clear it.
 - **Tripwire (the whole board stops moving).** On a stalled board, the timed run wakes every seat with open work, each with a deadline. On an empty board, it wakes blinky (`seats.coord`) to pull the next work, unless weekly burn is at or above 75% (`BIFROST_WEEKLY_BURN` of `0.75` or `75`): that empty-board wake stays quiet and no seat is woken. Below 75% the empty board still wakes blinky. `POST /clock` stays on that seat. Once per window.
 
 `POST /inbox` and `POST /inbox/builder` take `{lines, replace?}`. Each line is checked before anything is cleared. `replace: true` on the builder route clears that seat only after a line validates. A batch that stores nothing returns 400 and names the rejected refs (`id`, or `#` plus the index when the line has no id). A bad line in a mixed batch is skipped; the good lines are stored.
@@ -31,7 +31,7 @@ A read never acks. A non-empty read is the work: handle the line, post the recei
 
 A card date is `live-inbox <seat> --card <owner/repo#n> --start-after <ISO>`. The ISO time carries a numeric offset (`-05:00` or `-06:00` for Chicago). The same date is a GitHub comment whose first line is `Start after: <ISO>`, and that comment counts only from the card owner or a fleet seat. A stranger's comment is ignored. A time more than 30 days out is ignored, on the comment and on `POST /cards/start-after`. The command wins while it is stored. Until that time the card stays parked (no nudge, no tripwire, no empty-board pull). At that time the server wakes the owning seat through the normal inbox wake. The date is on disk, so a restart still honors it.
 
-`tools/live-inbox <seat>` prints open lines and advances the local cursor to the newest line seen. It does not ack. `--peek` means the same as a plain read. `--ack <id>` is the receipt for one handled line. `--ack stale` lists lines with a close or merge event, or a closed or done card, and does not ack until `--apply`, which posts each listed id. A missing card stays, and so does an old handoff whose card is still live. `--upto <id>` acks the stored prefix through that id, including live lines. `--ack all` acks every open line. `--pop <id|all>` is the same receipt as `--ack` for one id or all. A handoff is `live-inbox <seat> --handoff <to> --pr <owner/repo#n> --kind <ready|critic_fail|live_pass|merge|ci_fail> --sha <head>`. It posts one inbox packet and prints the 1:1 line. `--sha` is required and is a head of 7 to 64 hex digits. A plain `GET /inbox/<seat>` returns every unacked line, including a line whose card is closed or merged. An ack hides it. `?all=1` is the history. `LIVE_URL`, `SEAT_KEYS_DIR` and `LIVE_CURSORS` are required: `live-inbox` never guesses, and a missing one exits 2 and names it. Run the export line in `grok-bot/templates/house/fleet/WAKE-ROUTINE.md` first; it puts the installed copy (`~/.burst/bin`, or `LIVE_INBOX_BIN`) on `PATH` and sets the defaults, which are burst-live's; another board sets its own first. Set those only to override.
+`tools/live-inbox <seat>` prints open lines. A read does not write the cursor and does not ack. `--peek` means the same as a plain read. `--ack <id>` is the receipt for one handled line. `--ack stale` lists lines with a close or merge event, or a closed or done card, and does not ack until `--apply`, which posts each listed id. A missing card stays, and so does an old handoff whose card is still live. `--upto <id>` acks the stored prefix through that id, including live lines. `--ack all` acks every open line. `--pop <id|all>` is the same receipt as `--ack` for one id or all. A handoff is `live-inbox <seat> --handoff <to> --pr <owner/repo#n> --kind <ready|critic_fail|live_pass|merge|ci_fail> --sha <head>`. It posts one inbox packet and prints the 1:1 line. `--sha` is required and is a head of 7 to 64 hex digits. A plain `GET /inbox/<seat>` returns every unacked line, including a line whose card is closed or merged. An ack hides it. `?all=1` is the history. `LIVE_URL` and `SEAT_KEYS_DIR` are required. `LIVE_CURSORS` is not required. A missing `LIVE_URL` or `SEAT_KEYS_DIR` exits 2 and names it. The cursor folder rule is [Cursor folder](../../../grok-bot/OP-PROC.md#cursor-folder). Run `$XRAY_MAIN/house/live/tools/live-inbox`. The export line in `grok-bot/templates/house/fleet/WAKE-ROUTINE.md` sets `LIVE_URL` and `SEAT_KEYS_DIR`. Another board sets its own first.
 
 ## Seat wake URLs and webhooks
 
@@ -151,9 +151,9 @@ Reading never acks, but a non-empty read is the work. Seats read with `live-inbo
 
 ### Key folder on our box
 
-`LIVE_URL` and `SEAT_KEYS_DIR` are required. A missing or empty one exits 2 and names it. The cursor folder is `$HOME/.burst/cursors`. The tool does not search `/home/box/burst-run/cursors` or `/workspace/.cursors`. A `LIVE_CURSORS` value that names either of those exits 2. If `<seat>.txt` is in more than one of the three, the wake runs `live-inbox --migrate-cursors` once: handled keys are unioned into `$HOME/.burst/cursors` (newest copy of each key), `.claims.json` and `.lock` are copied from the newest file, and the old files are renamed to `*.migrated`. A later split exits 2 and names the paths. Run the export line in `grok-bot/templates/house/fleet/WAKE-ROUTINE.md` first. It sets that cursor folder even when another folder was already exported. Another board may export its own `LIVE_URL` and `SEAT_KEYS_DIR` on the line before the block. Never put a key's value in a routine, room or repo.
+`LIVE_URL` and `SEAT_KEYS_DIR` are required. A missing or empty one exits 2 and names it. `LIVE_CURSORS` is not required. The cursor folder rule is [Cursor folder](../../../grok-bot/OP-PROC.md#cursor-folder). Run the export line in `grok-bot/templates/house/fleet/WAKE-ROUTINE.md` first. Another board may export its own `LIVE_URL` and `SEAT_KEYS_DIR` on the line before the block. Never put a key's value in a routine, room or repo.
 
-**Tool path.** Run `$XRAY_MAIN/house/live/tools/live-inbox` from the main checkout. Do not run a copied binary. The WAKE-ROUTINE block sets `LIVE_CURSORS` to `$HOME/.burst/cursors`. A wake only counts once the routine reads and acks with no approval card.
+**Tool path.** Run `$XRAY_MAIN/house/live/tools/live-inbox` from the main checkout. Do not run a copied binary. A wake only counts once the routine reads and acks with no approval card.
 
 ### Reading the inbox after a wake
 
@@ -219,33 +219,29 @@ Arch1 runs in Grok CLI on Blaze's Mac. Grok CLI has no webhook receiver, so `SEA
 
 **Getting woken (host monitor, every ~60s).** The Mac has no public URL, so a webhook would need a tunnel; we use no tunnel and no webhook. Arch1 polls locally, and the Grok session hears a line only when the host's internal monitor is running the script. A launchd job is not that path.
 
-Arch1's watcher is `tools/inbox-watch.sh` (default seat `arch1`, every 60 seconds). It runs `live-inbox <seat>`. A failed poll prints `FAIL` once per distinct error. New inbox output prints `ACTION_REQUIRED` and the lines. The first time work appears it posts `live-inbox <seat> --turn start --tag wake`. When a later poll is empty it posts `live-inbox <seat> --turn end` once. It never acks and never prints the key. `live-inbox arch1` reads and never acks (`--peek` is the same), so repeated polls are harmless; ack only after the receipt (below). The script never starts the work. The Grok turn that sees the printed line does. Defaults, set only to override: `LIVE_URL` = `https://bifrost.0xray.dev`, `SEAT_KEYS_DIR` = `~/.burst/seat-keys`, `LIVE_CURSORS` = `~/.burst/cursors`.
+Arch1's watcher is `tools/inbox-watch.sh` (default seat `arch1`, every 60 seconds). It runs `live-inbox <seat>` from the main checkout. A failed poll prints `FAIL` once per distinct error. New inbox output prints `ACTION_REQUIRED` and the lines. The first time work appears it posts `live-inbox <seat> --turn start --tag wake`. When a later poll is empty it posts `live-inbox <seat> --turn end` once. It never acks and never prints the key. `live-inbox arch1` reads and never acks (`--peek` is the same), so repeated polls are harmless; ack only after the receipt (below). The script never starts the work. The Grok turn that sees the printed line does. Defaults, set only to override: `LIVE_URL` = `https://bifrost.0xray.dev`, `SEAT_KEYS_DIR` = `~/.burst/seat-keys`. `LIVE_CURSORS` is not required. The cursor folder rule is [Cursor folder](../../../grok-bot/OP-PROC.md#cursor-folder).
 
-Install from main:
+Run it from the main checkout. Set `XRAY_MAIN` to that checkout:
 
 ```
-curl -fsSL -o ~/.burst/bin/live-inbox https://raw.githubusercontent.com/0xRayAI/xray/main/house/live/tools/live-inbox
-curl -fsSL -o ~/.burst/bin/inbox-watch.sh https://raw.githubusercontent.com/0xRayAI/xray/main/house/live/tools/inbox-watch.sh
-chmod +x ~/.burst/bin/live-inbox ~/.burst/bin/inbox-watch.sh
+"$XRAY_MAIN/house/live/tools/inbox-watch.sh" arch1
 ```
-
-Run: `~/.burst/bin/inbox-watch.sh arch1`
 
 **Install on Blaze's Mac.**
-1. `mkdir -p ~/.burst/{bin,seat-keys,cursors} && chmod 700 ~/.burst/seat-keys`
-2. Copy `house/live/tools/live-inbox` and `house/live/tools/inbox-watch.sh` from the repo into `~/.burst/bin/`, then `chmod +x ~/.burst/bin/live-inbox ~/.burst/bin/inbox-watch.sh`.
-3. Set the variables (required; `live-inbox` exits 2 and names any missing one): run the export line in `grok-bot/templates/house/fleet/WAKE-ROUTINE.md`.
+1. `mkdir -p ~/.burst/seat-keys && chmod 700 ~/.burst/seat-keys`, and keep a checkout of main.
+2. Set `XRAY_MAIN` to that checkout. The watcher is `$XRAY_MAIN/house/live/tools/inbox-watch.sh`. It runs `$XRAY_MAIN/house/live/tools/live-inbox`. Do not copy either file into `~/.burst/bin`.
+3. Set `LIVE_URL` and `SEAT_KEYS_DIR` (required; `live-inbox` exits 2 and names a missing one): run the export line in `grok-bot/templates/house/fleet/WAKE-ROUTINE.md`.
 4. Place `arch1.key` in `~/.burst/seat-keys/` (delivered only through Blaze's 1:1), then `chmod 600 ~/.burst/seat-keys/arch1.key`.
 5. Check `python3 --version` (live-inbox needs Python 3).
-6. Run it once by hand: `INBOX_WATCH_ONCE=1 ~/.burst/bin/inbox-watch.sh arch1`. No output means an empty inbox; `FAIL` means the poll failed (a missing `SEAT_KEYS` entry returns 401).
-7. Run `~/.burst/bin/inbox-watch.sh arch1` as the host's internal monitor, not as a launchd job. Each stdout line is a session event. An empty inbox prints nothing. Tool-call hooks (the suit) are a separate install: [fleet-setup.md, Suit and hooks](fleet-setup.md#suit-and-hooks).
+6. Run it once by hand: `INBOX_WATCH_ONCE=1 "$XRAY_MAIN/house/live/tools/inbox-watch.sh" arch1`. No output means an empty inbox; `FAIL` means the poll failed (a missing `SEAT_KEYS` entry returns 401).
+7. Run `"$XRAY_MAIN/house/live/tools/inbox-watch.sh" arch1` as the host's internal monitor, not as a launchd job. Each stdout line is a session event. An empty inbox prints nothing. Tool-call hooks (the suit) are a separate install: [fleet-setup.md, Suit and hooks](fleet-setup.md#suit-and-hooks).
 
 **Exception to the no-local-watchers rule.** This poll is an approved exception, approved by Blaze on 2026-10-13 at 11:52 CT. The approval covers Arch1's inbox poll on Blaze's Mac.
 
-**Variables (names only; required, set by the WAKE-ROUTINE export line).**
+**Variables (names only).** `LIVE_URL` and `SEAT_KEYS_DIR` are required and are set by the WAKE-ROUTINE export line. `LIVE_CURSORS` is not required. The cursor folder rule is [Cursor folder](../../../grok-bot/OP-PROC.md#cursor-folder).
 - `LIVE_URL=https://bifrost.0xray.dev`
 - `SEAT_KEYS_DIR=~/.burst/seat-keys`
-- `LIVE_CURSORS=~/.burst/cursors`
+- `XRAY_MAIN` is the main checkout. The watcher runs `house/live/tools` from there.
 
 The key file is `arch1.key` in `SEAT_KEYS_DIR` (dir 700, file 600). Blaze delivers it only through his 1:1, never in a chat room, a repo or a routine. The server checks it against the `arch1` entry in the `SEAT_KEYS` Railway variable (sha256 of the key); if that entry is missing, every read returns 401 and the fix needs Blaze's GO for the variable change.
 

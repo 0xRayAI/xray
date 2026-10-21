@@ -34,7 +34,7 @@ Stage order is `open` > `review` > `fix` > `merge` > `retest` > `done`. State is
 
 A missed handoff is a separate ladder. L1 goes to the owing seat. L2 goes to that same seat. L3 repeats to that seat. CoS is not woken to reassign.
 
-An unacked inbox line uses `NUDGE_LINE_S` (default 900) between L1, L2, and L3, all to that seat. A line on a closed or merged item stays on a plain inbox read and is not nudged.
+An unacked inbox line uses `NUDGE_LINE_S` (default 900) between L1, L2, and L3, all to that seat. A line the seat already acked, or whose handled key is already in the [cursor folder](../../../grok-bot/OP-PROC.md#cursor-folder), gets no L1, L2, or L3. A line on a closed or merged item stays on a plain inbox read and is not nudged.
 
 ## Close
 
