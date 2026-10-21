@@ -12,14 +12,14 @@ export { inspectBed } from "@0xray/blip/sound";
 
 const require = createRequire(import.meta.url);
 
-function runCli(args) {
+async function runCli(args) {
   if (args[0] === "bed") {
     const magnetic = require("./sound-magnetic.cjs");
-    process.exit(magnetic.cli(args.slice(1)));
+    process.exit(await magnetic.cli(args.slice(1)));
   }
   if (args[0] === "gate" || args[0] === "reference") {
     const reference = require("./sound-reference.cjs");
-    process.exit(reference.cli(args.slice(1)));
+    process.exit(await reference.cli(args.slice(1)));
   }
   let cli;
   try {
@@ -39,5 +39,8 @@ function runCli(args) {
 const invoked =
   process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url;
 if (invoked) {
-  runCli(process.argv.slice(2));
+  runCli(process.argv.slice(2)).catch((err) => {
+    process.stderr.write(`${err && err.stack ? err.stack : err}\n`);
+    process.exit(1);
+  });
 }

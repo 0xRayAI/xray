@@ -163,14 +163,14 @@ function evaluateReference(bed, measured) {
   };
 }
 
-function cli(argv) {
+async function cli(argv) {
   const variant = argv[0];
   if (!variant) {
     process.stderr.write("Usage: sound reference <variant>\n");
     return 1;
   }
   const magnetic = require("./sound-magnetic.cjs");
-  const bed = magnetic.renderBed(variant);
+  const bed = await magnetic.loadBed(variant);
   const metrics = magnetic.measureBed(bed);
   const report = {
     name: bed.name,
