@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>0xRay</title>
+  <meta name="description" content="0xRay is a three-subsystem autonomous engine. The suit is the wear. Install with npm i -g 0xray." />
+  <link rel="icon" href="assets/favicon.png" />
+  <style>
+    :root {
+      --void: #08090b;
+      --paper: #f5f7fa;
+      --cyan: #3de0e8;
+      --gold: #f5c518;
+      --blue: #4a7fd4;
+      --line: rgba(245, 247, 250, 0.14);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: var(--void); color: var(--paper); }
+    body {
+      font-family: Inter, "Liberation Sans", "Segoe UI", sans-serif;
+      min-height: 100vh;
+    }
+    main {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 32px 20px 64px;
+    }
+    .hero {
+      margin: 0;
+    }
+    .hero img {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 18px;
+    }
+    .lede {
+      margin: 28px 0 8px;
+      font-size: 1.15rem;
+      line-height: 1.5;
+    }
+    .install {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin: 20px 0 28px;
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #101216;
+    }
+    .install code {
+      font-family: "JetBrains Mono", "Cascadia Mono", ui-monospace, monospace;
+      font-size: 1.05rem;
+      color: var(--cyan);
+    }
+    .links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .links a {
+      display: inline-block;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      color: var(--paper);
+      text-decoration: none;
+    }
+    .links a:hover { border-color: var(--cyan); color: var(--cyan); }
+    .links a:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  </style>
+</head>
+<body>
+  <main>
+    <figure class="hero">
+      <img src="assets/apex.png" width="1280" height="720" alt="Stamped 0xRay plate. Input: the host you already run. Processing: Inference remembers, Governance judges, Engine runs the work. Output: the next session wakes with the job." />
+    </figure>
+    <p class="lede">0xRay is a three-subsystem autonomous engine. The suit is the wear. Inference remembers. External Governance judges. The Autonomous Engine runs the work. When the window closes, the next session wakes with the job.</p>
+    <div class="install">
+      <code>npm i -g 0xray</code>
+    </div>
+    <ul class="links">
+      <li><a href="https://docs.0xray.dev">Docs</a></li>
+      <li><a href="https://github.com/0xRayAI/xray">GitHub</a></li>
+      <li><a href="https://www.npmjs.com/package/0xray">npm</a></li>
+      <li><a href="https://bifrost.0xray.dev">Bifrost</a></li>
+    </ul>
+  </main>
+</body>
+</html>
