@@ -6,22 +6,22 @@ The output goes on the PR as the live-pass comment.
 
 | Rule | What it proves | OP-PROC |
 |---|---|---|
-| routing | every seat routed; every route @-mentions the seat's real GitHub login (`fleet-nodes.json`), no nickname-only route | **Routing** |
-| deliver-sim | an issue and an @-comment naming each seat route to that seat (the kit's router) | **Two loops** |
-| edit-sim | a comment edited to add an @-mention routes exactly one line to the newly mentioned seat | **Two loops** |
-| edit (live) | a real comment edited to add the seat's @-mention lands as one `…:edit:<handle>` line | **Two loops** |
-| deliver (live) | a real issue and @-comment per seat, posted on `--repo`, land in that seat's inbox on `--target` | **Two loops** |
-| nodes | every `fleet-nodes.json` bot login resolves on GitHub (users API); a 404 fails | **Routing** |
-| resolve (live) | every routing-map login resolves on GitHub, as `--target`'s `GET /routing` reports | **Routing** |
-| board-page (live) | the board page and `/healthz` answer 200, no server error | **Card** |
-| board-cards (live) | every open issue/PR on `--repo` is exactly one card: none missing, none duplicated | **Card** |
-| board-owner (live) | every open card's owner is a seat in the routing map | **Card** |
-| addressed (live) | the test posts reach no seat they weren't addressed to (comment-watch / PR-head / issue_open watch seats excepted) | **Two loops** |
-| ack (live) | one delivered line acks with the seat key, non-interactively; the running seat confirms no approval card | **Ack** |
-| tripwire | a stalled board, and an empty board below 75% weekly burn, each start the timed run once per window; `BIFROST_WEEKLY_BURN=0.75` keeps the empty-board wake quiet (`governor.mjs`) | **Tripwire** |
-| nudge | a stuck line nudges its owner L1 -> L3. The coordinator is not woken to reassign | **Nudge** |
-| lexicon | every bolded term in the pack OP-PROC and runbooks has a row in `grok-bot/LEXICON.md` | OP-PROC line 3 |
-| names | docs and plates hold none of the stale phrases in `tools/bifrost-stale.json` | **Names** |
+| routing | every seat routed; every route @-mentions the seat's real GitHub login (`fleet-nodes.json`), no nickname-only route | [**Routing**](../OP-PROC.md#routing) |
+| deliver-sim | an issue and an @-comment naming each seat route to that seat (the kit's router) | [**Two loops**](../OP-PROC.md#two-loops) |
+| edit-sim | a comment edited to add an @-mention routes exactly one line to the newly mentioned seat | [**Two loops**](../OP-PROC.md#two-loops) |
+| edit (live) | a real comment edited to add the seat's @-mention lands as one `…:edit:<handle>` line | [**Two loops**](../OP-PROC.md#two-loops) |
+| deliver (live) | a real issue and @-comment per seat, posted on `--repo`, land in that seat's inbox on `--target` | [**Two loops**](../OP-PROC.md#two-loops) |
+| nodes | every `fleet-nodes.json` bot login resolves on GitHub (users API); a 404 fails | [**Routing**](../OP-PROC.md#routing) |
+| resolve (live) | every routing-map login resolves on GitHub, as `--target`'s `GET /routing` reports | [**Routing**](../OP-PROC.md#routing) |
+| board-page (live) | the board page and `/healthz` answer 200, no server error | [**Card**](../OP-PROC.md#card) |
+| board-cards (live) | every open issue/PR on `--repo` is exactly one card: none missing, none duplicated | [**Card**](../OP-PROC.md#card) |
+| board-owner (live) | every open card's owner is a seat in the routing map | [**Card**](../OP-PROC.md#card) |
+| addressed (live) | the test posts reach no seat they weren't addressed to (comment-watch / PR-head / issue_open watch seats excepted) | [**Two loops**](../OP-PROC.md#two-loops) |
+| ack (live) | one delivered line acks with the seat key, non-interactively; the running seat confirms no approval card | [**Ack**](../OP-PROC.md#ack) |
+| tripwire | a stalled board, and an empty board below 75% weekly burn, each start the timed run once per window; `BIFROST_WEEKLY_BURN=0.75` keeps the empty-board wake quiet (`governor.mjs`) | [**Tripwire**](../OP-PROC.md#tripwire) |
+| nudge | a stuck line nudges its owner L1 -> L3. The coordinator is not woken to reassign | [**Nudge**](../OP-PROC.md#nudge) |
+| lexicon | every bolded term in the pack OP-PROC and runbooks has a row in `grok-bot/LEXICON.md` | [OP-PROC](../OP-PROC.md) |
+| names | docs and plates hold none of the stale phrases in `tools/bifrost-stale.json` | [**Names**](../OP-PROC.md#names) |
 
 ## Run
 ```

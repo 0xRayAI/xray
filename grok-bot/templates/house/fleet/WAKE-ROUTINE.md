@@ -1,5 +1,7 @@
 # Seat wake routine (template)
 
+The rules are the named stanzas in [OP-PROC](../../../OP-PROC.md). This file is the webhook wake. It does not replace [Station boot](../../../OP-PROC.md#station-boot). A chat turn uses station and does not also run step 0.
+
 The prompt each seat installs as its webhook-triggered Bifrost inbox wake routine (inbox docs: `house/live/docs/inbox.md` in the repo). Copy the commands below as they are. Replace `<seat>` only. Set `SEAT_KEYS_DIR`, `LIVE_CURSORS` and `LIVE_URL` as folder or URL names only, never a key value. These commands post straight to the board with the seat's own key. The box pusher is not in this routine.
 
 This routine is the Bifrost inbox wake, and it sets `LIVE_URL`. A seat with no `LIVE_URL` does not use it: that seat reads and writes `house/WAVEBOARD.md`.

@@ -18,4 +18,4 @@ Planes: core, integration, ecosystem, distribution, live.
 
 Every seat copies this description line:
 
-On any message, run the board-prompt skill first; it posts the turn and points at OP-PROC.
+Points at station. Station is the boot. This file is not a second boot.
