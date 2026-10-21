@@ -10,10 +10,11 @@ CARD   = one GitHub issue or PR (repo#number): title, url, owner seat, stage (op
 HOLD   = the owner posts a comment whose first line is 'Held: <reason>' (optional until:), or the issue / PR
          carries a label in GITHUB_HOLD_LABEL (default on-hold). A Parked: comment still parks and wins over a hold.
          Repos in NO_NUDGE_REPOS (unset means none) stay visible and are never stalled or nudged.
-PACKET = goal, constraints, path, acceptance, evidence, next owner, escalate. An issue never needs a brief.
-         A packet card, a release PR (title starts with release), a body or branch that carries a packet
-         (PACKET.md, a packet heading, or a packet card alias), or acceptance plus next owner is packet_ok.
-         Anything else is amber 'no packet'. Evidence fills from the latest beat.
+PACKET = goal, constraints, path, acceptance, evidence, next owner, escalate. The amber
+         'needs a brief' badge is only a packet PR (title starts with Packet, or a packet: alias)
+         whose PACKET.md is missing. Issues, packet cards, release PRs, and ordinary PRs stay
+         packet_ok. A body that carries a packet, or PACKET.md on the branch, sets packet_file.
+         Evidence fills from the latest beat.
 BEAT   = one real event: PR opened/pushed, Reviewer verdict, CI result, merge, reopen, merge-queue.md tick, Lead message, blocker.
          A watcher run whose start and end fall in the same second is never a beat.
 STALL  = a live card with no beat for 60 min (red on the page; one line to fleet/inbox/coord.jsonl per stalled beat).
@@ -46,28 +47,22 @@ _last_md = [0.0]
 
 
 def brief_exempt(card, packet=None):
-    """Issues never need a brief. A packet card, a release PR, or a carried packet passes too.
+    """The badge is only a packet PR whose PACKET.md is missing.
 
-    A carried packet is packet_file (body or branch PACKET.md), a packet: alias, or both
-    acceptance and next owner. A plain PR with neither stays packet_ok false.
+    A packet PR has a title that starts with Packet, or a packet: alias. packet_file
+    (the body carries a packet or names PACKET.md, or the branch file exists) clears it.
+    Issues, packet cards, release titles, and ordinary PRs such as docs #388 and hotfix
+    #500 do not show the badge. Acceptance and next owner are not the badge.
     """
-    if not isinstance(card, dict):
-        return False
-    if card.get("pinned"):
+    if not isinstance(card, dict) or card.get("pinned"):
         return True
     kind = str(card.get("kind") or "")
-    key = str(card.get("key") or "").lower()
-    if kind in ("issue", "packet") or card.get("born") == "packet" or key.startswith("packet:"):
-        return True
     title = str(card.get("title") or "").strip()
-    if kind == "pr" and RELEASE_TITLE.match(title):
+    alias = str(card.get("alias") or "").lower()
+    packet_pr = kind == "pr" and (bool(re.match(r"(?i)^packet\b", title)) or alias.startswith("packet:"))
+    if not packet_pr:
         return True
-    if card.get("packet_file"):
-        return True
-    if str(card.get("alias") or "").lower().startswith("packet:"):
-        return True
-    pk = packet if isinstance(packet, dict) else (card.get("packet") if isinstance(card.get("packet"), dict) else {})
-    return bool(pk.get("acceptance") and pk.get("next owner"))
+    return bool(card.get("packet_file"))
 
 
 def _t(e):
@@ -792,7 +787,6 @@ def model(extra_events=None, now=None, prompts=None, held=None):
             ev = next((b["_ev"] for b in reversed(beats) if b["_ev"]), "")
             if ev:
                 pk["evidence"] = ev
-        missing = [f for f in ("acceptance", "next owner") if not pk.get(f)]
         last_t = last["t"] / 1000 if last else 0
         stall = state == "live" and bool(last_t) and now - last_t > STALL_S
         heads = [b["sha"] for b in beats if b["what"] == "pushed" and b.get("sha")]
@@ -830,9 +824,7 @@ def model(extra_events=None, now=None, prompts=None, held=None):
         if live_packet.repo_no_nudge(c.get("repo")):
             c.pop("nudge_to", None); c.pop("nudge_via", None)
             stall = False
-        missing = [f for f in ("acceptance", "next owner") if not pk.get(f)]
-        if brief_exempt(c, pk):
-            missing = []
+        missing = [] if brief_exempt(c, pk) else ["PACKET.md"]
         if resolved:
             c["resolved"] = resolved
         shown = _keep_push(beats, 5)

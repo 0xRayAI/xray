@@ -371,7 +371,9 @@ test('a holding card and a card-missing flag leave /healthz at 200', async () =>
       await new Promise(r => setTimeout(r, 100));
     }
     const row = (live.cloud_agents || []).find(item => item.bcId === 'bc-missing01');
-    assert.equal(row.flag, 'card missing');
+    assert.equal(row.flag, undefined);
+    assert.equal(row.label, 'no card');
+    assert.equal(row.card, '');
     assert.equal(health.cards_behind, false, JSON.stringify(health));
     assert.equal(res.status, 200);
     assert.ok((cards.cards || []).some(card => card.key === 'packet:line-1'));

@@ -1509,6 +1509,22 @@ function foldOpenCloudTurns(rows, now) {
   }
   return out;
 }
+function readTracks() {
+  const files = [];
+  const named = String(process.env.LIVE_TRACKS || '').trim();
+  if (named) files.push(named);
+  const house = String(process.env.LIVE_HOUSE || '').trim();
+  if (house) files.push(path.join(house, 'fleet', 'TRACKS.md'));
+  const houseFile = String(process.env.HOUSE || '').trim();
+  if (houseFile) files.push(path.join(path.dirname(houseFile), 'fleet', 'TRACKS.md'));
+  files.push(path.join(process.cwd(), 'house', 'fleet', 'TRACKS.md'));
+  for (const file of files) {
+    try {
+      if (file && fs.existsSync(file) && fs.statSync(file).isFile()) return fs.readFileSync(file, 'utf8');
+    } catch { /* the next path */ }
+  }
+  return '';
+}
 function cloudAgentBoard() {
   try {
     return boardCloudAgents({
@@ -1517,6 +1533,7 @@ function cloudAgentBoard() {
       links: arch1CloudLinks(),
       board: bfCards,
       events: githubEvents(),
+      tracks: readTracks(),
     });
   } catch (e) { console.log('cloud agents: ' + ((e && e.message) || 'read failed')); return []; }
 }

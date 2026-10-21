@@ -1562,6 +1562,15 @@ footer a { color: var(--foot); }
       ul.appendChild(kh);
       var ku = wbEl('ul', open ? 'wkids' : 'wkids collapsed'); ks.sort(byBeat).forEach(function (k) { ku.appendChild(card(k)); }); ul.appendChild(ku);
     }
+    function cloudCardHref(a) {
+      if (!a) return '';
+      var direct = wbSafeUrl(a.url) || wbSafeUrl(a.pr) || '';
+      if (direct) return direct;
+      if (!a.card || !L.cardGithubUrl) return '';
+      var ref = String(a.card).match(/^([^#]+)#(\d+)$/);
+      if (!ref) return '';
+      return wbSafeUrl(L.cardGithubUrl({ repo: ref[1], number: Number(ref[2]), kind: 'pr' })) || '';
+    }
     function cloudCard(a) {
       var li = wbEl('li', 'wcard cloud ' + (a.state || 'running') + (wb.open[a.bcId] ? ' open' : ''));
       li.dataset.key = a.bcId || ''; paintEdge(li, a.seat);
@@ -1574,15 +1583,23 @@ footer a { color: var(--foot); }
       var meta = wbEl('div', 'wmeta');
       meta.appendChild(wbEl('span', '', (a.seat || 'unassigned')));
       meta.appendChild(wbEl('span', 'wbadge state', a.state || 'running'));
-      if (a.card) meta.appendChild(wbEl('span', 'wbadge cloud', a.card));
-      addGithubFace(meta, { url: a.pr, kind: 'pr' });
+      var cloudHref = cloudCardHref(a);
+      if (a.card) {
+        var badge = cloudHref ? wbEl('a', 'wbadge cloud', a.card) : wbEl('span', 'wbadge cloud', a.card);
+        if (cloudHref) {
+          badge.href = cloudHref; badge.target = '_blank'; badge.rel = 'noopener';
+          badge.addEventListener('click', function (ev) { ev.stopPropagation(); });
+        }
+        meta.appendChild(badge);
+      } else if (!a.pr) meta.appendChild(wbEl('span', 'wuncarded', 'no card'));
+      addGithubFace(meta, { url: cloudHref, kind: 'pr' });
       li.appendChild(meta);
       var det = wbEl('div', 'wdetail'), dl = wbEl('dl');
-      [['bcId', a.bcId || '—'], ['owning seat', a.seat || '—'], ['linked card', a.card || '—'], ['state', a.state || '—'], ['last update', a.updated_ct || '—']].forEach(function (pair) {
+      [['bcId', a.bcId || '—'], ['owning seat', a.seat || '—'], ['linked card', a.card || (a.pr ? '—' : 'no card')], ['state', a.state || '—'], ['last update', a.updated_ct || '—']].forEach(function (pair) {
         dl.appendChild(wbEl('dt', '', pair[0])); dl.appendChild(wbEl('dd', '', pair[1]));
       });
       det.appendChild(dl);
-      var u = wbSafeUrl(a.pr);
+      var u = cloudHref;
       if (u) { var link = wbEl('a', '', 'open on GitHub'); link.href = u; link.target = '_blank'; link.rel = 'noopener'; link.addEventListener('click', function (ev) { ev.stopPropagation(); }); det.appendChild(link); }
       li.appendChild(det);
       return li;
@@ -2038,7 +2055,7 @@ footer a { color: var(--foot); }
         events.slice().sort(function (a, b) { return (Date.parse(b.t_ct) || 0) - (Date.parse(a.t_ct) || 0); }).forEach(function (e) {
           var li = document.createElement('li');
           li.appendChild(wbEl('span', 'when', wbCt(e.t_ct) || e.t_ct || ''));
-          li.appendChild(wbEl('span', 'who', e.from || ''));
+          li.appendChild(wbEl('span', 'who', L.whoTag ? L.whoTag(e) : (e.from || '')));
           if (!paintPrompt(li, e)) li.appendChild(wbEl('span', '', e.label || e.kind || ''));
           ul.appendChild(li);
         });

@@ -186,7 +186,8 @@ class Model(unittest.TestCase):
         evs = [self.ev(1, "pr_open", 5000, title="fix a", packet={"goal": "g", "acceptance": "tests", "next owner": "Reviewer"}),
                self.ev(1, "pr_commit", 4000, sha=sha),
                {"id": "cr1", "t_ct": ct(3900), "kind": "check_run", "repo": R, "sha": sha, "conclusion": "failure", "source": "https://github.com/ci/1"},
-               self.ev(2, "pr_open", 600, title="fix b"),                                       # no packet
+               self.ev(2, "pr_open", 600, title="fix b"),                                       # ordinary PR: no brief
+               self.ev(9, "pr_open", 500, title="Packet: missing file"),                      # packet PR, no PACKET.md
                self.ev(2, "critic_pass", 300),
                {"id": "w1", "t_ct": ct(100), "kind": "watcher", "repo": R, "number": 2, "start_ct": ct(100), "end_ct": ct(100)},
                self.ev(3, "pr_open", 9000, title="done one"), self.ev(3, "merged", 8000, merge_sha="f00ba12"),
@@ -197,7 +198,9 @@ class Model(unittest.TestCase):
         self.assertEqual((a["stage"], a["state"], a["packet_ok"]), ("fix", "live", True))
         self.assertTrue(a["stall"])                                                              # 65 min, no beat
         self.assertEqual(a["packet"]["evidence"], "https://github.com/ci/1")                    # from the latest beat
-        self.assertEqual((b["stage"], b["packet_ok"], b["missing"], b["packet"]["next owner"]), ("merge", False, ["acceptance"], "Builder"))   # PASS + green CI: Builder merges
+        self.assertEqual((b["stage"], b["packet_ok"], b["missing"], b["packet"]["next owner"]), ("merge", True, [], "Builder"))   # PASS + green CI: Builder merges; a plain PR needs no brief
+        bare = c[f"{R}#9".lower()]
+        self.assertEqual((bare["packet_ok"], bare["missing"]), (False, ["PACKET.md"]))
         self.assertEqual([x["what"] for x in b["beats"]], ["opened", "Reviewer PASS"])            # idle watcher: no beat
         self.assertFalse(b["stall"])
         self.assertEqual((d["stage"], d["state"]), ("done", "closed"))
@@ -702,7 +705,7 @@ class Stats(unittest.TestCase):
 
 
 class BriefExempt(unittest.TestCase):
-    """packet_ok was false at live_board.py when acceptance or next owner was missing. That line is the badge."""
+    """The badge is a packet PR whose PACKET.md is missing. Ordinary PRs and issues stay clear."""
 
     def ev(self, n, kind, ago, **kw):
         if kind == "pr_open":
@@ -735,10 +738,22 @@ class BriefExempt(unittest.TestCase):
         self.assertTrue(card["packet_ok"])
         self.assertTrue(card["packet_file"])
 
-    def test_a_plain_pr_still_needs_a_brief(self):
-        card = self.card([self.ev(388, "pr_open", 60, title="docs: seek map")], 388)
-        self.assertFalse(card["packet_ok"])
-        self.assertEqual(card["missing"], ["acceptance", "next owner"])
+    def test_docs_388_and_hotfix_500_do_not_need_a_brief(self):
+        """#388 is docs with no PACKET.md. #500's branch has root PACKET.md and is not a packet PR."""
+        docs = self.card([self.ev(388, "pr_open", 60, title="docs: seek map, cheap-first definition, skills as the first seek")], 388)
+        self.assertTrue(docs["packet_ok"])
+        self.assertEqual(docs["missing"], [])
+        hotfix = self.card([self.ev(500, "pr_open", 60, title="fix(live): brief only packet PRs and credit CI seats", packet_file=True)], 500)
+        self.assertTrue(hotfix["packet_ok"])
+        self.assertTrue(hotfix["packet_file"])
+        plain = self.card([self.ev(501, "pr_open", 60, title="fix(live): keep merged cards on the board for 7 days")], 501)
+        self.assertTrue(plain["packet_ok"])
+        missing = self.card([self.ev(495, "pr_open", 60, title="Packet: owner sign-in card under the Bifrost mesh")], 495)
+        self.assertFalse(missing["packet_ok"])
+        self.assertEqual(missing["missing"], ["PACKET.md"])
+        carried = self.card([self.ev(495, "pr_open", 60, title="Packet: owner sign-in card under the Bifrost mesh", packet_file=True)], 495)
+        self.assertTrue(carried["packet_ok"])
+        self.assertEqual(carried["missing"], [])
 
     def test_a_packet_card_is_exempt(self):
         import live_board

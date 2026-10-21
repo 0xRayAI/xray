@@ -520,6 +520,49 @@ function prOfCard(key, board) {
   return hit ? safePrUrl(hit.url) : '';
 }
 
+const PACKET_KEY = /^packet:[A-Za-z0-9._:-]{1,80}$/i;
+
+function trackCardCell(cell) {
+  const raw = String(cell || '').trim();
+  if (CARD_REF.test(raw) || PACKET_KEY.test(raw)) return raw;
+  return cardRefOf(raw);
+}
+
+/** TRACKS.md rows: Cloud id, seat, card (`owner/repo#n` or `packet:…`), state. */
+export function trackRows(text) {
+  const rows = [];
+  for (const line of String(text || '').split('\n')) {
+    const cells = line.split('|').map(cell => cell.trim()).filter(Boolean);
+    if (cells.length < 3 || !/^bc-/i.test(cells[0])) continue;
+    const card = trackCardCell(cells[2]);
+    if (!card) continue;
+    rows.push({ bcId: cells[0], card, seat: cells[1] || '' });
+  }
+  return rows;
+}
+
+function hrefFor(card, board) {
+  const key = String(card || '');
+  const hit = (board || []).find(item => item && String(item.key || '').toLowerCase() === key.toLowerCase());
+  const url = hit && typeof hit.url === 'string' ? hit.url.trim() : '';
+  if (/^https:\/\/github\.com\/[^/]+\/[^/]+\/(?:pull|issues)\/\d+\/?$/.test(url)) return url;
+  const match = new RegExp('^(' + GH_OWNER + ')/(' + GH_REPO + ')#(\\d{1,8})$', 'i').exec(key);
+  if (!match) return '';
+  const kind = hit && hit.kind === 'issue' ? 'issues' : 'pull';
+  return `https://github.com/${match[1]}/${match[2]}/${kind}/${Number(match[3])}`;
+}
+
+/** A run with no pull URL takes the card named on its TRACKS row. */
+function linkTrackRows(rows, tracks, board) {
+  for (const hit of trackRows(tracks)) {
+    for (const row of rows || []) {
+      if (!row || row.pr || !cloudIdsAlias(row.bcId, hit.bcId)) continue;
+      if (!row.card) row.card = hit.card;
+      if (!row.url) row.url = hrefFor(hit.card, board);
+    }
+  }
+}
+
 /** Fill an empty card or PR from a turn tag (`bc-<id> <track>`) or a head_ref that carries the id. */
 function linkCloudCards(rows, { activity = [], events = [], board = [] } = {}) {
   const list = rows || [];
@@ -559,7 +602,7 @@ function linkCloudCards(rows, { activity = [], events = [], board = [] } = {}) {
 }
 
 /** One board row per cloud agent. Latest line wins the state; an earlier seat, card, or PR stays. */
-export function boardCloudAgents({ agents = [], activity = [], links = [], board = [], events = [], now = Date.now() } = {}) {
+export function boardCloudAgents({ agents = [], activity = [], links = [], board = [], events = [], tracks = '', now = Date.now() } = {}) {
   const onBoard = boardIds(board);
   const lines = [];
   for (const row of agents || []) {
@@ -620,8 +663,17 @@ export function boardCloudAgents({ agents = [], activity = [], links = [], board
   }
   const rows = [...by.values()].sort((a, b) => (Date.parse(b.updated_ct) || 0) - (Date.parse(a.updated_ct) || 0) || a.bcId.localeCompare(b.bcId));
   linkCloudCards(rows, { activity, events, board });
-  const flagged = foldCloudIds(rows).map(row => (!row.card && !row.pr ? { ...row, flag: 'card missing' } : row));
-  return markStaleCloud(flagged, now);
+  linkTrackRows(rows, tracks, board);
+  const folded = foldCloudIds(rows).map(row => {
+    if (!row) return row;
+    const next = { ...row };
+    delete next.flag;
+    if (next.card && !next.url) next.url = hrefFor(next.card, board);
+    if (next.card || next.pr) delete next.label;
+    else next.label = 'no card';
+    return next;
+  });
+  return markStaleCloud(folded, now);
 }
 
 /** True when one id is the other, or one is a bc- prefix of the other (`bc-531f2033` and the full uuid). */
@@ -645,6 +697,8 @@ export function foldCloudIds(rows) {
     if (!hit.seat && row.seat) hit.seat = row.seat;
     if (!hit.card && row.card) hit.card = row.card;
     if (!hit.pr && row.pr) hit.pr = row.pr;
+    if (!hit.url && row.url) hit.url = row.url;
+    if (!hit.label && row.label) hit.label = row.label;
     if (String(row.bcId).length > String(hit.bcId).length) hit.bcId = row.bcId;
   }
   return folded;

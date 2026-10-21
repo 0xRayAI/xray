@@ -19,6 +19,8 @@ function feed() {
     events: [
       { id: 'e1', t_ct: iso(now - 60000), kind: 'pr_open', from: 'forge', to: 'GitHub', label: 'opened #3', repo: 'example/app', number: 3 },
       { id: 'e2', t_ct: iso(now - 30000), kind: 'merged', from: 'critic', to: 'GitHub', label: 'merged #2', repo: 'example/app', number: 2 },
+      { id: 'ci-forge', t_ct: iso(now - 20000), kind: 'workflow_run', from: 'CI', to: 'GitHub', credit: 'forge', label: 'run tests' },
+      { id: 'ci-blaze', t_ct: iso(now - 10000), kind: 'check_run', from: 'CI', to: 'GitHub', credit: 'Blaze', label: 'run lint' },
     ],
     queue: [
       { id: 'n1', type: 'nudge', seat: 'blinky', title: 'ack the handoff', t_ct: iso(now - 3600000) },
@@ -30,7 +32,8 @@ function feed() {
     ] },
     freshness: { github_latest_ct: iso(now), cards_at: iso(now), github_card_latest_ct: iso(now) },
     cloud_agents: [
-      { bcId: 'bc-fresh00001', seat: 'forge', state: 'running', updated_ct: iso(now - 60000), card: '' },
+      { bcId: 'bc-fresh00001', seat: 'forge', state: 'running', updated_ct: iso(now - 60000), card: '', label: 'no card' },
+      { bcId: 'bc-92de28a2', seat: 'forge', state: 'running', updated_ct: iso(now - 30000), card: '0xRayAI/xray#502', url: 'https://github.com/0xRayAI/xray/pull/502' },
       { bcId: 'bc-8450c4aa-ed0a-5fb3-9748-f09a044c848f', seat: 'forge', state: 'stale', updated_ct: '2026-10-18T17:30:55-05:00', card: 'example/app#3' },
     ],
     fleet: { seats: { forge: { active: true, working: true, working_via: 'cloud' }, blinky: { active: false, working: false }, critic: { active: false, working: false }, mill: { active: false, working: false } }, cloud: { active: true, working: true, open_agents: ['bc-fresh00001'] } },
@@ -160,8 +163,16 @@ test('the board face keeps the contract in both themes', async () => {
       const edge = openCard ? getComputedStyle(openCard).borderLeftColor : '';
       const mill = getComputedStyle(document.documentElement).getPropertyValue('--seat-mill').trim();
       const ids = [...document.querySelectorAll('#log li')].map(li => li.textContent);
+      const whos = [...document.querySelectorAll('#log li')].map(li => (li.querySelector('.who') || {}).textContent || '');
+      const linked = document.querySelector('#cloudBody a.wbadge.cloud');
+      const fresh = document.querySelector('#cloudBody .wcard[data-key="bc-fresh00001"]');
       return {
         openCloud, doneCloud, waiting, mergedParent: mergedCard && mergedCard.parentElement.className,
+        whos,
+        cloudHref: linked ? linked.getAttribute('href') : '',
+        cloudBadge: linked ? linked.textContent : '',
+        freshText: fresh ? fresh.textContent : '',
+        freshBadge: fresh ? fresh.querySelectorAll('a.wbadge.cloud, .wbadge.cloud').length : -1,
         sliderInside: slider.top >= mesh.top - 1 && slider.bottom <= mesh.bottom + 1 && slider.left >= mesh.left - 1 && slider.right <= mesh.right + 1,
         names, roster,
         activityCollapsed: activity.classList.contains('collapsed'),
@@ -172,6 +183,14 @@ test('the board face keeps the contract in both themes', async () => {
     });
     assert.equal(face.theme, 'dark');
     assert.match(face.openCloud, /bc-fresh00001/);
+    assert.match(face.openCloud, /no card/);
+    assert.doesNotMatch(face.openCloud, /card missing/);
+    assert.equal(face.freshBadge, 0);
+    assert.match(face.freshText, /no card/);
+    assert.equal(face.cloudBadge, '0xRayAI/xray#502');
+    assert.equal(face.cloudHref, 'https://github.com/0xRayAI/xray/pull/502');
+    assert.ok(face.whos.includes('forge'), JSON.stringify(face.whos));
+    assert.ok(face.whos.includes('Blaze'), JSON.stringify(face.whos));
     assert.doesNotMatch(face.openCloud, /bc-8450c4aa/);
     assert.match(face.doneCloud, /bc-8450c4aa/);
     assert.ok(face.waiting.some(row => row.startsWith('in review')));

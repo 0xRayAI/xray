@@ -230,7 +230,11 @@
     return out;
   }
 
+  var CI_KIND = { ci_pass: 1, ci_fail: 1, check_run: 1, check_suite: 1, workflow_run: 1, commit_status: 1 };
+  /* CI who is the credit (forge, Blaze). from stays the GitHub/CI source for the mesh. */
   function whoTag(e) {
+    var credit = e && CI_KIND[e.kind] ? String(e.credit || '') : '';
+    if (credit && !/^(github|ci)$/i.test(credit)) return credit;
     var who = e.kind.indexOf('critic_') === 0 ? 'critic' : e.from;
     return own(WHO_LOG, who) || String(who).replace(/^@/, '').toUpperCase().slice(0, 8);
   }

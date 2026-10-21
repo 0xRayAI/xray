@@ -528,6 +528,28 @@ test('wave count tiles title the 24h ids, capped at 20', () => {
   assert.equal(idTitle([]), '');
 });
 
+test('CI who is the credit and the mesh source stays GitHub', async () => {
+  const vm = await import('node:vm');
+  const pub = path.join(APP, 'public');
+  const ctx = { window: {}, console, URLSearchParams, location: { search: '', hash: '', href: 'http://x/' }, document: { addEventListener() {} } };
+  ctx.globalThis = ctx; ctx.window = ctx;
+  vm.createContext(ctx);
+  vm.runInContext(fs.readFileSync(path.join(pub, 'live.js'), 'utf8'), ctx);
+  vm.runInContext(fs.readFileSync(path.join(pub, 'live-config.js'), 'utf8'), ctx);
+  const L = ctx.LiveMesh;
+  const row = (id, credit) => ({ id, t_ct: '2026-10-20T12:00:00-05:00', kind: 'workflow_run', from: 'CI', to: 'GitHub', credit, label: 'run ' + id });
+  const fed = L.applyFeed({ events: [], live: true, t: 0 }, { events: [row('forge-row', 'forge'), row('blaze-row', 'Blaze'), row('gh-row', 'github')] }).state.events;
+  const by = Object.fromEntries(fed.map(e => [e.credit, e]));
+  assert.equal(by.forge.from, 'GitHub');
+  assert.equal(by.forge.credit, 'forge');
+  assert.equal(L.whoTag(by.forge), 'forge');
+  assert.equal(by.Blaze.from, 'GitHub');
+  assert.equal(L.whoTag(by.Blaze), 'Blaze');
+  assert.equal(by.github.from, 'GitHub');
+  assert.equal(L.whoTag(by.github), 'GITHUB');
+  assert.equal(L.whoTag({ kind: 'pr_open', from: 'forge', credit: 'forge' }), 'FORGE');
+});
+
 test('kit live-config carries no install brand (no Example / example.com); product names come from the feed header', () => {
   for (const f of [path.join(APP, 'public', 'live-config.js'), path.join(APP, '..', 'feed', 'live-config.js')]) {
     assert.doesNotMatch(fs.readFileSync(f, 'utf8'), /Example|example\.com/, f);
