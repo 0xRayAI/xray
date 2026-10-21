@@ -11,3 +11,4 @@ The plate is `docs-site/docs/plates/fleet.md`. The X copy is `docs-site/static/p
 1. Read the role from `house/OP-PROC.md` and `house/HOUSE.md` before changing a card.
 2. The mill card is the plant. The mill seat stays retired.
 3. The stamp line uses the version already in `package.json`.
+4. The X copy is square, 1600×1600. The output card is Distribution.

@@ -124,6 +124,7 @@ def part_size(part: str, key: str) -> float:
 W = int(layout_num("width"))
 WELL_L = int(layout_num("wellLeft"))
 WELL_R = int(layout_num("wellRight"))
+FLEET_SIZE = 1600
 RAIL_WIDTH = part_size("rail", "width")
 RAIL_GLOW = part_size("rail", "glow")
 HEAD_LEN = part_size("arrowhead", "length")
@@ -1185,6 +1186,208 @@ def _draw_card(
         raise RuntimeError(f"card dropped words from {lines[0] if lines else ''}")
 
 
+def _fleet_bounds() -> tuple[int, int, float]:
+    """Cards sit inside the well. The feed rail stays in the left gutter."""
+    gutter = 44
+    row_left = WELL_L + gutter
+    row_right = WELL_R - gutter
+    rail_x = float(row_left - 36)
+    return row_left, row_right, rail_x
+
+
+def _fleet_row(
+    flow: dict,
+    layer: int,
+    width: int,
+    gap: int,
+    numbered: bool,
+    left: int,
+    top: int,
+) -> tuple[list[dict], int]:
+    count = len(flow["layers"][layer]["nodes"])
+    heights = [
+        measure_card(flow["layers"][layer]["nodes"][i]["lines"], width, numbered)
+        for i in range(count)
+    ]
+    row_h = max(heights)
+    row_w = width * count + gap * (count - 1)
+    inner = _fleet_bounds()[1] - left
+    x = left + max(0, (inner - row_w) // 2)
+    cards = []
+    for index in range(count):
+        rect = (int(x), int(top), int(x + width), int(top + row_h))
+        number = str(index + 1) if numbered else ""
+        cards.append({"layer": layer, "index": index, "row": 0, "rect": rect, "number": number})
+        x += width + gap
+    return cards, row_h
+
+
+def layout_fleet(flow: dict, header_bottom: int) -> tuple[int, list[dict], list[dict]]:
+    """Square X frame. Layers stay in source order, top to bottom. The core is a numbered row."""
+    counts = [len(layer["nodes"]) for layer in flow["layers"]]
+    if counts != [3, 3, 5, 3]:
+        raise RuntimeError(f"fleet layers drifted: {counts}")
+    if "PROCESSING" not in flow["layers"][2]["name"].upper():
+        raise RuntimeError("fleet processing layer drifted")
+    height = FLEET_SIZE
+    row_left, row_right, rail_x = _fleet_bounds()
+    if rail_x - RAIL_GLOW / 2 < part_size("rivet", "inset") + part_size("rivet", "diameter"):
+        raise RuntimeError("fleet rail crosses a rivet")
+    inner = row_right - row_left
+    gaps = (20, 20, 48, 20)
+    numbered = (False, False, True, False)
+    widths = []
+    row_heights = []
+    for layer, gap, numbers in zip(range(4), gaps, numbered):
+        count = counts[layer]
+        width = (inner - gap * (count - 1)) // count
+        widths.append(width)
+        row_heights.append(
+            max(
+                measure_card(flow["layers"][layer]["nodes"][i]["lines"], width, numbers)
+                for i in range(count)
+            )
+        )
+    label_h = int(layout_num("bandPad")) + int(layout_num("labelBlock"))
+    band_end = int(layout_num("bandEnd"))
+    band_heights = [label_h + row_h + band_end for row_h in row_heights]
+    channels = [40, 64, 64]
+    note_font = font_at(BARLOW_SEMI, int(layout_num("noteSize")))
+    note_inner = WELL_R - WELL_L - int(layout_num("innerInset"))
+    note_h = 0
+    for note in flow["notes"]:
+        note_h += int(layout_num("noteLine")) * max(1, len(wrap_lines(note, note_font, note_inner)))
+    top = header_bottom + int(layout_num("belowHeader"))
+    foot_top = height - int(part_size("footer", "raise"))
+    content_bottom = foot_top - int(layout_num("footGap")) - note_h - int(part_size("header", "after"))
+    slack = content_bottom - top - sum(band_heights) - sum(channels)
+    if slack < 0:
+        raise RuntimeError(f"fleet square is short by {-slack}px")
+    share = slack // len(channels)
+    channels = [channel + share for channel in channels]
+    channels[-1] += slack - share * len(channels)
+    cursor = top
+    bands: list[dict] = []
+    for layer, width, gap, numbers, row_h, channel in zip(
+        range(4), widths, gaps, numbered, row_heights, channels + [0]
+    ):
+        band_top = cursor
+        cards, placed_h = _fleet_row(flow, layer, width, gap, numbers, row_left, band_top + label_h)
+        if placed_h != row_h:
+            raise RuntimeError("fleet row height drifted")
+        label_left = row_left
+        if numbers:
+            rect0 = cards[0]["rect"]
+            center = (rect0[0] + rect0[2]) / 2
+            label_left = int(center + RAIL_GLOW / 2 + 10 - part_size("layerLabel", "textX"))
+        cursor = band_top + label_h + row_h + band_end
+        bands.append({
+            "rect": (label_left, band_top, row_right, cursor),
+            "name": flow["layers"][layer]["name"],
+            "rows": [cards],
+            "layer": layer,
+        })
+        cursor += channel
+    if bands[-1]["rect"][3] > content_bottom:
+        raise RuntimeError("fleet notes collide with the footer")
+    placed = [card for band in bands for row in band["rows"] for card in row]
+    _assert_fleet_cards(placed, height)
+    return height, bands, placed
+
+
+def _assert_fleet_cards(placed: list[dict], height: int) -> None:
+    rects = [card["rect"] for card in placed]
+    for index, rect in enumerate(rects):
+        if rect[0] < WELL_L or rect[1] < 0 or rect[2] > WELL_R or rect[3] > height:
+            raise RuntimeError(f"fleet card outside the frame: {rect}")
+        for other in rects[index + 1:]:
+            if rect[0] < other[2] and other[0] < rect[2] and rect[1] < other[3] and other[1] < rect[3]:
+                raise RuntimeError(f"fleet cards overlap: {rect} {other}")
+
+
+def _segment_hits_card(x0: float, y0: float, x1: float, y1: float, rect: tuple[int, int, int, int]) -> bool:
+    left, right = sorted((x0, x1))
+    top, bot = sorted((y0, y1))
+    pad = RAIL_GLOW / 2
+    return left - pad < rect[2] and rect[0] < right + pad and top < rect[3] and rect[1] < bot
+
+
+def draw_fleet_arrows(img: Image.Image, flow: dict, bands: list[dict]) -> None:
+    """Inputs and the side feed join blinky. The core counts left to right. arch1 fans to the outputs."""
+    located: dict[tuple[int, int], dict] = {}
+    for band in bands:
+        for row in band["rows"]:
+            for card in row:
+                located[(card["layer"], card["index"])] = card
+    for edge in flow["edges"]:
+        src = (int(edge["from"][0]), int(edge["from"][1]))
+        dst = (int(edge["to"][0]), int(edge["to"][1]))
+        fed = dst == (2, 0) and src[0] in (0, 1)
+        chain = src[0] == 2 and dst[0] == 2 and dst[1] == src[1] + 1
+        fan = src == (2, 4) and dst[0] == 3
+        if edge["label"] or not (fed or chain or fan):
+            raise RuntimeError(f"fleet edge not laid out: {src} -> {dst}")
+    by_layer = {int(band["layer"]): band for band in bands}
+    inputs = [located[(0, index)] for index in range(3)]
+    side = [located[(1, index)] for index in range(3)]
+    proc = [located[(2, index)] for index in range(5)]
+    outs = [located[(3, index)] for index in range(3)]
+    _rail_x = _fleet_bounds()[2]
+    pad = layout_num("arrowInset")
+    cards = inputs + side + proc + outs
+
+    def stem_clear(x: float, y0: float, y1: float) -> None:
+        for card in cards:
+            if _segment_hits_card(x, y0, x, y1, card["rect"]):
+                raise RuntimeError("fleet rail crosses a card")
+
+    def bar_clear(x0: float, x1: float, y: float) -> None:
+        for card in cards:
+            if _segment_hits_card(x0, y, x1, y, card["rect"]):
+                raise RuntimeError("fleet bus crosses a card")
+
+    input_bottoms = [center_bottom(card["rect"]) for card in inputs]
+    side_top = by_layer[1]["rect"][1]
+    input_bus = (max(y for _x, y in input_bottoms) + side_top) / 2
+    side_bottoms = [center_bottom(card["rect"]) for card in side]
+    proc_top = by_layer[2]["rect"][1]
+    side_bus = (max(y for _x, y in side_bottoms) + proc_top) / 2
+    bar_clear(_rail_x, max(x for x, _y in input_bottoms), input_bus)
+    stem_clear(_rail_x, input_bus, side_bus)
+    for x, y in input_bottoms:
+        stem_clear(x, y + pad, input_bus)
+        draw_stem(img, x, y + pad, input_bus)
+        place_junction(img, x, input_bus)
+    draw_bar(img, _rail_x, max(x for x, _y in input_bottoms), input_bus)
+    place_junction(img, _rail_x, input_bus)
+    draw_stem(img, _rail_x, input_bus, side_bus)
+    place_junction(img, _rail_x, side_bus)
+    bar_clear(_rail_x, max(x for x, _y in side_bottoms), side_bus)
+    for x, y in side_bottoms:
+        stem_clear(x, y + pad, side_bus)
+        draw_stem(img, x, y + pad, side_bus)
+        place_junction(img, x, side_bus)
+    draw_bar(img, _rail_x, max(x for x, _y in side_bottoms), side_bus)
+    blink_x, blink_y = center_top(proc[0]["rect"])
+    draw_down_arrow(img, blink_x, side_bus, blink_y - pad)
+    place_junction(img, blink_x, side_bus)
+    for src, dst in zip(proc, proc[1:]):
+        y = (src["rect"][1] + src["rect"][3]) / 2
+        draw_right_arrow(img, src["rect"][2] + pad, dst["rect"][0] - pad, y)
+    arch = proc[-1]
+    arch_x, arch_y = center_bottom(arch["rect"])
+    tops = [center_top(card["rect"]) for card in outs]
+    out_bus = (arch_y + min(y for _x, y in tops)) / 2
+    bar_clear(min(arch_x, min(x for x, _y in tops)), max(arch_x, max(x for x, _y in tops)), out_bus)
+    stem_clear(arch_x, arch_y + pad, out_bus)
+    draw_stem(img, arch_x, arch_y + pad, out_bus)
+    draw_bar(img, min(arch_x, min(x for x, _y in tops)), max(arch_x, max(x for x, _y in tops)), out_bus)
+    place_junction(img, arch_x, out_bus)
+    for x, y in tops:
+        draw_down_arrow(img, x, out_bus, y - pad)
+        place_junction(img, x, out_bus)
+
+
 def write_itxt(path: Path, text: str) -> None:
     payload = TEXT_KEY.encode("latin1") + b"\x00\x00\x00\x00\x00" + text.encode("utf8")
     chunk = struct.pack(">I", len(payload)) + b"iTXt" + payload
@@ -1252,7 +1455,32 @@ def quantize_plate(rgb: Image.Image) -> Image.Image:
     return rgb.quantize(palette=pal_img, dither=Image.Dither.NONE)
 
 
+def _bind_canvas(fleet: bool) -> tuple[int, int, int]:
+    """The fleet X copy is a square. Every other plate keeps the kit width."""
+    global W, WELL_L, WELL_R
+    saved = (W, WELL_L, WELL_R)
+    if fleet:
+        margin = int(layout_num("width")) - int(layout_num("wellRight"))
+        W = FLEET_SIZE
+        WELL_L = int(layout_num("wellLeft"))
+        WELL_R = FLEET_SIZE - margin
+    return saved
+
+
+def _restore_canvas(saved: tuple[int, int, int]) -> None:
+    global W, WELL_L, WELL_R
+    W, WELL_L, WELL_R = saved
+
+
 def render(md_path: Path, out_path: Path) -> None:
+    saved = _bind_canvas(md_path.stem == "fleet")
+    try:
+        _render_plate(md_path, out_path)
+    finally:
+        _restore_canvas(saved)
+
+
+def _render_plate(md_path: Path, out_path: Path) -> None:
     text = md_path.read_text(encoding="utf8")
     payload = fence_payload(text)
     lines = fence_lines(payload)
@@ -1293,7 +1521,11 @@ def render(md_path: Path, out_path: Path) -> None:
     name_top = part_size("header", "top")
     name_h = max(part_size("header", "minHeight"), int(text_bottom + part_size("header", "after") + groove_gap + groove_h))
     name = (int(side), int(name_top), W - int(side), int(name_top + name_h))
-    height, bands, _placed = layout(flow, boxes, name[3])
+    fleet = md_path.stem == "fleet"
+    if fleet:
+        height, bands, _placed = layout_fleet(flow, name[3])
+    else:
+        height, bands, _placed = layout(flow, boxes, name[3])
     img = Image.new("RGBA", (W, height), (0, 0, 0, 0))
     place_part(img, "frame", (0, 0, W, height), "metal")
     rivet = part_size("rivet", "diameter")
@@ -1338,7 +1570,10 @@ def render(md_path: Path, out_path: Path) -> None:
     else:
         place_part(img, "accentRail", groove, "cyan")
     label_font = font_at(BARLOW_SEMI, int(part_size("header", "after")))
-    draw_flow_arrows(img, flow, bands, label_font)
+    if fleet:
+        draw_fleet_arrows(img, flow, bands)
+    else:
+        draw_flow_arrows(img, flow, bands, label_font)
     draw_cards(img, flow, bands)
     if flow["notes"]:
         note_font = font_at(BARLOW_SEMI, int(layout_num("noteSize")))
@@ -1363,6 +1598,8 @@ def render(md_path: Path, out_path: Path) -> None:
     rgb = img.convert("RGB")
     if rgb.size != (W, height):
         raise RuntimeError("canvas was resized after type")
+    if fleet and (W, height) != (FLEET_SIZE, FLEET_SIZE):
+        raise RuntimeError(f"fleet canvas is {W}x{height}")
     quant = quantize_plate(rgb)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     quant.save(out_path, optimize=True)

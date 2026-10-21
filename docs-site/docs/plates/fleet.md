@@ -85,7 +85,7 @@ Inference · External Governance · Autonomous Engine.
 │ OUTPUT LAYER                                              │                                      │
 │                                                           v                                      │
 │ ┌─────────────────────────┐ ┌─────────────────────────┐     ┌─────────────────────────┐          │
-│ │ npm release             │ │ Dist                    │     │ live board              │          │
+│ │ npm release             │ │ Distribution            │     │ live board              │          │
 │ │ 0xray 4.1.3             │ │ herald posts CoS words  │     │ bifrost.0xray.dev       │          │
 │ │ annotated tag           │ │ after Blaze go          │     │ cards via GET /cards    │          │
 │ │ GitHub Release          │ │ magnet owns listings    │     │                         │          │
@@ -120,7 +120,7 @@ Nibbler is the feed scout (`house/live/app/public/live.js:21`). The roster parks
 
 An npm release is done when the annotated tag is pushed and the GitHub Release exists. The human owner publishes it, or gives an explicit GO (`grok-bot/OP-PROC.md:56`). The version on this stamp is 4.1.3 (`package.json:3`). The next publish is a patch (`docs-site/docs/architecture/v4-now.md:17`).
 
-herald posts only after Blaze's go, and only the words CoS handed over (`house/OP-PROC.md:42`). magnet owns listings (`house/OP-PROC.md:43`).
+Distribution is the plane (`grok-bot/ops/SEATS.md:88`, `grok-bot/templates/house/ROLE-MAP.md:17`). herald posts only after Blaze's go, and only the words CoS handed over (`house/OP-PROC.md:42`). magnet owns listings (`house/OP-PROC.md:43`).
 
 The public board is https://bifrost.0xray.dev (`grok-bot/OP-PROC.md:17`). When `LIVE_URL` is set, open cards are Bifrost `GET /cards` (`grok-bot/OP-PROC.md:47`).
 

@@ -333,6 +333,16 @@ describe('pipeline plates', () => {
         expect(flow.notes).toContain('the gap stays open');
         expect(flow.edges.some((edge) => edge.label === 'looks down')).toBe(true);
       }
+      if (id === 'fleet') {
+        const raw = readFileSync(png);
+        expect(raw.readUInt32BE(16), 'fleet width').toBe(1600);
+        expect(raw.readUInt32BE(20), 'fleet height').toBe(1600);
+        expect(flow.layers[3]?.nodes.map((node) => node.lines[0])).toEqual([
+          'npm release',
+          'Distribution',
+          'live board',
+        ]);
+      }
     }
   });
 
