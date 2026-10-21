@@ -64,6 +64,7 @@ const PLATE_IDS = Object.freeze([
   "consumer-mcp",
   "confer",
   "grokbot",
+  "fleet",
 ]);
 
 /** Id token, then extra phrases. Equal top scores recall nothing. */
@@ -335,6 +336,11 @@ const CUES = {
     [/grokbot plate/i, 6],
     [/grok bot plate/i, 6],
     [/plates\/grokbot/i, 6],
+  ],
+  fleet: [
+    [/fleet plate/i, 6],
+    [/v5 fleet/i, 5],
+    [/plates\/fleet/i, 6],
   ],
 };
 

@@ -78,6 +78,7 @@ describe('pipeline plates', () => {
       'consumer-mcp',
       'confer',
       'grokbot',
+      'fleet',
     ]);
     for (const id of PLATE_IDS) {
       const plate = loadPlate(id);
@@ -114,6 +115,7 @@ describe('pipeline plates', () => {
     expect(recallPlate('review plate')?.id).toBe('review');
     expect(recallPlate('critic FAIL on the head')?.id).toBe('review');
     expect(recallPlate('re-review that head')?.id).toBe('review');
+    expect(recallPlate('fleet plate')?.id).toBe('fleet');
     expect(recallPlate('house processor boot')?.id).not.toBe('house');
   });
 
