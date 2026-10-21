@@ -369,9 +369,6 @@ header .title { animation: rise .6s ease-out both; }
 .pill.behind { border-color: var(--behind-edge); color: var(--behind-fg); background: var(--behind-bg); }
 .pill.behind::before { color: var(--behind-dot); animation: none; }
 .seat { position: relative; }
-.seat .dot.blink { animation: live-blink 2.8s ease-in-out infinite; }
-@keyframes live-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.62; } }
-@media (prefers-reduced-motion: reduce) { .seat .dot.blink { animation: none; } }
 #mesh { opacity: 0; transition: opacity 1.2s ease-out; background: var(--plate); }
 #mesh.in { opacity: 1; }
 @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
@@ -632,7 +629,7 @@ footer a { color: var(--foot); }
     <div id="head">&nbsp;</div>
     <div id="headTime">&nbsp;</div>
     <canvas id="mesh" width="920" height="400" aria-label="Mesh of seats and rails with handoff pings"></canvas>
-    <p class="mesh-legend" id="meshLegend"><span title="index.html drawNode. Hot seat from activeSeats over a handoff or push, or the rewind window. Three strokes. Live duration 2 times FLASH_MS, 5200ms. Letter seats.">Hot ring 5.2s</span><span title="index.html draw. A ping whose source is this node. One sine, PULSE_MS 900, across the flight. Flight is 2600ms, up to 7800ms.">Depart pulse</span><span title="index.html drawPing. from equals to. Radius 24 to 46 and alpha 1 to 0 across that same flight.">One-node ring</span></p>
+    <p class="mesh-legend" id="meshLegend"><span title="index.html drawNode. While seatView lit is true, three strokes at r+5, r+10, r+15 in the seat color loop (live.js hotRing). Reduced motion draws that ring still. A flash from activeSeats draws the same strokes on top for 2 times FLASH_MS, 5200ms. Letter seats.">Hot ring</span><span title="index.html draw. A ping whose source is this node. One sine, PULSE_MS 900, across the flight. Flight is 2600ms, up to 7800ms.">Depart pulse</span><span title="index.html drawPing. from equals to. Radius 24 to 46 and alpha 1 to 0 across that same flight.">One-node ring</span></p>
     </div>
   </section>
   <div id="agentPing" hidden></div>
@@ -1322,7 +1319,7 @@ footer a { color: var(--foot); }
       pings.forEach(function (pk) { if (pk.src === key) pul = Math.max(pul, L.pulse(pk.p * L.PULSE_MS, reduced)); });
       ctx.globalAlpha = L.entry(since, i, reduced);
       var nv = L.seatView(seatState(key, hot)); nodeView[key] = nv;   // same state as the header chip
-      drawNode(key, nv.lit, fs, pul, nv.nodeWorking, nowWall);
+      drawNode(key, nv.lit, fs, pul, nv.nodeWorking, nowWall, !!(hot && hot[key]));
 
       ctx.globalAlpha = 1;
     });
@@ -1334,17 +1331,24 @@ footer a { color: var(--foot); }
     ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
   }
 
-  function drawNode(key, isHot, fs, pul, spinning, nowWall) {
+  function drawNode(key, isHot, fs, pul, spinning, nowWall, flash) {
     var xy = pos[key], x = xy[0], y = xy[1], c = L.COLOR[key], sq = !!L.SQUARE[key], r = sq ? 15 : 18 + 3 * pul;
     var img = imgs[key], glyph = L.GLYPH[key], mark = L.MARK_PATH[key];
     var hasImg = !!(img && img.complete && img.naturalWidth);
     var bare = hasImg || (!sq && !!glyph);   // image / glyph nodes: no ring
-    if (isHot && !bare) {
+    function strokeRings(alphaFor) {
       for (var k = 3; k >= 1; k--) {
-        var rr = r + k * 5; ctx.strokeStyle = rgb(c, 1 / (k + 1)); ctx.lineWidth = 2;
+        var rr = r + k * 5; ctx.strokeStyle = rgb(c, alphaFor(k)); ctx.lineWidth = 2;
         if (sq) { roundRect(x - rr, y - rr, rr * 2, rr * 2, 6); } else { ctx.beginPath(); ctx.arc(x, y, rr, 0, 7); }
         ctx.stroke();
       }
+    }
+    if (isHot && !bare) {   // lit seat: the same three strokes, looping. Reduced motion is still.
+      var ring = L.hotRing(nowWall, reduced);
+      strokeRings(function (k) { return L.hotRingAlpha(k, ring); });
+    }
+    if (flash && !bare) {   // flash from activeSeats, drawn on top of the loop
+      strokeRings(function (k) { return 1 / (k + 1); });
     }
     ctx.fillStyle = cssVar('--node-fill'); ctx.strokeStyle = rgb(c); ctx.lineWidth = isHot ? 3 : 2;
     if (hasImg) {   // avatar: the image as-is, no circle / ring / border / clip
@@ -1383,19 +1387,6 @@ footer a { color: var(--foot); }
     if (silentNow) {   // amber 'silent 2h' under the icon, amber frame below
       ctx.font = '600 10px ui-monospace, SFMono-Regular, Menlo, monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
       ctx.fillStyle = cssVar('--silent-ink'); ctx.fillText('silent 2h', x, top); top += 14;
-    }
-    if (spinning) {   // 'working' under the icon: seat-color sheen sweeping L->R
-      ctx.font = '600 10px ui-monospace, SFMono-Regular, Menlo, monospace';
-      ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-      var wtxt = 'working', ww = ctx.measureText(wtxt).width;
-      ctx.fillStyle = rgb(c, 0.45); ctx.fillText(wtxt, x, top);
-      ctx.save();
-      var band = Math.max(10, ww * 0.38), travel = ww + band;
-      var bx = x - ww / 2 + ((nowWall / 1200) % 1) * travel - band;
-      ctx.beginPath(); ctx.rect(bx, top - 1, band, 13); ctx.clip();
-      ctx.fillStyle = rgb(c); ctx.fillText(wtxt, x, top);
-      ctx.restore();
-      top += 14;
     }
     var lx = L.labelX(x, w, W);   // never clipped at the canvas edge
     ctx.fillStyle = cssVar('--label-fill'); ctx.strokeStyle = silentNow ? cssVar('--silent-ink') : rgb(c); ctx.lineWidth = 2;
@@ -1784,11 +1775,7 @@ footer a { color: var(--foot); }
       s.dot.style.boxShadow = on ? '0 0 0 2px ' + cssVar('--ring-gap') + ', 0 0 0 4px ' + rgb(c) : 'none';
       var sil = !v.blink && fleetSilent(a[0]);
       s.el.classList.toggle('silent', sil); if (sil) s.dot.style.background = cssVar('--silent-ink');
-      var spinning = v.blink;
-      s.el.classList.toggle('working', spinning);
-      // A lit seat pulses the dot. An idle seat stays dim and still.
-      s.dot.classList.toggle('blink', on);
-      if (spinning) s.dot.style.background = rgb(c);
+      // The mesh hot ring is the active indicator. The roster dot stays a still color.
     });
     var logKey = shown + ':' + state.events.length;
     if (logKey !== lastLogKey) { lastLogKey = logKey; renderLog(shown); }
