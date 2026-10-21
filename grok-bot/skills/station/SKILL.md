@@ -13,7 +13,7 @@ One boot hook. Light on an owner message. Full after a summary, a wake, or a gat
 
 On any owner message:
 
-1. On every owner message, first run `live-inbox <seat> --prompt --from owner --note "<gist>"`; after handling any inbox line (in chat or on a wake), ack it right away with `live-inbox <seat> --ack <id>` (or `--ack all` once everything open is handled); when you launch or resume a cloud agent run `live-inbox <seat> --turn start --tag "bc-<first8> <track>"`; when it finishes or is cancelled run `live-inbox <seat> --turn end --tag "bc-<first8>"`. No exceptions for short turns. The gist is not the message text.
+1. On every owner message, first run `live-inbox <seat> --prompt --from owner --note "<gist>"`; after handling any inbox line (in chat or on a wake), ack it right away with `live-inbox <seat> --ack <id>` (or `--ack all` once everything open is handled); when you launch or resume a cloud agent run `live-inbox <seat> --turn start --tag "bc-<first8> <track>"`; when it finishes or is cancelled run `live-inbox <seat> --turn end --tag "bc-<first8>"`. No exceptions for short turns. The gist is not the message text. A quick follow-up that arrives mid-turn is its own owner message: log that prompt before the reply, before the station read, and before any other step.
 
 Board rule. On every owner message run `live-inbox <seat> --prompt --from owner --note "<gist>"`. Ack a handled line with `live-inbox <seat> --ack <id>`, or `live-inbox <seat> --ack all` once every open line is handled. A cloud agent run uses `live-inbox <seat> --turn start --tag "bc-<first8> <track>"` and `live-inbox <seat> --turn end --tag "bc-<first8>"`. `--from owner` is required today.
 
@@ -40,6 +40,8 @@ After a summary, a wake, or a gate, also read:
 Each step posts one activity line. Each cloud launch is written to `house/fleet/TRACKS.md` in that same step.
 
 ## Way out
+
+Ask: anything new without a card? Each yes is carded in this turn. The fields are a one-line what, `From:`, `Waiting on:` (a condition, or `nothing`), and `Owner:`. The rule is Fallout in `grok-bot/OP-PROC.md`. The station-card lens is `.agents/skills/station-card/SKILL.md`.
 
 Update STATION `Judgement:`, the card metadata (title, url, owner seat, stage, state), TRACKS, and the closing activity line.
 
