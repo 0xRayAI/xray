@@ -145,6 +145,7 @@ test('the board face keeps the contract in both themes', async () => {
       const mergedCard = document.querySelector('#waveBody .wcard[data-key="example/app#2"]');
       const openCard = document.querySelector('#waveBody .wcard[data-key="example/app#3"]');
       const mesh = document.getElementById('meshPanel').getBoundingClientRect();
+      const header = document.querySelector('main > header').getBoundingClientRect();
       const slider = document.getElementById('slider').getBoundingClientRect();
       const names = [...document.querySelectorAll('.seat .nm')].map(el => el.textContent);
       const roster = [...document.querySelectorAll('#seatGrid .seat')].map(el => {
@@ -181,7 +182,8 @@ test('the board face keeps the contract in both themes', async () => {
         cloudBadge: linked ? linked.textContent : '',
         freshText: fresh ? fresh.textContent : '',
         freshBadge: fresh ? fresh.querySelectorAll('a.wbadge.cloud, .wbadge.cloud').length : -1,
-        sliderInside: slider.top >= mesh.top - 1 && slider.bottom <= mesh.bottom + 1 && slider.left >= mesh.left - 1 && slider.right <= mesh.right + 1,
+        sliderInside: slider.top >= header.top - 1 && slider.bottom <= header.bottom + 1 && slider.height > 0 && getComputedStyle(document.querySelector('main > header')).position === 'sticky',
+        sliderBox: { top: slider.top, bottom: slider.bottom, height: slider.height, headerTop: header.top, headerBottom: header.bottom, meshTop: mesh.top },
         names, roster,
         activityCollapsed: activity.classList.contains('collapsed'),
         logDisplay: log.display, logMax: log.maxHeight, logOverflow: log.overflowY,
@@ -204,7 +206,7 @@ test('the board face keeps the contract in both themes', async () => {
     assert.ok(face.waiting.some(row => row.startsWith('in review')));
     assert.ok(!face.waiting.some(row => row.startsWith('waiting') && face.mergedParent && face.mergedParent.includes('done') === false));
     assert.match(face.mergedParent, /done/);
-    assert.equal(face.sliderInside, true);
+    assert.equal(face.sliderInside, true, JSON.stringify(face.sliderBox));
     assert.ok(face.names.every(name => !name.includes('·')));
     assert.ok(face.roster.length > 0);
     const stateWord = /\b(active|idle|working|live|silent)\b/i;

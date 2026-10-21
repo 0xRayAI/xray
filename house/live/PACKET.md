@@ -79,3 +79,7 @@ A click on an activity row opens the seat, the full Central time, the linked car
 ## History transitions
 
 An append-only transitions log is written before the 14-day filter and the 40-card cap. The id is `card|transition|source_id`. Day folders are America/Chicago. `GET /history/transitions` and `GET /history/export?date=` serve that log. `GET /history/cards` returns the latest transition, and `merged` wins over a later live snapshot in `cards.jsonl`. The backfill reads `events.jsonl` since 2026-06-05, appends once per source id, and does not rewrite `cards.jsonl` or clear `.backfill-done`. The ten missing days stay listed in `archive/transitions-backfill.json` until a transition lands on them. Daily files are not deleted. The durable copy is `$MESH_DATA_DIR/archive` on the Railway volume; a volume wipe is the loss.
+
+## Frozen column headers
+
+The page header holds the timeline toolbar, and that pair stays at the top of the page. Each kanban column keeps its status name and count in view. The card list under that header scrolls on its own. The board scrolls sideways, and the headers stay lined up with their columns. On the wave board, the status line (name and count) sticks to the top of the card list while the cards scroll.

@@ -4,7 +4,7 @@ A card is one GitHub issue or pull request. A beat is a real event on it. A pack
 
 The live page shows the same cards in a kanban above the activity list. A column is the card's stage (`open`, `review`, `fix`, `merge`, `retest`, `done`). A closed card sits in `done`. A click opens the timeline. The GitHub link is on the card face.
 
-Kanban note. The live page shows a read-only kanban above Activity. Columns are open, review, fix, merge, retest, and done. The deep link is `?card=`. The public board serves the kanban and GET /history, /history/cards, and /history/transitions.
+Kanban note. The live page shows a read-only kanban above Activity. Columns are open, review, fix, merge, retest, and done. The column header (stage and count) stays put while the cards under it scroll. The board scrolls sideways, and the headers stay lined up with the columns. The page header and the timeline toolbar stay at the top of the page. The deep link is `?card=`. The public board serves the kanban and GET /history, /history/cards, and /history/transitions.
 
 When `LIVE_URL` is set, the board seats see is the collector board (`GET /cards`). When `LIVE_URL` is unset, the board is hand-kept `house/WAVEBOARD.md`. `feed/live_mesh.py` runs `feed/live_collect.py` and `feed/live_board.py` every 45 seconds (`LIVE_WATCH_S`, default 45). An empty box board does not replace those cards.
 
@@ -75,7 +75,7 @@ The command is stored on the server and wins over the comment while that store e
 
 ## Layout
 
-The page groups cards that a seat is working on, then pinned cards, then the rest by status (waiting, in review, on hold, parked, done). The Cards control “By agent” switches that list to one group per seat, with status under the seat. Issues whose title names a pull request in the same repo fold under that pull request. A run of more than three loose issues collapses to one line.
+The page groups cards that a seat is working on, then pinned cards, then the rest by status (waiting, in review, on hold, parked, done). A status header (name and count) sticks to the top of the card list. The Cards control “By agent” switches that list to one group per seat, with status under the seat. Issues whose title names a pull request in the same repo fold under that pull request. A run of more than three loose issues collapses to one line.
 
 ## Ghost cards
 

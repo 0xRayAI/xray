@@ -355,7 +355,7 @@
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; }
 main { max-width: 1100px; margin: 0 auto; padding: 12px; }
-header { animation: rise .6s ease-out both; }
+header .title { animation: rise .6s ease-out both; }
 .title { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 #themeToggle { margin-left: auto; flex: none; }
 #mark { width: 112px; height: 44px; flex: none; }
@@ -377,11 +377,25 @@ header { animation: rise .6s ease-out both; }
 @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 @keyframes blink { 50% { opacity: .35; } }
 @media (prefers-reduced-motion: reduce) {
-  header, .pill::before { animation: none; }
+  header .title, .pill::before { animation: none; }
   #mesh { transition: none; }
 }
 header h1 { font-size: 20px; margin: 0; letter-spacing: .04em; }
-header { margin-bottom: 8px; }
+main > header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: var(--bg);
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+}
+main > header .mesh-controls {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  margin: 8px 0 0;
+  padding: 8px 10px;
+}
 .status b[title] { cursor: help; }
 header h1 span { color: var(--dim); font-size: 13px; font-weight: 400; letter-spacing: 0; margin-left: 8px; }
 .status { color: var(--dim); font-size: 13px; margin: 4px 0 0; }
@@ -403,7 +417,6 @@ header h1 span { color: var(--dim); font-size: 13px; font-weight: 400; letter-sp
 canvas { display: block; width: 100%; height: auto; }
 .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 #meshPanel { display: flex; flex-direction: column; }
-.mesh-controls { border: 0; background: transparent; margin: 8px 0 0; padding: 0; }
 .mesh-legend { color: var(--dim); font-size: 11px; margin: 6px 0 0; display: flex; flex-wrap: wrap; gap: 8px; }
 .mesh-legend span { border-bottom: 1px dotted var(--dim); cursor: help; }
 .spectrum-pill { display: inline-block; flex: none; font-size: 11px; font-weight: 700; letter-spacing: .08em; padding: 3px 8px; border-radius: 999px;
@@ -429,7 +442,7 @@ button.wstat.on { outline: 2px solid var(--focus); background: var(--panel); }
 .wstat.total { border-color: var(--stat-total); }
 @media (max-width: 900px) { .wave.collapsed .wave-stats { display: none; } }
 .wave-body { flex: 1 1 auto; min-height: 220px; overflow-y: auto; margin-top: 6px; padding-right: 2px; }
-.wgroup { margin: 8px 0 4px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.wgroup { position: sticky; top: 0; z-index: 3; margin: 0; padding: 8px 0 4px; background: var(--stat-bg); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 .wcards { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 .wcard { border: 1px solid var(--card-line); border-left: 4px solid var(--card-edge); border-radius: 8px; padding: 8px 10px; background: var(--card); font-size: 13px; cursor: pointer; box-shadow: 0 1px 0 var(--hairline); }
 .wcard:hover { background: var(--card-hover); }
@@ -452,11 +465,11 @@ button.wstat.on { outline: 2px solid var(--focus); background: var(--panel); }
 .wspin { width: 8px; height: 8px; margin-top: 3px; border-radius: 50%; border: 1.5px solid var(--spin); border-right-color: transparent; display: inline-block; animation: wspin .8s linear infinite; flex: none; }
 @keyframes wspin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .wspin { animation: none; border-color: var(--spin); background: var(--spin); } }
-.pinhead, .donehead { display: block; width: 100%; text-align: left; margin: 8px 0 4px; padding: 0; border: 0; background: transparent; font: inherit; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); cursor: pointer; }
+.pinhead, .donehead { display: block; position: sticky; top: 0; z-index: 2; width: 100%; text-align: left; margin: 0; padding: 8px 0 4px; border: 0; background: var(--stat-bg); font: inherit; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); cursor: pointer; }
 .wkids { list-style: none; margin: 2px 0 6px 14px; padding: 0 0 0 8px; border-left: 1px solid var(--kid-line); }
 .kidhead, .isshead { display: block; margin: 2px 0 2px 14px; padding: 0; border: 0; background: transparent; font: inherit; font-size: 10px; color: var(--muted); cursor: pointer; }
 .wkids.collapsed, .wcards.issues.collapsed, .wcards.pins.collapsed, .wcards.done.collapsed, .wcards.cloud-done.collapsed { display: none; }
-.wsub { margin: 4px 0 2px; font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: var(--sub); }
+.wsub { position: sticky; top: 1.45rem; z-index: 2; margin: 0; padding: 4px 0 2px; background: var(--stat-bg); font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: var(--sub); }
 .wdetail { display: none; margin-top: 5px; border-top: 1px solid var(--detail-line); padding-top: 4px; }
 .wcard.open .wdetail { display: block; }
 #cardPopDetail.wdetail { display: block; }
@@ -468,10 +481,11 @@ button.wstat.on { outline: 2px solid var(--focus); background: var(--panel); }
 .wcard.cloud.failed { outline: 1px solid var(--cloud-fail); }
 .wcard.cloud.finished, .wcard.cloud.stale { opacity: .72; }
 .wbadge.cloud { border-color: var(--badge-held-edge); color: var(--badge-held-fg); }
-.kanban-board { display: grid; grid-template-columns: repeat(6, minmax(140px, 1fr)); gap: 8px; overflow-x: auto; }
-.kanban-col { min-width: 0; border: 1px solid var(--line); border-radius: 8px; background: var(--stat-bg); padding: 6px; }
-.kanban-col h3 { margin: 0 0 6px; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
-.kanban-col .wcards { max-height: 360px; overflow: auto; }
+.kanban-board { display: grid; grid-template-columns: repeat(6, minmax(180px, 1fr)); grid-template-rows: minmax(0, 1fr); gap: 8px; align-items: stretch; }
+#kanbanBoard.fold-body { height: 22rem; max-height: 22rem; overflow-x: auto; overflow-y: hidden; }
+.kanban-col { min-width: 180px; min-height: 0; max-height: 100%; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--line); border-radius: 8px; background: var(--stat-bg); padding: 6px; }
+.kanban-col h3 { flex: none; margin: 0 0 6px; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); background: var(--stat-bg); }
+.kanban-col .wcards { flex: 1 1 auto; min-height: 0; max-height: none; overflow-x: hidden; overflow-y: auto; }
 .wlinks { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
 a.wgh,
 .wdetail a[href],
@@ -497,7 +511,11 @@ a.wgh:hover,
 #cardPop h2 { margin: 0; font-size: 16px; }
 #cardPop dl { margin: 8px 0 0; display: grid; grid-template-columns: max-content 1fr; gap: 2px 8px; font-size: 12px; }
 #cardPop dt { color: var(--detail-label); } #cardPop dd { margin: 0; overflow-wrap: anywhere; }
-@media (max-width: 900px) { .kanban-board { grid-template-columns: 1fr; } }
+@media (max-width: 900px) {
+  .kanban-board { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; }
+  #kanbanBoard.fold-body { height: auto; max-height: none; overflow: visible; }
+  .kanban-col { min-width: 0; height: 16rem; max-height: 16rem; }
+}
 .wcard.glow { animation: wglow 2.6s ease-out; }
 @keyframes wglow { 0% { box-shadow: 0 0 0 2px var(--glow), 0 0 18px var(--glow); } 100% { box-shadow: none; } }
 @media (prefers-reduced-motion: reduce) { .wcard.glow { animation: none; outline: 2px solid var(--glow); } }
@@ -582,6 +600,19 @@ footer a { color: var(--foot); }
     <p class="status" id="status">Loading…</p>
     <p class="fresh" id="fresh"><span class="fresh-dot"></span><span id="freshText">Loading…</span></p>
     <div hidden><canvas id="mark" width="112" height="44"></canvas><b id="fleet"></b><span id="blackout"></span></div>
+    <div class="controls mesh-controls" aria-label="Timeline">
+      <button id="play" type="button" title="Play / pause the replay (Live plays in real time; click the timeline to replay from there)">&#9654; Play</button>
+      <select id="speed" aria-label="Replay speed">
+        <option value="1">1× real time</option>
+        <option value="60">1 min / s</option>
+        <option value="600" selected>10 min / s</option>
+        <option value="3600">1 h / s</option>
+      </select>
+      <button id="live" type="button" class="on">Live</button>
+      <label class="ambient-toggle" title="Replay loop: every 10 s, replay the last few minutes dimmed (visual only)"><input id="ambient" type="checkbox" checked> Replay loop</label>
+      <input id="slider" type="range" min="0" max="1" step="1000" value="1" aria-label="Timeline">
+      <span id="tLabel"></span>
+    </div>
   </header>
 
   <section class="panel seats fold" id="seats" data-fold="roster" aria-label="Seats">
@@ -602,19 +633,6 @@ footer a { color: var(--foot); }
     <div id="headTime">&nbsp;</div>
     <canvas id="mesh" width="920" height="400" aria-label="Mesh of seats and rails with handoff pings"></canvas>
     <p class="mesh-legend" id="meshLegend"><span title="index.html drawNode. Hot seat from activeSeats over a handoff or push, or the rewind window. Three strokes. Live duration 2 times FLASH_MS, 5200ms. Letter seats.">Hot ring 5.2s</span><span title="index.html draw. A ping whose source is this node. One sine, PULSE_MS 900, across the flight. Flight is 2600ms, up to 7800ms.">Depart pulse</span><span title="index.html drawPing. from equals to. Radius 24 to 46 and alpha 1 to 0 across that same flight.">One-node ring</span></p>
-    <div class="controls mesh-controls" aria-label="Timeline">
-      <button id="play" type="button" title="Play / pause the replay (Live plays in real time; click the timeline to replay from there)">&#9654; Play</button>
-      <select id="speed" aria-label="Replay speed">
-        <option value="1">1× real time</option>
-        <option value="60">1 min / s</option>
-        <option value="600" selected>10 min / s</option>
-        <option value="3600">1 h / s</option>
-      </select>
-      <button id="live" type="button" class="on">Live</button>
-      <label class="ambient-toggle" title="Replay loop: every 10 s, replay the last few minutes dimmed (visual only)"><input id="ambient" type="checkbox" checked> Replay loop</label>
-      <input id="slider" type="range" min="0" max="1" step="1000" value="1" aria-label="Timeline">
-      <span id="tLabel"></span>
-        </div>
     </div>
   </section>
   <div id="agentPing" hidden></div>
