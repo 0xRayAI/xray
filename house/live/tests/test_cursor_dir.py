@@ -8,6 +8,7 @@ from pathlib import Path
 STRAY_NAMES = (
     "zzsplit.txt",
     "zzsplit.txt.migrated",
+    "zzsplit.txt.migrated.1",
     "zzsplit.txt.tmp",
     "zzsplit.claims.json",
     "zzsplit.claims.json.migrated",
@@ -63,14 +64,17 @@ class CursorDir(unittest.TestCase):
         except OSError:
             pass
 
-    def invoke(self, *args, cursors=None, cwd=None):
+    def invoke(self, *args, cursors=None, cwd=None, root=None):
         env = os.environ.copy()
         env["HOME"] = str(self.home)
         env["LIVE_URL"] = "http://127.0.0.1:9"
         env["SEAT_KEYS_DIR"] = str(self.keys)
         env.pop("LIVE_CURSORS", None)
+        env.pop("LIVE_CURSOR_ROOT", None)
         if cursors is not None:
             env["LIVE_CURSORS"] = cursors
+        if root is not None:
+            env["LIVE_CURSOR_ROOT"] = str(root)
         return subprocess.run(
             [str(TOOL), SEAT, *args],
             env=env,
@@ -100,10 +104,14 @@ class CursorDir(unittest.TestCase):
         self.assertEqual(again.returncode, 0, again.stderr)
         self.assertIn("repeat", again.stdout)
 
+    def legacy_work(self):
+        return self.home / "legacy" / "workspace" / ".cursors"
+
     def test_workspace_file_alone_is_not_a_repeat(self):
-        WORKSPACE.parent.mkdir(parents=True, exist_ok=True)
-        WORKSPACE.write_text(f"0xrayai/xray#539|{SHA}|{KIND}\n")
-        r = self.repeat()
+        folder = self.legacy_work()
+        folder.mkdir(parents=True)
+        (folder / f"{SEAT}.txt").write_text(f"0xrayai/xray#539|{SHA}|{KIND}\n")
+        r = self.repeat(root=self.home / "legacy")
         self.assertEqual(r.returncode, 1, r.stderr)
         self.assertIn("new", r.stdout)
         self.assertFalse(self.fixed_file().exists())
@@ -112,12 +120,14 @@ class CursorDir(unittest.TestCase):
         folder = self.fixed_file().parent
         folder.mkdir(parents=True)
         self.fixed_file().write_text("kept\n")
-        WORKSPACE.parent.mkdir(parents=True, exist_ok=True)
-        WORKSPACE.write_text("kept\n")
-        r = self.repeat()
+        work = self.legacy_work()
+        work.mkdir(parents=True)
+        stray = work / f"{SEAT}.txt"
+        stray.write_text("kept\n")
+        r = self.repeat(root=self.home / "legacy")
         self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
         self.assertIn("more than one folder", r.stderr)
-        self.assertIn(str(WORKSPACE), r.stderr)
+        self.assertIn(str(stray), r.stderr)
         self.assertIn(str(self.fixed_file()), r.stderr)
 
     def test_live_cursors_workspace_is_refused(self):
@@ -157,11 +167,12 @@ class CursorDir(unittest.TestCase):
         env["LIVE_URL"] = "http://127.0.0.1:9"
         env["SEAT_KEYS_DIR"] = str(self.keys)
         env.pop("LIVE_CURSORS", None)
+        env["LIVE_CURSOR_ROOT"] = str(self.home / "legacy")
         return subprocess.run([str(TOOL), "--migrate-cursors"], env=env, capture_output=True, text=True)
 
     def test_migrate_unions_keys_and_keeps_the_newest_sidecars(self):
         home = self.home / ".burst" / "cursors"
-        work = Path("/workspace/.cursors")
+        work = self.legacy_work()
         old = "0xrayai/xray#1|aaaaaaa|ready"
         shared = "0xrayai/xray#2|bbbbbbb|ready"
         newer = "0xrayai/xray#3|ccccccc|ready"
@@ -209,18 +220,38 @@ class CursorDir(unittest.TestCase):
         missing = self.invoke("--repeat", "--pr", "0xRayAI/xray#9", "--sha", "fffffff", "--kind", "ready")
         self.assertEqual(missing.returncode, 1, missing.stderr)
 
-    def test_migrate_refuses_to_replace_an_existing_migrated_file(self):
+    def test_migrate_keeps_an_existing_backup_and_still_merges(self):
         home = self.home / ".burst" / "cursors"
-        work = Path("/workspace/.cursors")
+        work = self.legacy_work()
         self.plant(home, f"{SEAT}.txt", "0xrayai/xray#1|aaaaaaa|ready\n", 1_000_000_000)
         self.plant(work, f"{SEAT}.txt", "0xrayai/xray#2|bbbbbbb|ready\n", 2_000_000_000)
         self.plant(work, f"{SEAT}.txt.migrated", "already\n", 1)
         r = self.migrate()
-        self.assertEqual(r.returncode, 2, r.stdout)
-        self.assertIn("already exists", r.stderr)
-        self.assertEqual((home / f"{SEAT}.txt").read_text(), "0xrayai/xray#1|aaaaaaa|ready\n")
-        self.assertEqual((work / f"{SEAT}.txt").read_text(), "0xrayai/xray#2|bbbbbbb|ready\n")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn(f"migrated {SEAT} 3 keys", r.stdout)
+        merged = (home / f"{SEAT}.txt").read_text().splitlines()
+        self.assertEqual(merged, ["already", "0xrayai/xray#1|aaaaaaa|ready", "0xrayai/xray#2|bbbbbbb|ready"])
         self.assertEqual((work / f"{SEAT}.txt.migrated").read_text(), "already\n")
+        self.assertFalse((work / f"{SEAT}.txt").exists())
+        self.assertTrue((work / f"{SEAT}.txt.migrated.1").is_file())
+        again = self.migrate()
+        self.assertEqual(again.returncode, 0, again.stderr)
+        self.assertNotIn("migrated", again.stdout)
+        self.assertEqual((home / f"{SEAT}.txt").read_text().splitlines(), merged)
+
+    def test_migrate_recovers_keys_left_only_in_migrated_files(self):
+        home = self.home / ".burst" / "cursors"
+        work = self.legacy_work()
+        self.plant(home, f"{SEAT}.txt.migrated", "0xrayai/xray#1|aaaaaaa|ready\n", 1_000_000_000)
+        self.plant(work, f"{SEAT}.txt.migrated", "0xrayai/xray#2|bbbbbbb|ready\n", 2_000_000_000)
+        r = self.migrate()
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual((home / f"{SEAT}.txt").read_text().splitlines(), [
+            "0xrayai/xray#1|aaaaaaa|ready",
+            "0xrayai/xray#2|bbbbbbb|ready",
+        ])
+        self.assertEqual((home / f"{SEAT}.txt.migrated").read_text(), "0xrayai/xray#1|aaaaaaa|ready\n")
+        self.assertEqual((work / f"{SEAT}.txt.migrated").read_text(), "0xrayai/xray#2|bbbbbbb|ready\n")
 
     def test_other_explicit_dir_stays_isolated(self):
         other = self.home / "board-cursors"

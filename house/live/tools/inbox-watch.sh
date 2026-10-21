@@ -13,14 +13,25 @@ fi
 interval="${INBOX_WATCH_INTERVAL:-60}"
 : "${LIVE_URL:=https://bifrost.0xray.dev}"
 : "${SEAT_KEYS_DIR:=$HOME/.burst/seat-keys}"
-: "${LIVE_CURSORS:=$HOME/.burst/cursors}"
-export LIVE_URL SEAT_KEYS_DIR LIVE_CURSORS
+# The cursor folder rule is grok-bot/OP-PROC.md#cursor-folder. This overwrites a pre-set folder.
+export LIVE_URL SEAT_KEYS_DIR
+export LIVE_CURSORS="$HOME/.burst/cursors"
 if [[ -n "${LIVE_INBOX:-}" ]]; then
   bin="$LIVE_INBOX"
-elif command -v live-inbox >/dev/null 2>&1; then
-  bin="$(command -v live-inbox)"
 else
-  bin="$(cd "$(dirname "$0")" && pwd)/live-inbox"
+  here="$(cd "$(dirname "$0")" && pwd)"
+  case "$here" in
+    */.burst/bin)
+      bin="${XRAY_MAIN:?set XRAY_MAIN to the main checkout}/house/live/tools/live-inbox"
+      ;;
+    *)
+      if [[ -x "$here/live-inbox" ]]; then
+        bin="$here/live-inbox"
+      else
+        bin="${XRAY_MAIN:?set XRAY_MAIN to the main checkout}/house/live/tools/live-inbox"
+      fi
+      ;;
+  esac
 fi
 last_err=""
 last_out=""
