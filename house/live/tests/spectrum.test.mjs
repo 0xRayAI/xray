@@ -55,6 +55,15 @@ test('aspect-fit uses one scale and centres wide, tall, and square boxes', () =>
   }
 });
 
+test('a same-node replay opens the lane the resolver already chose', () => {
+  const lane = (src, dst, resolved) => L.spectrumLane(src, dst, resolved).join('|');
+  assert.equal(lane('GitHub', 'GitHub', ['GitHub', 'forge']), 'GitHub|forge');
+  assert.equal(lane('forge', 'forge', ['forge', 'GitHub']), 'forge|GitHub');
+  assert.equal(lane('critic', 'forge', ['GitHub', 'forge']), 'critic|forge');
+  assert.equal(lane('GitHub', 'GitHub', ['GitHub', 'GitHub']), 'GitHub|GitHub');
+  assert.equal(lane('GitHub', 'GitHub', null), 'GitHub|GitHub');
+});
+
 test('spectrum meter is 14 bars and the hue moves', () => {
   const a = L.spectrumMeter(0, false);
   const b = L.spectrumMeter(4000, false);

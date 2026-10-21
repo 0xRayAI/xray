@@ -68,6 +68,14 @@ The badge stays only when the card is a packet PR (the title starts with `Packet
 
 `boardCloudAgents` flagged `card missing` when both `card` and `pr` were empty (`house/live/app/worktrack.mjs`). A `bc-<id> <track>` turn, a branch or `head_ref` that contains the id, and the card cell on `TRACKS.md` (`owner/repo#n` or `packet:…`) fill the card. The page renders that card as `.wbadge.cloud` with the GitHub href. A run with no pull and no named card shows `no card` and does not set the flag.
 
+## Activity row
+
+A click on an activity row opens the seat, the full Central time, the linked card, and the full note under that row. A second click closes it. A link inside the row still opens. The row does not rewind the mesh.
+
+## Spectrum trail
+
+A replayed check is stored with both ends on GitHub. The page was folding that ping back into a ring on GitHub after the resolver had already opened a lane to forge, and the rainbow trail returns before it can draw on a ring. A replayed same-node ping now keeps that opened lane when both ends are on the canvas, so the trail draws.
+
 ## Closed column and history
 
 `/cards` shows a merged or closed card for 24 hours. Inside that window the card takes a display slot before any parked card. The 40-card cap can still leave it off the board. That card is returned on `settled`. The server writes the final row to `/history` and `/history/cards` with `verb` `merged` when a merged event exists for that repo and number. A packet-born card whose item is merged, including `#485`, is not kept on the board. A later boot does not delete those archive rows. The merged-stat click keeps the merged event when it touches Bifrost, and the card it opens is closed with that merge, not a later approval.

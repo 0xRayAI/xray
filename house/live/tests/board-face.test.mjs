@@ -62,15 +62,21 @@ const historyCards = {
   cards: [{ id: 'example/app#2', owner: 'forge', state: 'closed', verb: 'merged', title: 'Merged one', number: 2, updated_ct: '2026-10-20T07:00:00-05:00', closed_ct: '2026-10-20T07:00:00-05:00' }],
 };
 
-function serve(payload) {
+function serve(payload, files) {
   const types = { '.html': 'text/html', '.js': 'text/javascript', '.json': 'application/json', '.png': 'image/png', '.woff2': 'font/woff2' };
   const body = JSON.stringify(payload || feed());
+  const extra = files || {};
   return new Promise((resolve) => {
     const server = http.createServer((req, res) => {
       const url = new URL(req.url, 'http://127.0.0.1');
       if (url.pathname === '/live-events.json') { res.writeHead(200, { 'content-type': 'application/json' }); res.end(body); return; }
       if (url.pathname === '/history/cards') { res.writeHead(200, { 'content-type': 'application/json' }); res.end(JSON.stringify(historyCards)); return; }
       if (url.pathname === '/history') { res.writeHead(200, { 'content-type': 'application/json' }); res.end(JSON.stringify({ days: ['2026-10-20'], events: [] })); return; }
+      if (extra[url.pathname]) {
+        res.writeHead(200, { 'content-type': types[path.extname(extra[url.pathname])] || 'text/javascript' });
+        res.end(fs.readFileSync(extra[url.pathname]));
+        return;
+      }
       const rel = url.pathname === '/' ? '/index.html' : url.pathname;
       const file = path.normalize(path.join(PUB, rel));
       if (!file.startsWith(PUB) || !fs.existsSync(file) || !fs.statSync(file).isFile()) { res.writeHead(404); res.end('missing'); return; }
@@ -416,6 +422,106 @@ test('each stat tile lists the items its count includes', async () => {
     assert.deepEqual(byLabel['PRs closed unmerged 24h'], ['example/app#12']);
     assert.deepEqual(byLabel['open now'], ['example/app#1', 'example/app#10']);
     assert.deepEqual(byLabel['owner prompts'], []);
+  } finally {
+    if (browser) await browser.close();
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
+test('an activity row expands to the full note and collapses again', async () => {
+  const now = Date.now();
+  const iso = (ms) => new Date(ms).toISOString();
+  const full = 'FULL NOTE the row keeps closed until the activity item is opened';
+  const longPrompt = 'look at the whole handoff. '.repeat(8).trim();
+  const payload = feed();
+  payload.events = [
+    { id: 'prompt1', t_ct: iso(now - 20000), kind: 'seat_prompt', from: 'Blaze', to: 'forge', note: longPrompt, label: 'Blaze → forge: ' + longPrompt },
+    { id: 'ci1', t_ct: iso(now - 10000), kind: 'workflow_run', from: 'CI', to: 'GitHub', credit: 'Blaze', label: 'run lint', repo: 'example/app', number: 9 },
+    { id: 'note1', t_ct: iso(now - 5000), kind: 'comment', from: 'forge', to: 'GitHub', label: 'short label', note: full, repo: 'example/app', number: 3, source: 'https://github.com/example/app/pull/3' },
+  ];
+  const overlay = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'site', 'public', 'site-config.js');
+  const server = await serve(payload, { '/site-config.js': overlay });
+  const base = `http://127.0.0.1:${server.address().port}/index.html`;
+  let browser;
+  try {
+    browser = await chromium.launch();
+    const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto(base, { waitUntil: 'domcontentloaded' });
+    const row = page.locator('#log li[data-id="note1"]');
+    await row.waitFor({ timeout: 8000 });
+    const note = row.locator('.log-note');
+    assert.equal(await note.isVisible(), false);
+    assert.equal(await row.locator('a').first().textContent(), 'short label');
+    await row.locator('.who').click();
+    assert.equal(await row.getAttribute('aria-expanded'), 'true');
+    assert.equal(await note.isVisible(), true);
+    assert.equal(await note.textContent(), full);
+    fs.mkdirSync(ART, { recursive: true });
+    await row.scrollIntoViewIfNeeded();
+    await row.screenshot({ path: path.join(ART, 'activity-row-open.png') });
+    const meta = await row.locator('.log-meta').textContent();
+    assert.match(meta, /FORGE/);
+    assert.match(meta, /CT/);
+    const card = row.locator('a.log-card');
+    assert.equal(await card.textContent(), 'example/app#3');
+    assert.equal(await card.getAttribute('href'), 'https://github.com/example/app/pull/3');
+    await page.evaluate(() => {
+      document.querySelector('#log li[data-id="note1"] a.log-card').addEventListener('click', (ev) => ev.preventDefault());
+    });
+    await card.click();
+    assert.equal(await row.getAttribute('aria-expanded'), 'true');
+    await note.click();
+    assert.equal(await row.getAttribute('aria-expanded'), 'false');
+    assert.equal(await note.isVisible(), false);
+    const prompt = page.locator('#log li[data-id="prompt1"]');
+    assert.equal(await prompt.locator('.prompt-line').textContent().then(t => t.endsWith('…')), true);
+    assert.equal(await prompt.locator('.log-note').isVisible(), false);
+    await prompt.locator('.when').click();
+    assert.equal(await prompt.locator('.log-note').textContent(), 'Blaze → forge: ' + longPrompt);
+    assert.equal(await row.getAttribute('aria-expanded'), 'false');
+    const ci = page.locator('#log li[data-id="ci1"]');
+    await ci.locator('.who').click();
+    assert.match(await ci.locator('.log-meta').textContent(), /Blaze/);
+    assert.equal(await ci.locator('a.log-card').getAttribute('href'), 'https://github.com/example/app/pull/9');
+    assert.equal(await prompt.getAttribute('aria-expanded'), 'true');
+  } finally {
+    if (browser) await browser.close();
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
+test('a replayed same-node check paints the spectrum trail', async () => {
+  const now = Date.now();
+  const iso = (ms) => new Date(ms).toISOString();
+  const payload = feed();
+  payload.events = [];
+  for (let i = 0; i < 8; i++) {
+    payload.events.push({
+      id: 'ci' + i, t_ct: iso(now - (240 - i * 30) * 1000), kind: 'workflow_run',
+      from: 'CI', to: 'GitHub', credit: 'forge', label: 'run ' + i, repo: 'example/app', number: 3,
+    });
+  }
+  const overlay = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'site', 'public', 'site-config.js');
+  const server = await serve(payload, { '/site-config.js': overlay });
+  const base = `http://127.0.0.1:${server.address().port}/index.html`;
+  let browser;
+  try {
+    fs.mkdirSync(ART, { recursive: true });
+    browser = await chromium.launch();
+    const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'no-preference' });
+    await page.goto(base, { waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(() => document.getElementById('mesh').dataset.spectrumTrail === '1', null, { timeout: 8000 });
+    const face = await page.evaluate(() => ({
+      pill: document.getElementById('spectrumPill').hidden,
+      bars: document.getElementById('spectrumMeter').children.length,
+      trail: document.getElementById('mesh').dataset.spectrumTrail,
+    }));
+    assert.equal(face.pill, false);
+    assert.equal(face.bars, 14);
+    assert.equal(face.trail, '1');
+    await page.screenshot({ path: path.join(ART, 'spectrum-trail.png') });
   } finally {
     if (browser) await browser.close();
     await new Promise((resolve) => server.close(resolve));

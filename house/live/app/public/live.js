@@ -239,6 +239,21 @@
     return own(WHO_LOG, who) || String(who).replace(/^@/, '').toUpperCase().slice(0, 8);
   }
 
+  /* One activity row, expanded: the seat, the card, the link, and the full note.
+     The row itself keeps the short label. */
+  function activityDetail(e) {
+    if (!e) return null;
+    if (typeof e.kind !== 'string') e = Object.assign({}, e, { kind: '' });
+    var prompt = promptView(e);
+    var note = prompt && prompt.line ? prompt.line : (typeof e.note === 'string' && e.note.trim() ? e.note.trim() : cleanLabel(e.label || ''));
+    var repo = e.repo ? String(e.repo) : '';
+    var num = e.number == null || e.number === '' ? NaN : Number(e.number);
+    var card = repo && num === num ? repo + '#' + num : '';
+    var href = /^https:\/\//.test(e.source || '') ? e.source : (/^https:\/\//.test(e.url || '') ? e.url : '');
+    if (!href && card) href = 'https://github.com/' + repo + '/' + (/issue/.test(e.kind) ? 'issues' : 'pull') + '/' + num;
+    return { seat: whoTag(e), card: card, href: href, note: note, label: cleanLabel(e.label || e.kind || '') };
+  }
+
   function headline(e) {
     var repo = (e.repo || '').split('/').pop();
     var head = repo + (e.number == null ? '' : ' #' + e.number) + ' \u00b7 ' + (KIND_WORD[e.kind] || e.kind);
@@ -392,6 +407,13 @@
     }
     return bars;
   }
+  /* A same-node ping has no curved lane. Replay opens the lane resolveNodes already
+     chose (GitHub → forge for a check) so the rainbow trail still has somewhere to sit. */
+  function spectrumLane(src, dst, resolved) {
+    if (src && dst && src !== dst) return [src, dst];
+    if (resolved && resolved[0] && resolved[1] && resolved[0] !== resolved[1]) return [resolved[0], resolved[1]];
+    return [src, dst];
+  }
   function spectrumTrail(p, nowMs, light) {
     var stops = [], base = light ? 0.98 : 0.9, lit = light ? 46 : 62;
     var head = Number(p) || 0, t = Number(nowMs) || 0, k;
@@ -486,7 +508,8 @@
     ENTRY_MS: ENTRY_MS, PULSE_MS: PULSE_MS, MARK: MARK, markCells: markCells,
     isPlaying: isPlaying, sliderAction: sliderAction, edgeTraffic: edgeTraffic, orbitStep: orbitStep,
     spectrumEnabled: spectrumEnabled, spectrumShows: spectrumShows, spectrumMeter: spectrumMeter,
-    spectrumTrail: spectrumTrail, packetCore: packetCore, aspectFit: aspectFit,
+    spectrumLane: spectrumLane, spectrumTrail: spectrumTrail, packetCore: packetCore, aspectFit: aspectFit,
+    activityDetail: activityDetail,
     GLYPH: GLYPH, MARK_PATH: MARK_PATH, activeSeats: activeSeats, recentItems: recentItems, BOT_IMAGES: BOT_IMAGES, BLACKOUT_UNTIL: BLACKOUT_UNTIL,
     countdown: countdown, blackoutLine: blackoutLine, clockLine: clockLine, fleetLine: fleetLine, wireGlow: wireGlow
   };

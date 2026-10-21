@@ -557,9 +557,12 @@ button:hover { border-color: var(--control-hover); }
 #log .when { color: var(--dim); font-variant-numeric: tabular-nums; font-size: 12px; font-family: "JetBrains Mono", ui-monospace, monospace; }
 #log .who { font-size: 11px; font-weight: 700; padding-top: 1px; }
 #log a { overflow-wrap: anywhere; }
-    #log .prompt-line { font: inherit; color: var(--ink); background: transparent; border: 0; padding: 0; text-align: left; min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    #log button.prompt-line { cursor: pointer; }
-    #log .prompt-line.open { white-space: normal; overflow: visible; }
+    #log .prompt-line { font: inherit; color: inherit; background: transparent; border: 0; padding: 0; text-align: left; min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    #log .log-detail { grid-column: 1 / -1; display: grid; gap: 2px; padding: 2px 0 8px; color: var(--text); font-size: 12px; white-space: normal; }
+    #log .log-detail[hidden] { display: none !important; }
+    #log .log-meta { color: var(--dim); }
+    #log .log-note { white-space: pre-wrap; overflow-wrap: anywhere; }
+    #log a.log-card { color: var(--focus); }
 .legend { color: var(--dim); font-size: 11px; }
 footer { color: var(--dim); font-size: 12px; }
 footer a { color: var(--foot); }
@@ -1269,6 +1272,10 @@ footer a { color: var(--foot); }
     if (ghosts.length) { ctx.globalAlpha = AMBIENT_ALPHA; ghosts.forEach(drawPing); ctx.globalAlpha = 1; }
     pings.forEach(drawPing);
     function drawPing(pk) {
+      if (pk.live && pk.e && pk.src === pk.dst && L.spectrumLane) {
+        var lane = L.spectrumLane(pk.src, pk.dst, L.resolveNodes(pk.e));
+        if (lane[0] !== lane[1] && pos[lane[0]] && pos[lane[1]]) { pk.src = lane[0]; pk.dst = lane[1]; }
+      }
       if (!hasPos(pk.src, 'ping') || !hasPos(pk.dst, 'ping')) return;
       if (pk.src === pk.dst) {   // one-node event (e.g. a check with no PR author): a ring pulse on the node
         var c0 = pos[pk.src]; ctx.strokeStyle = rgb(pk.col, Math.max(0, 1 - pk.p)); ctx.lineWidth = 2.5;
@@ -1808,47 +1815,70 @@ footer a { color: var(--foot); }
     $('status').innerHTML = st;
   }
 
-  function paintPrompt(parent, e) {
-    var view = L.promptView && L.promptView(e);
-    if (!view) return false;
-    var long = view.line.length > view.short.length;
-    var el = document.createElement(long ? 'button' : 'span');
-    el.className = 'prompt-line';
-    el.textContent = view.short;
-    el.title = view.line;
-    if (long) {
-      el.type = 'button';
-      el.setAttribute('aria-expanded', 'false');
-      el.addEventListener('click', function (ev) {
-        ev.preventDefault();
-        ev.stopPropagation();
-        var open = el.getAttribute('aria-expanded') === 'true';
-        el.setAttribute('aria-expanded', open ? 'false' : 'true');
-        el.classList.toggle('open', !open);
-        el.textContent = open ? view.short : view.line;
-      });
-    }
-    parent.appendChild(el);
-    return true;
+  var openLog = {};
+  function logTime(e) {
+    var t = typeof e._t === 'number' ? e._t : Date.parse(e.t_ct || '');
+    return t === t ? t : NaN;
   }
-
+  function appendLogRow(ul, e) {
+    var li = document.createElement('li');
+    var t = logTime(e);
+    if (t === t) li.dataset.t = t;
+    if (e.id) li.dataset.id = e.id;
+    var detail = L.activityDetail ? L.activityDetail(e) : null;
+    var open = !!(e.id && openLog[e.id]);
+    li.classList.toggle('open', open);
+    li.setAttribute('aria-expanded', open ? 'true' : 'false');
+    var when = document.createElement('span');
+    when.className = 'when';
+    when.textContent = t === t ? L.fmtCt(t).replace(' CT', '') : (e.t_ct || '');
+    var who = document.createElement('span');
+    who.className = 'who';
+    who.textContent = detail ? detail.seat : (L.whoTag ? L.whoTag(e) : (e.from || ''));
+    who.style.color = rgb(L.eventColor(e));
+    li.appendChild(when);
+    li.appendChild(who);
+    var prompt = L.promptView && L.promptView(e);
+    var labelText = prompt ? prompt.short : (detail ? detail.label : L.cleanLabel(e.label || e.kind || ''));
+    var href = detail && detail.href ? detail.href : '';
+    if (href && !prompt) {
+      var a = document.createElement('a');
+      a.textContent = labelText;
+      a.href = href; a.target = '_blank'; a.rel = 'noopener';
+      li.appendChild(a);
+    } else {
+      var span = document.createElement('span');
+      span.className = prompt ? 'prompt-line' : '';
+      span.textContent = labelText;
+      li.appendChild(span);
+    }
+    if (detail) {
+      var box = document.createElement('div');
+      box.className = 'log-detail';
+      box.hidden = !open;
+      var meta = document.createElement('div');
+      meta.className = 'log-meta';
+      meta.textContent = detail.seat + ' · ' + (t === t ? L.fmtCt(t) : (e.t_ct || ''));
+      box.appendChild(meta);
+      if (detail.card) {
+        var card = document.createElement(href ? 'a' : 'span');
+        card.className = 'log-card';
+        card.textContent = detail.card;
+        if (href) { card.href = href; card.target = '_blank'; card.rel = 'noopener'; }
+        box.appendChild(card);
+      }
+      var note = document.createElement('div');
+      note.className = 'log-note';
+      note.textContent = detail.note;
+      box.appendChild(note);
+      li.appendChild(box);
+    }
+    ul.appendChild(li);
+  }
   function renderLog(shown) {
     var ul = $('log'); ul.textContent = '';
     var lines = L.activityLines ? L.activityLines(state.events, shown, 14) : [];
-    for (var i = lines.length - 1; i >= 0; i--) {
-      var e = lines[i];
-      var li = document.createElement('li');
-      li.dataset.t = e._t;
-      var when = document.createElement('span'); when.className = 'when'; when.textContent = L.fmtCt(e._t).replace(' CT', '');
-      var who = document.createElement('span'); who.className = 'who'; who.textContent = L.whoTag(e); who.style.color = rgb(L.eventColor(e));
-      li.appendChild(when); li.appendChild(who);
-      if (!paintPrompt(li, e)) {
-        var a = document.createElement('a'); a.textContent = L.cleanLabel(e.label);
-        if (/^https:\/\//.test(e.source || '')) { a.href = e.source; a.target = '_blank'; a.rel = 'noopener'; }
-        li.appendChild(a);
-      }
-      ul.appendChild(li);
-    }
+    for (var i = lines.length - 1; i >= 0; i--) appendLogRow(ul, lines[i]);
     foldSum('activitySum', String(ul.children.length));
   }
 
@@ -1877,10 +1907,16 @@ footer a { color: var(--foot); }
   $('slider').addEventListener('pointerdown', function () { dragging = true; });
   window.addEventListener('pointerup', function () { dragging = false; });
   $('log').addEventListener('click', function (ev) {
-    if (ev.target.tagName === 'A' && ev.target.href) return;
-    if (ev.target.closest && ev.target.closest('.prompt-line')) return;
-    var li = ev.target.closest('li');
-    if (li) { rewindTo(Number(li.dataset.t)); playing = false; }
+    if (ev.target.closest && ev.target.closest('a[href]')) return;
+    var li = ev.target.closest ? ev.target.closest('li') : null;
+    if (!li) return;
+    var det = li.querySelector('.log-detail');
+    if (!det) return;
+    var open = !li.classList.contains('open');
+    li.classList.toggle('open', open);
+    li.setAttribute('aria-expanded', open ? 'true' : 'false');
+    det.hidden = !open;
+    if (li.dataset.id) openLog[li.dataset.id] = open;
   });
 
   function frame(nowWall) {
@@ -2056,11 +2092,7 @@ footer a { color: var(--foot); }
         var events = b.events || [];
         if (!events.length) { ul.appendChild(wbEl('li', '', 'No events this day')); return; }
         events.slice().sort(function (a, b) { return (Date.parse(b.t_ct) || 0) - (Date.parse(a.t_ct) || 0); }).forEach(function (e) {
-          var li = document.createElement('li');
-          li.appendChild(wbEl('span', 'when', wbCt(e.t_ct) || e.t_ct || ''));
-          li.appendChild(wbEl('span', 'who', L.whoTag ? L.whoTag(e) : (e.from || '')));
-          if (!paintPrompt(li, e)) li.appendChild(wbEl('span', '', e.label || e.kind || ''));
-          ul.appendChild(li);
+          appendLogRow(ul, e);
         });
       }).catch(function () {});
     });
