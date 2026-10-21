@@ -21,6 +21,10 @@
  * The kick body settles near 44 Hz. Bass notes stay short and
  * move a few percent in pitch. The pad and the plucks sit darker
  * so the upper-mid does not eat the 30–120 Hz share.
+ *
+ * v8lib keeps this arrangement and cue map. The musical voices
+ * render in Elementary Audio. The drums are the CC0 one-shots
+ * named in cc0/manifest.json. loadBed("v8lib") is the entry.
  */
 
 const fs = require("node:fs");
@@ -603,11 +607,15 @@ const BED_NAMES = {
   v5b: "BED-MAGNETIC-MOVES-v5b",
   v6: "BED-MAGNETIC-MOVES-v6",
   v7: "BED-MAGNETIC-MOVES-v7",
+  v8lib: "BED-MAGNETIC-MOVES-v8lib",
 };
 
 function renderBed(variant) {
   if (!BED_NAMES[variant]) {
     throw new Error(`unknown variant ${variant}`);
+  }
+  if (variant === "v8lib") {
+    throw new Error("BED-MAGNETIC-MOVES-v8lib renders through loadBed");
   }
   const v7 = variant === "v7";
   const v6 = variant === "v6" || v7;
@@ -811,7 +819,7 @@ function measureBed(bed) {
   const lowWindows = { body: [5.5, 7.65], across: [5.5, 15.4], final: [17.55, 19.4] };
   const pad = stemReport(bed.stems.pad, padWindows);
   const sub = stemReport(bed.stems.sub, lowWindows);
-  const mid = bed.variant === "v4b" || bed.variant === "v5b" || bed.variant === "v6" || bed.variant === "v7"
+  const mid = bed.variant === "v4b" || bed.variant === "v5b" || bed.variant === "v6" || bed.variant === "v7" || bed.variant === "v8lib"
     ? stemReport(bed.stems.mid, lowWindows)
     : null;
   const lufs = P.integratedLufs(bed.left, bed.right, bed.sampleRate);
@@ -897,6 +905,7 @@ function measureBed(bed) {
     rules,
     reference,
     earReady: rules.pass && reference.pass,
+    ...(bed.library ? { library: bed.library } : {}),
     pass: reasons.length === 0,
     fails: reasons,
     wind: {
@@ -941,7 +950,11 @@ function gapReport(bed, pad) {
     bodyCrestDb: round1(P.linDb(peak) - P.linDb(rms)),
     padChordSwingDb: round1(pad.swings.chord.swingDb),
     padBodySwingDb: round1(pad.swings.body.swingDb),
-    padMotionDb: bed.wide ? round1(padMotionDepthDb(bed.padMode)) : null,
+    padMotionDb: bed.padMotionDb != null
+      ? round1(bed.padMotionDb)
+      : bed.wide
+        ? round1(padMotionDepthDb(bed.padMode))
+        : null,
     kickHfDb: round1(P.hfRmsDb(bed.stems.kick, SR, 2000)),
     sideScale: round1(bed.sideScale || 0),
   };
@@ -973,16 +986,25 @@ function argValue(argv, name) {
   return argv[i + 1];
 }
 
-function cli(argv) {
+async function loadBed(variant) {
+  if (variant === "v8lib") {
+    const lib = require("./sound-lib.mjs");
+    return lib.renderLibBed();
+  }
+  return renderBed(variant);
+}
+
+async function cli(argv) {
   const variant = argv[0];
   if (!BED_NAMES[variant]) {
-    process.stderr.write("Usage: sound bed <v4a|v4b|v5a|v5b|v6|v7> --out wav [--mp3 file] [--metrics file]\n");
+    process.stderr.write("Usage: sound bed <v4a|v4b|v5a|v5b|v6|v7|v8lib> --out wav [--mp3 file] [--metrics file]\n");
     return 1;
   }
-  const bed = renderBed(variant);
+  const bed = await loadBed(variant);
   const metrics = measureBed(bed);
   if (bed.wide) {
-    const prior = measureBed(renderBed(variant === "v7" ? "v6" : "v5b"));
+    const priorVariant = variant === "v8lib" ? "v7" : variant === "v7" ? "v6" : "v5b";
+    const prior = measureBed(await loadBed(priorVariant));
     metrics.compare = {
       against: prior.name,
       before: prior.gaps,
@@ -990,6 +1012,17 @@ function cli(argv) {
       levelsBefore: prior.levels,
       levelsAfter: metrics.levels,
     };
+    if (variant === "v8lib") {
+      const brief = (row) => ({ id: row.id, pass: row.pass, detail: row.detail });
+      metrics.compare.rulesBefore = prior.rules.checks.map(brief);
+      metrics.compare.rulesAfter = metrics.rules.checks.map(brief);
+      metrics.compare.referenceBefore = prior.reference.measured;
+      metrics.compare.referenceAfter = metrics.reference.measured;
+      metrics.compare.earReadyBefore = prior.earReady;
+      metrics.compare.earReadyAfter = metrics.earReady;
+      metrics.compare.loudnessBefore = { lufs: prior.lufs, truePeakDb: prior.truePeakDb };
+      metrics.compare.loudnessAfter = { lufs: metrics.lufs, truePeakDb: metrics.truePeakDb };
+    }
   } else if (bed.patterned) {
     const priorVariant = variant === "v5a" ? "v4a" : "v4b";
     const prior = measureBed(renderBed(priorVariant));
@@ -1040,6 +1073,7 @@ module.exports = {
   PROG,
   DUCK_DB,
   renderBed,
+  loadBed,
   measureBed,
   levelTable,
   padMotionDepthDb,

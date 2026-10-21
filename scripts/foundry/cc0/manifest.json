@@ -1,0 +1,61 @@
+{
+  "bed": "BED-MAGNETIC-MOVES-v8lib",
+  "note": "One-shots only. No stems from released songs. Each file in this folder is a short mono 44.1 kHz excerpt of the named source, with a short fade so the hit does not carry the room. The license below is the license of that source.",
+  "samples": [
+    {
+      "id": "kick",
+      "role": "kick",
+      "file": "kick.wav",
+      "title": "mid_kick_snoff_vl2_rr1.flac",
+      "author": "Versilian Studios and Karoryfer Samples",
+      "sourceUrl": "https://github.com/sfzinstruments/virtuosity_drums/blob/master/Samples/mid/kick/mid_kick_snoff_vl2_rr1.flac",
+      "mediaUrl": "https://raw.githubusercontent.com/sfzinstruments/virtuosity_drums/master/Samples/mid/kick/mid_kick_snoff_vl2_rr1.flac",
+      "blobSha": "5e39f7020304c0c716ac002beca49f62942aacad",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://github.com/sfzinstruments/virtuosity_drums/blob/master/LICENSE",
+      "licenseEvidence": "The Virtuosity Drums repository LICENSE file is the CC0 1.0 legal code. This kick is a house-kit hit from that library, snares off, mid mic, velocity 2 round-robin 1.",
+      "excerpt": "48 kHz stereo flac summed to mono, resampled to 44.1 kHz, 164 ms from just before the beater, then a decay after 30 ms so the room does not linger."
+    },
+    {
+      "id": "hat-closed",
+      "role": "closed hat",
+      "file": "hat-closed.wav",
+      "title": "mid_hh_closed_vl2_rr1.flac",
+      "author": "Versilian Studios and Karoryfer Samples",
+      "sourceUrl": "https://github.com/sfzinstruments/virtuosity_drums/blob/master/Samples/mid/hh/mid_hh_closed_vl2_rr1.flac",
+      "mediaUrl": "https://raw.githubusercontent.com/sfzinstruments/virtuosity_drums/master/Samples/mid/hh/mid_hh_closed_vl2_rr1.flac",
+      "blobSha": "14f920b603916c6fa03764d7694c78e6f45d72a0",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://github.com/sfzinstruments/virtuosity_drums/blob/master/LICENSE",
+      "licenseEvidence": "Same CC0 LICENSE as the kick. Closed hi-hat, mid mic, velocity 2 round-robin 1.",
+      "excerpt": "48 kHz stereo flac summed to mono, resampled to 44.1 kHz, 19 ms around the tick, with a short fade."
+    },
+    {
+      "id": "hat-open",
+      "role": "open hat",
+      "file": "hat-open.wav",
+      "title": "mid_hh_open_vl1_rr1.flac",
+      "author": "Versilian Studios and Karoryfer Samples",
+      "sourceUrl": "https://github.com/sfzinstruments/virtuosity_drums/blob/master/Samples/mid/hh/mid_hh_open_vl1_rr1.flac",
+      "mediaUrl": "https://raw.githubusercontent.com/sfzinstruments/virtuosity_drums/master/Samples/mid/hh/mid_hh_open_vl1_rr1.flac",
+      "blobSha": "f6883ca809cf7dc7783be474120f0f977b2b1f70",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://github.com/sfzinstruments/virtuosity_drums/blob/master/LICENSE",
+      "licenseEvidence": "Same CC0 LICENSE as the kick. Open hi-hat, mid mic, velocity 1 round-robin 1.",
+      "excerpt": "48 kHz stereo flac summed to mono, resampled to 44.1 kHz, 57 ms from the attack, with a decay so the open hat is a short accent and not the full cymbal wash."
+    },
+    {
+      "id": "clap",
+      "role": "clap",
+      "file": "clap.wav",
+      "title": "Clap 01.wav",
+      "author": "totalcult",
+      "sourceUrl": "https://freesound.org/people/totalcult/sounds/388546/",
+      "mediaUrl": "https://cdn.freesound.org/previews/388/388546_14360-hq.mp3",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "licenseEvidence": "The Freesound page for sound 388546 lists the license as Creative Commons 0. Freesound serves the original wav only to a logged-in user, so this excerpt is decoded from the public HQ preview of that same CC0 recording.",
+      "excerpt": "HQ mp3 preview decoded to mono 44.1 kHz, 38 ms around the transient, with a short fade. Not a loop and not a song."
+    }
+  ]
+}
