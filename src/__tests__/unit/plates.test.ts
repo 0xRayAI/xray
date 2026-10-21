@@ -377,23 +377,19 @@ describe('pipeline plates', () => {
   });
 
   it('fails when an icon, a line, or a badge leaves the plate kit', () => {
-    const iconsDir = join(process.cwd(), 'plates/icons');
-    const icons = JSON.parse(readFileSync(join(iconsDir, 'icons.json'), 'utf8')) as Record<string, unknown>;
-    const kit = JSON.parse(readFileSync(join(process.cwd(), 'plates/kit.json'), 'utf8')) as {
-      palette: { default: string; rainbow: number[][] };
-      line: { arrowhead: { shape: string } };
-      iconMatch: Array<{ kind: string }>;
-    };
+    const kitDir = join(process.cwd(), 'plates/kit');
+    const kit = readKit();
     expect(kit.palette.default).toBe('cyan');
     expect(kit.palette.rainbow).toHaveLength(6);
     expect(kit.line.arrowhead.shape).toBe('triangle');
     const seen = new Set<string>();
-    for (const [kind, file] of Object.entries(icons)) {
+    const iconFiles = kit.parts.icon?.files ?? {};
+    for (const [kind, file] of Object.entries(iconFiles)) {
       expect(typeof file, kind).toBe('string');
       const name = String(file);
       expect(name.endsWith('.svg'), kind).toBe(true);
-      expect(existsSync(join(iconsDir, name)), kind).toBe(true);
-      const svg = readFileSync(join(iconsDir, name), 'utf8');
+      expect(existsSync(join(kitDir, name)), kind).toBe(true);
+      const svg = readFileSync(join(kitDir, name), 'utf8');
       expect(svg.includes('<text'), kind).toBe(false);
       seen.add(kind);
     }
@@ -406,7 +402,77 @@ describe('pipeline plates', () => {
     });
     expect(JSON.parse(report)).toEqual([]);
   });
+
+  it('fails when a plate uses a shape or color outside the kit', () => {
+    const kit = readKit();
+    const kitDir = join(process.cwd(), 'plates/kit');
+    const src = readFileSync(
+      join(process.cwd(), 'grok-bot/skills/draw-stamped-card/recipes/layered-flow/render.py'),
+      'utf8',
+    );
+    const problems: string[] = [];
+    const start = src.indexOf('def stamp_svg');
+    const end = src.indexOf('\ndef ', start + 1);
+    if (start < 0 || end < 0) problems.push('missing stamper');
+    const outside = src.slice(0, Math.max(0, start)) + src.slice(Math.max(0, end));
+    for (const method of ['rectangle', 'rounded_rectangle', 'polygon', 'ellipse', 'arc', 'pieslice', 'chord', 'line']) {
+      if (outside.includes(`.${method}(`)) problems.push(method);
+    }
+    const palette: number[][] = [];
+    for (const [name, value] of Object.entries(kit.palette)) {
+      if (name === 'default' || name === 'rainbow' || !Array.isArray(value) || typeof value[0] !== 'number') continue;
+      palette.push(value as number[]);
+    }
+    for (const match of src.matchAll(/\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/g)) {
+      const rgb = [Number(match[1]), Number(match[2]), Number(match[3])];
+      const known = palette.some((color) => color[0] === rgb[0] && color[1] === rgb[1] && color[2] === rgb[2]);
+      if (!known) problems.push(rgb.join(','));
+    }
+    const required = [
+      'frame',
+      'rivet',
+      'header',
+      'logoSlot',
+      'title',
+      'subtitle',
+      'accentRail',
+      'layerLabel',
+      'card',
+      'numberTile',
+      'rail',
+      'junction',
+      'arrowhead',
+      'footer',
+    ];
+    for (const id of required) {
+      const part = kit.parts[id];
+      if (!part?.svg || !part.sizes) {
+        problems.push(id);
+        continue;
+      }
+      const svgPath = join(kitDir, part.svg);
+      if (!existsSync(svgPath)) {
+        problems.push(`${id} missing`);
+        continue;
+      }
+      const svg = readFileSync(svgPath, 'utf8');
+      if (/#[0-9A-Fa-f]{3,8}/.test(svg) || /rgb\(/i.test(svg)) problems.push(`${id} color`);
+      if (!src.includes(`"${id}"`)) problems.push(`${id} unused`);
+    }
+    expect(problems).toEqual([]);
+  });
 });
+
+type PlateKit = {
+  palette: { default: string; rainbow: number[][] } & Record<string, unknown>;
+  line: { arrowhead: { shape: string } };
+  iconMatch: Array<{ kind: string }>;
+  parts: Record<string, { svg?: string; sizes?: Record<string, number>; files?: Record<string, string> }>;
+};
+
+function readKit(): PlateKit {
+  return JSON.parse(readFileSync(join(process.cwd(), 'plates/kit.json'), 'utf8')) as PlateKit;
+}
 
 const NO_LENS_CARD = new Set(['review', 'goggles', 'suit', 'kits', 'host-pack', 'glossary']);
 const LEFT_SIDE = new Set(['│', '├', '┼']);
