@@ -1,0 +1,14 @@
+{
+  "title": "SUIT",
+  "sub": "WHAT IT IS",
+  "footer": "WHEN THE WINDOW CLOSES, THE JOB STAYS",
+  "columns": ["PART", "WHAT IT DOES"],
+  "rows": [
+    ["INFERENCE", "Remembers the laws and the job"],
+    ["GOVERNANCE", "Judges before the work ships"],
+    ["ENGINE", "Runs the work"],
+    ["WAKE", "The next session picks up the job"],
+    ["WEAR", "The host you already run"],
+    ["DOCS", "The manual for the suit"]
+  ]
+}

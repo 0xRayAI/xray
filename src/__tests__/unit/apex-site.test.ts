@@ -26,7 +26,10 @@ describe('apex site', () => {
     expect(page).toContain('https://www.npmjs.com/package/0xray');
     expect(page).toContain('https://bifrost.0xray.dev');
     expect(page).toContain('assets/apex.png');
+    expect(page).toContain('assets/fonts/BlackOpsOne-Regular.ttf');
+    expect(page).toContain('assets/fonts/ChakraPetch-Bold.ttf');
     expect(page).not.toContain('logo.jpg');
+    expect(page).not.toContain('Inter');
   });
 
   it('uses a 1280x720 stamped plate and keeps the Pages workflow inside site/', () => {
