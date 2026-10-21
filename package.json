@@ -232,6 +232,8 @@
     "ws": "^8.16.0"
   },
   "devDependencies": {
+    "@elemaudio/core": "^4.0.1",
+    "@elemaudio/offline-renderer": "^4.0.3",
     "@eslint/js": "^9.39.2",
     "@playwright/test": "^1.55.0",
     "@types/express": "^5.0.0",
