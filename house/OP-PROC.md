@@ -35,7 +35,7 @@ OP-PROC is **layered**: pack base (`grok-bot/OP-PROC.md`) then this house file (
 
 - Pack roles map here: the cloud agent forge launches = implementer, **forge** = publisher/merge seat, **critic** = reviewer, **blinky** = CoS.
 - The cloud agent forge launches implements and pushes the branch. forge opens the pull request through its App.
-- **forge** keeps continuity and the gates, launches that cloud agent, and merges. **Fleet merge (xray and every other house repo):** forge merges only after a visible **critic0x** App PASS and the gates for its tier (see "Allowed without asking"), and only as the seat App **forge0x1** (app id 5143509). Critic never merges.
+- **forge** keeps continuity and the gates, launches that cloud agent, and merges. **Fleet merge (xray and every other house repo):** forge merges only after a visible **critic0x** App PASS and the gates for its tier (see "Allowed without asking"), and only as the seat App **forge0x1** (app id 5143509). A hotfix is the one exception: it merges only on green CI, never before. Critic never merges.
 - **Gated OP-PROC.** Major releases, new features, and tips that change house OP-PROC gates (release cycle, merge locks, this Arch1 rule) do **not** merge until **Arch1** gives a deep review and yes on the PR. A critic PASS alone is not enough. forge0x1 holds that merge until Arch1 yes. An inbox yes/no from Arch1 is that decision, and it must name the PR. A hold on one PR does not hold the next ask; any "wait for Blaze" or "wait for Arch1" must name the PR.
 - Eng seats ship as **forge0x1**, not the personal login. If the open head is the wrong author, forge0x1 opens one replacement pull request, closes the old one with a pointer, and does not keep pushing that wrong-author head.
 - **critic** writes PASS or FAIL, cites the section, and never merges. Nobody writes their own proof.
@@ -57,7 +57,7 @@ OP-PROC is **layered**: pack base (`grok-bot/OP-PROC.md`) then this house file (
 
 - **Review plate.** See [Forward-motion](../grok-bot/OP-PROC.md#forward-motion). A PASS ends it. A failed re-check of an original blocker is parked for Blaze. A new finding on that re-check is an issue, not a FAIL.
 - The words must match the live thing. Do not say personalized, generated, or composed for one person when the asset is the same for everyone. Fix the catalog and the page.
-- Open as a draft. Critic reviews by tier (Light, Normal, or Strict; see section 3). Merge only after the gate. Do not land unreviewed work on main.
+- Open as a draft. Critic reviews by tier (Light, Normal, or Strict; see section 3). Merge only after the gate. Do not land unreviewed work on main. A hotfix is the one exception: it merges only on green CI, never before.
 - **Wrong-author supersede.** If the open head is not forge0x1 when forge0x1 is required, forge0x1 opens one replacement pull request and closes the old one with a pointer. A forge0x1 FAIL stays on that Review plate. Do not open a new pull request for every FAIL.
 - A **Nit** does not block by itself. An unverified finding does not block. See [Forward-motion](../grok-bot/OP-PROC.md#forward-motion).
 - A blocking FAIL is a live break: wrong ship, money, lost data, or a security hole. Name the file and the check that fails on the old code.
@@ -73,7 +73,7 @@ OP-PROC is **layered**: pack base (`grok-bot/OP-PROC.md`) then this house file (
 2. **Stamp.** The version tool writes the changelog note for this cut. It updates the current-version words in the guides. It leaves old changelog headings as they are. It leaves the guide of older versions as it is. It leaves files under `.xray/state` as they are.
 3. **Plates.** Each Plate in `docs-site/docs/plates/` shows the version being cut. The release tool does not edit those files. The cut does, before the pack.
 4. **Docs check.** The docs check passes before the pack.
-5. **Tests.** Critic confirms passage on that same commit and writes PASS or FAIL on the pull request. Every unit test passes. The Playwright battery passes, and the coverage from that battery is part of the result. A green CI check is not passage. Forge does not confirm passage. Forge does not merge on a green CI check.
+5. **Tests.** Critic confirms passage on that same commit and writes PASS or FAIL on the pull request. Every unit test passes. The Playwright battery passes, and the coverage from that battery is part of the result. A green CI check is not passage. Forge does not confirm passage. Forge does not merge on a green CI check. A hotfix is the one exception: it merges only on green CI, never before.
 6. **Release page.** After the wear-gate and the ship go: publish that exact package, push the annotated tag, then open the GitHub release page. The tweet file the tool writes is not a post. A public post still needs Blaze's go.
 
 **Wear-gate.** After merge and before publish: build, pack, and install that exact package in a fresh git folder and a fresh non-git folder, with a temporary home. Then run wear, setup, and doctor. This is not a Review plate.
@@ -106,10 +106,10 @@ Allowed without asking:
 - Push a branch and open a pull request. Do not commit straight to main.
 - Merge by tier, when section 3 allows it. Gates: A CI green, B **on Blaze's machine**: the packed tarball + per-env checklist (git and non-git folder, temp home, run and update `.cjs`/`.mjs` for Cursor, Grok CLI, Hermes, OpenCode, OpenClaw) runs LOCALLY only: forge via Blaze-approved local tool steps, or local Arch1 on Grok CLI (asked by a PR comment @-mentioning @arch10x, which the collector turns into his inbox line). Cloud Arch1 and cloud agents may do review, A and C, never B; whoever runs it posts the receipt; B is unverified until then, C the docs match the code (stamp + `npm run release:docs-check`), D published and proven live (fresh install and upgrade, annotated tag pushed, GitHub Release so Latest flips).
   - **Floor:** gate A (CI green) and gate C (stamp + `npm run release:docs-check`) on every merge. B and D are set per PR by scope in the packet `gates:` field (implementer sets; critic may raise, never lower; locked once review starts). Core questions: works across all TUI environments (Cursor, Grok CLI, Hermes, OpenCode, OpenClaw), docs updated throughout. Per-scope criteria: set per PR for now.
-  - Fix and small PRs: critic0x Light PASS + gates A–C (D n/a, nothing published).
+  - Fix and small PRs: critic0x Light PASS + gates A–C (D n/a, nothing published). A hotfix is the one exception: it merges only on green CI, never before.
   - Releases: critic0x Strict PASS + gates A–D; D is checked after publish as the wear gate.
   - Major releases, new features, and OP-PROC gate changes: all of the above plus Arch1's deep review and yes on the PR before forge merges.
-- The lead or operator makes necessary small changes and merges by tier (critic PASS + the gates for that tier; Arch1 yes where the tier needs it) without asking the human. The human sees only real decisions: money, credentials, deletes, publishing, production, and taste.
+- The lead or operator makes necessary small changes and merges by tier (critic PASS + the gates for that tier; Arch1 yes where the tier needs it) without asking the human. A hotfix is the one exception: it merges only on green CI, never before. The human sees only real decisions: money, credentials, deletes, publishing, production, and taste.
 - A lab check that does not spend and does not publish.
 
 Public words are friend-speak. Test them on a person before they go out.
@@ -160,11 +160,11 @@ History note. Every activity line is archived to history. The word owner is the 
 
 ## Ship cadence
 
-Not in effect. Arch1, 2026-10-21, on #531: do not run the 2026-10-13 cadence. Green CI does not mean merge. The release cycle in section 3 stands (#219).
+Not in effect. Arch1, 2026-10-21, on #531: do not run the 2026-10-13 cadence. Green CI does not mean merge. A hotfix is the one exception: it merges only on green CI, never before. The release cycle in section 3 stands (#219).
 
 ## Hotfix
 
-The rule is [Hotfix bypass](../grok-bot/OP-PROC.md#hotfix-bypass). No merge before CI is green. Merge and deploy on green CI, and critic reviews after the merge (#452). Board fixes follow normal review and are not a hotfix class. The old P1 path (roll back first, then deploy `dev` before merge) is not in effect.
+The rule is [Hotfix bypass](../grok-bot/OP-PROC.md#hotfix-bypass). No merge before CI is green. Merge and deploy on green CI, and critic reviews after the merge. The authority is Blaze's owner ruling, 2026-10-21 08:37 CT. #452 is an example only. Board fixes follow normal review and are not a hotfix class. The old P1 path (roll back first, then deploy `dev` before merge) is not in effect.
 
 **Room vs 1:1 writes.** See [Room vs 1:1 writes](../grok-bot/OP-PROC.md#room-vs-1-1-writes). Never split, rename or rework a command to get past a check.
 
@@ -175,7 +175,7 @@ The rule is [Hotfix bypass](../grok-bot/OP-PROC.md#hotfix-bypass). No merge befo
 - Our install is public (no password, no masking); other installs stay gated and masked unless they opt in.
 - Seats ask Blaze yes/no questions in his 1:1. Webhook and key links go only in the owner's 1:1.
 - One PR per lap: follow-ups and nits fold into the open PR, never a new one.
-- A rebase with byte-identical files gets a re-stamp in seconds. Critic PASS still comes before merge. See [Packet-first](../grok-bot/OP-PROC.md#packet-first) and [Review](../grok-bot/OP-PROC.md#review).
+- A rebase with byte-identical files gets a re-stamp in seconds. Critic PASS still comes before merge. A hotfix is the one exception: it merges only on green CI, never before. See [Packet-first](../grok-bot/OP-PROC.md#packet-first) and [Review](../grok-bot/OP-PROC.md#review).
 - Blaze: land the changes first, then one final test pass after they're live.
 - Critic owns validating the live board: the final pass checks the data each seat shows (step 6), not just the page title and `/healthz` (Blaze caught example names and every seat idle on 2026-10-13).
 - Verify routing with a real GitHub-created event (an issue, a PR, a push), not only wakes we send ourselves: issue #281 (11:22 CT) routed to the kit's sample seat `triager`, an inbox nobody reads, while our test wakes passed.
