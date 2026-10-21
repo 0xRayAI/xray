@@ -1,0 +1,77 @@
+{
+  "measuredBy": "Arch1, independent review on PR 508, 2026-10-21T11:07Z",
+  "audioStored": false,
+  "primary": "session-recall",
+  "note": "Metrics only, from CC0 preview measurements. Never store or mix the audio. Bass and dub loops are stems, not the pass reference. The generic loop preview peaks hot and that peak is not a target.",
+  "tolerances": {
+    "lufsDb": 6,
+    "crestDb": 6,
+    "correlation": 0.15,
+    "sideUnderMidLo": -20,
+    "sideUnderMidHi": -8,
+    "lowShare": 0.2,
+    "bandDb": 10
+  },
+  "references": [
+    {
+      "id": "session-recall",
+      "freesound": "thehorsevalse/693897",
+      "title": "Session Recall, melodic techno",
+      "role": "full-bed",
+      "lufs": -11.9,
+      "lra": 0.6,
+      "crestDb": 11.2,
+      "correlation": 0.981,
+      "sideUnderMidDb": -20,
+      "lowShare30to120": 0.85,
+      "band2to4Db": -31,
+      "band4to8Db": -37,
+      "note": "Fair full-bed comparison. Public HQ mp3 preview. The top octave and the true peak are not the original file."
+    },
+    {
+      "id": "bass-melodic-techno-122",
+      "freesound": "FlavioConcini/824938",
+      "title": "Bass melodic techno 122",
+      "role": "stem",
+      "lufs": -19.0,
+      "lra": 0.7,
+      "crestDb": 15.7,
+      "correlation": 0.677,
+      "sideUnderMidDb": -7,
+      "lowShare30to120": 0.56,
+      "band2to4Db": null,
+      "band4to8Db": null,
+      "note": "A stem more than a bed. Not the pass reference."
+    },
+    {
+      "id": "dub-techno-loop",
+      "freesound": "The-Sacha-Rush/462918",
+      "title": "Dub Techno Loop",
+      "role": "stem",
+      "lufs": -25.8,
+      "lra": 5.6,
+      "crestDb": 16.8,
+      "correlation": 0.176,
+      "sideUnderMidDb": -1.5,
+      "lowShare30to120": 0.29,
+      "band2to4Db": null,
+      "band4to8Db": null,
+      "note": "A stem more than a bed. Not the pass reference."
+    },
+    {
+      "id": "generic-edm-loop",
+      "freesound": "furbyguy/388103",
+      "title": "Generic EDM Loop",
+      "role": "context",
+      "lufs": -8.0,
+      "lra": 0.6,
+      "crestDb": 8.8,
+      "correlation": 0.717,
+      "sideUnderMidDb": -8,
+      "lowShare30to120": 0.81,
+      "band2to4Db": null,
+      "band4to8Db": null,
+      "note": "Preview is already clipping. Do not use its peak as a target."
+    }
+  ]
+}

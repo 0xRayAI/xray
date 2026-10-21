@@ -21,6 +21,8 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const P = require("./sound-pro.cjs");
+const Rules = require("./sound-rules.cjs");
+const Reference = require("./sound-reference.cjs");
 
 const SECONDS = 22.87;
 const BPM = 123;
@@ -836,6 +838,14 @@ function measureBed(bed) {
     if (levels.clapUnderKickDb < 12) fails.push(`clap under kick ${levels.clapUnderKickDb}`);
   }
   const reasons = fails;
+  const rules = Rules.evaluateSoundRules(bed, { pad, padMotionDb: gaps.padMotionDb });
+  const reference = Reference.evaluateReference(bed, {
+    lufs,
+    crestDb: gaps.bodyCrestDb,
+    sideUnderMidDb: gaps.sideUnderMidDb,
+    band2to4Db: gaps.band2to4Db,
+    band4to8Db: gaps.band4to8After11Db,
+  });
   return {
     name: bed.name,
     variant: bed.variant,
@@ -859,6 +869,9 @@ function measureBed(bed) {
     mid,
     kickHfDb: P.hfRmsDb(bed.stems.kick, SR, 2000),
     gaps,
+    rules,
+    reference,
+    earReady: rules.pass && reference.pass,
     pass: reasons.length === 0,
     fails: reasons,
     wind: {
