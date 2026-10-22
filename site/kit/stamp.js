@@ -3,6 +3,20 @@
     customElements.define('x-stamp', class extends HTMLElement {});
   }
 
+  function fitStages() {
+    document.querySelectorAll('.stage-slot').forEach(function (slot) {
+      var fit = slot.querySelector('.stage-fit');
+      var stageEl = fit && fit.firstElementChild;
+      if (!stageEl) return;
+      var scale = slot.clientWidth / 1280;
+      stageEl.style.transformOrigin = 'top left';
+      stageEl.style.transform = 'scale(' + scale + ')';
+      fit.style.height = (720 * scale) + 'px';
+    });
+  }
+  fitStages();
+  window.addEventListener('resize', fitStages);
+
   var stamp = document.getElementById('suit-plate');
   var open = document.getElementById('plate-open');
   var zoom = document.getElementById('plate-zoom');
@@ -14,6 +28,7 @@
     clone.removeAttribute('id');
     clone.querySelectorAll('[id]').forEach(function (el) { el.removeAttribute('id'); });
     clone.querySelectorAll('button').forEach(function (el) { el.remove(); });
+    clone.style.transform = 'none';
     clone.style.width = '1280px';
     stage.replaceChildren(clone);
     zoom.hidden = false;

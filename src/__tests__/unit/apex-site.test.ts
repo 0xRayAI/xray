@@ -53,7 +53,12 @@ describe('apex site', () => {
     expect(plateCss).toContain('nm-roll');
     expect(plateCss).toContain('width: 1056px');
     expect(plateCss).toContain('grid-template-columns: 232px 824px');
-    expect(plateCss).toContain('zoom: calc(100cqw / 1280px)');
+    const stampJs = readSite('kit/stamp.js');
+    expect(stampJs).toContain('slot.clientWidth / 1280');
+    expect(stampJs).toContain('720 * scale');
+    expect(plateCss).toContain('transform: scale(calc(100cqw / 1280px))');
+    expect(plateCss).toContain('height: calc(100cqw * 720 / 1280)');
+    expect(plateCss).not.toContain('zoom:');
     expect(plateCss).toContain('../assets/console.jpg');
     expect(plateCss).toContain('.panel');
     const frame = readSite('kit/parts/frame.svg');

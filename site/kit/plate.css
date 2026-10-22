@@ -18,10 +18,25 @@ body {
 x-stamp { display: block; }
 img { max-width: 100%; }
 
-.hero-fit,
-.plate-fit { container-type: inline-size; width: 100%; }
-.hero-fit > .hero,
-.plate-fit > .stamp { zoom: calc(100cqw / 1280px); }
+/* Width drives the scale. zoom is not reliable in Firefox or Safari, and a
+   zoomed 1280 stage overflows or stays tiny once the viewport is not 1280.
+   The slot is the container. The fit box is the scaled height. The stage
+   stays 1280x720 and scales from the top left. */
+.stage-slot {
+  container-type: inline-size;
+  width: 100%;
+}
+.stage-fit {
+  width: 100%;
+  height: calc(100cqw * 720 / 1280);
+  overflow: hidden;
+}
+.stage-fit > .hero,
+.stage-fit > .stamp {
+  transform-origin: top left;
+  transform: scale(calc(100cqw / 1280px));
+}
+.plate-slot { margin-top: var(--space-hero-gap); }
 
 .hero {
   position: relative;
@@ -82,7 +97,6 @@ img { max-width: 100%; }
   text-shadow: 1px 1px 0 #08090b, 0 0 14px rgba(40, 170, 230, 0.9);
 }
 
-.plate-fit { margin-top: var(--space-hero-gap); }
 .stamp {
   position: relative;
   width: 1280px;
@@ -268,7 +282,7 @@ img { max-width: 100%; }
   display: flex;
   align-items: center;
   justify-content: center;
-  width: min(1280px, 100%);
+  width: 100%;
   min-height: 44px;
   margin: 12px auto 0;
   padding: 8px 14px;
@@ -487,7 +501,7 @@ main {
 .lightbox[hidden] { display: none; }
 .plate-stage { width: 1280px; }
 .plate-stage .stamp {
-  zoom: 1;
+  transform: none;
   width: 1280px;
   height: 720px;
   max-width: none;
