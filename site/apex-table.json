@@ -1,14 +1,16 @@
 {
   "title": "SUIT",
-  "sub": "WHAT IT IS",
-  "footer": "WHEN THE WINDOW CLOSES, THE JOB STAYS",
-  "columns": ["PART", "WHAT IT DOES"],
+  "sub": "FOR AGENTS",
+  "footer": "GROK, OPENCODE, HERMES, OPENCLAW, CURSOR, GROK BOT",
+  "accent": "cyan",
+  "col_fracs": [0.22, 0.78],
+  "columns": ["TOPIC", "WHAT YOU GET"],
   "rows": [
-    ["INFERENCE", "Remembers the laws and the job"],
-    ["GOVERNANCE", "Judges before the work ships"],
-    ["ENGINE", "Runs the work"],
-    ["WAKE", "The next session picks up the job"],
-    ["WEAR", "The host you already run"],
-    ["DOCS", "The manual for the suit"]
+    ["PROBLEM", "Your agent forgets the job when the session or context window ends"],
+    ["FIX", "A suit your agent wears. Keeps laws, memory, and the job when the window closes"],
+    ["REMEMBERS", "Between sessions"],
+    ["GOVERNANCE", "Checks its own work before it ships"],
+    ["WAKE", "Picks the job back up after a restart"],
+    ["FLEET", "Runs a fleet under shared rules"]
   ]
 }

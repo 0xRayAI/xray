@@ -241,7 +241,27 @@
     .links { display: grid; grid-template-columns: repeat(4, 1fr); }
     .docs-hero { display: block; width: 100%; height: auto; }
     .links a:hover { color: #fff; }
-    .links a:focus-visible, .site-footer a:focus-visible, .plate-open:focus-visible, .zoom-close:focus-visible, .faq summary:focus-visible {
+    .copy {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 44px;
+      margin: 0;
+      padding: 8px 14px;
+      border: 0;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: "Chakra Petch", sans-serif;
+      font-size: 16px;
+      letter-spacing: 0.12em;
+      color: var(--ink);
+      background: linear-gradient(180deg, #4a4e52, #1c1e20);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), 0 4px 0 #0c0d0e;
+    }
+    .copy svg { display: block; width: 18px; height: 18px; }
+    .copy.is-copied { color: var(--cyan); }
+    .links a:focus-visible, .site-footer a:focus-visible, .plate-open:focus-visible, .zoom-close:focus-visible, .faq summary:focus-visible, .copy:focus-visible {
       outline: 2px solid var(--orange);
       outline-offset: 3px;
     }
@@ -377,6 +397,7 @@
     @media (max-width: 800px) {
       .plate-open { margin-top: 20px; }
       .install { flex-direction: column; align-items: flex-start; }
+      .copy { align-self: stretch; }
       .install code { font-size: 24px; }
       .links { grid-template-columns: 1fr 1fr; }
       .faq details p { font-size: 20px; }
@@ -397,12 +418,19 @@
 <body>
   <img class="docs-hero" src="assets/readme-hero.jpg" width="1280" height="720" alt="0xRay — A Power Suit for AI Agents. survive compaction. build foundries. monitor the swarm." />
   <button type="button" class="plate-open" id="plate-open" aria-haspopup="dialog" aria-controls="plate-zoom">
-    <img class="plate" src="assets/apex.png" width="1280" height="720" alt="Stamped metal plate. Drawn 0xRay mark. Suit: Inference remembers the laws and the job. Governance judges before the work ships. Engine runs the work. Wake: the next session picks up the job." />
+    <img class="plate" src="assets/apex.png" width="1280" height="720" alt="Stamped metal plate with the drawn 0xRay mark. Problem: your agent forgets the job when the session or context window ends. Fix: a suit your agent wears that keeps the laws, memory, and job when the window closes. You get memory between sessions, a check before work ships, wake after a restart, and a fleet under shared rules. Works with Grok, OpenCode, Hermes, OpenClaw, Cursor, and Grok Bot." />
   </button>
   <main>
     <div class="install">
       <span>INSTALL</span>
-      <code>npm i -g 0xray</code>
+      <code id="install-line">npm i -g 0xray</code>
+      <button type="button" class="copy" id="install-copy">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <rect x="8" y="8" width="12" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="2"></rect>
+          <path d="M6 16H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" fill="none" stroke="currentColor" stroke-width="2"></path>
+        </svg>
+        <span id="install-copy-label" aria-live="polite">Copy</span>
+      </button>
     </div>
     <ul class="links">
       <li><a href="https://docs.0xray.dev">DOCS</a></li>
@@ -485,7 +513,7 @@
   </footer>
   <div id="plate-zoom" class="lightbox" hidden role="dialog" aria-modal="true" aria-label="Stamped plate, full size">
     <button type="button" class="zoom-close" id="plate-close" aria-label="Close">X</button>
-    <img class="plate-full" src="assets/apex.png" width="1280" height="720" alt="Stamped plate at full size." />
+    <img class="plate-full" src="assets/apex.png" width="1280" height="720" alt="Stamped plate at full size. Problem, the suit, what you get, and the hosts it works with." />
   </div>
   <script>
     (function () {
@@ -508,6 +536,44 @@
       document.addEventListener('keydown', function (event) {
         if (event.key === 'Escape') hide();
       });
+
+      var copyBtn = document.getElementById('install-copy');
+      var copyLabel = document.getElementById('install-copy-label');
+      var copyTimer = 0;
+      function fallbackCopy(text) {
+        var area = document.createElement('textarea');
+        area.value = text;
+        area.setAttribute('readonly', '');
+        area.style.position = 'fixed';
+        area.style.top = '0';
+        area.style.left = '0';
+        area.style.opacity = '0';
+        document.body.appendChild(area);
+        area.focus();
+        area.select();
+        area.setSelectionRange(0, text.length);
+        var ok = document.execCommand('copy');
+        document.body.removeChild(area);
+        if (!ok) throw new Error('copy failed');
+      }
+      function copyInstall() {
+        var text = document.getElementById('install-line').textContent;
+        var write = navigator.clipboard && navigator.clipboard.writeText
+          ? navigator.clipboard.writeText(text)
+          : Promise.reject();
+        write.catch(function () { fallbackCopy(text); }).then(function () {
+          copyBtn.classList.add('is-copied');
+          copyLabel.textContent = 'Copied';
+          window.clearTimeout(copyTimer);
+          copyTimer = window.setTimeout(function () {
+            copyBtn.classList.remove('is-copied');
+            copyLabel.textContent = 'Copy';
+          }, 1600);
+        }, function () {
+          copyLabel.textContent = 'Copy';
+        });
+      }
+      copyBtn.addEventListener('click', copyInstall);
     }());
   </script>
 </body>
