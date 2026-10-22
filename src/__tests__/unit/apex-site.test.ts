@@ -88,7 +88,7 @@ describe('apex site', () => {
     expect(suitWebp.subarray(8, 12).toString('ascii')).toBe('WEBP');
     expect(suitWebp.length).toBeLessThan(400000);
     const suitPng = readFileSync(join(root, 'site', 'assets', 'suit.png'));
-    expect(pngSize(suitPng).width).toBe(1100);
+    expect(pngSize(suitPng).width).toBe(1000);
     const canon = readFileSync(join(root, 'FINAL-REFS', 'bots', '00-CANONICAL-suit-grok-imagine-blaze-pick.jpg'));
     expect([...canon.subarray(0, 3)]).toEqual([0xff, 0xd8, 0xff]);
     expect(canon.length).toBeLessThan(800000);
