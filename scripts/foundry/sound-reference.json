@@ -1,0 +1,78 @@
+{
+  "measuredBy": "Arch1, independent review on PR 508, 2026-10-21T11:07Z",
+  "audioStored": false,
+  "primary": "session-recall",
+  "note": "Metrics only, from CC0 preview measurements. Never store or mix the audio. Bass and dub loops are stems, not the pass reference. The generic loop preview peaks hot and that peak is not a target. Session Recall's 0.85 low share is an mp3 preview: the encode shelves the top, so the share reads heavier than a full-band master. A short-note bed can print 0.85 only by giving that top away (0.855 with 2-4 kHz at -45 dB, outside the 10 dB band). With the top kept inside the rule, the same short notes sit near 0.76 and the quiet share stays about 0.6. Closing the rest of the gap means lengthening the bass into the held sine that put v4b at 0.94. The pass window is 0.60 to 0.90.",
+  "tolerances": {
+    "lufsDb": 6,
+    "crestDb": 6,
+    "correlation": 0.15,
+    "sideUnderMidLo": -20,
+    "sideUnderMidHi": -8,
+    "lowShareLo": 0.6,
+    "lowShareHi": 0.9,
+    "bandDb": 10
+  },
+  "references": [
+    {
+      "id": "session-recall",
+      "freesound": "thehorsevalse/693897",
+      "title": "Session Recall, melodic techno",
+      "role": "full-bed",
+      "lufs": -11.9,
+      "lra": 0.6,
+      "crestDb": 11.2,
+      "correlation": 0.981,
+      "sideUnderMidDb": -20,
+      "lowShare30to120": 0.85,
+      "band2to4Db": -31,
+      "band4to8Db": -37,
+      "note": "Fair full-bed comparison. Public HQ mp3 preview. The top octave and the true peak are not the original file."
+    },
+    {
+      "id": "bass-melodic-techno-122",
+      "freesound": "FlavioConcini/824938",
+      "title": "Bass melodic techno 122",
+      "role": "stem",
+      "lufs": -19.0,
+      "lra": 0.7,
+      "crestDb": 15.7,
+      "correlation": 0.677,
+      "sideUnderMidDb": -7,
+      "lowShare30to120": 0.56,
+      "band2to4Db": null,
+      "band4to8Db": null,
+      "note": "A stem more than a bed. Not the pass reference."
+    },
+    {
+      "id": "dub-techno-loop",
+      "freesound": "The-Sacha-Rush/462918",
+      "title": "Dub Techno Loop",
+      "role": "stem",
+      "lufs": -25.8,
+      "lra": 5.6,
+      "crestDb": 16.8,
+      "correlation": 0.176,
+      "sideUnderMidDb": -1.5,
+      "lowShare30to120": 0.29,
+      "band2to4Db": null,
+      "band4to8Db": null,
+      "note": "A stem more than a bed. Not the pass reference."
+    },
+    {
+      "id": "generic-edm-loop",
+      "freesound": "furbyguy/388103",
+      "title": "Generic EDM Loop",
+      "role": "context",
+      "lufs": -8.0,
+      "lra": 0.6,
+      "crestDb": 8.8,
+      "correlation": 0.717,
+      "sideUnderMidDb": -8,
+      "lowShare30to120": 0.81,
+      "band2to4Db": null,
+      "band4to8Db": null,
+      "note": "Preview is already clipping. Do not use its peak as a target."
+    }
+  ]
+}
