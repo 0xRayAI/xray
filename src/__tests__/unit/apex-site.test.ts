@@ -28,8 +28,7 @@ describe('apex site', () => {
     expect(page).toContain('kit/tokens.css');
     expect(page).toContain('kit/plate.css');
     expect(page).toContain('kit/stamp.js');
-    expect(page).toContain('kit/parts/rivet.svg');
-    expect(page).toContain('<h1 class="text-wave">A power suit for AI agents</h1>');
+    expect(page).toContain('>A power suit for AI agents</h1>');
     expect(page).toContain('Survive compaction');
     expect(page).toContain('Build foundries');
     expect(page).toContain('Monitor the swarm');
@@ -52,7 +51,10 @@ describe('apex site', () => {
     const plateCss = readSite('kit/plate.css');
     expect(plateCss).toContain('text-wave');
     expect(plateCss).toContain('nm-roll');
-    expect(plateCss).toContain('parts/frame.svg');
+    expect(plateCss).toContain('width: 1056px');
+    expect(plateCss).toContain('grid-template-columns: 232px 824px');
+    expect(plateCss).toContain('zoom: calc(100cqw / 1280px)');
+    expect(plateCss).toContain('../assets/console.jpg');
     expect(plateCss).toContain('.panel');
     const frame = readSite('kit/parts/frame.svg');
     expect(frame).toContain('stroke-width="16"');
@@ -65,6 +67,9 @@ describe('apex site', () => {
     expect(skill).toContain('ab36db743');
     expect(skill).toContain('house/live');
     expect(skill).toContain('site/kit/tokens.css');
+    expect(skill).toContain('## Teardown of site/assets/apex.png');
+    expect(skill).toContain('1056px');
+    expect(skill).toContain('(66, 55)');
   });
 
   it('keeps the 1280x720 raster twin and the Pages workflow inside site/', () => {
