@@ -25,7 +25,11 @@ describe('apex site', () => {
     expect(page).toContain('https://github.com/0xRayAI/xray');
     expect(page).toContain('https://www.npmjs.com/package/0xray');
     expect(page).toContain('https://bifrost.0xray.dev');
+    expect(page).toContain('assets/readme-hero.jpg');
+    expect(page.indexOf('assets/readme-hero.jpg')).toBeLessThan(page.indexOf('assets/apex.png'));
     expect(page).toContain('assets/apex.png');
+    const hero = readFileSync(join(root, 'site', 'assets', 'readme-hero.jpg'));
+    expect([...hero.subarray(0, 3)]).toEqual([0xff, 0xd8, 0xff]);
     expect(page).toContain('assets/fonts/BlackOpsOne-Regular.ttf');
     expect(page).toContain('assets/fonts/ChakraPetch-Bold.ttf');
     expect(page).not.toContain('logo.jpg');
