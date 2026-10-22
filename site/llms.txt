@@ -1,0 +1,28 @@
+# 0xRay
+
+> 0xRay is a three-subsystem autonomous engine. The suit is the wear.
+
+**4.1** — a suit that survives the context window. Inference remembers. External Governance judges. The Autonomous Engine runs the work. The host you already run wears it: Grok, OpenCode, Hermes, OpenClaw, or Cursor. When the window closes, the next session wakes with the job, the page, and the laws.
+
+Install:
+
+```
+npm install 0xray
+npx 0xray wear
+```
+
+## Docs
+
+- [Introduction](https://docs.0xray.dev/docs/introduction): what the suit is
+- [Getting started](https://docs.0xray.dev/docs/guides/getting-started): wear, four chat bridges + Cursor hooks, seven MCP
+- [Integrations](https://docs.0xray.dev/docs/guides/integrations): Grok, OpenCode, Hermes, OpenClaw
+- [Grok floor](https://docs.0xray.dev/docs/architecture/GROK_GUIDE): Read the station card; do not thicken the exo
+- [Consumer migration](https://docs.0xray.dev/docs/guides/consumer-migration): upgrade from 3.x
+- [Vision](https://docs.0xray.dev/docs/architecture/v4-vision): exo, not toolset
+
+## Links
+
+- [Docs](https://docs.0xray.dev): the manual
+- [GitHub](https://github.com/0xRayAI/xray): the repository
+- [npm](https://www.npmjs.com/package/0xray): the 0xray package
+- [Bifrost](https://bifrost.0xray.dev): the live board

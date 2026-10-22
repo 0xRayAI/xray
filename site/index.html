@@ -3,9 +3,86 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>0xRay</title>
-  <meta name="description" content="0xRay is a three-subsystem autonomous engine. The suit is the wear. Install with npm i -g 0xray." />
-  <link rel="icon" href="assets/favicon.png" />
+  <title>0xRay — a suit for coding agents</title>
+  <meta name="description" content="0xRay is a three-subsystem autonomous engine. The suit is the wear. Inference remembers. External Governance judges. The Autonomous Engine runs the work." />
+  <link rel="canonical" href="https://0xray.dev/" />
+  <link rel="icon" href="assets/favicon.png" type="image/png" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="0xRay — a suit for coding agents" />
+  <meta property="og:description" content="0xRay is a three-subsystem autonomous engine. The suit is the wear. Inference remembers. External Governance judges. The Autonomous Engine runs the work." />
+  <meta property="og:url" content="https://0xray.dev/" />
+  <meta property="og:image" content="https://0xray.dev/assets/readme-hero.jpg" />
+  <meta property="og:image:width" content="1280" />
+  <meta property="og:image:height" content="720" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="0xRay — a suit for coding agents" />
+  <meta name="twitter:description" content="0xRay is a three-subsystem autonomous engine. The suit is the wear. Inference remembers. External Governance judges. The Autonomous Engine runs the work." />
+  <meta name="twitter:image" content="https://0xray.dev/assets/readme-hero.jpg" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "name": "0xRay",
+        "url": "https://0xray.dev/",
+        "logo": "https://0xray.dev/assets/favicon.png",
+        "sameAs": [
+          "https://docs.0xray.dev",
+          "https://github.com/0xRayAI/xray",
+          "https://www.npmjs.com/package/0xray",
+          "https://bifrost.0xray.dev",
+          "https://x.com/0xRayAI"
+        ]
+      },
+      {
+        "@type": "SoftwareApplication",
+        "name": "0xray",
+        "softwareVersion": "4.1",
+        "applicationCategory": "DeveloperApplication",
+        "url": "https://0xray.dev/",
+        "installUrl": "https://www.npmjs.com/package/0xray",
+        "codeRepository": "https://github.com/0xRayAI/xray",
+        "description": "0xRay is a three-subsystem autonomous engine. The suit is the wear."
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "AI hallucinates bad code",
+            "acceptedAnswer": { "@type": "Answer", "text": "Governance gate blocks non-compliant proposals" }
+          },
+          {
+            "@type": "Question",
+            "name": "No quality enforcement",
+            "acceptedAnswer": { "@type": "Answer", "text": "v3 enforcement: hooks + CI validators + governance MCP" }
+          },
+          {
+            "@type": "Question",
+            "name": "Single-agent blindspots",
+            "acceptedAnswer": { "@type": "Answer", "text": "3 specialized reviewers debate each proposal" }
+          },
+          {
+            "@type": "Question",
+            "name": "Scattered edits",
+            "acceptedAnswer": { "@type": "Answer", "text": "Multi-agent orchestrator coordinates work" }
+          },
+          {
+            "@type": "Question",
+            "name": "Repeated mistakes",
+            "acceptedAnswer": { "@type": "Answer", "text": "Memory routing enriches selection (Repertoire organ on in 4.0)" }
+          },
+          {
+            "@type": "Question",
+            "name": "Deep sub-tasks lose context",
+            "acceptedAnswer": { "@type": "Answer", "text": "AsideContext subcontexts inherit session + memory routing (v3.2+)" }
+          }
+        ]
+      }
+    ]
+  }
+  </script>
   <style>
     @font-face {
       font-family: "Black Ops One";
@@ -45,22 +122,21 @@
     main {
       max-width: 1280px;
       margin: 0 auto;
-      padding: 28px 28px 72px;
+      padding: 28px 28px 36px;
     }
-    .tray {
-      padding: 18px;
-      border-radius: 22px;
-      background: linear-gradient(180deg, #2a2c2e, #141516);
-      box-shadow:
-        inset 0 2px 0 rgba(255,255,255,0.08),
-        inset 0 -8px 16px rgba(0,0,0,0.45),
-        0 0 0 1px #3a3c3e;
+    .plate-open {
+      display: block;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      background: none;
+      cursor: zoom-in;
     }
     .plate {
       display: block;
       width: 100%;
       height: auto;
-      border-radius: 12px;
     }
     .install {
       margin-top: 18px;
@@ -81,12 +157,12 @@
         inset 0 1px 0 rgba(255,255,255,0.45),
         inset 0 -3px 0 rgba(0,0,0,0.35);
     }
-    .install span {
+    .install span, .faq h2, .site-footer p {
       font-family: "Chakra Petch", sans-serif;
-      font-size: 18px;
-      letter-spacing: 0.22em;
+      letter-spacing: 0.16em;
       color: var(--cyan);
     }
+    .install span { font-size: 18px; letter-spacing: 0.22em; }
     .install code {
       font-family: "Chakra Petch", sans-serif;
       font-size: 32px;
@@ -94,15 +170,15 @@
       color: var(--ink);
       text-shadow: 0 1px 0 #08090b;
     }
-    .links {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
+    .links, .site-footer nav {
+      display: flex;
+      flex-wrap: wrap;
       gap: 14px;
       margin: 14px 0 0;
       padding: 0;
       list-style: none;
     }
-    .links a {
+    .links a, .site-footer a {
       display: block;
       padding: 18px 8px 16px;
       text-align: center;
@@ -122,26 +198,83 @@
         0 14px 18px rgba(0,0,0,0.45),
         inset 0 1px 0 rgba(255,255,255,0.35);
     }
-    .docs-hero {
-      display: block;
-      width: 100%;
-      height: auto;
+    .links { display: grid; grid-template-columns: repeat(4, 1fr); }
+    .docs-hero { display: block; width: 100%; height: auto; }
+    .links a:hover, .site-footer a:hover { color: #fff; }
+    .links a:focus-visible, .site-footer a:focus-visible, .plate-open:focus-visible {
+      outline: 2px solid var(--orange);
+      outline-offset: 3px;
     }
-    .links a:hover { color: #fff; }
-    .links a:focus-visible { outline: 2px solid var(--orange); outline-offset: 3px; }
+    .faq { margin-top: 28px; }
+    .faq h2 { margin: 0 0 12px; font-size: 22px; }
+    .faq dl { margin: 0; }
+    .faq dt, .faq dd {
+      margin: 0;
+      padding: 14px 18px;
+    }
+    .faq dt {
+      margin-top: 10px;
+      font-family: "Chakra Petch", sans-serif;
+      font-size: 18px;
+      letter-spacing: 0.04em;
+      color: var(--ink);
+      border-radius: 10px 10px 0 0;
+      background: linear-gradient(180deg, #5c6064, #3a3e42);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.35);
+    }
+    .faq dd {
+      font-size: 22px;
+      line-height: 1.35;
+      color: var(--glow);
+      border-radius: 0 0 10px 10px;
+      background: #1a1c1e;
+      box-shadow: inset 0 -2px 0 rgba(0,0,0,0.45);
+    }
+    .site-footer {
+      margin-top: 8px;
+      padding: 22px 28px 32px;
+      background:
+        radial-gradient(circle at 18px 18px, #111 3px, #9aa0a4 3.5px, #3a3e42 7px, transparent 8px),
+        radial-gradient(circle at calc(100% - 18px) 18px, #111 3px, #9aa0a4 3.5px, #3a3e42 7px, transparent 8px),
+        linear-gradient(180deg, #2a2c2e, #101113);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.12);
+    }
+    .site-footer p { margin: 0; font-size: 16px; }
+    .site-footer nav a { flex: 1 1 140px; }
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      margin: 0;
+      padding: 24px;
+      overflow: auto;
+      background: rgba(8, 9, 11, 0.92);
+      touch-action: pinch-zoom;
+      cursor: zoom-out;
+    }
+    .lightbox[hidden] { display: none; }
+    .lightbox img {
+      display: block;
+      width: 1280px;
+      max-width: none;
+      height: auto;
+      margin: 0 auto;
+      touch-action: pinch-zoom;
+    }
     @media (max-width: 800px) {
       .install { flex-direction: column; align-items: flex-start; }
       .install code { font-size: 24px; }
       .links { grid-template-columns: 1fr 1fr; }
+      .faq dd { font-size: 20px; }
     }
   </style>
 </head>
 <body>
   <img class="docs-hero" src="assets/readme-hero.jpg" width="1280" height="720" alt="0xRay — A Power Suit for AI Agents. survive compaction. build foundries. monitor the swarm." />
+  <button type="button" class="plate-open" id="plate-open" aria-haspopup="dialog" aria-controls="plate-zoom">
+    <img class="plate" src="assets/apex.png" width="1280" height="720" alt="Stamped metal plate. Drawn 0xRay mark. Suit: Inference remembers the laws and the job. Governance judges before the work ships. Engine runs the work. Wake: the next session picks up the job." />
+  </button>
   <main>
-    <div class="tray">
-      <img class="plate" src="assets/apex.png" width="1280" height="720" alt="Stamped metal plate. Drawn 0xRay mark. Suit: Inference remembers the laws and the job. Governance judges before the work ships. Engine runs the work. Wake: the next session picks up the job." />
-    </div>
     <div class="install">
       <span>INSTALL</span>
       <code>npm i -g 0xray</code>
@@ -152,6 +285,49 @@
       <li><a href="https://www.npmjs.com/package/0xray">NPM</a></li>
       <li><a href="https://bifrost.0xray.dev">BIFROST</a></li>
     </ul>
+    <section class="faq" aria-labelledby="faq-title">
+      <h2 id="faq-title">Why 0xRay?</h2>
+      <dl>
+        <dt>AI hallucinates bad code</dt>
+        <dd>Governance gate blocks non-compliant proposals</dd>
+        <dt>No quality enforcement</dt>
+        <dd>v3 enforcement: hooks + CI validators + governance MCP</dd>
+        <dt>Single-agent blindspots</dt>
+        <dd>3 specialized reviewers debate each proposal</dd>
+        <dt>Scattered edits</dt>
+        <dd>Multi-agent orchestrator coordinates work</dd>
+        <dt>Repeated mistakes</dt>
+        <dd>Memory routing enriches selection (Repertoire organ on in 4.0)</dd>
+        <dt>Deep sub-tasks lose context</dt>
+        <dd>AsideContext subcontexts inherit session + memory routing (v3.2+)</dd>
+      </dl>
+    </section>
   </main>
+  <footer class="site-footer">
+    <p>© 2026 0xRay</p>
+    <nav aria-label="Footer">
+      <a href="https://docs.0xray.dev">Docs</a>
+      <a href="https://github.com/0xRayAI/xray">GitHub</a>
+      <a href="https://www.npmjs.com/package/0xray">npm</a>
+      <a href="https://bifrost.0xray.dev">Bifrost board</a>
+      <a href="https://x.com/0xRayAI">X (@0xRayAI)</a>
+    </nav>
+  </footer>
+  <div id="plate-zoom" class="lightbox" hidden role="dialog" aria-modal="true" aria-label="Stamped plate, full size">
+    <img src="assets/apex.png" width="1280" height="720" alt="Stamped plate at full size. Close by clicking or pressing Escape." />
+  </div>
+  <script>
+    (function () {
+      var open = document.getElementById('plate-open');
+      var zoom = document.getElementById('plate-zoom');
+      function show() { zoom.hidden = false; }
+      function hide() { zoom.hidden = true; }
+      open.addEventListener('click', show);
+      zoom.addEventListener('click', hide);
+      document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') hide();
+      });
+    }());
+  </script>
 </body>
 </html>
