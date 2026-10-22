@@ -17,5 +17,10 @@ describe('root MCP Node image', () => {
     expect(railway.build.nixpacksConfig).toBeUndefined();
     expect(railway.deploy.startCommand).toBe('node mcp-server.mjs');
     expect(docker).toMatch(/^FROM node:24\.22\.1-bookworm-slim$/m);
+    expect(docker).toMatch(/^RUN npm ci --ignore-scripts$/m);
+    const installAt = docker.indexOf('RUN npm ci --ignore-scripts');
+    const sourceAt = docker.indexOf('COPY . .');
+    expect(installAt).toBeGreaterThan(-1);
+    expect(sourceAt).toBeGreaterThan(installAt);
   });
 });
