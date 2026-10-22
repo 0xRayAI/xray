@@ -29,6 +29,9 @@ describe('apex site', () => {
     expect(page).toContain('kit/plate.css');
     expect(page).toContain('kit/stamp.js');
     expect(page).toContain('>A power suit for AI agents</h1>');
+    expect(page).toContain('assets/suit.webp');
+    expect(page).toContain('assets/suit.png');
+    expect(page).toContain('0xRay v4.0 suit, hand raised');
     expect(page).toContain('Survive compaction');
     expect(page).toContain('Build foundries');
     expect(page).toContain('Monitor the swarm');
@@ -78,6 +81,18 @@ describe('apex site', () => {
   });
 
   it('keeps the 1280x720 raster twin and the Pages workflow inside site/', () => {
+    const suitWebp = readFileSync(join(root, 'site', 'assets', 'suit.webp'));
+    expect(suitWebp.subarray(0, 4).toString('ascii')).toBe('RIFF');
+    expect(suitWebp.subarray(8, 12).toString('ascii')).toBe('WEBP');
+    expect(suitWebp.length).toBeLessThan(400000);
+    const suitPng = readFileSync(join(root, 'site', 'assets', 'suit.png'));
+    expect(pngSize(suitPng).width).toBe(1000);
+    const canon = readFileSync(join(root, 'FINAL-REFS', 'bots', '00-CANONICAL-suit-grok-imagine-blaze-pick.jpg'));
+    expect([...canon.subarray(0, 3)]).toEqual([0xff, 0xd8, 0xff]);
+    expect(canon.length).toBeLessThan(800000);
+    const skillSuit = readFileSync(join(root, 'grok-bot', 'skills', 'draw-me-a-suit', 'SKILL.md'), 'utf8');
+    expect(skillSuit).toContain('FINAL-REFS/bots/00-CANONICAL-suit-grok-imagine-blaze-pick.jpg');
+    expect(skillSuit).toContain('FINAL-REFS/logos/00-0xray-stamp-FINAL.png');
     const plate = readFileSync(join(root, 'site', 'assets', 'apex.png'));
     expect(pngSize(plate)).toEqual({ width: 1280, height: 720 });
     const workflow = readSite('.github/workflows/pages.yml');
