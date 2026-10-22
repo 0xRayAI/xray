@@ -45,7 +45,7 @@ The HTML plate uses this grid at 1280×720 and scales with the container. It doe
 6. `.panel` is the board panel (surface, line, 10px radius). Use it for install, links, and FAQ answers.
 7. A title that contains BIFROST uses `--rainbow` on rails and edges. Any other title stays `--cyan`.
 8. `x-stamp` is a light-DOM custom element (`site/kit/stamp.js`). Zoom clones that element at width 1280 into the overlay. Close with the X button and Escape. Do not close on overlay click. `touch-action` stays pan. Strip ids and buttons from the clone.
-9. Scale the whole 1280×720 plate to the content width. `site/kit/stamp.js` measures `slot.clientWidth / 1280` and sets `transform: scale` plus a wrapper height of `720 * scale`. Firefox drops container-query units inside `scale()`, so the measured height is the one that fits. Do not use `zoom`. The row boxes stay 1056px wide in plate coordinates, so they stay equal. The lightbox clone clears that transform.
+9. Scale the whole 1280×720 plate to the viewport. `site/kit/stamp.js` measures `document.documentElement.clientWidth / 1280` on load and on resize. The stage is `position: absolute` because `transform: scale` does not change its layout box. The fit wrapper's layout width is that viewport width, its height is `720 * scale`, and `margin-left` / `margin-right` are `auto`. Do not use `zoom` or `cqw` for the scale. The row boxes stay 1056px wide in plate coordinates, so they stay equal. The lightbox clone clears the transform and the absolute position.
 
 ## Do not
 

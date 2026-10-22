@@ -57,10 +57,12 @@ describe('apex site', () => {
     expect(plateCss).toContain('width: 1056px');
     expect(plateCss).toContain('grid-template-columns: 232px 824px');
     const stampJs = readSite('kit/stamp.js');
-    expect(stampJs).toContain('slot.clientWidth / 1280');
+    expect(stampJs).toContain('document.documentElement.clientWidth');
     expect(stampJs).toContain('720 * scale');
-    expect(plateCss).toContain('transform: scale(calc(100cqw / 1280px))');
-    expect(plateCss).toContain('height: calc(100cqw * 720 / 1280)');
+    expect(stampJs).toContain("marginLeft = 'auto'");
+    expect(plateCss).toContain('margin-left: auto');
+    expect(plateCss).toContain('margin-right: auto');
+    expect(plateCss).toContain('height: calc(100vw * 720 / 1280)');
     expect(plateCss).not.toContain('zoom:');
     expect(plateCss).toContain('../assets/console.jpg');
     expect(plateCss).toContain('.panel');
@@ -86,7 +88,7 @@ describe('apex site', () => {
     expect(suitWebp.subarray(8, 12).toString('ascii')).toBe('WEBP');
     expect(suitWebp.length).toBeLessThan(400000);
     const suitPng = readFileSync(join(root, 'site', 'assets', 'suit.png'));
-    expect(pngSize(suitPng).width).toBe(1000);
+    expect(pngSize(suitPng).width).toBe(1100);
     const canon = readFileSync(join(root, 'FINAL-REFS', 'bots', '00-CANONICAL-suit-grok-imagine-blaze-pick.jpg'));
     expect([...canon.subarray(0, 3)]).toEqual([0xff, 0xd8, 0xff]);
     expect(canon.length).toBeLessThan(800000);

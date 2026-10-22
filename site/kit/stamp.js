@@ -3,19 +3,33 @@
     customElements.define('x-stamp', class extends HTMLElement {});
   }
 
+  var fittedWidth = -1;
   function fitStages() {
+    var viewport = document.documentElement.clientWidth;
+    if (!viewport || viewport === fittedWidth) return;
+    fittedWidth = viewport;
+    var scale = viewport / 1280;
+    var height = 720 * scale;
     document.querySelectorAll('.stage-slot').forEach(function (slot) {
       var fit = slot.querySelector('.stage-fit');
       var stageEl = fit && fit.firstElementChild;
       if (!stageEl) return;
-      var scale = slot.clientWidth / 1280;
+      fit.style.width = viewport + 'px';
+      fit.style.height = height + 'px';
+      fit.style.marginLeft = 'auto';
+      fit.style.marginRight = 'auto';
+      stageEl.style.position = 'absolute';
+      stageEl.style.left = '0';
+      stageEl.style.top = '0';
       stageEl.style.transformOrigin = 'top left';
       stageEl.style.transform = 'scale(' + scale + ')';
-      fit.style.height = (720 * scale) + 'px';
     });
   }
   fitStages();
   window.addEventListener('resize', fitStages);
+  if (window.ResizeObserver) {
+    new ResizeObserver(fitStages).observe(document.documentElement);
+  }
 
   var stamp = document.getElementById('suit-plate');
   var open = document.getElementById('plate-open');
@@ -29,6 +43,9 @@
     clone.querySelectorAll('[id]').forEach(function (el) { el.removeAttribute('id'); });
     clone.querySelectorAll('button').forEach(function (el) { el.remove(); });
     clone.style.transform = 'none';
+    clone.style.position = 'relative';
+    clone.style.left = 'auto';
+    clone.style.top = 'auto';
     clone.style.width = '1280px';
     stage.replaceChildren(clone);
     zoom.hidden = false;

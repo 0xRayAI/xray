@@ -18,23 +18,26 @@ body {
 x-stamp { display: block; }
 img { max-width: 100%; }
 
-/* Width drives the scale. zoom is not reliable in Firefox or Safari, and a
-   zoomed 1280 stage overflows or stays tiny once the viewport is not 1280.
-   The slot is the container. The fit box is the scaled height. The stage
-   stays 1280x720 and scales from the top left. */
-.stage-slot {
-  container-type: inline-size;
-  width: 100%;
-}
+/* The 1280x720 stage is position:absolute. transform:scale does not change
+   its layout box, so the fit wrapper owns the scaled width and height and
+   centers with margin:auto. stamp.js measures documentElement.clientWidth. */
+.stage-slot { width: 100%; }
 .stage-fit {
+  position: relative;
   width: 100%;
-  height: calc(100cqw * 720 / 1280);
+  height: calc(100vw * 720 / 1280);
+  margin-left: auto;
+  margin-right: auto;
   overflow: hidden;
 }
 .stage-fit > .hero,
 .stage-fit > .stamp {
+  position: absolute;
+  left: 0;
+  top: 0;
+  margin: 0;
   transform-origin: top left;
-  transform: scale(calc(100cqw / 1280px));
+  transform: scale(calc(100vw / 1280px));
 }
 .plate-slot { margin-top: var(--space-hero-gap); }
 
@@ -517,6 +520,9 @@ main {
 .lightbox[hidden] { display: none; }
 .plate-stage { width: 1280px; }
 .plate-stage .stamp {
+  position: relative;
+  left: auto;
+  top: auto;
   transform: none;
   width: 1280px;
   height: 720px;
