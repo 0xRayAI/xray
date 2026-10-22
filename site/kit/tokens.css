@@ -1,0 +1,69 @@
+/* Shared tokens for a live stamped page.
+   Plate palette: plates/kit.json on cursor/v5-plates-restamp-72d4 @ ab36db743.
+   Board tokens: the dark theme in house/live/app/public/index.html (bifrost.0xray.dev).
+   The board file and that branch are not edited. Colors are locked here because
+   an external SVG cannot see custom properties. Stamp faces are Black Ops One,
+   Chakra Petch, and Barlow Condensed. The board's reading face stays on the board. */
+
+@font-face {
+  font-family: "Black Ops One";
+  src: url("../assets/fonts/BlackOpsOne-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-display: block;
+}
+@font-face {
+  font-family: "Chakra Petch";
+  src: url("../assets/fonts/ChakraPetch-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-display: block;
+}
+@font-face {
+  font-family: "Barlow Condensed";
+  src: url("../assets/fonts/BarlowCondensed-SemiBold.ttf") format("truetype");
+  font-weight: 600;
+  font-display: block;
+}
+@font-face {
+  font-family: "Barlow Condensed";
+  src: url("../assets/fonts/BarlowCondensed-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-display: block;
+}
+
+:root {
+  color-scheme: dark;
+  --cyan: #5ad6de;
+  --cyan-dim: #164e58;
+  --ink: #eceeec;
+  --muted: #a8b2bc;
+  --shadow: #0c0e10;
+  --metal: #242628;
+  --metal-raised: #3a3c40;
+  --metal-card: #40444a;
+  --metal-edge: #5c6066;
+  --floor: #181e22;
+  --rivet: #babec2;
+  --rivet-hole: #1c1e20;
+  --rainbow: linear-gradient(90deg, #eb3434, #f58c1e, #f5dc28, #3cc85a, #328cf5, #9646e6);
+
+  --bg: #04060c;
+  --panel: #080c14;
+  --line: #23304a;
+  --text: #e6ebff;
+  --teal: #58d2b4;
+  --dim: #8c96b4;
+  --glow: #ffd166;
+  --foot: #3de0e8;
+  --focus: #3b82f6;
+  --plate: #04060c;
+  --card-hover: #1a2744;
+
+  --font-title: "Black Ops One", "Arial Black", sans-serif;
+  --font-stamp: "Chakra Petch", sans-serif;
+  --font-body: "Barlow Condensed", "Arial Narrow", sans-serif;
+
+  --space-hero-gap: 32px;
+  --space-page: 28px;
+  --engrave: 1px 1px 0 var(--shadow);
+  --glow-soft: 0 0 12px var(--foot);
+}

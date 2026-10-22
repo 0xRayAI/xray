@@ -17,7 +17,7 @@ function pngSize(buf: Buffer): { width: number; height: number } {
 }
 
 describe('apex site', () => {
-  it('claims 0xray.dev and ships the install line plus the four links', () => {
+  it('claims 0xray.dev and ships live plate text plus the install line', () => {
     expect(readSite('CNAME').trim()).toBe('0xray.dev');
     const page = readSite('index.html');
     expect(page).toContain('npm i -g 0xray');
@@ -25,18 +25,49 @@ describe('apex site', () => {
     expect(page).toContain('https://github.com/0xRayAI/xray');
     expect(page).toContain('https://www.npmjs.com/package/0xray');
     expect(page).toContain('https://bifrost.0xray.dev');
-    expect(page).toContain('assets/readme-hero.jpg');
-    expect(page.indexOf('assets/readme-hero.jpg')).toBeLessThan(page.indexOf('assets/apex.png'));
-    expect(page).toContain('assets/apex.png');
-    const hero = readFileSync(join(root, 'site', 'assets', 'readme-hero.jpg'));
-    expect([...hero.subarray(0, 3)]).toEqual([0xff, 0xd8, 0xff]);
-    expect(page).toContain('assets/fonts/BlackOpsOne-Regular.ttf');
-    expect(page).toContain('assets/fonts/ChakraPetch-Bold.ttf');
+    expect(page).toContain('kit/tokens.css');
+    expect(page).toContain('kit/plate.css');
+    expect(page).toContain('kit/stamp.js');
+    expect(page).toContain('kit/parts/rivet.svg');
+    expect(page).toContain('<h1 class="text-wave">A power suit for AI agents</h1>');
+    expect(page).toContain('Survive compaction');
+    expect(page).toContain('Build foundries');
+    expect(page).toContain('Monitor the swarm');
+    expect(page).toContain('Your agent forgets the job when the session or context window ends');
+    expect(page).toContain('A suit your agent wears. Keeps laws, memory, and the job when the window closes');
+    expect(page).toContain('GROK, OPENCODE, HERMES, OPENCLAW, CURSOR, GROK BOT');
+    expect(page).toContain('https://0xray.dev/assets/readme-hero.jpg');
+    expect(page).not.toContain('assets/apex.png');
     expect(page).not.toContain('logo.jpg');
     expect(page).not.toContain('Inter');
+    const hero = readFileSync(join(root, 'site', 'assets', 'readme-hero.jpg'));
+    expect([...hero.subarray(0, 3)]).toEqual([0xff, 0xd8, 0xff]);
+    const css = readSite('kit/tokens.css');
+    expect(css).toContain('assets/fonts/BlackOpsOne-Regular.ttf');
+    expect(css).toContain('assets/fonts/ChakraPetch-Bold.ttf');
+    expect(css).toContain('assets/fonts/BarlowCondensed-Bold.ttf');
+    expect(css).toContain('--bg: #04060c');
+    expect(css).toContain('--glow: #ffd166');
+    expect(css).toContain('--cyan: #5ad6de');
+    const plateCss = readSite('kit/plate.css');
+    expect(plateCss).toContain('text-wave');
+    expect(plateCss).toContain('nm-roll');
+    expect(plateCss).toContain('parts/frame.svg');
+    expect(plateCss).toContain('.panel');
+    const frame = readSite('kit/parts/frame.svg');
+    expect(frame).toContain('stroke-width="16"');
+    expect(frame).toContain('#242628');
+    expect(frame).not.toContain('palette:');
+    expect(readFileSync(join(root, 'site', 'assets', 'fonts', 'BarlowCondensed-Bold.ttf')).length).toBeGreaterThan(1000);
+    const logo = readFileSync(join(root, 'site', 'kit', 'logo.png'));
+    expect(pngSize(logo).width).toBe(420);
+    const skill = readFileSync(join(root, '.agents', 'skills', 'live-plate', 'SKILL.md'), 'utf8');
+    expect(skill).toContain('ab36db743');
+    expect(skill).toContain('house/live');
+    expect(skill).toContain('site/kit/tokens.css');
   });
 
-  it('uses a 1280x720 stamped plate and keeps the Pages workflow inside site/', () => {
+  it('keeps the 1280x720 raster twin and the Pages workflow inside site/', () => {
     const plate = readFileSync(join(root, 'site', 'assets', 'apex.png'));
     expect(pngSize(plate)).toEqual({ width: 1280, height: 720 });
     const workflow = readSite('.github/workflows/pages.yml');
