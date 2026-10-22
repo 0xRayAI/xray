@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""live-inbox <seat> [--peek] | live-inbox <seat> --ack <id|all|stale> [--apply] | live-inbox <seat> --pop <id|all> | live-inbox <seat> --upto <id> | live-inbox <seat> --turn start|end [--tag <tag>] | live-inbox <seat> --prompt [--from <name>] [--room <name>] [--note <line>]
+"""live-inbox <seat> [--peek] | live-inbox <seat> --ack <id|all|stale> [--apply] [--review <url>] | live-inbox <seat> --pop <id|all> | live-inbox <seat> --upto <id> | live-inbox <seat> --turn start|end [--tag <tag>] | live-inbox <seat> --prompt [--from <name>] [--room <name>] [--note <line>]
 live-inbox <seat> --handoff <to> --pr <owner/repo#n> --kind <ready|critic_fail|live_pass|merge|ci_fail> --sha <head>
 live-inbox <seat> --card <owner/repo#n> --start-after <ISO>
 
@@ -361,6 +361,7 @@ tag = take("--tag")
 frm = take("--from")
 room = take("--room")
 note = take("--note")
+review = take("--review")
 prompt = "--prompt" in argv
 if prompt:
     argv.remove("--prompt")
@@ -394,6 +395,8 @@ if turn is not None and (busy or turn not in ("start", "end")):
 if prompt and (ack is not None or handoff_to is not None or card_raw is not None or release or handled_lookup):
     sys.exit(USAGE)
 if (frm is not None or room is not None or note is not None) and not prompt:
+    sys.exit(USAGE)
+if review is not None and (ack_flag != "--ack" or not ack or ack in ("all", "stale")):
     sys.exit(USAGE)
 
 
@@ -483,11 +486,31 @@ refuse_split_cursors(seat)
 H = {"Authorization": "Bearer " + kf.read_text().strip()}
 
 
-def call(method, path, body=None, exit_on_error=True):
+def inbox_timeout():
+    raw = os.environ.get("LIVE_INBOX_TIMEOUT", "").strip()
+    if not raw:
+        return 20
+    try:
+        n = float(raw)
+    except ValueError:
+        return 20
+    return n if n > 0 else 20
+
+
+def is_timeout(err):
+    if isinstance(err, TimeoutError):
+        return True
+    reason = getattr(err, "reason", None)
+    if isinstance(reason, TimeoutError):
+        return True
+    return "timed out" in str(reason or err).lower()
+
+
+def call(method, path, body=None, exit_on_error=True, tolerate_timeout=False):
     req = urllib.request.Request(URL + path, data=json.dumps(body).encode() if body is not None else None, method=method,
                                  headers={**H, **({"Content-Type": "application/json"} if body is not None else {})})
     try:
-        with urllib.request.urlopen(req, timeout=20) as r:
+        with urllib.request.urlopen(req, timeout=inbox_timeout()) as r:
             return json.loads(r.read().decode())
     except urllib.error.HTTPError as e:
         msg = f"live-inbox: HTTP {e.code} {e.read().decode()[:200]}"
@@ -496,9 +519,19 @@ def call(method, path, body=None, exit_on_error=True):
         return {"ok": False, "error": msg}
     except (urllib.error.URLError, TimeoutError) as e:
         msg = f"live-inbox: server unreachable ({e})"
+        if tolerate_timeout and is_timeout(e):
+            return {"ok": False, "timeout": True, "error": msg}
         if exit_on_error:
             sys.exit(msg)
         return {"ok": False, "error": msg}
+
+
+def merge_handoff(line):
+    if not isinstance(line, dict):
+        return False
+    if str(line.get("kind") or "").lower() != "merge":
+        return False
+    return str(line.get("type") or "").lower() == "packet" or ":merge:" in str(line.get("id") or "")
 
 
 def ct_now():
@@ -674,7 +707,9 @@ if handoff_to is not None:
     line = {"id": line_id, "t_ct": datetime.now(timezone.utc).isoformat(),
             "seat": handoff_to, "from": seat, "to": handoff_to, "type": "packet", "kind": kind,
             "repo": repo, "number": number, "sha": head, "title": f"handoff {kind}", "url": url, "reason": f"handoff {kind}"}
-    call("POST", "/inbox", {"lines": [line]})
+    posted = call("POST", "/inbox", {"lines": [line]}, tolerate_timeout=True)
+    if isinstance(posted, dict) and posted.get("timeout"):
+        print(posted.get("error") or "live-inbox: server unreachable", file=sys.stderr)
     print(f"SendToAgent {handoff_to}: handoff {kind} {repo}#{number} @{head[:7]} {url}")
     sys.exit(0)
 if release:
@@ -733,7 +768,7 @@ if ack == "stale":
     failed = None
     for l in lines:
         line_id = l.get("id")
-        if not isinstance(line_id, str) or not line_id:
+        if not isinstance(line_id, str) or not line_id or merge_handoff(l):
             continue
         result = call("POST", f"/inbox/{seat}/ack", {"id": line_id}, exit_on_error=False)
         if result.get("error"):
@@ -751,7 +786,10 @@ if ack == "stale":
     print(json.dumps(receipt))
     sys.exit(0 if failed is None else 1)
 if ack is not None:
-    r = call("POST", f"/inbox/{seat}/ack", {"all": True} if ack == "all" else {"id": ack})
+    body = {"all": True} if ack == "all" else {"id": ack}
+    if review is not None:
+        body["review"] = review
+    r = call("POST", f"/inbox/{seat}/ack", body)
     print(json.dumps(r))
     sys.exit(0)
 lines = claim_open(seat, call("GET", f"/inbox/{seat}").get("lines") or [])

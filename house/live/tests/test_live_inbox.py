@@ -1,5 +1,5 @@
 """live-inbox --handoff posts one packet and prints one 1:1 line. The same PR and head keep one id."""
-import json, os, shutil, subprocess, threading, unittest
+import json, os, shutil, subprocess, threading, time, unittest
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -121,6 +121,56 @@ class HandoffCommand(unittest.TestCase):
         r = self.run_handoff("--handoff", "critic", "--pr", "0xRayAI/xray#1", "--kind", "room")
         self.assertNotEqual(r.returncode, 0)
         self.assertEqual(Inbox.posts, [])
+
+    def test_ack_review_is_sent_with_the_id(self):
+        url = "https://github.com/0xRayAI/xray/pull/80#pullrequestreview-554"
+        r = self.run_handoff("--ack", "handoff:0xrayai/xray#80:merge:abc1234", "--review", url)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(Inbox.posts[-1]["path"], "/inbox/forge/ack")
+        self.assertEqual(Inbox.posts[-1]["body"]["id"], "handoff:0xrayai/xray#80:merge:abc1234")
+        self.assertEqual(Inbox.posts[-1]["body"]["review"], url)
+        refused = self.run_handoff("--review", url)
+        self.assertNotEqual(refused.returncode, 0)
+        self.assertEqual(len(Inbox.posts), 1)
+        both = self.run_handoff("--ack", "all", "--review", url)
+        self.assertNotEqual(both.returncode, 0)
+        self.assertEqual(len(Inbox.posts), 1)
+
+    def test_handoff_timeout_still_prints_the_wake(self):
+        class Hang(BaseHTTPRequestHandler):
+            def log_message(self, fmt, *args):
+                return
+
+            def do_POST(self):
+                n = int(self.headers.get("Content-Length") or 0)
+                self.rfile.read(n)
+                time.sleep(30)
+
+        hang = ThreadingHTTPServer(("127.0.0.1", 0), Hang)
+        thread = threading.Thread(target=hang.serve_forever, daemon=True)
+        thread.start()
+        try:
+            env = {**self.env, "LIVE_URL": f"http://127.0.0.1:{hang.server_address[1]}", "LIVE_INBOX_TIMEOUT": "0.3"}
+            r = subprocess.run(
+                [str(TOOL), "forge", "--handoff", "critic", "--pr", "0xRayAI/xray#551", "--kind", "merge", "--sha", "abc1234"],
+                env=env, capture_output=True, text=True, timeout=5,
+            )
+            self.assertEqual(r.returncode, 0, r.stderr)
+            self.assertIn("SendToAgent critic: handoff merge 0xRayAI/xray#551 @abc1234 ", r.stdout)
+            self.assertIn("server unreachable", r.stderr)
+        finally:
+            hang.shutdown()
+            hang.server_close()
+
+    def test_handoff_refused_prints_no_wake(self):
+        env = {**self.env, "LIVE_URL": "http://127.0.0.1:1", "LIVE_INBOX_TIMEOUT": "0.3"}
+        r = subprocess.run(
+            [str(TOOL), "forge", "--handoff", "critic", "--pr", "0xRayAI/xray#551", "--kind", "merge", "--sha", "abc1234"],
+            env=env, capture_output=True, text=True, timeout=5,
+        )
+        self.assertNotEqual(r.returncode, 0)
+        self.assertNotIn("SendToAgent", r.stdout)
+        self.assertIn("server unreachable", r.stderr)
 
 
 if __name__ == "__main__":
