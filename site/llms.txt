@@ -20,6 +20,64 @@ npx 0xray wear
 - [Consumer migration](https://docs.0xray.dev/docs/guides/consumer-migration): upgrade from 3.x
 - [Vision](https://docs.0xray.dev/docs/architecture/v4-vision): exo, not toolset
 
+## FAQ
+
+Why do I need 0xRay?
+
+0xRay is the suit a coding agent wears so the job survives the context window. It is an exoskeleton that blocks AI slop from becoming real damage: every code change is checked against the Codex and deliberated by three specialized reviewers before it touches the codebase. When the window closes, the next session wakes with the job, the page, and the laws.
+
+What does 0xRay do?
+
+0xRay is a three-subsystem autonomous engine. Inference remembers, External Governance judges, and the Autonomous Engine runs the work. The suit is the wear on the host you already run.
+
+How does 0xRay power up my agent?
+
+Memory, judgement, and payments come on with the suit: Repertoire for memory, Dynamo for judgement, and Clearing for payments. The rules stay on in the tool you already open. Goggles views one plane, so a search runs inside the current card.
+
+What happens when an agent wears the suit?
+
+npx 0xray wear writes the consumer suit: AGENTS.md, .xray config, seven MCP servers, and the OpenCode, Grok, Hermes, and OpenClaw bridges. Inside a git checkout it also fastens Cursor project hooks. npm install 0xray links vendored Repertoire and does not write those bridges.
+
+How do I install 0xRay?
+
+Run npm install 0xray, then npx 0xray wear. npm install links vendored Repertoire and prints the wear command. Wear writes the suit.
+
+Which tools does 0xRay work with?
+
+The host you already run wears it: Grok, OpenCode, Hermes, OpenClaw, or Cursor. Wear installs the OpenCode, Grok, Hermes, and OpenClaw bridges. Inside a git checkout, wear also fastens Cursor project hooks.
+
+Is 0xRay free and open source?
+
+Yes. 0xRay is MIT licensed. The LICENSE grants permission, free of charge, to use, copy, modify, merge, publish, distribute, sublicense, and sell copies of the software.
+
+Where are the 0xRay docs?
+
+The manual is at https://docs.0xray.dev. Getting started covers wear, the four chat bridges, Cursor hooks, and the seven MCP servers. Each plate is one pipeline, including goggles and the suit.
+
+How do I make my AI agent remember things between sessions?
+
+Wear Repertoire. It is the memory organ (@0xray/repertoire 0.2.9) and it matches a task to named laws, with the project copy under .xray/state/repertoire/. Station at .xray/state/STATION.md is the wake ticket for the next session, not a substitute for Repertoire.
+
+How do I keep an agent's context after compaction?
+
+Grok PreCompact and Cursor preCompact write .xray/state/STATION.md before the compact continues. Read that card after the cut and leave Intent alone, so the same job continues. The long body stays in notes.
+
+How do I manage a fleet of AI agents?
+
+Bifrost is the fleet board at https://bifrost.0xray.dev. Every pull request, issue, and comment becomes one card and a line in the right seat's inbox, and that seat is woken. When LIVE_URL is unset, the board is the hand-kept house/WAVEBOARD.md.
+
+How do I govern AI agents?
+
+Governance runs before the work ships. Code review, security audit, and research vote approve, reject, or needs revision, and the PreToolUse gate stands beside that vote. The rules stay on.
+
+Does 0xRay work with Grok Bot?
+
+Yes. @0xray/grok-bot is the house companion for Grok Bot agents on the 0xRay suit. The suit keeps the rules on, the house is the grok-bot folder, and Repertoire ships in the suit.
+
+How do I set up a Grok Bot agent house?
+
+Install @0xray/grok-bot, then run npx @0xray/grok-bot house init if house/ is missing. Init copies templates/house/ into ./house and refuses to overwrite a file that is already there. Fill HOUSE.md, then run npx @0xray/grok-bot doctor until it reports House: PASS.
+
 ## Links
 
 - [Docs](https://docs.0xray.dev): the manual

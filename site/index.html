@@ -50,33 +50,73 @@
         "mainEntity": [
           {
             "@type": "Question",
-            "name": "AI hallucinates bad code",
-            "acceptedAnswer": { "@type": "Answer", "text": "Governance gate blocks non-compliant proposals" }
+            "name": "Why do I need 0xRay?",
+            "acceptedAnswer": { "@type": "Answer", "text": "0xRay is the suit a coding agent wears so the job survives the context window. It is an exoskeleton that blocks AI slop from becoming real damage: every code change is checked against the Codex and deliberated by three specialized reviewers before it touches the codebase. When the window closes, the next session wakes with the job, the page, and the laws." }
           },
           {
             "@type": "Question",
-            "name": "No quality enforcement",
-            "acceptedAnswer": { "@type": "Answer", "text": "v3 enforcement: hooks + CI validators + governance MCP" }
+            "name": "What does 0xRay do?",
+            "acceptedAnswer": { "@type": "Answer", "text": "0xRay is a three-subsystem autonomous engine. Inference remembers, External Governance judges, and the Autonomous Engine runs the work. The suit is the wear on the host you already run." }
           },
           {
             "@type": "Question",
-            "name": "Single-agent blindspots",
-            "acceptedAnswer": { "@type": "Answer", "text": "3 specialized reviewers debate each proposal" }
+            "name": "How does 0xRay power up my agent?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Memory, judgement, and payments come on with the suit: Repertoire for memory, Dynamo for judgement, and Clearing for payments. The rules stay on in the tool you already open. Goggles views one plane, so a search runs inside the current card." }
           },
           {
             "@type": "Question",
-            "name": "Scattered edits",
-            "acceptedAnswer": { "@type": "Answer", "text": "Multi-agent orchestrator coordinates work" }
+            "name": "What happens when an agent wears the suit?",
+            "acceptedAnswer": { "@type": "Answer", "text": "npx 0xray wear writes the consumer suit: AGENTS.md, .xray config, seven MCP servers, and the OpenCode, Grok, Hermes, and OpenClaw bridges. Inside a git checkout it also fastens Cursor project hooks. npm install 0xray links vendored Repertoire and does not write those bridges." }
           },
           {
             "@type": "Question",
-            "name": "Repeated mistakes",
-            "acceptedAnswer": { "@type": "Answer", "text": "Memory routing enriches selection (Repertoire organ on in 4.0)" }
+            "name": "How do I install 0xRay?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Run npm install 0xray, then npx 0xray wear. npm install links vendored Repertoire and prints the wear command. Wear writes the suit." }
           },
           {
             "@type": "Question",
-            "name": "Deep sub-tasks lose context",
-            "acceptedAnswer": { "@type": "Answer", "text": "AsideContext subcontexts inherit session + memory routing (v3.2+)" }
+            "name": "Which tools does 0xRay work with?",
+            "acceptedAnswer": { "@type": "Answer", "text": "The host you already run wears it: Grok, OpenCode, Hermes, OpenClaw, or Cursor. Wear installs the OpenCode, Grok, Hermes, and OpenClaw bridges. Inside a git checkout, wear also fastens Cursor project hooks." }
+          },
+          {
+            "@type": "Question",
+            "name": "Is 0xRay free and open source?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes. 0xRay is MIT licensed. The LICENSE grants permission, free of charge, to use, copy, modify, merge, publish, distribute, sublicense, and sell copies of the software." }
+          },
+          {
+            "@type": "Question",
+            "name": "Where are the 0xRay docs?",
+            "acceptedAnswer": { "@type": "Answer", "text": "The manual is at https://docs.0xray.dev. Getting started covers wear, the four chat bridges, Cursor hooks, and the seven MCP servers. Each plate is one pipeline, including goggles and the suit." }
+          },
+          {
+            "@type": "Question",
+            "name": "How do I make my AI agent remember things between sessions?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Wear Repertoire. It is the memory organ (@0xray/repertoire 0.2.9) and it matches a task to named laws, with the project copy under .xray/state/repertoire/. Station at .xray/state/STATION.md is the wake ticket for the next session, not a substitute for Repertoire." }
+          },
+          {
+            "@type": "Question",
+            "name": "How do I keep an agent's context after compaction?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Grok PreCompact and Cursor preCompact write .xray/state/STATION.md before the compact continues. Read that card after the cut and leave Intent alone, so the same job continues. The long body stays in notes." }
+          },
+          {
+            "@type": "Question",
+            "name": "How do I manage a fleet of AI agents?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Bifrost is the fleet board at https://bifrost.0xray.dev. Every pull request, issue, and comment becomes one card and a line in the right seat's inbox, and that seat is woken. When LIVE_URL is unset, the board is the hand-kept house/WAVEBOARD.md." }
+          },
+          {
+            "@type": "Question",
+            "name": "How do I govern AI agents?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Governance runs before the work ships. Code review, security audit, and research vote approve, reject, or needs revision, and the PreToolUse gate stands beside that vote. The rules stay on." }
+          },
+          {
+            "@type": "Question",
+            "name": "Does 0xRay work with Grok Bot?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes. @0xray/grok-bot is the house companion for Grok Bot agents on the 0xRay suit. The suit keeps the rules on, the house is the grok-bot folder, and Repertoire ships in the suit." }
+          },
+          {
+            "@type": "Question",
+            "name": "How do I set up a Grok Bot agent house?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Install @0xray/grok-bot, then run npx @0xray/grok-bot house init if house/ is missing. Init copies templates/house/ into ./house and refuses to overwrite a file that is already there. Fill HOUSE.md, then run npx @0xray/grok-bot doctor until it reports House: PASS." }
           }
         ]
       }
@@ -127,7 +167,7 @@
     .plate-open {
       display: block;
       width: 100%;
-      margin: 0;
+      margin: 32px 0 0;
       padding: 0;
       border: 0;
       background: none;
@@ -157,7 +197,7 @@
         inset 0 1px 0 rgba(255,255,255,0.45),
         inset 0 -3px 0 rgba(0,0,0,0.35);
     }
-    .install span, .faq h2, .site-footer p {
+    .install span, .faq h2 {
       font-family: "Chakra Petch", sans-serif;
       letter-spacing: 0.16em;
       color: var(--cyan);
@@ -170,7 +210,7 @@
       color: var(--ink);
       text-shadow: 0 1px 0 #08090b;
     }
-    .links, .site-footer nav {
+    .links {
       display: flex;
       flex-wrap: wrap;
       gap: 14px;
@@ -178,7 +218,7 @@
       padding: 0;
       list-style: none;
     }
-    .links a, .site-footer a {
+    .links a {
       display: block;
       padding: 18px 8px 16px;
       text-align: center;
@@ -200,29 +240,51 @@
     }
     .links { display: grid; grid-template-columns: repeat(4, 1fr); }
     .docs-hero { display: block; width: 100%; height: auto; }
-    .links a:hover, .site-footer a:hover { color: #fff; }
-    .links a:focus-visible, .site-footer a:focus-visible, .plate-open:focus-visible {
+    .links a:hover { color: #fff; }
+    .links a:focus-visible, .site-footer a:focus-visible, .plate-open:focus-visible, .zoom-close:focus-visible, .faq summary:focus-visible {
       outline: 2px solid var(--orange);
       outline-offset: 3px;
     }
     .faq { margin-top: 28px; }
     .faq h2 { margin: 0 0 12px; font-size: 22px; }
-    .faq dl { margin: 0; }
-    .faq dt, .faq dd {
+    .faq details { margin-top: 10px; }
+    .faq summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
       margin: 0;
       padding: 14px 18px;
-    }
-    .faq dt {
-      margin-top: 10px;
       font-family: "Chakra Petch", sans-serif;
       font-size: 18px;
       letter-spacing: 0.04em;
       color: var(--ink);
-      border-radius: 10px 10px 0 0;
+      border-radius: 10px;
       background: linear-gradient(180deg, #5c6064, #3a3e42);
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.35);
+      cursor: pointer;
+      list-style: none;
     }
-    .faq dd {
+    .faq summary::-webkit-details-marker { display: none; }
+    .faq summary::after {
+      content: "";
+      flex: 0 0 auto;
+      width: 8px;
+      height: 8px;
+      margin-top: -4px;
+      border-right: 2px solid var(--cyan);
+      border-bottom: 2px solid var(--cyan);
+      transform: rotate(45deg);
+      transition: transform 0.15s linear;
+    }
+    .faq details[open] summary { border-radius: 10px 10px 0 0; }
+    .faq details[open] summary::after {
+      margin-top: 4px;
+      transform: rotate(225deg);
+    }
+    .faq details p {
+      margin: 0;
+      padding: 14px 18px;
       font-size: 22px;
       line-height: 1.35;
       color: var(--glow);
@@ -231,41 +293,104 @@
       box-shadow: inset 0 -2px 0 rgba(0,0,0,0.45);
     }
     .site-footer {
-      margin-top: 8px;
-      padding: 22px 28px 32px;
-      background:
-        radial-gradient(circle at 18px 18px, #111 3px, #9aa0a4 3.5px, #3a3e42 7px, transparent 8px),
-        radial-gradient(circle at calc(100% - 18px) 18px, #111 3px, #9aa0a4 3.5px, #3a3e42 7px, transparent 8px),
-        linear-gradient(180deg, #2a2c2e, #101113);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.12);
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 24px 32px;
+      margin-top: 36px;
+      padding: 28px 40px 32px;
+      border-top: 1px solid rgba(236, 236, 232, 0.28);
+      background: none;
     }
-    .site-footer p { margin: 0; font-size: 16px; }
-    .site-footer nav a { flex: 1 1 140px; }
+    .site-footer .colophon {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      margin: 0;
+      font-family: "Barlow Condensed", "Arial Narrow", sans-serif;
+      font-size: 15px;
+      line-height: 1;
+      letter-spacing: 0.04em;
+      color: #8e9498;
+    }
+    .site-footer .colophon img {
+      width: 16px;
+      height: 16px;
+      align-self: center;
+    }
+    .site-footer nav {
+      display: flex;
+      align-items: baseline;
+      justify-content: flex-end;
+      gap: 28px;
+      margin: 0;
+      padding: 0;
+    }
+    .site-footer a {
+      font-family: "Barlow Condensed", "Arial Narrow", sans-serif;
+      font-size: 15px;
+      line-height: 1;
+      letter-spacing: 0.04em;
+      color: #8e9498;
+      text-decoration: none;
+    }
+    .site-footer a:hover { color: #d5d8dc; }
     .lightbox {
       position: fixed;
       inset: 0;
       z-index: 20;
       margin: 0;
-      padding: 24px;
+      padding: 0;
       overflow: auto;
       background: rgba(8, 9, 11, 0.92);
-      touch-action: pinch-zoom;
-      cursor: zoom-out;
+      touch-action: pan-x pan-y pinch-zoom;
+      overscroll-behavior: contain;
     }
     .lightbox[hidden] { display: none; }
-    .lightbox img {
+    .lightbox .plate-full {
       display: block;
       width: 1280px;
+      height: 720px;
       max-width: none;
-      height: auto;
-      margin: 0 auto;
-      touch-action: pinch-zoom;
+      max-height: none;
+      margin: 0;
+      touch-action: pan-x pan-y pinch-zoom;
+    }
+    .zoom-close {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 21;
+      width: 44px;
+      height: 44px;
+      margin: 0;
+      padding: 0;
+      border: 1px solid rgba(236, 236, 232, 0.4);
+      border-radius: 4px;
+      background: #1a1c1e;
+      color: #ecece8;
+      font-family: "Chakra Petch", sans-serif;
+      font-size: 22px;
+      line-height: 1;
+      cursor: pointer;
     }
     @media (max-width: 800px) {
+      .plate-open { margin-top: 20px; }
       .install { flex-direction: column; align-items: flex-start; }
       .install code { font-size: 24px; }
       .links { grid-template-columns: 1fr 1fr; }
-      .faq dd { font-size: 20px; }
+      .faq details p { font-size: 20px; }
+      .site-footer {
+        flex-direction: column;
+        align-items: center;
+        padding: 24px 20px 28px;
+        text-align: center;
+      }
+      .site-footer nav {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 12px 20px;
+      }
     }
   </style>
 </head>
@@ -286,25 +411,70 @@
       <li><a href="https://bifrost.0xray.dev">BIFROST</a></li>
     </ul>
     <section class="faq" aria-labelledby="faq-title">
-      <h2 id="faq-title">Why 0xRay?</h2>
-      <dl>
-        <dt>AI hallucinates bad code</dt>
-        <dd>Governance gate blocks non-compliant proposals</dd>
-        <dt>No quality enforcement</dt>
-        <dd>v3 enforcement: hooks + CI validators + governance MCP</dd>
-        <dt>Single-agent blindspots</dt>
-        <dd>3 specialized reviewers debate each proposal</dd>
-        <dt>Scattered edits</dt>
-        <dd>Multi-agent orchestrator coordinates work</dd>
-        <dt>Repeated mistakes</dt>
-        <dd>Memory routing enriches selection (Repertoire organ on in 4.0)</dd>
-        <dt>Deep sub-tasks lose context</dt>
-        <dd>AsideContext subcontexts inherit session + memory routing (v3.2+)</dd>
-      </dl>
+      <h2 id="faq-title">FAQ</h2>
+      <details>
+        <summary>Why do I need 0xRay?</summary>
+        <p>0xRay is the suit a coding agent wears so the job survives the context window. It is an exoskeleton that blocks AI slop from becoming real damage: every code change is checked against the Codex and deliberated by three specialized reviewers before it touches the codebase. When the window closes, the next session wakes with the job, the page, and the laws.</p>
+      </details>
+      <details>
+        <summary>What does 0xRay do?</summary>
+        <p>0xRay is a three-subsystem autonomous engine. Inference remembers, External Governance judges, and the Autonomous Engine runs the work. The suit is the wear on the host you already run.</p>
+      </details>
+      <details>
+        <summary>How does 0xRay power up my agent?</summary>
+        <p>Memory, judgement, and payments come on with the suit: Repertoire for memory, Dynamo for judgement, and Clearing for payments. The rules stay on in the tool you already open. Goggles views one plane, so a search runs inside the current card.</p>
+      </details>
+      <details>
+        <summary>What happens when an agent wears the suit?</summary>
+        <p>npx 0xray wear writes the consumer suit: AGENTS.md, .xray config, seven MCP servers, and the OpenCode, Grok, Hermes, and OpenClaw bridges. Inside a git checkout it also fastens Cursor project hooks. npm install 0xray links vendored Repertoire and does not write those bridges.</p>
+      </details>
+      <details>
+        <summary>How do I install 0xRay?</summary>
+        <p>Run npm install 0xray, then npx 0xray wear. npm install links vendored Repertoire and prints the wear command. Wear writes the suit.</p>
+      </details>
+      <details>
+        <summary>Which tools does 0xRay work with?</summary>
+        <p>The host you already run wears it: Grok, OpenCode, Hermes, OpenClaw, or Cursor. Wear installs the OpenCode, Grok, Hermes, and OpenClaw bridges. Inside a git checkout, wear also fastens Cursor project hooks.</p>
+      </details>
+      <details>
+        <summary>Is 0xRay free and open source?</summary>
+        <p>Yes. 0xRay is MIT licensed. The LICENSE grants permission, free of charge, to use, copy, modify, merge, publish, distribute, sublicense, and sell copies of the software.</p>
+      </details>
+      <details>
+        <summary>Where are the 0xRay docs?</summary>
+        <p>The manual is at https://docs.0xray.dev. Getting started covers wear, the four chat bridges, Cursor hooks, and the seven MCP servers. Each plate is one pipeline, including goggles and the suit.</p>
+      </details>
+      <details>
+        <summary>How do I make my AI agent remember things between sessions?</summary>
+        <p>Wear Repertoire. It is the memory organ (@0xray/repertoire 0.2.9) and it matches a task to named laws, with the project copy under .xray/state/repertoire/. Station at .xray/state/STATION.md is the wake ticket for the next session, not a substitute for Repertoire.</p>
+      </details>
+      <details>
+        <summary>How do I keep an agent's context after compaction?</summary>
+        <p>Grok PreCompact and Cursor preCompact write .xray/state/STATION.md before the compact continues. Read that card after the cut and leave Intent alone, so the same job continues. The long body stays in notes.</p>
+      </details>
+      <details>
+        <summary>How do I manage a fleet of AI agents?</summary>
+        <p>Bifrost is the fleet board at https://bifrost.0xray.dev. Every pull request, issue, and comment becomes one card and a line in the right seat's inbox, and that seat is woken. When LIVE_URL is unset, the board is the hand-kept house/WAVEBOARD.md.</p>
+      </details>
+      <details>
+        <summary>How do I govern AI agents?</summary>
+        <p>Governance runs before the work ships. Code review, security audit, and research vote approve, reject, or needs revision, and the PreToolUse gate stands beside that vote. The rules stay on.</p>
+      </details>
+      <details>
+        <summary>Does 0xRay work with Grok Bot?</summary>
+        <p>Yes. @0xray/grok-bot is the house companion for Grok Bot agents on the 0xRay suit. The suit keeps the rules on, the house is the grok-bot folder, and Repertoire ships in the suit.</p>
+      </details>
+      <details>
+        <summary>How do I set up a Grok Bot agent house?</summary>
+        <p>Install @0xray/grok-bot, then run npx @0xray/grok-bot house init if house/ is missing. Init copies templates/house/ into ./house and refuses to overwrite a file that is already there. Fill HOUSE.md, then run npx @0xray/grok-bot doctor until it reports House: PASS.</p>
+      </details>
     </section>
   </main>
   <footer class="site-footer">
-    <p>© 2026 0xRay</p>
+    <p class="colophon">
+      <img src="assets/favicon.png" width="64" height="64" alt="" />
+      <span>© 2026 0xRay</span>
+    </p>
     <nav aria-label="Footer">
       <a href="https://docs.0xray.dev">Docs</a>
       <a href="https://github.com/0xRayAI/xray">GitHub</a>
@@ -314,16 +484,27 @@
     </nav>
   </footer>
   <div id="plate-zoom" class="lightbox" hidden role="dialog" aria-modal="true" aria-label="Stamped plate, full size">
-    <img src="assets/apex.png" width="1280" height="720" alt="Stamped plate at full size. Close by clicking or pressing Escape." />
+    <button type="button" class="zoom-close" id="plate-close" aria-label="Close">X</button>
+    <img class="plate-full" src="assets/apex.png" width="1280" height="720" alt="Stamped plate at full size." />
   </div>
   <script>
     (function () {
       var open = document.getElementById('plate-open');
       var zoom = document.getElementById('plate-zoom');
-      function show() { zoom.hidden = false; }
-      function hide() { zoom.hidden = true; }
+      var close = document.getElementById('plate-close');
+      function show() {
+        zoom.hidden = false;
+        zoom.scrollTop = 0;
+        zoom.scrollLeft = 0;
+        close.focus();
+      }
+      function hide() {
+        if (zoom.hidden) return;
+        zoom.hidden = true;
+        open.focus();
+      }
       open.addEventListener('click', show);
-      zoom.addEventListener('click', hide);
+      close.addEventListener('click', hide);
       document.addEventListener('keydown', function (event) {
         if (event.key === 'Escape') hide();
       });
