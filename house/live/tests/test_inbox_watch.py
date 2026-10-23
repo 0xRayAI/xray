@@ -51,6 +51,17 @@ class InboxWatch(unittest.TestCase):
         self.assertNotIn("--ack", calls)
         self.assertNotIn("--turn", calls)
 
+    def test_success_writes_watch_state(self):
+        with tempfile.TemporaryDirectory() as d:
+            state = str(Path(d) / "inbox-watch.state")
+            r, _calls = self._run("exit 0", [], {"INBOX_WATCH_ONCE": "1", "INBOX_WATCH_STATE": state})
+            self.assertEqual(r.returncode, 0, r.stderr)
+            text = Path(state).read_text()
+            self.assertIn("pid=", text)
+            self.assertIn("last_ok=", text)
+            self.assertIn("live_url=https://bifrost.0xray.dev", text)
+            self.assertIn("script=house/live/tools/inbox-watch.sh", text)
+
     def test_new_lines_turn_start_then_end(self):
         body = r"""
 if [[ "$*" == *"--turn"* ]]; then exit 0; fi
@@ -85,6 +96,8 @@ exit 1
 """
         r, _calls = self._run(body, ["mill"], {"INBOX_WATCH_MAX": "3"})
         self.assertEqual(r.stdout.count("FAIL"), 2)
+        self.assertIn("LIVE_URL=https://bifrost.0xray.dev", r.stdout)
+        self.assertIn("expected=https://bifrost.0xray.dev", r.stdout)
         self.assertIn("boom", r.stdout)
         self.assertIn("other", r.stdout)
         self.assertNotIn("ACTION_REQUIRED", r.stdout)
