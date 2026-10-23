@@ -97,7 +97,7 @@ class DeployOverlay(unittest.TestCase):
                 self.assertEqual((dst / "public" / "avatars" / "mark.png").read_bytes(), b"png")
                 ts = (dst / ".railway" / "railway.ts").read_text()
                 self.assertIn('healthcheck: "/healthz"', ts)
-                self.assertIn('start: "node server.mjs"', ts)
+                self.assertIn('start: "/app/docker-entrypoint.sh"', ts)
                 self.assertIn("--service my-live", log.read_text())
         finally:
             if created:
