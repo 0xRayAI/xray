@@ -914,11 +914,14 @@ class RepoCollector:
             back = (datetime.now(timezone.utc) - timedelta(hours=36)).strftime("%Y-%m-%dT%H:%M:%SZ")
             cur = min(cur, back)
             self.st["etags"].pop("pulls", None)
+        # Stop walks the whole list. The stored cursor stays until a strictly newer update,
+        # so a same-instant +00:00 stamp does not replace the Z form.
+        walk_from = cur
         cards_rewalk = not self.st["bf"].get("cards:pulls")
         if cards_rewalk:
             cur = None
             self.st["etags"].pop("pulls", None)
-        newest = cur
+        newest = walk_from
         # Replay a pull that shares the cursor second. put() is idempotent.
         # Instant compare, not text: <= skips that sibling, and +00:00 / -05:00 sort before Z.
         for p in self.paged(c, f"/repos/{self.repo}/pulls", {"state": "all", "sort": "updated", "direction": "desc"},
@@ -1155,11 +1158,12 @@ class RepoCollector:
         cur = self.st["cur"].get("issues")
         # One walk of every issue. The time cursor skips a number that was not updated after it,
         # and that number never becomes a card. put() is idempotent.
+        stored = cur
         cards_rewalk = not self.st["bf"].get("cards:issues")
         if cards_rewalk:
             cur = None
             self.st["etags"].pop("issues", None)
-        newest = cur
+        newest = stored
         for i in self.paged(c, f"/repos/{self.repo}/issues", {"state": "all", "sort": "updated", "direction": "desc"},
                             "issues", stop=lambda i: gh_before(i.get("updated_at"), cur)):
             if gh_after(i.get("updated_at"), newest):
