@@ -226,12 +226,36 @@ n=0
 max="${INBOX_WATCH_MAX:-0}"
 started="$(date +%Y-%m-%dT%H:%M:%S%z)"
 fail_sleep="$interval"
+export LIVE_INBOX_TIMEOUT="${LIVE_INBOX_TIMEOUT:-60}"
+state_file="${INBOX_WATCH_STATE:-$HOME/.burst/inbox-watch.state}"
+pid_file="${INBOX_WATCH_PID:-$HOME/.burst/inbox-watch.pid}"
+mkdir -p "$(dirname "$state_file")" "$(dirname "$pid_file")"
+prev_ok=""
+if [[ -f "$state_file" ]]; then
+  prev_ok="$(awk -F= '$1=="last_ok"{print substr($0, index($0, "=")+1); exit}' "$state_file")"
+fi
+printf 'pid=%s\nstarted=%s\nlast_ok=%s\nlive_url=%s\nscript=house/live/tools/inbox-watch.sh\n' "$$" "$started" "$prev_ok" "$LIVE_URL" > "$state_file"
+printf '%s\n' "$$" > "$pid_file"
 while true; do
   errf="$(mktemp)"
   out="$("$bin" "$seat" 2>"$errf")"
   code=$?
   err="$(cat "$errf")"
   rm -f "$errf"
+  if [[ "$code" -ne 0 ]]; then
+    errf="$(mktemp)"
+    out2="$("$bin" "$seat" 2>"$errf")"
+    code2=$?
+    err2="$(cat "$errf")"
+    rm -f "$errf"
+    if [[ "$code2" -eq 0 ]]; then
+      out="$out2"
+      code=0
+      err=""
+    else
+      err="$err2"
+    fi
+  fi
   if [[ "$code" -ne 0 ]]; then
     if [[ "$err" != "$last_err" ]]; then
       printf 'FAIL\nLIVE_URL=%s expected=https://bifrost.0xray.dev\n%s\n' "$LIVE_URL" "$err"
@@ -297,7 +321,6 @@ for row in sorted(rows, key=lambda item: str(item.get("t_ct") or ""), reverse=Tr
     title = str(row.get("title") or "").replace("\n", " ")[:80]
     print("%s %s#%s %s %s" % (row.get("type") or "line", row.get("repo") or "", row.get("number") if row.get("number") is not None else "", row.get("id") or "", title))
 PY
-          cat "$dir/open"
           showed=1
         fi
         held_key=""
