@@ -6,6 +6,8 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+- Lock `ip-address` at 10.7.4. Refs #574.
+
 - Seat wakes use one cursor folder. The rule is the cursor-folder stanza in `grok-bot/OP-PROC.md`. `LIVE_CURSORS` is not required, and a read does not write `<seat>.txt`. The server nudge ladder does not re-wake a line the seat already acked or whose handled key is in that cursor. Watch scripts run `house/live/tools` from the main checkout. Refs #539 #546 #547.
 
 - Docs. The house guide and the bifrost plate carry the board rule, the kanban note, and the history note. Board rule. On every owner message run `live-inbox <seat> --prompt --from owner --note "<gist>"`. Ack a handled line with `live-inbox <seat> --ack <id>`, or `live-inbox <seat> --ack all` once every open line is handled. A cloud agent run uses `live-inbox <seat> --turn start --tag "bc-<first8> <track>"` and `live-inbox <seat> --turn end --tag "bc-<first8>"`. `--from owner` is required today. Kanban note. The live page shows a read-only kanban above Activity. Columns are open, review, fix, merge, retest, and done. The deep link is `?card=`. History note. Every activity line is archived to history. The word owner is the owner via LIVE_OWNER or the owner-name. The public board does not serve the history archive or the kanban yet.
