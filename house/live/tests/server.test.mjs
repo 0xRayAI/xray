@@ -364,7 +364,9 @@ test('nudges: L1 to next owner after 60 min quiet, no L2 to blinky, one open per
   assert.equal((await post({ 'X-Live-Ingest': INGEST })).status, 200);
   assert.equal((await fetch(BASE + '/inbox/critic', H())).status, 401);
   assert.equal((await fetch(BASE + '/inbox/critic', H(OKEY))).status, 403);           // only the seat itself
-  assert.deepEqual((await (await fetch(BASE + '/inbox/critic', H(CKEY))).json()).lines.map(l => l.id), ['L-c1']);
+  const criticIds = (await (await fetch(BASE + '/inbox/critic', H(CKEY))).json()).lines.map(l => l.id);
+  assert.deepEqual(criticIds.filter(id => !id.startsWith('nudge:')), ['L-c1']);
+  assert.equal(criticIds.filter(id => id.startsWith('nudge:example-org/app#901:L1:')).length, 1);
   assert.deepEqual((await (await fetch(BASE + '/inbox/critic?since=L-c1', H(CKEY))).json()).lines, []);
 });
 

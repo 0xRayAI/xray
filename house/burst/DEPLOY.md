@@ -6,7 +6,7 @@ Follow these in order. Hostnames and seat names below are examples. Put real URL
 
 ### 1. What runs where
 
-The server process owns the board. Start `node server.mjs` from the assembled `house/live/app` directory (Node 20, plus Python 3 on the same machine for the collector child). It serves the page, `/healthz`, cards, inboxes, and acks.
+The server process owns the board. Start `/app/docker-entrypoint.sh` from the assembled `house/live/app` directory (Node 20, plus Python 3 on the same machine for the collector child). It serves the page, `/healthz`, cards, inboxes, and acks.
 
 When `GITHUB_READ_TOKEN` is set and `COLLECTOR` is not `off`, the server starts `live_mesh.py` as a child. The child writes `$MESH_DATA_DIR/feed/github-events.json`. The server reads that file, keeps the cards and packets, routes new lines into seat inboxes, and fires seat webhooks. That is the whole loop. A box is not required.
 
@@ -110,7 +110,7 @@ Code: [house/live/](../live/) (server in `house/live/app/`, feed pass in `house/
 ## 1. Second process: file and start command
 
 There is no separate page/store service. It is one Node process, `house/live/app/server.mjs`
-(Node 20, zero npm dependencies), started with `node server.mjs`. It serves:
+(Node 20, zero npm dependencies), started with `/app/docker-entrypoint.sh`. It serves:
 
 | Route | Auth | What |
 |---|---|---|
@@ -146,7 +146,7 @@ second process. `server.mjs` spawns it as a child: `python3 -B -u collector/live
 
 - Builder: Dockerfile (`house/live/app/Dockerfile`): `node:24.22.1-bookworm-slim` plus Debian `python3` (3.11),
   `tzdata`, `ca-certificates`. Stdlib Python only.
-- Start: `node server.mjs` (from `house/live/app/railway.json`, and from `house/live/app/.railway/railway.ts`). The child start is shown in section 1.
+- Start: `/app/docker-entrypoint.sh` (from `house/live/app/railway.json`, and from `house/live/app/.railway/railway.ts`). Setting the start command to `node server.mjs` replaces ENTRYPOINT, skips the volume chown, and leaves the server running as root. The child start is shown in section 1.
 - Repo-root `railway.json` (`node mcp-server.mjs`) belongs to the xray MCP server, not to this. Do not deploy the
   live board from the repo root. Deploy with `house/live/app/deploy.sh`: it assembles a deploy dir (app files plus
   `collector/` = the `feed/live_*.py` modules and `house/live-mesh/fetch_feed.py`) and runs
@@ -155,7 +155,7 @@ second process. `server.mjs` spawns it as a child: `python3 -B -u collector/live
 - `deploy.sh` names: `LIVE_RAILWAY_PROJECT` (default `burst-live`), `LIVE_RAILWAY_SERVICE` (default `burst-live`), `LIVE_RAILWAY_ENVIRONMENT` (default `production`), `MESH_APP_DEPLOY_DIR` (default `/srv/live/deploy`; created and `railway link`ed on first run if missing, which needs a logged-in railway CLI). A merge to main does not deploy; run `deploy.sh` once after merging. These are the project, the service, and the railway-linked directory. They are not Railway variables on the service.
 - `house/live/site/public/` (committed, ours) is copied over the kit `public/` first: our seats, Lens nodes, `avatars/` (blinky, critic, forge, herald from the repo; arch1 from minime0x; Blaze from his X profile @Blaze0x1; others drawn, see [board.md](../live/docs/board.md#avatars)) and `favicon.png` (served at `/favicon.ico`, open in public mode). Another install deletes `house/live/site/`.
 - `LIVE_PUBLIC_OVERLAY` is a directory on the machine that runs `deploy.sh`. After the kit `public/` is copied, that directory is copied on top, so a fleet's `live-config.js` and `avatars/` survive the next deploy. Unset means the kit page only.
-- `railway.json` (Config as Code) is still read until **2026-12-01**. The replacement is `house/live/app/.railway/railway.ts`: `start` `node server.mjs`, `healthcheck` `/healthz`, one replica. `deploy.sh` copies that directory into the deploy dir. Do not `railway config apply` while `railway.json` is still the service config. Before the cutoff, from the deploy dir: `railway config plan`, then `railway config apply`. Rename `service()` and `project()` in that file to match `LIVE_RAILWAY_SERVICE` and `LIVE_RAILWAY_PROJECT`. Put no secrets in the file.
+- `railway.json` (Config as Code) is still read until **2026-12-01**. The replacement is `house/live/app/.railway/railway.ts`: `start` `/app/docker-entrypoint.sh`, `healthcheck` `/healthz`, one replica. `deploy.sh` copies that directory into the deploy dir. Do not `railway config apply` while `railway.json` is still the service config. Before the cutoff, from the deploy dir: `railway config plan`, then `railway config apply`. Rename `service()` and `project()` in that file to match `LIVE_RAILWAY_SERVICE` and `LIVE_RAILWAY_PROJECT`. Put no secrets in the file.
 
 ## 4. Env var names (names only)
 

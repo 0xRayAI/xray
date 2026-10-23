@@ -81,6 +81,7 @@ exit 0
         r, calls = self._run(body, ["arch1"], {"INBOX_WATCH_MAX": "3"})
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertEqual(r.stdout.count("ACTION_REQUIRED"), 2)
+        self.assertEqual(r.stdout.count("open 1: raw=1"), 2)
         self.assertEqual(r.stdout.count("line-a"), 2)
         self.assertEqual(calls.count("--turn start --tag wake"), 1)
         self.assertEqual(calls.count("--turn end"), 1)
@@ -153,7 +154,8 @@ esac
             r, calls = self._run(body, ["arch1"], dict({"INBOX_WATCH_MAX": "3"}, **hooks))
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertEqual(r.stdout.count("ACTION_REQUIRED"), 2)
-        self.assertEqual(r.stdout.count(open_line), 2)
+        self.assertEqual(r.stdout.count("open-1"), 2)
+        self.assertNotIn(open_line, r.stdout)
         self.assertEqual(r.stdout.count("held: 1"), 1)
         self.assertNotIn(held_line, r.stdout)
         self.assertNotIn("auto-ack", r.stdout)
@@ -196,7 +198,8 @@ exit 0
             r, calls = self._run(body, ["arch1"], dict({"INBOX_WATCH_MAX": "1"}, **hooks))
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertEqual(r.stdout.count("ACTION_REQUIRED"), 1)
-        self.assertIn(line, r.stdout)
+        self.assertIn("unknown-1", r.stdout)
+        self.assertNotIn(line, r.stdout)
         self.assertNotIn("auto-ack", r.stdout)
         self.assertNotIn("--ack", calls)
 
@@ -214,7 +217,8 @@ exit 0
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertNotIn("auto-ack", r.stdout)
         self.assertIn("ACTION_REQUIRED", r.stdout)
-        self.assertIn(line, r.stdout)
+        self.assertIn("closed-2", r.stdout)
+        self.assertNotIn(line, r.stdout)
         self.assertIn("--ack closed-2", calls)
 
 

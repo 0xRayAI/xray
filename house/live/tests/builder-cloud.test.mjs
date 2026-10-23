@@ -95,7 +95,7 @@ test('inbox ack: --ack id / upto / all hide lines for that seat only; reviewer l
   const CK = { Authorization: 'Bearer ' + CKEY }, R = 'example-org/q', t0 = new Date(Date.now() - 600000).toISOString();
   const mk = (id, n) => ({ id, t_ct: t0, seat: 'critic', type: 'pr_update', repo: R, number: n, sha: null, title: 'PR', url: '', reason: 'new or updated pr' });
   await fetch(BASE + '/inbox', { method: 'POST', body: JSON.stringify({ lines: [mk('c:1', 1), mk('c:2', 2), mk('c:3', 3), mk('c:4', 4)] }), headers: { 'X-Live-Ingest': INGEST, 'Content-Type': 'application/json' } });
-  const open = async () => (await (await fetch(BASE + '/inbox/critic', { headers: CK })).json()).lines.map(l => l.id);
+  const open = async () => (await (await fetch(BASE + '/inbox/critic', { headers: CK })).json()).lines.map(l => l.id).filter(id => id.startsWith('c:'));
   const ack = (b, h = CK) => fetch(BASE + '/inbox/critic/ack', { method: 'POST', body: JSON.stringify(b), headers: { ...h, 'Content-Type': 'application/json' } });
   assert.deepEqual(await open(), ['c:1', 'c:2', 'c:3', 'c:4']);
   assert.equal((await ack({ id: 'c:1' }, A(AKEY))).status, 403);                       // another seat cannot ack
@@ -110,7 +110,8 @@ test('inbox ack: --ack id / upto / all hide lines for that seat only; reviewer l
   assert.deepEqual(await open(), ['c:3', 'c:4']);
   assert.equal((await ack({ upto: 'c:3' })).status, 200); assert.deepEqual(await open(), ['c:4']);
   const r = await (await ack({ all: true })).json(); assert.equal(r.open, 0); assert.deepEqual(await open(), []);
-  assert.equal((await (await fetch(BASE + '/inbox/critic?all=1', { headers: CK })).json()).lines.length, 4);   // history kept
+  const hist = (await (await fetch(BASE + '/inbox/critic?all=1', { headers: CK })).json()).lines.map(l => l.id).filter(id => id.startsWith('c:'));
+  assert.equal(hist.length, 4);   // history kept
 });
 
 test('nudge retarget: an open L1 to the old owner closes and a new L1 goes to the current owner (Reviewer PASS at head -> Builder)', async () => {

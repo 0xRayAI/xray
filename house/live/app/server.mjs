@@ -1101,6 +1101,29 @@ function nudgeToCloud(n) {   // a nudge to Builder is also an inbox line for Bui
   if (!validInboxLine({ ...l, seat: 'builder' }) || seatInbox['builder-cloud'].some(x => x.id === l.id)) return;
   seatInbox['builder-cloud'].push(l); saveSeatInbox('builder-cloud'); noteWake('builder-cloud', l);
 }
+function deliverNudge(n) {
+  if (!n) return;
+  const seats = [];
+  const add = seat => {
+    const id = canonSeat(seat);
+    if (!id || !SEAT_IDS.includes(id) || seats.includes(id)) return;
+    seats.push(id);
+  };
+  add(n.seat);
+  for (const seat of seats) {
+    const line = {
+      id: n.id, t_ct: n.t_ct, seat, type: 'nudge',
+      repo: String(n.repo || ''), number: Number.isInteger(n.number) ? n.number : 0,
+      title: String(n.title || '').slice(0, 120), url: String(n.url || '').slice(0, 300),
+      reason: `nudge L${n.level} (${n.via || 'nudge'})`.slice(0, 200),
+    };
+    if (!validInboxLine({ ...line, seat: 'builder' })) continue;
+    const arr = seatInbox[seat];
+    if (!arr || arr.some(x => x.id === line.id)) continue;
+    arr.push(line); saveSeatInbox(seat); noteWake(seat, line);
+  }
+  if (seats.includes('builder')) nudgeToCloud(n);
+}
 function itemsFromWork() {
   const latest = new Map();
   for (const e of work.values()) {
@@ -1297,7 +1320,7 @@ function applyStartAfter(now = Date.now()) {
   return changed;
 }
 // NUDGE: a live card with no beat for 60 min -> level 1 to the packet's next owner (else the card owner); still no
-// beat 30 min after that -> level 2 to Coord. Level 3 then repeats to that same owner every 2h until a beat lands.
+// The card nudge is an inbox line for that seat, so the webhook fires. It does not open an L2 record and it does not wake the CoS seat to reassign. Level 3 then repeats to that same owner every 2h.
 // Repos in NO_NUDGE_REPOS (unset means none) are shown and never nudged. A held card raises no L1/L2/L3. It nudges
 // the owner once if it stays held with no beat past HELD_MAX_S (default 72h), unless the repo is in that list.
 function evalNudges(now = Date.now()) {
@@ -1324,7 +1347,7 @@ function evalNudges(now = Date.now()) {
         nudges.push({ id: nid, kind: 'held', t: now, t_ct: ctStamp(now), card: c.key, repo: c.repo || '', number: c.number || 0,
           title: String(c.title || '').slice(0, 120), url: String(c.url || '').slice(0, 300), stage: c.stage || '', level: 0, seat, via: 'held past max', beat_t: c.last_beat_t });
         changed = true;
-        if (seat === 'builder') nudgeToCloud(nudges[nudges.length - 1]);
+        deliverNudge(nudges[nudges.length - 1]);
       }
     }
     if (batch.inBeat(startKeyOf(c))) {
@@ -1340,7 +1363,7 @@ function evalNudges(now = Date.now()) {
     const id = lvl => `nudge:${c.key}:L${lvl}:${c.last_beat_t}`, has = lvl => nudges.find(n => n.id === id(lvl));
     const mk = (lvl, seat, via, nid = id(lvl)) => { nudges.push({ id: nid, t: now, t_ct: ctStamp(now), card: c.key, repo: c.repo || '', number: c.number || 0,
       title: String(c.title || '').slice(0, 120), url: String(c.url || '').slice(0, 300), stage: c.stage || '', level: lvl, seat, via, beat_t: c.last_beat_t }); changed = true;
-      if (seat === 'builder') nudgeToCloud(nudges[nudges.length - 1]); };
+      deliverNudge(nudges[nudges.length - 1]); };
     const to = seatIdOf(c.nudge_to), nx = to || seatIdOf((c.packet || {})['next owner']);
     const tgt = nx || seatIdOf(c.owner) || cosSeat(), via = to ? (c.nudge_via || 'retest owner') : nx ? 'next owner' : 'card owner';
     const l1s = nudges.filter(n => n.id === id(1) || n.id.startsWith(id(1) + ':'));
