@@ -6,6 +6,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+- The worn suit and the wake boot step link the packet rule. The card key is the issue or pull. Refs #567.
 - The collector walks every issue and pull once, so a number older than the time cursor still becomes a card. A short walk does not move that cursor. Refs #576.
 - A card nudge is an inbox line for its seat, so the seat webhook fires. Refs #588.
 - An inbox ack closes a merge handoff even when it has no review URL. The URL is stored only when it matches that pull. Refs #595.

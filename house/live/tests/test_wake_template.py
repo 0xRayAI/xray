@@ -20,6 +20,17 @@ class WakeTemplate(unittest.TestCase):
         self.steps = steps(self.text)
         self.assertGreaterEqual(len(self.steps), 6, TEMPLATE)
 
+
+    def test_boot_links_the_packet_rule(self):
+        boot = [s for s in self.steps if s.startswith("Boot read")]
+        self.assertEqual(len(boot), 1)
+        self.assertIn("OP-PROC.md#packet", boot[0])
+        self.assertIn("Do not hand-post a card", boot[0])
+        agents = Path(__file__).resolve().parents[3] / "AGENTS-consumer.md"
+        text = agents.read_text()
+        self.assertIn("#packet", text)
+        self.assertIn("Do not hand-post a card", text)
+
     def test_station_step_reads_station_then_notes(self):
         hit = [s for s in self.steps if "STATION.md" in s]
         self.assertEqual(len(hit), 1)
