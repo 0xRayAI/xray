@@ -1969,7 +1969,9 @@ footer a { color: var(--foot); }
     if (tone) box.classList.add(tone);
     text.textContent = line;
   }
+  var lastQueue = null;
   function renderQueue(lines) {
+    lastQueue = lines;
     var ul = $('queueList'), lab = $('queueLabel');
     if (!ul) return;
     ul.textContent = '';
@@ -2202,11 +2204,44 @@ footer a { color: var(--foot); }
   loadHistoryDays();
   loadCardHist();
   var first = true;
+  // A hidden tab skips polls. Coming back clears etag/cursor once so the next poll is not a silent 304,
+  // and drops the stamp/key gates so ages and the health strip redraw even when the body is unchanged.
+  function armShow() {
+    mem.showEtag = mem.etag || '';
+    mem.etag = null;
+    mem.force = 1;
+    mem.showCursor = mem.cursor || '';
+    mem.cursor = null;
+    mem.forceShow = 1;
+  }
+  function finishShow() {
+    if (!wb.stamp && mem.showStamp) wb.stamp = mem.showStamp;
+    if (!mem.cursor && mem.showCursor) mem.cursor = mem.showCursor;
+    if (!mem.etag && mem.showEtag) mem.etag = mem.showEtag;
+    mem.showStamp = '';
+    mem.showCursor = '';
+    mem.showEtag = '';
+    mem.forceShow = 0;
+    wb.key = '';
+    trackState.stamp = '';
+    lastText = 0;
+    renderWave(true);
+    renderTrack();
+    if (lastQueue) renderQueue(lastQueue);
+    paintFresh(Date.now());
+  }
   function poll() {
     if (document.hidden && !first) return;
+    var show = mem.forceShow;
+    if (show) mem.forceShow = 0;
     L.fetchFeed(window.fetch.bind(window), Date.now(), mem).then(function (r) {
       source = r.source; fetchError = '';
-      if (!r.feed) return;
+      if (show) {
+        mem.showStamp = wb.stamp || '';
+        wb.stamp = '';
+        wb.key = '';
+      }
+      if (!r.feed) { if (show) finishShow(); return; }
       feedLoaded = true;
       if (L.rosterEntries) {
         var rosterRows = L.rosterEntries(r.feed);
@@ -2237,9 +2272,25 @@ footer a { color: var(--foot); }
       queueFresh(fresh);
       if (state.live) playFresh();
       first = false; lastText = 0; lastLogKey = '';
-    }).catch(function (err) { fetchError = 'feed fetch failed, retrying'; lastText = 0; console.warn(err); });
+      if (show) finishShow();
+    }).catch(function (err) {
+      fetchError = 'feed fetch failed, retrying'; lastText = 0; console.warn(err);
+      if (show) finishShow();
+    });
   }
-  document.addEventListener('visibilitychange', function () { if (!document.hidden) poll(); });
+  var seenPage = false;
+  function onShown() {
+    if (document.hidden) return;
+    armShow();
+    poll();
+  }
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) onShown(); });
+  window.addEventListener('pageshow', function (ev) {
+    var firstShow = !seenPage;
+    seenPage = true;
+    if (firstShow && !ev.persisted) return;
+    onShown();
+  });
   poll();
   setInterval(poll, L.POLL_MS);
   requestAnimationFrame(frame);

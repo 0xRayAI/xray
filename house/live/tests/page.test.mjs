@@ -559,6 +559,37 @@ test('CI who is the credit and the mesh source stays GitHub', async () => {
   assert.equal(L.whoTag({ kind: 'pr_open', from: 'forge', credit: 'forge' }), 'FORGE');
 });
 
+test('tab show clears the conditional poll once and a 304 on that fetch is an empty feed', async () => {
+  assert.match(html, /function armShow\(\)/);
+  assert.match(html, /function finishShow\(\)/);
+  assert.match(html, /function onShown\(\)/);
+  assert.match(html, /visibilitychange[\s\S]{0,80}onShown\(\)/);
+  assert.match(html, /pageshow', function \(ev\)/);
+  assert.match(html, /if \(firstShow && !ev\.persisted\) return;/);
+  assert.match(html, /setInterval\(poll, L\.POLL_MS\)/);
+  assert.doesNotMatch(html, /location\.reload\(/);
+  const vm = await import('node:vm');
+  const pub = path.join(APP, 'public');
+  const ctx = { console, URLSearchParams, location: { search: '', hash: '', href: 'http://x/' }, document: { addEventListener() {} },
+    LIVE_FEED_URL: '/live-events.json' };
+  ctx.globalThis = ctx; ctx.window = ctx;
+  vm.createContext(ctx);
+  vm.runInContext(fs.readFileSync(path.join(pub, 'live.js'), 'utf8'), ctx);
+  vm.runInContext(fs.readFileSync(path.join(pub, 'live-config.js'), 'utf8'), ctx);
+  const urls = [];
+  const fake = (url) => { urls.push(url); return Promise.resolve({ status: 304, ok: false, json: () => Promise.resolve(null) }); };
+  const mem = { cursor: 'E.9', etag: '"abc"', force: 1 };
+  const r = await ctx.LiveMesh.fetchFeed(fake, Date.now(), mem);
+  assert.equal(r.feed, null);
+  assert.equal(urls[0], '/live-events.json');
+  assert.equal(mem.force, 0);
+  assert.equal(mem.cursor, 'E.9');
+  urls.length = 0;
+  const again = await ctx.LiveMesh.fetchFeed(fake, Date.now(), mem);
+  assert.equal(again.feed, null);
+  assert.equal(urls[0], '/live-events.json?since=E.9');
+});
+
 test('kit live-config carries no install brand (no Example / example.com); product names come from the feed header', () => {
   for (const f of [path.join(APP, 'public', 'live-config.js'), path.join(APP, '..', 'feed', 'live-config.js')]) {
     assert.doesNotMatch(fs.readFileSync(f, 'utf8'), /Example|example\.com/, f);
