@@ -113,6 +113,12 @@ def prepend_owner_prompt(card, event, prompts, used):
     card["_beats"].append(beat)
 
 
+def head_key(value):
+    """Seven hex digits. A shorter or empty value is not a head, so it cannot match another."""
+    got = re.sub(r"[^0-9a-f]", "", str(value or "").lower())[:7]
+    return got if len(got) == 7 else ""
+
+
 def beat_of(e):
     """-> short beat word, or None. Only real events that move a card."""
     k = str(e.get("kind") or "")
@@ -892,11 +898,11 @@ def model(extra_events=None, now=None, prompts=None, held=None):
         crit = next((b for b in reversed(beats) if b.get("kind") == "reviewer verdict"), None)
         cis = [b["what"] for b in beats if b["what"].startswith("CI ")]
         ci_ok = not cis or cis[-1] in ("CI success", "CI skipped", "CI neutral")
-        at_head = bool(crit) and (not head or not crit.get("sha") or head.startswith(crit["sha"]) or crit["sha"].startswith(head))
+        at_head = bool(crit) and head_key(head) != "" and head_key(head) == head_key(crit.get("sha"))
         if head:
             c["head"] = head
         if crit:
-            c["reviewer"] = {"verdict": crit["what"].split()[1] if len(crit["what"].split()) > 1 else "", "sha": crit.get("sha"), "t": crit["t"], "at_head": at_head}
+            c["reviewer"] = {"verdict": crit["what"].split()[1] if len(crit["what"].split()) > 1 else "", "sha": crit.get("sha"), "t": crit["t"], "at_head": at_head, "stale": not at_head}
         if stage == "retest" and state == "live":
             c["nudge_to"] = "tester"                        # Tester owns the retest: merged cards nudge the lab tester
             c["nudge_via"] = "retest owner"
