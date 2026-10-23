@@ -232,11 +232,14 @@ while true; do
   rm -f "$errf"
   if [[ "$code" -ne 0 ]]; then
     if [[ "$err" != "$last_err" ]]; then
-      printf 'FAIL\n%s\n' "$err"
+      printf 'FAIL\nLIVE_URL=%s expected=https://bifrost.0xray.dev\n%s\n' "$LIVE_URL" "$err"
       last_err="$err"
     fi
   else
     last_err=""
+    state_file="${INBOX_WATCH_STATE:-$HOME/.burst/inbox-watch.state}"
+    mkdir -p "$(dirname "$state_file")"
+    printf 'pid=%s\nlast_ok=%s\nlive_url=%s\nscript=house/live/tools/inbox-watch.sh\n' "$$" "$(date +%Y-%m-%dT%H:%M:%S%z)" "$LIVE_URL" > "$state_file"
     showed=0
     if [[ -n "$out" ]]; then
       dir="$(mktemp -d)" || exit 1
