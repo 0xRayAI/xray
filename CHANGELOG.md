@@ -7,6 +7,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 ## [Unreleased]
 
 - The worn suit and the wake boot step link the packet rule. The card key is the issue or pull. Refs #567.
+- An inbox ack closes a merge handoff even when it has no review URL. The URL is stored only when it matches that pull. Refs #595.
 - `inbox-watch` prints ACTION_REQUIRED on every non-empty poll, including a poll whose text matches the previous one. Refs #587.
 - `inbox-watch` auto-acks a line whose GitHub item is closed or merged, and lists held lines once as `held: N`. Open lines still print on every poll. Refs #587.
 - `inbox-watch` names `LIVE_URL` on a failed poll, backs off, and records pid, started, and last_ok. `inbox-watch-ensure` keeps one copy. The wake and pre-compact write one Watcher line. Refs #590.
