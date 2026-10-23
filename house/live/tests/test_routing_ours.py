@@ -72,6 +72,14 @@ class RealEventsLand(unittest.TestCase):
         got = deliver([ev("deploy_fail", 0), ev("ci_fail", 280, sha="abc")])
         self.assertEqual(len(got.get("forge", [])), 2); self.assertTrue(set(got) <= OURS, got.keys())
 
+    def test_review_lands_on_the_pr_author(self):
+        got = deliver([ev("review", 596, pr_author="arch10x[bot]", actor="critic0x[bot]", state="CHANGES_REQUESTED")])
+        self.assertIn("arch1", got)
+        self.assertEqual(got["arch1"][0]["type"], "review")
+        self.assertEqual(got["arch1"][0]["number"], 596)
+        self.assertEqual(got["arch1"][0]["reason"], "review on your PR")
+        self.assertNotIn("critic", got)
+
     def test_unknown_seat_falls_back_to_blinky(self):
         roles = {"extra_seats": {"ghost": {"kinds": ["review_requested"], "reason": "x"}}, "fallback": {"seat": "blinky", "from": ["arch1"]}}
         got = deliver([ev("review_requested", 7)], roles)

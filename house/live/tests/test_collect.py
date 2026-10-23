@@ -1298,3 +1298,38 @@ class CardLifecycle(unittest.TestCase):
             col.poll_comments(C())
         ev = next(e for e in col.ev.values() if e.get("kind") == "pr_comment")
         self.assertEqual(ev.get("start_after"), "2026-10-18T08:00-05:00")
+
+
+class CardRewalk(unittest.TestCase):
+    def test_old_issue_and_pull_are_cards(self):
+        from zoneinfo import ZoneInfo
+        ff = type("FF", (), {"CT": ZoneInfo("America/Chicago")})
+        old_issue = {"number": 561, "title": "old issue", "state": "closed", "created_at": "2026-09-01T00:00:00Z",
+                     "updated_at": "2026-09-02T00:00:00Z", "html_url": "https://github.com/acme/app/issues/561",
+                     "user": {"login": "forge0x1[bot]"}, "body": "", "labels": [], "closed_at": "2026-09-03T00:00:00Z"}
+        old_pull = {"number": 562, "title": "old pull", "state": "closed", "created_at": "2026-09-01T00:00:00Z",
+                    "updated_at": "2026-09-02T00:00:00Z", "html_url": "https://github.com/acme/app/pull/562",
+                    "user": {"login": "forge0x1[bot]"}, "body": "", "labels": [], "draft": False,
+                    "head": {"sha": "a" * 40, "ref": "old"}, "base": {"ref": "main"}, "merged_at": None, "closed_at": "2026-09-03T00:00:00Z"}
+
+        class Rows:
+            token = "t"
+            def __init__(self, rows):
+                self.rows = rows
+            def rest(self, path, params=None, etag=None, essential=True):
+                return 200, self.rows, "e1", None
+
+        with tempfile.TemporaryDirectory() as d:
+            col = uc.RepoCollector("acme/app", Path(d), ff, lambda *a: None)
+            col.st["cur"]["issues"] = "2026-10-20T00:00:00Z"
+            col.st["cur"]["pulls"] = "2026-10-20T00:00:00Z"
+            with mock.patch.dict(uc.NODE_LC, {"forge0x1[bot]": "forge"}):
+                col.poll_issues(Rows([old_issue]))
+                col.poll_pulls(Rows([old_pull]))
+            self.assertIn("acme/app!561:open", col.ev)
+            self.assertIn("acme/app#562:open", col.ev)
+            self.assertEqual(col.ev["acme/app!561:open"]["kind"], "issue_open")
+            self.assertEqual(col.ev["acme/app#562:open"]["kind"], "pr_open")
+            self.assertTrue(col.st["bf"].get("cards:issues"))
+            self.assertTrue(col.st["bf"].get("cards:pulls"))
+            self.assertEqual(len([e for e in col.ev if e.endswith(":open")]), 2)

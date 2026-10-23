@@ -775,9 +775,12 @@ class RepoCollector:
     def review_event(self, n, rid, state, t, login, url):
         if not t or state == "PENDING":
             return
+        pr = (self.st.get("prs") or {}).get(str(n), {})
+        pr_author = pr.get("author") if isinstance(pr, dict) else None
         self.put(f"{self.repo}#{n}:review:{rid}", t, node(login), self.pr_node(n), "review",
                  f"{login or '?'} {state.lower()} · {self.short} #{n}", url or f"https://github.com/{self.repo}/pull/{n}",
-                 n, state=state, actor=login, sha=(self.st.get("prs") or {}).get(str(n), {}).get("head"))
+                 n, state=state, actor=login, pr_author=pr_author,
+                 sha=(self.st.get("prs") or {}).get(str(n), {}).get("head"))
 
     # ---------------------------------------------------------------- incremental (REST)
     def pr_merged(self, n):
@@ -914,7 +917,14 @@ class RepoCollector:
             back = (datetime.now(timezone.utc) - timedelta(hours=36)).strftime("%Y-%m-%dT%H:%M:%SZ")
             cur = min(cur, back)
             self.st["etags"].pop("pulls", None)
-        newest = cur
+        # Stop walks the whole list. The stored cursor stays until a strictly newer update,
+        # so a same-instant +00:00 stamp does not replace the Z form.
+        walk_from = cur
+        cards_rewalk = not self.st["bf"].get("cards:pulls")
+        if cards_rewalk:
+            cur = None
+            self.st["etags"].pop("pulls", None)
+        newest = walk_from
         # Replay a pull that shares the cursor second. put() is idempotent.
         # Instant compare, not text: <= skips that sibling, and +00:00 / -05:00 sort before Z.
         for p in self.paged(c, f"/repos/{self.repo}/pulls", {"state": "all", "sort": "updated", "direction": "desc"},
@@ -967,6 +977,8 @@ class RepoCollector:
             self.st["etags"]["pulls"] = self._etag_new
         if actor_rewalk and getattr(self, "_paged_status", None) == "done":
             self.st["bf"]["merged:actor"] = True
+        if cards_rewalk and getattr(self, "_paged_status", None) == "done":
+            self.st["bf"]["cards:pulls"] = True
 
     def enrich_prs(self, c, limit=20):
         todo = list(self.st.get("enrich", {}).keys())[:limit]
@@ -1147,7 +1159,14 @@ class RepoCollector:
 
     def poll_issues(self, c):
         cur = self.st["cur"].get("issues")
-        newest = cur
+        # One walk of every issue. The time cursor skips a number that was not updated after it,
+        # and that number never becomes a card. put() is idempotent.
+        stored = cur
+        cards_rewalk = not self.st["bf"].get("cards:issues")
+        if cards_rewalk:
+            cur = None
+            self.st["etags"].pop("issues", None)
+        newest = stored
         for i in self.paged(c, f"/repos/{self.repo}/issues", {"state": "all", "sort": "updated", "direction": "desc"},
                             "issues", stop=lambda i: gh_before(i.get("updated_at"), cur)):
             if gh_after(i.get("updated_at"), newest):
@@ -1163,6 +1182,8 @@ class RepoCollector:
         self.st["cur"]["issues"] = newest
         if self._etag_new:
             self.st["etags"]["issues"] = self._etag_new
+        if cards_rewalk and getattr(self, "_paged_status", None) == "done":
+            self.st["bf"]["cards:issues"] = True
 
     def poll_comments(self, c):
         cur = self.st["cur"].get("comments")
