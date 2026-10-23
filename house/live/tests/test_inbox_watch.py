@@ -54,13 +54,18 @@ class InboxWatch(unittest.TestCase):
     def test_success_writes_watch_state(self):
         with tempfile.TemporaryDirectory() as d:
             state = str(Path(d) / "inbox-watch.state")
-            r, _calls = self._run("exit 0", [], {"INBOX_WATCH_ONCE": "1", "INBOX_WATCH_STATE": state})
+            pid_path = str(Path(d) / "inbox-watch.pid")
+            r, _calls = self._run("exit 0", [], {"INBOX_WATCH_ONCE": "1", "INBOX_WATCH_STATE": state, "INBOX_WATCH_PID": pid_path})
             self.assertEqual(r.returncode, 0, r.stderr)
             text = Path(state).read_text()
             self.assertIn("pid=", text)
+            self.assertIn("started=", text)
             self.assertIn("last_ok=", text)
             self.assertIn("live_url=https://bifrost.0xray.dev", text)
             self.assertIn("script=house/live/tools/inbox-watch.sh", text)
+            pid_text = Path(pid_path).read_text().strip()
+            self.assertTrue(pid_text.isdigit())
+            self.assertIn("pid=%s\n" % pid_text, text)
 
     def test_new_lines_turn_start_then_end(self):
         body = r"""
