@@ -1,7 +1,7 @@
 {
   "$schema": "https://railway.com/railway.schema.json",
   "deploy": {
-    "startCommand": "node server.mjs",
+    "startCommand": "/app/docker-entrypoint.sh",
     "healthcheckPath": "/healthz",
     "restartPolicyType": "ON_FAILURE",
     "numReplicas": 1
