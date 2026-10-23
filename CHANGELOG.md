@@ -6,6 +6,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+- A card nudge is an inbox line for its seat, so the seat webhook fires. Level 2 also reaches the operator inbox, and level 3 also reaches the operator and the CoS inbox. Refs #588.
 - `inbox-watch` prints ACTION_REQUIRED on every non-empty poll, including a poll whose text matches the previous one. Refs #587.
 - `inbox-watch` auto-acks a line whose GitHub item is closed or merged, and lists held lines once as `held: N`. Open lines still print on every poll. Refs #587.
 - Lock `ip-address` at 10.7.4. Refs #574.
