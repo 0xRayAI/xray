@@ -2184,7 +2184,7 @@ async function startCollector() {
   const args = ['-B', '-u', script, '--out', GH_FEED, '--watch', process.env.COLLECTOR_WATCH_S || '45',
     '--repos', ...collector.repos, '--deploy-repo', '', '--health', healthArg];
   const child = spawn('python3', args, { env, stdio: ['ignore', 'pipe', 'pipe'] });
-  collector.pid = child.pid; collector.child = child; collector.startedAt = Date.now(); collector.loopAt = 0; collector.watchKilled = false;
+  collector.pid = child.pid; collector.child = child; collector.startedAt = Date.now(); collector.watchKilled = false;
   console.log(`collector: started pid ${child.pid}`);
   for (const st of [child.stdout, child.stderr]) {
     let buf = '';
@@ -2322,14 +2322,17 @@ function watchLimitMs() {
   const mult = Number.isFinite(n) && n > 0 ? n : 3;
   return interval * mult;
 }
-function stallTick() {
-  // On-disk mtime from before this process is not a completed loop. Later of start and last loop.
-  return Math.max(collector.startedAt || 0, collector.loopAt || 0);
+function collectorTick(fallback = 0) {
+  // Count a write only when it is newer than this child. A stale feed mtime must not be the stall clock.
+  const wrote = collector.lastWrite || 0;
+  const started = collector.startedAt || 0;
+  const tick = wrote > started ? wrote : started;
+  return tick || fallback;
 }
 function feedStalled(now = Date.now()) {
   if (process.env.COLLECTOR === 'off' || !process.env.GITHUB_READ_TOKEN) return false;
   if (!collector.child && !collector.watchKilled) return false;
-  const tick = stallTick();
+  const tick = collectorTick();
   if (!tick) return false;
   return now - tick > watchLimitMs();
 }
@@ -2350,7 +2353,7 @@ function feedHealthLine(why) {
 function watchFeed() {
   if (!feedStalled() || collector.watchKilled || !collector.child) return;
   collector.watchKilled = true;
-  const age = Math.round((Date.now() - stallTick()) / 1000);
+  const age = Math.round((Date.now() - collectorTick(Date.now())) / 1000);
   feedHealthLine(`feed loop stalled ${age}s; restarting`);
   try { collector.child.kill('SIGTERM'); } catch { /* exit handler restarts the loop */ }
 }
@@ -2420,7 +2423,6 @@ function readCollectorFeed() {   // every 2 s: ingest the collector's file when 
   let f; try { f = JSON.parse(fs.readFileSync(GH_FEED, 'utf8')); } catch { return; }   // mid-replace: next tick
   if (!validFeed(f)) { collector.sig = sig; console.log('collector: feed file invalid; ignored'); return; }
   collector.sig = sig; collector.lastWrite = st.mtimeMs;   // quiet file: age is the file's age, including across a redeploy
-  if (collector.startedAt && st.mtimeMs >= collector.startedAt) collector.loopAt = st.mtimeMs;
   collector.watchKilled = false;
   if (evs.has('health:feed-loop')) { evs.delete('health:feed-loop'); fullDirty = true; }
   repoTimes(f);
@@ -3608,8 +3610,15 @@ function githubFeedEvents() {
   }
 }
 backfillArchive({ inboxes: seatInbox, extraInbox: inboxLines, nudges, acks: inboxAcks, cards: bfCards, events: githubFeedEvents() });
+server.on('error', (err) => {
+  console.log('live mesh listen failed: ' + (err && err.code ? err.code : 'error'));
+  process.exit(1);
+});
 server.listen(PORT, () => {
-  console.log(`live mesh listening on :${server.address().port} (${PUBLIC ? 'public: no password, no masking' : 'gated'})`);
+  const bound = server.address().port;
+  const webhookBase = String(process.env.CURSOR_WEBHOOK_BASE || '');
+  if (webhookBase.endsWith(':0')) process.env.CURSOR_WEBHOOK_BASE = 'http://127.0.0.1:' + bound;
+  console.log(`live mesh listening on :${bound} (${PUBLIC ? 'public: no password, no masking' : 'gated'})`);
   // The stall clock starts once the port is open, so a slow bind is not a stall.
   if (process.env.COLLECTOR !== 'off') {
     readCollectorFeed();
