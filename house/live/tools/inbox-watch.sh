@@ -276,6 +276,27 @@ while true; do
         fi
         if [[ -s "$dir/open" ]]; then
           printf 'ACTION_REQUIRED\n'
+          python3 - "$dir/open" << 'PY'
+import json, sys
+from collections import Counter
+from pathlib import Path
+rows = []
+for raw in Path(sys.argv[1]).read_text(encoding="utf-8").splitlines():
+    if not raw.strip():
+        continue
+    try:
+        obj = json.loads(raw)
+    except json.JSONDecodeError:
+        obj = {"type": "raw", "title": raw[:120], "t_ct": "", "id": "", "repo": "", "number": ""}
+    if isinstance(obj, dict):
+        rows.append(obj)
+counts = Counter(str(row.get("type") or "line") for row in rows)
+census = " ".join("%s=%s" % (key, counts[key]) for key in sorted(counts))
+print("open %s: %s" % (len(rows), census))
+for row in sorted(rows, key=lambda item: str(item.get("t_ct") or ""), reverse=True):
+    title = str(row.get("title") or "").replace("\n", " ")[:80]
+    print("%s %s#%s %s %s" % (row.get("type") or "line", row.get("repo") or "", row.get("number") if row.get("number") is not None else "", row.get("id") or "", title))
+PY
           cat "$dir/open"
           showed=1
         fi

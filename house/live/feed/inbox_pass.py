@@ -209,6 +209,12 @@ def _direct_all(event, roles):
             line = inbox._line(event, seat, reason + merged)
             if line:
                 out.append(line)
+    if kind == "review" and event.get("number") is not None:
+        author = login_seat(event.get("pr_author"), roles)
+        if author:
+            line = inbox._line(event, author, "review on your PR")
+            if line:
+                out.append(line)
     if kind in ("merged", "pr_close") and event.get("number") is not None:
         author = author_seat(event, roles)
         if author:

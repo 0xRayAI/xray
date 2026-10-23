@@ -775,9 +775,12 @@ class RepoCollector:
     def review_event(self, n, rid, state, t, login, url):
         if not t or state == "PENDING":
             return
+        pr = (self.st.get("prs") or {}).get(str(n), {})
+        pr_author = pr.get("author") if isinstance(pr, dict) else None
         self.put(f"{self.repo}#{n}:review:{rid}", t, node(login), self.pr_node(n), "review",
                  f"{login or '?'} {state.lower()} · {self.short} #{n}", url or f"https://github.com/{self.repo}/pull/{n}",
-                 n, state=state, actor=login, sha=(self.st.get("prs") or {}).get(str(n), {}).get("head"))
+                 n, state=state, actor=login, pr_author=pr_author,
+                 sha=(self.st.get("prs") or {}).get(str(n), {}).get("head"))
 
     # ---------------------------------------------------------------- incremental (REST)
     def pr_merged(self, n):
