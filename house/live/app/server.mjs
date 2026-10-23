@@ -3608,8 +3608,15 @@ function githubFeedEvents() {
   }
 }
 backfillArchive({ inboxes: seatInbox, extraInbox: inboxLines, nudges, acks: inboxAcks, cards: bfCards, events: githubFeedEvents() });
+server.on('error', (err) => {
+  console.log('live mesh listen failed: ' + (err && err.code ? err.code : 'error'));
+  process.exit(1);
+});
 server.listen(PORT, () => {
-  console.log(`live mesh listening on :${server.address().port} (${PUBLIC ? 'public: no password, no masking' : 'gated'})`);
+  const bound = server.address().port;
+  const webhookBase = String(process.env.CURSOR_WEBHOOK_BASE || '');
+  if (webhookBase.endsWith(':0')) process.env.CURSOR_WEBHOOK_BASE = 'http://127.0.0.1:' + bound;
+  console.log(`live mesh listening on :${bound} (${PUBLIC ? 'public: no password, no masking' : 'gated'})`);
   // The stall clock starts once the port is open, so a slow bind is not a stall.
   if (process.env.COLLECTOR !== 'off') {
     readCollectorFeed();
