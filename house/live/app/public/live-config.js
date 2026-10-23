@@ -15,11 +15,18 @@
   L.fetchFeed = function (fetchFn, nowMs, mem) {
     function full() {
       return fetchFn(FEED, { cache: 'no-store' }).then(function (res) {
+        // A show-poll drops the cursor once. A server that still answers 304 is an unchanged feed, not an error.
+        if (res.status === 304) return { source: 'feed', feed: null };
         if (!res.ok) throw new Error('feed HTTP ' + res.status);
-        return res.json();
-      }).then(function (f) { mem.cursor = (f && f.cursor) || null; return { source: 'feed', feed: f }; });
+        return res.json().then(function (f) {
+          mem.cursor = (f && f.cursor) || null;
+          return { source: 'feed', feed: f };
+        });
+      });
     }
-    if (!mem.cursor) return full();
+    var unconditional = !mem.cursor || mem.force;
+    if (mem.force) mem.force = 0;
+    if (unconditional) return full();
     var url = FEED + (FEED.indexOf('?') < 0 ? '?' : '&') + 'since=' + encodeURIComponent(mem.cursor);
     return fetchFn(url, { cache: 'no-store' }).then(function (res) {
       if (res.status === 304) return { source: 'feed', feed: null };
