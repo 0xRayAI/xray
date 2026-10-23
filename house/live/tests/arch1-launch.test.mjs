@@ -8,6 +8,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
 import os from 'node:os';
+import { listenPort } from './free-port.mjs';
 import { launchPrompt, parseCloudRepo, verifyCursorWebhook, realPacketKind, createArch1Launch, chicagoDay } from '../app/arch1-launch.mjs';
 
 const APP = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app');
@@ -65,29 +66,37 @@ async function boot(extra = {}, prep) {
     });
   });
   const cursorPort = await listen(cursor);
-  const port = 24000 + Math.floor(Math.random() * 20000);
   const ingest = crypto.randomBytes(16).toString('hex');
   const seatKey = 'arch1-' + crypto.randomBytes(8).toString('hex');
   const pw = crypto.randomBytes(8).toString('hex');
   const logs = [];
   const child = spawn(process.execPath, [path.join(APP, 'server.mjs')], {
     env: {
-      PORT: String(port), MESH_PASSWORD: pw, PATH: process.env.PATH,
+      PORT: '0', MESH_PASSWORD: pw, PATH: process.env.PATH,
       SESSION_SECRET: crypto.randomBytes(32).toString('hex'), INGEST_SECRET: ingest,
       MESH_DATA_DIR: data, COLLECTOR: 'off', GITHUB_API_URL: 'http://127.0.0.1:1',
       SEAT_KEYS: JSON.stringify({ arch1: crypto.createHash('sha256').update(seatKey).digest('hex') }),
       CURSOR_API_URL: `http://127.0.0.1:${cursorPort}`,
       CURSOR_API_KEY: KEY,
       CURSOR_WEBHOOK_SECRET: SECRET,
-      CURSOR_WEBHOOK_BASE: `http://127.0.0.1:${port}`,
+      CURSOR_WEBHOOK_BASE: 'http://127.0.0.1:0',
       ARCH1_CLOUD_REPO: REPO,
       ARCH1_LAUNCH_ENABLED: '0',
       ...extra,
     },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
+  const portPromise = listenPort(child);
   child.stdout.on('data', c => logs.push(c.toString()));
   child.stderr.on('data', c => logs.push(c.toString()));
+  let port;
+  try {
+    port = await portPromise;
+  } catch (err) {
+    child.kill();
+    cursor.close();
+    throw new Error('server did not boot: ' + (err && err.message ? err.message : err));
+  }
   const base = `http://127.0.0.1:${port}`;
   let up = false;
   for (let i = 0; i < 50; i++) {
@@ -562,4 +571,29 @@ test('a missing card is not a launch, and a holding card launches under packet:<
     assert.equal(calls[1].body.prompt.text.includes('#0'), false);
     assert.match(calls[1].body.name, /packet:hold-1/);
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('a taken port logs listen failed and exits', async () => {
+  const holder = http.createServer((_req, res) => { res.end('held'); });
+  const taken = await new Promise(resolve => holder.listen(0, () => resolve(holder.address().port)));
+  const data = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-a1l-busy-'));
+  const child = spawn(process.execPath, [path.join(APP, 'server.mjs')], {
+    env: {
+      PORT: String(taken), PATH: process.env.PATH, COLLECTOR: 'off', MESH_DATA_DIR: data,
+      MESH_PASSWORD: 'pw', SESSION_SECRET: '0123456789abcdef0123456789abcdef', INGEST_SECRET: 'abcdef0123456789abcdef0123456789',
+    },
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  let buf = '';
+  child.stdout.on('data', c => { buf += c.toString(); });
+  child.stderr.on('data', c => { buf += c.toString(); });
+  const code = await Promise.race([
+    new Promise(resolve => child.once('exit', resolve)),
+    new Promise(resolve => setTimeout(() => resolve('timeout'), 4000)),
+  ]);
+  if (code === 'timeout') child.kill();
+  holder.close();
+  fs.rmSync(data, { recursive: true, force: true });
+  assert.equal(code, 1);
+  assert.match(buf, /listen failed: EADDRINUSE/);
 });
