@@ -6,6 +6,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+- The collector walks every issue and pull once, so a number older than the time cursor still becomes a card. A short walk does not move that cursor. Refs #576.
 - `inbox-watch` prints ACTION_REQUIRED on every non-empty poll, including a poll whose text matches the previous one. Refs #587.
 - `inbox-watch` auto-acks a line whose GitHub item is closed or merged, and lists held lines once as `held: N`. Open lines still print on every poll. Refs #587.
 - Lock `ip-address` at 10.7.4. Refs #574.

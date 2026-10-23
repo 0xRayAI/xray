@@ -914,6 +914,10 @@ class RepoCollector:
             back = (datetime.now(timezone.utc) - timedelta(hours=36)).strftime("%Y-%m-%dT%H:%M:%SZ")
             cur = min(cur, back)
             self.st["etags"].pop("pulls", None)
+        cards_rewalk = not self.st["bf"].get("cards:pulls")
+        if cards_rewalk:
+            cur = None
+            self.st["etags"].pop("pulls", None)
         newest = cur
         # Replay a pull that shares the cursor second. put() is idempotent.
         # Instant compare, not text: <= skips that sibling, and +00:00 / -05:00 sort before Z.
@@ -962,11 +966,16 @@ class RepoCollector:
                 self.st.setdefault("enrich", {})[str(n)] = True
             if gh_after(p.get("updated_at"), newest):
                 newest = p["updated_at"]
+        if cards_rewalk and getattr(self, "_paged_status", None) != "done":
+            self.st["etags"].pop("pulls", None)
+            return
         self.st["cur"]["pulls"] = newest
         if self._etag_new:
             self.st["etags"]["pulls"] = self._etag_new
         if actor_rewalk and getattr(self, "_paged_status", None) == "done":
             self.st["bf"]["merged:actor"] = True
+        if cards_rewalk:
+            self.st["bf"]["cards:pulls"] = True
 
     def enrich_prs(self, c, limit=20):
         todo = list(self.st.get("enrich", {}).keys())[:limit]
@@ -1147,6 +1156,12 @@ class RepoCollector:
 
     def poll_issues(self, c):
         cur = self.st["cur"].get("issues")
+        # One walk of every issue. The time cursor skips a number that was not updated after it,
+        # and that number never becomes a card. put() is idempotent.
+        cards_rewalk = not self.st["bf"].get("cards:issues")
+        if cards_rewalk:
+            cur = None
+            self.st["etags"].pop("issues", None)
         newest = cur
         for i in self.paged(c, f"/repos/{self.repo}/issues", {"state": "all", "sort": "updated", "direction": "desc"},
                             "issues", stop=lambda i: gh_before(i.get("updated_at"), cur)):
@@ -1160,9 +1175,14 @@ class RepoCollector:
             self.put(f"{self.repo}!{n}:open", i["created_at"], node(login), "GitHub", "issue_open",
                      f"{self.short} issue #{n} opened · {i['title']}", i["html_url"], n, actor=login,
                      mentions=mentions(i.get("body")), **card_fields(i))
+        if cards_rewalk and getattr(self, "_paged_status", None) != "done":
+            self.st["etags"].pop("issues", None)
+            return
         self.st["cur"]["issues"] = newest
         if self._etag_new:
             self.st["etags"]["issues"] = self._etag_new
+        if cards_rewalk:
+            self.st["bf"]["cards:issues"] = True
 
     def poll_comments(self, c):
         cur = self.st["cur"].get("comments")
