@@ -966,15 +966,12 @@ class RepoCollector:
                 self.st.setdefault("enrich", {})[str(n)] = True
             if gh_after(p.get("updated_at"), newest):
                 newest = p["updated_at"]
-        if cards_rewalk and getattr(self, "_paged_status", None) != "done":
-            self.st["etags"].pop("pulls", None)
-            return
         self.st["cur"]["pulls"] = newest
         if self._etag_new:
             self.st["etags"]["pulls"] = self._etag_new
         if actor_rewalk and getattr(self, "_paged_status", None) == "done":
             self.st["bf"]["merged:actor"] = True
-        if cards_rewalk:
+        if cards_rewalk and getattr(self, "_paged_status", None) == "done":
             self.st["bf"]["cards:pulls"] = True
 
     def enrich_prs(self, c, limit=20):
@@ -1175,13 +1172,10 @@ class RepoCollector:
             self.put(f"{self.repo}!{n}:open", i["created_at"], node(login), "GitHub", "issue_open",
                      f"{self.short} issue #{n} opened · {i['title']}", i["html_url"], n, actor=login,
                      mentions=mentions(i.get("body")), **card_fields(i))
-        if cards_rewalk and getattr(self, "_paged_status", None) != "done":
-            self.st["etags"].pop("issues", None)
-            return
         self.st["cur"]["issues"] = newest
         if self._etag_new:
             self.st["etags"]["issues"] = self._etag_new
-        if cards_rewalk:
+        if cards_rewalk and getattr(self, "_paged_status", None) == "done":
             self.st["bf"]["cards:issues"] = True
 
     def poll_comments(self, c):
