@@ -1,4 +1,4 @@
-"""tools/inbox-watch.sh: FAIL once per distinct error, ACTION_REQUIRED on new lines, one turn start and one turn end."""
+"""tools/inbox-watch.sh: FAIL once per distinct error, ACTION_REQUIRED on every non-empty poll, one turn start and one turn end."""
 import os, subprocess, tempfile, unittest
 from pathlib import Path
 
@@ -55,8 +55,8 @@ exit 0
 """
         r, calls = self._run(body, ["arch1"], {"INBOX_WATCH_MAX": "3"})
         self.assertEqual(r.returncode, 0, r.stderr)
-        self.assertEqual(r.stdout.count("ACTION_REQUIRED"), 1)
-        self.assertIn("line-a", r.stdout)
+        self.assertEqual(r.stdout.count("ACTION_REQUIRED"), 2)
+        self.assertEqual(r.stdout.count("line-a"), 2)
         self.assertEqual(calls.count("--turn start --tag wake"), 1)
         self.assertEqual(calls.count("--turn end"), 1)
         self.assertNotIn("--ack", calls)

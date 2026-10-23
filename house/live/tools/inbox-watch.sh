@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Poll live-inbox <seat> (default arch1) every 60s.
-# FAIL once per distinct error. ACTION_REQUIRED plus the lines when the read changes.
+# FAIL once per distinct error. Every non-empty read prints ACTION_REQUIRED and the lines.
 # live-inbox <seat> --turn start --tag wake when work first appears.
 # live-inbox <seat> --turn end once the inbox is empty again.
 # Never acks. Never prints the key.
@@ -52,10 +52,8 @@ while true; do
   else
     last_err=""
     if [[ -n "$out" ]]; then
-      if [[ "$out" != "$last_out" ]]; then
-        printf 'ACTION_REQUIRED\n%s\n' "$out"
-        last_out="$out"
-      fi
+      printf 'ACTION_REQUIRED\n%s\n' "$out"
+      last_out="$out"
       if [[ "$had_work" -eq 0 ]]; then
         "$bin" "$seat" --turn start --tag wake >/dev/null 2>&1 || true
         had_work=1
