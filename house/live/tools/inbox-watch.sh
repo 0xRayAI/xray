@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Poll live-inbox <seat> (default arch1) every 60s.
-# FAIL once per distinct error.
+# FAIL once per distinct error. The line names LIVE_URL and the expected URL, then backs off.
 # A JSON line whose GitHub item is closed or merged is acked and logged as auto-ack.
 # A held line (hold label, or a card whose state is held) prints once as "held: N".
 # Every poll with open, non-held lines prints ACTION_REQUIRED and those lines.
@@ -224,6 +224,8 @@ last_held=""
 had_work=0
 n=0
 max="${INBOX_WATCH_MAX:-0}"
+started="$(date +%Y-%m-%dT%H:%M:%S%z)"
+fail_sleep="$interval"
 while true; do
   errf="$(mktemp)"
   out="$("$bin" "$seat" 2>"$errf")"
@@ -234,12 +236,23 @@ while true; do
     if [[ "$err" != "$last_err" ]]; then
       printf 'FAIL\nLIVE_URL=%s expected=https://bifrost.0xray.dev\n%s\n' "$LIVE_URL" "$err"
       last_err="$err"
+      fail_sleep="$interval"
+    fi
+    sleep_for="$fail_sleep"
+    if [[ "$interval" -ne 0 ]]; then
+      fail_sleep=$((fail_sleep * 2))
+      if [[ "$fail_sleep" -gt 180 ]]; then
+        fail_sleep=180
+      fi
     fi
   else
     last_err=""
+    fail_sleep="$interval"
     state_file="${INBOX_WATCH_STATE:-$HOME/.burst/inbox-watch.state}"
-    mkdir -p "$(dirname "$state_file")"
-    printf 'pid=%s\nlast_ok=%s\nlive_url=%s\nscript=house/live/tools/inbox-watch.sh\n' "$$" "$(date +%Y-%m-%dT%H:%M:%S%z)" "$LIVE_URL" > "$state_file"
+    pid_file="${INBOX_WATCH_PID:-$HOME/.burst/inbox-watch.pid}"
+    mkdir -p "$(dirname "$state_file")" "$(dirname "$pid_file")"
+    printf 'pid=%s\nstarted=%s\nlast_ok=%s\nlive_url=%s\nscript=house/live/tools/inbox-watch.sh\n' "$$" "$started" "$(date +%Y-%m-%dT%H:%M:%S%z)" "$LIVE_URL" > "$state_file"
+    printf '%s\n' "$$" > "$pid_file"
     showed=0
     if [[ -n "$out" ]]; then
       dir="$(mktemp -d)" || exit 1
@@ -296,6 +309,9 @@ while true; do
       last_held=""
     fi
   fi
+  if [[ "$code" -eq 0 ]]; then
+    sleep_for="$interval"
+  fi
   n=$((n + 1))
   if [[ "${INBOX_WATCH_ONCE:-}" == "1" ]]; then
     break
@@ -303,5 +319,5 @@ while true; do
   if [[ "$max" != "0" && "$n" -ge "$max" ]]; then
     break
   fi
-  sleep "$interval"
+  sleep "$sleep_for"
 done
