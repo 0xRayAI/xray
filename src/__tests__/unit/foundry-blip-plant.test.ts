@@ -1898,7 +1898,7 @@ describe('foundry blip plant — docs and CI', () => {
     expect(read('.github/workflows/enforce-version-compliance.yml')).toContain(
       'foundry-blip-plant.test.ts',
     );
-    expect(read('scripts/foundry/package.json')).toMatch(/"version": "0\.1\.12"/);
+    expect(read('scripts/foundry/package.json')).toMatch(/"version": "0\.1\.13"/);
     expect(read('scripts/foundry/package.json')).toMatch(/"@0xray\/blip"/);
   });
 });
