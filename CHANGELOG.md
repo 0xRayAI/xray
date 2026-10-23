@@ -53,6 +53,27 @@ Wear seeds `STATION.md` and `NOTES.md` when they are missing. After that, wear c
 
 When `LIVE_URL` is unset, the board is `house/WAVEBOARD.md`. When `LIVE_URL` is set, the board is Bifrost (`GET /cards`). When a real wave's last card is closed or merged, the board raises one plan-next-wave card for the CoS seat naming the next open wave. The window is a Chicago cron stored on the card. A due plan does not hide a stall wake. Weekly burn at 75% keeps the plan quiet and keeps an empty-board wake quiet. A plan card older than 7 days closes as expired and is not raised again for that same wave. Synthetic cards with no GitHub number are closed. `--apply` boards only the current wave and refuses the production board unless `BIFROST_SEED_APPLY=1`. The live image copies `wave-schedule.mjs` and `bifrost-waves.json`. `house init` copies an empty wave list. The server reads `house/bifrost-waves.json`.
 
+## [4.1.4] - 2026-10-23
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: card an issue or pull the time cursor skipped (#602) (608d8a1ec)
+- fix: show every inbox line type and route a review to the author (#597) (db7039377)
+- fix: deliver a card nudge into the seat inbox (#600) (5ea572f2d)
+- fix: an ack closes a merge handoff without a review URL (#598) (1db0bd12d)
+- fix: keep one inbox watcher and record it on the station page (#596) (69c2fa091)
+- fix: name LIVE_URL when the inbox watch cannot reach Bifrost (#594) (4180aa762)
+- fix: live tests bind port 0 so parallel runs do not collide (#593) (e6cc578cd)
+- fix: inbox-watch acks closed lines and lists held once (9150dfa3b)
+- fix: inbox-watch prints while lines remain (7250d5882)
+
+### 📚 Documentation
+- docs: link the packet rule from the wake (#601) (478e243c7)
+- docs: start burst-live with the entrypoint (#603) (f8c351abb)
+
+---
+
 ## [4.1.3] - 2026-10-19
 
 A hidden range ships in the kit. The first seat to land a hit holds the board for the wave the board has up. The initial and the selected seat live in `house/OP-PROC.md`. The hit stays on that machine. It does not post, deploy, or publish.
