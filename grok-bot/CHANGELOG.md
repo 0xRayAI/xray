@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.1.12 — 2026-10-23
+
+- Published Node floor is `>=24.22.1`.
+
 - The cursor folder rule is `OP-PROC.md#cursor-folder`. `LIVE_CURSORS` is not required. A read does not write `<seat>.txt`. Watch scripts run `house/live/tools` from the main checkout.
 
 ## 0.1.11 — 2026-10-20

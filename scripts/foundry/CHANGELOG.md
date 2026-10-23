@@ -2,7 +2,11 @@
 
 ## [Unreleased]
 
-Shim `sound-voice.cjs` → `@0xray/blip/sound-voice`. Depend on published `@0xray/blip@^0.1.2`. Foundry stamp stays 0.1.12. Do not vendor mill drawers.
+## [0.1.13] - 2026-10-23
+
+Published Node floor is `>=24.22.1`. Registry 0.1.12 said `>=18`.
+
+Shim `sound-voice.cjs` → `@0xray/blip/sound-voice`. Depend on published `@0xray/blip@^0.1.2`. Foundry stamp is 0.1.13. Do not vendor mill drawers.
 
 Inspect `--go` emits a shop-style forge GO receipt (harness profile: bare / suited / partial). Observational by default: Cursor/Grok `hooks.json` bound, Repertoire fastened (`node_modules` or `.xray/state/repertoire`), Station present. `--require-harness=` gates dual-cloud A/B. Vendor Repertoire source and `memory_routing` declaration are not fasten. Not an 8th MCP. Not PPE. Not 5.0.
 
