@@ -31,3 +31,18 @@ test('arch1 inbox: own key reads, wrong/other/no key refused, key never logged',
   await new Promise(r => setTimeout(r, 200));
   assert.ok(!logs.includes(K) && !logs.includes(H(K)), 'key leaked to server log');
 });
+
+test('a stalled card owned by Arch1 lands in the arch1 inbox as a nudge', async () => {
+  const now = Date.now(), R = 'example-org/x', q = now - 61 * 60000;
+  const card = { key: R + '#588', kind: 'pr', repo: R, number: 588, title: 'nudge me', url: 'https://github.com/' + R + '/pull/588', owner: 'Arch1', stage: 'fix', state: 'live',
+    packet: { 'next owner': 'Arch1' }, packet_ok: true, missing: [], beats: [{ t: q, what: 'pushed', url: '', id: 'b588' }], last_beat_t: q, stall: true };
+  const posted = await fetch(BASE + '/ingest', { method: 'POST', body: JSON.stringify({ title: 't', event_count: 0, generated_at: new Date().toISOString(), events: [], board: { updated_ct: 'x', cards: [card] } }),
+    headers: { ...A(INGEST), 'Content-Type': 'application/json' } });
+  assert.equal(posted.status, 200);
+  const mine = (await (await fetch(BASE + '/inbox/arch1', { headers: A(K) })).json()).lines.filter(l => l.type === 'nudge');
+  assert.equal(mine.length, 1);
+  assert.equal(mine[0].number, 588);
+  assert.match(mine[0].reason, /^nudge L1/);
+  const critic = (await (await fetch(BASE + '/inbox/critic', { headers: A(C) })).json()).lines.filter(l => l.type === 'nudge' && l.number === 588);
+  assert.equal(critic.length, 0);
+});
