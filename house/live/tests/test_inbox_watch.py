@@ -1,4 +1,4 @@
-"""tools/inbox-watch.sh: FAIL once per distinct error, ACTION_REQUIRED on new lines, one turn start and one turn end."""
+"""tools/inbox-watch.sh: FAIL once per distinct error, ACTION_REQUIRED on every open poll, auto-ack closed items, held lines once."""
 import os, subprocess, tempfile, unittest
 from pathlib import Path
 
@@ -31,6 +31,15 @@ class InboxWatch(unittest.TestCase):
             r = subprocess.run(["bash", str(W), *args], env=env, capture_output=True, text=True)
             return r, log.read_text() if log.exists() else ""
 
+    def _hooks(self, d, gh_body, card_body="printf 'live\\n'"):
+        gh = Path(d) / "gh"
+        card = Path(d) / "card"
+        gh.write_text("#!/usr/bin/env bash\n" + gh_body + "\n")
+        card.write_text("#!/usr/bin/env bash\n" + card_body + "\n")
+        gh.chmod(0o755)
+        card.chmod(0o755)
+        return {"INBOX_WATCH_GH": str(gh), "INBOX_WATCH_CARD": str(card)}
+
     def test_defaults_and_empty_poll_is_quiet(self):
         r, calls = self._run("exit 0", [], {"INBOX_WATCH_ONCE": "1"})
         self.assertEqual(r.returncode, 0, r.stderr)
@@ -55,8 +64,8 @@ exit 0
 """
         r, calls = self._run(body, ["arch1"], {"INBOX_WATCH_MAX": "3"})
         self.assertEqual(r.returncode, 0, r.stderr)
-        self.assertEqual(r.stdout.count("ACTION_REQUIRED"), 1)
-        self.assertIn("line-a", r.stdout)
+        self.assertEqual(r.stdout.count("ACTION_REQUIRED"), 2)
+        self.assertEqual(r.stdout.count("line-a"), 2)
         self.assertEqual(calls.count("--turn start --tag wake"), 1)
         self.assertEqual(calls.count("--turn end"), 1)
         self.assertNotIn("--ack", calls)
@@ -79,6 +88,116 @@ exit 1
         self.assertIn("boom", r.stdout)
         self.assertIn("other", r.stdout)
         self.assertNotIn("ACTION_REQUIRED", r.stdout)
+
+    def test_closed_line_is_auto_acked(self):
+        line = '{"id":"closed-1","repo":"0xRayAI/xray","number":531,"title":"done"}'
+        body = """
+if [[ "$*" == *"--turn"* || "$*" == *"--ack"* ]]; then exit 0; fi
+echo '%s'
+exit 0
+""" % line
+        with tempfile.TemporaryDirectory() as d:
+            hooks = self._hooks(d, "printf 'closed\\t\\t\\n'")
+            r, calls = self._run(body, ["arch1"], dict({"INBOX_WATCH_MAX": "2"}, **hooks))
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(r.stdout.count("auto-ack closed-1"), 2)
+        self.assertNotIn("ACTION_REQUIRED", r.stdout)
+        self.assertNotIn(line, r.stdout)
+        self.assertEqual(calls.count("--ack closed-1"), 2)
+        self.assertNotIn("--turn", calls)
+        self.assertNotIn("seat-key", r.stdout + r.stderr)
+
+    def test_held_label_once_and_open_line_repeats(self):
+        open_line = '{"id":"open-1","repo":"0xRayAI/xray","number":549,"title":"open"}'
+        held_line = '{"id":"held-1","repo":"0xRayAI/xray","number":570,"title":"held"}'
+        body = """
+if [[ "$*" == *"--turn"* || "$*" == *"--ack"* ]]; then exit 0; fi
+count="$(dirname "$0")/n"
+n=0
+[[ -f "$count" ]] && n=$(cat "$count")
+n=$((n + 1))
+echo "$n" > "$count"
+if [[ "$n" -le 2 ]]; then
+  echo '%s'
+  echo '%s'
+fi
+exit 0
+""" % (open_line, held_line)
+        gh = """
+case "$2" in
+  549) printf 'open\\t\\tbug\\n' ;;
+  570) printf 'open\\t\\tOn-Hold\\n' ;;
+  *) exit 1 ;;
+esac
+"""
+        with tempfile.TemporaryDirectory() as d:
+            hooks = self._hooks(d, gh)
+            r, calls = self._run(body, ["arch1"], dict({"INBOX_WATCH_MAX": "3"}, **hooks))
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(r.stdout.count("ACTION_REQUIRED"), 2)
+        self.assertEqual(r.stdout.count(open_line), 2)
+        self.assertEqual(r.stdout.count("held: 1"), 1)
+        self.assertNotIn(held_line, r.stdout)
+        self.assertNotIn("auto-ack", r.stdout)
+        self.assertNotIn("--ack", calls)
+        self.assertEqual(calls.count("--turn start --tag wake"), 1)
+        self.assertEqual(calls.count("--turn end"), 1)
+
+    def test_held_card_listed_once(self):
+        held_line = '{"id":"held-card","repo":"0xRayAI/xray","number":416,"title":"card"}'
+        body = """
+if [[ "$*" == *"--turn"* || "$*" == *"--ack"* ]]; then exit 0; fi
+count="$(dirname "$0")/n"
+n=0
+[[ -f "$count" ]] && n=$(cat "$count")
+n=$((n + 1))
+echo "$n" > "$count"
+if [[ "$n" -le 2 ]]; then echo '%s'; fi
+exit 0
+""" % held_line
+        with tempfile.TemporaryDirectory() as d:
+            hooks = self._hooks(d, "printf 'open\\t\\tbug\\n'", "printf 'held\\n'")
+            r, calls = self._run(body, ["arch1"], dict({"INBOX_WATCH_MAX": "3"}, **hooks))
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(r.stdout.count("held: 1"), 1)
+        self.assertNotIn("ACTION_REQUIRED", r.stdout)
+        self.assertNotIn(held_line, r.stdout)
+        self.assertNotIn("--ack", calls)
+        self.assertEqual(calls.count("--turn start --tag wake"), 1)
+        self.assertEqual(calls.count("--turn end"), 1)
+
+    def test_gh_failure_leaves_the_line_open(self):
+        line = '{"id":"unknown-1","repo":"0xRayAI/xray","number":588,"title":"unknown"}'
+        body = """
+if [[ "$*" == *"--turn"* || "$*" == *"--ack"* ]]; then exit 0; fi
+echo '%s'
+exit 0
+""" % line
+        with tempfile.TemporaryDirectory() as d:
+            hooks = self._hooks(d, "echo boom >&2; exit 1")
+            r, calls = self._run(body, ["arch1"], dict({"INBOX_WATCH_MAX": "1"}, **hooks))
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(r.stdout.count("ACTION_REQUIRED"), 1)
+        self.assertIn(line, r.stdout)
+        self.assertNotIn("auto-ack", r.stdout)
+        self.assertNotIn("--ack", calls)
+
+    def test_ack_failure_reprints_the_line(self):
+        line = '{"id":"closed-2","repo":"0xRayAI/xray","number":532,"title":"merged"}'
+        body = """
+if [[ "$*" == *"--ack"* ]]; then exit 1; fi
+if [[ "$*" == *"--turn"* ]]; then exit 0; fi
+echo '%s'
+exit 0
+""" % line
+        with tempfile.TemporaryDirectory() as d:
+            hooks = self._hooks(d, "printf 'merged\\tmerged\\t\\n'")
+            r, calls = self._run(body, ["arch1"], dict({"INBOX_WATCH_MAX": "1"}, **hooks))
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertNotIn("auto-ack", r.stdout)
+        self.assertIn("ACTION_REQUIRED", r.stdout)
+        self.assertIn(line, r.stdout)
+        self.assertIn("--ack closed-2", calls)
 
 
 if __name__ == "__main__":
