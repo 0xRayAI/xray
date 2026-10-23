@@ -733,17 +733,12 @@ function ackLines(seat, what, review) {
     : arr.some(l => l.id === what) ? [what] : null;
   if (!ids) return -1;
   const lineOf = id => arr.find(l => l.id === id);
-  const blocked = id => {
-    const line = lineOf(id);
-    return !!(line && isMergeHandoff(line) && !validMergeReview(review, line));
-  };
-  if (typeof what === 'string' && blocked(what)) return -2;
   for (const id of ids) {
-    if (have.has(id) || blocked(id)) continue;
+    if (have.has(id)) continue;
     have.add(id); n++;
     const line = lineOf(id);
     const row = { seat, line: id, t_ct: ctStamp(Date.now()) };
-    if (line && isMergeHandoff(line)) row.review = review;
+    if (line && isMergeHandoff(line) && validMergeReview(review, line)) row.review = review;
     appendArchive('acks', row);
   }
   const live = new Set(arr.map(l => l.id)); inboxAcks[seat] = [...have].filter(id => live.has(id)).slice(-6000);
@@ -3453,7 +3448,6 @@ async function handle(req, res) {
     if (!what) return json(req, res, 400, { error: 'id, upto, stale, or all required' });
     const review = d && typeof d.review === 'string' && d.review.length <= 300 ? d.review : '';
     const n = ackLines(who, what, review); touchSeat(who);
-    if (n === -2) return json(req, res, 400, { error: 'merge handoff needs a review url' });
     if (n < 0) return json(req, res, 404, { error: 'no such line' });
     if (n) serverActivity(who, 'turn', 'end', 'ack');
     if (n > 0) publishHeader();   // work tracking moves the packet to acked

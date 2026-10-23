@@ -7,8 +7,10 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 ## [Unreleased]
 
 - A card nudge is an inbox line for its seat, so the seat webhook fires. Refs #588.
+- An inbox ack closes a merge handoff even when it has no review URL. The URL is stored only when it matches that pull. Refs #595.
 - `inbox-watch` prints ACTION_REQUIRED on every non-empty poll, including a poll whose text matches the previous one. Refs #587.
 - `inbox-watch` auto-acks a line whose GitHub item is closed or merged, and lists held lines once as `held: N`. Open lines still print on every poll. Refs #587.
+- `inbox-watch` names `LIVE_URL` on a failed poll, backs off, and records pid, started, and last_ok. `inbox-watch-ensure` keeps one copy. The wake and pre-compact write one Watcher line. Refs #590.
 - Lock `ip-address` at 10.7.4. Refs #574.
 - Move `vitest` and `@vitest/coverage-v8` to 4.1.12. `express` stays 5.2.1 and `jsonwebtoken` stays 9.0.3. Refs #549.
 
