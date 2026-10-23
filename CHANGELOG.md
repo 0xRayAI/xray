@@ -6,6 +6,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+- An inbox ack closes a merge handoff even when it has no review URL. The URL is stored only when it matches that pull. Refs #595.
 - `inbox-watch` prints ACTION_REQUIRED on every non-empty poll, including a poll whose text matches the previous one. Refs #587.
 - `inbox-watch` auto-acks a line whose GitHub item is closed or merged, and lists held lines once as `held: N`. Open lines still print on every poll. Refs #587.
 - Lock `ip-address` at 10.7.4. Refs #574.
