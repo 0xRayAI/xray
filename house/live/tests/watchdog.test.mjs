@@ -56,7 +56,7 @@ test('hung feed loop restarts and is visible on the board and on healthz', async
   }
 });
 
-test('stale feed on disk does not kill a fresh collector; a real stall still does', async () => {
+test('stale lastWrite older than startedAt does not SIGTERM the new child', async () => {
   const data = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-watch-stale-'));
   const bin = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-py-'));
   fs.writeFileSync(path.join(bin, 'python3'), '#!/bin/sh\nsleep 60\n');
@@ -94,11 +94,14 @@ test('stale feed on disk does not kill a fresh collector; a real stall still doe
     const base = `http://127.0.0.1:${port[1]}`;
     const early = await (await fetch(base + '/healthz')).json();
     assert.equal(early.stalled, false);
+    // The on-disk mtime is 10 minutes old (lastWrite < startedAt). The old
+    // `lastWrite || startedAt` clock SIGTERMs on the first tick and reports ~600s.
+    assert.doesNotMatch(logs, /feed loop stalled/);
     let body = null;
     for (let i = 0; i < 40 && !/feed loop stalled/.test(logs); i++) await new Promise(r => setTimeout(r, 250));
     assert.match(logs, /feed loop stalled \d+s; restarting/);
     const age = Number(/feed loop stalled (\d+)s; restarting/.exec(logs)[1]);
-    assert.ok(age < 30, `stall age ${age}s is the on-disk file, not this start`);
+    assert.ok(age < 30, `stall age ${age}s counted stale lastWrite; lastWrite < startedAt must use this child`);
     body = await (await fetch(base + '/healthz')).json();
     assert.equal(body.stalled, true);
   } finally {
