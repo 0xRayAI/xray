@@ -1,12 +1,12 @@
 # Deploy FAQ
 
-Generic install mismatches. No project ids, no secret values. The agreed host setup is [DEPLOY.md](../../burst/DEPLOY.md): start `node server.mjs`, health check `GET /healthz`, root directory is the assembled deploy dir, collector probes come only from `COLLECTOR_HEALTH_URLS`.
+Generic install mismatches. No project ids, no secret values. The agreed host setup is [DEPLOY.md](../../burst/DEPLOY.md): start `/app/docker-entrypoint.sh`, health check `GET /healthz`, root directory is the assembled deploy dir, collector probes come only from `COLLECTOR_HEALTH_URLS`.
 
 ### The service starts the wrong program
 
 - **Symptom:** The process is `python3 house/live-mesh/fetch_feed.py`, or the page is a static `docs-site` directory.
 - **Cause:** An old setup section named that command, `BURST_REPOS`, and `BURST_HEALTH_URL`.
-- **Fix:** Follow DEPLOY. Start `node server.mjs`. Set `COLLECTOR_REPOS` and `COLLECTOR_HEALTH_URLS`.
+- **Fix:** Follow DEPLOY. Start `/app/docker-entrypoint.sh`. Set `COLLECTOR_REPOS` and `COLLECTOR_HEALTH_URLS`.
 
 ### Deploy from the repo root runs a different server
 
@@ -102,4 +102,4 @@ Generic install mismatches. No project ids, no secret values. The agreed host se
 
 - **Symptom:** Every deploy warns that `railway.json` is deprecated.
 - **Cause:** Config as Code stops being read on 2026-12-01. DEPLOY still needs a start command and `/healthz` until then.
-- **Fix:** `house/live/app/.railway/railway.ts` is the replacement (`node server.mjs`, health check `/healthz`, one replica). Plan and apply it before 2026-12-01, after `railway.json` is no longer the service config. Rename the service and project in that file to yours. Put no secrets in it.
+- **Fix:** `house/live/app/.railway/railway.ts` is the replacement (`/app/docker-entrypoint.sh`, health check `/healthz`, one replica). Plan and apply it before 2026-12-01, after `railway.json` is no longer the service config. Rename the service and project in that file to yours. Put no secrets in it.
