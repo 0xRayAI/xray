@@ -1,6 +1,7 @@
 ---
 title: Dynamo
 sidebar_label: Dynamo
+plate_type: pipeline
 ---
 
 # Dynamo
@@ -16,7 +17,7 @@ This drawing is the client. Shipped features set no `endpoint_url` and set `enab
 │   │ else PUBLIC_DYNAMO_SSOT                              │   │
 │   └──────────────────────────┬───────────────────────────┘   │
 └──────────────────────────────┼───────────────────────────────┘
-                               v
+                               v                                
 ┌──────────────────────────────┼───────────────────────────────┐
 │ PROCESSING LAYER             v                               │
 │   ┌──────────────────────────────────────────────────────┐   │
@@ -24,7 +25,7 @@ This drawing is the client. Shipped features set no `endpoint_url` and set `enab
 │   │ callTool posts baseUrl/call_connected_tool           │   │
 │   └──────────────────────────┬───────────────────────────┘   │
 └──────────────────────────────┼───────────────────────────────┘
-                               v
+                               v                                
 ┌──────────────────────────────┼───────────────────────────────┐
 │ OUTPUT LAYER                 v                               │
 │   ┌──────────────────────────────────────────────────────┐   │

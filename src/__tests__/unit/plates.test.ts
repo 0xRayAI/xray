@@ -1,4 +1,6 @@
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { inflateSync } from 'node:zlib';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -12,6 +14,7 @@ import {
   stampPlateIfMissing,
   type PlateId,
 } from '../../memory-routing/plates.js';
+import { parsePlateFlow } from './plate-flow.js';
 
 const BOX = /[┌┐└┘│─]/;
 
@@ -75,6 +78,7 @@ describe('pipeline plates', () => {
       'consumer-mcp',
       'confer',
       'grokbot',
+      'fleet',
     ]);
     for (const id of PLATE_IDS) {
       const plate = loadPlate(id);
@@ -111,6 +115,7 @@ describe('pipeline plates', () => {
     expect(recallPlate('review plate')?.id).toBe('review');
     expect(recallPlate('critic FAIL on the head')?.id).toBe('review');
     expect(recallPlate('re-review that head')?.id).toBe('review');
+    expect(recallPlate('fleet plate')?.id).toBe('fleet');
     expect(recallPlate('house processor boot')?.id).not.toBe('house');
   });
 
@@ -271,4 +276,442 @@ describe('pipeline plates', () => {
     expect(opBody).not.toMatch(/Kind 0|outer plane/i);
     expect(op.join('\n')).not.toMatch(/outer plane/i);
   });
+
+  it('keeps lens-card fences rectangular and checks the X copy for the same flow', () => {
+    expect(displayWidth('┌┐│─≤→·')).toBe(7);
+    expect(displayWidth('中')).toBe(2);
+    expect(displayWidth('a\u0301')).toBe(1);
+    const version = (JSON.parse(readFileSync(join(process.cwd(), 'package.json'), 'utf8')) as { version: string }).version;
+    for (const id of PLATE_IDS) {
+      const md = readFileSync(join(process.cwd(), 'docs-site/docs/plates', `${id}.md`), 'utf8');
+      const frontmatter = /^---\n([\s\S]*?)\n---/.exec(md)?.[1] ?? '';
+      const plateType = /^plate_type:\s*(.+?)\s*$/m.exec(frontmatter)?.[1] ?? '';
+      expect(plateType, id).toMatch(/^(pipeline|state flow|domain model)$/);
+      const png = join(process.cwd(), 'docs-site/static/plates/x', `${id}.png`);
+      if (NO_LENS_CARD.has(id)) {
+        expect(existsSync(png), id).toBe(false);
+        continue;
+      }
+      expect(md, id).toContain(`stamped · 0xray ${version}`);
+      const body = fenceBody(md);
+      const lines = fenceLines(body);
+      const width = displayWidth(lines[0] ?? '');
+      expect(lines.every((line) => displayWidth(line) === width), id).toBe(true);
+      for (const box of plateBoxes(lines)) {
+        const top = lines[box.top] ?? '';
+        const bot = lines[box.bot] ?? '';
+        expect(top[box.right], `${id} top`).toBe('┐');
+        expect(bot[box.left], `${id} bot`).toBe('└');
+        expect(bot.indexOf('┘', box.left + 1), `${id} corner`).toBe(box.right);
+        for (let row = box.top + 1; row < box.bot; row += 1) {
+          const edge = lines[row] ?? '';
+          expect(LEFT_SIDE.has(edge[box.left] ?? ''), `${id} left ${row}`).toBe(true);
+          expect(RIGHT_EDGE.has(edge[box.right] ?? ''), `${id} right ${row}`).toBe(true);
+        }
+      }
+      const embedded = JSON.parse(pngText(readFileSync(png), 'xray-plate-flow') ?? 'null') as ReturnType<typeof parsePlateFlow>;
+      const flow = parsePlateFlow(lines);
+      expect(embedded, id).toEqual(flow);
+      if (id === 'routing') {
+        expect(flow.layers.map((layer) => layer.name)).toEqual(['INPUT LAYER', 'PROCESSING LAYER', 'OUTPUT LAYER']);
+        expect(flow.layers[1]?.nodes.map((node) => node.lines[0])).toEqual([
+          'scoreComplexity',
+          'lensPlane',
+          'routeToAgent',
+          'resolveThinDispatch',
+        ]);
+        expect(flow.layers[2]?.nodes.map((node) => node.lines[0])).toEqual(['agent', 'strategy', 'adjusted score', 'file']);
+        expect(flow.edges.filter((edge) => edge.to[0] === 2 && edge.to[1] === 3)).toEqual([]);
+        expect(flow.edges.filter((edge) => edge.from[0] === 0).map((edge) => edge.to)).toEqual([[1, 0], [1, 0], [1, 0]]);
+      }
+      if (id === 'house') {
+        expect(flow.edges.some((edge) => edge.label === 'house init' && edge.from[0] === 0 && edge.to[0] === 1)).toBe(true);
+        expect(flow.edges.some((edge) => edge.label === 'not yet' && edge.from[0] === 4 && edge.to[0] === 2)).toBe(true);
+      }
+      if (id === 'centrifuge') {
+        expect(flow.notes).toContain('CENTRIFUGE');
+        expect(flow.notes).toContain('the gap stays open');
+        expect(flow.edges.some((edge) => edge.label === 'looks down')).toBe(true);
+      }
+      if (id === 'fleet') {
+        const raw = readFileSync(png);
+        expect(raw.readUInt32BE(16), 'fleet width').toBe(1600);
+        expect(raw.readUInt32BE(20), 'fleet height').toBe(1600);
+        const debate = readFileSync(join(process.cwd(), 'docs-site/static/plates/x/v5-confer.png'));
+        expect(debate.readUInt32BE(16), 'v5 debate width').toBe(1600);
+        expect(debate.readUInt32BE(20), 'v5 debate height').toBe(1600);
+        const motion = readFileSync(join(process.cwd(), 'docs-site/static/plates/x/v5-confer.html'), 'utf8');
+        for (const name of ['fadeIn', 'rise', 'blink', 'live-blink', 'wspin', 'wglow']) {
+          expect(motion, name).toContain(`@keyframes ${name}`);
+        }
+        expect(flow.layers[3]?.nodes.map((node) => node.lines[0])).toEqual([
+          'npm release',
+          'Distribution',
+          'live board',
+        ]);
+      }
+    }
+  });
+
+  it('fails when a rendered plate character has no glyph', () => {
+    const fonts = join(
+      process.cwd(),
+      'grok-bot/skills/draw-stamped-card/recipes/bifrost-storyboard/assets/fonts',
+    );
+    const bold = cmapOf(join(fonts, 'BarlowCondensed-Bold.ttf'));
+    const semi = cmapOf(join(fonts, 'BarlowCondensed-SemiBold.ttf'));
+    const stencil = cmapOf(join(fonts, 'BlackOpsOne-Regular.ttf'));
+    const drawn = drawnArrows();
+    expect(drawn.has('→')).toBe(true);
+    expect(bold.has(codePoint('→'))).toBe(false);
+    expect(bold.has(codePoint('·'))).toBe(true);
+    expect(bold.has(codePoint('≤'))).toBe(true);
+    const missing: string[] = [];
+    for (const id of PLATE_IDS) {
+      if (NO_LENS_CARD.has(id)) continue;
+      const md = readFileSync(join(process.cwd(), 'docs-site/docs/plates', `${id}.md`), 'utf8');
+      const frontmatter = /^---\n([\s\S]*?)\n---/.exec(md)?.[1] ?? '';
+      const title = (/^title:\s*(.+)\s*$/m.exec(frontmatter)?.[1] ?? id).toUpperCase();
+      noteMissing(missing, id, 'title', title, stencil, drawn);
+      noteMissing(missing, id, 'subtitle', leadLine(md), semi, drawn);
+      const footer = md.split('\n').find((line) => line.startsWith('stamped')) ?? '';
+      noteMissing(missing, id, 'footer', footer, bold, drawn);
+      const flow = parsePlateFlow(fenceLines(fenceBody(md)));
+      for (const layer of flow.layers) {
+        noteMissing(missing, id, 'layer', layer.name.toUpperCase(), bold, drawn);
+        for (const node of layer.nodes) {
+          const text = node.lines.join(' ');
+          noteMissing(missing, id, 'card', text, bold, drawn);
+          noteMissing(missing, id, 'card', text, semi, drawn);
+        }
+      }
+      for (const edge of flow.edges) {
+        noteMissing(missing, id, 'edge', edge.label, semi, drawn);
+      }
+      for (const note of flow.notes) {
+        noteMissing(missing, id, 'note', note, semi, drawn);
+      }
+    }
+    expect(missing).toEqual([]);
+  });
+
+  it('fails when an icon, a line, or a badge leaves the plate kit', () => {
+    const kitDir = join(process.cwd(), 'plates/kit');
+    const kit = readKit();
+    expect(kit.palette.default).toBe('cyan');
+    expect(kit.palette.rainbow).toHaveLength(6);
+    expect(kit.line.arrowhead.shape).toBe('triangle');
+    const seen = new Set<string>();
+    const iconFiles = kit.parts.icon?.files ?? {};
+    for (const [kind, file] of Object.entries(iconFiles)) {
+      expect(typeof file, kind).toBe('string');
+      const name = String(file);
+      expect(name.endsWith('.svg'), kind).toBe(true);
+      expect(existsSync(join(kitDir, name)), kind).toBe(true);
+      const svg = readFileSync(join(kitDir, name), 'utf8');
+      expect(svg.includes('<text'), kind).toBe(false);
+      seen.add(kind);
+    }
+    for (const rule of kit.iconMatch) {
+      expect(seen.has(rule.kind), rule.kind).toBe(true);
+    }
+    const report = execFileSync('python3', ['-c', 'import render,json; print(json.dumps(render.audit_kit()))'], {
+      cwd: join(process.cwd(), 'grok-bot/skills/draw-stamped-card/recipes/layered-flow'),
+      encoding: 'utf8',
+    });
+    expect(JSON.parse(report)).toEqual([]);
+  });
+
+  it('fails when a plate uses a shape or color outside the kit', () => {
+    const kit = readKit();
+    const kitDir = join(process.cwd(), 'plates/kit');
+    const src = readFileSync(
+      join(process.cwd(), 'grok-bot/skills/draw-stamped-card/recipes/layered-flow/render.py'),
+      'utf8',
+    );
+    const problems: string[] = [];
+    const start = src.indexOf('def stamp_svg');
+    const end = src.indexOf('\ndef ', start + 1);
+    if (start < 0 || end < 0) problems.push('missing stamper');
+    const outside = src.slice(0, Math.max(0, start)) + src.slice(Math.max(0, end));
+    for (const method of ['rectangle', 'rounded_rectangle', 'polygon', 'ellipse', 'arc', 'pieslice', 'chord', 'line']) {
+      if (outside.includes(`.${method}(`)) problems.push(method);
+    }
+    const palette: number[][] = [];
+    for (const [name, value] of Object.entries(kit.palette)) {
+      if (name === 'default' || name === 'rainbow' || !Array.isArray(value) || typeof value[0] !== 'number') continue;
+      palette.push(value as number[]);
+    }
+    for (const match of src.matchAll(/\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/g)) {
+      const rgb = [Number(match[1]), Number(match[2]), Number(match[3])];
+      const known = palette.some((color) => color[0] === rgb[0] && color[1] === rgb[1] && color[2] === rgb[2]);
+      if (!known) problems.push(rgb.join(','));
+    }
+    const required = [
+      'frame',
+      'rivet',
+      'header',
+      'logoSlot',
+      'title',
+      'subtitle',
+      'accentRail',
+      'layerLabel',
+      'card',
+      'numberTile',
+      'rail',
+      'junction',
+      'arrowhead',
+      'footer',
+    ];
+    for (const id of required) {
+      const part = kit.parts[id];
+      if (!part?.svg || !part.sizes) {
+        problems.push(id);
+        continue;
+      }
+      const svgPath = join(kitDir, part.svg);
+      if (!existsSync(svgPath)) {
+        problems.push(`${id} missing`);
+        continue;
+      }
+      const svg = readFileSync(svgPath, 'utf8');
+      if (/#[0-9A-Fa-f]{3,8}/.test(svg) || /rgb\(/i.test(svg)) problems.push(`${id} color`);
+      if (!src.includes(`"${id}"`)) problems.push(`${id} unused`);
+    }
+    expect(problems).toEqual([]);
+  });
 });
+
+type PlateKit = {
+  palette: { default: string; rainbow: number[][] } & Record<string, unknown>;
+  line: { arrowhead: { shape: string } };
+  iconMatch: Array<{ kind: string }>;
+  parts: Record<string, { svg?: string; sizes?: Record<string, number>; files?: Record<string, string> }>;
+};
+
+function readKit(): PlateKit {
+  return JSON.parse(readFileSync(join(process.cwd(), 'plates/kit.json'), 'utf8')) as PlateKit;
+}
+
+const NO_LENS_CARD = new Set(['review', 'goggles', 'suit', 'kits', 'host-pack', 'glossary']);
+const LEFT_SIDE = new Set(['│', '├', '┼']);
+const RIGHT_EDGE = new Set(['│', '┐', '┘', '┤', '┼']);
+
+function isWide(cp: number): boolean {
+  return (
+    (cp >= 0x1100 && cp <= 0x115f) ||
+    (cp >= 0x2329 && cp <= 0x232a) ||
+    (cp >= 0x2e80 && cp <= 0xa4cf && cp !== 0x303f) ||
+    (cp >= 0xac00 && cp <= 0xd7a3) ||
+    (cp >= 0xf900 && cp <= 0xfaff) ||
+    (cp >= 0xfe10 && cp <= 0xfe19) ||
+    (cp >= 0xfe30 && cp <= 0xfe6f) ||
+    (cp >= 0xff00 && cp <= 0xff60) ||
+    (cp >= 0xffe0 && cp <= 0xffe6) ||
+    (cp >= 0x1f300 && cp <= 0x1f64f) ||
+    (cp >= 0x1f900 && cp <= 0x1f9ff) ||
+    (cp >= 0x20000 && cp <= 0x3fffd)
+  );
+}
+
+function isCombining(cp: number): boolean {
+  return (
+    (cp >= 0x0300 && cp <= 0x036f) ||
+    (cp >= 0x1ab0 && cp <= 0x1aff) ||
+    (cp >= 0x1dc0 && cp <= 0x1dff) ||
+    (cp >= 0x20d0 && cp <= 0x20ff) ||
+    (cp >= 0xfe20 && cp <= 0xfe2f)
+  );
+}
+
+function displayWidth(text: string): number {
+  let width = 0;
+  for (const ch of text) {
+    const cp = ch.codePointAt(0) ?? 0;
+    if (isCombining(cp)) continue;
+    width += isWide(cp) ? 2 : 1;
+  }
+  return width;
+}
+
+function fenceBody(md: string): string {
+  const match = /```[^\n]*\n([\s\S]*?)```/.exec(md);
+  if (!match) throw new Error('plate has no code fence');
+  return match[1];
+}
+
+function fenceLines(body: string): string[] {
+  const text = body.endsWith('\n') ? body.slice(0, -1) : body;
+  return text.split('\n');
+}
+
+function plateBoxes(lines: string[]): Array<{ top: number; bot: number; left: number; right: number }> {
+  const found: Array<{ top: number; bot: number; left: number; right: number }> = [];
+  for (let r = 0; r < lines.length; r += 1) {
+    const line = lines[r] ?? '';
+    let c = 0;
+    while (c < line.length) {
+      if (line[c] === '┌') {
+        let k = c + 1;
+        while (k < line.length && line[k] !== '┐' && line[k] !== '┌') k += 1;
+        if (k < line.length && line[k] === '┐') {
+          let rr = r + 1;
+          while (rr < lines.length && LEFT_SIDE.has((lines[rr] ?? '')[c] ?? '')) rr += 1;
+          if (rr < lines.length && (lines[rr] ?? '')[c] === '└') {
+            found.push({ top: r, bot: rr, left: c, right: k });
+            c = k;
+            continue;
+          }
+        }
+      }
+      c += 1;
+    }
+  }
+  return found;
+}
+
+function codePoint(ch: string): number {
+  return ch.codePointAt(0) ?? 0;
+}
+
+function drawnArrows(): Set<string> {
+  const src = readFileSync(
+    join(process.cwd(), 'grok-bot/skills/draw-stamped-card/recipes/layered-flow/render.py'),
+    'utf8',
+  );
+  const block = /INLINE_ARROWS\s*=\s*\{([^}]+)\}/.exec(src)?.[1] ?? '';
+  if (!block || !src.includes('def draw_inline_arrow') || !src.includes('def paint_text')) {
+    throw new Error('renderer does not draw the arrow characters');
+  }
+  const arrows = new Set<string>();
+  for (const match of block.matchAll(/"([^"]+)"/g)) {
+    const ch = match[1] ?? '';
+    if (ch) arrows.add(ch);
+  }
+  return arrows;
+}
+
+function leadLine(md: string): string {
+  const parts = md.split('---');
+  const body = parts.length >= 3 ? parts.slice(2).join('---') : md;
+  const chunk: string[] = [];
+  for (const line of body.split('\n')) {
+    if (line.startsWith('#') || line.startsWith('```')) {
+      if (chunk.length) break;
+      continue;
+    }
+    if (!line.trim()) {
+      if (chunk.length) break;
+      continue;
+    }
+    chunk.push(line.trim());
+  }
+  let sentence = chunk.join(' ');
+  const dot = sentence.indexOf('. ');
+  if (dot !== -1) sentence = sentence.slice(0, dot + 1);
+  if (!sentence || sentence.length > 68) return '';
+  return sentence;
+}
+
+function noteMissing(
+  missing: string[],
+  id: string,
+  role: string,
+  text: string,
+  cmap: Set<number>,
+  drawn: Set<string>,
+): void {
+  for (const ch of text) {
+    if (drawn.has(ch) || ch === '\n') continue;
+    const cp = ch.codePointAt(0) ?? 0;
+    if (!cmap.has(cp)) missing.push(`${id} ${role} ${ch}`);
+  }
+}
+
+function cmapOf(path: string): Set<number> {
+  const buf = readFileSync(path);
+  const view = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+  const numTables = view.getUint16(4);
+  let cmapAt = -1;
+  for (let index = 0; index < numTables; index += 1) {
+    const rec = 12 + index * 16;
+    if (buf.toString('ascii', rec, rec + 4) === 'cmap') cmapAt = view.getUint32(rec + 8);
+  }
+  if (cmapAt < 0) throw new Error(`no cmap in ${path}`);
+  const nEnc = view.getUint16(cmapAt + 2);
+  let best = -1;
+  let bestScore = -1;
+  for (let index = 0; index < nEnc; index += 1) {
+    const rec = cmapAt + 4 + index * 8;
+    const platform = view.getUint16(rec);
+    const encoding = view.getUint16(rec + 2);
+    const off = cmapAt + view.getUint32(rec + 4);
+    if (view.getUint16(off) !== 4) continue;
+    const score = (platform === 3 && encoding === 1 ? 100000 : 0) + view.getUint16(off + 2);
+    if (score > bestScore) {
+      bestScore = score;
+      best = off;
+    }
+  }
+  if (best < 0) throw new Error(`no format-4 cmap in ${path}`);
+  const seg = view.getUint16(best + 6) / 2;
+  let pos = best + 14;
+  const end: number[] = [];
+  const start: number[] = [];
+  const delta: number[] = [];
+  const roff: number[] = [];
+  for (let index = 0; index < seg; index += 1) end.push(view.getUint16(pos + index * 2));
+  pos += seg * 2 + 2;
+  for (let index = 0; index < seg; index += 1) start.push(view.getUint16(pos + index * 2));
+  pos += seg * 2;
+  for (let index = 0; index < seg; index += 1) delta.push(view.getInt16(pos + index * 2));
+  pos += seg * 2;
+  const roffPos = pos;
+  for (let index = 0; index < seg; index += 1) roff.push(view.getUint16(pos + index * 2));
+  const found = new Set<number>();
+  for (let index = 0; index < seg; index += 1) {
+    const startCp = start[index] ?? 0;
+    const endCp = end[index] ?? 0;
+    const idDelta = delta[index] ?? 0;
+    const rangeOff = roff[index] ?? 0;
+    for (let cp = startCp; cp <= endCp; cp += 1) {
+      let glyph = 0;
+      if (rangeOff === 0) {
+        glyph = (cp + idDelta) & 0xffff;
+      } else {
+        const gpos = roffPos + index * 2 + rangeOff + 2 * (cp - startCp);
+        glyph = view.getUint16(gpos);
+        if (glyph) glyph = (glyph + idDelta) & 0xffff;
+      }
+      if (glyph) found.add(cp);
+    }
+  }
+  return found;
+}
+
+function pngText(buf: Buffer, keyword: string): string | null {
+  const sig = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  if (!buf.subarray(0, 8).equals(sig)) throw new Error('not a png');
+  let offset = 8;
+  while (offset + 8 <= buf.length) {
+    const length = buf.readUInt32BE(offset);
+    const type = buf.toString('ascii', offset + 4, offset + 8);
+    const data = buf.subarray(offset + 8, offset + 8 + length);
+    if (type === 'iTXt') {
+      const keyEnd = data.indexOf(0);
+      const key = data.toString('latin1', 0, keyEnd);
+      if (key === keyword) {
+        let cursor = keyEnd + 1;
+        const compressed = data[cursor] === 1;
+        cursor += 2;
+        const langEnd = data.indexOf(0, cursor);
+        cursor = langEnd + 1;
+        const transEnd = data.indexOf(0, cursor);
+        const text = data.subarray(transEnd + 1);
+        return compressed ? inflateSync(text).toString('utf8') : text.toString('utf8');
+      }
+    }
+    offset += 12 + length;
+  }
+  return null;
+}

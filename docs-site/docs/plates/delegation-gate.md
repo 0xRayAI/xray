@@ -1,6 +1,7 @@
 ---
 title: Delegation gate
 sidebar_label: Delegation gate
+plate_type: pipeline
 ---
 
 # Delegation gate
@@ -14,7 +15,7 @@ The pre-tool gate for every host. The loader is `src/integrations/hooks/delegati
 │   │ a tool call                                          │   │
 │   └──────────────────────────┬───────────────────────────┘   │
 └──────────────────────────────┼───────────────────────────────┘
-                               v
+                               v                                
 ┌──────────────────────────────┼───────────────────────────────┐
 │ PROCESSING LAYER             v                               │
 │   ┌──────────────────────────────────────────────────────┐   │
@@ -33,7 +34,7 @@ The pre-tool gate for every host. The loader is `src/integrations/hooks/delegati
 │   │ destructive shell                                    │   │
 │   └──────────────────────────┬───────────────────────────┘   │
 └──────────────────────────────┼───────────────────────────────┘
-                               v
+                               v                                
 ┌──────────────────────────────┼───────────────────────────────┐
 │ OUTPUT LAYER                 v                               │
 │   ┌──────────────────────────────────────────────────────┐   │

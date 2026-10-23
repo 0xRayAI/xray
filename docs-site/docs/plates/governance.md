@@ -1,6 +1,7 @@
 ---
 title: Governance
 sidebar_label: Governance
+plate_type: pipeline
 ---
 
 # Governance
@@ -14,7 +15,7 @@ Two doors run today. One vote comes out: approve, reject, or needs_revision. The
 │   │ GovernanceService          │ │ inference:run           │ │
 │   └─────────────┬──────────────┘ └────────────┬────────────┘ │
 └─────────────────┼──────────────────────────────┼─────────────┘
-                  v                              v
+                  v                              v              
 ┌─────────────────┼──────────────────────────────┼─────────────┐
 │ PROCESSING LAYER  v                            v             │
 │   ┌──────────────────────────────────────────────────────┐   │
@@ -30,7 +31,7 @@ Two doors run today. One vote comes out: approve, reject, or needs_revision. The
 │   │ delegation-gate          │  beside the vote          │   │
 │   └──────────────────────────┼───────────────────────────┘   │
 └──────────────────────────────┼───────────────────────────────┘
-                               v
+                               v                                
 ┌──────────────────────────────┼───────────────────────────────┐
 │ OUTPUT LAYER                 v                               │
 │   ┌──────────────────────────────────────────────────────┐   │
