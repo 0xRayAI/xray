@@ -16,6 +16,7 @@ import {
   writeSessionBoot,
 } from './grok-hook-utils.js';
 import { appendHookActivity } from './grok-hook-activity.js';
+import { hookText, notifyBifrost } from '../../hooks/bifrost-send.mjs';
 import { recordSynthesisTurnSlice } from '../../hooks/synthesis-hook-runtime.mjs';
 import { archiveStaleLeadDevPlan } from '../../hooks/plan-hook-runtime.mjs';
 import {
@@ -165,6 +166,26 @@ async function main() {
       stationLine: payload.stationLine,
       hotSwap: payload.hotSwap || null,
     });
+
+    try {
+      const phase = HOOK_EVENT === 'pre_compact'
+        ? 'end'
+        : HOOK_EVENT === 'session_start'
+          ? 'start'
+          : HOOK_EVENT === 'user_prompt_submit'
+            ? 'work'
+            : '';
+      if (phase) {
+        await notifyBifrost({
+          root: eventRoot,
+          phase,
+          text: phase === 'work' ? hookText(event) : '',
+          env: process.env,
+        });
+      }
+    } catch {
+      /* a quiet board must not stop the hook */
+    }
 
     try {
       scheduleAutonomousReportingMarker(eventRoot);
