@@ -6,6 +6,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+- Worn Grok hooks send a turn, an issue tag, a pull tag, and a handoff packet while Bifrost health says the board is live. A quiet board sends nothing. Refs #564 #567.
 - The worn suit and the wake boot step link the packet rule. The card key is the issue or pull. Refs #567.
 - The collector walks every issue and pull once, so a number older than the time cursor still becomes a card. A short walk does not move that cursor. Refs #576.
 - A card nudge is an inbox line for its seat, so the seat webhook fires. Refs #588.
