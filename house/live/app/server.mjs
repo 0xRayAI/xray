@@ -14,6 +14,7 @@ import net from 'node:net';
 import zlib from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
+import { Worker } from 'node:worker_threads';
 import { seatPresence, presentSeat, foldSeatTouch, fleetConfigOf, configuredRoster, readWakeOk, writeWakeOk } from './presence.mjs';
 import { parseAllowlist, mergeCards, sourceCardsFrom, projectAllowed, validateItem, workEventToItem, cardNoNudge, workItemNewer } from './source.mjs';
 import { checkRoutesFromDir, readRoutingMap, createLoginResolver, auditLogins } from './routes.mjs';
@@ -2434,18 +2435,59 @@ function healthBody() {   // public: counts, times, ages (s) and wake states; no
   if (warming) body.status = 'warming';
   return body;
 }
-function readCollectorFeed() {   // every 2 s: ingest the collector's file when it changed (atomic rename by the writer)
-  let st; try { st = fs.statSync(GH_FEED); } catch { return; }
-  const sig = `${st.ino}:${st.size}:${st.mtimeMs}`;
-  if (sig === collector.sig) return;
-  let f; try { f = JSON.parse(fs.readFileSync(GH_FEED, 'utf8')); } catch { return; }   // mid-replace: next tick
-  if (!validFeed(f)) { collector.sig = sig; console.log('collector: feed file invalid; ignored'); return; }
-  collector.sig = sig; collector.lastWrite = st.mtimeMs;   // quiet file: age is the file's age, including across a redeploy
+let feedEventHash = '';
+let feedRead = null;
+function applyCollectorHeader(hdr) {
+  const S = SRCS.github;
+  seq++; S.seq++; S.at = Date.now(); S.header = hdr;
+  const at = typeof hdr.generated_at === 'string' ? hdr.generated_at : new Date().toISOString();
+  for (const full of collector.repos) {
+    const prev = repoSeen.get(full);
+    repoSeen.set(full, { last_collected: at, newest_event: prev ? prev.newest_event : null });
+  }
+  recomputeGithubDataAt();
+  const packetHeld = bfCards.some(c => c && (c.born === 'packet' || String(c.key || '').toLowerCase().startsWith('packet:')));
+  if (packetHeld && !(S.header && S.header.board)) publishBoard();
+  header = mergedHeader();
+  fullDirty = true;
+}
+function applyFeedRead(msg) {
+  if (!msg || !msg.ok) {
+    if (msg && msg.error === 'invalid' && msg.sig) collector.sig = msg.sig;
+    return;
+  }
+  collector.sig = msg.sig; collector.lastWrite = msg.mtimeMs;   // quiet file: age is the file's age, including across a redeploy
   collector.watchKilled = false;
+  feedEventHash = msg.eventHash;
   if (evs.has('health:feed-loop')) { evs.delete('health:feed-loop'); fullDirty = true; }
-  repoTimes(f);
-  ingestSrc('github', f.events, headerOf(f));
+  if (msg.same) { applyCollectorHeader(msg.header); return; }
+  if (!validFeed(msg.feed)) return;
+  repoTimes(msg.feed);
+  ingestSrc('github', msg.feed.events, headerOf(msg.feed));
   routeSoon();
+}
+function readCollectorFeed() {   // every 2 s: ingest the collector's file when it changed. The parse runs off the request thread.
+  let st; try { st = fs.statSync(GH_FEED); } catch { return Promise.resolve(); }
+  const sig = `${st.ino}:${st.size}:${st.mtimeMs}`;
+  if (sig === collector.sig) return Promise.resolve();
+  if (feedRead) { feedRead.again = true; return feedRead.promise; }
+  let resolve;
+  const promise = new Promise(r => { resolve = r; });
+  feedRead = { again: false, promise };
+  const w = new Worker(new URL('./feed-read-worker.mjs', import.meta.url), { workerData: { file: GH_FEED, prevHash: feedEventHash } });
+  let settled = false;
+  const finish = () => {
+    if (settled) return;
+    settled = true;
+    w.terminate().catch(() => {});
+    const again = feedRead && feedRead.again;
+    feedRead = null;
+    resolve();
+    if (again) readCollectorFeed();
+  };
+  w.once('message', (msg) => { try { applyFeedRead(msg); } finally { finish(); } });
+  w.once('error', () => finish());
+  return promise;
 }
 // ---- Server inbox routing: after each collector pass, feed/inbox_pass.py (same rules as the box pusher:
 // routing/inbox-roles.json) routes events not seen before into seat inboxes, then postSeatLines stores them and fires
@@ -3631,20 +3673,24 @@ server.on('error', (err) => {
   console.log('live mesh listen failed: ' + (err && err.code ? err.code : 'error'));
   process.exit(1);
 });
-server.listen(PORT, () => {
+async function openMesh() {
+  // The first read finishes before the port opens, so health and the board see the feed.
+  if (process.env.COLLECTOR !== 'off') await readCollectorFeed();
+  server.listen(PORT, () => {
   const bound = server.address().port;
   const webhookBase = String(process.env.CURSOR_WEBHOOK_BASE || '');
   if (webhookBase.endsWith(':0')) process.env.CURSOR_WEBHOOK_BASE = 'http://127.0.0.1:' + bound;
   console.log(`live mesh listening on :${bound} (${PUBLIC ? 'public: no password, no masking' : 'gated'})`);
   // The stall clock starts once the port is open, so a slow bind is not a stall.
   if (process.env.COLLECTOR !== 'off') {
-    readCollectorFeed();
     setInterval(readCollectorFeed, 2000).unref();
     const watchEvery = Math.min(5000, Math.max(500, (Number(process.env.COLLECTOR_WATCH_S) || 45) * 1000));
     setInterval(watchFeed, watchEvery).unref();
     startCollector().catch(e => console.log("collector: start failed " + String(e.message).slice(0, 80)));
   }
-});
+  });
+}
+openMesh();
 for (const sig of ['SIGTERM', 'SIGINT']) process.on(sig, () => { stopping = true; server.close(() => process.exit(0)); setTimeout(() => process.exit(0), 5000).unref(); });
 readJiraFeed();
 setInterval(readJiraFeed, 2000).unref();

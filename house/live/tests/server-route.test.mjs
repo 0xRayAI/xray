@@ -27,6 +27,17 @@ function start() {
 async function stop() { if (!srv) return; const p = new Promise(r => srv.once('exit', r)); srv.kill(); await p; srv = null; }
 after(async () => { await stop(); sink.close(); fs.rmSync(DATA, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 }); });
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+async function tick() {
+  const h = await (await fetch(`http://127.0.0.1:${srvPort}/healthz`)).json();
+  return h.last_tick || '';
+}
+async function sawNewTick(prev) {
+  for (let i = 0; i < 80; i++) {
+    try { const now = await tick(); if (now && now !== prev) return true; } catch { /* not up */ }
+    await sleep(100);
+  }
+  return false;
+}
 const count = re => (logs.match(new RegExp(re.source, 'g')) || []).length;
 const until = async (fn, n = 100) => { for (let i = 0; i < n && !fn(); i++) await sleep(100); return fn(); };
 const ct = ago => new Date(Date.now() - ago * 1000).toISOString();
@@ -79,12 +90,18 @@ test('#275: WAKE_KEY_<SEAT> works without key_env (key_env still wins); /healthz
 
 test('same events again, and after a restart: nothing routed twice, no second wake', async () => {
   const before = wakes.length, n = ['forge', 'blinky'].map(s => inbox(s).length);
+  const passes = count(/route: pass /);
+  const prev = await tick();
   writeFeed([...old, ...fresh]);
-  assert.ok(await until(() => count(/route: pass 0 0/) >= 2), logs);
+  assert.ok(await sawNewTick(prev), logs);   // unchanged events refresh the header and do not route
+  assert.equal(count(/route: pass /), passes, logs);
   await stop(); start();
-  assert.ok(await until(() => /route: pass 0 0/.test(logs)), logs);              // warm start re-reads the feed
+  assert.ok(await until(() => srvPort > 0 && /route: pass 0 0/.test(logs)), logs);   // warm start re-reads the feed
+  const passes2 = count(/route: pass /);
+  const prev2 = await tick();
   writeFeed([...old, ...fresh]);
-  assert.ok(await until(() => count(/route: pass 0 0/) >= 2), logs);
+  assert.ok(await sawNewTick(prev2), logs);
+  assert.equal(count(/route: pass /), passes2, logs);
   await sleep(300);
   assert.deepEqual(['forge', 'blinky'].map(s => inbox(s).length), n);
   assert.equal(wakes.length, before);

@@ -7,7 +7,7 @@ RUN apt-get update \
  && apt-get install -y --no-install-recommends python3 tzdata ca-certificates gosu \
  && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
-COPY package.json server.mjs presence.mjs source.mjs archive.mjs origin.mjs routes.mjs governor.mjs arch1-launch.mjs worktrack.mjs handoff.mjs wave-schedule.mjs bifrost-waves.json chicago-stamp.mjs pr-batch.mjs wake-gate.mjs ./
+COPY package.json server.mjs feed-read-worker.mjs presence.mjs source.mjs archive.mjs origin.mjs routes.mjs governor.mjs arch1-launch.mjs worktrack.mjs handoff.mjs wave-schedule.mjs bifrost-waves.json chicago-stamp.mjs pr-batch.mjs wake-gate.mjs ./
 COPY public ./public
 COPY collector ./collector
 # deploy.sh writes this one-line file from the house config name:. LIVE_OWNER overrides it.
