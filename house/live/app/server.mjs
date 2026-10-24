@@ -14,6 +14,7 @@ import net from 'node:net';
 import zlib from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
+import { Worker } from 'node:worker_threads';
 import { seatPresence, presentSeat, foldSeatTouch, fleetConfigOf, configuredRoster, readWakeOk, writeWakeOk } from './presence.mjs';
 import { parseAllowlist, mergeCards, sourceCardsFrom, projectAllowed, validateItem, workEventToItem, cardNoNudge, workItemNewer } from './source.mjs';
 import { checkRoutesFromDir, readRoutingMap, createLoginResolver, auditLogins } from './routes.mjs';
@@ -2434,18 +2435,55 @@ function healthBody() {   // public: counts, times, ages (s) and wake states; no
   if (warming) body.status = 'warming';
   return body;
 }
-function readCollectorFeed() {   // every 2 s: ingest the collector's file when it changed (atomic rename by the writer)
+let feedEventHash = '';
+let feedRead = null;
+function applyCollectorHeader(hdr) {
+  const S = SRCS.github;
+  seq++; S.seq++; S.at = Date.now(); S.header = hdr;
+  const at = typeof hdr.generated_at === 'string' ? hdr.generated_at : new Date().toISOString();
+  for (const full of collector.repos) {
+    const prev = repoSeen.get(full);
+    repoSeen.set(full, { last_collected: at, newest_event: prev ? prev.newest_event : null });
+  }
+  recomputeGithubDataAt();
+  const packetHeld = bfCards.some(c => c && (c.born === 'packet' || String(c.key || '').toLowerCase().startsWith('packet:')));
+  if (packetHeld && !(S.header && S.header.board)) publishBoard();
+  header = mergedHeader();
+  fullDirty = true;
+}
+function applyFeedRead(msg) {
+  if (!msg || !msg.ok) {
+    if (msg && msg.error === 'invalid' && msg.sig) collector.sig = msg.sig;
+    return;
+  }
+  collector.sig = msg.sig; collector.lastWrite = msg.mtimeMs;   // quiet file: age is the file's age, including across a redeploy
+  collector.watchKilled = false;
+  feedEventHash = msg.eventHash;
+  if (evs.has('health:feed-loop')) { evs.delete('health:feed-loop'); fullDirty = true; }
+  if (msg.same) { applyCollectorHeader(msg.header); return; }
+  if (!validFeed(msg.feed)) return;
+  repoTimes(msg.feed);
+  ingestSrc('github', msg.feed.events, headerOf(msg.feed));
+  routeSoon();
+}
+function readCollectorFeed() {   // every 2 s: ingest the collector's file when it changed. The parse runs off the request thread.
   let st; try { st = fs.statSync(GH_FEED); } catch { return; }
   const sig = `${st.ino}:${st.size}:${st.mtimeMs}`;
   if (sig === collector.sig) return;
-  let f; try { f = JSON.parse(fs.readFileSync(GH_FEED, 'utf8')); } catch { return; }   // mid-replace: next tick
-  if (!validFeed(f)) { collector.sig = sig; console.log('collector: feed file invalid; ignored'); return; }
-  collector.sig = sig; collector.lastWrite = st.mtimeMs;   // quiet file: age is the file's age, including across a redeploy
-  collector.watchKilled = false;
-  if (evs.has('health:feed-loop')) { evs.delete('health:feed-loop'); fullDirty = true; }
-  repoTimes(f);
-  ingestSrc('github', f.events, headerOf(f));
-  routeSoon();
+  if (feedRead) { feedRead.again = true; return; }
+  feedRead = { again: false };
+  const w = new Worker(new URL('./feed-read-worker.mjs', import.meta.url), { workerData: { file: GH_FEED, prevHash: feedEventHash } });
+  let done = false;
+  const finish = () => {
+    if (done) return;
+    done = true;
+    w.terminate().catch(() => {});
+    const again = feedRead && feedRead.again;
+    feedRead = null;
+    if (again) readCollectorFeed();
+  };
+  w.once('message', (msg) => { try { applyFeedRead(msg); } finally { finish(); } });
+  w.once('error', () => finish());
 }
 // ---- Server inbox routing: after each collector pass, feed/inbox_pass.py (same rules as the box pusher:
 // routing/inbox-roles.json) routes events not seen before into seat inboxes, then postSeatLines stores them and fires
