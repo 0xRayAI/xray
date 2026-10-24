@@ -16,6 +16,7 @@ import {
   workspaceRoot,
 } from './grok-hook-utils.js';
 import { appendHookActivity } from './grok-hook-activity.js';
+import { hookText, notifyBifrost } from '../../hooks/bifrost-send.mjs';
 import {
   evaluatePostToolSpawn,
   isOrchestrateToolEvent as gateIsOrchestrateToolEvent,
@@ -104,6 +105,16 @@ async function main() {
   try {
     const event = await readStdinJson();
     handlePostToolUse(event, root);
+    try {
+      await notifyBifrost({
+        root: normalizeWorkspaceRoot(event.workspaceRoot || event.cwd || root),
+        phase: 'work',
+        text: hookText(event),
+        env: process.env,
+      });
+    } catch {
+      /* a quiet board must not stop the hook */
+    }
     process.exit(0);
   } catch (err) {
     appendHookActivity(root, 'grok-post-tool-use', 'hook-error', 'error', {

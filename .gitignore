@@ -37,6 +37,7 @@ rerun_*/
 
 # Station card is a projection of session-boot.json — disk contract, not git
 .xray/state/STATION.md
+.xray/state/bifrost-send.json
 .xray/state/goggles-views.json
 .xray/state/goggles-plane.json
 .xray/state/session-boot.json
