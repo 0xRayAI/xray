@@ -26,10 +26,20 @@ class WakeTemplate(unittest.TestCase):
         self.assertEqual(len(boot), 1)
         self.assertIn("OP-PROC.md#packet", boot[0])
         self.assertIn("Do not hand-post a card", boot[0])
-        agents = Path(__file__).resolve().parents[3] / "AGENTS-consumer.md"
-        text = agents.read_text()
-        self.assertIn("#packet", text)
-        self.assertIn("Do not hand-post a card", text)
+        root = Path(__file__).resolve().parents[3]
+        watcher = "$XRAY_MAIN/house/live/tools/inbox-watch.sh"
+        for rel in ("AGENTS.md", "AGENTS-consumer.md"):
+            text = (root / rel).read_text()
+            self.assertIn("#packet", text, rel)
+            self.assertIn("issue or pull", text, rel)
+            self.assertIn("Do not hand-post a card", text, rel)
+            self.assertIn(watcher, text, rel)
+        lens = (root / ".agents" / "skills" / "boot" / "SKILL.md").read_text()
+        self.assertIn(watcher, lens)
+        self.assertIn("only TUI monitor", lens)
+        station = (root / "grok-bot" / "skills" / "station" / "SKILL.md").read_text()
+        self.assertIn("#packet", station)
+        self.assertIn("Do not hand-post a card", station)
 
     def test_station_step_reads_station_then_notes(self):
         hit = [s for s in self.steps if "STATION.md" in s]

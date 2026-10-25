@@ -11,3 +11,4 @@ The class is `BootOrchestrator` in `src/core/boot-orchestrator.ts`. The plate is
 1. `executeBootSequence` brings the engine up.
 2. The plate stays the boot list. Do not redraw it from this skill.
 3. The suit turn is worn-turn. The plate that stays with this lens is suit-wear.
+4. When Bifrost is on, the only TUI monitor is `$XRAY_MAIN/house/live/tools/inbox-watch.sh <seat>`. No inline loop. No `~/.burst/bin` copy.
