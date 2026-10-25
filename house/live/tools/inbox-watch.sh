@@ -3,7 +3,7 @@
 # FAIL once per distinct error. The line names LIVE_URL and the expected URL, then backs off.
 # A JSON line whose GitHub item is closed or merged is acked and logged as auto-ack.
 # A held line (hold label, or a card whose state is held) prints once as "held: N".
-# Every poll with open, non-held lines prints ACTION_REQUIRED and those lines.
+# Every poll with open, non-held lines prints ACTION_REQUIRED, unfinished:N, and those lines.
 # live-inbox <seat> --turn start --tag wake when that printed work first appears.
 # live-inbox <seat> --turn end once the inbox is empty again.
 # Never prints the key. A gh miss, or a failed ack, leaves the line open.
@@ -299,7 +299,8 @@ while true; do
           done < "$dir/closed"
         fi
         if [[ -s "$dir/open" ]]; then
-          printf 'ACTION_REQUIRED\n'
+          open_n="$(awk 'NF{n++} END{print n+0}' "$dir/open")"
+          printf 'ACTION_REQUIRED\nunfinished:%s\n' "$open_n"
           python3 - "$dir/open" << 'PY'
 import json, sys
 from collections import Counter
@@ -337,7 +338,8 @@ PY
           last_held=""
         fi
       else
-        printf 'ACTION_REQUIRED\n%s\n' "$out"
+        open_n="$(printf '%s\n' "$out" | awk 'NF{n++} END{print n+0}')"
+        printf 'ACTION_REQUIRED\nunfinished:%s\n%s\n' "$open_n" "$out"
         showed=1
       fi
       rm -rf "$dir"
