@@ -37,6 +37,6 @@ Each step posts one activity line. Each cloud launch is written to `house/fleet/
 
 ## Way out
 
-Ask anything new without a card, then update STATION, the card, TRACKS, and the closing line, as [Station boot](../../OP-PROC.md#station-boot) and [Card](../../OP-PROC.md#card) say.
+Ask anything new without a card, then update STATION, the card, TRACKS, and the closing line, as [Station boot](../../OP-PROC.md#station-boot) and [Card](../../OP-PROC.md#card) say. A packet and its card follow [Packet](../../OP-PROC.md#packet). The card key is the issue or pull. Do not hand-post a card.
 
 Backstop: not built yet. Doctor does not flag a stale STATION or an incomplete card. It warns when `STATION.md` is older than `NOTES.md`, or when `Skills:` or `Keys:` is missing.

@@ -6,6 +6,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+- A suit that lacks the packet link fails, and so does a pull or cloud run with no card. When Bifrost is on, the only TUI monitor is `$XRAY_MAIN/house/live/tools/inbox-watch.sh <seat>`. Refs #567.
 - The live board keeps answering while a collector pass rewrites the same feed. The event parse leaves the request thread, and an unchanged event set only refreshes the header. The port opens after the first read, so health and the board see that feed.
 - Worn Grok hooks send a turn, an issue tag, a pull tag, and a handoff packet while Bifrost health says the board is live. A quiet board sends nothing. Refs #564 #567.
 - The worn suit and the wake boot step link the packet rule. The card key is the issue or pull. Refs #567.

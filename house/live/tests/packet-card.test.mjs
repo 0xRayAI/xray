@@ -8,8 +8,29 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { cardKeyOf } from '../app/arch1-launch.mjs';
-import { acceptWaveCards, attachPacketCards, retainSeedCards } from '../app/wave-schedule.mjs';
+import { acceptWaveCards, attachPacketCards, missingCardRuns, retainSeedCards } from '../app/wave-schedule.mjs';
+import { boardCloudAgents } from '../app/worktrack.mjs';
 import { listenPort } from './free-port.mjs';
+
+test('a pull or cloud run with no card fails', () => {
+  const cards = [{ key: 'acme/app#9', repo: 'acme/app', number: 9, state: 'live' }];
+  const gaps = missingCardRuns([
+    { kind: 'pr_open', repo: 'acme/app', number: 9 },
+    { kind: 'pr_open', repo: 'acme/app', number: 10 },
+    { kind: 'cloud', bcId: 'bc-ok', card: 'acme/app#9' },
+    { kind: 'cloud', bcId: 'bc-none', card: '' },
+  ], cards);
+  assert.equal(gaps.some(gap => gap.kind === 'pull' && gap.key === 'acme/app#9'), false);
+  assert.equal(gaps.some(gap => gap.kind === 'pull' && gap.key === 'acme/app#10'), true);
+  assert.deepEqual(gaps.filter(gap => gap.kind === 'cloud'), [{ kind: 'cloud', key: '' }]);
+  const rows = boardCloudAgents({
+    agents: [{ agent: 'bc-none', seat: 'forge', status: 'running', t_ct: '2026-10-25T12:00:00-05:00' }],
+    board: cards,
+    now: Date.parse('2026-10-25T12:05:00-05:00'),
+  });
+  assert.equal(rows[0].label, 'no card');
+  assert.equal(rows[0].card, '');
+});
 
 const APP = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app', 'server.mjs');
 const FEED = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'feed');
