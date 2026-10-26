@@ -6,6 +6,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+- A Grok prompt or compact hook that omits the script name loads session-start.js. If that hook cannot run, the runner prints no decision, so UserPromptSubmit does not see `allow`.
 - Resolve `fast-uri` to >=3.1.9 in the root and docs-site locks. Refs #616.
 - Resolve docs-site `body-parser` to >=1.20.9. Express stays 4. Refs #617.
 - Pin `@modelcontextprotocol/sdk` at 1.32.2 and set a finite `maxRequestBodySize` on the HTTP MCP transports. Refs #507.
