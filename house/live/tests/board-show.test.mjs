@@ -119,9 +119,9 @@ test('hide then show refreshes ages and the health strip when the feed answers 3
     await page.goto(base, { waitUntil: 'domcontentloaded' });
     await page.evaluate(() => { window.__boot = 1; });
     await page.clock.runFor(200);
-    const opened = await waitFace(page, (row) => row.age === '0m' && row.fresh === 'Updated just now');
+    const opened = await waitFace(page, (row) => row.age === '0m' && row.fresh === 'Last activity just now');
     assert.equal(opened.age, '0m');
-    assert.equal(opened.fresh, 'Updated just now');
+    assert.equal(opened.fresh, 'Last activity just now');
     const full = hits.filter((hit) => hit.url.startsWith('/live-events.json') && !hit.stale);
     assert.equal(full.length, 1, JSON.stringify(hits));
     assert.ok(full.every((hit) => !hit.url.includes('since=')), JSON.stringify(full));
@@ -133,13 +133,13 @@ test('hide then show refreshes ages and the health strip when the feed answers 3
     await page.clock.setFixedTime(T0 + 120000);
     const frozen = await face(page);
     assert.equal(frozen.age, '0m', JSON.stringify(frozen));
-    assert.equal(frozen.fresh, 'Updated just now');
+    assert.equal(frozen.fresh, 'Last activity just now');
 
     const beforeShow = hits.length;
     await setHidden(page, false);
-    const shown = await waitFace(page, (row) => row.age === '2m' && row.fresh === 'Updated 2 min ago');
+    const shown = await waitFace(page, (row) => row.age === '2m' && row.fresh === 'Last activity 2 min ago');
     assert.equal(shown.age, '2m');
-    assert.equal(shown.fresh, 'Updated 2 min ago');
+    assert.equal(shown.fresh, 'Last activity 2 min ago');
     assert.equal(shown.boot, 1, 'show refreshes in place');
     const showHits = hits.slice(beforeShow).filter((hit) => hit.url.startsWith('/live-events.json'));
     assert.ok(showHits.length >= 1, JSON.stringify(hits));
@@ -157,9 +157,9 @@ test('hide then show refreshes ages and the health strip when the feed answers 3
     await page.evaluate(() => {
       window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
     });
-    const restored = await waitFace(page, (row) => row.age === '4m' && row.fresh === 'Updated 4 min ago');
+    const restored = await waitFace(page, (row) => row.age === '4m' && row.fresh === 'Last activity 4 min ago');
     assert.equal(restored.age, '4m');
-    assert.equal(restored.fresh, 'Updated 4 min ago');
+    assert.equal(restored.fresh, 'Last activity 4 min ago');
     assert.equal(restored.boot, 1);
     const pageHits = hits.slice(beforePage).filter((hit) => hit.url.startsWith('/live-events.json'));
     assert.ok(pageHits.length >= 1, JSON.stringify(hits.slice(beforePage)));
