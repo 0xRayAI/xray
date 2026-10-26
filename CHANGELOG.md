@@ -6,6 +6,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+- house/live tests get 30 minutes and a Playwright browser cache. A cold Chromium download was using the old 15 minute cap. Refs #634.
 - Inbox alias fixtures use a fresh stamp. A line older than 7 days is dropped on save, and the 2026-10-19 stamp had aged out. Refs #637.
 - inbox-watch posts a wake turn after every poll that prints work. An empty poll does not end that turn. The seat posts the turn end when the chat finishes.
 - WAKE step 0 and the HOUSE inbound line post `live-inbox --cloud` beside the turn, with the card tag. Refs #628.
