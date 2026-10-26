@@ -5,8 +5,9 @@
 # A held line (hold label, or a card whose state is held) prints once as "held: N" and is not popped.
 # An open, non-held line is printed once (ACTION_REQUIRED, unfinished:N, the line), then popped (`pop <id>`).
 # A new event is a new line. A raw line with no id still reprints. A failed ack leaves that line open.
-# live-inbox <seat> --turn start --tag wake when that printed work first appears.
-# live-inbox <seat> --turn end once the inbox is empty again.
+# After every poll that prints work, live-inbox <seat> --turn start --tag wake.
+# The start is after the pop, because an ack closes a turn.
+# An empty poll does not end the turn. The seat posts the turn end when the chat finishes.
 # Never prints the key. Never uses --ack all. A gh miss still delivers the line, then pops it.
 set -u
 seat="${1:-arch1}"
@@ -222,7 +223,6 @@ PY
 trap 'rm -f "$class_py"' EXIT
 last_err=""
 last_held=""
-had_work=0
 n=0
 max="${INBOX_WATCH_MAX:-0}"
 started="$(date +%Y-%m-%dT%H:%M:%S%z)"
@@ -373,15 +373,10 @@ PY
         showed=1
       fi
       rm -rf "$dir"
-      if [[ "$showed" -eq 1 && "$had_work" -eq 0 ]]; then
+      if [[ "$showed" -eq 1 ]]; then
         "$bin" "$seat" --turn start --tag wake >/dev/null 2>&1 || true
-        had_work=1
       fi
     else
-      if [[ "$had_work" -eq 1 ]]; then
-        "$bin" "$seat" --turn end >/dev/null 2>&1 || true
-        had_work=0
-      fi
       last_held=""
     fi
   fi
