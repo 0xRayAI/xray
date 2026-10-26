@@ -35,6 +35,9 @@ import { getCodexPolicyService } from "../governance/codex-policy.service.js";
 import { initializeGovernanceIntegration, shutdownGovernanceIntegration } from "../integrations/governance/index.js";
 import type { GovernanceRequest } from "../governance/governance-types.js";
 
+/** Bytes. Matches the SDK 1.32 default. Skipped when the caller passes parsedBody. */
+export const MCP_MAX_REQUEST_BODY_SIZE = 4194304;
+
 interface GovernanceProposalInput {
   id?: string;
   type: 'fix' | 'refactor' | 'guard' | 'automate' | 'codify' | 'strategic' | 'compliance';
@@ -523,6 +526,7 @@ class GovernanceServer extends XrayKnowledgeSkillBase {
         } else if (!sessionId && isInitializeRequest(req.body)) {
           transport = new StreamableHTTPServerTransport({
             sessionIdGenerator: () => randomUUID(),
+            maxRequestBodySize: MCP_MAX_REQUEST_BODY_SIZE,
             onsessioninitialized: (sid) => {
               if (transport) {
                 transports[sid] = transport;
@@ -603,7 +607,7 @@ class GovernanceServer extends XrayKnowledgeSkillBase {
       await Promise.all(Object.values(transports).map((t) => t.close()));
     };
 
-    app.listen(port, () => {
+    app.listen(port, mcpHost, () => {
       frameworkLogger.log("governance-mcp", "http-listening", "info", { port });
     });
 
