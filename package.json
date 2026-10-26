@@ -248,5 +248,8 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.7.2",
     "vitest": "^4.1.12"
+  },
+  "overrides": {
+    "body-parser": "^2.4.0"
   }
 }
