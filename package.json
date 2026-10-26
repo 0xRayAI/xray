@@ -250,6 +250,7 @@
     "vitest": "^4.1.12"
   },
   "overrides": {
-    "body-parser": "^2.4.0"
+    "body-parser": "^2.4.0",
+    "fast-uri": "^3.1.9"
   }
 }
