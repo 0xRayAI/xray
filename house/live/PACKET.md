@@ -14,6 +14,8 @@ A short `board` array is the counted header, not the roster. Invalid `LIVE_FLEET
 
 `configuredRoster` in `house/live/app/presence.mjs` unions a valid `LIVE_FLEET_SEATS` value with every committed `fleet-roster.json` `seats` list. A `board` subset is used only when that source has no `seats`. When no seat list exists, the node map supplies the names and rails stay off. The server writes `roster` and `roster_roles` on the feed header. The page paints those chips. The overlay no longer installs a fixed strip.
 
+The chip is the seat name. The role opens on a click. Status stays on the dot.
+
 The theme toggle is the last control in the header title row, pushed to the far right.
 
 ## Kanban detail

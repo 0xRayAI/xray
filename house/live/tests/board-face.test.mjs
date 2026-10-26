@@ -211,12 +211,11 @@ test('the board face keeps the contract in both themes', async () => {
     assert.ok(face.roster.length > 0);
     const stateWord = /\b(active|idle|working|live|silent)\b/i;
     for (const row of face.roster) {
-      assert.equal(row.tag, 'DIV');
-      assert.equal(row.text, row.title.toUpperCase() + row.role);
-      assert.ok(row.role);
+      assert.equal(row.tag, 'BUTTON');
+      assert.equal(row.text, row.title.toUpperCase());
+      assert.equal(row.role, '');
       assert.equal(row.ellipsis, 'ellipsis');
       assert.equal(row.nowrap, 'nowrap');
-      assert.doesNotMatch(row.role, stateWord);
       assert.doesNotMatch(row.text, stateWord);
       assert.equal(row.pulse, false);
     }
@@ -339,11 +338,11 @@ test('the roster renders no state text', async () => {
     })));
     assert.ok(rows.length > 0);
     for (const row of rows) {
-      assert.equal(row.tag, 'DIV');
+      assert.equal(row.tag, 'BUTTON');
       assert.equal(row.html.includes('class="st"'), false);
-      assert.equal(row.text, row.title.toUpperCase() + row.role);
-      assert.ok(row.role);
-      assert.doesNotMatch(row.role, /\b(active|idle|working|live|silent)\b/i);
+      assert.equal(row.html.includes('class="role"'), false);
+      assert.equal(row.text, row.title.toUpperCase());
+      assert.equal(row.role, '');
       assert.doesNotMatch(row.text, /\b(active|idle|working|live|silent)\b/i);
       assert.doesNotMatch(row.text, /·/);
     }

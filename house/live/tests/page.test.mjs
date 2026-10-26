@@ -165,8 +165,11 @@ test('one seat state: header text, dot and node label all come from L.seatView(s
   assert.match(html, /v = L\.seatView\(seatState\(a\[0\], hot\)\), on = v\.lit;/);
   assert.doesNotMatch(html, /s\.st/);
   assert.doesNotMatch(html, /var spinning = v\.blink;/);
-  assert.match(html, /el\.querySelector\('\.role'\)\.textContent = String\(a\[1\] \|\| ''\)/);
-  assert.doesNotMatch(html, /createElement\('button'\)[\s\S]{0,80}className = 'seat'/);
+  assert.match(html, /var roleText = String\(a\[1\] \|\| ''\)/);
+  assert.match(html, /role\.textContent = roleText/);
+  assert.match(html, /createElement\('button'\)/);
+  assert.match(html, /el\.className = 'seat'/);
+  assert.doesNotMatch(html, /seat-copy/);
   assert.match(html, /var nv = L\.seatView\(seatState\(key, hot\)\); nodeView\[key\] = nv;/);
   assert.match(html, /drawNode\(key, nv\.lit, fs, pul, nv\.nodeWorking, nowWall\);/);
   assert.doesNotMatch(html, /hot\[a\[0\]\] \? 'LIVE'/);         // the old split derivation is gone
