@@ -55,7 +55,7 @@ The grid is uneven on purpose. Do not flatten it into one timer.
 | **Live tick** | Off-beat work | `/loop` via `cursor-subscriptions-subscribe_timer`. First run is **now**. Interval is the next real close, not sleep. **Clean the prompt every cycle** (unsubscribe then resubscribe — name-dedupe does not rewrite). Name stays `loop-<purpose>`. |
 | **Workstream** | Ostinato | Keep every open stream moving. No idle wait for a pacer. Park only on a human gate or a finished close. |
 | **Compact cut** | Rest that must survive | Station is the compact ticket — heat it this wake. **Repertoire is preferred** (dest = named laws). If Repertoire is off (explicit), Station + NOTES **are** the mind. Dest names are OP-PROC when worn (`repertoire-working.json` `opProcNames`). Do not paste OP-PROC onto Station. NOTES hold the deep cut. Do not pin a patch number on Station. |
-| **Board** | Call and response | Critic Strict comments. Forge implements. Dialog until PASS, or Needs Blaze with the step it unblocks. Lead stays the main thread. |
+| **Board** | Call and response | Critic Strict comments. Forge implements. Dialog until PASS, or Needs owner with the step it unblocks. Lead stays the main thread. |
 | **Seat law** | Ghost note | CoS ASSIGN DON'T DO. Forge owns eng clouds. Critic is resume-only. |
 | **Human gates** | Held rest | Spend, credentials, deletes, taste, mint/rotate tokens — Ask-first (`OPS-SPEC.md`). npm publish and Railway deploy stay Ask-first even after mill-gate **D**. Green CI is not publish. |
 | **Dist root** | Slow pulse | `dist/CADENCE.md` ≥4h. Do not use Dist spacing as the lead work clock. |
@@ -169,7 +169,7 @@ Memory scoring: [docs/memory-scoring.md](https://github.com/0xRayAI/xray/blob/ma
 3. **Worktrees / user asides** when streams must run in parallel (`features.json` → `user_asides` + `worktree` / `branch`). Isolation is the rollback wall.
 4. **Always a PR.** Docs as you go on that repo: README · CHANGELOG · `llms.txt` · `AGENTS.md` · `SKILLS.md` · Docusaurus when the repo has them. Friend-test the public/OS line.
 5. **Builds.** Use the environment / pack / CI build. Chat is not a receipt (`foundry inspect`, pack gate, CI).
-6. **Board.** Same critic comments. Forge replies. Dialog until PASS, or Needs Blaze with the step it unblocks. Then merge or park.
+6. **Board.** Same critic comments. Forge replies. Dialog until PASS, or Needs owner with the step it unblocks. Then merge or park.
 7. **Subject review. Fix n ship.** After board PASS, the lead + same critic review the *subject* (worn dest / domain names, not only CI). Close leftovers. Then mill-gate **D**. PASS is not ship. Green CI is not ship.
 8. **Rollback = close the PR** (or revert the merge). Do not wreck production. Do not pin Repertoire 0.1.8 for mill wear.
 9. **Codex 69.** Rewire orchestrator / ops / hooks. Do not add `src/skills/lead-cadence/SKILL.md` or a new MCP.
