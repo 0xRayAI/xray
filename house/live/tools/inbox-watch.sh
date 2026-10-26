@@ -2,11 +2,12 @@
 # Poll live-inbox <seat> (default arch1) every 60s.
 # FAIL once per distinct error. The line names LIVE_URL and the expected URL, then backs off.
 # A JSON line whose GitHub item is closed or merged is acked and logged as auto-ack.
-# A held line (hold label, or a card whose state is held) prints once as "held: N".
-# Every poll with open, non-held lines prints ACTION_REQUIRED, unfinished:N, and those lines.
+# A held line (hold label, or a card whose state is held) prints once as "held: N" and is not popped.
+# An open, non-held line is printed once (ACTION_REQUIRED, unfinished:N, the line), then popped (`pop <id>`).
+# A new event is a new line. A raw line with no id still reprints. A failed ack leaves that line open.
 # live-inbox <seat> --turn start --tag wake when that printed work first appears.
 # live-inbox <seat> --turn end once the inbox is empty again.
-# Never prints the key. A gh miss, or a failed ack, leaves the line open.
+# Never prints the key. Never uses --ack all. A gh miss still delivers the line, then pops it.
 set -u
 seat="${1:-arch1}"
 if ! [[ "$seat" =~ ^[a-z0-9-]{2,16}$ ]]; then
@@ -323,6 +324,35 @@ for row in sorted(rows, key=lambda item: str(item.get("t_ct") or ""), reverse=Tr
     print("%s %s#%s %s %s" % (row.get("type") or "line", row.get("repo") or "", row.get("number") if row.get("number") is not None else "", row.get("id") or "", title))
 PY
           showed=1
+          python3 - "$dir/open" > "$dir/pop-ids" << 'PY'
+import json, re, sys
+from pathlib import Path
+ID_RE = re.compile(r"^[^\s\x1f]{1,300}$")
+skip = {"all", "stale"}
+for raw in Path(sys.argv[1]).read_text(encoding="utf-8").splitlines():
+    if not raw.strip():
+        continue
+    try:
+        obj = json.loads(raw)
+    except json.JSONDecodeError:
+        continue
+    if not isinstance(obj, dict):
+        continue
+    ident = obj.get("id")
+    if not isinstance(ident, str) or not ID_RE.match(ident):
+        continue
+    if ident in skip or ident[:1] == "-":
+        continue
+    print(ident)
+PY
+          if [[ -s "$dir/pop-ids" ]]; then
+            while IFS= read -r id || [[ -n "$id" ]]; do
+              [[ -z "$id" ]] && continue
+              if "$bin" "$seat" --ack "$id" >/dev/null 2>&1; then
+                printf 'pop %s\n' "$id"
+              fi
+            done < "$dir/pop-ids"
+          fi
         fi
         held_key=""
         held_n=0
