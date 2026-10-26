@@ -319,7 +319,7 @@ export function isPacket(line) {
 function wokenIds(wakes) {
   const ids = new Set();
   for (const row of wakes || []) {
-    if (!row || row.ok !== true) continue;
+    if (!row || row.ok !== true || row.outcome === 'skipped') continue;
     if (typeof row.id === 'string' && row.id) ids.add(row.id);
     if (Array.isArray(row.ids)) for (const id of row.ids) if (typeof id === 'string' && id) ids.add(id);
   }
