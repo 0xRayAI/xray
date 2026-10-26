@@ -2492,7 +2492,8 @@ function readCollectorFeed() {   // every 2 s: ingest the collector's file when 
 // ---- Server inbox routing: after each collector pass, feed/inbox_pass.py (same rules as the box pusher:
 // routing/inbox-roles.json) routes events not seen before into seat inboxes, then postSeatLines stores them and fires
 // the SEAT_WEBHOOKS wake. State (seen / sent ids, spool) lives on the volume under $MESH_DATA_DIR/route, so an event is
-// routed once across restarts; the very first pass seeds silently (history is never delivered). A line that was
+// routed once across restarts. The first pass marks history seen and delivers only events inside the seed grace.
+// Older history is never delivered. A line that was
 // stored but not yet marked sent (crash in between) is re-posted and dropped by postSeatLines' per-seat id check.
 // The python child gets no token or secret. SERVER_ROUTING=off turns this off.
 const ROUTE_DIR = path.join(DATA_DIR, 'route');

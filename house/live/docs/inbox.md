@@ -59,7 +59,7 @@ Until then blinky's fallback line and sweep cover them (arch1 has no webhook by 
 
 D12 (seats never woken by an inbox packet) is closed under this path.
 
-**Server routing.** After each collector pass the server runs `feed/inbox_pass.py` (the box pusher's rules, `feed/routing/inbox-roles.json`) on the collector's events, stores the new lines in the seat inboxes and fires the seat's webhook. Seen and sent ids live on the volume (`$MESH_DATA_DIR/route/`), so an event is routed once, also across restarts; the first pass on an empty volume seeds silently. `SERVER_ROUTING=off` turns it off. The box pusher is no longer needed for collector events; if it runs too, its lines carry the same ids and are not stored twice.
+**Server routing.** After each collector pass the server runs `feed/inbox_pass.py` (the box pusher's rules, `feed/routing/inbox-roles.json`) on the collector's events, stores the new lines in the seat inboxes and fires the seat's webhook. Seen and sent ids live on the volume (`$MESH_DATA_DIR/route/`), so an event is routed once, also across restarts. The first pass on an empty volume marks history seen and delivers only events inside the seed grace (10 minutes before that pass). Older history is not delivered. `SERVER_ROUTING=off` turns it off. The box pusher is no longer needed for collector events; if it runs too, its lines carry the same ids and are not stored twice.
 
 **Route table (our 8 seats).** Every route in `feed/routing/inbox-roles.json` lands on one of our 8 seats (`feed/fleet-roster.json`: blinky, critic, forge, arch1, herald, magnet, nibbler, sound); `tests/test_routing_ours.py` fails on any other name. The mill seat is gone. `@mill`, an implement ask, a rebase ask, a dev ask, and `mill wave` land on forge.
 
