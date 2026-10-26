@@ -6,6 +6,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+- Bifrost's straight git build is 0xRayAI/bifrost at e972d8d45cc962b1064aec76195c428beab65910. Health is /healthz. house/live/POINTER.md names that tip, and this tree stays until burst-live is connected. Refs #573.
 - An open issue or PR stays on `/cards`. The 40-card cap cuts closed rows only, and a quiet open item is not dropped at 14 days. Refs #576.
 - A hidden board keeps the painted card ages until the tab is shown. Refs #576.
 - A Grok prompt or compact hook that omits the script name loads session-start.js. If that hook cannot run, the runner prints no decision, so UserPromptSubmit does not see `allow`.
