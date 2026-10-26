@@ -6,6 +6,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+- WAKE step 0 and the HOUSE inbound line post `live-inbox --cloud` beside the turn, with the card tag. Refs #628.
 - A seat logs a cloud agent with `live-inbox --cloud` beside the turn. `xray#n` is stored as `0xRayAI/xray#n`. The cloud agent does not post that line. Refs #628.
 - A Reviewer FIX comment beats as Reviewer FIX. The wire id stays critic_fail.
 - Review verdicts are PASS or FIX only; HOLD and FAIL are retired. Parked is for future scope or a named upstream/downstream blocker; owner waits go under Needs owner with the step they unblock. Target 4.1.4.
