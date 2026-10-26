@@ -2,6 +2,18 @@
 
 **Audience**: Plugin authors, bridge maintainers (Hermes, OpenClaw, Grok Build, OpenCode), and projects that consume `0xray` directly.
 
+## 4.1.3 → 4.1.4
+
+A fleet on 4.1.3 follows this path. The v3 consumer steps below stay as they are.
+
+1. Install and wear. `npm install 0xray@4.1.4`, then `npx 0xray wear`.
+2. Node is 24.22.1. `engines.node` is `>=24.22.1`. A bare "Node 24" is not the pin.
+3. Board. When `LIVE_URL` is set, the board is the collector. The board rule is in `house/live/docs/fleet-setup.md`. On every owner message run `live-inbox <seat> --prompt --from owner --note "<gist>"`.
+4. Inbox watch. When Bifrost is on, the only TUI monitor is `$XRAY_MAIN/house/live/tools/inbox-watch.sh <seat>`. After a poll that prints work it posts `live-inbox <seat> --turn start --tag wake`. An empty poll does not end the turn. The seat posts `live-inbox <seat> --turn end` when the chat finishes.
+5. Cloud. A cloud run posts `live-inbox <seat> --cloud` beside the turn. The tag is `owner/repo#n` or `xray#n`. The cloud agent does not post that line. Turn start uses `--tag "bc-<first8> <track>"`. Turn end uses `--tag "bc-<first8>"`.
+6. Cursor folder. Seat wakes use one cursor folder. The rule is the cursor-folder stanza in `grok-bot/OP-PROC.md`. `LIVE_CURSORS` is not required.
+7. Reviews are PASS or FIX only. HOLD and FAIL are retired.
+
 ## Temperament on upgrade (v4.0)
 
 Existing `.xray/features.json` **without** `suit_temperament` stays **guided** (full spawn-plan deny). Postinstall merge will not silently frontier a Grok consumer. New installs copy shipped `profile: "auto"` (Grok → frontier, Hermes/OpenCode → guided). See [Suit temperament](./v3-temperament.md).

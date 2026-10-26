@@ -4,6 +4,18 @@ Every file a new fleet edits to map its seats. Each section shows **ours** (Bifr
 
 Seats (ours): blinky, critic, forge, herald, magnet, nibbler, sound, arch1 (`feed/fleet-roster.json`).
 
+## Upgrade from 4.1.3
+
+Other fleets upgrade the kit, then map seats. This install's seat files stay edited in place.
+
+- Node is 24.22.1. `engines.node` is `>=24.22.1`.
+- Seats. Copy the roster and the role map for the new fleet. Here, `feed/fleet-roster.json` lists the seats and `feed/routing/inbox-roles.json` is edited in place. A fresh install keeps the kit defaults in `feed/routing/inbox.py`.
+- Wake. `inbox-watch` posts `live-inbox <seat> --turn start --tag wake` after a poll that prints work. The seat posts `live-inbox <seat> --turn end` when the chat finishes. A cloud run posts `live-inbox <seat> --cloud` beside that turn. The cloud agent does not post the line.
+- Board rule. The stanza below is the owner prompt, the ack, and the cloud tags.
+- Cursor folder. One folder per seat wake. The rule is `grok-bot/OP-PROC.md#cursor-folder`. `LIVE_CURSORS` is not required.
+- Reviews are PASS or FIX only.
+- Bifrost pointer. If `house/live/POINTER.md` is in the tree, it names the bifrost git tip and `/healthz`. `house/live` stays in this repo until burst-live is connected.
+
 ## Board rule
 
 A new fleet reads these before the seat map. Board rule. On every owner message run `live-inbox <seat> --prompt --from owner --note "<gist>"`. Ack a handled line with `live-inbox <seat> --ack <id>`, or `live-inbox <seat> --ack all` once every open line is handled. A cloud agent run uses `live-inbox <seat> --turn start --tag "bc-<first8> <track>"` beside `live-inbox <seat> --cloud launch --agent <bc-id> --tag <card>` on first start or `--cloud reply` on resume, and `live-inbox <seat> --turn end --tag "bc-<first8>"` beside `live-inbox <seat> --cloud finished --agent <bc-id> --tag <card>` (cancel is `--cloud cancel`). The tag is owner/repo#n or xray#n. The cloud agent does not post that line. `--from owner` is required today.

@@ -1,10 +1,8 @@
-# Changelog
-
-All notable changes to this project will be documented in this file.
-
-The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
-
 ## [Unreleased]
+
+## [4.1.4] - 2026-10-26
+
+### 🔄 Changes
 
 - The roster chip is the seat name again. The role opens on a click. Status stays on the dot. Refs #635.
 - A weekday poll can post one station nudge per seat. The line says to run station and re-read OP-PROC. The plist template is not loaded. Refs #631.
@@ -38,46 +36,8 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - `inbox-watch` prints an open-line census and one short line per type before the JSON, newest first, so a cut poll still shows handoffs and PR comments. A GitHub review is an inbox line on the PR author's seat. Refs #587.
 - Lock `ip-address` at 10.7.4. Refs #574.
 - Move `vitest` and `@vitest/coverage-v8` to 4.1.12. `express` stays 5.2.1 and `jsonwebtoken` stays 9.0.3. Refs #549.
-
 - Seat wakes use one cursor folder. The rule is the cursor-folder stanza in `grok-bot/OP-PROC.md`. `LIVE_CURSORS` is not required, and a read does not write `<seat>.txt`. The server nudge ladder does not re-wake a line the seat already acked or whose handled key is in that cursor. Watch scripts run `house/live/tools` from the main checkout. Refs #539 #546 #547.
-
 - Docs. The house guide and the bifrost plate carry the board rule, the kanban note, and the history note. Board rule. On every owner message run `live-inbox <seat> --prompt --from owner --note "<gist>"`. Ack a handled line with `live-inbox <seat> --ack <id>`, or `live-inbox <seat> --ack all` once every open line is handled. A cloud agent run uses `live-inbox <seat> --turn start --tag "bc-<first8> <track>"` beside `live-inbox <seat> --cloud launch --agent <bc-id> --tag <card>` on first start or `--cloud reply` on resume, and `live-inbox <seat> --turn end --tag "bc-<first8>"` beside `live-inbox <seat> --cloud finished --agent <bc-id> --tag <card>` (cancel is `--cloud cancel`). The tag is owner/repo#n or xray#n. The cloud agent does not post that line. `--from owner` is required today. Kanban note. The live page shows a read-only kanban above Activity. Columns are open, review, fix, merge, retest, and done. The deep link is `?card=`. History note. Every activity line is archived to history. The word owner is the owner via LIVE_OWNER or the owner-name. The public board does not serve the history archive or the kanban yet.
-
-### 4.1.3 notes
-
-Arch1 owns the version bump, the tag, and the publish.
-
-A suit first worn on 4.1.1 keeps the catalog and a held dev card. On a non-mill seat, wear now removes a packaged catalog skill when that file is the package copy or the same text in two or more project skill dirs, and packaged role agents that are not in the fastened plant, before foundry-inspect. A skill the seat wrote in one dir stays, and foundry-inspect still refuses it. A plant set in `.xray/features.json` counts. Goggles runs a stored card through the plant lens, so `Skills:` and `Worn:` fill on a card the older suit already wrote. Wear replaces a held dev plane that has no `chosen` flag. A domain or integration plane, or a dev plane marked `chosen`, stays. A `Plane:` line already set on the station stays. (#395)
-
-`require('0xray/package.json')` resolves. Wear links vendored `@0xray/repertoire` itself, so a skipped install script is not required.
-
-### Wake and tripwire
-
-The seat wake lists the open inbox first. An owner message posts `--prompt` before an empty inbox stops the turn, then turn start, even when every line is a repeat. Before any ack, the wake reads the station ticket and `NOTES.md`. A line is acked with `live-inbox <seat> --ack <id>` only when `live-inbox <seat> --repeat` exits 0 against the cursor key `repo#number|sha|kind`. A new head is not acked. A still-waiting line gets one reply and is acked, and it does not stop a newer line. A second run of the same seat gets an empty read, does not ack the first run's lines, and posts no turn start and no turn end. Only that claim's owner token may release it or post its turn end. `live-inbox <seat> --release` drops that token's claims without posting, and the wake trap runs it on any shell exit, not only turn end, so a still-waiting stop does not hide lines while the pid is alive. The per-seat cursor key is `repo#number|sha|kind`. `--repeat` is the cheap handled-record read: a new head is not a repeat, and a plain read does not write the key. An early return runs turn end, and turn end clears the working mark. The wake command exports `LIVE_URL` and `SEAT_KEYS_DIR`, then runs `live-inbox <seat>`. The cursor folder rule is `grok-bot/OP-PROC.md#cursor-folder`. The claim key includes the head sha, so a new head is not the line a per-seat cursor already holds. Head-SHA and review-list checks, a verdict the cloud already wrote, inbox acks, handoffs, and NOTES lines stay local. A webhook wake never launches or resumes a cloud agent. It quick-checks the inbox and exits on a duplicate or a still-waiting delivery, records the event, and hands off to the owner's chat (forge for builds, critic for reviews) with a seat message pointing at the card. Only the owner's persistent chat launches or resumes a cloud agent. The card stores `critic_bc`, the critic cloud id for that PR. On a new head the critic chat resumes that id and launches a new agent only when the card has no `critic_bc` or the resume is refused. One critic agent per PR. (#401)
-
-The tripwire reads the parked and dark roster on each check. `openLines` leaves those seats out, the same way the open queue does. Their lines do not cancel the stall: when they are the only seats with open lines, the stall still wakes the CoS role. A parked or dark seat with a recent owner prompt is unmuted.
-
-### 4.1.2 notes
-
-Arch1 owns the version bump, the tag, and the publish.
-
-#393 was left out of the [4.1.1] changelog and the release body. The release script is the only stamp. (#393)
-
-Wear, validate, and goggles follow the fastened plant. A non-mill seat does not receive the catalog through the Grok plugin folder. Validate checks that plant and runs the same checks on every suit. On a folder that is not a git work tree, validate skips the three `.cursor` hook paths and says so. (#395)
-
-Doctor treats a suit as worn when `.xray/features.json` and the fastened plant's skills are on disk. It fails when `goggles.enabled` is false. (#395)
-
-Goggles reads the plant, or a plane named in suit config, and fills `Worn:` with that plant and the package version. A held dev card still gets that lens. Wear replaces only a `package` version token on `Fresh:` and leaves a `Plane:` line that is already set. The full ranking stays with the role picker. (#395, #385)
-
-Wear seeds `STATION.md` and `NOTES.md` when they are missing. After that, wear changes only the version token described above and leaves the rest of the station as written. The seat wake reads both on every turn, including Grok wakes that do not run `.cursor` hooks. (#395, #386)
-
-### Wave schedule
-
-When `LIVE_URL` is unset, the board is `house/WAVEBOARD.md`. When `LIVE_URL` is set, the board is Bifrost (`GET /cards`). When a real wave's last card is closed or merged, the board raises one plan-next-wave card for the CoS seat naming the next open wave. The window is a Chicago cron stored on the card. A due plan does not hide a stall wake. Weekly burn at 75% keeps the plan quiet and keeps an empty-board wake quiet. A plan card older than 7 days closes as expired and is not raised again for that same wave. Synthetic cards with no GitHub number are closed. `--apply` boards only the current wave and refuses the production board unless `BIFROST_SEED_APPLY=1`. The live image copies `wave-schedule.mjs` and `bifrost-waves.json`. `house init` copies an empty wave list. The server reads `house/bifrost-waves.json`.
-
-## [4.1.4] - 2026-10-23
-
-### 🔄 Changes
 
 ### 🐛 Bug Fixes
 - fix: card an issue or pull the time cursor skipped (#602) (608d8a1ec)
@@ -94,6 +54,16 @@ When `LIVE_URL` is unset, the board is `house/WAVEBOARD.md`. When `LIVE_URL` is 
 - docs: link the packet rule from the wake (#601) (478e243c7)
 - docs: start burst-live with the entrypoint (#603) (f8c351abb)
 
+### Wake and tripwire
+
+The seat wake lists the open inbox first. An owner message posts `--prompt` before an empty inbox stops the turn, then turn start, even when every line is a repeat. Before any ack, the wake reads the station ticket and `NOTES.md`. A line is acked with `live-inbox <seat> --ack <id>` only when `live-inbox <seat> --repeat` exits 0 against the cursor key `repo#number|sha|kind`. A new head is not acked. A still-waiting line gets one reply and is acked, and it does not stop a newer line. A second run of the same seat gets an empty read, does not ack the first run's lines, and posts no turn start and no turn end. Only that claim's owner token may release it or post its turn end. `live-inbox <seat> --release` drops that token's claims without posting, and the wake trap runs it on any shell exit, not only turn end, so a still-waiting stop does not hide lines while the pid is alive. The per-seat cursor key is `repo#number|sha|kind`. `--repeat` is the cheap handled-record read: a new head is not a repeat, and a plain read does not write the key. An early return runs turn end, and turn end clears the working mark. The wake command exports `LIVE_URL` and `SEAT_KEYS_DIR`, then runs `live-inbox <seat>`. The cursor folder rule is `grok-bot/OP-PROC.md#cursor-folder`. The claim key includes the head sha, so a new head is not the line a per-seat cursor already holds. Head-SHA and review-list checks, a verdict the cloud already wrote, inbox acks, handoffs, and NOTES lines stay local. A webhook wake never launches or resumes a cloud agent. It quick-checks the inbox and exits on a duplicate or a still-waiting delivery, records the event, and hands off to the owner's chat (forge for builds, critic for reviews) with a seat message pointing at the card. Only the owner's persistent chat launches or resumes a cloud agent. The card stores `critic_bc`, the critic cloud id for that PR. On a new head the critic chat resumes that id and launches a new agent only when the card has no `critic_bc` or the resume is refused. One critic agent per PR. (#401)
+
+The tripwire reads the parked and dark roster on each check. `openLines` leaves those seats out, the same way the open queue does. Their lines do not cancel the stall: when they are the only seats with open lines, the stall still wakes the CoS role. A parked or dark seat with a recent owner prompt is unmuted.
+
+### Wave schedule
+
+When `LIVE_URL` is unset, the board is `house/WAVEBOARD.md`. When `LIVE_URL` is set, the board is Bifrost (`GET /cards`). When a real wave's last card is closed or merged, the board raises one plan-next-wave card for the CoS seat naming the next open wave. The window is a Chicago cron stored on the card. A due plan does not hide a stall wake. Weekly burn at 75% keeps the plan quiet and keeps an empty-board wake quiet. A plan card older than 7 days closes as expired and is not raised again for that same wave. Synthetic cards with no GitHub number are closed. `--apply` boards only the current wave and refuses the production board unless `BIFROST_SEED_APPLY=1`. The live image copies `wave-schedule.mjs` and `bifrost-waves.json`. `house init` copies an empty wave list. The server reads `house/bifrost-waves.json`.
+
 ---
 
 ## [4.1.3] - 2026-10-19
@@ -106,12 +76,30 @@ The wake template's export block is the burst-live fleet's defaults. `live-inbox
 
 That release treated `LIVE_CURSORS` as the cursors directory. A read does not write `<seat>.txt`. Only `--remember` does. The current rule is `grok-bot/OP-PROC.md#cursor-folder`. (#409)
 
+Arch1 owns the version bump, the tag, and the publish.
+
+A suit first worn on 4.1.1 keeps the catalog and a held dev card. On a non-mill seat, wear now removes a packaged catalog skill when that file is the package copy or the same text in two or more project skill dirs, and packaged role agents that are not in the fastened plant, before foundry-inspect. A skill the seat wrote in one dir stays, and foundry-inspect still refuses it. A plant set in `.xray/features.json` counts. Goggles runs a stored card through the plant lens, so `Skills:` and `Worn:` fill on a card the older suit already wrote. Wear replaces a held dev plane that has no `chosen` flag. A domain or integration plane, or a dev plane marked `chosen`, stays. A `Plane:` line already set on the station stays. (#395)
+
+`require('0xray/package.json')` resolves. Wear links vendored `@0xray/repertoire` itself, so a skipped install script is not required.
+
 ## [4.1.2] - 2026-10-19
 
 ### 🔄 Changes
 
 ### 🔎 Other Changes
 - fix(suit): follow the fastened plant when the seat is worn (#396) (c82fe7ae9)
+
+Arch1 owns the version bump, the tag, and the publish.
+
+#393 was left out of the [4.1.1] changelog and the release body. The release script is the only stamp. (#393)
+
+Wear, validate, and goggles follow the fastened plant. A non-mill seat does not receive the catalog through the Grok plugin folder. Validate checks that plant and runs the same checks on every suit. On a folder that is not a git work tree, validate skips the three `.cursor` hook paths and says so. (#395)
+
+Doctor treats a suit as worn when `.xray/features.json` and the fastened plant's skills are on disk. It fails when `goggles.enabled` is false. (#395)
+
+Goggles reads the plant, or a plane named in suit config, and fills `Worn:` with that plant and the package version. A held dev card still gets that lens. Wear replaces only a `package` version token on `Fresh:` and leaves a `Plane:` line that is already set. The full ranking stays with the role picker. (#395, #385)
+
+Wear seeds `STATION.md` and `NOTES.md` when they are missing. After that, wear changes only the version token described above and leaves the rest of the station as written. The seat wake reads both on every turn, including Grok wakes that do not run `.cursor` hooks. (#395, #386)
 
 ---
 
