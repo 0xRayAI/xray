@@ -16,7 +16,7 @@ When `LIVE_URL` is set, the board seats see is the collector board (`GET /cards`
 | `Prompt: <id>` on the new issue or PR | Beat `owner prompt`, then `opened`. The first beat uses the prompt's time and the stored note. A second card that repeats the id does not take it. |
 | `pr_draft` | The card parks at once. |
 | `review` `APPROVED`, or `critic_pass` | Beat `Reviewer PASS`. |
-| `review` `CHANGES_REQUESTED`, or `critic_fail` | Beat `Reviewer FAIL`. Stage moves to fix. |
+| `review` `CHANGES_REQUESTED`, or `critic_fail` | Beat `Reviewer FIX` (legacy `critic_fail` reads as FIX). Stage moves to fix. |
 | `pr_commit`, `pr_force_push`, `pr_update` | Beat `pushed`. A head change emits `pr_commit`. The newest push stays on the card when later beats fill the window. A new head after a FAIL is a new review. A new head after red CI closes the `ci_fail` handoff. |
 | `ci_pass`, `ci_fail` | CI stays on the card for that PR number. It is not board traffic. |
 | `merged` | Beat `merged`. The card field `merged_by` is the merger, never the author. The author's seat gets an info line. |

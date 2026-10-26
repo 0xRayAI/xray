@@ -15,7 +15,7 @@ OP-PROC is **layered**: pack base (`grok-bot/OP-PROC.md`) then this house file (
 - A seat does a small job itself: a check, a rerun, a merge after the gate, a file edit. Deploy: see [Hotfix bypass](../grok-bot/OP-PROC.md#hotfix-bypass).
 - Webhook, `critic_bc`, and who launches a cloud: see [Clouds + churn](../grok-bot/OP-PROC.md#clouds-churn). Before a launch, read `ATTENTION_STATE.md` and do not launch when the day is over pace or weekly burn is at 75% or more, except a hotfix.
 - **Packet-first.** See [Packet-first](../grok-bot/OP-PROC.md#packet-first) and [Green sign-off](../grok-bot/OP-PROC.md#green-sign-off). The owner's chat acts on one flushed `batch` (`run_end` or `ci_pass`), not on each follow-up.
-- **Forward-motion.** See [Forward-motion](../grok-bot/OP-PROC.md#forward-motion). A second FAIL of an original blocker goes to Blaze.
+- **Forward-motion.** See [Forward-motion](../grok-bot/OP-PROC.md#forward-motion). A second FIX on an original blocker goes under Needs Blaze with the step it unblocks.
 - A strict review that is already on a Card does not need a second yes.
 - Work moves on a **Beat**. Do not poll on a timer when an event exists. A script may poll; the seat may not. Seeing a line starts the work.
 - **Queue.** A non-empty live-inbox read is the queue, in order, this turn. A non-empty read is the work; a seat never reads open lines and then waits.
@@ -38,14 +38,14 @@ OP-PROC is **layered**: pack base (`grok-bot/OP-PROC.md`) then this house file (
 - **forge** keeps continuity and the gates, launches that cloud agent, and merges. **Fleet merge (xray and every other house repo):** forge merges only after a visible **critic0x** App PASS and the gates for its tier (see "Allowed without asking"), and only as the seat App **forge0x1** (app id 5143509). A hotfix is the one exception: it merges only on green CI, never before. Critic never merges.
 - **Gated OP-PROC.** Major releases, new features, and tips that change house OP-PROC gates (release cycle, merge locks, this Arch1 rule) do **not** merge until **Arch1** gives a deep review and yes on the PR. A critic PASS alone is not enough. forge0x1 holds that merge until Arch1 yes. An inbox yes/no from Arch1 is that decision, and it must name the PR. A hold on one PR does not hold the next ask; any "wait for Blaze" or "wait for Arch1" must name the PR.
 - Eng seats ship as **forge0x1**, not the personal login. If the open head is the wrong author, forge0x1 opens one replacement pull request, closes the old one with a pointer, and does not keep pushing that wrong-author head.
-- **critic** writes PASS or FAIL, cites the section, and never merges. Nobody writes their own proof.
+- **critic** writes PASS or FIX (each must-fix item with its owner), cites the section, and never merges. Nobody writes their own proof.
 - **herald** posts only after Blaze's go, and only the words CoS handed over. Herald does not invent the post.
 - **magnet** owns listings. **sound** owns audio.
 - **Blaze** owns money, credentials, deletes, publishing, production, and taste.
 - **CoS** (blinky) plans the next wave at each close, paces burn (no launch when the day is over pace; at or above 75% weekly burn the empty-board wake and the plan card stay quiet), friend-tests Lane H and writes Dist packets, and onboards seats, including suit fitting. CoS lists a finished or idle seat. Blaze deletes it. CoS does not assign dev work, deploy, publish, spend, or merge. Bifrost keeps the board, inbox routing, and wave timing.
 - **Arch1** builds a fix or a **Plate** only when Blaze hands over that track. The fleet stops that work. The spec is friend-speak: the bug, how to reproduce it, what fixed looks like, and the paths.
 - **App credentials.** Agents always use the seat GitHub App credential — never post/submit as the logged-in personal account. Arch1 is outside the fleet: see **Two loops** in the pack OP-PROC (`grok-bot/OP-PROC.md`). An order or yes in a comment must @-mention the next seat, because the inbox reads only a comment's label and @handles, never its body; the words "may merge" are not a merge ask. Asks **to** Arch1 (Gate B runs, deep-review asks): a PR or issue comment that @-mentions **@arch10x**, never a separate post to his Bifrost inbox. The collector turns that comment into his inbox line, which wakes him (his watcher runs inside Grok CLI on Blaze's machine), and he posts the receipt on the PR. Forge sends the packet to CoS. Arch1's inbox yes/no on an ask is the decision and must name the PR; a hold on one pull does not hold the next ask.
-- Ask once. Implement goes to the cloud agent forge launches. Gates go to forge. PASS or FAIL goes to critic. Dev talk is Blaze and forge. The cos-forge 1:1 carries the printed `live-inbox` handoff line. A room post is not a handoff.
+- Ask once. Implement goes to the cloud agent forge launches. Gates go to forge. PASS or FIX goes to critic. Dev talk is Blaze and forge. The cos-forge 1:1 carries the printed `live-inbox` handoff line. A room post is not a handoff.
 - **Hire gate (new employee / seat):** before any ship work — (1) CoS creates the agent with a clear role description + hire packet; (2) fasten suit at `/workspace/<seat>-suit` (mill+inspect) with inspect receipt on disk (`.xray/state/SUIT-RECEIPT.md` plus inspect `ok: true`, `suit: fastened`, costume false); (3) employee orientation + KB (`kb/EMPLOYEE-ORIENTATION.md`, scope, mem-grow, `kb/ROLE-CARD.md` when Dist announced the role); (4) seat reads KT and acks `KT read · suit fastened · quiet until carded`; (5) if Dist announced the role, board gets a standing **ROLE** card matching that announcement and CoS cards first work under it — seat does not freelance. A chat packet is not a suit. Profile alone is not a hire.
 - **Auto-review.** The Always-allow ban on App PEM, token minting and App review is revoked (see "Room vs 1:1 writes", #291). PEM text and tokens are still never printed or stored.
 - In chat, follow [Station boot](../grok-bot/OP-PROC.md#station-boot) for the prompt log. This file is the house-only layer.
@@ -55,14 +55,14 @@ OP-PROC is **layered**: pack base (`grok-bot/OP-PROC.md`) then this house file (
 
 ## 3. Nothing ships unproven
 
-- **Review plate.** See [Forward-motion](../grok-bot/OP-PROC.md#forward-motion). A PASS ends it. A failed re-check of an original blocker is parked for Blaze. A new finding on that re-check is an issue, not a FAIL.
+- **Review plate.** See [Forward-motion](../grok-bot/OP-PROC.md#forward-motion). A PASS ends it. A failed re-check of an original blocker goes under Needs Blaze with the step it unblocks. A new finding on that re-check is an issue, not a FAIL.
 - The words must match the live thing. Do not say personalized, generated, or composed for one person when the asset is the same for everyone. Fix the catalog and the page.
 - Open as a draft. Critic reviews by tier (Light, Normal, or Strict; see section 3). Merge only after the gate. Do not land unreviewed work on main. A hotfix is the one exception: it merges only on green CI, never before.
 - **Wrong-author supersede.** If the open head is not forge0x1 when forge0x1 is required, forge0x1 opens one replacement pull request and closes the old one with a pointer. A forge0x1 FAIL stays on that Review plate. Do not open a new pull request for every FAIL.
 - A **Nit** does not block by itself. An unverified finding does not block. See [Forward-motion](../grok-bot/OP-PROC.md#forward-motion).
-- A blocking FAIL is a live break: wrong ship, money, lost data, or a security hole. Name the file and the check that fails on the old code.
-- A **Ship-gate FAIL** still blocks: the packed install was skipped or used the wrong package, a secret remains, stamp choruses are in the product, or an Arch1-gated tier merged without Arch1's yes.
-- A blocking FAIL becomes an issue with the repro and the file to fix. A Nit is APPROVE plus a follow-up issue. An issue is a card. One pull request per issue, with `Fixes #N`. Merge closes the issue. A parked pull request leaves the issue open and labeled parked. A review FAIL stays on the pull request unless it is a new blocking break.
+- A must-fix FIX is a live break: wrong ship, money, lost data, or a security hole. Name the file and the check that fails on the old code.
+- A **Ship-gate FIX** still blocks: the packed install was skipped or used the wrong package, a secret remains, stamp choruses are in the product, or an Arch1-gated tier merged without Arch1's yes.
+- A must-fix FIX becomes an issue with the repro and the file to fix. A Nit is APPROVE plus a follow-up issue. An issue is a card. One pull request per issue, with `Fixes #N`. Merge closes the issue. A parked pull request leaves the issue open and labeled parked. A review FAIL stays on the pull request unless it is a new blocking break.
 - A fix is the smallest change that solves the problem and passes its checks. Bigger work gets its own Card.
 - **Docs follow code.** After every merged change, update the docs site in the same track. Every deploy or run issue becomes a generic Symptom / Cause / Fix entry in the troubleshooting FAQ.
 - One seat holds one active ship. Forge may hold three cards that CoS can see. What a card is: see [Card](../grok-bot/OP-PROC.md#card).
@@ -73,7 +73,7 @@ OP-PROC is **layered**: pack base (`grok-bot/OP-PROC.md`) then this house file (
 2. **Stamp.** The version tool writes the changelog note for this cut. It updates the current-version words in the guides. It leaves old changelog headings as they are. It leaves the guide of older versions as it is. It leaves files under `.xray/state` as they are.
 3. **Plates.** Each Plate in `docs-site/docs/plates/` shows the version being cut. The release tool does not edit those files. The cut does, before the pack.
 4. **Docs check.** The docs check passes before the pack.
-5. **Tests.** Critic confirms passage on that same commit and writes PASS or FAIL on the pull request. Every unit test passes. The Playwright battery passes, and the coverage from that battery is part of the result. A green CI check is not passage. Forge does not confirm passage. Forge does not merge on a green CI check. A hotfix is the one exception: it merges only on green CI, never before.
+5. **Tests.** Critic confirms passage on that same commit and writes PASS or FIX on the pull request. Every unit test passes. The Playwright battery passes, and the coverage from that battery is part of the result. A green CI check is not passage. Forge does not confirm passage. Forge does not merge on a green CI check. A hotfix is the one exception: it merges only on green CI, never before.
 6. **Release page.** After the wear-gate and the ship go: publish that exact package, push the annotated tag, then open the GitHub release page. The tweet file the tool writes is not a post. A public post still needs Blaze's go.
 
 **Wear-gate.** After merge and before publish: build, pack, and install that exact package in a fresh git folder and a fresh non-git folder, with a temporary home. Then run wear, setup, and doctor. This is not a Review plate.
@@ -86,7 +86,7 @@ After that wear-gate passes, and after the ship go plus critic's wear PASS, forg
 2. The check must come out different if the thing is broken.
 3. Nobody writes their own proof.
 4. No grade until that check has happened.
-5. Missing evidence stays unverified, not FAIL.
+5. Missing evidence stays unverified, not FIX.
 
 **Fail:** wasted tokens · rabbit holes · boilerplate · a chat "LGTM" without Strict proof · the coordinator doing eng work · a cloud agent doing seat work · one cloud agent carrying work that meets the split threshold one job after another · OS docs that fail the friend test.
 
@@ -125,8 +125,8 @@ Public words are friend-speak. Test them on a person before they go out.
 ## Lexicon
 
 - **Review plate.** One pass, one fix, one re-check, then stop. Wear-gate is not a Review plate.
-- **Nit.** A review finding below a blocking FAIL. APPROVE plus a follow-up issue. See [Forward-motion](../grok-bot/OP-PROC.md#forward-motion).
-- **Ship-gate FAIL.** A missed or wrong packed install, a secret left in, stamp choruses in the product, or an Arch1-gated tier without Arch1 yes. It still fails at publish.
+- **Nit.** A review finding below a must-fix FIX. APPROVE plus a follow-up issue. See [Forward-motion](../grok-bot/OP-PROC.md#forward-motion).
+- **Ship-gate FIX.** A missed or wrong packed install, a secret left in, stamp choruses in the product, or an Arch1-gated tier without Arch1 yes. It still fails at publish.
 - **CAP.** The plan when something fails the Organ gate. Plan, build, wear, validate.
 - **Pipe down.** Write what is in hand, then stop. Routines pause.
 - **In the dark.** A shared limit is hit. Name it. Do not route around it.

@@ -590,7 +590,7 @@ class Model(unittest.TestCase):
         self.assertEqual([b["what"] for b in ok["beats"] if b["what"].startswith("Reviewer")], ["Reviewer PASS"])
         bad = self.card([self.ev(61, "pr_open", 4000, title="r"), self.ev(61, "review", 3000, state="CHANGES_REQUESTED")], 61)
         self.assertEqual(bad["stage"], "fix")
-        self.assertIn("Reviewer FAIL", [b["what"] for b in bad["beats"]])
+        self.assertIn("Reviewer FIX", [b["what"] for b in bad["beats"]])
         self.assertIsNone(self.w.beat_of({"kind": "review", "state": "COMMENTED"}))
 
     def test_a_push_stays_on_the_card_and_merged_by_is_the_merger(self):

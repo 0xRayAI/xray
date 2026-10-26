@@ -10,8 +10,8 @@ Updated: 2026-09-25T10:30 America/Chicago
 - OPPROC-ONE-PAGE: forge replaces the book with Blaze's page + mirrors board/attention (Normal)
 - WAVEBOARD-NAME-CLAIM: spec PR after OPPROC-ONE-PAGE
 ## Holds
-- Dist AGENT-COMMAND-LEXICON thread on HOLD
-- Attract ZERO-FOREIGN HOLD
+- Needs Blaze: Dist AGENT-COMMAND-LEXICON thread ships on your yes
+- Attract ZERO-FOREIGN parked behind the Rippel-canvas dogfood
 ## Closed today
 - BLAZE-JUST-DO-WEIGH-IN https://x.com/0xRayAI/status/2103422395625488452
 - HOT-SWAP-SUIT-BOUNDARY https://x.com/0xRayAI/status/2103419095257612375
