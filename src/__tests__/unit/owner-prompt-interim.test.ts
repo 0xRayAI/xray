@@ -11,8 +11,10 @@ const ACK_ALL = '--ack all';
 const TURN_START = 'live-inbox <seat> --turn start --tag "bc-<first8> <track>"';
 const TURN_END = 'live-inbox <seat> --turn end --tag "bc-<first8>"';
 
+const CLOUD_LAUNCH = 'live-inbox <seat> --cloud launch --agent <bc-id> --tag <card>';
+const CLOUD_FINISH = 'live-inbox <seat> --cloud finished --agent <bc-id> --tag <card>';
 const INTERIM =
-  `On every owner message, first run \`${PROMPT}\`; after handling any inbox line (in chat or on a wake), ack it right away with \`${ACK}\` (or \`${ACK_ALL}\` once everything open is handled); when you launch or resume a cloud agent run \`${TURN_START}\`; when it finishes or is cancelled run \`${TURN_END}\`. No exceptions for short turns.`;
+  `On every owner message, first run \`${PROMPT}\`; after handling any inbox line (in chat or on a wake), ack it right away with \`${ACK}\` (or \`${ACK_ALL}\` once everything open is handled); when you launch or resume a cloud agent run \`${TURN_START}\` and \`${CLOUD_LAUNCH}\` (resume uses \`--cloud reply\`); when it finishes or is cancelled run \`${TURN_END}\` and \`${CLOUD_FINISH}\` (cancel uses \`--cloud cancel\`). The tag is owner/repo#n or xray#n. The cloud agent does not post that line. No exceptions for short turns.`;
 
 const FILES = [
   'grok-bot/OP-PROC.md',
@@ -45,9 +47,11 @@ describe('owner-prompt interim line', () => {
   it('asserts that wording in step 0, the inbound bullet, and the board-prompt skill', () => {
     const wake = readFileSync(path.join(root, 'grok-bot/templates/house/fleet/WAKE-ROUTINE.md'), 'utf8');
     const step0 = wake.split('\n').find((row) => row.startsWith('0. ')) ?? '';
-    for (const phrase of [PROMPT, ACK, ACK_ALL, TURN_START, TURN_END]) {
+    for (const phrase of [PROMPT, ACK, ACK_ALL, TURN_START, TURN_END, CLOUD_LAUNCH, CLOUD_FINISH]) {
       expect(step0, 'WAKE-ROUTINE step 0').toContain(phrase);
     }
+    expect(step0).toContain('The tag is owner/repo#n or xray#n.');
+    expect(step0).toContain('The cloud agent does not post that line.');
     expect(step0).not.toContain('Pass no `--from`');
 
     const inboundFiles = [
@@ -62,6 +66,13 @@ describe('owner-prompt interim line', () => {
       expect(line, rel).not.toBe('');
       expect(line, rel).not.toContain('board-prompt skill first');
       expect(line, rel).not.toContain('no `--from`');
+      if (rel.endsWith('HOUSE.md')) {
+        for (const phrase of [TURN_START, TURN_END, CLOUD_LAUNCH, CLOUD_FINISH]) {
+          expect(line, rel).toContain(phrase);
+        }
+        expect(line, rel).toContain('The tag is owner/repo#n or xray#n.');
+        expect(line, rel).toContain('The cloud agent does not post that line.');
+      }
     }
 
     const skill = readFileSync(path.join(root, 'grok-bot/skills/board-prompt/SKILL.md'), 'utf8');

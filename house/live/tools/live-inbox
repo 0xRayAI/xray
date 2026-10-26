@@ -21,6 +21,7 @@ The cursor folder rule is grok-bot/OP-PROC.md#cursor-folder.
 when the key is already there and exits 1 for a new head. The claim is not this record.
 --turn start|end posts {kind:turn, action, t_ct, tag?} to POST /activity.
 A turn inside a cloud agent posts that same kind:turn line and does not post cloud_agent launch.
+--cloud launch|reply|finished|cancel --agent <bc-id> [--tag <owner/repo#n|xray#n>] posts {kind:cloud_agent, action, agent, t_ct, tag?} to POST /activity. The seat is the bearer. The body has no seat. xray#n is stored as 0xRayAI/xray#n so the board rebinds that card. Run it beside --turn, as its own command. It does not take the turn claim. The cloud agent does not post this line.
 --prompt posts {t_ct, seat, kind:prompt, action:sent, from, to:seat, room?, note?} to POST /activity. from defaults to the name: line under ## Owner in HOUSE.md. A missing name: warns and uses owner.
 --note is one quoted line, at most 240 characters of letters, digits, spaces, and ._:@#+/?'",;!()-. It is the only prose the board stores. Keys named body, text, or message are refused.
 t_ct is America/Chicago with its offset. Both posts use the seat key. The key is never printed. There is no local file.
@@ -313,11 +314,20 @@ KINDS = ("ready", "critic_fail", "live_pass", "merge", "ci_fail")
 USAGE = ("usage: live-inbox <seat> [--peek] | live-inbox <seat> --ack <id|all|stale> [--apply] | live-inbox <seat> --pop <id|all> | "
          "live-inbox <seat> --upto <id> | live-inbox <seat> --release | "
          "live-inbox <seat> --remember|--repeat --pr <owner/repo#n> --sha <head> --kind <kind> | "
-         "live-inbox <seat> --turn start|end [--tag <tag>] | live-inbox <seat> --prompt [--from <name>] [--room <name>] [--note <line>] | "
+         "live-inbox <seat> --turn start|end [--tag <tag>] | "
+         "live-inbox <seat> --cloud launch|reply|finished|cancel --agent <bc-id> [--tag <owner/repo#n|xray#n>] | "
+         "live-inbox <seat> --prompt [--from <name>] [--room <name>] [--note <line>] | "
          "live-inbox <seat> --handoff <to> --pr <owner/repo#n> --kind <" + "|".join(KINDS) + "> --sha <head> | "
          "live-inbox <seat> --card <owner/repo#n> --start-after <ISO> | "
          "live-inbox --migrate-cursors")
 TAG = re.compile(r"[A-Za-z0-9 ._:@#+/-]{1,40}")
+CLOUD_ACTIONS = ("launch", "reply", "finished", "cancel")
+AGENT_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{2,40}$")
+# Same owner/repo shape as house/live/app/worktrack.mjs CARD_REF.
+GH_OWNER = r"(?![A-Za-z0-9-]{40})[A-Za-z0-9](?:-[A-Za-z0-9]|[A-Za-z0-9]){0,38}"
+GH_REPO = r"(?![A-Za-z0-9._-]{101})[A-Za-z0-9_](?:[A-Za-z0-9._-]*[A-Za-z0-9_])?"
+CARD_REF = re.compile(rf"^{GH_OWNER}/{GH_REPO}#\d{{1,8}}$")
+SHORT_XRAY = re.compile(r"^xray#(\d{1,8})$")
 argv = sys.argv[1:]
 if argv == ["--migrate-cursors"]:
     migrate_cursors()
@@ -357,6 +367,8 @@ sha = take("--sha")
 card_raw = take("--card")
 start_after = take("--start-after")
 turn = take("--turn")
+cloud = take("--cloud")
+agent = take("--agent")
 tag = take("--tag")
 frm = take("--from")
 room = take("--room")
@@ -383,14 +395,18 @@ if any(a.startswith("--") for a in argv):
 args = [a for a in argv if not a.startswith("--")]
 if len(args) != 1 or not re.fullmatch(r"[a-z0-9-]{2,16}", args[0]):
     sys.exit(USAGE)
-if tag is not None and turn is None:
+if tag is not None and turn is None and cloud is None:
+    sys.exit(USAGE)
+if agent is not None and cloud is None:
     sys.exit(USAGE)
 busy = ack is not None or upto is not None or prompt or handoff_to is not None or card_raw is not None or start_after is not None or release or handled_lookup
 if apply and ack != "stale":
     sys.exit(USAGE)
 if upto is not None and ack is not None:
     sys.exit(USAGE)
-if turn is not None and (busy or turn not in ("start", "end")):
+if turn is not None and (busy or turn not in ("start", "end") or cloud is not None):
+    sys.exit(USAGE)
+if cloud is not None and (busy or peek or cloud not in CLOUD_ACTIONS):
     sys.exit(USAGE)
 if prompt and (ack is not None or handoff_to is not None or card_raw is not None or release or handled_lookup):
     sys.exit(USAGE)
@@ -437,6 +453,8 @@ if prompt and frm is None:
     frm = owner_from_house()
 if tag is not None and not TAG.fullmatch(tag):
     sys.exit("tag must be a short plain id")
+if cloud is not None and (agent is None or not AGENT_ID.fullmatch(agent)):
+    sys.exit("agent id required")
 if frm is not None and not TAG.fullmatch(frm):
     sys.exit("from must be a short plain id")
 if room is not None and not TAG.fullmatch(room):
@@ -456,7 +474,7 @@ if card_raw is not None:
     if not cm:
         sys.exit(USAGE)
     repo, number = cm.group(1), int(cm.group(2))
-if handled_lookup and (handoff_to is not None or ack is not None or turn is not None or prompt or release or card_raw is not None or upto is not None):
+if handled_lookup and (handoff_to is not None or ack is not None or turn is not None or cloud is not None or prompt or release or card_raw is not None or upto is not None):
     sys.exit(USAGE)
 if not handled_lookup and ((handoff_to is None) != (pr_raw is None or kind is None) or (ack is not None and handoff_to is not None)):
     sys.exit(USAGE)
@@ -674,6 +692,25 @@ def release_own(seat):
         handle.close()
 
 
+
+def cloud_card_tag(raw):
+    """owner/repo#n stays. xray#n is stored as 0xRayAI/xray#n. The number is canonical."""
+    if CARD_REF.fullmatch(raw):
+        owner_repo, num = raw.rsplit("#", 1)
+        number = int(num)
+    else:
+        short = SHORT_XRAY.fullmatch(raw)
+        if not short:
+            sys.exit("tag must be owner/repo#n or xray#n")
+        owner_repo, number = "0xRayAI/xray", int(short.group(1))
+    if number < 1:
+        sys.exit("tag must be owner/repo#n or xray#n")
+    expanded = f"{owner_repo}#{number}"
+    if len(expanded) > 40 or not TAG.fullmatch(expanded) or not CARD_REF.fullmatch(expanded):
+        sys.exit("tag must be a short plain id")
+    return expanded
+
+
 def turn_gate(seat, action):
     """True when this owner token may post the turn.
 
@@ -737,12 +774,19 @@ if prompt:
             receipt["id"] = posted["id"]
     print(json.dumps(receipt))
     sys.exit(0)
+if cloud is not None:
+    # Seat from the bearer. No seat field. A foreign turn claim does not swallow this post.
+    body = {"kind": "cloud_agent", "action": cloud, "agent": agent, "t_ct": ct_now()}
+    if tag is not None:
+        body["tag"] = cloud_card_tag(tag)
+    print(json.dumps(call("POST", "/activity", body)))
+    sys.exit(0)
 if turn is not None:
     # Turn end posts the activity line only. WAKE-ROUTINE step 7 asks
     # "anything new without a card?" and files each card (From, Waiting on, Owner)
     # before this post. A crash still reaches the trap without that question.
     # A wake that lost the lines does not start a turn and does not end the winner's claim.
-    # kind: turn only. Cloud launch and finish stay on the cloud-agent hooks.
+    # kind: turn only. A cloud row is live-inbox --cloud, a second command. This path does not post it.
     if not turn_gate(seat, turn):
         sys.exit(0)
     body = {"kind": "turn", "action": turn, "t_ct": ct_now()}
