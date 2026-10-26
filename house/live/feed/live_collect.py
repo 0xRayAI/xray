@@ -57,7 +57,8 @@ def ci_result_kind(conclusion, status) -> str | None:
     if word in CI_FAIL:
         return "ci_fail"
     return None
-CRITIC_RE = re.compile(r"^\*\*Reviewer(?:: (PASS|FAIL|HOLD)\b| re-check:\s*(?:\**\s*)?(PASS|FAIL)?\b)")
+# Verdicts are PASS or FIX (4.1.4). FAIL and HOLD are legacy words, still read so old comments parse; both mean FIX.
+CRITIC_RE = re.compile(r"^\*\*Reviewer(?:: (PASS|FIX|FAIL|HOLD)\b| re-check:\s*(?:\**\s*)?(PASS|FIX|FAIL)?\b)")
 MENTION_RE = re.compile(r"(?<![\w`/.])@([A-Za-z0-9](?:[A-Za-z0-9-]{0,38})(?:\[bot\])?)(?![\w-])")
 
 
@@ -1234,7 +1235,7 @@ class RepoCollector:
             self.st["etags"]["comments"] = self._etag_new
         for n, v in self.st["reviewer"].items():   # latest verdict per PR, stable id
             word = v["result"] or v["verdict"]
-            kind = {"PASS": "critic_pass", "FAIL": "critic_fail", "HOLD": "critic_hold"}.get(word, "critic_recheck")
+            kind = {"PASS": "critic_pass", "FIX": "critic_fail", "FAIL": "critic_fail", "HOLD": "critic_fail"}.get(word, "critic_recheck")
             shown = (f"re-check {v['result']}" if v["result"] else "re-check") if v["verdict"] == "RE-CHECK" else v["verdict"]
             self.put(f"{self.repo}#{n}:reviewer", v["t"], "Reviewer", self.pr_node(n), kind,
                      f"reviewer {shown} · {self.short} #{n}" + (f" @ {v['sha'][:7]}" if v["sha"] else ""), v["url"], n,

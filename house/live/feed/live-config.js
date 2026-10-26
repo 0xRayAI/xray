@@ -76,7 +76,7 @@
   L.botImage = function (key) { return AVATAR[key] ? 'avatars/' + AVATAR[key] + '.png' : null; };
   var W = { lab_bug: 'lab bug', lab_bug_update: 'lab bug', lab_issue: 'lab issue', lab_run: 'lab test run',
     lab_calls: 'lab calls', board_card: 'board card', board_status: 'board', lab_retest_pass: 'lab retest PASS', lab_retest_fail: 'lab retest FAIL', critic_pass: 'reviewer PASS',
-    critic_fail: 'reviewer FAIL', critic_hold: 'reviewer HOLD', critic_recheck: 'reviewer re-check', pr_commit: 'PR push',
+    critic_fail: 'reviewer FIX', critic_hold: 'reviewer FIX (legacy HOLD)', critic_recheck: 'reviewer re-check', pr_commit: 'PR push',
     review: 'review', pr_comment: 'PR comment', issue_comment: 'issue comment', review_comment: 'review comment',
     commit: 'commit', check_run: 'check run', check_suite: 'check suite', workflow_run: 'workflow run',
     commit_status: 'status', deploy_pending: 'deploy pending', tag: 'tag', release: 'release' };

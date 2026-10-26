@@ -18,7 +18,9 @@ class Verdicts(unittest.TestCase):
     def test_prefixes(self):
         self.assertEqual(self.m("**Reviewer: PASS: ready for lab test** @ af8c8d0"), ("PASS", None))
         self.assertEqual(self.m("**Reviewer: FAIL (P0/P1)** @ b599aab"), ("FAIL", None))
-        self.assertEqual(self.m("**Reviewer: HOLD** @ 1234567"), ("HOLD", None))
+        self.assertEqual(self.m("**Reviewer: HOLD** @ 1234567"), ("HOLD", None))   # legacy, still read
+        self.assertEqual(self.m("**Reviewer: FIX: two must-fix items, forge** @ 1234567"), ("FIX", None))
+        self.assertEqual(self.m("**Reviewer re-check: FIX** @ d07d2c2"), (None, "FIX"))
         self.assertEqual(self.m("**Reviewer re-check: PASS, ready** @ d07d2c2"), (None, "PASS"))
         self.assertEqual(self.m("**Reviewer re-check:** pending @ abcdef1"), (None, None))
 
