@@ -17,7 +17,7 @@ Syncopate means finding our head from our tail: we watch what we actually did, w
 This cadence is how the room decides spend. It is not the Confer feature, which stays off (see house).
 1. Design before spend. Critic and CoS agree the fix design before the first paid cloud round. Critic's first review gives the complete blocker list; later rounds add nothing new unless the code changed.
 2. Acceptance before the round. The tests or probes that decide PASS are agreed in the room before the round is sent. The review checks only those, plus the diff stat and the type-check (tsc) count.
-3. One paid round per PR. A second Strict FIX goes under Needs Blaze with a smaller design or a shelve recommendation. No automatic retry.
+3. One paid round per PR. A second Strict FIX goes under Needs owner with a smaller design or a shelve recommendation. No automatic retry.
 4. Outage exception. If the PR fixes something that is down, the round cap does not apply. Each round stays small and fixes only the named blocker; no redesign, never shelve.
 5. Consensus on blockers vs nits. Critic labels each finding:
    - BLOCKER: names live behavior, money spent, data lost, or a failing test.

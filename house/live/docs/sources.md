@@ -10,4 +10,4 @@ Jira pull starts only when `JIRA_SITE`, `JIRA_EMAIL`, `JIRA_API_TOKEN`, and `JIR
 
 When two updates share a key, the later `updated` time wins. On a tie, a closed item wins over an open one.
 
-A Jira status that matches `JIRA_HOLD_STATUS` (default `On Hold`) holds the card. Closed stays closed.
+A Jira status that matches `JIRA_HOLD_STATUS` (default `On Hold`) shows the card as Parked behind that blocker. Closed stays closed.

@@ -215,6 +215,11 @@
     if (dataAge < 30 * 60000) return { tone: 'green', line: 'Updated ' + freshClock(dataAge) + ' ago' };
     return { tone: 'amber', line: 'Updated ' + freshClock(dataAge) + ' ago' };
   };
+  // A held card (Held: comment, GITHUB_HOLD_LABEL, or Jira JIRA_HOLD_STATUS) displays as Parked with its named blocker.
+  L.parkedLabel = function (c) {
+    var why = c && c.hold && String(c.hold.reason || '').trim();
+    return why ? 'Parked behind ' + why : 'Parked';
+  };
   L.cardBucket = function (c) {
     if (!c) return 'waiting';
     if (c.state === 'parked') return 'parked';

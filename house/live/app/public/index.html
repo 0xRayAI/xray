@@ -1097,8 +1097,8 @@ footer a { color: var(--foot); }
       });
       if (c.start_after) row('start after', c.start_after);
       if (c.hold && (c.hold.by || c.hold.reason || c.hold.until)) {
-        row('held by', c.hold.by || '—');
-        row('reason', c.hold.reason || '—');
+        row('parked by', c.hold.by || '—');
+        row('waits on', c.hold.reason || '—');
         if (c.hold.until) row('until', c.hold.until);
       }
     }
@@ -1565,7 +1565,7 @@ footer a { color: var(--foot); }
       meta.appendChild(wbEl('span', 'wbadge state', c.state || 'live'));
       if (c.pinned) meta.appendChild(wbEl('span', 'wbadge pin', 'pinned'));
       else if (c.packet_ok === false) meta.appendChild(wbEl('span', 'wbadge', 'needs a brief'));
-      if (c.state === 'held') meta.appendChild(wbEl('span', 'wbadge held', 'On hold'));
+      if (c.state === 'held') meta.appendChild(wbEl('span', 'wbadge held', L.parkedLabel(c)));
       if (c.start_after) meta.appendChild(wbEl('span', 'wbadge', 'start after ' + c.start_after));
       if (c.stall) meta.appendChild(wbEl('span', 'wbadge stall', 'quiet 60 min+'));
       addGithubFace(meta, c);
@@ -1665,8 +1665,8 @@ footer a { color: var(--foot); }
       pins.forEach(function (c) { pu.appendChild(card(c)); }); body.appendChild(pu);
     }
     var rest = wb.cards.filter(function (c) { return !(c.pinned || cardWorking(c) || LK.child[c.key]); });
-    var bucketName = { waiting: 'waiting on this seat', review: 'in review', held: 'on hold', parked: 'parked' };
-    var statusName = { waiting: 'waiting', review: 'in review', held: 'on hold', parked: 'parked' };
+    var bucketName = { waiting: 'waiting on this seat', review: 'in review', held: 'parked behind a blocker', parked: 'parked' };
+    var statusName = { waiting: 'waiting', review: 'in review', held: 'parked behind a blocker', parked: 'parked' };
     function paintOpen(cs, ik, sub) {
       if (!cs.length) return;
       if (sub) body.appendChild(wbEl('div', 'wsub', sub));
@@ -1721,7 +1721,7 @@ footer a { color: var(--foot); }
     if (!wb.stamp) waveHead.textContent = 'building';
     else if (!wb.cards.length && !cloudN) waveHead.textContent = 'empty';
     else if (!wb.cards.length) waveHead.textContent = cloudN + ' cloud';
-    else waveHead.textContent = live + ' live' + (held ? ' · ' + held + ' held' : '') + (stalls ? ' · ' + stalls + ' stalled' : '') + cloudBit;
+    else waveHead.textContent = live + ' live' + (held ? ' · ' + held + ' parked' : '') + (stalls ? ' · ' + stalls + ' stalled' : '') + cloudBit;
     var cardsSum = $('cardsSum'); if (cardsSum) cardsSum.textContent = waveHead.textContent;
     var statsSum = $('statsSum'); if (statsSum) statsSum.textContent = S && S.open_total != null ? String(S.open_total) + ' open' : '';
     var cloudSum = $('cloudSum'); if (cloudSum) cloudSum.textContent = String((wb.cloudAgents || []).length);
@@ -1991,7 +1991,7 @@ footer a { color: var(--foot); }
   var cardHistRows = [], cardHistOn = false;
   function recentState(s) {
     if (s === 'review') return 'in review';
-    if (s === 'held') return 'on hold';
+    if (s === 'held') return 'parked';
     if (s === 'parked') return 'parked';
     if (s === 'closed') return 'closed';
     return s || '';
