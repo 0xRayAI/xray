@@ -396,7 +396,7 @@ describe('core seat defaults when routing is absent', () => {
 function aliasLine(id, seat) {
   return {
     id,
-    t_ct: '2026-10-19T12:00:00-05:00',
+    t_ct: new Date(Date.now() - 60 * 1000).toISOString(), // inbox save drops a line older than 7 days
     seat,
     type: 'note',
     repo: 'example-org/app',

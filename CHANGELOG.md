@@ -6,6 +6,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+- Inbox alias fixtures use a fresh stamp. A line older than 7 days is dropped on save, and the 2026-10-19 stamp had aged out. Refs #637.
 - inbox-watch posts a wake turn after every poll that prints work. An empty poll does not end that turn. The seat posts the turn end when the chat finishes.
 - WAKE step 0 and the HOUSE inbound line post `live-inbox --cloud` beside the turn, with the card tag. Refs #628.
 - A seat logs a cloud agent with `live-inbox --cloud` beside the turn. `xray#n` is stored as `0xRayAI/xray#n`. The cloud agent does not post that line. Refs #628.
