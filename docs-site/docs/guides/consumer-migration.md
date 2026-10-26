@@ -6,7 +6,7 @@
 
 A fleet on 4.1.3 follows this path. The v3 consumer steps below stay as they are.
 
-1. Install and wear. `npm install 0xray@4.1.4`, then `npx 0xray wear`.
+1. Install and wear. `npm install 0xray`, then `npx 0xray wear`. The version is the one in `package.json`.
 2. Node is 24.22.1. `engines.node` is `>=24.22.1`. A bare "Node 24" is not the pin.
 3. Board. When `LIVE_URL` is set, the board is the collector. The board rule is in `house/live/docs/fleet-setup.md`. On every owner message run `live-inbox <seat> --prompt --from owner --note "<gist>"`.
 4. Inbox watch. When Bifrost is on, the only TUI monitor is `$XRAY_MAIN/house/live/tools/inbox-watch.sh <seat>`. After a poll that prints work it posts `live-inbox <seat> --turn start --tag wake`. An empty poll does not end the turn. The seat posts `live-inbox <seat> --turn end` when the chat finishes.
