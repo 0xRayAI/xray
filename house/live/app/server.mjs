@@ -580,7 +580,7 @@ function wakeErr(e) {
 }
 async function deliverWake(cfg, body) {
   const key = process.env[cfg.keyEnv] || process.env[cfg.seatKeyEnv];
-  if (typeof key !== 'string' || !key || /[\r\n]/.test(key)) return { ok: false, attempts: 0, error: 'no_key' };
+  if (typeof key !== 'string' || !key || /[\r\n]/.test(key)) return { ok: false, attempts: 0, error: 'no_key', outcome: 'failed' };
   const headers = { 'Content-Type': 'application/json', 'User-Agent': 'bifrost-live' };
   if (cfg.bearer) headers.Authorization = 'Bearer ' + key; else headers[cfg.header] = key;
   let error = 'network', detail = '';
@@ -588,13 +588,15 @@ async function deliverWake(cfg, body) {
     try {
       const res = await fetch(cfg.url, { method: 'POST', headers, body, redirect: 'error', signal: AbortSignal.timeout(8000) });
       const text = await res.text().catch(() => '');
-      if (res.ok) return { ok: true, attempts: i };
+      // Overlay no-op: every line already acked. Not a seat failure, and not worth a retry.
+      if (res.status === 409 && res.headers.get('x-bifrost-wake') === 'noop') return { ok: true, attempts: i, outcome: 'skipped', http: 409 };
+      if (res.ok) return { ok: true, attempts: i, outcome: 'delivered' };
       error = 'http_' + res.status;
       detail = wakeDetail(text, key, cfg.url);
     } catch (e) { error = wakeErr(e); }
     if (i < WAKE_ATTEMPTS) await new Promise(r => { const t = setTimeout(r, WAKE_RETRY_MS * (2 ** (i - 1))); if (t.unref) t.unref(); });
   }
-  return { ok: false, attempts: WAKE_ATTEMPTS, error, detail };
+  return { ok: false, attempts: WAKE_ATTEMPTS, error, detail, outcome: 'failed' };
 }
 // non-2xx response body for the log: one line, 160 chars, the key and the webhook url (with its automation id) removed
 function wakeDetail(text, key, url) {
@@ -608,26 +610,33 @@ async function flushWake(seat) {
   const batch = st.pending.splice(0, st.pending.length);
   st.inflight = true; st.lastSent = Date.now();
   let result; try { result = await deliverWake(cfg, JSON.stringify(wakePayload(seat, batch))); }
-  catch { result = { ok: false, attempts: WAKE_ATTEMPTS, error: 'network' }; }
-  st.status = { ok: !!result.ok, attempts: result.attempts, at: new Date().toISOString() };
-  if (!result.ok) st.status.error = result.error || 'network';
-  console.log(`wake: ${seat} ${result.ok ? 'ok' : 'fail'} attempts=${result.attempts}${result.ok ? '' : ' ' + st.status.error}${result.detail ? ' body=' + JSON.stringify(result.detail) : ''}`);
-  if (result.ok) {
-    noteSent(wakeState, seat, batch, Date.now());
-    touchSeat(seat); wakeOkAt[seat] = st.status.at; persistWakeOk();
-    serverActivity(seat, 'turn', 'start', 'wake', { moves: false });
+  catch { result = { ok: false, attempts: WAKE_ATTEMPTS, error: 'network', outcome: 'failed' }; }
+  const outcome = result.outcome || (result.ok ? 'delivered' : 'failed');
+  const at = new Date().toISOString();
+  if (outcome === 'skipped') console.log(`wake: ${seat} skipped (noop)`);
+  else {
+    st.status = { ok: !!result.ok, outcome, attempts: result.attempts, at };
+    if (!result.ok) st.status.error = result.error || 'network';
+    console.log(`wake: ${seat} ${result.ok ? 'ok' : 'fail'} attempts=${result.attempts}${result.ok ? '' : ' ' + st.status.error}${result.detail ? ' body=' + JSON.stringify(result.detail) : ''}`);
+    if (result.ok) {
+      noteSent(wakeState, seat, batch, Date.now());
+      touchSeat(seat); wakeOkAt[seat] = st.status.at; persistWakeOk();
+      serverActivity(seat, 'turn', 'start', 'wake', { moves: false });
+    }
   }
   st.inflight = false;
   const last = batch[batch.length - 1] || {};
   try {
     appendWake(STATE_DIR, {
       seat, id: last.id, ids: batch.map(l => l.id).filter(id => typeof id === 'string' && id),
-      t_ct: st.status.at, ok: !!result.ok, attempts: result.attempts,
+      t_ct: outcome === 'skipped' ? at : st.status.at, ok: outcome === 'skipped' ? true : !!result.ok, attempts: result.attempts,
+      outcome,
+      ...(outcome === 'skipped' ? { http: 409 } : {}),
       title: String(last.title || '').slice(0, 120),
       repo: String(last.repo || '').slice(0, 200), number: Number.isInteger(last.number) ? last.number : 0,
       kind: String(last.type || last.kind || '').slice(0, 64),
       ...(typeof last.sha === 'string' && last.sha ? { sha: last.sha.slice(0, 80) } : {}),
-      ...(result.ok ? {} : { error: String(result.error || 'network').slice(0, 40) }),
+      ...(outcome === 'failed' ? { error: String(result.error || 'network').slice(0, 40) } : {}),
     });
   } catch (e) { console.log('wake: append failed ' + ((e && e.code) || 'write')); }
   armWake(seat);
@@ -635,7 +644,7 @@ async function flushWake(seat) {
 }
 // Last time this process saw each seat act through its inbox (wake 2xx, inbox read, ack); counts toward fleet "active".
 // Acks survive a restart as append-only archive rows and are folded in at startup.
-// The last good wake survives too: persistWakeOk writes wake-ok.json, and loadPersistedWakes restores wakes.jsonl.
+// The last good wake survives too: persistWakeOk writes wake-ok.json, and loadPersistedWakes restores the last non-skipped wakes.jsonl row.
 const seatTouch = {};
 const touchSeat = (seat, t = Date.now()) => { if (seat) seatTouch[seat] = Math.max(seatTouch[seat] || 0, t); };
 const sha256hex = s => crypto.createHash('sha256').update(String(s)).digest('hex');
@@ -2872,23 +2881,42 @@ loadActivity();
 for (const l of activity.slice(-500)) if (Date.now() - Date.parse(l.t_ct || '') < 86400000) activityEvent(l, { replay: true });
 loadPersistedWakes();
 activityReady = true;
-function loadPersistedWakes() {   // last wake per seat survives a restart (wakes.jsonl is append-only)
-  const last = new Map();
-  for (const row of readWakeRows(STATE_DIR)) if (row && row.seat) last.set(String(row.seat), row);
-  for (const [seat, row] of last) {
+function legacyWake409(row) {
+  return !!row && (row.outcome == null || row.outcome === '') && row.error === 'http_409';
+}
+// Last row that is not a noop skip. A legacy http_409 (no outcome) is ambiguous, so a trailing one falls back to the earlier row. All-legacy-409 stays fail. The file is not rewritten.
+function keptWakeBySeat(rows) {
+  const kept = new Map();
+  const prior = new Map();
+  for (const row of rows) {
+    if (!row || !row.seat || row.outcome === 'skipped') continue;
+    const seat = String(row.seat);
+    if (legacyWake409(row)) {
+      kept.set(seat, prior.has(seat) ? prior.get(seat) : row);
+      continue;
+    }
+    prior.set(seat, row);
+    kept.set(seat, row);
+  }
+  return kept;
+}
+function loadPersistedWakes() {   // last non-skipped wake per seat survives a restart (wakes.jsonl is append-only)
+  const rows = readWakeRows(STATE_DIR);
+  for (const [seat, row] of keptWakeBySeat(rows)) {
     let st = wakeQ.get(seat);
     if (!st) { st = { lastSent: 0, pending: [], timer: null, inflight: false, status: null }; wakeQ.set(seat, st); }
     st.status = { ok: !!row.ok, attempts: Number(row.attempts) || 0, at: typeof row.t_ct === 'string' ? row.t_ct : new Date().toISOString() };
+    if (row.outcome === 'delivered' || row.outcome === 'failed') st.status.outcome = row.outcome;
     if (row.error) st.status.error = String(row.error).slice(0, 40);
     const t = Date.parse(row.t_ct || '');
     if (Number.isFinite(t)) st.lastSent = t;
-    if (row.ok && typeof row.t_ct === 'string' && !wakeOkAt[seat]) wakeOkAt[seat] = row.t_ct;
+    if (row.ok && (row.outcome == null || row.outcome === 'delivered') && typeof row.t_ct === 'string' && !wakeOkAt[seat]) wakeOkAt[seat] = row.t_ct;
   }
   let skipRows = [];
   try {
     skipRows = fs.readFileSync(path.join(STATE_DIR, 'wake-skips.jsonl'), 'utf8').split('\n').filter(Boolean).map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean);
   } catch { /* no skip file yet */ }
-  restoreWakeBook(wakeState, readWakeRows(STATE_DIR), skipRows, Date.now(), wakeConfig(process.env).statMs);
+  restoreWakeBook(wakeState, rows.filter(row => row && row.outcome !== 'skipped'), skipRows, Date.now(), wakeConfig(process.env).statMs);
 }
 header = mergedHeader(); fullDirty = true;
 function clearSeatWork(f, seat) {
