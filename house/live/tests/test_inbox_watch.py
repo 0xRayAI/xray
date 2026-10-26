@@ -67,7 +67,7 @@ class InboxWatch(unittest.TestCase):
             self.assertTrue(pid_text.isdigit())
             self.assertIn("pid=%s\n" % pid_text, text)
 
-    def test_new_lines_turn_start_then_end(self):
+    def test_new_lines_keep_the_turn_open(self):
         body = r"""
 if [[ "$*" == *"--turn"* ]]; then exit 0; fi
 count="$(dirname "$0")/n"
@@ -84,8 +84,8 @@ exit 0
         self.assertEqual(r.stdout.count("unfinished:1"), 2)
         self.assertEqual(r.stdout.count("open 1: raw=1"), 2)
         self.assertEqual(r.stdout.count("line-a"), 2)
-        self.assertEqual(calls.count("--turn start --tag wake"), 1)
-        self.assertEqual(calls.count("--turn end"), 1)
+        self.assertEqual(calls.count("--turn start --tag wake"), 2)
+        self.assertNotIn("--turn end", calls)
         self.assertNotIn("--ack", calls)
         self.assertNotIn("seat-key", r.stdout + r.stderr)
 
@@ -170,7 +170,7 @@ esac
         self.assertNotIn("--ack held-1", calls)
         self.assertNotIn("--ack all", calls)
         self.assertEqual(calls.count("--turn start --tag wake"), 1)
-        self.assertEqual(calls.count("--turn end"), 1)
+        self.assertNotIn("--turn end", calls)
 
     def test_held_card_listed_once(self):
         held_line = '{"id":"held-card","repo":"0xRayAI/xray","number":416,"title":"card"}'
@@ -193,7 +193,7 @@ exit 0
         self.assertNotIn(held_line, r.stdout)
         self.assertNotIn("--ack", calls)
         self.assertEqual(calls.count("--turn start --tag wake"), 1)
-        self.assertEqual(calls.count("--turn end"), 1)
+        self.assertNotIn("--turn end", calls)
 
     def test_gh_failure_delivers_then_pops(self):
         line = '{"id":"unknown-1","repo":"0xRayAI/xray","number":588,"title":"unknown"}'
@@ -273,8 +273,8 @@ exit 0
         self.assertEqual(calls.count("--ack open-2"), 1)
         self.assertEqual(calls.count("--ack open-3"), 1)
         self.assertNotIn("--ack all", calls)
-        self.assertEqual(calls.count("--turn start --tag wake"), 1)
-        self.assertEqual(calls.count("--turn end"), 1)
+        self.assertEqual(calls.count("--turn start --tag wake"), 2)
+        self.assertNotIn("--turn end", calls)
 
     def test_poison_id_all_is_not_acked(self):
         line = '{"id":"all","repo":"0xRayAI/xray","number":608,"title":"poison"}'
