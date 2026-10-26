@@ -6,6 +6,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+- Pin `@modelcontextprotocol/sdk` at 1.32.2 and set a finite `maxRequestBodySize` on the HTTP MCP transports. Refs #507.
 - Resolve `body-parser` to >=2.4.0. Express stays 5.2.1. Refs #613.
 - A suit that lacks the packet link fails, and so does a pull or cloud run with no card. When Bifrost is on, the only TUI monitor is `$XRAY_MAIN/house/live/tools/inbox-watch.sh <seat>`. Refs #567.
 - The live board keeps answering while a collector pass rewrites the same feed. The event parse leaves the request thread, and an unchanged event set only refreshes the header. The port opens after the first read, so health and the board see that feed.

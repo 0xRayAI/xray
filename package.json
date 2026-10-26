@@ -228,7 +228,7 @@
   ],
   "dependencies": {
     "@0xray/blip": "^0.1.2",
-    "@modelcontextprotocol/sdk": "^1.0.4",
+    "@modelcontextprotocol/sdk": "1.32.2",
     "commander": "^11.1.0",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",

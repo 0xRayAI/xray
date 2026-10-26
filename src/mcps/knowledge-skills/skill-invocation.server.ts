@@ -12,6 +12,9 @@ import { mcpClientManager } from "../mcp-client.js";
 import { frameworkLogger } from "../../core/framework-logger.js";
 import { skillInstallCommand, skillRegistryCommand } from "../../cli/commands/skill-install.js";
 
+/** Bytes. Matches the SDK 1.32 default. Skipped when the caller passes parsedBody. */
+export const MCP_MAX_REQUEST_BODY_SIZE = 4194304;
+
 interface ListSkillsArgs {
   category?: "all" | "core" | "registry" | "knowledge";
 }
@@ -595,9 +598,11 @@ class SkillInvocationServer extends XrayKnowledgeSkillBase {
    * Run as HTTP server using Streamable HTTP transport (for Grok CLI compatibility).
    */
   async runHttp(port: number = parseInt(process.env.MCP_PORT ?? "3200", 10)): Promise<void> {
-    const app = createMcpExpressApp();
+    const mcpHost = process.env.MCP_HOST || "127.0.0.1";
+    const app = createMcpExpressApp({ host: mcpHost });
     const transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: () => randomUUID(),
+      maxRequestBodySize: MCP_MAX_REQUEST_BODY_SIZE,
     });
 
     await this.server.connect(transport as any);
@@ -617,7 +622,7 @@ class SkillInvocationServer extends XrayKnowledgeSkillBase {
       res.json({ status: "ok", server: "skill-invocation" });
     });
 
-    app.listen(port, () => {
+    app.listen(port, mcpHost, () => {
       frameworkLogger.log("skill-invocation", "http-listening", "info", { port });
     });
 
