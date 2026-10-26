@@ -6,6 +6,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+- Resolve `fast-uri` to >=3.1.9 in the root and docs-site locks. Refs #616.
 - Resolve docs-site `body-parser` to >=1.20.9. Express stays 4. Refs #617.
 - Pin `@modelcontextprotocol/sdk` at 1.32.2 and set a finite `maxRequestBodySize` on the HTTP MCP transports. Refs #507.
 - Resolve `body-parser` to >=2.4.0. Express stays 5.2.1. Refs #613.
