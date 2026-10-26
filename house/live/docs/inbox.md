@@ -213,6 +213,12 @@ Receipt: `200` with `added: 1`, then `wake: <seat> ok` in the server log, then t
 - Pending wakes live in memory only; a restart drops them (the inbox lines persist).
 - Once the 3 attempts fail, the batch is not retried later. A newer line starts a fresh batch.
 
+## Station nudge
+
+Boot on every turn stays the rule. This poll is only the reminder after a summary. A memory note is not that re-read.
+
+`live-inbox <seat> --station` posts one line, `nudge:station:<seat>:<Chicago hour>`, with the sentence `Run station and re-read OP-PROC`. The line type is `nudge` and the kind is `station`. It is not a packet. `house/live/bin/station-nudge` posts that line for forge, critic, and blinky, and for arch1 when that id is in `inbox-roles.json`. It runs on weekdays from 7:30 to 18:00 America/Chicago. A failed post is logged without the key and retried on the next tick. `house/live/bin/com.burst.station-nudge.plist` is a template. Do not load it. The served board returns 403 for this line until that build has the same gate.
+
 ## Arch1 / CLI seats (Grok CLI)
 
 Arch1 runs in Grok CLI on Blaze's Mac. Grok CLI has no webhook receiver, so `SEAT_WEBHOOKS` has no URL for arch1 and the seat **polls** its inbox instead. Arch1 is a known inbox seat on the server (`SEAT_IDS` in `app/server.mjs`, `feed/seat_keys.sh` defaults, `feed/routing/inbox-roles.json`). Arch1 is outside the fleet: only an explicit @arch10x (or @arch1) mention routes to him, and his lines are never copied to blinky.

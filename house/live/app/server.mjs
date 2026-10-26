@@ -3425,6 +3425,8 @@ async function handle(req, res) {
     if (sender !== 'ingest') {
       const lines = parsed && Array.isArray(parsed.lines) ? parsed.lines : [];
       const handoffId = /^handoff:([a-z0-9_.-]+\/[a-z0-9_.-]+)#([1-9]\d{0,6}):(ready|critic_fail|live_pass|merge|ci_fail):([0-9a-f]{7,64})$/;
+      const stationId = /^nudge:station:([a-z0-9-]{2,16}):(\d{4}-\d{2}-\d{2}T\d{2})$/;
+      const stationSentence = 'Run station and re-read OP-PROC';
       const ownHandoff = (line) => {
         if (!line || typeof line !== 'object' || Array.isArray(line)) return false;
         if (canonSeat(line.from) !== sender || line.type !== 'packet') return false;
@@ -3436,8 +3438,22 @@ async function handle(req, res) {
         const lineSha = typeof line.sha === 'string' ? line.sha.trim().toLowerCase() : '';
         return idSha === lineSha;
       };
+      // One reminder shape. type stays nudge, so this is not a packet and arch1 launch stays quiet.
+      const ownStation = (line) => {
+        if (!line || typeof line !== 'object' || Array.isArray(line)) return false;
+        if (canonSeat(line.from) !== sender || line.type !== 'nudge') return false;
+        if (String(line.kind || '').toLowerCase() !== 'station') return false;
+        if (line.reason !== stationSentence || line.title !== stationSentence) return false;
+        if (line.repo !== '' || line.url !== '' || line.number !== 0) return false;
+        if (line.sha != null && line.sha !== '') return false;
+        const id = typeof line.id === 'string' ? line.id : '';
+        const hit = stationId.exec(id);
+        if (!hit || canonSeat(hit[1]) !== canonSeat(line.seat)) return false;
+        if (line.to != null && canonSeat(line.to) !== canonSeat(line.seat)) return false;
+        return true;
+      };
       if (parsed && parsed.replace === true) return json(req, res, 403, { error: 'not your handoff' });
-      if (!lines.length || lines.length > 8 || lines.some(line => !ownHandoff(line))) return json(req, res, 403, { error: 'not your handoff' });
+      if (!lines.length || lines.length > 8 || lines.some(line => !ownHandoff(line) && !ownStation(line))) return json(req, res, 403, { error: 'not your handoff' });
     }
     const r = postSeatLines(parsed, null);
     if (r.status === 200) { seq++; header = mergedHeader(); fullDirty = true; }

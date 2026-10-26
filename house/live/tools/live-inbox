@@ -27,6 +27,7 @@ A turn inside a cloud agent posts that same kind:turn line and does not post clo
 t_ct is America/Chicago with its offset. Both posts use the seat key. The key is never printed. There is no local file.
 Handoff: POST one packet to /inbox for <to> and print the one-line 1:1 message the seat sends. The same pull request,
 kind and head post the same line id. --sha is required and is a head of 7 to 64 hex digits. A room post is not this command.
+--station posts one nudge into this seat's inbox. The id is nudge:station:<seat>:<Chicago hour>. The sentence is Run station and re-read OP-PROC. The type is nudge, so it is not a packet.
 Date: POST /cards/start-after. --start-after is an ISO time with a numeric offset (Chicago, -05:00 or -06:00). The card
 stays parked until that time, then the server wakes the owning seat. A GitHub comment whose first line is
 `Start after: <ISO>` sets the same field; the command wins while it is stored.
@@ -317,6 +318,7 @@ USAGE = ("usage: live-inbox <seat> [--peek] | live-inbox <seat> --ack <id|all|st
          "live-inbox <seat> --turn start|end [--tag <tag>] | "
          "live-inbox <seat> --cloud launch|reply|finished|cancel --agent <bc-id> [--tag <owner/repo#n|xray#n>] | "
          "live-inbox <seat> --prompt [--from <name>] [--room <name>] [--note <line>] | "
+         "live-inbox <seat> --station | "
          "live-inbox <seat> --handoff <to> --pr <owner/repo#n> --kind <" + "|".join(KINDS) + "> --sha <head> | "
          "live-inbox <seat> --card <owner/repo#n> --start-after <ISO> | "
          "live-inbox --migrate-cursors")
@@ -360,6 +362,9 @@ for flag in ("--ack", "--pop"):
         ack = argv[i + 1]
         del argv[i:i + 2]
         break
+station = "--station" in argv
+if station:
+    argv.remove("--station")
 handoff_to = take("--handoff")
 pr_raw = take("--pr")
 kind = take("--kind")
@@ -463,6 +468,8 @@ if note is not None and not re.fullmatch(r"""[A-Za-z0-9 ._:@#+/?'",;!()-]{1,240}
     sys.exit("note must be a short plain line")
 if peek and busy:
     sys.exit(USAGE)
+if station and (busy or turn is not None or cloud is not None or peek):
+    sys.exit(USAGE)
 if sha is not None and handoff_to is None and not handled_lookup:
     sys.exit(USAGE)
 if (card_raw is None) != (start_after is None) or (card_raw is not None and (handoff_to is not None or ack is not None)):
@@ -476,7 +483,7 @@ if card_raw is not None:
     repo, number = cm.group(1), int(cm.group(2))
 if handled_lookup and (handoff_to is not None or ack is not None or turn is not None or cloud is not None or prompt or release or card_raw is not None or upto is not None):
     sys.exit(USAGE)
-if not handled_lookup and ((handoff_to is None) != (pr_raw is None or kind is None) or (ack is not None and handoff_to is not None)):
+if not handled_lookup and not station and ((handoff_to is None) != (pr_raw is None or kind is None) or (ack is not None and handoff_to is not None)):
     sys.exit(USAGE)
 if handoff_to is not None:
     if not re.fullmatch(r"[a-z0-9-]{2,16}", handoff_to) or kind not in KINDS:
@@ -736,6 +743,19 @@ def turn_gate(seat, action):
 if card_raw is not None:
     call("POST", "/cards/start-after", {"repo": repo, "number": number, "start_after": start_after})
     print(f"start after {start_after} {repo}#{number}")
+    sys.exit(0)
+if station:
+    local = datetime.now(ZoneInfo("America/Chicago"))
+    hour = local.strftime("%Y-%m-%dT%H")
+    sentence = "Run station and re-read OP-PROC"
+    line_id = f"nudge:station:{seat}:{hour}"
+    line = {"id": line_id, "t_ct": datetime.now(timezone.utc).isoformat(),
+            "seat": seat, "from": seat, "to": seat, "type": "nudge", "kind": "station",
+            "repo": "", "number": 0, "title": sentence, "url": "", "reason": sentence}
+    posted = call("POST", "/inbox", {"lines": [line]}, tolerate_timeout=True)
+    if isinstance(posted, dict) and posted.get("timeout"):
+        print(posted.get("error") or "live-inbox: server unreachable", file=sys.stderr)
+    print(f"station {seat} {line_id}")
     sys.exit(0)
 if handoff_to is not None:
     head = sha.lower()

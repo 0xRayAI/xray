@@ -6,6 +6,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+- A weekday poll can post one station nudge per seat. The line says to run station and re-read OP-PROC. The plist template is not loaded. Refs #631.
 - The board header says Refreshed for the page pull. The light says Last activity for the newest GitHub event.
 - house/live tests get 30 minutes and a Playwright browser cache. A cold Chromium download was using the old 15 minute cap. Refs #634.
 - Inbox alias fixtures use a fresh stamp. A line older than 7 days is dropped on save, and the 2026-10-19 stamp had aged out. Refs #637.

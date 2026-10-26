@@ -75,6 +75,25 @@ class HandoffCommand(unittest.TestCase):
         self.assertEqual(posted["id"], "handoff:0xrayai/xray#22:ready:abc1234")
         self.assertEqual(posted["sha"], "abc1234")
 
+    def test_station_posts_one_nudge(self):
+        Inbox.posts = []
+        r = self.run_handoff("--station")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertNotIn("seat-key-forge", r.stdout + r.stderr)
+        self.assertEqual(len(Inbox.posts), 1)
+        line = Inbox.posts[0]["body"]["lines"][0]
+        self.assertEqual(line["type"], "nudge")
+        self.assertEqual(line["kind"], "station")
+        self.assertEqual(line["from"], "forge")
+        self.assertEqual(line["seat"], "forge")
+        self.assertEqual(line["number"], 0)
+        self.assertEqual(line["reason"], "Run station and re-read OP-PROC")
+        self.assertRegex(line["id"], r"^nudge:station:forge:\d{4}-\d{2}-\d{2}T\d{2}$")
+        before = len(Inbox.posts)
+        mixed = self.run_handoff("--station", "--handoff", "critic", "--pr", "0xRayAI/xray#1", "--kind", "ready", "--sha", "abc1234")
+        self.assertNotEqual(mixed.returncode, 0)
+        self.assertEqual(len(Inbox.posts), before)
+
     def test_cloud_turn_posts_kind_turn_only(self):
         agent = "bc-531f2033-90e0-595f-87de-8dfe576ec69c"
         env = {**self.env, "CURSOR_AGENT": "1", "CURSOR_CONVERSATION_ID": agent}
