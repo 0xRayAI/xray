@@ -1,4 +1,4 @@
-"""Seat inboxes (xray PR #5 port): first pass seeds silently; a real new event lands in the right seat file."""
+"""Seat inboxes (xray PR #5 port): the seed pass delivers the grace window; older history stays silent."""
 import json, os, subprocess, sys, tempfile, time, unittest
 from datetime import datetime
 from pathlib import Path
@@ -105,6 +105,43 @@ class InboxPass(unittest.TestCase):
             self.assertFalse(rd("mill"))
             self.assertTrue(any(l.get("id") == "op:rw:abcd1234:SUCCESS" for l in rd("forge")))
             self.assertFalse(any(l.get("id") == "op:rw:abcd1234:BUILDING" for l in rd("forge")))
+
+    def test_seed_delivers_fresh_arch1_mention(self):
+        """Empty route state still delivers a fresh @arch10x comment and handoff (#620).
+
+        The seed pass marks older ids seen and writes no line for them. An issue
+        comment, a PR comment, and a packet inside the grace are delivered once.
+        """
+        with tempfile.TemporaryDirectory() as d:
+            run = Path(d); (run / "feed").mkdir(); (run / "fleet").mkdir()
+            env = dict(os.environ, MESH_RUN=str(run), LIVE_BOARD="off")
+            R = "0xRayAI/xray"
+            old_issue = {"id": f"{R}!608:comment:6402034337", "t_ct": ct(900), "kind": "issue_comment", "repo": R,
+                         "number": 608, "from": "forge0x1[bot]", "label": "forge comment · xray issue #608",
+                         "source": "https://github.com/0xRayAI/xray/issues/608#issuecomment-6402034337", "mentions": ["arch10x"]}
+            old_pr = {"id": f"{R}#614:comment:6413388677", "t_ct": ct(3 * 3600), "kind": "pr_comment", "repo": R,
+                      "number": 614, "from": "critic0x[bot]", "label": "critic comment · xray pull #614",
+                      "source": "https://github.com/0xRayAI/xray/pull/614#issuecomment-6413388677", "mentions": ["arch10x"]}
+            fresh_issue = {"id": f"{R}!620:comment:6413715112", "t_ct": ct(60), "kind": "issue_comment", "repo": R,
+                           "number": 620, "from": "forge0x1[bot]", "label": "forge comment · xray issue #620",
+                           "source": "https://github.com/0xRayAI/xray/issues/620#issuecomment-6413715112", "mentions": ["arch10x"]}
+            fresh_pr = {"id": f"{R}#615:comment:6413389184", "t_ct": ct(30), "kind": "pr_comment", "repo": R,
+                        "number": 615, "from": "forge0x1[bot]", "label": "forge comment · xray pull #615",
+                        "source": "https://github.com/0xRayAI/xray/pull/615#issuecomment-6413389184", "mentions": ["arch10x"]}
+            fresh_handoff = {"id": f"handoff:{R}#549:ready:c6366225661", "t_ct": ct(20), "kind": "packet", "repo": R,
+                             "number": 549, "from": "forge0x1[bot]", "label": "handoff ready",
+                             "source": "https://github.com/0xRayAI/xray/issues/549", "mentions": ["arch10x"]}
+            feed = run / "feed" / "live-events.json"
+            feed.write_text(json.dumps({"events": [old_issue, old_pr, fresh_issue, fresh_pr, fresh_handoff]}))
+            out = self.run_pass(env, "pass").split()
+            self.assertEqual(out[0], "3", out)
+            box = run / "feed" / "inbox-spool"
+            rd = lambda s: [json.loads(x) for x in (box / f"{s}.jsonl").read_text().splitlines()] if (box / f"{s}.jsonl").exists() else []
+            self.assertEqual([l["id"] for l in rd("arch1")], [fresh_issue["id"], fresh_pr["id"], fresh_handoff["id"]])
+            blob = "".join(f.read_text() for f in box.glob("*.jsonl"))
+            self.assertNotIn(old_issue["id"], blob)
+            self.assertNotIn(old_pr["id"], blob)
+            self.assertEqual(self.run_pass(env, "pass"), "0 0")
 
 
 if __name__ == "__main__":

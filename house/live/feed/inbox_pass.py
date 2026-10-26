@@ -8,8 +8,10 @@ Run by the pusher every cycle (no secrets on argv; the ingest secret comes on st
   sent OUT                   -> after a 200, remember those ids
 The local spool ($MESH_RUN/feed/inbox-spool/<seat>.jsonl) is a ring buffer (last 300 lines a seat); the Railway
 server is the source of truth (GET /inbox/<seat>).
-First pass seeds silently (history is never delivered). Inbox lines carry ids, kinds, repo#number, sha, title (event
-label, already in the public feed), url and a short reason; never bodies, prompt text or secrets.
+The first pass marks every id seen and delivers only events inside the seed grace (SEED_GRACE_S). Older history is
+never delivered. A later pass delivers an id once, and skips an id first seen after ROUTE_MAX_AGE_S. Inbox lines carry
+ids, kinds, repo#number, sha, title (event label, already in the public feed), url and a short reason; never bodies,
+prompt text or secrets.
 """
 import json, os, sys, time
 from datetime import datetime, timedelta, timezone
@@ -401,7 +403,10 @@ def cmd_pass(now=None):
                           "t_ct": datetime.fromtimestamp(now, timezone.utc).isoformat(), "edited_from": k})
     ments = {k: v for k, v in ments.items() if k in seen or k in ev}
     new = new + edits + changed
-    if not first and new:
+    # `new` is already inside the floor: seed grace on the first pass, route max age after that.
+    # History was marked seen above and is not in this list. Deliver the grace window on the seed pass too,
+    # or a fresh @arch10x comment is swallowed when the route volume is empty (#620).
+    if new:
         acts = []
         if ACTIVITY.is_file():
             for raw in ACTIVITY.read_text().splitlines()[-2000:]:
@@ -418,7 +423,7 @@ def cmd_pass(now=None):
     _save(STATE, {"seeded": True, "seeded_at": seeded_at, "seen": seen, "sent": st.get("sent") or [], "ments": ments, "sig": sig})
     ring()
     _save(CACHE, c)
-    print(f"{0 if first else len(new)} {lines}")
+    print(f"{len(new)} {lines}")
 
 
 def ring():
