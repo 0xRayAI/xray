@@ -59,6 +59,7 @@ Docs: [guides/autonomy-command](docs-site/docs/guides/autonomy-command.md) · Sk
 
 | Version | Highlights |
 |---------|------------|
+| **4.1.4** | Node is 24.22.1. Review verdicts are PASS or FIX. The roster chip is the seat name. The header says Refreshed for the page pull. The light says Last activity for the newest GitHub event. A noop wake 409 is skipped. |
 | **4.1.0** | Bifrost is the collector board. A cloud agent is a board row. A stuck card's L2 nudge goes to the CoS role. `live-inbox` requires `LIVE_URL` and `SEAT_KEYS_DIR`. `LIVE_CURSORS` is not required. Goggles views one plane. The card is in LENS.md. A search runs inside that card. |
 | **4.0.43** | Confer completes only on a real PASS. Cursor gate events fail closed, except EACCES when a cloud wrapper cannot write dest. Gate C cannot be skipped. |
 | **4.0.42** | Confer votes. Burst runs the swarm. |
