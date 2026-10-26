@@ -4,6 +4,7 @@
 
 ### 🔄 Changes
 
+- The README hero shoulder says v4.1. The exo poster and the social card say v4.1.4.
 - The roster chip is the seat name again. The role opens on a click. Status stays on the dot. Refs #635.
 - A weekday poll can post one station nudge per seat. The line says to run station and re-read OP-PROC. The plist template is not loaded. Refs #631.
 - The board header says Refreshed for the page pull. The light says Last activity for the newest GitHub event.
