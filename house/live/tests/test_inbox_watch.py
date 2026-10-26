@@ -1,4 +1,4 @@
-"""tools/inbox-watch.sh: FAIL once per distinct error, ACTION_REQUIRED+unfinished:N on every open poll, auto-ack closed items, held lines once."""
+"""tools/inbox-watch.sh: FAIL once per distinct error, pop a delivered open id, auto-ack closed items, held lines once."""
 import os, subprocess, tempfile, unittest
 from pathlib import Path
 
@@ -127,18 +127,21 @@ exit 0
         self.assertNotIn("--turn", calls)
         self.assertNotIn("seat-key", r.stdout + r.stderr)
 
-    def test_held_label_once_and_open_line_repeats(self):
+    def test_held_label_once_and_open_line_pops(self):
         open_line = '{"id":"open-1","repo":"0xRayAI/xray","number":549,"title":"open"}'
         held_line = '{"id":"held-1","repo":"0xRayAI/xray","number":570,"title":"held"}'
         body = """
-if [[ "$*" == *"--turn"* || "$*" == *"--ack"* ]]; then exit 0; fi
-count="$(dirname "$0")/n"
+if [[ "$2" == "--turn" ]]; then exit 0; fi
+if [[ "$2" == "--ack" ]]; then echo "$3" >> "$(dirname "$0")/acked"; exit 0; fi
+d="$(dirname "$0")"
 n=0
-[[ -f "$count" ]] && n=$(cat "$count")
+[[ -f "$d/n" ]] && n=$(cat "$d/n")
 n=$((n + 1))
-echo "$n" > "$count"
+echo "$n" > "$d/n"
 if [[ "$n" -le 2 ]]; then
-  echo '%s'
+  if [[ ! -f "$d/acked" ]] || ! grep -qx 'open-1' "$d/acked"; then
+    echo '%s'
+  fi
   echo '%s'
 fi
 exit 0
@@ -154,14 +157,18 @@ esac
             hooks = self._hooks(d, gh)
             r, calls = self._run(body, ["arch1"], dict({"INBOX_WATCH_MAX": "3"}, **hooks))
         self.assertEqual(r.returncode, 0, r.stderr)
-        self.assertEqual(r.stdout.count("ACTION_REQUIRED"), 2)
-        self.assertEqual(r.stdout.count("unfinished:1"), 2)
-        self.assertEqual(r.stdout.count("open-1"), 2)
+        self.assertEqual(r.stdout.count("ACTION_REQUIRED"), 1)
+        self.assertEqual(r.stdout.count("unfinished:1"), 1)
+        self.assertEqual(r.stdout.count("pop open-1"), 1)
+        self.assertEqual(r.stdout.count("line 0xRayAI/xray#549 open-1 open"), 1)
         self.assertNotIn(open_line, r.stdout)
         self.assertEqual(r.stdout.count("held: 1"), 1)
         self.assertNotIn(held_line, r.stdout)
         self.assertNotIn("auto-ack", r.stdout)
-        self.assertNotIn("--ack", calls)
+        self.assertNotIn("pop held-1", r.stdout)
+        self.assertEqual(calls.count("--ack open-1"), 1)
+        self.assertNotIn("--ack held-1", calls)
+        self.assertNotIn("--ack all", calls)
         self.assertEqual(calls.count("--turn start --tag wake"), 1)
         self.assertEqual(calls.count("--turn end"), 1)
 
@@ -188,7 +195,7 @@ exit 0
         self.assertEqual(calls.count("--turn start --tag wake"), 1)
         self.assertEqual(calls.count("--turn end"), 1)
 
-    def test_gh_failure_leaves_the_line_open(self):
+    def test_gh_failure_delivers_then_pops(self):
         line = '{"id":"unknown-1","repo":"0xRayAI/xray","number":588,"title":"unknown"}'
         body = """
 if [[ "$*" == *"--turn"* || "$*" == *"--ack"* ]]; then exit 0; fi
@@ -204,7 +211,9 @@ exit 0
         self.assertIn("unknown-1", r.stdout)
         self.assertNotIn(line, r.stdout)
         self.assertNotIn("auto-ack", r.stdout)
-        self.assertNotIn("--ack", calls)
+        self.assertEqual(r.stdout.count("pop unknown-1"), 1)
+        self.assertEqual(calls.count("--ack unknown-1"), 1)
+        self.assertNotIn("--ack all", calls)
 
     def test_ack_failure_reprints_the_line(self):
         line = '{"id":"closed-2","repo":"0xRayAI/xray","number":532,"title":"merged"}'
@@ -225,29 +234,62 @@ exit 0
         self.assertNotIn(line, r.stdout)
         self.assertIn("--ack closed-2", calls)
 
-    def test_same_open_set_prints_unfinished(self):
-        """Same non-empty set reprints ACTION_REQUIRED + unfinished:N; empty stays quiet."""
-        line = '{"id":"open-2","repo":"0xRayAI/xray","number":608,"title":"still open","type":"issue_comment"}'
+    def test_delivered_open_line_pops_and_a_new_id_prints(self):
+        """A delivered id is popped once. A later id is a new line. Empty stays quiet."""
+        first = '{"id":"open-2","repo":"0xRayAI/xray","number":608,"title":"still open","type":"issue_comment"}'
+        second = '{"id":"open-3","repo":"0xRayAI/xray","number":608,"title":"newer","type":"issue_comment"}'
         body = """
-if [[ "$*" == *"--turn"* || "$*" == *"--ack"* ]]; then exit 0; fi
-count="$(dirname "$0")/n"
+if [[ "$2" == "--turn" ]]; then exit 0; fi
+if [[ "$2" == "--ack" ]]; then echo "$3" >> "$(dirname "$0")/acked"; exit 0; fi
+d="$(dirname "$0")"
 n=0
-[[ -f "$count" ]] && n=$(cat "$count")
+[[ -f "$d/n" ]] && n=$(cat "$d/n")
 n=$((n + 1))
-echo "$n" > "$count"
-if [[ "$n" -le 2 ]]; then echo '%s'; fi
+echo "$n" > "$d/n"
+acked() { [[ -f "$d/acked" ]] && grep -qx "$1" "$d/acked"; }
+if [[ "$n" -eq 1 ]]; then echo '%s'; fi
+if [[ "$n" -eq 2 ]]; then
+  acked open-2 || echo '%s'
+  echo '%s'
+fi
+if [[ "$n" -ge 3 ]]; then
+  acked open-2 || echo '%s'
+  acked open-3 || echo '%s'
+fi
 exit 0
-""" % line
+""" % (first, first, second, first, second)
         with tempfile.TemporaryDirectory() as d:
             hooks = self._hooks(d, "printf 'open\\t\\tbug\\n'")
             r, calls = self._run(body, ["arch1"], dict({"INBOX_WATCH_MAX": "3"}, **hooks))
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertEqual(r.stdout.count("ACTION_REQUIRED"), 2)
         self.assertEqual(r.stdout.count("unfinished:1"), 2)
-        self.assertEqual(r.stdout.count("open-2"), 2)
-        self.assertNotIn(line, r.stdout)
+        self.assertEqual(r.stdout.count("pop open-2"), 1)
+        self.assertEqual(r.stdout.count("pop open-3"), 1)
+        self.assertEqual(r.stdout.count("still open"), 1)
+        self.assertEqual(r.stdout.count("newer"), 1)
+        self.assertNotIn(first, r.stdout)
+        self.assertNotIn(second, r.stdout)
+        self.assertEqual(calls.count("--ack open-2"), 1)
+        self.assertEqual(calls.count("--ack open-3"), 1)
+        self.assertNotIn("--ack all", calls)
         self.assertEqual(calls.count("--turn start --tag wake"), 1)
         self.assertEqual(calls.count("--turn end"), 1)
+
+    def test_poison_id_all_is_not_acked(self):
+        line = '{"id":"all","repo":"0xRayAI/xray","number":608,"title":"poison"}'
+        body = """
+if [[ "$*" == *"--turn"* || "$*" == *"--ack"* ]]; then exit 0; fi
+echo '%s'
+exit 0
+""" % line
+        with tempfile.TemporaryDirectory() as d:
+            hooks = self._hooks(d, "printf 'open\\t\\tbug\\n'")
+            r, calls = self._run(body, ["arch1"], dict({"INBOX_WATCH_MAX": "1"}, **hooks))
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(r.stdout.count("ACTION_REQUIRED"), 1)
+        self.assertIn("poison", r.stdout)
+        self.assertNotIn("pop ", r.stdout)
         self.assertNotIn("--ack", calls)
 
 
