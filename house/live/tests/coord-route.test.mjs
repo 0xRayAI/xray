@@ -204,7 +204,7 @@ describe('coord and operator routing', { concurrency: 1 }, () => {
       assert.notEqual(held.seat, 'blinky');
 
       const line = (id, seat) => ({
-        id, t_ct: '2026-10-19T12:00:00-05:00', seat, type: 'note', repo: 'example-org/app', number: 3,
+        id, t_ct: new Date(Date.now() - 60 * 1000).toISOString(), seat, type: 'note', repo: 'example-org/app', number: 3,
         title: 'example alias', url: 'https://github.com/example-org/app/pull/3', reason: 'example alias',
       });
       const posted = await fetch(base + '/inbox', {
