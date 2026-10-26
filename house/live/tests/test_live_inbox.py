@@ -173,5 +173,77 @@ class HandoffCommand(unittest.TestCase):
         self.assertIn("server unreachable", r.stderr)
 
 
+
+    def test_cloud_posts_cloud_agent_and_rebinds_xray_tag(self):
+        agent = "bc-043681df"
+        full = "bc-531f2033-90e0-595f-87de-8dfe576ec69c"
+        Inbox.posts = []
+        short = self.run_handoff("--cloud", "reply", "--agent", agent, "--tag", "xray#628")
+        self.assertEqual(short.returncode, 0, short.stderr)
+        self.assertNotIn("seat-key-forge", short.stdout + short.stderr)
+        self.assertEqual(Inbox.posts[0]["path"], "/activity")
+        self.assertEqual(Inbox.posts[0]["auth"], "Bearer seat-key-forge")
+        body = Inbox.posts[0]["body"]
+        self.assertEqual(body["kind"], "cloud_agent")
+        self.assertEqual(body["action"], "reply")
+        self.assertEqual(body["agent"], agent)
+        self.assertEqual(body["tag"], "0xRayAI/xray#628")
+        self.assertNotIn("seat", body)
+        self.assertRegex(body["t_ct"], r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$")
+        kept = self.run_handoff("--cloud", "launch", "--agent", agent, "--tag", "0xRayAI/xray#0627")
+        self.assertEqual(kept.returncode, 0, kept.stderr)
+        self.assertEqual(Inbox.posts[-1]["body"]["tag"], "0xRayAI/xray#627")
+        self.assertEqual(Inbox.posts[-1]["body"]["action"], "launch")
+        other = self.run_handoff("--cloud", "cancel", "--agent", agent, "--tag", "0xRayAI/bifrost#12")
+        self.assertEqual(other.returncode, 0, other.stderr)
+        self.assertEqual(Inbox.posts[-1]["body"]["tag"], "0xRayAI/bifrost#12")
+        self.assertEqual(Inbox.posts[-1]["body"]["action"], "cancel")
+        bare = self.run_handoff("--cloud", "finished", "--agent", full)
+        self.assertEqual(bare.returncode, 0, bare.stderr)
+        self.assertEqual(set(Inbox.posts[-1]["body"]), {"kind", "action", "agent", "t_ct"})
+        self.assertEqual(Inbox.posts[-1]["body"]["action"], "finished")
+        self.assertEqual(Inbox.posts[-1]["body"]["agent"], full)
+
+    def test_cloud_refuses_a_bad_tag_agent_or_turn_mix(self):
+        before = len(Inbox.posts)
+        refused = [
+            ["--cloud", "reply", "--tag", "xray#628"],
+            ["--cloud", "nope", "--agent", "bc-043681df"],
+            ["--cloud", "reply", "--agent", "x", "--tag", "xray#1"],
+            ["--cloud", "reply", "--agent", "bc-043681df", "--tag", "bifrost#3"],
+            ["--cloud", "reply", "--agent", "bc-043681df", "--tag", "xray#0"],
+            ["--cloud", "reply", "--agent", "bc-043681df", "--turn", "start"],
+            ["--cloud", "reply", "--agent", "bc-043681df", "--tag", "xray#628", "--turn", "start"],
+        ]
+        for args in refused:
+            got = self.run_handoff(*args)
+            self.assertNotEqual(got.returncode, 0, args)
+            self.assertEqual(len(Inbox.posts), before, args)
+
+    def test_cloud_posts_while_another_turn_owns_the_claim(self):
+        cur = Path(self.env["LIVE_CURSORS"])
+        cur.mkdir(parents=True, exist_ok=True)
+        sleeper = subprocess.Popen(["sleep", "30"])
+        try:
+            (cur / "forge.claims.json").write_text(json.dumps({
+                "0xrayai/xray#1|abc1234|ready": {"pid": sleeper.pid, "token": "other-wake", "at": 1, "id": "line"},
+            }))
+            Inbox.posts = []
+            blocked = self.run_handoff("--turn", "start", "--tag", "bc-043681df track")
+            self.assertEqual(blocked.returncode, 0, blocked.stderr)
+            self.assertEqual(blocked.stdout, "")
+            self.assertEqual(Inbox.posts, [])
+            posted = self.run_handoff("--cloud", "reply", "--agent", "bc-043681df", "--tag", "xray#628")
+            self.assertEqual(posted.returncode, 0, posted.stderr)
+            self.assertEqual(len(Inbox.posts), 1)
+            self.assertEqual(Inbox.posts[0]["body"]["kind"], "cloud_agent")
+            self.assertEqual(Inbox.posts[0]["body"]["tag"], "0xRayAI/xray#628")
+            saved = json.loads((cur / "forge.claims.json").read_text())
+            self.assertEqual(saved["0xrayai/xray#1|abc1234|ready"]["token"], "other-wake")
+        finally:
+            sleeper.kill()
+            sleeper.wait(timeout=5)
+
+
 if __name__ == "__main__":
     unittest.main()

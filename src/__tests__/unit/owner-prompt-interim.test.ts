@@ -11,8 +11,10 @@ const ACK_ALL = '--ack all';
 const TURN_START = 'live-inbox <seat> --turn start --tag "bc-<first8> <track>"';
 const TURN_END = 'live-inbox <seat> --turn end --tag "bc-<first8>"';
 
+const CLOUD_LAUNCH = 'live-inbox <seat> --cloud launch --agent <bc-id> --tag <card>';
+const CLOUD_FINISH = 'live-inbox <seat> --cloud finished --agent <bc-id> --tag <card>';
 const INTERIM =
-  `On every owner message, first run \`${PROMPT}\`; after handling any inbox line (in chat or on a wake), ack it right away with \`${ACK}\` (or \`${ACK_ALL}\` once everything open is handled); when you launch or resume a cloud agent run \`${TURN_START}\`; when it finishes or is cancelled run \`${TURN_END}\`. No exceptions for short turns.`;
+  `On every owner message, first run \`${PROMPT}\`; after handling any inbox line (in chat or on a wake), ack it right away with \`${ACK}\` (or \`${ACK_ALL}\` once everything open is handled); when you launch or resume a cloud agent run \`${TURN_START}\` and \`${CLOUD_LAUNCH}\` (resume uses \`--cloud reply\`); when it finishes or is cancelled run \`${TURN_END}\` and \`${CLOUD_FINISH}\` (cancel uses \`--cloud cancel\`). The tag is owner/repo#n or xray#n. The cloud agent does not post that line. No exceptions for short turns.`;
 
 const FILES = [
   'grok-bot/OP-PROC.md',
