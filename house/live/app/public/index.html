@@ -1929,6 +1929,12 @@ footer a { color: var(--foot); }
   });
 
   function frame(nowWall) {
+    // A hidden tab keeps the painted card ages. The show path repaints them.
+    if (document.hidden) {
+      lastFrame = nowWall;
+      requestAnimationFrame(frame);
+      return;
+    }
     var dt = Math.min(250, nowWall - lastFrame); lastFrame = nowWall;
     if (playing && (replay || !state.live)) {
       if (replay) state.live = false;
