@@ -598,3 +598,11 @@ test('kit live-config carries no install brand (no Example / example.com); produ
   const out = L.applyFeed({}, { product_nodes: ['burst-live'], events: [{ id: 1, t_ct: '2026-10-13T10:00:00-05:00', from: 'Railway', to: 'burst-live' }] }).state.events;
   assert.equal(out[0].to, 'mymuse.house');
 });
+test('a held card displays as Parked with its named blocker; inputs still read as held', () => {
+  const L = loadCfg(true);
+  assert.equal(L.cardBucket({ state: 'held' }), 'held');
+  assert.equal(L.parkedLabel({ state: 'held', hold: { reason: 'org/repo#123' } }), 'Parked behind org/repo#123');
+  assert.equal(L.parkedLabel({ state: 'held' }), 'Parked');
+  assert.match(html, /wbadge held', L\.parkedLabel\(c\)/);
+  assert.doesNotMatch(html, /'On hold'/);
+});

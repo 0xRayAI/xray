@@ -129,12 +129,17 @@ def beat_of(e):
         if st == "APPROVED":
             return "Reviewer PASS"
         if st == "CHANGES_REQUESTED":
-            return "Reviewer FAIL"
+            return "Reviewer FIX"
     if k in ("pr_commit", "pr_force_push", "pr_update"):
         return "pushed"
     if k.startswith("critic_"):
-        v = e.get("recheck_result") or k.split("_", 1)[1].upper()
-        return f"Reviewer {str(v).upper()}"
+        # critic_fail stays the wire id. The beat is Reviewer FIX, including a legacy FAIL or HOLD comment.
+        result = str(e.get("recheck_result") or "").upper()
+        if result:
+            return f"Reviewer {result}"
+        if k == "critic_fail":
+            return "Reviewer FIX"
+        return f"Reviewer {k.split('_', 1)[1].upper()}"
     if k in ("check_run", "workflow_run", "ci_pass", "ci_fail") and (e.get("conclusion") or k.startswith("ci_")):
         return "CI " + (e.get("conclusion") or k[3:])
     if k == "merged":
@@ -704,7 +709,7 @@ def _card_transitions(card, beats, by_id, merged, explicit_close, close_id):
                 emit("released", "live", stage, b)
                 was_held = False
             emit("merged", "closed", "done", b)
-        elif what in ("Reviewer FAIL", "Reviewer HOLD") or what in ("CI failure", "CI timed_out"):
+        elif what in ("Reviewer FIX", "Reviewer FAIL", "Reviewer HOLD") or what in ("CI failure", "CI timed_out"):
             if stage != "fix":
                 emit("stage", "closed" if state == "closed" else "live", "fix", b)
         elif what.startswith("Reviewer PASS") and state != "closed" and stage != "merge":
@@ -840,7 +845,7 @@ def model(extra_events=None, now=None, prompts=None, held=None):
             w = b["what"]
             if w in ("opened", "pushed"):
                 stage = "review" if c["kind"] == "pr" else stage
-            elif w in ("Reviewer FAIL", "Reviewer HOLD") or w in ("CI failure", "CI timed_out"):
+            elif w in ("Reviewer FIX", "Reviewer FAIL", "Reviewer HOLD") or w in ("CI failure", "CI timed_out"):
                 stage = "fix"
             elif w.startswith("Reviewer PASS") or (w == "CI success" and stage == "merge"):
                 stage = "merge" if stage != "fix" or w.startswith("Reviewer PASS") else stage

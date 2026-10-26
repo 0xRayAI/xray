@@ -30,8 +30,8 @@ after merge needs a new issue. The card also moves to **done** when:
 - the card owner's own comment says it's resolved ("resolved", "superseded", "fixed by #N", "nothing … waiting",
   "no action needed", "can be closed"). The collector keeps only a true/false flag and the `#N` numbers, never text.
 
-## Holds
-A card is **held** (visible, not stalled, no level 1/2/3) when the owner posts a comment whose first line is
-`Held: <reason>` with an optional `until:`, when the issue carries `GITHUB_HOLD_LABEL` (default `on-hold`), or when
-a Jira item's status equals `JIRA_HOLD_STATUS` (default `On Hold`). A `Parked:` comment still parks and wins over a hold.
-If a hold stays quiet past `HELD_MAX_S` (default 72h), the owner gets one nudge, unless the repo is in `NO_NUDGE_REPOS`.
+## Parked behind a blocker
+A card shows as **Parked** with its named blocker (visible, not stalled, no level 1/2/3) when the owner posts a comment whose first line is
+`Held: <blocker>` (name or link what it waits on, e.g. `Held: org/repo#123`) with an optional `until:`, when the issue carries `GITHUB_HOLD_LABEL` (default `on-hold`), or when
+a Jira item's status equals `JIRA_HOLD_STATUS` (default `On Hold`). A `Parked:` comment still parks and wins. Inputs are unchanged; only the display says Parked.
+If a parked-behind-blocker card stays quiet past `HELD_MAX_S` (default 72h), the owner gets one nudge, unless the repo is in `NO_NUDGE_REPOS`.

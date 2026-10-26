@@ -24,7 +24,7 @@ Every packet CoS sends gets a card here first. Every receipt closes or updates i
 ### Card — WAVEBOARD-NAME-CLAIM (IN FLIGHT · owner forge (search), CoS (spec text) · 2026-09-25)
 - **Goal:** dated public first use of "0xRay Waveboard" as a product name.
 - **Found:** first public "WAVEBOARD" in 0xRayAI/xray commit `291f743` (PR #33), 2026-09-13 07:46 CT; also in npm @0xray/grok-bot@0.1.1 the same day.
-- **Next:** spec PR `grok-bot/WAVEBOARD.md` from the one-page proc words; docs PR, Normal (forge + CI). Forge spec step on HOLD until PROCESS-AUDIT closes.
+- **Next:** spec PR `grok-bot/WAVEBOARD.md` from the one-page proc words; docs PR, Normal (forge + CI). Forge spec step parked behind PROCESS-AUDIT.
 - **Blaze only:** trademark filing (capital, lawyer clearance first).
 
 ### Card — PROCESS-AUDIT (IN FLIGHT · owner CoS · 2026-09-25)
@@ -37,14 +37,14 @@ Every packet CoS sends gets a card here first. Every receipt closes or updates i
 - **Next:** review the first live posts for friend-test; tune the voice prompt via forge if they drift.
 
 ## Open backlog (encode when seats are awake)
-- **AGENT-COMMAND-LEXICON**: Dist HOLD per Blaze. Stamp the house command vocabulary into seats. Source https://x.com/Blaze0x1/status/2103073249038860606
+- **AGENT-COMMAND-LEXICON**: Needs Blaze: Dist ships on your yes. Stamp the house command vocabulary into seats. Source https://x.com/Blaze0x1/status/2103073249038860606
 - **HOT-SWAP-SUIT-DELTA**: record Blaze's result (keyword lost after compaction without the suit, kept with it) in the survive-compact skill.
 - **MEMORY-ENCODE**: merged from GROK47-SCORE-MEM-PLATES, HOT-SWAP-COMPACTION-SURVIVAL-V1, ARCH1-HOLD-LINE-MEMORY, ARCH1-MEMORY-BREAKFIX. One memory break/fix track, first failure case still unnamed.
 - **DIGRESSIVE-INVERSION**: put "answer what was asked, one next step" into seat contracts and the grok-bot mirror.
 - **REBASE-NEXT-WAVEBOARD**: every "~ next" becomes a ticket here. Now covered by the Rule above; close when the wave-loop skill says it.
 
 ## Blocked on Blaze
-- Attract ZERO-FOREIGN broken (7 foreign); Attract HOLD until the Rippel-canvas dogfood.
+- Attract ZERO-FOREIGN broken (7 foreign); Attract parked behind the Rippel-canvas dogfood.
 - Delete magnet-DUPLICATE-DELETE-ME from the sidebar.
 - Reconcile Auto Review always-allows against capital.
 

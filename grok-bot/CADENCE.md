@@ -17,7 +17,7 @@ Syncopate means finding our head from our tail: we watch what we actually did, w
 This cadence is how the room decides spend. It is not the Confer feature, which stays off (see house).
 1. Design before spend. Critic and CoS agree the fix design before the first paid cloud round. Critic's first review gives the complete blocker list; later rounds add nothing new unless the code changed.
 2. Acceptance before the round. The tests or probes that decide PASS are agreed in the room before the round is sent. The review checks only those, plus the diff stat and the type-check (tsc) count.
-3. One paid round per PR. A second Strict FAIL goes to Blaze with a smaller design or a shelve recommendation. No automatic retry.
+3. One paid round per PR. A second Strict FIX goes under Needs owner with a smaller design or a shelve recommendation. No automatic retry.
 4. Outage exception. If the PR fixes something that is down, the round cap does not apply. Each round stays small and fixes only the named blocker; no redesign, never shelve.
 5. Consensus on blockers vs nits. Critic labels each finding:
    - BLOCKER: names live behavior, money spent, data lost, or a failing test.
@@ -31,7 +31,7 @@ This cadence is how the room decides spend. It is not the Confer feature, which 
 9. Gos. Publish, deploy, spend and prod credentials need Blaze's go (merge: see rule 10). A go covers exactly what it names.
 10. Merge on PASS. A critic PASS on an unchanged head is the go to merge, with no second ask, except in repos the house marks careful-change, which need the owner's explicit go. A hotfix is the one exception: it merges only on green CI, never before. Any new push needs a fresh verdict. Publish and deploy still need their own go (rule 9).
 11. CI before merge. Do not merge until CI/CD has been updated for the change.
-12. Bulk check. Every Strict review lists files added outside the package (run logs, rerun folders, duplicate JSON, nested lockfiles, sample apps). Unexplained bulk is a FAIL.
+12. Bulk check. Every Strict review lists files added outside the package (run logs, rerun folders, duplicate JSON, nested lockfiles, sample apps). Unexplained bulk is a FIX.
 13. Check before you claim. The reviewer reads or runs the code before raising a finding.
 14. Errors to GENESIS. Every confirmed error gets a GENESIS entry the same day it is confirmed.
 
