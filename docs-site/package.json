@@ -44,5 +44,8 @@
   },
   "engines": {
     "node": ">=24.22.1"
+  },
+  "overrides": {
+    "body-parser": "^1.20.9"
   }
 }
