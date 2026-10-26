@@ -463,19 +463,32 @@ class Model(unittest.TestCase):
         evs += [self.ev(n, "issue_open", 3 * 86400, title=f"parked {n}", pr_state="open", labels=["parked"]) for n in range(31, 51)]
         evs += [self.ev(80, "pr_open", 7200, title="just merged"), self.ev(80, "merged", 1800)]
         body = [c for c in self.w.model(evs)["cards"] if not c.get("pinned")]
-        self.assertEqual(len(body), self.w.MAX_CARDS)
+        self.assertEqual(sum(1 for c in body if c["state"] == "live"), 30)
+        self.assertEqual(sum(1 for c in body if c["state"] == "parked"), 20)
         hit = next(c for c in body if c["number"] == 80)
         self.assertEqual((hit["state"], hit["stage"], hit["verb"]), ("closed", "done", "merged"))
-        self.assertLess(sum(1 for c in body if c["state"] == "parked"), 20)
-        self.assertTrue(any(c["state"] == "parked" for c in body))
+        parked_at = min(i for i, c in enumerate(body) if c["state"] == "parked")
+        self.assertLess(body.index(hit), parked_at)
+
+    def test_open_rows_stay_when_the_closed_page_is_full(self):
+        evs = [self.ev(n, "issue_open", 600, title=f"open {n}", pr_state="open") for n in range(1, 46)]
+        evs += [self.ev(90, "pr_open", 5000, title="kept"), self.ev(90, "merged", 1000)]
+        m = self.w.model(evs)
+        nums = {c["number"] for c in m["cards"] if not c.get("pinned")}
+        self.assertTrue(set(range(1, 46)) <= nums)
+        self.assertIn(90, nums)
 
     def test_cap_cut_still_settles_the_merge(self):
-        evs = [self.ev(n, "issue_open", 600, title=f"open {n}", pr_state="open") for n in range(1, 46)]
-        evs += [self.ev(90, "pr_open", 5000, title="capped"), self.ev(90, "merged", 1000)]
+        evs = [self.ev(1, "issue_open", 600, title="open", pr_state="open")]
+        for n in range(2, 2 + self.w.MAX_CARDS + 1):
+            evs += [self.ev(n, "pr_open", 5000, title=f"m{n}"), self.ev(n, "merged", 1000)]
         m = self.w.model(evs)
-        self.assertNotIn(90, {c["number"] for c in m["cards"]})
-        settled = [c for c in m["settled"] if c["number"] == 90]
-        self.assertEqual([(c["state"], c["stage"], c["verb"]) for c in settled], [("closed", "done", "merged")])
+        body = [c for c in m["cards"] if not c.get("pinned")]
+        self.assertIn(1, {c["number"] for c in body})
+        self.assertEqual(sum(1 for c in body if c["state"] == "closed"), self.w.MAX_CARDS)
+        overflow = [c for c in m["settled"] if c["state"] == "closed"]
+        self.assertEqual(len(overflow), 1)
+        self.assertEqual((overflow[0]["stage"], overflow[0]["verb"]), ("done", "merged"))
 
     def test_transitions_are_kept_when_the_cap_and_the_14_day_filter_drop_the_card(self):
         merge = self.ev(90, "merged", 1000)
@@ -483,8 +496,10 @@ class Model(unittest.TestCase):
         evs += [self.ev(90, "pr_open", 5000, title="capped"), merge]
         evs.append(self.ev(900, "issue_open", 20 * 86400, title="stale", pr_state="open"))
         m = self.w.model(evs)
-        self.assertNotIn(90, {c["number"] for c in m["cards"]})
-        self.assertNotIn(900, {c["number"] for c in m["cards"] + m["settled"]})
+        self.assertIn(90, {c["number"] for c in m["cards"]})
+        stale = next(c for c in m["cards"] if c["number"] == 900)
+        self.assertEqual(stale["state"], "parked")
+        self.assertNotIn(900, {c["number"] for c in m["settled"]})
         merged = [t for t in m["transitions"] if t["card"].endswith("#90") and t["transition"] == "merged"]
         self.assertEqual(len(merged), 1)
         self.assertEqual(merged[0]["source_id"], merge["id"])
@@ -548,7 +563,8 @@ class Model(unittest.TestCase):
         cards = modeled["cards"]
         self.assertEqual(sum(1 for c in cards if c.get("pinned")), 1)
         body = [c for c in cards if not c.get("pinned")]
-        self.assertEqual(len(body), self.w.MAX_CARDS)
+        self.assertGreaterEqual(len(body), self.w.MAX_CARDS)
+        self.assertTrue(set(range(901, 907)) <= {c["number"] for c in body})
         self.assertTrue(any(c["state"] == "live" for c in body))
         self.assertTrue(any(c["state"] == "parked" for c in body))
         by_num = {c["number"]: c for c in body}

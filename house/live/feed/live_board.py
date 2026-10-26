@@ -7,8 +7,8 @@ the collector pass already writes (live_collect.card_fields: title, state, label
 CARD   = one GitHub issue or PR (repo#number): title, url, owner seat, stage (open > review > fix > merge > retest >
          done), state (live | held | parked | closed). A merge, an issue close, or a PR close sets state closed
          and stage done. A failed retest after merge needs a new issue. The board shows a closed card for 24 hours.
-         Inside that window it takes a slot before any parked card. The cap can still cut it from the page.
-         The cut card is returned on settled so /history keeps the final state. The 24h drop does not delete it.
+         The 40-card cap cuts closed rows only. An open issue or PR stays on the board, including a quiet one.
+         A closed row the cap cuts is returned on settled. The 24h drop does not delete it.
 HOLD   = the owner posts a comment whose first line is 'Held: <reason>' (optional until:), or the issue / PR
          carries a label in GITHUB_HOLD_LABEL (default on-hold). A Parked: comment still parks and wins over a hold.
          Repos in NO_NUDGE_REPOS (unset means none) stay visible and are never stalled or nudged.
@@ -652,7 +652,7 @@ def _actor(event, card):
 
 
 def _card_transitions(card, beats, by_id, merged, explicit_close, close_id):
-    """One row per verb, before the 14-day filter and the 40-card cap. A merge keeps its own source id."""
+    """One row per verb, before the closed-row cap. A merge keeps its own source id."""
     rows = []
     stage = "open" if card.get("kind") == "issue" else "review"
     state = "live"
@@ -937,15 +937,18 @@ def model(extra_events=None, now=None, prompts=None, held=None):
             settled.append(c)                              # off the board; /history still gets this final state
         else:
             out.append(c)
-    # live/parked need a beat in 14 days. Closed rows already passed the 24h display window.
-    out = [c for c in out if c["state"] == "closed" or (c["last_beat_t"] and now - c["last_beat_t"] / 1000 < 14 * 86400)]
-    # Closed cards inside the window take a slot before the parked backlog. Live and held stay first.
+    # Open issue and PR cards stay, including ones quiet longer than 14 days.
+    # The page cap cuts closed rows only. Live and held stay ahead of closed, then parked.
     rank = {"live": 0, "held": 0, "closed": 1, "parked": 2}
     out.sort(key=lambda c: (rank[c["state"]], STAGES.index(c["stage"]), -c["last_beat_t"]))
-    visible = out[:MAX_CARDS]
-    for c in out[MAX_CARDS:]:
-        if c.get("state") == "closed":
+    visible, closed_kept = [], 0
+    for c in out:
+        if c.get("state") == "closed" and closed_kept >= MAX_CARDS:
             settled.append(c)
+            continue
+        if c.get("state") == "closed":
+            closed_kept += 1
+        visible.append(c)
     cards = pinned() + visible
     if held:
         cards = _merge_attached(cards, attach_held(held, evs), now)

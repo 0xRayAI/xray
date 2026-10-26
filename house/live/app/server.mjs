@@ -1251,7 +1251,8 @@ function setCards(wb) {
   takeTransitions(wb.transitions);
   if (!Array.isArray(wb.cards)) return;
   const stamp = wb.updated_ct || new Date().toISOString();
-  const sliced = wb.cards.slice(0, 200);
+  // Runaway backstop only. The model no longer page-caps an open issue or PR.
+  const sliced = wb.cards.slice(0, 2000);
   const kept = acceptWaveCards(sliced, waveCards, {
     stalled: feedStalled(),
     feedAgeMs: feedFileAgeMs(),
