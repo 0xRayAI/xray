@@ -6,7 +6,7 @@ Follow these in order. Hostnames and seat names below are examples. Put real URL
 
 ### 1. What runs where
 
-The server process owns the board. Start `/app/docker-entrypoint.sh` from the assembled `house/live/app` directory (Node 20, plus Python 3 on the same machine for the collector child). It serves the page, `/healthz`, cards, inboxes, and acks.
+The server process owns the board. Start `/app/docker-entrypoint.sh` from the assembled `house/live/app` directory (Node 24.22.1, plus Python 3 on the same machine for the collector child). It serves the page, `/healthz`, cards, inboxes, and acks.
 
 When `GITHUB_READ_TOKEN` is set and `COLLECTOR` is not `off`, the server starts `live_mesh.py` as a child. The child writes `$MESH_DATA_DIR/feed/github-events.json`. The server reads that file, keeps the cards and packets, routes new lines into seat inboxes, and fires seat webhooks. That is the whole loop. A box is not required.
 
@@ -90,7 +90,7 @@ HTTP 503 and `"ok": false` means fix `feed_quiet` or `cards_behind`. A quiet nig
 
 ### 6. One command on this machine
 
-From the repo root, with Node 20 and Python 3:
+From the repo root, with Node 24.22.1 and Python 3:
 
 ```bash
 bash house/live/tools/local-smoke.sh
@@ -110,7 +110,7 @@ Code: [house/live/](../live/) (server in `house/live/app/`, feed pass in `house/
 ## 1. Second process: file and start command
 
 There is no separate page/store service. It is one Node process, `house/live/app/server.mjs`
-(Node 20, zero npm dependencies), started with `/app/docker-entrypoint.sh`. It serves:
+(Node 24.22.1, zero npm dependencies), started with `/app/docker-entrypoint.sh`. It serves:
 
 | Route | Auth | What |
 |---|---|---|
