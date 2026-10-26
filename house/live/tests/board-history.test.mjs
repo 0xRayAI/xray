@@ -20,10 +20,10 @@ test('freshness stays green when a non-card event is newer than the cards', () =
   const min = 60000;
   const comment = L.freshTone(now - min, now - 10 * min, now - 10 * min, now);
   assert.equal(comment.tone, 'green');
-  assert.equal(comment.line, 'Updated 1 min ago');
+  assert.equal(comment.line, 'Last activity 1 min ago');
   const quiet = L.freshTone(now - 5 * min, now - 70 * min, now - 70 * min, now);
   assert.equal(quiet.tone, 'green');
-  assert.equal(quiet.line, 'Updated 5 min ago');
+  assert.equal(quiet.line, 'Last activity 5 min ago');
   const behind = L.freshTone(now - min, now - 70 * min, now - min, now);
   assert.equal(behind.tone, 'red');
   assert.equal(behind.line, 'Cards last changed 1 h ago');
