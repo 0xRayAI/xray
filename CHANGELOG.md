@@ -6,6 +6,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+- A Reviewer FIX comment beats as Reviewer FIX. The wire id stays critic_fail.
 - Review verdicts are PASS or FIX only; HOLD and FAIL are retired. Parked is for future scope or a named upstream/downstream blocker; owner waits go under Needs owner with the step they unblock. Target 4.1.4.
 - A Grok prompt or compact hook that omits the script name loads session-start.js. If that hook cannot run, the runner prints no decision, so UserPromptSubmit does not see `allow`.
 - Resolve `fast-uri` to >=3.1.9 in the root and docs-site locks. Refs #616.

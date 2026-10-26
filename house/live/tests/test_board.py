@@ -577,6 +577,17 @@ class Model(unittest.TestCase):
         self.assertIn("Reviewer FIX", [b["what"] for b in bad["beats"]])
         self.assertIsNone(self.w.beat_of({"kind": "review", "state": "COMMENTED"}))
 
+    def test_fix_comment_beats_as_reviewer_fix(self):
+        self.assertEqual(self.w.beat_of({"kind": "critic_fail", "verdict": "FIX"}), "Reviewer FIX")
+        self.assertEqual(self.w.beat_of({"kind": "critic_fail", "verdict": "FAIL"}), "Reviewer FIX")
+        self.assertEqual(self.w.beat_of({"kind": "critic_fail", "verdict": "HOLD"}), "Reviewer FIX")
+        self.assertEqual(self.w.beat_of({"kind": "critic_fail"}), "Reviewer FIX")
+        self.assertEqual(self.w.beat_of({"kind": "critic_fail", "verdict": "RE-CHECK", "recheck_result": "FIX"}), "Reviewer FIX")
+        self.assertEqual(self.w.beat_of({"kind": "critic_pass", "verdict": "PASS"}), "Reviewer PASS")
+        c = self.card([self.ev(63, "pr_open", 4000, title="fix"), self.ev(63, "critic_fail", 3000, verdict="FIX")], 63)
+        self.assertEqual(c["stage"], "fix")
+        self.assertIn("Reviewer FIX", [b["what"] for b in c["beats"]])
+
     def test_a_push_stays_on_the_card_and_merged_by_is_the_merger(self):
         self.assertEqual(self.w.beat_of({"kind": "pr_commit"}), "pushed")
         self.assertEqual(self.w.beat_of({"kind": "pr_force_push"}), "pushed")

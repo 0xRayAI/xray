@@ -55,14 +55,14 @@ OP-PROC is **layered**: pack base (`grok-bot/OP-PROC.md`) then this house file (
 
 ## 3. Nothing ships unproven
 
-- **Review plate.** See [Forward-motion](../grok-bot/OP-PROC.md#forward-motion). A PASS ends it. A failed re-check of an original blocker goes under Needs Blaze with the step it unblocks. A new finding on that re-check is an issue, not a FAIL.
+- **Review plate.** See [Forward-motion](../grok-bot/OP-PROC.md#forward-motion). A PASS ends it. A failed re-check of an original blocker goes under Needs Blaze with the step it unblocks. A new finding on that re-check is an issue, not a FIX.
 - The words must match the live thing. Do not say personalized, generated, or composed for one person when the asset is the same for everyone. Fix the catalog and the page.
 - Open as a draft. Critic reviews by tier (Light, Normal, or Strict; see section 3). Merge only after the gate. Do not land unreviewed work on main. A hotfix is the one exception: it merges only on green CI, never before.
-- **Wrong-author supersede.** If the open head is not forge0x1 when forge0x1 is required, forge0x1 opens one replacement pull request and closes the old one with a pointer. A forge0x1 FAIL stays on that Review plate. Do not open a new pull request for every FAIL.
+- **Wrong-author supersede.** If the open head is not forge0x1 when forge0x1 is required, forge0x1 opens one replacement pull request and closes the old one with a pointer. A forge0x1 FIX stays on that Review plate. Do not open a new pull request for every FIX.
 - A **Nit** does not block by itself. An unverified finding does not block. See [Forward-motion](../grok-bot/OP-PROC.md#forward-motion).
 - A must-fix FIX is a live break: wrong ship, money, lost data, or a security hole. Name the file and the check that fails on the old code.
 - A **Ship-gate FIX** still blocks: the packed install was skipped or used the wrong package, a secret remains, stamp choruses are in the product, or an Arch1-gated tier merged without Arch1's yes.
-- A must-fix FIX becomes an issue with the repro and the file to fix. A Nit is APPROVE plus a follow-up issue. An issue is a card. One pull request per issue, with `Fixes #N`. Merge closes the issue. A parked pull request leaves the issue open and labeled parked. A review FAIL stays on the pull request unless it is a new blocking break.
+- A must-fix FIX becomes an issue with the repro and the file to fix. A Nit is APPROVE plus a follow-up issue. An issue is a card. One pull request per issue, with `Fixes #N`. Merge closes the issue. A parked pull request leaves the issue open and labeled parked. A review FIX stays on the pull request unless it is a new blocking break.
 - A fix is the smallest change that solves the problem and passes its checks. Bigger work gets its own Card.
 - **Docs follow code.** After every merged change, update the docs site in the same track. Every deploy or run issue becomes a generic Symptom / Cause / Fix entry in the troubleshooting FAQ.
 - One seat holds one active ship. Forge may hold three cards that CoS can see. What a card is: see [Card](../grok-bot/OP-PROC.md#card).

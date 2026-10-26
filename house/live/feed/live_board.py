@@ -133,8 +133,13 @@ def beat_of(e):
     if k in ("pr_commit", "pr_force_push", "pr_update"):
         return "pushed"
     if k.startswith("critic_"):
-        v = e.get("recheck_result") or k.split("_", 1)[1].upper()
-        return f"Reviewer {str(v).upper()}"
+        # critic_fail stays the wire id. The beat is Reviewer FIX, including a legacy FAIL or HOLD comment.
+        result = str(e.get("recheck_result") or "").upper()
+        if result:
+            return f"Reviewer {result}"
+        if k == "critic_fail":
+            return "Reviewer FIX"
+        return f"Reviewer {k.split('_', 1)[1].upper()}"
     if k in ("check_run", "workflow_run", "ci_pass", "ci_fail") and (e.get("conclusion") or k.startswith("ci_")):
         return "CI " + (e.get("conclusion") or k[3:])
     if k == "merged":
