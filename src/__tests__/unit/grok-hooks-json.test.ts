@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { spawnSync } from 'child_process';
 import { copyFileSync, cpSync, existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
-import { resolveGrokHook } from '../../../scripts/mjs/run-grok-hook.mjs';
+import { grokHookEventFromArgv, resolveGrokHook, selectGrokHookName } from '../../../scripts/mjs/run-grok-hook.mjs';
 import { homedir, tmpdir } from 'os';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -332,6 +332,65 @@ describe('Grok hooks.json command strings', () => {
       const broken = spawnSync(process.execPath, [launcher, 'pre-tool-use.js'], { encoding: 'utf8' });
       expect(broken.status).toBe(0);
       expect(broken.stdout.trim()).toBe('{"decision":"allow"}');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('a prompt or compact hook with no script name does not print decision allow', () => {
+    expect(selectGrokHookName(['node', 'run-grok-hook.mjs', '--hook-event=user_prompt_submit'])).toBe(
+      'session-start.js',
+    );
+    expect(grokHookEventFromArgv(['node', 'run-grok-hook.mjs', '--hook-event=pre_compact'])).toBe('pre_compact');
+    expect(selectGrokHookName(['node', 'run-grok-hook.mjs', 'pre-tool-use.js'])).toBe('pre-tool-use.js');
+
+    const root = mkdtempSync(path.join(tmpdir(), 'xray-hook-prompt-'));
+    const launcherDir = path.join(root, 'scripts', 'mjs');
+    const srcHook = path.join(root, 'src', 'integrations', 'grok', 'hooks', 'session-start.js');
+    const launcher = path.join(launcherDir, 'run-grok-hook.mjs');
+    try {
+      mkdirSync(launcherDir, { recursive: true });
+      copyFileSync(path.join(packageRoot, 'scripts', 'mjs', 'run-grok-hook.mjs'), launcher);
+
+      for (const event of ['user_prompt_submit', 'pre_compact', 'post_compact']) {
+        const missing = spawnSync(process.execPath, [launcher, `--hook-event=${event}`], { encoding: 'utf8' });
+        expect(missing.status).toBe(0);
+        expect(missing.stdout.trim()).toBe('{}');
+        expect(missing.stdout).not.toContain('allow');
+      }
+
+      const wrong = spawnSync(process.execPath, [launcher, 'gone.js', '--hook-event=user_prompt_submit'], {
+        encoding: 'utf8',
+      });
+      expect(wrong.status).toBe(0);
+      expect(wrong.stdout.trim()).toBe('{}');
+
+      mkdirSync(path.dirname(srcHook), { recursive: true });
+      writeFileSync(
+        srcHook,
+        'const flag = process.argv.find((arg) => String(arg).startsWith("--hook-event="));\n' +
+          'process.stdout.write(JSON.stringify({ flag: flag || "" }) + "\\n");\n' +
+          'process.exit(0);\n',
+      );
+      const loaded = spawnSync(process.execPath, [launcher, '--hook-event=user_prompt_submit'], {
+        encoding: 'utf8',
+      });
+      expect(loaded.status).toBe(0);
+      expect(loaded.stdout.trim()).toBe('{"flag":"--hook-event=user_prompt_submit"}');
+
+      const named = spawnSync(process.execPath, [launcher, 'session-start.js', '--hook-event=pre_compact'], {
+        encoding: 'utf8',
+      });
+      expect(named.status).toBe(0);
+      expect(named.stdout.trim()).toBe('{"flag":"--hook-event=pre_compact"}');
+
+      writeFileSync(srcHook, 'throw new Error("boom");\n');
+      const thrown = spawnSync(process.execPath, [launcher, '--hook-event=user_prompt_submit'], {
+        encoding: 'utf8',
+      });
+      expect(thrown.status).toBe(0);
+      expect(thrown.stdout.trim()).toBe('{}');
+      expect(thrown.stdout).not.toContain('allow');
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
