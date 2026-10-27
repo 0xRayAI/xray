@@ -236,6 +236,9 @@ describe('goggles plate', () => {
       expect(lensBeforeResearch(root, 'grep', 'access_tokens')?.decision).toBe('deny');
       expect(lensBeforeResearch(root, 'grep', 'searchPaths')?.decision).toBe('deny');
       expect(lensBeforeResearch(root, 'grep', `access_tokens\n${root}/house`)).toBeNull();
+      expect(lensBeforeResearch(root, 'grep', 'def |print\n/tmp/outside-wear/watch_pr.py')).toBeNull();
+      expect(lensBeforeResearch(root, 'grep', 'searchPaths\n/tmp/outside-wear/watch_pr.py')).toBeNull();
+      expect(lensBeforeResearch(root, 'grep', '/tmp/outside-wear/scripts/foundry')).toBeNull();
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

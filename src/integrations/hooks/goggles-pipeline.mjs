@@ -1064,17 +1064,31 @@ function searchStays(root, file, current) {
   return current === currentPlane(root) && target.plane === current;
 }
 
-/** A tool path on its own line counts. A one-token pattern that names no file does not. */
+/** A tool path on its own line counts. A path outside this checkout counts. A one-token pattern that names no file does not. */
 function searchPaths(root, text) {
   const raw = String(text || '').replace(/\\/g, '/');
-  const found = openPaths(raw);
   let rootAbs = '';
   try {
     rootAbs = resolve(root).replace(/\\/g, '/');
   } catch {
     rootAbs = '';
   }
+  const kept = [];
+  const found = [];
   for (const line of raw.split('\n')) {
+    const item = line.trim();
+    const outside = Boolean(item)
+      && !/\s/.test(item)
+      && !(rootAbs && (item === rootAbs || item.startsWith(`${rootAbs}/`)))
+      && (item.startsWith('/') || /^[A-Za-z]:\//.test(item));
+    if (outside) {
+      found.push(item.replace(/\/+$/, ''));
+      continue;
+    }
+    kept.push(line);
+  }
+  found.push(...openPaths(kept.join('\n')));
+  for (const line of kept) {
     const item = line.trim();
     if (!item || /\s/.test(item)) continue;
     let rel = item;

@@ -19,6 +19,7 @@ Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 - Wear keeps the station call on the factory pre-compact hook. A same-named user script that does not launch the runner stays in place.
 - A search of a file on the held plane runs. The tool glob counts as that file. A search of another plane still returns the current card.
 - A search of a path on no plane runs. A directory the plane list does not name is that path. A one-token pattern that names no file is not a path, and a search with no path still returns the current card.
+- A search path outside this checkout runs. An absolute path that is not under this copy is on no plane.
 - A `node_modules` symlink is ignored the same way a `node_modules` directory is.
 
 ## [4.1.4] - 2026-10-26
