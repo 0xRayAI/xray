@@ -8,6 +8,8 @@ Quick reference for the 0xRay suit worn on **{{CONSUMER_NAME}}**{{CONSUMER_VERSI
 
 Confer votes. Burst runs the swarm.
 
+Goggles views one plane. A search inside that card runs. A search of another plane returns the card. A path outside this checkout runs.
+
 0xRay is a three-subsystem autonomous engine (Inference · External Governance · Autonomous Engine). The suit is the wear. Constitution always on. Temperament scales ceremony. Four chat bridges plus Cursor project hooks. **Repertoire is preferred** — vendored 0.2.9 ships **on**. Dest is named laws, not keywords. Station is the wake ticket, not a substitute. Explicit opt-out only: `"enabled": false, "provider": "repertoire"`.
 
 **Governance always on** (Codex PreToolUse, no new surface, no `eval`). **Engine ceremony** (analyze-complexity before spawn, confer) is **guided** by default so free-model OpenCode/Hermes stay in check. Frontier hosts (Grok 4.6 class) with `suit_temperament.profile: auto` **warn** on spawn-without-plan instead of deny — the engine is still there. Existing `.xray/features.json` without `suit_temperament` stays **guided**. Docs: v3 from v2 · Suit temperament.
