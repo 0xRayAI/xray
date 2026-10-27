@@ -18,11 +18,11 @@ It views one plane.
   │ · the card is in LENS.md                                   │
   ├────────────────────────────────────────────────────────────┤
   │ REFUSED                                                    │
-  │ · a search outside the card does not run                   │
+  │ · a search of another plane returns the card               │
   └────────────────────────────────────────────────────────────┘
 ```
 
-A session starts on dev. The card is in `.xray/state/LENS.md`. The planes are dev, integration, domain, and ecosystem. A search inside the current card runs. Any other search returns the card and does not run. Opening a file on another plane switches to that card.
+A session starts on dev. The card is in `.xray/state/LENS.md`. The planes are dev, integration, domain, and ecosystem. A search inside the current card runs. A search of another plane returns the card and does not run. A path on no plane runs. A path outside this checkout runs. Opening a file on another plane switches to that card.
 
 A thing on that plane has its own card. A card with no plate names the stamp-plate skill. Stamp one plate for that card.
 
@@ -32,4 +32,4 @@ One named card fills that card's files. Two names stay quiet. Bifrost and grokbo
 
 A checkout named `0xray` records `scripts/mjs/run-goggles-mcp.mjs`. Any other project records `node_modules/0xray/scripts/mjs/run-goggles-mcp.mjs`.
 
-stamped · 0xray 4.1.0
+stamped · 0xray 4.1.4

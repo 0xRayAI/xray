@@ -864,7 +864,7 @@ function researchCall(toolName, text) {
   const tool = String(toolName || '');
   const spoken = String(text || '');
   if (/researcher|explorer|deep[- ]?research/i.test(tool) || DEEP_SEARCH.test(tool)) return true;
-  if (/bash|shell/i.test(tool) && (/researcher|explorer|deep[- ]?research/i.test(spoken) || DEEP_SEARCH.test(spoken) || shellSearches(spoken) || shellReadsSource(spoken))) return true;
+  if (isShellTool(tool) && (/researcher|explorer|deep[- ]?research/i.test(spoken) || DEEP_SEARCH.test(spoken) || shellSearches(spoken) || shellReadsSource(spoken))) return true;
   if (/^(grep|glob)$/i.test(tool)) return true;
   return /^read_file$/i.test(tool) && !opensLensFile(spoken);
 }
@@ -922,18 +922,22 @@ function openPaths(text) {
   return found;
 }
 
+function isShellTool(tool) {
+  return /bash|shell|run_terminal_command/i.test(String(tool || ''));
+}
+
 function isSearch(tool, text) {
   const name = String(tool || '');
   const spoken = String(text || '');
   if (/researcher|explorer|deep[- ]?research/i.test(name) || DEEP_SEARCH.test(name)) return true;
   if (/semanticsearch|codebase_search/i.test(name)) return true;
   if (/^(grep|glob|rg|ripgrep)$/i.test(name)) return true;
-  return /bash|shell/i.test(name) && (shellSearches(spoken) || DEEP_SEARCH.test(spoken) || /researcher|explorer|deep[- ]?research/i.test(spoken));
+  return isShellTool(name) && (shellSearches(spoken) || DEEP_SEARCH.test(spoken) || /researcher|explorer|deep[- ]?research/i.test(spoken));
 }
 
 function isRead(tool, text) {
   if (/^(read_file|read)$/i.test(String(tool || ''))) return true;
-  return /bash|shell/i.test(String(tool || '')) && shellReadsSource(text) && !shellSearches(text);
+  return isShellTool(tool) && shellReadsSource(text) && !shellSearches(text);
 }
 
 function currentPlane(root) {
@@ -1064,7 +1068,33 @@ function searchStays(root, file, current) {
   return current === currentPlane(root) && target.plane === current;
 }
 
-/** A tool path on its own line counts. A path outside this checkout counts. A one-token pattern that names no file does not. */
+/** A command token that is an absolute path outside this checkout. The tool binary does not count. */
+function commandPaths(line, rootAbs) {
+  const found = [];
+  for (const raw of String(line || '').split(/\s+/)) {
+    let item = raw.trim().replace(/^['"]+|['"]+$/g, '');
+    item = item.replace(/[,:;]+$/, '');
+    if (!item || item.startsWith('-')) continue;
+    const abs = item.startsWith('/') || /^[A-Za-z]:\//.test(item);
+    if (!abs) continue;
+    if (rootAbs && (item === rootAbs || item.startsWith(`${rootAbs}/`))) continue;
+    if (/\/(?:rg|grep|ag|ack|fd|find)$/.test(item)) continue;
+    if (item.split('/').includes('..')) continue;
+    found.push(item.replace(/\/+$/, ''));
+  }
+  return found;
+}
+
+/** Drop an outside absolute token so a repo token inside it is not this checkout. */
+function lineWithoutOutsidePaths(line, rootAbs) {
+  const tokens = commandPaths(line, rootAbs).sort((a, b) => b.length - a.length);
+  if (!tokens.length) return line;
+  let rest = String(line || '');
+  for (const token of tokens) rest = rest.split(token).join(' ');
+  return rest;
+}
+
+/** A tool path on its own line counts. A path outside this checkout counts, including inside a command. A one-token pattern that names no file does not. */
 function searchPaths(root, text) {
   const raw = String(text || '').replace(/\\/g, '/');
   let rootAbs = '';
@@ -1085,7 +1115,8 @@ function searchPaths(root, text) {
       found.push(item.replace(/\/+$/, ''));
       continue;
     }
-    kept.push(line);
+    found.push(...commandPaths(line, rootAbs));
+    kept.push(lineWithoutOutsidePaths(line, rootAbs));
   }
   found.push(...openPaths(kept.join('\n')));
   for (const line of kept) {

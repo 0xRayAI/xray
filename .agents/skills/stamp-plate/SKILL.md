@@ -48,7 +48,7 @@ A card with no plate needs one plate. Stamp that one plate for the card. Do not 
 
 The planes are dev, integration, domain, and ecosystem. A plane holds many cards. One card is one thing. Each card has its own plate, and it can name more on the Plates row. Do not add a fifth plane.
 
-A session starts on dev. The cards are in `.xray/state/LENS.md`. A search inside the current card runs. Any other search returns the current card. The path switches the card. A missing plate names this skill.
+A session starts on dev. The cards are in `.xray/state/LENS.md`. A search inside the current card runs. A search of another plane returns the current card. A path on no plane runs. A path outside this checkout runs. The path switches the card. A missing plate names this skill.
 
 1. Write the skill in the same change as the plate.
 2. Run `npx vitest run src/__tests__/unit/goggles-pipeline.test.ts src/__tests__/unit/plates.test.ts` from the worktree.

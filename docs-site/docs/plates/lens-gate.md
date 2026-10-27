@@ -30,8 +30,8 @@ A search inside the current card runs.
 └────────────────────────────────────────────────────────────┘
 ```
 
-lensBeforeResearch in src/integrations/hooks/goggles-pipeline.mjs looks at the path. A search inside the current card runs. Any other search returns the current card and does not run. Opening a file on the current plane adds nothing. Opening a file on another plane switches and returns that card. A file on no plane stays and returns the current card. The hook does not search the repo.
+lensBeforeResearch in src/integrations/hooks/goggles-pipeline.mjs looks at the path. A search inside the current card runs. A search of another plane returns the current card and does not run. A path on no plane runs. A path outside this checkout runs, including inside a terminal command. Opening a file on the current plane adds nothing. Opening a file on another plane switches and returns that card. A file on no plane stays, and the open proceeds. The hook does not search the repo.
 
 A session starts on dev. Compact writes that same card back.
 
-stamped · 0xray 4.1.0
+stamped · 0xray 4.1.4

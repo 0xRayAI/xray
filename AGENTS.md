@@ -6,6 +6,8 @@ Quick reference for the 0xRay suit (**4.1**).
 
 Confer votes. Burst runs the swarm.
 
+Goggles views one plane. A search inside that card runs. A search of another plane returns the card. A path outside this checkout runs.
+
 **The suit is the wear.** Three-subsystem autonomous engine (Inference · External Governance · Autonomous Engine) · constitution always on · temperament by host · 4 floors · **Repertoire preferred** (vendored 0.2.9, dest = laws).
 
 **Temperament:** ceremony (analyze-complexity before spawn, confer) is **guided** by default so free-model OpenCode/Hermes stay in check. Frontier hosts (Grok 4.6 class) with `suit_temperament.profile: auto` **warn** on spawn-without-plan; Codex 11/29/69 still **deny**. Missing `suit_temperament` stays guided. See `docs-site/docs/architecture/v3-from-v2.md`.

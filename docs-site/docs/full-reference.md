@@ -1,7 +1,7 @@
 # 0xRay — reference
 
 **4.1** — a suit that survives the context window
-Bifrost is the live board. Goggles views one plane. A search runs inside that card.
+Bifrost is the live board. Goggles views one plane. A search inside that card runs. A search of another plane returns the card. A path outside this checkout runs.
 
 
 Exo, not catalog. Constitution always on. Temperament by host. Four floors. Repertoire organ on.
