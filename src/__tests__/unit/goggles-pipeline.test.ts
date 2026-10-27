@@ -189,6 +189,28 @@ describe('goggles plate', () => {
     }
   });
 
+  it('a terminal command is the same search as bash', () => {
+    const root = mkdtempSync(join(tmpdir(), 'goggles-terminal-'));
+    try {
+      const held = lensBeforeResearch(root, 'read_file', 'docs-site/docs/plates/glossary.md');
+      expect(held?.reason).toContain('Plane: domain');
+      expect(lensBeforeResearch(root, 'run_terminal_command', 'git status -sb')).toBeNull();
+      expect(lensBeforeResearch(root, 'run_terminal_command', 'npm test')).toBeNull();
+      const off = lensBeforeResearch(root, 'run_terminal_command', 'rg -n function src/nucleus/thin-dispatch.ts');
+      expect(off?.decision).toBe('deny');
+      expect(off?.reason).toContain('Plane: domain');
+      const bash = lensBeforeResearch(root, 'bash', 'rg -n function src/nucleus/thin-dispatch.ts');
+      expect(bash?.decision).toBe('deny');
+      expect(bash?.reason).toContain('Plane: domain');
+      const open = lensBeforeResearch(root, 'run_terminal_command', 'python3 -c "print(1)" src/core/config-paths.ts');
+      expect(open?.decision).toBe('allow');
+      expect(open?.reason).toContain('Plane: dev');
+      expect(lensBeforeResearch(root, 'run_terminal_command', 'rg -n path src/core/config-paths.ts')).toBeNull();
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it('a search of a file on the held plane runs', () => {
     const root = mkdtempSync(join(tmpdir(), 'goggles-same-plane-'));
     try {

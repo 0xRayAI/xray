@@ -864,7 +864,7 @@ function researchCall(toolName, text) {
   const tool = String(toolName || '');
   const spoken = String(text || '');
   if (/researcher|explorer|deep[- ]?research/i.test(tool) || DEEP_SEARCH.test(tool)) return true;
-  if (/bash|shell/i.test(tool) && (/researcher|explorer|deep[- ]?research/i.test(spoken) || DEEP_SEARCH.test(spoken) || shellSearches(spoken) || shellReadsSource(spoken))) return true;
+  if (isShellTool(tool) && (/researcher|explorer|deep[- ]?research/i.test(spoken) || DEEP_SEARCH.test(spoken) || shellSearches(spoken) || shellReadsSource(spoken))) return true;
   if (/^(grep|glob)$/i.test(tool)) return true;
   return /^read_file$/i.test(tool) && !opensLensFile(spoken);
 }
@@ -922,18 +922,22 @@ function openPaths(text) {
   return found;
 }
 
+function isShellTool(tool) {
+  return /bash|shell|run_terminal_command/i.test(String(tool || ''));
+}
+
 function isSearch(tool, text) {
   const name = String(tool || '');
   const spoken = String(text || '');
   if (/researcher|explorer|deep[- ]?research/i.test(name) || DEEP_SEARCH.test(name)) return true;
   if (/semanticsearch|codebase_search/i.test(name)) return true;
   if (/^(grep|glob|rg|ripgrep)$/i.test(name)) return true;
-  return /bash|shell/i.test(name) && (shellSearches(spoken) || DEEP_SEARCH.test(spoken) || /researcher|explorer|deep[- ]?research/i.test(spoken));
+  return isShellTool(name) && (shellSearches(spoken) || DEEP_SEARCH.test(spoken) || /researcher|explorer|deep[- ]?research/i.test(spoken));
 }
 
 function isRead(tool, text) {
   if (/^(read_file|read)$/i.test(String(tool || ''))) return true;
-  return /bash|shell/i.test(String(tool || '')) && shellReadsSource(text) && !shellSearches(text);
+  return isShellTool(tool) && shellReadsSource(text) && !shellSearches(text);
 }
 
 function currentPlane(root) {
