@@ -104,6 +104,37 @@ function logRead(e) {
 // #290: startup reads only the newest WARM_DAYS day dirs; any other day's ids load lazily on its first append.
 const WARM_DAYS = Math.max(1, Number(process.env.MESH_ARCHIVE_WARM_DAYS) || 2);
 const loadedDays = new Set();
+const LINE_CAP = 1024 * 1024;
+
+/** One jsonl line at a time. A file past the string cap still yields its rows. */
+function forEachJsonLine(file, onLine) {
+  let fd;
+  try { fd = fs.openSync(file, 'r'); }
+  catch (e) { logRead(e); return; }
+  const chunk = Buffer.alloc(64 * 1024);
+  let pending = Buffer.alloc(0);
+  try {
+    for (;;) {
+      const n = fs.readSync(fd, chunk, 0, chunk.length, null);
+      if (n <= 0) break;
+      pending = Buffer.concat([pending, chunk.subarray(0, n)]);
+      let start = 0;
+      for (let i = 0; i < pending.length; i += 1) {
+        if (pending[i] !== 10) continue;
+        const end = i > start && pending[i - 1] === 13 ? i - 1 : i;
+        if (end - start <= LINE_CAP && end > start) onLine(pending.toString('utf8', start, end));
+        start = i + 1;
+      }
+      pending = Buffer.from(pending.subarray(start));
+      if (pending.length > LINE_CAP) pending = Buffer.alloc(0);
+    }
+    if (pending.length && pending.length <= LINE_CAP) onLine(pending.toString('utf8'));
+  } catch (e) {
+    logRead(e);
+  } finally {
+    try { fs.closeSync(fd); } catch { /* closed */ }
+  }
+}
 
 function loadDay(day) {
   if (loadedDays.has(day)) return;
@@ -116,17 +147,13 @@ function loadDay(day) {
     if (!name.endsWith('.jsonl')) continue;
     const kind = name.slice(0, -6);
     if (!KINDS.includes(kind)) continue;
-    let text;
-    try { text = fs.readFileSync(path.join(dir, name), 'utf8'); }
-    catch (e) { logRead(e); continue; }
-    for (const line of text.split('\n')) {
-      if (!line) continue;
+    forEachJsonLine(path.join(dir, name), (line) => {
       try {
         const row = JSON.parse(line);
         const id = kind === 'inbox' ? recordId(kind, row) : row && row.id;
         if (row && row.id && id) seen.add(kind + '\0' + id);
       } catch { /* truncated or corrupt line */ }
-    }
+    });
   }
 }
 
@@ -240,16 +267,12 @@ function scanTransitionRows() {
   try { days = fs.readdirSync(root); }
   catch (e) { logRead(e); return rows; }
   for (const day of days.filter(validArchiveDate).sort()) {
-    let text;
-    try { text = fs.readFileSync(transitionFile(day), 'utf8'); }
-    catch (e) { logRead(e); continue; }
-    for (const line of text.split('\n')) {
-      if (!line) continue;
+    forEachJsonLine(transitionFile(day), (line) => {
       try {
         const row = JSON.parse(line);
         if (row && row.id && row.card) rows.push(row);
       } catch { /* truncated or corrupt line */ }
-    }
+    });
   }
   return rows;
 }
@@ -566,15 +589,11 @@ export function cardHistory(query) {
 export function readArchive(date, kind) {
   if (!validArchiveDate(date) || !KINDS.includes(kind)) return { lines: [] };
   const file = path.join(root, date, kind + '.jsonl');
-  let text;
-  try { text = fs.readFileSync(file, 'utf8'); }
-  catch (e) { logRead(e); return { lines: [] }; }
   const lines = [];
-  for (const line of text.split('\n')) {
-    if (!line) continue;
+  forEachJsonLine(file, (line) => {
     try { lines.push(JSON.parse(line)); }
     catch { /* truncated or corrupt line */ }
-  }
+  });
   return { lines };
 }
 
