@@ -202,6 +202,15 @@ describe('goggles plate', () => {
       const bash = lensBeforeResearch(root, 'bash', 'rg -n function src/nucleus/thin-dispatch.ts');
       expect(bash?.decision).toBe('deny');
       expect(bash?.reason).toContain('Plane: domain');
+      expect(lensBeforeResearch(root, 'run_terminal_command', 'rg -n kind /tmp/outside-wear/watch_pr.py')).toBeNull();
+      const both = lensBeforeResearch(
+        root,
+        'run_terminal_command',
+        'rg -n kind /tmp/outside-wear/watch_pr.py src/nucleus/thin-dispatch.ts',
+      );
+      expect(both?.decision).toBe('deny');
+      expect(both?.reason).toContain('Plane: domain');
+      expect(lensBeforeResearch(root, 'run_terminal_command', '/usr/bin/rg -n kind')?.reason).toContain('Plane: domain');
       const open = lensBeforeResearch(root, 'run_terminal_command', 'python3 -c "print(1)" src/core/config-paths.ts');
       expect(open?.decision).toBe('allow');
       expect(open?.reason).toContain('Plane: dev');

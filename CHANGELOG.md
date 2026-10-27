@@ -21,6 +21,7 @@ Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 - A search of a path on no plane runs. A directory the plane list does not name is that path. A one-token pattern that names no file is not a path, and a search with no path still returns the current card.
 - A search path outside this checkout runs. An absolute path that is not under this copy is on no plane.
 - A terminal command is the same search as a shell command. `rg` in that command returns the current card when the path is on another plane.
+- A path outside this checkout counts inside a terminal command. `rg` of that path runs.
 - A `node_modules` symlink is ignored the same way a `node_modules` directory is.
 
 ## [4.1.4] - 2026-10-26

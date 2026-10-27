@@ -1068,7 +1068,24 @@ function searchStays(root, file, current) {
   return current === currentPlane(root) && target.plane === current;
 }
 
-/** A tool path on its own line counts. A path outside this checkout counts. A one-token pattern that names no file does not. */
+/** A command token that is an absolute path outside this checkout. The tool binary does not count. */
+function commandPaths(line, rootAbs) {
+  const found = [];
+  for (const raw of String(line || '').split(/\s+/)) {
+    let item = raw.trim().replace(/^['"]+|['"]+$/g, '');
+    item = item.replace(/[,:;]+$/, '');
+    if (!item || item.startsWith('-')) continue;
+    const abs = item.startsWith('/') || /^[A-Za-z]:\//.test(item);
+    if (!abs) continue;
+    if (rootAbs && (item === rootAbs || item.startsWith(`${rootAbs}/`))) continue;
+    if (/\/(?:rg|grep|ag|ack|fd|find)$/.test(item)) continue;
+    if (item.split('/').includes('..')) continue;
+    found.push(item.replace(/\/+$/, ''));
+  }
+  return found;
+}
+
+/** A tool path on its own line counts. A path outside this checkout counts, including inside a command. A one-token pattern that names no file does not. */
 function searchPaths(root, text) {
   const raw = String(text || '').replace(/\\/g, '/');
   let rootAbs = '';
@@ -1089,6 +1106,7 @@ function searchPaths(root, text) {
       found.push(item.replace(/\/+$/, ''));
       continue;
     }
+    found.push(...commandPaths(line, rootAbs));
     kept.push(line);
   }
   found.push(...openPaths(kept.join('\n')));
