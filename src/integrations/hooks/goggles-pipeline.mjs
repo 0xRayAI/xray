@@ -1,7 +1,8 @@
 /**
  * Goggles. The plane is state. A session starts on dev.
  * The card is in LENS.md: Entry, Exit, and the other rows.
- * A search inside the current card runs. Any other search returns the card and does not run.
+ * A search inside the current card runs. A file on this plane runs while the hold is that plane.
+ * A file on no plane stays and that search runs. Any other search returns the card and does not run.
  * Opening a file on that card stays quiet.
  * Opening a file on another plane switches, returns that card, and the open proceeds.
  * A file on no plane stays put and returns the current card.
@@ -1053,7 +1054,49 @@ function targetOf(file) {
   return { plane, card: thing || plane };
 }
 
-/** A search inside the current card runs. A file open follows the path. */
+/** A path stays when this card owns it, it has no card, or the hold is its plane. */
+function searchStays(root, file, current) {
+  const owned = cardMatchPaths(current);
+  if (owned.some((listed) => covers(listed, file))) return true;
+  const target = targetOf(file);
+  if (!target) return true;
+  if (target.card === current) return true;
+  return current === currentPlane(root) && target.plane === current;
+}
+
+/** A tool path on its own line counts. A one-token pattern that names no file does not. */
+function searchPaths(root, text) {
+  const raw = String(text || '').replace(/\\/g, '/');
+  const found = openPaths(raw);
+  let rootAbs = '';
+  try {
+    rootAbs = resolve(root).replace(/\\/g, '/');
+  } catch {
+    rootAbs = '';
+  }
+  for (const line of raw.split('\n')) {
+    const item = line.trim();
+    if (!item || /\s/.test(item)) continue;
+    let rel = item;
+    let fromRoot = false;
+    if (rootAbs && (item === rootAbs || item.startsWith(`${rootAbs}/`))) {
+      rel = item.slice(rootAbs.length).replace(/^\//, '');
+      fromRoot = true;
+    }
+    if (!rel || rel.startsWith('/') || rel.split('/').includes('..')) continue;
+    if (!/^[A-Za-z0-9_@./-]+$/.test(rel)) continue;
+    rel = rel.replace(/^\.\//, '').replace(/\/+$/, '');
+    if (!rel.includes('/') && !fromRoot) {
+      let onDisk = false;
+      try { onDisk = existsSync(join(root, rel)); } catch { onDisk = false; }
+      if (!onDisk) continue;
+    }
+    found.push(rel);
+  }
+  return [...new Set(found.filter(Boolean))];
+}
+
+/** A search on the held plane runs. A file open follows the path. */
 export function lensBeforeResearch(root, toolName, text) {
   const spoken = String(text || '');
   const searching = isSearch(toolName, spoken);
@@ -1062,11 +1105,8 @@ export function lensBeforeResearch(root, toolName, text) {
   ensurePlane(root);
   const current = currentCard(root);
   if (searching) {
-    const owned = cardMatchPaths(current);
-    const paths = openPaths(spoken);
-    const inside = owned.length > 0
-      && paths.length > 0
-      && paths.every((file) => owned.some((listed) => covers(listed, file)));
+    const paths = searchPaths(root, spoken);
+    const inside = paths.length > 0 && paths.every((file) => searchStays(root, file, current));
     if (inside) return null;
     return { gate: 'lens', decision: 'deny', reason: cardText(root, current) };
   }

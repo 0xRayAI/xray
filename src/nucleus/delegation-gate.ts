@@ -38,7 +38,7 @@ import {
   tryRecordSynthesisConsultReceipt,
 } from './synthesis-consult-receipt.js';
 import { resolveSpawnPlan, hasValidSpawnPlanContext } from './spawn-plan-resolution.js';
-import { probeFreshness } from './work-freshness.mjs';
+import { staleWriteReason } from './work-freshness.mjs';
 import {
   isUserAsidesEnabled,
   isUserAsideTodoId,
@@ -619,7 +619,7 @@ function collectWriteContent(toolInput: ToolGateInput): string {
 
 function collectWritePaths(toolInput: ToolGateInput): string[] {
   const paths: string[] = [];
-  for (const key of ['path', 'file_path', 'filePath', 'target_notebook'] as const) {
+  for (const key of ['path', 'file_path', 'filePath', 'target_file', 'target_notebook'] as const) {
     const v = toolInput[key];
     if (typeof v === 'string' && v) paths.push(v);
   }
@@ -643,11 +643,11 @@ export function evaluateConstitutionGate(
   const writing = isWriteTool(toolName, ctx.host ?? 'generic');
 
   if (writing) {
-    const freshness = probeFreshness(ctx.projectRoot);
-    if (freshness.stale) {
+    const reason = staleWriteReason(ctx.projectRoot, paths);
+    if (reason) {
       return {
         allow: false,
-        reason: freshness.reason,
+        reason,
         gate: 'codex-70',
       };
     }

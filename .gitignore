@@ -1,7 +1,7 @@
 # Docusaurus build artifacts
 docs-site/build/
 docs-site/.docusaurus/
-docs-site/node_modules/
+docs-site/node_modules
 
 # Generated runtime files
 .ci-reports/
@@ -108,7 +108,7 @@ rerun_*/
 .opencode/commands/tree
 
 # Dependencies
-node_modules/
+node_modules
 
 # Build artifacts
 dist/
