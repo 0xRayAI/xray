@@ -3,12 +3,14 @@
  * and the package is not older than the published one.
  * This repo is that package when package.json name is 0xray.
  * The check is saved at session start. The edit gate reads the saved result.
+ * A path outside this repo is not this copy.
+ * A worktree of this repo is judged on its own HEAD.
  * A temp directory inside a repo is not the workspace, so unit tests stay quiet.
  */
 
 import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { dirname, isAbsolute, join, resolve, sep } from 'node:path';
 
 export function compareVersions(left, right) {
   const a = String(left).split('.').map((part) => parseInt(part, 10) || 0);
@@ -154,6 +156,69 @@ export function probeFreshness(projectRoot) {
   const saved = readJson(freshnessFile(projectRoot));
   if (saved && saved.behind != null) return decideFreshness(saved);
   return decideFreshness(readWorkSnapshot(projectRoot));
+}
+
+function asDirectory(abs) {
+  try {
+    if (statSync(abs).isDirectory()) return abs;
+  } catch {
+    /* a missing file still has a parent */
+  }
+  return dirname(abs);
+}
+
+function gitCommon(cwd) {
+  try {
+    const dir = run('git', ['rev-parse', '--path-format=absolute', '--git-common-dir'], cwd, 3000);
+    return dir ? resolve(dir) : null;
+  } catch {
+    return null;
+  }
+}
+
+function sameRepo(left, right) {
+  if (!left || !right) return false;
+  if (resolve(left) === resolve(right)) return true;
+  const a = gitCommon(left);
+  const b = gitCommon(right);
+  return Boolean(a && b && a === b);
+}
+
+/** The checkout a write would change, or null when the path is not this repo. */
+export function copyRootForWrite(file, projectRoot) {
+  const abs = isAbsolute(file) ? resolve(file) : resolve(projectRoot, file);
+  const top = gitTop(asDirectory(abs));
+  const projectTop = gitTop(projectRoot);
+  if (!top || !projectTop || !sameRepo(top, projectTop)) {
+    const root = resolve(projectRoot);
+    if (abs === root || abs.startsWith(`${root}${sep}`)) return root;
+    return null;
+  }
+  return resolve(top);
+}
+
+function writeCopyFreshness(copy) {
+  const saved = readJson(freshnessFile(copy));
+  if (saved && saved.behind != null) return decideFreshness(saved);
+  const snapshot = readWorkSnapshot(copy);
+  if (snapshot.repoName === '0xray' && snapshot.repoVersion) {
+    snapshot.wornSuit = snapshot.repoVersion;
+  }
+  return decideFreshness(snapshot);
+}
+
+/** Empty when the write does not touch a stale copy of this repo. */
+export function staleWriteReason(projectRoot, paths) {
+  const files = Array.isArray(paths) && paths.length ? paths : [projectRoot];
+  const seen = new Set();
+  for (const file of files) {
+    const copy = copyRootForWrite(file, projectRoot);
+    if (!copy || seen.has(copy)) continue;
+    seen.add(copy);
+    const freshness = writeCopyFreshness(copy);
+    if (freshness.stale) return freshness.reason;
+  }
+  return '';
 }
 
 export function refreshFreshness(projectRoot) {

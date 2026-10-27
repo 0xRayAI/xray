@@ -1,5 +1,9 @@
 ## [Unreleased]
 
+### 🐛 Bug Fixes
+
+- Codex 70 denies a write in this stale checkout. A path outside this copy is allowed. A worktree is judged on its own HEAD.
+
 ## [4.1.4] - 2026-10-26
 
 ### 🔄 Changes
