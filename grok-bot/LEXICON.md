@@ -113,7 +113,7 @@ Locked 2026-09-14 with Blaze — categorized.
 | **packet** | Workstream | A card's seven fields: goal, constraints, path, acceptance, evidence, next owner, escalate. From a `## Packet` block or one line. Missing acceptance or next owner makes the card amber (`no packet`). Evidence fills from the latest beat. |
 | **EXECUTE** | Practices | Armed Dist/action order with exact copy + gates; herald/seat ships only on EXECUTE (not draft/FYI). Distinct from a packet (the packet may *carry* an EXECUTE). |
 | **handoff** | Workstream | The channel or file that *carries* a packet (`ops/handoffs/…` or a seat message). The packet is the content; the handoff is the pipe. |
-| **inbox watcher** | Workstream | One inbox-watch.sh per seat. inbox-watch-ensure.sh starts it when the pid is gone or the last ok poll is older than three polls, and does not start a second copy. inbox-watch-station.sh writes the one Watcher line on the station card. |
+| **inbox watcher** | Workstream | One inbox-watch.sh per seat, run in the local TUI. Suit boot enables that monitor. inbox-watch-station.sh writes the one Watcher line on the station card. |
 
 ## Lexicon add (2026-10-14 — work track)
 
