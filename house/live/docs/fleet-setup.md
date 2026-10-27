@@ -24,7 +24,7 @@ Kanban note. The live page shows a read-only kanban above Activity. Columns are 
 
 History note. Every activity line is archived to history. The word owner is the owner via LIVE_OWNER or the owner-name.
 
-The public board does not serve the history archive or the kanban yet.
+The public board serves the kanban and GET /history, /history/cards, and /history/transitions.
 
 ## inbox-roles.json
 
@@ -126,4 +126,4 @@ Checks:
 
 ### Inbox watcher
 
-`tools/inbox-watch.sh` polls Arch1's inbox and never acks; install steps in [inbox.md](inbox.md). A non-empty read is the work: the Grok turn that sees the lines handles them, posts the receipt, then acks. The host monitor is what delivers those lines into the Grok session. The launchd log is not a wake. It is an approved exception to the no-local-watchers rule, not the only one. Hooks above are a separate install: see [Suit and hooks](#suit-and-hooks).
+`tools/inbox-watch.sh` polls Arch1's inbox and never acks; install steps in [inbox.md](inbox.md). A non-empty read is the work: the Grok turn that sees the lines handles them, posts the receipt, then acks. Suit boot runs that script in the local TUI. A log file outside the TUI is not a wake. It is an approved exception to the no-local-watchers rule, not the only one. Hooks above are a separate install: see [Suit and hooks](#suit-and-hooks).

@@ -1,121 +1,54 @@
-"""inbox-watch-ensure.sh keeps one watcher. inbox-watch-station.sh writes one Watcher line."""
+"""inbox-watch-ensure.sh stays out of the TUI. inbox-watch-station.sh writes one Watcher line."""
 import os
 import subprocess
 import tempfile
-import time
 import unittest
 from pathlib import Path
 
 LIVE = Path(__file__).resolve().parent.parent
+ROOT = LIVE.parents[1]
 ENSURE = LIVE / "tools" / "inbox-watch-ensure.sh"
 STATION = LIVE / "tools" / "inbox-watch-station.sh"
 
 
 class Ensure(unittest.TestCase):
-    def setUp(self):
-        self.pids = []
-
-    def tearDown(self):
-        for pid in self.pids:
-            try:
-                os.kill(pid, 15)
-            except OSError:
-                pass
-
-    def _sleeper(self, directory):
-        script = Path(directory) / "inbox-watch.sh"
-        script.write_text("#!/bin/bash\nsleep 30\n")
-        script.chmod(0o755)
-        proc = subprocess.Popen([str(script)])
-        self.pids.append(proc.pid)
-        return proc
-
-    def _env(self, directory, **extra):
-        env = {
-            "PATH": os.environ["PATH"],
-            "HOME": directory,
-            "INBOX_WATCH_INTERVAL": "60",
-            "INBOX_WATCH_STATE": str(Path(directory) / "inbox-watch.state"),
-            "INBOX_WATCH_PID": str(Path(directory) / "inbox-watch.pid"),
-            "INBOX_WATCH_LOG": str(Path(directory) / "inbox-watch.log"),
-        }
-        env.update(extra)
-        return env
-
-    def test_fresh_pid_is_left_alone(self):
-        with tempfile.TemporaryDirectory() as directory:
-            proc = self._sleeper(directory)
-            state = Path(directory) / "inbox-watch.state"
-            state.write_text(
-                "pid=%s\nstarted=2026-10-23T12:00:00-0500\nlast_ok=%s\nlive_url=https://bifrost.0xray.dev\nscript=house/live/tools/inbox-watch.sh\n"
-                % (proc.pid, time.strftime("%Y-%m-%dT%H:%M:%S%z"))
-            )
-            (Path(directory) / "inbox-watch.pid").write_text("%s\n" % proc.pid)
-            marker = Path(directory) / "replacement.sh"
-            marker.write_text("#!/bin/bash\necho replaced >> %s/ran\nsleep 30\n" % directory)
-            marker.chmod(0o755)
-            result = subprocess.run(
-                ["bash", str(ENSURE), "arch1"],
-                env=self._env(directory, INBOX_WATCH_BIN=str(marker)),
-                capture_output=True,
-                text=True,
-            )
-            self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertEqual(result.stdout, "")
-            self.assertFalse((Path(directory) / "ran").exists())
-            os.kill(proc.pid, 0)
-
-    def test_dead_pid_starts_one_copy(self):
+    def test_names_the_local_tui_and_starts_nothing(self):
         with tempfile.TemporaryDirectory() as directory:
             script = Path(directory) / "inbox-watch.sh"
-            script.write_text("#!/bin/bash\nsleep 30\n")
+            script.write_text("#!/bin/bash\ntouch %s/ran\n" % directory)
             script.chmod(0o755)
-            (Path(directory) / "inbox-watch.pid").write_text("999999\n")
             result = subprocess.run(
                 ["bash", str(ENSURE), "arch1"],
-                env=self._env(directory, INBOX_WATCH_BIN=str(script)),
+                env={
+                    "PATH": os.environ["PATH"],
+                    "HOME": directory,
+                    "INBOX_WATCH_BIN": str(script),
+                },
                 capture_output=True,
                 text=True,
             )
-            self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertIn("watcher restarted pid", result.stdout)
-            pid = int(result.stdout.strip().split()[-1])
-            self.pids.append(pid)
-            again = subprocess.run(
-                ["bash", str(ENSURE), "arch1"],
-                env=self._env(directory, INBOX_WATCH_BIN=str(script)),
-                capture_output=True,
-                text=True,
-            )
-            self.assertEqual(again.returncode, 0, again.stderr)
-            self.assertEqual(again.stdout, "")
-            os.kill(pid, 0)
+            self.assertEqual(result.returncode, 2, result.stderr)
+            self.assertIn("run in the local TUI", result.stdout)
+            self.assertIn(str(script), result.stdout)
+            self.assertIn("arch1", result.stdout)
+            self.assertFalse((Path(directory) / "ran").exists())
 
-    def test_stale_poll_restarts_once(self):
-        with tempfile.TemporaryDirectory() as directory:
-            proc = self._sleeper(directory)
-            (Path(directory) / "inbox-watch.state").write_text(
-                "pid=%s\nstarted=2020-01-01T00:00:00+0000\nlast_ok=2020-01-01T00:00:00+0000\nlive_url=https://bifrost.0xray.dev\nscript=house/live/tools/inbox-watch.sh\n"
-                % proc.pid
-            )
-            (Path(directory) / "inbox-watch.pid").write_text("%s\n" % proc.pid)
-            replacement = Path(directory) / "next-inbox-watch.sh"
-            replacement.write_text("#!/bin/bash\nsleep 30\n")
-            replacement.chmod(0o755)
-            result = subprocess.run(
-                ["bash", str(ENSURE), "arch1"],
-                env=self._env(directory, INBOX_WATCH_BIN=str(replacement)),
-                capture_output=True,
-                text=True,
-            )
-            self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertIn("watcher restarted pid", result.stdout)
-            new = int(result.stdout.strip().split()[-1])
-            self.pids.append(new)
-            self.assertNotEqual(new, proc.pid)
-            proc.wait(timeout=3)
-            self.assertIsNotNone(proc.returncode)
-            os.kill(new, 0)
+    def test_bad_seat_is_usage(self):
+        result = subprocess.run(
+            ["bash", str(ENSURE), "nope seat"],
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("usage:", result.stderr)
+
+    def test_procedure_enables_the_local_tui(self):
+        proc = (ROOT / "grok-bot" / "OP-PROC.md").read_text()
+        self.assertIn("local TUI", proc)
+        self.assertIn("Suit boot enables", proc)
+        self.assertIn("inbox-watch-ensure.sh` does not start a process", proc)
+        lexicon = (ROOT / "grok-bot" / "LEXICON.md").read_text()
+        self.assertIn("run in the local TUI", lexicon)
 
 
 class StationLine(unittest.TestCase):

@@ -2,6 +2,22 @@
 
 **Audience**: Plugin authors, bridge maintainers (Hermes, OpenClaw, Grok Build, OpenCode), and projects that consume `0xray` directly.
 
+## Missed in the 4.1.4 Dist notes
+
+The 4.1.3 → 4.1.4 steps below still apply. These lines were left out of the Dist notes. package.json stays 4.1.4 here.
+
+1. Goggles. One named card fills that card's files. Bifrost, grokbot, and worn-turn are cards.
+2. Seats. The mill seat is off the roster, the mesh, and the inbox. Forge launches the cloud agent and opens the pull request through its App. Blinky plans the wave, paces burn, handles Lane H and Dist, and onboards. An unassigned issue or a P1 wakes forge. CoS is not woken to reassign.
+3. Station. A seat sets its own title. Planes are core, integration, ecosystem, distribution, and live. `Keys:` is `gh-<seat>`.
+4. Wake and hotfix. The wake posts for real new work. A hotfix merges on green CI. Critic reviews after.
+5. Suit. Worn Grok hooks run while Bifrost is live. The only TUI monitor is `inbox-watch.sh`. The default board is https://bifrost.0xray.dev.
+6. Inbox. A printed open id is acked. The seed grace delivers a fresh comment. A noop wake 409 is skipped.
+7. Board. The public board serves the kanban and `GET /history`, `/history/cards`, and `/history/transitions`.
+
+## Unreleased
+
+Notes for Dist when Arch1 publishes the next version. package.json stays 4.1.4 here. Reading a plate file holds that card so a search of its files runs (#644). Codex 70 denies a write only in a stale copy of this repo (#646). A red CI check writes a card when the pull has none, then a `ci_fail` inbox line (#648). This guide does not include that code.
+
 ## 4.1.3 → 4.1.4
 
 A fleet on 4.1.3 follows this path. The v3 consumer steps below stay as they are.

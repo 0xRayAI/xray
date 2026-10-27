@@ -17,7 +17,7 @@
 - A board card for every packet and every cloud agent (#477). A packet post creates the card. The id is `repo#number`, or `packet:<line id>` until a pull request attaches. A cloud agent does not run without that card id. The cloud agent pushes its branch. The seat App opens the pull request. The server attaches both.
 - Cards group by status by default, with a by-seat toggle (#457). Default groups are waiting, in review, on hold, parked, and done. By agent restores one group per seat. The choice is kept across a reload.
 - Board docs sweep, with migration steps (#487). The seat files share one owner-prompt line. Adoption and migration from 0.1.10 live in `templates/house/STATION-BOOT.md`. `house init` does not overwrite a house file the fleet already has.
-- A real owner-chat source is not in this release. The public board does not serve the history archive or the kanban yet.
+- A real owner-chat source is not in this release. The public board serves the kanban and GET /history, /history/cards, and /history/transitions.
 - Station boot. Each seat's profile title is `You are <seat>, <role> on the <plane> plane. Run the station skill first (suit <suit path>).` The description opens with the BOOT line. Planes are core, integration, ecosystem, distribution, and live.
 - Skills `station`, `seat-label`, and `seat-github-key`. `seat-label` runs in that seat's own chat (`UpdateProfile` title only, then `profile.json`). `~/bin/gh-<seat>` mints a fresh App token every call and never prints the token or the PEM.
 - `HOUSE.md` carries `name:` and `OP-PROC:`. The station line template adds `Plane:`, `Skills:`, and `Keys:`. `house/fleet/TRACKS.md` is written when a cloud launches.
