@@ -27,6 +27,7 @@ Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 - The changelog mill fails when `## [package version]` has no bullets. A top version ahead of package.json still fails. The range rule is OP-PROC `#changelog`.
 - A day archive is read one line at a time, so a file past the string cap still dedups. #663.
 - A quiet collector pass leaves the event document in place and writes a small clock file. The server takes that clock without reading the document again. #667.
+- A missed health beat exits the live process so Railway can replace the replica. #661.
 
 ## [4.1.4] - 2026-10-26
 

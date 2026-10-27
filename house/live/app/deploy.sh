@@ -14,7 +14,7 @@ if [ ! -d "$DST" ]; then   # fresh machine: create and link the deploy dir inste
     || { echo "deploy dir $DST missing and railway link failed (log in with the railway CLI first)" >&2; exit 1; }
 fi
 [ "$(cd "$DST" && pwd -P)" = "$APP" ] || {
-  cp "$APP"/server.mjs "$APP"/feed-read-worker.mjs "$APP"/presence.mjs "$APP"/source.mjs "$APP"/archive.mjs "$APP"/origin.mjs "$APP"/routes.mjs "$APP"/governor.mjs "$APP"/arch1-launch.mjs "$APP"/worktrack.mjs "$APP"/handoff.mjs "$APP"/wave-schedule.mjs "$APP"/bifrost-waves.json "$APP"/chicago-stamp.mjs "$APP"/pr-batch.mjs "$APP"/wake-gate.mjs "$APP"/package.json "$APP"/railway.json "$APP"/.railwayignore "$APP"/Dockerfile "$APP"/docker-entrypoint.sh "$DST"/
+  cp "$APP"/server.mjs "$APP"/feed-read-worker.mjs "$APP"/health-beat.mjs "$APP"/health-beat-worker.mjs "$APP"/presence.mjs "$APP"/source.mjs "$APP"/archive.mjs "$APP"/origin.mjs "$APP"/routes.mjs "$APP"/governor.mjs "$APP"/arch1-launch.mjs "$APP"/worktrack.mjs "$APP"/handoff.mjs "$APP"/wave-schedule.mjs "$APP"/bifrost-waves.json "$APP"/chicago-stamp.mjs "$APP"/pr-batch.mjs "$APP"/wake-gate.mjs "$APP"/package.json "$APP"/railway.json "$APP"/.railwayignore "$APP"/Dockerfile "$APP"/docker-entrypoint.sh "$DST"/
   rm -rf "$DST/public.new"; cp -r "$APP/public" "$DST/public.new"; rm -rf "$DST/public"; mv "$DST/public.new" "$DST/public"
   # our install's committed page overlay (seats, nodes, avatars, favicon); another install has no house/live/site/
   if [ -d "$APP/../site/public" ]; then cp -a "$APP/../site/public"/. "$DST/public/"; fi

@@ -29,6 +29,7 @@ import { pinnedOrigin } from './origin.mjs';
 import { missingHandoffs, hotfixMergeLine, isHotfixTitle, isMergeHandoff, validMergeReview } from './handoff.mjs';
 import { clockStamp, writeStartAfter } from './chicago-stamp.mjs';
 import { createBatch } from './pr-batch.mjs';
+import { startHealthBeat } from './health-beat.mjs';
 const batch = createBatch();
 
 const PORT = process.env.PORT === '0' ? 0 : (Number(process.env.PORT) || 8080);   // PORT=0: the OS picks a free port (tests); the log line names it
@@ -3307,6 +3308,7 @@ async function handle(req, res) {
     return json(req, res, result.status, result.body);
   }
   if (p === '/healthz' && (m === 'GET' || m === 'HEAD')) {
+    healthBeat.beat();
     const body = healthBody();
     return send(req, res, body.ok ? 200 : 503, 'application/json; charset=utf-8', JSON.stringify(body));
   }
@@ -3743,6 +3745,7 @@ server.on('error', (err) => {
   console.log('live mesh listen failed: ' + (err && err.code ? err.code : 'error'));
   process.exit(1);
 });
+const healthBeat = startHealthBeat();
 async function openMesh() {
   // The first read finishes before the port opens, so health and the board see the feed.
   if (process.env.COLLECTOR !== 'off') await readCollectorFeed();
