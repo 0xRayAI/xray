@@ -34,4 +34,6 @@ export function wornSuitVersion(projectRoot?: string, opts?: { liveGlobal?: bool
 export function readWorkSnapshot(projectRoot: string): WorkSnapshot;
 export function readSavedFreshness(projectRoot: string): string | null;
 export function probeFreshness(projectRoot: string): FreshnessDecision;
+export function copyRootForWrite(file: string, projectRoot: string): string | null;
+export function staleWriteReason(projectRoot: string, paths: string[]): string;
 export function refreshFreshness(projectRoot: string): FreshnessRefresh;
