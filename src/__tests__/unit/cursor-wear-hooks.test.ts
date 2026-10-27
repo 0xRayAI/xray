@@ -26,7 +26,7 @@ const bridges = require(path.join(repoRoot, 'scripts/node/install-bridges.cjs'))
     target: string,
     packageRoot: string,
     log?: () => void,
-    opts?: { outerRoots?: boolean },
+    opts?: { outerRoots?: boolean; suit?: boolean },
   ) => string;
   unwearCursorHooks: (target: string) => boolean;
   installCursorBridge: (target: string, packageRoot: string, log?: () => void) => string | null;
@@ -423,6 +423,61 @@ describe('cursor wear wires installed dist hooks', () => {
     } finally {
       rmSync(project, { recursive: true, force: true });
     }
+  });
+
+  it('keeps a user hook script when the worn package ships the suit', () => {
+    const project = mkdtempSync(path.join(tmpdir(), 'xray-wear-suit-user-'));
+    const packageRoot = path.join(project, 'node_modules', '0xray');
+    const userScript = '#!/bin/sh\necho user-pre-compact\n';
+    const original =
+      '{"version":1,"hooks":{"preCompact":[{"command":".cursor/hooks/pre-compact.sh","timeout":4}]}}\n';
+    try {
+      gitInit(project);
+      mkdirSync(path.join(project, '.cursor', 'hooks'), { recursive: true });
+      writeFileSync(path.join(project, '.cursor', 'hooks', 'pre-compact.sh'), userScript);
+      chmodSync(path.join(project, '.cursor', 'hooks', 'pre-compact.sh'), 0o755);
+      writeFileSync(path.join(project, '.cursor', 'hooks.json'), original);
+      plantDistHooks(packageRoot, 'dist');
+      writeFileSync(path.join(packageRoot, 'AGENTS-consumer.md'), '# suit\n');
+      wearCursorHooks(project, packageRoot, () => {});
+      expect(readFileSync(path.join(project, '.cursor', 'hooks', 'pre-compact.sh'), 'utf8')).toBe(userScript);
+      const hooks = commandsOf(path.join(project, '.cursor', 'hooks.json'));
+      expect(hooks.preCompact).toEqual([
+        '.cursor/hooks/pre-compact.sh',
+        'node_modules/0xray/dist/integrations/cursor/hooks/pre-compact.sh',
+      ]);
+    } finally {
+      rmSync(project, { recursive: true, force: true });
+    }
+  });
+
+  it('dogfood wear restores the station call on the factory pre-compact hook', () => {
+    const factory = mkdtempSync(path.join(tmpdir(), 'xray-wear-station-'));
+    const stale = '#!/bin/sh\nHERE="$(CDPATH= cd -- \"$(dirname -- \"$0\")\" && pwd)"\nexec /bin/sh "${HERE}/xray-cloud-hook.sh" preCompact pre-compact.js\n';
+    try {
+      gitInit(factory);
+      writeFileSync(path.join(factory, 'package.json'), `${JSON.stringify({ name: '0xray' })}\n`);
+      const dest = path.join(factory, 'src', 'integrations', 'cursor', 'hooks');
+      mkdirSync(dest, { recursive: true });
+      for (const name of readdirSync(srcHooks)) {
+        copyFileSync(path.join(srcHooks, name), path.join(dest, name));
+      }
+      mkdirSync(path.join(factory, '.cursor', 'hooks'), { recursive: true });
+      writeFileSync(path.join(factory, '.cursor', 'hooks.json'), '{"version":1,"hooks":{}}\n');
+      writeFileSync(path.join(factory, '.cursor', 'hooks', 'pre-compact.sh'), stale);
+      wearCursorHooks(factory, factory, () => {}, { suit: false });
+      const worn = readFileSync(path.join(factory, '.cursor', 'hooks', 'pre-compact.sh'), 'utf8');
+      expect(worn).toContain('inbox-watch-station.sh');
+      expect(worn).toBe(readFileSync(path.join(srcHooks, 'pre-compact.sh'), 'utf8'));
+    } finally {
+      rmSync(factory, { recursive: true, force: true });
+    }
+  });
+
+  it('the shipped pre-compact hook matches the factory runner', () => {
+    const src = readFileSync(path.join(srcHooks, 'pre-compact.sh'), 'utf8');
+    expect(src).toContain('inbox-watch-station.sh');
+    expect(src).toBe(readFileSync(path.join(repoRoot, '.cursor/hooks/pre-compact.sh'), 'utf8'));
   });
 
   it('does not write CURSOR_PROJECT_DIR or a repos/xray ancestor unless outer roots are requested', () => {
