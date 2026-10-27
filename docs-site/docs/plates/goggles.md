@@ -28,6 +28,8 @@ A thing on that plane has its own card. A card with no plate names the stamp-pla
 
 A name that is not a plane or a card says `Name one plane.`
 
+One named card fills that card's files. Two names stay quiet. Bifrost and grokbot are cards on the ecosystem plane. Worn-turn is the card for the Cursor and Grok pre-tool hooks.
+
 A checkout named `0xray` records `scripts/mjs/run-goggles-mcp.mjs`. Any other project records `node_modules/0xray/scripts/mjs/run-goggles-mcp.mjs`.
 
 stamped · 0xray 4.1.0

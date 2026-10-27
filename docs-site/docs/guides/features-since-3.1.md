@@ -8,6 +8,10 @@ The docs site is https://docs.0xray.dev/. The public board is https://bifrost.0x
 
 Goggles keeps four planes: dev, integration, domain, and ecosystem. Each card is one thing. A search inside the current card runs. Any other search returns that card and does not run. Plates now exist for repertoire, dynamo, foundry, the delegation gate, temperament, asides, the inference cycle, Hermes, OpenClaw, OpenCode, the consumer MCP set, and confer. Confer stays off unless it is enabled.
 
+Missed in the 4.1.4 Dist notes. One named card fills that card's files. Bifrost, grokbot, and worn-turn are cards. The mill seat is off the roster, the mesh, and the inbox. Forge launches the cloud agent and opens the pull request through its App. Blinky plans the wave, paces burn, handles Lane H and Dist, and onboards. An unassigned issue or a P1 wakes forge. CoS is not woken to reassign. A seat sets its own title. Planes are core, integration, ecosystem, distribution, and live. `Keys:` is `gh-<seat>`. The wake posts for real new work. A hotfix merges on green CI. Critic reviews after. Worn Grok hooks run while Bifrost is live. The only TUI monitor is `inbox-watch.sh`. The default board is https://bifrost.0xray.dev. A printed inbox id is acked. The seed grace delivers a fresh comment. A noop wake 409 is skipped. The public board serves the kanban and `GET /history`, `/history/cards`, and `/history/transitions`.
+
+Notes for Dist when Arch1 publishes the next version. package.json stays 4.1.4 here. Reading a plate file holds that card so a search of its files runs (#644). Codex 70 denies a write only in a stale copy of this repo (#646). A red CI check writes a card when the pull has none, then a `ci_fail` inbox line (#648). This guide does not include that code.
+
 ## 4.1.0 — Bifrost board, goggles, wake
 
 Bifrost is the collector board. Goggles views one plane. The cards are in `.xray/state/LENS.md`. A search inside the current card runs. 4.0.43 below is the earlier confer and hook cut. It was stamped and not published.
