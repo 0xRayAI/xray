@@ -1050,7 +1050,7 @@ function searchStays(root, file, current) {
   return current === currentPlane(root) && target.plane === current;
 }
 
-/** A tool path on its own line counts, including a directory the plane list does not name. */
+/** A tool path on its own line counts. A one-token pattern that names no file does not. */
 function searchPaths(root, text) {
   const raw = String(text || '').replace(/\\/g, '/');
   const found = openPaths(raw);
@@ -1064,12 +1064,20 @@ function searchPaths(root, text) {
     const item = line.trim();
     if (!item || /\s/.test(item)) continue;
     let rel = item;
+    let fromRoot = false;
     if (rootAbs && (item === rootAbs || item.startsWith(`${rootAbs}/`))) {
       rel = item.slice(rootAbs.length).replace(/^\//, '');
+      fromRoot = true;
     }
     if (!rel || rel.startsWith('/') || rel.split('/').includes('..')) continue;
     if (!/^[A-Za-z0-9_@./-]+$/.test(rel)) continue;
-    found.push(rel.replace(/^\.\//, '').replace(/\/+$/, ''));
+    rel = rel.replace(/^\.\//, '').replace(/\/+$/, '');
+    if (!rel.includes('/') && !fromRoot) {
+      let onDisk = false;
+      try { onDisk = existsSync(join(root, rel)); } catch { onDisk = false; }
+      if (!onDisk) continue;
+    }
+    found.push(rel);
   }
   return [...new Set(found.filter(Boolean))];
 }

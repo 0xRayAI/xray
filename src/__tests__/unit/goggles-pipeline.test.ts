@@ -233,6 +233,9 @@ describe('goggles plate', () => {
       expect(other?.decision).toBe('deny');
       expect(other?.reason).toContain('Plane: domain');
       expect(lensBeforeResearch(root, 'grep', 'still searching')?.decision).toBe('deny');
+      expect(lensBeforeResearch(root, 'grep', 'access_tokens')?.decision).toBe('deny');
+      expect(lensBeforeResearch(root, 'grep', 'searchPaths')?.decision).toBe('deny');
+      expect(lensBeforeResearch(root, 'grep', `access_tokens\n${root}/house`)).toBeNull();
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
