@@ -7,6 +7,10 @@ Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 - A red CI check writes a card when the pull has none, then a `ci_fail` inbox line for the next owner, else the owner. One open line per head. Ships in the 4.1.5 cut. #648. This pull does not include that code.
 - Suit boot enables `inbox-watch.sh` in the local TUI. `inbox-watch-ensure` does not start a process.
 
+### 🐛 Bug Fixes
+
+- A plate file holds its card. Reading `docs-site/docs/plates/<id>.md` keeps that card, and a search of the card's files runs.
+
 ## [4.1.4] - 2026-10-26
 
 ### 🔄 Changes
