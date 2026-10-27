@@ -1,5 +1,9 @@
 ## [Unreleased]
 
+### 🐛 Bug Fixes
+
+- Wear keeps the station call on the factory pre-compact hook. A same-named user script that does not launch the runner stays in place.
+
 ## [4.1.4] - 2026-10-26
 
 ### 🔄 Changes

@@ -1216,6 +1216,19 @@ function fastenCursorHookScripts(targetDir, packageRoot, log) {
     const src = path.join(srcDir, name);
     if (!fs.existsSync(src)) continue;
     const dest = path.join(destDir, name);
+    if (fs.existsSync(dest)) {
+      let body = "";
+      try {
+        body = shellWithoutComments(fs.readFileSync(dest, "utf8"));
+      } catch {
+        body = "";
+      }
+      // A script that does not launch our runner belongs to the user.
+      if (!body.includes("xray-cloud-hook.sh")) {
+        log("cursor-bridge", "kept user hook script", "info", { path: dest });
+        continue;
+      }
+    }
     copyFileIfChanged(src, dest);
     chmodIfNeeded(dest, 0o755);
     copied++;
