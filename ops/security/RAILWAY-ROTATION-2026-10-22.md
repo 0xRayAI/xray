@@ -46,7 +46,7 @@ npm: no `NPM_TOKEN` or `NODE_AUTH_TOKEN` is read by any of these services, and n
 - Project: `burst-live`. Service: `burst-live`. Environment: `production`.
 - Defined: `house/live/app/deploy.sh:8` (project and service) and `:11` (environment). `house/live/README.md:86` and `:92`. `house/live/feed/site.json:2`.
 - Builder: `house/live/app/Dockerfile:2` (`node:24.22.1-bookworm-slim`). Start: `house/live/app/railway.json:4` (`node server.mjs`). Health: `/healthz`.
-- Public board host behind the service: `burst-live-production.up.railway.app` is named at `house/live/tools/load-wave-seed.mjs:14`. The page host is `https://bifrost.0xray.dev` (`house/live/feed/site.json:3`).
+- Public board host behind the service is named at `house/live/tools/load-wave-seed.mjs:14`. The page host is `https://bifrost.0xray.dev` (`house/live/feed/site.json:3`).
 - `house/live/app/.railway/railway.ts:11` and `:16` say service `live-mesh` and project `live-board`. The file says to rename those to `LIVE_RAILWAY_SERVICE` and `LIVE_RAILWAY_PROJECT` before apply, and not to apply while `railway.json` is still the config (`railway.ts:4`). Treat `live-mesh` / `live-board` as unused placeholders, not the live names.
 - Deploy-machine names, not variables on the service: `LIVE_RAILWAY_PROJECT`, `LIVE_RAILWAY_SERVICE`, `LIVE_RAILWAY_ENVIRONMENT`, `MESH_APP_DEPLOY_DIR`, `LIVE_PUBLIC_OVERLAY` (`house/burst/DEPLOY.md:155`).
 

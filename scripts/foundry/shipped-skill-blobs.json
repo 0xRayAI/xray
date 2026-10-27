@@ -75,5 +75,117 @@
         "since": "4.0.27"
       }
     ]
+  },
+  "agents": {
+    "blip-inspect.yml": [
+      {
+        "blob": "78bae34025bfd24da8a839963f35b44104a08b49",
+        "since": "4.0.14"
+      },
+      {
+        "blob": "d9da1b4301660519f1f1b847c4455e9a2d5e22fd",
+        "since": "4.0.15"
+      }
+    ],
+    "blip-looker.yml": [
+      {
+        "blob": "8d3620006eddc0a4a0dca77a1018f4d3236ece4e",
+        "since": "4.0.15"
+      }
+    ],
+    "blip-vibe.yml": [
+      {
+        "blob": "03859723cc2c3b62feb0d82c6456f187ebdf0304",
+        "since": "4.0.15"
+      }
+    ],
+    "blip.yml": [
+      {
+        "blob": "885dd9e09f8fec7110f8b2f219033a10b02b0289",
+        "since": "4.0.14"
+      },
+      {
+        "blob": "da40ab874b2046c622117ab19a1328df36e97108",
+        "since": "4.0.15"
+      }
+    ],
+    "inspect.yml": [
+      {
+        "blob": "4655a6dd7ec760cf2e9a5a2034965929e40e4f2a",
+        "since": "4.0.4"
+      },
+      {
+        "blob": "b35bc595cbe5c2f87cbf369ec86972d38223ae18",
+        "since": "4.0.5"
+      },
+      {
+        "blob": "89854faf2c9bd5008ceeeff436b5bb8fb9d60dce",
+        "since": "4.0.6"
+      },
+      {
+        "blob": "0f55ba23cb5ef8616e04795742621c5ad9392ec3",
+        "since": "4.0.7"
+      },
+      {
+        "blob": "b387c2d02baa0d74f961803e0635e7d76e2906f9",
+        "since": "4.0.13"
+      },
+      {
+        "blob": "740ad9ba5bed0459c1b631b60f6a2e4bee0979eb",
+        "since": "4.0.15"
+      }
+    ],
+    "mill.yml": [
+      {
+        "blob": "9c719aacb565c29e3f0bf94cc532b76cc85dc7d2",
+        "since": "4.0.4"
+      },
+      {
+        "blob": "00e59174ce4000c4cd3b6ba1845b7ab604f3db0d",
+        "since": "4.0.5"
+      },
+      {
+        "blob": "a9fa79d39866a3d3c81069ded553ef8dfe906b9f",
+        "since": "4.0.6"
+      },
+      {
+        "blob": "fc18a6e281d950b49150109339ba28babe113f51",
+        "since": "4.0.7"
+      },
+      {
+        "blob": "c604c17a54d19f72a4785e2a10d6066f0265f09e",
+        "since": "4.0.13"
+      },
+      {
+        "blob": "583d4e9cd207d97df09d67e8fdef4cdfdd7184fa",
+        "since": "4.0.15"
+      }
+    ],
+    "sound-inspect.yml": [
+      {
+        "blob": "2abf03789b3ad739a9f01a76531ab2b1198fb393",
+        "since": "4.0.14"
+      },
+      {
+        "blob": "b9a7e96087eab49fdbdd9e08acde6802aed8e73a",
+        "since": "4.0.15"
+      }
+    ],
+    "sound-mixer.yml": [
+      {
+        "blob": "2846433591fd4ec5c0ced2230eac061c2369df16",
+        "since": "4.0.15"
+      }
+    ],
+    "sound.yml": [
+      {
+        "blob": "48edd2ac31752147df87d008cf15314d7816a680",
+        "since": "4.0.14"
+      },
+      {
+        "blob": "7eb466238d06e040d4c17110fc95c2b2dea22407",
+        "since": "4.0.15"
+      }
+    ]
   }
 }
