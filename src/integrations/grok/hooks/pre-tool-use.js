@@ -81,7 +81,7 @@ async function main() {
       if (extraBlock) finish(eventRoot, 'deny', extraBlock, null, toolName);
     }
 
-    const spoken = [cmd, content, toolInput.pattern, toolInput.query, ...(ctx.paths || [])].filter(Boolean).join('\n');
+    const spoken = [cmd, content, toolInput.pattern, toolInput.query, toolInput.glob, ...(ctx.paths || [])].filter(Boolean).join('\n');
     const lensStop = lensBeforeResearch(eventRoot, toolName, spoken);
     if (lensStop?.decision === 'deny') {
       finish(eventRoot, 'deny', lensStop.reason, null, toolName, { gate: lensStop.gate });
@@ -127,7 +127,7 @@ async function main() {
 
 function extractFromEvent(event) {
   const toolName = event.toolName || process.env.TOOL_NAME || 'unknown';
-  const toolInput = event.toolInput ?? {};
+  const toolInput = event.toolInput ?? event.tool_input ?? {};
   const paths = [];
   let content = '';
 

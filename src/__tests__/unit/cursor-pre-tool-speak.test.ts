@@ -61,4 +61,83 @@ describe('cursor lens spoken path', () => {
     expect(out.permission).toBe('allow');
     expect(out.agent_message).toContain('Plane: integration');
   });
+
+  it('a glob of package.json on the dev plane runs', () => {
+    const result = runCursorHook({
+      tool_name: 'Grep',
+      tool_input: { pattern: 'test', glob: 'package.json', path: '/tmp/not-a-repo' },
+    });
+    expect(result.status).toBe(0);
+    const out = JSON.parse(result.stdout);
+    expect(out.permission).toBe('allow');
+    expect(out.agent_message ?? '').not.toContain('Plane: dev');
+  });
+
+  it('a file on this plane runs and a file on another plane returns the card', () => {
+    const here = runCursorHook({
+      tool_name: 'Grep',
+      tool_input: { pattern: 'chmodIfNeeded', path: 'scripts/node/install-bridges.cjs' },
+    });
+    expect(here.status).toBe(0);
+    const allowed = JSON.parse(here.stdout);
+    expect(allowed.permission).toBe('allow');
+    expect(allowed.agent_message ?? '').not.toContain('Plane:');
+
+    const there = runCursorHook({
+      tool_name: 'Grep',
+      tool_input: { pattern: 'release', path: 'scripts/foundry/release.mjs' },
+    });
+    expect(there.status).toBe(0);
+    const denied = JSON.parse(there.stdout);
+    expect(denied.permission).toBe('deny');
+    expect(denied.agent_message).toContain('Plane: dev');
+  });
+});
+
+function runGrokHook(payload: Record<string, unknown>) {
+  const cwd = mkdtempSync(join(tmpdir(), 'grok-hook-'));
+  const hook = join(process.cwd(), 'src/integrations/grok/hooks/pre-tool-use.js');
+  const env = { ...process.env };
+  delete env.GROK_WORKSPACE_ROOT;
+  delete env.CLAUDE_PROJECT_DIR;
+  delete env.XRAY_ROOT;
+  return spawnSync(process.execPath, [hook], {
+    cwd,
+    env,
+    input: JSON.stringify({ ...payload, cwd }),
+    encoding: 'utf8',
+  });
+}
+
+describe('grok lens spoken path', () => {
+  it('a glob of package.json on the dev plane runs', () => {
+    const result = runGrokHook({
+      toolName: 'grep',
+      toolInput: { pattern: 'test', glob: 'package.json', path: '/tmp/not-a-repo' },
+    });
+    expect(result.status).toBe(0);
+    const out = JSON.parse(result.stdout);
+    expect(out.decision).toBe('allow');
+    expect(out.reason ?? '').not.toContain('Plane: dev');
+  });
+
+  it('a file on this plane runs and a file on another plane returns the card', () => {
+    const here = runGrokHook({
+      toolName: 'grep',
+      toolInput: { pattern: 'chmodIfNeeded', path: 'scripts/node/install-bridges.cjs' },
+    });
+    expect(here.status).toBe(0);
+    const allowed = JSON.parse(here.stdout);
+    expect(allowed.decision).toBe('allow');
+    expect(allowed.reason ?? '').not.toContain('Plane:');
+
+    const there = runGrokHook({
+      toolName: 'grep',
+      toolInput: { pattern: 'release', path: 'scripts/foundry/release.mjs' },
+    });
+    expect(there.status).toBe(0);
+    const denied = JSON.parse(there.stdout);
+    expect(denied.decision).toBe('deny');
+    expect(denied.reason).toContain('Plane: dev');
+  });
 });

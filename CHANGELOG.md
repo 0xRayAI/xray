@@ -6,6 +6,10 @@ Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 - Codex 70 denies a write only when that path sits in a stale copy of this repo. A file outside the repo is allowed. A worktree on main is allowed. The code is on #646.
 - A red CI check writes a card when the pull has none, then a `ci_fail` inbox line for the next owner, else the owner. One open line per head. Ships in the 4.1.5 cut. #648. This pull does not include that code.
 
+### 🐛 Bug Fixes
+
+- A search of a file on the held plane runs. The tool glob counts as that file. A search of another plane still returns the current card.
+
 ## [4.1.4] - 2026-10-26
 
 ### 🔄 Changes

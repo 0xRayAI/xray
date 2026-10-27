@@ -189,6 +189,32 @@ describe('goggles plate', () => {
     }
   });
 
+  it('a search of a file on the held plane runs', () => {
+    const root = mkdtempSync(join(tmpdir(), 'goggles-same-plane-'));
+    try {
+      expect(thingOfPath('scripts/node/install-bridges.cjs')).toBe('suit-wear');
+      expect(lensBeforeResearch(root, 'grep', 'scripts/node/install-bridges.cjs')).toBeNull();
+      expect(lensBeforeResearch(root, 'grep', 'scripts/mjs/run-grok-hook.mjs')).toBeNull();
+      const hold = JSON.parse(readFileSync(join(root, '.xray', 'state', 'goggles-plane.json'), 'utf8'));
+      expect(hold).toEqual({ plane: 'dev', card: 'dev' });
+      const other = lensBeforeResearch(root, 'grep', 'scripts/foundry/release.mjs');
+      expect(other?.decision).toBe('deny');
+      expect(other?.reason).toContain('Plane: dev');
+      expect(lensBeforeResearch(root, 'grep', 'package.json\n/tmp/wear-station')).toBeNull();
+      const hop = lensBeforeResearch(root, 'read_file', 'src/nucleus/thin-dispatch.ts');
+      expect(hop?.reason).toContain('Card: routing');
+      const off = lensBeforeResearch(root, 'grep', 'scripts/node/install-bridges.cjs');
+      expect(off?.decision).toBe('deny');
+      expect(off?.reason).toContain('Card: routing');
+      expect(lensBeforeResearch(root, 'grep', 'scripts/mjs/run-grok-hook.mjs')).toBeNull();
+      const stayed = JSON.parse(readFileSync(join(root, '.xray', 'state', 'goggles-plane.json'), 'utf8'));
+      expect(stayed.card).toBe('routing');
+      expect(lensBeforeResearch(root, 'grep', 'still searching')?.decision).toBe('deny');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it('a shared path opens the named owner', () => {
     const root = mkdtempSync(join(tmpdir(), 'goggles-owner-'));
     try {
