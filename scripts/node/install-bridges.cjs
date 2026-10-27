@@ -1223,8 +1223,10 @@ function fastenCursorHookScripts(targetDir, packageRoot, log) {
       } catch {
         body = "";
       }
-      // A script that does not launch our runner belongs to the user.
-      if (!body.includes("xray-cloud-hook.sh")) {
+      // Keep a different script that does not launch our runner. The copy we
+      // wrote still gets its mode restored on the next wear.
+      const same = sameFileBytes(dest, fs.readFileSync(src));
+      if (!same && !body.includes("xray-cloud-hook.sh")) {
         log("cursor-bridge", "kept user hook script", "info", { path: dest });
         continue;
       }
