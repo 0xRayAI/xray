@@ -1085,6 +1085,15 @@ function commandPaths(line, rootAbs) {
   return found;
 }
 
+/** Drop an outside absolute token so a repo token inside it is not this checkout. */
+function lineWithoutOutsidePaths(line, rootAbs) {
+  const tokens = commandPaths(line, rootAbs).sort((a, b) => b.length - a.length);
+  if (!tokens.length) return line;
+  let rest = String(line || '');
+  for (const token of tokens) rest = rest.split(token).join(' ');
+  return rest;
+}
+
 /** A tool path on its own line counts. A path outside this checkout counts, including inside a command. A one-token pattern that names no file does not. */
 function searchPaths(root, text) {
   const raw = String(text || '').replace(/\\/g, '/');
@@ -1107,7 +1116,7 @@ function searchPaths(root, text) {
       continue;
     }
     found.push(...commandPaths(line, rootAbs));
-    kept.push(line);
+    kept.push(lineWithoutOutsidePaths(line, rootAbs));
   }
   found.push(...openPaths(kept.join('\n')));
   for (const line of kept) {

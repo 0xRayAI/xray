@@ -203,6 +203,20 @@ describe('goggles plate', () => {
       expect(bash?.decision).toBe('deny');
       expect(bash?.reason).toContain('Plane: domain');
       expect(lensBeforeResearch(root, 'run_terminal_command', 'rg -n kind /tmp/outside-wear/watch_pr.py')).toBeNull();
+      expect(lensBeforeResearch(root, 'run_terminal_command', 'rg -n kind /tmp/outside-wear/scripts/foundry')).toBeNull();
+      expect(lensBeforeResearch(root, 'bash', 'rg -n kind /tmp/outside-wear/src/cli/index.js')).toBeNull();
+      expect(lensBeforeResearch(root, 'run_terminal_command', "rg -n kind '/tmp/outside-wear/grok-bot/OP-PROC.md'")).toBeNull();
+      expect(lensBeforeResearch(root, 'run_terminal_command', 'rg -n kind /tmp/outside-wear/node_modules/@0xray/repertoire/package.json')).toBeNull();
+      const inside = lensBeforeResearch(root, 'run_terminal_command', `rg -n kind ${root}/src/nucleus/thin-dispatch.ts`);
+      expect(inside?.decision).toBe('deny');
+      expect(inside?.reason).toContain('Plane: domain');
+      const tokenAndOff = lensBeforeResearch(
+        root,
+        'run_terminal_command',
+        'rg -n kind /tmp/outside-wear/scripts/foundry src/nucleus/thin-dispatch.ts',
+      );
+      expect(tokenAndOff?.decision).toBe('deny');
+      expect(tokenAndOff?.reason).toContain('Plane: domain');
       const both = lensBeforeResearch(
         root,
         'run_terminal_command',
