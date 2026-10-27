@@ -2101,11 +2101,12 @@ function since(c, raw = false) {   // raw: unmasked (ingest-secret inbox routing
 // env is built from scratch: no ingest secret, session secret or mesh password, and the token is never logged.
 const DATA_DIR = process.env.MESH_DATA_DIR || '/data';
 const GH_FEED = path.join(DATA_DIR, 'feed', 'github-events.json');
+const GH_BEAT = path.join(DATA_DIR, 'feed', 'github-events.beat.json');
 const JIRA_FEED = path.join(DATA_DIR, 'feed', 'jira-events.json');
 const jira = { pid: null, restarts: 0, lastWrite: 0, sig: '' };
 const COLLECTOR_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), 'collector');
 const COLLECTOR_REPOS = (process.env.COLLECTOR_REPOS || 'example-org/app example-org/mcp').split(/\s+/).filter(Boolean);
-const collector = { pid: null, restarts: 0, lastExit: null, lastWrite: 0, sig: '', repos: COLLECTOR_REPOS, child: null };
+const collector = { pid: null, restarts: 0, lastExit: null, lastWrite: 0, sig: '', beatSig: '', repos: COLLECTOR_REPOS, child: null };
 // COLLECTOR_ORG=org (D18): watch every repo the token can see in that org, unioned with COLLECTOR_REPOS; re-listed every
 // COLLECTOR_ORG_REFRESH_S (3600). A changed list restarts the collector child with the new repos. A failed listing keeps the last list.
 async function orgRepos(org, tok) {
@@ -2365,13 +2366,18 @@ function feedStalled(now = Date.now()) {
   if (!tick) return false;
   return now - tick > watchLimitMs();
 }
-function feedFileAgeMs(now = Date.now()) {
+function fileAgeMs(file, now) {
   try {
-    const age = now - fs.statSync(GH_FEED).mtimeMs;
+    const age = now - fs.statSync(file).mtimeMs;
     return age > 0 ? age : 0;
   } catch {
-    return 0;
+    return null;
   }
+}
+function feedFileAgeMs(now = Date.now()) {
+  const ages = [fileAgeMs(GH_FEED, now), fileAgeMs(GH_BEAT, now)].filter((age) => age != null);
+  if (!ages.length) return 0;
+  return Math.min(...ages);
 }
 function feedHealthLine(why) {
   upsert({ id: 'health:feed-loop', t_ct: ctStamp(Date.now()), from: 'watchdog', to: 'GitHub', kind: 'health_fail',
@@ -2476,10 +2482,28 @@ function applyFeedRead(msg) {
   ingestSrc('github', msg.feed.events, headerOf(msg.feed));
   routeSoon();
 }
-function readCollectorFeed() {   // every 2 s: ingest the collector's file when it changed. The parse runs off the request thread.
-  let st; try { st = fs.statSync(GH_FEED); } catch { return Promise.resolve(); }
+function readBeatClock() {
+  // A quiet pass rewrites this small file, not the event document. The clock still moves.
+  let st;
+  try { st = fs.statSync(GH_BEAT); } catch { return; }
+  if (!(st.size > 0) || st.size > 2 * 1024 * 1024) return;
+  if (st.mtimeMs > (collector.lastWrite || 0)) collector.lastWrite = st.mtimeMs;
   const sig = `${st.ino}:${st.size}:${st.mtimeMs}`;
-  if (sig === collector.sig) return Promise.resolve();
+  if (sig === collector.beatSig) return;
+  let hdr;
+  try { hdr = JSON.parse(fs.readFileSync(GH_BEAT, 'utf8')); } catch { return; }
+  if (!hdr || typeof hdr !== 'object' || Array.isArray(hdr)) return;
+  delete hdr.events;
+  collector.beatSig = sig;
+  collector.watchKilled = false;
+  applyCollectorHeader(hdr);
+}
+function readCollectorFeed() {   // every 2 s: ingest the collector's file when it changed. The parse runs off the request thread.
+  let st;
+  try { st = fs.statSync(GH_FEED); }
+  catch { readBeatClock(); return Promise.resolve(); }
+  const sig = `${st.ino}:${st.size}:${st.mtimeMs}`;
+  if (sig === collector.sig) { readBeatClock(); return Promise.resolve(); }
   if (feedRead) { feedRead.again = true; return feedRead.promise; }
   let resolve;
   const promise = new Promise(r => { resolve = r; });

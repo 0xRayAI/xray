@@ -101,6 +101,16 @@ test('the live feed takes a new generated_at when the events stay, and a new eve
   }
   assert.equal(body.generated_at, '2026-10-24T12:01:00+00:00');
   assert.deepEqual(body.events.map(e => e.id), [ev.id]);
+  fs.writeFileSync(FEED.replace(/\.json$/, '.beat.json'), JSON.stringify({ generated_at: '2026-10-24T12:01:30+00:00', notes: ['beat'] }));
+  for (let i = 0; i < 80; i++) {
+    body = await feed();
+    if (body.generated_at === '2026-10-24T12:01:30+00:00') break;
+    await sleep(100);
+  }
+  assert.equal(body.generated_at, '2026-10-24T12:01:30+00:00');
+  assert.deepEqual(body.events.map(e => e.id), [ev.id]);
+  const beatHealth = await fetch(`http://127.0.0.1:${srvPort}/healthz`);
+  assert.equal(beatHealth.status, 200);
   writeFeed('2026-10-24T12:02:00+00:00', [{ ...ev, id: 'acme/one#2:open' }]);
   for (let i = 0; i < 40; i++) {
     body = await feed();
