@@ -189,6 +189,28 @@ describe('goggles plate', () => {
     }
   });
 
+  it('a plate file holds its card', () => {
+    const root = mkdtempSync(join(tmpdir(), 'goggles-plate-card-'));
+    try {
+      expect(thingOfPath('docs-site/docs/plates/foundry.md')).toBe('foundry');
+      expect(thingOfPath('docs-site/docs/plates/memory-recall.md')).toBe('memory-recall');
+      expect(thingOfPath('docs-site/docs/plates/index.md')).toBe('');
+      expect(thingOfPath('docs-site/docs/plates/glossary.md')).toBe('');
+      const opened = lensBeforeResearch(root, 'read_file', 'docs-site/docs/plates/foundry.md');
+      expect(opened?.decision).toBe('allow');
+      expect(opened?.reason).toContain('Card: foundry');
+      expect(opened?.reason).toContain('Plane: ecosystem');
+      expect(lensBeforeResearch(root, 'grep', 'scripts/foundry/release.mjs')).toBeNull();
+      expect(lensBeforeResearch(root, 'grep', '/tmp/xray-worktrees/publish-414/scripts/foundry')).toBeNull();
+      const glossary = lensBeforeResearch(root, 'read_file', 'docs-site/docs/plates/glossary.md');
+      expect(glossary?.decision).toBe('allow');
+      expect(glossary?.reason).toContain('Plane: domain');
+      expect(glossary?.reason).not.toMatch(/^Card:/m);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it('a shared path opens the named owner', () => {
     const root = mkdtempSync(join(tmpdir(), 'goggles-owner-'));
     try {

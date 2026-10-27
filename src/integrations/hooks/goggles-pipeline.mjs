@@ -182,16 +182,30 @@ function rootsOf(entry) {
   return [];
 }
 
+function plateCardOf(rel) {
+  const prefix = 'docs-site/docs/plates/';
+  if (!rel.startsWith(prefix) || !rel.endsWith('.md')) return '';
+  const id = rel.slice(prefix.length, -3);
+  if (!id || id.includes('/') || CARD_PLANES.includes(id) || !isCardName(id)) return '';
+  // The plate file is the card. The domain plane also owns that directory.
+  return platePath(id) === rel ? id : '';
+}
+
 function cardMatchPaths(id) {
   if (CARD_PLANES.includes(id)) return PLANE_PATHS[id] || [];
   const row = mapEntry(id);
   if (!row) return [];
-  return [...thingFiles(row), ...rootsOf(row)];
+  const plate = platePath(id);
+  const listed = [...thingFiles(row), ...rootsOf(row)];
+  if (plate) listed.push(plate);
+  return listed;
 }
 
 /** Longest listed path. A root may equal the plane. A tie uses PATH_OWNER, or stays the plane. */
 export function thingOfPath(file) {
   const rel = String(file || '').replace(/\\/g, '/').replace(/^\.\//, '');
+  const plated = plateCardOf(rel);
+  if (plated) return plated;
   const table = overlayTable();
   let best = -1;
   const hits = [];

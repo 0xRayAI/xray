@@ -1,5 +1,9 @@
 ## [Unreleased]
 
+### 🐛 Bug Fixes
+
+- A plate file holds its card. Reading `docs-site/docs/plates/<id>.md` keeps that card, and a search of the card's files runs.
+
 ## [4.1.4] - 2026-10-26
 
 ### 🔄 Changes
