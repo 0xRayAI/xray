@@ -1023,6 +1023,37 @@ describe('foundry mill — mint from consumer SSOT', () => {
     }
   });
 
+  it('changelog mill fails when the package section is ahead, missing, or empty', () => {
+    const write = (name: string, version: string, changelog: string) => {
+      const tmp = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-changelog-'));
+      writeFileSync(path.join(tmp, 'package.json'), `${JSON.stringify({ name, version }, null, 2)}\n`);
+      writeFileSync(path.join(tmp, 'CHANGELOG.md'), changelog);
+      return tmp;
+    };
+    const ahead = write('acme-app', '1.2.3', '## [9.9.9] - 2026-01-01\n\n- future\n');
+    const missing = write('acme-app', '1.2.3', '## [0.0.1] - 2026-01-01\n\n- old\n');
+    const empty = write('acme-app', '1.2.3', '## [1.2.3] - 2026-01-01\n\n### Changes\n');
+    const ok = write('acme-app', '1.2.3', '## [Unreleased]\n\n## [1.2.3] - 2026-01-01\n\n- shipped\n');
+    try {
+      const aheadResult = validateReleaseDocs(ahead);
+      expect(aheadResult.ok).toBe(false);
+      expect(aheadResult.errors.join('\n')).toContain('top CHANGELOG entry is [9.9.9]');
+      const missingResult = validateReleaseDocs(missing);
+      expect(missingResult.ok).toBe(false);
+      expect(missingResult.errors.join('\n')).toContain('missing ## [1.2.3] section');
+      const emptyResult = validateReleaseDocs(empty);
+      expect(emptyResult.ok).toBe(false);
+      expect(emptyResult.errors.join('\n')).toContain('## [1.2.3] has no bullets');
+      const okResult = validateReleaseDocs(ok);
+      expect(okResult.ok, okResult.errors.join('\n')).toBe(true);
+    } finally {
+      rmSync(ahead, { recursive: true, force: true });
+      rmSync(missing, { recursive: true, force: true });
+      rmSync(empty, { recursive: true, force: true });
+      rmSync(ok, { recursive: true, force: true });
+    }
+  });
+
   it('validate-release-docs is light unless the milled repo is 0xray with docs-site', () => {
     const tmp = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-light-'));
     try {

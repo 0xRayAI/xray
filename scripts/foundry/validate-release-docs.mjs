@@ -234,6 +234,23 @@ function getCodexTermCount(rootDir) {
   return Object.keys(codex.terms || {}).length;
 }
 
+function versionSectionBody(content, version) {
+  const lines = String(content).split('\n');
+  const heading = `## [${version}]`;
+  const start = lines.findIndex((line) => line.startsWith(heading));
+  if (start === -1) return null;
+  const rest = [];
+  for (let i = start + 1; i < lines.length; i += 1) {
+    if (lines[i].startsWith('## [')) break;
+    rest.push(lines[i]);
+  }
+  return rest.join('\n');
+}
+
+function sectionHasBullet(body) {
+  return /^[ \t]*[-*][ \t]+\S/m.test(body);
+}
+
 function validateChangelog(content, version) {
   const errors = [];
   const headings = [...content.matchAll(/^## \[([^\]]+)\]/gm)].map((m) => m[1]);
@@ -250,6 +267,10 @@ function validateChangelog(content, version) {
   }
   if (!content.includes(`## [${version}]`)) {
     errors.push(`missing ## [${version}] section`);
+  }
+  const body = versionSectionBody(content, version);
+  if (body !== null && !sectionHasBullet(body)) {
+    errors.push(`## [${version}] has no bullets`);
   }
   return errors;
 }
