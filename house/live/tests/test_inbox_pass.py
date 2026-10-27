@@ -143,6 +143,33 @@ class InboxPass(unittest.TestCase):
             self.assertNotIn(old_pr["id"], blob)
             self.assertEqual(self.run_pass(env, "pass"), "0 0")
 
+    def test_packet_next_owner_tips_that_seat(self):
+        """Opener self-lines stay dropped. A different packet next owner is the tip, not unowned."""
+        with tempfile.TemporaryDirectory() as d:
+            run = Path(d); (run / "feed").mkdir(); (run / "fleet").mkdir()
+            env = dict(os.environ, MESH_RUN=str(run), LIVE_BOARD="off")
+            R = "example-org/app"
+            feed = run / "feed" / "live-events.json"
+            seed = {"id": f"{R}#1:open", "t_ct": ct(900), "kind": "pr_open", "repo": R, "number": 1, "label": "old", "source": "https://github.com/x"}
+            feed.write_text(json.dumps({"events": [seed]}))
+            self.assertEqual(self.run_pass(env, "pass"), "0 0")
+            opened = {"id": f"{R}!660:open", "t_ct": ct(20), "kind": "issue_open", "repo": R, "number": 660,
+                      "from": "critic", "actor": "critic0x[bot]", "label": "issue opened", "source": "https://github.com/x/660",
+                      "packet": {"next owner": "Arch1"}}
+            self_open = {"id": f"{R}!661:open", "t_ct": ct(10), "kind": "issue_open", "repo": R, "number": 661,
+                         "from": "critic", "actor": "critic0x[bot]", "label": "self open", "source": "https://github.com/x/661",
+                         "packet": {"next owner": "Critic"}}
+            feed.write_text(json.dumps({"events": [seed, opened, self_open]}))
+            self.run_pass(env, "pass")
+            box = run / "feed" / "inbox-spool"
+            rd = lambda s: [json.loads(x) for x in (box / f"{s}.jsonl").read_text().splitlines()] if (box / f"{s}.jsonl").exists() else []
+            arch = [l for l in rd("arch1") if l["id"] == opened["id"]]
+            self.assertEqual([l["reason"] for l in arch], ["packet next owner"])
+            self.assertFalse(any(l["id"] == opened["id"] for l in rd("blinky")))
+            self.assertFalse(any(l["id"] == opened["id"] for l in rd("critic")))
+            self.assertFalse(any(l["id"] == self_open["id"] for l in rd("critic")))
+            self.assertFalse(any(l["id"] == self_open["id"] for l in rd("arch1")))
+
 
 if __name__ == "__main__":
     unittest.main()
