@@ -306,6 +306,54 @@ def write(feed, out):
     return n
 
 
+def feed_cap():
+    """Newest events kept in the live document. The archive holds the rest. A ~50k document OOMs node."""
+    try:
+        n = int(os.environ.get("LIVE_FEED_CAP", "2000"))
+    except ValueError:
+        return 2000
+    return n if n > 0 else 0
+
+
+def window_events(events, cap):
+    if not isinstance(events, list) or cap <= 0 or len(events) <= cap:
+        return list(events) if isinstance(events, list) else []
+    def key(item):
+        i, e = item
+        if not isinstance(e, dict):
+            return ("", "", i)
+        t = e.get("t_ct")
+        return (t if isinstance(t, str) else "", str(e.get("id") or ""), i)
+    ranked = sorted(enumerate(events), key=key)
+    return [e for _, e in ranked[-cap:]]
+
+
+def cap_file(path):
+    """Shrink an existing document before node parses it. Returns how many events were dropped."""
+    path = Path(path)
+    try:
+        if not path.is_file() or path.stat().st_size == 0:
+            return 0
+        feed = json.loads(path.read_text())
+    except (OSError, json.JSONDecodeError):
+        return 0
+    if not isinstance(feed, dict) or not isinstance(feed.get("events"), list):
+        return 0
+    cap = feed_cap()
+    events = feed["events"]
+    if cap <= 0 or len(events) <= cap:
+        return 0
+    kept = window_events(events, cap)
+    dropped = len(events) - len(kept)
+    payload = dict(feed)
+    payload["events"] = kept
+    payload["event_count"] = len(kept)
+    tmp = path.with_suffix(f".json.tmp.{os.getpid()}")
+    tmp.write_text(json.dumps(payload, ensure_ascii=False, separators=(",", ":")) + "\n")
+    os.replace(tmp, path)
+    return dropped
+
+
 def _write_beat(feed, out):
     """Clock and header only. A quiet pass must not rewrite the event document."""
     header = {k: v for k, v in feed.items() if k != "events"}
@@ -321,21 +369,26 @@ def _write(feed, out):
     seen = set(json.loads(seen_path.read_text())) if seen_path.exists() else set()
     def h(e):
         return hashlib.sha1(json.dumps(e, sort_keys=True, ensure_ascii=False).encode()).hexdigest()[:20]
-    events = feed.get("events") or []
+    events = list(feed.get("events") or [])
+    if MODE == "github":
+        events = window_events(events, feed_cap())
     keys = [h(e) for e in events]
     keyset = set(keys)
     new = [(e, k) for e, k in zip(events, keys) if k not in seen]
+    payload = dict(feed)
+    payload["events"] = events
+    payload["event_count"] = len(events)
     # Railway collector: same events leave the document bytes in place. The beat still moves the clock.
     if MODE == "github" and out.exists() and keyset == seen:
-        _write_beat(feed, out)
+        _write_beat(payload, out)
         return 0
     tmp = out.with_suffix(f".json.tmp.{os.getpid()}")
-    tmp.write_text(json.dumps(feed, ensure_ascii=False, separators=(",", ":")) + "\n")
+    tmp.write_text(json.dumps(payload, ensure_ascii=False, separators=(",", ":")) + "\n")
     os.replace(tmp, out)
     if MODE == "github":                # no append-only archive; the content hashes persist on the volume
         tmp = seen_path.with_suffix(f".tmp.{os.getpid()}")
         tmp.write_text(json.dumps(sorted(keyset))); os.replace(tmp, seen_path)
-        _write_beat(feed, out)
+        _write_beat(payload, out)
         return len(new)
     if new:
         with stream.open("a") as f:
