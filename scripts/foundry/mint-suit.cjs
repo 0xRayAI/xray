@@ -744,22 +744,38 @@ function packagedAgentPath(packageRoot, file) {
   return files.find((candidate) => fs.existsSync(candidate)) || "";
 }
 
-let shippedSkillBlobsCache = null;
+let shippedBlobsCache = null;
 
-/** Pinned git blob ids of catalog skill bodies shipped since v4.0.0. Never reads git or npm. */
-function shippedSkillBlobs() {
-  if (shippedSkillBlobsCache) return shippedSkillBlobsCache;
+function fillBlobMap(source) {
   const map = new Map();
+  for (const [name, list] of Object.entries(source || {})) {
+    map.set(name, new Set((Array.isArray(list) ? list : []).map((entry) => entry.blob)));
+  }
+  return map;
+}
+
+/** Pinned git blob ids of catalog bodies shipped since v4.0.0. Never reads git or npm. */
+function shippedBlobs() {
+  if (shippedBlobsCache) return shippedBlobsCache;
+  let skills = new Map();
+  let agents = new Map();
   try {
     const data = JSON.parse(fs.readFileSync(path.join(__dirname, "shipped-skill-blobs.json"), "utf8"));
-    for (const [name, list] of Object.entries(data.skills || {})) {
-      map.set(name, new Set((Array.isArray(list) ? list : []).map((entry) => entry.blob)));
-    }
+    skills = fillBlobMap(data.skills);
+    agents = fillBlobMap(data.agents);
   } catch {
     /* no pinned list: only the current bytes count */
   }
-  shippedSkillBlobsCache = map;
-  return map;
+  shippedBlobsCache = { skills, agents };
+  return shippedBlobsCache;
+}
+
+function shippedSkillBlobs() {
+  return shippedBlobs().skills;
+}
+
+function shippedAgentBlobs() {
+  return shippedBlobs().agents;
 }
 
 function gitBlobId(bytes) {
@@ -770,8 +786,8 @@ function gitBlobId(bytes) {
     .digest("hex");
 }
 
-/** Worn skill bytes equal the current package file or a shipped body of that skill. */
-function wornSkillIsShippedMirror(name, wornFile, packagedFile) {
+/** Worn bytes equal the current package file or a pinned shipped body of that name. */
+function wornBytesMatchShipped(name, wornFile, packagedFile, blobs) {
   let worn;
   try {
     worn = fs.readFileSync(wornFile);
@@ -783,8 +799,18 @@ function wornSkillIsShippedMirror(name, wornFile, packagedFile) {
   } catch {
     /* fall through to the pinned list */
   }
-  const shipped = shippedSkillBlobs().get(name);
+  const shipped = blobs.get(name);
   return Boolean(shipped && shipped.has(gitBlobId(worn)));
+}
+
+/** Worn skill bytes equal the current package file or a shipped body of that skill. */
+function wornSkillIsShippedMirror(name, wornFile, packagedFile) {
+  return wornBytesMatchShipped(name, wornFile, packagedFile, shippedSkillBlobs());
+}
+
+/** Worn agent bytes equal the current package file or a shipped body of that agent. */
+function wornAgentIsShippedMirror(name, wornFile, packagedFile) {
+  return wornBytesMatchShipped(name, wornFile, packagedFile, shippedAgentBlobs());
 }
 
 function sameBytes(left, right) {
@@ -838,7 +864,7 @@ function staleShippedSkillBodies(targetDir, packageRoot) {
  * A non-mill seat does not wear the catalog. An older wear copied each
  * packaged skill into the project skill dirs, and each packaged agent into
  * .opencode/agents. Remove a worn file only when its bytes match that package
- * copy, or (skills) a body of that skill shipped since v4.0.0, pinned in
+ * copy, or a body of that skill or agent shipped since v4.0.0, pinned in
  * shipped-skill-blobs.json. A seat's own text stays, even when the same bytes sit in several
  * dirs, so the costume check can refuse it.
  */
@@ -867,7 +893,7 @@ function stripPackagedCatalog(targetDir, millPlant, packageRoot) {
     if (allowAgents.has(file)) continue;
     const packaged = packagedAgentPath(packageRoot, file);
     const wornAgent = path.join(agentsDir, file);
-    if (!packaged || !sameBytes(wornAgent, packaged)) continue;
+    if (!wornAgentIsShippedMirror(file, wornAgent, packaged)) continue;
     fs.rmSync(wornAgent, { force: true });
   }
 }

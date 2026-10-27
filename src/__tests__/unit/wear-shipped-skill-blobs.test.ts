@@ -27,7 +27,10 @@ const version = JSON.parse(readFileSync(path.join(repoRoot, 'package.json'), 'ut
 const fixtures = path.join(repoRoot, 'src/__tests__/fixtures/shipped-skills');
 const pinned = JSON.parse(
   readFileSync(path.join(repoRoot, 'scripts/foundry/shipped-skill-blobs.json'), 'utf8'),
-) as { skills: Record<string, { blob: string; since: string }[]> };
+) as {
+  skills: Record<string, { blob: string; since: string }[]>;
+  agents: Record<string, { blob: string; since: string }[]>;
+};
 const skillDirs = [
   '.opencode/skills',
   '.grok/plugins/0xray/skills',
@@ -151,6 +154,19 @@ describe('wear strips catalog skill bodies shipped since v4.0.0', () => {
     for (const [name, list] of Object.entries(pinned.skills)) {
       for (const { blob } of list) expect(blobId(readFileSync(fixtureFor(name, blob)))).toBe(blob);
     }
+  });
+
+  it('pins the shipped mill and inspect bodies and leaves the current file off that list', () => {
+    expect(pinned.agents['mill.yml'].map((entry) => entry.blob)).toContain(
+      '583d4e9cd207d97df09d67e8fdef4cdfdd7184fa',
+    );
+    expect(pinned.agents['inspect.yml'].map((entry) => entry.blob)).toContain(
+      '740ad9ba5bed0459c1b631b60f6a2e4bee0979eb',
+    );
+    const currentMill = blobId(readFileSync(path.join(repoRoot, 'scripts/foundry/plant/agents/mill.yml')));
+    const currentInspect = blobId(readFileSync(path.join(repoRoot, 'scripts/foundry/plant/agents/inspect.yml')));
+    expect(pinned.agents['mill.yml'].map((entry) => entry.blob)).not.toContain(currentMill);
+    expect(pinned.agents['inspect.yml'].map((entry) => entry.blob)).not.toContain(currentInspect);
   });
 
   it('wears a sound plant over each of the 13 shipped orchestrator bodies', () => {

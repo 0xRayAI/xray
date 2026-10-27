@@ -33,7 +33,7 @@ describe("Status Command", () => {
   });
 
   describe("Function Implementation", () => {
-    it("should detect skills in .opencode/skills", () => {
+    it("should detect skills from the config directory", () => {
       const statusPath = path.join(PROJECT_ROOT, "src/cli/commands/status.ts");
       const content = fs.readFileSync(statusPath, "utf-8");
       expect(content).toContain("getSkillsList");
@@ -60,8 +60,8 @@ describe("Status Command", () => {
   });
 
   describe("Skills Directory", () => {
-    it("should have .opencode/skills directory", () => {
-      const skillsPath = path.join(PROJECT_ROOT, ".opencode/skills");
+    it("should have the src/skills catalog", () => {
+      const skillsPath = path.join(PROJECT_ROOT, "src/skills");
       expect(fs.existsSync(skillsPath)).toBe(true);
     });
 

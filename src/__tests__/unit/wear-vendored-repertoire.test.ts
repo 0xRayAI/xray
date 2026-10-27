@@ -13,7 +13,7 @@ import {
   symlinkSync,
   writeFileSync,
 } from 'node:fs';
-import os from 'node:os';
+import os, { homedir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
@@ -92,6 +92,27 @@ describe('wear-vendored-repertoire', () => {
       expect(realpathSync(existing)).toBe(realpathSync(vendor));
     } finally {
       rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('resolves a link from a tmp seat onto a vendor outside that prefix', () => {
+    const packageRoot = mkdtempSync(path.join(homedir(), 'xray-wear-vendor-'));
+    const targetDir = mkdtempSync(path.join(os.tmpdir(), 'xray-wear-cross-'));
+    const vendor = path.join(packageRoot, 'vendor', '@0xray', 'repertoire');
+    mkdirSync(vendor, { recursive: true });
+    writeFileSync(
+      path.join(vendor, 'package.json'),
+      JSON.stringify({ name: '@0xray/repertoire', version: '0.2.9' }),
+    );
+    try {
+      wearVendoredRepertoire(packageRoot, targetDir);
+      const dest = path.join(targetDir, 'node_modules', '@0xray', 'repertoire');
+      expect(realpathSync(dest)).toBe(realpathSync(vendor));
+      const worn = JSON.parse(readFileSync(path.join(dest, 'package.json'), 'utf8')) as { name: string };
+      expect(worn.name).toBe('@0xray/repertoire');
+    } finally {
+      rmSync(packageRoot, { recursive: true, force: true });
+      rmSync(targetDir, { recursive: true, force: true });
     }
   });
 
