@@ -25,6 +25,7 @@ Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 - The lens-gate plate, the goggles plate, the features guide, and the package face state that same search rule. README, `llms.txt`, AGENTS, and SKILLS say it.
 - A `node_modules` symlink is ignored the same way a `node_modules` directory is.
 - The changelog mill fails when `## [package version]` has no bullets. A top version ahead of package.json still fails. The range rule is OP-PROC `#changelog`.
+- A day archive is read one line at a time, so a file past the string cap still dedups. #663.
 
 ## [4.1.4] - 2026-10-26
 

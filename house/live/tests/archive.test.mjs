@@ -257,3 +257,25 @@ test('a 19:00 CT event files on that Chicago day, and the same source appends on
   assert.equal(stamped.ids.includes('example/repo#19|merged|edge-1900'), true);
   fs.rmSync(data, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 });
 });
+
+test('a day file larger than one read chunk still dedups', () => {
+  const data = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-arch-'));
+  const stamp = '2026-10-27T12:00:00-05:00';
+  const day = chicagoDay(Date.parse(stamp));
+  const dir = path.join(data, 'archive', day);
+  fs.mkdirSync(dir, { recursive: true });
+  const pad = 'x'.repeat(1000);
+  const rows = [];
+  for (let i = 0; i < 80; i += 1) {
+    rows.push(JSON.stringify({ id: `id-${i}`, t_ct: stamp, kind: 'push', label: pad }));
+  }
+  fs.writeFileSync(path.join(dir, 'events.jsonl'), `${rows.join('\n')}\n`);
+  initArchive(data);
+  const again = appendArchive('events', { id: 'id-0', t_ct: stamp, kind: 'push', label: 'n' });
+  assert.equal(again, false);
+  const got = readArchive(day, 'events');
+  assert.equal(got.lines.length, 80);
+  assert.equal(got.lines[79].id, 'id-79');
+  assert.equal(readArchive('2026-01-01', 'events').lines.length, 0);
+  fs.rmSync(data, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 });
+});
