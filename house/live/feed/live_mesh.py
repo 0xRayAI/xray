@@ -16,6 +16,7 @@ sys.dont_write_bytecode = True   # never write __pycache__ into the upstream che
 SRC = os.environ.get("LIVE_MESH_SRC", str(Path(__file__).resolve().parent.parent.parent / "live-mesh"))
 sys.path.insert(0, SRC)
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from feed_cap import cap_file, feed_cap, window_events  # noqa: E402
 import fetch_feed as ff  # noqa: E402
 import live_collect as uc  # noqa: E402
 import live_flow  # noqa: E402
@@ -304,54 +305,6 @@ def write(feed, out):
     if mark:
         Path(mark).write_text(f"{time.time():.0f}\n")
     return n
-
-
-def feed_cap():
-    """Newest events kept in the live document. The archive holds the rest. A ~50k document OOMs node."""
-    try:
-        n = int(os.environ.get("LIVE_FEED_CAP", "2000"))
-    except ValueError:
-        return 2000
-    return n if n > 0 else 0
-
-
-def window_events(events, cap):
-    if not isinstance(events, list) or cap <= 0 or len(events) <= cap:
-        return list(events) if isinstance(events, list) else []
-    def key(item):
-        i, e = item
-        if not isinstance(e, dict):
-            return ("", "", i)
-        t = e.get("t_ct")
-        return (t if isinstance(t, str) else "", str(e.get("id") or ""), i)
-    ranked = sorted(enumerate(events), key=key)
-    return [e for _, e in ranked[-cap:]]
-
-
-def cap_file(path):
-    """Shrink an existing document before node parses it. Returns how many events were dropped."""
-    path = Path(path)
-    try:
-        if not path.is_file() or path.stat().st_size == 0:
-            return 0
-        feed = json.loads(path.read_text())
-    except (OSError, json.JSONDecodeError):
-        return 0
-    if not isinstance(feed, dict) or not isinstance(feed.get("events"), list):
-        return 0
-    cap = feed_cap()
-    events = feed["events"]
-    if cap <= 0 or len(events) <= cap:
-        return 0
-    kept = window_events(events, cap)
-    dropped = len(events) - len(kept)
-    payload = dict(feed)
-    payload["events"] = kept
-    payload["event_count"] = len(kept)
-    tmp = path.with_suffix(f".json.tmp.{os.getpid()}")
-    tmp.write_text(json.dumps(payload, ensure_ascii=False, separators=(",", ":")) + "\n")
-    os.replace(tmp, path)
-    return dropped
 
 
 def _write_beat(feed, out):

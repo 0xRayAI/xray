@@ -28,6 +28,7 @@ Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 - A day archive is read one line at a time, so a file past the string cap still dedups. #663.
 - A quiet collector pass leaves the event document in place and writes a small clock file. The server takes that clock without reading the document again. #667.
 - The live GitHub document keeps the newest events. A file of ~50k events is not parsed into the heap. #669.
+- Boot shrinks that document with a script that does not import the collector. fetch_feed lives under collector/upstream. #671.
 
 ## [4.1.4] - 2026-10-26
 
