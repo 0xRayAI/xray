@@ -96,8 +96,8 @@ describe("Antigravity Status Command", () => {
   });
 
   describe("Installed Skills Verification", () => {
-    it("should have skills directory with installed skills", () => {
-      const skillsPath = path.join(PROJECT_ROOT, ".opencode", "skills");
+    it("should have the src/skills catalog", () => {
+      const skillsPath = path.join(PROJECT_ROOT, "src", "skills");
       expect(fs.existsSync(skillsPath)).toBe(true);
     });
 

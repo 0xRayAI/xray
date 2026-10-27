@@ -42,4 +42,16 @@ describe('materialize opencode mirror', () => {
     expect(pkg.scripts.build).toContain('scripts/node/materialize-opencode-mirror.cjs');
     expect(pkg.scripts.build).not.toContain('cp -r src/opencode/');
   });
+
+  it('copies skills into .opencode only on the OpenCode pack line', () => {
+    const pkg = JSON.parse(readFileSync(join(process.cwd(), 'package.json'), 'utf8')) as {
+      scripts: { test: string; build: string; 'build:opencode-skills': string };
+    };
+    expect(pkg.scripts['build:opencode-skills']).toBe(
+      'mkdir -p .opencode/skills && cp -R src/skills/. .opencode/skills/',
+    );
+    expect(pkg.scripts.build).toContain('npm run build:opencode-skills');
+    expect(pkg.scripts.test).not.toContain('build:opencode-skills');
+    expect(pkg.scripts.test).not.toContain('.opencode/skills');
+  });
 });

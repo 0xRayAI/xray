@@ -98,8 +98,8 @@ describe('Antigravity Skills Integration', () => {
     expect(fs.existsSync(licensePath)).toBe(true);
   });
 
-  it('should list Antigravity in skills directory', () => {
-    const skillsDir = path.join(process.cwd(), '.opencode/skills');
+  it('should list the src/skills catalog', () => {
+    const skillsDir = path.join(process.cwd(), 'src/skills');
     expect(fs.existsSync(skillsDir)).toBe(true);
     const entries = fs.readdirSync(skillsDir);
     expect(entries.length).toBeGreaterThan(0);

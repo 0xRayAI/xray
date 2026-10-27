@@ -40,7 +40,6 @@ beforeAll(() => {
     ".opencode/logs",
     ".xray",
     "src",
-    "dist/plugin/mcps",
   ];
 
   requiredDirs.forEach((dir) => {
