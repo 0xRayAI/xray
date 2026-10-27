@@ -24,7 +24,7 @@ Kanban note. The live page shows a read-only kanban above Activity. Columns are 
 
 History note. Every activity line is archived to history. The word owner is the owner via LIVE_OWNER or the owner-name.
 
-The public board does not serve the history archive or the kanban yet.
+The public board serves the kanban and GET /history, /history/cards, and /history/transitions.
 
 ## inbox-roles.json
 

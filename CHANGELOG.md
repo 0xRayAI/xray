@@ -1,5 +1,31 @@
 ## [Unreleased]
 
+## [4.1.5] - 2026-10-27
+
+Notes for Dist. `package.json` stays 4.1.4 until Arch1 publishes. The two fixes below are already open pulls. This change does not carry their code.
+
+### 🐛 Bug Fixes
+
+- A plate file holds its card. Reading `docs-site/docs/plates/<id>.md` keeps that card, and a search of the card's files runs. Four planes stay. The code lands in #644 (`arch1/plate-holds-card`, `b3fa16e22fa6a198b7f03fdf01f46c8fa2165183`).
+- Codex 70 denies a write only when that path sits in a stale copy of this repo. A file outside the repo is allowed. A worktree on main is allowed. A path in the stale factory is denied. The code lands in #646 (`arch1/codex-70-write-scope`, `82f7eaced7c46d026eedfecc84b4f1348500e7eb`).
+
+### 🔄 Changes
+
+These behaviors shipped on the 4.1.4 tag (`v4.1.3` `9ead6911932d9c5662396fe70230fe9973c85325` .. `v4.1.4` `c7731d1cc2ee1a0f9633e972f7c6247fabb39d2b`) and were missing or wrong in ## [4.1.4].
+
+- Goggles takes one named card and fills that card's files. Two names stay quiet. Bifrost and grokbot are cards on the ecosystem plane. Worn-turn is the card for the Cursor and Grok pre-tool hooks. Dynamo's card is the governance client. Refs #494 #511.
+- The mill seat is off the roster, the mesh, and the inbox map. The eight seats are blinky, critic, forge, herald, magnet, nibbler, sound, and arch1. The board seats are blinky, critic, and forge. `@mill` and an implement, rebase, dev, or mill-wave ask go to forge. Forge launches the cloud agent. The cloud agent pushes the branch. Forge opens the pull request through its App. Refs #473 #468.
+- Blinky keeps four duties: plan the next wave on a Bifrost card, pace burn, Lane H and Dist packets, and onboard seats. An unassigned issue or a P1 label wakes forge. Blinky keeps the stored copy. A new issue by itself does not wake blinky. A stuck card's L1 goes to the next owner or the card owner, and L3 repeats to that seat. CoS is not woken to reassign. Refs #473 #452.
+- Each seat sets its own profile title in its own chat. The title is `You are <seat>, <role> on the <plane> plane. Run the station skill first.` Planes are core, integration, ecosystem, distribution, and live. The station card carries `Plane:`, `Skills: station, seat-label, seat-github-key`, and `Keys: gh-<seat>`. Refs #482 #531.
+- The wake posts only for real new work. The target is the routed seat, then the handoff, then the card owner. A new head waits out the cooldown or the hour. A hotfix skips that cooldown. Refs #452.
+- A hotfix merges only on green CI. Critic reviews after the merge and gets a merge line. Forge can deploy a few-line hotfix once tests are green. Refs #558.
+- Worn Grok hooks, while Bifrost health says the board is live, send a turn, an issue tag, a pull tag, and a handoff packet. A quiet board sends nothing. When Bifrost is on, the only TUI monitor is `$XRAY_MAIN/house/live/tools/inbox-watch.sh <seat>`. The wake runs `live-inbox` from that main checkout. The default board is https://bifrost.0xray.dev. Refs #564 #567 #605 #482.
+- Automatic reflections write into `.xray/state/repertoire/feedback`. Cursor preCompact calls that stub, and a reflection error does not block compact. The commit threshold is 25. Synthesis and Confer stay off. Refs #493 #446.
+- A printed open inbox id is acked, so the next poll stays quiet until a new event. An empty route volume delivers a fresh comment or handoff inside the 10-minute seed grace. History older than that grace stays silent. A 409 with the noop wake header is skipped: no retry, and the seat is not marked failed. Refs #621 #622 #620 #633.
+- The live page serves the read-only kanban. The public board serves that kanban and `GET /history`, `/history/cards`, and `/history/transitions` (public mode, or a session). The 4.1.4 line that said the public board withheld them is corrected in that section. Refs #485 #486.
+- Cards group by status by default. A merge is stored as a merge. A reopen is a beat. A pull with no user stays on the open page. A fetched pull writes its open card. The collector keeps a pull updated in the cursor's own second. A cloud agent's pull link stays on the card. Owner prompts show as one line and beat the card first. The mesh draws the spectrum stream, replay resumes, and a 24h count lists its items. `cursor[bot]` mentions still reach seat inboxes. Served times stamp in America/Chicago. Refs #457 #424 #425 #426 #427 #428 #436 #439 #443 #445 #451 #465 #474 #432 #433 #435 #534 #422.
+- When a packet names a Repo, the pull request base is that repo's main tip. The kit stamps in this range are grok-bot 0.1.12 and foundry 0.1.13, on Node 24.22.1. Refs #584 #578 #490.
+
 ## [4.1.4] - 2026-10-26
 
 ### 🔄 Changes
@@ -38,7 +64,7 @@
 - Lock `ip-address` at 10.7.4. Refs #574.
 - Move `vitest` and `@vitest/coverage-v8` to 4.1.12. `express` stays 5.2.1 and `jsonwebtoken` stays 9.0.3. Refs #549.
 - Seat wakes use one cursor folder. The rule is the cursor-folder stanza in `grok-bot/OP-PROC.md`. `LIVE_CURSORS` is not required, and a read does not write `<seat>.txt`. The server nudge ladder does not re-wake a line the seat already acked or whose handled key is in that cursor. Watch scripts run `house/live/tools` from the main checkout. Refs #539 #546 #547.
-- Docs. The house guide and the bifrost plate carry the board rule, the kanban note, and the history note. Board rule. On every owner message run `live-inbox <seat> --prompt --from owner --note "<gist>"`. Ack a handled line with `live-inbox <seat> --ack <id>`, or `live-inbox <seat> --ack all` once every open line is handled. A cloud agent run uses `live-inbox <seat> --turn start --tag "bc-<first8> <track>"` beside `live-inbox <seat> --cloud launch --agent <bc-id> --tag <card>` on first start or `--cloud reply` on resume, and `live-inbox <seat> --turn end --tag "bc-<first8>"` beside `live-inbox <seat> --cloud finished --agent <bc-id> --tag <card>` (cancel is `--cloud cancel`). The tag is owner/repo#n or xray#n. The cloud agent does not post that line. `--from owner` is required today. Kanban note. The live page shows a read-only kanban above Activity. Columns are open, review, fix, merge, retest, and done. The deep link is `?card=`. History note. Every activity line is archived to history. The word owner is the owner via LIVE_OWNER or the owner-name. The public board does not serve the history archive or the kanban yet.
+- Docs. The house guide and the bifrost plate carry the board rule, the kanban note, and the history note. Board rule. On every owner message run `live-inbox <seat> --prompt --from owner --note "<gist>"`. Ack a handled line with `live-inbox <seat> --ack <id>`, or `live-inbox <seat> --ack all` once every open line is handled. A cloud agent run uses `live-inbox <seat> --turn start --tag "bc-<first8> <track>"` beside `live-inbox <seat> --cloud launch --agent <bc-id> --tag <card>` on first start or `--cloud reply` on resume, and `live-inbox <seat> --turn end --tag "bc-<first8>"` beside `live-inbox <seat> --cloud finished --agent <bc-id> --tag <card>` (cancel is `--cloud cancel`). The tag is owner/repo#n or xray#n. The cloud agent does not post that line. `--from owner` is required today. Kanban note. The live page shows a read-only kanban above Activity. Columns are open, review, fix, merge, retest, and done. The deep link is `?card=`. History note. Every activity line is archived to history. The word owner is the owner via LIVE_OWNER or the owner-name. The public board serves the kanban and GET /history, /history/cards, and /history/transitions.
 
 ### 🐛 Bug Fixes
 - fix: card an issue or pull the time cursor skipped (#602) (608d8a1ec)

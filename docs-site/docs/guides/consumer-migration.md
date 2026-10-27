@@ -2,6 +2,16 @@
 
 **Audience**: Plugin authors, bridge maintainers (Hermes, OpenClaw, Grok Build, OpenCode), and projects that consume `0xray` directly.
 
+## 4.1.4 notes → 4.1.5
+
+The 4.1.3 → 4.1.4 steps below still apply. ## [4.1.4] in `CHANGELOG.md` left these out. `package.json` stays 4.1.4 until Arch1 publishes. #644 and #646 carry their own code.
+
+1. Goggles. One named card fills that card's files. Bifrost and grokbot are ecosystem cards. Reading a plate file holds that card once #644 lands. Codex 70 judges the checkout a write touches once #646 lands.
+2. Seats. The mill seat is gone from the roster and the inbox map. Forge launches the cloud agent and opens the pull request. Blinky plans the wave, paces burn, and onboards. An unassigned issue or a P1 wakes forge.
+3. Station. Each seat sets its own title. Planes are core, integration, ecosystem, distribution, and live. `Keys:` is `gh-<seat>`.
+4. Board. The public board serves the kanban and `GET /history`, `/history/cards`, and `/history/transitions`.
+5. Inbox. A printed line is acked. A fresh comment inside the seed grace is delivered. A noop wake 409 is skipped.
+
 ## 4.1.3 → 4.1.4
 
 A fleet on 4.1.3 follows this path. The v3 consumer steps below stay as they are.

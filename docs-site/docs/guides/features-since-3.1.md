@@ -8,6 +8,18 @@ The docs site is https://docs.0xray.dev/. The public board is https://bifrost.0x
 
 Goggles keeps four planes: dev, integration, domain, and ecosystem. Each card is one thing. A search inside the current card runs. Any other search returns that card and does not run. Plates now exist for repertoire, dynamo, foundry, the delegation gate, temperament, asides, the inference cycle, Hermes, OpenClaw, OpenCode, the consumer MCP set, and confer. Confer stays off unless it is enabled.
 
+## 4.1.5 — ship notes the 4.1.4 changelog missed
+
+`package.json` stays 4.1.4 until Arch1 publishes. Two open pulls carry the code. This guide only records them.
+
+- **Plate card.** Reading `docs-site/docs/plates/<id>.md` holds that card, so a search of the card's files runs. Four planes stay. Code: #644.
+- **Codex 70.** A write is denied only when the path sits in a stale copy of this repo. A file outside the repo is allowed. A worktree on main is allowed. Code: #646.
+- **Goggles.** One named card fills that card's files. Bifrost and grokbot are ecosystem cards. Worn-turn covers the Cursor and Grok pre-tool hooks. #494 #511.
+- **Seats.** The mill seat is off the roster, the mesh, and the inbox map. Forge launches the cloud agent, the agent pushes the branch, and forge opens the pull request. Blinky plans the wave, paces burn, handles Lane H and Dist, and onboards seats. An unassigned issue or a P1 wakes forge. CoS is not woken to reassign. #473 #468 #452.
+- **Station.** Each seat titles itself. Planes are core, integration, ecosystem, distribution, and live. `Keys:` is `gh-<seat>`. #482 #531.
+- **Inbox.** A printed line is acked. The seed grace delivers a fresh comment. A noop wake 409 is skipped. #621 #622 #633.
+- **Board.** The public board serves the kanban and `GET /history`, `/history/cards`, and `/history/transitions`. #485 #486.
+
 ## 4.1.0 — Bifrost board, goggles, wake
 
 Bifrost is the collector board. Goggles views one plane. The cards are in `.xray/state/LENS.md`. A search inside the current card runs. 4.0.43 below is the earlier confer and hook cut. It was stamped and not published.
