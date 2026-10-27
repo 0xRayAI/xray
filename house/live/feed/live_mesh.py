@@ -306,21 +306,36 @@ def write(feed, out):
     return n
 
 
+def _write_beat(feed, out):
+    """Clock and header only. A quiet pass must not rewrite the event document."""
+    header = {k: v for k, v in feed.items() if k != "events"}
+    path = out.with_suffix(".beat.json")
+    tmp = path.with_suffix(f".tmp.{os.getpid()}")
+    tmp.write_text(json.dumps(header, ensure_ascii=False, separators=(",", ":")) + "\n")
+    os.replace(tmp, path)
+
+
 def _write(feed, out):
     stream = out.with_suffix(".jsonl")
     seen_path = out.parent / "jsonl-seen.json"
     seen = set(json.loads(seen_path.read_text())) if seen_path.exists() else set()
     def h(e):
         return hashlib.sha1(json.dumps(e, sort_keys=True, ensure_ascii=False).encode()).hexdigest()[:20]
-    new = [(e, h(e)) for e in feed["events"]]
-    new = [(e, k) for e, k in new if k not in seen]
+    events = feed.get("events") or []
+    keys = [h(e) for e in events]
+    keyset = set(keys)
+    new = [(e, k) for e, k in zip(events, keys) if k not in seen]
+    # Railway collector: same events leave the document bytes in place. The beat still moves the clock.
+    if MODE == "github" and out.exists() and keyset == seen:
+        _write_beat(feed, out)
+        return 0
     tmp = out.with_suffix(f".json.tmp.{os.getpid()}")
     tmp.write_text(json.dumps(feed, ensure_ascii=False, separators=(",", ":")) + "\n")
     os.replace(tmp, out)
-    if MODE == "github":                # Railway collector: the server reads this file; no append-only archive, but the
-        if new:                         # content hashes persist on the volume so "N new" counts only new or changed events
-            tmp = seen_path.with_suffix(f".tmp.{os.getpid()}")
-            tmp.write_text(json.dumps(sorted({k for _, k in new} | {h(e) for e in feed["events"]}))); os.replace(tmp, seen_path)
+    if MODE == "github":                # no append-only archive; the content hashes persist on the volume
+        tmp = seen_path.with_suffix(f".tmp.{os.getpid()}")
+        tmp.write_text(json.dumps(sorted(keyset))); os.replace(tmp, seen_path)
+        _write_beat(feed, out)
         return len(new)
     if new:
         with stream.open("a") as f:

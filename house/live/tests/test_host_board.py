@@ -52,9 +52,13 @@ sys.path.insert(0, %r)
 import live_mesh as lm
 out = root/"feed"/"github-events.json"
 ev = [{"id": f"e{i}", "t_ct": "2026-10-13T09:00:00-05:00", "kind": "pr_open"} for i in range(5)]
-n1 = lm._write({"events": ev}, out); n2 = lm._write({"events": ev}, out)
-ev[0] = dict(ev[0], label="changed"); n3 = lm._write({"events": ev}, out)
-print(json.dumps([n1, n2, n3, (root/"feed"/"live-events.jsonl").exists()]))
+n1 = lm._write({"events": ev, "generated_at": "t1"}, out)
+raw = out.read_bytes()
+n2 = lm._write({"events": ev, "generated_at": "t2"}, out)
+kept = out.read_bytes() == raw
+beat = json.loads((root/"feed"/"github-events.beat.json").read_text())
+ev[0] = dict(ev[0], label="changed"); n3 = lm._write({"events": ev, "generated_at": "t3"}, out)
+print(json.dumps([n1, n2, n3, (root/"feed"/"live-events.jsonl").exists(), kept, beat.get("generated_at")]))
 '''
 
 
@@ -63,7 +67,7 @@ class GithubModeDedupe(unittest.TestCase):
         """burst-live logged 26440 (26440 new) every pass: github mode never persisted the seen hashes."""
         r = subprocess.run([sys.executable, "-B", "-c", DEDUPE % FEED], capture_output=True, text=True, timeout=60)
         self.assertEqual(r.returncode, 0, r.stderr)
-        self.assertEqual(json.loads(r.stdout.strip().splitlines()[-1]), [5, 0, 1, False])
+        self.assertEqual(json.loads(r.stdout.strip().splitlines()[-1]), [5, 0, 1, False, True, "t2"])
 
 
 STEP = r'''
