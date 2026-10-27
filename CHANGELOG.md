@@ -10,6 +10,7 @@ Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 ### 🐛 Bug Fixes
 
 - A search of a file on the held plane runs. The tool glob counts as that file. A search of another plane still returns the current card.
+- A search of a path on no plane runs. A directory the plane list does not name is that path. A search with no path still returns the current card.
 
 ## [4.1.4] - 2026-10-26
 

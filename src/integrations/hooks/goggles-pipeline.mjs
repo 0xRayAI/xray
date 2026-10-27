@@ -1050,6 +1050,30 @@ function searchStays(root, file, current) {
   return current === currentPlane(root) && target.plane === current;
 }
 
+/** A tool path on its own line counts, including a directory the plane list does not name. */
+function searchPaths(root, text) {
+  const raw = String(text || '').replace(/\\/g, '/');
+  const found = openPaths(raw);
+  let rootAbs = '';
+  try {
+    rootAbs = resolve(root).replace(/\\/g, '/');
+  } catch {
+    rootAbs = '';
+  }
+  for (const line of raw.split('\n')) {
+    const item = line.trim();
+    if (!item || /\s/.test(item)) continue;
+    let rel = item;
+    if (rootAbs && (item === rootAbs || item.startsWith(`${rootAbs}/`))) {
+      rel = item.slice(rootAbs.length).replace(/^\//, '');
+    }
+    if (!rel || rel.startsWith('/') || rel.split('/').includes('..')) continue;
+    if (!/^[A-Za-z0-9_@./-]+$/.test(rel)) continue;
+    found.push(rel.replace(/^\.\//, '').replace(/\/+$/, ''));
+  }
+  return [...new Set(found.filter(Boolean))];
+}
+
 /** A search on the held plane runs. A file open follows the path. */
 export function lensBeforeResearch(root, toolName, text) {
   const spoken = String(text || '');
@@ -1059,7 +1083,7 @@ export function lensBeforeResearch(root, toolName, text) {
   ensurePlane(root);
   const current = currentCard(root);
   if (searching) {
-    const paths = openPaths(spoken);
+    const paths = searchPaths(root, spoken);
     const inside = paths.length > 0 && paths.every((file) => searchStays(root, file, current));
     if (inside) return null;
     return { gate: 'lens', decision: 'deny', reason: cardText(root, current) };

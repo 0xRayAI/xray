@@ -215,6 +215,29 @@ describe('goggles plate', () => {
     }
   });
 
+  it('a search of a path on no plane runs', () => {
+    const root = mkdtempSync(join(tmpdir(), 'goggles-no-plane-'));
+    try {
+      const domain = lensBeforeResearch(root, 'read_file', 'docs-site/docs/plates/glossary.md');
+      expect(domain?.decision).toBe('allow');
+      expect(domain?.reason).toContain('Plane: domain');
+      expect(lensBeforeResearch(root, 'grep', 'house/live/tools/open-pr')).toBeNull();
+      expect(lensBeforeResearch(root, 'grep', `${root}/house/burst/seat-app.mjs`)).toBeNull();
+      const spoken = [
+        'installations/167022506/access_tokens',
+        '*.{mjs,js,sh,py,md}',
+        `${root}/house`,
+      ].join('\n');
+      expect(lensBeforeResearch(root, 'grep', spoken)).toBeNull();
+      const other = lensBeforeResearch(root, 'grep', 'scripts/foundry/release.mjs');
+      expect(other?.decision).toBe('deny');
+      expect(other?.reason).toContain('Plane: domain');
+      expect(lensBeforeResearch(root, 'grep', 'still searching')?.decision).toBe('deny');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it('a shared path opens the named owner', () => {
     const root = mkdtempSync(join(tmpdir(), 'goggles-owner-'));
     try {
