@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Poll live-inbox <seat> (default arch1) every 60s.
+# Suit boot enables this script in the local TUI. Do not nohup it. Do not launchd it.
 # FAIL once per distinct error. The line names LIVE_URL and the expected URL, then backs off.
 # A JSON line whose GitHub item is closed or merged is acked and logged as auto-ack.
 # A held line (hold label, or a card whose state is held) prints once as "held: N" and is not popped.

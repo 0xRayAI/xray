@@ -5,8 +5,8 @@
 # The tool is main's house/live/tools/live-inbox (XRAY_MAIN, or the tools directory beside this script). Not a copy under ~/.burst/bin.
 # The cursor folder rule is grok-bot/OP-PROC.md#cursor-folder. The key is never read or printed here.
 # An approved exception to the no-local-watchers rule (Arch1's inbox poll; approved by Blaze 2026-10-13).
-# Grok hears a printed line only when this script is the host's internal monitor. A launchd job writes
-# ~/.burst/live-inbox-watch.log and does not open the chat. LIVE_WATCH_DELTA=1 prints only when the open set changes.
+# Suit boot runs house/live/tools/inbox-watch.sh in the local TUI. This file is the old poller.
+# A launchd job writes ~/.burst/live-inbox-watch.log and the TUI does not hear it. LIVE_WATCH_DELTA=1 prints only when the open set changes.
 set -u
 SEAT="${1:-arch1}"
 INTERVAL="${2:-60}"

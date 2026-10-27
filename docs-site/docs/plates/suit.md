@@ -39,4 +39,6 @@ Give your agent a suit. The rules stay on, you add powers, and it runs in the to
 
 A foundry is mills and hangars. The mill builds and ships. The hangar is the shop. Same rules in the repo. You are not locked into one app.
 
+While Bifrost health says the board is live, worn Grok hooks send a turn, an issue tag, a pull tag, and a handoff packet. A quiet board sends nothing. When Bifrost is on, suit boot enables the only TUI monitor in the local TUI: `house/live/tools/inbox-watch.sh`.
+
 stamped · 0xray 4.1.0
