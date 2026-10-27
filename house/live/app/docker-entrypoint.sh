@@ -33,12 +33,11 @@ forbidden() {
 cap_github_feed() {
   data=$(strip_slash "${MESH_DATA_DIR:-/data}")
   file="$data/feed/github-events.json"
-  mesh=/app/collector/live_mesh.py
-  if [ ! -f "$file" ] || [ ! -f "$mesh" ]; then
+  cap=/app/collector/feed_cap.py
+  if [ ! -f "$file" ] || [ ! -f "$cap" ]; then
     return 0
   fi
-  LIVE_MODE="${LIVE_MODE:-github}" PYTHONPATH=/app/collector python3 -c 'import sys, live_mesh; print("feed cap dropped", live_mesh.cap_file(sys.argv[1]))' "$file" \
-    || echo "feed cap skipped" >&2
+  python3 "$cap" "$file" || echo "feed cap skipped" >&2
 }
 
 prepare_dir() {
