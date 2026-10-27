@@ -5,6 +5,7 @@ Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 - Reading a plate file holds that card, so a search of its files runs. The code is on #644.
 - Codex 70 denies a write only when that path sits in a stale copy of this repo. A file outside the repo is allowed. A worktree on main is allowed. The code is on #646.
 - A red CI check writes a card when the pull has none, then a `ci_fail` inbox line for the next owner, else the owner. One open line per head. Ships in the 4.1.5 cut. #648. This pull does not include that code.
+- Suit boot enables `inbox-watch.sh` in the local TUI. `inbox-watch-ensure` does not start a process.
 
 ### 🐛 Bug Fixes
 
