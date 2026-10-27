@@ -10,6 +10,7 @@ Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 - Wear treats a pinned agent body in `shipped-skill-blobs.json` as a shipped catalog copy and removes it on a non-catalog seat. A sound seat drops the mill and inspect files left by 4.1.1 and 4.1.2.
 - A repertoire symlink is relative to the real parent directory, so a seat under `/var` still opens the vendored organ.
 - The source suite reads `src/skills`. `.opencode/skills` is the OpenCode pack line. A missing `dist/cli` skips the CLI tests.
+- Suit boot enables `inbox-watch.sh` in the local TUI. `inbox-watch-ensure` does not start a process.
 
 ## [4.1.4] - 2026-10-26
 
