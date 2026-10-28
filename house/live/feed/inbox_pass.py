@@ -165,6 +165,36 @@ def watched_by_seat(seat, event):
     return ("*" in repos or str(event.get("repo") or "") in repos) and ("*" in kinds or inbox._kind(event) in kinds)
 
 
+def packet_next_seat(event, roles):
+    """Packet next owner, when it names one of our seats. The opener is not a tip."""
+    pk = event.get("packet")
+    if not isinstance(pk, dict):
+        return None
+    raw = str(pk.get("next owner") or "").strip()
+    if not raw:
+        return None
+    known = set(our_seats()) | {str(s) for s in (roles.get("routing") or {})}
+    names = [raw]
+    first = raw.split()[0]
+    if first and first != raw:
+        names.append(first)
+    for name in names:
+        hit = alias_seat(name, roles)
+        if not hit:
+            want = name.casefold().removesuffix("[bot]")
+            for key, seat in aliases_of(roles).items():
+                if str(key).casefold() == want:
+                    hit = seat
+                    break
+        if not hit:
+            mapped = role_seat(name.casefold(), roles)
+            if mapped and mapped != name.casefold() and mapped in known:
+                hit = mapped
+        if hit in known:
+            return hit
+    return None
+
+
 def _direct_all(event, roles):
     """PR #5 routes plus the extra Chat Bot seats (roles.extra_seats: kinds / merge_bases / needles)."""
     kind = inbox._kind(event)
@@ -224,6 +254,11 @@ def _direct_all(event, roles):
             line = inbox._line(event, author, why, line_id=f"{event.get('id')}:info", line_type="info")
             if line:
                 out.append(line)
+    nxt = packet_next_seat(event, roles)
+    if nxt and nxt != actor_seat(event, roles):
+        line = inbox._line(event, nxt, "packet next owner")
+        if line:
+            out.append(line)
     ours = our_seats()
     if ours:   # a line to a seat outside ours (unknown, sample, unkeyed) is read by nobody: drop it, fall back below
         out = [l for l in out if l.get("seat") in ours]
