@@ -1650,6 +1650,7 @@ function mergedHeader(now = Date.now()) {
   if (h.fleet) h.fleet = clearClosedWork(h.fleet);
   if (h.fleet) h.fleet = applyTurnRelease(h.fleet, now);   // an ended turn clears older marks; a fresh later mark stays. a cloud via is not a seat turn
   const cf = applyCloudOwners(h.fleet, h.cloud_agents, now); if (cf) h.fleet = cf;   // a running agent stays on its own id; the seat stays idle
+  if (h.fleet) h.fleet = bindSeatWorkToCards(h.fleet);   // working requires an open card once the board has one
   if (h.fleet) h.fleet = stampClockTree(h.fleet);
   if (h.fleet) h.fleet.seat_display = { ...SEAT_DISPLAY, ...jsonEnvObj('SEAT_DISPLAY_NAMES') };
   if (h.fleet && h.fleet.cloud && typeof h.fleet.cloud === 'object' && !Array.isArray(h.fleet.cloud)) {
@@ -2052,6 +2053,93 @@ function clearClosedWork(fleet) {
     changed = true;
   }
   return changed ? { ...fleet, seats, working } : fleet;
+}
+function cardIsActiveWork(card) {
+  if (!card || card.pinned) return false;
+  const state = String(card.state || '').toLowerCase();
+  const stage = String(card.stage || '').toLowerCase();
+  if (state === 'closed' || state === 'parked' || state === 'held') return false;
+  if (stage === 'done') return false;
+  return !cardIsClosed(card);
+}
+function cardNextOwner(card) {
+  const packet = card && card.packet && typeof card.packet === 'object' ? card.packet : null;
+  const next = packet && (packet['next owner'] || packet.next_owner);
+  return String(next || (card && card.owner) || '').trim();
+}
+function workText(row, seat) {
+  if (row && row.working_on) return String(row.working_on);
+  if (row && row.pr) return String(row.pr);
+  if (row && row.on) return String(row.on);
+  if (seat && seat.working_on) return String(seat.working_on);
+  return '';
+}
+function cardMatchesWork(card, on) {
+  const target = workTarget(on);
+  if (!target) {
+    const low = String(on || '').trim().toLowerCase();
+    return !!low && !!card && String(card.key || '').toLowerCase() === low;
+  }
+  const repo = String(card.repo || '').toLowerCase();
+  const key = String(card.key || '').toLowerCase();
+  const full = (String(target.repo) + '#' + target.number).toLowerCase();
+  const n = Number(card.number);
+  if (key === full) return true;
+  if (!repo || n !== target.number) return false;
+  const id = repo + '#' + n;
+  return id === full || id.endsWith('/' + full) || full.endsWith('/' + id);
+}
+// A seat stays working only while an open board card is that work.
+// Before the first card loads, the in-flight mark stays so a cold boot is not a blank fleet.
+// A loaded board with no open card clears working.
+function bindSeatWorkToCards(fleet) {
+  if (!fleet) return fleet;
+  if (!bfCards.length) return fleet;
+  const open = bfCards.filter(cardIsActiveWork);
+  const seats = { ...(fleet.seats || {}) };
+  const working = { ...(fleet.working || {}) };
+  let changed = false;
+  const names = new Set([...Object.keys(seats), ...Object.keys(working)]);
+  for (const name of names) {
+    if (name === 'CloudAgents') continue;
+    const row = working[name];
+    const seat = seats[name];
+    if (!row && !(seat && seat.working)) continue;
+    const on = workText(row, seat);
+    const named = workTarget(on);
+    const packetKey = !named && String(on).toLowerCase().startsWith('packet:');
+    let keep = false;
+    if (named || packetKey) {
+      keep = open.some(card => cardMatchesWork(card, on));
+      if (keep && on) {
+        if (row && !row.working_on) { working[name] = { ...row, working_on: on }; changed = true; }
+        if (seat && !seat.working_on) { seats[name] = { ...seat, working_on: on }; changed = true; }
+      }
+    } else if (on) keep = open.some(card => canonSeat(name) === canonSeat(cardNextOwner(card)));
+    else {
+      const owned = open.filter(card => canonSeat(name) === canonSeat(cardNextOwner(card)));
+      keep = owned.length > 0;
+      if (owned.length === 1) {
+        const card = owned[0];
+        const key = card.repo && Number(card.number) >= 1 ? String(card.repo) + '#' + Number(card.number) : String(card.key || '');
+        if (key) {
+          if (row && !row.working_on) { working[name] = { ...row, working_on: key }; changed = true; }
+          if (seat && !seat.working_on) { seats[name] = { ...(seats[name] || seat), working_on: key }; changed = true; }
+        }
+      }
+    }
+    if (keep) continue;
+    if (working[name]) { delete working[name]; changed = true; }
+    if (seat && (seat.working || seat.working_on || seat.working_via)) {
+      const next = { ...seat, working: false };
+      delete next.working_via;
+      delete next.working_on;
+      seats[name] = next;
+      changed = true;
+    }
+  }
+  if (!changed) return fleet;
+  return { ...fleet, seats, working, active: Object.values(seats).filter(v => v && v.active && !v.external).length };
 }
 setInterval(() => governorRun(), GOV_MS).unref();
 // Weekday half hour. A test bind stays quiet. Railway posts unless STATION_NUDGE=off.
@@ -3180,6 +3268,7 @@ function refreshWorking(now = Date.now()) {
   if (fleet) fleet = clearClosedWork(fleet);
   const cleared = applyCloudOwners(fleet, header.cloud_agents || [], now);
   if (cleared) fleet = cleared;
+  if (fleet) fleet = bindSeatWorkToCards(fleet);
   if (fleet) header.fleet = stampClockTree(fleet);
   if (JSON.stringify((header.fleet && header.fleet.working) || {}) !== before) { seq++; fullDirty = true; }
 }

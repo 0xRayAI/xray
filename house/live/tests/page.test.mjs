@@ -178,7 +178,11 @@ test('one seat state: header text, dot and node label all come from L.seatView(s
   assert.match(html, /el\.className = 'seat'/);
   assert.doesNotMatch(html, /seat-copy/);
   assert.match(html, /var nv = L\.seatView\(seatState\(key, hot\)\); nodeView\[key\] = nv;/);
-  assert.match(html, /drawNode\(key, nv\.lit, fs, pul, nv\.nodeWorking, nowWall\);/);
+  assert.match(html, /drawNode\(key, nv\.lit, fs, pul, nv\.nodeWorking, nowWall, !!nv\.seen\);/);
+  assert.match(html, /var seenNow = !!seen && !isHot;/);
+  assert.match(html, /else if \(seenNow && !hasImg\)/);
+  assert.match(html, /else if \(seenNow\) \{ ctx\.strokeStyle = rgb\(c, 0\.35\); ctx\.lineWidth = 1\.5; ctx\.beginPath\(\); ctx\.arc\(x, y, ar \+ 4, 0, 7\); ctx\.stroke\(\); \}/);
+  assert.match(html, /var names = fleetNames\(k\);/);
   assert.doesNotMatch(html, /hot\[a\[0\]\] \? 'LIVE'/);         // the old split derivation is gone
   assert.doesNotMatch(html, /fleetWorking\(key\), nowWall/);
 });
@@ -315,7 +319,7 @@ test('board stats strip: 24h counts + open now from feed.board.stats, textConten
   assert.match(html, /wb\.stats = r\.feed\.board\.stats \|\| null/);
 });
 test('silent seat: amber "silent 2h" on node and chip from fleet.seats[name].silent, never while working', () => {
-  assert.match(html, /return !!\(f && f\.seats && f\.seats\[name\] && f\.seats\[name\]\.silent\);/);
+  assert.match(html, /if \(row && row\.silent\) return true;/);
   assert.match(html, /var silentNow = !spinning && fleetSilent\(key\);/);
   assert.match(html, /ctx\.fillText\('silent 2h', x, top\)/);
   assert.match(html, /var sil = !v\.blink && fleetSilent\(a\[0\]\);/);

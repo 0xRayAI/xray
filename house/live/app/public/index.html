@@ -647,7 +647,7 @@ footer a { color: var(--foot); }
     <div id="head">&nbsp;</div>
     <div id="headTime">&nbsp;</div>
     <canvas id="mesh" width="920" height="400" aria-label="Mesh of seats and rails with handoff pings"></canvas>
-    <p class="mesh-legend" id="meshLegend"><span title="index.html drawNode. Hot seat from activeSeats over a handoff or push, or the rewind window. Three strokes. Live duration 2 times FLASH_MS, 5200ms. Letter seats.">Hot ring 5.2s</span><span title="index.html draw. A ping whose source is this node. One sine, PULSE_MS 900, across the flight. Flight is 2600ms, up to 7800ms.">Depart pulse</span><span title="index.html drawPing. from equals to. Radius 24 to 46 and alpha 1 to 0 across that same flight.">One-node ring</span></p>
+    <p class="mesh-legend" id="meshLegend"><span title="index.html drawNode. Hot seat from activeSeats over a handoff or push, or the rewind window. Three strokes. Live duration 2 times FLASH_MS, 5200ms. Letter seats.">Hot ring 5.2s</span><span title="index.html drawNode. A seen seat is live or active, and it is not working. One dim stroke. The name does not roll.">Seen ring</span><span title="index.html draw. A ping whose source is this node. One sine, PULSE_MS 900, across the flight. Flight is 2600ms, up to 7800ms.">Depart pulse</span><span title="index.html drawPing. from equals to. Radius 24 to 46 and alpha 1 to 0 across that same flight.">One-node ring</span></p>
     </div>
   </section>
   <div id="agentPing" hidden></div>
@@ -917,13 +917,23 @@ footer a { color: var(--foot); }
     var s = f && f.seats && (f.seats[name] || f.seats[String(name).toLowerCase()]);
     return !!(s && s.active);
   }
+  function fleetNames(k) {   // mesh keys are title case; activity stores the seat id in lower case
+    return k === 'blinky' ? ['Coord', 'coord', 'blinky'] : [k, String(k).toLowerCase()];
+  }
   // the one seat state for chip + node; views recorded for tests/debug (window.LIVE_SEAT_VIEWS)
   var chipView = {}, nodeView = {}; window.LIVE_SEAT_VIEWS = { chip: chipView, node: nodeView };
   function seatState(k, hot) { return L.seatState(fleetWorking(k), !!(hot && hot[k]), fleetActive(k)); }
   function fleetWorking(k) {   // in-flight spinner; not counted in N of M
-    var f = window.LIVE_FLEET, name = k === 'blinky' ? 'Coord' : k;
+    var f = window.LIVE_FLEET;
     if (k === 'CloudAgents') return !!(f && f.cloud && f.cloud.working);
-    return !!(f && ((f.working && f.working[name]) || (f.seats && f.seats[name] && f.seats[name].working)));
+    if (!f) return false;
+    var names = fleetNames(k);
+    for (var i = 0; i < names.length; i++) {
+      var name = names[i];
+      if (f.working && f.working[name]) return true;
+      if (f.seats && f.seats[name] && f.seats[name].working) return true;
+    }
+    return false;
   }
   // Live queue: new ids wait here until the view is live, then flash in time order (late ones tagged)
   var LATE_MS = 2 * 60 * 1000, CATCHUP_MS = 30 * 60 * 1000, BATCH_MS = 9000;
@@ -947,8 +957,14 @@ footer a { color: var(--foot); }
     });
   }
   function fleetSilent(k) {
-    var f = window.LIVE_FLEET, name = k === 'blinky' ? 'Coord' : k;
-    return !!(f && f.seats && f.seats[name] && f.seats[name].silent);
+    var f = window.LIVE_FLEET;
+    if (!f || !f.seats) return false;
+    var names = fleetNames(k);
+    for (var i = 0; i < names.length; i++) {
+      var row = f.seats[names[i]];
+      if (row && row.silent) return true;
+    }
+    return false;
   }
   function currentPings(nowWall) {
     if (state.live) {
@@ -1384,7 +1400,7 @@ footer a { color: var(--foot); }
       pings.forEach(function (pk) { if (pk.src === key) pul = Math.max(pul, L.pulse(pk.p * L.PULSE_MS, reduced)); });
       ctx.globalAlpha = L.entry(since, i, reduced);
       var nv = L.seatView(seatState(key, hot)); nodeView[key] = nv;   // same state as the header chip
-      drawNode(key, nv.lit, fs, pul, nv.nodeWorking, nowWall);
+      drawNode(key, nv.lit, fs, pul, nv.nodeWorking, nowWall, !!nv.seen);
 
       ctx.globalAlpha = 1;
     });
@@ -1396,21 +1412,33 @@ footer a { color: var(--foot); }
     ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
   }
 
-  function drawNode(key, isHot, fs, pul, spinning, nowWall) {
+  function drawNode(key, isHot, fs, pul, spinning, nowWall, seen) {
     var xy = pos[key], x = xy[0], y = xy[1], c = L.COLOR[key], sq = !!L.SQUARE[key], r = sq ? 15 : 18 + 3 * pul;
     var img = imgs[key], glyph = L.GLYPH[key], mark = L.MARK_PATH[key];
     var hasImg = !!(img && img.complete && img.naturalWidth);
-    var bare = hasImg || (!sq && !!glyph);   // image / glyph nodes: no ring
+    var bare = hasImg || (!sq && !!glyph);   // glyph skips the letter ring. an avatar paints its ring after the image
+    var seenNow = !!seen && !isHot;   // one dim stroke. active or live, not the working sheen
     if (isHot && !bare) {
       for (var k = 3; k >= 1; k--) {
         var rr = r + k * 5; ctx.strokeStyle = rgb(c, 1 / (k + 1)); ctx.lineWidth = 2;
         if (sq) { roundRect(x - rr, y - rr, rr * 2, rr * 2, 6); } else { ctx.beginPath(); ctx.arc(x, y, rr, 0, 7); }
         ctx.stroke();
       }
+    } else if (seenNow && !hasImg) {
+      var sr = r + 4; ctx.strokeStyle = rgb(c, 0.35); ctx.lineWidth = 1.5;
+      if (sq) { roundRect(x - sr, y - sr, sr * 2, sr * 2, 6); } else { ctx.beginPath(); ctx.arc(x, y, sr, 0, 7); }
+      ctx.stroke();
     }
-    ctx.fillStyle = cssVar('--node-fill'); ctx.strokeStyle = rgb(c); ctx.lineWidth = isHot ? 3 : 2;
-    if (hasImg) {   // avatar: the image as-is, no circle / ring / border / clip
+    ctx.fillStyle = cssVar('--node-fill'); ctx.strokeStyle = rgb(c); ctx.lineWidth = isHot ? 3 : seenNow ? 2.5 : 2;
+    if (hasImg) {   // avatar image. the seen ring and the working ring sit outside it
       var as = 46 + 4 * pul; ctx.drawImage(img, x - as / 2, y - as / 2, as, as);
+      var ar = as / 2;
+      if (isHot) {
+        for (var hk = 3; hk >= 1; hk--) {
+          var hr = ar + hk * 5; ctx.strokeStyle = rgb(c, 1 / (hk + 1)); ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.arc(x, y, hr, 0, 7); ctx.stroke();
+        }
+      } else if (seenNow) { ctx.strokeStyle = rgb(c, 0.35); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x, y, ar + 4, 0, 7); ctx.stroke(); }
     }
     else if (mark && typeof Path2D !== 'undefined') {   // vector mark, light fill (no font, no fetch)
       ctx.save(); ctx.translate(x - 15, y - 15); ctx.scale(30 / 16, 30 / 16);
@@ -1418,6 +1446,7 @@ footer a { color: var(--foot); }
     }
     else if (glyph) {
       if (!sq && isHot) { ctx.fillStyle = rgb(c, 0.22); ctx.beginPath(); ctx.arc(x, y, r + 6, 0, 7); ctx.fill(); }   // seat glow, no circle
+      else if (!sq && seenNow) { ctx.fillStyle = rgb(c, 0.1); ctx.beginPath(); ctx.arc(x, y, r + 4, 0, 7); ctx.fill(); }
       ctx.fillStyle = cssVar('--glyph'); ctx.font = 'bold 30px "Inter", system-ui, "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Segoe UI Symbol", "Noto Sans Math", sans-serif';
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(glyph, x, y + 1);
     }
