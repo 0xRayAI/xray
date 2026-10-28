@@ -1376,3 +1376,71 @@ class CardRewalk(unittest.TestCase):
             self.assertTrue(col.st["bf"].get("cards:issues"))
             self.assertTrue(col.st["bf"].get("cards:pulls"))
             self.assertEqual(len([e for e in col.ev if e.endswith(":open")]), 2)
+
+
+class OpenCards(unittest.TestCase):
+    """An author outside the fleet is still a card. The backfill runs once."""
+
+    def _client(self, rows, one=None):
+        class C:
+            token = "t"
+            def __init__(self):
+                self.gets = []
+            def rest(self, path, params=None, etag=None, essential=True):
+                self.gets.append(str(path))
+                if str(path).endswith("/issues/162"):
+                    return 200, one, None, None
+                return 200, rows, None, None
+        return C()
+
+    def test_outside_author_keeps_the_open_card(self):
+        col = _collector("acme/app")
+        issue = {"number": 162, "title": "outside", "state": "open", "created_at": "2026-09-30T00:00:00Z",
+                 "updated_at": "2026-09-30T00:00:00Z", "html_url": "https://github.com/acme/app/issues/162",
+                 "user": {"login": "USMailAI"}, "body": "", "labels": []}
+
+        class Rows:
+            token = "t"
+            def rest(self, path, params=None, etag=None, essential=True):
+                return 200, [issue], "e1", None
+
+        with mock.patch.dict(uc.NODE_LC, {"forge0x1[bot]": "forge"}):
+            col.poll_issues(Rows())
+        ev = col.ev["acme/app!162:open"]
+        self.assertEqual(ev["kind"], "issue_open")
+        self.assertEqual(ev["from"], "GitHub")
+        self.assertEqual(ev["actor"], "USMailAI")
+        self.assertEqual(ev["pr_state"], "open")
+        self.assertNotEqual(ev["from"], "Others")
+
+    def test_backfill_fetches_only_a_missing_number_and_once(self):
+        col = _collector("acme/app")
+        col.ev["acme/app!7:open"] = {"id": "acme/app!7:open", "kind": "issue_open", "from": "forge"}
+        one = {"number": 162, "title": "missing", "state": "open", "created_at": "2026-09-30T00:00:00Z",
+               "html_url": "https://github.com/acme/app/issues/162", "user": {"login": "USMailAI"},
+               "body": "", "labels": []}
+        client = self._client([{"number": 7}, {"number": 162}], one)
+        with mock.patch.dict(uc.NODE_LC, {"forge0x1[bot]": "forge"}):
+            col.backfill_open_cards(client)
+        self.assertEqual(col.ev["acme/app!162:open"]["from"], "GitHub")
+        self.assertEqual(col.ev["acme/app!162:open"]["pr_state"], "open")
+        self.assertTrue(any(path.endswith("/issues/162") for path in client.gets))
+        self.assertFalse(any(path.endswith("/issues/7") for path in client.gets))
+        self.assertTrue(col.st["bf"].get("cards:missing"))
+        before = list(client.gets)
+        col.backfill_open_cards(client)
+        self.assertEqual(client.gets, before)
+
+    def test_rate_low_does_not_set_the_missing_flag(self):
+        col = _collector("acme/app")
+
+        class C:
+            token = "t"
+            def rest(self, path, params=None, etag=None, essential=True):
+                if str(path).endswith("/issues/9"):
+                    raise uc.RateLow("low")
+                return 200, [{"number": 9}], None, None
+
+        col.backfill_open_cards(C())
+        self.assertFalse(col.st["bf"].get("cards:missing"))
+        self.assertNotIn("acme/app!9:open", col.ev)

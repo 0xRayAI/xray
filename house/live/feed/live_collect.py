@@ -178,6 +178,12 @@ def node(login: str | None) -> str:
     return "Others" if login else "GitHub"
 
 
+def shown_from(login):
+    """An open card is a target. An author outside the fleet is GitHub, so put() keeps the card."""
+    who = node(login) if login else "GitHub"
+    return "GitHub" if who == "Others" else who
+
+
 def gql_login(actor) -> str | None:
     """GraphQL returns a Bot's login without the REST '[bot]' suffix; normalize to the REST form."""
     if not actor or not actor.get("login"):
@@ -865,7 +871,7 @@ class RepoCollector:
         url = p.get("html_url") or f"https://github.com/{self.repo}/pull/{n}"
         created = p.get("created_at") or p.get("updated_at")
         base = (p.get("base") or {}).get("ref") if isinstance(p.get("base"), dict) else None
-        self.put(eid, created, node(login) if login else "GitHub", "GitHub", "pr_open",
+        self.put(eid, created, shown_from(login), "GitHub", "pr_open",
                  f"{self.short} #{n} opened · {p.get('title') or ''}", url, n,
                  base=base, actor=login or None, sha=head, head_ref=head_ref, author=login or None,
                  draft=p.get("draft"), mentions=mentions(p.get("body")), **card_fields(p))
@@ -960,7 +966,7 @@ class RepoCollector:
             fields = card_fields(p)
             if not fields.get("packet_file") and head and packet_file_on_ref(c, self.repo, head):
                 fields["packet_file"] = True
-            self.put(f"{self.repo}#{n}:open", p["created_at"], node(login) if login else "GitHub", "GitHub", "pr_open",
+            self.put(f"{self.repo}#{n}:open", p["created_at"], shown_from(login), "GitHub", "pr_open",
                      f"{self.short} #{n} opened · {p['title']}", url, n, base=p["base"]["ref"], actor=login or None,
                      sha=head, head_ref=head_ref, author=login or None,
                      draft=p.get("draft"), mentions=mentions(p.get("body")), **fields)
@@ -1172,6 +1178,65 @@ class RepoCollector:
         if self._etag_new:
             self.st["etags"]["ievents"] = self._etag_new
 
+    def _put_open_card(self, item):
+        """Store one fetched issue or pull. The login stays on the actor. from is the fleet node or GitHub."""
+        if not isinstance(item, dict) or item.get("number") is None:
+            return
+        try:
+            n = int(item["number"])
+        except (TypeError, ValueError):
+            return
+        user = item.get("user") if isinstance(item.get("user"), dict) else {}
+        login = user.get("login") or ""
+        is_pr = "pull_request" in item
+        eid = f"{self.repo}#{n}:open" if is_pr else f"{self.repo}!{n}:open"
+        if eid in self.ev:
+            return
+        created = item.get("created_at") or item.get("updated_at")
+        kind = "pull" if is_pr else "issues"
+        url = item.get("html_url") or f"https://github.com/{self.repo}/{kind}/{n}"
+        title = item.get("title") or ""
+        label = (f"{self.short} #{n} opened · {title}" if is_pr
+                 else f"{self.short} issue #{n} opened · {title}")
+        if login and not is_pr:
+            self.st.setdefault("issues", {})[str(n)] = login
+        self.put(eid, created, shown_from(login), "GitHub", "pr_open" if is_pr else "issue_open",
+                 label, url, n, actor=login or None, mentions=mentions(item.get("body")),
+                 author=login or None, **card_fields(item))
+
+    def backfill_open_cards(self, c, limit=30):
+        """Once: each open number with no open event is fetched. A finished pass sets cards:missing."""
+        bf = self.st.setdefault("bf", {})
+        if bf.get("cards:missing"):
+            return
+        if not getattr(c, "token", None):
+            return
+        found = open_numbers(c, [self.repo])
+        key = str(self.repo).lower()
+        if key not in found:
+            return
+        missing = [n for n in sorted(found[key])
+                   if f"{self.repo}!{n}:open" not in self.ev and f"{self.repo}#{n}:open" not in self.ev]
+        if not missing:
+            bf["cards:missing"] = True
+            return
+        done = 0
+        for n in missing[:limit]:
+            try:
+                st, data, _, _ = c.rest(f"/repos/{self.repo}/issues/{n}", None, essential=False)
+            except RateLow:
+                return
+            except (urllib.error.URLError, http.client.HTTPException, TimeoutError, OSError, ValueError, KeyError):
+                return
+            if st != 200 or not isinstance(data, dict):
+                return
+            self._put_open_card(data)
+            if f"{self.repo}!{n}:open" not in self.ev and f"{self.repo}#{n}:open" not in self.ev:
+                return
+            done += 1
+        if done == len(missing):
+            bf["cards:missing"] = True
+
     def poll_issues(self, c):
         cur = self.st["cur"].get("issues")
         # One walk of every issue. The time cursor skips a number that was not updated after it,
@@ -1191,7 +1256,7 @@ class RepoCollector:
             n, login = i["number"], (i.get("user") or {}).get("login")
             if login:
                 self.st.setdefault("issues", {})[str(n)] = login
-            self.put(f"{self.repo}!{n}:open", i["created_at"], node(login), "GitHub", "issue_open",
+            self.put(f"{self.repo}!{n}:open", i["created_at"], shown_from(login), "GitHub", "issue_open",
                      f"{self.short} issue #{n} opened · {i['title']}", i["html_url"], n, actor=login,
                      mentions=mentions(i.get("body")), **card_fields(i))
         self.st["cur"]["issues"] = newest
@@ -1497,7 +1562,8 @@ class RepoCollector:
     # ---------------------------------------------------------------- one pass
     def run(self, c, deadline):
         self._denied = None
-        steps = [("pulls", self.poll_pulls), ("issues", self.poll_issues), ("issue events", self.poll_issue_events),
+        steps = [("pulls", self.poll_pulls), ("issues", self.poll_issues),
+                 ("open cards", self.backfill_open_cards), ("issue events", self.poll_issue_events),
                  ("merger backfill", self.backfill_mergers),
                  ("comments", self.poll_comments), ("review comments", self.poll_review_comments),
                  ("pushes", self.poll_pushes),

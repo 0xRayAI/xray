@@ -1,6 +1,6 @@
 # Board
 
-A card is one GitHub issue or pull request. A beat is a real event on it. A packet is the structured fields (goal, constraints, path, acceptance, evidence, next owner, escalate, raci). raci names who does the work and who answers. A live card missing R or A is amber on its own mark. That mark is not the PACKET.md badge.
+A card is one GitHub issue or pull request. An author outside the fleet still gets that card: the from node is GitHub and the actor keeps the login. One backfill fetches each open number that has no open event. The flag `cards:missing` is set only when that pass finishes. A second pass does not fetch. A beat is a real event on it. A packet is the structured fields (goal, constraints, path, acceptance, evidence, next owner, escalate, raci). raci names who does the work and who answers. A live card missing R or A is amber on its own mark. That mark is not the PACKET.md badge.
 
 The live page shows the same cards in a kanban above the activity list. A column is the card's stage (`open`, `review`, `fix`, `merge`, `retest`, `done`). A closed card sits in `done`. A click opens the timeline. The GitHub link is on the card face.
 
