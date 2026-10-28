@@ -8,7 +8,7 @@ This page is the 4.0 record. The suit era is 4.1. The live ticket is `.xray/stat
 
 Public thesis: [temperament and synchronicity move the stack from toolsets to factories](https://x.com/Blaze0x1/status/2093318114217763225). 4.0 is the suit for that shift. A foundry is built from mills and hangars. The mill builds and ships. The hangar is the shop.
 
-![0xRay — A Power Suit for AI Agents. survive compaction. build foundries. monitor the swarm.](/img/readme-hero.jpg)
+![0xRay Bifrost. The suit wears the board. One card, one seat. Inbox wakes. Rules stay on.](/img/readme-hero.jpg)
 
 This page is the north star. Mechanism lives in [suit temperament](../guides/v3-temperament.md) and [4.0 from v2](./v3-from-v2.md). Fat vs bone is the [trim list](./v3-museum.md). Station card for the next session: [4.0 handoff](./v4-now.md). Mill vs exo: [4.0 foundry](./v4-foundry.md). What's still open: [4.0 left](./v4-left.md).
 

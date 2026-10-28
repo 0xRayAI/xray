@@ -1,6 +1,6 @@
 # xray — a suit for coding agents
 
-![0xRay — A Power Suit for AI Agents. survive compaction. build foundries. monitor the swarm.](docs-site/static/img/readme-hero.jpg)
+![0xRay Bifrost. The suit wears the board. One card, one seat. Inbox wakes. Rules stay on.](docs-site/static/img/readme-hero.jpg)
 
 **4.1** — a suit that survives the context window
 
