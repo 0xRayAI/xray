@@ -2,6 +2,7 @@
 
 Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 
+- A test server does not post the station nudge. Railway does, unless STATION_NUDGE=off. #689.
 - The board tick posts one station nudge per seat on the weekday half hour. The plist template stays unloaded. bifrost #11.
 - Reading a plate file holds that card, so a search of its files runs. The code is on #644.
 - Codex 70 denies a write only when that path sits in a stale copy of this repo. A file outside the repo is allowed. A worktree on main is allowed. The code is on #646.
@@ -18,6 +19,7 @@ Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 
 ### 🐛 Bug Fixes
 
+- A test bind stays quiet inside the weekday window. The station tick posts when RAILWAY_ENVIRONMENT is set. #689.
 - A board tick posts nudge:station on the weekday half hour. The plist stays unloaded. bifrost #11.
 - A plate file holds its card. Reading `docs-site/docs/plates/<id>.md` keeps that card, and a search of the card's files runs.
 - Codex 70 denies a write in this stale checkout. A path outside this copy is allowed. A worktree is judged on its own HEAD.

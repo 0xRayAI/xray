@@ -60,7 +60,8 @@ test('a due hour posts the sentence once', () => {
 test('the server tick is the board path and the station gate does not deliver a nudge', () => {
   const src = fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app', 'server.mjs'), 'utf8');
   assert.match(src, /import \{ stationDue \} from '\.\/station-tick\.mjs'/);
-  assert.match(src, /process\.env\.STATION_NUDGE === 'off'/);
+  assert.match(src, /flag === 'off'/);
+  assert.match(src, /RAILWAY_ENVIRONMENT/);
   assert.match(src, /function stationTick\(now = new Date\(\)\)/);
   const gate = src.slice(src.indexOf('const ownStation'), src.indexOf('if (parsed && parsed.replace === true)'));
   assert.equal(gate.includes('deliverNudge'), false);
@@ -115,6 +116,38 @@ test('a board boot inside the half hour posts one line per seat', async () => {
       assert.equal(stored[0].kind, 'station');
       assert.equal(stored[0].reason, STATION_SENTENCE);
     }
+  } finally {
+    await stop(srv, data);
+  }
+});
+
+test('a real test port stays quiet inside the half hour', async () => {
+  const port = String(22000 + Math.floor(Math.random() * 20000));
+  const { srv, data, raw } = spawnBoard({ PORT: port, STATION_NUDGE: '', STATION_NOW: OPEN });
+  try {
+    const port = await listenPort(srv);
+    const seen = await (await fetch('http://127.0.0.1:' + port + '/inbox/forge?all=1', {
+      headers: { Authorization: 'Bearer ' + raw.forge },
+    })).json();
+    assert.equal((seen.lines || []).filter((line) => line.kind === 'station').length, 0);
+  } finally {
+    await stop(srv, data);
+  }
+});
+
+test('Railway posts on a real port inside the half hour', async () => {
+  const port = String(22000 + Math.floor(Math.random() * 20000));
+  const { srv, data, raw } = spawnBoard({
+    PORT: port, STATION_NUDGE: '', STATION_NOW: OPEN, RAILWAY_ENVIRONMENT: 'production',
+  });
+  try {
+    const port = await listenPort(srv);
+    const seen = await (await fetch('http://127.0.0.1:' + port + '/inbox/forge?all=1', {
+      headers: { Authorization: 'Bearer ' + raw.forge },
+    })).json();
+    const station = (seen.lines || []).filter((line) => line.kind === 'station');
+    assert.equal(station.length, 1);
+    assert.equal(station[0].id, 'nudge:station:forge:2026-10-26T07');
   } finally {
     await stop(srv, data);
   }
