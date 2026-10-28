@@ -31,6 +31,7 @@ import { pinnedOrigin } from './origin.mjs';
 import { missingHandoffs, hotfixMergeLine, isHotfixTitle, isMergeHandoff, validMergeReview } from './handoff.mjs';
 import { clockStamp, writeStartAfter } from './chicago-stamp.mjs';
 import { createBatch } from './pr-batch.mjs';
+import { idsToAck } from './ci-clear.mjs';
 const batch = createBatch();
 
 const PORT = process.env.PORT === '0' ? 0 : (Number(process.env.PORT) || 8080);   // PORT=0: the OS picks a free port (tests); the log line names it
@@ -2584,6 +2585,7 @@ async function routeOnce(script) {
     if (s.code !== 0) { console.log('route: sent failed (' + s.code + ')'); return; }
     if (Number(u.out) < 500) break;
   }
+  ackGreenCi();
   route.passes++; route.last = new Date().toISOString();
   console.log(`route: pass ${p.out}`);
 }
@@ -2595,6 +2597,12 @@ async function routePass() {
   try { do { route.again = false; await routeOnce(script); } while (route.again); }
   catch (e) { console.log('route: ' + redactRepos(String(e.message)).slice(0, 80)); }
   finally { route.busy = false; }
+}
+function ackGreenCi() {
+  const events = githubEvents();
+  for (const seat of Object.keys(seatInbox)) {
+    for (const id of idsToAck(seatInbox[seat], events)) ackLines(seat, id);
+  }
 }
 function routeSoon() { if (process.env.SERVER_ROUTING !== 'off') routePass(); }
 function jiraScript() {

@@ -171,6 +171,50 @@ class InboxPass(unittest.TestCase):
             self.assertFalse(any(l["id"] == self_open["id"] for l in rd("arch1")))
 
 
+    def test_ci_fail_is_one_line_per_head(self):
+        """A red suite opens one ci_fail line. A second event on that sha does not."""
+        with tempfile.TemporaryDirectory() as d:
+            run = Path(d); (run / "feed").mkdir(); (run / "fleet").mkdir()
+            env = dict(os.environ, MESH_RUN=str(run), LIVE_BOARD="off")
+            R = "example-org/app"
+            sha = "a" * 40
+            feed = run / "feed" / "live-events.json"
+            seed = {"id": f"{R}#1:open", "t_ct": ct(900), "kind": "pr_open", "repo": R, "number": 1,
+                    "label": "old", "source": "https://github.com/x"}
+            feed.write_text(json.dumps({"events": [seed]}))
+            self.assertEqual(self.run_pass(env, "pass"), "0 0")
+            opened = {"id": f"{R}#2:open", "t_ct": ct(40), "kind": "pr_open", "repo": R, "number": 2,
+                      "from": "critic", "actor": "critic0x[bot]", "label": "pr opened",
+                      "source": "https://github.com/example-org/app/pull/2",
+                      "packet": {"next owner": "Arch1"}}
+            pushed = {"id": f"{R}#2:commit:{sha[:12]}", "t_ct": ct(30), "kind": "pr_commit", "repo": R,
+                      "number": 2, "sha": sha, "from": "critic", "label": "push"}
+            suite = {"id": f"{R}:suite:9", "t_ct": ct(20), "kind": "check_suite", "repo": R, "sha": sha,
+                     "app": "github-actions", "conclusion": "failure", "status": "completed", "label": "suite failure"}
+            build = {"id": f"{R}:checkrun:1", "t_ct": ct(18), "kind": "check_run", "repo": R, "sha": sha,
+                     "name": "Build", "conclusion": "failure", "label": "Build failure"}
+            quality = {"id": f"{R}:checkrun:2", "t_ct": ct(17), "kind": "check_run", "repo": R, "sha": sha,
+                       "name": "Quality Checks", "conclusion": "failure", "label": "Quality Checks failure"}
+            feed.write_text(json.dumps({"events": [seed, opened, pushed, suite, build, quality]}))
+            self.run_pass(env, "pass")
+            box = run / "feed" / "inbox-spool"
+            rd = lambda s: [json.loads(x) for x in (box / f"{s}.jsonl").read_text().splitlines()] if (box / f"{s}.jsonl").exists() else []
+            red = [l for l in rd("arch1") if l["type"] == "ci_fail"]
+            self.assertEqual(len(red), 1)
+            self.assertEqual(red[0]["id"], f"ci_fail:{R}#2:{sha}")
+            self.assertEqual(red[0]["sha"], sha)
+            self.assertEqual(red[0]["url"], "https://github.com/example-org/app/pull/2")
+            self.assertIn("Build", red[0]["title"])
+            self.assertIn("Quality Checks", red[0]["title"])
+            self.assertFalse(any(l["type"] == "ci_fail" for l in rd("critic")))
+            self.assertFalse(any(l["type"] == "ci_fail" for l in rd("blinky")))
+            again = {"id": f"{R}:checkrun:3", "t_ct": ct(5), "kind": "check_run", "repo": R, "sha": sha,
+                     "name": "Build", "conclusion": "failure", "label": "Build failure again"}
+            feed.write_text(json.dumps({"events": [seed, opened, pushed, suite, build, quality, again]}))
+            self.run_pass(env, "pass")
+            red = [l for l in rd("arch1") if l["type"] == "ci_fail"]
+            self.assertEqual(len(red), 1)
+
 if __name__ == "__main__":
     unittest.main()
 
