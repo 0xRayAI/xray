@@ -110,7 +110,7 @@ Locked 2026-09-14 with Blaze — categorized.
 ## Lexicon add (2026-10-05 — inter-bot)
 | Term | Bucket | Plain |
 |------|--------|-------|
-| **packet** | Workstream | A card's seven fields: goal, constraints, path, acceptance, evidence, next owner, escalate. From a `## Packet` block or one line. Missing acceptance or next owner makes the card amber (`no packet`). Evidence fills from the latest beat. |
+| **packet** | Workstream | A card's fields: goal, constraints, path, acceptance, gates, evidence, next owner, escalate, raci. From a `## Packet` block or one line. `raci` names who does the work (R) and who answers (A). A live card missing R or A is amber on its own mark. The `needs a brief` badge is a packet PR whose PACKET.md is missing. Evidence fills from the latest beat. Cap 200 characters. |
 | **EXECUTE** | Practices | Armed Dist/action order with exact copy + gates; herald/seat ships only on EXECUTE (not draft/FYI). Distinct from a packet (the packet may *carry* an EXECUTE). |
 | **handoff** | Workstream | The channel or file that *carries* a packet (`ops/handoffs/…` or a seat message). The packet is the content; the handoff is the pipe. |
 | **inbox watcher** | Workstream | One inbox-watch.sh per seat, run in the local TUI. Suit boot enables that monitor. inbox-watch-station.sh writes the one Watcher line on the station card. |
@@ -135,7 +135,7 @@ Don't confuse: watcher ≠ Dist; workstream ≠ product; workstream ≠ planes.
 | Term | Bucket | Plain |
 |------|--------|-------|
 | **card** | Workstream | One GitHub issue or pull request (`repo#number`). Title, url, owner seat, stage (`open` > `review` > `fix` > `merge` > `retest` > `done`), state (`live`, `held`, `parked`, or `closed`). |
-| **packet** | Workstream | That card's seven fields. Cap 200 characters. Allowlisted links. Amber `no packet` badge when acceptance or next owner is missing. |
+| **packet** | Workstream | That card's fields, including raci. Cap 200 characters. Allowlisted links. A live card missing R or A is amber on its own mark. The `needs a brief` badge is a packet PR whose PACKET.md is missing. |
 | **beat** | Workstream | One real event: opened or pushed, review verdict, merge, merge-queue tick, owner message, blocker, or a finished deploy (deploy, deploy_fail). CI stays on the card and is not board traffic. A watcher whose start and end fall in the same second is never a beat. |
 | **deploy stages** | Workstream | The board's phases for one Railway deploy: BUILDING, DEPLOYING, then a terminal status. Stamps are in order (BUILDING <= DEPLOYING <= terminal). Only SUCCESS backfills missed phases; FAILED, SKIPPED and CRASHED show only what was seen. |
 
@@ -149,7 +149,7 @@ Don't confuse: watcher ≠ Dist; workstream ≠ product; workstream ≠ planes.
 | **routing** | Workstream | Which seat gets which line. The routing map lists each seat once with its real GitHub login and nicknames; served read-only at `/routing`. Look a login up there before any @-mention. |
 | **two loops** | Workstream | Outer loop: GitHub issues, PRs and @-comments (the record). Inner loop: seat DMs, each pointing at one of them (the wake). |
 | **volley** | Workstream | Packet ping-pong between seats inside a wave: ask, answer, fix, re-check. |
-| **tandem** | Workstream | The governor: seats moving together across both loops. Without it Bifrost stalls. |
+| **tandem** | Workstream | Several tracks move at once, on both loops, and no seat waits for a nod. The card names who does the work and who answers. |
 
 ## Lexicon add (2026-10-14 — OP-PROC terms)
 Every bolded term in the pack OP-PROC and runbooks is defined here (`bifrost check --only lexicon`).

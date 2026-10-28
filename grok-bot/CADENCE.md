@@ -56,7 +56,7 @@ R = does it, A = answers for it, C = consulted before, I = told after. Every sea
 | Design and acceptance tests before spend | I | A | R | R |
 | Build rounds and cloud agents | I | C | A/R | I |
 | Review verdict (blocker/nit/UNVERIFIED) | I | I | C | A/R |
-| Merge after PASS (careful-change repos: Blaze A) | I | I | A/R | C |
+| Merge after PASS (Arch1 A/R; careful-change repos: Blaze A) | I | I | C | C |
 | Publish, deploy, spend, prod credentials | A | C | R | C |
 | Beat line in the room | I | R | R | R |
 | Board row change and drift check | I | A/R | C | C |

@@ -472,6 +472,7 @@ button.wstat.on { outline: 2px solid var(--focus); background: var(--panel); }
 .wbadge.nudge { border-color: var(--badge-nudge-edge); color: var(--badge-nudge-fg); }
 .wbadge.pin { border-color: var(--badge-pin-edge); color: var(--badge-pin-fg); }
 .wbadge.held { border-color: var(--badge-held-edge); color: var(--badge-held-fg); }
+.wbadge.raci { border-color: var(--fresh-amber); color: var(--fresh-amber); }
 .wbadge.state { border-color: var(--line); color: var(--text); }
 .wspin { width: 8px; height: 8px; margin-top: 3px; border-radius: 50%; border: 1.5px solid var(--spin); border-right-color: transparent; display: inline-block; animation: wspin .8s linear infinite; flex: none; }
 @keyframes wspin { to { transform: rotate(360deg); } }
@@ -1003,7 +1004,7 @@ footer a { color: var(--foot); }
   // same events; read-only). Grouped by status unless the Cards toggle is by agent. Click a card for its packet and last 5 beats; a related live beat glows it.
   var wb = { cards: [], cloudAgents: [], stamp: '', key: '', open: {}, byKey: {}, glows: 0, kidsOpen: {}, pinsOpen: false, issuesOpen: {}, doneOpen: {}, statFilter: '', cloudDoneOpen: false, group: 'status' };
   window.LIVE_WAVE = wb;
-  var WB_PACKET = ['goal', 'constraints', 'path', 'acceptance', 'evidence', 'next owner', 'escalate'];
+  var WB_PACKET = ['goal', 'constraints', 'path', 'acceptance', 'evidence', 'next owner', 'escalate', 'raci'];
   var WB_BEAT_KINDS = /^(pr_open|issue_open|pr_commit|pr_force_push|pr_update|critic_|merged|lab_retest_|check_run|workflow_run|ci_)/;
   function wbCt(t) {
     try { var o = { timeZone: 'America/Chicago' }, d = new Date(t).toLocaleDateString('en-US', o) !== new Date().toLocaleDateString('en-US', o);
@@ -1108,6 +1109,12 @@ footer a { color: var(--foot); }
     if (!c.pinned) {
       WB_PACKET.forEach(function (f) {
         var v = (c.packet || {})[f];
+        if (f === 'raci') {
+          var gaps = c.raci_missing || [];
+          if (!v && !gaps.length) return;
+          row(f, v || '— missing —');
+          return;
+        }
         if (!v && !(f === 'acceptance' || f === 'next owner')) return;
         row(f, v || '— missing —');
       });
@@ -1570,7 +1577,8 @@ footer a { color: var(--foot); }
       if (want && $('cardPop') && !$('cardPop').open) openCardPop(want);
     }
     function card(c) {
-      var li = wbEl('li', 'wcard ' + (c.state || 'live') + (c.packet_ok === false && !c.pinned ? ' nopacket' : '') + (c.stall ? ' stall' : '') + (wb.open[c.key] ? ' open' : ''));
+      var raciMiss = c.raci_missing && c.raci_missing.length;
+      var li = wbEl('li', 'wcard ' + (c.state || 'live') + (c.packet_ok === false && !c.pinned ? ' nopacket' : '') + (raciMiss ? ' noraci' : '') + (c.stall ? ' stall' : '') + (wb.open[c.key] ? ' open' : ''));
       li.dataset.key = c.key; wb.byKey[c.key] = li; paintEdge(li, cardSeat(c));
       var top = wbEl('div', 'wtop');
       var it = wbEl('span', 'witem', (c.number ? '#' + c.number + ' ' : '') + cleanTitle(c)); it.title = (c.repo ? c.repo + ' #' + c.number + ' ' : '') + (c.title || '');
@@ -1581,6 +1589,7 @@ footer a { color: var(--foot); }
       meta.appendChild(wbEl('span', 'wbadge state', c.state || 'live'));
       if (c.pinned) meta.appendChild(wbEl('span', 'wbadge pin', 'pinned'));
       else if (c.packet_ok === false) meta.appendChild(wbEl('span', 'wbadge', 'needs a brief'));
+      if (c.raci_missing && c.raci_missing.length) meta.appendChild(wbEl('span', 'wbadge raci', 'needs ' + c.raci_missing.join(' ')));
       if (c.state === 'held') meta.appendChild(wbEl('span', 'wbadge held', L.parkedLabel(c)));
       if (c.start_after) meta.appendChild(wbEl('span', 'wbadge', 'start after ' + c.start_after));
       if (c.stall) meta.appendChild(wbEl('span', 'wbadge stall', 'quiet 60 min+'));

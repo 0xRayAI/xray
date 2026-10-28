@@ -12,8 +12,10 @@ CARD   = one GitHub issue or PR (repo#number): title, url, owner seat, stage (op
 HOLD   = the owner posts a comment whose first line is 'Held: <reason>' (optional until:), or the issue / PR
          carries a label in GITHUB_HOLD_LABEL (default on-hold). A Parked: comment still parks and wins over a hold.
          Repos in NO_NUDGE_REPOS (unset means none) stay visible and are never stalled or nudged.
-PACKET = goal, constraints, path, acceptance, evidence, next owner, escalate. The amber
-         'needs a brief' badge is only a packet PR (title starts with Packet, or a packet: alias)
+PACKET = goal, constraints, path, acceptance, evidence, next owner, escalate, raci.
+         raci names who does the work and who answers. A live card missing R or A sets
+         raci_missing. That amber mark is not the PACKET.md badge. The 'needs a brief'
+         badge is only a packet PR (title starts with Packet, or a packet: alias)
          whose PACKET.md is missing. Issues, packet cards, release PRs, and ordinary PRs stay
          packet_ok. A body that carries a packet, or PACKET.md on the branch, sets packet_file.
          Evidence fills from the latest beat.
@@ -931,12 +933,14 @@ def model(extra_events=None, now=None, prompts=None, held=None):
             c.pop("nudge_to", None); c.pop("nudge_via", None)
             stall = False
         missing = [] if brief_exempt(c, pk) else ["PACKET.md"]
+        raci_missing = live_packet.raci_gaps(pk, state, c.get("pinned"))
         if resolved:
             c["resolved"] = resolved
         shown = _keep_push(beats, 5)
         if closed:
             c["verb"] = "merged" if merged else "closed"
         c.update(stage=stage, state=state, packet=pk, packet_ok=not missing, missing=missing,
+                 raci_missing=raci_missing,
                  beats=[{k: v for k, v in b.items() if not k.startswith("_")} for b in shown],
                  last_beat_t=int(last_t * 1000), stall=stall, closed_t=int(closed_t * 1000) if closed else 0)
         close_id = str(c.pop("_close_id", "") or "")

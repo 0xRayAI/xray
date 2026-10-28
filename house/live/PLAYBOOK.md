@@ -1,7 +1,7 @@
 # Live board playbook
 
 ## Words
-**Card** = a GitHub issue or PR. **Beat** = a real event on it. **Packet** = the structured fields on a card (done-when, stops-at, next owner, acceptance, evidence). **Nudge** = a server-made poke at a seat about a stalled card.
+**Card** = a GitHub issue or PR. **Beat** = a real event on it. **Packet** = the structured fields on a card (done-when, stops-at, next owner, acceptance, evidence, raci). **raci** names who does the work and who answers. A live card missing R or A is amber on its own mark. **Nudge** = a server-made poke at a seat about a stalled card.
 
 ## Cards, beats, stalls
 A card is a GitHub issue / PR. A beat is a real event on it (opened, pushed, Reviewer verdict, CI result, merge,
