@@ -2,6 +2,7 @@
 
 Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 
+- A missed /healthz makes the supervisor exit 1 so ON_FAILURE replaces the one replica. The replica pid is not SIGKILL'd. #661.
 - An open issue whose author is outside the fleet still gets a card. One backfill fills a number that has no open event. A second pass does not. #576.
 - Status compare uses one canonical id. The display name is paint only. An unknown status stays visible and is marked unknown. #570.
 - Acking a merge handoff requires a review or comment link on that pull. A bare ack leaves the line open. Other kinds ack as today. #554.
@@ -25,6 +26,7 @@ Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 
 ### 🐛 Bug Fixes
 
+- A missed health beat exits non-zero. /healthz still answers while the loop is alive. The inbox watcher is not signaled. #661.
 - An open card whose author is outside the fleet stays stored. The from node is GitHub. One backfill fills a missing number and does not run again. #576.
 - A card stored as `in_flight` and a card stored as `In Flight` land in the same column and the same filter. An unknown status is marked, not moved to open. #570.
 - A merge handoff ack without a review or comment link on that pull stays open. The stored ack keeps the link. #554.
