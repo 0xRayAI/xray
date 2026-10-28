@@ -2,6 +2,8 @@
 
 Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 
+- The README hero and the social card are the Bifrost poster. The suit wears the board. The mark stays v4.1.
+- The unposted ship thread is tweets/v4.1.5.md. It stays a draft until Dist GO.
 - The OP cycle is digest, then card, then do, then loop, then ship. Digest is disk. Card is the same turn. Do is the implementer. Loop is the two loops. Ship is the publisher after Review. #701.
 - L1 through L3 stay on the packet next owner, else the card owner, or the owing seat. CoS is not woken to reassign. A threshold a runbook does not hard-name is a soft follow-up. #700.
 - A prompt pulse spins only the card named by working_on. A roster row is a fleet seat or a product node, and a seat quiet for 7 days is dormant. Seen is not working, and the mesh paints that seen seat with one dim ring. An avatar keeps that ring outside the image. A GitHub write lights the seat only when that repo#number is an open board card. A board of only closed cards clears working. A finished cloud agent stamps cloud.last_ct, and an empty open set leaves CloudAgents off. An owner comment or push moves a stall card. bifrost #5 #6 #7 #8 #9 #10 #12.

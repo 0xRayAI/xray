@@ -8,7 +8,7 @@ sidebar_label: Overview
 
 0xRay is a three-subsystem autonomous engine. The suit is the wear. Constitution always on. Temperament by host. Four floors. Repertoire for the laws. Station is the wake ticket.
 
-![0xRay — A Power Suit for AI Agents. survive compaction. build foundries. monitor the swarm.](/img/readme-hero.jpg)
+![0xRay Bifrost. The suit wears the board. One card, one seat. Inbox wakes. Rules stay on.](/img/readme-hero.jpg)
 
 Confer votes. Burst runs the swarm.
 

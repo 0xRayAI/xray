@@ -2,7 +2,7 @@
 
 **4.1** — a suit that survives the context window
 
-![0xRay — A Power Suit for AI Agents. survive compaction. build foundries. monitor the swarm.](/img/readme-hero.jpg)
+![0xRay Bifrost. The suit wears the board. One card, one seat. Inbox wakes. Rules stay on.](/img/readme-hero.jpg)
 
 Bifrost is the live board. Goggles views one plane. A search inside that card runs. A search of another plane returns the card. A path outside this checkout runs.
 
