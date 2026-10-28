@@ -3913,7 +3913,7 @@ async function historyEvents(date) {
 async function openMesh() {
   // The first read finishes before the port opens, so health and the board see the feed.
   if (process.env.COLLECTOR !== 'off') await readCollectorFeed();
-  server.listen(PORT, () => {
+  server.listen(PORT, '0.0.0.0', () => {
   const bound = server.address().port;
   const webhookBase = String(process.env.CURSOR_WEBHOOK_BASE || '');
   if (webhookBase.endsWith(':0')) process.env.CURSOR_WEBHOOK_BASE = 'http://127.0.0.1:' + bound;

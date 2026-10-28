@@ -6,6 +6,7 @@ Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 - Upkeep and reminders are scripts with no model call. A missing prompt, drift, or a dead cron is one card. The local reminder writes station.md. #577.
 - A same-path cluster is one tip and one pull. Lots of small cards stay. R opens the pull. A tips it. A blocker hotfix, a different deploy surface, or a soft follow-up stays a solo tip. #694.
 - A same-path cluster is one tip and one pull. Lots of small cards stay. A blocker hotfix, a different deploy surface, or a soft follow-up stays a solo tip. #694.
+- The first /healthz beat has a 120s boot window. A steady miss after that beat still exits 1. The server listens on 0.0.0.0 so the supervisor probe reaches it. #661.
 - A missed /healthz makes the supervisor exit 1 so ON_FAILURE replaces the one replica. The replica pid is not SIGKILL'd. #661.
 - An open issue whose author is outside the fleet still gets a card. One backfill fills a number that has no open event. A second pass does not. #576.
 - Status compare uses one canonical id. The display name is paint only. An unknown status stays visible and is marked unknown. #570.
