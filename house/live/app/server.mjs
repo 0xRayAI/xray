@@ -2091,10 +2091,11 @@ function cardMatchesWork(card, on) {
 }
 // A seat stays working only while an open board card is that work.
 // Before the first card loads, the in-flight mark stays so a cold boot is not a blank fleet.
+// A loaded board with no open card clears working.
 function bindSeatWorkToCards(fleet) {
   if (!fleet) return fleet;
+  if (!bfCards.length) return fleet;
   const open = bfCards.filter(cardIsActiveWork);
-  if (!open.length) return fleet;
   const seats = { ...(fleet.seats || {}) };
   const working = { ...(fleet.working || {}) };
   let changed = false;

@@ -118,3 +118,54 @@ test('working follows an open card, and a seen seat is not that sheen', async ()
     fs.rmSync(data, { recursive: true, force: true });
   }
 });
+
+test('a board of only closed cards does not mark a seat working', async () => {
+  const data = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-card-closed-'));
+  fs.mkdirSync(path.join(data, 'live'), { recursive: true });
+  fs.writeFileSync(path.join(data, 'live', 'cards.json'), JSON.stringify({
+    updated_ct: new Date().toISOString(),
+    cards: [
+      {
+        key: '0xrayai/xray#1', kind: 'pr', repo: '0xRayAI/xray', number: 1,
+        title: 'old', owner: 'forge', state: 'closed', stage: 'done', packet_ok: true,
+        beats: [], last_beat_t: Date.now(),
+      },
+    ],
+  }));
+  const srv = start(data);
+  let base = null;
+  for (let i = 0; i < 50 && !base; i++) {
+    base = srv.baseOf();
+    if (!base) await new Promise(r => setTimeout(r, 50));
+  }
+  try {
+    if (!base) throw new Error(srv.logs());
+    const res = await fetch(base + '/activity', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + FORGE_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ t_ct: stamp(), seat: 'forge', kind: 'prompt', action: 'sent', from: 'blaze', to: 'forge' }),
+    });
+    assert.equal(res.status, 202, await res.text());
+    const live = await (await fetch(base + '/live-events.json')).json();
+    assert.notEqual(live.fleet.seats.forge && live.fleet.seats.forge.working, true);
+    assert.equal(live.fleet.working && live.fleet.working.forge, undefined);
+    const comment = await fetch(base + '/ingest', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + srv.ingest, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: 't', generated_at: new Date().toISOString(), event_count: 1,
+        events: [{
+          id: 'closed#1', t_ct: stamp(), kind: 'pr_comment', from: 'forge', actor: 'forge',
+          repo: '0xRayAI/xray', number: 1, label: 'closed card', src_file: 'github-api',
+        }],
+      }),
+    });
+    assert.equal(comment.status, 200, await comment.text());
+    const after = await (await fetch(base + '/live-events.json')).json();
+    assert.notEqual(after.fleet.seats.forge && after.fleet.seats.forge.working, true);
+    assert.equal(after.fleet.working && after.fleet.working.forge, undefined);
+  } finally {
+    await stop(srv.child);
+    fs.rmSync(data, { recursive: true, force: true });
+  }
+});
