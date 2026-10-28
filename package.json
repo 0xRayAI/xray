@@ -252,6 +252,7 @@
   },
   "overrides": {
     "body-parser": "^2.4.0",
-    "fast-uri": "^3.1.9"
+    "fast-uri": "^3.1.9",
+    "qs": ">=6.17.0"
   }
 }
