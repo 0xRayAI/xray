@@ -33,6 +33,38 @@ def window_events(events, cap):
     return [e for _, e in ranked[-cap:]]
 
 
+def window_note(notes, events):
+    """The live document is the newest window. Older days stay in the history archive."""
+    oldest = None
+    count = len(events) if isinstance(events, list) else 0
+    if isinstance(events, list):
+        for event in events:
+            if not isinstance(event, dict):
+                continue
+            stamp = event.get("t_ct")
+            if isinstance(stamp, str) and (oldest is None or stamp < oldest):
+                oldest = stamp
+    window = f"Window: newest {count} events"
+    window += f" (oldest in this document {oldest})." if oldest else "."
+    window += " Older days stay in the history archive."
+    out = []
+    replaced = False
+    for line in notes or []:
+        if isinstance(line, str) and line.startswith("Window:"):
+            out.append(window)
+            replaced = True
+        elif isinstance(line, str) and "full GitHub history" in line:
+            out.append(line.replace(
+                "full GitHub history (backfilled from repo creation, then incremental)",
+                "GitHub history archived by day. This document is the newest window (backfilled from repo creation, then incremental)",
+            ))
+        else:
+            out.append(line)
+    if not replaced:
+        out.append(window)
+    return out
+
+
 def cap_file(path):
     """Shrink an existing document before node parses it. Returns how many events were dropped."""
     path = Path(path)

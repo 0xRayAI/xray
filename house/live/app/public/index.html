@@ -2056,7 +2056,8 @@ footer a { color: var(--foot); }
     cardHistRows.forEach(function (c) { ul.appendChild(historyCard(c)); });
     foldSum('historySum', String(cardHistRows.length));
   }
-  function loadCardHist() {
+  function loadCardHist(attempt) {
+    var n = attempt || 0;
     fetch('/history/cards', { headers: { Accept: 'application/json' } }).then(function (r) {
       if (!r.ok) return null;
       return r.json();
@@ -2065,7 +2066,10 @@ footer a { color: var(--foot); }
       cardHistRows = b.cards;
       renderCardRecent();
       renderCardHist();
-    }).catch(function () {});
+      if (b.ready === false && n < 600) setTimeout(function () { loadCardHist(n + 1); }, 3000);
+    }).catch(function () {
+      if (n < 600) setTimeout(function () { loadCardHist(n + 1); }, 3000);
+    });
   }
   function showCardHist(on) {
     cardHistOn = !!on;

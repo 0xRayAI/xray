@@ -16,7 +16,7 @@ sys.dont_write_bytecode = True   # never write __pycache__ into the upstream che
 SRC = os.environ.get("LIVE_MESH_SRC", str(Path(__file__).resolve().parent.parent.parent / "live-mesh"))
 sys.path.insert(0, SRC)
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from feed_cap import cap_file, feed_cap, window_events  # noqa: E402
+from feed_cap import cap_file, feed_cap, window_events, window_note  # noqa: E402
 import fetch_feed as ff  # noqa: E402
 import live_collect as uc  # noqa: E402
 import live_flow  # noqa: E402
@@ -331,6 +331,8 @@ def _write(feed, out):
     payload = dict(feed)
     payload["events"] = events
     payload["event_count"] = len(events)
+    if MODE == "github":
+        payload["notes"] = window_note(payload.get("notes"), events)
     # Railway collector: same events leave the document bytes in place. The beat still moves the clock.
     if MODE == "github" and out.exists() and keyset == seen:
         _write_beat(payload, out)

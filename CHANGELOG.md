@@ -29,6 +29,7 @@ Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 - A quiet collector pass leaves the event document in place and writes a small clock file. The server takes that clock without reading the document again. #667.
 - The live GitHub document keeps the newest events. A file of ~50k events is not parsed into the heap. #669.
 - Boot shrinks that document with a script that does not import the collector. fetch_feed lives under collector/upstream. #671.
+- A settled card is archived once per close. Day files over 8MB are folded to the latest row, then Redis serves /history and /history/cards. The live document says it is the newest window. #673.
 
 ## [4.1.4] - 2026-10-26
 
