@@ -213,3 +213,8 @@ Every bolded term in the pack OP-PROC and runbooks is defined here (`bifrost che
 ## Lexicon add (2026-10-19 — pulsar)
 
 | **pulsar** | Workstream | The one-wave board hold. The first seat to hit holds the open cards for the wave the board has up. The hold ends when the board closes that wave. It does not post, deploy, publish, or spend. |
+
+## Lexicon add (2026-10-28 — bundle)
+| Term | Bucket | Plain |
+|------|--------|-------|
+| **bundle** | Workstream | Lots of small cards stay. A same-path cluster is one tip and one pull with a Closes list, and critic Strict is once. A blocker hotfix, a different deploy surface, an unrelated acceptance, or a soft follow-up stays a solo tip. Forge tips the cluster. Arch1 may widen a same-path bundle and does not open a second pull for a sister without a reason. |
