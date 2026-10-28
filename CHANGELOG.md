@@ -3,7 +3,7 @@
 Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 
 - The README hero and the social card are the Bifrost poster. The suit wears the board. The mark stays v4.1.
-- Worn hooks post chat activity, the packet, the card tag, and the turn. The board is https://bifrost.0xray.dev. The key folder is ~/.burst/seat-keys. One seat key is the seat.
+- Worn hooks post chat activity, the packet, the card tag, and the turn. The board is https://bifrost.0xray.dev. The key folder is ~/.burst/seat-keys. One seat key is the seat. A 202 from the board counts as posted.
 - The unposted ship thread is tweets/v4.1.5.md. It stays a draft until Dist GO.
 - The OP cycle is digest, then card, then do, then loop, then ship. Digest is disk. Card is the same turn. Do is the implementer. Loop is the two loops. Ship is the publisher after Review. #701.
 - L1 through L3 stay on the packet next owner, else the card owner, or the owing seat. CoS is not woken to reassign. A threshold a runbook does not hard-name is a soft follow-up. #700.

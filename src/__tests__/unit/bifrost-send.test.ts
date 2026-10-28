@@ -80,16 +80,30 @@ describe('bifrost send', () => {
     fs.mkdirSync(keys, { recursive: true });
     fs.writeFileSync(path.join(keys, 'arch1.key'), `${KEY}\n`, { mode: 0o600 });
     const calls: Array<{ url: string; body: string; auth: string }> = [];
+    const now = new Date('2026-10-24T18:00:00Z');
     const sent = await notifyBifrost({
       root,
       phase: 'start',
       env: {},
       home,
       fetchImpl: liveFetch(calls),
-      now: new Date('2026-10-24T18:00:00Z'),
+      now,
     });
     expect(sent.sent).toEqual(['start']);
     expect(calls[0].url).toBe('https://bifrost.0xray.dev/activity');
+    const accepted = await notifyBifrost({
+      root,
+      phase: 'end',
+      env: {},
+      home,
+      fetchImpl: async (url: string, init: { body?: string; headers?: { authorization?: string } } = {}) => {
+        if (String(url).endsWith('/healthz')) return { status: 200, json: async () => ({ ok: true, board: 'live' }) };
+        calls.push({ url: String(url), body: String(init.body || ''), auth: init.headers?.authorization || '' });
+        return { status: 202, json: async () => ({ ok: true }) };
+      },
+      now,
+    });
+    expect(accepted.sent).toEqual(['end']);
     expect(calls[0].auth).toBe(`Bearer ${KEY}`);
     expect(JSON.parse(calls[0].body)).toMatchObject({ kind: 'turn', action: 'start' });
   });

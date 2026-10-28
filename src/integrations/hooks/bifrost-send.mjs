@@ -233,7 +233,7 @@ async function postJson(url, key, body, fetchImpl, timeoutMs) {
       body: JSON.stringify(body),
       signal: ac.signal,
     });
-    return !!(res && res.status === 200);
+    return !!(res && (res.status === 200 || res.status === 202));
   } catch {
     return false;
   } finally {
