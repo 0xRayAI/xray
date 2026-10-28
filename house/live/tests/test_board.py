@@ -36,6 +36,20 @@ class Packet(unittest.TestCase):
         self.assertIn("WORKING_CLOUD_S", fields["evidence"])
         self.assertEqual(p.parse("[docs](https://notion.so/x) text\n## Packet\n- Goal: [d](https://notion.so/y) z"), {"goal": "d z"})
 
+    def test_raci_line_and_letters_keep_next_owner(self):
+        import live_packet as p
+        fields = p.parse("## Packet\n- goal: ship\n- next owner: critic\n- raci: R=forge A=arch1\n")
+        self.assertEqual(fields["next owner"], "critic")
+        self.assertEqual(fields["raci"], "R=forge A=arch1")
+        self.assertEqual(p.raci_gaps(fields, "live"), [])
+        got = p.parse("## Packet\n- goal: ship\n- R: forge\n- A: arch1\n- C: critic\n- I: CoS\n")
+        self.assertEqual(got["raci"], "R=forge A=arch1 C=critic I=CoS")
+        self.assertEqual(p.raci_gaps({"goal": "ship"}, "live"), ["R", "A"])
+        self.assertEqual(p.raci_gaps({"goal": "ship"}, "closed"), [])
+        self.assertEqual(p.raci_gaps({}, "live", True), [])
+        self.assertEqual(p.parse("Packet: goal: ship | raci: R=forge A=arch1 | next owner: critic"),
+                         {"goal": "ship", "raci": "R=forge A=arch1", "next owner": "critic"})
+
     def test_pr_packet_subsections_keep_scope_acceptance_and_next_owner(self):
         """PR 477's ## Packet ends at ### Scope unless subsections stay inside the block."""
         import live_packet as p
@@ -180,6 +194,23 @@ class Model(unittest.TestCase):
         self.assertIn("comment after merge", [b["what"] for b in cards[42]["beats"]])
         self.assertIn("comment after close", [b["what"] for b in cards[43]["beats"]])
         self.assertEqual({cards[42]["state"], cards[43]["state"]}, {"closed"})
+
+    def test_raci_missing_is_not_the_brief_badge(self):
+        evs = [
+            self.ev(70, "pr_open", 30, title="needs who", packet={"goal": "g", "next owner": "critic"}),
+            self.ev(71, "pr_open", 30, title="has who", packet={"goal": "g", "raci": "R=forge A=arch1", "next owner": "critic"}),
+            self.ev(72, "pr_open", 4000, title="closed who"),
+            self.ev(72, "merged", 3900),
+        ]
+        cards = {c["number"]: c for c in self.w.model(evs)["cards"] if c.get("repo") == R}
+        self.assertEqual(cards[70]["raci_missing"], ["R", "A"])
+        self.assertTrue(cards[70]["packet_ok"])
+        self.assertEqual(cards[70]["missing"], [])
+        self.assertEqual(cards[70]["packet"]["next owner"], "critic")
+        self.assertEqual(cards[71]["raci_missing"], [])
+        self.assertEqual(cards[71]["packet"]["raci"], "R=forge A=arch1")
+        self.assertEqual(cards[72]["state"], "closed")
+        self.assertEqual(cards[72]["raci_missing"], [])
 
     def test_cards_stages_packets_stall_md(self):
         sha = "abcdef1234567"

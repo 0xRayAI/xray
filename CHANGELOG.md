@@ -12,6 +12,8 @@ Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 - The source suite reads `src/skills`. `.opencode/skills` is the OpenCode pack line. A missing `dist/cli` skips the CLI tests.
 - Suit boot enables `inbox-watch.sh` in the local TUI. `inbox-watch-ensure` does not start a process.
 - Pin qs to 6.17.0 in the root lock and the docs-site lock. Nested body-parser uses the same pin. #645.
+- Tandem is several tracks at once, on both loops, and no seat waits for a nod. It is the work mode. #683.
+- A card carries raci. A live card missing R or A is amber on its own mark. That mark is not the PACKET.md badge. #684.
 
 ### 🐛 Bug Fixes
 
@@ -37,6 +39,8 @@ Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 - A packet next owner is an inbox tip when the opener is someone else. The opener's own line still drops. #660.
 - Pin qs to 6.17.0 in the root lock and the docs-site lock, including nested body-parser. #645.
 - A red CI check writes a card when the pull has none, then one `ci_fail` inbox line for that head. A green head clears it. #648.
+- Tandem is several tracks at once, on both loops, and no seat waits for a nod. #683.
+- A card carries raci. A live card missing R or A is amber on its own mark. #684.
 
 ## [4.1.4] - 2026-10-26
 
