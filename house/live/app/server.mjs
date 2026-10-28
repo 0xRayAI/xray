@@ -24,7 +24,9 @@ import { createArch1Launch, ARCH1_CANON, cardKeyOf } from './arch1-launch.mjs';
 import { configureWorkTrack, acceptCursorWebhook, appendWake, applyCloudOwners, boardCloudAgents, canonSeatToken, cloudIdsAlias, cloudTurnId, deriveTrackFromDir, displaySeat, isPacket, loadSeatAgentMap, openCloudTurns, readJsonl, readWakeRows, safePrUrl, seatForAgentId, stampCriticCloud, toToken } from './worktrack.mjs';
 import { wakeConfig, createWakeState, classifyBatch, gateLine, noteSent, releaseDue, publicStats, fullStats, restoreWakeBook, viewLine } from './wake-gate.mjs';
 const COLLECTOR_DIR_EARLY = () => path.join(path.dirname(fileURLToPath(import.meta.url)), 'collector');
-import { initArchive, appendArchive, backfillArchive, readArchive, validArchiveDate, KINDS as ARCHIVE_KINDS, cardHistory, archiveDays, archivedLineBytes, appendTransition, transitionFromEvent, queryTransitions, exportTransitions } from './archive.mjs';
+import { initArchive, appendArchive, backfillArchive, readArchive, validArchiveDate, KINDS as ARCHIVE_KINDS, cardHistory, archiveDays, archivedLineBytes, appendTransition, transitionFromEvent, queryTransitions, exportTransitions, archiveRoot, setArchiveSink, foldCardRows, useCardRows, reloadCardRows, adoptFoldedCards } from './archive.mjs';
+import { openHistory } from './history-store.mjs';
+import { oversizedCardDays, compactOversized } from './compact-cards.mjs';
 import { pinnedOrigin } from './origin.mjs';
 import { missingHandoffs, hotfixMergeLine, isHotfixTitle, isMergeHandoff, validMergeReview } from './handoff.mjs';
 import { clockStamp, writeStartAfter } from './chicago-stamp.mjs';
@@ -1210,7 +1212,10 @@ function mergedEventFor(card, events) {
   if (!repo || !Number.isInteger(number)) return null;
   return (events || []).find(e => e && e.kind === 'merged' && String(e.repo || '').toLowerCase() === repo && Number(e.number) === number) || null;
 }
-/** Final merged or closed rows the display cap or the 24h window left off the board. The archive stamp is this write, so a newer live snapshot does not stay last. */
+// One row per settled card per process. The board clock moves every pass; stamping that clock
+// on every pass filled the day file with the same closed cards (multi-GB) and the heap parsed them.
+const settledOnce = new Set();
+/** Final merged or closed rows the display cap or the 24h window left off the board. The first stamp is this write, so a newer live snapshot does not stay last. */
 function archiveFinals(settled, stamp) {
   const events = githubEvents();
   const rows = [];
@@ -1220,12 +1225,15 @@ function archiveFinals(settled, stamp) {
     const hit = mergedEventFor(c, events);
     rows.push({
       ...c, state: 'closed', stage: 'done', verb: hit ? 'merged' : 'closed',
-      merged_by: hit ? (hit.merged_by || hit.from) : c.merged_by, updated_ct: stamp,
+      merged_by: hit ? (hit.merged_by || hit.from) : c.merged_by,
     });
   }
   for (const c of rows) {
     const hit = mergedEventFor(c, events);
     const verb = hit ? 'merged' : (c.verb === 'merged' || c.verb === 'closed' ? c.verb : 'closed');
+    const ident = [c.key, 'done', 'closed', verb].join('|').toLowerCase();
+    if (settledOnce.has(ident)) continue;
+    settledOnce.add(ident);
     archiveCard({
       ...c, state: 'closed', stage: 'done', verb,
       merged_by: (hit && (hit.merged_by || hit.from)) || c.merged_by,
@@ -2447,6 +2455,7 @@ function healthBody() {   // public: counts, times, ages (s) and wake states; no
     card_stale_s: CARD_STALE_S, data_stale_s: DATA_STALE_S, board: boardWord(),
     cards_behind: behind, stale_status: staleStatus,
     last_tick: passAt ? new Date(passAt).toISOString() : null, stalled,
+    history_ready: historyState.ready, history_redis: historyState.redis, history_cards: historyState.cards,
     origin: ORIGIN || null, wakes: wakeHealth(), wake_stats: publicStats(wakeState, now, wakeConfig(process.env).statMs), arch1_launch: arch1Launch.health(), nudged_lines: nudges.filter(n => n.kind === 'line' && !n.closed_at).length, routing: ROUTING.ok ? 'ok' : 'fail', governor_changes: governorChanges };
   if (warming) body.status = 'warming';
   return body;
@@ -3337,11 +3346,15 @@ async function handle(req, res) {
       return send(req, res, 200, 'application/x-ndjson; charset=utf-8', exportTransitions(date));
     }
     if (p === '/history/transitions') return json(req, res, 200, queryTransitions(q));
-    if (p === '/history/cards') return json(req, res, 200, cardHistory(q));
+    if (p === '/history/cards') {
+      const body = cardHistory(q);
+      body.ready = historyState.ready;
+      return json(req, res, 200, body);
+    }
     const date = url.searchParams.get('date') || '';
     if (!date) return json(req, res, 200, { days: archiveDays() });
     if (!validArchiveDate(date)) return json(req, res, 400, { error: 'bad date' });
-    return json(req, res, 200, { date, events: readArchive(date, 'events').lines });
+    return json(req, res, 200, { date, events: await historyEvents(date) });
   }
   if (p === '/robots.txt' && (m === 'GET' || m === 'HEAD')) return send(req, res, 200, 'text/plain; charset=utf-8', 'User-agent: *\nDisallow: /\n');
 
@@ -3743,6 +3756,105 @@ server.on('error', (err) => {
   console.log('live mesh listen failed: ' + (err && err.code ? err.code : 'error'));
   process.exit(1);
 });
+const historyState = { ready: false, redis: 'off', cards: 0, loaded: false };
+let historyStore = null;
+let historyReplay = null;
+
+function noteArchive(kind, rec, day) {
+  if (historyReplay) historyReplay.push({ kind, rec, day });
+  else if (historyStore && historyState.loaded) {
+    const op = kind === 'cards' ? historyStore.putCard(rec) : kind === 'events' ? historyStore.putEvent(day, rec) : null;
+    if (op) op.catch(() => { historyState.redis = 'down'; });
+  }
+}
+
+function compactChildEnv() {
+  const env = { PATH: process.env.PATH || '', TZ: process.env.TZ || 'America/Chicago' };
+  if (process.env.MESH_CARDS_READ_MAX) env.MESH_CARDS_READ_MAX = process.env.MESH_CARDS_READ_MAX;
+  return env;
+}
+
+function runCompactChild(archiveAt) {
+  const script = path.join(path.dirname(fileURLToPath(import.meta.url)), 'compact-cards.mjs');
+  return new Promise((resolve) => {
+    const child = spawn(process.execPath, ['--max-old-space-size=1024', script, archiveAt], { env: compactChildEnv(), stdio: ['ignore', 'ignore', 'ignore'] });
+    const timer = setTimeout(() => { try { child.kill(); } catch { /* already gone */ } }, 1800000);
+    child.once('exit', (code) => { clearTimeout(timer); resolve(code === 0); });
+    child.once('error', () => { clearTimeout(timer); resolve(false); });
+  });
+}
+
+async function fillHistory() {
+  const reduced = foldCardRows(reloadCardRows());
+  historyState.cards = reduced.length;
+  useCardRows(reduced);
+  await historyStore.replaceCards(reduced);
+  const days = archiveDays();
+  for (const day of days) await historyStore.replaceEvents(day, readArchive(day, 'events').lines);
+  return days.length;
+}
+
+async function drainHistory() {
+  while (historyReplay && historyReplay.length) {
+    const batch = historyReplay.splice(0, historyReplay.length);
+    for (const item of batch) {
+      try {
+        if (item.kind === 'cards') await historyStore.putCard(item.rec);
+        else if (item.kind === 'events') await historyStore.putEvent(item.day, item.rec);
+      } catch { historyState.redis = 'down'; }
+    }
+  }
+}
+
+async function warmHistory() {
+  historyReplay = [];
+  setArchiveSink(noteArchive);
+  try {
+    const archiveAt = archiveRoot();
+    if (archiveAt && oversizedCardDays(archiveAt).length) {
+      let ok = false;
+      if (process.env.MESH_COMPACT_IN_PROCESS === '1') {
+        compactOversized(archiveAt);
+        ok = true;
+      } else ok = await runCompactChild(archiveAt);
+      if (ok) adoptFoldedCards();
+    }
+  } catch { /* the board stays up; oversized days stay unread */ }
+  historyState.ready = true;
+  const url = process.env.REDIS_URL || '';
+  if (!url) {
+    historyReplay = null;
+    historyState.redis = 'off';
+    return;
+  }
+  try {
+    historyStore = await openHistory(url);
+    historyState.redis = 'up';
+    const days = await fillHistory();
+    await drainHistory();
+    const reduced = foldCardRows(reloadCardRows());
+    historyState.cards = reduced.length;
+    useCardRows(reduced);
+    historyReplay = null;
+    historyState.loaded = true;
+    await historyStore.markReady({ cards: reduced.length, days });
+  } catch {
+    historyReplay = null;
+    historyState.loaded = false;
+    historyState.redis = 'down';
+  }
+}
+
+async function historyEvents(date) {
+  if (historyStore && historyState.loaded) {
+    try {
+      const rows = await historyStore.readEvents(date);
+      if (rows) return rows;
+    } catch { historyState.redis = 'down'; }
+  }
+  return readArchive(date, 'events').lines;
+}
+
 async function openMesh() {
   // The first read finishes before the port opens, so health and the board see the feed.
   if (process.env.COLLECTOR !== 'off') await readCollectorFeed();
@@ -3751,6 +3863,7 @@ async function openMesh() {
   const webhookBase = String(process.env.CURSOR_WEBHOOK_BASE || '');
   if (webhookBase.endsWith(':0')) process.env.CURSOR_WEBHOOK_BASE = 'http://127.0.0.1:' + bound;
   console.log(`live mesh listening on :${bound} (${PUBLIC ? 'public: no password, no masking' : 'gated'})`);
+  void warmHistory();
   // The stall clock starts once the port is open, so a slow bind is not a stall.
   if (process.env.COLLECTOR !== 'off') {
     setInterval(readCollectorFeed, 2000).unref();

@@ -422,6 +422,8 @@ test('a display drop and a merged packet stay in history, and a restart does not
       assert.equal(after['example/repo#493'].verb, 'merged');
       const still = new Set(archiveCardRows(data).map(row => row.id));
       for (const id of kept) assert.equal(still.has(id), true, id);
+      assert.ok(still.size <= kept.length + 6, 'restart added ' + (still.size - kept.length) + ' card rows');
+      assert.ok(still.size < 40, 'card archive grew to ' + still.size);
       const listed = await (await fetch(second.srv.base + '/history/transitions?card=example/repo%23485', { headers: { Cookie: second.cookie } })).json();
       assert.ok(listed.transitions.some(row => row.transition === 'merged' && row.card === 'example/repo#485'));
     } finally {
