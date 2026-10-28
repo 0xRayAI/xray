@@ -11,7 +11,7 @@ find "$C" -mindepth 1 -maxdepth 1 ! -name README.md -exec rm -rf {} +
 [ -f "$C/README.md" ] || cp "$APP/collector/README.md" "$C/"
 mkdir -p "$C/upstream" "$C/routing"
 cp "$FEED"/live_mesh.py "$FEED"/feed_cap.py "$FEED"/live_collect.py "$FEED"/live_flow.py "$FEED"/live_fleet.py "$FEED"/push_payload.py "$FEED"/live_packet.py \
-   "$FEED"/live_site.py "$FEED"/live_board.py "$FEED"/upstream.py "$FEED"/jira_source.py "$FEED"/deploy_status.py "$FEED"/host_poll.py "$C/"
+   "$FEED"/live_site.py "$FEED"/live_board.py "$FEED"/ci_inbox.py "$FEED"/upstream.py "$FEED"/jira_source.py "$FEED"/deploy_status.py "$FEED"/host_poll.py "$C/"
 cp "$APP/../../live-mesh/fetch_feed.py" "$C/upstream/"            # house/live-mesh in this repo
 # server inbox routing (same rules as the box pusher): inbox_pass.py + routing/ beside it
 cp "$FEED"/inbox_pass.py "$C/"
