@@ -2,6 +2,7 @@
 
 Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 
+- Status compare uses one canonical id. The display name is paint only. An unknown status stays visible and is marked unknown. #570.
 - Acking a merge handoff requires a review or comment link on that pull. A bare ack leaves the line open. Other kinds ack as today. #554.
 - The inbox watcher writes a new open line to the seat todo and does not ack it. A seen id stays quiet. The seat acks after the work.
 - A queued or still-running required check does not open a ci_fail line. Only a completed failure does. #655.
@@ -23,6 +24,7 @@ Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 
 ### 🐛 Bug Fixes
 
+- A card stored as `in_flight` and a card stored as `In Flight` land in the same column and the same filter. An unknown status is marked, not moved to open. #570.
 - A merge handoff ack without a review or comment link on that pull stays open. The stored ack keeps the link. #554.
 - The inbox watcher writes a new open line to `~/.burst/inbox-todo/<seat>.md` and leaves that line open. A seen id is not printed again. The seat acks after the work.
 - A queued, pending, waiting, or in-progress check is not a ci_fail line. A completed failure still is. #655.

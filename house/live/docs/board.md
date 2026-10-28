@@ -4,6 +4,8 @@ A card is one GitHub issue or pull request. A beat is a real event on it. A pack
 
 The live page shows the same cards in a kanban above the activity list. A column is the card's stage (`open`, `review`, `fix`, `merge`, `retest`, `done`). A closed card sits in `done`. A click opens the timeline. The GitHub link is on the card face.
 
+Compare uses one canonical id. The id is lowercase, and a run of separators becomes one underscore, so `In Flight` and `in_flight` are the same id. `Review` and `review` are the same id. The display name is paint only. An id outside those six columns stays on the board in its own column and is marked unknown. It is not moved to `open`.
+
 Kanban note. The live page shows a read-only kanban above Activity. Columns are open, review, fix, merge, retest, and done. The deep link is `?card=`. The column header (stage and count) stays put while the cards under it scroll. The board scrolls sideways, and the headers stay lined up with the columns. The page header and the timeline toolbar stay at the top of the page. The public board serves the kanban and GET /history, /history/cards, and /history/transitions.
 
 When `LIVE_URL` is set, the board seats see is the collector board (`GET /cards`). When `LIVE_URL` is unset, the board is hand-kept `house/WAVEBOARD.md`. `feed/live_mesh.py` runs `feed/live_collect.py` and `feed/live_board.py` every 45 seconds (`LIVE_WATCH_S`, default 45). An empty box board does not replace those cards.

@@ -34,7 +34,8 @@ test('freshness stays green when a non-card event is newer than the cards', () =
   assert.match(html, /github_card_latest_ct/);
   assert.match(html, /No recent changes/);
   const cfg = fs.readFileSync(path.join(APP, 'public', 'live-config.js'), 'utf8');
-  assert.match(cfg, /if \(c\.state === 'parked'\) return 'parked'/);
+  assert.match(cfg, /var state = L\.statusId\(c\.state\)/);
+  assert.match(cfg, /if \(state === 'parked'\) return 'parked'/);
   assert.doesNotMatch(html, /dataAt > cardsAt/);
 });
 

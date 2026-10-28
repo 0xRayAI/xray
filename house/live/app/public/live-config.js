@@ -220,20 +220,50 @@
     var why = c && c.hold && String(c.hold.reason || '').trim();
     return why ? 'Parked behind ' + why : 'Parked';
   };
+  // One id for every compare. Lowercase, and a run of separators becomes one underscore.
+  // The painted word is statusName. An id outside the six columns stays visible and is flagged.
+  L.statusId = function (raw) {
+    return String(raw == null ? '' : raw).trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+  };
+  L.statusName = function (raw) {
+    var id = L.statusId(raw);
+    if (!id) return '';
+    return id.split('_').filter(Boolean).map(function (word) {
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    }).join(' ');
+  };
+  L.KNOWN_STATES = ['live', 'parked', 'held', 'closed', 'waiting'];
+  L.KANBAN_STAGES = ['open', 'review', 'fix', 'merge', 'retest', 'done'];
+  L.statusFlagged = function (raw) {
+    var id = L.statusId(raw);
+    if (!id) return false;
+    if (L.KANBAN_STAGES.indexOf(id) >= 0) return false;
+    if (L.KNOWN_STATES.indexOf(id) >= 0) return false;
+    return true;
+  };
   L.cardBucket = function (c) {
     if (!c) return 'waiting';
-    if (c.state === 'parked') return 'parked';
-    if (c.state === 'closed' || c.stage === 'done') return 'done';
-    if (c.state === 'held') return 'held';
-    if (c.stage === 'review') return 'review';
+    var state = L.statusId(c.state);
+    var stage = L.statusId(c.stage);
+    if (state === 'parked') return 'parked';
+    if (state === 'closed' || stage === 'done') return 'done';
+    if (state === 'held') return 'held';
+    if (stage === 'review') return 'review';
     return 'waiting';
   };
-  L.KANBAN_STAGES = ['open', 'review', 'fix', 'merge', 'retest', 'done'];
+  L.cardsForStatus = function (cards, filter) {
+    var id = L.statusId(filter);
+    if (!id) return [];
+    return (cards || []).filter(function (c) {
+      return !!c && (L.statusId(c.stage) === id || L.statusId(c.state) === id);
+    });
+  };
   L.kanbanColumn = function (c) {
     if (!c) return 'open';
-    if (c.state === 'closed' || c.stage === 'done') return 'done';
-    var stage = String(c.stage || 'open');
-    return L.KANBAN_STAGES.indexOf(stage) >= 0 ? stage : 'open';
+    var state = L.statusId(c.state);
+    var stage = L.statusId(c.stage) || 'open';
+    if (state === 'closed' || stage === 'done') return 'done';
+    return stage;
   };
   L.cardGithubUrl = function (c) {
     if (!c) return '';
