@@ -211,6 +211,8 @@ test('the page asks again until card history is ready', () => {
   const page = fs.readFileSync(path.join(APP, 'public', 'index.html'), 'utf8');
   assert.match(page, /b\.ready === false/);
   assert.match(page, /loadCardHist\(n \+ 1\)/);
+  assert.match(page, /\/history\/cards\?limit=1000/);
+  assert.match(page, /b\.next/);
 });
 
 test('a booted board loads planted history into redis', async () => {

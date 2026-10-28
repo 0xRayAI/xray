@@ -2058,12 +2058,26 @@ footer a { color: var(--foot); }
   }
   function loadCardHist(attempt) {
     var n = attempt || 0;
-    fetch('/history/cards', { headers: { Accept: 'application/json' } }).then(function (r) {
-      if (!r.ok) return null;
-      return r.json();
-    }).then(function (b) {
-      if (!b || !Array.isArray(b.cards)) return;
-      cardHistRows = b.cards;
+    var rows = [];
+    var seen = {};
+    function take(cursor) {
+      if (cursor && seen[cursor]) return Promise.resolve(null);
+      if (cursor) seen[cursor] = true;
+      var url = '/history/cards?limit=1000';
+      if (cursor) url += '&cursor=' + encodeURIComponent(cursor);
+      return fetch(url, { headers: { Accept: 'application/json' } }).then(function (r) {
+        if (!r.ok) throw new Error('history');
+        return r.json();
+      }).then(function (b) {
+        if (!b || !Array.isArray(b.cards)) return null;
+        rows = rows.concat(b.cards);
+        if (b.next && rows.length < 20000) return take(b.next);
+        return b;
+      });
+    }
+    take('').then(function (b) {
+      if (!b) return;
+      cardHistRows = rows;
       renderCardRecent();
       renderCardHist();
       if (b.ready === false && n < 600) setTimeout(function () { loadCardHist(n + 1); }, 3000);
