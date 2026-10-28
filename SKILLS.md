@@ -6,6 +6,8 @@ Confer votes. Burst runs the swarm.
 
 Goggles views one plane. A search inside that card runs. A search of another plane returns the card. A path outside this checkout runs.
 
+Unreleased 4.1.5. package.json stays 4.1.4 until Dist publishes. A prompt pulse spins only the named card. Seen is not working. Tandem is several tracks at once. A card carries raci. A missed /healthz replaces the one replica. The OP cycle is digest, card, do, loop, ship. The catalog count stays 45.
+
 0xRay is a three-subsystem autonomous engine. The suit is the wear. This file is the catalog.
 
 **45 skills** in this exo catalog. Default consumer plant is **`mill` + `inspect`**, not this dump. `npm install 0xray` does **not** sync 45 skills unless `foundry.json` `"costume": true`. Factory shop plant (`shop-extract`, `shop-witness`, `shop-pin`) coexists with mill plant when a hangar wears those shops. Extra shops: `foundry.json` `shopPlant`. Fasten is **foundry-plant/0**: builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill package declares — organs (looker, vibe, mixer) live in the mill, not this catalog. Nested mill `@0xray/foundry@0.1.12`. CLI shims `foundry blip|sound` still exist on foundry 0.1.11+. Agent map: [llms.txt](llms.txt).

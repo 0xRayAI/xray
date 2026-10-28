@@ -8,6 +8,8 @@ Confer votes. Burst runs the swarm.
 
 Goggles views one plane. A search inside that card runs. A search of another plane returns the card. A path outside this checkout runs.
 
+Unreleased 4.1.5. package.json stays 4.1.4 until Dist publishes. A prompt pulse spins only the card named by working_on. Seen is not working. Tandem is several tracks at once and no seat waits for a nod. A card carries raci, and a live card missing R or A is amber. A missed /healthz replaces the one replica. The OP cycle is digest, card, do, loop, ship (`grok-bot/OP-PROC.md` #op-cycle).
+
 **The suit is the wear.** Three-subsystem autonomous engine (Inference · External Governance · Autonomous Engine) · constitution always on · temperament by host · 4 floors · **Repertoire preferred** (vendored 0.2.9, dest = laws).
 
 **Temperament:** ceremony (analyze-complexity before spawn, confer) is **guided** by default so free-model OpenCode/Hermes stay in check. Frontier hosts (Grok 4.6 class) with `suit_temperament.profile: auto` **warn** on spawn-without-plan; Codex 11/29/69 still **deny**. Missing `suit_temperament` stays guided. See `docs-site/docs/architecture/v3-from-v2.md`.

@@ -8,6 +8,8 @@ Confer votes. Burst runs the swarm.
 
 Goggles views one plane. A search inside that card runs. A search of another plane returns the card. A path outside this checkout runs.
 
+Unreleased 4.1.5. package.json stays 4.1.4 until Dist publishes. A prompt pulse spins only the card named by working_on. Seen is not working. Tandem is several tracks at once and no seat waits for a nod. A card carries raci, and a live card missing R or A is amber. A missed /healthz replaces the one replica. The OP cycle is digest, card, do, loop, ship.
+
 **4.1** — a suit that survives the context window
 
 0xRay is a three-subsystem autonomous engine. The suit is the wear. Inference remembers. External Governance judges. The Autonomous Engine runs the work. The host you already run wears it: Grok, OpenCode, Hermes, OpenClaw, or Cursor. Memory, judgement, and payments come on with the suit. When the window closes, the next session wakes with the job, the page, and the laws. Confer votes: the agents on a decision vote, and only a real yes carries the work. Burst runs the swarm, so the agents are in the work as it happens. A foundry is built from mills and hangars.
@@ -66,7 +68,7 @@ Not an 8th `xray-*` server. **Repertoire is preferred** — vendored 0.2.9 ships
 
 ## Live board (Bifrost)
 
-When `LIVE_URL` is set, the board seats see is the collector board. When `LIVE_URL` is unset, the board is hand-kept `house/WAVEBOARD.md`. `house/live/feed/live_mesh.py` runs the collector and the board every `LIVE_WATCH_S` seconds (default 45). A cloud agent is a board row (`bcId`, owning seat, linked card, state `running`, `finished`, or `failed`). `live-inbox` requires `LIVE_URL` and `SEAT_KEYS_DIR`, and exits 2 when one is missing. `LIVE_CURSORS` is not required. The cursor folder rule is `grok-bot/OP-PROC.md#cursor-folder`. The seat wake is `grok-bot/templates/house/fleet/WAKE-ROUTINE.md`: turn start on every turn, turn end on every exit. A stuck card sends L1 to the next owner or the card owner, and L2 to the CoS role. Plate: `docs-site/docs/plates/bifrost.md`. Lexicon: `grok-bot/LEXICON.md`, including **button up**.
+When `LIVE_URL` is set, the board seats see is the collector board. When `LIVE_URL` is unset, the board is hand-kept `house/WAVEBOARD.md`. `house/live/feed/live_mesh.py` runs the collector and the board every `LIVE_WATCH_S` seconds (default 45). A cloud agent is a board row (`bcId`, owning seat, linked card, state `running`, `finished`, or `failed`). `live-inbox` requires `LIVE_URL` and `SEAT_KEYS_DIR`, and exits 2 when one is missing. `LIVE_CURSORS` is not required. The cursor folder rule is `grok-bot/OP-PROC.md#cursor-folder`. The seat wake is `grok-bot/templates/house/fleet/WAKE-ROUTINE.md`: turn start on every turn, turn end on every exit. A stuck card sends L1 to the next owner or the card owner, and L3 repeats to that seat. An unacked line and a missing handoff stay on that seat through L3. CoS is not woken to reassign. Plate: `docs-site/docs/plates/bifrost.md`. Lexicon: `grok-bot/LEXICON.md`, including **button up**.
 
 ## Docs
 
