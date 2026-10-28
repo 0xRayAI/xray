@@ -45,6 +45,45 @@ function cardsStore(day) {
   if (fileSize(primary) > max) return { write: tail, read: tailOk ? [tail] : [] };
   return { write: primary, read: tailOk ? [primary, tail] : [primary] };
 }
+
+function cardBookPath() {
+  return path.join(root, 'cards.jsonl');
+}
+
+function takeCardFile(file, map) {
+  if (!file || fileSize(file) <= 0 || fileSize(file) > cardsReadMax()) return;
+  forEachJsonLine(file, (line) => {
+    let row;
+    try { row = JSON.parse(line); }
+    catch { return; }
+    const key = String(row && row.key || '').toLowerCase();
+    if (!key || row.kind === 'source') return;
+    map.set(key, mergeCardRow(map.get(key), row));
+  });
+}
+
+function writeCardBook(map) {
+  const rows = [...map.values()];
+  const body = rows.map((row) => JSON.stringify(row)).join('\n') + (rows.length ? '\n' : '');
+  if (Buffer.byteLength(body) > cardsReadMax()) return false;
+  const file = cardBookPath();
+  const tmp = file + '.tmp';
+  fs.mkdirSync(root, { recursive: true });
+  fs.writeFileSync(tmp, body);
+  fs.renameSync(tmp, file);
+  return true;
+}
+
+function rememberCardBook() {
+  const file = cardBookPath();
+  if (fileSize(file) <= 0 || fileSize(file) > cardsReadMax()) return;
+  forEachJsonLine(file, (line) => {
+    try {
+      const row = JSON.parse(line);
+      if (row && row.id) seen.add('cards\0' + row.id);
+    } catch { /* truncated or corrupt line */ }
+  });
+}
 const transitionIds = new Set();
 let transitionLatest = new Map();
 const TRANSITION_VERBS = new Set(['opened', 'stage', 'parked', 'held', 'released', 'merged', 'closed', 'reopened']);
@@ -215,6 +254,7 @@ export function initArchive(dataDir) {
   transitionIds.clear();
   transitionLatest = new Map();
   loadSeen();
+  rememberCardBook();
   loadTransitionIndex();
   return root;
 }
@@ -317,6 +357,30 @@ export function adoptFoldedCards() {
   return adopted;
 }
 
+// One line per card on the volume. Day card logs are folded in, then removed when they were small enough to read.
+export function adoptCardBook() {
+  if (!root) return 0;
+  const map = new Map();
+  takeCardFile(cardBookPath(), map);
+  const remove = [];
+  for (const day of archiveDays()) {
+    for (const name of ['cards.jsonl', 'cards-tail.jsonl', 'cards-folded.jsonl']) {
+      const file = path.join(root, day, name);
+      const size = fileSize(file);
+      if (!size || size > cardsReadMax()) continue;
+      takeCardFile(file, map);
+      remove.push(file);
+    }
+  }
+  if (!map.size || !writeCardBook(map)) return 0;
+  for (const file of remove) {
+    try { fs.unlinkSync(file); } catch { /* already gone */ }
+  }
+  for (const row of map.values()) if (row && row.id) seen.add('cards\0' + row.id);
+  cardCache = null;
+  return map.size;
+}
+
 export function appendArchive(kind, row) {
   if (!root || !KINDS.includes(kind) || !row || typeof row !== 'object') return false;
   const id = recordId(kind, row);
@@ -327,9 +391,30 @@ export function appendArchive(kind, row) {
   loadDay(day);
   if (seen.has(key)) return false;
   const rec = project(kind, row);
-  const stored = kind === 'cards' ? cardsStore(day) : null;
-  const file = stored ? stored.write : path.join(root, day, kind + '.jsonl');
-  if (!file) return false;
+  if (kind === 'cards') {
+    if (!rec.key || fileSize(cardBookPath()) > cardsReadMax()) return false;
+    const map = new Map();
+    takeCardFile(cardBookPath(), map);
+    const cardKey = String(rec.key).toLowerCase();
+    map.set(cardKey, mergeCardRow(map.get(cardKey), rec));
+    try {
+      if (!writeCardBook(map)) return false;
+    } catch {
+      return false;
+    }
+    seen.add(key);
+    if (cardCache && rec.kind !== 'source') {
+      const at = cardCache.findIndex((item) => String(item && item.key || '').toLowerCase() === cardKey);
+      if (at >= 0) cardCache[at] = mergeCardRow(cardCache[at], rec);
+      else cardCache.push(rec);
+    }
+    if (archiveSink) {
+      try { archiveSink(kind, rec, day); }
+      catch { /* the file write already stands */ }
+    }
+    return true;
+  }
+  const file = path.join(root, day, kind + '.jsonl');
   try {
     fs.mkdirSync(path.dirname(file), { recursive: true });
     fs.appendFileSync(file, JSON.stringify(rec) + '\n');
@@ -338,7 +423,6 @@ export function appendArchive(kind, row) {
     return false;
   }
   seen.add(key);
-  if (kind === 'cards' && cardCache && typeof rec.key === 'string' && rec.key && rec.kind !== 'source') cardCache.push(rec);
   if (archiveSink) {
     try { archiveSink(kind, rec, day); }
     catch { /* the file write already stands */ }
@@ -348,14 +432,18 @@ export function appendArchive(kind, row) {
 
 function loadCardCache() {
   if (cardCache) return cardCache;
-  const rows = [];
+  const map = new Map();
+  takeCardFile(cardBookPath(), map);
   for (const day of archiveDays()) {
     for (const row of readArchive(day, 'cards').lines) {
-      if (row && typeof row.key === 'string' && row.key && row.kind !== 'source') rows.push(row);
+      if (row && typeof row.key === 'string' && row.key && row.kind !== 'source') {
+        const cardKey = String(row.key).toLowerCase();
+        map.set(cardKey, mergeCardRow(map.get(cardKey), row));
+      }
     }
   }
-  cardCache = rows;
-  return rows;
+  cardCache = [...map.values()];
+  return cardCache;
 }
 
 function textOf(v, n) {

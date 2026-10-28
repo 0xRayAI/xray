@@ -8,7 +8,7 @@ import net from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { initArchive, readArchive, appendArchive, cardHistory, adoptFoldedCards } from '../app/archive.mjs';
+import { initArchive, readArchive, appendArchive, cardHistory, adoptFoldedCards, adoptCardBook } from '../app/archive.mjs';
 import { connectRedis, parseRedisUrl, readReply } from '../app/resp.mjs';
 import { createHistory } from '../app/history-store.mjs';
 import { compactOversized } from '../app/compact-cards.mjs';
@@ -167,7 +167,8 @@ test('an oversized card dump folds to one row and the tail written during the sc
     }), true);
     const after = readArchive(day, 'cards').lines;
     assert.ok(after.some((row) => row.title === 'From tail'));
-    assert.ok(after.some((row) => row.key === 'example/repo#2'));
+    const added = cardHistory().cards.find((row) => String(row.id).toLowerCase() === 'example/repo#2');
+    assert.equal(added.title, 'New');
     const card = cardHistory().cards.find((row) => row.id.toLowerCase() === 'example/repo#1');
     assert.equal(card.verb, 'merged');
     assert.equal(card.opened_ct, '2026-10-27T00:00:00-05:00');
@@ -203,6 +204,55 @@ test('a tail-only card day keeps the folded row and does not write it again', ()
   } finally {
     if (prev == null) delete process.env.MESH_CARDS_READ_MAX;
     else process.env.MESH_CARDS_READ_MAX = prev;
+    fs.rmSync(data, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 });
+  }
+});
+
+test('a reboot keeps event days and one line per card', () => {
+  const data = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-reboot-'));
+  try {
+    const dayDir = path.join(data, 'archive', '2026-10-26');
+    fs.mkdirSync(dayDir, { recursive: true });
+    fs.writeFileSync(path.join(dayDir, 'cards.jsonl'), JSON.stringify({
+      id: 'example/repo#4|open|live|2026-10-26T08:00:00-05:00',
+      key: 'example/repo#4', state: 'live', stage: 'open', title: 'Day',
+      t_ct: '2026-10-26T08:00:00-05:00', updated_ct: '2026-10-26T08:00:00-05:00',
+    }) + '\n');
+    fs.writeFileSync(path.join(dayDir, 'events.jsonl'), JSON.stringify({
+      id: 'day-event', t_ct: '2026-10-26T09:00:00-05:00', kind: 'issue_open', repo: 'example/repo', number: 4,
+    }) + '\n');
+    initArchive(data);
+    assert.equal(appendArchive('events', {
+      id: 'june-keep', t_ct: '2026-06-05T12:00:00-05:00', kind: 'issue_open', repo: 'example/repo', number: 1, title: 'June',
+    }), true);
+    assert.equal(appendArchive('cards', {
+      key: 'example/repo#3', state: 'live', stage: 'open', title: 'First',
+      t_ct: '2026-10-27T01:00:00-05:00', updated_ct: '2026-10-27T01:00:00-05:00',
+    }), true);
+    assert.equal(appendArchive('cards', {
+      key: 'example/repo#3', state: 'closed', stage: 'done', verb: 'closed', title: 'Second',
+      t_ct: '2026-10-27T01:00:00-05:00', updated_ct: '2026-10-27T04:00:00-05:00',
+    }), true);
+    const book = path.join(data, 'archive', 'cards.jsonl');
+    assert.equal(fs.readFileSync(book, 'utf8').trim().split('\n').length, 1);
+    const keptEvents = fs.readFileSync(path.join(dayDir, 'events.jsonl'));
+    assert.equal(adoptCardBook() >= 2, true);
+    assert.equal(fs.existsSync(path.join(dayDir, 'cards.jsonl')), false);
+    assert.equal(fs.readFileSync(path.join(dayDir, 'events.jsonl')).equals(keptEvents), true);
+    initArchive(data);
+    const lines = fs.readFileSync(book, 'utf8').trim().split('\n');
+    assert.equal(lines.length, 2);
+    const fresh = JSON.parse(lines.find((line) => line.includes('example/repo#3')));
+    assert.equal(fresh.title, 'Second');
+    assert.equal(fresh.t_ct, '2026-10-27T01:00:00-05:00');
+    assert.equal(appendArchive('cards', {
+      key: 'example/repo#3', state: 'closed', stage: 'done', verb: 'closed', title: 'Second',
+      t_ct: '2026-10-27T01:00:00-05:00', updated_ct: '2026-10-27T04:00:00-05:00',
+    }), false);
+    assert.equal(fs.readFileSync(book, 'utf8').trim().split('\n').length, 2);
+    assert.equal(readArchive('2026-06-05', 'events').lines[0].id, 'june-keep');
+    assert.equal(readArchive('2026-10-26', 'events').lines[0].id, 'day-event');
+  } finally {
     fs.rmSync(data, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 });
   }
 });

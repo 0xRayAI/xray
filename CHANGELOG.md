@@ -32,6 +32,7 @@ Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 - A settled card is archived once per close. Day files over 8MB are folded to the latest row, then Redis serves /history and /history/cards. The live document says it is the newest window. #673.
 - The History panel follows /history/cards pages, so it lists every card. #675.
 - A settled card keeps its own close time, so a restart does not archive it again. #677.
+- A reboot keeps the volume. Each card is one line in the card book, and event days stay files. Redis refills from both. #679.
 
 ## [4.1.4] - 2026-10-26
 

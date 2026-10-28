@@ -119,7 +119,7 @@ test('a dry-run writes nothing, and a second write adds nothing', async () => {
   assert.equal(again.events, 0);
   assert.equal(again.wrote_cards, 0);
   assert.equal(again.wrote_events, 0);
-  const lines = fs.readFileSync(path.join(data, 'archive', '2026-10-10', 'cards.jsonl'), 'utf8').trim().split('\n');
+  const lines = fs.readFileSync(path.join(data, 'archive', 'cards.jsonl'), 'utf8').trim().split('\n');
   assert.equal(lines.length, 1);
   fs.rmSync(data, { recursive: true, force: true });
 });
@@ -153,7 +153,7 @@ test('transition backfill of the five merges is a no-op the second time and does
     key: '0xrayai/xray#496', state: 'closed', stage: 'done', verb: 'closed', title: 'PR 496',
     repo: '0xRayAI/xray', number: 496, t_ct: '2026-10-21T03:00:00Z', updated_ct: '2026-10-21T03:00:00Z',
   }), true);
-  const cardsBefore = fs.readFileSync(path.join(data, 'archive', '2026-10-20', 'cards.jsonl'), 'utf8');
+  const cardsBefore = fs.readFileSync(path.join(data, 'archive', 'cards.jsonl'), 'utf8');
   const dry = runTransitionBackfill({ dataDir: data, write: false });
   assert.equal(dry.wrote, false);
   assert.equal(dry.rows, 6);
@@ -175,7 +175,7 @@ test('transition backfill of the five merges is a no-op the second time and does
   assert.deepEqual(listed, ['opened', 'merged']);
   assert.ok(!fs.readFileSync(path.join(data, 'archive', '2026-10-20', 'transitions.jsonl'), 'utf8').includes('SENTINEL_BODY'));
   assert.equal(fs.readFileSync(path.join(data, 'archive', '.backfill-done'), 'utf8'), '1\n');
-  assert.equal(fs.readFileSync(path.join(data, 'archive', '2026-10-20', 'cards.jsonl'), 'utf8'), cardsBefore);
+  assert.equal(fs.readFileSync(path.join(data, 'archive', 'cards.jsonl'), 'utf8'), cardsBefore);
   const page = queryTransitions({ limit: 1 });
   assert.equal(page.transitions.length, 1);
   const next = queryTransitions({ limit: 1, cursor: page.transitions[0].id });
