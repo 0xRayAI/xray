@@ -4,12 +4,13 @@
 # FAIL once per distinct error. The line names LIVE_URL and the expected URL, then backs off.
 # A JSON line whose GitHub item is closed or merged is acked and logged as auto-ack.
 # A held line (hold label, or a card whose state is held) prints once as "held: N" and is not popped.
-# An open, non-held line is printed once (ACTION_REQUIRED, unfinished:N, the line), then popped (`pop <id>`).
-# A new event is a new line. A raw line with no id still reprints. A failed ack leaves that line open.
+# An open, non-held line is printed once (ACTION_REQUIRED, unfinished:N, the line) and appended to the seat todo.
+# The watcher does not ack that id. The seat acks after the work. A seen id stays quiet on the next poll.
+# A new event is a new line. A raw line with no id still reprints. A failed ack of a closed item leaves that line open.
 # After every poll that prints work, live-inbox <seat> --turn start --tag wake.
-# The start is after the pop, because an ack closes a turn.
+# The start is after the todo write. An ack is the seat's, after the work.
 # An empty poll does not end the turn. The seat posts the turn end when the chat finishes.
-# Never prints the key. Never uses --ack all. A gh miss still delivers the line, then pops it.
+# Never prints the key. Never uses --ack all. A gh miss still delivers the line onto the todo and does not ack it.
 set -u
 seat="${1:-arch1}"
 if ! [[ "$seat" =~ ^[a-z0-9-]{2,16}$ ]]; then
@@ -296,14 +297,75 @@ while true; do
             if "$bin" "$seat" --ack "$id" >/dev/null 2>&1; then
               printf 'auto-ack %s\n' "$id"
             else
-              printf '%s\n' "$raw" >> "$dir/open"
+              printf '%s\n' "$raw" >> "$dir/retry"
             fi
           done < "$dir/closed"
         fi
-        if [[ -s "$dir/open" ]]; then
-          open_n="$(awk 'NF{n++} END{print n+0}' "$dir/open")"
-          printf 'ACTION_REQUIRED\nunfinished:%s\n' "$open_n"
-          python3 - "$dir/open" << 'PY'
+        if [[ -s "$dir/open" || -s "$dir/retry" ]]; then
+          todo_dir="${INBOX_TODO_DIR:-$HOME/.burst/inbox-todo}"
+          mkdir -p "$todo_dir"
+          seen="$todo_dir/${seat}.seen"
+          todo="$todo_dir/${seat}.md"
+          touch "$seen"
+          if [[ ! -s "$todo" ]]; then
+            printf '# inbox todo %s\n\n' "$seat" > "$todo"
+          fi
+          : > "$dir/fresh"
+          if [[ -s "$dir/open" ]]; then
+            python3 - "$dir/open" "$seen" "$todo" "$dir/fresh" << 'PY'
+import json, re, sys
+from pathlib import Path
+ID_RE = re.compile(r"^[^\s\x1f]{1,300}$")
+skip = {"all", "stale"}
+open_path, seen_path, todo_path, fresh_path = map(Path, sys.argv[1:5])
+seen = {line.strip() for line in seen_path.read_text(encoding="utf-8").splitlines() if line.strip()}
+fresh = []
+new_seen = []
+new_todo = []
+for raw in open_path.read_text(encoding="utf-8").splitlines():
+    if not raw.strip():
+        continue
+    try:
+        obj = json.loads(raw)
+    except json.JSONDecodeError:
+        fresh.append(raw)
+        continue
+    if not isinstance(obj, dict):
+        fresh.append(raw)
+        continue
+    ident = obj.get("id")
+    if not isinstance(ident, str) or not ID_RE.match(ident):
+        fresh.append(raw)
+        continue
+    if ident in seen:
+        continue
+    fresh.append(raw)
+    new_seen.append(ident)
+    if ident in skip or ident[:1] == "-":
+        continue
+    repo = str(obj.get("repo") or "")
+    number = obj.get("number") if obj.get("number") is not None else ""
+    kind = str(obj.get("type") or "line").replace("\n", " ")
+    title = str(obj.get("title") or "").replace("\n", " ")[:80]
+    new_todo.append("- [ ] id=%s repo=%s number=%s type=%s title=%s" % (ident, repo, number, kind, title))
+if new_seen:
+    with seen_path.open("a", encoding="utf-8") as handle:
+        for ident in new_seen:
+            handle.write(ident + "\n")
+if new_todo:
+    with todo_path.open("a", encoding="utf-8") as handle:
+        for row in new_todo:
+            handle.write(row + "\n")
+fresh_path.write_text("".join(line + "\n" for line in fresh), encoding="utf-8")
+PY
+          fi
+          if [[ -s "$dir/retry" ]]; then
+            cat "$dir/retry" >> "$dir/fresh"
+          fi
+          if [[ -s "$dir/fresh" ]]; then
+            open_n="$(awk 'NF{n++} END{print n+0}' "$dir/fresh")"
+            printf 'ACTION_REQUIRED\nunfinished:%s\n' "$open_n"
+            python3 - "$dir/fresh" << 'PY'
 import json, sys
 from collections import Counter
 from pathlib import Path
@@ -324,35 +386,7 @@ for row in sorted(rows, key=lambda item: str(item.get("t_ct") or ""), reverse=Tr
     title = str(row.get("title") or "").replace("\n", " ")[:80]
     print("%s %s#%s %s %s" % (row.get("type") or "line", row.get("repo") or "", row.get("number") if row.get("number") is not None else "", row.get("id") or "", title))
 PY
-          showed=1
-          python3 - "$dir/open" > "$dir/pop-ids" << 'PY'
-import json, re, sys
-from pathlib import Path
-ID_RE = re.compile(r"^[^\s\x1f]{1,300}$")
-skip = {"all", "stale"}
-for raw in Path(sys.argv[1]).read_text(encoding="utf-8").splitlines():
-    if not raw.strip():
-        continue
-    try:
-        obj = json.loads(raw)
-    except json.JSONDecodeError:
-        continue
-    if not isinstance(obj, dict):
-        continue
-    ident = obj.get("id")
-    if not isinstance(ident, str) or not ID_RE.match(ident):
-        continue
-    if ident in skip or ident[:1] == "-":
-        continue
-    print(ident)
-PY
-          if [[ -s "$dir/pop-ids" ]]; then
-            while IFS= read -r id || [[ -n "$id" ]]; do
-              [[ -z "$id" ]] && continue
-              if "$bin" "$seat" --ack "$id" >/dev/null 2>&1; then
-                printf 'pop %s\n' "$id"
-              fi
-            done < "$dir/pop-ids"
+            showed=1
           fi
         fi
         held_key=""

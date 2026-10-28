@@ -2,6 +2,7 @@
 
 Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 
+- The inbox watcher writes a new open line to the seat todo and does not ack it. A seen id stays quiet. The seat acks after the work.
 - A queued or still-running required check does not open a ci_fail line. Only a completed failure does. #655.
 - A search that names one other card switches to that card and runs. Two cards stay on the held card. A path on no plane still runs. #662.
 - A test server does not post the station nudge. Railway does, unless STATION_NUDGE=off. #689.
@@ -21,6 +22,7 @@ Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 
 ### 🐛 Bug Fixes
 
+- The inbox watcher writes a new open line to `~/.burst/inbox-todo/<seat>.md` and leaves that line open. A seen id is not printed again. The seat acks after the work.
 - A queued, pending, waiting, or in-progress check is not a ci_fail line. A completed failure still is. #655.
 - A search that names one other card switches to that card and runs. Two cards return the held card. #662.
 - A test bind stays quiet inside the weekday window. The station tick posts when RAILWAY_ENVIRONMENT is set. #689.
