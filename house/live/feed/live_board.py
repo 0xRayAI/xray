@@ -284,6 +284,35 @@ def fleet_from(name):
     return str(name or "").strip().lower() in _FLEET_FROM
 
 
+_LOGIN_SEAT = None
+
+
+def _login_seat(login):
+    """fleet-nodes.json login to seat. A missing file is an empty map."""
+    global _LOGIN_SEAT
+    if _LOGIN_SEAT is None:
+        try:
+            raw = json.loads((Path(__file__).resolve().parent / "fleet-nodes.json").read_text())
+            _LOGIN_SEAT = {str(k).lower(): str(v).lower() for k, v in raw.items() if isinstance(v, str)}
+        except (OSError, ValueError):
+            _LOGIN_SEAT = {}
+    return _LOGIN_SEAT.get(str(login or "").strip().lower(), "")
+
+
+def event_seat(e):
+    """Seat for a beat when from is GitHub or Others and the actor maps to a fleet seat."""
+    for key in ("from", "credit", "actor", "author", "merged_by"):
+        raw = str((e or {}).get(key) or "").strip()
+        if not raw:
+            continue
+        if fleet_from(raw):
+            return raw.lower()
+        mapped = _login_seat(raw)
+        if mapped and fleet_from(mapped):
+            return mapped.lower()
+    return ""
+
+
 def _key(e, sha_num):
     repo = e.get("repo")
     if not repo:
@@ -810,6 +839,16 @@ def model(extra_events=None, now=None, prompts=None, held=None):
             # the owner, or any other fleet seat. a stranger (Others) is not a beat.
             if who == c["owner"] or (fleet_from(who) and not (c["_closed"] or c.get("_merged_t"))):
                 if who == c["owner"]:
+                    w = "owner: resolved" if e.get("resolved") else "owner comment"
+                    if e.get("resolved"):
+                        c["_resolved"] = "owner says resolved"
+                else:
+                    w = "comment"
+        if not w and kind in ("pr_comment", "issue_comment", "pr_review", "review_comment") and not (c["_closed"] or c.get("_merged_t")):
+            seat = event_seat(e)
+            owner = str(c.get("owner") or "")
+            if seat and (seat == owner.lower() or fleet_from(seat)):
+                if seat == owner.lower():
                     w = "owner: resolved" if e.get("resolved") else "owner comment"
                     if e.get("resolved"):
                         c["_resolved"] = "owner says resolved"

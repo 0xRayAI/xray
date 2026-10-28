@@ -404,6 +404,9 @@ header h1 span { color: var(--dim); font-size: 13px; font-weight: 400; letter-sp
 .seat { display: inline-flex; gap: 8px; align-items: center; width: max-content; max-width: 16rem; flex: none; min-width: 0; }
 button.seat { background: transparent; border: 0; padding: 0; color: inherit; font: inherit; cursor: pointer; }
 .seat.idle { opacity: .45; }
+.seat.seen { opacity: 1; }
+.seat.dormant { opacity: .35; }
+.seat.dormant .nm { font-style: italic; }
 .dot { width: 14px; height: 14px; border-radius: 50%; background: var(--dot-off); flex: none; }
 .seat .nm { min-width: 0; max-width: 8rem; flex: 0 1 auto; font-weight: 700; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: rgb(var(--nm)); }
 /* The working label's sheen, on the roster name: dim seat color with a full-color band sweeping left to right while .live (seatView.lit). 1.2s is the old canvas travel. */
@@ -798,9 +801,25 @@ footer a { color: var(--foot); }
     L.COLOR[name] = next;
     return next;
   }
-  function paintRoster(entries) {
-    if (!entries || !entries.length) return;
-    var sig = entries.map(function (a) { return a[0] + '\n' + (a[1] || ''); }).join('\n');
+  function rosterSeatRow(feed, name) {
+    var seats = feed && feed.fleet && feed.fleet.seats;
+    if (!seats || !name) return null;
+    if (seats[name]) return seats[name];
+    var low = String(name).toLowerCase();
+    if (seats[low]) return seats[low];
+    var keys = Object.keys(seats);
+    for (var i = 0; i < keys.length; i++) if (String(keys[i]).toLowerCase() === low) return seats[keys[i]];
+    return null;
+  }
+  function paintRoster(entries, feed) {
+    if (!entries) return;
+    if (!entries.length && !feed) return;
+    var sig = entries.map(function (a) {
+      var row = rosterSeatRow(feed, a[0]);
+      var last = row && row.last_ct ? String(row.last_ct) : '';
+      var dormant = row && L.seatDormant && L.seatDormant(row.last_ct, Date.now()) ? '1' : '0';
+      return a[0] + '\n' + (a[1] || '') + '\n' + last + '\n' + dormant;
+    }).join('\n');
     if (sig === paintRoster.sig) return;
     paintRoster.sig = sig;
     L.AGENTS.splice(0, L.AGENTS.length);
@@ -812,16 +831,18 @@ footer a { color: var(--foot); }
       L.AGENTS.push(a);
       L.SEAT_NAMES.push(a[0]);
       if (!L.LABEL[a[0]]) L.LABEL[a[0]] = a[0];
+      var row = rosterSeatRow(feed, a[0]);
+      var dormant = !!(row && L.seatDormant && L.seatDormant(row.last_ct, Date.now()));
       var el = document.createElement('button');
       el.type = 'button';
-      el.className = 'seat';
+      el.className = 'seat' + (dormant ? ' dormant' : '');
       el.setAttribute('aria-expanded', 'false');
       var label = String(L.LABEL[a[0]] || a[0]);
       var roleText = String(a[1] || '');
       el.innerHTML = '<span class="dot"></span><span class="nm"></span>';
       var nm = el.querySelector('.nm');
       nm.textContent = label.toUpperCase();
-      nm.title = label;
+      nm.title = dormant ? label + ' · dormant' : label;
       var ink = seatColor(a[0]);
       nm.style.setProperty('--nm', ink[0] + ', ' + ink[1] + ', ' + ink[2]);
       el.addEventListener('click', function () {
@@ -1473,7 +1494,8 @@ footer a { color: var(--foot); }
   }
   function cardWorking(c) {
     if (!c || c.pinned || c._bucket === 'done' || c._agentDone || statusId(c.state) === 'closed' || statusId(c.state) === 'parked' || statusId(c.state) === 'held' || statusId(c.stage) === 'done') return false;
-    return fleetWorking(cardSeat(c));
+    if (!L.cardInWork) return false;
+    return !!L.cardInWork(Object.assign({}, c, { _seat: cardSeat(c) }), window.LIVE_FLEET);
   }
 
   function readCardGroup() {
@@ -1819,8 +1841,9 @@ footer a { color: var(--foot); }
       var s = seatEls[a[0]], c = L.COLOR[a[0]], v = L.seatView(seatState(a[0], hot)), on = v.lit;
       chipView[a[0]] = v;
       s.el.classList.toggle('live', on);
-      s.el.classList.toggle('idle', !on);
-      s.dot.style.background = on ? rgb(c) : cssVar('--dot-off');
+      s.el.classList.toggle('seen', !!v.seen);
+      s.el.classList.toggle('idle', !on && !v.seen);
+      s.dot.style.background = on ? rgb(c) : v.seen ? rgb(c, 0.55) : cssVar('--dot-off');
       s.dot.style.boxShadow = on ? '0 0 0 2px ' + cssVar('--ring-gap') + ', 0 0 0 4px ' + rgb(c) : 'none';
       var sil = !v.blink && fleetSilent(a[0]);
       s.el.classList.toggle('silent', sil); if (sil) s.dot.style.background = cssVar('--silent-ink');
@@ -1856,10 +1879,12 @@ footer a { color: var(--foot); }
     $('play').innerHTML = L.isPlaying(state.live, playing) ? '&#10074;&#10074; Pause' : '&#9654; Play';
     var seatNames = L.SEAT_NAMES;   // the strip's seats: header count and chips read the same seatState
     var bots = seatNames.filter(function (k) { return seatState(k, hot) !== 'idle'; }).length;
+    var workingN = seatNames.filter(function (k) { return fleetWorking(k); }).length;
     window.LIVE_HEADER_ACTIVE = [bots, seatNames.length];
+    window.LIVE_HEADER_WORKING = [workingN, seatNames.length];
     var total = window.LIVE_FEED_TOTAL != null ? window.LIVE_FEED_TOTAL : state.events.length;
     var st = state.generatedAt ? 'Refreshed <b title="' + L.fmtCt(state.generatedAt) + '">' + L.ago(now - state.generatedAt) + '</b>' : 'Waiting for feed';
-    st += ' · ' + Number(total).toLocaleString('en-US') + ' events · ' + bots + ' of ' + seatNames.length + ' seats active';
+    st += ' · ' + Number(total).toLocaleString('en-US') + ' events · ' + bots + ' of ' + seatNames.length + ' seats active · ' + workingN + ' working';
     paintFresh(now);
     if (fetchError) st += ' · <span class="err">' + fetchError + '</span>';
     $('status').innerHTML = st;
@@ -2314,7 +2339,8 @@ footer a { color: var(--foot); }
       feedLoaded = true;
       if (L.rosterEntries) {
         var rosterRows = L.rosterEntries(r.feed);
-        if (rosterRows) paintRoster(rosterRows);
+        if (rosterRows && L.rosterKept) rosterRows = L.rosterKept(rosterRows, r.feed);
+        if (rosterRows) paintRoster(rosterRows, r.feed);
       }
       if (r.feed.freshness) {
         light.dataAt = Date.parse(r.feed.freshness.github_latest_ct || '') || 0;

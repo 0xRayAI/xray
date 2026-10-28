@@ -706,6 +706,23 @@ class Model(unittest.TestCase):
         stranger = self.card(base + [dict(self.ev(64, "pr_comment", 1000), **{"from": "Others"})], 64)
         self.assertNotIn("comment", [b["what"] for b in stranger["beats"]])
 
+    def test_mapped_actor_moves_a_stall_card_a_stranger_does_not(self):
+        opened = self.ev(90, "issue_open", 3 * 3600, title="stall", pr_state="open", **{"from": "arch1"})
+        quiet = self.card([opened], 90)
+        self.assertEqual(quiet["owner"], "arch1")
+        self.assertTrue(quiet["stall"])
+        moved = self.card([opened, dict(self.ev(90, "issue_comment", 30), **{"from": "GitHub", "actor": "arch10x[bot]"})], 90)
+        self.assertFalse(moved["stall"])
+        self.assertIn("owner comment", [b["what"] for b in moved["beats"]])
+        pushed = self.card([opened, dict(self.ev(90, "pr_commit", 20, sha="abc1234"), **{"from": "GitHub", "actor": "arch10x[bot]"})], 90)
+        self.assertFalse(pushed["stall"])
+        self.assertIn("pushed", [b["what"] for b in pushed["beats"]])
+        review = self.card([opened, dict(self.ev(90, "review_comment", 25), **{"from": "GitHub", "actor": "arch10x[bot]"})], 90)
+        self.assertIn("owner comment", [b["what"] for b in review["beats"]])
+        stranger = self.card([opened, dict(self.ev(90, "issue_comment", 30), **{"from": "GitHub", "actor": "stranger"})], 90)
+        self.assertTrue(stranger["stall"])
+        self.assertEqual([b["what"] for b in stranger["beats"]], ["opened"])
+
     def test_pr_ready_opens_and_pr_draft_parks_immediately(self):
         ready = self.card([self.ev(65, "pr_open", 8000, title="d", draft=True), self.ev(65, "pr_draft", 7000),
                            self.ev(65, "pr_ready", 100)], 65)

@@ -38,6 +38,18 @@ test('foldSeatTouch: wake / inbox read / ack within the window makes a seat acti
   assert.equal(foldSeatTouch(fleet, {}, now), fleet);
 });
 
+test('an inbox touch does not mark the seat working', () => {
+  const now = Date.parse('2026-10-28T15:00:00Z');
+  const fleet = { window_min: 15, seats: { arch1: { active: false, working: false, last_ct: null, via: null } }, working: {}, active: 0, total: 1 };
+  const f = foldSeatTouch(fleet, { arch1: now - 1000, mill: now - 1000 }, now);
+  assert.equal(f.seats.arch1.active, true);
+  assert.equal(f.seats.arch1.working, false);
+  assert.equal(f.seats.arch1.via, 'inbox');
+  assert.equal(f.seats.mill.working, false);
+  assert.equal(f.working.arch1, undefined);
+  assert.equal(fleet.seats.arch1.working, false);
+});
+
 const FEED = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'feed');
 
 test('configuredRoster unions the live seat list with the committed roster and ignores a short board', () => {

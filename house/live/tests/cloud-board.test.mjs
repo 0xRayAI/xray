@@ -342,6 +342,25 @@ test('the live feed lists a running cloud agent, then a cancel as failed', async
   }
 });
 
+test('a finished cloud row stamps last_ct and leaves open_agents empty', () => {
+  const id = 'bc-043681df-9a95-5788-b990-e393349b3d53';
+  const now = Date.parse('2026-10-28T12:00:00-05:00');
+  const finishedAt = '2026-10-28T11:50:00-05:00';
+  const fleet = {
+    seats: { critic: { active: false, working: false, last_ct: '2026-10-28T10:00:00-05:00' } },
+    working: {},
+    cloud: { active: false, open_agents: [id], working: false, last_ct: '2026-10-28T10:00:00-05:00' },
+  };
+  const next = applyCloudOwners(fleet, [
+    { bcId: id, seat: 'critic', state: 'finished', updated_ct: finishedAt, finished_ct: finishedAt },
+  ], now);
+  assert.deepEqual(next.cloud.open_agents, []);
+  assert.equal(next.cloud.working, false);
+  assert.equal(next.cloud.active, false);
+  assert.ok(Date.parse(next.cloud.last_ct) >= Date.parse(finishedAt));
+  assert.equal(next.seats.critic.working, false);
+});
+
 test('finished clears that seat cloud mark; a second running id keeps it; a github mark stays', () => {
   const id = 'bc-531f2033-90e0-595f-87de-8dfe576ec69c';
   const other = 'bc-aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee';

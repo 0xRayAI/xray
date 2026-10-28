@@ -157,6 +157,15 @@ def visible_feed_lists(services, product_nodes):
     return [s for s in services if keep(s)], sorted(n for n in product_nodes if keep(n))
 
 
+def stamp_cloud_node(product_nodes, fleet_state):
+    """CloudAgents is a product node when the fleet has a cloud object. An empty open set stays off."""
+    nodes = [n for n in (product_nodes or []) if n != "burst-live"]
+    cloud = fleet_state.get("cloud") if isinstance(fleet_state, dict) else None
+    if isinstance(cloud, dict) and "CloudAgents" not in nodes:
+        nodes.append("CloudAgents")
+    return nodes
+
+
 def board_wave(events, write, prompts=None):
     """One card pass. A miss is logged and the rest of the feed still writes."""
     try:
@@ -234,6 +243,7 @@ def build(args, gh):
         ff.SERVICES,
         [live_site.SITE["node"], *live_site.SITE["hosts"].values(), *(x["name"] for x in live_site.SITE["services"])],
     )
+    product_nodes = stamp_cloud_node(product_nodes, fleet_state)
     return {
         "title": live_site.SITE["title"],
         "sources": [f"https://github.com/{r}" for r in args.repos] + HEALTH_URLS + [MERGE_QUEUE.name],

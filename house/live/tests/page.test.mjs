@@ -151,15 +151,22 @@ test('one seat state: header text, dot and node label all come from L.seatView(s
   const L = { SOURCES: [], AGENTS: [], SEAT_NAMES: [], SATS: {}, COLOR: {}, LABEL: {}, SUB: {}, GLYPH: {}, SQUARE: {},
     EDGES: [], BOT_IMAGES: [], KIND_WORD: {}, applyFeed: (st, feed) => ({ state: { events: feed.events } }) };
   new Function('window', 'location', fs.readFileSync(path.join(APP, 'public', 'live-config.js'), 'utf8'))({ LiveMesh: L }, { search: '' });
-  const want = { working: ['WORKING', true, true, true], live: ['LIVE', true, false, false], active: ['ACTIVE', true, false, false], idle: ['IDLE', false, false, false] };
+  const want = {
+    working: ['WORKING', true, true, true, false],
+    live: ['LIVE', false, false, false, true],
+    active: ['ACTIVE', false, false, false, true],
+    idle: ['IDLE', false, false, false, false],
+  };
   for (const working of [false, true]) for (const live of [false, true]) for (const active of [false, true]) {
     const st = L.seatState(working, live, active);
     assert.equal(st, working ? 'working' : live ? 'live' : active ? 'active' : 'idle');
-    const v = L.seatView(st), [word, lit, blink, nodeWorking] = want[st];
-    assert.deepEqual([v.word, v.lit, v.blink, v.nodeWorking], [word, lit, blink, nodeWorking], `${working}/${live}/${active}`);
+    const v = L.seatView(st), [word, lit, blink, nodeWorking, seen] = want[st];
+    assert.deepEqual([v.word, v.lit, v.blink, v.nodeWorking, !!v.seen], [word, lit, blink, nodeWorking, seen], `${working}/${live}/${active}`);
     assert.equal(v.blink, v.nodeWorking);                       // dot blinks <=> node shows 'working'
-    assert.equal(v.word === 'IDLE', !v.lit);                    // header word idle <=> node unlit
+    assert.equal(v.lit, st === 'working');                      // the sheen is working, not a recent ping
   }
+  assert.match(html, /s\.el\.classList\.toggle\('seen', !!v\.seen\)/);
+  assert.match(html, /seats active · ' \+ workingN \+ ' working/);
   // the page derives chip text, dot and node from that one state (no other source of truth left)
   assert.match(html, /function seatState\(k, hot\) \{ return L\.seatState\(fleetWorking\(k\), !!\(hot && hot\[k\]\), fleetActive\(k\)\); \}/);
   assert.match(html, /v = L\.seatView\(seatState\(a\[0\], hot\)\), on = v\.lit;/);
@@ -174,6 +181,39 @@ test('one seat state: header text, dot and node label all come from L.seatView(s
   assert.match(html, /drawNode\(key, nv\.lit, fs, pul, nv\.nodeWorking, nowWall\);/);
   assert.doesNotMatch(html, /hot\[a\[0\]\] \? 'LIVE'/);         // the old split derivation is gone
   assert.doesNotMatch(html, /fleetWorking\(key\), nowWall/);
+});
+
+test('a spinner is only the card in working_on, and a 7-day seat is dormant', () => {
+  const L = { SOURCES: [], AGENTS: [], SEAT_NAMES: [], SATS: {}, COLOR: {}, LABEL: {}, SUB: {}, GLYPH: {}, SQUARE: {},
+    EDGES: [], BOT_IMAGES: [], KIND_WORD: {}, applyFeed: (st, feed) => ({ state: { events: feed.events } }) };
+  new Function('window', 'location', fs.readFileSync(path.join(APP, 'public', 'live-config.js'), 'utf8'))({ LiveMesh: L }, { search: '' });
+  assert.equal(L.DORMANT_MS, 7 * 24 * 60 * 60 * 1000);
+  const now = Date.parse('2026-10-28T12:00:00Z');
+  assert.equal(L.seatDormant('2026-10-20T12:00:00Z', now), true);
+  assert.equal(L.seatDormant('2026-10-22T12:00:00Z', now), false);
+  assert.equal(L.seatDormant('', now), false);
+  const fleet = {
+    working: { arch1: { via: 'prompt', since_ct: '2026-10-28T11:00:00Z' } },
+    seats: {
+      arch1: { working: true, working_on: '0xRayAI/xray#5' },
+      critic: { working: true, working_on: '0xRayAI/xray#6' },
+      magnet: { working: false, last_ct: '2026-10-01T12:00:00Z' },
+    },
+  };
+  assert.equal(L.cardInWork({ repo: '0xRayAI/xray', number: 5, _seat: 'arch1' }, fleet), true);
+  assert.equal(L.cardInWork({ repo: '0xRayAI/xray', number: 9, _seat: 'arch1' }, fleet), false);
+  fleet.working.arch1.working_on = '0xRayAI/xray#6';
+  assert.equal(L.cardInWork({ repo: '0xRayAI/xray', number: 5, _seat: 'arch1' }, fleet), false);
+  assert.equal(L.cardInWork({ repo: '0xRayAI/xray', number: 6, _seat: 'arch1' }, fleet), true);
+  delete fleet.working.arch1.working_on;
+  delete fleet.seats.arch1.working_on;
+  assert.equal(L.cardInWork({ repo: '0xRayAI/xray', number: 5, _seat: 'arch1' }, fleet), false);
+  const rows = [['sound', ''], ['arch1', ''], ['CloudAgents', ''], ['magnet', '']];
+  const kept = L.rosterKept(rows, { fleet, product_nodes: ['CloudAgents'] });
+  assert.deepEqual(kept.map(a => a[0]), ['arch1', 'CloudAgents', 'magnet']);
+  assert.deepEqual(L.rosterKept(rows, {}), rows);
+  assert.match(html, /L\.cardInWork\(Object\.assign\(\{\}, c, \{ _seat: cardSeat\(c\) \}\), window\.LIVE_FLEET\)/);
+  assert.match(html, /L\.rosterKept\) rosterRows = L\.rosterKept\(rosterRows, r\.feed\)/);
 });
 
 test('near-real-time poll: config sets 10 s, page polls on L.POLL_MS after the overlay loads', async () => {
