@@ -6,6 +6,8 @@ Bifrost is the live board. Goggles views one plane. A search inside that card ru
 
 Exo, not catalog. Constitution always on. Temperament by host. Four floors. Repertoire organ on.
 
+Unreleased notes for 4.1.5 are in [Features since 3.1](./guides/features-since-3.1). package.json stays 4.1.4 until Dist publishes.
+
 CLI, bridges, seven MCP servers, Codex. Product thesis: [4.0 vision](./architecture/v4-vision.md). Wear: [getting started](./guides/getting-started.md).
 
 ---

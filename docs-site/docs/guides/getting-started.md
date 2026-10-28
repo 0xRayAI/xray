@@ -6,6 +6,8 @@ Confer votes. Burst runs the swarm.
 
 Wear the suit. Constitution on every stroke. Temperament by host. When the window closes, the next session wakes with the job.
 
+Unreleased notes for 4.1.5 are in [Features since 3.1](./features-since-3.1). package.json stays 4.1.4 until Dist publishes.
+
 ## Quick Start
 
 ```bash

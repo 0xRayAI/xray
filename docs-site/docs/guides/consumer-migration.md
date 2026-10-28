@@ -16,7 +16,18 @@ The 4.1.3 → 4.1.4 steps below still apply. These lines were left out of the Di
 
 ## Unreleased
 
-Notes for Dist when Arch1 publishes the next version. package.json stays 4.1.4 here. Reading a plate file holds that card so a search of its files runs (#644). Codex 70 denies a write only in a stale copy of this repo (#646). A red CI check writes a card when the pull has none, then a `ci_fail` inbox line (#648). This guide does not include that code.
+Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here. npm still serves 4.1.4 until that publish. These steps are the main tree after 4.1.4.
+
+1. Board. A prompt pulse spins only the card named by working_on. Seen is not working. A roster row is a fleet seat or a product node. A seat quiet for 7 days is dormant. A merge or a GitHub write lights the seat.
+2. Tandem. Several tracks run at once, on both loops, and no seat waits for a nod.
+3. Card. A card carries raci. A live card missing R or A is amber on its own mark. A same-path cluster is one tip and one pull.
+4. Health. A missed /healthz makes the supervisor exit 1 so the one replica is replaced. The replica pid is not SIGKILL'd. The collector is not signaled.
+5. Inbox. The watcher writes a new open line to the seat todo and does not ack it. The seat acks after the work. A merge handoff ack needs a review or comment link. A queued check is not a ci_fail line. One open line per head. A green head clears it.
+6. Search. A plate file holds its card. One other card in a search switches to that card. Two cards stay. A path on no plane runs. A path outside this checkout runs.
+7. Writes. Codex 70 denies a write only in a stale copy of this repo. A worktree on main is allowed.
+8. Nudge. L1 through L3 stay on the next owner, the card owner, or the owing seat. CoS is not woken to reassign. A test server does not post the station nudge. Railway does, unless STATION_NUDGE=off.
+9. OP cycle. Digest, then card, then do, then loop, then ship. The stanza is OP-PROC #op-cycle.
+10. Pins. qs is 6.17.0 in the root lock and the docs-site lock, including nested body-parser. Status compare uses one canonical id.
 
 ## 4.1.3 → 4.1.4
 
