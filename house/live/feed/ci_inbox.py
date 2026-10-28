@@ -45,7 +45,18 @@ def _conclusion(event):
     return _low(event.get("conclusion"))
 
 
+def _status(event):
+    return _low(event.get("status"))
+
+
+# A check that has not finished is not a failure. Empty status stays the completed shape.
+RUNNING = {"queued", "in_progress", "pending", "waiting", "requested"}
+
+
 def _red(event):
+    status = _status(event)
+    if status in RUNNING or (status and status != "completed"):
+        return False
     kind = _kind(event)
     if kind == "ci_fail":
         return True
