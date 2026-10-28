@@ -31,6 +31,7 @@ Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 - Boot shrinks that document with a script that does not import the collector. fetch_feed lives under collector/upstream. #671.
 - A settled card is archived once per close. Day files over 8MB are folded to the latest row, then Redis serves /history and /history/cards. The live document says it is the newest window. #673.
 - The History panel follows /history/cards pages, so it lists every card. #675.
+- A settled card keeps its own close time, so a restart does not archive it again. #677.
 
 ## [4.1.4] - 2026-10-26
 
