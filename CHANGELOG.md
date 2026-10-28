@@ -11,6 +11,7 @@ Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 - A repertoire symlink is relative to the real parent directory, so a seat under `/var` still opens the vendored organ.
 - The source suite reads `src/skills`. `.opencode/skills` is the OpenCode pack line. A missing `dist/cli` skips the CLI tests.
 - Suit boot enables `inbox-watch.sh` in the local TUI. `inbox-watch-ensure` does not start a process.
+- Pin qs to 6.17.0 in the root lock and the docs-site lock. Nested body-parser uses the same pin. #645.
 
 ### 🐛 Bug Fixes
 
@@ -34,6 +35,7 @@ Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 - A settled card keeps its own close time, so a restart does not archive it again. #677.
 - A reboot keeps the volume. Each card is one line in the card book, and event days stay files. Redis refills from both. #679.
 - A packet next owner is an inbox tip when the opener is someone else. The opener's own line still drops. #660.
+- Pin qs to 6.17.0 in the root lock and the docs-site lock, including nested body-parser. #645.
 
 ## [4.1.4] - 2026-10-26
 
