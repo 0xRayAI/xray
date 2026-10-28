@@ -80,13 +80,25 @@ if [ "$(id -u)" -eq 0 ]; then
   fi
   cap_github_feed
   if [ "$#" -eq 0 ]; then
-    set -- node server.mjs
+    if [ "${HEALTH_EXIT:-}" = "off" ]; then
+      set -- node server.mjs
+    elif [ -n "${RAILWAY_ENVIRONMENT:-}" ] || [ "${HEALTH_EXIT:-}" = "on" ]; then
+      set -- node health-exit.mjs
+    else
+      set -- node server.mjs
+    fi
   fi
   exec gosu node "$@"
 fi
 
 cap_github_feed
 if [ "$#" -eq 0 ]; then
-  set -- node server.mjs
+  if [ "${HEALTH_EXIT:-}" = "off" ]; then
+    set -- node server.mjs
+  elif [ -n "${RAILWAY_ENVIRONMENT:-}" ] || [ "${HEALTH_EXIT:-}" = "on" ]; then
+    set -- node health-exit.mjs
+  else
+    set -- node server.mjs
+  fi
 fi
 exec "$@"

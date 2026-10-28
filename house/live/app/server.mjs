@@ -3921,6 +3921,7 @@ async function openMesh() {
   });
 }
 openMesh();
+process.on('SIGUSR2', () => process.exit(1));
 for (const sig of ['SIGTERM', 'SIGINT']) process.on(sig, () => { stopping = true; server.close(() => process.exit(0)); setTimeout(() => process.exit(0), 5000).unref(); });
 readJiraFeed();
 setInterval(readJiraFeed, 2000).unref();
