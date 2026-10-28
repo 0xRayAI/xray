@@ -180,7 +180,8 @@ test('one seat state: header text, dot and node label all come from L.seatView(s
   assert.match(html, /var nv = L\.seatView\(seatState\(key, hot\)\); nodeView\[key\] = nv;/);
   assert.match(html, /drawNode\(key, nv\.lit, fs, pul, nv\.nodeWorking, nowWall, !!nv\.seen\);/);
   assert.match(html, /var seenNow = !!seen && !isHot;/);
-  assert.match(html, /else if \(seenNow\)/);
+  assert.match(html, /else if \(seenNow && !hasImg\)/);
+  assert.match(html, /else if \(seenNow\) \{ ctx\.strokeStyle = rgb\(c, 0\.35\); ctx\.lineWidth = 1\.5; ctx\.beginPath\(\); ctx\.arc\(x, y, ar \+ 4, 0, 7\); ctx\.stroke\(\); \}/);
   assert.match(html, /var names = fleetNames\(k\);/);
   assert.doesNotMatch(html, /hot\[a\[0\]\] \? 'LIVE'/);         // the old split derivation is gone
   assert.doesNotMatch(html, /fleetWorking\(key\), nowWall/);

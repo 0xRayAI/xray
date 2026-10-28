@@ -1416,7 +1416,7 @@ footer a { color: var(--foot); }
     var xy = pos[key], x = xy[0], y = xy[1], c = L.COLOR[key], sq = !!L.SQUARE[key], r = sq ? 15 : 18 + 3 * pul;
     var img = imgs[key], glyph = L.GLYPH[key], mark = L.MARK_PATH[key];
     var hasImg = !!(img && img.complete && img.naturalWidth);
-    var bare = hasImg || (!sq && !!glyph);   // image / glyph nodes: no working ring
+    var bare = hasImg || (!sq && !!glyph);   // glyph skips the letter ring. an avatar paints its ring after the image
     var seenNow = !!seen && !isHot;   // one dim stroke. active or live, not the working sheen
     if (isHot && !bare) {
       for (var k = 3; k >= 1; k--) {
@@ -1424,14 +1424,21 @@ footer a { color: var(--foot); }
         if (sq) { roundRect(x - rr, y - rr, rr * 2, rr * 2, 6); } else { ctx.beginPath(); ctx.arc(x, y, rr, 0, 7); }
         ctx.stroke();
       }
-    } else if (seenNow) {
+    } else if (seenNow && !hasImg) {
       var sr = r + 4; ctx.strokeStyle = rgb(c, 0.35); ctx.lineWidth = 1.5;
       if (sq) { roundRect(x - sr, y - sr, sr * 2, sr * 2, 6); } else { ctx.beginPath(); ctx.arc(x, y, sr, 0, 7); }
       ctx.stroke();
     }
     ctx.fillStyle = cssVar('--node-fill'); ctx.strokeStyle = rgb(c); ctx.lineWidth = isHot ? 3 : seenNow ? 2.5 : 2;
-    if (hasImg) {   // avatar: the image as-is, no circle / ring / border / clip
+    if (hasImg) {   // avatar image. the seen ring and the working ring sit outside it
       var as = 46 + 4 * pul; ctx.drawImage(img, x - as / 2, y - as / 2, as, as);
+      var ar = as / 2;
+      if (isHot) {
+        for (var hk = 3; hk >= 1; hk--) {
+          var hr = ar + hk * 5; ctx.strokeStyle = rgb(c, 1 / (hk + 1)); ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.arc(x, y, hr, 0, 7); ctx.stroke();
+        }
+      } else if (seenNow) { ctx.strokeStyle = rgb(c, 0.35); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x, y, ar + 4, 0, 7); ctx.stroke(); }
     }
     else if (mark && typeof Path2D !== 'undefined') {   // vector mark, light fill (no font, no fetch)
       ctx.save(); ctx.translate(x - 15, y - 15); ctx.scale(30 / 16, 30 / 16);
