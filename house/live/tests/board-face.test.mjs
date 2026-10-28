@@ -262,7 +262,7 @@ test('the board face keeps the contract in both themes', async () => {
       const badge = el && el.querySelector('.wbadge.state');
       return { state: badge ? badge.textContent : '', text: el ? el.textContent : '' };
     });
-    assert.equal(mergedNine.state, 'closed');
+    assert.equal(mergedNine.state, 'Closed');
     assert.match(mergedNine.text, /merged #9/);
     assert.doesNotMatch(mergedNine.text, /approved #9/);
 

@@ -135,7 +135,7 @@ test('kanban renders above activity, opens a card, and keeps the GitHub link on 
     assert.match(pop.detail, /opened/);
     assert.match(pop.detail, /tests green/);
     assert.match(pop.detail, /mill/);
-    assert.match(pop.detail, /live/);
+    assert.match(pop.detail, /Live/);
     assert.match(pop.detail, /bc-review-3/);
     assert.equal(pop.detail, waveText);
     assert.deepEqual(pop.hrefs, waveHrefs);
