@@ -140,11 +140,18 @@
   L.blackoutLine = function () { return ''; };
   // ONE derived seat state, used by the header chip text, its dot and the canvas node alike:
   //   working (in-flight spinner) > live (a ping on the board right now) > active (fleet, last 15 min) > idle
+  // lit is working only. seen is a recent ping or a 15-minute beat, and it is not the working sheen.
   L.seatState = function (working, live, active) {
     return working ? 'working' : live ? 'live' : active ? 'active' : 'idle';
   };
   var SEAT_WORD = { working: 'WORKING', live: 'LIVE', active: 'ACTIVE', idle: 'IDLE' };
   L.seatView = function (st) {   // everything the chip and the node show, from that one state
-    return { word: SEAT_WORD[st] || 'IDLE', lit: st !== 'idle', blink: st === 'working', nodeWorking: st === 'working' };
+    return {
+      word: SEAT_WORD[st] || 'IDLE',
+      lit: st === 'working',
+      blink: st === 'working',
+      nodeWorking: st === 'working',
+      seen: st === 'live' || st === 'active'
+    };
   };
 })(window.LiveMesh);

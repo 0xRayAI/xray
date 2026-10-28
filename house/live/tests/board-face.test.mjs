@@ -513,9 +513,12 @@ test('a working seat name rolls across two frames and a seen seat name does not'
     await page.goto(base, { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => {
       const views = window.LIVE_SEAT_VIEWS && window.LIVE_SEAT_VIEWS.chip;
+      const nodes = window.LIVE_SEAT_VIEWS && window.LIVE_SEAT_VIEWS.node;
       return !!(views && views.Reviewer && views.Reviewer.lit === true
         && views.QA && views.QA.lit === false && views.QA.seen === true
-        && views.Tester && views.Tester.lit === false && views.Tester.seen === false);
+        && views.Tester && views.Tester.lit === false && views.Tester.seen === false
+        && nodes && nodes.QA && nodes.QA.seen === true && nodes.QA.lit === false
+        && nodes.Reviewer && nodes.Reviewer.lit === true && nodes.Reviewer.seen === false);
     }, null, { timeout: 8000 });
     const sample = () => page.evaluate(() => {
       function one(word) {
