@@ -338,8 +338,12 @@ function archiveCardRows(data) {
   const root = path.join(data, 'archive');
   const rows = [];
   if (!fs.existsSync(root)) return rows;
+  const files = [path.join(root, 'cards.jsonl')];
   for (const day of fs.readdirSync(root)) {
     const file = path.join(root, day, 'cards.jsonl');
+    if (fs.existsSync(file)) files.push(file);
+  }
+  for (const file of files) {
     if (!fs.existsSync(file)) continue;
     for (const line of fs.readFileSync(file, 'utf8').split('\n')) {
       if (!line) continue;
