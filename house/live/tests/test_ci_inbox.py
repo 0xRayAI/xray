@@ -44,6 +44,26 @@ class CiInbox(unittest.TestCase):
         ]
         self.assertEqual(ci_inbox.ack_ids([line], green), [line["id"]])
 
+    def test_queued_summary_does_not_open_ci_fail(self):
+        """A still-running required check is not red. A completed failure is. Then green adds nothing."""
+        opened = [ev("open", "pr_open", number=9, sha=SHA)]
+        seat = lambda repo, number: "forge"
+        queued = ev("sum", "workflow_run", number=9, sha=SHA, status="queued", conclusion="", name="CI Summary")
+        running = ev("run", "check_run", number=9, sha=SHA, status="in_progress", conclusion="failure", name="CI Summary")
+        pending = ev("wait", "check_suite", number=9, sha=SHA, status="pending", conclusion="cancelled", name="CI Summary")
+        self.assertEqual(ci_inbox.ci_fail_lines(opened + [queued], [queued], seat), [])
+        self.assertEqual(ci_inbox.ci_fail_lines(opened + [running], [running], seat), [])
+        self.assertEqual(ci_inbox.ci_fail_lines(opened + [pending], [pending], seat), [])
+        self.assertNotEqual(ci_inbox.sha_color(opened + [queued, running]).get((R, SHA)), "red")
+        done = ev("bad", "workflow_run", number=9, sha=SHA, status="completed", conclusion="failure", name="CI Summary")
+        lines = ci_inbox.ci_fail_lines(opened + [queued, done], [done], seat)
+        self.assertEqual(len(lines), 1)
+        self.assertEqual(lines[0]["id"], f"ci_fail:{R}#9:{SHA}")
+        green = ev("ok", "workflow_run", number=9, sha=SHA, status="completed", conclusion="success", name="CI Summary",
+                   t_ct="2026-10-28T10:05:00-05:00")
+        self.assertEqual(ci_inbox.ci_fail_lines(opened + [queued, green], [green], seat), [])
+        self.assertEqual(ci_inbox.sha_color(opened + [queued, green]).get((R, SHA)), "green")
+
 
 if __name__ == "__main__":
     unittest.main()
