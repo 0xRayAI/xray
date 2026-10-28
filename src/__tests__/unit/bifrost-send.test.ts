@@ -59,8 +59,39 @@ describe('bifrost send', () => {
       now: new Date('2026-10-24T18:00:00Z'),
     });
     expect(quiet).toEqual({ sent: [], reason: 'quiet' });
-    const off = await notifyBifrost({ root, phase: 'start', env: {}, fetchImpl: async () => { throw new Error('called'); } });
+    const emptyHome = fs.mkdtempSync(path.join(os.tmpdir(), 'bifrost-home-'));
+    dirs.push(emptyHome);
+    fs.mkdirSync(path.join(emptyHome, '.burst', 'seat-keys'), { recursive: true });
+    const off = await notifyBifrost({
+      root,
+      phase: 'start',
+      env: {},
+      home: emptyHome,
+      fetchImpl: async () => { throw new Error('called'); },
+    });
     expect(off.reason).toBe('off');
+  });
+
+  it('posts the turn on the suit board when the shell set nothing and one seat key exists', async () => {
+    const home = fs.mkdtempSync(path.join(os.tmpdir(), 'bifrost-home-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bifrost-send-'));
+    dirs.push(home, root);
+    const keys = path.join(home, '.burst', 'seat-keys');
+    fs.mkdirSync(keys, { recursive: true });
+    fs.writeFileSync(path.join(keys, 'arch1.key'), `${KEY}\n`, { mode: 0o600 });
+    const calls: Array<{ url: string; body: string; auth: string }> = [];
+    const sent = await notifyBifrost({
+      root,
+      phase: 'start',
+      env: {},
+      home,
+      fetchImpl: liveFetch(calls),
+      now: new Date('2026-10-24T18:00:00Z'),
+    });
+    expect(sent.sent).toEqual(['start']);
+    expect(calls[0].url).toBe('https://bifrost.0xray.dev/activity');
+    expect(calls[0].auth).toBe(`Bearer ${KEY}`);
+    expect(JSON.parse(calls[0].body)).toMatchObject({ kind: 'turn', action: 'start' });
   });
 
   it('posts activity, the issue, the pull, and the packet once while the board is live', async () => {

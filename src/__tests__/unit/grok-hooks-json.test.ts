@@ -81,7 +81,10 @@ describe('Grok hooks.json command strings', () => {
         ),
       );
       mkdirSync(path.join(packageRoot, 'dist/integrations/grok/hooks'), { recursive: true });
-      patchGrokHooks(pluginDir, packageRoot, tmp, () => {}, 'test');
+      const home = path.join(tmp, 'home');
+      mkdirSync(path.join(home, '.burst', 'seat-keys'), { recursive: true });
+      writeFileSync(path.join(home, '.burst', 'seat-keys', 'arch1.key'), 'not-a-real-key\n');
+      patchGrokHooks(pluginDir, packageRoot, tmp, () => {}, 'test', { home });
       const patched = JSON.parse(readFileSync(path.join(pluginDir, 'hooks', 'hooks.json'), 'utf8'));
       const commands = collectHookCommands(patched);
       for (const hook of commands) {
@@ -89,6 +92,10 @@ describe('Grok hooks.json command strings', () => {
         expect(String(hook.command)).toContain(`XRAY_AI_PATH=${JSON.stringify(packageRoot)}`);
         expect(String(hook.command)).toContain('node ');
         expect(hook.timeout).toBe(30);
+        const env = hook.env as Record<string, string>;
+        expect(env.LIVE_URL).toBe('https://bifrost.0xray.dev');
+        expect(env.SEAT_KEYS_DIR).toBe(path.join(home, '.burst', 'seat-keys'));
+        expect(env.XRAY_SEAT).toBe('arch1');
       }
     } finally {
       rmSync(tmp, { recursive: true, force: true });

@@ -1,11 +1,15 @@
 /**
  * Worn-hook sends while Bifrost is active.
- * Active means LIVE_URL, XRAY_SEAT, a seat key, and GET /healthz with board "live".
- * The four sends are a turn line, an issue tag, a pull tag, and a handoff packet.
+ * The suit wire is chat activity, the packet, the card tag, and the turn.
+ * The board defaults to https://bifrost.0xray.dev and ~/.burst/seat-keys.
+ * One seat key is the seat. A shell may still set LIVE_URL, XRAY_SEAT, or SEAT_KEYS_DIR.
  * A quiet board sends nothing. Prompt text and the key stay off the wire.
  */
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
+
+const SUIT_BOARD = 'https://bifrost.0xray.dev';
 
 const TAG = /^[A-Za-z0-9 ._:@#+/\-]{1,80}$/;
 const SEAT = /^[a-z0-9-]{2,16}$/;
@@ -150,10 +154,32 @@ function saveState(root, state) {
   fs.renameSync(tmp, file);
 }
 
-function configOf(env) {
-  const origin = boardOrigin(env.LIVE_URL);
-  const seat = typeof env.XRAY_SEAT === 'string' ? env.XRAY_SEAT.trim() : '';
-  const keys = typeof env.SEAT_KEYS_DIR === 'string' ? env.SEAT_KEYS_DIR.trim() : '';
+function suitHome(env, home) {
+  if (typeof home === 'string' && home.trim()) return home.trim();
+  if (typeof env.HOME === 'string' && env.HOME.trim()) return env.HOME.trim();
+  return os.homedir();
+}
+
+function soleSeat(dir) {
+  let names;
+  try {
+    names = fs.readdirSync(dir);
+  } catch {
+    return '';
+  }
+  const seats = names
+    .filter((name) => name.endsWith('.key'))
+    .map((name) => name.slice(0, -4))
+    .filter((seat) => SEAT.test(seat));
+  return seats.length === 1 ? seats[0] : '';
+}
+
+function configOf(env, home) {
+  const origin = boardOrigin(env.LIVE_URL) || boardOrigin(SUIT_BOARD);
+  const keys = (typeof env.SEAT_KEYS_DIR === 'string' && env.SEAT_KEYS_DIR.trim())
+    || path.join(suitHome(env, home), '.burst', 'seat-keys');
+  let seat = typeof env.XRAY_SEAT === 'string' ? env.XRAY_SEAT.trim() : '';
+  if (!SEAT.test(seat)) seat = soleSeat(keys);
   if (!origin || !SEAT.test(seat) || !keys) return null;
   return { origin, seat, keys };
 }
@@ -221,7 +247,7 @@ export async function notifyBifrost(opts = {}) {
   const fetchImpl = opts.fetchImpl || globalThis.fetch;
   const now = opts.now instanceof Date ? opts.now : new Date();
   const sent = [];
-  const cfg = configOf(env);
+  const cfg = configOf(env, opts.home);
   if (!cfg) return { sent, reason: 'off' };
   const key = readKey(cfg.keys, cfg.seat);
   if (!key) return { sent, reason: 'off' };

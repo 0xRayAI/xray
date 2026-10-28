@@ -3,13 +3,13 @@
 Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 
 - The README hero and the social card are the Bifrost poster. The suit wears the board. The mark stays v4.1.
+- Worn hooks post chat activity, the packet, the card tag, and the turn. The board is https://bifrost.0xray.dev. The key folder is ~/.burst/seat-keys. One seat key is the seat.
 - The unposted ship thread is tweets/v4.1.5.md. It stays a draft until Dist GO.
 - The OP cycle is digest, then card, then do, then loop, then ship. Digest is disk. Card is the same turn. Do is the implementer. Loop is the two loops. Ship is the publisher after Review. #701.
 - L1 through L3 stay on the packet next owner, else the card owner, or the owing seat. CoS is not woken to reassign. A threshold a runbook does not hard-name is a soft follow-up. #700.
 - A prompt pulse spins only the card named by working_on. A roster row is a fleet seat or a product node, and a seat quiet for 7 days is dormant. Seen is not working, and the mesh paints that seen seat with one dim ring. An avatar keeps that ring outside the image. A GitHub write lights the seat only when that repo#number is an open board card. A board of only closed cards clears working. A finished cloud agent stamps cloud.last_ct, and an empty open set leaves CloudAgents off. An owner comment or push moves a stall card. bifrost #5 #6 #7 #8 #9 #10 #12.
 - Upkeep and reminders are scripts with no model call. A missing prompt, drift, or a dead cron is one card. The local reminder writes station.md. #577.
 - A same-path cluster is one tip and one pull. Lots of small cards stay. R opens the pull. A tips it. A blocker hotfix, a different deploy surface, or a soft follow-up stays a solo tip. #694.
-- A same-path cluster is one tip and one pull. Lots of small cards stay. A blocker hotfix, a different deploy surface, or a soft follow-up stays a solo tip. #694.
 - The first /healthz beat has a 120s boot window. A steady miss after that beat still exits 1. The server listens on 0.0.0.0 so the supervisor probe reaches it. #661.
 - A missed /healthz makes the supervisor exit 1 so ON_FAILURE replaces the one replica. The replica pid is not SIGKILL'd. #661.
 - An open issue whose author is outside the fleet still gets a card. One backfill fills a number that has no open event. A second pass does not. #576.
