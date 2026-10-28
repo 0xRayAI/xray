@@ -1141,7 +1141,7 @@ function searchPaths(root, text) {
   return [...new Set(found.filter(Boolean))];
 }
 
-/** A search on the held plane runs. A file open follows the path. */
+/** A search on the held plane runs. One other card switches and runs. Two cards stay on the held card. */
 export function lensBeforeResearch(root, toolName, text) {
   const spoken = String(text || '');
   const searching = isSearch(toolName, spoken);
@@ -1151,8 +1151,21 @@ export function lensBeforeResearch(root, toolName, text) {
   const current = currentCard(root);
   if (searching) {
     const paths = searchPaths(root, spoken);
-    const inside = paths.length > 0 && paths.every((file) => searchStays(root, file, current));
-    if (inside) return null;
+    const leaving = [];
+    let wide = false;
+    for (const file of paths) {
+      if (searchStays(root, file, current)) continue;
+      const target = targetOf(file);
+      if (!target) continue;
+      if (target.card === target.plane) { wide = true; continue; }
+      if (target.card === current || leaving.includes(target.card)) continue;
+      leaving.push(target.card);
+    }
+    if (paths.length > 0 && leaving.length === 0 && !wide) return null;
+    if (leaving.length === 1 && !wide) {
+      holdPlane(root, leaving[0]);
+      return { gate: 'lens', decision: 'allow', reason: cardText(root, leaving[0]) };
+    }
     return { gate: 'lens', decision: 'deny', reason: cardText(root, current) };
   }
   const targets = [];
