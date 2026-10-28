@@ -492,12 +492,13 @@ test('an activity row expands to the full note and collapses again', async () =>
   }
 });
 
-test('an active seat name rolls across two frames and an idle seat name does not', async () => {
+test('a working seat name rolls across two frames and a seen seat name does not', async () => {
   const payload = feed();
   payload.events = [];
   payload.fleet = {
     seats: {
-      Reviewer: { active: true, working: false },
+      Reviewer: { active: true, working: true },
+      QA: { active: true, working: false },
       Tester: { active: false, working: false },
     },
     cloud: { active: false, working: false },
@@ -512,7 +513,9 @@ test('an active seat name rolls across two frames and an idle seat name does not
     await page.goto(base, { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => {
       const views = window.LIVE_SEAT_VIEWS && window.LIVE_SEAT_VIEWS.chip;
-      return !!(views && views.Reviewer && views.Reviewer.lit === true && views.Tester && views.Tester.lit === false);
+      return !!(views && views.Reviewer && views.Reviewer.lit === true
+        && views.QA && views.QA.lit === false && views.QA.seen === true
+        && views.Tester && views.Tester.lit === false && views.Tester.seen === false);
     }, null, { timeout: 8000 });
     const sample = () => page.evaluate(() => {
       function one(word) {
@@ -522,6 +525,7 @@ test('an active seat name rolls across two frames and an idle seat name does not
         const a = anims[0];
         return {
           live: seat.classList.contains('live'),
+          seen: seat.classList.contains('seen'),
           idle: seat.classList.contains('idle'),
           count: anims.length,
           name: a ? a.animationName : '',
@@ -529,17 +533,21 @@ test('an active seat name rolls across two frames and an idle seat name does not
           play: a ? a.playState : '',
         };
       }
-      return { reviewer: one('REVIEWER'), tester: one('TESTER') };
+      return { reviewer: one('REVIEWER'), qa: one('QA'), tester: one('TESTER') };
     });
     const frame1 = await sample();
     await page.evaluate(() => new Promise((resolve) => { setTimeout(resolve, 250); }));
     const frame2 = await sample();
     assert.equal(frame1.reviewer.live, true, JSON.stringify(frame1));
+    assert.equal(frame1.qa.seen, true, JSON.stringify(frame1));
+    assert.equal(frame1.qa.live, false, JSON.stringify(frame1));
+    assert.equal(frame1.qa.count, 0, JSON.stringify(frame1));
     assert.equal(frame1.tester.idle, true, JSON.stringify(frame1));
     assert.equal(frame1.reviewer.count, 1, JSON.stringify(frame1));
     assert.equal(frame1.reviewer.name, 'nm-roll');
     assert.equal(frame1.reviewer.play, 'running');
     assert.equal(frame1.tester.count, 0, JSON.stringify(frame1));
+    assert.equal(frame2.qa.count, 0, JSON.stringify(frame2));
     assert.equal(frame2.tester.count, 0, JSON.stringify(frame2));
     assert.notEqual(frame2.reviewer.time, frame1.reviewer.time, JSON.stringify({ frame1, frame2 }));
     fs.mkdirSync(ART, { recursive: true });
