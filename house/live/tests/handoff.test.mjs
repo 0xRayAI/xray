@@ -309,11 +309,14 @@ test('a hotfix merge line is one reviewer packet, and the review url must match 
   assert.equal(isMergeHandoff({ ...line, kind: 'ready' }), false);
   const url = 'https://github.com/0xRayAI/xray/pull/80#pullrequestreview-12';
   assert.equal(validMergeReview(url, line), true);
+  assert.equal(validMergeReview('https://github.com/0xRayAI/xray/pull/80#issuecomment-99', line), true);
+  assert.equal(validMergeReview('https://github.com/0xRayAI/xray/pull/80#discussion_r99', line), true);
   assert.equal(validMergeReview('https://github.com/0xRayAI/xray/pull/81#pullrequestreview-12', line), false);
+  assert.equal(validMergeReview('https://github.com/0xRayAI/other/pull/80#issuecomment-99', line), false);
   assert.equal(validMergeReview('https://github.com/0xRayAI/xray/pull/80', line), false);
 });
 
-test('merging a hotfix enqueues one critic merge line, and a legacy ack needs no review url', async () => {
+test('merging a hotfix enqueues one critic merge line, and the ack stores a review link', async () => {
   const app = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app');
   const data = fs.mkdtempSync(path.join(os.tmpdir(), 'hotfix-merge-'));
   const forgeKey = 'forge-key-' + crypto.randomBytes(6).toString('hex');
@@ -367,15 +370,22 @@ test('merging a hotfix enqueues one critic merge line, and a legacy ack needs no
     assert.equal(merge.sha, head);
     assert.equal(merge.id, `handoff:0xrayai/xray#80:merge:${head}`);
     assert.equal(lines.some(l => l.number === 81), false);
+    const review = 'https://github.com/0xRayAI/xray/pull/80#issuecomment-99';
     const bare = await fetch(base + '/inbox/critic/ack', { method: 'POST', headers: auth(criticKey, { 'Content-Type': 'application/json' }), body: JSON.stringify({ id: merge.id }) });
-    assert.equal(bare.status, 200);
-    assert.equal((await bare.json()).acked, 1);
+    assert.equal(bare.status, 400);
+    const still = await (await fetch(base + '/inbox/critic', { headers: auth(criticKey) })).json();
+    assert.equal(still.lines.some(l => l.id === merge.id), true);
+    const wrong = await fetch(base + '/inbox/critic/ack', { method: 'POST', headers: auth(criticKey, { 'Content-Type': 'application/json' }), body: JSON.stringify({ id: merge.id, review: 'https://github.com/0xRayAI/xray/pull/81#pullrequestreview-12' }) });
+    assert.equal(wrong.status, 400);
+    const linked = await fetch(base + '/inbox/critic/ack', { method: 'POST', headers: auth(criticKey, { 'Content-Type': 'application/json' }), body: JSON.stringify({ id: merge.id, review }) });
+    assert.equal(linked.status, 200);
+    assert.equal((await linked.json()).acked, 1);
     const gone = await (await fetch(base + '/inbox/critic', { headers: auth(criticKey) })).json();
     assert.equal(gone.lines.some(l => l.id === merge.id), false);
     const archived = [];
     const walk = dir => { for (const name of fs.readdirSync(dir)) { const p = path.join(dir, name); if (fs.statSync(p).isDirectory()) walk(p); else if (name === 'acks.jsonl') archived.push(...fs.readFileSync(p, 'utf8').split('\n').filter(Boolean)); } };
     walk(path.join(data, 'archive'));
-    assert.ok(archived.some(row => row.includes(merge.id) && !row.includes('pullrequestreview')));
+    assert.ok(archived.some(row => row.includes(merge.id) && row.includes('issuecomment-99')));
   } finally {
     srv.kill();
     await new Promise(r => srv.exitCode != null || srv.signalCode ? r() : srv.once('exit', r));

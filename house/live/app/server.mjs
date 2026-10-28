@@ -747,16 +747,21 @@ function ackLines(seat, what, review) {
     : arr.some(l => l.id === what) ? [what] : null;
   if (!ids) return -1;
   const lineOf = id => arr.find(l => l.id === id);
+  const single = typeof what === 'string' && what !== 'all' && what !== 'stale';
+  let blocked = false;
   for (const id of ids) {
     if (have.has(id)) continue;
-    have.add(id); n++;
     const line = lineOf(id);
+    if (line && isMergeHandoff(line) && !validMergeReview(review, line)) { blocked = true; continue; }
+    have.add(id); n++;
     const row = { seat, line: id, t_ct: ctStamp(Date.now()) };
-    if (line && isMergeHandoff(line) && validMergeReview(review, line)) row.review = review;
+    if (line && isMergeHandoff(line)) row.review = review;
     appendArchive('acks', row);
   }
   const live = new Set(arr.map(l => l.id)); inboxAcks[seat] = [...have].filter(id => live.has(id)).slice(-6000);
-  bfWrite('acks.json', JSON.stringify(inboxAcks)); return n;
+  bfWrite('acks.json', JSON.stringify(inboxAcks));
+  if (single && blocked && n === 0) return -2;
+  return n;
 }
 // Closed items (nudge skips them): the latest close / merge vs reopen event per repo#number, from the merged feed. A line
 // or card on a closed or merged PR / issue is done even when the board no longer carries its card.
@@ -3613,6 +3618,7 @@ async function handle(req, res) {
     if (!what) return json(req, res, 400, { error: 'id, upto, stale, or all required' });
     const review = d && typeof d.review === 'string' && d.review.length <= 300 ? d.review : '';
     const n = ackLines(who, what, review); touchSeat(who);
+    if (n === -2) return json(req, res, 400, { error: 'merge handoff requires a review link' });
     if (n < 0) return json(req, res, 404, { error: 'no such line' });
     if (n) serverActivity(who, 'turn', 'end', 'ack');
     if (n > 0) publishHeader();   // work tracking moves the packet to acked

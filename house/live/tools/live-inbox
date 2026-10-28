@@ -12,7 +12,9 @@ and its --turn end post nothing and leave the claim file unchanged. `--release` 
 nothing. The wake trap posts `--turn end` and then runs `--release` on any shell exit, so a crash still closes the turn.
 Before that post, WAKE-ROUTINE step 7 asks "anything new without a card?" and files each new item as a card (`From:`, `Waiting on:`, `Owner:`). This command posts the turn line. It does not open the card.
 A read never acks. The ack is the receipt (the pop) and a seat sends it after it handles the line, with
---ack or --pop <id> (one line) or --ack all / --pop all (everything open). --ack stale lists lines with a close or merge
+--ack or --pop <id> (one line) or --ack all / --pop all (everything open). A kind=merge handoff is rejected unless
+--review is a review or comment URL on that pull, and the acked line stores the link. Other kinds ack as today.
+--ack all and --ack stale leave a merge line open when it has no review link. --ack stale lists lines with a close or merge
 event, or a closed or done card, and does not ack them. A missing card stays. --ack stale --apply acks the ids just listed.
 --upto <id> acks the stored prefix through that id. A plain read still shows a merged card until one of those receipts.
 --peek means the same as a plain read.
