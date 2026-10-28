@@ -60,6 +60,7 @@ test('a seat key can post one station nudge and a loose line is refused', async 
       PATH: process.env.PATH,
       MESH_DATA_DIR: data,
       SERVER_ROUTING: 'off',
+      STATION_NUDGE: 'off',
       SEAT_KEYS: JSON.stringify(keys),
     },
     stdio: ['ignore', 'pipe', 'pipe'],

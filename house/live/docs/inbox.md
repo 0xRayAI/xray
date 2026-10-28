@@ -217,7 +217,7 @@ Receipt: `200` with `added: 1`, then `wake: <seat> ok` in the server log, then t
 
 Boot on every turn stays the rule. This poll is only the reminder after a summary. A memory note is not that re-read.
 
-`live-inbox <seat> --station` posts one line, `nudge:station:<seat>:<Chicago hour>`, with the sentence `Run station and re-read OP-PROC`. The line type is `nudge` and the kind is `station`. It is not a packet. `house/live/bin/station-nudge` posts that line for forge, critic, and blinky, and for arch1 when that id is in `inbox-roles.json`. It runs on weekdays from 7:30 to 18:00 America/Chicago. A failed post is logged without the key and retried on the next tick. `house/live/bin/com.burst.station-nudge.plist` is a template. Do not load it. The served board returns 403 for this line until that build has the same gate.
+`live-inbox <seat> --station` posts one line, `nudge:station:<seat>:<Chicago hour>`, with the sentence `Run station and re-read OP-PROC`. The line type is `nudge` and the kind is `station`. It is not a packet. `house/live/bin/station-nudge` posts that line for forge, critic, and blinky, and for arch1 when that id is in `inbox-roles.json`. It runs on weekdays from 7:30 to 18:00 America/Chicago. A failed post is logged without the key and retried on the next tick. The board tick posts that line on the half hour, weekdays 7:30 through 17:30 America/Chicago. `house/live/bin/com.burst.station-nudge.plist` is a template and is not loaded. The served board returns 403 for this line until that build has the same gate.
 
 ## Arch1 / CLI seats (Grok CLI)
 

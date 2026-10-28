@@ -32,6 +32,7 @@ import { missingHandoffs, hotfixMergeLine, isHotfixTitle, isMergeHandoff, validM
 import { clockStamp, writeStartAfter } from './chicago-stamp.mjs';
 import { createBatch } from './pr-batch.mjs';
 import { idsToAck } from './ci-clear.mjs';
+import { stationDue } from './station-tick.mjs';
 const batch = createBatch();
 
 const PORT = process.env.PORT === '0' ? 0 : (Number(process.env.PORT) || 8080);   // PORT=0: the OS picks a free port (tests); the log line names it
@@ -2040,6 +2041,32 @@ function clearClosedWork(fleet) {
   return changed ? { ...fleet, seats, working } : fleet;
 }
 setInterval(() => governorRun(), GOV_MS).unref();
+// Weekday half hour. PORT 0 is a test listen and stays quiet unless STATION_NUDGE=on.
+let stationPosted = '';
+function stationClock(now) {
+  const raw = String(process.env.STATION_NOW || '').trim();
+  if (!raw) return now;
+  const parsed = new Date(raw);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+function stationTickOn() {
+  if (process.env.STATION_NUDGE === 'off') return false;
+  if (process.env.STATION_NUDGE === 'on') return true;
+  return process.env.PORT !== '0';
+}
+function stationTick(now = new Date()) {
+  if (!stationTickOn()) return;
+  const when = stationClock(now);
+  if (!when) return;
+  const due = stationDue(when, stationPosted, SEAT_IDS);
+  if (!due) return;
+  const r = postSeatLines({ lines: due.lines }, null);
+  if (r.status !== 200) return;
+  stationPosted = due.hour;
+  if (r.added) { seq++; header = mergedHeader(); fullDirty = true; }
+}
+setInterval(() => { try { stationTick(); } catch { /* the next minute retries */ } }, 60000).unref();
+try { stationTick(); } catch { /* the next minute retries */ }
 header = mergedHeader();
 function full() {   // built lazily: only the first full GET after a change pays for stringify + gzip
   refreshWorking();
