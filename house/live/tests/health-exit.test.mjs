@@ -36,6 +36,7 @@ function runSupervisor(port, child, extra = {}) {
       HEALTH_CHILD: child,
       HEALTH_STDIO: 'ignore',
       HEALTH_EXIT_MISS_MS: '400',
+      HEALTH_EXIT_BOOT_MS: '400',
       HEALTH_EXIT_EVERY_MS: '40',
       HEALTH_EXIT_GRACE_MS: '250',
       HEALTH_EXIT_TIMEOUT_MS: '100',
@@ -72,6 +73,28 @@ test('a live /healthz stays up until a stop exits 0', async () => {
   assert.equal(child.exitCode, null);
   child.kill('SIGTERM');
   assert.equal(await waitExit(child), 0);
+  fs.unlinkSync(stub);
+});
+
+test('a quiet boot stays up through the short miss and exits at the boot limit', async () => {
+  const port = await freePort();
+  const stub = writeStub('health-exit-boot.mjs', `
+    import http from 'node:http';
+    const server = http.createServer(() => {});
+    server.listen(Number(process.env.PORT), '127.0.0.1');
+    process.on('SIGTERM', () => {});
+    process.on('SIGUSR2', () => {});
+  `);
+  const child = runSupervisor(port, stub, {
+    HEALTH_EXIT_MISS_MS: '200',
+    HEALTH_EXIT_BOOT_MS: '900',
+    HEALTH_EXIT_EVERY_MS: '40',
+    HEALTH_EXIT_TIMEOUT_MS: '50',
+    HEALTH_EXIT_GRACE_MS: '200',
+  });
+  await new Promise((resolve) => setTimeout(resolve, 400));
+  assert.equal(child.exitCode, null);
+  assert.equal(await waitExit(child), 1);
   fs.unlinkSync(stub);
 });
 
