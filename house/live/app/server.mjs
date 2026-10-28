@@ -1212,10 +1212,10 @@ function mergedEventFor(card, events) {
   if (!repo || !Number.isInteger(number)) return null;
   return (events || []).find(e => e && e.kind === 'merged' && String(e.repo || '').toLowerCase() === repo && Number(e.number) === number) || null;
 }
-// One row per settled card per process. The board clock moves every pass; stamping that clock
-// on every pass filled the day file with the same closed cards (multi-GB) and the heap parsed them.
+// One row per settled card. The close time is the card's own closed_t, not the board clock.
+// A moving clock made every restart a new row and filled the day file.
 const settledOnce = new Set();
-/** Final merged or closed rows the display cap or the 24h window left off the board. The first stamp is this write, so a newer live snapshot does not stay last. */
+/** Final merged or closed rows the display cap or the 24h window left off the board. */
 function archiveFinals(settled, stamp) {
   const events = githubEvents();
   const rows = [];
@@ -1234,10 +1234,13 @@ function archiveFinals(settled, stamp) {
     const ident = [c.key, 'done', 'closed', verb].join('|').toLowerCase();
     if (settledOnce.has(ident)) continue;
     settledOnce.add(ident);
+    const closedMs = Number(c.closed_t);
+    const beatMs = Number(c.last_beat_t);
+    const stableMs = Number.isFinite(closedMs) && closedMs > 0 ? closedMs : (Number.isFinite(beatMs) && beatMs > 0 ? beatMs : 0);
     archiveCard({
       ...c, state: 'closed', stage: 'done', verb,
       merged_by: (hit && (hit.merged_by || hit.from)) || c.merged_by,
-      updated_ct: stamp,
+      updated_ct: stableMs ? new Date(stableMs).toISOString() : stamp,
     }, stamp);
   }
 }
