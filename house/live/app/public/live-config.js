@@ -186,12 +186,76 @@
   };
   // ONE derived seat state, used by the header chip text, its dot and the canvas node alike:
   //   working (in-flight spinner) > live (a ping on the board right now) > active (fleet, last 15 min) > idle
+  // lit is working only. seen is a recent ping or a 15-minute beat, and it is not the working sheen.
   L.seatState = function (working, live, active) {
     return working ? 'working' : live ? 'live' : active ? 'active' : 'idle';
   };
   var SEAT_WORD = { working: 'WORKING', live: 'LIVE', active: 'ACTIVE', idle: 'IDLE' };
   L.seatView = function (st) {   // everything the chip and the node show, from that one state
-    return { word: SEAT_WORD[st] || 'IDLE', lit: st !== 'idle', blink: st === 'working', nodeWorking: st === 'working' };
+    return {
+      word: SEAT_WORD[st] || 'IDLE',
+      lit: st === 'working',
+      blink: st === 'working',
+      nodeWorking: st === 'working',
+      seen: st === 'live' || st === 'active'
+    };
+  };
+  // A seat quiet this long is dormant. Seven days is the named count for that class.
+  L.DORMANT_MS = 7 * 24 * 60 * 60 * 1000;
+  L.seatDormant = function (lastCt, now) {
+    var t = typeof lastCt === 'number' ? lastCt : Date.parse(lastCt || '');
+    if (!(t > 0)) return false;
+    return (now || Date.now()) - t >= L.DORMANT_MS;
+  };
+  L.workOnKey = function (raw) {
+    var m = /([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+)#(\d+)/.exec(String(raw || '').trim());
+    return m ? m[1].toLowerCase() + '#' + m[2] : '';
+  };
+  L.cardWorkKey = function (c) {
+    if (!c) return '';
+    if (c.repo != null && c.number != null && String(c.repo)) return L.workOnKey(String(c.repo) + '#' + c.number);
+    return L.workOnKey(c.key);
+  };
+  L.seatWorkOn = function (fleet, seat) {
+    if (!fleet || !seat) return '';
+    var names = [seat, String(seat).toLowerCase()];
+    if (seat === 'blinky' || seat === 'Coord' || String(seat).toLowerCase() === 'blinky') names.push('blinky', 'Coord');
+    var working = fleet.working || {};
+    var seats = fleet.seats || {};
+    var mark = '';
+    for (var i = 0; i < names.length; i++) {
+      var row = working[names[i]];
+      if (row && row.working_on) { mark = row.working_on; break; }
+    }
+    if (!mark) {
+      for (var j = 0; j < names.length; j++) {
+        var src = seats[names[j]];
+        if (src && src.working_on) { mark = src.working_on; break; }
+      }
+    }
+    return L.workOnKey(mark);
+  };
+  L.cardInWork = function (c, fleet) {
+    var want = L.cardWorkKey(c);
+    var seat = c && (c._seat || c.seat);
+    if (!want || !seat) return false;
+    return L.seatWorkOn(fleet, seat) === want;
+  };
+  L.rosterKept = function (rows, feed) {
+    var fleet = feed && feed.fleet;
+    var seats = fleet && fleet.seats;
+    if (!seats || typeof seats !== 'object') return rows || [];
+    var keys = {};
+    Object.keys(seats).forEach(function (k) { keys[String(k).toLowerCase()] = 1; });
+    var products = {};
+    var nodes = feed.product_nodes;
+    if (Array.isArray(nodes)) nodes.forEach(function (n) { if (typeof n === 'string' && n) products[n.toLowerCase()] = 1; });
+    return (rows || []).filter(function (a) {
+      var low = String((a && a[0]) || '').toLowerCase();
+      if (!low) return false;
+      if (products[low]) return true;
+      return !!keys[low];
+    });
   };
   function freshClock(ms) {
     var m = Math.max(1, Math.round(ms / 60000));

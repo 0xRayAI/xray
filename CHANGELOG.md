@@ -2,6 +2,7 @@
 
 Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 
+- A prompt pulse spins only the card named by working_on. A roster row is a fleet seat or a product node, and a seat quiet for 7 days is dormant. Seen is not working. A merge or a GitHub write lights the seat. A finished cloud agent stamps cloud.last_ct, and an empty open set leaves CloudAgents off. An owner comment or push moves a stall card. bifrost #5 #6 #7 #8 #9 #10 #12.
 - Upkeep and reminders are scripts with no model call. A missing prompt, drift, or a dead cron is one card. The local reminder writes station.md. #577.
 - A same-path cluster is one tip and one pull. Lots of small cards stay. R opens the pull. A tips it. A blocker hotfix, a different deploy surface, or a soft follow-up stays a solo tip. #694.
 - A same-path cluster is one tip and one pull. Lots of small cards stay. A blocker hotfix, a different deploy surface, or a soft follow-up stays a solo tip. #694.

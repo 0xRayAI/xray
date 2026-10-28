@@ -1652,6 +1652,11 @@ function mergedHeader(now = Date.now()) {
   const cf = applyCloudOwners(h.fleet, h.cloud_agents, now); if (cf) h.fleet = cf;   // a running agent stays on its own id; the seat stays idle
   if (h.fleet) h.fleet = stampClockTree(h.fleet);
   if (h.fleet) h.fleet.seat_display = { ...SEAT_DISPLAY, ...jsonEnvObj('SEAT_DISPLAY_NAMES') };
+  if (h.fleet && h.fleet.cloud && typeof h.fleet.cloud === 'object' && !Array.isArray(h.fleet.cloud)) {
+    const nodes = Array.isArray(h.product_nodes) ? h.product_nodes.filter(n => n !== 'burst-live') : [];
+    if (!nodes.includes('CloudAgents')) nodes.push('CloudAgents');
+    h.product_nodes = nodes;
+  }
   h.freshness = stampClockTree({
     github_latest_ct: githubDataAt ? new Date(githubDataAt).toISOString() : null,
     github_card_latest_ct: githubCardAt ? new Date(githubCardAt).toISOString() : null,
@@ -1925,6 +1930,7 @@ function buildLoginMap() {
 }
 function loginMap() { if (!loginToSeat) loginToSeat = buildLoginMap(); return loginToSeat; }
 function githubWorkKind(kind) {
+  if (kind === 'merged') return true;
   if (CLOSE_KINDS.has(kind)) return false;
   return GH_WORK_KINDS.has(kind) || kind.startsWith('issue_');
 }
@@ -1937,10 +1943,12 @@ function workOnOf(e) {
 }
 function seatOfGithub(e) {
   const map = loginMap();
-  for (const key of ['actor', 'author', 'sender', 'user', 'merged_by', 'triggering_actor']) {
+  for (const key of ['actor', 'author', 'sender', 'user', 'merged_by', 'triggering_actor', 'from', 'credit']) {
     const login = e[key];
-    if (typeof login !== 'string' || !login) continue;
-    const hit = map.get(login.toLowerCase());
+    if (typeof login !== 'string' || !login.trim()) continue;
+    const low = login.trim().toLowerCase();
+    if (SEAT_IDS.includes(low)) return low;
+    const hit = map.get(low);
     if (hit) return hit;
   }
   const blob = ['actor', 'label', 'branch', 'ref', 'head', 'head_ref', 'title', 'source'].map(k => typeof e[k] === 'string' ? e[k] : '').join(' ');

@@ -117,10 +117,40 @@ test('feed JSON drops burst-live from product_nodes and services', async () => {
   const srv = await boot(data);
   try {
     const live = await liveOf(srv.base);
-    assert.deepEqual(live.product_nodes, ['Bifrost']);
+    assert.deepEqual(live.product_nodes, ['Bifrost', 'CloudAgents']);
     assert.deepEqual(live.services, ['GitHub']);
     assert.equal(JSON.stringify(live.product_nodes).includes('burst-live'), false);
     assert.equal(JSON.stringify(live.services).includes('burst-live'), false);
+  } finally {
+    await stop(srv.child);
+    fs.rmSync(data, { recursive: true, force: true });
+  }
+});
+
+test('a merge with no actor still lights the seat when from is the seat', async () => {
+  const data = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-merge-'));
+  const now = new Date().toISOString();
+  writeFeed(data, {
+    generated_at: now,
+    product_nodes: ['Bifrost'],
+    fleet: { window_min: 15, seats: { arch1: { active: false, working: false, last_ct: now } }, cloud: { open_agents: [], active: false } },
+    events: [{ id: 'm698', t_ct: now, kind: 'merged', repo: '0xRayAI/xray', number: 698, from: 'arch1', label: 'merged' }],
+  });
+  const srv = await boot(data);
+  try {
+    let live = null;
+    for (let i = 0; i < 40; i++) {
+      live = await (await fetch(srv.base + '/live-events.json')).json();
+      if (live.fleet && live.fleet.seats && live.fleet.seats.arch1 && live.fleet.seats.arch1.working) break;
+      await new Promise(r => setTimeout(r, 50));
+    }
+    assert.equal(live.fleet.seats.arch1.working, true);
+    assert.equal(live.fleet.working.arch1.via, 'github');
+    assert.equal(live.fleet.seats.arch1.working_on, undefined);
+    assert.equal(live.fleet.working.arch1.working_on, undefined);
+    assert.equal(live.fleet.cloud.working, false);
+    assert.ok(live.product_nodes.includes('CloudAgents'));
+    assert.equal(live.product_nodes.includes('burst-live'), false);
   } finally {
     await stop(srv.child);
     fs.rmSync(data, { recursive: true, force: true });

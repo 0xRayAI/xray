@@ -783,7 +783,18 @@ export function applyCloudOwners(fleet, rows, now = Date.now()) {
     }
     f.seats[seat] = next;
   }
+  let last = Date.parse(f.cloud.last_ct || '');
+  if (!Number.isFinite(last)) last = 0;
+  let bumped = false;
+  for (const row of list) {
+    if (!row || !AGENT_ID.test(String(row.bcId || ''))) continue;
+    for (const key of ['updated_ct', 'finished_ct', 't_ct']) {
+      const t = Date.parse(row[key] || '');
+      if (Number.isFinite(t) && t > last) { last = t; bumped = true; }
+    }
+  }
   f.cloud = { ...f.cloud, active: open.size > 0, open_agents: [...open].sort(), working: open.size > 0 };
+  if (bumped) f.cloud.last_ct = new Date(last).toISOString();
   f.active = Object.values(f.seats).filter(v => v.active && !v.external).length;
   if (!fleet) f.total = Object.keys(f.seats).length;
   return f;
