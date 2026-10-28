@@ -1,5 +1,7 @@
 # Inbox
 
+Upkeep findings are one card or one inbox line. The watcher check is [Inbox watcher](../../../grok-bot/OP-PROC.md#inbox-watcher). The scripts do not ack and do not print keys.
+
 ## Who fixes stopped work
 
 - **Bifrost owns the board.** `seats.coord` stays blinky. blinky plans the next wave. Bifrost routes the inbox and keeps wave timing.

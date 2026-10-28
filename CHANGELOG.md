@@ -2,6 +2,7 @@
 
 Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 
+- Upkeep and reminders are scripts with no model call. A missing prompt, drift, or a dead cron is one card. The local reminder writes station.md. #577.
 - A same-path cluster is one tip and one pull. Lots of small cards stay. R opens the pull. A tips it. A blocker hotfix, a different deploy surface, or a soft follow-up stays a solo tip. #694.
 - A same-path cluster is one tip and one pull. Lots of small cards stay. A blocker hotfix, a different deploy surface, or a soft follow-up stays a solo tip. #694.
 - A missed /healthz makes the supervisor exit 1 so ON_FAILURE replaces the one replica. The replica pid is not SIGKILL'd. #661.
