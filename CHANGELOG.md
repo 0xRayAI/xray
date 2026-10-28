@@ -2,6 +2,7 @@
 
 Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 
+- The board tick posts one station nudge per seat on the weekday half hour. The plist template stays unloaded. bifrost #11.
 - Reading a plate file holds that card, so a search of its files runs. The code is on #644.
 - Codex 70 denies a write only when that path sits in a stale copy of this repo. A file outside the repo is allowed. A worktree on main is allowed. The code is on #646.
 - A red CI check writes a card when the pull has none, then a `ci_fail` inbox line for the next owner, else the owner. One open line per head. A green head clears it. #648.
@@ -17,6 +18,7 @@ Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 
 ### 🐛 Bug Fixes
 
+- A board tick posts nudge:station on the weekday half hour. The plist stays unloaded. bifrost #11.
 - A plate file holds its card. Reading `docs-site/docs/plates/<id>.md` keeps that card, and a search of the card's files runs.
 - Codex 70 denies a write in this stale checkout. A path outside this copy is allowed. A worktree is judged on its own HEAD.
 - Wear keeps the station call on the factory pre-compact hook. A same-named user script that does not launch the runner stays in place.
