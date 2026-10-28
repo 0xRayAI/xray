@@ -17,6 +17,8 @@ import json, os, sys, time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+import ci_inbox
+
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE / "routing"))
 import inbox  # noqa: E402
@@ -453,6 +455,60 @@ def cmd_pass(now=None):
         written = inbox.deliver(adapt(new), adapt([ev[k] for k in ids]), directory=INBOX, roles=roles,
                                 now=datetime.fromtimestamp(now, timezone.utc), activity=acts)
         lines = sum(written.values())
+        cached = adapt([ev[k] for k in ids])
+
+        def seat_named(name):
+            hit = alias_seat(name, roles)
+            if hit:
+                return hit
+            want = name.casefold().removesuffix("[bot]")
+            for key, seat in aliases_of(roles).items():
+                if str(key).casefold() == want and seat:
+                    return seat
+            return ""
+
+        def ci_seat(repo, number):
+            rows = []
+            for event in cached:
+                try:
+                    got = int(event.get("number"))
+                except (TypeError, ValueError):
+                    continue
+                if str(event.get("repo") or "").lower() != repo or got != number:
+                    continue
+                if str(event.get("kind") or "") not in ("pr_open", "issue_open", "pr_update", "pr_commit"):
+                    continue
+                rows.append(event)
+            if not rows:
+                return ""
+            for event in sorted(rows, key=lambda item: str(item.get("t_ct") or ""), reverse=True):
+                packet = event.get("packet") if isinstance(event.get("packet"), dict) else {}
+                raw = str(packet.get("next owner") or "").strip()
+                for name in ([raw, raw.split()[0]] if raw else []):
+                    hit = seat_named(name)
+                    if hit:
+                        return hit
+            newest = max(rows, key=lambda item: str(item.get("t_ct") or ""))
+            for key in ("from", "actor"):
+                hit = seat_named(str(newest.get(key) or ""))
+                if hit:
+                    return hit
+            return ""
+
+        extra = ci_inbox.ci_fail_lines(cached, adapt(new), ci_seat)
+        by_seat = {}
+        for line in extra:
+            by_seat.setdefault(line["seat"], []).append(line)
+        for seat, group in by_seat.items():
+            path = INBOX / f"{seat}.jsonl"
+            known = inbox._known_ids(path)
+            fresh = []
+            for line in group:
+                if line["id"] in known or set(line) - set(inbox._FIELDS):
+                    continue
+                known.add(line["id"])
+                fresh.append(line)
+            lines += inbox._append(path, fresh)
         inbox.maybe_board(len(new), log=lambda m: print(m, file=sys.stderr))
     sig = {k: v for k, v in sig.items() if k in seen or k in ev}
     _save(STATE, {"seeded": True, "seeded_at": seeded_at, "seen": seen, "sent": st.get("sent") or [], "ments": ments, "sig": sig})

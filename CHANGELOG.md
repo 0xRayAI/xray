@@ -4,7 +4,7 @@ Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 
 - Reading a plate file holds that card, so a search of its files runs. The code is on #644.
 - Codex 70 denies a write only when that path sits in a stale copy of this repo. A file outside the repo is allowed. A worktree on main is allowed. The code is on #646.
-- A red CI check writes a card when the pull has none, then a `ci_fail` inbox line for the next owner, else the owner. One open line per head. Ships in the 4.1.5 cut. #648. This pull does not include that code.
+- A red CI check writes a card when the pull has none, then a `ci_fail` inbox line for the next owner, else the owner. One open line per head. A green head clears it. #648.
 - A cloud-activity stamp reads GNU `stat -c` and BSD `stat -f`, so a fresh launch stamp skips the second post on macOS.
 - The rotation record names the public board host at `house/live/tools/load-wave-seed.mjs:14`. The page host stays `https://bifrost.0xray.dev`.
 - Wear treats a pinned agent body in `shipped-skill-blobs.json` as a shipped catalog copy and removes it on a non-catalog seat. A sound seat drops the mill and inspect files left by 4.1.1 and 4.1.2.
@@ -36,6 +36,7 @@ Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 - A reboot keeps the volume. Each card is one line in the card book, and event days stay files. Redis refills from both. #679.
 - A packet next owner is an inbox tip when the opener is someone else. The opener's own line still drops. #660.
 - Pin qs to 6.17.0 in the root lock and the docs-site lock, including nested body-parser. #645.
+- A red CI check writes a card when the pull has none, then one `ci_fail` inbox line for that head. A green head clears it. #648.
 
 ## [4.1.4] - 2026-10-26
 
