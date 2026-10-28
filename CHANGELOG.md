@@ -2,6 +2,7 @@
 
 Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 
+- A same-path cluster is one tip and one pull. Lots of small cards stay. R opens the pull. A tips it. A blocker hotfix, a different deploy surface, or a soft follow-up stays a solo tip. #694.
 - A same-path cluster is one tip and one pull. Lots of small cards stay. A blocker hotfix, a different deploy surface, or a soft follow-up stays a solo tip. #694.
 - A missed /healthz makes the supervisor exit 1 so ON_FAILURE replaces the one replica. The replica pid is not SIGKILL'd. #661.
 - An open issue whose author is outside the fleet still gets a card. One backfill fills a number that has no open event. A second pass does not. #576.
