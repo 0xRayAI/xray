@@ -2041,7 +2041,7 @@ function clearClosedWork(fleet) {
   return changed ? { ...fleet, seats, working } : fleet;
 }
 setInterval(() => governorRun(), GOV_MS).unref();
-// Weekday half hour. PORT 0 is a test listen and stays quiet unless STATION_NUDGE=on.
+// Weekday half hour. A test bind stays quiet. Railway posts unless STATION_NUDGE=off.
 let stationPosted = '';
 function stationClock(now) {
   const raw = String(process.env.STATION_NOW || '').trim();
@@ -2050,8 +2050,10 @@ function stationClock(now) {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 function stationTickOn() {
-  if (process.env.STATION_NUDGE === 'off') return false;
-  if (process.env.STATION_NUDGE === 'on') return true;
+  const flag = String(process.env.STATION_NUDGE || '').trim();
+  if (flag === 'off') return false;
+  if (flag === 'on') return true;
+  if (!process.env.RAILWAY_ENVIRONMENT) return false;
   return process.env.PORT !== '0';
 }
 function stationTick(now = new Date()) {
