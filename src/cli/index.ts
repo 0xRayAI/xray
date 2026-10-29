@@ -881,7 +881,7 @@ program
       await initializeGovernanceIntegration();
     }
 
-    const cycle = InferenceCycle.getInstance(projectRoot, { skipDeployVerify: options.noVerify ?? true, skipApply: options.noApply ?? false, skipResearcherReview: options.noResearcherReview ?? false, force: options.force ?? false });
+    const cycle = InferenceCycle.getInstance(projectRoot, { skipDeployVerify: options.verify === false, skipApply: options.apply === false, skipResearcherReview: options.researcherReview === false, force: options.force ?? false });
     const result = await cycle.maybeRunCycle();
 
     if (options.json) {

@@ -678,11 +678,17 @@ function pageKeep(list, query, idOf) {
 export function queryTransitions(query = {}) {
   const card = String(query.card || '').toLowerCase();
   const verb = String(query.transition || '');
+  const day = validArchiveDate(query.day) ? String(query.day) : '';
   let rows = scanTransitionRows();
   if (card) rows = rows.filter(row => String(row.card || '').toLowerCase() === card);
   if (verb) rows = rows.filter(row => row.transition === verb);
+  if (day) rows = rows.filter(row => chicagoDay(row.t_ct) === day);
   rows = rows.filter(row => inWindow(row.t_ct, query.since, query.until));
   rows.sort((a, b) => (Date.parse(a.t_ct) || 0) - (Date.parse(b.t_ct) || 0) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  if (day && !(query && query.cursor)) {
+    const limit = clampLimit(query && query.limit);
+    if (rows.length > limit) rows = rows.slice(rows.length - limit);
+  }
   const paged = pageKeep(rows, query, row => row.id);
   return { transitions: paged.rows, next: paged.next };
 }

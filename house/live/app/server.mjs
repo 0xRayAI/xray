@@ -164,6 +164,8 @@ let rosterSeats = null;
 function creditOf(e) {
   if (typeof e.credit === 'string' && e.credit) return e.credit;
   if (!rosterSeats) { try { rosterSeats = new Set((JSON.parse(fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'collector', 'fleet-roster.json'), 'utf8')).seats || []).map(x => String(x).toLowerCase())); } catch { rosterSeats = new Set(); } }
+  const named = String(e.seat || '').toLowerCase();
+  if (named && named !== 'github') return named;
   const f = String(e.from || '').toLowerCase();
   if (f === 'coord') return cosSeat();
   if (HUMAN_ALIASES[f]) return HUMAN_ALIASES[f];
@@ -3491,6 +3493,7 @@ async function handle(req, res) {
       transition: url.searchParams.get('transition') || '',
       since: url.searchParams.get('since') || '',
       until: url.searchParams.get('until') || '',
+      day: url.searchParams.get('day') || '',
       limit: url.searchParams.get('limit') || '',
       cursor: url.searchParams.get('cursor') || '',
     };
