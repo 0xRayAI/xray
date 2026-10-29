@@ -260,6 +260,7 @@ export function generateReasoning(
   score: number,
   level: ComplexityLevel
 ): string[] {
+  void score;
   const reasoning: string[] = [];
 
   // File count reasoning
@@ -295,12 +296,12 @@ export function generateReasoning(
     reasoning.push(`${metrics.dependencies} dependencies increase coordination needs`);
   }
 
-  // Score-based reasoning
-  if (score > 75) {
+  // The level comes from the same cutoff table as getLevelFromScore.
+  if (level === "enterprise") {
     reasoning.push("Enterprise-level complexity requires full orchestration");
-  } else if (score > 50) {
+  } else if (level === "complex") {
     reasoning.push("Complex task benefits from multi-agent coordination");
-  } else if (score > 25) {
+  } else if (level === "moderate") {
     reasoning.push("Moderate complexity appropriate for specialized agents");
   } else {
     reasoning.push("Simple task suitable for direct agent assignment");

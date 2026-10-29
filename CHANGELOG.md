@@ -2,6 +2,11 @@
 
 Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 
+- `/history/transitions?day=` returns that Chicago day, and the latest rows of the day when the page is full. #16 on bifrost.
+- A score reason uses the same level as `getLevelFromScore`. #542.
+- `inference:run --no-verify` skips deploy verify, and `--no-apply` skips apply. #515.
+- An activity line with a seat is credited to that seat, not Github. #530.
+
 - Wear retargets a home Grok hook `args` path off a deleted temp checkout onto the worn package. A suit that already has a foundry inventory keeps those skills and does not gain the catalog on the next wear. #727 #728.
 - GitHub Actions workflows are locked in `.github/workflows/actions.lock`. #714.
 
