@@ -2,6 +2,9 @@
 
 Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 
+- Wear retargets a home Grok hook `args` path off a deleted temp checkout onto the worn package. A suit that already has a foundry inventory keeps those skills and does not gain the catalog on the next wear. #727 #728.
+- GitHub Actions workflows are locked in `.github/workflows/actions.lock`. #714.
+
 - After a compact, the station card says `Full: due` and keeps that line until the seat replaces it. `--prompt` stays step 1. The checklist is OP-PROC station-boot and station-nudge. #720.
 
 - Board stats sit above the mesh. The roster sits at the top of the mesh card and the timeline sits at the bottom of that card.

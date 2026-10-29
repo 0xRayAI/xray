@@ -207,7 +207,7 @@ function deepMerge(src, dest) {
   return result;
 }
 
-function syncBuiltinSkills(targetSkillsDir, packageRoot) {
+function syncBuiltinSkills(targetSkillsDir, packageRoot, allow) {
   const candidateDirs = [
     path.join(packageRoot, "dist", "skills"),
     path.join(packageRoot, "src", "skills"),
@@ -228,6 +228,7 @@ function syncBuiltinSkills(targetSkillsDir, packageRoot) {
         }
       }
       if (!entry.isDirectory() && !linkedDir) continue;
+      if (allow && !allow.has(entry.name)) continue;
       const skillMd = path.join(sourceDir, entry.name, "SKILL.md");
       if (!fs.existsSync(skillMd)) continue;
       const destMd = path.join(targetSkillsDir, entry.name, "SKILL.md");
@@ -284,7 +285,7 @@ function dropPluginSkillFiles(files) {
   return next;
 }
 
-function copyRoleAgentFiles(packageRoot, opencodeDest) {
+function copyRoleAgentFiles(packageRoot, opencodeDest, allow) {
   const dirs = [
     path.join(packageRoot, "src", "opencode", "agents"),
     path.join(packageRoot, ".opencode", "agents"),
@@ -299,6 +300,7 @@ function copyRoleAgentFiles(packageRoot, opencodeDest) {
     }
     for (const name of names) {
       if (!name.endsWith(".yml") && !name.endsWith(".yaml")) continue;
+      if (allow && !allow.has(name)) continue;
       const src = path.join(dir, name);
       let st;
       try {
@@ -315,10 +317,37 @@ function copyRoleAgentFiles(packageRoot, opencodeDest) {
   }
 }
 
+function listedNames(value) {
+  const names = [];
+  if (!value || typeof value !== "object") return names;
+  if (Array.isArray(value.skills)) names.push(...value.skills);
+  return names;
+}
+
+function inventorySkillAllow(targetDir) {
+  const file = path.join(targetDir, ".xray", "foundry-inventory.json");
+  if (!fs.existsSync(file)) return null;
+  try {
+    const inventory = JSON.parse(fs.readFileSync(file, "utf8"));
+    const names = [
+      ...listedNames(inventory.millPlant),
+      ...listedNames(inventory.soundPlant),
+      ...listedNames(inventory.blipPlant),
+      ...listedNames(inventory),
+    ];
+    if (!names.length) return null;
+    return new Set(names);
+  } catch {
+    return null;
+  }
+}
+
 function syncCostumeSkills(targetSkillsDir, packageRoot, targetDir) {
-  // Catalog skills belong on the mill suit. A blip or sound seat keeps its plant.
+  // A blip or sound seat keeps its plant. A suit that already has an inventory
+  // keeps those skills. A new mill suit still receives the catalog.
   if (targetDir && !plantIncludesMill(targetDir, packageRoot)) return 0;
-  return syncBuiltinSkills(targetSkillsDir, packageRoot);
+  const allow = targetDir && !wantsCostume(targetDir) ? inventorySkillAllow(targetDir) : null;
+  return syncBuiltinSkills(targetSkillsDir, packageRoot, allow);
 }
 
 function copyTree(src, dest, relPath = "") {
@@ -574,7 +603,7 @@ function installOpencodeBridge(targetDir, packageRoot, log) {
   } else {
     fs.mkdirSync(opencodeDest, { recursive: true });
     if (millSuit) {
-      copyRoleAgentFiles(packageRoot, opencodeDest);
+      copyRoleAgentFiles(packageRoot, opencodeDest, null);
       log("opencode-bridge", "mill suit — role files, not the costume tree", "info");
     } else {
       log("opencode-bridge", "plant seat — plugin only", "info");
@@ -745,6 +774,14 @@ function retargetEphemeralText(text, durableRoot) {
     if (scriptsAt > 0) {
       const repl = path.join(durableRoot, token.slice(scriptsAt + 1));
       if (fs.existsSync(repl)) out = out.split(token).join(repl);
+      continue;
+    }
+    const hookAt = token.indexOf("/dist/integrations/");
+    const srcAt = hookAt < 0 ? token.indexOf("/src/integrations/") : -1;
+    const relAt = hookAt >= 0 ? hookAt : srcAt;
+    if (relAt > 0) {
+      const repl = path.join(durableRoot, token.slice(relAt + 1));
+      if (!fs.existsSync(token) && fs.existsSync(repl)) out = out.split(token).join(repl);
       continue;
     }
     const runner = path.join(durableRoot, "scripts", "mjs", "run-grok-hook.mjs");

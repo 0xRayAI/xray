@@ -1075,8 +1075,10 @@ function mintConsumerSuit(millPackageRoot, targetDir, log) {
     return { suit: "dogfood", skipped: true };
   }
   const params = loadFoundryParams(targetDir);
+  const inventoryPath = path.join(targetDir, ".xray", "foundry-inventory.json");
+  const hadInventory = fs.existsSync(inventoryPath);
   const millPlant = fastenMillPlant(millPackageRoot, targetDir, log);
-  if (suitCatalogApplies(targetDir, millPlant, millPackageRoot)) {
+  if (!hadInventory && suitCatalogApplies(targetDir, millPlant, millPackageRoot)) {
     wearCatalog(millPackageRoot, targetDir);
   }
   const tree = overlayConsumerTree(targetDir, log, params);
