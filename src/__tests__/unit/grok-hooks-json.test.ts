@@ -15,6 +15,7 @@ const {
   grokHookShellCommand,
   settlePackageRoot,
   scrubEphemeralMachineGrokPins,
+  retargetHomeGrokHooks,
   isEphemeralInstallRoot,
   isIsolatedHome,
   installAllBridges,
@@ -292,6 +293,93 @@ describe('Grok hooks.json command strings', () => {
         mcpServers: { 'xray-enforcer': { env: { XRAY_ROOT: string } } };
       };
       expect(kept.mcpServers['xray-enforcer'].env.XRAY_ROOT).toBe('/home/box/other-seat');
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+    }
+  });
+
+  it('retargets home Grok hooks off a missing or foreign runner', () => {
+    const home = mkdtempSync(path.join(homedir(), 'xray-home-hook-'));
+    const durable = path.join(home, 'worn');
+    const foreign = path.join(home, 'other-tree');
+    const dead = path.join(home, 'gone-tree');
+    const runner = path.join(durable, 'scripts', 'mjs', 'run-grok-hook.mjs');
+    try {
+      mkdirSync(path.join(home, '.grok'), { recursive: true });
+      mkdirSync(path.dirname(runner), { recursive: true });
+      writeFileSync(runner, '#!/usr/bin/env node\n');
+      mkdirSync(path.join(foreign, 'scripts', 'mjs'), { recursive: true });
+      writeFileSync(path.join(foreign, 'scripts', 'mjs', 'run-grok-hook.mjs'), '#!/usr/bin/env node\n');
+      const deadCmd =
+        'LIVE_URL=https://bifrost.0xray.dev XRAY_AI_PATH=' +
+        dead +
+        ' node ' +
+        path.join(dead, 'scripts', 'mjs', 'run-grok-hook.mjs') +
+        ' pre-tool-use.js';
+      const foreignCmd = `XRAY_AI_PATH=${JSON.stringify(foreign)} node ${JSON.stringify(
+        path.join(foreign, 'scripts', 'mjs', 'run-grok-hook.mjs'),
+      )} session-start.js --hook-event=pre_compact`;
+      writeFileSync(
+        path.join(home, '.grok', 'config.toml'),
+        [
+          '[models]',
+          'default = "grok-4.7"',
+          '',
+          '[[hooks.PreToolUse]]',
+          '',
+          '[[hooks.PreToolUse.hooks]]',
+          'type = "command"',
+          `command = ${JSON.stringify(deadCmd)}`,
+          'timeout = 30',
+          '',
+          '[[hooks.PostToolUse]]',
+          '',
+          '[[hooks.PostToolUse.hooks]]',
+          'type = "command"',
+          'command = "echo leave-this"',
+          '',
+        ].join('\n'),
+      );
+      mkdirSync(path.join(home, '.grok', 'hooks'), { recursive: true });
+      writeFileSync(
+        path.join(home, '.grok', 'hooks', '0xray.json'),
+        `${JSON.stringify({
+          hooks: {
+            PreCompact: [{ hooks: [{ type: 'command', command: foreignCmd, env: { XRAY_AI_PATH: foreign, XRAY_ROOT: '/home/box/project' } }] }],
+          },
+        })}\n`,
+      );
+      mkdirSync(path.join(home, '.grok', 'plugins', '0xray', 'hooks'), { recursive: true });
+      writeFileSync(
+        path.join(home, '.grok', 'plugins', '0xray', 'hooks', 'hooks.json'),
+        `${JSON.stringify({
+          hooks: {
+            PostToolUse: [{ hooks: [{ type: 'command', command: deadCmd, env: { XRAY_AI_PATH: dead, KEEP: 'yes' } }] }],
+          },
+        })}\n`,
+      );
+      expect(retargetHomeGrokHooks(home, durable)).toBe(3);
+      const toml = readFileSync(path.join(home, '.grok', 'config.toml'), 'utf8');
+      expect(toml).toContain(runner);
+      expect(toml).toContain(`XRAY_AI_PATH=${durable}`);
+      expect(toml).toContain('LIVE_URL=https://bifrost.0xray.dev');
+      expect(toml).toContain('pre-tool-use.js');
+      expect(toml).toContain('command = "echo leave-this"');
+      expect(toml).toContain('default = "grok-4.7"');
+      expect(toml).not.toContain(dead);
+      const discovered = JSON.parse(readFileSync(path.join(home, '.grok', 'hooks', '0xray.json'), 'utf8')).hooks
+        .PreCompact[0].hooks[0] as { command: string; env: Record<string, string> };
+      expect(discovered.command).toContain(runner);
+      expect(discovered.command).toContain('--hook-event=pre_compact');
+      expect(discovered.command).not.toContain(foreign);
+      expect(discovered.env.XRAY_AI_PATH).toBe(durable);
+      expect(discovered.env.XRAY_ROOT).toBe('/home/box/project');
+      const plugin = JSON.parse(readFileSync(path.join(home, '.grok', 'plugins', '0xray', 'hooks', 'hooks.json'), 'utf8'))
+        .hooks.PostToolUse[0].hooks[0] as { command: string; env: Record<string, string> };
+      expect(plugin.command).toContain(runner);
+      expect(plugin.env.XRAY_AI_PATH).toBe(durable);
+      expect(plugin.env.KEEP).toBe('yes');
+      expect(retargetHomeGrokHooks(home, durable)).toBe(0);
     } finally {
       rmSync(home, { recursive: true, force: true });
     }
