@@ -77,6 +77,7 @@ describe("BED-MAGNETIC-MOVES-v9", () => {
       "kick",
       "closed hat",
       "open hat",
+      "open hat",
       "clap",
     ]);
     for (const sample of manifest.samples) {
