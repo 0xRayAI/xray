@@ -6,7 +6,10 @@
  */
 
 const fs = require("fs");
+const os = require("os");
 const path = require("path");
+const SUIT_BOARD = "https://bifrost.0xray.dev";
+const SEAT_NAME = /^[a-z0-9-]{2,16}$/;
 const { execFileSync } = require("child_process");
 const {
   wantsCostume,
@@ -450,17 +453,46 @@ function grokHookShellCommand(packageRoot, scriptName, extraArgs) {
   return `XRAY_AI_PATH=${JSON.stringify(packageRoot)} node ${JSON.stringify(script)} ${scriptName}${extra}`;
 }
 
-function patchGrokHookEntry(hook, packageRoot, targetDir, scriptName, extraArgs) {
+function soleSeatKey(dir) {
+  let names;
+  try {
+    names = fs.readdirSync(dir);
+  } catch {
+    return "";
+  }
+  const seats = names
+    .filter((name) => name.endsWith(".key"))
+    .map((name) => name.slice(0, -4))
+    .filter((seat) => SEAT_NAME.test(seat));
+  return seats.length === 1 ? seats[0] : "";
+}
+
+function suitHookEnv(env, home) {
+  const next = { ...(env || {}) };
+  if (!next.LIVE_URL) next.LIVE_URL = SUIT_BOARD;
+  if (!next.SEAT_KEYS_DIR) next.SEAT_KEYS_DIR = path.join(home, ".burst", "seat-keys");
+  if (!next.XRAY_SEAT) {
+    const seat = soleSeatKey(next.SEAT_KEYS_DIR);
+    if (seat) next.XRAY_SEAT = seat;
+  }
+  return next;
+}
+
+function patchGrokHookEntry(hook, packageRoot, targetDir, scriptName, extraArgs, opts) {
   if (!hook) return;
   hook.type = "command";
   hook.command = grokHookShellCommand(packageRoot, scriptName, extraArgs);
   hook.timeout = 30;
   delete hook.args;
-  hook.env = {
-    ...(hook.env || {}),
-    XRAY_ROOT: targetDir,
-    XRAY_AI_PATH: packageRoot,
-  };
+  const home = (opts && opts.home) || os.homedir();
+  hook.env = suitHookEnv(
+    {
+      ...(hook.env || {}),
+      XRAY_ROOT: targetDir,
+      XRAY_AI_PATH: packageRoot,
+    },
+    home,
+  );
 }
 
 function ensureGrokHookEvent(hooks, eventName) {
@@ -473,7 +505,7 @@ function ensureGrokHookEvent(hooks, eventName) {
   }
 }
 
-function patchGrokHooks(pluginDir, packageRoot, targetDir, log, label) {
+function patchGrokHooks(pluginDir, packageRoot, targetDir, log, label, opts) {
   packageRoot = settlePackageRoot(packageRoot, targetDir);
   const hooksDir = path.join(pluginDir, "hooks");
   const hooksPath = path.join(hooksDir, "hooks.json");
@@ -486,7 +518,7 @@ function patchGrokHooks(pluginDir, packageRoot, targetDir, log, label) {
   try {
     const hooks = JSON.parse(fs.readFileSync(hooksPath, "utf8"));
     if (!fs.existsSync(hookScript)) return;
-    writeFileIfChanged(hooksPath, patchedGrokHooksBody(hooks, packageRoot, targetDir));
+    writeFileIfChanged(hooksPath, patchedGrokHooksBody(hooks, packageRoot, targetDir, opts));
     writeGrokDiscoveredHooks(targetDir, hooksPath, log, label);
     log(label, "hooks.json patched → Grok command-string enforcement gate", "info");
   } catch (e) {
@@ -581,17 +613,18 @@ function pluginMcpBody(targetDir) {
   return JSON.stringify(buildPluginMcpJson(targetDir), null, 2) + "\n";
 }
 
-function patchedGrokHooksBody(hooks, packageRoot, targetDir) {
-  patchGrokHookEntry(hooks.hooks?.PreToolUse?.[0]?.hooks?.[0], packageRoot, targetDir, "pre-tool-use.js");
-  patchGrokHookEntry(hooks.hooks?.SessionStart?.[0]?.hooks?.[0], packageRoot, targetDir, "session-start.js");
+function patchedGrokHooksBody(hooks, packageRoot, targetDir, opts) {
+  patchGrokHookEntry(hooks.hooks?.PreToolUse?.[0]?.hooks?.[0], packageRoot, targetDir, "pre-tool-use.js", "", opts);
+  patchGrokHookEntry(hooks.hooks?.SessionStart?.[0]?.hooks?.[0], packageRoot, targetDir, "session-start.js", "", opts);
   patchGrokHookEntry(
     hooks.hooks?.UserPromptSubmit?.[0]?.hooks?.[0],
     packageRoot,
     targetDir,
     "session-start.js",
     "--hook-event=user_prompt_submit",
+    opts,
   );
-  patchGrokHookEntry(hooks.hooks?.PostToolUse?.[0]?.hooks?.[0], packageRoot, targetDir, "post-tool-use.js");
+  patchGrokHookEntry(hooks.hooks?.PostToolUse?.[0]?.hooks?.[0], packageRoot, targetDir, "post-tool-use.js", "", opts);
   ensureGrokHookEvent(hooks, "PreCompact");
   ensureGrokHookEvent(hooks, "PostCompact");
   patchGrokHookEntry(
@@ -600,6 +633,7 @@ function patchedGrokHooksBody(hooks, packageRoot, targetDir) {
     targetDir,
     "session-start.js",
     "--hook-event=pre_compact",
+    opts,
   );
   patchGrokHookEntry(
     hooks.hooks?.PostCompact?.[0]?.hooks?.[0],
@@ -607,6 +641,7 @@ function patchedGrokHooksBody(hooks, packageRoot, targetDir) {
     targetDir,
     "session-start.js",
     "--hook-event=post_compact",
+    opts,
   );
   return JSON.stringify(hooks, null, 2) + "\n";
 }

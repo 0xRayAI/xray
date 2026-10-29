@@ -1,11 +1,16 @@
 /**
  * Worn-hook sends while Bifrost is active.
- * Active means LIVE_URL, XRAY_SEAT, a seat key, and GET /healthz with board "live".
- * The four sends are a turn line, an issue tag, a pull tag, and a handoff packet.
- * A quiet board sends nothing. Prompt text and the key stay off the wire.
+ * The suit wire is chat activity, the packet, the card tag, and the turn.
+ * Chat activity is one activity-feed prompt: kind prompt, action sent, from owner, note the line.
+ * The board defaults to https://bifrost.0xray.dev and ~/.burst/seat-keys.
+ * One seat key is the seat. A shell may still set LIVE_URL, XRAY_SEAT, or SEAT_KEYS_DIR.
+ * A quiet board sends nothing. Tool output and the key stay off the wire.
  */
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
+
+const SUIT_BOARD = 'https://bifrost.0xray.dev';
 
 const TAG = /^[A-Za-z0-9 ._:@#+/\-]{1,80}$/;
 const SEAT = /^[a-z0-9-]{2,16}$/;
@@ -106,6 +111,28 @@ export function handoffFromText(text, fromSeat, now = new Date()) {
   };
 }
 
+const NOTE_DROP = /[^A-Za-z0-9 ._:@#+/?'",;!()-]/g;
+
+export function promptNote(text) {
+  const flat = String(text || '')
+    .replace(NOTE_DROP, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 240)
+    .trim();
+  return flat;
+}
+
+const OWNER_KEYS = ['prompt', 'userPrompt', 'user_prompt', 'userMessage', 'message'];
+
+export function ownerLine(event) {
+  if (!event || typeof event !== 'object') return '';
+  for (const key of OWNER_KEYS) {
+    if (typeof event[key] === 'string' && event[key].trim()) return event[key];
+  }
+  return '';
+}
+
 export function hookText(event) {
   if (!event || typeof event !== 'object') return '';
   const bits = [];
@@ -150,10 +177,32 @@ function saveState(root, state) {
   fs.renameSync(tmp, file);
 }
 
-function configOf(env) {
-  const origin = boardOrigin(env.LIVE_URL);
-  const seat = typeof env.XRAY_SEAT === 'string' ? env.XRAY_SEAT.trim() : '';
-  const keys = typeof env.SEAT_KEYS_DIR === 'string' ? env.SEAT_KEYS_DIR.trim() : '';
+function suitHome(env, home) {
+  if (typeof home === 'string' && home.trim()) return home.trim();
+  if (typeof env.HOME === 'string' && env.HOME.trim()) return env.HOME.trim();
+  return os.homedir();
+}
+
+function soleSeat(dir) {
+  let names;
+  try {
+    names = fs.readdirSync(dir);
+  } catch {
+    return '';
+  }
+  const seats = names
+    .filter((name) => name.endsWith('.key'))
+    .map((name) => name.slice(0, -4))
+    .filter((seat) => SEAT.test(seat));
+  return seats.length === 1 ? seats[0] : '';
+}
+
+function configOf(env, home) {
+  const origin = boardOrigin(env.LIVE_URL) || boardOrigin(SUIT_BOARD);
+  const keys = (typeof env.SEAT_KEYS_DIR === 'string' && env.SEAT_KEYS_DIR.trim())
+    || path.join(suitHome(env, home), '.burst', 'seat-keys');
+  let seat = typeof env.XRAY_SEAT === 'string' ? env.XRAY_SEAT.trim() : '';
+  if (!SEAT.test(seat)) seat = soleSeat(keys);
   if (!origin || !SEAT.test(seat) || !keys) return null;
   return { origin, seat, keys };
 }
@@ -177,6 +226,12 @@ function activityLine(action, tag, now) {
   const body = { t_ct, kind: 'turn', action };
   if (tag) body.tag = tag;
   return body;
+}
+
+function promptLine(seat, note, now) {
+  const t_ct = ctStamp(now);
+  if (!t_ct || !SEAT.test(seat) || !note) return null;
+  return { t_ct, seat, kind: 'prompt', action: 'sent', from: 'owner', to: seat, note };
 }
 
 async function boardLive(origin, fetchImpl, timeoutMs) {
@@ -207,7 +262,7 @@ async function postJson(url, key, body, fetchImpl, timeoutMs) {
       body: JSON.stringify(body),
       signal: ac.signal,
     });
-    return !!(res && res.status === 200);
+    return !!(res && (res.status === 200 || res.status === 202));
   } catch {
     return false;
   } finally {
@@ -221,7 +276,7 @@ export async function notifyBifrost(opts = {}) {
   const fetchImpl = opts.fetchImpl || globalThis.fetch;
   const now = opts.now instanceof Date ? opts.now : new Date();
   const sent = [];
-  const cfg = configOf(env);
+  const cfg = configOf(env, opts.home);
   if (!cfg) return { sent, reason: 'off' };
   const key = readKey(cfg.keys, cfg.seat);
   if (!key) return { sent, reason: 'off' };
@@ -243,7 +298,15 @@ export async function notifyBifrost(opts = {}) {
   } else if (opts.phase === 'end' && state.turn === 'start') {
     const line = activityLine('end', '', now);
     if (line) posts.push({ path: '/activity', body: line, mark: 'end' });
-  } else if (opts.phase === 'work') {
+  } else if (opts.phase === 'prompt' || opts.phase === 'work') {
+    if (opts.phase === 'prompt') {
+      const note = promptNote(opts.text);
+      const mark = note ? `prompt:${note}` : '';
+      if (note && !(state.tags[mark] > nowMs)) {
+        const line = promptLine(cfg.seat, note, now);
+        if (line) posts.push({ path: '/activity', body: line, mark, ttl: 60 * 1000 });
+      }
+    }
     const refs = refsFromText(opts.text);
     for (const ref of [...refs.issues, ...refs.prs]) {
       if (state.tags[ref.tag] > nowMs) continue;
@@ -260,11 +323,12 @@ export async function notifyBifrost(opts = {}) {
     const ok = await postJson(`${cfg.origin}${post.path}`, key, post.body, fetchImpl, opts.timeoutMs || 2000);
     if (!ok) continue;
     if (post.path === '/inbox') sent.push('packet');
+    else if (post.body.kind === 'prompt') sent.push('prompt');
     else if (post.body.tag) sent.push(post.body.tag);
     else sent.push(post.body.action);
     if (post.mark === 'turn') state.turn = 'start';
     else if (post.mark === 'end') state.turn = '';
-    else state.tags[post.mark] = nowMs + 60 * 60 * 1000;
+    else state.tags[post.mark] = nowMs + (post.ttl || 60 * 60 * 1000);
   }
   try { saveState(root, state); } catch { /* the post already landed */ }
   return { sent, reason: 'live' };
