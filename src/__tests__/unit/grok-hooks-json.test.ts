@@ -298,6 +298,43 @@ describe('Grok hooks.json command strings', () => {
     }
   });
 
+  it('retargets a node args hook off a deleted temp checkout', () => {
+    const home = mkdtempSync(path.join(homedir(), 'xray-home-args-'));
+    const durable = path.join(home, 'worn');
+    const dead = path.join('/private/tmp', `pos51-${Date.now()}`);
+    const hookRel = path.join('dist', 'integrations', 'grok', 'hooks', 'pre-tool-use.js');
+    try {
+      mkdirSync(path.join(home, '.grok', 'plugins', '0xray', 'hooks'), { recursive: true });
+      mkdirSync(path.dirname(path.join(durable, hookRel)), { recursive: true });
+      mkdirSync(path.join(durable, 'scripts', 'mjs'), { recursive: true });
+      writeFileSync(path.join(durable, 'scripts', 'mjs', 'run-grok-hook.mjs'), '#!/usr/bin/env node\n');
+      writeFileSync(path.join(durable, hookRel), '#!/usr/bin/env node\n');
+      const plugin = path.join(home, '.grok', 'plugins', '0xray');
+      writeFileSync(
+        path.join(plugin, 'hooks', 'hooks.json'),
+        `${JSON.stringify({
+          hooks: {
+            PreToolUse: [{
+              hooks: [{
+                type: 'command',
+                command: 'node',
+                args: [path.join(dead, hookRel)],
+                env: { XRAY_AI_PATH: durable },
+              }],
+            }],
+          },
+        }, null, 2)}\n`,
+      );
+      expect(scrubEphemeralMachineGrokPins(home, durable)).toBe(1);
+      const hook = JSON.parse(readFileSync(path.join(plugin, 'hooks', 'hooks.json'), 'utf8')).hooks
+        .PreToolUse[0].hooks[0] as { args: string[] };
+      expect(hook.args[0]).toBe(path.join(durable, hookRel));
+      expect(hook.args[0]).not.toContain(dead);
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+    }
+  });
+
   it('retargets home Grok hooks off a missing or foreign runner', () => {
     const home = mkdtempSync(path.join(homedir(), 'xray-home-hook-'));
     const durable = path.join(home, 'worn');

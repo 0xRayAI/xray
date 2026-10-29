@@ -25,10 +25,10 @@ jobs:
       contains(github.event.pull_request.labels.*.name, 'needs-hermes') ||
       contains(github.event.pull_request.labels.*.name, 'ci:full')
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.4.0
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v5.6.0
         with:
           python-version: "3.11"
 
@@ -36,7 +36,7 @@ jobs:
         run: pip install pytest
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v4.4.0
         with:
           node-version: "24.22.1"
           cache: "npm"
@@ -58,10 +58,10 @@ jobs:
       contains(github.event.pull_request.labels.*.name, 'needs-hermes') ||
       contains(github.event.pull_request.labels.*.name, 'ci:full')
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.4.0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v4.4.0
         with:
           node-version: "24.22.1"
           cache: "npm"
@@ -115,10 +115,10 @@ jobs:
       contains(github.event.pull_request.labels.*.name, 'needs-hermes') ||
       contains(github.event.pull_request.labels.*.name, 'ci:full')
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.4.0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v4.4.0
         with:
           node-version: "24.22.1"
           cache: "npm"
