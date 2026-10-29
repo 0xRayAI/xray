@@ -10,7 +10,7 @@ const inline = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[
 
 test('inline scripts compile', () => { for (const s of inline) assert.doesNotThrow(() => new Function(s)); });
 test('Replay: live on first load, ends into live, indicator', () => {
-  assert.match(html, /REPLAY_MS = 6500, REPLAY_WINDOW_MS = 5 \* 60 \* 1000, REPLAY_MIN_EVENTS = 20/);
+  assert.match(html, /REPLAY_MS = 6500, REPLAY_WINDOW_MS = 60 \* 60 \* 1000, REPLAY_MIN_EVENTS = 20/);
   assert.match(html, /if \(first && !reduced && startReplay\(\)\) fresh = \[\];/);
   assert.match(html, /\(replay && state\.t >= replay\.end\)\) goLive\(\);/);
   assert.match(html, /function goLive\(\) \{ endReplay\(\);/);
@@ -270,7 +270,8 @@ test('delta polls: full once, then ?since=cursor; new ids play once; 304 = no fe
   assert.equal(mem.cursor, 'F.1');
 });
 test('ambient Replay loop: dimmed overlay every 10 s, visual only, toggle + ?replay=0 + reduced motion', () => {
-  assert.match(html, /AMBIENT_EVERY_MS = 10000, AMBIENT_MS = 5000, AMBIENT_WINDOW_MS = 5 \* 60 \* 1000, AMBIENT_ALPHA = 0\.4;/);
+  assert.match(html, /AMBIENT_EVERY_MS = 10000, AMBIENT_MS = 5000, AMBIENT_WINDOW_MS = 60 \* 60 \* 1000, AMBIENT_ALPHA = 0\.4;/);
+  assert.match(html, /replay the last hour dimmed/);
   assert.match(html, /var ambientOn = !reduced && !\/\[\?&\]replay=0\(&\|\$\)\/\.test\(location\.search\);/);
   assert.match(html, /<input id="ambient" type="checkbox" checked>/);
   assert.match(html, /if \(!ambientOn \|\| !state\.live \|\| replay \|\| document\.hidden\)/);
