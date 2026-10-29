@@ -2,6 +2,8 @@
 
 Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 
+- The infrastructure test reads agent YML from `src/opencode/agents`, the source of truth. It does not require a generated `.opencode/agents` tree. #397.
+
 - A second cloud launch on a pull that already has a running agent is recorded as a reply on that agent. #377 #380 #401.
 
 - A live card whose current head is already on the seat's handled cursor gets no L1, L2, or L3. #539 #546.
