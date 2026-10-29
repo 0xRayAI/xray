@@ -16,7 +16,7 @@ import {
   workspaceRoot,
 } from './grok-hook-utils.js';
 import { appendHookActivity } from './grok-hook-activity.js';
-import { hookText, notifyBifrost } from '../../hooks/bifrost-send.mjs';
+import { hookText, notifyBifrost, subagentMark } from '../../hooks/bifrost-send.mjs';
 import {
   evaluatePostToolSpawn,
   isOrchestrateToolEvent as gateIsOrchestrateToolEvent,
@@ -106,8 +106,19 @@ async function main() {
     const event = await readStdinJson();
     handlePostToolUse(event, root);
     try {
+      const eventRoot = normalizeWorkspaceRoot(event.workspaceRoot || event.cwd || root);
+      const { toolName, toolInput } = extractToolContext(event);
+      if (isSubagentTool(toolName)) {
+        await notifyBifrost({
+          root: eventRoot,
+          phase: 'subagent',
+          action: 'end',
+          tag: subagentMark(toolName, toolInput),
+          env: process.env,
+        });
+      }
       await notifyBifrost({
-        root: normalizeWorkspaceRoot(event.workspaceRoot || event.cwd || root),
+        root: eventRoot,
         phase: 'work',
         text: hookText(event),
         env: process.env,

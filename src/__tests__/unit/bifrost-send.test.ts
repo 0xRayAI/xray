@@ -9,6 +9,7 @@ import {
   ownerLine,
   promptNote,
   refsFromText,
+  subagentMark,
 } from '../../integrations/hooks/bifrost-send.mjs';
 
 const KEY = `ghs_${'a'.repeat(40)}`;
@@ -129,7 +130,7 @@ describe('bifrost send', () => {
       now,
       text: 'hunter2 https://github.com/0xRayAI/xray/issues/564 https://github.com/0xRayAI/xray/pull/604 --handoff critic --pr 0xRayAI/xray#604 --kind ready --sha abcdef1',
     });
-    expect(work.sent).toEqual(['issue:0xRayAI/xray#564', 'pr:0xRayAI/xray#604', 'packet']);
+    expect(work.sent).toEqual(['tick', 'issue:0xRayAI/xray#564', 'pr:0xRayAI/xray#604', 'packet']);
     const again = await notifyBifrost({
       root,
       phase: 'work',
@@ -202,8 +203,42 @@ describe('bifrost send', () => {
       now,
       text: 'npm test hunter2',
     });
-    expect(tool.sent).toEqual([]);
+    expect(tool.sent).toEqual(['start']);
+    const bodies = calls.map((call) => call.body).join('\n');
+    expect(bodies).not.toContain('hunter2');
+    expect(bodies).not.toContain(KEY);
+    expect(JSON.parse(calls[calls.length - 1].body)).toMatchObject({ kind: 'turn', action: 'start' });
+  });
+
+  it('posts a subagent start and end on the same tag and keeps the prompt off the wire', async () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bifrost-send-'));
+    const keys = fs.mkdtempSync(path.join(os.tmpdir(), 'bifrost-keys-'));
+    dirs.push(root, keys);
+    fs.writeFileSync(path.join(keys, 'arch1.key'), `${KEY}\n`, { mode: 0o600 });
+    const env = { LIVE_URL: 'https://bifrost.example/board', XRAY_SEAT: 'arch1', SEAT_KEYS_DIR: keys };
+    const now = new Date('2026-10-24T18:00:00Z');
+    const calls: Array<{ url: string; body: string; auth: string }> = [];
+    const fetchImpl = liveFetch(calls);
+    const input = { description: 'Deep diff since 4.1.4', prompt: 'hunter2 secret prompt' };
+    const tag = subagentMark('spawn_subagent', input);
+    expect(tag).toBe(subagentMark('spawn_subagent', input));
+    expect(tag).toMatch(/^sub[0-9a-f]{12}$/);
+    expect(tag).not.toContain('hunter2');
+    const started = await notifyBifrost({
+      root, phase: 'subagent', action: 'start', tag, env, fetchImpl, now,
+    });
+    expect(started.sent).toEqual(['subagent:start']);
+    const repeat = await notifyBifrost({
+      root, phase: 'subagent', action: 'start', tag, env, fetchImpl, now,
+    });
+    expect(repeat.sent).toEqual([]);
+    const ended = await notifyBifrost({
+      root, phase: 'subagent', action: 'end', tag, env, fetchImpl, now,
+    });
+    expect(ended.sent).toEqual(['subagent:end']);
+    const lines = calls.map((call) => JSON.parse(call.body));
+    expect(lines[0]).toMatchObject({ kind: 'subagent', action: 'start', tag });
+    expect(lines[1]).toMatchObject({ kind: 'subagent', action: 'end', tag });
     expect(calls.map((call) => call.body).join('\n')).not.toContain('hunter2');
-    expect(calls.map((call) => call.body).join('\n')).not.toContain(KEY);
   });
 });

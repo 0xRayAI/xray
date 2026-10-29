@@ -8,11 +8,13 @@ import {
   evaluatePreToolGate,
   loadDelegationGateFeatures,
 } from '../../hooks/delegation-gate-runtime.mjs';
+import { notifyBifrost, subagentMark } from '../../hooks/bifrost-send.mjs';
 import {
   checkCodexPatterns,
   checkFullTestSuite,
   ensureSessionBoot,
   isShellTool,
+  isSubagentTool,
   isWriteTool,
   loadFeatures,
   normalizeWorkspaceRoot,
@@ -26,7 +28,25 @@ import { repertoireDecisionFields, repertoireRoute } from '../../hooks/pre-tool-
 
 export { repertoireDecisionFields };
 
-function finish(root, decision, reason, hint, toolName, extra = {}) {
+async function reportSeat(root, toolName, toolInput) {
+  try {
+    if (isSubagentTool(toolName)) {
+      await notifyBifrost({
+        root,
+        phase: 'subagent',
+        action: 'start',
+        tag: subagentMark(toolName, toolInput),
+        env: process.env,
+      });
+    }
+    await notifyBifrost({ root, phase: 'work', text: '', env: process.env });
+  } catch {
+    /* a quiet board must not stop the hook */
+  }
+}
+
+async function finish(root, decision, reason, hint, toolName, extra = {}, work) {
+  if (decision === 'allow' && work) await reportSeat(work.root, toolName, work.input);
   const out = { decision, ...extra };
   if (reason) out.reason = reason;
   if (hint) out.hint = hint;
@@ -63,8 +83,9 @@ async function main() {
       features: gateFeatures,
       host: 'grok',
     });
+    const seatWork = { root: eventRoot, input: toolInput };
     if (!gateBlock.allow) {
-      finish(
+      await finish(
         eventRoot,
         'deny',
         gateBlock.reason,
@@ -78,43 +99,44 @@ async function main() {
     // Grok extra: Codex 2/7 (TODO/FIXME/STUB, console.log).
     if (isWriteTool(toolName) && content) {
       const extraBlock = checkCodexPatterns(content, { terms: [2, 7] });
-      if (extraBlock) finish(eventRoot, 'deny', extraBlock, null, toolName);
+      if (extraBlock) await finish(eventRoot, 'deny', extraBlock, null, toolName);
     }
 
     const spoken = [cmd, content, toolInput.pattern, toolInput.query, toolInput.glob, ...(ctx.paths || [])].filter(Boolean).join('\n');
     const lensStop = lensBeforeResearch(eventRoot, toolName, spoken);
     if (lensStop?.decision === 'deny') {
-      finish(eventRoot, 'deny', lensStop.reason, null, toolName, { gate: lensStop.gate });
+      await finish(eventRoot, 'deny', lensStop.reason, null, toolName, { gate: lensStop.gate });
     }
     if (lensStop?.decision === 'allow' && lensStop.reason) {
-      finish(eventRoot, 'allow', lensStop.reason, lensStop.reason, toolName, { gate: lensStop.gate });
+      await finish(eventRoot, 'allow', lensStop.reason, lensStop.reason, toolName, { gate: lensStop.gate }, seatWork);
     }
 
     const route = repertoireRoute([toolName, cmd, content].filter(Boolean).join(' '));
 
     if (isShellTool(toolName) && cmd) {
       const testHint = checkFullTestSuite(cmd, features);
-      if (testHint) finish(eventRoot, 'allow', null, testHint, toolName, route || {});
+      if (testHint) await finish(eventRoot, 'allow', null, testHint, toolName, route || {}, seatWork);
     }
 
     if (gateBlock.reason) {
-      finish(
+      await finish(
         eventRoot,
         'allow',
         gateBlock.reason,
         gateBlock.hint,
         toolName,
         { gate: gateBlock.gate, warn: true, ...(route || {}) },
+        seatWork,
       );
     }
 
-    finish(eventRoot, 'allow', null, null, toolName, route || {});
+    await finish(eventRoot, 'allow', null, null, toolName, route || {}, seatWork);
   } catch (err) {
     appendHookActivity(root, 'grok-pre-tool-use', 'hook-error', 'error', {
       tool: toolName,
       error: err.message,
     });
-    finish(
+    await finish(
       root,
       'deny',
       `PreToolUse hook error — blocked for safety: ${err.message}`,
