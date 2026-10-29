@@ -1,0 +1,37 @@
+{
+  "agents": [
+    {"agent": "bc-22f1b70d-a78d-5505-8ee0-9714f6ca1e99", "seat": "forge", "status": "finished", "t_ct": "2026-10-19T18:33:19-05:00"},
+    {"agent": "bc-8450c4aa-ed0a-5fb3-9748-f09a044c848f", "seat": "forge", "status": "running", "t_ct": "2026-10-18T17:30:55-05:00"},
+    {"agent": "bc-f35e4c51", "seat": "forge", "status": "finished", "t_ct": "2026-10-15T05:38:56-05:00"},
+    {"agent": "bc-f0dc0299", "seat": "forge", "status": "finished", "t_ct": "2026-10-15T05:38:55-05:00"}
+  ],
+  "tracks": "| Cloud id | Seat | Card | State |\n|----------|------|------|-------|\n| bc-f35e4c51 | forge | 0xRayAI/xray#410 | finished |\n",
+  "events": [
+    {
+      "kind": "pr_open",
+      "repo": "0xRayAI/xray",
+      "number": 429,
+      "head_ref": "cursor/live-coord-operator-routing-1e99",
+      "title": "live: finish coord/operator routing",
+      "source": "https://github.com/0xRayAI/xray/pull/429",
+      "body": "Receipts\n\nhttps://cursor.com/agents/bc-22f1b70d-a78d-5505-8ee0-9714f6ca1e99"
+    },
+    {
+      "kind": "pr_open",
+      "repo": "0xRayAI/xray",
+      "number": 396,
+      "head_ref": "cursor/hotfix-plant-wear-848f",
+      "title": "fix(suit): follow the fastened plant",
+      "bc_ids": ["bc-8450c4aa-ed0a-5fb3-9748-f09a044c848f"],
+      "source": "https://github.com/0xRayAI/xray/pull/396"
+    },
+    {
+      "kind": "pr_open",
+      "repo": "0xRayAI/xray",
+      "number": 360,
+      "head_ref": "cursor/old-board-0299",
+      "title": "older cloud row",
+      "source": "https://github.com/0xRayAI/xray/pull/360"
+    }
+  ]
+}

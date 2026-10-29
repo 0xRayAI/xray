@@ -216,6 +216,53 @@ class StoredCiOthersReclaim(unittest.TestCase):
         self.assertEqual(got["drops"], [])
 
 
+class StoredCiSeatCredit(unittest.TestCase):
+    """Live 2026-10-20 rows: from is GitHub even when the actor is forge0x1[bot] or the app maps."""
+
+    def _ff(self):
+        from zoneinfo import ZoneInfo
+        return type("FF", (), {"CT": ZoneInfo("America/Chicago")})()
+
+    def test_fixture_rewrites_github_and_ci_from_actor_or_app(self):
+        self.enterContext(mock.patch.object(uc, "SHOW_UNMAPPED", False))
+        removed = uc.NODE_LC.pop("cursor[bot]", None)
+        self.addCleanup(lambda: removed is not None and uc.NODE_LC.__setitem__("cursor[bot]", removed))
+        self.enterContext(mock.patch.dict(uc.NODE_LC, {"forge0x1[bot]": "forge", "htafolla": "Blaze", "github-actions[bot]": "CI"}, clear=False))
+        raw = json.loads((HERE / "fixtures" / "ci_github_store.json").read_text())
+        with tempfile.TemporaryDirectory() as d:
+            store = Path(d)
+            (store / "xray.json").write_text(json.dumps(raw))
+            col = uc.RepoCollector("0xRayAI/xray", store, self._ff(), lambda *_a: None)
+            got = {eid.split(":")[-1]: col.ev[eid]["from"] for eid in raw["events"]}
+            self.assertEqual(got["forge"], "forge")
+            self.assertEqual(got["cursor"], "GitHub")
+            self.assertEqual(got["blaze"], "Blaze")
+            self.assertEqual(got["actions"], "GitHub")
+            self.assertEqual(got["app"], "forge")
+            col.put("0xRayAI/xray:run:new", "2026-10-20T16:00:00Z", "CI", "GitHub", "workflow_run", "run ci",
+                    "https://github.com/0xRayAI/xray/actions/runs/9", None, actor="forge0x1[bot]")
+            col.put("0xRayAI/xray:run:bugbot", "2026-10-20T16:01:00Z", "CI", "GitHub", "workflow_run", "run ci",
+                    "https://github.com/0xRayAI/xray/actions/runs/10", None, actor="cursor[bot]")
+            self.assertEqual(col.ev["0xRayAI/xray:run:new"]["from"], "forge")
+            self.assertEqual(col.ev["0xRayAI/xray:run:bugbot"]["from"], "CI")
+            self.assertIn("0xRayAI/xray:run:bugbot", col.ev)
+
+    def test_flow_uses_the_actor_seat(self):
+        import live_flow
+        self.enterContext(mock.patch.dict(uc.NODE_LC, {"forge0x1[bot]": "forge"}, clear=False))
+        removed = uc.NODE_LC.pop("cursor[bot]", None)
+        self.addCleanup(lambda: removed is not None and uc.NODE_LC.__setitem__("cursor[bot]", removed))
+        flow = live_flow.Flow({}, lambda login: uc.node(login))
+        forge = {"id": "run:f", "kind": "workflow_run", "from": "GitHub", "to": "GitHub", "repo": "0xRayAI/xray",
+                 "actor": "forge0x1[bot]", "label": "run"}
+        bugbot = {"id": "run:c", "kind": "workflow_run", "from": "GitHub", "to": "GitHub", "repo": "0xRayAI/xray",
+                  "actor": "cursor[bot]", "label": "run"}
+        flow.apply([forge, bugbot])
+        self.assertEqual(forge["from"], "forge")
+        self.assertEqual(forge["hops"][0], "forge")
+        self.assertEqual(bugbot["from"], "GitHub")
+
+
 class SeatTrailer(unittest.TestCase):
     def test_trailer_overrides_login_map(self):
         self.assertEqual(uc.seat_trailer("fix x\n\nbody\nSeat: mill\n"), "mill")

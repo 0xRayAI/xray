@@ -38,9 +38,17 @@ Wave cards use `--card-hover` and `--card-open`. Dark lifts the card from `#0b11
 
 Kanban, wave, and activity anchors that have an `href` use the focus color, an underline, a pointer, and a teal hover. Both themes already define `--focus` and `--teal`.
 
+## Brief badge and CI who
+
+`needs a brief` is only a packet PR whose `PACKET.md` is missing. Issues, packet cards, release PRs, and ordinary PRs stay clear. Acceptance and next owner do not drive that badge. RACI is a separate mark.
+
+A cloud row links from TRACKS, a turn tag, a PR body that names the bc id, or the head branch. A run with no pull and no named card says `no card`.
+
+A CI row's `from` is the seat of its actor or its app. `forge0x1[bot]` is forge. `cursor[bot]` stays GitHub. A history read rewrites a stored GitHub or CI row the same way. The #492 reclaim only rewrote `Others`.
+
 ## Checks
 
-`node --test` on `presence.test.mjs`, `page.test.mjs`, `board-folds.test.mjs`, `board-group.test.mjs`, `theme-colors.test.mjs`, and `kanban-board.test.mjs`. Playwright checks that the roster count is above 3, that the theme toggle is the rightmost header control, that a kanban click's detail matches the wave card, that those links look like links in light and dark, that the grouping control is right-aligned and narrower than its header, that in the dark theme a wave card's hover and open backgrounds both differ from the resting card, and that the band under the mesh is at most 24px.
+`node --test` on `presence.test.mjs`, `page.test.mjs`, `board-folds.test.mjs`, `board-group.test.mjs`, `theme-colors.test.mjs`, `kanban-board.test.mjs`, `ci-credit.test.mjs`, and `cloud-board.test.mjs`. Playwright checks that the roster count is above 3, that the theme toggle is the rightmost header control, that a kanban click's detail matches the wave card, that those links look like links in light and dark, that the grouping control is right-aligned and narrower than its header, that in the dark theme a wave card's hover and open backgrounds both differ from the resting card, and that the band under the mesh is at most 24px.
 
 ## Turn state
 

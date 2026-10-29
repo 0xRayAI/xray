@@ -1,0 +1,10 @@
+{
+  "issues": [
+    {"key": "0xrayai/xray#498", "kind": "issue", "title": "#496 follow-up: packet block, Blaze in fallback roster", "packet": {}, "packet_ok": false, "missing": ["acceptance", "next owner"]},
+    {"key": "0xrayai/xray#463", "kind": "issue", "title": "packet: cloud agents push branches only", "packet": {}, "packet_ok": false, "missing": ["acceptance", "next owner"]}
+  ],
+  "plain_pr": {"key": "0xrayai/xray#388", "kind": "pr", "title": "docs: seek map, cheap-first definition, skills as the first seek", "packet": {"evidence": "https://github.com/0xRayAI/xray/commit/de6c8939653a11834dd76a5735468a8c388be1f3/checks"}, "packet_ok": false, "missing": ["acceptance", "next owner"]},
+  "packet_card": {"key": "0xrayai/xray#485", "kind": "packet", "born": "packet", "title": "handoff critic_fail", "packet": {}, "packet_ok": false, "missing": ["acceptance", "next owner"]},
+  "packet_pr_open": {"key": "0xrayai/xray#700", "kind": "pr", "title": "Packet: handoff with no brief", "packet": {}, "missing": ["acceptance", "next owner"]},
+  "packet_pr_done": {"key": "0xrayai/xray#495", "kind": "pr", "title": "Packet: owner sign-in card under the Bifrost mesh", "packet": {"goal": "A sign-in card", "acceptance": "The drag writes a status beat", "next owner": "critic"}}
+}
