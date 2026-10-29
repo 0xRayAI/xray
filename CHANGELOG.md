@@ -2,7 +2,7 @@
 
 Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 
-- The infrastructure test reads agent YML from `src/opencode/agents`, the source of truth. It does not require a generated `.opencode/agents` tree. #397.
+- The infrastructure test reads agents from `src/agents` and suit config from `xray/`. `src/opencode/agents` is the OpenCode wear dir. #397.
 
 - A second cloud launch on a pull that already has a running agent is recorded as a reply on that agent. #377 #380 #401.
 

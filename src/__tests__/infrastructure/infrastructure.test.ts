@@ -118,23 +118,18 @@ describe("0xRay Infrastructure Tests", () => {
   });
 
   describe("Agent Configuration Infrastructure", () => {
-    it("should have agent configuration files", () => {
-      const agentConfigDir = "src/opencode/agents";
-      expect(fs.existsSync(agentConfigDir)).toBe(true);
-
-      const files = fs.readdirSync(agentConfigDir);
-      const configFiles = files.filter(
-        (f) => f.endsWith(".yml") || f.endsWith(".yaml"),
-      );
-
-      expect(configFiles.length).toBeGreaterThan(0);
+    it("should have agent source modules", () => {
+      const agentDir = "src/agents";
+      expect(fs.existsSync(agentDir)).toBe(true);
+      const files = fs.readdirSync(agentDir).filter((f) => f.endsWith(".ts") && f !== "index.ts" && f !== "types.ts");
+      expect(files.length).toBeGreaterThanOrEqual(8);
+      expect(fs.existsSync("src/agents/index.ts")).toBe(true);
     });
 
-    it("should have required agent configurations", () => {
-      const agentDir = "src/opencode/agents";
-      const agentFiles = fs.readdirSync(agentDir);
-      const ymlFiles = agentFiles.filter(f => f.endsWith('.yml') || f.endsWith('.yaml'));
-      expect(ymlFiles.length).toBeGreaterThanOrEqual(8);
+    it("should have the suit config source", () => {
+      for (const file of ["xray/codex.json", "xray/features.json", "xray/config.json"]) {
+        expect(fs.existsSync(file)).toBe(true);
+      }
     });
   });
 
