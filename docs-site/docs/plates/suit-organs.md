@@ -36,4 +36,4 @@ Reporting reads the activity log and may write a report. Station reads `latest-s
 
 Repertoire already keeps `inference-state.json` and the day log under `.xray/state/repertoire/`. Goggles does not write these files. It reads a plate when one plane is named.
 
-stamped · 0xray 4.1.3
+stamped · 0xray 4.1.4

@@ -33,4 +33,4 @@ Confer stays off unless it is enabled.
 
 `src/nucleus/confer.ts` defaults to enabled false and on_synthesis false. A missing key stays off. A confer todo completes only on a real model PASS.
 
-stamped · 0xray 4.1.3
+stamped · 0xray 4.1.4

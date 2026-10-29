@@ -57,4 +57,4 @@ When `LIVE_URL` is unset, open cards are hand-kept in `house/WAVEBOARD.md`. When
 
 `HOUSE.md` carries `name:` under `## Owner` and `OP-PROC:`. Doctor warns, and House stays PASS, when that `name:` line is missing, when the profile lacks the station hook, when the station card is older than NOTES, or when `Skills:` or `Keys:` is missing. Adoption is `templates/house/STATION-BOOT.md`.
 
-stamped · 0xray 4.1.3 · @0xray/grok-bot 0.1.11
+stamped · 0xray 4.1.4 · @0xray/grok-bot 0.1.11

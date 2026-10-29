@@ -42,4 +42,4 @@ When `LIVE_URL` is unset, the board is hand-kept `house/WAVEBOARD.md`. When `LIV
 
 That `LIVE_URL` sentence is `house/live/docs/board.md:9` and `grok-bot/LEXICON.md:38`. The kit version is `grok-bot/package.json:3`.
 
-stamped · 0xray 4.1.3 · @0xray/grok-bot 0.1.11
+stamped · 0xray 4.1.4 · @0xray/grok-bot 0.1.11

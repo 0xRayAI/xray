@@ -33,4 +33,4 @@ The mill builds and ships a suit.
 
 The card owns `scripts/foundry`. The release script is `scripts/foundry/release.mjs`. That script is the only stamp. A longer card still wins. A live publish needs `--i-mean-it`. The OTP link is the `npm-publish` lens.
 
-stamped · 0xray 4.1.3
+stamped · 0xray 4.1.4

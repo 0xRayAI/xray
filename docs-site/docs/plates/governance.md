@@ -44,4 +44,4 @@ Two doors run today. One vote comes out: approve, reject, or needs_revision. The
 
 `inference:run` does not use that default. With shipped `inference_governance.enabled` false (`xray/features.json:199-200`), `governProposals` returns `governWithLocalMatrix` (`src/inference/inference-cycle.ts:406-407`, `:445-460`). The comment in that function says Dynamo is not called.
 
-stamped · 0xray 4.1.3
+stamped · 0xray 4.1.4

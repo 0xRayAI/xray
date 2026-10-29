@@ -33,4 +33,4 @@ Cursor preCompact writes the station card and cannot block the compact.
 
 The file is `src/integrations/cursor/hooks/pre-compact.js`. The message tells the seat to read STATION.md. The plates that belong here are payload-heat and station-heat.
 
-stamped · 0xray 4.1.3
+stamped · 0xray 4.1.4
