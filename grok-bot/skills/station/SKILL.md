@@ -31,6 +31,8 @@ Light does not read the pack.
 
 After a summary, a wake, or a gate, read what [Station boot](../../OP-PROC.md#station-boot) names for Full. When `LIVE_URL` is set, the board is Bifrost (`GET /cards`).
 
+After a nudge or a summary, Full before any ack. `--prompt` is step 1 of Light. The checklist is [Station boot](../../OP-PROC.md#station-boot) and [Station nudge](../../OP-PROC.md#station-nudge). A compact writes `Full: due` on the station card. Replace it with `Full: OP-PROC read` only after that read, and only then ack.
+
 ## During the work
 
 Each step posts one activity line. Each cloud launch is written to `house/fleet/TRACKS.md` in that same step.
