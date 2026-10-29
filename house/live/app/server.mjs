@@ -476,6 +476,21 @@ function handledKeySet(seat) {
   handledCache.set(name, { mtime: st.mtimeMs, size: st.size, file, keys });
   return keys;
 }
+function cardHeadSha(card) {
+  return String(card && (card.sha || card.head_sha || card.head) || '').trim().toLowerCase();
+}
+function headHandled(seat, card) {
+  if (!card) return false;
+  const keys = handledKeySet(seat);
+  if (!keys.lower.size) return false;
+  const repo = String(card.repo || '').trim().toLowerCase();
+  const number = Number(card.number);
+  const sha = cardHeadSha(card);
+  if (!repo || !Number.isInteger(number) || !sha) return false;
+  const prefix = `${repo}#${number}|${sha}|`;
+  for (const key of keys.lower) if (key.startsWith(prefix)) return true;
+  return false;
+}
 function lineHandled(seat, line) {
   if (!line) return false;
   const keys = handledKeySet(seat);
@@ -1409,6 +1424,14 @@ function evalNudges(now = Date.now()) {
       deliverNudge(nudges[nudges.length - 1]); };
     const to = seatIdOf(c.nudge_to), nx = to || seatIdOf((c.packet || {})['next owner']);
     const tgt = nx || seatIdOf(c.owner) || cosSeat(), via = to ? (c.nudge_via || 'retest owner') : nx ? 'next owner' : 'card owner';
+    if (headHandled(tgt, c)) {
+      for (const n of nudges) {
+        if (n.closed_at || n.card !== c.key || n.beat_t !== c.last_beat_t) continue;
+        n.closed_at = new Date(now).toISOString();
+        changed = true;
+      }
+      continue;
+    }
     const l1s = nudges.filter(n => n.id === id(1) || n.id.startsWith(id(1) + ':'));
     let l1 = l1s[l1s.length - 1];
     if (!l1) { mk(1, tgt, via); l1 = has(1); }

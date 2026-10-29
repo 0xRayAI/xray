@@ -2,6 +2,8 @@
 
 Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 
+- A live card whose current head is already on the seat's handled cursor gets no L1, L2, or L3. #539 #546.
+
 - The grok-bot wave rank lives in the package. It does not import the house tree. #517.
 - The dormant redeploy path refuses `git push origin master` and `git reset --hard`. #516.
 - qs stays at 6.17.1 or newer. `@hono/node-server` is pinned to 2.1.5. #715 #713.
