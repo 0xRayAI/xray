@@ -207,6 +207,10 @@ function configOf(env, home) {
   return { origin, seat, keys };
 }
 
+export function suitConfig(env = {}, home) {
+  return configOf(env, home);
+}
+
 function readKey(dir, seat) {
   const root = path.resolve(dir);
   const file = path.resolve(root, `${seat}.key`);
