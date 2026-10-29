@@ -13,6 +13,8 @@ Grok Bot chat **does not** fire 0xRay `PreCompact` / Repertoire hooks. Do not wa
 
 After a summary, a wake, or a gate, run station Full. The read list is [Station boot](../../OP-PROC.md#station-boot). When `LIVE_URL` is set, the board is Bifrost (`GET /cards`). When `LIVE_URL` is unset, the board is `house/WAVEBOARD.md`.
 
+After a nudge or a summary, `--prompt` is step 1 before any ack. [Station nudge](../../OP-PROC.md#station-nudge).
+
 ## When
 - After a long thread, a rolled-up history, or any “I feel blank” wake
 - Before launching a cloud, opening a PR track, or rewriting something that might already exist
