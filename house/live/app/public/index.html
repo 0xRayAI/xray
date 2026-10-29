@@ -624,7 +624,7 @@ footer a { color: var(--foot); }
         <option value="3600">1 h / s</option>
       </select>
       <button id="live" type="button" class="on">Live</button>
-      <label class="ambient-toggle" title="Replay loop: every 10 s, replay the last few minutes dimmed (visual only)"><input id="ambient" type="checkbox" checked> Replay loop</label>
+      <label class="ambient-toggle" title="Replay loop: every 10 s, replay the last hour dimmed (visual only)"><input id="ambient" type="checkbox" checked> Replay loop</label>
       <input id="slider" type="range" min="0" max="1" step="1000" value="1" aria-label="Timeline">
       <span id="tLabel"></span>
     </div>
@@ -740,7 +740,7 @@ footer a { color: var(--foot); }
   var t0Page = performance.now();
   var pos = {};                // per-frame node positions (SATS + bob)
   // Replay: replay the recent past as a short live on load, then go live (reuses rewindTo/play/goLive)
-  var REPLAY_MS = 6500, REPLAY_WINDOW_MS = 5 * 60 * 1000, REPLAY_MIN_EVENTS = 20;
+  var REPLAY_MS = 6500, REPLAY_WINDOW_MS = 60 * 60 * 1000, REPLAY_MIN_EVENTS = 20;
   var replay = null;         // { speed: the user's speed, restored when the live ends }
   function endReplay() { if (!replay) return; speed = replay.speed; replay = null; lastText = 0; }
   function startReplay() {
@@ -978,7 +978,7 @@ footer a { color: var(--foot); }
   }
 
   // Ambient Replay loop: dimmed overlay replay on its own clock; never changes live state, pill, counts or seats
-  var AMBIENT_EVERY_MS = 10000, AMBIENT_MS = 5000, AMBIENT_WINDOW_MS = 5 * 60 * 1000, AMBIENT_ALPHA = 0.4;
+  var AMBIENT_EVERY_MS = 10000, AMBIENT_MS = 5000, AMBIENT_WINDOW_MS = 60 * 60 * 1000, AMBIENT_ALPHA = 0.4;
   var ambientOn = !reduced && !/[?&]replay=0(&|$)/.test(location.search);
   var spectrumOn = false;
   function readSpectrum() { spectrumOn = L.spectrumEnabled(L.SPECTRUM, location.search, reduced); }

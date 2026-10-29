@@ -414,7 +414,8 @@ test('chip, dot, and node label share one seat state', () => {
 test('ambient replay loop: dimmed overlay every 10 s, visual only, toggle + ?spectrum=0 + reduced motion', () => {
   const html = readFileSync(path.join(liveDir, 'index.html'), 'utf8');
   for (const s of [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1])) assert.doesNotThrow(() => new Function(s));
-  assert.match(html, /AMBIENT_EVERY_MS = 10000, AMBIENT_MS = 5000, AMBIENT_WINDOW_MS = 5 \* 60 \* 1000, AMBIENT_ALPHA = 0\.4/);
+  assert.match(html, /AMBIENT_EVERY_MS = 10000, AMBIENT_MS = 5000, AMBIENT_WINDOW_MS = 60 \* 60 \* 1000, AMBIENT_ALPHA = 0\.4/);
+  assert.match(html, /replay the last hour dimmed/);
   assert.match(html, /var ambientOn = !reduced && !\/\[\?&\]spectrum=0\(&\|\$\)\/\.test\(location\.search\);/);
   assert.match(html, /<input id="ambient" type="checkbox" checked>/);
   assert.match(html, /if \(!ambientOn \|\| !state\.live \|\| document\.hidden\)/);

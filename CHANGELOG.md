@@ -2,6 +2,7 @@
 
 Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 
+- The spectrum replay plays the last hour. The opening burst and the replay loop use that window.
 - Grok session start runs `inbox-watch.sh` once when `~/.burst/inbox-watch.pid` is not a live process. The printed lines are the session systemMessage. A live watcher pid is left running. The once-poll does not ack and does not replace that pid. Grok has no inbound webhook.
 - The README hero and the social card are the Bifrost poster. The suit wears the board. The mark stays v4.1.
 - Worn hooks post the owner line on the activity feed as kind prompt, action sent, from owner, with the note. The same wire posts the packet, the card tag, and the turn. The board is https://bifrost.0xray.dev. The key folder is ~/.burst/seat-keys. One seat key is the seat. A 202 from the board counts as posted.
