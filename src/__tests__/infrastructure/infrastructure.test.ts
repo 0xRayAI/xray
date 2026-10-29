@@ -119,7 +119,7 @@ describe("0xRay Infrastructure Tests", () => {
 
   describe("Agent Configuration Infrastructure", () => {
     it("should have agent configuration files", () => {
-      const agentConfigDir = ".opencode/agents";
+      const agentConfigDir = "src/opencode/agents";
       expect(fs.existsSync(agentConfigDir)).toBe(true);
 
       const files = fs.readdirSync(agentConfigDir);
@@ -131,13 +131,7 @@ describe("0xRay Infrastructure Tests", () => {
     });
 
     it("should have required agent configurations", () => {
-      // Check that agents directory exists and has sufficient agents
-      const agentDir = ".opencode/agents";
-      if (!fs.existsSync(agentDir)) {
-        // In CI, agents might be installed by postinstall
-        return;
-      }
-      
+      const agentDir = "src/opencode/agents";
       const agentFiles = fs.readdirSync(agentDir);
       const ymlFiles = agentFiles.filter(f => f.endsWith('.yml') || f.endsWith('.yaml'));
       expect(ymlFiles.length).toBeGreaterThanOrEqual(8);
