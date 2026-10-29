@@ -3,12 +3,23 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 
 const PUB = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app', 'public');
-const ART = '/opt/cursor/artifacts';
+const ART = (() => {
+  const preferred = '/opt/cursor/artifacts';
+  try {
+    fs.mkdirSync(preferred, { recursive: true });
+    return preferred;
+  } catch {
+    const fallback = path.join(os.tmpdir(), 'board-layout-artifacts');
+    fs.mkdirSync(fallback, { recursive: true });
+    return fallback;
+  }
+})();
 
 function feed() {
   const now = new Date().toISOString();
@@ -68,17 +79,26 @@ function layoutOf() {
   const kanban = document.getElementById('kanban').getBoundingClientRect();
   const split = document.querySelector('.split').getBoundingClientRect();
   const roster = document.getElementById('seats').getBoundingClientRect();
+  const canvas = document.getElementById('mesh').getBoundingClientRect();
   const play = document.getElementById('play');
+  const rewind = play.getBoundingClientRect();
+  const stats = document.getElementById('statsFold').getBoundingClientRect();
   const ambient = document.getElementById('ambient');
+  const meshEl = document.getElementById('meshPanel');
   return {
     top: Math.abs(mesh.top - wave.top),
     bottom: Math.abs(mesh.bottom - wave.bottom),
     kanbanLeft: Math.abs(kanban.left - split.left),
     kanbanRight: Math.abs(kanban.right - split.right),
     kanbanWider: kanban.width > mesh.width + 40,
-    rosterInside: document.getElementById('meshPanel').contains(document.getElementById('seats')),
+    rosterInside: meshEl.contains(document.getElementById('seats')),
+    rewindInside: meshEl.contains(play),
+    statsAbove: mesh.top - stats.bottom,
+    statsOutsideWave: !document.getElementById('wave').contains(document.getElementById('statsFold')),
+    rosterTop: roster.top - mesh.top,
+    rosterAboveCanvas: canvas.top - roster.bottom,
+    rewindGap: mesh.bottom - rewind.bottom,
     kanbanOutside: !document.querySelector('.split').contains(document.getElementById('kanban')),
-    rosterGap: mesh.bottom - roster.bottom,
     rosterH: roster.height,
     replay: !!(play && ambient && document.getElementById('spectrumPill')),
     mesh: { top: mesh.top, bottom: mesh.bottom, left: mesh.left, right: mesh.right },
@@ -104,10 +124,15 @@ test('mesh and wave align and kanban spans the page', async () => {
       assert.ok(box.bottom <= 4, JSON.stringify(box));
       assert.ok(box.kanbanLeft <= 4 && box.kanbanRight <= 4, JSON.stringify(box));
       assert.equal(box.rosterInside, true);
+      assert.equal(box.rewindInside, true);
+      assert.equal(box.statsOutsideWave, true);
       assert.equal(box.kanbanOutside, true);
       assert.equal(box.kanbanWider, true);
       assert.ok(box.rosterH > 40, JSON.stringify(box));
-      assert.ok(box.rosterGap < 24, JSON.stringify(box));
+      assert.ok(box.rosterTop > 0 && box.rosterTop < 80, JSON.stringify(box));
+      assert.ok(box.rosterAboveCanvas >= -1, JSON.stringify(box));
+      assert.ok(box.rewindGap >= -1 && box.rewindGap < 24, JSON.stringify(box));
+      assert.ok(box.statsAbove >= -1 && box.statsAbove < 24, JSON.stringify(box));
       assert.equal(box.replay, true);
       await page.screenshot({ path: path.join(ART, `board-layout-${width}.png`), fullPage: true });
       await page.close();
