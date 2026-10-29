@@ -1479,19 +1479,7 @@ footer a { color: var(--foot); }
     ctx.fillStyle = cssVar('--label-fill'); ctx.strokeStyle = silentNow ? cssVar('--silent-ink') : rgb(c); ctx.lineWidth = 2;
     roundRect(lx - w / 2, top, w, h, 6); ctx.fill(); ctx.stroke();
     ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-    ctx.font = 'bold ' + 14 * fs + 'px system-ui, sans-serif';
-    var nameY = top + 2 * fs;
-    if (spinning && title) {   // seat-color sheen sweeping L->R across the name while working
-      ctx.fillStyle = rgb(c, 0.45); ctx.fillText(title, lx, nameY);
-      ctx.save();
-      var band = Math.max(10, tw * 0.38), travel = tw + band;
-      var bx = lx - tw / 2 + ((nowWall / 1200) % 1) * travel - band;
-      ctx.beginPath(); ctx.rect(bx, nameY - 1, band, 16 * fs); ctx.clip();
-      ctx.fillStyle = rgb(c); ctx.fillText(title, lx, nameY);
-      ctx.restore();
-    } else {
-      ctx.fillStyle = rgb(c); ctx.fillText(title, lx, nameY);
-    }
+    ctx.fillStyle = rgb(c); ctx.font = 'bold ' + 14 * fs + 'px system-ui, sans-serif'; ctx.fillText(title, lx, top + 2 * fs);
     ctx.fillStyle = cssVar('--label-sub'); ctx.font = 11 * fs + 'px "Inter", system-ui, sans-serif'; ctx.fillText(sub, lx, top + (title ? 17 : 3) * fs);
   }
 
