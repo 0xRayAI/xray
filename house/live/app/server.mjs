@@ -3310,12 +3310,11 @@ function refreshWorking(now = Date.now()) {
   if (JSON.stringify((header.fleet && header.fleet.working) || {}) !== before) { seq++; fullDirty = true; }
 }
 const actHits = new Map();   // seat -> [timestamps]
-function runningCloudForHead(tag) {
-  if (!/^[0-9a-f]{40}$/.test(String(tag || ''))) return '';
+function runningCloudId(match) {
   let id = '';
   for (const line of activity) {
     if (!line || (line.kind !== 'cloud_agent' && line.kind !== 'agent')) continue;
-    if (line.tag !== tag) continue;
+    if (!match(line)) continue;
     const agent = typeof line.agent === 'string' ? line.agent : '';
     if (!ACT_AGENT.test(agent)) continue;
     const action = String(line.action || '');
@@ -3327,10 +3326,22 @@ function runningCloudForHead(tag) {
   if (!row || row.state !== 'running') return '';
   return row.bcId;
 }
+function runningCloudForHead(tag) {
+  if (!/^[0-9a-f]{40}$/.test(String(tag || ''))) return '';
+  return runningCloudId(line => line.tag === tag);
+}
+function runningCloudForPr(pr) {
+  const want = String(pr || '').trim();
+  if (!want) return '';
+  return runningCloudId(line => String(line.pr || '') === want);
+}
 // A finished cloud line stays here. It is not copied onto the inbox as run_end.
 function foldCloudHead(d) {
-  if (!d || (d.kind !== 'cloud_agent' && d.kind !== 'agent') || !/^[0-9a-f]{40}$/.test(d.tag || '')) return { line: d, skip: false };
-  const running = runningCloudForHead(d.tag);
+  if (!d || (d.kind !== 'cloud_agent' && d.kind !== 'agent')) return { line: d, skip: false };
+  const byTag = /^[0-9a-f]{40}$/.test(d.tag || '') ? runningCloudForHead(d.tag) : '';
+  const byPr = d.pr ? runningCloudForPr(d.pr) : '';
+  const running = byTag || byPr;
+  if (!byTag && !byPr) return { line: d, skip: false };
   if (!running || running === d.agent) return { line: d, skip: false };
   if (d.action === 'launch') return { line: { ...d, agent: running, action: 'reply' }, skip: false };
   if (d.action === 'finished' || d.action === 'finish' || d.action === 'cancel') return { line: d, skip: true };

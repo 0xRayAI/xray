@@ -2,6 +2,8 @@
 
 Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 
+- A second cloud launch on a pull that already has a running agent is recorded as a reply on that agent. #377 #380 #401.
+
 - A live card whose current head is already on the seat's handled cursor gets no L1, L2, or L3. #539 #546.
 
 - The grok-bot wave rank lives in the package. It does not import the house tree. #517.
