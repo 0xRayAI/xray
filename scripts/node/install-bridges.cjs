@@ -811,6 +811,149 @@ function scrubEphemeralMachineGrokPins(machine, durablePackageRoot) {
   return changed;
 }
 
+const GROK_HOOK_RUNNER_TAIL = "/scripts/mjs/run-grok-hook.mjs";
+
+function grokHookRunnerFromCommand(command) {
+  const text = String(command || "");
+  const quoted = text.match(/"([^"]*\/scripts\/mjs\/run-grok-hook\.mjs)"/);
+  if (quoted) return quoted[1];
+  const bare = text.match(/(?:^|[\s=])(\/[^"'\s]*\/scripts\/mjs\/run-grok-hook\.mjs)(?=$|[\s"])/);
+  return bare ? bare[1] : "";
+}
+
+function packageRootFromGrokRunner(runner) {
+  const norm = String(runner || "").replace(/\\/g, "/");
+  if (!norm.endsWith(GROK_HOOK_RUNNER_TAIL)) return "";
+  return runner.slice(0, runner.length - GROK_HOOK_RUNNER_TAIL.length);
+}
+
+function replaceEnvAssign(command, key, from, to) {
+  let next = command;
+  const pairs = [
+    [`${key}=${JSON.stringify(from)}`, `${key}=${JSON.stringify(to)}`],
+    [`${key}=${from}`, `${key}=${to}`],
+  ];
+  for (const [oldValue, newValue] of pairs) {
+    if (oldValue !== newValue && next.includes(oldValue)) next = next.split(oldValue).join(newValue);
+  }
+  return next;
+}
+
+/** Point a Grok hook command at durableRoot when its runner is missing or foreign. */
+function retargetGrokHookCommand(command, durableRoot) {
+  const runner = grokHookRunnerFromCommand(command);
+  if (!runner) return command;
+  const pinned = packageRootFromGrokRunner(runner);
+  const durableRunner = path.join(durableRoot, "scripts", "mjs", "run-grok-hook.mjs");
+  if (!fs.existsSync(durableRunner)) return command;
+  const same = Boolean(pinned) && path.resolve(pinned) === path.resolve(durableRoot);
+  if (same && fs.existsSync(runner)) return command;
+  let next = command.split(runner).join(durableRunner);
+  if (pinned) next = replaceEnvAssign(next, "XRAY_AI_PATH", pinned, durableRoot);
+  return next;
+}
+
+function retargetHookNode(node, durableRoot) {
+  if (Array.isArray(node)) {
+    let changed = false;
+    for (const item of node) {
+      if (retargetHookNode(item, durableRoot)) changed = true;
+    }
+    return changed;
+  }
+  if (!node || typeof node !== "object") return false;
+  let changed = false;
+  if (typeof node.command === "string" && node.command.includes("run-grok-hook.mjs")) {
+    const next = retargetGrokHookCommand(node.command, durableRoot);
+    if (next !== node.command) {
+      node.command = next;
+      changed = true;
+    }
+    if (node.env && typeof node.env.XRAY_AI_PATH === "string") {
+      const pinned = node.env.XRAY_AI_PATH;
+      const same = path.resolve(pinned) === path.resolve(durableRoot);
+      const runner = path.join(pinned, "scripts", "mjs", "run-grok-hook.mjs");
+      if (!same || !fs.existsSync(runner)) {
+        node.env.XRAY_AI_PATH = durableRoot;
+        changed = true;
+      }
+    }
+  }
+  for (const [key, value] of Object.entries(node)) {
+    if (key === "env" || !value || typeof value !== "object") continue;
+    if (retargetHookNode(value, durableRoot)) changed = true;
+  }
+  return changed;
+}
+
+function retargetGrokConfigToml(text, durableRoot) {
+  let changed = false;
+  const lines = String(text || "").split("\n").map((line) => {
+    const match = /^(\s*command\s*=\s*)"(.*)"(\s*)$/.exec(line);
+    if (!match || !match[2].includes("run-grok-hook.mjs")) return line;
+    const decoded = match[2].replace(/\\"/g, '"').replace(/\\\\/g, "\\");
+    const next = retargetGrokHookCommand(decoded, durableRoot);
+    if (next === decoded) return line;
+    changed = true;
+    return `${match[1]}${JSON.stringify(next)}${match[3]}`;
+  });
+  return { text: lines.join("\n"), changed };
+}
+
+/**
+ * Home Grok still runs ~/.grok/config.toml, ~/.grok/hooks, and the machine
+ * plugin hooks.json. A deleted worktree is not an ephemeral pin, so the temp
+ * scrub leaves it. Move those commands onto the package being worn.
+ */
+function retargetHomeGrokHooks(machine, durablePackageRoot) {
+  if (!machine || !durablePackageRoot) return 0;
+  const runner = path.join(durablePackageRoot, "scripts", "mjs", "run-grok-hook.mjs");
+  if (!fs.existsSync(runner)) return 0;
+  let changed = 0;
+  const tomlPath = path.join(machine, ".grok", "config.toml");
+  if (fs.existsSync(tomlPath)) {
+    let raw = "";
+    try {
+      raw = fs.readFileSync(tomlPath, "utf8");
+    } catch {
+      raw = "";
+    }
+    const next = retargetGrokConfigToml(raw, durablePackageRoot);
+    if (next.changed) {
+      const body = next.text.endsWith("\n") ? next.text : `${next.text}\n`;
+      writeFileIfChanged(tomlPath, body);
+      changed += 1;
+    }
+  }
+  const jsonFiles = [];
+  const hooksDir = path.join(machine, ".grok", "hooks");
+  if (fs.existsSync(hooksDir)) {
+    let names = [];
+    try {
+      names = fs.readdirSync(hooksDir);
+    } catch {
+      names = [];
+    }
+    for (const name of names) {
+      if (name.endsWith(".json")) jsonFiles.push(path.join(hooksDir, name));
+    }
+  }
+  jsonFiles.push(path.join(machine, ".grok", "plugins", "0xray", "hooks", "hooks.json"));
+  for (const file of jsonFiles) {
+    if (!fs.existsSync(file)) continue;
+    let data;
+    try {
+      data = JSON.parse(fs.readFileSync(file, "utf8"));
+    } catch {
+      continue;
+    }
+    if (!retargetHookNode(data, durablePackageRoot)) continue;
+    writeFileIfChanged(file, `${JSON.stringify(data, null, 2)}\n`);
+    changed += 1;
+  }
+  return changed;
+}
+
 function installGrokBridge(targetDir, packageRoot, log, opts) {
   const sourceDir = findGrokPluginSource(packageRoot);
   if (!sourceDir) {
@@ -830,7 +973,9 @@ function installGrokBridge(targetDir, packageRoot, log, opts) {
     log("grok-bridge", "skip machine ~/.grok plugin — isolated HOME", "info");
   } else {
     log("grok-bridge", "skip machine ~/.grok plugin — project-scoped wear", "info");
-    scrubEphemeralMachineGrokPins(machine, settlePackageRoot(packageRoot, targetDir));
+    const durable = settlePackageRoot(packageRoot, targetDir);
+    scrubEphemeralMachineGrokPins(machine, durable);
+    retargetHomeGrokHooks(machine, durable);
   }
 
   for (const dest of targets) {
@@ -2693,6 +2838,7 @@ module.exports = {
   grokHookShellCommand,
   settlePackageRoot,
   scrubEphemeralMachineGrokPins,
+  retargetHomeGrokHooks,
   writeGrokDiscoveredHooks,
   isEphemeralInstallRoot,
   isIsolatedHome,
