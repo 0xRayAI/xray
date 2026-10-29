@@ -7,10 +7,24 @@ description: >-
 # Draw me a suit
 
 ## Refs (pose / detail checklist — do not paste as the plate)
-`FINAL-REFS/bots/01`…`04`, `06`…`09` (Blaze-approved only).
+
+Paths are relative to the repo root.
+
+- `FINAL-REFS/bots/00-CANONICAL-suit-grok-imagine-blaze-pick.jpg` — primary. Blaze's pick.
+- `FINAL-REFS/bots/01-canonical-suit-rain-constitution-v4.jpg`
+- `FINAL-REFS/bots/02-suit-hangar-v4-logic-neural-exec.jpeg`
+- `FINAL-REFS/bots/03-helmet-0xray-constitution-on.jpeg`
+- `FINAL-REFS/bots/04-suit-fullbody-blue-lightning-hud.jpg`
+- `FINAL-REFS/bots/06-brand-ref-suit-rain-constitution.jpg`
+- `FINAL-REFS/bots/07-brand-ref-suit-hangar-wrist.jpg`
+- `FINAL-REFS/bots/08-brand-ref-helmet-wordmark-source.jpeg`
+- `FINAL-REFS/bots/09-brand-ref-goggles-product-rain.jpg`
+- `FINAL-REFS/logos/00-0xray-stamp-FINAL.png` — wordmark measure. Do not paste it as a plate overlay.
+
+The apex hero uses a cutout of `00-CANONICAL-suit-grok-imagine-blaze-pick.jpg` (`site/assets/suit.webp`, png fallback) because this environment cannot run Grok Imagine. A new plate still draws with Imagine and does not paste the bot photo.
 
 ## Method
-**OWNER CALL (Blaze 2026-10-05 2:12 PM CT): Grok Imagine is the suit-drawing role. The canonical suit is `FINAL-REFS/bots/00-CANONICAL-suit-grok-imagine-blaze-pick.png`: a square close-up, hand raised; a segmented glossy black dome with a grey `0xRay` wordmark; a raised Goggles unit with `GOGGLES` on top and `CONSTITUTION ON` on a dark cyan-lit lens; a large cyan `v4.0` on the right shoulder; stacked wrist rings LOOP/DOMAIN/STATE/FOUNDRY on the raised forearm; orbs low on the chest in a triangle (MEMORY cyan on top, JUDGEMENT purple, PAYMENTS orange); cyan lightning veins in the armor; a rainy city night with bokeh. Every new suit is drawn with Grok Imagine, using this file as the primary reference, and is judged against it. The in-house generator's dry runs (fullbody/zoom passes 1-4) were rejected and should not be used as refs.**
+**OWNER CALL (Blaze 2026-10-05 2:12 PM CT): Grok Imagine is the suit-drawing role. The canonical suit is `FINAL-REFS/bots/00-CANONICAL-suit-grok-imagine-blaze-pick.jpg`: a square close-up, hand raised; a segmented glossy black dome with a grey `0xRay` wordmark; a raised Goggles unit with `GOGGLES` on top and `CONSTITUTION ON` on a dark cyan-lit lens; a large cyan `v4.0` on the right shoulder; stacked wrist rings LOOP/DOMAIN/STATE/FOUNDRY on the raised forearm; orbs low on the chest in a triangle (MEMORY cyan on top, JUDGEMENT purple, PAYMENTS orange); cyan lightning veins in the armor; a rainy city night with bokeh. Every new suit is drawn with Grok Imagine, using this file as the primary reference, and is judged against it. The in-house generator's dry runs (fullbody/zoom passes 1-4) were rejected and should not be used as refs.**
 
 **Primary: image generation** with the pose templates below, passing the matching bot ref as a style/reference image. Then composite the result into the stamped plate (fade edges as needed).
 Helmet wordmark on the suit MUST be produced via [draw-0xray-logo](sand-workflow:draw-0xray-logo) when you add/repair labels in post (do not type a flat font wordmark).

@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>0xRay — a suit for coding agents</title>
+  <meta name="description" content="0xRay is a three-subsystem autonomous engine. The suit is the wear. Inference remembers. External Governance judges. The Autonomous Engine runs the work." />
+  <link rel="canonical" href="https://0xray.dev/" />
+  <link rel="icon" href="assets/favicon.png" type="image/png" />
+  <link rel="stylesheet" href="kit/tokens.css" />
+  <link rel="stylesheet" href="kit/plate.css" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="0xRay — a suit for coding agents" />
+  <meta property="og:description" content="0xRay is a three-subsystem autonomous engine. The suit is the wear. Inference remembers. External Governance judges. The Autonomous Engine runs the work." />
+  <meta property="og:url" content="https://0xray.dev/" />
+  <meta property="og:image" content="https://0xray.dev/assets/readme-hero.jpg" />
+  <meta property="og:image:width" content="1280" />
+  <meta property="og:image:height" content="720" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="0xRay — a suit for coding agents" />
+  <meta name="twitter:description" content="0xRay is a three-subsystem autonomous engine. The suit is the wear. Inference remembers. External Governance judges. The Autonomous Engine runs the work." />
+  <meta name="twitter:image" content="https://0xray.dev/assets/readme-hero.jpg" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "name": "0xRay",
+        "url": "https://0xray.dev/",
+        "logo": "https://0xray.dev/assets/favicon.png",
+        "sameAs": [
+          "https://docs.0xray.dev",
+          "https://github.com/0xRayAI/xray",
+          "https://www.npmjs.com/package/0xray",
+          "https://bifrost.0xray.dev",
+          "https://x.com/0xRayAI"
+        ]
+      },
+      {
+        "@type": "SoftwareApplication",
+        "name": "0xray",
+        "softwareVersion": "4.1",
+        "applicationCategory": "DeveloperApplication",
+        "url": "https://0xray.dev/",
+        "installUrl": "https://www.npmjs.com/package/0xray",
+        "codeRepository": "https://github.com/0xRayAI/xray",
+        "description": "0xRay is a three-subsystem autonomous engine. The suit is the wear."
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Why do I need 0xRay?",
+            "acceptedAnswer": { "@type": "Answer", "text": "0xRay is the suit a coding agent wears so the job survives the context window. It is an exoskeleton that blocks AI slop from becoming real damage: every code change is checked against the Codex and deliberated by three specialized reviewers before it touches the codebase. When the window closes, the next session wakes with the job, the page, and the laws." }
+          },
+          {
+            "@type": "Question",
+            "name": "What does 0xRay do?",
+            "acceptedAnswer": { "@type": "Answer", "text": "0xRay is a three-subsystem autonomous engine. Inference remembers, External Governance judges, and the Autonomous Engine runs the work. The suit is the wear on the host you already run." }
+          },
+          {
+            "@type": "Question",
+            "name": "How does 0xRay power up my agent?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Memory, judgement, and payments come on with the suit: Repertoire for memory, Dynamo for judgement, and Clearing for payments. The rules stay on in the tool you already open. Goggles views one plane, so a search runs inside the current card." }
+          },
+          {
+            "@type": "Question",
+            "name": "What happens when an agent wears the suit?",
+            "acceptedAnswer": { "@type": "Answer", "text": "npx 0xray wear writes the consumer suit: AGENTS.md, .xray config, seven MCP servers, and the OpenCode, Grok, Hermes, and OpenClaw bridges. Inside a git checkout it also fastens Cursor project hooks. npm install 0xray links vendored Repertoire and does not write those bridges." }
+          },
+          {
+            "@type": "Question",
+            "name": "How do I install 0xRay?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Run npm install 0xray, then npx 0xray wear. npm install links vendored Repertoire and prints the wear command. Wear writes the suit." }
+          },
+          {
+            "@type": "Question",
+            "name": "Which tools does 0xRay work with?",
+            "acceptedAnswer": { "@type": "Answer", "text": "The host you already run wears it: Grok, OpenCode, Hermes, OpenClaw, or Cursor. Wear installs the OpenCode, Grok, Hermes, and OpenClaw bridges. Inside a git checkout, wear also fastens Cursor project hooks." }
+          },
+          {
+            "@type": "Question",
+            "name": "Is 0xRay free and open source?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes. 0xRay is MIT licensed. The LICENSE grants permission, free of charge, to use, copy, modify, merge, publish, distribute, sublicense, and sell copies of the software." }
+          },
+          {
+            "@type": "Question",
+            "name": "Where are the 0xRay docs?",
+            "acceptedAnswer": { "@type": "Answer", "text": "The manual is at https://docs.0xray.dev. Getting started covers wear, the four chat bridges, Cursor hooks, and the seven MCP servers. Each plate is one pipeline, including goggles and the suit." }
+          },
+          {
+            "@type": "Question",
+            "name": "How do I make my AI agent remember things between sessions?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Wear Repertoire. It is the memory organ (@0xray/repertoire 0.2.9) and it matches a task to named laws, with the project copy under .xray/state/repertoire/. Station at .xray/state/STATION.md is the wake ticket for the next session, not a substitute for Repertoire." }
+          },
+          {
+            "@type": "Question",
+            "name": "How do I keep an agent's context after compaction?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Grok PreCompact and Cursor preCompact write .xray/state/STATION.md before the compact continues. Read that card after the cut and leave Intent alone, so the same job continues. The long body stays in notes." }
+          },
+          {
+            "@type": "Question",
+            "name": "How do I manage a fleet of AI agents?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Bifrost is the fleet board at https://bifrost.0xray.dev. Every pull request, issue, and comment becomes one card and a line in the right seat's inbox, and that seat is woken. When LIVE_URL is unset, the board is the hand-kept house/WAVEBOARD.md." }
+          },
+          {
+            "@type": "Question",
+            "name": "How do I govern AI agents?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Governance runs before the work ships. Code review, security audit, and research vote approve, reject, or needs revision, and the PreToolUse gate stands beside that vote. The rules stay on." }
+          },
+          {
+            "@type": "Question",
+            "name": "Does 0xRay work with Grok Bot?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes. @0xray/grok-bot is the house companion for Grok Bot agents on the 0xRay suit. The suit keeps the rules on, the house is the grok-bot folder, and Repertoire ships in the suit." }
+          },
+          {
+            "@type": "Question",
+            "name": "How do I set up a Grok Bot agent house?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Install @0xray/grok-bot, then run npx @0xray/grok-bot house init if house/ is missing. Init copies templates/house/ into ./house and refuses to overwrite a file that is already there. Fill HOUSE.md, then run npx @0xray/grok-bot doctor until it reports House: PASS." }
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+</head>
+<body>
+  <div class="stage-slot">
+    <div class="stage-fit">
+    <header class="hero">
+      <img class="hero-logo" src="kit/logo.png" width="420" height="185" alt="0xRay" />
+      <h1>A power suit for AI agents</h1>
+      <ul class="hero-beats">
+        <li>Survive compaction</li>
+        <li>Build foundries</li>
+        <li>Monitor the swarm</li>
+      </ul>
+      <picture class="hero-suit">
+        <source srcset="assets/suit.webp" type="image/webp" />
+        <img src="assets/suit.png" width="1000" height="1000" alt="0xRay v4.0 suit, hand raised" />
+      </picture>
+    </header>
+    </div>
+  </div>
+  <div class="stage-slot plate-slot">
+    <div class="stage-fit">
+    <x-stamp class="stamp" id="suit-plate">
+      <div class="tray"></div>
+      <div class="nameplate">
+        <img class="stamp-logo" src="kit/logo.png" width="420" height="185" alt="" />
+        <h2 id="suit-title" class="stamp-title">SUIT</h2>
+        <p class="stamp-sub">FOR AGENTS</p>
+        <span class="title-line" aria-hidden="true"></span>
+        <span class="name-line" aria-hidden="true"></span>
+      </div>
+      <div class="board" role="table" aria-labelledby="suit-title">
+        <div class="plaque head" role="row">
+          <div role="columnheader">TOPIC</div>
+          <div role="columnheader">WHAT YOU GET</div>
+        </div>
+        <div class="plaque" role="row">
+          <div role="rowheader">PROBLEM</div>
+          <div role="cell">Your agent forgets the job when the session or context window ends</div>
+        </div>
+        <div class="plaque" role="row">
+          <div role="rowheader">FIX</div>
+          <div role="cell">A suit your agent wears. Keeps laws, memory, and the job when the window closes</div>
+        </div>
+        <div class="plaque" role="row">
+          <div role="rowheader">REMEMBERS</div>
+          <div role="cell">Between sessions</div>
+        </div>
+        <div class="plaque" role="row">
+          <div role="rowheader">GOVERNANCE</div>
+          <div role="cell">Checks its own work before it ships</div>
+        </div>
+        <div class="plaque" role="row">
+          <div role="rowheader">WAKE</div>
+          <div role="cell">Picks the job back up after a restart</div>
+        </div>
+        <div class="plaque" role="row">
+          <div role="rowheader">FLEET</div>
+          <div role="cell">Runs a fleet under shared rules</div>
+        </div>
+      </div>
+      <span class="divider" aria-hidden="true"></span>
+      <p class="foot-well">GROK, OPENCODE, HERMES, OPENCLAW, CURSOR, GROK BOT</p>
+    </x-stamp>
+    </div>
+    <button type="button" class="plate-open" id="plate-open" aria-haspopup="dialog" aria-controls="plate-zoom">Enlarge</button>
+  </div>
+  <main>
+    <div class="install panel">
+      <span>INSTALL</span>
+      <code id="install-line">npm i -g 0xray</code>
+      <button type="button" class="copy" id="install-copy">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <rect x="8" y="8" width="12" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="2"></rect>
+          <path d="M6 16H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" fill="none" stroke="currentColor" stroke-width="2"></path>
+        </svg>
+        <span id="install-copy-label" aria-live="polite">Copy</span>
+      </button>
+    </div>
+    <ul class="links">
+      <li><a href="https://docs.0xray.dev">DOCS</a></li>
+      <li><a href="https://github.com/0xRayAI/xray">GITHUB</a></li>
+      <li><a href="https://www.npmjs.com/package/0xray">NPM</a></li>
+      <li><a href="https://bifrost.0xray.dev">BIFROST</a></li>
+    </ul>
+    <section class="faq" aria-labelledby="faq-title">
+      <h2 id="faq-title">FAQ</h2>
+      <details>
+        <summary>Why do I need 0xRay?</summary>
+        <p>0xRay is the suit a coding agent wears so the job survives the context window. It is an exoskeleton that blocks AI slop from becoming real damage: every code change is checked against the Codex and deliberated by three specialized reviewers before it touches the codebase. When the window closes, the next session wakes with the job, the page, and the laws.</p>
+      </details>
+      <details>
+        <summary>What does 0xRay do?</summary>
+        <p>0xRay is a three-subsystem autonomous engine. Inference remembers, External Governance judges, and the Autonomous Engine runs the work. The suit is the wear on the host you already run.</p>
+      </details>
+      <details>
+        <summary>How does 0xRay power up my agent?</summary>
+        <p>Memory, judgement, and payments come on with the suit: Repertoire for memory, Dynamo for judgement, and Clearing for payments. The rules stay on in the tool you already open. Goggles views one plane, so a search runs inside the current card.</p>
+      </details>
+      <details>
+        <summary>What happens when an agent wears the suit?</summary>
+        <p>npx 0xray wear writes the consumer suit: AGENTS.md, .xray config, seven MCP servers, and the OpenCode, Grok, Hermes, and OpenClaw bridges. Inside a git checkout it also fastens Cursor project hooks. npm install 0xray links vendored Repertoire and does not write those bridges.</p>
+      </details>
+      <details>
+        <summary>How do I install 0xRay?</summary>
+        <p>Run npm install 0xray, then npx 0xray wear. npm install links vendored Repertoire and prints the wear command. Wear writes the suit.</p>
+      </details>
+      <details>
+        <summary>Which tools does 0xRay work with?</summary>
+        <p>The host you already run wears it: Grok, OpenCode, Hermes, OpenClaw, or Cursor. Wear installs the OpenCode, Grok, Hermes, and OpenClaw bridges. Inside a git checkout, wear also fastens Cursor project hooks.</p>
+      </details>
+      <details>
+        <summary>Is 0xRay free and open source?</summary>
+        <p>Yes. 0xRay is MIT licensed. The LICENSE grants permission, free of charge, to use, copy, modify, merge, publish, distribute, sublicense, and sell copies of the software.</p>
+      </details>
+      <details>
+        <summary>Where are the 0xRay docs?</summary>
+        <p>The manual is at https://docs.0xray.dev. Getting started covers wear, the four chat bridges, Cursor hooks, and the seven MCP servers. Each plate is one pipeline, including goggles and the suit.</p>
+      </details>
+      <details>
+        <summary>How do I make my AI agent remember things between sessions?</summary>
+        <p>Wear Repertoire. It is the memory organ (@0xray/repertoire 0.2.9) and it matches a task to named laws, with the project copy under .xray/state/repertoire/. Station at .xray/state/STATION.md is the wake ticket for the next session, not a substitute for Repertoire.</p>
+      </details>
+      <details>
+        <summary>How do I keep an agent's context after compaction?</summary>
+        <p>Grok PreCompact and Cursor preCompact write .xray/state/STATION.md before the compact continues. Read that card after the cut and leave Intent alone, so the same job continues. The long body stays in notes.</p>
+      </details>
+      <details>
+        <summary>How do I manage a fleet of AI agents?</summary>
+        <p>Bifrost is the fleet board at https://bifrost.0xray.dev. Every pull request, issue, and comment becomes one card and a line in the right seat's inbox, and that seat is woken. When LIVE_URL is unset, the board is the hand-kept house/WAVEBOARD.md.</p>
+      </details>
+      <details>
+        <summary>How do I govern AI agents?</summary>
+        <p>Governance runs before the work ships. Code review, security audit, and research vote approve, reject, or needs revision, and the PreToolUse gate stands beside that vote. The rules stay on.</p>
+      </details>
+      <details>
+        <summary>Does 0xRay work with Grok Bot?</summary>
+        <p>Yes. @0xray/grok-bot is the house companion for Grok Bot agents on the 0xRay suit. The suit keeps the rules on, the house is the grok-bot folder, and Repertoire ships in the suit.</p>
+      </details>
+      <details>
+        <summary>How do I set up a Grok Bot agent house?</summary>
+        <p>Install @0xray/grok-bot, then run npx @0xray/grok-bot house init if house/ is missing. Init copies templates/house/ into ./house and refuses to overwrite a file that is already there. Fill HOUSE.md, then run npx @0xray/grok-bot doctor until it reports House: PASS.</p>
+      </details>
+    </section>
+  </main>
+  <footer class="site-footer">
+    <p class="colophon">
+      <img src="assets/favicon.png" width="64" height="64" alt="" />
+      <span>© 2026 0xRay</span>
+    </p>
+    <nav aria-label="Footer">
+      <a href="https://docs.0xray.dev">Docs</a>
+      <a href="https://github.com/0xRayAI/xray">GitHub</a>
+      <a href="https://www.npmjs.com/package/0xray">npm</a>
+      <a href="https://bifrost.0xray.dev">Bifrost board</a>
+      <a href="https://x.com/0xRayAI">X (@0xRayAI)</a>
+    </nav>
+  </footer>
+  <div id="plate-zoom" class="lightbox" hidden role="dialog" aria-modal="true" aria-label="Stamped plate, full size">
+    <button type="button" class="zoom-close" id="plate-close" aria-label="Close">X</button>
+    <div id="plate-stage" class="plate-stage"></div>
+  </div>
+  <script src="kit/stamp.js"></script>
+</body>
+</html>
