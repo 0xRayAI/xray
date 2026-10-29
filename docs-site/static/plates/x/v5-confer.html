@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>V5 debate</title>
+  <style>
+    /* Motions already named on this branch. Durations and curves are copied.
+       fadeIn: docs-site/src/css/custom.css
+       rise, blink: docs-site/static/live/index.html
+       live-blink, wspin, wglow: house/live/app/public/index.html
+       The board canvas clocks in BOARD-DATA-MAP.md are not used here.
+       This pull request does not reference that file. */
+    html, body { margin: 0; background: #04060c; }
+    .stage { position: relative; width: 1600px; height: 1600px; overflow: hidden; background: #04060c; }
+    .head, .body { position: absolute; left: 0; width: 1600px; overflow: hidden; }
+    .head { top: 0; height: 202px; animation: rise .6s ease-out both; }
+    .body { top: 202px; height: 1398px; animation: fadeIn 0.3s ease-out; }
+    .head img, .body > img { position: absolute; left: 0; width: 1600px; height: 1600px; }
+    .body > img { top: -202px; }
+    .hole { position: absolute; overflow: hidden; background: #04060c; }
+    .win {
+      position: absolute;
+      inset: 0;
+      background-image: url("v5-confer.png");
+      background-repeat: no-repeat;
+    }
+    .chip { animation: blink 1.6s ease-in-out infinite; }
+    .seat { animation: live-blink 2.8s ease-in-out infinite; }
+    .spin { animation: wspin .8s linear infinite; }
+    .glow {
+      position: absolute;
+      left: 1116px;
+      top: 34px;
+      width: 408px;
+      height: 390px;
+      border-radius: 18px;
+      pointer-events: none;
+      animation: wglow 2.6s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+    @keyframes blink { 50% { opacity: .35; } }
+    @keyframes live-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.62; } }
+    @keyframes wspin { to { transform: rotate(360deg); } }
+    @keyframes wglow { 0% { box-shadow: 0 0 0 2px #ffd166, 0 0 18px #ffd166; } 100% { box-shadow: none; } }
+    @media (prefers-reduced-motion: reduce) {
+      .head, .body, .chip, .seat, .spin, .glow { animation: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <div class="head"><img src="v5-confer.png" alt=""></div>
+    <div class="body">
+      <img src="v5-confer.png" alt="V5 debate">
+      <div class="glow"></div>
+      <div class="hole" style="left:76px;top:522px;width:72px;height:72px"><div class="win chip" style="background-position:-76px -724px"></div></div>
+      <div class="hole" style="left:1018px;top:522px;width:72px;height:72px"><div class="win chip" style="background-position:-1018px -724px"></div></div>
+      <div class="hole" style="left:76px;top:822px;width:72px;height:72px"><div class="win chip" style="background-position:-76px -1024px"></div></div>
+      <div class="hole" style="left:1018px;top:822px;width:72px;height:72px"><div class="win chip" style="background-position:-1018px -1024px"></div></div>
+      <div class="hole" style="left:1188px;top:610px;width:72px;height:72px"><div class="win chip" style="background-position:-1188px -812px"></div></div>
+      <div class="hole" style="left:1188px;top:738px;width:72px;height:72px"><div class="win chip" style="background-position:-1188px -940px"></div></div>
+      <div class="hole" style="left:94px;top:938px;width:26px;height:26px"><div class="win spin" style="background-position:-94px -1140px"></div></div>
+      <div class="hole" style="left:256px;top:1158px;width:26px;height:26px"><div class="win seat" style="background-position:-256px -1360px"></div></div>
+      <div class="hole" style="left:738px;top:1158px;width:26px;height:26px"><div class="win seat" style="background-position:-738px -1360px"></div></div>
+      <div class="hole" style="left:1223px;top:1158px;width:26px;height:26px"><div class="win seat" style="background-position:-1223px -1360px"></div></div>
+    </div>
+  </div>
+</body>
+</html>

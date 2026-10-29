@@ -109,6 +109,7 @@ const sidebars: SidebarsConfig = {
         'plates/consumer-mcp',
         'plates/confer',
         'plates/grokbot',
+        'plates/fleet',
       ],
     },
     'full-reference',
