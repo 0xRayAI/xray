@@ -6,6 +6,7 @@ Complete reference of capabilities through **0xRay 4.1**. 0xRay is a three-subsy
 
 Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 
+- **Mesh.** Board stats sit above the mesh. The roster sits at the top of the mesh card and the timeline sits at the bottom of that card.
 - **Working.** A Grok tool opens the seat turn, then ticks it once a minute. A subagent posts kind subagent on spawn and on return. The tag is a short hash. The prompt stays off the wire. A next-owner label that names the seat, such as Arch1 (@arch10x), binds that light to the open card.
 
 The docs site is https://docs.0xray.dev/. The public board is https://bifrost.0xray.dev. The cursor folder rule is [Cursor folder](https://github.com/0xRayAI/xray/blob/main/grok-bot/OP-PROC.md#cursor-folder). `LIVE_CURSORS` is not required. A read does not write `<seat>.txt`. The server nudge ladder does not re-wake a line the seat already acked or whose handled key is in that cursor. Watch scripts run `house/live/tools` from the main checkout. Fleet seats boot through the station skill: Light on an owner message, Full after a summary, a wake, or a gate. Profile planes are core, integration, ecosystem, distribution, and live. See the [house guide](./house.md).

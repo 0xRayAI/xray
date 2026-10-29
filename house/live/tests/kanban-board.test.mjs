@@ -336,7 +336,7 @@ test('column headers stay visible after the card area scrolls', async () => {
       const list = col.querySelector('.wcards');
       const head = col.querySelector('h3');
       const pageHead = document.querySelector('main > header').getBoundingClientRect();
-      const bar = document.querySelector('main > header .mesh-controls').getBoundingClientRect();
+      const bar = document.querySelector('#meshPanel .mesh-controls').getBoundingClientRect();
       const headBefore = head.getBoundingClientRect().top;
       const cardBefore = list.querySelector('.wcard').getBoundingClientRect().top;
       const topsBefore = [...board.querySelectorAll('h3')].map((h) => h.getBoundingClientRect().top);
@@ -346,7 +346,7 @@ test('column headers stay visible after the card area scrolls', async () => {
       const boardBox = board.getBoundingClientRect();
       const topsAfter = [...board.querySelectorAll('h3')].map((h) => Math.round(h.getBoundingClientRect().top));
       const pageHeadAfter = document.querySelector('main > header').getBoundingClientRect();
-      const barAfter = document.querySelector('main > header .mesh-controls').getBoundingClientRect();
+      const barAfter = document.querySelector('#meshPanel .mesh-controls').getBoundingClientRect();
       board.scrollLeft = board.scrollWidth;
       const columns = [...board.querySelectorAll('.kanban-col')].map((node) => {
         const h = node.querySelector('h3').getBoundingClientRect();
@@ -414,13 +414,10 @@ test('column headers stay visible after the card area scrolls', async () => {
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
     const pinned = await page.evaluate(() => {
       const head = document.querySelector('main > header').getBoundingClientRect();
-      const bar = document.querySelector('main > header .mesh-controls').getBoundingClientRect();
       const h1 = document.querySelector('main > header h1').getBoundingClientRect();
       return {
         headTop: head.top,
         headBottom: head.bottom,
-        barTop: bar.top,
-        barBottom: bar.bottom,
         h1Top: h1.top,
         h1Bottom: h1.bottom,
         view: window.innerHeight,
@@ -428,8 +425,6 @@ test('column headers stay visible after the card area scrolls', async () => {
     });
     assert.ok(pinned.headTop <= 1, JSON.stringify(pinned));
     assert.ok(pinned.h1Bottom > 0 && pinned.h1Top < pinned.view, JSON.stringify(pinned));
-    assert.ok(pinned.barTop >= pinned.headTop && pinned.barBottom <= pinned.headBottom + 1, JSON.stringify(pinned));
-    assert.ok(pinned.barBottom > 0 && pinned.barTop < pinned.view, JSON.stringify(pinned));
 
     await page.screenshot({ path: '/opt/cursor/artifacts/kanban-headers-stuck.png', fullPage: false });
   } finally {

@@ -386,12 +386,12 @@ main > header {
   margin-bottom: 8px;
   padding-bottom: 8px;
 }
-main > header .mesh-controls {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  margin: 8px 0 0;
-  padding: 8px 10px;
+#meshPanel .mesh-controls {
+  flex: none;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--hairline);
+  background: transparent;
 }
 .status b[title] { cursor: help; }
 header h1 span { color: var(--dim); font-size: 13px; font-weight: 400; letter-spacing: 0; margin-left: 8px; }
@@ -431,9 +431,11 @@ button.seat { background: transparent; border: 0; padding: 0; color: inherit; fo
 canvas { display: block; width: 100%; height: auto; }
 .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 #meshPanel { display: flex; flex-direction: column; height: 720px; max-height: 720px; overflow: hidden; min-height: 0; }
-#seats { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; margin: 0; background: transparent; border: 0; padding: 4px 0 0; }
+#seats { flex: 0 1 auto; max-height: 8.5rem; min-height: 0; display: flex; flex-direction: column; margin: 0; background: transparent; border: 0; padding: 0; }
 #seats > .fold-head { flex: none; }
 #seats > .fold-body { flex: 1 1 auto; min-height: 0; max-height: none; overflow: auto; }
+#statsFold { margin: 0 0 12px; border: 1px solid var(--line); border-radius: 8px; padding: 0 8px; background: transparent; }
+#statsFold:not(.collapsed) { background: var(--stat-bg); }
 #kanban { margin-top: 12px; }
 .mesh-legend { color: var(--dim); font-size: 11px; margin: 6px 0 0; display: flex; flex-wrap: wrap; gap: 8px; }
 .mesh-legend span { border-bottom: 1px dotted var(--dim); cursor: help; }
@@ -544,7 +546,7 @@ a.wgh:hover,
 .fresh.green .fresh-dot { background: var(--fresh-green); }
 .fresh.amber .fresh-dot { background: var(--fresh-amber); }
 .fresh.red .fresh-dot { background: var(--fresh-red); }
-    #cardRecent, #queueBox, #cardHist, #trackBox, #statsFold, #cardsFold, #cloudFold { margin-top: 8px; }
+    #cardRecent, #queueBox, #cardHist, #trackBox, #cardsFold, #cloudFold { margin-top: 8px; }
     #wave > .fold { border: 1px solid var(--line); border-radius: 8px; background: transparent; padding: 0 8px; }
     #wave > .fold:not(.collapsed) { background: var(--stat-bg); }
     #wave > .fold:hover { background: var(--log-hover); }
@@ -581,7 +583,7 @@ button:hover { border-color: var(--control-hover); }
     .fold-sum { margin-left: auto; color: var(--dim); font-weight: 450; font-size: 12px; }
     .fold-body { max-height: var(--fold-cap, 16rem); overflow: auto; }
     .fold.collapsed .fold-body { display: none; }
-    #meshPanel > .fold-body { flex: 0 0 auto; max-height: none; overflow: visible; }
+    #meshPanel > .fold-body { flex: 1 1 auto; min-height: 0; max-height: none; overflow: auto; }
     #cardsFold:not(.collapsed) { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
     #waveBody { max-height: none; flex: 1 1 auto; min-height: 220px; overflow-y: auto; }
     #cardGroup { flex: none; width: auto; align-self: center; margin: 0; white-space: nowrap; font-size: 11px; font-weight: 650; line-height: 1.2; padding: 3px 8px; background: transparent; color: var(--text); border: 0; border-radius: 6px; }
@@ -618,6 +620,30 @@ footer a { color: var(--foot); }
     <p class="status" id="status">Loading…</p>
     <p class="fresh" id="fresh"><span class="fresh-dot"></span><span id="freshText">Loading…</span></p>
     <div hidden><canvas id="mark" width="112" height="44"></canvas><b id="fleet"></b><span id="blackout"></span></div>
+  </header>
+
+  <div class="fold" data-fold="stats" id="statsFold">
+    <button class="fold-head" type="button" aria-expanded="true"><span>Stats</span><span class="fold-sum" id="statsSum"></span></button>
+    <div class="fold-body"><div class="wave-stats" id="waveStats" aria-label="last 24 h and open now"></div></div>
+  </div>
+
+  <div class="split">
+  <section class="panel fold" id="meshPanel" data-fold="mesh">
+    <button class="fold-head" type="button" aria-expanded="true"><span>Mesh</span><span class="fold-sum" id="meshSum"></span></button>
+    <section class="seats fold" id="seats" data-fold="roster" aria-label="Seats">
+      <button class="fold-head" type="button" aria-expanded="true"><span>Roster</span><span class="fold-sum" id="rosterSum"></span></button>
+      <div class="fold-body" id="seatGrid"></div>
+    </section>
+    <div class="fold-body">
+    <div class="lens-head">
+      <span>THE LENS · PING-PONG VOLLEY</span>
+      <span class="legend">pings = handoffs + pushes · circles = seats · squares = rails</span>
+    </div>
+    <div id="head">&nbsp;</div>
+    <div id="headTime">&nbsp;</div>
+    <canvas id="mesh" width="920" height="400" aria-label="Mesh of seats and rails with handoff pings"></canvas>
+    <p class="mesh-legend" id="meshLegend"><span title="index.html drawNode. Hot seat from activeSeats over a handoff or push, or the rewind window. Three strokes. Live duration 2 times FLASH_MS, 5200ms. Letter seats.">Hot ring 5.2s</span><span title="index.html drawNode. A seen seat is live or active, and it is not working. One dim stroke. The name does not roll.">Seen ring</span><span title="index.html draw. A ping whose source is this node. One sine, PULSE_MS 900, across the flight. Flight is 2600ms, up to 7800ms.">Depart pulse</span><span title="index.html drawPing. from equals to. Radius 24 to 46 and alpha 1 to 0 across that same flight.">One-node ring</span></p>
+    </div>
     <div class="controls mesh-controls" aria-label="Timeline">
       <button id="play" type="button" title="Play / pause the replay (Live plays in real time; click the timeline to replay from there)">&#9654; Play</button>
       <select id="speed" aria-label="Replay speed">
@@ -631,32 +657,9 @@ footer a { color: var(--foot); }
       <input id="slider" type="range" min="0" max="1" step="1000" value="1" aria-label="Timeline">
       <span id="tLabel"></span>
     </div>
-  </header>
-
-  <div class="split">
-  <section class="panel fold" id="meshPanel" data-fold="mesh">
-    <button class="fold-head" type="button" aria-expanded="true"><span>Mesh</span><span class="fold-sum" id="meshSum"></span></button>
-    <div class="fold-body">
-    <div class="lens-head">
-      <span>THE LENS · PING-PONG VOLLEY</span>
-      <span class="legend">pings = handoffs + pushes · circles = seats · squares = rails</span>
-    </div>
-    <div id="head">&nbsp;</div>
-    <div id="headTime">&nbsp;</div>
-    <canvas id="mesh" width="920" height="400" aria-label="Mesh of seats and rails with handoff pings"></canvas>
-    <p class="mesh-legend" id="meshLegend"><span title="index.html drawNode. Hot seat from activeSeats over a handoff or push, or the rewind window. Three strokes. Live duration 2 times FLASH_MS, 5200ms. Letter seats.">Hot ring 5.2s</span><span title="index.html drawNode. A seen seat is live or active, and it is not working. One dim stroke. The name does not roll.">Seen ring</span><span title="index.html draw. A ping whose source is this node. One sine, PULSE_MS 900, across the flight. Flight is 2600ms, up to 7800ms.">Depart pulse</span><span title="index.html drawPing. from equals to. Radius 24 to 46 and alpha 1 to 0 across that same flight.">One-node ring</span></p>
-    </div>
-    <section class="seats fold" id="seats" data-fold="roster" aria-label="Seats">
-      <button class="fold-head" type="button" aria-expanded="true"><span>Roster</span><span class="fold-sum" id="rosterSum"></span></button>
-      <div class="fold-body" id="seatGrid"></div>
-    </section>
   </section>
   <aside class="panel wave" id="wave" aria-label="Board (read-only)">
     <div class="wave-head"><b>🌊 Board</b><span id="waveCount"></span><button id="waveToggle" type="button" aria-expanded="true" aria-controls="waveBody">Hide</button></div>
-    <div class="fold" data-fold="stats" id="statsFold">
-      <button class="fold-head" type="button" aria-expanded="true"><span>Stats</span><span class="fold-sum" id="statsSum"></span></button>
-      <div class="fold-body"><div class="wave-stats" id="waveStats" aria-label="last 24 h and open now"></div></div>
-    </div>
     <div class="fold" data-fold="cards" id="cardsFold">
       <div class="fold-bar">
         <button class="fold-head" type="button" aria-expanded="true"><span>Cards</span><span class="fold-sum" id="cardsSum"></span></button>

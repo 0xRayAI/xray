@@ -343,7 +343,14 @@ test('see all history sits in the recent header and replaces the side pane', asy
       return { hist: wave.classList.contains('hist-open'), shown };
     });
     assert.equal(closed.hist, false);
-    assert.ok(closed.shown.includes('statsFold') && closed.shown.includes('cardsFold') && closed.shown.includes('cardRecent'));
+    assert.ok(closed.shown.includes('cardsFold') && closed.shown.includes('cardRecent'));
+    assert.equal(closed.shown.includes('statsFold'), false);
+    const statsAbove = await page.evaluate(() => {
+      const stats = document.getElementById('statsFold').getBoundingClientRect();
+      const mesh = document.getElementById('meshPanel').getBoundingClientRect();
+      return mesh.top - stats.bottom;
+    });
+    assert.ok(statsAbove >= -1 && statsAbove < 24, String(statsAbove));
     assert.equal(await page.locator('#waveHistBack').evaluate((el) => getComputedStyle(el).display), 'none');
   } finally {
     if (browser) await browser.close();
