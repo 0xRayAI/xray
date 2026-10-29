@@ -377,20 +377,7 @@ export class RedeployCoordinator {
     // In a real system, this would integrate with deployment APIs
 
     // Trigger a new CI/CD run to validate the fixes
-    try {
-      execSync("git push origin master", {
-        stdio: "pipe",
-        timeout: 30000,
-      });
-      await frameworkLogger.log(
-        "-redeploy-coordinator",
-        "-deployment-triggered-via-git-push-",
-        "success",
-        { message: "✅ Deployment triggered via git push" },
-      );
-    } catch (error) {
-      throw new Error(`Deployment trigger failed: ${error}`);
-    }
+    throw new Error("refusing git push origin master");
   }
 
   /**
@@ -557,17 +544,7 @@ export class RedeployCoordinator {
       // In a real system, this would revert to the previous version
 
       // For this implementation, we could revert the git commit
-      execSync("git reset --hard HEAD~1", {
-        stdio: "pipe",
-        timeout: 10000,
-      });
-
-      await frameworkLogger.log(
-        "-redeploy-coordinator",
-        "-deployment-rolled-back-successfully-",
-        "success",
-        { message: "✅ Deployment rolled back successfully" },
-      );
+      throw new Error("refusing git reset --hard");
     } catch (error) {
       frameworkLogger.log("RedeployCoordinator", "rollback", "error", { error, message: "❌ Rollback failed:" });
       throw new Error(`Rollback failed: ${error}`);
