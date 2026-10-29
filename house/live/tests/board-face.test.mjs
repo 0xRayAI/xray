@@ -160,6 +160,7 @@ test('the board face keeps the contract in both themes', async () => {
           ellipsis: cs.textOverflow,
           nowrap: cs.whiteSpace,
           idle: el.classList.contains('idle'),
+          working: el.classList.contains('working'),
           pulse: el.querySelector('.dot').classList.contains('blink'),
         };
       });

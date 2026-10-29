@@ -430,7 +430,11 @@ button.seat { background: transparent; border: 0; padding: 0; color: inherit; fo
 #headTime { color: var(--dim); font-size: 12px; font-family: "JetBrains Mono", ui-monospace, monospace; }
 canvas { display: block; width: 100%; height: auto; }
 .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-#meshPanel { display: flex; flex-direction: column; }
+#meshPanel { display: flex; flex-direction: column; height: 720px; max-height: 720px; overflow: hidden; min-height: 0; }
+#seats { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; margin: 0; background: transparent; border: 0; padding: 4px 0 0; }
+#seats > .fold-head { flex: none; }
+#seats > .fold-body { flex: 1 1 auto; min-height: 0; max-height: none; overflow: auto; }
+#kanban { margin-top: 12px; }
 .mesh-legend { color: var(--dim); font-size: 11px; margin: 6px 0 0; display: flex; flex-wrap: wrap; gap: 8px; }
 .mesh-legend span { border-bottom: 1px dotted var(--dim); cursor: help; }
 .spectrum-pill { display: inline-block; flex: none; font-size: 11px; font-weight: 700; letter-spacing: .08em; padding: 3px 8px; border-radius: 999px;
@@ -440,9 +444,8 @@ canvas { display: block; width: 100%; height: auto; }
 .spectrum-meter i { display: block; width: 3px; border-radius: 1px; }
 @media (prefers-reduced-motion: reduce) { .spectrum-meter i { transition: none; } }
 main { max-width: 1560px; }
-.split { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 12px; align-items: start; }
-.split-main { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
-.split > .panel, .split-main > .panel { margin: 0; min-width: 0; }
+.split { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 12px; align-items: stretch; }
+.split > .panel { margin: 0; min-width: 0; }
 #agentPing[hidden], #agentPing:empty { display: none; }
 .wave { display: flex; flex-direction: column; height: 720px; max-height: 720px; overflow: hidden; isolation: isolate; }
 .wave-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 12px; color: var(--dim); }
@@ -535,7 +538,7 @@ a.wgh:hover,
 .wcard.glow { animation: wglow 2.6s ease-out; }
 @keyframes wglow { 0% { box-shadow: 0 0 0 2px var(--glow), 0 0 18px var(--glow); } 100% { box-shadow: none; } }
 @media (prefers-reduced-motion: reduce) { .wcard.glow { animation: none; outline: 2px solid var(--glow); } }
-@media (max-width: 900px) { .split { grid-template-columns: 1fr; } #waveToggle { display: inline-block; } .wave.collapsed .wave-body { display: none; } .wave { height: auto; max-height: none; } }
+@media (max-width: 900px) { .split { grid-template-columns: 1fr; } #waveToggle { display: inline-block; } .wave.collapsed .wave-body { display: none; } .wave, #meshPanel { height: auto; max-height: none; } #meshPanel { overflow: visible; } }
 .fresh { display: inline-flex; align-items: center; gap: 6px; margin: 0 0 8px; font-weight: 600; }
 .fresh-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--fresh-idle); flex: none; }
 .fresh.green .fresh-dot { background: var(--fresh-green); }
@@ -578,7 +581,7 @@ button:hover { border-color: var(--control-hover); }
     .fold-sum { margin-left: auto; color: var(--dim); font-weight: 450; font-size: 12px; }
     .fold-body { max-height: var(--fold-cap, 16rem); overflow: auto; }
     .fold.collapsed .fold-body { display: none; }
-    #meshPanel > .fold-body { max-height: none; overflow: visible; }
+    #meshPanel > .fold-body { flex: 0 0 auto; max-height: none; overflow: visible; }
     #cardsFold:not(.collapsed) { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
     #waveBody { max-height: none; flex: 1 1 auto; min-height: 220px; overflow-y: auto; }
     #cardGroup { flex: none; width: auto; align-self: center; margin: 0; white-space: nowrap; font-size: 11px; font-weight: 650; line-height: 1.2; padding: 3px 8px; background: transparent; color: var(--text); border: 0; border-radius: 6px; }
@@ -630,13 +633,7 @@ footer a { color: var(--foot); }
     </div>
   </header>
 
-  <section class="panel seats fold" id="seats" data-fold="roster" aria-label="Seats">
-    <button class="fold-head" type="button" aria-expanded="true"><span>Roster</span><span class="fold-sum" id="rosterSum"></span></button>
-    <div class="fold-body" id="seatGrid"></div>
-  </section>
-
   <div class="split">
-  <div class="split-main">
   <section class="panel fold" id="meshPanel" data-fold="mesh">
     <button class="fold-head" type="button" aria-expanded="true"><span>Mesh</span><span class="fold-sum" id="meshSum"></span></button>
     <div class="fold-body">
@@ -649,13 +646,11 @@ footer a { color: var(--foot); }
     <canvas id="mesh" width="920" height="400" aria-label="Mesh of seats and rails with handoff pings"></canvas>
     <p class="mesh-legend" id="meshLegend"><span title="index.html drawNode. Hot seat from activeSeats over a handoff or push, or the rewind window. Three strokes. Live duration 2 times FLASH_MS, 5200ms. Letter seats.">Hot ring 5.2s</span><span title="index.html drawNode. A seen seat is live or active, and it is not working. One dim stroke. The name does not roll.">Seen ring</span><span title="index.html draw. A ping whose source is this node. One sine, PULSE_MS 900, across the flight. Flight is 2600ms, up to 7800ms.">Depart pulse</span><span title="index.html drawPing. from equals to. Radius 24 to 46 and alpha 1 to 0 across that same flight.">One-node ring</span></p>
     </div>
+    <section class="seats fold" id="seats" data-fold="roster" aria-label="Seats">
+      <button class="fold-head" type="button" aria-expanded="true"><span>Roster</span><span class="fold-sum" id="rosterSum"></span></button>
+      <div class="fold-body" id="seatGrid"></div>
+    </section>
   </section>
-  <div id="agentPing" hidden></div>
-  <section class="panel kanban fold" id="kanban" data-fold="kanban" aria-label="Kanban">
-    <button class="fold-head" type="button" aria-expanded="true" aria-controls="kanbanBoard"><span>Kanban</span><span class="fold-sum" id="kanbanSum"></span></button>
-    <div class="fold-body kanban-board" id="kanbanBoard"></div>
-  </section>
-  </div>
   <aside class="panel wave" id="wave" aria-label="Board (read-only)">
     <div class="wave-head"><b>🌊 Board</b><span id="waveCount"></span><button id="waveToggle" type="button" aria-expanded="true" aria-controls="waveBody">Hide</button></div>
     <div class="fold" data-fold="stats" id="statsFold">
@@ -697,6 +692,11 @@ footer a { color: var(--foot); }
     </div>
   </aside>
   </div>
+  <div id="agentPing" hidden></div>
+  <section class="panel kanban fold" id="kanban" data-fold="kanban" aria-label="Kanban">
+    <button class="fold-head" type="button" aria-expanded="true" aria-controls="kanbanBoard"><span>Kanban</span><span class="fold-sum" id="kanbanSum"></span></button>
+    <div class="fold-body kanban-board" id="kanbanBoard"></div>
+  </section>
 
   <dialog id="cardPop" aria-labelledby="cardPopTitle">
     <div class="card-pop">
