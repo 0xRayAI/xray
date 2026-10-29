@@ -24,10 +24,11 @@ type DrumManifest = {
 describe("BED-MAGNETIC-MOVES-v8lib", () => {
   it("records a CC0 source for each drum one-shot", () => {
     const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as DrumManifest;
-    expect(manifest.bed).toBe("BED-MAGNETIC-MOVES-v8lib");
+    expect(manifest.bed).toBe("BED-MAGNETIC-MOVES-v9");
     expect(manifest.samples.map((row) => row.role)).toEqual([
       "kick",
       "closed hat",
+      "open hat",
       "open hat",
       "clap",
     ]);
