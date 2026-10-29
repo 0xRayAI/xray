@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { formatInboxMessage, pollInboxOnce, watcherAlive } from '../../integrations/hooks/inbox-boot.mjs';
+import { composeInboxMessage, formatInboxMessage, pollInboxOnce, watcherAlive } from '../../integrations/hooks/inbox-boot.mjs';
 
 const dirs: string[] = [];
 
@@ -31,6 +31,10 @@ describe('inbox boot', () => {
     const long = formatInboxMessage(`ACTION_REQUIRED\n${'x'.repeat(5000)}`);
     expect(long.length).toBeLessThanOrEqual(3500);
     expect(long.endsWith('…')).toBe(true);
+    const ordered = composeInboxMessage(`ACTION_REQUIRED\n${'x'.repeat(5000)}`, 'Start the inbox monitor before other work.\nCommand: go');
+    expect(ordered.length).toBeLessThanOrEqual(3500);
+    expect(ordered).toContain('ACTION_REQUIRED');
+    expect(ordered.endsWith('Command: go')).toBe(true);
   });
 
   it('treats a dead pid as absent and a live pid as the watcher', () => {
@@ -61,6 +65,7 @@ describe('inbox boot', () => {
       },
     });
     expect(text).toBe('');
+    expect(text).not.toContain('Command:');
     expect(spawned).toBe(false);
   });
 
@@ -119,6 +124,9 @@ printf 'ACTION_REQUIRED\\nunfinished:1\\n'
     });
     expect(text).toContain('ACTION_REQUIRED');
     expect(text).toContain('unfinished:1');
+    expect(text).toContain('Start the inbox monitor before other work.');
+    expect(text).toContain(file);
+    expect(text).toContain(keys);
     expect(fs.readFileSync(`${marker}.seat`, 'utf8').trim()).toBe('arch1');
     expect(fs.readFileSync(`${marker}.once`, 'utf8').trim()).toBe('1');
     expect(fs.readFileSync(`${marker}.url`, 'utf8').trim()).toBe('https://bifrost.example');
@@ -141,7 +149,32 @@ printf 'ACTION_REQUIRED\\nunfinished:1\\n'
       script: file,
       timeoutMs: 200,
     });
-    expect(text).toBe('');
+    expect(text).toContain('Start the inbox monitor before other work.');
+    expect(text).toContain(file);
+    expect(text).not.toContain('ACTION_REQUIRED');
+  });
+
+  it('orders the session monitor when the watcher pid is dead and the poll is empty', async () => {
+    const home = tmp('inbox-boot-order-');
+    const keys = path.join(home, 'keys');
+    fs.mkdirSync(keys);
+    fs.writeFileSync(path.join(keys, 'arch1.key'), 'not-a-real-key\n', { mode: 0o600 });
+    const file = script(home, '#!/bin/sh\nexit 0\n');
+    const text = await pollInboxOnce({
+      env: { SEAT_KEYS_DIR: keys, XRAY_SEAT: 'arch1', LIVE_URL: 'https://bifrost.example' },
+      home,
+      pidFile: path.join(home, 'absent.pid'),
+      script: file,
+    });
+    expect(text).toContain('Start the inbox monitor before other work.');
+    expect(text).toContain('One copy. Persistent.');
+    expect(text).toContain('Leave a live inbox-watch pid alone.');
+    expect(text).toContain(`'${file}'`);
+    expect(text).toContain(`'arch1'`);
+    expect(text).toContain(`'${keys}'`);
+    expect(text).toContain('https://bifrost.example');
+    expect(text).not.toContain('ACTION_REQUIRED');
+    expect(text).not.toContain('not-a-real-key');
   });
 
   it('puts the once-poll on session start stdout and leaves the boot file without it', () => {
@@ -187,6 +220,8 @@ printf 'ACTION_REQUIRED\\nunfinished:1\\n'
     expect(ran.status).toBe(0);
     const out = JSON.parse(ran.stdout) as { systemMessage?: string };
     expect(out.systemMessage).toContain('ACTION_REQUIRED');
+    expect(out.systemMessage).toContain('Start the inbox monitor before other work.');
+    expect(out.systemMessage).toContain(path.join(tools, 'inbox-watch.sh'));
     const boot = fs.readFileSync(path.join(project, '.xray/state/session-boot.json'), 'utf8');
     expect(boot).not.toContain('systemMessage');
     const prompt = spawnSync(process.execPath, [hook, '--hook-event=user_prompt_submit'], {
