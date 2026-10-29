@@ -16,7 +16,7 @@ import {
   writeSessionBoot,
 } from './grok-hook-utils.js';
 import { appendHookActivity } from './grok-hook-activity.js';
-import { hookText, notifyBifrost } from '../../hooks/bifrost-send.mjs';
+import { notifyBifrost, ownerLine } from '../../hooks/bifrost-send.mjs';
 import { recordSynthesisTurnSlice } from '../../hooks/synthesis-hook-runtime.mjs';
 import { archiveStaleLeadDevPlan } from '../../hooks/plan-hook-runtime.mjs';
 import {
@@ -173,13 +173,13 @@ async function main() {
         : HOOK_EVENT === 'session_start'
           ? 'start'
           : HOOK_EVENT === 'user_prompt_submit'
-            ? 'work'
+            ? 'prompt'
             : '';
       if (phase) {
         await notifyBifrost({
           root: eventRoot,
           phase,
-          text: phase === 'work' ? hookText(event) : '',
+          text: phase === 'prompt' ? ownerLine(event) : '',
           env: process.env,
         });
       }

@@ -6,6 +6,8 @@ import {
   ctStamp,
   handoffFromText,
   notifyBifrost,
+  ownerLine,
+  promptNote,
   refsFromText,
 } from '../../integrations/hooks/bifrost-send.mjs';
 
@@ -149,5 +151,59 @@ describe('bifrost send', () => {
     expect(packet.lines[0].from).toBe('arch1');
     expect(packet.lines[0].type).toBe('packet');
     expect(packet.lines[0].id).toBe('handoff:0xrayai/xray#604:ready:abcdef1');
+  });
+
+  it('posts the owner line on the activity feed and keeps tool text off it', async () => {
+    expect(promptNote('ship it 🎉 now\nplease')).toBe('ship it now please');
+    expect(ownerLine({ user_prompt: 'the board accepts activity feed' })).toBe('the board accepts activity feed');
+    expect(ownerLine({ prompt: 'kept', user_prompt: 'other' })).toBe('kept');
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bifrost-send-'));
+    const keys = fs.mkdtempSync(path.join(os.tmpdir(), 'bifrost-keys-'));
+    dirs.push(root, keys);
+    fs.writeFileSync(path.join(keys, 'arch1.key'), `${KEY}\n`, { mode: 0o600 });
+    const env = { LIVE_URL: 'https://bifrost.example/board', XRAY_SEAT: 'arch1', SEAT_KEYS_DIR: keys };
+    const now = new Date('2026-10-24T18:00:00Z');
+    const calls: Array<{ url: string; body: string; auth: string }> = [];
+    const fetchImpl = liveFetch(calls);
+    const said = await notifyBifrost({
+      root,
+      phase: 'prompt',
+      env,
+      fetchImpl,
+      now,
+      text: 'i do not see my messages to you on the board why?',
+    });
+    expect(said.sent).toEqual(['prompt']);
+    const line = JSON.parse(calls[0].body);
+    expect(line).toMatchObject({
+      kind: 'prompt',
+      action: 'sent',
+      from: 'owner',
+      to: 'arch1',
+      seat: 'arch1',
+      note: 'i do not see my messages to you on the board why?',
+      t_ct: '2026-10-24T13:00:00-05:00',
+    });
+    expect(calls[0].url).toBe('https://bifrost.example/activity');
+    const again = await notifyBifrost({
+      root,
+      phase: 'prompt',
+      env,
+      fetchImpl,
+      now,
+      text: 'i do not see my messages to you on the board why?',
+    });
+    expect(again.sent).toEqual([]);
+    const tool = await notifyBifrost({
+      root,
+      phase: 'work',
+      env,
+      fetchImpl,
+      now,
+      text: 'npm test hunter2',
+    });
+    expect(tool.sent).toEqual([]);
+    expect(calls.map((call) => call.body).join('\n')).not.toContain('hunter2');
+    expect(calls.map((call) => call.body).join('\n')).not.toContain(KEY);
   });
 });
