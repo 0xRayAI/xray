@@ -1,0 +1,2496 @@
+{
+  "title": "Security and updates watchlist",
+  "snapshot": {
+    "repo": "0xRayAI/xray",
+    "commit": "af1c9bf487c227633b9b92b2a5e77e9a0b75ce95",
+    "date": "2026-10-22",
+    "audiences": [
+      "Nibbler daily security and updates fleet report",
+      "Arch1 tech-parity research"
+    ]
+  },
+  "rules": [
+    "Names only. No secret values.",
+    "Every hit cites a file and line in this checkout at the snapshot commit.",
+    "A gap is a fleet name this tree does not cite. It is listed so the daily report can say so."
+  ],
+  "products": {
+    "npm": [
+      {
+        "name": "0xray",
+        "version": "4.1.3",
+        "publish": "public",
+        "role": "Suit package. Repository 0xRayAI/xray.",
+        "watch": [
+          "GHSA and npm deprecation for 0xray",
+          "breaking minor or major",
+          "registry publish that does not match this git pin"
+        ],
+        "source": "package.json:3",
+        "also": [
+          "package.json:9"
+        ]
+      },
+      {
+        "name": "@0xray/grok-bot",
+        "version": "0.1.11",
+        "publish": "public",
+        "role": "House kit. No npm dependencies. Ships from the grok-bot directory of 0xRayAI/xray.",
+        "watch": [
+          "GHSA and npm deprecation for @0xray/grok-bot",
+          "breaking minor",
+          "engines floor drift against 0xray"
+        ],
+        "source": "grok-bot/package.json:3",
+        "also": [
+          "grok-bot/package.json:52"
+        ]
+      },
+      {
+        "name": "@0xray/foundry",
+        "version": "0.1.12",
+        "publish": "public",
+        "role": "Mill CLI (inspect, release, blip, sound). Directory scripts/foundry of 0xRayAI/xray.",
+        "watch": [
+          "GHSA and npm deprecation for @0xray/foundry",
+          "breaking mill CLI",
+          "blip range ^0.1.3 with no lockfile beside this package"
+        ],
+        "source": "scripts/foundry/package.json:3",
+        "also": [
+          "scripts/foundry/package.json:58"
+        ]
+      },
+      {
+        "name": "@0xray/repertoire",
+        "version": "0.2.9",
+        "publish": "public, vendored copy",
+        "role": "Memory organ. Upstream git is 0xRayAI/repertoire. This checkout vendors 0.2.9 and does not carry its lockfile.",
+        "watch": [
+          "GHSA for @0xray/repertoire and its unlocked ranges",
+          "breaking 0.x",
+          "vendor pin drifting from the upstream registry version"
+        ],
+        "source": "vendor/@0xray/repertoire/package.json:3",
+        "also": [
+          "vendor/@0xray/repertoire/package.json:10"
+        ]
+      },
+      {
+        "name": "@0xray/blip",
+        "version": "0.1.2 locked; foundry declares ^0.1.3",
+        "publish": "public mill, consumed here",
+        "role": "Blip product mill. Not a package.json we author in this repo. Root lock pins 0.1.2. Foundry declares ^0.1.3 with no lockfile. Upstream git is htafolla/blips.",
+        "watch": [
+          "GHSA for @0xray/blip",
+          "0.1.2 versus the foundry range ^0.1.3",
+          "breaking shortie or audio-bed changes"
+        ],
+        "source": "package.json:230",
+        "also": [
+          "package-lock.json:41",
+          "house/HOUSE.md:22"
+        ]
+      },
+      {
+        "name": "goggles",
+        "version": "in the 0xray package, no separate npm name",
+        "publish": "not a package.json in this repo",
+        "role": "Lens organ inside 0xray (goggles-pipeline). No package named goggles or @0xray/goggles in any package.json or either lockfile.",
+        "watch": [
+          "Treat goggles CVEs as 0xray CVEs",
+          "do not open a separate npm advisory for a package that is not published from here"
+        ],
+        "source": "src/integrations/hooks/goggles-pipeline.mjs:2"
+      },
+      {
+        "name": "xray-docs",
+        "version": "1.0.0",
+        "publish": "private",
+        "role": "Docusaurus site published to GitHub Pages, not the npm registry. Lockfile still names stringray-docs.",
+        "watch": [
+          "Docusaurus 3.7 security releases",
+          "lockfile name stringray-docs drifting from package name xray-docs",
+          "GitHub Pages outage"
+        ],
+        "source": "docs-site/package.json:3",
+        "also": [
+          "docs-site/package-lock.json:2",
+          "docs-site/package.json:2"
+        ]
+      },
+      {
+        "name": "live-board",
+        "version": "1.0.0",
+        "publish": "private",
+        "role": "Bifrost server image. No npm dependencies in its package.json.",
+        "watch": [
+          "Node image CVEs",
+          "Railway outages for burst-live",
+          "breaking healthcheck contract"
+        ],
+        "source": "house/live/app/package.json:3",
+        "also": [
+          "house/live/app/package.json:6"
+        ]
+      },
+      {
+        "name": "xray-pre-tool",
+        "version": "4.1.3",
+        "publish": "private",
+        "role": "OpenClaw PreToolUse extension. Version tracks 0xray.",
+        "watch": [
+          "version skew against 0xray",
+          "OpenClaw host breaking changes"
+        ],
+        "source": "src/integrations/openclaw/plugin/xray-pre-tool/package.json:3"
+      },
+      {
+        "name": "recall-bench-100k",
+        "version": "1.0.0",
+        "publish": "example, private flag unset",
+        "role": "Bench app. file: dependencies on 0xray and the vendored repertoire. npm publish in this directory would be public.",
+        "watch": [
+          "accidental npm publish",
+          "file: links breaking when the vendor path moves"
+        ],
+        "source": "examples/ben-proof/suited/package.json:3",
+        "also": [
+          "examples/ben-proof/suited/package.json:2"
+        ]
+      },
+      {
+        "name": "recall-bench-dummy-app",
+        "version": "0.1.0",
+        "publish": "private example",
+        "role": "Bench app with no dependencies.",
+        "watch": [
+          "engines floor",
+          "accidental un-private change"
+        ],
+        "source": "examples/ben-proof/dummy/package.json:3"
+      },
+      {
+        "name": "mcp-image-recognition",
+        "version": "3.1.0",
+        "publish": "example, private flag unset",
+        "role": "Example plugin. No dependencies. Keyword still says stringray-plugin.",
+        "watch": [
+          "accidental npm publish",
+          "stale StringRay name on a public example"
+        ],
+        "source": "examples/plugins/mcp-image-recognition/package.json:3",
+        "also": [
+          "examples/plugins/mcp-image-recognition/package.json:10"
+        ]
+      }
+    ],
+    "github": [
+      {
+        "name": "0xRayAI/xray",
+        "role": "this checkout",
+        "watch": [
+          "GHSA",
+          "Actions compromise",
+          "default-branch protection"
+        ],
+        "source": "package.json:9"
+      },
+      {
+        "name": "0xRayAI/repertoire",
+        "role": "upstream of the vendored organ",
+        "watch": [
+          "GHSA",
+          "breaking 0.x",
+          "vendor pin lag"
+        ],
+        "source": "vendor/@0xray/repertoire/package.json:10"
+      },
+      {
+        "name": "0xRayAI/muse-house",
+        "role": "named in the live-events feed",
+        "watch": [
+          "GHSA",
+          "archive or transfer",
+          "Pages or Railway outage"
+        ],
+        "source": "docs-site/static/live/live-events.json:13"
+      },
+      {
+        "name": "0xRayAI/0xray-moltbook",
+        "role": "push-allowed; merge to main is the Railway deploy",
+        "watch": [
+          "GHSA",
+          "Railway auto-deploy on merge",
+          "branch protection"
+        ],
+        "source": "house/HOUSE.md:25"
+      },
+      {
+        "name": "htafolla/blips",
+        "role": "upstream of @0xray/blip",
+        "watch": [
+          "GHSA",
+          "private-repo cloud 404",
+          "blip semver"
+        ],
+        "source": "house/HOUSE.md:22"
+      },
+      {
+        "name": "htafolla/clearing",
+        "role": "push-allowed; x402 USDC on Base",
+        "watch": [
+          "GHSA",
+          "Railway hostname change",
+          "Base or USDC contract change"
+        ],
+        "source": "house/HOUSE.md:23"
+      },
+      {
+        "name": "htafolla/groover",
+        "role": "push-allowed; DID registry and hangar",
+        "watch": [
+          "GHSA",
+          "registry hostname change"
+        ],
+        "source": "house/HOUSE.md:24"
+      },
+      {
+        "name": "htafolla/chrono-warp-drive",
+        "role": "Dynamo / Chrono. Read-only watcher.",
+        "watch": [
+          "GHSA",
+          "solar API break",
+          "blurrn-mcp version"
+        ],
+        "source": "house/WATCHERS.md:18"
+      },
+      {
+        "name": "htafolla/trinitarium",
+        "role": "read-only watcher",
+        "watch": [
+          "GHSA",
+          "archive or transfer"
+        ],
+        "source": "house/WATCHERS.md:17"
+      },
+      {
+        "name": "htafolla/rippel-synapse-flow",
+        "role": "private sound SSOT",
+        "watch": [
+          "access loss for cloud agents",
+          "GHSA"
+        ],
+        "source": "house/CLOUD-REPO-ACCESS.md:9"
+      },
+      {
+        "name": "htafolla/piddy2",
+        "role": "private Ditty Drop lineage",
+        "watch": [
+          "access loss",
+          "GHSA"
+        ],
+        "source": "house/CLOUD-REPO-ACCESS.md:10"
+      },
+      {
+        "name": "htafolla/rippel",
+        "role": "public brand repo, called empty",
+        "watch": [
+          "archive",
+          "accidental pushes"
+        ],
+        "source": "house/CLOUD-REPO-ACCESS.md:11"
+      },
+      {
+        "name": "htafolla/stringray",
+        "role": "historical predecessor name",
+        "watch": [
+          "dangling discussions URL",
+          "rename leftovers"
+        ],
+        "source": "docs-site/docs/archive/architecture/ORCHESTRATOR_INTEGRATION_ARCHITECTURE.md:434"
+      },
+      {
+        "name": "htafolla/groofer",
+        "role": "called empty or stale",
+        "watch": [
+          "confusion with groover"
+        ],
+        "source": "examples/killer-dual/ARM-B-LANDSCAPE.md:40"
+      },
+      {
+        "name": "htafolla/jelly-roast-bot",
+        "role": "only public jelly name match",
+        "watch": [
+          "stale one-commit repo mistaken for confer history"
+        ],
+        "source": "grok-bot/ops/cards/SYNTHESIS-CONFER-WRITEUP.md:32"
+      },
+      {
+        "name": "htafolla/dynamo-news",
+        "role": "X briefing consumer of govern_with_solar",
+        "watch": [
+          "X API changes",
+          "repo archive"
+        ],
+        "source": "examples/killer-dual/ARM-S-LANDSCAPE.md:62"
+      }
+    ],
+    "githubAbsent": [
+      {
+        "name": "htafolla/chrono",
+        "role": "cited as a miss; Chrono is the package inside groover plus chrono-warp-drive",
+        "watch": [
+          "confirm before treating it as a live repo"
+        ],
+        "source": "examples/killer-dual/ARM-S-LANDSCAPE.md:63"
+      },
+      {
+        "name": "htafolla/jelly",
+        "role": "GET repo returned 404 in that writeup",
+        "watch": [
+          "confirm before treating it as a live repo"
+        ],
+        "source": "grok-bot/ops/cards/SYNTHESIS-CONFER-WRITEUP.md:32"
+      },
+      {
+        "name": "htafolla/zigzag",
+        "role": "no public repo; signer is a live label",
+        "watch": [
+          "confirm before treating it as a live repo"
+        ],
+        "source": "examples/killer-dual/ARM-B-LANDSCAPE.md:39"
+      },
+      {
+        "name": "htafolla/dynamo",
+        "role": "no repo; Dynamo v5 text lives in chrono-warp-drive",
+        "watch": [
+          "confirm before treating it as a live repo"
+        ],
+        "source": "examples/killer-dual/ARM-S-LANDSCAPE.md:62"
+      },
+      {
+        "name": "0xRayAI/0xray.dev",
+        "role": "this repo publishes docs.0xray.dev, not an apex 0xray.dev Pages repo",
+        "watch": [
+          "confirm before treating it as a live repo"
+        ],
+        "source": "docs-site/static/CNAME:1"
+      }
+    ],
+    "services": [
+      {
+        "name": "Bifrost / burst-live",
+        "where": "https://bifrost.0xray.dev",
+        "role": "Live board. Railway project and service default to burst-live. The board is not a fleet node.",
+        "watch": [
+          "Railway outage",
+          "pricing",
+          "hostname or LIVE_URL change",
+          "breaking /healthz or /cards"
+        ],
+        "source": "docs-site/docs/plates/grokbot.md:41",
+        "also": [
+          "house/live/app/deploy.sh:8"
+        ]
+      },
+      {
+        "name": "docs.0xray.dev",
+        "where": "GitHub Pages environment github-pages",
+        "role": "Docusaurus manual. CNAME is docs.0xray.dev. This checkout does not set an apex 0xray.dev CNAME.",
+        "watch": [
+          "Pages outage",
+          "certificate or CNAME change",
+          "actions/deploy-pages breaking tag"
+        ],
+        "source": "docs-site/static/CNAME:1",
+        "also": [
+          ".github/workflows/deploy-docs.yml:42",
+          "docs-site/docusaurus.config.ts:9"
+        ]
+      },
+      {
+        "name": "Clearing",
+        "where": "https://clearing.rippel.ai and clearing-production-9968.up.railway.app",
+        "role": "x402 USDC shop on Base.",
+        "watch": [
+          "Railway hostname rotation",
+          "outage",
+          "USDC or x402 contract change on Base"
+        ],
+        "source": "grok-bot/lib/seat-doctor.cjs:8",
+        "also": [
+          "grok-bot/lib/seat-doctor.cjs:9"
+        ]
+      },
+      {
+        "name": "Groover registry MCP",
+        "where": "https://registry-production-e2c4.up.railway.app/mcp",
+        "role": "DID registry MCP.",
+        "watch": [
+          "Railway hostname rotation",
+          "outage",
+          "MCP schema break"
+        ],
+        "source": "grok-bot/lib/seat-doctor.cjs:11"
+      },
+      {
+        "name": "Groover suit site",
+        "where": "https://website-production-c0da.up.railway.app/suit",
+        "role": "Factory suit UI on Railway.",
+        "watch": [
+          "Railway hostname rotation",
+          "outage"
+        ],
+        "source": "grok-bot/lib/seat-doctor.cjs:10"
+      },
+      {
+        "name": "blurrn-mcp",
+        "where": "https://mcp-production-80e2.up.railway.app",
+        "role": "Cited as blurrn-mcp 4.8.3 with govern_with_solar. Dynamo / Chrono live MCP.",
+        "watch": [
+          "version 4.8.3 moving",
+          "Railway hostname rotation",
+          "solar tool rename or removal"
+        ],
+        "source": "examples/killer-dual/ARM-B-LANDSCAPE.md:38"
+      },
+      {
+        "name": "0xray-moltbook Railway",
+        "where": "Railway auto-deploy on merge to main of 0xRayAI/0xray-moltbook",
+        "role": "The only repo in this house whose merge is the deploy.",
+        "watch": [
+          "Railway auto-deploy failure",
+          "pricing",
+          "unexpected production deploy from a merge"
+        ],
+        "source": "house/HOUSE.md:28"
+      },
+      {
+        "name": "xray MCP image",
+        "where": "repo-root railway.json, Dockerfile, start node mcp-server.mjs",
+        "role": "Root Railway config is the MCP server, not the live board.",
+        "watch": [
+          "image CVE",
+          "start command change",
+          "deploying the board from this root by mistake"
+        ],
+        "source": "railway.json:8",
+        "also": [
+          "house/burst/DEPLOY.md:150"
+        ]
+      },
+      {
+        "name": "sweet-trust",
+        "where": "env label on muse-house live events",
+        "role": "Feed notes say env sweet-trust / production. This checkout does not name a Railway project id for it.",
+        "watch": [
+          "environment rename",
+          "production deploy of muse-house"
+        ],
+        "source": "docs-site/static/live/live-events.json:73"
+      },
+      {
+        "name": "ZigZag signer",
+        "where": "hosted sign is 410; wallet setup zigzag-two.vercel.app",
+        "role": "Marketplace signer label on Clearing health. No public git home in this tree.",
+        "watch": [
+          "Vercel app outage",
+          "sign endpoint returning",
+          "Base EIP-3009 changes"
+        ],
+        "source": "examples/killer-dual/ARM-B-LANDSCAPE.md:39"
+      }
+    ],
+    "serviceGaps": [
+      {
+        "name": "Railway project bedrock",
+        "role": "the word bedrock in this tree is the repertoire dump to keep off the station card, not a Railway project",
+        "watch": [
+          "the inner names have no line in this checkout"
+        ],
+        "source": "docs-site/docs/guides/station-vs-repertoire.md:17"
+      },
+      {
+        "name": "xray-mcp services blips-minter, governance, clearing, zigzag-mcp, blip-plant, blips, registry, moltbook-worker, optimistic-victory, website",
+        "role": "those service names are not in this checkout; clearing, registry, and website appear only as public Railway hostnames above",
+        "watch": [
+          "the inner names have no line in this checkout"
+        ],
+        "source": "railway.json:8"
+      },
+      {
+        "name": "blurrn-mcp services Redis x2, stellar-mcp, neural-fusion-backend, mcp",
+        "role": "only the blurrn-mcp product name and one Railway hostname are cited; Redis x2, stellar-mcp, and neural-fusion-backend have no line",
+        "watch": [
+          "the inner names have no line in this checkout"
+        ],
+        "source": "examples/killer-dual/ARM-B-LANDSCAPE.md:38"
+      }
+    ]
+  },
+  "dependencies": {
+    "direct": [
+      {
+        "package": "0xray",
+        "section": "dependencies",
+        "name": "@0xray/blip",
+        "declared": "^0.1.2",
+        "locked": "0.1.2",
+        "watch": [
+          "GHSA/CVE",
+          "npm deprecation",
+          "range ^0.1.2 can move on a lock refresh; pin is 0.1.2"
+        ],
+        "source": "package.json:230",
+        "lockSource": "package-lock.json:41"
+      },
+      {
+        "package": "0xray",
+        "section": "dependencies",
+        "name": "@modelcontextprotocol/sdk",
+        "declared": "^1.0.4",
+        "locked": "1.28.0",
+        "watch": [
+          "GHSA/CVE",
+          "npm deprecation",
+          "range ^1.0.4 can move on a lock refresh; pin is 1.28.0",
+          "breaking protocol or auth release"
+        ],
+        "source": "package.json:231",
+        "lockSource": "package-lock.json:972"
+      },
+      {
+        "package": "0xray",
+        "section": "dependencies",
+        "name": "commander",
+        "declared": "^11.1.0",
+        "locked": "11.1.0",
+        "watch": [
+          "GHSA/CVE",
+          "npm deprecation",
+          "range ^11.1.0 can move on a lock refresh; pin is 11.1.0"
+        ],
+        "source": "package.json:232",
+        "lockSource": "package-lock.json:2183"
+      },
+      {
+        "package": "0xray",
+        "section": "dependencies",
+        "name": "express",
+        "declared": "^5.2.1",
+        "locked": "5.2.1",
+        "watch": [
+          "GHSA/CVE",
+          "npm deprecation",
+          "range ^5.2.1 can move on a lock refresh; pin is 5.2.1",
+          "breaking protocol or auth release"
+        ],
+        "source": "package.json:233",
+        "lockSource": "package-lock.json:2770"
+      },
+      {
+        "package": "0xray",
+        "section": "dependencies",
+        "name": "jsonwebtoken",
+        "declared": "^9.0.3",
+        "locked": "9.0.3",
+        "watch": [
+          "GHSA/CVE",
+          "npm deprecation",
+          "range ^9.0.3 can move on a lock refresh; pin is 9.0.3",
+          "breaking protocol or auth release"
+        ],
+        "source": "package.json:234",
+        "lockSource": "package-lock.json:3360"
+      },
+      {
+        "package": "0xray",
+        "section": "dependencies",
+        "name": "ws",
+        "declared": "^8.16.0",
+        "locked": "8.21.0",
+        "watch": [
+          "GHSA/CVE",
+          "npm deprecation",
+          "range ^8.16.0 can move on a lock refresh; pin is 8.21.0",
+          "breaking protocol or auth release"
+        ],
+        "source": "package.json:235",
+        "lockSource": "package-lock.json:5003"
+      },
+      {
+        "package": "0xray",
+        "section": "devDependencies",
+        "name": "@eslint/js",
+        "declared": "^9.39.2",
+        "locked": "9.39.4",
+        "watch": [
+          "GHSA/CVE",
+          "npm deprecation",
+          "range ^9.39.2 can move on a lock refresh; pin is 9.39.4"
+        ],
+        "source": "package.json:238",
+        "lockSource": "package-lock.json:829"
+      },
+      {
+        "package": "0xray",
+        "section": "devDependencies",
+        "name": "@playwright/test",
+        "declared": "^1.55.0",
+        "locked": "1.55.0",
+        "watch": [
+          "GHSA/CVE",
+          "npm deprecation",
+          "range ^1.55.0 can move on a lock refresh; pin is 1.55.0"
+        ],
+        "source": "package.json:239",
+        "lockSource": "package-lock.json:1041"
+      },
+      {
+        "package": "0xray",
+        "section": "devDependencies",
+        "name": "@types/express",
+        "declared": "^5.0.0",
+        "locked": "5.0.6",
+        "watch": [
+          "GHSA/CVE",
+          "npm deprecation",
+          "range ^5.0.0 can move on a lock refresh; pin is 5.0.6"
+        ],
+        "source": "package.json:240",
+        "lockSource": "package-lock.json:1412"
+      },
+      {
+        "package": "0xray",
+        "section": "devDependencies",
+        "name": "@types/jsonwebtoken",
+        "declared": "^9.0.7",
+        "locked": "9.0.10",
+        "watch": [
+          "GHSA/CVE",
+          "npm deprecation",
+          "range ^9.0.7 can move on a lock refresh; pin is 9.0.10"
+        ],
+        "source": "package.json:241",
+        "lockSource": "package-lock.json:1451"
+      },
+      {
+        "package": "0xray",
+        "section": "devDependencies",
+        "name": "@types/node",
+        "declared": "^22.10.2",
+        "locked": "22.19.19",
+        "watch": [
+          "GHSA/CVE",
+          "npm deprecation",
+          "range ^22.10.2 can move on a lock refresh; pin is 22.19.19"
+        ],
+        "source": "package.json:242",
+        "lockSource": "package-lock.json:1469"
+      },
+      {
+        "package": "0xray",
+        "section": "devDependencies",
+        "name": "@types/ws",
+        "declared": "^8.5.13",
+        "locked": "8.18.1",
+        "watch": [
+          "GHSA/CVE",
+          "npm deprecation",
+          "range ^8.5.13 can move on a lock refresh; pin is 8.18.1"
+        ],
+        "source": "package.json:243",
+        "lockSource": "package-lock.json:1514"
+      },
+      {
+        "package": "0xray",
+        "section": "devDependencies",
+        "name": "@typescript-eslint/eslint-plugin",
+        "declared": "^8.18.0",
+        "locked": "8.60.1",
+        "watch": [
+          "GHSA/CVE",
+          "npm deprecation",
+          "range ^8.18.0 can move on a lock refresh; pin is 8.60.1"
+        ],
+        "source": "package.json:244",
+        "lockSource": "package-lock.json:1524"
+      },
+      {
+        "package": "0xray",
+        "section": "devDependencies",
+        "name": "@typescript-eslint/parser",
+        "declared": "^8.18.0",
+        "locked": "8.60.1",
+        "watch": [
+          "GHSA/CVE",
+          "npm deprecation",
+          "range ^8.18.0 can move on a lock refresh; pin is 8.60.1"
+        ],
+        "source": "package.json:245",
+        "lockSource": "package-lock.json:1553"
+      },
+      {
+        "package": "0xray",
+        "section": "devDependencies",
+        "name": "@vitest/coverage-v8",
+        "declared": "^4.1.8",
+        "locked": "4.1.8",
+        "watch": [
+          "GHSA/CVE",
+          "npm deprecation",
+          "range ^4.1.8 can move on a lock refresh; pin is 4.1.8"
+        ],
+        "source": "package.json:246",
+        "lockSource": "package-lock.json:1757"
+      },
+      {
+        "package": "0xray",
+        "section": "devDependencies",
+        "name": "eslint",
+        "declared": "^9.17.0",
+        "locked": "9.39.4",
+        "watch": [
+          "GHSA/CVE",
+          "npm deprecation",
+          "range ^9.17.0 can move on a lock refresh; pin is 9.39.4"
+        ],
+        "source": "package.json:247",
+        "lockSource": "package-lock.json:2475"
+      },
+      {
+        "package": "0xray",
+        "section": "devDependencies",
+        "name": "ts-node",
+        "declared": "^10.9.2",
+        "locked": "10.9.2",
+        "watch": [
+          "GHSA/CVE",
+          "npm deprecation",
+          "range ^10.9.2 can move on a lock refresh; pin is 10.9.2"
+        ],
+        "source": "package.json:248",
+        "lockSource": "package-lock.json:4631"
+      },
+      {
+        "package": "0xray",
+        "section": "devDependencies",
+        "name": "typescript",
+        "declared": "^5.7.2",
+        "locked": "5.9.3",
+        "watch": [
+          "GHSA/CVE",
+          "npm deprecation",
+          "range ^5.7.2 can move on a lock refresh; pin is 5.9.3"
+        ],
+        "source": "package.json:249",
+        "lockSource": "package-lock.json:4731"
+      },
+      {
+        "package": "0xray",
+        "section": "devDependencies",
+        "name": "vitest",
+        "declared": "^4.1.8",
+        "locked": "4.1.8",
+        "watch": [
+          "GHSA/CVE",
+          "npm deprecation",
+          "range ^4.1.8 can move on a lock refresh; pin is 4.1.8"
+        ],
+        "source": "package.json:250",
+        "lockSource": "package-lock.json:4865"
+      },
+      {
+        "package": "xray-docs",
+        "section": "dependencies",
+        "name": "@docusaurus/core",
+        "declared": "3.7.0",
+        "locked": "3.7.0",
+        "watch": [
+          "GHSA/CVE",
+          "npm deprecation",
+          "declared spec matches the lock"
+        ],
+        "source": "docs-site/package.json:19",
+        "lockSource": "docs-site/package-lock.json:3432"
+      },
+      {
+        "package": "xray-docs",
+        "section": "dependencies",
+        "name": "@docusaurus/preset-classic",
+        "declared": "3.7.0",
+        "locked": "3.7.0",
+        "watch": [
+          "GHSA/CVE",
+          "npm deprecation",
+          "declared spec matches the lock"
+        ],
+        "source": "docs-site/package.json:20",
+        "lockSource": "docs-site/package-lock.json:3794"
+      },
+      {
+        "package": "xray-docs",
+        "section": "dependencies",
+        "name": "@mdx-js/react",
+        "declared": "^3.0.0",
+        "locked": "3.1.1",
+        "watch": [
+          "GHSA/CVE",
+          "npm deprecation",
+          "range ^3.0.0 can move on a lock refresh; pin is 3.1.1"
+        ],
+        "source": "docs-site/package.json:21",
+        "lockSource": "docs-site/package-lock.json:4183"
+      },
+      {
+        "package": "xray-docs",
+        "section": "dependencies",
+        "name": "clsx",
+        "declared": "^2.0.0",
+        "locked": "2.1.1",
+        "watch": [
+          "GHSA/CVE",
+          "npm deprecation",
+          "range ^2.0.0 can move on a lock refresh; pin is 2.1.1"
+        ],
+        "source": "docs-site/package.json:22",
+        "lockSource": "docs-site/package-lock.json:6216"
+      },
+      {
+        "package": "xray-docs",
+        "section": "dependencies",
+        "name": "prism-react-renderer",
+        "declared": "^2.4.0",
+        "locked": "2.4.1",
+        "watch": [
+          "GHSA/CVE",
+          "npm deprecation",
+          "range ^2.4.0 can move on a lock refresh; pin is 2.4.1"
+        ],
+        "source": "docs-site/package.json:23",
+        "lockSource": "docs-site/package-lock.json:14817"
+      },
+      {
+        "package": "xray-docs",
+        "section": "dependencies",
+        "name": "react",
+        "declared": "^18.3.1",
+        "locked": "18.3.1",
+        "watch": [
+          "GHSA/CVE",
+          "npm deprecation",
+          "range ^18.3.1 can move on a lock refresh; pin is 18.3.1"
+        ],
+        "source": "docs-site/package.json:24",
+        "lockSource": "docs-site/package-lock.json:15053"
+      },
+      {
+        "package": "xray-docs",
+        "section": "dependencies",
+        "name": "react-dom",
+        "declared": "^18.3.1",
+        "locked": "18.3.1",
+        "watch": [
+          "GHSA/CVE",
+          "npm deprecation",
+          "range ^18.3.1 can move on a lock refresh; pin is 18.3.1"
+        ],
+        "source": "docs-site/package.json:25",
+        "lockSource": "docs-site/package-lock.json:15191"
+      },
+      {
+        "package": "xray-docs",
+        "section": "devDependencies",
+        "name": "@docusaurus/module-type-aliases",
+        "declared": "3.7.0",
+        "locked": "3.7.0",
+        "watch": [
+          "GHSA/CVE",
+          "npm deprecation",
+          "declared spec matches the lock"
+        ],
+        "source": "docs-site/package.json:28",
+        "lockSource": "docs-site/package-lock.json:3560"
+      },
+      {
+        "package": "xray-docs",
+        "section": "devDependencies",
+        "name": "@docusaurus/tsconfig",
+        "declared": "3.7.0",
+        "locked": "3.7.0",
+        "watch": [
+          "GHSA/CVE",
+          "npm deprecation",
+          "declared spec matches the lock"
+        ],
+        "source": "docs-site/package.json:29",
+        "lockSource": "docs-site/package-lock.json:3936"
+      },
+      {
+        "package": "xray-docs",
+        "section": "devDependencies",
+        "name": "@docusaurus/types",
+        "declared": "3.7.0",
+        "locked": "3.7.0",
+        "watch": [
+          "GHSA/CVE",
+          "npm deprecation",
+          "declared spec matches the lock"
+        ],
+        "source": "docs-site/package.json:30",
+        "lockSource": "docs-site/package-lock.json:3943"
+      },
+      {
+        "package": "xray-docs",
+        "section": "devDependencies",
+        "name": "typescript",
+        "declared": "~5.6.2",
+        "locked": "5.6.3",
+        "watch": [
+          "GHSA/CVE",
+          "npm deprecation",
+          "range ~5.6.2 can move on a lock refresh; pin is 5.6.3"
+        ],
+        "source": "docs-site/package.json:31",
+        "lockSource": "docs-site/package-lock.json:17109"
+      },
+      {
+        "package": "@0xray/foundry",
+        "section": "dependencies",
+        "name": "@0xray/blip",
+        "declared": "^0.1.3",
+        "locked": null,
+        "watch": [
+          "GHSA/CVE",
+          "npm deprecation",
+          "no lockfile next to this package.json; install can move inside the range"
+        ],
+        "source": "scripts/foundry/package.json:58",
+        "lockSource": null
+      },
+      {
+        "package": "@0xray/repertoire",
+        "section": "dependencies",
+        "name": "@modelcontextprotocol/sdk",
+        "declared": "^1.12.0",
+        "locked": null,
+        "watch": [
+          "GHSA/CVE",
+          "npm deprecation",
+          "no lockfile next to this package.json; install can move inside the range",
+          "breaking protocol or auth release"
+        ],
+        "source": "vendor/@0xray/repertoire/package.json:109",
+        "lockSource": null
+      },
+      {
+        "package": "@0xray/repertoire",
+        "section": "peerDependencies",
+        "name": "0xray",
+        "declared": ">=3.5.5",
+        "locked": null,
+        "watch": [
+          "GHSA/CVE",
+          "npm deprecation",
+          "no lockfile next to this package.json; install can move inside the range"
+        ],
+        "source": "vendor/@0xray/repertoire/package.json:112",
+        "lockSource": null
+      },
+      {
+        "package": "@0xray/repertoire",
+        "section": "devDependencies",
+        "name": "0xray",
+        "declared": "^4.0.28",
+        "locked": null,
+        "watch": [
+          "GHSA/CVE",
+          "npm deprecation",
+          "no lockfile next to this package.json; install can move inside the range"
+        ],
+        "source": "vendor/@0xray/repertoire/package.json:120",
+        "lockSource": null
+      },
+      {
+        "package": "@0xray/repertoire",
+        "section": "devDependencies",
+        "name": "@types/node",
+        "declared": "^22.15.0",
+        "locked": null,
+        "watch": [
+          "GHSA/CVE",
+          "npm deprecation",
+          "no lockfile next to this package.json; install can move inside the range"
+        ],
+        "source": "vendor/@0xray/repertoire/package.json:121",
+        "lockSource": null
+      },
+      {
+        "package": "@0xray/repertoire",
+        "section": "devDependencies",
+        "name": "tsx",
+        "declared": "^4.19.0",
+        "locked": null,
+        "watch": [
+          "GHSA/CVE",
+          "npm deprecation",
+          "no lockfile next to this package.json; install can move inside the range"
+        ],
+        "source": "vendor/@0xray/repertoire/package.json:122",
+        "lockSource": null
+      },
+      {
+        "package": "@0xray/repertoire",
+        "section": "devDependencies",
+        "name": "typescript",
+        "declared": "^5.6.0",
+        "locked": null,
+        "watch": [
+          "GHSA/CVE",
+          "npm deprecation",
+          "no lockfile next to this package.json; install can move inside the range"
+        ],
+        "source": "vendor/@0xray/repertoire/package.json:123",
+        "lockSource": null
+      },
+      {
+        "package": "@0xray/repertoire",
+        "section": "devDependencies",
+        "name": "vitest",
+        "declared": "^4.1.8",
+        "locked": null,
+        "watch": [
+          "GHSA/CVE",
+          "npm deprecation",
+          "no lockfile next to this package.json; install can move inside the range"
+        ],
+        "source": "vendor/@0xray/repertoire/package.json:124",
+        "lockSource": null
+      },
+      {
+        "package": "recall-bench-100k",
+        "section": "dependencies",
+        "name": "@0xray/repertoire",
+        "declared": "file:../../../vendor/@0xray/repertoire",
+        "locked": null,
+        "watch": [
+          "GHSA/CVE",
+          "npm deprecation",
+          "no lockfile next to this package.json; install can move inside the range"
+        ],
+        "source": "examples/ben-proof/suited/package.json:11",
+        "lockSource": null
+      },
+      {
+        "package": "recall-bench-100k",
+        "section": "dependencies",
+        "name": "0xray",
+        "declared": "file:../../..",
+        "locked": null,
+        "watch": [
+          "GHSA/CVE",
+          "npm deprecation",
+          "no lockfile next to this package.json; install can move inside the range"
+        ],
+        "source": "examples/ben-proof/suited/package.json:12",
+        "lockSource": null
+      }
+    ],
+    "keyTransitive": [
+      {
+        "name": "zod",
+        "version": "4.3.6",
+        "via": "@modelcontextprotocol/sdk peer zod ^3.25 || ^4.0 (sdk package-lock.json:992)",
+        "alsoDirect": false,
+        "watch": [
+          "GHSA/CVE",
+          "deprecation",
+          "breaking major on this line even when the parent range allows it"
+        ],
+        "source": "package-lock.json:5047"
+      },
+      {
+        "name": "zod-to-json-schema",
+        "version": "3.25.1",
+        "via": "@modelcontextprotocol/sdk",
+        "alsoDirect": false,
+        "watch": [
+          "GHSA/CVE",
+          "deprecation",
+          "breaking major on this line even when the parent range allows it"
+        ],
+        "source": "package-lock.json:5056"
+      },
+      {
+        "name": "hono",
+        "version": "4.12.23",
+        "via": "@modelcontextprotocol/sdk; also imported by api/mcp.ts:1 without its own package.json dependency",
+        "alsoDirect": false,
+        "watch": [
+          "GHSA/CVE",
+          "deprecation",
+          "breaking major on this line even when the parent range allows it"
+        ],
+        "source": "package-lock.json:3108"
+      },
+      {
+        "name": "@hono/node-server",
+        "version": "1.19.14",
+        "via": "@modelcontextprotocol/sdk",
+        "alsoDirect": false,
+        "watch": [
+          "GHSA/CVE",
+          "deprecation",
+          "breaking major on this line even when the parent range allows it"
+        ],
+        "source": "package-lock.json:866"
+      },
+      {
+        "name": "jose",
+        "version": "6.1.3",
+        "via": "@modelcontextprotocol/sdk",
+        "alsoDirect": false,
+        "watch": [
+          "GHSA/CVE",
+          "deprecation",
+          "breaking major on this line even when the parent range allows it"
+        ],
+        "source": "package-lock.json:3295"
+      },
+      {
+        "name": "ajv",
+        "version": "8.18.0",
+        "via": "@modelcontextprotocol/sdk",
+        "alsoDirect": false,
+        "watch": [
+          "GHSA/CVE",
+          "deprecation",
+          "breaking major on this line even when the parent range allows it"
+        ],
+        "source": "package-lock.json:1950"
+      },
+      {
+        "name": "ajv-formats",
+        "version": "3.0.1",
+        "via": "@modelcontextprotocol/sdk",
+        "alsoDirect": false,
+        "watch": [
+          "GHSA/CVE",
+          "deprecation",
+          "breaking major on this line even when the parent range allows it"
+        ],
+        "source": "package-lock.json:1966"
+      },
+      {
+        "name": "cors",
+        "version": "2.8.6",
+        "via": "@modelcontextprotocol/sdk",
+        "alsoDirect": false,
+        "watch": [
+          "GHSA/CVE",
+          "deprecation",
+          "breaking major on this line even when the parent range allows it"
+        ],
+        "source": "package-lock.json:2246"
+      },
+      {
+        "name": "express-rate-limit",
+        "version": "8.5.2",
+        "via": "@modelcontextprotocol/sdk",
+        "alsoDirect": false,
+        "watch": [
+          "GHSA/CVE",
+          "deprecation",
+          "breaking major on this line even when the parent range allows it"
+        ],
+        "source": "package-lock.json:2813"
+      },
+      {
+        "name": "eventsource",
+        "version": "3.0.7",
+        "via": "@modelcontextprotocol/sdk",
+        "alsoDirect": false,
+        "watch": [
+          "GHSA/CVE",
+          "deprecation",
+          "breaking major on this line even when the parent range allows it"
+        ],
+        "source": "package-lock.json:2739"
+      },
+      {
+        "name": "cross-spawn",
+        "version": "7.0.6",
+        "via": "@modelcontextprotocol/sdk",
+        "alsoDirect": false,
+        "watch": [
+          "GHSA/CVE",
+          "deprecation",
+          "breaking major on this line even when the parent range allows it"
+        ],
+        "source": "package-lock.json:2270"
+      },
+      {
+        "name": "playwright",
+        "version": "1.55.0",
+        "via": "@playwright/test",
+        "alsoDirect": false,
+        "watch": [
+          "GHSA/CVE",
+          "deprecation",
+          "breaking major on this line even when the parent range allows it"
+        ],
+        "source": "package-lock.json:4103"
+      },
+      {
+        "name": "playwright-core",
+        "version": "1.55.0",
+        "via": "@playwright/test",
+        "alsoDirect": false,
+        "watch": [
+          "GHSA/CVE",
+          "deprecation",
+          "breaking major on this line even when the parent range allows it"
+        ],
+        "source": "package-lock.json:4121"
+      },
+      {
+        "name": "express",
+        "version": "4.22.1",
+        "via": "docs-site tree, beside root express 5.2.1",
+        "alsoDirect": false,
+        "watch": [
+          "GHSA/CVE",
+          "deprecation",
+          "breaking major on this line even when the parent range allows it"
+        ],
+        "source": "docs-site/package-lock.json:7902"
+      },
+      {
+        "name": "ws",
+        "version": "8.20.0",
+        "via": "docs-site nested under webpack-dev-server",
+        "alsoDirect": false,
+        "watch": [
+          "GHSA/CVE",
+          "deprecation",
+          "breaking major on this line even when the parent range allows it"
+        ],
+        "source": "docs-site/package-lock.json:17843"
+      },
+      {
+        "name": "ws",
+        "version": "7.5.10",
+        "via": "docs-site hoisted ws 7, beside root ws 8.21.0",
+        "alsoDirect": false,
+        "watch": [
+          "GHSA/CVE",
+          "deprecation",
+          "breaking major on this line even when the parent range allows it"
+        ],
+        "source": "docs-site/package-lock.json:18113"
+      },
+      {
+        "name": "commander",
+        "version": "5.1.0",
+        "via": "docs-site tree, beside root commander 11.1.0",
+        "alsoDirect": false,
+        "watch": [
+          "GHSA/CVE",
+          "deprecation",
+          "breaking major on this line even when the parent range allows it"
+        ],
+        "source": "docs-site/package-lock.json:6284"
+      },
+      {
+        "name": "@types/react",
+        "version": "19.2.14",
+        "via": "docs-site types, beside react 18.3.1",
+        "alsoDirect": false,
+        "watch": [
+          "GHSA/CVE",
+          "deprecation",
+          "breaking major on this line even when the parent range allows it"
+        ],
+        "source": "docs-site/package-lock.json:4866"
+      }
+    ],
+    "absent": [
+      {
+        "name": "viem",
+        "watch": [
+          "not installed; do not file a viem GHSA against this checkout until a package.json or lockfile gains it"
+        ],
+        "source": "package-lock.json:4",
+        "note": "No node_modules/viem entry in package-lock.json or docs-site/package-lock.json."
+      },
+      {
+        "name": "ethers",
+        "watch": [
+          "not installed"
+        ],
+        "source": "docs-site/package-lock.json:4",
+        "note": "No node_modules/ethers entry in either lockfile. Base settlement in this tree is x402 and OWS, not an ethers import."
+      },
+      {
+        "name": "redis / ioredis / @redis/client",
+        "watch": [
+          "not installed",
+          "api/mcp.ts documents an in-memory bus and no Redis dependency"
+        ],
+        "source": "api/mcp.ts:35",
+        "note": "Archive docker notes mention REDIS_URL and ioredis. They are not current dependencies."
+      }
+    ]
+  },
+  "platforms": [
+    {
+      "name": "Railway",
+      "watch": [
+        "outages",
+        "pricing",
+        "CLI and config-as-code break",
+        "railway.json read path ends 2026-12-01"
+      ],
+      "source": "house/burst/DEPLOY.md:158",
+      "also": [
+        "railway.json:2",
+        "house/live/app/deploy.sh:13"
+      ],
+      "note": "Env names only: RAILWAY_TOKEN, LIVE_RAILWAY_PROJECT, LIVE_RAILWAY_SERVICE, LIVE_RAILWAY_ENVIRONMENT, LIVE_RAILWAY_TARGETS, RAILWAY_PROJECTS."
+    },
+    {
+      "name": "GitHub Actions",
+      "watch": [
+        "tag mutation on every uses: line below",
+        "action CVEs",
+        "ubuntu-latest image drift"
+      ],
+      "source": ".github/workflows/mill-ci.yml:25",
+      "note": "No workflow pins an action to a 40-character SHA. Weekly npm audit is scheduled and masked with || true.",
+      "also": [
+        ".github/workflows/security.yml:25",
+        ".github/workflows/security-audit.yml:29"
+      ]
+    },
+    {
+      "name": "GitHub Apps",
+      "watch": [
+        "App permission changes",
+        "token-mint breakage",
+        "bot login rename"
+      ],
+      "source": "grok-bot/ops/AUTO-REVIEW-POLICY.md:59",
+      "also": [
+        "docs-site/docs/guides/house.md:146"
+      ],
+      "note": "Seat Apps named in-tree: forge0x1, critic0x. Plain gh is not the seat."
+    },
+    {
+      "name": "GitHub Pages",
+      "watch": [
+        "Pages outage",
+        "deploy-pages or upload-pages-artifact breaking release",
+        "CNAME change"
+      ],
+      "source": ".github/workflows/deploy-docs.yml:47"
+    },
+    {
+      "name": "npm",
+      "watch": [
+        "registry outage",
+        "pricing or auth-flow change",
+        "token rotation"
+      ],
+      "source": ".github/workflows/publish.yml:73",
+      "also": [
+        ".github/workflows/publish.yml:75"
+      ],
+      "note": "Secret name only: NPM_TOKEN, passed as NODE_AUTH_TOKEN. Weekly audit does not fail the job."
+    },
+    {
+      "name": "Cursor cloud agents",
+      "watch": [
+        "cloud-agent API break",
+        "webhook signature change",
+        "pricing"
+      ],
+      "source": "house/burst/DEPLOY.md:185",
+      "note": "Env name only. Launch flag ARCH1_LAUNCH_ENABLED is named on the next rows of that file."
+    },
+    {
+      "name": "xAI / Grok",
+      "watch": [
+        "auth.x.ai outage or OAuth break",
+        "API pricing",
+        "CLI login changes"
+      ],
+      "source": "scripts/node/setup-xai-oauth.mjs:22",
+      "also": [
+        "scripts/node/setup-xai-oauth.mjs:23",
+        "house/live/tools/arch1-tui-harness.sh:511"
+      ],
+      "note": "Names only: XAI_API_KEY, XAI_CLIENT_ID. The client id value is not copied here."
+    },
+    {
+      "name": "X API",
+      "watch": [
+        "API pricing",
+        "breaking v2 changes",
+        "credential-name rotation"
+      ],
+      "source": "src/mcps/registry.json:7",
+      "also": [
+        "src/mcps/registry.json:10"
+      ],
+      "note": "Catalog MCP xmcp. Env names: X_BEARER_TOKEN, X_API_KEY. No X SDK in either lockfile."
+    },
+    {
+      "name": "Redis",
+      "watch": [
+        "do not track a Redis CVE for this checkout until a client is added",
+        "archive REDIS_URL examples are not the running bus"
+      ],
+      "source": "api/mcp.ts:35",
+      "also": [
+        "docs-site/docs/archive/operations/deployment/DOCKER_DEPLOYMENT_GUIDE.md:525"
+      ]
+    },
+    {
+      "name": "Coinbase CDP",
+      "watch": [
+        "no citation in this checkout; nothing to diff until a config or SDK line appears"
+      ],
+      "source": "docs-site/docs/architecture/ecosystem.md:29",
+      "note": "Base row mentions Smart Wallet. It does not name Coinbase or CDP."
+    },
+    {
+      "name": "Stripe",
+      "watch": [
+        "catalog only; no stripe package in either lockfile",
+        "API version and pricing if a seat starts calling it"
+      ],
+      "source": "src/mcps/registry.json:101",
+      "also": [
+        "src/mcps/registry.json:106"
+      ],
+      "note": "Env name only: STRIPE_SECRET_KEY."
+    },
+    {
+      "name": "Resend",
+      "watch": [
+        "no citation in this checkout"
+      ],
+      "source": "grok-bot/OP-PROC.md:64",
+      "note": "That line is the verb. Searched this tree for resend.com and api.resend. No email-vendor hit."
+    },
+    {
+      "name": "Moltbook",
+      "watch": [
+        "Railway auto-deploy",
+        "repo GHSA",
+        "no moltbook.com host is named in this tree"
+      ],
+      "source": "house/HOUSE.md:28"
+    },
+    {
+      "name": "Vercel",
+      "watch": [
+        "project config drift",
+        "outages",
+        "@vercel/node runtime break"
+      ],
+      "source": "vercel.json:3",
+      "also": [
+        "api/mcp.ts:160",
+        "src/mcps/registry.json:37"
+      ],
+      "note": "Catalog env name: VERCEL_TOKEN."
+    },
+    {
+      "name": "Base",
+      "watch": [
+        "chain 8453 incidents",
+        "USDC contract change",
+        "x402 or EIP-3009 break",
+        "OP Stack upgrades"
+      ],
+      "source": "docs-site/docs/architecture/ecosystem.md:29",
+      "also": [
+        "grok-bot/skills/setup-ows-pay/SKILL.md:15"
+      ],
+      "note": "No viem or ethers package. Pay path cited is ows sign."
+    },
+    {
+      "name": "Dynamo",
+      "watch": [
+        "PUBLIC_DYNAMO_SSOT or GOVERNANCE_ENDPOINT move",
+        "blurrn-mcp outage",
+        "solar verdict schema break"
+      ],
+      "source": ".agents/skills/dynamo/SKILL.md:12"
+    },
+    {
+      "name": "Jira",
+      "watch": [
+        "optional collector pull; API break and token name rotation"
+      ],
+      "source": "house/burst/DEPLOY.md:205",
+      "note": "Env names only: JIRA_SITE, JIRA_EMAIL, JIRA_API_TOKEN, JIRA_PROJECTS."
+    },
+    {
+      "name": "Community MCP catalog",
+      "watch": [
+        "third-party MCP repo compromise",
+        "API pricing and breaking changes for each vendor below"
+      ],
+      "source": "src/mcps/registry.json:2",
+      "note": "Env names only, from src/mcps/registry.json: DISCORD_TOKEN, SENTRY_AUTH_TOKEN, VERCEL_TOKEN, NOTION_TOKEN, TELEGRAM_BOT_TOKEN, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, SLACK_BOT_TOKEN, JIRA_TOKEN, JIRA_URL, CONFLUENT_API_KEY, CONFLUENT_API_SECRET, WAZUH_API_KEY, WAZUH_URL, GITHUB_TOKEN, STRIPE_SECRET_KEY, X_BEARER_TOKEN, X_API_KEY."
+    },
+    {
+      "name": "Debian bookworm and ffmpeg",
+      "watch": [
+        "base image rebuilds",
+        "unpinned apt ffmpeg",
+        "python3 on bookworm staying 3.11 while CI uses 3.12"
+      ],
+      "source": "house/live/app/Dockerfile:4",
+      "also": [
+        ".github/workflows/mill-ci.yml:49"
+      ]
+    }
+  ],
+  "runtimes": {
+    "node": [
+      {
+        "where": "0xray engines",
+        "pin": ">=24.22.1",
+        "watch": [
+          "Node 24 CVEs after 24.22.1",
+          "a later 24.x is allowed by engines and refused by CI until the pin moves"
+        ],
+        "source": "package.json:41"
+      },
+      {
+        "where": "xray-docs engines",
+        "pin": ">=24.22.1",
+        "watch": [
+          "same floor"
+        ],
+        "source": "docs-site/package.json:46"
+      },
+      {
+        "where": "@0xray/grok-bot engines",
+        "pin": ">=24.22.1",
+        "watch": [
+          "same floor"
+        ],
+        "source": "grok-bot/package.json:56"
+      },
+      {
+        "where": "@0xray/foundry engines",
+        "pin": ">=24.22.1",
+        "watch": [
+          "same floor"
+        ],
+        "source": "scripts/foundry/package.json:61"
+      },
+      {
+        "where": "@0xray/repertoire engines",
+        "pin": ">=24.22.1",
+        "watch": [
+          "same floor"
+        ],
+        "source": "vendor/@0xray/repertoire/package.json:27"
+      },
+      {
+        "where": "live-board engines",
+        "pin": ">=24.22.1",
+        "watch": [
+          "same floor"
+        ],
+        "source": "house/live/app/package.json:12"
+      },
+      {
+        "where": "recall-bench-dummy-app engines",
+        "pin": ">=24.22.1",
+        "watch": [
+          "same floor"
+        ],
+        "source": "examples/ben-proof/dummy/package.json:14"
+      },
+      {
+        "where": "CI env NODE_VERSION",
+        "pin": "24.22.1",
+        "watch": [
+          "security release newer than 24.22.1",
+          "no .nvmrc and no node-version matrix"
+        ],
+        "source": ".github/workflows/mill-ci.yml:20"
+      },
+      {
+        "where": "Docker root image",
+        "pin": "node:24.22.1-bookworm-slim",
+        "watch": [
+          "tag rebuild without a digest pin",
+          "bookworm CVEs",
+          "Node CVEs"
+        ],
+        "source": "Dockerfile:2"
+      },
+      {
+        "where": "Docker live-board image",
+        "pin": "node:24.22.1-bookworm-slim",
+        "watch": [
+          "same tag, plus apt python3 tzdata ca-certificates"
+        ],
+        "source": "house/live/app/Dockerfile:2"
+      }
+    ],
+    "nvmrc": {
+      "present": false,
+      "watch": [
+        "a future .nvmrc can diverge from engines and from CI 24.22.1"
+      ],
+      "source": "package.json:41",
+      "note": "No .nvmrc and no .node-version in this checkout. CI is a single pin, not a version matrix."
+    },
+    "python": [
+      {
+        "where": "mill-ci house/live tests",
+        "pin": "3.12",
+        "watch": [
+          "3.12 CVEs",
+          "skew versus bookworm python3 3.11"
+        ],
+        "source": ".github/workflows/mill-ci.yml:147"
+      },
+      {
+        "where": "dev-lane",
+        "pin": "3.12",
+        "watch": [
+          "3.12 CVEs"
+        ],
+        "source": ".github/workflows/dev-lane.yml:33"
+      },
+      {
+        "where": "hermes-plugin",
+        "pin": "3.11",
+        "watch": [
+          "3.11 CVEs",
+          "pytest breakage"
+        ],
+        "source": ".github/workflows/hermes-plugin.yml:33"
+      },
+      {
+        "where": "live image apt python3",
+        "pin": "bookworm python3, cited as 3.11",
+        "watch": [
+          "Debian point releases"
+        ],
+        "source": "house/burst/DEPLOY.md:147"
+      }
+    ],
+    "actions": [
+      {
+        "action": "actions/checkout",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/auto-report.yml:38"
+      },
+      {
+        "action": "actions/setup-node",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/auto-report.yml:41"
+      },
+      {
+        "action": "actions/upload-artifact",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/auto-report.yml:81"
+      },
+      {
+        "action": "actions/checkout",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/deploy-docs.yml:27"
+      },
+      {
+        "action": "actions/setup-node",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/deploy-docs.yml:28"
+      },
+      {
+        "action": "actions/upload-pages-artifact",
+        "ref": "v3",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/deploy-docs.yml:35"
+      },
+      {
+        "action": "actions/deploy-pages",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/deploy-docs.yml:49"
+      },
+      {
+        "action": "actions/checkout",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/dev-lane.yml:26"
+      },
+      {
+        "action": "actions/setup-node",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/dev-lane.yml:27"
+      },
+      {
+        "action": "actions/setup-python",
+        "ref": "v5",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/dev-lane.yml:31"
+      },
+      {
+        "action": "actions/checkout",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/enforce-agents-md.yml:17"
+      },
+      {
+        "action": "actions/setup-node",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/enforce-agents-md.yml:20"
+      },
+      {
+        "action": "actions/github-script",
+        "ref": "v7",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/enforce-agents-md.yml:34"
+      },
+      {
+        "action": "actions/upload-artifact",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/enforce-agents-md.yml:68"
+      },
+      {
+        "action": "actions/checkout",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/enforce-version-compliance.yml:17"
+      },
+      {
+        "action": "actions/setup-node",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/enforce-version-compliance.yml:20"
+      },
+      {
+        "action": "actions/checkout",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/hermes-plugin.yml:28"
+      },
+      {
+        "action": "actions/setup-python",
+        "ref": "v5",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/hermes-plugin.yml:31"
+      },
+      {
+        "action": "actions/setup-node",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/hermes-plugin.yml:39"
+      },
+      {
+        "action": "actions/checkout",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/hermes-plugin.yml:61"
+      },
+      {
+        "action": "actions/setup-node",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/hermes-plugin.yml:64"
+      },
+      {
+        "action": "actions/checkout",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/hermes-plugin.yml:118"
+      },
+      {
+        "action": "actions/setup-node",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/hermes-plugin.yml:121"
+      },
+      {
+        "action": "actions/checkout",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/mill-ci.yml:27"
+      },
+      {
+        "action": "actions/setup-node",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/mill-ci.yml:28"
+      },
+      {
+        "action": "actions/checkout",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/mill-ci.yml:42"
+      },
+      {
+        "action": "actions/setup-node",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/mill-ci.yml:43"
+      },
+      {
+        "action": "actions/checkout",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/mill-ci.yml:62"
+      },
+      {
+        "action": "actions/setup-node",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/mill-ci.yml:63"
+      },
+      {
+        "action": "actions/checkout",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/mill-ci.yml:77"
+      },
+      {
+        "action": "actions/setup-node",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/mill-ci.yml:80"
+      },
+      {
+        "action": "actions/checkout",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/mill-ci.yml:98"
+      },
+      {
+        "action": "actions/setup-node",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/mill-ci.yml:99"
+      },
+      {
+        "action": "actions/checkout",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/mill-ci.yml:114"
+      },
+      {
+        "action": "actions/setup-node",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/mill-ci.yml:115"
+      },
+      {
+        "action": "actions/checkout",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/mill-ci.yml:127"
+      },
+      {
+        "action": "actions/setup-node",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/mill-ci.yml:128"
+      },
+      {
+        "action": "actions/checkout",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/mill-ci.yml:141"
+      },
+      {
+        "action": "actions/setup-node",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/mill-ci.yml:142"
+      },
+      {
+        "action": "actions/setup-python",
+        "ref": "v5",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/mill-ci.yml:145"
+      },
+      {
+        "action": "actions/checkout",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/mill-monitor.yml:30"
+      },
+      {
+        "action": "actions/setup-node",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/mill-monitor.yml:31"
+      },
+      {
+        "action": "actions/upload-artifact",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/mill-monitor.yml:44"
+      },
+      {
+        "action": "actions/checkout",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/processor-tests.yml:20"
+      },
+      {
+        "action": "actions/setup-node",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/processor-tests.yml:23"
+      },
+      {
+        "action": "actions/checkout",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/processor-tests.yml:39"
+      },
+      {
+        "action": "actions/setup-node",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/processor-tests.yml:42"
+      },
+      {
+        "action": "actions/upload-artifact",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/processor-tests.yml:57"
+      },
+      {
+        "action": "actions/checkout",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/processor-tests.yml:66"
+      },
+      {
+        "action": "actions/setup-node",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/processor-tests.yml:69"
+      },
+      {
+        "action": "actions/checkout",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/publish.yml:11"
+      },
+      {
+        "action": "actions/setup-node",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/publish.yml:14"
+      },
+      {
+        "action": "actions/checkout",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/publish.yml:52"
+      },
+      {
+        "action": "actions/setup-node",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/publish.yml:55"
+      },
+      {
+        "action": "actions/github-script",
+        "ref": "v7",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/publish.yml:78"
+      },
+      {
+        "action": "actions/checkout",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/release.yml:26"
+      },
+      {
+        "action": "actions/setup-node",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/release.yml:31"
+      },
+      {
+        "action": "actions/checkout",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/security-audit.yml:14"
+      },
+      {
+        "action": "actions/setup-node",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/security-audit.yml:17"
+      },
+      {
+        "action": "actions/upload-artifact",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/security-audit.yml:40"
+      },
+      {
+        "action": "actions/checkout",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/security-audit.yml:50"
+      },
+      {
+        "action": "actions/setup-node",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/security-audit.yml:53"
+      },
+      {
+        "action": "actions/checkout",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/security-monitoring.yml:18"
+      },
+      {
+        "action": "actions/setup-node",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/security-monitoring.yml:21"
+      },
+      {
+        "action": "actions/upload-artifact",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/security-monitoring.yml:65"
+      },
+      {
+        "action": "actions/checkout",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/security.yml:13"
+      },
+      {
+        "action": "actions/setup-node",
+        "ref": "v4",
+        "shaPinned": false,
+        "watch": [
+          "moving major tag",
+          "action CVE",
+          "supply-chain swap of the tag"
+        ],
+        "source": ".github/workflows/security.yml:16"
+      }
+    ],
+    "clis": [
+      {
+        "name": "gh",
+        "pin": "unpinned",
+        "role": "Seat work uses a GitHub App mint, not plain gh. Collector and backfill call gh api.",
+        "watch": [
+          "breaking gh major",
+          "auth changes",
+          "using plain gh where the seat App is required"
+        ],
+        "source": "house/live/tools/backfill-history.mjs:30",
+        "also": [
+          "docs-site/docs/guides/house.md:146"
+        ]
+      },
+      {
+        "name": "railway",
+        "pin": "unpinned",
+        "role": "deploy.sh links and the deploy notes use railway up. The collector lists deployments read-only.",
+        "watch": [
+          "CLI breaking release",
+          "login flow change",
+          "config plan/apply around the 2026-12-01 cutoff"
+        ],
+        "source": "house/live/app/deploy.sh:13",
+        "also": [
+          "house/burst/DEPLOY.md:153",
+          "house/live/feed/host_poll.py:7"
+        ]
+      },
+      {
+        "name": "@0xray/foundry",
+        "pin": "0.1.12 in scripts/foundry/package.json",
+        "role": "Mill CLI. Inspect is the suit receipt. This is not Ethereum Foundry (forge, cast, anvil), which this tree does not install.",
+        "watch": [
+          "breaking inspect or release",
+          "npm tag that does not match 0.1.12"
+        ],
+        "source": "grok-bot/lib/seat-doctor.cjs:734",
+        "also": [
+          "scripts/foundry/package.json:3"
+        ]
+      }
+    ],
+    "docker": [
+      {
+        "image": "node:24.22.1-bookworm-slim",
+        "watch": [
+          "digest drift",
+          "Node CVE",
+          "bookworm CVE"
+        ],
+        "source": "Dockerfile:2"
+      },
+      {
+        "image": "node:24.22.1-bookworm-slim",
+        "watch": [
+          "same, plus apt packages python3 tzdata ca-certificates"
+        ],
+        "source": "house/live/app/Dockerfile:2"
+      }
+    ]
+  }
+}
