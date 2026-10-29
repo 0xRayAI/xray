@@ -119,6 +119,65 @@ test('working follows an open card, and a seen seat is not that sheen', async ()
   }
 });
 
+test('a next-owner label that names the seat keeps that seat working', async () => {
+  const data = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-card-label-'));
+  fs.mkdirSync(path.join(data, 'live'), { recursive: true });
+  const archKey = 'arch1-card-' + crypto.randomBytes(8).toString('hex');
+  fs.writeFileSync(path.join(data, 'live', 'cards.json'), JSON.stringify({
+    updated_ct: new Date().toISOString(),
+    cards: [
+      {
+        key: '0xrayai/xray#719', kind: 'issue', repo: '0xRayAI/xray', number: 719,
+        title: 'model', owner: 'Blaze', state: 'live', stage: 'open', packet_ok: true,
+        packet: { 'next owner': 'Arch1 (@arch10x)' },
+        beats: [], last_beat_t: Date.now(),
+      },
+    ],
+  }));
+  const ingest = crypto.randomBytes(32).toString('hex');
+  const child = spawn(process.execPath, [path.join(APP, 'server.mjs')], {
+    env: {
+      PORT: '0', COLLECTOR: 'off', LIVE_PUBLIC: '1', SERVER_ROUTING: 'off',
+      PATH: process.env.PATH, MESH_DATA_DIR: data,
+      SESSION_SECRET: crypto.randomBytes(32).toString('hex'),
+      INGEST_SECRET: ingest,
+      SEAT_KEYS: JSON.stringify({
+        arch1: crypto.createHash('sha256').update(archKey).digest('hex'),
+      }),
+    },
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  let logs = '';
+  child.stdout.on('data', (d) => { logs += d; });
+  child.stderr.on('data', (d) => { logs += d; });
+  let base = null;
+  for (let i = 0; i < 50 && !base; i++) {
+    const m = /listening on :(\d+)/.exec(logs);
+    base = m ? `http://127.0.0.1:${m[1]}` : null;
+    if (!base) await new Promise((r) => setTimeout(r, 50));
+  }
+  try {
+    if (!base) throw new Error(logs);
+    const posted = await fetch(base + '/activity', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + archKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ t_ct: stamp(), seat: 'arch1', kind: 'subagent', action: 'start', tag: 'suba1b2c3d4e5f6' }),
+    });
+    assert.equal(posted.status, 202, await posted.text());
+    const live = await (await fetch(base + '/live-events.json')).json();
+    assert.equal(live.fleet.seats.arch1.working, true);
+    assert.equal(live.fleet.working.arch1.via, 'subagent');
+    assert.equal(live.fleet.seats.arch1.working_on, '0xRayAI/xray#719');
+  } finally {
+    if (child.exitCode == null) {
+      const done = new Promise((r) => child.once('exit', r));
+      child.kill();
+      await done;
+    }
+    fs.rmSync(data, { recursive: true, force: true });
+  }
+});
+
 test('a board of only closed cards does not mark a seat working', async () => {
   const data = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-card-closed-'));
   fs.mkdirSync(path.join(data, 'live'), { recursive: true });

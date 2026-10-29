@@ -2,6 +2,7 @@
 
 Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 
+- A Grok tool opens the seat turn, then ticks it once a minute, so a long session stays working. A subagent posts kind subagent on spawn and on return. The tag is a short hash. The prompt stays off the wire. A next-owner label that names the seat, such as Arch1 (@arch10x), binds that light to the open card.
 - Wear retargets a home Grok hook onto the package being worn when `run-grok-hook.mjs` is missing or points at another tree. The files are `~/.grok/config.toml`, `~/.grok/hooks`, and the machine plugin `hooks.json`.
 - The spectrum replay plays the last hour. The opening burst and the replay loop use that window.
 - Grok session start runs `inbox-watch.sh` once when `~/.burst/inbox-watch.pid` is not a live process. The printed lines and a start order for that script are the session systemMessage. A live watcher pid is left running and gets no start order. The once-poll does not ack and does not replace that pid. Grok has no inbound webhook.

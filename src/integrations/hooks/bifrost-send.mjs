@@ -1,11 +1,14 @@
 /**
  * Worn-hook sends while Bifrost is active.
- * The suit wire is chat activity, the packet, the card tag, and the turn.
+ * The suit wire is chat activity, the packet, the card tag, the turn, and the subagent.
  * Chat activity is one activity-feed prompt: kind prompt, action sent, from owner, note the line.
+ * A tool opens the seat turn, then ticks it once a minute. A subagent posts kind subagent
+ * on spawn and on return. The tag is a short hash. The prompt stays off the wire.
  * The board defaults to https://bifrost.0xray.dev and ~/.burst/seat-keys.
  * One seat key is the seat. A shell may still set LIVE_URL, XRAY_SEAT, or SEAT_KEYS_DIR.
  * A quiet board sends nothing. Tool output and the key stay off the wire.
  */
+import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -133,6 +136,24 @@ export function ownerLine(event) {
   return '';
 }
 
+export function subagentMark(toolName, toolInput) {
+  const input = toolInput && typeof toolInput === 'object' ? toolInput : {};
+  const basis = [
+    String(toolName || ''),
+    String(input.description || ''),
+    String(input.subagent_type || input.agent || ''),
+    String(input.prompt || '').slice(0, 240),
+  ].join('\n');
+  return `sub${createHash('sha256').update(basis).digest('hex').slice(0, 12)}`;
+}
+
+function cleanTag(raw) {
+  const tag = String(raw || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 40);
+  if (!/^[A-Za-z0-9][A-Za-z0-9_-]{2,39}$/.test(tag)) return '';
+  if (/body|text|message/i.test(tag)) return '';
+  return tag;
+}
+
 export function hookText(event) {
   if (!event || typeof event !== 'object') return '';
   const bits = [];
@@ -224,10 +245,10 @@ function readKey(dir, seat) {
   }
 }
 
-function activityLine(action, tag, now) {
+function activityLine(action, tag, now, kind = 'turn') {
   const t_ct = ctStamp(now);
   if (!t_ct) return null;
-  const body = { t_ct, kind: 'turn', action };
+  const body = { t_ct, kind, action };
   if (tag) body.tag = tag;
   return body;
 }
@@ -302,7 +323,24 @@ export async function notifyBifrost(opts = {}) {
   } else if (opts.phase === 'end' && state.turn === 'start') {
     const line = activityLine('end', '', now);
     if (line) posts.push({ path: '/activity', body: line, mark: 'end' });
+  } else if (opts.phase === 'subagent') {
+    const action = opts.action === 'end' ? 'end' : 'start';
+    const tag = cleanTag(opts.tag);
+    const mark = tag ? `subagent:${tag}:${action}` : '';
+    if (tag && !(state.tags[mark] > nowMs)) {
+      const line = activityLine(action, tag, now, 'subagent');
+      if (line) posts.push({ path: '/activity', body: line, mark, ttl: 60 * 1000 });
+    }
   } else if (opts.phase === 'prompt' || opts.phase === 'work') {
+    if (opts.phase === 'work') {
+      if (state.turn !== 'start') {
+        const line = activityLine('start', '', now);
+        if (line) posts.push({ path: '/activity', body: line, mark: 'turn' });
+      } else if (!(state.tags['turn:tick'] > nowMs)) {
+        const line = activityLine('tick', '', now);
+        if (line) posts.push({ path: '/activity', body: line, mark: 'turn:tick', ttl: 60 * 1000 });
+      }
+    }
     if (opts.phase === 'prompt') {
       const note = promptNote(opts.text);
       const mark = note ? `prompt:${note}` : '';
@@ -328,6 +366,7 @@ export async function notifyBifrost(opts = {}) {
     if (!ok) continue;
     if (post.path === '/inbox') sent.push('packet');
     else if (post.body.kind === 'prompt') sent.push('prompt');
+    else if (post.body.kind === 'subagent') sent.push(`subagent:${post.body.action}`);
     else if (post.body.tag) sent.push(post.body.tag);
     else sent.push(post.body.action);
     if (post.mark === 'turn') state.turn = 'start';

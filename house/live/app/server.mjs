@@ -331,6 +331,16 @@ function canonSeat(name) {
   if (OPERATOR_NAMES.has(id)) return operatorSeat();
   return SEAT_ALIAS[id] || id;
 }
+function seatToken(name) {
+  const id = canonSeat(name);
+  if (SEAT_IDS.includes(id)) return id;
+  const low = String(name || '').toLowerCase();
+  for (const seat of SEAT_IDS) {
+    if (seat === 'builder' || seat === 'builder-cloud') continue;
+    if (new RegExp('(?:^|[^a-z0-9])' + seat + '(?:[^a-z0-9]|$)').test(low)) return seat;
+  }
+  return id;
+}
 // Builder-cloud: the cloud Builder seat (own key). It reads Builder's work: every builder inbox line is mirrored into its inbox,
 // nudges to builder land in its inbox as type 'nudge', and /cards?seat=builder-cloud shows Builder's cards.
 const SEAT_DISPLAY = { 'builder-cloud': 'Builder-cloud' };
@@ -2117,9 +2127,9 @@ function bindSeatWorkToCards(fleet) {
         if (row && !row.working_on) { working[name] = { ...row, working_on: on }; changed = true; }
         if (seat && !seat.working_on) { seats[name] = { ...seat, working_on: on }; changed = true; }
       }
-    } else if (on) keep = open.some(card => canonSeat(name) === canonSeat(cardNextOwner(card)));
+    } else if (on) keep = open.some(card => seatToken(name) === seatToken(cardNextOwner(card)));
     else {
-      const owned = open.filter(card => canonSeat(name) === canonSeat(cardNextOwner(card)));
+      const owned = open.filter(card => seatToken(name) === seatToken(cardNextOwner(card)));
       keep = owned.length > 0;
       if (owned.length === 1) {
         const card = owned[0];
