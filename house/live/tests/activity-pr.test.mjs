@@ -241,6 +241,24 @@ test('a stale head is not resumed and the new run can finish', async () => {
   });
 });
 
+test('a second launch on the same pull resumes the running agent', async () => {
+  await withServer(async ctx => {
+    const firstHead = 'ab'.repeat(20);
+    const nextHead = 'cd'.repeat(20);
+    const first = await postActivity(ctx, {
+      t_ct: stamp(0), kind: 'cloud_agent', action: 'launch', agent: 'bc-cardowner1', tag: firstHead, pr: ACME,
+    });
+    assert.equal(first.status, 202, JSON.stringify(first.body));
+    const second = await postActivity(ctx, {
+      t_ct: stamp(1000), kind: 'cloud_agent', action: 'launch', agent: 'bc-cardother1', tag: nextHead, pr: ACME,
+    });
+    assert.equal(second.status, 202, JSON.stringify(second.body));
+    const cookie = await login(ctx);
+    assert.equal((await rowOf(ctx, cookie, 'bc-cardowner1')).state, 'running');
+    assert.equal(await rowOf(ctx, cookie, 'bc-cardother1'), undefined);
+  });
+});
+
 test('(a) an activity-only URL is shown', async () => {
   await withServer(async ctx => {
     const posted = await postActivity(ctx, {
