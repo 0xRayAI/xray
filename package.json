@@ -1,6 +1,6 @@
 {
   "name": "0xray",
-  "version": "4.1.4",
+  "version": "4.1.5",
   "description": "Three-subsystem autonomous engine. The suit powers the agent you already run: memory, judgement, payments, and the wake.",
   "readme": "README.md",
   "license": "MIT",

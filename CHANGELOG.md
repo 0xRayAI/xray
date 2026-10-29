@@ -74,6 +74,52 @@ Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 - Tandem is several tracks at once, on both loops, and no seat waits for a nod. #683.
 - A card carries raci. A live card missing R or A is amber on its own mark. #684.
 
+## [4.1.5] - 2026-10-29
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: put roster and rewind on the mesh card (#722) (c117c86fa)
+- fix: show a Grok subagent as working (#721) (84835d26f)
+- fix: order the inbox monitor when no watcher is running (#718) (e5c93f2a4)
+- fix: retarget home Grok hooks onto the worn package (#717) (65e359661)
+- fix: poll the inbox once on Grok session start (#710) (e73ef88e4)
+- fix: wire chat activity onto the board (#709) (783a545fc)
+- fix: show a seen seat on the mesh (#705) (49c957299)
+- fix: give the first health beat a boot window (bd4d55a02)
+- fix: the live board shows the card in work (#699) (e108cc9e4)
+- fix: upkeep findings are one card (#577) (c099cc419)
+- fix: a missed health beat exits the live process (#661) (6f79f9cb4)
+- fix: an outside author still gets an open card (#576) (8658bda8c)
+- fix: status compare uses one canonical id (#570) (575242605)
+- fix: a merge handoff ack requires a review link (#554) (2666674b9)
+- fix: an open inbox line stays on the seat todo (416c1cb46)
+- fix: a queued check does not open a ci_fail line (#655) (a4d79d468)
+- fix: a search of one other card switches and runs (#662) (81f6238d7)
+- fix: a test port does not post the station nudge (#689) (a0b05ed55)
+- fix: the board posts the station nudge on the half hour (#686) (741693dbf)
+- fix: tandem is the work mode, and a card carries raci (9bfeabb37)
+- fix: a red check writes one ci_fail line per head (#648) (1443db04f)
+- fix: pin qs to 6.17.0 (#645) (5a7e7c6eb)
+- fix: a packet next owner tips that seat (#660) (51ba57414)
+- fix: a release changelog comes from the git range (#659) (c5da44726)
+- fix: a terminal command uses the same lens as bash (#658) (6c6f1bbdb)
+- fix: land the remaining wear fixes in one pass (#657) (a02728050)
+- fix: clean the macOS suite — stamp, shipped agents, repertoire link (#652) (0f35b94ca)
+- fix: a plate file holds its card (#644) (22ee056e9)
+- fix: run the inbox watcher in the local TUI (#656) (f56fc75a1)
+
+### 📚 Documentation
+- docs: map complexity scorers for #538 (#541) (6fcd7b429)
+- docs: add the fleet security and updates watchlist (#562) (e2c917d3a)
+- docs: set the Bifrost suit poster as the hero (#708) (730c7bf2a)
+- docs: write the 4.1.5 notes across the face (c0acb35dd)
+- docs: stamp the OP cycle (#703) (33a7c79c9)
+- docs: the live nudge ladder matches the board (#702) (0274ca536)
+- docs: a same-path cluster is one tip (#694) (3e1795818)
+
+---
+
 ## [4.1.4] - 2026-10-26
 
 ### 🔄 Changes
