@@ -1,5 +1,7 @@
 /**
  * One inbox poll when Grok session start has no live watcher.
+ * The same message orders the seat to start that script as the session monitor.
+ * A live watcher pid gets neither the poll nor the order.
  * Grok reads a session-start systemMessage. It does not receive a webhook.
  * A hook http call leaves this machine. A detached loop is not a session event.
  * The poll uses the suit board and the sole seat key. It does not ack.
@@ -69,6 +71,33 @@ export function formatInboxMessage(text) {
   return `${joined.slice(0, CAP - 2).trimEnd()}\n…`;
 }
 
+function shQuote(value) {
+  return `'${String(value).replace(/'/g, `'\\''`)}'`;
+}
+
+/** The session monitor command. The hook does not spawn the loop. */
+export function monitorStartOrder(script, seat, origin, keys) {
+  const command = `LIVE_URL=${shQuote(origin)} SEAT_KEYS_DIR=${shQuote(keys)} ${shQuote(script)} ${shQuote(seat)}`;
+  return [
+    'Start the inbox monitor before other work. One copy. Persistent.',
+    'Leave a live inbox-watch pid alone.',
+    `Command: ${command}`,
+  ].join('\n');
+}
+
+export function composeInboxMessage(pollText, order) {
+  const poll = formatInboxMessage(pollText);
+  const tail = String(order || '').trim();
+  if (!tail) return poll;
+  const clipped = tail.length <= CAP ? tail : `${tail.slice(0, CAP - 2).trimEnd()}\n…`;
+  if (!poll) return clipped;
+  const extra = `\n${clipped}`;
+  if (poll.length + extra.length <= CAP) return `${poll}${extra}`;
+  const room = CAP - extra.length;
+  if (room < 40) return clipped;
+  return `${poll.slice(0, room - 2).trimEnd()}\n…${extra}`;
+}
+
 function delivered(text) {
   return /^(ACTION_REQUIRED|FAIL|held:|unfinished:|auto-ack |open )/m.test(String(text || ''));
 }
@@ -84,6 +113,7 @@ export async function pollInboxOnce(opts = {}) {
   if (!cfg) return '';
   const script = opts.script || inboxWatchScript(env);
   if (!script || !fs.existsSync(script)) return '';
+  const order = monitorStartOrder(script, cfg.seat, cfg.origin, cfg.keys);
   const timeoutMs = Number(opts.timeoutMs) > 0 ? Number(opts.timeoutMs) : TIMEOUT_MS;
   const ownScratch = !opts.scratch;
   const scratch = opts.scratch || fs.mkdtempSync(path.join(os.tmpdir(), 'inbox-boot-'));
@@ -140,5 +170,5 @@ export async function pollInboxOnce(opts = {}) {
       /* scratch is disposable */
     }
   }
-  return formatInboxMessage(text);
+  return composeInboxMessage(text, order);
 }
