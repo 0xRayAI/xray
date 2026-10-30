@@ -249,7 +249,7 @@ def _direct_all(event, roles):
             line = inbox._line(event, author, "review on your PR")
             if line:
                 out.append(line)
-    if kind == "merged" and event.get("door_seat") and event.get("parent") and event.get("next_issue"):
+    if kind in ("merged", "next_parent") and event.get("door_seat") and event.get("parent") and event.get("next_issue"):
         line = inbox._line(event, str(event.get("door_seat")), "next on parent",
                            line_id=f"{event.get('id')}:next:{event.get('next_issue')}", line_type="packet")
         if line:
