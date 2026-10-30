@@ -2,6 +2,7 @@
 
 Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 
+- PR workflows for AGENTS, version and docs, CodeQL, processor tests, and the Hermes plugin cancel the previous run on the same ref. The mill report skips a cancelled parent run. #766.
 - The inbox head keeps a new comment and a comment on a P0 or P1 card. Older comments and nudges stay stored. The read and the board report Arch1 backlog depth. #768 #731.
 - The inbox read is the queue head: ready handoffs, a hotfix, and P0 or P1. Nudges and station lines stay stored while that head is open. A station nudge is not posted while any line is open. #731.
 - A later packet comment refreshes R, A, and next owner. An open issue that missed `issue_open` still becomes a card on the next pass. #746.

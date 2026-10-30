@@ -12,6 +12,10 @@ on:
       - "src/processors/**"
       - "tests/**"
 
+concurrency:
+  group: processor-tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   validate-processor-mocks:
     name: Validate Processor Mock Coverage
