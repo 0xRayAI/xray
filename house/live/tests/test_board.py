@@ -212,6 +212,21 @@ class Model(unittest.TestCase):
         self.assertEqual(cards[72]["state"], "closed")
         self.assertEqual(cards[72]["raci_missing"], [])
 
+    def test_a_later_packet_comment_seats_arch1(self):
+        evs = [
+            self.ev(80, "issue_open", 100, title="tip", pr_state="open", **{"from": "forge"}),
+            self.ev(80, "issue_comment", 40, **{"from": "forge", "packet": {
+                "goal": "seat the card", "raci": "R=Arch1 A=Blaze", "next owner": "Arch1",
+            }}),
+        ]
+        card = next(c for c in self.w.model(evs)["cards"] if c.get("number") == 80 and c.get("repo") == R)
+        self.assertEqual(card["packet"]["next owner"], "Arch1")
+        self.assertEqual(card["packet"]["raci"], "R=Arch1 A=Blaze")
+        self.assertEqual(card["raci_missing"], [])
+        self.assertTrue(card["packet_ok"])
+        self.assertEqual(card["missing"], [])
+        self.assertEqual(card["owner"], "arch1")
+
     def test_cards_stages_packets_stall_md(self):
         sha = "abcdef1234567"
         evs = [self.ev(1, "pr_open", 5000, title="fix a", packet={"goal": "g", "acceptance": "tests", "next owner": "Reviewer"}),

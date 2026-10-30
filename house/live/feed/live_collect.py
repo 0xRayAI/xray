@@ -1277,10 +1277,9 @@ class RepoCollector:
                  author=login or None, **card_fields(item))
 
     def backfill_open_cards(self, c, limit=30):
-        """Once: each open number with no open event is fetched. A finished pass sets cards:missing."""
+        """Each pass fetches open numbers that still have no open event, up to limit. An empty miss list does not latch."""
         bf = self.st.setdefault("bf", {})
-        if bf.get("cards:missing"):
-            return
+        bf.pop("cards:missing", None)
         if not getattr(c, "token", None):
             return
         found = open_numbers(c, [self.repo])
@@ -1290,9 +1289,7 @@ class RepoCollector:
         missing = [n for n in sorted(found[key])
                    if f"{self.repo}!{n}:open" not in self.ev and f"{self.repo}#{n}:open" not in self.ev]
         if not missing:
-            bf["cards:missing"] = True
             return
-        done = 0
         for n in missing[:limit]:
             try:
                 st, data, _, _ = c.rest(f"/repos/{self.repo}/issues/{n}", None, essential=False)
@@ -1305,9 +1302,6 @@ class RepoCollector:
             self._put_open_card(data)
             if f"{self.repo}!{n}:open" not in self.ev and f"{self.repo}#{n}:open" not in self.ev:
                 return
-            done += 1
-        if done == len(missing):
-            bf["cards:missing"] = True
 
     def poll_issues(self, c):
         cur = self.st["cur"].get("issues")
@@ -1362,12 +1356,14 @@ class RepoCollector:
             hold = live_packet.parse_hold(body)
             k = "pr_comment" if is_pr else "issue_comment"
             to = self.pr_node(n) if is_pr else self.issue_node(n)
+            packet = live_packet.parse(body) or None
             self.put(f"{self.repo}{'#' if is_pr else '!'}{n}:comment:{cm['id']}", cm["created_at"], node(login), to, k,
                      f"{login or '?'} comment · {self.short} {'#' if is_pr else 'issue #'}{n}", cm["html_url"], n,
                      actor=login, resolved=True if RESOLVED_RE.search(body) else None,   # flags only
                      parked=True if PARKED_COMMENT_RE.match(body) else None,
                      start_after=comment_start_after(body),
-                     hold=hold, mentions=mentions(body), pr_merged=self.pr_merged(n) if is_pr else None)
+                     hold=hold, mentions=mentions(body), packet=packet,
+                     pr_merged=self.pr_merged(n) if is_pr else None)
             if is_pr:
                 self.st.setdefault("enrich", {})[str(n)] = True   # a comment is a reason to re-read reviews
             if is_pr and login in CRITIC_LOGINS:   # verdict word + SHA only; the body is discarded here

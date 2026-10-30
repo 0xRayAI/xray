@@ -241,6 +241,37 @@ def _claim_owners(cards, evs, sha_num):
             _apply_owner(cards, f"{repo}#{n}", seat)
 
 
+def _packet_of(e):
+    pk = e.get("packet") if isinstance(e.get("packet"), dict) else {}
+    return {f: live_packet.clean(v) for f, v in pk.items() if f in live_packet.FIELDS and v}
+
+
+def _next_owner_seat(value):
+    raw = str(value or "").strip().lower()
+    if not raw:
+        return None
+    token = re.sub(r"[^a-z0-9]", "", raw.split()[0])
+    return token if token in _CLAIM else None
+
+
+def _refresh_packets(cards, evs, sha_num):
+    """Later packet fields win. A next owner that is arch1, critic, mill, or blinky takes a forge-opened card."""
+    for e in evs:
+        pk = _packet_of(e)
+        if not pk:
+            continue
+        key = _key(e, sha_num)
+        c = cards.get(key) if key else None
+        if not c:
+            continue
+        c["packet"].update(pk)
+        if e.get("packet_file"):
+            c["packet_file"] = True
+        seat = _next_owner_seat(c["packet"].get("next owner"))
+        if seat:
+            _apply_owner(cards, key, seat)
+
+
 _FLEET_FROM = None
 
 
@@ -787,6 +818,7 @@ def model(extra_events=None, now=None, prompts=None, held=None):
     for row in ci_inbox.missing_cards(evs, cards):
         cards[row["key"]] = row
     _claim_owners(cards, evs, sha_num)             # mill (trailer, credit, or git name) takes a card forge opened
+    _refresh_packets(cards, evs, sha_num)          # a later body or packet comment replaces empty R/A and next owner
     used_prompts = set()
     prompt_rows = list(prompts or [])
     merged_keys = {_key(e, sha_num) for e in evs if e.get("kind") == "merged"}
