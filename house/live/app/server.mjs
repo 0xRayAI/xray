@@ -34,6 +34,7 @@ import { clockStamp, writeStartAfter } from './chicago-stamp.mjs';
 import { createBatch } from './pr-batch.mjs';
 import { idsToAck } from './ci-clear.mjs';
 import { stationDue } from './station-tick.mjs';
+import { queueView, backlogOf, keepStation } from './inbox-queue.mjs';
 const CI_NODES = loadCiNodes();
 const batch = createBatch();
 
@@ -882,7 +883,7 @@ const NUDGE_LINE_MS = Math.max(1, Number(process.env.NUDGE_LINE_S) > 0 ? Number(
 function nudgeLines(now) {
   let changed = false;
   const open = new Set();
-  for (const seat of SEAT_IDS) for (const l of openLines(seat)) {
+  for (const seat of SEAT_IDS) for (const l of queueView(openLines(seat))) {
     if (itemClosed(l.repo, l.number)) continue;
     const closedCard = lineCard(l);
     if (closedCard && closedCard.state === 'closed') continue;
@@ -2200,7 +2201,9 @@ function stationTick(now = new Date()) {
   if (!when) return;
   const due = stationDue(when, stationPosted, SEAT_IDS);
   if (!due) return;
-  const r = postSeatLines({ lines: due.lines }, null);
+  const lines = due.lines.filter((line) => keepStation(seatOpenRows(line.seat, false)));
+  if (!lines.length) { stationPosted = due.hour; return; }
+  const r = postSeatLines({ lines }, null);
   if (r.status !== 200) return;
   stationPosted = due.hour;
   if (r.added) { seq++; header = mergedHeader(); fullDirty = true; }
@@ -3736,8 +3739,11 @@ async function handle(req, res) {
     if (!who) return json(req, res, 401, { error: 'unauthorized' });
     if (!SEAT_IDS.includes(inboxM[1]) || who !== inboxM[1]) return json(req, res, 403, { error: 'inbox is not exposed' });
     const since = url.searchParams.get('since'), all = url.searchParams.get('all') === '1', stale = url.searchParams.get('stale') === '1';
+    const queue = url.searchParams.get('queue') === '1', backlog = url.searchParams.get('backlog') === '1';
     const base = since && seatInbox[who].some(l => l.id === since) ? linesAfter(seatInbox[who], since) : seatInbox[who];
-    const keep = new Set(seatOpenRows(who, stale ? false : all).map(l => l.id)); touchSeat(who);
+    const rows = seatOpenRows(who, stale ? false : all);
+    const view = (all || stale) ? rows : (backlog ? backlogOf(rows) : (queue ? queueView(rows) : rows));
+    const keep = new Set(view.map(l => l.id)); touchSeat(who);
     const lines = base.filter(l => keep.has(l.id) && (!stale || settledLine(l)));
     return json(req, res, 200, { seat: who, lines: lines.slice(0, 1000) });
   }

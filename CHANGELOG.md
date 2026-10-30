@@ -2,6 +2,7 @@
 
 Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 
+- The inbox read is the queue head: ready handoffs, a hotfix, and P0 or P1. Nudges and station lines stay stored while that head is open. A station nudge is not posted while any line is open. #731.
 - A later packet comment refreshes R, A, and next owner. An open issue that missed `issue_open` still becomes a card on the next pass. #746.
 - The npm pack lists `grok-bot/lib/next-wave.mjs` beside `pulsar-game.mjs`. #749.
 - Critic does not pass a live packet until R and A are filled. A soft follow-up is in the cut, scheduled, or closed with a reopen note. A ready card is held only by Waiting on, start_after, or Held. #732 #733 #731.
