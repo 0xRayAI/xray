@@ -1473,10 +1473,13 @@ class OpenCards(unittest.TestCase):
         self.assertEqual(col.ev["acme/app!162:open"]["pr_state"], "open")
         self.assertTrue(any(path.endswith("/issues/162") for path in client.gets))
         self.assertFalse(any(path.endswith("/issues/7") for path in client.gets))
-        self.assertTrue(col.st["bf"].get("cards:missing"))
-        before = list(client.gets)
+        self.assertFalse(col.st["bf"].get("cards:missing"))
+        before = len(client.gets)
         col.backfill_open_cards(client)
-        self.assertEqual(client.gets, before)
+        again = client.gets[before:]
+        self.assertTrue(again)
+        self.assertFalse(any(path.endswith("/issues/162") for path in again))
+        self.assertFalse(any(path.endswith("/issues/7") for path in again))
 
     def test_rate_low_does_not_set_the_missing_flag(self):
         col = _collector("acme/app")
@@ -1491,3 +1494,45 @@ class OpenCards(unittest.TestCase):
         col.backfill_open_cards(C())
         self.assertFalse(col.st["bf"].get("cards:missing"))
         self.assertNotIn("acme/app!9:open", col.ev)
+
+    def test_backfill_fetches_a_number_that_opens_later(self):
+        col = _collector("acme/app")
+        col.st["bf"]["cards:missing"] = True
+        one = {"number": 200, "title": "later", "state": "open", "created_at": "2026-10-30T00:00:00Z",
+               "html_url": "https://github.com/acme/app/issues/200", "user": {"login": "forge0x1[bot]"},
+               "body": "", "labels": []}
+
+        class C:
+            token = "t"
+            def __init__(self):
+                self.gets = []
+            def rest(self, path, params=None, etag=None, essential=True):
+                self.gets.append(str(path))
+                if str(path).endswith("/issues/200"):
+                    return 200, one, None, None
+                return 200, [{"number": 200}], None, None
+
+        with mock.patch.dict(uc.NODE_LC, {"forge0x1[bot]": "forge"}):
+            col.backfill_open_cards(C())
+        self.assertIn("acme/app!200:open", col.ev)
+        self.assertFalse(col.st["bf"].get("cards:missing"))
+
+    def test_packet_comment_stores_fields_not_the_body(self):
+        col = _collector()
+        body = "secret prose\n## Packet\n- goal: seat it\n- next owner: Arch1\n- raci: R=Arch1 A=Blaze\n"
+        cm = {"id": 11, "created_at": "2026-10-30T12:00:00Z", "updated_at": "2026-10-30T12:00:00Z",
+              "html_url": "https://github.com/acme/app/issues/9#issuecomment-11",
+              "issue_url": "https://api.github.com/repos/acme/app/issues/9",
+              "user": {"login": "forge0x1[bot]"}, "body": body}
+
+        class C:
+            def rest(self, path, params=None, etag=None, essential=True):
+                return 200, [cm], "etag", None
+
+        col.st["bf"]["comments:critic3"] = True
+        col.st.setdefault("issues", {})["9"] = "forge0x1[bot]"
+        with mock.patch.dict(uc.NODE_LC, {"forge0x1[bot]": "forge"}):
+            col.poll_comments(C())
+        ev = next(e for e in col.ev.values() if e.get("kind") == "issue_comment")
+        self.assertEqual(ev.get("packet"), {"goal": "seat it", "next owner": "Arch1", "raci": "R=Arch1 A=Blaze"})
+        self.assertNotIn("secret", json.dumps(ev))
