@@ -17,6 +17,12 @@ class NextParent(unittest.TestCase):
         door = next_parent.parent_door({768: PARENT}, {731})
         self.assertEqual(door, {"parent": 768, "next": 772, "seat": "arch1"})
 
+    def test_a_closed_number_in_the_story_is_skipped_when_only_open_issues_count(self):
+        body = "#753 merged\n#2 closed\n#731 still open\nR=Arch1\n"
+        door = next_parent.parent_door({768: body}, set(), {731})
+        self.assertEqual(door["next"], 731)
+        self.assertEqual(door["seat"], "arch1")
+
     def test_refs_come_from_the_pull_body(self):
         self.assertEqual(next_parent.ref_numbers("Refs #731. Refs #768."), [731, 768])
 

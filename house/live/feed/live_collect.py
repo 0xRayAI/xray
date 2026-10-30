@@ -1055,9 +1055,9 @@ class RepoCollector:
                     extra["merged_by"] = merger
                 else:
                     self.st.setdefault("need_merger", {})[str(n)] = 1
-                extra.update(self._parent_door(c, p.get("body")))
                 self.put(f"{self.repo}#{n}:merged", p["merged_at"], node(merger or login), "GitHub", "merged",
                          f"merged {self.short} #{n} → {p['base']['ref']}", url, n, **extra)
+                self._put_parent_door(c, n, p.get("merged_at"), url, p.get("body"))
             if prev_head and head and prev_head != head:
                 self.pr_commit_event(n, head, p["updated_at"], p.get("title") or "", login)
                 self.st.setdefault("enrich", {})[str(n)] = True
@@ -1074,6 +1074,7 @@ class RepoCollector:
             self.st["bf"]["cards:pulls"] = True
         if bc_rewalk and getattr(self, "_paged_status", None) == "done":
             self.st["bf"]["bc:body"] = True
+        self._backfill_parent_doors(c)
 
     def enrich_prs(self, c, limit=20):
         todo = list(self.st.get("enrich", {}).keys())[:limit]
@@ -1124,30 +1125,92 @@ class RepoCollector:
             "labels": iss.get("labels"),
         })
 
+    def _issue_brief(self, c, number):
+        try:
+            st, data, _, _ = c.rest(f"/repos/{self.repo}/issues/{number}", None, essential=False)
+        except RateLow:
+            raise
+        except (urllib.error.URLError, http.client.HTTPException, TimeoutError, OSError, ValueError, KeyError):
+            return None
+        if st != 200 or not isinstance(data, dict):
+            return None
+        state = str(data.get("state") or "").lower()
+        if state == "closed" or data.get("merged_at") or str(data.get("pull_request", {}).get("merged_at") or ""):
+            state = "closed" if state == "closed" or data.get("merged_at") else state
+        text = data.get("body") if isinstance(data.get("body"), str) else ""
+        return {"state": "closed" if state == "closed" or data.get("merged_at") else state or "open", "body": text}
+
     def _parent_door(self, c, body):
-        """One ready line's fields when a merged pull names an open parent. The body is not stored."""
+        """One ready line's fields when a merged pull names an open parent. The body is not stored.
+        A child counts only when that issue is still open."""
         refs = next_parent.ref_numbers(body)[:3]
         if not refs or not getattr(c, "token", None):
             return {}
+        briefs = {}
+        def brief(n):
+            if n not in briefs:
+                briefs[n] = self._issue_brief(c, n)
+            return briefs[n]
         bodies = {}
         done = set()
+        open_nums = set()
         for n in refs:
+            info = brief(n)
+            if not info:
+                continue
+            bodies[n] = info["body"]
+            if info["state"] == "closed":
+                done.add(n)
+            else:
+                for cand in next_parent.child_numbers(info["body"])[:8]:
+                    if cand in done or cand == n:
+                        continue
+                    child = brief(cand)
+                    if not child:
+                        continue
+                    if child["state"] == "closed":
+                        done.add(cand)
+                        continue
+                    open_nums.add(cand)
+                    break
+        door = next_parent.parent_door(bodies, done, open_nums)
+        if not door:
+            return {}
+        return {"parent": door["parent"], "next_issue": door["next"], "door_seat": door["seat"]}
+
+    def _put_parent_door(self, c, number, when, url, body):
+        door = self._parent_door(c, body)
+        if not door:
+            return
+        eid = f"{self.repo}#{int(number)}:next:{door['next_issue']}"
+        if eid in self.ev:
+            return
+        self.put(eid, when, "GitHub", "GitHub", "next_parent",
+                 f"next on #{door['parent']}: #{door['next_issue']}", url, door["next_issue"], **door)
+
+    def _backfill_parent_doors(self, c, limit=5):
+        """Recent merged pulls that were stored before this code still get one next line."""
+        if not getattr(c, "token", None):
+            return
+        merged = [e for e in self.ev.values() if e.get("kind") == "merged" and e.get("repo") == self.repo and e.get("number")]
+        merged.sort(key=lambda e: str(e.get("t_ct") or ""), reverse=True)
+        seen = 0
+        for e in merged:
+            if seen >= limit:
+                return
+            n = int(e["number"])
+            if any(str(k).startswith(f"{self.repo}#{n}:next:") for k in self.ev):
+                continue
+            seen += 1
             try:
-                st, data, _, _ = c.rest(f"/repos/{self.repo}/issues/{n}", None, essential=False)
+                st, data, _, _ = c.rest(f"/repos/{self.repo}/pulls/{n}", None, essential=False)
             except RateLow:
                 raise
             except (urllib.error.URLError, http.client.HTTPException, TimeoutError, OSError, ValueError, KeyError):
                 continue
             if st != 200 or not isinstance(data, dict):
                 continue
-            text = data.get("body") if isinstance(data.get("body"), str) else ""
-            bodies[n] = text
-            if str(data.get("state") or "").lower() == "closed":
-                done.add(n)
-        door = next_parent.parent_door(bodies, done)
-        if not door:
-            return {}
-        return {"parent": door["parent"], "next_issue": door["next"], "door_seat": door["seat"]}
+            self._put_parent_door(c, n, e.get("t_ct"), data.get("html_url") or e.get("source"), data.get("body"))
 
     def _record_merged_event(self, n, e, actor, url):
         """Store the merged beat from an issue event when pulls have not stored merged_at yet."""

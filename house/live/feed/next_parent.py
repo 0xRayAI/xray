@@ -10,12 +10,20 @@ def ref_numbers(body):
     return [int(n) for n in REF_RE.findall(body or "")]
 
 
-def next_open_child(body, done):
+def child_numbers(body):
+    return [int(n) for n in HASH_RE.findall(body or "")]
+
+
+def next_open_child(body, done, open_nums=None):
     closed = {int(n) for n in done}
+    allowed = None if open_nums is None else {int(n) for n in open_nums}
     for raw in HASH_RE.findall(body or ""):
         num = int(raw)
-        if num not in closed:
-            return num
+        if num in closed:
+            continue
+        if allowed is not None and num not in allowed:
+            continue
+        return num
     return None
 
 
@@ -27,11 +35,12 @@ def r_seat(body):
     return seat or None
 
 
-def parent_door(bodies, done):
-    """bodies maps an issue number to its body. The first parent with a later open child wins."""
+def parent_door(bodies, done, open_nums=None):
+    """bodies maps an issue number to its body. The first parent with a later open child wins.
+    When open_nums is set, a child counts only if that issue is still open."""
     closed = {int(n) for n in done}
     for num, body in bodies.items():
-        nxt = next_open_child(body, closed | {int(num)})
+        nxt = next_open_child(body, closed | {int(num)}, open_nums)
         seat = r_seat(body)
         if nxt and nxt != int(num) and seat:
             return {"parent": int(num), "next": nxt, "seat": seat}
