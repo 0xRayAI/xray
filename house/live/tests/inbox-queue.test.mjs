@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { backlogOf, keepStation, lineRank, queueView } from '../app/inbox-queue.mjs';
+import { backlogOf, keepStation, lineRank, markShed, nudgeTargets, overWip, queueView } from '../app/inbox-queue.mjs';
 
 const line = (id, extra) => ({ id, t_ct: extra.t || '2026-10-30T10:00:00Z', type: 'issue_comment', repo: '0xRayAI/xray', number: 1, title: id, url: '', reason: 'ask', ...extra });
 
@@ -68,4 +68,21 @@ test('a comment on a P1 card stays in the head even when the cap is full', () =>
   assert.equal(head.includes('tip'), true);
   assert.equal(queueView([tip, ...comments], { wip: 0, titleOf: titles }).map((row) => row.id).includes('tip'), true);
   assert.deepEqual(queueView([tip, ...comments], { nudge: true, titleOf: titles }).map((row) => row.id), ['tip']);
+});
+
+test('over WIP a new non-P0 comment is stored off the head and is not laddered', () => {
+  const ready = line('h', { type: 'packet', kind: 'ready', title: 'handoff ready', t: '2026-10-30T01:00:00Z' });
+  const noise = line('old', { type: 'nudge', t: '2026-10-30T02:00:00Z' });
+  const open = [ready, noise];
+  assert.equal(overWip(open), true);
+  const fresh = line('new', { title: 'htafolla comment · xray issue #800', number: 800, t: '2026-10-30T12:00:00Z' });
+  const shed = markShed(fresh, open);
+  assert.equal(shed.shed, true);
+  const p1 = line('p1', { title: 'comment', number: 768, t: '2026-10-30T12:01:00Z' });
+  const kept = markShed(p1, open, { titleOf: (row) => row.number === 768 ? 'P1: unstick' : '' });
+  assert.equal(kept.shed, undefined);
+  const lines = [ready, noise, shed];
+  assert.equal(queueView(lines).some((row) => row.id === 'new'), false);
+  assert.deepEqual(nudgeTargets(lines).map((row) => row.id), ['h']);
+  assert.deepEqual(nudgeTargets([fresh]).map((row) => row.id), ['new']);
 });
