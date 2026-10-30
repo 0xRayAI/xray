@@ -2,6 +2,8 @@
 
 Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 
+- Critic does not pass a live packet until R and A are filled. A soft follow-up is in the cut, scheduled, or closed with a reopen note. A deep inbox is not a reason to skip a tip. #732 #733 #731.
+
 - `express-rate-limit` in the lock is 8.7.2. The watchlist row matches. No app flag change. #743.
 - Hotpack is a runbook and a lexicon row. tip, soft FU, strip, rewear, mainstay, Dist GO, and graduate each have a row. #725.
 
