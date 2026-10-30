@@ -25,6 +25,8 @@ The output goes on the PR as the live-pass comment.
 
 A live card is not packet OK until `raci` names R and A. The amber mark is not a pass. See [Packet](../OP-PROC.md#packet).
 
+A packet that claims a hold for another review lane is not OK unless the card says Waiting on, start_after, or Held.
+
 ## Run
 ```
 house/live/tools/bifrost-check --dry-run                                   # offline rules; prints the live plan, writes nothing
