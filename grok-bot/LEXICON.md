@@ -85,6 +85,12 @@ How we act — not a product, not a ticket type.
 | packet ≠ ack | seven fields on a card ≠ a reflexive chime |
 | EXECUTE ≠ draft | armed ship ≠ proposed copy |
 | EXECUTE ≠ packet | armed Dist/action ≠ the handoff object |
+| tip ≠ packet | asking for the work ≠ the handoff object |
+| tip ≠ EXECUTE | asking for the work ≠ armed Dist |
+| tip ≠ Dist | asking for the work ≠ a public post |
+| hotpack ≠ kit | a short-lived pack from a tip ≠ a product kit |
+| hotpack ≠ suit | the interim pack ≠ the worn suit |
+| soft FU ≠ FIX | a later linked issue ≠ a review that blocks the pull |
 
 Locked 2026-09-14 with Blaze — categorized.
 
@@ -218,4 +224,17 @@ Every bolded term in the pack OP-PROC and runbooks is defined here (`bifrost che
 ## Lexicon add (2026-10-28 — bundle)
 | Term | Bucket | Plain |
 |------|--------|-------|
-| **bundle** | Workstream | Lots of small cards stay. A same-path cluster is one tip and one pull with a Closes list, and critic Strict is once. R opens the bundled pull. A tips that pull and does not open it. A blocker hotfix, a different deploy surface, an unrelated acceptance, or a soft follow-up stays a solo tip. An open solo tip stays solo unless the same path is widened on purpose. There is no retro pass. |
+| **bundle** | Workstream | Lots of small cards stay. A same-path cluster is one pull with a Closes list, and critic Strict is once. R opens the bundled pull. A does not open it. A blocker hotfix, a different deploy surface, an unrelated acceptance, or a soft FU stays a solo card. An open solo card stays solo unless the same path is widened on purpose. There is no retro pass. **tip** has its own row. |
+
+## Lexicon add (2026-10-30 — hotpack)
+
+| Term | Bucket | Plain |
+|------|--------|-------|
+| **tip** | Workstream | A seat asks the implementer to open or advance the work named on the card. Not a Dist post. Not a packet. Not EXECUTE. |
+| **soft FU** | Workstream | APPROVE now and open a linked issue for later. Wording, docs, and nits. Never a FIX that blocks the pull. |
+| **hotpack** | Workstream | A short-lived pack cut from a main tip that just merged. The fleet wears it, then graduates to npm. Not a kit, a suit, a bundle, or a packet. Steps: [HOTPACK](runbooks/HOTPACK.md). |
+| **strip** | Workstream | An ordered wear and doctor pass across seats. One seat at a time. Example order: blinky, forge, critic, herald. |
+| **rewear** | Workstream | Wear an already-suited fleet onto a new package cut. Also called FLEET-REWEAR. |
+| **mainstay** | Workstream | The seat stays in the chat and delegates. It does not do the deep work itself. |
+| **Dist GO** | Workstream | Blaze's go for a public Dist. Without it, Dist stays HOLD. |
+| **graduate** | Workstream | The fleet leaves the hotpack when the npm cut ships. |

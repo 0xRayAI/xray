@@ -3,6 +3,7 @@
 Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 
 - `express-rate-limit` in the lock is 8.7.2. The watchlist row matches. No app flag change. #743.
+- Hotpack is a runbook and a lexicon row. tip, soft FU, strip, rewear, mainstay, Dist GO, and graduate each have a row. #725.
 
 - The infrastructure test reads agents from `src/agents` and suit config from `xray/`. `src/opencode/agents` is the OpenCode wear dir. #397.
 
