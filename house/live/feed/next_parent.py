@@ -43,10 +43,13 @@ def parent_door(bodies, done, open_nums=None):
     closed = {int(n) for n in done}
     found = []
     for num, body in bodies.items():
-        nxt = next_open_child(body, closed | {int(num)}, open_nums)
+        parent = int(num)
+        if parent in closed:
+            continue
+        nxt = next_open_child(body, closed | {parent}, open_nums)
         seat = r_seat(body)
-        if nxt and nxt != int(num) and seat:
-            found.append({"parent": int(num), "next": nxt, "seat": seat})
+        if nxt and nxt != parent and seat:
+            found.append({"parent": parent, "next": nxt, "seat": seat})
     if not found:
         return None
     by_parent = {row["parent"]: row for row in found}
