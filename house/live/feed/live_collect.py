@@ -11,6 +11,7 @@ from pathlib import Path
 
 import live_packet
 import live_site
+import next_parent
 
 API = "https://api.github.com"
 REST_FLOOR = int(os.environ.get("LIVE_REST_FLOOR", "1500"))   # leave this much core budget for the fleet
@@ -1054,6 +1055,7 @@ class RepoCollector:
                     extra["merged_by"] = merger
                 else:
                     self.st.setdefault("need_merger", {})[str(n)] = 1
+                extra.update(self._parent_door(c, p.get("body")))
                 self.put(f"{self.repo}#{n}:merged", p["merged_at"], node(merger or login), "GitHub", "merged",
                          f"merged {self.short} #{n} → {p['base']['ref']}", url, n, **extra)
             if prev_head and head and prev_head != head:
@@ -1121,6 +1123,31 @@ class RepoCollector:
             "body": iss.get("body"),
             "labels": iss.get("labels"),
         })
+
+    def _parent_door(self, c, body):
+        """One ready line's fields when a merged pull names an open parent. The body is not stored."""
+        refs = next_parent.ref_numbers(body)[:3]
+        if not refs or not getattr(c, "token", None):
+            return {}
+        bodies = {}
+        done = set()
+        for n in refs:
+            try:
+                st, data, _, _ = c.rest(f"/repos/{self.repo}/issues/{n}", None, essential=False)
+            except RateLow:
+                raise
+            except (urllib.error.URLError, http.client.HTTPException, TimeoutError, OSError, ValueError, KeyError):
+                continue
+            if st != 200 or not isinstance(data, dict):
+                continue
+            text = data.get("body") if isinstance(data.get("body"), str) else ""
+            bodies[n] = text
+            if str(data.get("state") or "").lower() == "closed":
+                done.add(n)
+        door = next_parent.parent_door(bodies, done)
+        if not door:
+            return {}
+        return {"parent": door["parent"], "next_issue": door["next"], "door_seat": door["seat"]}
 
     def _record_merged_event(self, n, e, actor, url):
         """Store the merged beat from an issue event when pulls have not stored merged_at yet."""
