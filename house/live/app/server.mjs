@@ -820,7 +820,7 @@ function queueOpts() {
   return { titleOf: (line) => { const card = lineCard(line); return card && card.title ? String(card.title) : ''; } };
 }
 function arch1InboxDepth() {
-  const rows = seatOpenRows('arch1', false);
+  const rows = Array.isArray(seatInbox.arch1) ? seatOpenRows('arch1', false) : [];
   const head = queueView(rows, queueOpts());
   return { open: rows.length, head: head.length, backlog: Math.max(0, rows.length - head.length) };
 }
@@ -891,7 +891,7 @@ const NUDGE_LINE_MS = Math.max(1, Number(process.env.NUDGE_LINE_S) > 0 ? Number(
 function nudgeLines(now) {
   let changed = false;
   const open = new Set();
-  for (const seat of SEAT_IDS) for (const l of queueView(openLines(seat), { ...queueOpts(), nudge: true })) {
+  for (const seat of SEAT_IDS) for (const l of queueView(openLines(seat), queueOpts())) {
     if (itemClosed(l.repo, l.number)) continue;
     const closedCard = lineCard(l);
     if (closedCard && closedCard.state === 'closed') continue;
@@ -1687,7 +1687,8 @@ function mergedHeader(now = Date.now()) {
   h.track = trackView(now);   // Cursor agents, packets, wakes and blockers rebuilt from the volume
   h.cloud_agents = foldOpenCloudTurns(cloudAgentBoard(), now);   // first-class board rows: bcId, seat, card, state, last update
     if (h.board) {
-    h.board.stats = { ...(h.board.stats || {}), ...(ownerName() ? ownerPromptStats(now) : {}), arch1_backlog: arch1InboxDepth().backlog };
+    if (ownerName()) h.board.stats = { ...(h.board.stats || {}), ...ownerPromptStats(now) };
+    if (h.board.stats) h.board.stats.arch1_backlog = arch1InboxDepth().backlog;
     h.board.cloud_agents = h.cloud_agents;
     if (Array.isArray(h.board.cards)) h.board.cards = stampCriticCloud(h.board.cards, h.cloud_agents);
   }

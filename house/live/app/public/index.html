@@ -1552,15 +1552,14 @@ footer a { color: var(--foot); }
       var extra = ids.length - shown.length;
       return shown.join(', ') + (extra > 0 ? ' +' + extra + ' more' : '');
     }
-    var statKeys = ['issues_opened_24h', 'issues_closed_24h', 'prs_opened_24h', 'prs_merged_24h', 'prs_closed_unmerged_24h', 'owner_prompts_24h', 'open_total', 'arch1_backlog'];
+    var statKeys = ['issues_opened_24h', 'issues_closed_24h', 'prs_opened_24h', 'prs_merged_24h', 'prs_closed_unmerged_24h', 'owner_prompts_24h', 'open_total'];
     if (S) [['issues opened', S.issues_opened_24h, S.issues_opened_24h_ids], ['issues closed', S.issues_closed_24h, S.issues_closed_24h_ids],
       ['PRs opened', S.prs_opened_24h, S.prs_opened_24h_ids], ['PRs merged', S.prs_merged_24h, S.prs_merged_24h_ids],
       ['PRs closed unmerged', S.prs_closed_unmerged_24h, S.prs_closed_unmerged_24h_ids],
       ['owner prompts', S.owner_prompts_24h, S.owner_prompts_24h_ids, S.owner_prompts_24h_bytes],
-      ['open now', S.open_total],
-      ['arch1 backlog', S.arch1_backlog]].forEach(function (x, i) {
+      ['open now', S.open_total]].forEach(function (x, i) {
       var key = statKeys[i];
-      var d = wbEl('button', 'wstat' + (key === 'open_total' ? ' total' : '') + (wb.statFilter === key ? ' on' : ''));
+      var d = wbEl('button', 'wstat' + (i === statKeys.length - 1 ? ' total' : '') + (wb.statFilter === key ? ' on' : ''));
       d.type = 'button'; d.setAttribute('aria-pressed', wb.statFilter === key ? 'true' : 'false');
       var label = x[0] === 'owner prompts' ? x[0] : x[0] + (i < statKeys.length - 1 ? ' 24h' : '');
       d.appendChild(wbEl('b', '', String(x[1] == null ? '–' : x[1]))); d.appendChild(wbEl('small', '', label));
