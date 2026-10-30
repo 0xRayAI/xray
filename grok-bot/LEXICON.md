@@ -224,6 +224,8 @@ Every bolded term in the pack OP-PROC and runbooks is defined here (`bifrost che
 ## Lexicon add (2026-10-28 — bundle)
 | Term | Bucket | Plain |
 |------|--------|-------|
+| **soft follow-up** | Workstream | An approve that opens a later issue. It is in the cut, names Waiting on or start_after, or is closed with a reopen note. It is not a silent second pile. |
+| **backup queue** | Workstream | Hold a ready card only when it says Waiting on, start_after, or Held. An open review on another pull is not that hold. Resume when the field clears. |
 | **bundle** | Workstream | Lots of small cards stay. A same-path cluster is one pull with a Closes list, and critic Strict is once. R opens the bundled pull. A does not open it. A blocker hotfix, a different deploy surface, an unrelated acceptance, or a soft FU stays a solo card. An open solo card stays solo unless the same path is widened on purpose. There is no retro pass. **tip** has its own row. |
 
 ## Lexicon add (2026-10-30 — hotpack)

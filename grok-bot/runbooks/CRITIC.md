@@ -23,6 +23,10 @@ The output goes on the PR as the live-pass comment.
 | lexicon | every bolded term in the pack OP-PROC and runbooks has a row in `grok-bot/LEXICON.md` | [OP-PROC](../OP-PROC.md) |
 | names | docs and plates hold none of the stale phrases in `tools/bifrost-stale.json` | [**Names**](../OP-PROC.md#names) |
 
+A live card is not packet OK until `raci` names R and A. The amber mark is not a pass. See [Packet](../OP-PROC.md#packet).
+
+A packet that claims a hold for another review lane is not OK unless the card says Waiting on, start_after, or Held.
+
 ## Run
 ```
 house/live/tools/bifrost-check --dry-run                                   # offline rules; prints the live plan, writes nothing
