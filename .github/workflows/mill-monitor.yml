@@ -19,12 +19,16 @@ permissions:
   actions: read
   contents: read
 
+concurrency:
+  group: mill-monitor-${{ github.event.workflow_run.head_sha || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   mill-ci-report:
-    # Replay pushes already ran Deploy Docs. Skip the npm report on that branch.
+    # A cancelled parent run does not need a report. Replay pushes already ran Deploy Docs.
     if: >-
       github.event_name != 'workflow_run' ||
-      github.event.workflow_run.head_branch != 'live-wire'
+      (github.event.workflow_run.conclusion != 'cancelled' && github.event.workflow_run.head_branch != 'live-wire')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4.4.0

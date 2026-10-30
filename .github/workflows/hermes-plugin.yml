@@ -16,6 +16,10 @@ on:
   # Also allow manual triggering via PR label
   workflow_dispatch:
 
+concurrency:
+  group: hermes-plugin-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   plugin-python-tests:
     name: Python Plugin Tests

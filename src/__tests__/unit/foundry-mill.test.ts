@@ -1824,6 +1824,19 @@ describe('foundry mill — CI and hooks', () => {
     const monitor = read('.github/workflows/mill-monitor.yml');
     expect(monitor).toContain('0xRay CI/CD');
     expect(monitor).toContain('ci-monitor.mjs');
+    expect(monitor).toContain("github.event.workflow_run.conclusion != 'cancelled'");
+    expect(monitor).toContain('mill-monitor-${{ github.event.workflow_run.head_sha || github.ref }}');
+    for (const file of [
+      '.github/workflows/enforce-agents-md.yml',
+      '.github/workflows/enforce-version-compliance.yml',
+      '.github/workflows/codeql.yml',
+      '.github/workflows/processor-tests.yml',
+      '.github/workflows/hermes-plugin.yml',
+    ]) {
+      const text = read(file);
+      expect(text).toContain('cancel-in-progress: true');
+      expect(text).toContain('${{ github.ref }}');
+    }
     expect(monitor).toContain('Foundry mill (CI report)');
     expect(existsSync(path.join(root, '.github/workflows/ci-cd-monitor.yml'))).toBe(false);
     expect(read('scripts/node/github-actions-monitor.cjs')).toContain('foundry/ci-monitor.mjs');
