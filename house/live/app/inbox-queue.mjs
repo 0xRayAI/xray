@@ -61,7 +61,7 @@ export function queueView(lines, opts = {}) {
   const rows = ranked(lines, opts.titleOf);
   const ready = pick(rows, 0);
   const priority = rows.filter((row) => row.rank === 1 && row.priority).sort(byAge).map((row) => row.line);
-  const rest = rows.filter((row) => row.rank === 1 && !row.priority).sort(newestFirst).slice(0, opts.nudge ? 0 : wip).map((row) => row.line);
+  const rest = rows.filter((row) => row.rank === 1 && !row.priority && !row.line.shed).sort(newestFirst).slice(0, opts.nudge ? 0 : wip).map((row) => row.line);
   const head = [...ready, ...priority, ...rest];
   if (head.length) return head;
   const real = pick(rows, 2);
@@ -80,4 +80,33 @@ export function backlogOf(lines, opts = {}) {
 
 export function keepStation(lines) {
   return !(Array.isArray(lines) ? lines : []).some(Boolean);
+}
+
+export function overWip(lines, opts = {}) {
+  return backlogOf(lines, opts).length > 0;
+}
+
+export function nudgeTargets(lines, opts = {}) {
+  const head = queueView(lines, opts);
+  if (!overWip(lines, opts)) return head;
+  const titleOf = typeof opts.titleOf === 'function' ? opts.titleOf : () => '';
+  return head.filter((line) => {
+    const type = String(line && line.type || '').toLowerCase();
+    const kind = String(line && line.kind || '').toLowerCase();
+    if (type === 'packet' && HEAD_KINDS.has(kind)) return true;
+    return isPriority(line, titleOf(line) || '');
+  });
+}
+
+export function markShed(line, openLines, opts = {}) {
+  if (!line || line.shed) return line;
+  if (!overWip(openLines, opts)) return line;
+  const titleOf = typeof opts.titleOf === 'function' ? opts.titleOf : () => '';
+  const cardTitle = titleOf(line) || '';
+  const type = String(line.type || '').toLowerCase();
+  const kind = String(line.kind || '').toLowerCase();
+  if (type === 'packet' && HEAD_KINDS.has(kind)) return line;
+  if (isPriority(line, cardTitle)) return line;
+  if (type === 'nudge' || kind === 'station') return line;
+  return { ...line, shed: true };
 }
