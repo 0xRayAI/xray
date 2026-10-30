@@ -91,6 +91,10 @@ class Flow:
             # The re-apply fallback above would demote that to Others, and fleet_only would drop the merge.
             merger = frm if frm not in (None, "Others") else GH
             return [merger, GH] + tail
+        if k == "next_parent":
+            # Posted as GitHub with no login. The writer fallback would mark that Others,
+            # and fleet_only would drop the doorbell before the inbox ever sees it.
+            return [GH, USM]
         if k == "op_deploy":
             return ["Operator", RW] + ([e["instance"]] if e.get("instance") else [])
         if k == "op_commit":

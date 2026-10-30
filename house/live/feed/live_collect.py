@@ -1183,7 +1183,12 @@ class RepoCollector:
         if not door:
             return
         eid = f"{self.repo}#{int(number)}:next:{door['next_issue']}:door"
-        if eid in self.ev:
+        prefix = f"{self.repo}#{int(number)}:next:"
+        for key in list(self.ev):
+            if str(key).startswith(prefix) and str(key) != eid:
+                self.ev.pop(key, None)
+        current = self.ev.get(eid)
+        if current and current.get("parent") == door["parent"] and current.get("next_issue") == door["next_issue"]:
             return
         # Stamp now. A merge time older than the route window is marked seen and never delivered.
         live = datetime.now(self.CT).isoformat(timespec="seconds")
@@ -1191,17 +1196,21 @@ class RepoCollector:
                  f"next on #{door['parent']}: #{door['next_issue']}", url, door["next_issue"], **door)
 
     def _backfill_parent_doors(self, c, limit=5):
-        """Recent merged pulls that were stored before this code still get one next line."""
+        """Recent merged pulls that were stored before this code still get one next line.
+        One pass replaces a stale :next: row. After that, a pull that already has :door is left alone."""
         if not getattr(c, "token", None):
             return
+        replace = not self.st["bf"].get("door:child")
         merged = [e for e in self.ev.values() if e.get("kind") == "merged" and e.get("repo") == self.repo and e.get("number")]
         merged.sort(key=lambda e: str(e.get("t_ct") or ""), reverse=True)
         seen = 0
+        checked = 0
         for e in merged:
             if seen >= limit:
-                return
+                break
             n = int(e["number"])
-            if any(str(k).startswith(f"{self.repo}#{n}:next:") for k in self.ev):
+            prefix = f"{self.repo}#{n}:next:"
+            if not replace and any(str(k).startswith(prefix) and str(k).endswith(":door") for k in self.ev):
                 continue
             seen += 1
             try:
@@ -1212,7 +1221,10 @@ class RepoCollector:
                 continue
             if st != 200 or not isinstance(data, dict):
                 continue
+            checked += 1
             self._put_parent_door(c, n, e.get("t_ct"), data.get("html_url") or e.get("source"), data.get("body"))
+        if replace and (checked or not merged):
+            self.st["bf"]["door:child"] = True
 
     def _record_merged_event(self, n, e, actor, url):
         """Store the merged beat from an issue event when pulls have not stored merged_at yet."""
