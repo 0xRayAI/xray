@@ -2,6 +2,7 @@
 
 Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 
+- The npm pack lists `grok-bot/lib/next-wave.mjs` beside `pulsar-game.mjs`. #749.
 - Critic does not pass a live packet until R and A are filled. A soft follow-up is in the cut, scheduled, or closed with a reopen note. A ready card is held only by Waiting on, start_after, or Held. #732 #733 #731.
 
 - `express-rate-limit` in the lock is 8.7.2. The watchlist row matches. No app flag change. #743.
