@@ -1196,7 +1196,7 @@
       },
       {
         "name": "express-rate-limit",
-        "version": "8.5.2",
+        "version": "8.7.2",
         "via": "@modelcontextprotocol/sdk",
         "alsoDirect": false,
         "watch": [
@@ -1204,7 +1204,7 @@
           "deprecation",
           "breaking major on this line even when the parent range allows it"
         ],
-        "source": "package-lock.json:2813"
+        "source": "package-lock.json:2806"
       },
       {
         "name": "eventsource",
