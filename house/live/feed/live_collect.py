@@ -1182,7 +1182,9 @@ class RepoCollector:
         door = self._parent_door(c, body)
         if not door:
             return
-        eid = f"{self.repo}#{int(number)}:next:{door['next_issue']}:door"
+        # Parent is in the id. A closed parent that keeps the same child is a new row,
+        # or the inbox seen-set keeps the old title.
+        eid = f"{self.repo}#{int(number)}:next:{door['parent']}:{door['next_issue']}:door"
         prefix = f"{self.repo}#{int(number)}:next:"
         for key in list(self.ev):
             if str(key).startswith(prefix) and str(key) != eid:
@@ -1196,22 +1198,17 @@ class RepoCollector:
                  f"next on #{door['parent']}: #{door['next_issue']}", url, door["next_issue"], **door)
 
     def _backfill_parent_doors(self, c, limit=5):
-        """Recent merged pulls that were stored before this code still get one next line.
-        One pass replaces a stale :next: row. After that, a pull that already has :door is left alone."""
+        """Recent merged pulls get one next line.
+        A stored :door is recomputed. door:child does not keep a closed parent."""
         if not getattr(c, "token", None):
             return
-        replace = not self.st["bf"].get("door:child")
         merged = [e for e in self.ev.values() if e.get("kind") == "merged" and e.get("repo") == self.repo and e.get("number")]
         merged.sort(key=lambda e: str(e.get("t_ct") or ""), reverse=True)
         seen = 0
-        checked = 0
         for e in merged:
             if seen >= limit:
-                break
+                return
             n = int(e["number"])
-            prefix = f"{self.repo}#{n}:next:"
-            if not replace and any(str(k).startswith(prefix) and str(k).endswith(":door") for k in self.ev):
-                continue
             seen += 1
             try:
                 st, data, _, _ = c.rest(f"/repos/{self.repo}/pulls/{n}", None, essential=False)
@@ -1221,10 +1218,7 @@ class RepoCollector:
                 continue
             if st != 200 or not isinstance(data, dict):
                 continue
-            checked += 1
             self._put_parent_door(c, n, e.get("t_ct"), data.get("html_url") or e.get("source"), data.get("body"))
-        if replace and (checked or not merged):
-            self.st["bf"]["door:child"] = True
 
     def _record_merged_event(self, n, e, actor, url):
         """Store the merged beat from an issue event when pulls have not stored merged_at yet."""

@@ -65,6 +65,15 @@ class NextParent(unittest.TestCase):
         )
         self.assertEqual(door, {"parent": 768, "next": 731, "seat": "arch1"})
 
+    def test_a_closed_ref_is_not_the_door_parent(self):
+        """#772 is closed. The doorbell names the open bundle, not the closed ref."""
+        door = next_parent.parent_door(
+            {772: BUG, 768: BUNDLE},
+            {772, 753, 764, 766},
+            {731},
+        )
+        self.assertEqual(door, {"parent": 768, "next": 731, "seat": "arch1"})
+
     def test_stored_door_survives_the_feed_and_lands_in_the_inbox(self):
         """#775 stored a next row the hop pass turned into Others, so the feed never
         carried it. deliver() then dropped the ready line because kind is not a spool field.
@@ -82,7 +91,7 @@ class NextParent(unittest.TestCase):
                     parent=772, next_issue=768, door_seat="arch1")
             col._backfill_parent_doors(_DoorClient())
             doors = [e for e in col.ev.values() if e.get("kind") == "next_parent"]
-            self.assertEqual([e["id"] for e in doors], [f"{repo}#776:next:731:door"])
+            self.assertEqual([e["id"] for e in doors], [f"{repo}#776:next:768:731:door"])
             door = doors[0]
             self.assertEqual(door["parent"], 768)
             self.assertEqual(door["next_issue"], 731)
@@ -120,6 +129,31 @@ class NextParent(unittest.TestCase):
             self.assertNotIn("body", hit[0])
 
 
+    def test_a_latched_door_is_replaced_when_the_parent_is_closed(self):
+        """door:child already true must not keep a closed issue as the parent."""
+        repo = "0xRayAI/xray"
+        old = "2026-10-30T10:00:00Z"
+        with tempfile.TemporaryDirectory() as tmp:
+            col = live_collect.RepoCollector(
+                repo, Path(tmp), type("FF", (), {"CT": ZoneInfo("America/Chicago")})(), lambda *_a: None)
+            col.st["bf"]["door:child"] = True
+            col.put(f"{repo}#776:merged", old, "GitHub", "GitHub", "merged",
+                    "merged xray #776", "https://github.com/0xRayAI/xray/pull/776", 776)
+            stale = f"{repo}#776:next:731:door"
+            col.put(stale, old, "GitHub", "GitHub", "next_parent",
+                    "next on #772: #731", "https://github.com/0xRayAI/xray/pull/776", 731,
+                    parent=772, next_issue=731, door_seat="arch1")
+            col._backfill_parent_doors(_ClosedParent())
+            doors = [e for e in col.ev.values() if e.get("kind") == "next_parent"]
+            self.assertEqual(len(doors), 1)
+            self.assertEqual(doors[0]["parent"], 768)
+            self.assertEqual(doors[0]["next_issue"], 731)
+            self.assertTrue(str(doors[0]["id"]).endswith(":door"))
+            self.assertNotIn(stale, col.ev)
+            posted = datetime.fromisoformat(doors[0]["t_ct"])
+            self.assertLess(abs((datetime.now(posted.tzinfo) - posted).total_seconds()), 120)
+
+
 class _DoorClient:
     token = "t"
     _issues = {
@@ -136,6 +170,10 @@ class _DoorClient:
             return 200, {"body": "Refs #772\nRefs #768\n", "html_url": "https://github.com/0xRayAI/xray/pull/776"}, None, None
         number = int(str(path).rstrip("/").split("/")[-1])
         return 200, self._issues[number], None, None
+
+
+class _ClosedParent(_DoorClient):
+    _issues = {**_DoorClient._issues, 772: {"state": "closed", "body": BUG}}
 
 
 if __name__ == "__main__":
