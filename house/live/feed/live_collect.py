@@ -1178,14 +1178,16 @@ class RepoCollector:
             return {}
         return {"parent": door["parent"], "next_issue": door["next"], "door_seat": door["seat"]}
 
-    def _put_parent_door(self, c, number, when, url, body):
+    def _put_parent_door(self, c, number, _when, url, body):
         door = self._parent_door(c, body)
         if not door:
             return
-        eid = f"{self.repo}#{int(number)}:next:{door['next_issue']}"
+        eid = f"{self.repo}#{int(number)}:next:{door['next_issue']}:door"
         if eid in self.ev:
             return
-        self.put(eid, when, "GitHub", "GitHub", "next_parent",
+        # Stamp now. A merge time older than the route window is marked seen and never delivered.
+        live = datetime.now(self.CT).isoformat(timespec="seconds")
+        self.put(eid, live, "GitHub", "GitHub", "next_parent",
                  f"next on #{door['parent']}: #{door['next_issue']}", url, door["next_issue"], **door)
 
     def _backfill_parent_doors(self, c, limit=5):
