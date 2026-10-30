@@ -2,6 +2,8 @@
 
 Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 
+- `express-rate-limit` in the lock is 8.7.2. The watchlist row matches. No app flag change. #743.
+
 - The infrastructure test reads agents from `src/agents` and suit config from `xray/`. `src/opencode/agents` is the OpenCode wear dir. #397.
 
 - A second cloud launch on a pull that already has a running agent is recorded as a reply on that agent. #377 #380 #401.

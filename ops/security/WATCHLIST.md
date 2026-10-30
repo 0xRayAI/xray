@@ -140,7 +140,7 @@ These are in a lockfile and are not the direct row above. `viem`, `ethers`, and 
 | ajv | `8.18.0` | @modelcontextprotocol/sdk | GHSA/CVE; deprecation; breaking major on this line even when the parent range allows it | `package-lock.json:1950` |
 | ajv-formats | `3.0.1` | @modelcontextprotocol/sdk | GHSA/CVE; deprecation; breaking major on this line even when the parent range allows it | `package-lock.json:1966` |
 | cors | `2.8.6` | @modelcontextprotocol/sdk | GHSA/CVE; deprecation; breaking major on this line even when the parent range allows it | `package-lock.json:2246` |
-| express-rate-limit | `8.5.2` | @modelcontextprotocol/sdk | GHSA/CVE; deprecation; breaking major on this line even when the parent range allows it | `package-lock.json:2813` |
+| express-rate-limit | `8.7.2` | @modelcontextprotocol/sdk | GHSA/CVE; deprecation; breaking major on this line even when the parent range allows it | `package-lock.json:2806` |
 | eventsource | `3.0.7` | @modelcontextprotocol/sdk | GHSA/CVE; deprecation; breaking major on this line even when the parent range allows it | `package-lock.json:2739` |
 | cross-spawn | `7.0.6` | @modelcontextprotocol/sdk | GHSA/CVE; deprecation; breaking major on this line even when the parent range allows it | `package-lock.json:2270` |
 | playwright | `1.55.0` | @playwright/test | GHSA/CVE; deprecation; breaking major on this line even when the parent range allows it | `package-lock.json:4103` |
