@@ -145,7 +145,7 @@ Any 2xx is success. The response body is ignored.
 
 ### No webhook set (fallback)
 
-A seat not in `SEAT_WEBHOOKS` gets no POST. It learns of work from the one-line `SendToAgent`, from blinky's sweep, or by reading its inbox (`live-inbox` uses `GET /inbox/<seat>?queue=1`, then ack). That read is the queue head: ready handoffs, a hotfix, and P0 or P1. While that head is open, nudges and station lines stay stored and `?backlog=1` lists them. A station nudge is not posted while any line is open. Close or merge still acks. A read does not pop. The seated turn works that head. A non-empty head is the work.
+A seat not in `SEAT_WEBHOOKS` gets no POST. It learns of work from the one-line `SendToAgent`, from blinky's sweep, or by reading its inbox (`live-inbox` uses `GET /inbox/<seat>?queue=1`, then ack). That read is the queue head: ready handoffs, a hotfix, P0 or P1, a comment whose card title is P0 or P1, and the newest other comments. Older comments, nudges, and station lines stay stored and `?backlog=1` lists them. The response names `head` and `backlog`. arch1_launch off means this read is the doorbell. `sent:0` counts cloud launches, not this read. A station nudge is not posted while any line is open. Close or merge still acks. A read does not pop. The seated turn works that head. A non-empty head is the work.
 
 ### Ack route
 

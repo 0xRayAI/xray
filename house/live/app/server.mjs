@@ -816,6 +816,14 @@ function itemClosed(repo, number) {
 function lineCard(l) {
   return bfCards.find(x => x.repo && String(x.repo).toLowerCase() === String(l.repo || '').toLowerCase() && Number(x.number) === Number(l.number));
 }
+function queueOpts() {
+  return { titleOf: (line) => { const card = lineCard(line); return card && card.title ? String(card.title) : ''; } };
+}
+function arch1InboxDepth() {
+  const rows = Array.isArray(seatInbox.arch1) ? seatOpenRows('arch1', false) : [];
+  const head = queueView(rows, queueOpts());
+  return { open: rows.length, head: head.length, backlog: Math.max(0, rows.length - head.length) };
+}
 function lineDone(seat, l) {
   if (itemClosed(l.repo, l.number)) return false;
   const c = lineCard(l);
@@ -883,7 +891,7 @@ const NUDGE_LINE_MS = Math.max(1, Number(process.env.NUDGE_LINE_S) > 0 ? Number(
 function nudgeLines(now) {
   let changed = false;
   const open = new Set();
-  for (const seat of SEAT_IDS) for (const l of queueView(openLines(seat))) {
+  for (const seat of SEAT_IDS) for (const l of queueView(openLines(seat), queueOpts())) {
     if (itemClosed(l.repo, l.number)) continue;
     const closedCard = lineCard(l);
     if (closedCard && closedCard.state === 'closed') continue;
@@ -1680,6 +1688,7 @@ function mergedHeader(now = Date.now()) {
   h.cloud_agents = foldOpenCloudTurns(cloudAgentBoard(), now);   // first-class board rows: bcId, seat, card, state, last update
     if (h.board) {
     if (ownerName()) h.board.stats = { ...(h.board.stats || {}), ...ownerPromptStats(now) };
+    if (h.board.stats) h.board.stats.arch1_backlog = arch1InboxDepth().backlog;
     h.board.cloud_agents = h.cloud_agents;
     if (Array.isArray(h.board.cards)) h.board.cards = stampCriticCloud(h.board.cards, h.cloud_agents);
   }
@@ -2630,7 +2639,7 @@ function healthBody() {   // public: counts, times, ages (s) and wake states; no
     cards_behind: behind, stale_status: staleStatus,
     last_tick: passAt ? new Date(passAt).toISOString() : null, stalled,
     history_ready: historyState.ready, history_redis: historyState.redis, history_cards: historyState.cards,
-    origin: ORIGIN || null, wakes: wakeHealth(), wake_stats: publicStats(wakeState, now, wakeConfig(process.env).statMs), arch1_launch: arch1Launch.health(), nudged_lines: nudges.filter(n => n.kind === 'line' && !n.closed_at).length, routing: ROUTING.ok ? 'ok' : 'fail', governor_changes: governorChanges };
+    origin: ORIGIN || null, wakes: wakeHealth(), wake_stats: publicStats(wakeState, now, wakeConfig(process.env).statMs), arch1_launch: arch1Launch.health(), arch1_inbox: arch1InboxDepth(), nudged_lines: nudges.filter(n => n.kind === 'line' && !n.closed_at).length, routing: ROUTING.ok ? 'ok' : 'fail', governor_changes: governorChanges };
   if (warming) body.status = 'warming';
   return body;
 }
@@ -3742,10 +3751,12 @@ async function handle(req, res) {
     const queue = url.searchParams.get('queue') === '1', backlog = url.searchParams.get('backlog') === '1';
     const base = since && seatInbox[who].some(l => l.id === since) ? linesAfter(seatInbox[who], since) : seatInbox[who];
     const rows = seatOpenRows(who, stale ? false : all);
-    const view = (all || stale) ? rows : (backlog ? backlogOf(rows) : (queue ? queueView(rows) : rows));
+    const opts = queueOpts();
+    const head = queueView(rows, opts);
+    const view = (all || stale) ? rows : (backlog ? backlogOf(rows, opts) : (queue ? head : rows));
     const keep = new Set(view.map(l => l.id)); touchSeat(who);
     const lines = base.filter(l => keep.has(l.id) && (!stale || settledLine(l)));
-    return json(req, res, 200, { seat: who, lines: lines.slice(0, 1000) });
+    return json(req, res, 200, { seat: who, head: head.length, backlog: Math.max(0, rows.length - head.length), lines: lines.slice(0, 1000) });
   }
   if (p === '/clock') {   // POST /clock: the CoS starts the same timed run the tripwire starts (BIFROST_CLOCK_SEATS keys only)
     if (m !== 'POST') return json(req, res, 405, { error: 'method not allowed' }, { Allow: 'POST' });

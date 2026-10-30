@@ -12,17 +12,17 @@ test('ready handoffs and a hotfix are the head, and nudges stay back', () => {
   const comment = line('c', { title: 'soft follow-up', t: '2026-10-30T07:00:00Z' });
   assert.equal(lineRank(ready), 0);
   assert.equal(lineRank(hot), 1);
-  assert.equal(lineRank(comment), 2);
+  assert.equal(lineRank(comment), 1);
   assert.equal(lineRank(nudge), 3);
   assert.equal(lineRank(station), 4);
-  assert.deepEqual(queueView([nudge, station, comment, hot, ready]).map((row) => row.id), ['h', 'f']);
-  assert.deepEqual(backlogOf([nudge, station, comment, hot, ready]).map((row) => row.id), ['n', 's', 'c']);
+  assert.deepEqual(queueView([nudge, station, comment, hot, ready]).map((row) => row.id), ['h', 'f', 'c']);
+  assert.deepEqual(backlogOf([nudge, station, comment, hot, ready]).map((row) => row.id), ['n', 's']);
 });
 
-test('with no head, real lines show, then one oldest nudge, then one station line', () => {
+test('with no ready handoff, newest comments show, then one oldest nudge, then one station line', () => {
   const older = line('a', { t: '2026-10-30T01:00:00Z' });
   const newer = line('b', { t: '2026-10-30T02:00:00Z' });
-  assert.deepEqual(queueView([newer, older]).map((row) => row.id), ['a', 'b']);
+  assert.deepEqual(queueView([newer, older]).map((row) => row.id), ['b', 'a']);
   const n1 = line('n1', { type: 'nudge', t: '2026-10-30T03:00:00Z' });
   const n2 = line('n2', { type: 'nudge', t: '2026-10-30T04:00:00Z' });
   assert.deepEqual(queueView([n2, n1]).map((row) => row.id), ['n1']);
@@ -38,4 +38,34 @@ test('a P1 line joins the head and a station nudge waits for an empty inbox', ()
   assert.equal(keepStation([]), true);
   assert.equal(keepStation([p1]), false);
   assert.equal(keepStation([noise]), false);
+});
+
+test('a new comment stays in the head and older comments past the cap stay stored', () => {
+  const ready = line('h', { type: 'packet', kind: 'ready', title: 'handoff ready', t: '2026-10-30T01:00:00Z' });
+  const comments = Array.from({ length: 9 }, (_, i) => line('c' + i, {
+    title: 'htafolla comment · xray issue #' + (700 + i),
+    number: 700 + i,
+    t: '2026-10-30T' + String(10 + i).padStart(2, '0') + ':00:00Z',
+  }));
+  const nudge = line('n', { type: 'nudge', t: '2026-10-30T20:00:00Z' });
+  const head = queueView([ready, nudge, ...comments], { wip: 8 }).map((row) => row.id);
+  assert.equal(head[0], 'h');
+  assert.equal(head.includes('c8'), true);
+  assert.equal(head.includes('c0'), false);
+  assert.equal(head.includes('n'), false);
+  assert.equal(backlogOf([ready, nudge, ...comments], { wip: 8 }).some((row) => row.id === 'c0'), true);
+});
+
+test('a comment on a P1 card stays in the head even when the cap is full', () => {
+  const comments = Array.from({ length: 8 }, (_, i) => line('c' + i, {
+    title: 'comment',
+    number: 800 + i,
+    t: '2026-10-30T' + String(10 + i).padStart(2, '0') + ':00:00Z',
+  }));
+  const tip = line('tip', { title: 'htafolla comment · xray issue #768', number: 768, t: '2026-10-30T08:00:00Z' });
+  const titles = (row) => row.number === 768 ? 'P1: Arch1 unstick' : '';
+  const head = queueView([tip, ...comments], { wip: 8, titleOf: titles }).map((row) => row.id);
+  assert.equal(head.includes('tip'), true);
+  assert.equal(queueView([tip, ...comments], { wip: 0, titleOf: titles }).map((row) => row.id).includes('tip'), true);
+  assert.deepEqual(queueView([tip, ...comments], { nudge: true, titleOf: titles }).map((row) => row.id), ['tip']);
 });
