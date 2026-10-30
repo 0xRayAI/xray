@@ -250,8 +250,10 @@ def _direct_all(event, roles):
             if line:
                 out.append(line)
     if kind in ("merged", "next_parent") and event.get("door_seat") and event.get("parent") and event.get("next_issue"):
+        raw_id = str(event.get("id") or "")
+        line_id = raw_id if raw_id.endswith(":door") else f"{raw_id}:door"
         line = inbox._line(event, str(event.get("door_seat")), "next on parent",
-                           line_id=f"{event.get('id')}:next:{event.get('next_issue')}", line_type="packet")
+                           line_id=line_id, line_type="packet")
         if line:
             line["kind"] = "ready"
             line["title"] = f"next on #{event.get('parent')}: #{event.get('next_issue')}"[:120]

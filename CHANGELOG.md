@@ -5,6 +5,7 @@ Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 - The next-child line is stamped when it is posted, so a merge older than the route window still reaches the seat. arch1_launch stays off. #772 #768.
 - A merged pull already on the board still posts one ready line for the next open child. A closed number in the parent story is skipped. arch1_launch stays off. #772 #768.
 - A merged pull that names an open parent posts one ready line to that parent's R seat with the next open child. arch1_launch stays off. #772 #768.
+- The next-child doorbell stays in the feed. A cross-link is not the next child. The inbox line id ends in `:door` and the time is the post time. #772 #768 #731.
 - When Arch1 already has a backlog, a new non-P0 comment is stored and is not laddered. A P0 or P1 card and a ready handoff still enter the head. #731 #768.
 - PR workflows for AGENTS, version and docs, CodeQL, processor tests, and the Hermes plugin cancel the previous run on the same ref. The mill report skips a cancelled parent run. #766.
 - The inbox head keeps a new comment and a comment on a P0 or P1 card. Older comments and nudges stay stored. The read and the board report Arch1 backlog depth. #768 #731.

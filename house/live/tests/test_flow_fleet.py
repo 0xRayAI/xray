@@ -88,6 +88,17 @@ class FlowTest(unittest.TestCase):
         for x in e[1:]:
             self.assertEqual((x["from"], x["to"], x["hops"]), ("GitHub", "GitHub", ["GitHub"]))   # GitHub-only pulse
 
+    def test_hop_pass_keeps_the_parent_door(self):
+        """A next_parent row is posted as GitHub. The writer fallback must not mark it Others."""
+        e = {"id": "0xRayAI/xray#776:next:731:door", "kind": "next_parent", "from": "GitHub", "to": "GitHub",
+             "repo": self.R, "src_file": "github-api", "label": "next on #768: #731",
+             "parent": 768, "next_issue": 731, "door_seat": "arch1"}
+        self.f.apply([e])
+        self.f.apply([e])
+        self.assertEqual(e["from"], "GitHub")
+        self.assertNotIn("Others", (e["from"], e["to"]))
+        self.assertNotIn("Others", e["hops"])
+
     def test_hop_pass_keeps_a_stored_merge_actor(self):
         """GitHub on a stored merge is the unmapped merger. The hop pass must not demote it to Others."""
         e = {"id": "example-org/app#407:merged", "kind": "merged", "from": "GitHub", "to": "GitHub",

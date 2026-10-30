@@ -36,12 +36,23 @@ def r_seat(body):
 
 
 def parent_door(bodies, done, open_nums=None):
-    """bodies maps an issue number to its body. The first parent with a later open child wins.
+    """bodies maps an issue number to its body, in the pull's ref order.
+    A child that is itself one of those issues is a cross-link. Follow it.
+    The doorbell names the last issue in that chain and that issue's next open child.
     When open_nums is set, a child counts only if that issue is still open."""
     closed = {int(n) for n in done}
+    found = []
     for num, body in bodies.items():
         nxt = next_open_child(body, closed | {int(num)}, open_nums)
         seat = r_seat(body)
         if nxt and nxt != int(num) and seat:
-            return {"parent": int(num), "next": nxt, "seat": seat}
-    return None
+            found.append({"parent": int(num), "next": nxt, "seat": seat})
+    if not found:
+        return None
+    by_parent = {row["parent"]: row for row in found}
+    row = found[0]
+    seen = set()
+    while row["next"] in by_parent and row["parent"] not in seen:
+        seen.add(row["parent"])
+        row = by_parent[row["next"]]
+    return row
