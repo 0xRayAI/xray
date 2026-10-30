@@ -858,6 +858,6 @@ if ack is not None:
     r = call("POST", f"/inbox/{seat}/ack", body)
     print(json.dumps(r))
     sys.exit(0)
-lines = claim_open(seat, call("GET", f"/inbox/{seat}").get("lines") or [])
+lines = claim_open(seat, call("GET", f"/inbox/{seat}?queue=1").get("lines") or [])
 for l in lines:
     print(json.dumps(l, ensure_ascii=False))
