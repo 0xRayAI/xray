@@ -2,6 +2,7 @@
 
 Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 
+- The board shows Arch1 backlog depth before open now. A card that already has an L3 does not get another while that backlog is open. #731 #768.
 - The next-child line is stamped when it is posted, so a merge older than the route window still reaches the seat. arch1_launch stays off. #772 #768.
 - A merged pull already on the board still posts one ready line for the next open child. A closed number in the parent story is skipped. arch1_launch stays off. #772 #768.
 - A merged pull that names an open parent posts one ready line to that parent's R seat with the next open child. arch1_launch stays off. #772 #768.
