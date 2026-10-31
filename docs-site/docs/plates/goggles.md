@@ -32,4 +32,4 @@ One named card fills that card's files. Two names stay quiet. Bifrost and grokbo
 
 A checkout named `0xray` records `scripts/mjs/run-goggles-mcp.mjs`. Any other project records `node_modules/0xray/scripts/mjs/run-goggles-mcp.mjs`.
 
-stamped · 0xray 4.1.4
+stamped · 0xray 4.1.5

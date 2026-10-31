@@ -79,6 +79,12 @@ describe('pipeline plates', () => {
       'confer',
       'grokbot',
       'fleet',
+      'ai-fleet-ops',
+      'fleet-ops-hub',
+      'guides-map',
+      'control-plane',
+      'spend-governance',
+      'stand-up',
     ]);
     for (const id of PLATE_IDS) {
       const plate = loadPlate(id);
@@ -116,6 +122,12 @@ describe('pipeline plates', () => {
     expect(recallPlate('critic FAIL on the head')?.id).toBe('review');
     expect(recallPlate('re-review that head')?.id).toBe('review');
     expect(recallPlate('fleet plate')?.id).toBe('fleet');
+    expect(recallPlate('ai fleet ops')?.id).toBe('ai-fleet-ops');
+    expect(recallPlate('fleet ops hub')?.id).toBe('fleet-ops-hub');
+    expect(recallPlate('guides map')?.id).toBe('guides-map');
+    expect(recallPlate('control plane plate')?.id).toBe('control-plane');
+    expect(recallPlate('spend governance')?.id).toBe('spend-governance');
+    expect(recallPlate('stand up a fleet')?.id).toBe('stand-up');
     expect(recallPlate('house processor boot')?.id).not.toBe('house');
   });
 

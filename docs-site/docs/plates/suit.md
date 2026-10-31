@@ -41,4 +41,4 @@ A foundry is mills and hangars. The mill builds and ships. The hangar is the sho
 
 While Bifrost health says the board is live, worn Grok hooks send a turn, an issue tag, a pull tag, and a handoff packet. A quiet board sends nothing. When Bifrost is on, suit boot
 
-stamped · 0xray 4.1.4
+stamped · 0xray 4.1.5

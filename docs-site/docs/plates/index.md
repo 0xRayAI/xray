@@ -19,11 +19,11 @@ Plates have a type. A domain model plate shows how named parts fit. A state flow
 
 ## Domain model
 
-[Goggles](./goggles.md) · [Suit](./suit.md) · [Kits](./kits.md) · [Host Pack](./host-pack.md) · [Glossary](./glossary.md) · [Grok Bot](./grokbot.md) · [Centrifuge](./centrifuge.md)
+[Goggles](./goggles.md) · [Suit](./suit.md) · [Kits](./kits.md) · [Host Pack](./host-pack.md) · [Glossary](./glossary.md) · [Grok Bot](./grokbot.md) · [Centrifuge](./centrifuge.md) · [AI Fleet Ops](./ai-fleet-ops.md) · [Fleet Ops Hub](./fleet-ops-hub.md) · [Guides Map](./guides-map.md)
 
 ## State flow
 
-[House](./house.md) · [Bifrost](./bifrost.md) · [Review](./review.md)
+[House](./house.md) · [Bifrost](./bifrost.md) · [Review](./review.md) · [Control Plane](./control-plane.md) · [Spend Governance](./spend-governance.md) · [Stand Up](./stand-up.md)
 
 ## Pipeline
 

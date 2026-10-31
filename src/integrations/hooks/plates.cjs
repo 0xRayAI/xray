@@ -65,6 +65,12 @@ const PLATE_IDS = Object.freeze([
   "confer",
   "grokbot",
   "fleet",
+  "ai-fleet-ops",
+  "fleet-ops-hub",
+  "guides-map",
+  "control-plane",
+  "spend-governance",
+  "stand-up",
 ]);
 
 /** Id token, then extra phrases. Equal top scores recall nothing. */
@@ -341,6 +347,34 @@ const CUES = {
     [/fleet plate/i, 6],
     [/v5 fleet/i, 5],
     [/plates\/fleet/i, 6],
+  ],
+  "ai-fleet-ops": [
+    [/ai fleet ops/i, 6],
+    [/fleet ops plate/i, 6],
+    [/plates\/ai-fleet-ops/i, 6],
+    [/ops control plane/i, 5],
+  ],
+  "fleet-ops-hub": [
+    [/fleet ops hub/i, 7],
+    [/ops hub plate/i, 6],
+    [/plates\/fleet-ops-hub/i, 6],
+  ],
+  "guides-map": [
+    [/guides map/i, 6],
+    [/plates\/guides-map/i, 6],
+  ],
+  "control-plane": [
+    [/control plane plate/i, 6],
+    [/plates\/control-plane/i, 6],
+  ],
+  "spend-governance": [
+    [/spend governance/i, 6],
+    [/plates\/spend-governance/i, 6],
+  ],
+  "stand-up": [
+    [/stand up a fleet/i, 6],
+    [/stand up plate/i, 6],
+    [/plates\/stand-up/i, 6],
   ],
 };
 

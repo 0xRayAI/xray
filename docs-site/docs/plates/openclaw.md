@@ -33,4 +33,4 @@ OpenClaw wears the suit through its plugin.
 
 The host pack names OpenClaw. This card is `src/integrations/openclaw`.
 
-stamped · 0xray 4.1.4
+stamped · 0xray 4.1.5

@@ -65,6 +65,12 @@ export const PLATE_IDS = [
   'confer',
   'grokbot',
   'fleet',
+  'ai-fleet-ops',
+  'fleet-ops-hub',
+  'guides-map',
+  'control-plane',
+  'spend-governance',
+  'stand-up',
 ] as const;
 
 export type PlateId = (typeof PLATE_IDS)[number];
