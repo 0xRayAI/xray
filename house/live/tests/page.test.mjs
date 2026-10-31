@@ -315,7 +315,7 @@ test('pre-alpha naming: page is 🌈 Live board, Spectrum pill, panel 🌊 Board
 });
 test('board stats strip: 24h counts + open now from feed.board.stats, textContent only', () => {
   assert.match(html, /<div class="wave-stats" id="waveStats"/);
-  for (const k of ['issues_opened_24h', 'issues_closed_24h', 'prs_opened_24h', 'prs_merged_24h', 'prs_closed_unmerged_24h', 'owner_prompts_24h', 'owner_prompts_24h_ids', 'owner_prompts_24h_bytes', 'open_total']) assert.match(html, new RegExp('S\\.' + k));
+  for (const k of ['issues_opened_24h', 'issues_closed_24h', 'prs_opened_24h', 'prs_merged_24h', 'prs_closed_unmerged_24h', 'owner_prompts_24h', 'owner_prompts_24h_ids', 'owner_prompts_24h_bytes', 'open_total', 'arch1_backlog']) assert.match(html, new RegExp('S\\.' + k));
   assert.match(html, /'owner prompts'/);
   assert.match(html, /wb\.stats = r\.feed\.board\.stats \|\| null/);
 });

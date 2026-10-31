@@ -385,6 +385,7 @@ function statFeed() {
         issues_open: 1, prs_open: 1, open_total: 2,
         open_total_ids: ['Example/App#1', 'Example/App#10'],
         owner_prompts_24h: 0, owner_prompts_24h_ids: [], owner_prompts_24h_bytes: 0,
+        arch1_backlog: 0,
       },
       cards: [
         { key: 'example/app#1', repo: 'Example/App', number: 1, kind: 'issue', state: 'live', stage: 'open', title: 'Opened issue', owner: 'forge', packet_ok: true, last_beat_t: now - 1000, beats: [{ t: now - 1000, what: 'opened' }] },
@@ -403,7 +404,7 @@ test('each stat tile lists the items its count includes', async () => {
     const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto(base, { waitUntil: 'domcontentloaded' });
-    await page.waitForFunction(() => document.querySelectorAll('#waveStats .wstat').length === 7, null, { timeout: 8000 });
+    await page.waitForFunction(() => document.querySelectorAll('#waveStats .wstat').length === 8, null, { timeout: 8000 });
     const head = page.locator('[data-fold="stats"].collapsed > .fold-head, [data-fold="cards"].collapsed > .fold-head');
     const n = await head.count();
     for (let i = 0; i < n; i++) await head.nth(i).click();
@@ -414,7 +415,7 @@ test('each stat tile lists the items its count includes', async () => {
         return { label: tile.querySelector('small').textContent, count: Number(tile.querySelector('b').textContent), keys };
       });
     });
-    assert.equal(rows.length, 7);
+    assert.equal(rows.length, 8);
     for (const row of rows) assert.equal(row.keys.length, row.count, row.label);
     const byLabel = Object.fromEntries(rows.map(row => [row.label, row.keys]));
     assert.deepEqual(byLabel['issues opened 24h'], ['example/app#1']);
@@ -423,6 +424,7 @@ test('each stat tile lists the items its count includes', async () => {
     assert.deepEqual(byLabel['PRs merged 24h'], ['example/app#11']);
     assert.deepEqual(byLabel['PRs closed unmerged 24h'], ['example/app#12']);
     assert.deepEqual(byLabel['open now'], ['example/app#1', 'example/app#10']);
+    assert.deepEqual(byLabel['arch1 backlog'], []);
     assert.deepEqual(byLabel['owner prompts'], []);
   } finally {
     if (browser) await browser.close();
