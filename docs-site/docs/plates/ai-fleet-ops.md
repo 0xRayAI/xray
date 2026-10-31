@@ -9,19 +9,14 @@ plate_type: domain model
 One control plane and one queue run the fleet.
 
 ```
-┌──────────────────┐     ┌──────────────────┐     ┌──────────────────┐     ┌──────────────────┐
-│ONE PLANE         │ ─── │ONE QUEUE         │ ─── │CONTROL PLANE     │ ─── │FRAMEWORKS        │
-│one picture       │     │one item          │     │three layers      │     │build agents      │
-│of the fleet      │     │one owner         │     │under the queue   │     │tests first       │
-└──────────────────┘     └──────────────────┘     └──────────────────┘     └──────────────────┘
-                                                                                               
-┌──────────────────┐     ┌──────────────────┐     ┌──────────────────┐     ┌──────────────────┐
-│OPS RUNS          │ ─── │PILOT             │ ─── │SHIP GATE         │ ─── │PRODUCTION        │
-│day to day        │     │bounded trial     │     │prod waits        │     │runs live         │
-│not the build     │     │then a receipt    │     │policy holds      │     │policy held       │
-└──────────────────┘     └──────────────────┘     └──────────────────┘     └──────────────────┘
-                                                                                               
-consult@0xray.dev · ops.0xray.dev                                                              
+┌────────────────┐     ┌────────────────┐     ┌────────────────┐     ┌────────────────┐     ┌────────────────┐
+│ONE PLANE       │ ─── │CONTROL PLANE   │ ─── │FRAMEWORKS      │ ─── │OPS RUNS        │ ─── │PRODUCTION      │
+│one queue       │     │three layers    │     │build agents    │     │bounded trial   │     │ship gate       │
+│one owner       │     │under the queue │     │tests first     │     │then a receipt  │     │runs live       │
+│                │     │                │     │                │     │                │     │policy held     │
+└────────────────┘     └────────────────┘     └────────────────┘     └────────────────┘     └────────────────┘
+                                                                                                              
+consult@0xray.dev · ops.0xray.dev                                                                             
 ```
 
 Work enters one picture and one queue. Each item is one issue or pull request, on its own branch, and it does not sit on a second pile (`grok-bot/OP-PROC.md:6`). Only one pass of that queue is active at a time (`grok-bot/OP-PROC.md:20`). The queue moves from a source, to an owner, to an artifact, to evidence, to the next owner (`grok-bot/ops/OPS-SPEC.md:26`).
