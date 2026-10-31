@@ -1,7 +1,7 @@
 ---
 title: AI Fleet Ops
 sidebar_label: AI Fleet Ops
-plate_type: pipeline
+plate_type: domain model
 ---
 
 # AI Fleet Ops
@@ -9,55 +9,19 @@ plate_type: pipeline
 One control plane and one queue run the fleet.
 
 ```
-┌──────────────────────────────────────────────────────────────┐
-│ INPUT LAYER                                                  │
-│                                                              │
-│   ┌──────────────┐   ┌──────────────┐   ┌────────────────┐   │
-│   │ One plane    │   │ One queue    │   │ Spend policy   │   │
-│   │ one picture  │   │ one item     │   │ money waits    │   │
-│   │ of the fleet │   │ one owner    │   │ for a human    │   │
-│   └──────┬───────┘   └──────┬───────┘   └───────┬────────┘   │
-│          └──────────────────┴─────────┬─────────┘            │
-└────────────────────────────────────────┼─────────────────────┘
-                                         v                      
-┌────────────────────────────────────────┼─────────────────────┐
-│ PROCESSING LAYER                       │                     │
-│                                        v                     │
-│   ┌──────────────────────────────────────────────────────┐   │
-│   │ Frameworks build                                     │   │
-│   │ agents and tools are built here                      │   │
-│   │ tests finish before they run                         │   │
-│   │ the build does not run the fleet                     │   │
-│   └──────────────────────────┬───────────────────────────┘   │
-│                              v                               │
-│   ┌──────────────────────────────────────────────────────┐   │
-│   │ Ops runs                                             │   │
-│   │ operations runs the fleet                            │   │
-│   │ day to day, on one queue                             │   │
-│   │ it does not do the build                             │   │
-│   └──────────────────────────┬───────────────────────────┘   │
-│                              v                               │
-│   ┌──────────────────────────────────────────────────────┐   │
-│   │ Pilot                                                │   │
-│   │ a bounded trial                                      │   │
-│   │ a receipt before it widens                           │   │
-│   └──────────────────────────┬───────────────────────────┘   │
-│                              v                               │
-│   ┌──────────────────────────────────────────────────────┐   │
-│   │ Ship gate                                            │   │
-│   │ production waits on this gate                        │   │
-│   │ spend policy still holds                             │   │
-│   │ live means it runs for real                          │   │
-│   └──────────────────────────┬───────────────────────────┘   │
-└──────────────────────────────┼───────────────────────────────┘
-                               v                                
-┌──────────────────────────────┼───────────────────────────────┐
-│ OUTPUT LAYER                 v                               │
-│   ┌────────────┐   ┌────────────────┐   ┌────────────────┐   │
-│   │ Production │   │ Policy held    │   │ Consult        │   │
-│   │ runs live  │   │ spend in rule  │   │ ops.0xray.dev  │   │
-│   └────────────┘   └────────────────┘   └────────────────┘   │
-└──────────────────────────────────────────────────────────────┘
+┌──────────────────┐     ┌──────────────────┐     ┌──────────────────┐     ┌──────────────────┐
+│ONE PLANE         │ ─── │ONE QUEUE         │ ─── │CONTROL PLANE     │ ─── │FRAMEWORKS        │
+│one picture       │     │one item          │     │three layers      │     │build agents      │
+│of the fleet      │     │one owner         │     │under the queue   │     │tests first       │
+└──────────────────┘     └──────────────────┘     └──────────────────┘     └──────────────────┘
+                                                                                               
+┌──────────────────┐     ┌──────────────────┐     ┌──────────────────┐     ┌──────────────────┐
+│OPS RUNS          │ ─── │PILOT             │ ─── │SHIP GATE         │ ─── │PRODUCTION        │
+│day to day        │     │bounded trial     │     │prod waits        │     │runs live         │
+│not the build     │     │then a receipt    │     │policy holds      │     │policy held       │
+└──────────────────┘     └──────────────────┘     └──────────────────┘     └──────────────────┘
+                                                                                               
+consult@0xray.dev · ops.0xray.dev                                                              
 ```
 
 Work enters one picture and one queue. Each item is one issue or pull request, on its own branch, and it does not sit on a second pile (`grok-bot/OP-PROC.md:6`). Only one pass of that queue is active at a time (`grok-bot/OP-PROC.md:20`). The queue moves from a source, to an owner, to an artifact, to evidence, to the next owner (`grok-bot/ops/OPS-SPEC.md:26`).

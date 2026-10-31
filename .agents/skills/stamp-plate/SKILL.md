@@ -32,6 +32,16 @@ Plates are assembled, not drawn. Every visual part is an approved SVG in `plates
 - An ordered step gets a number tile and no icon. Every other card gets that kind's icon and no number. Never both.
 - `src/__tests__/unit/plates.test.ts` fails on an unknown icon kind, a missing SVG, a color or arrow style outside the kit, a card with both a number and an icon, or a shape or color that is not in the kit.
 
+## Flow axis HARD
+
+Blaze Dist lock 2026-10-31. Every plate reads **left → right** like a domain diagram.
+
+- The spine is one horizontal row of stage cards joined by `──►` rails.
+- Not allowed as the main layout: INPUT / PROCESSING / OUTPUT layers stacked top to bottom, tall two-column tables (RULE | WHY, GUIDE | PATH), or a numbered 1..N list running down the page.
+- Vertical stacking is allowed only for short detail lines inside one stage card, a return rail above or below the spine, or one footer CTA row under the spine.
+- Dist edu plates use `plate_type: domain model` or `state flow`. A `pipeline` plate keeps INPUT and OUTPUT but puts INPUT on the left and OUTPUT on the right, never as layer blocks.
+- The X kit PNG (`docs-site/static/plates/x/<id>.png`) must match the `.md` exactly: same nodes, same order, same edges. The renderer lays the spine out left to right.
+
 ## Plate
 
 1. Add `docs-site/docs/plates/<id>.md`.
