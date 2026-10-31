@@ -45,4 +45,4 @@ The pre-tool gate for every host. The loader is `src/integrations/hooks/delegati
 
 `evaluateConstitutionGate` (`src/nucleus/delegation-gate.ts:636-696`) denies a write that touches a stale checkout (Codex 70, `:646-652`), a new surface (Codex 69, `:656-667`), an unrestricted type or a suppression comment (Codex 11, `:671-677`), a direct dynamic-code call (Codex 29, `:679-685`), and a destructive shell (`:688-693`). `evaluatePreToolGate` (`:699-738`) runs station heat, then constitution, then synthesis and pending delegations unless ceremony is lite (`:718-734`), then the spawn plan (`:736`). A path outside this copy is allowed. A worktree is judged on its own HEAD. A spawn with no plan follows the host temperament.
 
-stamped · 0xray 4.1.4
+stamped · 0xray 4.1.5

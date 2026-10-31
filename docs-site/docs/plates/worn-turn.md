@@ -41,4 +41,4 @@ Cursor (`src/integrations/cursor/hooks/pre-tool-use.js`) denies empty input (`:8
 
 Grok (`src/integrations/grok/hooks/pre-tool-use.js`) uses the same order with different edges: `evaluatePreToolGate` (`:60`), extra Codex 2 and 7 on writes (`:77-81`), `lensBeforeResearch` (`:84-90`), `repertoireRoute` (`:93`). A thrown load denies (`:112-124`).
 
-stamped · 0xray 4.1.4
+stamped · 0xray 4.1.5

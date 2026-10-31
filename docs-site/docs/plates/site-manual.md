@@ -33,4 +33,4 @@ The published manual is docs-site/docs.
 
 Guides, architecture, and introduction live here. Factory notes under `docs/` are a different set. Reflections stay in `docs/reflections/`.
 
-stamped · 0xray 4.1.4
+stamped · 0xray 4.1.5

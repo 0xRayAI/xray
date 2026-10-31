@@ -35,4 +35,4 @@ lensBeforeResearch in src/integrations/hooks/goggles-pipeline.mjs looks at the p
 
 A session starts on dev. Compact writes that same card back.
 
-stamped · 0xray 4.1.4
+stamped · 0xray 4.1.5

@@ -63,4 +63,4 @@ The straight git build is 0xRayAI/bifrost at `e972d8d45cc962b1064aec76195c428bea
 
 `evalNudges` is the nudge path (`house/live/app/server.mjs:1234`, named at `:762`). Tripwire minutes default 30 (`server.mjs:1656`). Cloud agents are board rows (`server.mjs:1491`, copied onto the board at `:1494`). `LIVE_URL` is `house/live/docs/board.md:9`. The seat doctor reads it (`grok-bot/lib/seat-doctor.cjs:661`). `server.mjs` does not.
 
-stamped · 0xray 4.1.4
+stamped · 0xray 4.1.5

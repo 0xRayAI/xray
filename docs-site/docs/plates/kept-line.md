@@ -33,4 +33,4 @@ A station rewrite keeps one Fresh line and drops the copies. `Skills:` and `Keys
 
 mergeStationMarkdown in src/integrations/hooks/station-hook-runtime.cjs treats a Fresh line as stock. Copies are not preserved. When the new card has no Fresh line, the latest one is kept. The plates that belong here are station-card and work-fresh.
 
-stamped · 0xray 4.1.4
+stamped · 0xray 4.1.5

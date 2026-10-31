@@ -33,4 +33,4 @@ OpenCode install writes the plugin.
 
 The command is `src/cli/commands/opencode-install.ts`. Existing `.yml`, `.yaml`, and `.md` files stay. `xray/features.json` is merged.
 
-stamped · 0xray 4.1.4
+stamped · 0xray 4.1.5

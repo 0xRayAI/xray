@@ -33,4 +33,4 @@ The worn checkout lists seven MCP servers.
 
 The card owns `src/mcps`. A longer card still wins. The seven servers are xray-governance, xray-skills, xray-enforcer, xray-orchestrator, xray-researcher, xray-code-review, and xray-architect-tools. Repertoire and goggles sit beside them in `.mcp.json`. `src/mcps/registry.json` is the community catalog. Orchestrator and governance keep their own cards.
 
-stamped · 0xray 4.1.4
+stamped · 0xray 4.1.5

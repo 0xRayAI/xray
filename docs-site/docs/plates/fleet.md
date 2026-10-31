@@ -126,4 +126,4 @@ The public board is https://bifrost.0xray.dev (`grok-bot/OP-PROC.md:17`). When `
 
 The core is the three subsystems named above (`AGENTS.md:9`, `AGENTS.md:23`, `AGENTS.md:24`, `AGENTS.md:25`). A module is an organ plugged into the suit (`grok-bot/LEXICON.md:62`).
 
-stamped · 0xray 4.1.4
+stamped · 0xray 4.1.5

@@ -33,4 +33,4 @@ The reflect checkpoint for this checkout.
 
 The file is `src/nucleus/synthesis.ts`. The checkpoint is `.xray/state/synthesis-checkpoint.json`. While `synthesis.enabled` is false, a slice is not written and it does not come due.
 
-stamped · 0xray 4.1.4
+stamped · 0xray 4.1.5
