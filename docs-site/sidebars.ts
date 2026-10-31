@@ -110,6 +110,7 @@ const sidebars: SidebarsConfig = {
         'plates/confer',
         'plates/grokbot',
         'plates/fleet',
+        'plates/ai-fleet-ops',
       ],
     },
     'full-reference',

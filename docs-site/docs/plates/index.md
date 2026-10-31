@@ -27,7 +27,7 @@ Plates have a type. A domain model plate shows how named parts fit. A state flow
 
 ## Pipeline
 
-[Routing](./routing.md) · [Governance](./governance.md) · [Boot](./boot.md) · [Orchestration](./orchestration.md) · [Processor](./processor.md) · [Reporting](./reporting.md) · [Memory recall](./memory-recall.md) · [Stamp plate](./stamp-plate.md) · [Ground](./ground.md) · [Synthesis](./synthesis.md) · [Fleet](./fleet.md)
+[Routing](./routing.md) · [Governance](./governance.md) · [Boot](./boot.md) · [Orchestration](./orchestration.md) · [Processor](./processor.md) · [Reporting](./reporting.md) · [Memory recall](./memory-recall.md) · [Stamp plate](./stamp-plate.md) · [Ground](./ground.md) · [Synthesis](./synthesis.md) · [Fleet](./fleet.md) · [AI Fleet Ops](./ai-fleet-ops.md)
 
 The planes are dev, integration, domain, and ecosystem. Each drawing above is a card on one of those planes. A plate id is not a plane.
 

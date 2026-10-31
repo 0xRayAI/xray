@@ -79,6 +79,7 @@ describe('pipeline plates', () => {
       'confer',
       'grokbot',
       'fleet',
+      'ai-fleet-ops',
     ]);
     for (const id of PLATE_IDS) {
       const plate = loadPlate(id);
@@ -116,6 +117,7 @@ describe('pipeline plates', () => {
     expect(recallPlate('critic FAIL on the head')?.id).toBe('review');
     expect(recallPlate('re-review that head')?.id).toBe('review');
     expect(recallPlate('fleet plate')?.id).toBe('fleet');
+    expect(recallPlate('ai fleet ops')?.id).toBe('ai-fleet-ops');
     expect(recallPlate('house processor boot')?.id).not.toBe('house');
   });
 
@@ -493,7 +495,16 @@ function readKit(): PlateKit {
   return JSON.parse(readFileSync(join(process.cwd(), 'plates/kit.json'), 'utf8')) as PlateKit;
 }
 
-const NO_LENS_CARD = new Set(['review', 'goggles', 'suit', 'kits', 'host-pack', 'glossary']);
+const NO_LENS_CARD = new Set([
+  'review',
+  'goggles',
+  'suit',
+  'kits',
+  'host-pack',
+  'glossary',
+  // ASCII is the source. The kit PNG lands after critic PASS.
+  'ai-fleet-ops',
+]);
 const LEFT_SIDE = new Set(['│', '├', '┼']);
 const RIGHT_EDGE = new Set(['│', '┐', '┘', '┤', '┼']);
 

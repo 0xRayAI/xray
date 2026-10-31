@@ -65,6 +65,7 @@ const PLATE_IDS = Object.freeze([
   "confer",
   "grokbot",
   "fleet",
+  "ai-fleet-ops",
 ]);
 
 /** Id token, then extra phrases. Equal top scores recall nothing. */
@@ -341,6 +342,12 @@ const CUES = {
     [/fleet plate/i, 6],
     [/v5 fleet/i, 5],
     [/plates\/fleet/i, 6],
+  ],
+  "ai-fleet-ops": [
+    [/ai fleet ops/i, 6],
+    [/fleet ops plate/i, 6],
+    [/plates\/ai-fleet-ops/i, 6],
+    [/ops control plane/i, 5],
   ],
 };
 
