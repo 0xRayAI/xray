@@ -32,6 +32,9 @@ const line = (id, number, sha, kind) => ({
   sha, kind, title: id, url: 'https://github.com/example-org/x/pull/' + number, reason: 'ask',
 });
 fs.mkdirSync(path.join(data, 'live', 'inbox'), { recursive: true });
+fs.writeFileSync(path.join(data, 'live', 'cards.json'), JSON.stringify({ cards: [9, 10, 11].map(number => ({
+  key: `example-org/x#${number}`, repo: 'example-org/x', number, title: 'open', state: 'live', stage: 'open', kind: 'pr', packet: { raci: 'R=forge A=Blaze' },
+})) }));
 fs.writeFileSync(path.join(data, 'live', 'inbox', 'forge.jsonl'), [
   line('acked-old', 9, 'aaaaaaaa', 'ready'),
   line('handled-old', 10, 'bbbbbbbb', 'ready'),

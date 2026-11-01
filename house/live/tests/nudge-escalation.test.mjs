@@ -14,7 +14,7 @@ const W = `http://127.0.0.1:${sink.address().port}`;
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-esc-')), ROUTE = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-esc-r-'));
 fs.mkdirSync(path.join(DATA, 'live', 'inbox'), { recursive: true });
 fs.writeFileSync(path.join(DATA, 'live', 'inbox', 'forge.jsonl'), JSON.stringify({ id: 'old-1', t_ct: new Date(Date.now() - 3600e3).toISOString(),
-  seat: 'forge', type: 'pr_comment', repo: 'example-org/x', number: 9, title: 't', url: 'https://github.com/example-org/x/pull/9', reason: 'ask' }) + '\n');
+  seat: 'forge', type: 'packet', kind: 'ready', repo: 'example-org/x', number: 9, title: 't', url: 'https://github.com/example-org/x/pull/9', reason: 'ask' }) + '\n');
 fs.writeFileSync(path.join(ROUTE, 'inbox-roles.json'), JSON.stringify({ seats: { coord: { seat: 'critic' } }, extra_seats: { forge: { needles: ['@forge'] } } }));
 fs.writeFileSync(path.join(ROUTE, 'roster.json'), JSON.stringify({ seats: ['forge', 'critic'] }));
 let PORT = 0, BASE = '';

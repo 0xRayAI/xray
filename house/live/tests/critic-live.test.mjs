@@ -92,7 +92,7 @@ test('fleet.as_of, seat and cloud clocks, and freshness are America/Chicago', as
     assert.equal(live.fleet.cloud.github_last_ct, ct);
     assert.equal(live.freshness.github_latest_ct, ct);
     assert.equal(live.freshness.github_card_latest_ct, ct);
-    assert.match(live.fleet.as_of, /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}-05:00$/);
+    assert.match(live.fleet.as_of, /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}-0[56]:00$/);
     if (live.freshness.cards_at) assert.match(live.freshness.cards_at, /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}-0[56]:00$/);
     const bad = [];
     clockEnds(live.fleet, bad, 'fleet.');
