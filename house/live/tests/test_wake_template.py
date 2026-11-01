@@ -98,6 +98,8 @@ class WakeTemplate(unittest.TestCase):
         self.assertIn("forge for builds", cloud)
         self.assertIn("critic for reviews", cloud)
         self.assertIn("seat message pointing at the card", cloud)
+        self.assertIn("chat doorbell", cloud.lower())
+        self.assertIn("not a cloud resume", cloud.lower())
         self.assertIn("persistent chat", cloud)
         self.assertIn("launches or resumes a cloud agent", cloud)
         self.assertNotIn("build_bc", self.text)
