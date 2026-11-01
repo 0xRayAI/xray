@@ -314,7 +314,7 @@ def migrate_cursors():
 
 CUR = resolve_cursor_dir()
 KINDS = ("ready", "critic_fail", "live_pass", "merge", "ci_fail")
-USAGE = ("usage: live-inbox <seat> [--peek] | live-inbox <seat> --ack <id|all|stale> [--apply] | live-inbox <seat> --pop <id|all> | "
+USAGE = ("usage: live-inbox <seat> [--peek] | live-inbox <seat> --pass [id] | live-inbox <seat> --ack <id|all|stale> [--apply] | live-inbox <seat> --pop <id|all> | "
          "live-inbox <seat> --upto <id> | live-inbox <seat> --release | "
          "live-inbox <seat> --remember|--repeat --pr <owner/repo#n> --sha <head> --kind <kind> | "
          "live-inbox <seat> --turn start|end [--tag <tag>] | "
@@ -353,6 +353,7 @@ apply = "--apply" in argv
 if apply:
     argv.remove("--apply")
 upto = take("--upto")
+pass_id = take("--pass")
 ack = None
 ack_flag = None
 for flag in ("--ack", "--pop"):
@@ -815,6 +816,16 @@ if turn is not None:
     if tag is not None:
         body["tag"] = tag
     print(json.dumps(call("POST", "/activity", body)))
+    sys.exit(0)
+if pass_id is not None:
+    target = pass_id
+    if target == "head":
+        lines = call("GET", f"/inbox/{seat}?queue=1").get("lines") or []
+        if not lines or not isinstance(lines[0].get("id"), str) or not lines[0]["id"]:
+            print(json.dumps({"ok": False, "error": "no live line"}))
+            sys.exit(1)
+        target = lines[0]["id"]
+    print(json.dumps(call("POST", f"/inbox/{seat}/pass", {"id": target})))
     sys.exit(0)
 if upto is not None:
     print(json.dumps(call("POST", f"/inbox/{seat}/ack", {"upto": upto})))

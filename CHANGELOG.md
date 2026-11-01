@@ -2,6 +2,7 @@
 
 Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 
+- A seat can pass the live inbox line. The line leaves the queue and the pull or issue stays open. A ready or merge handoff on an issue does not pin that line.
 - The seat read is one live line. That line prints once per wake, and a new wake prints it again until it is acked. Later polls of the same line stay quiet. The rest stay stored. #768
 - A live inbox pid from another session still polls and orders this session's monitor. The pid that belongs to this session is left alone. #798
 - The pack ships `house/live/tools/inbox-watch.sh` and `live-inbox` beside it. The board server stays out of the tarball. #797
