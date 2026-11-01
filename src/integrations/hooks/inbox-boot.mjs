@@ -42,21 +42,37 @@ export function watcherPidFile(env = {}, home = '') {
   return path.join(root, '.burst', 'inbox-watch.pid');
 }
 
-export function watcherAlive(pidFile) {
+export function watcherPid(pidFile) {
   let text = '';
   try {
     text = fs.readFileSync(pidFile, 'utf8');
   } catch {
-    return false;
+    return 0;
   }
   const pid = Number(String(text).trim().split(/\s+/)[0]);
-  if (!Number.isInteger(pid) || pid <= 0) return false;
+  return Number.isInteger(pid) && pid > 0 ? pid : 0;
+}
+
+export function watcherAlive(pidFile) {
+  const pid = watcherPid(pidFile);
+  if (!pid) return false;
   try {
     process.kill(pid, 0);
     return true;
   } catch (err) {
     return !!(err && err.code === 'EPERM');
   }
+}
+
+export function watcherSession(stateFile) {
+  let text = '';
+  try {
+    text = fs.readFileSync(stateFile, 'utf8');
+  } catch {
+    return '';
+  }
+  const line = text.split('\n').find((row) => row.startsWith('session='));
+  return line ? line.slice('session='.length).trim() : '';
 }
 
 export function formatInboxMessage(text) {
@@ -76,11 +92,15 @@ function shQuote(value) {
 }
 
 /** The session monitor command. The hook does not spawn the loop. */
-export function monitorStartOrder(script, seat, origin, keys) {
-  const command = `LIVE_URL=${shQuote(origin)} SEAT_KEYS_DIR=${shQuote(keys)} ${shQuote(script)} ${shQuote(seat)}`;
+export function monitorStartOrder(script, seat, origin, keys, sessionId, foreignPid) {
+  const session = sessionId ? ` INBOX_WATCH_SESSION=${shQuote(sessionId)}` : '';
+  const command = `LIVE_URL=${shQuote(origin)} SEAT_KEYS_DIR=${shQuote(keys)}${session} ${shQuote(script)} ${shQuote(seat)}`;
+  const hold = foreignPid
+    ? `Stop inbox-watch pid ${foreignPid}. It is not this session.`
+    : 'Leave a live inbox-watch pid alone.';
   return [
     'Start the inbox monitor before other work. One copy. Persistent.',
-    'Leave a live inbox-watch pid alone.',
+    hold,
     `Command: ${command}`,
   ].join('\n');
 }
@@ -108,12 +128,17 @@ export async function pollInboxOnce(opts = {}) {
     ? opts.home.trim()
     : ((typeof env.HOME === 'string' && env.HOME.trim()) || os.homedir());
   const pidFile = opts.pidFile || watcherPidFile(env, home);
-  if (opts.force !== true && watcherAlive(pidFile)) return '';
+  const stateFile = opts.stateFile || path.join(path.dirname(pidFile), 'inbox-watch.state');
+  const sessionId = String(opts.sessionId || env.GROK_SESSION_ID || '').trim();
+  const pid = watcherPid(pidFile);
+  const alive = pid > 0 && watcherAlive(pidFile);
+  const owned = alive && sessionId !== '' && watcherSession(stateFile) === sessionId;
+  if (opts.force !== true && owned) return '';
   const cfg = suitConfig(env, home);
   if (!cfg) return '';
   const script = opts.script || inboxWatchScript(env);
   if (!script || !fs.existsSync(script)) return '';
-  const order = monitorStartOrder(script, cfg.seat, cfg.origin, cfg.keys);
+  const order = monitorStartOrder(script, cfg.seat, cfg.origin, cfg.keys, sessionId, alive ? pid : 0);
   const timeoutMs = Number(opts.timeoutMs) > 0 ? Number(opts.timeoutMs) : TIMEOUT_MS;
   const ownScratch = !opts.scratch;
   const scratch = opts.scratch || fs.mkdtempSync(path.join(os.tmpdir(), 'inbox-boot-'));

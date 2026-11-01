@@ -278,7 +278,11 @@ while true; do
     state_file="${INBOX_WATCH_STATE:-$HOME/.burst/inbox-watch.state}"
     pid_file="${INBOX_WATCH_PID:-$HOME/.burst/inbox-watch.pid}"
     mkdir -p "$(dirname "$state_file")" "$(dirname "$pid_file")"
-    printf 'pid=%s\nstarted=%s\nlast_ok=%s\nlive_url=%s\nscript=house/live/tools/inbox-watch.sh\n' "$$" "$started" "$(date +%Y-%m-%dT%H:%M:%S%z)" "$LIVE_URL" > "$state_file"
+    session_line=""
+    if [[ "${INBOX_WATCH_SESSION:-}" =~ ^[A-Za-z0-9._:-]{1,80}$ ]]; then
+      session_line="$(printf 'session=%s\n' "$INBOX_WATCH_SESSION")"
+    fi
+    printf 'pid=%s\nstarted=%s\nlast_ok=%s\nlive_url=%s\nscript=house/live/tools/inbox-watch.sh\n%s' "$$" "$started" "$(date +%Y-%m-%dT%H:%M:%S%z)" "$LIVE_URL" "$session_line" > "$state_file"
     printf '%s\n' "$$" > "$pid_file"
     showed=0
     if [[ -n "$out" ]]; then
