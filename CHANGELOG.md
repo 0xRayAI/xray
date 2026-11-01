@@ -2,7 +2,7 @@
 
 Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 
-- The inbox head is an open card whose packet names this seat as R. Priority is hotfix, then P0 or P1 on that packet, not the comment title. A merge names that card, not a number inside the child's story. #768.
+- The inbox head is an open card whose packet names this seat as R. Priority is hotfix, then P0, then P1 on that packet. The line ladder follows that head. A merge names that card. #768.
 - The board shows Arch1 backlog depth before open now. A card that already has an L3 does not get another while that backlog is open. #731 #768.
 - The next-child line is stamped when it is posted, so a merge older than the route window still reaches the seat. arch1_launch stays off. #772 #768.
 - A merged pull already on the board still posts one ready line for the next open child. A closed number in the parent story is skipped. arch1_launch stays off. #772 #768.

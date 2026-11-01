@@ -924,7 +924,7 @@ const NUDGE_LINE_MS = Math.max(1, Number(process.env.NUDGE_LINE_S) > 0 ? Number(
 function nudgeLines(now) {
   let changed = false;
   const open = new Set();
-  for (const seat of SEAT_IDS) for (const l of nudgeTargets(openLines(seat), queueOpts())) {
+  for (const seat of SEAT_IDS) for (const l of nudgeTargets(openLines(seat), queueOpts(seat))) {
     if (itemClosed(l.repo, l.number)) continue;
     const closedCard = lineCard(l);
     if (closedCard && closedCard.state === 'closed') continue;

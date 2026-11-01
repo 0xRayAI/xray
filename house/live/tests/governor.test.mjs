@@ -18,6 +18,9 @@ const old = new Date(Date.now() - 3600e3).toISOString();
 fs.mkdirSync(path.join(DATA, 'live', 'inbox'), { recursive: true });
 fs.writeFileSync(path.join(DATA, 'live', 'inbox', 'forge.jsonl'),
   JSON.stringify({ id: 'stale-1', t_ct: old, seat: 'forge', type: 'pr_comment', repo: 'example-org/x', number: 7, title: 't', url: 'https://github.com/example-org/x/pull/7', reason: 'merge ask' }) + '\n');
+fs.writeFileSync(path.join(DATA, 'live', 'cards.json'), JSON.stringify({ cards: [
+  { key: 'example-org/x#7', repo: 'example-org/x', number: 7, title: 'open', state: 'live', stage: 'open', kind: 'pr', packet: { raci: 'R=forge A=Blaze' } },
+] }));
 const ROUTE = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-gov-route-'));
 fs.writeFileSync(path.join(ROUTE, 'inbox-roles.json'), JSON.stringify({ extra_seats: { forge: { needles: ['@forge'] } } }));
 fs.writeFileSync(path.join(ROUTE, 'roster.json'), JSON.stringify({ seats: ['forge', 'mill'] }));

@@ -67,6 +67,7 @@ test('a titled P1 is not the head when no card names this seat', () => {
   const opts = { seat: 'arch1', cardOf: () => null };
   assert.deepEqual(queueView([noise], opts).map((row) => row.id), []);
   assert.equal(markShed(noise, [noise], opts).shed, true);
+  assert.deepEqual(nudgeTargets([noise], opts).map((row) => row.id), []);
 });
 
 test('a P1 line joins the head and a station nudge waits for an empty inbox', () => {
