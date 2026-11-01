@@ -2,6 +2,7 @@
 
 Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 
+- The seat read is one live line. That line is printed again on the next poll until it is acked. The rest stay stored. #768
 - A live inbox pid from another session still polls and orders this session's monitor. The pid that belongs to this session is left alone. #798
 - The pack ships `house/live/tools/inbox-watch.sh` and `live-inbox` beside it. The board server stays out of the tarball. #797
 - An empty R head still shows the seat's open line. A ready handoff keeps a comment with no R packet in the backlog. #793

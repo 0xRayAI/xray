@@ -326,6 +326,7 @@ seen = {line.strip() for line in seen_path.read_text(encoding="utf-8").splitline
 fresh = []
 new_seen = []
 new_todo = []
+head_open = True
 for raw in open_path.read_text(encoding="utf-8").splitlines():
     if not raw.strip():
         continue
@@ -341,9 +342,12 @@ for raw in open_path.read_text(encoding="utf-8").splitlines():
     if not isinstance(ident, str) or not ID_RE.match(ident):
         fresh.append(raw)
         continue
+    if ident in seen and not head_open:
+        continue
+    head_open = False
+    fresh.append(raw)
     if ident in seen:
         continue
-    fresh.append(raw)
     new_seen.append(ident)
     if ident in skip or ident[:1] == "-":
         continue
