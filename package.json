@@ -225,6 +225,8 @@
     "grok-bot/lib/next-wave.mjs",
     "grok-bot/ops/arcade/RANGE.md",
     "house/live/app/wave-schedule.mjs",
+    "house/live/tools/inbox-watch.sh",
+    "house/live/tools/live-inbox",
     "vendor/@0xray/repertoire/",
     "!vendor/**/*.map"
   ],
