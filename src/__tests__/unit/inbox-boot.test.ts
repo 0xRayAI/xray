@@ -46,18 +46,22 @@ describe('inbox boot', () => {
     expect(watcherAlive(pidFile)).toBe(true);
   });
 
-  it('skips the poll while a watcher pid is alive', async () => {
+  it('skips the poll when the live pid belongs to this session', async () => {
     const home = tmp('inbox-boot-live-');
     const keys = path.join(home, 'keys');
     fs.mkdirSync(keys);
     fs.writeFileSync(path.join(keys, 'arch1.key'), 'not-a-real-key\n', { mode: 0o600 });
     const pidFile = path.join(home, 'pid');
+    const stateFile = path.join(home, 'inbox-watch.state');
     fs.writeFileSync(pidFile, `${process.pid}\n`);
+    fs.writeFileSync(stateFile, 'session=this-session\n');
     let spawned = false;
     const text = await pollInboxOnce({
       env: { SEAT_KEYS_DIR: keys, XRAY_SEAT: 'arch1', LIVE_URL: 'https://bifrost.example' },
       home,
       pidFile,
+      stateFile,
+      sessionId: 'this-session',
       script: path.join(home, 'missing.sh'),
       spawnImpl: () => {
         spawned = true;
@@ -67,6 +71,29 @@ describe('inbox boot', () => {
     expect(text).toBe('');
     expect(text).not.toContain('Command:');
     expect(spawned).toBe(false);
+  });
+
+  it('polls and orders a start when the live pid is another session', async () => {
+    const home = tmp('inbox-boot-foreign-');
+    const keys = path.join(home, 'keys');
+    fs.mkdirSync(keys);
+    fs.writeFileSync(path.join(keys, 'arch1.key'), 'not-a-real-key\n', { mode: 0o600 });
+    const pidFile = path.join(home, 'pid');
+    const stateFile = path.join(home, 'inbox-watch.state');
+    fs.writeFileSync(pidFile, `${process.pid}\n`);
+    fs.writeFileSync(stateFile, 'session=other-session\n');
+    const file = script(home, '#!/bin/sh\nprintf \'ACTION_REQUIRED\\nunfinished:1\\n\'\n');
+    const text = await pollInboxOnce({
+      env: { SEAT_KEYS_DIR: keys, XRAY_SEAT: 'arch1', LIVE_URL: 'https://bifrost.example', GROK_SESSION_ID: 'this-session' },
+      home,
+      pidFile,
+      stateFile,
+      script: file,
+    });
+    expect(text).toContain('ACTION_REQUIRED');
+    expect(text).toContain(`Stop inbox-watch pid ${process.pid}. It is not this session.`);
+    expect(text).toContain('INBOX_WATCH_SESSION=');
+    expect(text).not.toContain('Leave a live inbox-watch pid alone.');
   });
 
   it('returns empty when the seat key or the script is missing', async () => {
