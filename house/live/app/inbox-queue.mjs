@@ -1,6 +1,6 @@
 // The default seat read is a queue head. Stored lines stay until close, merge, or an ack.
-// Ready handoffs come first. With a seat, the rest of the head is cards whose packet
-// names that seat as R: hotfix, then P0 or P1 on the packet. Priority is that packet.
+// Ready handoffs come first. With a seat, the rest of the head is every card whose
+// packet names that seat as R. Hotfix, then P0, then P1 sort ahead of the other cards.
 // While that head is open, nudges and station lines stay in the backlog. A read does not pop.
 
 const P_MARK = /\bP[01]\b/;
@@ -50,8 +50,7 @@ function packetLevel(card) {
 function isPriority(line, cardTitle, card, seat) {
   if (seat) {
     const who = String(seat || '').toLowerCase();
-    if (rSeat((card && card.packet || {}).raci) !== who) return false;
-    return packetLevel(card) < 3;
+    return who !== '' && rSeat((card && card.packet || {}).raci) === who;
   }
   const title = String(line && line.title || '');
   return /^hotfix:/i.test(title) || P_MARK.test(lineText(line, cardTitle));

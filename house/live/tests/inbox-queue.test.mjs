@@ -70,6 +70,16 @@ test('a titled P1 is not the head when no card names this seat', () => {
   assert.deepEqual(nudgeTargets([noise], opts).map((row) => row.id), []);
 });
 
+test('a plain card whose packet names this seat stays on the head and is laddered', () => {
+  const cards = { 12: { title: 'do the work', packet: { raci: 'R=Arch1 A=Blaze', goal: 'do the work' } } };
+  const plain = line('plain', { number: 12, title: 'htafolla comment', t: '2026-10-30T09:00:00Z' });
+  const nudge = line('old', { type: 'nudge', t: '2026-10-30T02:00:00Z' });
+  const opts = { seat: 'arch1', cardOf: (row) => cards[row.number] || null };
+  assert.deepEqual(queueView([plain, nudge], opts).map((row) => row.id), ['plain']);
+  assert.deepEqual(nudgeTargets([plain, nudge], opts).map((row) => row.id), ['plain']);
+  assert.equal(markShed(plain, [plain, nudge], opts).shed, undefined);
+});
+
 test('a P1 line joins the head and a station nudge waits for an empty inbox', () => {
   const p1 = line('p', { title: 'P1: wake path', t: '2026-10-30T01:00:00Z' });
   const noise = line('n', { type: 'nudge', t: '2026-10-30T02:00:00Z' });
