@@ -2,6 +2,7 @@
 
 Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 
+- An empty R head still shows the seat's open line. A ready handoff keeps a comment with no R packet in the backlog. #793
 - A comment on a card whose packet names this seat as R stays on the head and is laddered. Hotfix, then P0, then P1 are read first. #768.
 - The inbox head is an open card whose packet names this seat as R. Priority is hotfix, then P0, then P1 on that packet. The line ladder follows that head. A merge names that card. #768.
 - The board shows Arch1 backlog depth before open now. A card that already has an L3 does not get another while that backlog is open. #731 #768.
