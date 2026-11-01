@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { backlogOf, keepStation, lineRank, markShed, nudgeTargets, overWip, queueView } from '../app/inbox-queue.mjs';
+import { backlogOf, keepStation, lineRank, markShed, nudgeTargets, overWip, queueView, rSeat } from '../app/inbox-queue.mjs';
 
 const line = (id, extra) => ({ id, t_ct: extra.t || '2026-10-30T10:00:00Z', type: 'issue_comment', repo: '0xRayAI/xray', number: 1, title: id, url: '', reason: 'ask', ...extra });
 
@@ -29,6 +29,44 @@ test('with no ready handoff, newest comments show, then one oldest nudge, then o
   const s1 = line('s1', { type: 'nudge', kind: 'station', t: '2026-10-30T05:00:00Z' });
   const s2 = line('s2', { type: 'nudge', kind: 'station', t: '2026-10-30T06:00:00Z' });
   assert.deepEqual(queueView([s1, s2]).map((row) => row.id), ['s2']);
+});
+
+test('a comment titled P1 stays back when the packet does not name this seat', () => {
+  const ready = line('h', { type: 'packet', kind: 'ready', title: 'handoff ready', t: '2026-10-30T12:00:00Z' });
+  const noise = line('p', { title: 'P1: wake path', number: 768, t: '2026-10-30T11:00:00Z' });
+  const cards = { 700: { title: 'unstick the seat', packet: { raci: 'R=Arch1 A=Blaze', goal: 'P1 unstick' } } };
+  const real = line('tip', { title: 'htafolla comment · xray issue #700', number: 700, t: '2026-10-30T09:00:00Z' });
+  const cardOf = (row) => cards[row.number] || null;
+  const opts = { seat: 'arch1', cardOf };
+  const head = queueView([noise, real, ready], opts).map((row) => row.id);
+  assert.equal(rSeat('R=Arch1 A=Blaze'), 'arch1');
+  assert.equal(head.includes('h'), true);
+  assert.equal(head.includes('tip'), true);
+  assert.equal(head.includes('p'), false);
+  const open = [ready, line('old', { type: 'nudge', t: '2026-10-30T02:00:00Z' })];
+  assert.equal(markShed(noise, open, opts).shed, true);
+  assert.equal(markShed(real, open, opts).shed, undefined);
+  assert.deepEqual(nudgeTargets([ready, ...open.slice(1), noise, real], opts).map((row) => row.id), ['h', 'tip']);
+});
+
+test('hotfix on the packet is read before an older P0, and P0 before P1', () => {
+  const cards = {
+    1: { title: 'pack the module', packet: { raci: 'R=Arch1 A=Blaze', goal: 'hotfix: pack the module' } },
+    2: { title: 'first', packet: { raci: 'R=Arch1 A=Blaze', goal: 'P0 first' } },
+    3: { title: 'second', packet: { raci: 'R=Arch1 A=Blaze', goal: 'P1 second' } },
+  };
+  const hot = line('hot', { number: 1, title: 'htafolla comment', t: '2026-10-30T12:00:00Z' });
+  const p0 = line('p0', { number: 2, title: 'htafolla comment', t: '2026-10-30T08:00:00Z' });
+  const p1 = line('p1', { number: 3, title: 'htafolla comment', t: '2026-10-30T01:00:00Z' });
+  const cardOf = (row) => cards[row.number] || null;
+  assert.deepEqual(queueView([p1, p0, hot], { seat: 'arch1', cardOf }).map((row) => row.id), ['hot', 'p0', 'p1']);
+});
+
+test('a titled P1 is not the head when no card names this seat', () => {
+  const noise = line('p', { title: 'P1: wake path', number: 384, t: '2026-10-30T11:00:00Z' });
+  const opts = { seat: 'arch1', cardOf: () => null };
+  assert.deepEqual(queueView([noise], opts).map((row) => row.id), []);
+  assert.equal(markShed(noise, [noise], opts).shed, true);
 });
 
 test('a P1 line joins the head and a station nudge waits for an empty inbox', () => {

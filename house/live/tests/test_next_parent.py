@@ -56,12 +56,21 @@ class NextParent(unittest.TestCase):
         self.assertTrue(door[0]["id"].endswith(":door"))
         self.assertNotIn("body", door[0])
 
-    def test_a_cross_link_names_the_bundle_child(self):
-        """#772 points at #768. The doorbell is the bundle's next open child, #731."""
+    def test_a_cross_link_names_the_named_issue_not_its_story(self):
+        """#772 names #768. The next card is #768. #731 inside #768 is not read."""
         door = next_parent.parent_door(
             {772: BUG, 768: BUNDLE},
             {753, 764, 766},
             {768, 731},
+        )
+        self.assertEqual(door, {"parent": 772, "next": 768, "seat": "arch1"})
+
+    def test_a_child_story_is_not_the_next_card(self):
+        """#768 names #731. #731's story names #384. The next card is #731."""
+        door = next_parent.parent_door(
+            {731: "#384 sweep\nR=Arch1\n", 768: "#731 load\nR=Arch1\n"},
+            set(),
+            {384, 731},
         )
         self.assertEqual(door, {"parent": 768, "next": 731, "seat": "arch1"})
 
@@ -91,10 +100,10 @@ class NextParent(unittest.TestCase):
                     parent=772, next_issue=768, door_seat="arch1")
             col._backfill_parent_doors(_DoorClient())
             doors = [e for e in col.ev.values() if e.get("kind") == "next_parent"]
-            self.assertEqual([e["id"] for e in doors], [f"{repo}#776:next:768:731:door"])
+            self.assertEqual([e["id"] for e in doors], [f"{repo}#776:next:772:768:door"])
             door = doors[0]
-            self.assertEqual(door["parent"], 768)
-            self.assertEqual(door["next_issue"], 731)
+            self.assertEqual(door["parent"], 772)
+            self.assertEqual(door["next_issue"], 768)
             self.assertNotIn(stale, col.ev)
             posted = datetime.fromisoformat(door["t_ct"])
             self.assertLess(abs((datetime.now(posted.tzinfo) - posted).total_seconds()), 120)
@@ -123,7 +132,7 @@ class NextParent(unittest.TestCase):
             rows = [json.loads(line) for line in (spool / "arch1.jsonl").read_text().splitlines()]
             hit = [row for row in rows if str(row.get("id") or "").endswith(":door")]
             self.assertEqual(len(hit), 1)
-            self.assertEqual(hit[0]["title"], "next on #768: #731")
+            self.assertEqual(hit[0]["title"], "next on #772: #768")
             self.assertEqual(hit[0]["kind"], "ready")
             self.assertEqual(hit[0]["seat"], "arch1")
             self.assertNotIn("body", hit[0])
