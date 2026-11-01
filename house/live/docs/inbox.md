@@ -114,6 +114,10 @@ Invalid JSON logs `wake: SEAT_WEBHOOKS is not json` and disables all wakes. A ba
 
 Every inbox line newly stored for a configured seat queues a wake: lines from `POST /inbox` / `POST /inbox/builder` (duplicates by `id` are not new), the server-side mirror of Builder lines into `builder-cloud`, and nudges copied to `builder-cloud`. Acks and reads never fire one.
 
+### Chat doorbell
+
+A critic `ready` or `ci_pass` head rings the critic chat as well as the inbox webhook. `SEAT_CHAT_DOORBELL` is JSON of the same shape as `SEAT_WEBHOOKS`, keyed by seat. The POST is a seat message (`kind: seat_message`) that names the card, the head, and `resume critic_bc`. That POST is the wake of the persistent chat. It is not a cloud follow-up: a URL whose path is an agent resume is refused and not sent. NOTES and board activity do not ring the chat. A missing critic entry logs `doorbell: critic no_chat` and the chat stays idle. The inbox webhook still never launches or resumes a cloud.
+
 ### Request
 
 - `POST <url>`, `Content-Type: application/json`, `User-Agent: bifrost-live`.
