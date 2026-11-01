@@ -158,10 +158,10 @@ esac
             r, calls = self._run(body, ["arch1"], dict({"INBOX_WATCH_MAX": "3", "INBOX_TODO_DIR": str(Path(d) / "todo")}, **hooks))
             todo = (Path(d) / "todo" / "arch1.md").read_text()
         self.assertEqual(r.returncode, 0, r.stderr)
-        self.assertEqual(r.stdout.count("ACTION_REQUIRED"), 2)
-        self.assertEqual(r.stdout.count("unfinished:1"), 2)
+        self.assertEqual(r.stdout.count("ACTION_REQUIRED"), 1)
+        self.assertEqual(r.stdout.count("unfinished:1"), 1)
         self.assertNotIn("pop ", r.stdout)
-        self.assertEqual(r.stdout.count("line 0xRayAI/xray#549 open-1 open"), 2)
+        self.assertEqual(r.stdout.count("line 0xRayAI/xray#549 open-1 open"), 1)
         self.assertNotIn(open_line, r.stdout)
         self.assertEqual(r.stdout.count("held: 1"), 1)
         self.assertNotIn(held_line, r.stdout)
@@ -171,7 +171,7 @@ esac
         self.assertNotIn("--ack all", calls)
         self.assertEqual(todo.count("id=open-1"), 1)
         self.assertNotIn("held-1", todo)
-        self.assertEqual(calls.count("--turn start --tag wake"), 2)
+        self.assertEqual(calls.count("--turn start --tag wake"), 1)
         self.assertNotIn("--turn end", calls)
 
     def test_held_card_listed_once(self):
@@ -239,7 +239,7 @@ exit 0
         self.assertIn("--ack closed-2", calls)
 
     def test_delivered_open_line_is_todo_and_a_new_id_prints(self):
-        """The head reprints until ack. A later id is a new line. A later seen id stays quiet."""
+        """A later id is a new line. After the first print of a wake, a seen head stays quiet."""
         first = '{"id":"open-2","repo":"0xRayAI/xray","number":608,"title":"still open","type":"issue_comment"}'
         second = '{"id":"open-3","repo":"0xRayAI/xray","number":608,"title":"newer","type":"issue_comment"}'
         body = """
@@ -267,11 +267,10 @@ exit 0
             r, calls = self._run(body, ["arch1"], dict({"INBOX_WATCH_MAX": "3", "INBOX_TODO_DIR": str(Path(d) / "todo")}, **hooks))
             todo = (Path(d) / "todo" / "arch1.md").read_text()
         self.assertEqual(r.returncode, 0, r.stderr)
-        self.assertEqual(r.stdout.count("ACTION_REQUIRED"), 3)
+        self.assertEqual(r.stdout.count("ACTION_REQUIRED"), 2)
         self.assertEqual(r.stdout.count("unfinished:1"), 2)
-        self.assertEqual(r.stdout.count("unfinished:2"), 1)
         self.assertNotIn("pop ", r.stdout)
-        self.assertEqual(r.stdout.count("still open"), 3)
+        self.assertEqual(r.stdout.count("still open"), 1)
         self.assertEqual(r.stdout.count("newer"), 1)
         self.assertNotIn(first, r.stdout)
         self.assertNotIn(second, r.stdout)
@@ -279,8 +278,25 @@ exit 0
         self.assertNotIn("--ack all", calls)
         self.assertEqual(todo.count("id=open-2"), 1)
         self.assertEqual(todo.count("id=open-3"), 1)
-        self.assertEqual(calls.count("--turn start --tag wake"), 3)
+        self.assertEqual(calls.count("--turn start --tag wake"), 2)
         self.assertNotIn("--turn end", calls)
+
+    def test_a_seen_head_prints_once_per_wake(self):
+        line = '{"id":"open-9","repo":"0xRayAI/xray","number":12,"title":"fleet","type":"packet"}'
+        body = """
+if [[ "$*" == *"--turn"* || "$*" == *"--ack"* ]]; then exit 0; fi
+echo '%s'
+exit 0
+""" % line
+        with tempfile.TemporaryDirectory() as d:
+            todo = Path(d) / "todo"
+            todo.mkdir()
+            (todo / "arch1.seen").write_text("open-9\n")
+            hooks = self._hooks(d, "printf 'open\\t\\tbug\\n'")
+            r, _calls = self._run(body, ["arch1"], dict({"INBOX_WATCH_MAX": "2", "INBOX_TODO_DIR": str(todo)}, **hooks))
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(r.stdout.count("ACTION_REQUIRED"), 1)
+        self.assertEqual(r.stdout.count("fleet"), 1)
 
     def test_poison_id_all_is_not_acked(self):
         line = '{"id":"all","repo":"0xRayAI/xray","number":608,"title":"poison"}'

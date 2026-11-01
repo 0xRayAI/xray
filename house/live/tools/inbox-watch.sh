@@ -226,6 +226,7 @@ trap 'rm -f "$class_py"' EXIT
 last_err=""
 last_held=""
 n=0
+reprint=1
 max="${INBOX_WATCH_MAX:-0}"
 started="$(date +%Y-%m-%dT%H:%M:%S%z)"
 fail_sleep="$interval"
@@ -316,12 +317,13 @@ while true; do
           fi
           : > "$dir/fresh"
           if [[ -s "$dir/open" ]]; then
-            python3 - "$dir/open" "$seen" "$todo" "$dir/fresh" << 'PY'
+            python3 - "$dir/open" "$seen" "$todo" "$dir/fresh" "${reprint:-1}" << 'PY'
 import json, re, sys
 from pathlib import Path
 ID_RE = re.compile(r"^[^\s\x1f]{1,300}$")
 skip = {"all", "stale"}
 open_path, seen_path, todo_path, fresh_path = map(Path, sys.argv[1:5])
+reprint = len(sys.argv) > 5 and sys.argv[5] == "1"
 seen = {line.strip() for line in seen_path.read_text(encoding="utf-8").splitlines() if line.strip()}
 fresh = []
 new_seen = []
@@ -342,7 +344,7 @@ for raw in open_path.read_text(encoding="utf-8").splitlines():
     if not isinstance(ident, str) or not ID_RE.match(ident):
         fresh.append(raw)
         continue
-    if ident in seen and not head_open:
+    if ident in seen and not (head_open and reprint):
         continue
     head_open = False
     fresh.append(raw)
@@ -371,6 +373,7 @@ PY
             cat "$dir/retry" >> "$dir/fresh"
           fi
           if [[ -s "$dir/fresh" ]]; then
+            reprint=0
             open_n="$(awk 'NF{n++} END{print n+0}' "$dir/fresh")"
             printf 'ACTION_REQUIRED\nunfinished:%s\n' "$open_n"
             python3 - "$dir/fresh" << 'PY'
