@@ -184,7 +184,11 @@ test('the webhook path rings the critic chat and does not resume a cloud', async
     assert.equal(JSON.stringify(hits).includes('/v0/agents'), false);
     assert.equal(JSON.stringify(hits).includes('followup'), false);
     assert.equal(hits.filter((hit) => hit.path === '/chat').length, 1);
-    const rows = fs.readFileSync(path.join(data, 'live', 'chat-doorbell.jsonl'), 'utf8').trim().split('\n').map((row) => JSON.parse(row));
+    const door = path.join(data, 'live', 'chat-doorbell.jsonl');
+    for (let i = 0; i < 80 && !fs.existsSync(door); i++) {
+      await new Promise((resolve) => setTimeout(resolve, 40));
+    }
+    const rows = fs.readFileSync(door, 'utf8').trim().split('\n').map((row) => JSON.parse(row));
     assert.equal(rows.length, 1);
     assert.equal(rows[0].ok, true);
     assert.equal(rows[0].card, CARD);

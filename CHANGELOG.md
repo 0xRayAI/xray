@@ -2,7 +2,7 @@
 
 Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 
-- A ready handoff does not replace a card title with "handoff ready" or point an issue at /pull/. The GitHub title stays, and a stuck packet card takes that title from the open event. #829
+- A ready handoff does not replace a card title with "handoff ready" or point an issue at /pull/. The GitHub title stays. A stuck packet card takes that title from the open event, or from the GitHub issue when the feed has no open event. #829
 
 - A re-tip that is already queued prints added:0 and the target's live head. A new tip still prints the send line. #814
 - A line marked shed is never the live head, including the rank-2 fallback. A ready handoff still leads a same-card tip. #823
