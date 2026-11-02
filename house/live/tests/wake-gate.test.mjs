@@ -10,7 +10,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { listenPort } from './free-port.mjs';
 import {
-  ROLLING_HOUR_MS, wakeConfig, createWakeState, classifyBatch, gateLine, noteSent, releaseDue,
+  ROLLING_HOUR_MS, wakeConfig, createWakeState, classifyBatch, gateLine, noteSent, releaseDue, defaultIssueSeat,
   publicStats, fullStats, isP1Issue, hasSha,
 } from '../app/wake-gate.mjs';
 
@@ -55,6 +55,14 @@ test('handoff to, card owner, unassigned, ack, turn, and own post', () => {
   assert.equal(classifyBatch([line({ id: 'a', seat: 'forge', type: 'ack', reason: 'ack' })]).skips[0].reason, 'ack');
   assert.equal(classifyBatch([line({ id: 't', seat: 'forge', type: 'turn', reason: 'turn' })]).skips[0].reason, 'turn');
   assert.equal(classifyBatch([line({ id: 'o', seat: 'forge', from: 'forge', type: 'pr_comment', reason: 'mine' })]).skips[0].reason, 'own_post');
+});
+
+test('unassigned issue_open wakes arch1 when forge is dark', () => {
+  const dark = classifyBatch([line({ id: 'iss-dark', seat: 'blinky', type: 'issue_open', reason: 'opened' })], { defaultSeat: 'arch1' });
+  assert.deepEqual(dark.wakes.map(w => w.seat), ['arch1']);
+  assert.equal(defaultIssueSeat({ FORGE_DARK: '1' }), 'arch1');
+  assert.equal(defaultIssueSeat({ LIVE_MODE: 'arch1-only' }), 'arch1');
+  assert.equal(defaultIssueSeat({}), 'forge');
 });
 
 test('unassigned issue_open wakes forge and blinky is only the extra copy', () => {
