@@ -195,7 +195,7 @@ Railway service (`server.mjs`):
 | `MESH_DATA_DIR` | optional | default `/data` |
 | `COLLECTOR`, `COLLECTOR_REPOS`, `COLLECTOR_ORG`, `COLLECTOR_ORG_REFRESH_S`, `COLLECTOR_HEALTH_URLS`, `COLLECTOR_WATCH_S` | optional | `off`; `org/repo ...`; org whose repos are all watched (unioned with `COLLECTOR_REPOS`); org re-list seconds, default 3600; space-separated app `/health` URLs (unset means the collector probes no host); default 45 |
 | `LIVE_FLEET_SEATS` | optional | JSON list of seat names, or `{"seats","board","fold"}`, or a path to that JSON. Unset keeps the example seat list. Passed to the collector. The header "N of M bots active" counts `board` (or the list). |
-| `NUDGE_L1_S`, `NUDGE_L2_S`, `NUDGE_L3_S`, `SILENT_S`, `HELD_MAX_S` | optional | 3600, 1800, 7200, 7200, 259200 |
+| `NUDGE_L1_S`, `NUDGE_L2_S`, `NUDGE_L3_S`, `SILENT_S` | optional | 3600, 1800, 7200, 7200 |
 | `EMITTER_WORKING_S`, `BOX_STALE_S` | optional | 120, 180 |
 | `GITHUB_HOLD_LABEL` | optional | label that holds a card; default `on-hold` |
 | `NO_NUDGE_REPOS` | optional | comma list of `owner/name` or `owner/*`; unset means every repo can be nudged |
