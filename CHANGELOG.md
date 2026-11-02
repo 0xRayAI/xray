@@ -3,6 +3,7 @@
 Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 
 - A re-tip that is already queued prints added:0 and the target's live head. A new tip still prints the send line. #814
+- A line marked shed is never the live head, including the rank-2 fallback. A ready handoff still leads a same-card tip. #823
 - Forge owns the eng wave and beat cut. arch1_launch off disables the Arch1 cloud worker only and does not stop inbox head work. #821 #822
 - A merged turn that names a fixed issue must also say that issue is closed. Otherwise the exit gate fails. #819
 - An unassigned issue wakes arch1 when forge is dark, and forge otherwise. #815
