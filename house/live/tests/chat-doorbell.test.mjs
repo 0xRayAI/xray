@@ -121,6 +121,9 @@ test('the webhook path rings the critic chat and does not resume a cloud', async
       SESSION_SECRET: crypto.randomBytes(32).toString('hex'),
       MESH_PASSWORD: 'pw-' + crypto.randomBytes(8).toString('hex'),
       COLLECTOR: 'off',
+      SERVER_ROUTING: 'off',
+      BIFROST_ROUTING_DIR: fileURLToPath(new URL('../feed/routing', import.meta.url)),
+      BIFROST_ROSTER: fileURLToPath(new URL('../feed/fleet-roster.json', import.meta.url)),
       GITHUB_API_URL: 'http://127.0.0.1:1',
       SEAT_WEBHOOKS: JSON.stringify({ critic: { url: `http://127.0.0.1:${port}/wake`, key_env: 'WAKE_KEY_CRITIC' } }),
       SEAT_CHAT_DOORBELL: JSON.stringify({ critic: { url: `http://127.0.0.1:${port}/chat`, key_env: 'CHAT_KEY_CRITIC' } }),
@@ -185,7 +188,12 @@ test('the webhook path rings the critic chat and does not resume a cloud', async
     assert.equal(rows.length, 1);
     assert.equal(rows[0].ok, true);
     assert.equal(rows[0].card, CARD);
+    // The chat hit is recorded before the child prints. Wait until that line is on the pipe.
+    for (let i = 0; i < 80 && !/doorbell: critic ok 0xRayAI\/xray#753/.test(logs); i++) {
+      await new Promise((resolve) => setTimeout(resolve, 40));
+    }
     assert.match(logs, /doorbell: critic ok 0xRayAI\/xray#753/);
+    assert.equal(/ROUTING: FAIL/.test(logs), false);
     const accepted = criticHandoffAcceptance({ notes: NOTES, lines: FIXTURE, doorbells: rows });
     assert.equal(accepted.ok, true);
     assert.equal(accepted.reason, 'doorbell');
