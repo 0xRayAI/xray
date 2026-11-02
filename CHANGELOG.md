@@ -2,6 +2,8 @@
 
 Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 
+- A re-tip that is already queued prints added:0 and the target's live head. A new tip still prints the send line. #814
+- A newer merge tip on the same pull is the live head. An older tip on that pull does not stay in front. A ready handoff still leads. #813
 - The exit gate reads the first notes section and accepts `repo#n`. Notes are prepended, so an older unlinked line does not fail the turn. #812
 - A new issue open leads an older parent tip. A passed parent stays shed, so later tips on that card do not take the head. Wear writes one wake token. #809
 - The first head print after a watcher start writes one wake token, so the next poll reprints that head once. Later polls of that token stay quiet. #809
