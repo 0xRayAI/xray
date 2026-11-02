@@ -53,6 +53,7 @@ const sidebars: SidebarsConfig = {
       link: { type: 'doc', id: 'plates/index' },
       items: [
         'plates/routing',
+        'plates/fleet-routing',
         'plates/governance',
         'plates/boot',
         'plates/orchestration',
