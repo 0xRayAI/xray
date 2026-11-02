@@ -771,7 +771,17 @@ if handoff_to is not None:
     posted = call("POST", "/inbox", {"lines": [line]}, tolerate_timeout=True)
     if isinstance(posted, dict) and posted.get("timeout"):
         print(posted.get("error") or "live-inbox: server unreachable", file=sys.stderr)
-    print(f"SendToAgent {handoff_to}: handoff {kind} {repo}#{number} @{head[:7]} {url}")
+    added = posted.get("added") if isinstance(posted, dict) else None
+    short = head[:7]
+    if added == 0:
+        print(f"already queued (added:0) {repo}#{number} {kind} @{short}")
+    else:
+        print(f"SendToAgent {handoff_to}: handoff {kind} {repo}#{number} @{short} {url}")
+    peeked = call("GET", f"/inbox/{handoff_to}?queue=1", exit_on_error=False)
+    lines = peeked.get("lines") if isinstance(peeked, dict) else None
+    top = lines[0] if isinstance(lines, list) and lines else None
+    if isinstance(top, dict) and top.get("id"):
+        print(f"head {top.get('id')} @{str(top.get('sha') or '')[:7]}")
     sys.exit(0)
 if release:
     release_own(seat)

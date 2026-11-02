@@ -191,6 +191,42 @@ class HandoffCommand(unittest.TestCase):
         self.assertNotIn("SendToAgent", r.stdout)
         self.assertIn("server unreachable", r.stderr)
 
+    def test_retip_says_already_queued_and_shows_the_head(self):
+        class Retip(Inbox):
+            def do_POST(self):
+                n = int(self.headers.get("Content-Length") or 0)
+                self.rfile.read(n)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(b'{"ok":true,"added":0,"rejected":[]}')
+
+            def do_GET(self):
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                body = json.dumps({"lines": [{"id": "handoff:0xrayai/xray#811:merge:baa5ae29", "sha": "baa5ae29"}]}).encode()
+                self.wfile.write(body)
+
+        self.httpd.shutdown()
+        self.httpd.server_close()
+        httpd = ThreadingHTTPServer(("127.0.0.1", 0), Retip)
+        thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+        thread.start()
+        try:
+            env = {**self.env, "LIVE_URL": f"http://127.0.0.1:{httpd.server_address[1]}"}
+            r = subprocess.run(
+                [str(TOOL), "forge", "--handoff", "critic", "--pr", "0xRayAI/xray#811", "--kind", "merge", "--sha", "baa5ae29"],
+                env=env, capture_output=True, text=True, timeout=5,
+            )
+            self.assertEqual(r.returncode, 0, r.stderr)
+            self.assertIn("already queued (added:0)", r.stdout)
+            self.assertIn("head handoff:0xrayai/xray#811:merge:baa5ae29 @baa5ae2", r.stdout)
+            self.assertNotIn("SendToAgent", r.stdout)
+        finally:
+            httpd.shutdown()
+            httpd.server_close()
+
 
 
     def test_cloud_posts_cloud_agent_and_rebinds_xray_tag(self):
