@@ -22,26 +22,29 @@ export function turnSlice(text) {
   return lines.slice(start, end).join('\n');
 }
 
-const REF_RE = /([A-Za-z0-9_.-]+)#(\d+)/g;
+const REF_SRC = '([A-Za-z0-9_.-]+)#(\\d+)';
 
-function refsOn(line) {
-  return [...String(line).matchAll(REF_RE)].map((m) => `${m[1].toLowerCase()}#${m[2]}`);
+function refOf(repo, n) {
+  return `${repo.toLowerCase()}#${n}`;
 }
 
 export function unclosedAfterMerge(text) {
+  const merged = new Set();
   const fixes = new Set();
   const closed = new Set();
-  let merged = false;
   for (const raw of turnSlice(text).split('\n')) {
     const line = raw.trim();
     if (!line) continue;
-    const refs = refsOn(line);
-    if (/\bmerged\b/i.test(line)) merged = true;
-    if (/\b(?:fix(?:es|ed)?|refs?|closes?)\b/i.test(line)) refs.forEach((r) => fixes.add(r));
-    if (/\bclosed\b/i.test(line)) refs.forEach((r) => closed.add(r));
+    const mergeRe = new RegExp(`^-?\\s*merged\\s+${REF_SRC}\\b`, 'i');
+    const fixRe = new RegExp(`(?:^|\\s)(?:fix(?:es|ed)?|closes?)\\s+${REF_SRC}\\b`, 'gi');
+    const closedRe = new RegExp(`(?<!not\\s)closed\\s+${REF_SRC}\\b`, 'gi');
+    const merge = line.match(mergeRe);
+    if (merge) merged.add(refOf(merge[1], merge[2]));
+    for (const hit of line.matchAll(fixRe)) fixes.add(refOf(hit[1], hit[2]));
+    for (const hit of line.matchAll(closedRe)) closed.add(refOf(hit[1], hit[2]));
   }
-  if (!merged) return [];
-  return [...fixes].filter((r) => !closed.has(r));
+  if (merged.size === 0) return [];
+  return [...fixes].filter((r) => !merged.has(r) && !closed.has(r));
 }
 
 export function unbackedDefects(text) {
