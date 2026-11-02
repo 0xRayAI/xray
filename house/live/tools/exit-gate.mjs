@@ -8,16 +8,18 @@ const DEFECT = /\b(?:bug|gap|follow-up|follow up|FU)\b|\bask:/i;
 
 export function turnSlice(text) {
   const lines = String(text || '').split('\n');
-  let start = 0;
-  let headed = false;
+  let start = -1;
+  let end = lines.length;
   for (let i = 0; i < lines.length; i += 1) {
-    if (/^##\s+\S/.test(lines[i])) {
-      start = i;
-      headed = true;
+    if (!/^##\s+\S/.test(lines[i])) continue;
+    if (start < 0) start = i;
+    else {
+      end = i;
+      break;
     }
   }
-  if (headed) return lines.slice(start).join('\n');
-  return lines.slice(-30).join('\n');
+  if (start < 0) return lines.slice(0, 30).join('\n');
+  return lines.slice(start, end).join('\n');
 }
 
 export function unbackedDefects(text) {

@@ -23,11 +23,12 @@ test('a short repo number passes', () => {
 });
 
 test('an older notes section does not fail the current turn', () => {
-  const notes = '## 2026-10-01\n- bug: old and unlinked\n## 2026-11-02\n- bug: stamped. xray#809\n';
+  const notes = '## 2026-11-02\n- bug: stamped. xray#809\n## 2026-10-01\n- bug: old and unlinked\n';
   assert.deepEqual(unbackedDefects(notes), []);
 });
 
-test('the newest notes section still fails a prose bug', () => {
-  const notes = '## old\n- fine\n## now\n- bug: still prose\n';
+test('the top notes section still fails a prose bug', () => {
+  const notes = '## now\n- bug: still prose\n## old\n- fine\n';
   assert.equal(unbackedDefects(notes).length, 1);
+  assert.equal(unbackedDefects('## new\nFU: gap unref\n## old\nok').length, 1);
 });
