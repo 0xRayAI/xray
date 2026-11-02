@@ -64,6 +64,42 @@ class CiInbox(unittest.TestCase):
         self.assertEqual(ci_inbox.ci_fail_lines(opened + [queued, green], [green], seat), [])
         self.assertEqual(ci_inbox.sha_color(opened + [queued, green]).get((R, SHA)), "green")
 
+    def test_green_after_a_red_head_rings_critic(self):
+        red = ev("bad", "ci_fail", number=9, sha=SHA, t_ct="2026-10-28T10:02:00-05:00")
+        green = ev("ok", "ci_pass", number=9, sha=SHA2, t_ct="2026-10-28T10:05:00-05:00")
+        lines = ci_inbox.critic_return_lines([red, green], [green])
+        self.assertEqual(len(lines), 1)
+        self.assertEqual(lines[0]["seat"], "critic")
+        self.assertEqual(lines[0]["kind"], "ci_pass")
+        self.assertEqual(lines[0]["type"], "ci_pass")
+        self.assertEqual(lines[0]["sha"], SHA2)
+        self.assertEqual(lines[0]["id"], f"wake:critic:{R.lower()}#{9}:{SHA2}")
+
+    def test_a_plain_green_head_does_not_ring_critic(self):
+        green = ev("ok", "ci_pass", number=9, sha=SHA2)
+        self.assertEqual(ci_inbox.critic_return_lines([green], [green]), [])
+
+    def test_a_pass_on_the_green_sha_does_not_ring_critic(self):
+        red = ev("bad", "ci_fail", number=9, sha=SHA, t_ct="2026-10-28T10:02:00-05:00")
+        passed = ev("rev", "critic_pass", number=9, sha=SHA2, t_ct="2026-10-28T10:04:00-05:00")
+        green = ev("ok", "ci_pass", number=9, sha=SHA2, t_ct="2026-10-28T10:05:00-05:00")
+        self.assertEqual(ci_inbox.critic_return_lines([red, passed, green], [green]), [])
+
+    def test_packet_next_owner_critic_rings_on_green(self):
+        opened = ev("open", "pr_open", number=9, sha=SHA, packet={"next owner": "critic"})
+        green = ev("ok", "ci_pass", number=9, sha=SHA, t_ct="2026-10-28T10:05:00-05:00")
+        lines = ci_inbox.critic_return_lines([opened, green], [green])
+        self.assertEqual(len(lines), 1)
+        self.assertEqual(lines[0]["sha"], SHA)
+
+    def test_a_pass_on_the_old_sha_rings_the_new_green_head(self):
+        opened = ev("open", "pr_open", number=9, sha=SHA)
+        passed = ev("rev", "critic_pass", number=9, sha=SHA, t_ct="2026-10-28T10:03:00-05:00")
+        green = ev("ok", "ci_pass", number=9, sha=SHA2, t_ct="2026-10-28T10:05:00-05:00")
+        lines = ci_inbox.critic_return_lines([opened, passed, green], [green])
+        self.assertEqual(len(lines), 1)
+        self.assertEqual(lines[0]["sha"], SHA2)
+
 
 if __name__ == "__main__":
     unittest.main()
