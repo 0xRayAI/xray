@@ -14,6 +14,7 @@
 # An empty poll does not end the turn. The seat posts the turn end when the chat finishes.
 # Never prints the key. Never uses --ack all. A gh miss still delivers the line onto the todo and does not ack it.
 set -u
+here="$(cd "$(dirname "$0")" && pwd)"
 seat="${1:-arch1}"
 if ! [[ "$seat" =~ ^[a-z0-9-]{2,16}$ ]]; then
   echo "usage: inbox-watch.sh [seat]" >&2
@@ -392,8 +393,7 @@ PY
           if [[ -s "$dir/fresh" ]]; then
             reprint=0
             if [[ "$boot_stamp" -eq 1 ]]; then
-              mkdir -p "$wake_dir"
-              printf 'boot-%s-%s\n' "$$" "$(date +%s)" > "$wake_file"
+              INBOX_WAKE_DIR="$wake_dir" "$here/inbox-wake-stamp.sh" "$seat" >/dev/null 2>&1 || true
               boot_stamp=0
             fi
             open_n="$(awk 'NF{n++} END{print n+0}' "$dir/fresh")"
