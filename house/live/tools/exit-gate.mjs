@@ -22,6 +22,28 @@ export function turnSlice(text) {
   return lines.slice(start, end).join('\n');
 }
 
+const REF_RE = /([A-Za-z0-9_.-]+)#(\d+)/g;
+
+function refsOn(line) {
+  return [...String(line).matchAll(REF_RE)].map((m) => `${m[1].toLowerCase()}#${m[2]}`);
+}
+
+export function unclosedAfterMerge(text) {
+  const fixes = new Set();
+  const closed = new Set();
+  let merged = false;
+  for (const raw of turnSlice(text).split('\n')) {
+    const line = raw.trim();
+    if (!line) continue;
+    const refs = refsOn(line);
+    if (/\bmerged\b/i.test(line)) merged = true;
+    if (/\b(?:fix(?:es|ed)?|refs?|closes?)\b/i.test(line)) refs.forEach((r) => fixes.add(r));
+    if (/\bclosed\b/i.test(line)) refs.forEach((r) => closed.add(r));
+  }
+  if (!merged) return [];
+  return [...fixes].filter((r) => !closed.has(r));
+}
+
 export function unbackedDefects(text) {
   const bad = [];
   for (const raw of turnSlice(text).split('\n')) {
@@ -49,6 +71,7 @@ function main() {
       throw err;
     }
     for (const line of unbackedDefects(text)) bad.push(`${file}: ${line}`);
+    for (const ref of unclosedAfterMerge(text)) bad.push(`${file}: merged turn left ${ref} open`);
   }
   if (!bad.length) process.exit(0);
   process.stderr.write(bad.join('\n') + '\n');

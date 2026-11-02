@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { unbackedDefects } from '../tools/exit-gate.mjs';
+import { unbackedDefects, unclosedAfterMerge } from '../tools/exit-gate.mjs';
 
 test('a prose-only bug fails the exit gate', () => {
   const bad = unbackedDefects('- bug: the wake token is never stamped\n');
@@ -25,6 +25,16 @@ test('a short repo number passes', () => {
 test('an older notes section does not fail the current turn', () => {
   const notes = '## 2026-11-02\n- bug: stamped. xray#809\n## 2026-10-01\n- bug: old and unlinked\n';
   assert.deepEqual(unbackedDefects(notes), []);
+});
+
+test('a merged turn that leaves the fixed issue open fails', () => {
+  const turn = '## now\nmerged xray#817\nfixes xray#813\nfixes xray#814\nclosed xray#813\n';
+  assert.deepEqual(unclosedAfterMerge(turn), ['xray#814']);
+});
+
+test('closing the fixed issues in the same turn passes', () => {
+  const turn = '## now\nmerged xray#817\nfixes xray#813\nclosed xray#813\n';
+  assert.deepEqual(unclosedAfterMerge(turn), []);
 });
 
 test('the top notes section still fails a prose bug', () => {
