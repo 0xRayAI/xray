@@ -2,6 +2,8 @@
 
 Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 
+- Fleet routing sits beside the LENS routing plate. The routing card stays task to agent. #816
+
 - A newer ready or ci_pass on the same pull is the head. The older line of that same kind is shed, including when the card is not a pull. #833
 
 - A ready handoff does not replace a card title with "handoff ready" or point an issue at /pull/. The GitHub title stays. A stuck packet card takes that title from the open event, or from the GitHub issue when the feed has no open event. #829
