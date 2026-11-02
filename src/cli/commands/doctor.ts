@@ -4,6 +4,7 @@
  * goggles.enabled false fails the command. A missing key stays on.
  */
 import { createRequire } from "node:module";
+import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { getConfigDir } from "../../core/config-paths.js";
@@ -59,6 +60,18 @@ export function runDoctor(cwd: string, nodeVersion: string = process.version): D
   if (existsSync(join(cwd, ".mcp.json"))) {
     lines.push("ℹ️ Found .mcp.json - may conflict with framework");
     fixes.push("Consider removing .mcp.json or excluding framework servers");
+  }
+
+  const notes = join(cwd, ".xray", "state", "NOTES.md");
+  const gate = [join(cwd, "house", "live", "tools", "exit-gate.mjs"), join(cwd, "node_modules", "0xray", "house", "live", "tools", "exit-gate.mjs")].find((file) => existsSync(file));
+  if (gate && existsSync(notes)) {
+    const ran = spawnSync(process.execPath, [gate, notes], { encoding: "utf8" });
+    if (ran.status !== 0) {
+      issues.push("exit gate: a named defect has no GitHub issue, pull, or comment");
+      fixes.push("Open or comment the GitHub item, then put owner/repo#n on the NOTES line");
+    } else {
+      lines.push("✅ exit gate");
+    }
   }
 
   const gogglesOff = suitSeat.gogglesDisabled(cwd);

@@ -227,6 +227,7 @@
     "house/live/app/wave-schedule.mjs",
     "house/live/tools/inbox-watch.sh",
     "house/live/tools/inbox-wake-stamp.sh",
+    "house/live/tools/exit-gate.mjs",
     "house/live/tools/live-inbox",
     "vendor/@0xray/repertoire/",
     "!vendor/**/*.map"
