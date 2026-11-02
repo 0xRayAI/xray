@@ -71,6 +71,8 @@ describe('inbox boot', () => {
     expect(text).toBe('');
     expect(text).not.toContain('Command:');
     expect(spawned).toBe(false);
+    const wake = fs.readFileSync(path.join(home, '.burst', 'inbox-wake', 'arch1'), 'utf8').trim();
+    expect(wake.length).toBeGreaterThan(0);
   });
 
   it('polls and orders a start when the live pid is another session', async () => {

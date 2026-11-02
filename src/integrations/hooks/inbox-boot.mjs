@@ -2,6 +2,7 @@
  * One inbox poll when Grok session start has no live watcher.
  * The same message orders the seat to start that script as the session monitor.
  * A live watcher pid gets neither the poll nor the order.
+ * Session start still writes one wake token so that watcher reprints the head once.
  * Grok reads a session-start systemMessage. It does not receive a webhook.
  * A hook http call leaves this machine. A detached loop is not a session event.
  * The poll uses the suit board and the sole seat key. It does not ack.
@@ -40,6 +41,16 @@ export function watcherPidFile(env = {}, home = '') {
   }
   const root = home || (typeof env.HOME === 'string' && env.HOME.trim()) || os.homedir();
   return path.join(root, '.burst', 'inbox-watch.pid');
+}
+
+export function recordInboxWake(home, seat) {
+  const name = String(seat || '').trim();
+  if (!/^[a-z0-9-]{2,16}$/.test(name)) return '';
+  const dir = path.join(home, '.burst', 'inbox-wake');
+  fs.mkdirSync(dir, { recursive: true });
+  const token = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+  fs.writeFileSync(path.join(dir, name), `${token}\n`, { mode: 0o600 });
+  return token;
 }
 
 export function watcherPid(pidFile) {
@@ -133,6 +144,8 @@ export async function pollInboxOnce(opts = {}) {
   const pid = watcherPid(pidFile);
   const alive = pid > 0 && watcherAlive(pidFile);
   const owned = alive && sessionId !== '' && watcherSession(stateFile) === sessionId;
+  const seat = String(env.XRAY_SEAT || 'arch1').trim();
+  recordInboxWake(home, seat);
   if (opts.force !== true && owned) return '';
   const cfg = suitConfig(env, home);
   if (!cfg) return '';

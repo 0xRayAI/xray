@@ -6,6 +6,7 @@
 # A held line (hold label, or a card whose state is held) prints once as "held: N" and is not popped.
 # An open, non-held line is printed once (ACTION_REQUIRED, unfinished:N, the line) and appended to the seat todo.
 # The watcher does not ack that id. The seat acks after the work. A seen id stays quiet on the next poll.
+# A new token in $HOME/.burst/inbox-wake/<seat> reprints that one head once. Later polls of the same token stay quiet.
 # A new event is a new line. A raw line with no id still reprints. A failed ack of a closed item leaves that line open.
 # After every poll that prints work, live-inbox <seat> --turn start --tag wake.
 # The start is after the todo write. An ack is the seat's, after the work.
@@ -233,14 +234,25 @@ fail_sleep="$interval"
 export LIVE_INBOX_TIMEOUT="${LIVE_INBOX_TIMEOUT:-60}"
 state_file="${INBOX_WATCH_STATE:-$HOME/.burst/inbox-watch.state}"
 pid_file="${INBOX_WATCH_PID:-$HOME/.burst/inbox-watch.pid}"
+wake_dir="${INBOX_WAKE_DIR:-$HOME/.burst/inbox-wake}"
 mkdir -p "$(dirname "$state_file")" "$(dirname "$pid_file")"
 prev_ok=""
+wake_seen=""
 if [[ -f "$state_file" ]]; then
   prev_ok="$(awk -F= '$1=="last_ok"{print substr($0, index($0, "=")+1); exit}' "$state_file")"
+  wake_seen="$(awk -F= '$1=="wake"{print substr($0, index($0, "=")+1); exit}' "$state_file")"
 fi
-printf 'pid=%s\nstarted=%s\nlast_ok=%s\nlive_url=%s\nscript=house/live/tools/inbox-watch.sh\n' "$$" "$started" "$prev_ok" "$LIVE_URL" > "$state_file"
+printf 'pid=%s\nstarted=%s\nlast_ok=%s\nlive_url=%s\nscript=house/live/tools/inbox-watch.sh\nwake=%s\n' "$$" "$started" "$prev_ok" "$LIVE_URL" "$wake_seen" > "$state_file"
 printf '%s\n' "$$" > "$pid_file"
 while true; do
+  wake_file="$wake_dir/$seat"
+  wake_now=""
+  if [[ -f "$wake_file" ]]; then
+    wake_now="$(awk 'NR==1{print; exit}' "$wake_file" | tr -cd 'A-Za-z0-9._:-')"
+  fi
+  if [[ -n "$wake_now" && "$wake_now" != "$wake_seen" ]]; then
+    reprint=1
+  fi
   errf="$(mktemp)"
   out="$("$bin" "$seat" 2>"$errf")"
   code=$?
@@ -283,7 +295,10 @@ while true; do
     if [[ "${INBOX_WATCH_SESSION:-}" =~ ^[A-Za-z0-9._:-]{1,80}$ ]]; then
       session_line="$(printf 'session=%s\n' "$INBOX_WATCH_SESSION")"
     fi
-    printf 'pid=%s\nstarted=%s\nlast_ok=%s\nlive_url=%s\nscript=house/live/tools/inbox-watch.sh\n%s' "$$" "$started" "$(date +%Y-%m-%dT%H:%M:%S%z)" "$LIVE_URL" "$session_line" > "$state_file"
+    if [[ -n "$wake_now" ]]; then
+      wake_seen="$wake_now"
+    fi
+    printf 'pid=%s\nstarted=%s\nlast_ok=%s\nlive_url=%s\nscript=house/live/tools/inbox-watch.sh\nwake=%s\n%s' "$$" "$started" "$(date +%Y-%m-%dT%H:%M:%S%z)" "$LIVE_URL" "$wake_seen" "$session_line" > "$state_file"
     printf '%s\n' "$$" > "$pid_file"
     showed=0
     if [[ -n "$out" ]]; then
