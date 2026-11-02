@@ -35,6 +35,7 @@ Ops nouns — clocks, tickets, roles, decks. Not products.
 |------|-------------|
 | **beat** | One real event on a card: pull request opened or pushed, review verdict, merge, merge-queue tick, owner message, blocker, or a finished deploy (deploy, deploy_fail). CI stays on the card and is not board traffic. A watcher run whose start and end fall in the same second is not a beat |
 | **wave** | Stretch of beats toward one outcome (ship, dist week, proof) |
+| **eng wave** | The engineering wave and its beat cut. Forge owns it. Blinky does not cut an eng beat. Distinct from a generic wave |
 | **board** | `house/WAVEBOARD.md` when `LIVE_URL` is unset. Bifrost (https://bifrost.0xray.dev) when `LIVE_URL` is set. GitHub cards grouped by stage, plus one cloud-agent row per `bcId` (owning seat, linked card, state `running` / `finished` / `failed`, last update). burst-live is the Bifrost board, never a node on it |
 | **card** | One GitHub issue or pull request (`repo#number`): title, url, owner seat, stage (`open` > `review` > `fix` > `merge` > `retest` > `done`), state (`live`, `held`, `parked`, or `closed`). A packet post creates it, a cloud agent does not run without its id, the cloud agent pushes, the seat App opens the pull request, and the server attaches both |
 | **OP cycle** | digest · card · do · loop · ship, in that order. The stanza is [OP cycle](OP-PROC.md#op-cycle) |
