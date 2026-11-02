@@ -2,6 +2,7 @@
 
 Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 
+- A new issue open leads an older parent tip. A passed parent stays shed, so later tips on that card do not take the head. Wear writes one wake token. #809
 - The first head print after a watcher start writes one wake token, so the next poll reprints that head once. Later polls of that token stay quiet. #809
 - A new wake reprints the one seen inbox head once. Later polls of that same wake stay quiet. bifrost#29
 - A green head that is still critic's posts one ci_pass line to critic. That line rings the chat. A pass on that sha does not. #806 #32

@@ -2930,7 +2930,18 @@ function installAllBridges(opts) {
   log("install-bridges", "4-platform + cursor wear complete", "success");
   } finally {
     pinLauncherPackageRoot("");
+    try { stampInboxWake(); } catch { /* a wake file must not fail wear */ }
   }
+}
+
+function stampInboxWake() {
+  const name = String(process.env.XRAY_SEAT || "arch1").trim();
+  if (!/^[a-z0-9-]{2,16}$/.test(name)) return;
+  const home = process.env.HOME || "";
+  if (!home) return;
+  const dir = path.join(home, ".burst", "inbox-wake");
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, name), `wear-${Date.now().toString(36)}\n`, { mode: 0o600 });
 }
 
 module.exports = {
