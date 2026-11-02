@@ -323,6 +323,7 @@ while true; do
               printf '%s\n' "$raw" >> "$dir/retry"
             fi
           done < "$dir/closed"
+          "$bin" "$seat" --ack merged >/dev/null 2>&1 || true
         fi
         if [[ -s "$dir/open" || -s "$dir/retry" ]]; then
           todo_dir="${INBOX_TODO_DIR:-$HOME/.burst/inbox-todo}"

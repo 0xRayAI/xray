@@ -16,6 +16,7 @@ A read never acks. The ack is the receipt (the pop) and a seat sends it after it
 --review is a review or comment URL on that pull, and the acked line stores the link. Other kinds ack as today.
 --ack all and --ack stale leave a merge line open when it has no review link. --ack stale lists lines with a close or merge
 event, or a closed or done card, and does not ack them. A missing card stays. --ack stale --apply acks the ids just listed.
+--ack merged asks GitHub once per card and acks every open line whose issue or pull is CLOSED or MERGED. An open card stays.
 --upto <id> acks the stored prefix through that id. A plain read still shows a merged card until one of those receipts.
 --peek means the same as a plain read.
 The cursor folder rule is grok-bot/OP-PROC.md#cursor-folder.
@@ -36,7 +37,7 @@ stays parked until that time, then the server wakes the owning seat. A GitHub co
 `Start after: <ISO>` sets the same field; the command wins while it is stored.
 Env: LIVE_URL and SEAT_KEYS_DIR (key <seat>.key, never printed) are required. A missing or empty one exits 2 and names it.
 LIVE_CURSORS is not required. The cursor folder rule is grok-bot/OP-PROC.md#cursor-folder."""
-import fcntl, json, os, re, sys, time, urllib.error, urllib.parse, urllib.request
+import fcntl, json, os, re, subprocess, sys, time, urllib.error, urllib.parse, urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -874,6 +875,67 @@ if ack == "stale":
         line_id = l.get("id")
         if not isinstance(line_id, str) or not line_id or merge_handoff(l):
             continue
+        result = call("POST", f"/inbox/{seat}/ack", {"id": line_id}, exit_on_error=False)
+        if result.get("error"):
+            failed = result["error"]
+            break
+        acked += int(result.get("acked") or 0)
+        acked_ids.append(line_id)
+        if "open" in result:
+            open_n = result.get("open")
+    receipt = {"ok": failed is None, "acked": acked, "ids": acked_ids}
+    if open_n is not None:
+        receipt["open"] = open_n
+    if failed:
+        receipt["error"] = failed
+    print(json.dumps(receipt))
+    sys.exit(0 if failed is None else 1)
+
+def card_closed(repo, number, cache):
+    key = (str(repo), str(number))
+    if key in cache:
+        return cache[key]
+    closed = False
+    for kind in ("issue", "pr"):
+        probe = subprocess.run(
+            ["gh", kind, "view", str(number), "--repo", str(repo), "--json", "state"],
+            capture_output=True, text=True,
+        )
+        if probe.returncode != 0:
+            continue
+        try:
+            state = str(json.loads(probe.stdout).get("state") or "").upper()
+        except json.JSONDecodeError:
+            continue
+        if state in ("CLOSED", "MERGED"):
+            closed = True
+            break
+    cache[key] = closed
+    return closed
+
+if ack == "merged":
+    if ack_flag != "--ack":
+        sys.exit(USAGE)
+    lines = []
+    for query in (f"/inbox/{seat}?queue=1", f"/inbox/{seat}?backlog=1"):
+        got = call("GET", query, exit_on_error=False)
+        if isinstance(got, dict):
+            lines.extend(got.get("lines") or [])
+    cache = {}
+    acked = 0
+    acked_ids = []
+    open_n = None
+    failed = None
+    seen = set()
+    for line in lines:
+        line_id = line.get("id") if isinstance(line, dict) else None
+        repo = line.get("repo") if isinstance(line, dict) else None
+        number = line.get("number") if isinstance(line, dict) else None
+        if not isinstance(line_id, str) or line_id in seen or merge_handoff(line):
+            continue
+        if not repo or number is None or not card_closed(repo, number, cache):
+            continue
+        seen.add(line_id)
         result = call("POST", f"/inbox/{seat}/ack", {"id": line_id}, exit_on_error=False)
         if result.get("error"):
             failed = result["error"]
