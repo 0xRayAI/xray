@@ -298,6 +298,28 @@ exit 0
         self.assertEqual(r.stdout.count("ACTION_REQUIRED"), 1)
         self.assertEqual(r.stdout.count("fleet"), 1)
 
+    def test_a_new_wake_reprints_the_seen_head_once(self):
+        """Polls stay quiet. A wake token written during a poll reprints the head on the next poll only."""
+        line = '{"id":"open-9","repo":"0xRayAI/xray","number":12,"title":"fleet","type":"packet"}'
+        body = """
+if [[ "$*" == *"--turn"* || "$*" == *"--ack"* ]]; then exit 0; fi
+echo '%s'
+if [[ ! -f "$HOME/.burst/inbox-wake/arch1" ]]; then
+  mkdir -p "$HOME/.burst/inbox-wake"
+  printf 'wake-2\\n' > "$HOME/.burst/inbox-wake/arch1"
+fi
+exit 0
+""" % line
+        with tempfile.TemporaryDirectory() as d:
+            todo = Path(d) / "todo"
+            todo.mkdir()
+            (todo / "arch1.seen").write_text("open-9\n")
+            hooks = self._hooks(d, "printf 'open\\t\\tbug\\n'")
+            r, _calls = self._run(body, ["arch1"], dict({"INBOX_WATCH_MAX": "3", "INBOX_TODO_DIR": str(todo)}, **hooks))
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(r.stdout.count("ACTION_REQUIRED"), 2)
+        self.assertEqual(r.stdout.count("fleet"), 2)
+
     def test_poison_id_all_is_not_acked(self):
         line = '{"id":"all","repo":"0xRayAI/xray","number":608,"title":"poison"}'
         body = """

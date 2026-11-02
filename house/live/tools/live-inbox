@@ -22,6 +22,7 @@ The cursor folder rule is grok-bot/OP-PROC.md#cursor-folder.
 `--remember --pr <owner/repo#n> --sha <head> --kind <kind>` adds that key. `--repeat` with the same flags exits 0
 when the key is already there and exits 1 for a new head. The claim is not this record.
 --turn start|end posts {kind:turn, action, t_ct, tag?} to POST /activity.
+--turn start without tag wake writes one token at $HOME/.burst/inbox-wake/<seat>. The watcher reprints the one head once for that token. Tag wake does not write it.
 A turn inside a cloud agent posts that same kind:turn line and does not post cloud_agent launch.
 --cloud launch|reply|finished|cancel --agent <bc-id> [--tag <owner/repo#n|xray#n>] posts {kind:cloud_agent, action, agent, t_ct, tag?} to POST /activity. The seat is the bearer. The body has no seat. xray#n is stored as 0xRayAI/xray#n so the board rebinds that card. Run it beside --turn, as its own command. It does not take the turn claim. The cloud agent does not post this line.
 --prompt posts {t_ct, seat, kind:prompt, action:sent, from, to:seat, room?, note?} to POST /activity. from defaults to the name: line under ## Owner in HOUSE.md. A missing name: warns and uses owner.
@@ -804,6 +805,21 @@ if cloud is not None:
         body["tag"] = cloud_card_tag(tag)
     print(json.dumps(call("POST", "/activity", body)))
     sys.exit(0)
+def note_external_wake(seat_name):
+    """A seat turn is a new wake. The watcher's own tag wake is not."""
+    if tag == "wake" or turn != "start":
+        return
+    root = os.environ.get("INBOX_WAKE_DIR") or str(Path.home() / ".burst" / "inbox-wake")
+    dest_dir = Path(root)
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    dest = dest_dir / seat_name
+    dest.write_text(str(time.time_ns()) + "\n")
+    try:
+        os.chmod(dest, 0o600)
+    except OSError:
+        return
+
+
 if turn is not None:
     # Turn end posts the activity line only. WAKE-ROUTINE step 7 asks
     # "anything new without a card?" and files each card (From, Waiting on, Owner)
@@ -812,6 +828,7 @@ if turn is not None:
     # kind: turn only. A cloud row is live-inbox --cloud, a second command. This path does not post it.
     if not turn_gate(seat, turn):
         sys.exit(0)
+    note_external_wake(seat)
     body = {"kind": "turn", "action": turn, "t_ct": ct_now()}
     if tag is not None:
         body["tag"] = tag
