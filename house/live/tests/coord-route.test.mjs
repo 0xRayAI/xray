@@ -1,5 +1,5 @@
 // Coord and operator aliases follow the routing file (#423).
-// seatIdOf, holdOwner, the card L1 fallback, and canonSeatToken use those seats.
+// seatIdOf, the card L1 fallback, and canonSeatToken use those seats. A held card raises no nudge.
 // Equal-rank agent rows break ties by instant, including a Zulu stamp beside a Chicago offset.
 import { describe, test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
@@ -101,7 +101,6 @@ describe('coord and operator routing', { concurrency: 1 }, () => {
           NUDGE_L1_S: '1',
           NUDGE_L2_S: '3600',
           NUDGE_L3_S: '3600',
-          HELD_MAX_S: '1',
           LIVE_SEAT_IDS: 'lead,ops,critic,forge,blinky',
           SEAT_KEYS: JSON.stringify({
             lead: sha(LEAD_KEY), ops: sha(OPS_KEY), forge: sha(FORGE_KEY), blinky: sha(BLINKY_KEY),
@@ -182,7 +181,7 @@ describe('coord and operator routing', { concurrency: 1 }, () => {
         const res = await fetch(base + '/nudges', auth(OPS_KEY));
         assert.equal(res.status, 200, 'nudges ' + res.status);
         body = (await res.json()).nudges || [];
-        if (body.some((n) => n.card === 'example-org/app#48' && n.kind === 'held')) break;
+        if (body.some((n) => n.card === 'example-org/app#41' && n.level === 1)) break;
         await new Promise((r) => setTimeout(r, 50));
       }
       const l1 = (n) => body.find((row) => row.card === 'example-org/app#' + n && row.level === 1);
@@ -198,10 +197,7 @@ describe('coord and operator routing', { concurrency: 1 }, () => {
       assert.equal(l1(47).seat, 'lead');
       assert.equal(l1(47).via, 'card owner');
       assert.notEqual(l1(47).seat, 'blinky');
-      const held = body.find((row) => row.card === 'example-org/app#48' && row.kind === 'held');
-      assert.ok(held, 'held nudge missing');
-      assert.equal(held.seat, 'lead');
-      assert.notEqual(held.seat, 'blinky');
+      assert.equal(body.some((row) => row.card === 'example-org/app#48'), false);
 
       const line = (id, seat) => ({
         id, t_ct: new Date(Date.now() - 60 * 1000).toISOString(), seat, type: 'note', repo: 'example-org/app', number: 3,

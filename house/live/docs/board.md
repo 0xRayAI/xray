@@ -54,7 +54,7 @@ A card is held when any of these is true:
 - the issue or pull request has a label in `GITHUB_HOLD_LABEL` (default `on-hold`)
 - a Jira item's status matches `JIRA_HOLD_STATUS` (default `On Hold`), compared without case
 
-A held card stays visible, is not a stall, and gets no level 1, 2, or 3 nudge. If it stays held with no beat past `HELD_MAX_S` (default 72 hours), the owner gets one nudge.
+A held card stays visible, is not a stall, and raises no nudge.
 
 A `Parked:` comment still parks the card and wins over a hold.
 
