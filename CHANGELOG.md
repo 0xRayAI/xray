@@ -2,6 +2,7 @@
 
 Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 
+- The exit gate reads the newest notes section and accepts `repo#n`. An older unlinked line does not fail the turn. #812
 - A new issue open leads an older parent tip. A passed parent stays shed, so later tips on that card do not take the head. Wear writes one wake token. #809
 - The first head print after a watcher start writes one wake token, so the next poll reprints that head once. Later polls of that token stay quiet. #809
 - A new wake reprints the one seen inbox head once. Later polls of that same wake stay quiet. bifrost#29

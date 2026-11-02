@@ -68,7 +68,7 @@ export function runDoctor(cwd: string, nodeVersion: string = process.version): D
     const ran = spawnSync(process.execPath, [gate, notes], { encoding: "utf8" });
     if (ran.status !== 0) {
       issues.push("exit gate: a named defect has no GitHub issue, pull, or comment");
-      fixes.push("Open or comment the GitHub item, then put owner/repo#n on the NOTES line");
+      fixes.push("Open or comment the GitHub item, then put repo#n on the newest NOTES section");
     } else {
       lines.push("✅ exit gate");
     }

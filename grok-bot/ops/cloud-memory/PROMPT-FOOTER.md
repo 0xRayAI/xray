@@ -12,6 +12,6 @@ End the report with a Fell out list, one line per item the card rule names.
 
 Each line carries a one-line what, `From:`, `Waiting on:`, and `Owner:`.
 
-A bullet that names a bug, gap, follow-up, or ask must also carry `owner/repo#n` or a GitHub issue, pull, or comment URL. A bullet without that link fails the footer check.
+A bullet that names a bug, gap, follow-up, or ask must also carry `repo#n` (`xray#808` or `owner/repo#n`) or a GitHub issue, pull, or comment URL. A bullet without that link fails the footer check.
 
 An empty list is written `Fell out: nothing`.

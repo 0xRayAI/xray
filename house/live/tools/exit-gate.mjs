@@ -3,12 +3,26 @@
 import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
-const REF = /[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+#\d+|https:\/\/github\.com\/\S+\/(?:issues|pull|pulls)\/\d+/;
+const REF = /[A-Za-z0-9_.-]+#\d+|https:\/\/github\.com\/\S+\/(?:issues|pull|pulls)\/\d+/;
 const DEFECT = /\b(?:bug|gap|follow-up|follow up|FU)\b|\bask:/i;
+
+export function turnSlice(text) {
+  const lines = String(text || '').split('\n');
+  let start = 0;
+  let headed = false;
+  for (let i = 0; i < lines.length; i += 1) {
+    if (/^##\s+\S/.test(lines[i])) {
+      start = i;
+      headed = true;
+    }
+  }
+  if (headed) return lines.slice(start).join('\n');
+  return lines.slice(-30).join('\n');
+}
 
 export function unbackedDefects(text) {
   const bad = [];
-  for (const raw of String(text || '').split('\n')) {
+  for (const raw of turnSlice(text).split('\n')) {
     const line = raw.trim();
     if (!line || /^fell out:\s*nothing$/i.test(line)) continue;
     if (!DEFECT.test(line) || REF.test(line)) continue;
