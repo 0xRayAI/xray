@@ -247,7 +247,7 @@ test('packets move sent to acked for sender and recipient; blockers sit in the h
     WAKE_DEBOUNCE_S: '0',
     WAKE_COALESCE_MS: '20',
     WAKE_RETRY_MS: '20',
-    NUDGE_L1_S: '30',
+    NUDGE_L1_S: '30', FLEET_MODE: 'full',
   });
   try {
     const cookie = await login(ctx.base, pw);
@@ -350,7 +350,7 @@ test('a wake fired before restart is still working on the packet after boot', as
   const common = {
     MESH_PASSWORD: pw, SESSION_SECRET: session, INGEST_SECRET: ingest,
     SEAT_KEYS: JSON.stringify({ critic: sha(criticKey) }),
-    NUDGE_L1_S: '3600',
+    NUDGE_L1_S: '3600', FLEET_MODE: 'full',
   };
   const first = await boot(data, {
     ...common,

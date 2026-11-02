@@ -54,7 +54,7 @@ A card is held when any of these is true:
 - the issue or pull request has a label in `GITHUB_HOLD_LABEL` (default `on-hold`)
 - a Jira item's status matches `JIRA_HOLD_STATUS` (default `On Hold`), compared without case
 
-A held card stays visible, is not a stall, and raises no nudge.
+A held card stays visible, is not a stall, and raises no nudge. The board shows the fleet mode (`full`, `lights-on`, or `dark`) and who set it. `lights-on` is the default. P1 and a scheduled run wake in every mode. Blaze or blinky sets the mode. A seat wake does not.
 
 A `Parked:` comment still parks the card and wins over a hold.
 

@@ -39,7 +39,7 @@ before(async () => {
   });
   await new Promise(r => gh.listen(0, '127.0.0.1', r));
   srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], { env: { PORT: '0', MESH_PASSWORD: PW,
-    SESSION_SECRET: crypto.randomBytes(32).toString('hex'), INGEST_SECRET: INGEST, ACTIVITY_KEY_Builder: AKEY, GITHUB_API_URL: `http://127.0.0.1:${gh.address().port}`, PATH: process.env.PATH, MESH_DATA_DIR: DATA, BOX_STALE_S: '4', NUDGE_L2_S: '1', SEAT_KEYS: JSON.stringify({ critic: crypto.createHash('sha256').update(CKEY).digest('hex'), forge: crypto.createHash('sha256').update(OKEY).digest('hex') }) }, stdio: ['ignore', 'pipe', 'ignore'] });
+    SESSION_SECRET: crypto.randomBytes(32).toString('hex'), INGEST_SECRET: INGEST, ACTIVITY_KEY_Builder: AKEY, GITHUB_API_URL: `http://127.0.0.1:${gh.address().port}`, PATH: process.env.PATH, MESH_DATA_DIR: DATA, FLEET_MODE: 'full', BOX_STALE_S: '4', NUDGE_L2_S: '1', SEAT_KEYS: JSON.stringify({ critic: crypto.createHash('sha256').update(CKEY).digest('hex'), forge: crypto.createHash('sha256').update(OKEY).digest('hex') }) }, stdio: ['ignore', 'pipe', 'ignore'] });
   PORT = await listenPort(srv); BASE = `http://127.0.0.1:${PORT}`;   // #304: port 0, read the assigned port
   for (let i = 0; i < 50; i++) { try { if ((await fetch(BASE + '/healthz')).ok) break; } catch {} await new Promise(r => setTimeout(r, 100)); }
   const r = await fetch(BASE + '/login', { method: 'POST', body: 'password=' + PW, redirect: 'manual',

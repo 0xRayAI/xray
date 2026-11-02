@@ -44,7 +44,7 @@ const srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], {
     MESH_DATA_DIR: data, LIVE_CURSORS: cursors,
     SEAT_WEBHOOKS: JSON.stringify({ forge: { url: `${hook}/forge` } }),
     WAKE_KEY_FORGE: 'k', WAKE_RETRY_MS: '10', WAKE_STAGGER_MS: '0', WAKE_DEBOUNCE_S: '0',
-    NUDGE_L1_S: '1', BIFROST_TICK_S: '0.2', BIFROST_TRIPWIRE_MINUTES: '60',
+    NUDGE_L1_S: '1', FLEET_MODE: 'full', BIFROST_TICK_S: '0.2', BIFROST_TRIPWIRE_MINUTES: '60',
     BIFROST_ROUTING_DIR: route, BIFROST_ROSTER: path.join(route, 'roster.json'),
   },
   stdio: ['ignore', 'pipe', 'pipe'],

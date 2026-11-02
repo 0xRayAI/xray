@@ -54,7 +54,7 @@ test('a live packet card and a holding card nudge L1, and a pull request attach 
       SESSION_SECRET: crypto.randomBytes(32).toString('hex'), INGEST_SECRET: ingest,
       MESH_PASSWORD: 'pw-' + crypto.randomBytes(8).toString('hex'),
       SEAT_KEYS: JSON.stringify({ forge: crypto.createHash('sha256').update(forgeKey).digest('hex') }),
-      NUDGE_L1_S: '1', BIFROST_TICK_S: '0.2', ARCH1_LAUNCH_ENABLED: '0',
+      NUDGE_L1_S: '1', FLEET_MODE: 'full', BIFROST_TICK_S: '0.2', ARCH1_LAUNCH_ENABLED: '0',
     },
     stdio: ['ignore', 'pipe', 'pipe'],
   });

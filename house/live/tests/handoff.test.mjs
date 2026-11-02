@@ -211,7 +211,7 @@ test('the server flags a missed handoff and does not post the packet', async () 
     env: {
       PORT: '0', MESH_PASSWORD: pw, SESSION_SECRET: crypto.randomBytes(16).toString('hex'),
       INGEST_SECRET: crypto.randomBytes(16).toString('hex'), PATH: process.env.PATH, MESH_DATA_DIR: data,
-      SERVER_ROUTING: 'off', NUDGE_L1_S: '1', NUDGE_L2_S: '1', NUDGE_L3_S: '1',
+      SERVER_ROUTING: 'off', NUDGE_L1_S: '1', NUDGE_L2_S: '1', NUDGE_L3_S: '1', FLEET_MODE: 'full',
       GITHUB_API_URL: `http://127.0.0.1:${gh.address().port}`,
       SEAT_KEYS: JSON.stringify(keys),
     },
