@@ -2,6 +2,7 @@
 
 Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 
+- The first head print after a watcher start writes one wake token, so the next poll reprints that head once. Later polls of that token stay quiet. #809
 - A new wake reprints the one seen inbox head once. Later polls of that same wake stay quiet. bifrost#29
 - A green head that is still critic's posts one ci_pass line to critic. That line rings the chat. A pass on that sha does not. #806 #32
 - A seat can pass the live inbox line. The line leaves the queue and the pull or issue stays open. A ready or merge handoff on an issue does not pin that line.

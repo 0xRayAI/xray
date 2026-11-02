@@ -7,6 +7,7 @@
 # An open, non-held line is printed once (ACTION_REQUIRED, unfinished:N, the line) and appended to the seat todo.
 # The watcher does not ack that id. The seat acks after the work. A seen id stays quiet on the next poll.
 # A new token in $HOME/.burst/inbox-wake/<seat> reprints that one head once. Later polls of the same token stay quiet.
+# The first head print of a process writes one fresh token after it has recorded the old one, so the next poll reprints once. Tag wake does not write that token.
 # A new event is a new line. A raw line with no id still reprints. A failed ack of a closed item leaves that line open.
 # After every poll that prints work, live-inbox <seat> --turn start --tag wake.
 # The start is after the todo write. An ack is the seat's, after the work.
@@ -228,6 +229,7 @@ last_err=""
 last_held=""
 n=0
 reprint=1
+boot_stamp=1
 max="${INBOX_WATCH_MAX:-0}"
 started="$(date +%Y-%m-%dT%H:%M:%S%z)"
 fail_sleep="$interval"
@@ -389,6 +391,11 @@ PY
           fi
           if [[ -s "$dir/fresh" ]]; then
             reprint=0
+            if [[ "$boot_stamp" -eq 1 ]]; then
+              mkdir -p "$wake_dir"
+              printf 'boot-%s-%s\n' "$$" "$(date +%s)" > "$wake_file"
+              boot_stamp=0
+            fi
             open_n="$(awk 'NF{n++} END{print n+0}' "$dir/fresh")"
             printf 'ACTION_REQUIRED\nunfinished:%s\n' "$open_n"
             python3 - "$dir/fresh" << 'PY'
