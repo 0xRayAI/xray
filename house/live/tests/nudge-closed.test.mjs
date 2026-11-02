@@ -26,7 +26,7 @@ fs.writeFileSync(path.join(DATA, 'feed', 'github-events.json'), JSON.stringify({
 fs.writeFileSync(path.join(ROUTE, 'inbox-roles.json'), JSON.stringify({ seats: { coord: { seat: 'critic' } }, extra_seats: { forge: { needles: ['@forge'] } } }));
 fs.writeFileSync(path.join(ROUTE, 'roster.json'), JSON.stringify({ seats: ['forge', 'critic'] }));
 let logs = '';
-const srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], { env: { PORT: '0', PATH: process.env.PATH, LIVE_PUBLIC: '1', SERVER_ROUTING: 'off',
+const srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], { env: { PORT: '0', PATH: process.env.PATH, LIVE_PUBLIC: '1', SERVER_ROUTING: 'off', FLEET_MODE: 'full',
   SESSION_SECRET: crypto.randomBytes(32).toString('hex'), INGEST_SECRET: crypto.randomBytes(32).toString('hex'), MESH_DATA_DIR: DATA,
   SEAT_WEBHOOKS: JSON.stringify({ forge: { url: `${W}/forge` }, critic: { url: `${W}/critic` } }), WAKE_KEY_FORGE: 'k', WAKE_KEY_CRITIC: 'k',
   WAKE_RETRY_MS: '10', WAKE_STAGGER_MS: '0', WAKE_DEBOUNCE_S: '0', NUDGE_LINE_S: '1', BIFROST_TICK_S: '0.2', BIFROST_TRIPWIRE_MINUTES: '60',

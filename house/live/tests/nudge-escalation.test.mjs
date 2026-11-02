@@ -19,7 +19,7 @@ fs.writeFileSync(path.join(ROUTE, 'inbox-roles.json'), JSON.stringify({ seats: {
 fs.writeFileSync(path.join(ROUTE, 'roster.json'), JSON.stringify({ seats: ['forge', 'critic'] }));
 let PORT = 0, BASE = '';
 let logs = '';
-const srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], { env: { PORT: '0', PATH: process.env.PATH, COLLECTOR: 'off', LIVE_PUBLIC: '1',
+const srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], { env: { PORT: '0', PATH: process.env.PATH, COLLECTOR: 'off', LIVE_PUBLIC: '1', FLEET_MODE: 'full',
   SESSION_SECRET: crypto.randomBytes(32).toString('hex'), INGEST_SECRET: crypto.randomBytes(32).toString('hex'), MESH_DATA_DIR: DATA,
   SEAT_WEBHOOKS: JSON.stringify({ forge: { url: `${W}/forge` }, critic: { url: `${W}/critic` } }), WAKE_KEY_FORGE: 'k', WAKE_KEY_CRITIC: 'k',
   WAKE_RETRY_MS: '10', WAKE_STAGGER_MS: '0', WAKE_DEBOUNCE_S: '0', LIVE_TURN_OPEN_MIN: '0', NUDGE_LINE_S: '1', BIFROST_TICK_S: '0.2',
