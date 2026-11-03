@@ -60,7 +60,7 @@ Wear writes the consumer suit, including when npm did not run the install script
 | 2 | `.gitignore.default` → `.gitignore` (if absent) |
 | 3 | Deploy `.xray/` (`codex.json`, `features.json`, `config.json`) |
 | 4 | Write project `.mcp.json` with **7 MCP servers** |
-| 5 | Install **4 chat bridges**: OpenCode, Grok, Hermes, OpenClaw, plus **Cursor** `.cursor/hooks.json` |
+| 5 | Install **4 chat bridges**: OpenCode, Grok, Hermes, OpenClaw, plus **Cursor** `.cursor/hooks.json`. The Grok plugin includes `bundle.md`. Session boot reads it. |
 | 6 | Fasten mill plant (`mill` + `inspect`). Fasten is foundry-plant/0. `"plant": "@0xray/blip"` (aliases blip/sound) fastens whatever that mill declares. Nested mill `@0xray/foundry@0.1.12`. The mill suit also wears every catalog skill and every role file. A blip or sound seat fastens that plant only. |
 | 7 | Optional git pre-commit hook. Factory hangar shops coexist via `shopPlant` |
 
