@@ -142,3 +142,82 @@ test('mesh and wave align and kanban spans the page', async () => {
     await new Promise((resolve) => server.close(resolve));
   }
 });
+
+const ROSTER_NAMES = ['forge', 'critic', 'blinky', 'herald', 'magnet', 'nibbler', 'sound', 'arch1'];
+
+function rosterServe() {
+  const types = { '.html': 'text/html', '.js': 'text/javascript', '.json': 'application/json' };
+  const body = JSON.stringify({
+    generated_at: new Date().toISOString(),
+    cursor: 'roster',
+    events: [],
+    queue: [],
+    track: { items: [] },
+    cloud_agents: [],
+    roster: ROSTER_NAMES,
+    roster_roles: { forge: 'merge' },
+    board: { updated_ct: new Date().toISOString(), cards: [], stats: { open_total: 0 } },
+  });
+  return new Promise((resolve) => {
+    const server = http.createServer((req, res) => {
+      const url = new URL(req.url, 'http://127.0.0.1');
+      if (url.pathname === '/live-events.json') { res.writeHead(200, { 'content-type': 'application/json' }); res.end(body); return; }
+      if (url.pathname === '/history/cards' || url.pathname === '/history') { res.writeHead(200, { 'content-type': 'application/json' }); res.end('{"cards":[],"days":[],"events":[]}'); return; }
+      const rel = url.pathname === '/' ? '/index.html' : url.pathname;
+      const file = path.normalize(path.join(PUB, rel));
+      if (!file.startsWith(PUB) || !fs.existsSync(file) || !fs.statSync(file).isFile()) { res.writeHead(404); res.end('missing'); return; }
+      res.writeHead(200, { 'content-type': types[path.extname(file)] || 'application/octet-stream' });
+      res.end(fs.readFileSync(file));
+    });
+    server.listen(0, '127.0.0.1', () => resolve(server));
+  });
+}
+
+test('eight seats wrap into columns and stay inside a narrow viewport', async () => {
+  const server = await rosterServe();
+  const base = `http://127.0.0.1:${server.address().port}/index.html`;
+  let browser;
+  try {
+    browser = await chromium.launch();
+    const wide = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+    await wide.goto(base, { waitUntil: 'domcontentloaded' });
+    await wide.waitForFunction((n) => document.querySelectorAll('#seatGrid .seat').length === n, ROSTER_NAMES.length);
+    const desktop = await wide.evaluate(() => {
+      const grid = document.getElementById('seatGrid');
+      const seats = [...grid.querySelectorAll('.seat')].map((el) => {
+        const box = el.getBoundingClientRect();
+        return { name: el.querySelector('.nm').textContent, x: Math.round(box.x), y: Math.round(box.y), r: box.right };
+      });
+      const view = document.documentElement.clientWidth;
+      return { seats, view, display: getComputedStyle(grid).display, scroll: Math.max(grid.scrollWidth, document.documentElement.scrollWidth) };
+    });
+    const rows = new Set(desktop.seats.map((seat) => seat.y));
+    const cols = new Set(desktop.seats.map((seat) => seat.x));
+    assert.equal(desktop.display, 'grid');
+    assert.equal(desktop.seats.length, 8);
+    assert.ok(cols.size >= 2 && rows.size >= 2, JSON.stringify(desktop.seats));
+    assert.ok(desktop.scroll <= desktop.view + 1, JSON.stringify(desktop));
+    await wide.close();
+    const narrow = await browser.newPage({ viewport: { width: 800, height: 900 } });
+    await narrow.goto(base, { waitUntil: 'domcontentloaded' });
+    await narrow.waitForFunction((n) => document.querySelectorAll('#seatGrid .seat').length === n, ROSTER_NAMES.length);
+    const phone = await narrow.evaluate(() => {
+      const grid = document.getElementById('seatGrid');
+      const seats = [...grid.querySelectorAll('.seat')].map((el) => {
+        const box = el.getBoundingClientRect();
+        return { name: el.querySelector('.nm').textContent, x: Math.round(box.x), y: Math.round(box.y), r: box.right };
+      });
+      const view = document.documentElement.clientWidth;
+      return { seats, view, scroll: Math.max(grid.scrollWidth, document.documentElement.scrollWidth) };
+    });
+    const rowsNarrow = new Set(phone.seats.map((seat) => seat.y));
+    assert.ok(phone.scroll <= phone.view + 1, JSON.stringify(phone));
+    assert.ok(phone.seats.every((seat) => seat.r <= phone.view + 1), JSON.stringify(phone.seats));
+    assert.ok(rowsNarrow.size >= 2, JSON.stringify(phone.seats));
+    await narrow.locator('#seatGrid .seat', { hasText: 'FORGE' }).click();
+    assert.equal(await narrow.locator('#seatGrid .seat', { hasText: 'FORGE' }).getAttribute('aria-expanded'), 'true');
+  } finally {
+    if (browser) await browser.close();
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
