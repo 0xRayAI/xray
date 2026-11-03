@@ -10,7 +10,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { listenPort } from './free-port.mjs';
 import {
-  ROLLING_HOUR_MS, wakeConfig, createWakeState, classifyBatch, gateLine, noteSent, releaseDue, releaseForTurn, defaultIssueSeat,
+  ROLLING_HOUR_MS, wakeConfig, createWakeState, classifyBatch, gateLine, noteSent, releaseDue, defaultIssueSeat,
   publicStats, fullStats, isP1Issue, hasSha,
 } from '../app/wake-gate.mjs';
 
