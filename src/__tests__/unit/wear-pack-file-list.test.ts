@@ -183,7 +183,8 @@ describe('packed tarball file list against 0xray@4.0.28', () => {
         // files are the mill suit. Hooks and init.sh stay off unless costume is on.
         // Wear seeds the station ticket and the notes page on every suit.
         const seededPages = ['.xray/state/NOTES.md', '.xray/state/STATION.md'];
-        expect(plainExtra).toEqual(['.grok/config.toml', ...seededPages, ...plainAgents].sort());
+        const wornBundle = '.grok/plugins/0xray/bundle.md';
+        expect(plainExtra).toEqual(['.grok/config.toml', wornBundle, ...seededPages, ...plainAgents].sort());
         expect(plainMissing).toEqual([...CURSOR_HOOK_FILES].sort());
 
         const gitAgents = roleAgentFiles(packedGit).filter((rel) => !oldGit.includes(rel));
@@ -193,6 +194,7 @@ describe('packed tarball file list against 0xray@4.0.28', () => {
             ...CURSOR_HOOK_FILES,
             ...GIT_HOOK_SNAPSHOT,
             '.grok/config.toml',
+            '.grok/plugins/0xray/bundle.md',
             ...seededPages,
             ...gitAgents,
           ]),
