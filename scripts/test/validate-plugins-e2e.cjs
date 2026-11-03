@@ -270,6 +270,8 @@ async function main() {
   else { console.log(`  \x1b[33mKept: ${opencodeInstallDir}\x1b[0m`); }
 
   await runInfrastructureValidation();
+  // cloud-hook tests walk parents for node_modules/0xray; never leave a mill under /tmp
+  try { fs.rmSync(path.join(os.tmpdir(), 'node_modules'), { recursive: true, force: true }); } catch (_) {}
   printSummary(startTime);
 }
 
