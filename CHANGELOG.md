@@ -158,6 +158,53 @@
 - Tandem is several tracks at once, on both loops, and no seat waits for a nod. #683.
 - A card carries raci. A live card missing R or A is amber on its own mark. #684.
 
+## [4.2.0] - 2026-11-03
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: spin only the card named by working_on (#791) (bc0a635e4c)
+- fix: show Arch1 backlog and stop extra L3 repeats (#784) (a009005684)
+- fix: a closed issue is not the doorbell parent (#779) (50234bd937)
+- fix: keep the next-child doorbell in the feed (#777) (fde79c60ac)
+- fix: stamp the next-child line when it is posted (#776) (7b9a6bee2e)
+- fix: backfill the next child for a merge already stored (#775) (8ab1062dee)
+- fix: a merged child names the next item on its parent (#774) (14abebc6fd)
+- fix: shed a new non-P0 comment when Arch1 is over WIP (#773) (8f390fc2f3)
+- fix: cancel stacked PR runs on the sibling workflows (#771) (705a5080ed)
+- fix: the wake head includes a new comment (#770) (90a8929475)
+- fix: the inbox read is the queue head (#753) (d27aa6b477)
+- fix: refresh a card packet and keep backfill open (#752) (41f20627ff)
+- fix: pack grok-bot/lib/next-wave.mjs (#750) (07754710cf)
+- fix: pin express-rate-limit 8.7.2 (#744) (310efd4a20)
+- fix: resume the running agent on the same pull (#738) (985881f339)
+- fix: skip the card ladder when the head is handled (#737) (576d996b33)
+- fix: ship the wave rank and refuse a master push (#735) (fad069d976)
+- fix: show today on the transition day filter (#730) (0c7daa05d7)
+- fix: retarget worn hooks and lock Actions (#729) (2ee80e2eaa)
+- fix: keep Full station due after a compact (#726) (b7b34e5a4e)
+
+### 📚 Documentation
+- docs: the remaining wear pages name bundle.md (#860) (71fe932d24)
+- docs: record the unreleased wave (#859) (b6243bec55)
+- docs: name the worn bundle on the install path (#858) (b98db631a3)
+- docs: drop patch pins from the faces (#857) (d20e392fdd)
+- docs: name tip, doorbell, and wake on the fleet-routing plate (#853) (73dafc8f94)
+- docs: an inbox packet stays on the named pull (#847) (45450bcffd)
+- docs: packet for Bifrost fleet mode (#836) (0816e5a56e)
+- docs: land the fleet-routing plate beside LENS routing (#835) (b53f943f69)
+- docs: forge owns the eng wave and beat cut (#825) (60daed8e23)
+- docs: one Unreleased note for the wake reprint (#804) (4ee032a689)
+- docs: restamp fleet ops plates left to right (#789) (c117ed3679)
+- docs: gate a live packet on R and A (#747) (2b24d233f2)
+- docs: name hotpack and the fleet words (#745) (8e0f505428)
+
+### 🧪 Tests
+- test: read agents from src/agents and suit config from xray (#740) (133b6cccb7)
+- test: read agent YML from the source tree (#739) (9ea1fe0705)
+
+---
+
 ## [4.1.5] - 2026-10-29
 
 ### 🔄 Changes
