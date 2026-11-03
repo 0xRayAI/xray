@@ -18,6 +18,8 @@ test('a green current head acks the open ci_fail line', () => {
     { id: 'ok', t_ct: '2026-10-28T10:04:00-05:00', kind: 'check_suite', repo: R, sha: NEXT, conclusion: 'success' },
   ]);
   assert.deepEqual(idsToAck([line], green), [line.id]);
+  const handoff = { id: `handoff:${R}#9:${SHA}:ci_fail`, type: 'packet', kind: 'ci_fail', repo: R, number: 9, sha: SHA };
+  assert.deepEqual(idsToAck([handoff], green), [handoff.id]);
 });
 
 test('a merge acks the card lines and leaves the merge handoff', () => {

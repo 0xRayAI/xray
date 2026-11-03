@@ -43,6 +43,8 @@ class CiInbox(unittest.TestCase):
             ev("ok", "check_suite", sha=SHA2, conclusion="success", t_ct="2026-10-28T10:04:00-05:00"),
         ]
         self.assertEqual(ci_inbox.ack_ids([line], green), [line["id"]])
+        handoff = {"id": f"handoff:{R}#9:ci_fail:{SHA}", "type": "packet", "kind": "ci_fail", "repo": R, "number": 9, "sha": SHA}
+        self.assertEqual(ci_inbox.ack_ids([handoff], green), [handoff["id"]])
 
     def test_queued_summary_does_not_open_ci_fail(self):
         """A still-running required check is not red. A completed failure is. Then green adds nothing."""
