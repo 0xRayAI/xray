@@ -111,8 +111,10 @@ The autonomous pipeline: who writes inbox lines, who ranks them, who wakes a sea
 ║ nudge / station               │ rank 3 / rank 4                   │ last                     ║
 ║ ci_fail head turns green      │ ci-clear auto-acks                │ only auto-ack            ║
 ║ re-tip same sha               │ added:0, CLI still SendToAgent    │ BUG #814                 ║
+║ acked ready, same sha         │ re-POST added:0; stays hidden     │ #849 pr_comment tip      ║
 ╟──────────────────────────────────────────────────────────────────────────────────────────────╢
 ║ FAIL CLOSED: stale ready/merge never auto-sheds -> must --ack <id>                           ║
+║ FAIL CLOSED: acked ready same sha stays hidden; pr_comment tip still rings (#849)            ║
 ║ SYNC WITH:   01 feeds, 04 prints head, 05 kinds, 09 ci-clear                                 ║
 ║ SSOT:        house/live/app/inbox-queue.mjs:93-141, ci-clear.mjs                             ║
 ╚══════════════════════════════════════════════════════════════════════════════════════════════╝
@@ -171,3 +173,24 @@ The autonomous pipeline: who writes inbox lines, who ranks them, who wakes a sea
 ║ SYNC WITH:   01 (ci lines), 04 (webhook wake), 03 (ready rank 0)                             ║
 ║ SSOT:        house/live/app/chat-doorbell.mjs; WAKE-ROUTINE step 4                           ║
 ╚══════════════════════════════════════════════════════════════════════════════════════════════╝
+```
+
+```
+╔══════════════════════════════════════════════════════════════════════════════════════════════╗
+║ 0xRAY · ROUTING                                        [ 08 · NAMES (TIP / DOORBELL / WAKE) ]║
+╠══════════════════════════════════════════════════════════════════════════════════════════════╣
+║ IF                            │ THEN                              │ NEXT                     ║
+╟──────────────────────────────────────────────────────────────────────────────────────────────╢
+║ tip (code)                    │ TIP_TYPES GH comment/review       │ not the lexicon tip      ║
+║ doorbell                      │ chat-doorbell seat_message        │ next-parent door         ║
+║ queue kind ready              │ the head doorbell                 │ rank 0 handoff           ║
+║ wake                          │ offerLines -> wake-gate hook      │ tripwire / launch        ║
+║ --remember / --repeat         │ local cursor only                 │ not the queue            ║
+║ acked ready same sha          │ acks.json hides that id           │ #849 added:0             ║
+║ pr_comment after that         │ still a tip ring                  │ separate ingress         ║
+╟──────────────────────────────────────────────────────────────────────────────────────────────╢
+║ FAIL CLOSED: tip, doorbell, and wake are three rings; remember is not the block              ║
+║ SYNC WITH:   03 (#849 ack-hide vs #814 CLI print), 06 chat-doorbell                          ║
+║ SSOT: inbox-queue TIP_TYPES; chat-doorbell.mjs; wake-gate.mjs; server postSeatLines          ║
+╚══════════════════════════════════════════════════════════════════════════════════════════════╝
+```
