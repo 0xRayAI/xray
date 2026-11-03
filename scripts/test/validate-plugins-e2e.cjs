@@ -279,6 +279,8 @@ async function runInfrastructureValidation() {
   const infraDir = path.join(os.tmpdir(), `xray-infra-${Date.now()}`);
   fs.mkdirSync(infraDir, { recursive: true });
   getStdout('git init -q && git config user.email "t@t.com" && git config user.name "T"', { cwd: infraDir, timeout: 15000 });
+  // npm 11+ will not install a tarball into a dir with no package.json
+  getStdout('npm init -y', { cwd: infraDir, timeout: 15000 });
   result(`consumer dir: ${path.basename(infraDir)}`, true);
 
   const infraTb = getStdout('npm pack', { cwd: ROOT, timeout: 60000 });
