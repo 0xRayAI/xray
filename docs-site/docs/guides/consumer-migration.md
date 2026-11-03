@@ -28,6 +28,10 @@ These steps are on main and are not stamped yet.
 8. Nudge. L1 through L3 stay on the next owner, the card owner, or the owing seat. CoS is not woken to reassign. A test server does not post the station nudge. Railway does, unless STATION_NUDGE=off.
 9. OP cycle. Digest, then card, then do, then loop, then ship. The stanza is OP-PROC #op-cycle.
 10. Pins. qs is 6.17.0 in the root lock and the docs-site lock, including nested body-parser. Status compare uses one canonical id.
+11. Suit. Wear copies `bundle.md` into the Grok plugin. Session boot reads it.
+12. Inbox. A green head acks a handoff `ci_fail`. A popped ready rings again after `critic_fail` on that sha. A merge or close acks the card's other open lines. The merge handoff stays.
+13. Wake. A ready tells the seat to clear Quiet. A `ci_pass` on that same sha still rings, and the doorbell says Strict.
+14. Board. The roster wraps into columns. Fleet mode is full, lights-on, or dark. Weekdays 7:30–15:30 Chicago are full.
 
 ## 4.1.3 → 4.1.4
 

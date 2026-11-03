@@ -1,5 +1,17 @@
 ## [Unreleased]
 
+- Wear copies bundle.md into the Grok plugin. Session boot reads it. #848
+
+- A green head acks a handoff ci_fail. The collector ci_fail line still clears too. #856
+
+- A ready tells the seat to clear Quiet. A ci_pass on that same sha still rings, and the doorbell says Strict. #852
+
+- A merge or close acks that card's other open lines. The merge handoff stays. #854
+
+- The roster wraps into columns. A narrow page does not scroll sideways. bifrost#42
+
+- A popped ready rings again after critic_fail on that same sha. A pass on that sha keeps it buried. #849
+
 - A failed-verify comment plus a later green head rings critic with one ci_pass for that sha. A pass on that sha does not ring again. #806
 
 - A line stored during a live turn wakes that seat once when the turn ends. A 409 claim drop is replayed. An already-done wake is not. #832
