@@ -4,7 +4,7 @@
 
 ## Missed in the 4.1.4 Dist notes
 
-The 4.1.3 → 4.1.4 steps below still apply. These lines were left out of the Dist notes. package.json stays 4.1.4 here.
+The 4.1.3 → 4.1.4 steps below still apply. These lines are in the published suit.
 
 1. Goggles. One named card fills that card's files. Bifrost, grokbot, and worn-turn are cards.
 2. Seats. The mill seat is off the roster, the mesh, and the inbox. Forge launches the cloud agent and opens the pull request through its App. Blinky plans the wave, paces burn, handles Lane H and Dist, and onboards. An unassigned issue or a P1 wakes forge. CoS is not woken to reassign.
@@ -16,7 +16,7 @@ The 4.1.3 → 4.1.4 steps below still apply. These lines were left out of the Di
 
 ## Unreleased
 
-Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here. npm still serves 4.1.4 until that publish. These steps are the main tree after 4.1.4.
+These steps are on main and are not stamped yet.
 
 1. Board. A prompt pulse spins only the card named by working_on. Seen is not working. A roster row is a fleet seat or a product node. A seat quiet for 7 days is dormant. A merge or a GitHub write lights the seat.
 2. Tandem. Several tracks run at once, on both loops, and no seat waits for a nod.

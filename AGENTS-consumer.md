@@ -10,7 +10,7 @@ Confer votes. Burst runs the swarm.
 
 Goggles views one plane. A search inside that card runs. A search of another plane returns the card. A path outside this checkout runs.
 
-Unreleased 4.1.5. package.json stays 4.1.4 until Dist publishes. A prompt pulse spins only the card named by working_on. Seen is not working. Tandem is several tracks at once and no seat waits for a nod. A card carries raci, and a live card missing R or A is amber. A missed /healthz replaces the one replica. The OP cycle is digest, card, do, loop, ship (`OP-PROC` #op-cycle).
+A prompt pulse spins only the card named by working_on. Seen is not working. Tandem is several tracks at once and no seat waits for a nod. A card carries raci, and a live card missing R or A is amber. A missed /healthz replaces the one replica. The OP cycle is digest, card, do, loop, ship (`OP-PROC` #op-cycle).
 
 0xRay is a three-subsystem autonomous engine (Inference · External Governance · Autonomous Engine). The suit is the wear. Constitution always on. Temperament scales ceremony. Four chat bridges plus Cursor project hooks. **Repertoire is preferred** — vendored 0.2.9 ships **on**. Dest is named laws, not keywords. Station is the wake ticket, not a substitute. Explicit opt-out only: `"enabled": false, "provider": "repertoire"`.
 

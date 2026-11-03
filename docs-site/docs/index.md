@@ -12,7 +12,7 @@ sidebar_label: Overview
 
 Confer votes. Burst runs the swarm.
 
-Unreleased notes for 4.1.5 are in [Features since 3.1](./guides/features-since-3.1). package.json stays 4.1.4 until Dist publishes.
+Notes are in [Features since 3.1](./guides/features-since-3.1).
 
 The host you already run wears the suit: Grok, OpenCode, Hermes, OpenClaw, or Cursor. Memory, judgement, and payments come on with it. When the window closes, the next session wakes with the job, the page, and the laws. A foundry is built from mills and hangars.
 
