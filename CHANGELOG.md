@@ -2,6 +2,8 @@
 
 Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 
+- The newer tip comment on a card is the inbox head. The older tip on that same card is shed. #840
+
 - The Chicago schedule sets fleet mode: weekdays 7:30–15:30 are full, otherwise lights-on. A manual switch holds until the next boundary. The route is arch1, cursor-cloud, grok-cli, or none. Cursor cloud launches only when that route allows it. #566
 
 - Fleet mode is full, lights-on, or dark. lights-on is the default. P1 and a scheduled run wake in every mode. Blaze or blinky sets the mode, and a seat wake does not. #566
