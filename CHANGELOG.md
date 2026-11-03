@@ -2,6 +2,8 @@
 
 Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 
+- A line stored during a live turn wakes that seat once when the turn ends. A 409 claim drop is replayed. An already-done wake is not. #832
+
 - The newer tip comment on a card is the inbox head. The older tip on that same card is shed. #840
 
 - The Chicago schedule sets fleet mode: weekdays 7:30–15:30 are full, otherwise lights-on. A manual switch holds until the next boundary. The route is arch1, cursor-cloud, grok-cli, or none. Cursor cloud launches only when that route allows it. #566
