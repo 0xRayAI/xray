@@ -54,7 +54,7 @@ A card is held when any of these is true:
 - the issue or pull request has a label in `GITHUB_HOLD_LABEL` (default `on-hold`)
 - a Jira item's status matches `JIRA_HOLD_STATUS` (default `On Hold`), compared without case
 
-A held card stays visible, is not a stall, and raises no nudge. The board shows the fleet mode (`full`, `lights-on`, or `dark`) and who set it. `lights-on` is the default. P1 and a scheduled run wake in every mode. Blaze or blinky sets the mode. A seat wake does not.
+A held card stays visible, is not a stall, and raises no nudge. The board shows the fleet mode (`full`, `lights-on`, or `dark`), the route (`arch1`, `cursor-cloud`, `grok-cli`, or `none`), and who set them. `lights-on` is the default. Weekdays 7:30–15:30 America/Chicago are `full`; every other minute is `lights-on`. A manual switch holds until the next boundary. P1 and a scheduled run wake in every mode. Blaze or blinky sets the mode. A seat wake does not. Cursor cloud launches only when the route is `cursor-cloud`, or when the board cannot be read and the card is P1.
 
 A `Parked:` comment still parks the card and wins over a hold.
 

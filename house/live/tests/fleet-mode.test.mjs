@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { wakeAllowed } from '../app/fleet-mode.mjs';
+import { applySchedule, cursorLaunchAllowed, scheduledFleetMode, wakeAllowed } from '../app/fleet-mode.mjs';
 import { listenPort } from './free-port.mjs';
 
 test('P1 and a scheduled run pass in every mode', () => {
@@ -22,6 +22,19 @@ test('P1 and a scheduled run pass in every mode', () => {
   assert.equal(wakeAllowed('dark', plain), false);
   assert.equal(wakeAllowed('dark', marked), false);
   assert.equal(wakeAllowed('full', plain), true);
+  assert.equal(scheduledFleetMode(Date.parse('2026-11-02T14:00:00Z')), 'full');
+  assert.equal(scheduledFleetMode(Date.parse('2026-11-02T13:29:00Z')), 'lights-on');
+  assert.equal(scheduledFleetMode(Date.parse('2026-11-02T21:30:00Z')), 'lights-on');
+  assert.equal(scheduledFleetMode(Date.parse('2026-11-01T18:00:00Z')), 'lights-on');
+  const held = { mode: 'dark', route: 'none', by: 'blaze', source: 'manual', boundary: '2026-11-02 full' };
+  assert.equal(applySchedule(held, Date.parse('2026-11-02T14:00:00Z')).mode, 'dark');
+  assert.equal(applySchedule(held, Date.parse('2026-11-02T21:30:00Z')).mode, 'lights-on');
+  assert.equal(applySchedule(held, Date.parse('2026-11-02T21:30:00Z')).by, 'schedule');
+  assert.equal(applySchedule({ mode: 'full', source: 'env', route: 'none' }, Date.parse('2026-11-02T21:30:00Z')).mode, 'full');
+  assert.equal(cursorLaunchAllowed({ route: 'cursor-cloud', readable: true, p1: false }), true);
+  assert.equal(cursorLaunchAllowed({ route: 'none', readable: true, p1: true }), false);
+  assert.equal(cursorLaunchAllowed({ route: 'none', readable: false, p1: true }), true);
+  assert.equal(cursorLaunchAllowed({ route: 'cursor-cloud', readable: false, p1: false }), false);
 });
 
 test('the board shows the mode, and only Blaze or blinky can set it', async () => {
@@ -35,7 +48,7 @@ test('the board shows the mode, and only Blaze or blinky can set it', async () =
       PORT: '0', PATH: process.env.PATH, COLLECTOR: 'off', SERVER_ROUTING: 'off', LIVE_PUBLIC: '1',
       MESH_DATA_DIR: data, INGEST_SECRET: ingest,
       SESSION_SECRET: crypto.randomBytes(32).toString('hex'),
-      NUDGE_L1_S: '1', NUDGE_L2_S: '3600', NUDGE_L3_S: '3600',
+      NUDGE_L1_S: '1', NUDGE_L2_S: '3600', NUDGE_L3_S: '3600', BIFROST_TICK_S: '3600',
       LIVE_SEAT_IDS: 'forge,blinky,critic',
       SEAT_KEYS: JSON.stringify({ forge: sha(forgeKey), blinky: sha(blinkyKey) }),
     },
@@ -63,6 +76,13 @@ test('the board shows the mode, and only Blaze or blinky can set it', async () =
     const dark = await (await fetch(base + '/fleet-mode')).json();
     assert.equal(dark.mode, 'dark');
     assert.equal(dark.by, 'blaze');
+    assert.equal(dark.route, 'none');
+    const routed = await fetch(base + '/fleet-mode', {
+      method: 'POST', headers: { 'X-Live-Ingest': ingest, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: 'dark', route: 'cursor-cloud' }),
+    });
+    assert.equal(routed.status, 200, await routed.text());
+    assert.equal((await (await fetch(base + '/fleet-mode')).json()).route, 'cursor-cloud');
     const health = await (await fetch(base + '/healthz')).json();
     assert.equal(health.fleet_mode.mode, 'dark');
     assert.equal(health.fleet_mode.by, 'blaze');
