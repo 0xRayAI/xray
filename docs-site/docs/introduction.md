@@ -35,6 +35,8 @@ npx 0xray openclaw install
 npx 0xray skill:install
 ```
 
+The Grok plugin includes `bundle.md`. Session boot reads it.
+
 ## How It Works
 
 Every code change is checked against a **69-term Codex**, deliberated by **3 specialized reviewers** (code review, security audit, research), and approved, revised, or blocked before it touches your codebase.
