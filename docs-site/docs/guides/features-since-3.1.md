@@ -4,6 +4,10 @@ Complete reference of capabilities through **0xRay 4.1**. 0xRay is a three-subsy
 
 ## Unreleased
 
+- **Suit.** Wear copies `bundle.md` into the Grok plugin. Session boot reads it.
+- **Inbox.** A green head acks a handoff `ci_fail`. A popped ready rings again after `critic_fail` on that same sha. A pass keeps it buried. A merge or close acks that card's other open lines. The merge handoff stays.
+- **Wake.** A ready tells the seat to clear Quiet. A `ci_pass` on that same sha still rings, and the doorbell says Strict.
+- **Board.** The roster wraps into columns. A narrow page does not scroll sideways. Fleet mode is full, lights-on, or dark. Weekdays 7:30–15:30 Chicago are full.
 - **Mesh.** Board stats sit above the mesh. The roster sits at the top of the mesh card and the timeline sits at the bottom of that card.
 - **Working.** A Grok tool opens the seat turn, then ticks it once a minute. A subagent posts kind subagent on spawn and on return. The tag is a short hash. The prompt stays off the wire. A next-owner label that names the seat, such as Arch1 (@arch10x), binds that light to the open card.
 

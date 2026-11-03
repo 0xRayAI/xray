@@ -60,4 +60,4 @@ These six are the compact path that was opened, plus the hook chain. Each one is
 
 Each one is a card. One top file. The planes stay dev, integration, domain, and ecosystem.
 
-stamped · 0xray 4.1.0
+stamped · 0xray 4.1.5
