@@ -98,7 +98,7 @@ describe('coord and operator routing', { concurrency: 1 }, () => {
           BIFROST_ROUTING_DIR: route,
           SESSION_SECRET: crypto.randomBytes(32).toString('hex'),
           INGEST_SECRET: INGEST,
-          NUDGE_L1_S: '1',
+          NUDGE_L1_S: '1', FLEET_MODE: 'full',
           NUDGE_L2_S: '3600',
           NUDGE_L3_S: '3600',
           LIVE_SEAT_IDS: 'lead,ops,critic,forge,blinky',

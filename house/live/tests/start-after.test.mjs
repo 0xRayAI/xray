@@ -38,7 +38,7 @@ function spawnSrv() {
       SEAT_WEBHOOKS: JSON.stringify({ critic: { url: W } }),
       WAKE_KEY_CRITIC: 'wk',
       WAKE_DEBOUNCE_S: '0', WAKE_STAGGER_MS: '0', WAKE_RETRY_MS: '10',
-      NUDGE_L1_S: '1', BIFROST_TICK_S: '30',
+      NUDGE_L1_S: '1', FLEET_MODE: 'full', BIFROST_TICK_S: '30',
     },
     stdio: ['ignore', 'pipe', 'pipe'],
   });

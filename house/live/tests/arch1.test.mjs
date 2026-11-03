@@ -11,7 +11,7 @@ const INGEST = crypto.randomBytes(32).toString('hex'), H = k => crypto.createHas
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-arch1-')); let srv, logs = '';
 before(async () => {
   srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], { env: { PORT: '0', MESH_PASSWORD: 'x'+crypto.randomBytes(4).toString('hex'), PATH: process.env.PATH,
-    SESSION_SECRET: crypto.randomBytes(32).toString('hex'), INGEST_SECRET: INGEST, MESH_DATA_DIR: DATA, COLLECTOR: 'off', GITHUB_API_URL: 'http://127.0.0.1:1',
+    SESSION_SECRET: crypto.randomBytes(32).toString('hex'), INGEST_SECRET: INGEST, MESH_DATA_DIR: DATA, COLLECTOR: 'off', FLEET_MODE: 'full', GITHUB_API_URL: 'http://127.0.0.1:1',
     SEAT_KEYS: JSON.stringify({ arch1: H(K), critic: H(C) }) }, stdio: ['ignore', 'pipe', 'pipe'] });
   srv.stdout.on('data', d => logs += d); srv.stderr.on('data', d => logs += d);
   PORT = await listenPort(srv); BASE = `http://127.0.0.1:${PORT}`;   // #304: port 0, read the assigned port

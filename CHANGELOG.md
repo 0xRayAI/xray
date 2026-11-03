@@ -2,6 +2,8 @@
 
 Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
 
+- Fleet mode is full, lights-on, or dark. lights-on is the default. P1 and a scheduled run wake in every mode. Blaze or blinky sets the mode, and a seat wake does not. #566
+
 - A held card stays on the board and raises no nudge. #566
 
 - Fleet routing sits beside the LENS routing plate. The routing card stays task to agent. #816

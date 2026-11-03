@@ -17,7 +17,7 @@ const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-a1c-'));
 let srv;
 before(async () => {
   srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], { env: { PORT: '0', MESH_PASSWORD: PW, PATH: process.env.PATH,
-    SESSION_SECRET: crypto.randomBytes(32).toString('hex'), INGEST_SECRET: INGEST, MESH_DATA_DIR: DATA, COLLECTOR: 'off', GITHUB_API_URL: 'http://127.0.0.1:1',
+    SESSION_SECRET: crypto.randomBytes(32).toString('hex'), INGEST_SECRET: INGEST, MESH_DATA_DIR: DATA, COLLECTOR: 'off', FLEET_MODE: 'full', GITHUB_API_URL: 'http://127.0.0.1:1',
     SEAT_KEYS: JSON.stringify({ 'builder-cloud': H(AKEY), critic: H(CKEY) }) }, stdio: ['ignore', 'pipe', 'ignore'] });
   PORT = await listenPort(srv); BASE = `http://127.0.0.1:${PORT}`;   // #304: port 0, read the assigned port
   for (let i = 0; i < 50; i++) { try { if ((await fetch(BASE + '/healthz')).ok) break; } catch {} await new Promise(r => setTimeout(r, 100)); }

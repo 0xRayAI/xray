@@ -49,7 +49,7 @@ fs.writeFileSync(path.join(route, 'roster.json'), JSON.stringify({ seats: ['forg
 let logs = '';
 const srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], {
   env: {
-    PORT: '0', PATH: process.env.PATH, HOME: os.homedir(), COLLECTOR: 'off', LIVE_PUBLIC: '1',
+    PORT: '0', PATH: process.env.PATH, HOME: os.homedir(), COLLECTOR: 'off', LIVE_PUBLIC: '1', FLEET_MODE: 'full',
     SESSION_SECRET: crypto.randomBytes(32).toString('hex'), INGEST_SECRET: crypto.randomBytes(32).toString('hex'),
     MESH_DATA_DIR: data, LIVE_CURSORS: cursors,
     SEAT_WEBHOOKS: JSON.stringify({ forge: { url: `${hook}/forge` }, critic: { url: `${hook}/critic` } }),
