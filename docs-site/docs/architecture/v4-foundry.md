@@ -27,7 +27,7 @@ Vision: [4.0 vision](./v4-vision.md). Handoff: [4.0 handoff](./v4-now.md). Open 
 
 ## What a stranger actually gets
 
-`npm install 0xray` links vendored `@0xray/repertoire` and prints `npx 0xray wear`. It does not fasten the plant or write the bridges. `npx 0xray wear` fastens mill plant (`mill` + `inspect`), generates host wiring, then overlays their plant: constitution (`xray/codex.json`), features, temperament, and config.
+`npm install 0xray` links vendored `@0xray/repertoire` and prints `npx 0xray wear`. It does not fasten the plant or write the bridges. `npx 0xray wear` fastens mill plant (`mill` + `inspect`), copies `bundle.md` into the Grok plugin, generates host wiring, then overlays their plant: constitution (`xray/codex.json`), features, temperament, and config.
 
 ```
 npm i 0xray

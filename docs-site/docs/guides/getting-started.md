@@ -22,7 +22,7 @@ npx 0xray wear
 - Seeds **`.gitignore`** (if absent)
 - Deploys **`.xray/`** config (`codex.json`, `features.json`, `config.json`) then overlays **their** plant
 - Writes **`.mcp.json`** with **7 MCP servers** (`npx -y 0xray mcp …`)
-- Installs **4 chat bridges**: OpenCode, Grok, Hermes, OpenClaw (PPE + wiring), plus **Cursor** `.cursor/hooks.json`
+- Installs **4 chat bridges**: OpenCode, Grok, Hermes, OpenClaw (PPE + wiring), plus **Cursor** `.cursor/hooks.json`. The Grok plugin includes `bundle.md`. Session boot reads it.
 - Factory shop plant (`shop-extract`, `shop-witness`, `shop-pin`) may coexist when worn. Extra shops: `foundry.json` `shopPlant`. Not costume
 - **`autonomy-command`** is the default operating model (orchestrator skill + `lead_dev_mode`)
 - **Mill target:** mills the consumer project, not npm global prefix or `_npx`. Isolated HOME skips machine `~/.grok`

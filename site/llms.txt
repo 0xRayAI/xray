@@ -36,7 +36,7 @@ Memory, judgement, and payments come on with the suit: Repertoire for memory, Dy
 
 What happens when an agent wears the suit?
 
-npx 0xray wear writes the consumer suit: AGENTS.md, .xray config, seven MCP servers, and the OpenCode, Grok, Hermes, and OpenClaw bridges. Inside a git checkout it also fastens Cursor project hooks. npm install 0xray links vendored Repertoire and does not write those bridges.
+npx 0xray wear writes the consumer suit: AGENTS.md, .xray config, seven MCP servers, and the OpenCode, Grok, Hermes, and OpenClaw bridges. The Grok plugin includes bundle.md. Session boot reads it. Inside a git checkout it also fastens Cursor project hooks. npm install 0xray links vendored Repertoire and does not write those bridges.
 
 How do I install 0xRay?
 
