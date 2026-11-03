@@ -125,6 +125,8 @@ test('two readys on different PRs inside 900s both send; the same sha is repeat_
   assert.equal(b.op, 'send');
   const same = gateLine({ seat: 'forge', line: line({ id: 'r3', type: 'ready', number: 1, sha: 'aaa' }) }, st, T0 + 1000, cfg);
   assert.equal(same.reason, 'repeat_sha');
+  const green = gateLine({ seat: 'forge', line: line({ id: 'g1', type: 'ci_pass', number: 1, sha: 'aaa' }) }, st, T0 + 1000, cfg);
+  assert.equal(green.op, 'send');
   const inside = gateLine({ seat: 'forge', line: line({ id: 'r4', type: 'ready', number: 1, sha: 'ccc' }) }, st, T0 + 899999, cfg);
   assert.equal(inside.op, 'queue');
   const edge = createWakeState();
