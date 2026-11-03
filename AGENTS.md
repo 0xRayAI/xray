@@ -8,7 +8,7 @@ Confer votes. Burst runs the swarm.
 
 Goggles views one plane. A search inside that card runs. A search of another plane returns the card. A path outside this checkout runs.
 
-Unreleased 4.1.5. package.json stays 4.1.4 until Dist publishes. A prompt pulse spins only the card named by working_on. Seen is not working. Tandem is several tracks at once and no seat waits for a nod. A card carries raci, and a live card missing R or A is amber. A missed /healthz replaces the one replica. The OP cycle is digest, card, do, loop, ship (`grok-bot/OP-PROC.md` #op-cycle).
+A prompt pulse spins only the card named by working_on. Seen is not working. Tandem is several tracks at once and no seat waits for a nod. A card carries raci, and a live card missing R or A is amber. A missed /healthz replaces the one replica. The OP cycle is digest, card, do, loop, ship (`grok-bot/OP-PROC.md` #op-cycle).
 
 **The suit is the wear.** Three-subsystem autonomous engine (Inference · External Governance · Autonomous Engine) · constitution always on · temperament by host · 4 floors · **Repertoire preferred** (vendored 0.2.9, dest = laws).
 
@@ -124,14 +124,7 @@ Governance deliberation: **code-review**, **security-audit**, **researcher** wit
 
 ## Changes since 3.1
 
-| Version | Change |
-|---------|--------|
-| **3.4.1** | `install-bridges.cjs`, 7 MCPs `npx`, release pipeline + docs sync |
-| **3.4.0** | Nucleus exports, governance closure, verify gate |
-| **3.3.1** | Confidence gate, repertoire researcher wiring |
-| **3.3.0** | Memory routing + Repertoire provider |
-| **3.2.0** | AsideContext wired, SelfProposalEngine, pre-tool-use hook |
-| **3.1.1** | 0xRay rename, marketplace, AGENTS/SKILLS consumer seeding |
+Patch notes are in [CHANGELOG.md](CHANGELOG.md). The guide is [Features since 3.1](docs-site/docs/guides/features-since-3.1.md).
 
 **Removed:** `hermes bridge`, `.opencode/xray/` fallback, `advanced-features/`.
 

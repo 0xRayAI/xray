@@ -57,77 +57,7 @@ Docs: [guides/autonomy-command](docs-site/docs/guides/autonomy-command.md) · Sk
 
 ## What's New Since 3.1
 
-| Version | Highlights |
-|---------|------------|
-| **4.1.5** | Notes for Dist. package.json stays 4.1.4 until that publish. A prompt pulse spins only the named card. Seen is not working. Tandem is several tracks at once. A card carries raci. A missed /healthz replaces the one replica. The OP cycle is digest, card, do, loop, ship. |
-| **4.1.4** | Node is 24.22.1. Review verdicts are PASS or FIX. The roster chip is the seat name. The header says Refreshed for the page pull. The light says Last activity for the newest GitHub event. A noop wake 409 is skipped. |
-| **4.1.0** | Bifrost is the collector board. A cloud agent is a board row. A stuck card's L1 stays with the owner. `live-inbox` requires `LIVE_URL` and `SEAT_KEYS_DIR`. `LIVE_CURSORS` is not required. Goggles views one plane. The card is in LENS.md. A search runs inside that card. |
-| **4.0.43** | Confer completes only on a real PASS. Cursor gate events fail closed, except EACCES when a cloud wrapper cannot write dest. Gate C cannot be skipped. |
-| **4.0.42** | Confer votes. Burst runs the swarm. |
-| **4.0.41** | Wake cascade stays on the station module. A fresh wear fastens mill and inspect. Goggles records the worn package path. The live page plays the mesh in the browser. |
-| **4.0.40** | Live mesh runs the full loop: feed watch, render, direction, deploy, health, and the ledger both ways. |
-| **4.0.39** | The seven stack laws stay worn. Repertoire in the suit is 0.2.9. |
-| **4.0.38** | Codex term 70 requires the current source and the worn npm package. Dynamo's recommendation is honored. |
-| **4.0.37** | A naked checkout wakes with repertoire on. |
-| **4.0.36** | Goggles holds the stop through search, read, and a dist wipe. |
-| **4.0.35** | Wear rewrites a checkout `dist/cli` launch to `node_modules/0xray`. |
-| **4.0.34** | The lens stays on the worn build when the source is not packed. |
-| **4.0.33** | Version bump. |
-| **4.0.32** | `0xray look` opens one plane. Digest and triage return the card. Calling and confer stay off. |
-| **4.0.31** | Goggles looks at one pipeline. Kind 0 stays quiet when the worn list matches the map. Calling and confer stay off. |
-| **4.0.30** | Fixes 4.0.29: `npx 0xray wear` and `setup` work outside a git checkout again. They write the 4.0.28 project setup, skip only Cursor hooks, and print one warning. Inside a git checkout they restore the 4.0.28 project setup, and `wear` adds Cursor hooks plus the unwear snapshot. Companion `@0xray/grok-bot` 0.1.8. Released 2026-09-28. |
-| **4.0.29** | `npm install` only creates the relative `node_modules/@0xray/repertoire` link to the vendored repertoire and prints `npx 0xray wear`. Run `npx 0xray wear` after install. Wear writes only the consumer project's `.cursor/hooks.json` (installed dist hooks, beside user entries); `npx 0xray unwear` restores the snapshot. Companion `@0xray/grok-bot` 0.1.8. Released 2026-09-28. |
-| **4.0.28** | MCP servers start through `scripts/node/mcp-launch.cjs` and only see PATH, HOME, XRAY_ROOT, plus names on their keep list. Tokens such as NPM_TOKEN are not inherited. User env values stay out of argv. Postinstall keeps user edits to AGENTS.md, .mcp.json, and opencode.json. `house init` does not copy EXAMPLE.md; doctor FAILs while `house/EXAMPLE.md` exists. Inspect adds a machinePlugin check. The Cursor hook defaults XRAY_ROOT to the suit. Companion `@0xray/grok-bot` 0.1.7. Released 2026-09-27. |
-| **4.0.27** | Host compact proof needs a generation id and a numeric usage percent, and the same preCompact receipt is mirrored to nested consumer wear roots. Memory scoring: [docs/memory-scoring.md](docs/memory-scoring.md) (orchestrator links it). Companion `@0xray/grok-bot` 0.1.6: general page vs `house/` overlay, `templates/house/`, `grok-bot house init`, doctor `GROK_BOT_HOUSE` or walk-up. Released 2026-09-26. |
-| **4.0.26** | A lesson is stored when the task matches no signal. A Cursor compact cut is proved with a session log and a per-session receipt. |
-| **4.0.25** | Plate schematics ship in the package. A worn suit resolves them from `dist/integrations/hooks/plates.cjs`. |
-| **4.0.24** | Compaction and a host change are the same cut. The station card is the handoff. Repertoire in that suit is 0.2.8. |
-| **4.0.23** | The Dynamo client starts when external governance is required. Proposals score locally when that governance is off. |
-| **4.0.22** | The stamper strips present-tense patch pins from shipped prose. The cursor gate follows the suit mill. |
-| **4.0.21** | Dest is named laws, not hangar slugs. Cleanup heat grows the project copy when Repertoire is on. |
-| **4.0.20** | Heat grows the project copy. Session boot rewrites when HEAD moves. |
-| **4.0.19** | Vendored Repertoire 0.2.5. Wear replaces older leftovers. |
-| **4.0.18** | Wake heat joins bookmark, index, and mind. |
-| **4.0.17** | Cursor heat writes session files when HEAD moves. |
-| **4.0.16** | `npx 0xray validate` is a wear check. |
-| **4.0.15** | Fasten is **foundry-plant/0**: builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill declares (looker / vibe / mixer live in the mill). Nested mill `@0xray/foundry@0.1.12`. CLI shims `foundry blip\|sound` remain (0.1.11+). Shop plant first-class (`shop-extract`, `shop-witness`, `shop-pin` + `foundry.json` `shopPlant`). |
-| **4.0.14** | Factory-blip beds stamp the hook cell and keep six tellable bodies. |
-| **4.0.13** | Station PreCompact merge keeps custom STATION.md keys. |
-| **4.0.12** | Project-scoped Grok plugin dest so multi-seat wear does not clobber the machine plugin. |
-| **4.0.11** | The npm pack includes `.grok-plugin/` so the Grok marketplace manifest ships. |
-| **4.0.10** | Version bump. |
-| **4.0.9** | Mill target: postinstall does not mill npm global prefix or `_npx` as a consumer. Isolated HOME skips machine `~/.grok`. |
-| **4.0.8** | Confer abstains locally instead of rubber-stamping a proposal. |
-| **4.0.7** | Nested mill 0.1.9. Inventory writes `dna`. The mill does not mint on chain. |
-| **4.0.6** | Nested mill 0.1.8. Isolated HOME skips machine Hermes and OpenClaw. |
-| **4.0.5** | Inspect is a mill command. A costume dump fails mint. Mill plant stays mill + inspect. |
-| **4.0.4** | Mill fastens an inspect suit. Costume is opt-in with `foundry.json` `"costume": true`. |
-| **4.0.3** | Their plant is the suit. The mill plant is the factory discipline on the hanger. |
-| **4.0.2** | The nested mill ships in the 0xray tarball. `@0xray/foundry` stays the standalone mill CLI. |
-| **4.0.1** | CLI `--version` no longer dumps a Commander stack. The release gate smokes the organ and does not run another publish from a lifecycle script. |
-| **4.0.0** | Exo + temperament. Constitution always on; ceremony by host. Repertoire organ on (vendored 0.2). Station card survives compact/host-swap. **On npm.** [vision](docs-site/docs/architecture/v4-vision.md) · [now](docs-site/docs/architecture/v4-now.md) |
-| **3.4.1** | Unified `install-bridges.cjs` on postinstall — OpenCode, Grok, Hermes, OpenClaw in one pass. All 7 MCPs servers via `npx -y 0xray mcp <cmd>` (no `dist/` paths). Canonical `release.mjs` pipeline. |
-| **3.3.1** | Orchestrator confidence gate wired into execution planning. |
-| **3.3.0** | Pluggable **Memory Routing** (`features.json` → `memory_routing`). Repertoire is the default provider in the framework repo. |
-| **3.2.0** | Typecheck hardening (58 errors fixed), orphan cleanup (5 deleted / ~39 integrated), full pre-tool-use hook, SelfProposalEngine + AsideContext restored, Hermes E2E 44/0/0, Grok CLI E2E green. |
-| **3.1.1** | StringRay → **0xRay** rename. Marketplace files (`.mcp.json`, `.grok-plugin/plugin.json`). Postinstall ships `AGENTS.md`, `SKILLS.md`, `.gitignore.default`. ConfigLoader `mcpServers` format. |
-| **3.1.0** | Pre-publish guard tolerates missing `features.json`. |
-
-### Consolidations
-
-- **Install, then wear, then setup where needed** — Wear links vendored `@0xray/repertoire` and writes the suit. `postinstall.cjs`, when npm runs it, symlinks vendored `@0xray/repertoire` into `node_modules` and prints one line: `npx 0xray wear`. `wear` and `unwear` set up or remove the Cursor suit. `npx 0xray setup` writes `.mcp.json` and the OpenCode, Grok, Hermes, and OpenClaw bridges (`install-bridges.cjs`); git hooks only with `--git-hooks`. Mill target is the consumer project, not npm global prefix or `_npx`.
-- **7-server MCP surface** — `.mcp.json` SSOT; Grok plugin and all bridges share `XRAY_MCP_SERVERS`.
-- **Dev vs consumer AGENTS** — `AGENTS.md` (framework) vs `AGENTS-consumer.md` (copied to consumer projects on install).
-- **Release pipeline** — `npm run release:patch|minor|major` → reconcile → gate → artifacts → tag → publish.
-
-### Removals / Deprecations
-
-- **StringRay / strray-ai** branding retired (3.1.1).
-- **`hermes bridge`** CLI removed — use `npx 0xray hermes install`.
-- **`.opencode/xray/` fallback** removed from auto-reflection-generator (3.1.1).
-- **~180 stale `@version` JSDoc tags** and **"xray 2.0" command doc strings** cleaned (3.2.0).
-- **`advanced-features/`** removed. The live Grok hook is `pre-tool-use.js`.
-- **PostProcessor** soft-deprecated since 3.0 (`enablePostProcessor: false` default).
+Patch notes are in [CHANGELOG.md](CHANGELOG.md).
 
 ## Three-Subsystem Architecture
 

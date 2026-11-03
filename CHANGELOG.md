@@ -1,7 +1,5 @@
 ## [Unreleased]
 
-Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
-
 - A failed-verify comment plus a later green head rings critic with one ci_pass for that sha. A pass on that sha does not ring again. #806
 
 - A line stored during a live turn wakes that seat once when the turn ends. A 409 claim drop is replayed. An already-done wake is not. #832

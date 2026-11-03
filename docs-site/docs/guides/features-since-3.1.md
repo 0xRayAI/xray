@@ -4,8 +4,6 @@ Complete reference of capabilities through **0xRay 4.1**. 0xRay is a three-subsy
 
 ## Unreleased
 
-Notes for Dist when Arch1 publishes 4.1.5. package.json stays 4.1.4 here.
-
 - **Mesh.** Board stats sit above the mesh. The roster sits at the top of the mesh card and the timeline sits at the bottom of that card.
 - **Working.** A Grok tool opens the seat turn, then ticks it once a minute. A subagent posts kind subagent on spawn and on return. The tag is a short hash. The prompt stays off the wire. A next-owner label that names the seat, such as Arch1 (@arch10x), binds that light to the open card.
 
@@ -27,7 +25,7 @@ Goggles keeps four planes: dev, integration, domain, and ecosystem. Each card is
 
 ## Missed in the 4.1.4 Dist notes
 
-The 4.1.0 section below still applies. These lines were left out of the Dist notes. package.json stays 4.1.4 here.
+The 4.1.0 section below still applies. These lines are in the published suit.
 
 One named card fills that card's files. Bifrost, grokbot, and worn-turn are cards. The mill seat is off the roster, the mesh, and the inbox. Forge launches the cloud agent and opens the pull request through its App. Blinky plans the wave, paces burn, handles Lane H and Dist, and onboards. An unassigned issue or a P1 wakes forge. CoS is not woken to reassign. A seat sets its own title. Planes are core, integration, ecosystem, distribution, and live. `Keys:` is `gh-<seat>`. The wake posts for real new work. A hotfix merges on green CI. Critic reviews after. Worn Grok hooks run while Bifrost is live. The only TUI monitor is `inbox-watch.sh`. The default board is https://bifrost.0xray.dev. A printed inbox id is acked. The seed grace delivers a fresh comment. A noop wake 409 is skipped. The public board serves the kanban and `GET /history`, `/history/cards`, and `/history/transitions`.
 

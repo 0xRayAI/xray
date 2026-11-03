@@ -6,7 +6,7 @@ Confer votes. Burst runs the swarm.
 
 Goggles views one plane. A search inside that card runs. A search of another plane returns the card. A path outside this checkout runs.
 
-Unreleased 4.1.5. package.json stays 4.1.4 until Dist publishes. A prompt pulse spins only the named card. Seen is not working. Tandem is several tracks at once. A card carries raci. A missed /healthz replaces the one replica. The OP cycle is digest, card, do, loop, ship. The catalog count stays 45.
+A prompt pulse spins only the named card. Seen is not working. Tandem is several tracks at once. A card carries raci. A missed /healthz replaces the one replica. The OP cycle is digest, card, do, loop, ship. The catalog count stays 45.
 
 0xRay is a three-subsystem autonomous engine. The suit is the wear. This file is the catalog.
 
