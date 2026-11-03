@@ -415,9 +415,9 @@ class Model(unittest.TestCase):
         newer = dict(self.ev(40, "pr_commit", 5000), sha="bbbbbbb1")             # pushed after the PASS: not at head
         c = self.card([op, push, ci, crit, newer], 40)
         self.assertFalse(c["reviewer"]["at_head"]); self.assertTrue(c["reviewer"]["stale"])
-        self.assertEqual(c["nudge_to"], "builder")   # never Tester before merge
-        self.assertNotEqual(c.get("nudge_via"), "merge (Reviewer PASS at head)")
-        self.assertNotEqual(c["packet"]["next owner"], "Builder")
+        self.assertEqual(c["nudge_to"], "critic")   # a new head names critic again; never Tester before merge
+        self.assertEqual(c.get("nudge_via"), "new head")
+        self.assertEqual(c["packet"]["next owner"], "critic")
         c = self.card([op, push, ci, crit, self.ev(40, "merged", 4000)], 40)    # merge closes; a later retest needs a new issue
         self.assertEqual((c["stage"], c["state"]), ("done", "closed"))
         self.assertNotIn("nudge_to", c)
