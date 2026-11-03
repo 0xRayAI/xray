@@ -82,6 +82,7 @@ async function boot(extra = {}, prep) {
       CURSOR_WEBHOOK_BASE: 'http://127.0.0.1:0',
       ARCH1_CLOUD_REPO: REPO,
       ARCH1_LAUNCH_ENABLED: '0',
+      FLEET_ROUTE: 'cursor-cloud',
       ...extra,
     },
     stdio: ['ignore', 'pipe', 'pipe'],
