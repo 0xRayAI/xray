@@ -869,6 +869,30 @@ function ackLines(seat, what, review) {
   if (single && blocked && n === 0) return -2;
   return n;
 }
+function unackLine(seat, id) {
+  const have = new Set(inboxAcks[seat] || []);
+  if (!have.delete(id)) return false;
+  inboxAcks[seat] = [...have];
+  bfWrite('acks.json', JSON.stringify(inboxAcks));
+  return true;
+}
+function sameHead(a, b) {
+  return String(a.repo || '').toLowerCase() === String(b.repo || '').toLowerCase()
+    && Number(a.number) === Number(b.number)
+    && String(a.sha || '').toLowerCase() === String(b.sha || '').toLowerCase();
+}
+function readyAfterFix(seat, line) {
+  if (String(line.kind || '').toLowerCase() !== 'ready') return false;
+  if (!ackedSet(seat).has(String(line.id || ''))) return false;
+  const rows = seatInbox[seat] || [];
+  const fail = rows.some((row) => String(row.kind || '').toLowerCase() === 'critic_fail' && sameHead(row, line));
+  if (!fail) return false;
+  const passed = rows.some((row) => {
+    const kind = String(row.kind || '').toLowerCase();
+    return (kind === 'live_pass' || kind === 'merge') && sameHead(row, line);
+  });
+  return !passed;
+}
 // Closed items (nudge skips them): the latest close / merge vs reopen event per repo#number, from the merged feed. A line
 // or card on a closed or merged PR / issue is done even when the board no longer carries its card.
 const CLOSE_KINDS = new Set(['merged', 'pr_close', 'issue_close', 'pr_closed', 'issue_closed', 'closed']);
@@ -1110,7 +1134,17 @@ function postSeatLines(parsed, onlySeat) {
     touched.add(onlySeat);
   }
   for (const l of outgoing) {
-    const s = canonSeat(l.seat), arr = seatInbox[s]; if (!arr || arr.some(x => x.id === l.id)) continue;
+    const s = canonSeat(l.seat), arr = seatInbox[s];
+    if (!arr) continue;
+    const dup = arr.find(x => x.id === l.id);
+    if (dup) {
+      if (readyAfterFix(s, l)) {
+        unackLine(s, l.id);
+        dup.t_ct = l.t_ct || ctStamp(Date.now());
+        fresh.push(dup); touched.add(s); added++;
+      }
+      continue;
+    }
     let stored = { ...l, seat: s };
     for (const k of ['from', 'to', 'kind', 'flag']) if (typeof stored[k] === 'string') stored[k] = stored[k].toLowerCase();
     if (s === 'arch1') stored = markShed(stored, seatOpenRows(s, false), queueOpts(s));
