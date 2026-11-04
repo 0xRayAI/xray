@@ -1,0 +1,5 @@
+name: goggles
+skill: goggles
+description: "Scout-lens plant. One plane, one card, one feed look. Nibbler organ."
+version: "0.1.13"
+mode: subagent
