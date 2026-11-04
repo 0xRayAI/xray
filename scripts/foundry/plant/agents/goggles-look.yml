@@ -1,5 +1,5 @@
 name: goggles-look
 skill: goggles-look
 description: "Scout feed look. Quote one plane's card. Nibbler organ."
-version: "0.1.13"
+version: "0.1.14"
 mode: subagent

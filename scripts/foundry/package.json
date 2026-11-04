@@ -1,6 +1,6 @@
 {
   "name": "@0xray/foundry",
-  "version": "0.1.13",
+  "version": "0.1.14",
   "private": false,
   "type": "module",
   "description": "0xRay mill: mint their suit params, stamp, gate, publish, CI report, git hooks. Not the worn exo.",
@@ -82,8 +82,16 @@
     "plants": {
       "goggles": {
         "millOff": true,
-        "skills": ["goggles", "goggles-look", "goggles-inspect"],
-        "agents": ["goggles.yml", "goggles-look.yml", "goggles-inspect.yml"]
+        "skills": [
+          "goggles",
+          "goggles-look",
+          "goggles-inspect"
+        ],
+        "agents": [
+          "goggles.yml",
+          "goggles-look.yml",
+          "goggles-inspect.yml"
+        ]
       }
     }
   }
