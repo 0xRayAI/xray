@@ -126,7 +126,7 @@ describe('foundry scout plant — resolve', () => {
     expect(body).not.toMatch(/\bhangar\b/i);
     expect(readFileSync(path.join(millRoot, 'cli.mjs'), 'utf8')).toContain('scout: { script: "scout.mjs"');
     expect(readFileSync(path.join(root, 'scripts/foundry/README.md'), 'utf8')).toMatch(/"plant": "scout"/);
-    expect(readFileSync(path.join(root, 'scripts/foundry/package.json'), 'utf8')).toMatch(/"version": "0\.1\.14"/);
+    expect(readFileSync(path.join(root, 'scripts/foundry/package.json'), 'utf8')).toMatch(/"version": "0\.1\.15"/);
   });
 });
 
