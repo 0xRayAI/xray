@@ -2,7 +2,9 @@
 
 ## [Unreleased]
 
-Goggles plant (`goggles` + `goggles-look` + `goggles-inspect`). `foundry.json` `"plant": "goggles"` and alias `"plant": "scout"` fasten the same scout-lens plant and turn mill off. Skills ship in this package `plant/`. Nibbler pin is `{ "plant": "goggles", "costume": false }`. Not the eng mill catalog. Not Dist beds. Not a `@0xray/blip` organ. No version bump.
+## [0.1.14] - 2026-11-04
+
+Scout plant (`scout` + `scout-inspect` + `scout-look`). `foundry.json` `{ "plant": "scout", "costume": false }` fastens the feed mill and turns mill off. `npx @0xray/foundry scout look` writes `.xray/scout/digest.md` and `.xray/scout-feed-receipt.json` (PASS/FAIL + plane, topic, paths). `scout inspect` quotes the last receipt. Missing plane, empty body, and a missing digest fail closed. Goggles stays the suit HUD and is not a plant id. Not the eng mill catalog. Not Dist beds. Not a `@0xray/blip` organ. Plant agent YAML stamps 0.1.14.
 
 ## [0.1.13] - 2026-10-23
 

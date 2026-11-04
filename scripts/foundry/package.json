@@ -1,6 +1,6 @@
 {
   "name": "@0xray/foundry",
-  "version": "0.1.13",
+  "version": "0.1.14",
   "private": false,
   "type": "module",
   "description": "0xRay mill: mint their suit params, stamp, gate, publish, CI report, git hooks. Not the worn exo.",
@@ -41,6 +41,8 @@
     "./mill-plant": "./mill-plant.cjs",
     "./inspect": "./inspect.mjs",
     "./sound": "./sound.mjs",
+    "./scout": "./scout.mjs",
+    "./scout-feed": "./scout-feed.cjs",
     "./sound-bed": "./sound-bed.cjs",
     "./sound-mixer": "./sound-mixer.cjs",
     "./blip": "./blip.mjs",
@@ -69,7 +71,7 @@
     "mill",
     "sound",
     "blip",
-    "goggles",
+    "scout",
     "release",
     "changelog"
   ],
@@ -80,10 +82,18 @@
       "agents": "plant/agents"
     },
     "plants": {
-      "goggles": {
+      "scout": {
         "millOff": true,
-        "skills": ["goggles", "goggles-look", "goggles-inspect"],
-        "agents": ["goggles.yml", "goggles-look.yml", "goggles-inspect.yml"]
+        "skills": [
+          "scout",
+          "scout-inspect",
+          "scout-look"
+        ],
+        "agents": [
+          "scout.yml",
+          "scout-inspect.yml",
+          "scout-look.yml"
+        ]
       }
     }
   }
