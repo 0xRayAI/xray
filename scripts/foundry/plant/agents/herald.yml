@@ -1,0 +1,5 @@
+name: herald
+skill: herald
+description: "Herald Dist write plant. H-lane draft → receipt."
+version: "0.1.15"
+mode: subagent

@@ -1,5 +1,5 @@
 name: scout-look
 skill: scout-look
 description: "Scout looker. One plane, one brief, one digest."
-version: "0.1.14"
+version: "0.1.15"
 mode: subagent

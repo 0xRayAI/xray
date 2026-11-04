@@ -14,7 +14,14 @@ const PACKAGE_ALIASES = {
   sound: "@0xray/blip",
   // Scout feed mill ships in this foundry package's plant/. Goggles stays the suit HUD.
   scout: "@0xray/foundry",
+  // Herald Dist write plant (H-lane write/brand). Not eng mill, not scout, not Dist send.
+  herald: "@0xray/foundry",
+  write: "@0xray/foundry",
+  brand: "@0xray/foundry",
 };
+
+// Alias tokens that land on another plant id in the same package.
+const PLANT_ID_ALIASES = { write: "herald", brand: "herald" };
 
 function plantError(message, code) {
   const err = new Error(message);
@@ -140,10 +147,11 @@ function parsePlantToken(raw) {
     return { builtin: true, kind: "mill", plantId: "mill", packageName: null, alias: false };
   }
   if (PACKAGE_ALIASES[token]) {
+    const id = PLANT_ID_ALIASES[token] || token;
     return {
       builtin: false,
-      kind: token,
-      plantId: token,
+      kind: id,
+      plantId: id,
       packageName: PACKAGE_ALIASES[token],
       alias: true,
     };

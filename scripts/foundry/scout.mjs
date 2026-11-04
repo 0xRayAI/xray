@@ -34,7 +34,7 @@ function parseLook(argv) {
       const list = take(argv, i);
       if (list) out.paths.push(...list.split(",").map((item) => item.trim()).filter(Boolean));
     } else if (arg === "--stdin") out.stdin = true;
-    if (arg.startsWith("--") && arg !== "--stdin") i += 1;
+    if (arg.startsWith("--") && arg !== "--stdin" && take(argv, i)) i += 1;
   }
   return out;
 }
@@ -46,6 +46,8 @@ function readStdin() {
     return "";
   }
 }
+
+export { parseLook };
 
 function run(args) {
   const root = process.env.FOUNDRY_ROOT || process.cwd();

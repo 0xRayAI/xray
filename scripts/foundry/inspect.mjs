@@ -385,6 +385,37 @@ function checkScoutFeed(root) {
   };
 }
 
+function checkHeraldWrite(root) {
+  const inventory = readJson(path.join(root, ".xray", "foundry-inventory.json"));
+  const kinds = inventory ? mint.inventoryPlantKinds(inventory) : mint.loadFactoryPlantKinds(root);
+  if (!kinds.includes("herald")) return null;
+  const herald = require("./herald-write.cjs");
+  const receipt = herald.readReceipt(root);
+  if (!receipt) {
+    return {
+      id: "herald-write",
+      ok: true,
+      skipped: true,
+      status: "NONE",
+      plant: kinds,
+      detail: 'no herald receipt yet — npx @0xray/foundry herald draft --brief "..." --lane H --friend-hear "..." --body "..."',
+    };
+  }
+  const live = herald.inspectWrite(root);
+  const status = live.status === "PASS" ? "PASS" : "FAIL";
+  return {
+    id: "herald-write",
+    ok: status === "PASS",
+    status,
+    failClosed: true,
+    plant: kinds,
+    lane: live.receipt?.lane || null,
+    draft: live.receipt?.draft || null,
+    dist: "HOLD",
+    detail: status === "PASS" ? null : live.reason || "herald receipt FAIL",
+  };
+}
+
 function checkSoundBed(root) {
   const inventory = readJson(path.join(root, ".xray", "foundry-inventory.json"));
   const kinds = inventory ? mint.inventoryPlantKinds(inventory) : mint.loadFactoryPlantKinds(root);
@@ -638,6 +669,8 @@ export async function inspectSuit(root, opts = {}) {
   if (blip) checks.push(blip);
   const scoutFeed = checkScoutFeed(root);
   if (scoutFeed) checks.push(scoutFeed);
+  const heraldWrite = checkHeraldWrite(root);
+  if (heraldWrite) checks.push(heraldWrite);
   checks.push(checkCi(root));
 
   if (skipLive) {

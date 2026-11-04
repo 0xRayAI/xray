@@ -33,6 +33,8 @@ npx @0xray/foundry blip vibe
 npx @0xray/foundry blip look
 npx @0xray/foundry scout look --brief TEXT --plane dev|integration|domain|ecosystem [--topic TEXT] [--body TEXT] [--file PATH] [--path PATH] [--stdin]
 npx @0xray/foundry scout inspect
+npx @0xray/foundry herald draft --brief TEXT --lane H --friend-hear TEXT [--body TEXT|--file PATH|--stdin]
+npx @0xray/foundry herald inspect
 npx @0xray/foundry ci [--commit SHA] [--report]
 npx @0xray/foundry hooks
 ```
@@ -66,7 +68,7 @@ After mill plant is fastened, overlay their plant (defaults; remap in `foundry.j
 
 **Default mill plant:** `mill` + `inspect` (inspect AI work). Fasten is **foundry-plant/0**: builtin plant is mill+inspect only (files from this package `plant/`). Fastens a suit, not an empty one. The mill suit also wears every catalog skill and every role file. A blip, sound, or scout seat fastens that plant only. A name outside the fastened set still fails inspect. **Repertoire is preferred** (vendored, dest = laws). PPE stays worn.
 
-**foundry-plant/0:** `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill package declares and ships in its own `plant/`. Organs (looker, vibe, mixer) live in the mill. Adding a blip or sound organ is a mill publish, not a foundry catalog PR. CLI shims `foundry blip|sound|scout` still exist on foundry 0.1.11+ (scout on 0.1.14); fasten is the new cut. Foundry **0.1.14**. Alias `"plant": "scout"` fastens this package's feed plant (`mill.plants.scout`, `millOff`). It does not fasten `@0xray/blip`. Goggles stays the suit HUD and is not a plant id.
+**foundry-plant/0:** `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill package declares and ships in its own `plant/`. Organs (looker, vibe, mixer) live in the mill. Adding a blip or sound organ is a mill publish, not a foundry catalog PR. CLI shims `foundry blip|sound|scout` still exist on foundry 0.1.11+ (scout on 0.1.14); fasten is the new cut. Foundry **0.1.15**. Alias `"plant": "scout"` fastens this package's feed plant (`mill.plants.scout`, `millOff`). It does not fasten `@0xray/blip`. Goggles stays the suit HUD and is not a plant id.
 
 **Sound plant (factory-sound):** mill `@0xray/blip`. Alias `"plant": "sound"` fastens what that mill declares (`sound` + `sound-inspect` + `sound-mixer` today) and turns mill off. Spine: brief → checksum seed → genre (`ambient` | `techno` | `jazz` | `phonk`) → crystal-clear headless wav (Rippel membrane + metal + mixer, not a 3-sine toy) → metrics gate → `.xray/sound-bed-receipt.json`. `npx @0xray/foundry sound mix` levels every genre × tempo × motif (hats / plate / glue). Tone.Offline is blocked in Node (no `OfflineAudioContext`). Mixer organ lives in `@0xray/blip`; this package shims `foundry sound`. Inspect reports the mill-declared plant plus last bed `PASS`/`FAIL`. Not costume.
 
@@ -84,6 +86,12 @@ Nibbler seat pin:
 
 ```json
 { "plant": "scout", "costume": false }
+```
+
+**Herald plant (Dist write mill, 0.1.15):** this package. `"plant": "herald"` (aliases `"write"` / `"brand"`) fastens `herald` + `herald-inspect` + `herald-write` and turns mill off. H-lane write/brand only. Spine: brief → lane `H` → friend-hear → body → `.xray/herald/draft.md` → `.xray/herald-write-receipt.json` (`PASS` / `FAIL`, `dist: HOLD`, `sent: false`). Any missing gate fails closed. Not the eng mill. Not scout or the suit HUD. Not Dist packaging; it never sends. Herald seat pin (documented; not worn yet):
+
+```json
+{ "plant": "herald", "costume": false }
 ```
 
 **Shop plant:** `shop-extract`, `shop-witness`, `shop-pin` are first-class with mill plant. Inspect does not treat those worn names as a costume dump. `foundry.json` `"shopPlant"` names more shops (array), a plant dir (string), or `{ "skills": [...], "dir": "..." }`. This is not `"costume": true` and does not copy 45/42.
