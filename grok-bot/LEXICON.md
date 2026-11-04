@@ -241,3 +241,9 @@ Every bolded term in the pack OP-PROC and runbooks is defined here (`bifrost che
 | **mainstay** | Workstream | The seat stays in the chat and delegates. It does not do the deep work itself. |
 | **Dist GO** | Workstream | Blaze's go for a public Dist. Without it, Dist stays HOLD. |
 | **graduate** | Workstream | The fleet leaves the hotpack when the npm cut ships. |
+
+## Lexicon add (2026-11-04 — goggles)
+
+| Term | Bucket | Plain |
+|------|--------|-------|
+| **goggles** | Workstream | Nibbler's scout lenses: how Nibbler sees. Only Nibbler wears them every turn. Forge and critic stay eng (mill, inspect, Strict) and do not wear goggles each wake or turn. Suit-tree hygiene (`npm install`, `npx 0xray wear`) is not wearing goggles. Not `plant:scout`. Rule: [OP-PROC](OP-PROC.md#goggles). |
