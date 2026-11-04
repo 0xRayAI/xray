@@ -12,6 +12,14 @@ const BUILTIN_MILL = { skills: ["mill", "inspect"], agents: ["mill.yml", "inspec
 const PACKAGE_ALIASES = {
   blip: "@0xray/blip",
   sound: "@0xray/blip",
+  // Scout lenses ship in this foundry package's plant/, not the Dist mill.
+  goggles: "@0xray/foundry",
+  scout: "@0xray/foundry",
+};
+
+/** Pin names that fasten an existing plant id. scout and goggles are one plant. */
+const PLANT_ID_ALIASES = {
+  scout: "goggles",
 };
 
 function plantError(message, code) {
@@ -138,10 +146,11 @@ function parsePlantToken(raw) {
     return { builtin: true, kind: "mill", plantId: "mill", packageName: null, alias: false };
   }
   if (PACKAGE_ALIASES[token]) {
+    const plantId = PLANT_ID_ALIASES[token] || token;
     return {
       builtin: false,
-      kind: token,
-      plantId: token,
+      kind: plantId,
+      plantId,
       packageName: PACKAGE_ALIASES[token],
       alias: true,
     };
@@ -214,8 +223,18 @@ function tryRequireResolve(fromDir, packageName) {
   }
 }
 
+function foundrySelfRoot() {
+  return readPkgName(__dirname) === "@0xray/foundry" ? __dirname : null;
+}
+
 function resolvePackageRoot(packageName, dirs) {
   if (!isPackageName(packageName)) return null;
+  // This file ships inside @0xray/foundry. Goggles skills sit beside it.
+  // Prefer that root over a stale node_modules copy of the same package.
+  if (packageName === "@0xray/foundry") {
+    const self = foundrySelfRoot();
+    if (self) return self;
+  }
   if (typeof dirs === "string") {
     dirs = { targetDir: dirs, millPackageRoot: dirs, cwd: process.cwd() };
   }
@@ -597,6 +616,7 @@ module.exports = {
   FOUNDRY_PLANT_PROTOCOL: PROTOCOL,
   BUILTIN_MILL,
   PACKAGE_ALIASES,
+  PLANT_ID_ALIASES,
   plantError,
   unresolvedPackageError,
   readFoundryExtra,

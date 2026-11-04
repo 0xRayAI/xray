@@ -69,7 +69,22 @@
     "mill",
     "sound",
     "blip",
+    "goggles",
     "release",
     "changelog"
-  ]
+  ],
+  "mill": {
+    "protocol": "foundry-plant/0",
+    "paths": {
+      "skills": "plant/skills",
+      "agents": "plant/agents"
+    },
+    "plants": {
+      "goggles": {
+        "millOff": true,
+        "skills": ["goggles", "goggles-look", "goggles-inspect"],
+        "agents": ["goggles.yml", "goggles-look.yml", "goggles-inspect.yml"]
+      }
+    }
+  }
 }

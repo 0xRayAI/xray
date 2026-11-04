@@ -1,0 +1,5 @@
+name: goggles-inspect
+skill: goggles-inspect
+description: "Scout-seat inspect. Unknown skill fails closed."
+version: "0.1.13"
+mode: subagent

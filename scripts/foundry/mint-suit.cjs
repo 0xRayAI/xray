@@ -150,7 +150,7 @@ function catalogAgentFiles(packageRoot) {
 }
 
 /**
- * The mill suit wears the catalog. A blip-only or sound-only seat does not.
+ * The mill suit wears the catalog. A blip-only, sound-only, or goggles-only seat does not.
  * Costume stays a separate flag and does not decide this.
  */
 function suitCatalogApplies(targetDir, millPlant, packageRoot) {

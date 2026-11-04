@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+Goggles plant (`goggles` + `goggles-look` + `goggles-inspect`). `foundry.json` `"plant": "goggles"` and alias `"plant": "scout"` fasten the same scout-lens plant and turn mill off. Skills ship in this package `plant/`. Nibbler pin is `{ "plant": "goggles", "costume": false }`. Not the eng mill catalog. Not Dist beds. Not a `@0xray/blip` organ. No version bump.
+
 ## [0.1.13] - 2026-10-23
 
 Published Node floor is `>=24.22.1`. Registry 0.1.12 said `>=18`.
