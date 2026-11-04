@@ -1,0 +1,5 @@
+name: scout
+skill: scout
+description: "Scout feed plant. Brief → plane → digest → receipt."
+version: "0.1.14"
+mode: subagent

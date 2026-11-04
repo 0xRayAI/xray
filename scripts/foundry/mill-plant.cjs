@@ -12,14 +12,8 @@ const BUILTIN_MILL = { skills: ["mill", "inspect"], agents: ["mill.yml", "inspec
 const PACKAGE_ALIASES = {
   blip: "@0xray/blip",
   sound: "@0xray/blip",
-  // Scout lenses ship in this foundry package's plant/, not the Dist mill.
-  goggles: "@0xray/foundry",
+  // Scout feed mill ships in this foundry package's plant/. Goggles stays the suit HUD.
   scout: "@0xray/foundry",
-};
-
-/** Pin names that fasten an existing plant id. scout and goggles are one plant. */
-const PLANT_ID_ALIASES = {
-  scout: "goggles",
 };
 
 function plantError(message, code) {
@@ -146,11 +140,10 @@ function parsePlantToken(raw) {
     return { builtin: true, kind: "mill", plantId: "mill", packageName: null, alias: false };
   }
   if (PACKAGE_ALIASES[token]) {
-    const plantId = PLANT_ID_ALIASES[token] || token;
     return {
       builtin: false,
-      kind: plantId,
-      plantId,
+      kind: token,
+      plantId: token,
       packageName: PACKAGE_ALIASES[token],
       alias: true,
     };
@@ -616,7 +609,6 @@ module.exports = {
   FOUNDRY_PLANT_PROTOCOL: PROTOCOL,
   BUILTIN_MILL,
   PACKAGE_ALIASES,
-  PLANT_ID_ALIASES,
   plantError,
   unresolvedPackageError,
   readFoundryExtra,

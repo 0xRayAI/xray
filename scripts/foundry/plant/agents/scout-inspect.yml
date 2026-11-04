@@ -1,0 +1,5 @@
+name: scout-inspect
+skill: scout-inspect
+description: "Scout feed inspect. Last digest receipt, fail-closed."
+version: "0.1.14"
+mode: subagent

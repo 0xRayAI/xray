@@ -353,6 +353,38 @@ function checkReceipt(root, millRoot) {
   };
 }
 
+function checkScoutFeed(root) {
+  const inventory = readJson(path.join(root, ".xray", "foundry-inventory.json"));
+  const kinds = inventory ? mint.inventoryPlantKinds(inventory) : mint.loadFactoryPlantKinds(root);
+  if (!kinds.includes("scout")) return null;
+  const scout = require("./scout-feed.cjs");
+  const receipt = scout.readReceipt(root);
+  if (!receipt) {
+    return {
+      id: "scout-feed",
+      ok: true,
+      skipped: true,
+      status: "NONE",
+      plant: kinds,
+      detail: 'no scout receipt yet — npx @0xray/foundry scout look --brief "..." --plane dev --body "..."',
+    };
+  }
+  const live = scout.inspectFeed(root);
+  const status = live.status === "PASS" ? "PASS" : "FAIL";
+  return {
+    id: "scout-feed",
+    ok: status === "PASS",
+    status,
+    failClosed: true,
+    plant: kinds,
+    plane: live.receipt?.plane || receipt.plane || null,
+    topic: live.receipt?.topic || receipt.topic || null,
+    paths: live.receipt?.paths || receipt.paths || [],
+    digest: live.receipt?.digest || receipt.digest || null,
+    detail: status === "PASS" ? null : live.reason || receipt.reason || "scout receipt FAIL",
+  };
+}
+
 function checkSoundBed(root) {
   const inventory = readJson(path.join(root, ".xray", "foundry-inventory.json"));
   const kinds = inventory ? mint.inventoryPlantKinds(inventory) : mint.loadFactoryPlantKinds(root);
@@ -604,6 +636,8 @@ export async function inspectSuit(root, opts = {}) {
   if (soundBed) checks.push(soundBed);
   const blip = checkBlip(root);
   if (blip) checks.push(blip);
+  const scoutFeed = checkScoutFeed(root);
+  if (scoutFeed) checks.push(scoutFeed);
   checks.push(checkCi(root));
 
   if (skipLive) {

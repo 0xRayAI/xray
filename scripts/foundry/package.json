@@ -41,6 +41,8 @@
     "./mill-plant": "./mill-plant.cjs",
     "./inspect": "./inspect.mjs",
     "./sound": "./sound.mjs",
+    "./scout": "./scout.mjs",
+    "./scout-feed": "./scout-feed.cjs",
     "./sound-bed": "./sound-bed.cjs",
     "./sound-mixer": "./sound-mixer.cjs",
     "./blip": "./blip.mjs",
@@ -69,7 +71,7 @@
     "mill",
     "sound",
     "blip",
-    "goggles",
+    "scout",
     "release",
     "changelog"
   ],
@@ -80,17 +82,17 @@
       "agents": "plant/agents"
     },
     "plants": {
-      "goggles": {
+      "scout": {
         "millOff": true,
         "skills": [
-          "goggles",
-          "goggles-look",
-          "goggles-inspect"
+          "scout",
+          "scout-inspect",
+          "scout-look"
         ],
         "agents": [
-          "goggles.yml",
-          "goggles-look.yml",
-          "goggles-inspect.yml"
+          "scout.yml",
+          "scout-inspect.yml",
+          "scout-look.yml"
         ]
       }
     }
