@@ -12,6 +12,7 @@ import {
   handCard,
   look,
   growPlane,
+  isXrayCheckout,
   lensBeforeResearch,
   liveDrift,
   lookCards,
@@ -800,6 +801,48 @@ describe('goggles plate', () => {
       expect(card).toContain('Skills: sound, sound-inspect, sound-mixer');
       expect(card).toContain('Worn: sound 4.1.1');
       expect(card).not.toContain(stockSkills);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+
+  it('consumer GOGGLES_ROOT places the checkout on dev without grok-bot or docs-site', () => {
+    const root = mkdtempSync(join(tmpdir(), 'goggles-consumer-root-'));
+    try {
+      writeFileSync(join(root, 'package.json'), `${JSON.stringify({ name: 'postalocity-ai', version: '0.0.1' })}\n`);
+      writeFileSync(join(root, 'README.md'), 'consumer\n');
+      mkdirSync(join(root, 'app'), { recursive: true });
+      writeFileSync(join(root, 'app', 'Mail.php'), '<?php\n');
+      expect(isXrayCheckout(root)).toBe(false);
+      const card = look(['dev'], root).text;
+      expect(card).toContain('Plane: dev');
+      expect(card).toContain('Entry: package.json and the project root.');
+      expect(card).toContain('Files: .');
+      expect(card).not.toContain('grok-bot');
+      expect(card).not.toContain('docs-site');
+      holdPlane(root, 'dev');
+      expect(lensBeforeResearch(root, 'grep', 'app/Mail.php')).toBeNull();
+      expect(lensBeforeResearch(root, 'bash', `git grep -n Mail ${root}/app/Mail.php`)).toBeNull();
+      expect(lensBeforeResearch(root, 'run_terminal_command', `git grep -n pattern ${root}/app`)).toBeNull();
+      expect(lensBeforeResearch(root, 'bash', `git grep -n pattern ${root}`)).toBeNull();
+      const bare = lensBeforeResearch(root, 'grep', 'still searching');
+      expect(bare?.decision).toBe('deny');
+      expect(bare?.reason).toContain('Plane: dev');
+      expect(bare?.reason).toContain('Files: .');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('xray checkout keeps the builtin dev plane paths', () => {
+    const root = mkdtempSync(join(tmpdir(), 'goggles-xray-root-'));
+    try {
+      writeFileSync(join(root, 'package.json'), `${JSON.stringify({ name: '0xray', version: '4.2.0' })}\n`);
+      mkdirSync(join(root, 'grok-bot'), { recursive: true });
+      writeFileSync(join(root, 'grok-bot', 'OP-PROC.md'), '# op\n');
+      expect(isXrayCheckout(root)).toBe(true);
+      expect(look(['dev'], root).text).toBe(DEV_CARD);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

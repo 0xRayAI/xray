@@ -1,6 +1,8 @@
 /**
  * Goggles. The plane is state. A session starts on dev.
  * The card is in LENS.md: Entry, Exit, and the other rows.
+ * Planes are the planes of the app under GOGGLES_ROOT: xray builtins when that
+ * root is the 0xray checkout; otherwise the consumer project's own tree on dev.
  * A search inside the current card runs. A file on this plane runs while the hold is that plane.
  * A file on no plane stays and that search runs. Any other search returns the card and does not run.
  * Opening a file on that card stays quiet.
@@ -90,8 +92,66 @@ const PLANE_ROWS = {
   },
 };
 
-function builtinCard(id) {
-  const row = PLANE_ROWS[id];
+/** True when GOGGLES_ROOT is the 0xray package/checkout. Named consumers are not. */
+export function isXrayCheckout(root) {
+  if (!root) return true;
+  try {
+    if (existsSync(join(root, 'grok-bot', 'OP-PROC.md'))) return true;
+  } catch {
+    /* missing root */
+  }
+  try {
+    const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
+    if (pkg && pkg.name === '0xray') return true;
+    if (pkg && typeof pkg.name === 'string' && pkg.name.trim()) return false;
+  } catch {
+    /* no package.json */
+  }
+  // Empty / unnamed roots keep xray builtins (unit fixtures).
+  return true;
+}
+
+function consumerDevRow() {
+  return {
+    from: '',
+    digest: 'This checkout.',
+    plate: '',
+    entry: 'package.json and the project root.',
+    exit: 'A change that stays in this repo.',
+    files: '.',
+    skills: 'orchestrator, researcher, project-analysis, git-workflow, tech-writer',
+    setup: 'You are in this repo.',
+    teardown: 'Leave other repos alone.',
+    worn: '',
+  };
+}
+
+function planePathsMap(root) {
+  if (root && !isXrayCheckout(root)) {
+    return {
+      dev: ['.'],
+      integration: [],
+      domain: [],
+      ecosystem: ['node_modules/@0xray'],
+    };
+  }
+  return PLANE_PATHS;
+}
+
+function planeRowsMap(root) {
+  if (root && !isXrayCheckout(root)) {
+    return { ...PLANE_ROWS, dev: consumerDevRow() };
+  }
+  return PLANE_ROWS;
+}
+
+function inCheckoutRel(rel) {
+  const path = String(rel || '').replace(/\\/g, '/').replace(/^\.\//, '');
+  return Boolean(path) && !path.startsWith('/') && !path.startsWith('../') && !path.split('/').includes('..');
+}
+
+function builtinCard(id, root) {
+  const row = planeRowsMap(root)[id];
   if (!row) return '';
   const lines = [
     ['Plane', id],
@@ -109,12 +169,15 @@ function builtinCard(id) {
   return lines.map(([key, value]) => `${key}: ${value}`.trimEnd()).join('\n');
 }
 
-function planeOfPath(file) {
+function planeOfPath(file, root) {
   const rel = String(file || '').replace(/\\/g, '/').replace(/^\.\//, '');
+  if (rel !== '.' && !inCheckoutRel(rel)) return '';
   let best = '';
   let winner = '';
-  for (const [id, paths] of Object.entries(PLANE_PATHS)) {
+  const map = planePathsMap(root);
+  for (const [id, paths] of Object.entries(map)) {
     for (const prefix of paths) {
+      if (prefix === '.') continue;
       if (rel === prefix || rel.startsWith(`${prefix}/`)) {
         if (prefix.length > best.length) {
           best = prefix;
@@ -123,7 +186,9 @@ function planeOfPath(file) {
       }
     }
   }
-  return winner;
+  if (winner) return winner;
+  if ((map.dev || []).includes('.') && (rel === '.' || inCheckoutRel(rel))) return 'dev';
+  return '';
 }
 
 /** Empty GOGGLES_PLANES_PATH keeps the file beside the organ. */
@@ -151,11 +216,15 @@ function thingFiles(entry) {
   return [];
 }
 
-function planeSpan(file) {
+function planeSpan(file, root) {
   const rel = String(file || '').replace(/\\/g, '/').replace(/^\.\//, '');
   let best = 0;
-  for (const paths of Object.values(PLANE_PATHS)) {
+  for (const paths of Object.values(planePathsMap(root))) {
     for (const prefix of paths) {
+      if (prefix === '.') {
+        if (rel === '.' || inCheckoutRel(rel)) best = Math.max(best, 1);
+        continue;
+      }
       if (rel === prefix || rel.startsWith(`${prefix}/`)) best = Math.max(best, prefix.length);
     }
   }
@@ -173,6 +242,7 @@ export const PATH_OWNER = {
 };
 
 function covers(listed, rel) {
+  if (listed === '.') return rel === '.' || inCheckoutRel(rel);
   return rel === listed || rel.startsWith(`${listed}/`);
 }
 
@@ -192,8 +262,8 @@ function plateCardOf(rel) {
   return platePath(id) === rel ? id : '';
 }
 
-function cardMatchPaths(id) {
-  if (CARD_PLANES.includes(id)) return PLANE_PATHS[id] || [];
+function cardMatchPaths(id, root) {
+  if (CARD_PLANES.includes(id)) return planePathsMap(root)[id] || [];
   const row = mapEntry(id);
   if (!row) return [];
   const plate = platePath(id);
@@ -203,7 +273,7 @@ function cardMatchPaths(id) {
 }
 
 /** Longest listed path. A root may equal the plane. A tie uses PATH_OWNER, or stays the plane. */
-export function thingOfPath(file) {
+export function thingOfPath(file, root) {
   const rel = String(file || '').replace(/\\/g, '/').replace(/^\.\//, '');
   const plated = plateCardOf(rel);
   if (plated) return plated;
@@ -214,7 +284,7 @@ export function thingOfPath(file) {
     if (CARD_PLANES.includes(id)) continue;
     const row = entry && typeof entry === 'object' && !Array.isArray(entry) ? entry : null;
     if (!row) continue;
-    const span = planeSpan(rel);
+    const span = planeSpan(rel, root);
     const consider = (listed, floor) => {
       if (!covers(listed, rel) || listed.length < floor) return;
       if (listed.length > best) {
@@ -1051,18 +1121,18 @@ export function seekHeldCard(root, need, opts = {}) {
 }
 
 
-function targetOf(file) {
-  const thing = thingOfPath(file);
-  const plane = planeOfPath(file) || (thing ? planeForCard(thing) : '');
+function targetOf(file, root) {
+  const thing = thingOfPath(file, root);
+  const plane = planeOfPath(file, root) || (thing ? planeForCard(thing) : '');
   if (!plane) return null;
   return { plane, card: thing || plane };
 }
 
 /** A path stays when this card owns it, it has no card, or the hold is its plane. */
 function searchStays(root, file, current) {
-  const owned = cardMatchPaths(current);
+  const owned = cardMatchPaths(current, root);
   if (owned.some((listed) => covers(listed, file))) return true;
-  const target = targetOf(file);
+  const target = targetOf(file, root);
   if (!target) return true;
   if (target.card === current) return true;
   return current === currentPlane(root) && target.plane === current;
@@ -1094,6 +1164,28 @@ function lineWithoutOutsidePaths(line, rootAbs) {
   return rest;
 }
 
+/** Absolute tokens under this checkout, as repo-relative paths (including `.`). */
+function underRootCommandPaths(line, rootAbs) {
+  const found = [];
+  if (!rootAbs) return found;
+  for (const raw of String(line || '').split(/\s+/)) {
+    let item = raw.trim().replace(/^['"]+|['"]+$/g, '');
+    item = item.replace(/[,:;]+$/, '');
+    if (!item || item.startsWith('-')) continue;
+    const abs = item.startsWith('/') || /^[A-Za-z]:\//.test(item);
+    if (!abs) continue;
+    if (item === rootAbs) {
+      found.push('.');
+      continue;
+    }
+    if (!item.startsWith(`${rootAbs}/`)) continue;
+    if (item.split('/').includes('..')) continue;
+    const rel = item.slice(rootAbs.length + 1).replace(/\/+$/, '');
+    if (rel) found.push(rel);
+  }
+  return found;
+}
+
 /** A tool path on its own line counts. A path outside this checkout counts, including inside a command. A one-token pattern that names no file does not. */
 function searchPaths(root, text) {
   const raw = String(text || '').replace(/\\/g, '/');
@@ -1116,6 +1208,7 @@ function searchPaths(root, text) {
       continue;
     }
     found.push(...commandPaths(line, rootAbs));
+    found.push(...underRootCommandPaths(line, rootAbs));
     kept.push(lineWithoutOutsidePaths(line, rootAbs));
   }
   found.push(...openPaths(kept.join('\n')));
@@ -1155,7 +1248,7 @@ export function lensBeforeResearch(root, toolName, text) {
     let wide = false;
     for (const file of paths) {
       if (searchStays(root, file, current)) continue;
-      const target = targetOf(file);
+      const target = targetOf(file, root);
       if (!target) continue;
       if (target.card === target.plane) { wide = true; continue; }
       if (target.card === current || leaving.includes(target.card)) continue;
@@ -1170,7 +1263,7 @@ export function lensBeforeResearch(root, toolName, text) {
   }
   const targets = [];
   for (const file of openPaths(spoken)) {
-    const target = targetOf(file);
+    const target = targetOf(file, root);
     if (target && !targets.includes(target.card)) targets.push(target.card);
   }
   if (targets.length === 1 && targets[0] === current) return null;
@@ -1372,7 +1465,7 @@ function overlaySeatLens(root, id, block) {
 }
 
 function lensCardText(root, held) {
-  const built = builtinCard(held.id);
+  const built = builtinCard(held.id, root);
   if (built) return overlaySeatLens(root, held.id, built);
   const platesDir = findPlatesDir(HERE);
   const plane = growPlane(held.id, platesDir, root);

@@ -22,7 +22,7 @@ It views one plane.
   └────────────────────────────────────────────────────────────┘
 ```
 
-A session starts on dev. The card is in `.xray/state/LENS.md`. The planes are dev, integration, domain, and ecosystem. A search inside the current card runs. A search of another plane returns the card and does not run. A path on no plane runs. A path outside this checkout runs. Opening a file on another plane switches to that card.
+A session starts on dev. The card is in `.xray/state/LENS.md`. The planes are the planes of the app under `GOGGLES_ROOT` (xray builtins when that root is the 0xray checkout; otherwise the consumer project). The plane names are still dev, integration, domain, and ecosystem. A search inside the current card runs. A search of another plane returns the card and does not run. A path on no plane runs. A path outside this checkout runs. Opening a file on another plane switches to that card.
 
 A thing on that plane has its own card. A card with no plate names the stamp-plate skill. Stamp one plate for that card.
 
