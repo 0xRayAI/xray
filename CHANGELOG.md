@@ -158,6 +158,14 @@
 - Tandem is several tracks at once, on both loops, and no seat waits for a nod. #683.
 - A card carries raci. A live card missing R or A is amber on its own mark. #684.
 
+## [4.2.1] - 2026-11-05
+
+### 🔄 Changes
+
+- Version bump
+
+---
+
 ## [4.2.0] - 2026-11-03
 
 ### 🔄 Changes
