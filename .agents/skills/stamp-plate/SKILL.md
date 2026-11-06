@@ -32,15 +32,22 @@ Plates are assembled, not drawn. Every visual part is an approved SVG in `plates
 - An ordered step gets a number tile and no icon. Every other card gets that kind's icon and no number. Never both.
 - `src/__tests__/unit/plates.test.ts` fails on an unknown icon kind, a missing SVG, a color or arrow style outside the kit, a card with both a number and an icon, or a shape or color that is not in the kit.
 
-## Flow axis HARD
+## System of design HARD
 
-Blaze Dist lock 2026-10-31. Every plate reads **left → right** like a domain diagram.
+Blaze 2026-11-06: the skill was lacking here. Model the system of design. The drawing is a process flow of the piping under view — how named parts connect — with no ambiguity and clarity for humans.
 
-- The spine is one horizontal row of stage cards joined by `──►` rails.
-- Not allowed as the main layout: INPUT / PROCESSING / OUTPUT layers stacked top to bottom, tall two-column tables (RULE | WHY, GUIDE | PATH), or a numbered 1..N list running down the page.
-- Vertical stacking is allowed only for short detail lines inside one stage card, a return rail above or below the spine, or one footer CTA row under the spine.
+Look at the docs plates first and copy that grammar: `docs-site/docs/plates/goggles.md`, `suit.md`, `kits.md`, `grokbot.md`, `centrifuge.md`. Those show boxed parts, labeled joins ("looks down", "points at", "they snap on"), and a refused or not-this box when the boundary matters.
+
+- Show what each part is, how it is made, and how it joins the others.
+- Joins are relationships, not ritual steps. "looks through" and "points at" are piping. "Open the skill → write the file → run look" is a howto spine — do not draw that as the face.
+- Do not stack INPUT / PROCESSING / OUTPUT as the main layout. Do not use a tall two-column table (RULE | WHY, GUIDE | PATH) or a numbered 1..N list as the drawing.
 - Dist edu plates use `plate_type: domain model` or `state flow`. A `pipeline` plate keeps INPUT and OUTPUT but puts INPUT on the left and OUTPUT on the right, never as layer blocks.
-- The X kit PNG (`docs-site/static/plates/x/<id>.png`) must match the `.md` exactly: same nodes, same order, same edges. The renderer lays the spine out left to right.
+- The X kit PNG (`docs-site/static/plates/x/<id>.png`) must match the `.md` exactly: same nodes, same order, same edges.
+
+## Flow axis
+
+Read left to right when the join is a relationship across parts. Vertical stack is fine when it shows composition or a view looking down (see `suit.md`, `centrifuge.md`). Detail lines live inside a part box.
+
 
 ## Plate
 

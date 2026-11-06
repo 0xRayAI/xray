@@ -19,7 +19,7 @@ Plates have a type. A domain model plate shows how named parts fit. A state flow
 
 ## Domain model
 
-[Goggles](./goggles.md) · [Suit](./suit.md) · [Kits](./kits.md) · [Host Pack](./host-pack.md) · [Glossary](./glossary.md) · [Grok Bot](./grokbot.md) · [Centrifuge](./centrifuge.md) · [AI Fleet Ops](./ai-fleet-ops.md) · [Fleet Ops Hub](./fleet-ops-hub.md) · [Guides Map](./guides-map.md)
+[Goggles](./goggles.md) · [Stamp plate](./stamp-plate.md) · [Suit](./suit.md) · [Kits](./kits.md) · [Host Pack](./host-pack.md) · [Glossary](./glossary.md) · [Grok Bot](./grokbot.md) · [Centrifuge](./centrifuge.md) · [AI Fleet Ops](./ai-fleet-ops.md) · [Fleet Ops Hub](./fleet-ops-hub.md) · [Guides Map](./guides-map.md)
 
 ## State flow
 
@@ -27,7 +27,7 @@ Plates have a type. A domain model plate shows how named parts fit. A state flow
 
 ## Pipeline
 
-[Routing](./routing.md) · [Fleet routing](./fleet-routing.md) · [Governance](./governance.md) · [Boot](./boot.md) · [Orchestration](./orchestration.md) · [Processor](./processor.md) · [Reporting](./reporting.md) · [Memory recall](./memory-recall.md) · [Stamp plate](./stamp-plate.md) · [Ground](./ground.md) · [Synthesis](./synthesis.md) · [Fleet](./fleet.md)
+[Routing](./routing.md) · [Fleet routing](./fleet-routing.md) · [Governance](./governance.md) · [Boot](./boot.md) · [Orchestration](./orchestration.md) · [Processor](./processor.md) · [Reporting](./reporting.md) · [Memory recall](./memory-recall.md) · [Ground](./ground.md) · [Synthesis](./synthesis.md) · [Fleet](./fleet.md)
 
 The planes are dev, integration, domain, and ecosystem. Each drawing above is a card on one of those planes. A plate id is not a plane.
 

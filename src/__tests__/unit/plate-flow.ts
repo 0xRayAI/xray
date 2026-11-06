@@ -428,14 +428,22 @@ export function parsePlateFlow(lines: string[]): PlateFlow {
       const b = ordered[i + 1];
       if (!a || !b) continue;
       let linked = false;
+      const labels: string[] = [];
       for (let r = Math.max(a.top, b.top); r <= Math.min(a.bot, b.bot); r += 1) {
         const seg = (lines[r] ?? '').slice(a.right + 1, b.left);
-        if (seg.includes('─') || seg.includes('→')) linked = true;
+        if (seg.includes('─') || seg.includes('→') || seg.includes('►')) linked = true;
+        const text = [...seg]
+          .map((ch) => (BOX_CHARS.has(ch) || '→►◀◄'.includes(ch) ? ' ' : ch))
+          .join('')
+          .split(/\s+/)
+          .filter(Boolean)
+          .join(' ');
+        if (text) labels.push(text);
       }
       if (linked) {
         const from = index.get(a);
         const to = index.get(b);
-        if (from && to) raw.push([from, to, '']);
+        if (from && to) raw.push([from, to, labels.join(' ')]);
       }
     }
   }
@@ -470,6 +478,9 @@ export function parsePlateFlow(lines: string[]): PlateFlow {
     const hi = Math.max(sbox.bot, dbox.top);
     for (let r = lo + 1; r < hi; r += 1) labelRows.add(r);
     if (dst[0] < src[0]) for (let r = dbox.top; r <= sbox.bot; r += 1) labelRows.add(r);
+    if (dst[0] === src[0]) {
+      for (let r = Math.max(sbox.top, dbox.top); r <= Math.min(sbox.bot, dbox.bot); r += 1) labelRows.add(r);
+    }
   }
 
   const notes: string[] = [];

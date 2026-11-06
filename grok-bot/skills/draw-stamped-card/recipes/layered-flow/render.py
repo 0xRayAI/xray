@@ -1001,9 +1001,19 @@ def draw_flow_arrows(img: Image.Image, flow: dict, bands: list[dict], font: Imag
         key = (src["layer"], src["row"], dst["layer"], dst["row"], edge["label"])
         groups.setdefault(key, []).append((src, dst))
     inset = layout_num("arrowInset")
-    for (src, dst, _label) in horizontal:
+    for (src, dst, label) in horizontal:
         y = (src["rect"][1] + src["rect"][3]) / 2
         draw_right_arrow(img, src["rect"][2] + inset, dst["rect"][0] - inset, y)
+        if label:
+            mx = (src["rect"][2] + dst["rect"][0]) / 2
+            paint_text(
+                img,
+                (mx - run_width(label, font) / 2, y - layout_num("labelY") - font.size),
+                label,
+                font,
+                INK,
+                BARLOW_SEMI,
+            )
     for key, pairs in groups.items():
         _draw_group(img, pairs, font, key[4])
     for back in backs:
@@ -1042,6 +1052,26 @@ def _draw_group(img: Image.Image, pairs: list, font: ImageFont.FreeTypeFont, lab
                 draw_down_arrow(img, x1, mid, y1 - pad)
                 place_junction(img, x0, mid)
                 place_junction(img, x1, mid)
+        return
+    if len(sources) == 1 and len(targets) == 1:
+        src, dst = sources[0], targets[0]
+        x0, y0 = center_bottom(src["rect"])
+        x1, y1 = center_top(dst["rect"])
+        under = src["rect"][0] < x1 < src["rect"][2]
+        if under or abs(x0 - x1) < slack:
+            drop_x = x1 if under else x0
+            draw_down_arrow(img, drop_x, y0 + pad, y1 - pad)
+            if label:
+                paint_text(img, (drop_x + lx, (y0 + y1) / 2 - ly), label, font, INK, BARLOW_SEMI)
+            return
+        mid = (y0 + y1) / 2
+        draw_stem(img, x0, y0 + pad, mid)
+        draw_bar(img, x0, x1, mid)
+        draw_down_arrow(img, x1, mid, y1 - pad)
+        place_junction(img, x0, mid)
+        place_junction(img, x1, mid)
+        if label:
+            paint_text(img, ((x0 + x1) / 2 - run_width(label, font) / 2, mid - ly), label, font, INK, BARLOW_SEMI)
         return
     bottoms = [center_bottom(card["rect"]) for card in sources]
     tops = [center_top(card["rect"]) for card in targets]
