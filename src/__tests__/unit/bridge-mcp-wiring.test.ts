@@ -221,6 +221,58 @@ describe('bridge-mcp-wiring', () => {
     }
   });
 
+  it('repins another checkout mcp-launch.cjs onto the installed package', () => {
+    const targetDir = mkdtempSync(path.join(os.tmpdir(), 'xray-mcp-foreign-'));
+    const other = mkdtempSync(path.join(os.tmpdir(), 'xray-mcp-other-'));
+    const launcher = path.join(targetDir, 'node_modules', '0xray', 'scripts', 'node', 'mcp-launch.cjs');
+    const goggles = path.join(targetDir, 'node_modules', '0xray', 'scripts', 'mjs', 'run-goggles-mcp.mjs');
+    const repertoire = path.join(targetDir, 'node_modules', '@0xray', 'repertoire', 'dist', 'mcp', 'server.js');
+    const foreignLaunch = path.join(other, 'scripts', 'node', 'mcp-launch.cjs');
+    const foreignGoggles = path.join(other, 'scripts', 'mjs', 'run-goggles-mcp.mjs');
+    const foreignRepertoire = path.join(other, 'scripts', 'mjs', 'run-repertoire-mcp.mjs');
+    for (const file of [launcher, goggles, repertoire, foreignLaunch, foreignGoggles, foreignRepertoire]) {
+      mkdirSync(path.dirname(file), { recursive: true });
+      writeFileSync(file, '#!/usr/bin/env node\n');
+    }
+    const scoped = (script: string) => ({
+      command: 'node',
+      args: [foreignLaunch, '--keep', 'PATH,HOME,XRAY_ROOT', '--', 'node', script],
+    });
+    writeFileSync(
+      path.join(targetDir, '.mcp.json'),
+      `${JSON.stringify({
+        mcpServers: {
+          goggles: scoped(foreignGoggles),
+          repertoire: scoped(foreignRepertoire),
+          'xray-architect-tools': {
+            command: 'node',
+            args: [foreignLaunch, '--keep', 'PATH,HOME,XRAY_ROOT', '--', 'npx', '-y', '0xray@4.1.4', 'mcp', 'architect-tools'],
+          },
+        },
+      })}\n`,
+    );
+    try {
+      wiring.deployPortableProjectMcpJson(targetDir);
+      const mcp = JSON.parse(readFileSync(path.join(targetDir, '.mcp.json'), 'utf8')) as {
+        mcpServers: Record<string, { args?: string[] }>;
+      };
+      expect(mcp.mcpServers.goggles.args?.[0]).toBe(launcher);
+      expect(innerAfterScoped(mcp.mcpServers.goggles.args || [])).toEqual(['node', goggles]);
+      expect(mcp.mcpServers.repertoire.args?.[0]).toBe(launcher);
+      expect(innerAfterScoped(mcp.mcpServers.repertoire.args || [])).toEqual(['node', repertoire]);
+      expect(innerAfterScoped(mcp.mcpServers['xray-architect-tools'].args || [])).toEqual([
+        'npx',
+        '-y',
+        '0xray@4.1.4',
+        'mcp',
+        'architect-tools',
+      ]);
+    } finally {
+      rmSync(targetDir, { recursive: true, force: true });
+      rmSync(other, { recursive: true, force: true });
+    }
+  });
+
   it('uses node_modules/xray only when that legacy tree is the install', () => {
     const targetDir = mkdtempSync(path.join(os.tmpdir(), 'xray-mcp-legacy-'));
     const cli = path.join(targetDir, 'node_modules', 'xray', 'dist', 'cli', 'index.js');
