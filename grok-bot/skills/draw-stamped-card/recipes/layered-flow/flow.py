@@ -289,12 +289,21 @@ def pick_targets(
     return uniq
 
 
-def horizontal_label_free(lines: list[str], a: Box, b: Box) -> bool:
+def horizontal_edge_label(lines: list[str], a: Box, b: Box) -> str | None:
+    found_rail = False
+    labels: list[str] = []
     for r in range(max(a.top, b.top), min(a.bot, b.bot) + 1):
-        seg = lines[r][a.right + 1:b.left]
-        if "─" in seg or "→" in seg:
-            return True
-    return False
+        line = lines[r] if r < len(lines) else ""
+        seg = line[a.right + 1:b.left]
+        if "─" in seg or "→" in seg or "►" in seg:
+            found_rail = True
+        chars = [" " if ch in BOX_CHARS or ch in "→►◀◄" else ch for ch in seg]
+        text = " ".join("".join(chars).split())
+        if text:
+            labels.append(text)
+    if not found_rail:
+        return None
+    return " ".join(labels)
 
 
 def outside_text(lines: list[str], boxes: list[Box], r: int) -> list[str]:
@@ -470,8 +479,9 @@ def parse_flow(lines: list[str]) -> dict:
     for row_nodes in _rows_of(leaves, index):
         ordered = sorted(row_nodes, key=lambda n: n.left)
         for a, b in zip(ordered, ordered[1:]):
-            if horizontal_label_free(lines, a, b):
-                raw.append((index[a], index[b], ""))
+            label = horizontal_edge_label(lines, a, b)
+            if label is not None:
+                raw.append((index[a], index[b], label))
 
     for source, target, label in back_edges(lines, boxes, leaves):
         if source in index and target in index:
@@ -506,6 +516,9 @@ def parse_flow(lines: list[str]) -> dict:
             label_rows.add(r)
         if dst[0] < src[0]:
             for r in range(dbox.top, sbox.bot + 1):
+                label_rows.add(r)
+        if dst[0] == src[0]:
+            for r in range(max(sbox.top, dbox.top), min(sbox.bot, dbox.bot) + 1):
                 label_rows.add(r)
 
     notes: list[str] = []
