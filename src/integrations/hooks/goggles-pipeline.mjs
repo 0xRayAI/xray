@@ -514,6 +514,7 @@ function cardsNamed(lower) {
   for (const word of lower) {
     if (isCardName(word) && !found.includes(word)) found.push(word);
   }
+  if (found.length > 1 && found.includes('plane')) return found.filter((name) => name !== 'plane');
   return found;
 }
 
