@@ -427,6 +427,7 @@ export function liveDrift(block, root) {
   const held = Boolean(worn) && existsSync(join(root, worn));
   const packed = (rel) => held && (rel.startsWith('src/') || rel.startsWith('grok-bot/'));
   for (const rel of files) {
+    if (rel.startsWith('node_modules/')) continue;
     if (existsSync(join(root, rel))) continue;
     if (packed(rel)) continue;
     return `Drift: ${rel} is not there`;
@@ -1279,6 +1280,10 @@ export function lensBeforeResearch(root, toolName, text) {
   for (const file of openPaths(spoken)) {
     const target = targetOf(file, root);
     if (target && !targets.includes(target.card)) targets.push(target.card);
+  }
+  if (!targets.length) {
+    if (CARD_PLANES.includes(current)) return null;
+    return { gate: 'lens', decision: 'allow', reason: cardText(root, current) };
   }
   if (targets.length === 1 && targets[0] === current) return null;
   if (targets.length === 1) {
