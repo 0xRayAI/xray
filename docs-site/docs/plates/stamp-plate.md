@@ -39,4 +39,6 @@ Goggles views one plane. A lens is a card that points at a plate. Look opens bot
 
 Goggles views one plane and one card. The card lives in `.xray/state/LENS.md`. A lens is that card, written for the plane in view, and it names one plate. A stamped plate is the ASCII drawing in `docs-site/docs/plates/<id>.md` plus the kit PNG that matches it — open the stamp-plate skill to write that drawing. `npx 0xray look` opens the card and its plate. A card with no plate names this skill — stamp that one plate. Do not add a plane.
 
+Parts: looks through → lens-page, points at → stamp-plate
+
 stamped · 0xray 4.2.1

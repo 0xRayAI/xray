@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
-import { lookCards } from '../../integrations/hooks/goggles-pipeline.mjs';
+import { look, lookCards } from '../../integrations/hooks/goggles-pipeline.mjs';
 import { TOOLS, dispatchTool } from '../../integrations/hooks/goggles-mcp.mjs';
 
 const LAUNCHER = fileURLToPath(new URL('../../../scripts/mjs/run-goggles-mcp.mjs', import.meta.url));
@@ -63,6 +63,30 @@ describe('goggles MCP', () => {
     const missed = await dispatchTool('look', { plane: 'not-a-card' }, root);
     expect(missed.isError).toBe(true);
     expect(missed.payload.error.reason).toBe('Name one plane.');
+    rmSync(root, { recursive: true, force: true });
+  });
+
+  it('look returns the neighbor plates', async () => {
+    const { payload, isError } = await dispatchTool('look', { plane: 'routing' }, tempRoot());
+    expect(isError).toBe(false);
+    expect(payload.content.card).toBe('routing');
+    expect(payload.content.plates).toEqual(['orchestration', 'processor']);
+  });
+
+  it('a part of the current plate hops to that card', async () => {
+    const root = tempRoot();
+    const opened = await dispatchTool('look', { plane: 'stamp-plate' }, root);
+    expect(opened.isError).toBe(false);
+    expect(opened.payload.content.card).toBe('stamp-plate');
+    const hop = await dispatchTool('look', { plane: 'looks through' }, root);
+    expect(hop.isError).toBe(false);
+    expect(hop.payload.content.card).toBe('lens-page');
+    await dispatchTool('look', { plane: 'stamp-plate' }, root);
+    const back = await dispatchTool('look', { plane: 'points-at' }, root);
+    expect(back.isError).toBe(false);
+    expect(back.payload.content.card).toBe('stamp-plate');
+    expect(look(['looks', 'through'], root).text).toContain('Card: lens-page');
+    expect(look(['dev', 'integration'], root).text).toBe('Name one plane.');
     rmSync(root, { recursive: true, force: true });
   });
 

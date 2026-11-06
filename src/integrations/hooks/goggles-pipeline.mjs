@@ -490,12 +490,19 @@ function gogglesAnswer(argv, projectRoot, hold) {
   const named = cardsNamed(lower);
   const root = lensRoot(projectRoot);
   let id = '';
+  let hopped = false;
+  if (named.length > 1) return { text: 'Name one plane.', cards: null };
   if (named.length === 1) id = named[0];
   else if (words.length === 0) {
     if (hold) ensurePlane(root);
     id = currentCard(root);
-  } else return { text: 'Name one plane.', cards: null };
-  if (hold && named.length === 1) holdPlane(root, id, { chosen: true });
+  } else {
+    const target = partCard(root, words.join(' '));
+    if (!target) return { text: 'Name one plane.', cards: null };
+    id = target;
+    hopped = true;
+  }
+  if (hold && (named.length === 1 || hopped)) holdPlane(root, id, { chosen: true });
   const card = presentCard(root, id);
   if (!card) return { text: 'Name one plane.', cards: null };
   return { text: card.text, cards: [card.view] };
@@ -515,6 +522,41 @@ function cardsNamed(lower) {
     if (isCardName(word) && !found.includes(word)) found.push(word);
   }
   return found;
+}
+
+function partKey(text) {
+  return String(text || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
+
+function platePartMap(body) {
+  const map = new Map();
+  for (const line of String(body || '').split(/\r?\n/)) {
+    const row = line.match(/^Parts:\s*(.+)$/);
+    if (!row) continue;
+    for (const pair of row[1].split(',')) {
+      const bits = pair.split(/\s*(?:→|->)\s*/);
+      if (bits.length !== 2) continue;
+      const key = partKey(bits[0]);
+      const card = bits[1].trim();
+      if (key && isCardName(card)) map.set(key, card);
+    }
+  }
+  return map;
+}
+
+function partCard(root, phrase) {
+  const key = partKey(phrase);
+  if (!key) return '';
+  const current = currentCard(root);
+  const dir = findPlatesDir(HERE);
+  if (!dir || !current) return '';
+  const abs = join(dir, `${current}.md`);
+  if (!existsSync(abs)) return '';
+  try {
+    return platePartMap(readFileSync(abs, 'utf8')).get(key) || '';
+  } catch {
+    return '';
+  }
 }
 
 function listedFiles(plane) {
