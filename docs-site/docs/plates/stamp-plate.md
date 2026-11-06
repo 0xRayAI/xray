@@ -6,16 +6,37 @@ plate_type: domain model
 
 # Stamp plate
 
-Goggles look at one plane. Stamp the plate, name the lens, then look opens both.
+Goggles views one plane. A lens is a card that points at a plate. Look opens both.
 
 ```
-┌──────────────┐     ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│  GOGGLES     │────►│  STAMP PLATE │────►│  LENS CARD   │────►│  LOOK FLOW   │
-│  one plane   │     │  open skill  │     │  write card  │     │  opens both  │
-│  one card    │     │  ASCII+PNG   │     │  in LENS.md  │     │  gap→stamp   │
-└──────────────┘     └──────────────┘     └──────────────┘     └──────────────┘
+  ┌──────────────────────────────────────────────────────────────────┐
+  │ GOGGLES · views one plane                                        │
+  ├──────────────────────────────────────────────────────────────────┤
+  │ · one card at a time                                             │
+  │ · the card is in LENS.md                                         │
+  └────────────────────────────────┬─────────────────────────────────┘
+                                   │ looks through                    
+                                   v                                  
+  ┌──────────────────────────┐ points at ┌───────────────────────────┐
+  │ LENS                     │──────────►│ STAMPED PLATE             │
+  ├──────────────────────────┤           ├───────────────────────────┤
+  │ · write one card         │           │ · open the stamp-plate    │
+  │   in LENS.md             │           │   skill                   │
+  │ · name that plate        │           │ · ASCII into plates/id.md │
+  │                          │           │ · kit PNG matches ASCII   │
+  └────────────┬─────────────┘           └─────────────┬─────────────┘
+               │                                       │              
+               └───────────────────┬───────────────────┘              
+                                   │ look opens both                  
+                                   v                                  
+  ┌──────────────────────────────────────────────────────────────────┐
+  │ LOOK · the card and its plate                                    │
+  ├──────────────────────────────────────────────────────────────────┤
+  │ · a card with no plate names the stamp-plate skill               │
+  │ · stamp that one plate · do not add a plane                      │
+  └──────────────────────────────────────────────────────────────────┘
 ```
 
-Goggles views one plane and one card. A stamped plate is the ASCII drawing plus the kit PNG that matches it — open the stamp-plate skill, stamp left → right into `docs-site/docs/plates/<id>.md`, then render the X kit. A lens is one card in `.xray/state/LENS.md` that points at that plate. `npx 0xray look` opens the card and its plate. A card with no plate names this skill — stamp that one plate. Do not add a plane.
+Goggles views one plane and one card. The card lives in `.xray/state/LENS.md`. A lens is that card, written for the plane in view, and it names one plate. A stamped plate is the ASCII drawing in `docs-site/docs/plates/<id>.md` plus the kit PNG that matches it — open the stamp-plate skill to write that drawing. `npx 0xray look` opens the card and its plate. A card with no plate names this skill — stamp that one plate. Do not add a plane.
 
 stamped · 0xray 4.2.1
