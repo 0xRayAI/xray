@@ -296,9 +296,58 @@ function mcpSubcommand(inner) {
  * A checkout `dist/cli` launch is replaced with the installed package.
  * A legacy `node_modules/xray` launch is replaced only when `node_modules/0xray` exists.
  */
+function installedLauncher(targetDir) {
+  if (!targetDir) return "";
+  const file = path.join(targetDir, "node_modules", "0xray", "scripts", "node", "mcp-launch.cjs");
+  return fs.existsSync(file) ? file : "";
+}
+
+function isOtherCheckoutFile(token, targetDir) {
+  const normalized = normalizeLaunchToken(token);
+  if (!normalized || !path.isAbsolute(normalized) || !targetDir) return false;
+  const resolved = path.resolve(normalized);
+  const home = path.resolve(targetDir);
+  if (resolved === home || resolved.startsWith(`${home}${path.sep}`)) return false;
+  const installed = path.resolve(targetDir, "node_modules", "0xray");
+  if (resolved === installed || resolved.startsWith(`${installed}${path.sep}`)) return false;
+  return (
+    resolved.endsWith(`${path.sep}mcp-launch.cjs`) ||
+    resolved.endsWith(`${path.sep}run-goggles-mcp.mjs`) ||
+    resolved.endsWith(`${path.sep}run-repertoire-mcp.mjs`) ||
+    resolved.includes(`${path.sep}repertoire${path.sep}dist${path.sep}mcp${path.sep}server.js`)
+  );
+}
+
+function hasOtherCheckoutLaunch(server, targetDir) {
+  return commandTokens(server).some((token) => isOtherCheckoutFile(token, targetDir));
+}
+
+function packageScript(targetDir, kind) {
+  if (kind === "goggles") {
+    const file = path.join(targetDir, "node_modules", "0xray", "scripts", "mjs", "run-goggles-mcp.mjs");
+    return fs.existsSync(file) ? file : "";
+  }
+  const file = path.join(targetDir, "node_modules", "@0xray", "repertoire", "dist", "mcp", "server.js");
+  return fs.existsSync(file) ? file : "";
+}
+
+function innerFromOtherCheckout(inner, targetDir) {
+  const joined = [inner.command, ...(inner.args || [])].join(" ");
+  if (joined.includes("run-goggles-mcp.mjs")) {
+    const file = packageScript(targetDir, "goggles");
+    if (file) return { command: "node", args: [file] };
+  }
+  if (joined.includes("run-repertoire-mcp.mjs") || joined.includes(`${path.sep}repertoire${path.sep}`)) {
+    const file = packageScript(targetDir, "repertoire");
+    if (file) return { command: "node", args: [file] };
+  }
+  return inner;
+}
+
 function shouldRepinToInstalledCli(inner, targetDir) {
   if (!inner || hasVersionPin(inner)) return false;
   if (isCheckoutDistCliLaunch(inner)) return true;
+  if (hasOtherCheckoutLaunch(inner, targetDir)) return true;
   if (!isLegacyXrayCliLaunch(inner)) return false;
   const cli = localXrayCli(targetDir);
   return Boolean(cli && normalizeLaunchToken(cli).includes("/node_modules/0xray/"));
@@ -497,6 +546,7 @@ function mergeUserWinsServer(framework, user, targetDir) {
   if (inner && shouldRepinToInstalledCli(inner, targetDir)) {
     const mcpCmd = mcpSubcommand(inner);
     if (mcpCmd) inner = pinnedMcpLaunch(targetDir, mcpCmd);
+    else if (hasOtherCheckoutLaunch(inner, targetDir)) inner = innerFromOtherCheckout(inner, targetDir);
   }
   if (!inner) return framework;
   const mergedEnv = mergeScopedEnv([
@@ -506,7 +556,11 @@ function mergeUserWinsServer(framework, user, targetDir) {
     user.env,
     user.environment,
   ]);
+  const foreign = user && !hasVersionPin(user) && hasOtherCheckoutLaunch(user, targetDir) && installedLauncher(targetDir);
+  const previousRoot = launcherPackageRoot;
+  if (foreign) launcherPackageRoot = path.join(targetDir, "node_modules", "0xray");
   const wrapped = wrapScopedLaunch(inner, mergedEnv);
+  launcherPackageRoot = previousRoot;
   if (usesCommandArray(user) || usesCommandArray(framework)) {
     next.command = wrapped.commandList;
     delete next.args;
