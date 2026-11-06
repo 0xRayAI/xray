@@ -147,6 +147,7 @@ try {
   check('boot is a thing card', boot.startsWith('Card: boot\n'));
   check('boot sits on integration', boot.includes('Plane: integration') && boot.includes('From: integration'));
   check('boot names its plate', boot.includes('Plate: docs-site/docs/plates/boot.md'));
+  check('boot opens the plate drawing', boot.includes('INPUT LAYER') && boot.includes('BootResult'));
   check('boot does not ask for a stamp', !boot.includes('Stamp:'));
   check('the boot plate file exists', existsSync(join(repo, 'docs-site/docs/plates/boot.md')));
 

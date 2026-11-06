@@ -315,12 +315,26 @@ function platePath(id) {
   return existsSync(abs) ? join('docs-site', 'docs', 'plates', `${id}.md`) : '';
 }
 
+function plateDrawing(id) {
+  const dir = findPlatesDir(HERE);
+  if (!dir) return '';
+  const abs = join(dir, `${id}.md`);
+  if (!existsSync(abs)) return '';
+  try {
+    return readFileSync(abs, 'utf8').trim();
+  } catch {
+    return '';
+  }
+}
+
 function showCard(id, block) {
   if (CARD_PLANES.includes(id)) return block;
   const path = platePath(id);
   let shown = block;
   if (path && /^Plate:[ \t]*$/m.test(shown)) shown = shown.replace(/^Plate:[ \t]*$/m, `Plate: ${path}`);
   if (!path && !shown.includes('Stamp:')) shown = `${shown}\n${STAMP_LINE}`;
+  const drawing = path ? plateDrawing(id) : '';
+  if (drawing) shown = `${shown}\n\n${drawing}`;
   return shown;
 }
 
