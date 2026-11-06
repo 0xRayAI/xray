@@ -315,12 +315,26 @@ function platePath(id) {
   return existsSync(abs) ? join('docs-site', 'docs', 'plates', `${id}.md`) : '';
 }
 
+function plateDrawing(id) {
+  const dir = findPlatesDir(HERE);
+  if (!dir) return '';
+  const abs = join(dir, `${id}.md`);
+  if (!existsSync(abs)) return '';
+  try {
+    return readFileSync(abs, 'utf8').trim();
+  } catch {
+    return '';
+  }
+}
+
 function showCard(id, block) {
   if (CARD_PLANES.includes(id)) return block;
   const path = platePath(id);
   let shown = block;
   if (path && /^Plate:[ \t]*$/m.test(shown)) shown = shown.replace(/^Plate:[ \t]*$/m, `Plate: ${path}`);
   if (!path && !shown.includes('Stamp:')) shown = `${shown}\n${STAMP_LINE}`;
+  const drawing = path ? plateDrawing(id) : '';
+  if (drawing) shown = `${shown}\n\n${drawing}`;
   return shown;
 }
 
@@ -413,6 +427,7 @@ export function liveDrift(block, root) {
   const held = Boolean(worn) && existsSync(join(root, worn));
   const packed = (rel) => held && (rel.startsWith('src/') || rel.startsWith('grok-bot/'));
   for (const rel of files) {
+    if (rel.startsWith('node_modules/')) continue;
     if (existsSync(join(root, rel))) continue;
     if (packed(rel)) continue;
     return `Drift: ${rel} is not there`;
@@ -1265,6 +1280,10 @@ export function lensBeforeResearch(root, toolName, text) {
   for (const file of openPaths(spoken)) {
     const target = targetOf(file, root);
     if (target && !targets.includes(target.card)) targets.push(target.card);
+  }
+  if (!targets.length) {
+    if (CARD_PLANES.includes(current)) return null;
+    return { gate: 'lens', decision: 'allow', reason: cardText(root, current) };
   }
   if (targets.length === 1 && targets[0] === current) return null;
   if (targets.length === 1) {
