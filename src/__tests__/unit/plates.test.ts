@@ -85,6 +85,21 @@ describe('pipeline plates', () => {
       'control-plane',
       'spend-governance',
       'stand-up',
+      'pipeline',
+      'component',
+      'artifact',
+      'watcher',
+      'hook',
+      'facet',
+      'feature',
+      'factory',
+      'mill',
+      'hangar',
+      'plant',
+      'seat',
+      'board',
+      'lens',
+      'plane',
     ]);
     for (const id of PLATE_IDS) {
       const plate = loadPlate(id);
@@ -126,6 +141,21 @@ describe('pipeline plates', () => {
     expect(recallPlate('fleet ops hub')?.id).toBe('fleet-ops-hub');
     expect(recallPlate('guides map')?.id).toBe('guides-map');
     expect(recallPlate('control plane plate')?.id).toBe('control-plane');
+    expect(recallPlate('pipeline plate')?.id).toBe('pipeline');
+    expect(recallPlate('component plate')?.id).toBe('component');
+    expect(recallPlate('artifact plate')?.id).toBe('artifact');
+    expect(recallPlate('watcher plate')?.id).toBe('watcher');
+    expect(recallPlate('hook plate')?.id).toBe('hook');
+    expect(recallPlate('facet plate')?.id).toBe('facet');
+    expect(recallPlate('feature plate')?.id).toBe('feature');
+    expect(recallPlate('factory plate')?.id).toBe('factory');
+    expect(recallPlate('mill plate')?.id).toBe('mill');
+    expect(recallPlate('hangar plate')?.id).toBe('hangar');
+    expect(recallPlate('plant plate')?.id).toBe('plant');
+    expect(recallPlate('seat plate')?.id).toBe('seat');
+    expect(recallPlate('board plate')?.id).toBe('board');
+    expect(recallPlate('sight lens type')?.id).toBe('lens');
+    expect(recallPlate('plane slot plate')?.id).toBe('plane');
     expect(recallPlate('spend governance')?.id).toBe('spend-governance');
     expect(recallPlate('stand up a fleet')?.id).toBe('stand-up');
     expect(recallPlate('house processor boot')?.id).not.toBe('house');
@@ -321,6 +351,10 @@ describe('pipeline plates', () => {
           expect(RIGHT_EDGE.has(edge[box.right] ?? ''), `${id} right ${row}`).toBe(true);
         }
       }
+      if (ASCII_FIRST.has(id)) {
+        expect(existsSync(png), id).toBe(false);
+        continue;
+      }
       const embedded = JSON.parse(pngText(readFileSync(png), 'xray-plate-flow') ?? 'null') as ReturnType<typeof parsePlateFlow>;
       const flow = parsePlateFlow(lines);
       expect(embedded, id).toEqual(flow);
@@ -380,7 +414,7 @@ describe('pipeline plates', () => {
     expect(bold.has(codePoint('≤'))).toBe(true);
     const missing: string[] = [];
     for (const id of PLATE_IDS) {
-      if (NO_LENS_CARD.has(id)) continue;
+      if (NO_LENS_CARD.has(id) || ASCII_FIRST.has(id)) continue;
       const md = readFileSync(join(process.cwd(), 'docs-site/docs/plates', `${id}.md`), 'utf8');
       const frontmatter = /^---\n([\s\S]*?)\n---/.exec(md)?.[1] ?? '';
       const title = (/^title:\s*(.+)\s*$/m.exec(frontmatter)?.[1] ?? id).toUpperCase();
@@ -506,6 +540,7 @@ function readKit(): PlateKit {
 }
 
 const NO_LENS_CARD = new Set(['review', 'goggles', 'suit', 'kits', 'host-pack', 'glossary']);
+const ASCII_FIRST = new Set(['pipeline', 'component', 'artifact', 'watcher', 'hook', 'facet', 'feature', 'factory', 'mill', 'hangar', 'plant', 'seat', 'board', 'lens', 'plane']);
 const LEFT_SIDE = new Set(['│', '├', '┼']);
 const RIGHT_EDGE = new Set(['│', '┐', '┘', '┤', '┼']);
 

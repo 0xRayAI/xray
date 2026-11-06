@@ -71,6 +71,21 @@ const PLATE_IDS = Object.freeze([
   "control-plane",
   "spend-governance",
   "stand-up",
+  "pipeline",
+  "component",
+  "artifact",
+  "watcher",
+  "hook",
+  "facet",
+  "feature",
+  "factory",
+  "mill",
+  "hangar",
+  "plant",
+  "seat",
+  "board",
+  "lens",
+  "plane",
 ]);
 
 /** Id token, then extra phrases. Equal top scores recall nothing. */
@@ -376,6 +391,21 @@ const CUES = {
     [/stand up plate/i, 6],
     [/plates\/stand-up/i, 6],
   ],
+  pipeline: [[/pipeline plate/i, 6], [/plates\/pipeline/i, 6]],
+  component: [[/component plate/i, 6], [/plates\/component/i, 6]],
+  artifact: [[/artifact plate/i, 6], [/plates\/artifact/i, 6]],
+  watcher: [[/watcher plate/i, 6], [/plates\/watcher/i, 6]],
+  hook: [[/hook plate/i, 6], [/plates\/hook/i, 6]],
+  facet: [[/facet plate/i, 6], [/plates\/facet/i, 6]],
+  feature: [[/feature plate/i, 6], [/plates\/feature/i, 6]],
+  factory: [[/factory plate/i, 6], [/plates\/factory/i, 6]],
+  mill: [[/mill plate/i, 6], [/plates\/mill/i, 6]],
+  hangar: [[/hangar plate/i, 6], [/plates\/hangar/i, 6]],
+  plant: [[/plant plate/i, 6], [/plates\/plant/i, 6]],
+  seat: [[/seat plate/i, 6], [/plates\/seat/i, 6]],
+  board: [[/board plate/i, 6], [/plates\/board/i, 6]],
+  lens: [[/sight lens type/i, 6], [/plates\/lens/i, 6]],
+  plane: [[/plane slot plate/i, 6], [/plates\/plane/i, 6]],
 };
 
 function platesDir() {

@@ -71,6 +71,21 @@ export const PLATE_IDS = [
   'control-plane',
   'spend-governance',
   'stand-up',
+  'pipeline',
+  'component',
+  'artifact',
+  'watcher',
+  'hook',
+  'facet',
+  'feature',
+  'factory',
+  'mill',
+  'hangar',
+  'plant',
+  'seat',
+  'board',
+  'lens',
+  'plane',
 ] as const;
 
 export type PlateId = (typeof PLATE_IDS)[number];

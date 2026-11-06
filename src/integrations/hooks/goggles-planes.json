@@ -298,5 +298,23 @@
     "files": ["grok-bot/package.json"],
     "skills": "grokbot, house, bifrost",
     "plates": ["bifrost", "house"]
-  }
+  },
+  "pipeline": { "plane": "domain", "skills": "pipeline", "plates": ["component", "artifact"] },
+  "component": { "plane": "domain", "skills": "component", "plates": ["pipeline", "artifact"] },
+  "artifact": { "plane": "domain", "skills": "artifact", "plates": ["pipeline", "component"] },
+  "watcher": { "plane": "domain", "files": ["house/live/tools/inbox-watch.sh"], "skills": "watcher", "plates": ["hook", "board"] },
+  "hook": { "plane": "integration", "skills": "hook", "plates": ["watcher", "lens"] },
+  "facet": { "plane": "domain", "skills": "facet", "plates": ["feature"] },
+  "feature": { "plane": "domain", "skills": "feature", "plates": ["component", "facet"] },
+  "factory": { "plane": "ecosystem", "skills": "factory", "plates": ["mill", "plant"] },
+  "mill": { "plane": "ecosystem", "skills": "mill", "plates": ["factory", "plant", "hangar"] },
+  "hangar": { "plane": "ecosystem", "skills": "hangar", "plates": ["mill"] },
+  "plant": { "plane": "ecosystem", "skills": "plant", "plates": ["mill"] },
+  "seat": { "plane": "ecosystem", "skills": "seat", "plates": ["board"] },
+  "board": { "plane": "ecosystem", "files": ["house/live/feed/live_board.py"], "skills": "board", "plates": ["seat"] },
+  "lens": { "plane": "domain", "skills": "lens, lens-page, stamp-plate", "plates": ["plane", "stamp-plate"] },
+  "plane": { "plane": "domain", "skills": "plane, lens", "plates": ["lens"] },
+  "goggles": { "plane": "domain", "skills": "lens-gate, stamp-plate, lens", "plates": ["lens", "plane"] },
+  "fleet": { "plane": "ecosystem", "skills": "fleet, fleet-ops-hub, ai-fleet-ops", "plates": ["fleet-ops-hub", "ai-fleet-ops", "fleet-routing"] },
+  "suit": { "plane": "domain", "skills": "suit-wear, suit-settings, suit-organs", "plates": ["suit-wear", "suit-settings", "suit-organs"] }
 }

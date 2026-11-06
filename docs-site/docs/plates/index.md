@@ -60,4 +60,10 @@ These six are the compact path that was opened, plus the hook chain. Each one is
 
 Each one is a card. One top file. The planes stay dev, integration, domain, and ecosystem.
 
+## Sight
+
+[Pipeline](./pipeline.md) · [Component](./component.md) · [Artifact](./artifact.md) · [Watcher](./watcher.md) · [Hook](./hook.md) · [Facet](./facet.md) · [Feature](./feature.md) · [Factory](./factory.md) · [Mill](./mill.md) · [Hangar](./hangar.md) · [Plant](./plant.md) · [Seat](./seat.md) · [Board](./board.md) · [Lens](./lens.md) · [Plane](./plane.md)
+
+One noun, one view. The four job names stay slots, not drawings.
+
 stamped · 0xray 4.1.5
