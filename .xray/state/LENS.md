@@ -186,11 +186,11 @@ Worn:
 Card: stamp-plate
 Plane: domain
 From: domain
-Digest: A stamped plate is one drawing for one plane.
+Digest: Goggles look at one plane. Stamp the plate, name the lens, then look opens both.
 Plate: docs-site/docs/plates/stamp-plate.md
 Plates: review
-Entry: one plane that was opened
-Exit: the plate the lens can open
+Entry: view one plane
+Exit: look opens card + plate
 Files: .agents/skills/stamp-plate/SKILL.md
 Skills: stamp-plate, lens-gate, record-map, site-manual
 Setup:
