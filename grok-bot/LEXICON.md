@@ -247,3 +247,9 @@ Every bolded term in the pack OP-PROC and runbooks is defined here (`bifrost che
 | Term | Bucket | Plain |
 |------|--------|-------|
 | **goggles** | Workstream | Nibbler's scout lenses: how Nibbler sees. Only Nibbler wears them every turn. Forge and critic stay eng (mill, inspect, Strict) and do not wear goggles each wake or turn. Suit-tree hygiene (`npm install`, `npx 0xray wear`) is not wearing goggles. Not `plant:scout`. Rule: [OP-PROC](OP-PROC.md#goggles). |
+
+## Lexicon add (2026-11-08 — sweep)
+
+| Term | Bucket | Plain |
+|------|--------|-------|
+| **sweep** | Workstream | Critic owns the backlog sweep. Every open issue and pull has a status and a next owner. Done means closed, with a reason. Fourteen days with no beat is a proposed close to Blaze. A squash keeps `Closes #`. Overnight triage files findings and does not merge. Rule: [OP-PROC](OP-PROC.md#sweep). |
