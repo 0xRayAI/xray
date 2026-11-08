@@ -35,7 +35,7 @@ import { clockStamp, writeStartAfter } from './chicago-stamp.mjs';
 import { applySchedule, normalizeFleetMode, normalizeFleetRoute, scheduleBoundary, wakeAllowed } from './fleet-mode.mjs';
 import { createBatch } from './pr-batch.mjs';
 import { idsToAck, idsToAckOnClose } from './ci-clear.mjs';
-import { stationDue } from './station-tick.mjs';
+import { loadOwnerClock, stationDue } from './station-tick.mjs';
 import { liveLine, backlogOf, keepStation, nudgeTargets, markShed } from './inbox-queue.mjs';
 const CI_NODES = loadCiNodes();
 const batch = createBatch();
@@ -2367,7 +2367,8 @@ function stationTick(now = new Date()) {
   if (!stationTickOn()) return;
   const when = stationClock(now);
   if (!when) return;
-  const due = stationDue(when, stationPosted, SEAT_IDS);
+  const clockFile = String(process.env.OWNER_CLOCK || '').trim() || path.join(process.env.MESH_DATA_DIR || '/data', 'owner-clock.json');
+  const due = stationDue(when, stationPosted, SEAT_IDS, loadOwnerClock(clockFile));
   if (!due) return;
   const lines = due.lines.filter((line) => keepStation(seatOpenRows(line.seat, false)));
   if (!lines.length) { stationPosted = due.hour; return; }

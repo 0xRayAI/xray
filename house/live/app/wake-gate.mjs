@@ -193,6 +193,10 @@ export function classifyBatch(lines, ctx = {}) {
       if (owner) seat = owner;
     }
     if (!seat) { skips.push({ seat: '', line, reason: 'unassigned' }); return; }
+    if (String(line.kind || '').toLowerCase() === 'station') {
+      wakes.push({ seat, line });
+      return;
+    }
     if (String(line.from || '').trim().toLowerCase() === seat) {
       skips.push({ seat, line, reason: 'own_post' });
       return;

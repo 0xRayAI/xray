@@ -8,10 +8,11 @@ import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
 import os from 'node:os';
 import { listenPort } from './free-port.mjs';
-import { stationDue, stationHourKey, stationLines, stationSeats, STATION_SENTENCE } from '../app/station-tick.mjs';
+import { keepStoredStartAfter, chicagoStamp } from '../app/chicago-stamp.mjs';
+import { parseOwnerClock, stationDue, stationHourKey, stationLines, stationSeats, STATION_SENTENCE } from '../app/station-tick.mjs';
 
 const IDS = ['builder', 'builder-cloud', 'arch1', 'forge', 'critic', 'blinky', 'herald'];
-const OPEN = '2026-10-26T07:30:00-05:00';
+const OPEN = '2026-11-06T07:30:00-06:00';
 
 test('the half hour is the only open weekday slot', () => {
   assert.equal(stationHourKey('2026-10-26T07:29:00-05:00'), null);
@@ -36,10 +37,10 @@ test('arch1 is included only when that id is in the list', () => {
 
 test('a due hour posts the sentence once', () => {
   const due = stationDue(OPEN, '', IDS);
-  assert.equal(due.hour, '2026-10-26T07');
+  assert.equal(due.hour, '2026-11-06T07');
   assert.deepEqual(due.lines.map((line) => line.seat), ['forge', 'critic', 'blinky', 'arch1']);
   for (const line of due.lines) {
-    assert.equal(line.id, `nudge:station:${line.seat}:2026-10-26T07`);
+    assert.equal(line.id, `nudge:station:${line.seat}:2026-11-06T07`);
     assert.equal(line.type, 'nudge');
     assert.equal(line.kind, 'station');
     assert.equal(line.from, line.seat);
@@ -59,7 +60,7 @@ test('a due hour posts the sentence once', () => {
 
 test('the server tick is the board path and the station gate does not deliver a nudge', () => {
   const src = fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app', 'server.mjs'), 'utf8');
-  assert.match(src, /import \{ stationDue \} from '\.\/station-tick\.mjs'/);
+  assert.match(src, /import \{ loadOwnerClock, stationDue \} from '\.\/station-tick\.mjs'/);
   assert.match(src, /flag === 'off'/);
   assert.match(src, /RAILWAY_ENVIRONMENT/);
   assert.match(src, /function stationTick\(now = new Date\(\)\)/);
@@ -111,7 +112,7 @@ test('a board boot inside the half hour posts one line per seat', async () => {
       })).json();
       const stored = (seen.lines || []).filter((line) => String(line.id || '').startsWith('nudge:station:'));
       assert.equal(stored.length, 1, seat);
-      assert.equal(stored[0].id, `nudge:station:${seat}:2026-10-26T07`);
+      assert.equal(stored[0].id, `nudge:station:${seat}:2026-11-06T07`);
       assert.equal(stored[0].type, 'nudge');
       assert.equal(stored[0].kind, 'station');
       assert.equal(stored[0].reason, STATION_SENTENCE);
@@ -147,14 +148,53 @@ test('Railway posts on a real port inside the half hour', async () => {
     })).json();
     const station = (seen.lines || []).filter((line) => line.kind === 'station');
     assert.equal(station.length, 1);
-    assert.equal(station[0].id, 'nudge:station:forge:2026-10-26T07');
+    assert.equal(station[0].id, 'nudge:station:forge:2026-11-06T07');
   } finally {
     await stop(srv, data);
   }
 });
 
+test('an owner clock names the zone, the window, and the seats', () => {
+  const clock = parseOwnerClock('{"zone":"Asia/Tokyo","window":["09:00","17:30"],"seats":["herald","arch1"]}');
+  assert.equal(clock.zone, 'Asia/Tokyo');
+  assert.equal(stationHourKey('2026-10-26T09:00:00+09:00', clock), '2026-10-26T09');
+  assert.equal(stationHourKey('2026-10-26T09:00:00+09:00'), null);
+  assert.equal(stationHourKey('2026-10-26T17:31:00+09:00', clock), null);
+  assert.deepEqual(stationSeats(IDS, clock), ['herald', 'arch1']);
+  const due = stationDue('2026-10-26T09:00:00+09:00', '', IDS, clock);
+  assert.deepEqual(due.lines.map((line) => line.seat), ['herald', 'arch1']);
+  assert.equal(parseOwnerClock('{"zone":"Not/AZone","start":"09:00","end":"17:00","seats":["forge"]}'), null);
+  assert.equal(keepStoredStartAfter('2026-01-01T00:00:00+00:00'), '2026-01-01T00:00:00+00:00');
+  assert.match(chicagoStamp(Date.parse('2026-10-26T12:30:00Z')), /2026-10-26T07:30:00-05:00/);
+});
+
+test('a board boot on an owner clock posts only the named seat', async () => {
+  const file = path.join(os.tmpdir(), 'owner-clock-' + crypto.randomBytes(4).toString('hex') + '.json');
+  fs.writeFileSync(file, JSON.stringify({ zone: 'Asia/Tokyo', start: '09:00', end: '17:30', seats: ['blinky'] }));
+  const { srv, data, raw } = spawnBoard({
+    OWNER_CLOCK: file,
+    STATION_NOW: '2026-11-06T09:00:00+09:00',
+  });
+  try {
+    const port = await listenPort(srv);
+    const blinky = await (await fetch('http://127.0.0.1:' + port + '/inbox/blinky?all=1', {
+      headers: { Authorization: 'Bearer ' + raw.blinky },
+    })).json();
+    const station = (blinky.lines || []).filter((line) => line.kind === 'station');
+    assert.equal(station.length, 1);
+    assert.equal(station[0].id, 'nudge:station:blinky:2026-11-06T09');
+    const forge = await (await fetch('http://127.0.0.1:' + port + '/inbox/forge?all=1', {
+      headers: { Authorization: 'Bearer ' + raw.forge },
+    })).json();
+    assert.equal((forge.lines || []).filter((line) => line.kind === 'station').length, 0);
+  } finally {
+    await stop(srv, data);
+    fs.rmSync(file, { force: true });
+  }
+});
+
 test('a board boot before the half hour posts nothing', async () => {
-  const { srv, data, raw } = spawnBoard({ STATION_NOW: '2026-10-26T07:29:00-05:00' });
+  const { srv, data, raw } = spawnBoard({ STATION_NOW: '2026-11-06T07:29:00-06:00' });
   try {
     const port = await listenPort(srv);
     const seen = await (await fetch('http://127.0.0.1:' + port + '/inbox/forge?all=1', {
