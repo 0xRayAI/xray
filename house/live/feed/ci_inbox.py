@@ -114,33 +114,44 @@ def known_pulls(events):
 
 
 def sha_color(events):
-    """Newest completed suite wins. With no suite, the newest run or ci_* event wins."""
-    suites = {}
-    runs = {}
+    """Newest event per check name (or suite app). Any red name => red; else any running name => pending.
+
+    A later green job must not paint the sha green while another required check
+    on that same sha is still red. A re-run of the same name can flip that name.
+    """
+    latest = {}
     for event in _events(events):
         sha, repo = _sha(event), _repo(event).lower()
         if not sha or not repo:
             continue
         kind = _kind(event)
         stamp = _stamp(event)
-        if kind == "check_suite" and _conclusion(event):
-            prev = suites.get((repo, sha))
-            if not prev or stamp >= prev[0]:
-                suites[(repo, sha)] = (stamp, "green" if _conclusion(event) == "success" else "red" if _red(event) else "")
+        status = _status(event)
+        running = status in RUNNING or (status and status != "completed")
+        if kind == "check_suite" and (_conclusion(event) or running):
+            name = "suite:" + str(event.get("app") or "checks").strip().lower()
+            color = "pending" if running else "green" if _conclusion(event) == "success" else "red" if _red(event) else ""
         elif kind in ("check_run", "workflow_run", "ci_pass", "ci_fail"):
-            color = "green" if _conclusion(event) == "success" or kind == "ci_pass" else "red" if _red(event) else ""
-            if not color:
-                continue
-            prev = runs.get((repo, sha))
-            if not prev or stamp >= prev[0]:
-                runs[(repo, sha)] = (stamp, color)
+            name = str(event.get("name") or event.get("label") or "").strip().lower() or "ci"
+            if running and kind in ("check_run", "workflow_run"):
+                color = "pending"
+            else:
+                color = "green" if _conclusion(event) == "success" or kind == "ci_pass" else "red" if _red(event) else ""
+        else:
+            continue
+        if not color:
+            continue
+        key = (repo, sha, name)
+        prev = latest.get(key)
+        if not prev or stamp >= prev[0]:
+            latest[key] = (stamp, color)
+    # Red beats pending beats green: a check still running on this sha keeps it from going green.
+    rank = {"green": 0, "pending": 1, "red": 2}
     colors = {}
-    keys = set(suites) | set(runs)
-    for key in keys:
-        if key in suites and suites[key][1]:
-            colors[key] = suites[key][1]
-        elif key in runs:
-            colors[key] = runs[key][1]
+    for (repo, sha, _name), (_when, color) in latest.items():
+        key = (repo, sha)
+        if key not in colors or rank[color] > rank[colors[key]]:
+            colors[key] = color
     return colors
 
 
@@ -187,14 +198,25 @@ def _names(events, repo, sha):
 
 
 def _url(events, repo, number, sha):
+    """Prefer a source URL on this sha. Never return a prior head's commit URL."""
+    fallback = ""
     for event in _events(events):
         if _repo(event).lower() != repo or _num(event) != number:
             continue
-        if _kind(event) not in ("pr_open", "pr_update"):
+        if _kind(event) not in ("pr_open", "pr_update", "pr_commit", "pr_force_push"):
             continue
         source = str(event.get("source") or "")
-        if source.startswith("https://"):
+        if not source.startswith("https://"):
+            continue
+        if sha and _sha_match(_sha(event), sha) and not _names_other_sha(source, sha):
             return source[:300]
+        # A bare pull URL names no head, so it is safe for any sha; a commit or run URL may name an older head.
+        if not fallback and source.rstrip("/").lower().endswith(f"/pull/{number}"):
+            fallback = source[:300]
+    if fallback:
+        return fallback
+    if repo and number and sha:
+        return f"https://github.com/{repo}/pull/{number}/commits/{sha}"[:300]
     if repo and number:
         return f"https://github.com/{repo}/pull/{number}"[:300]
     return ""
@@ -261,6 +283,15 @@ def ci_fail_lines(events, new_events, seat_of):
             "reason": f"{title} {sha[:12]}"[:80],
         })
     return out
+
+
+def _names_other_sha(url, sha):
+    """True when the URL path carries a commit sha that is not this one."""
+    import re
+    for found in re.findall(r"/commits?/([0-9a-fA-F]{7,40})", url):
+        if not _sha_match(found, sha):
+            return True
+    return False
 
 
 def _sha_match(left, right):
