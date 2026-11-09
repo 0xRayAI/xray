@@ -231,6 +231,7 @@ function stationSeed(version, plane, root) {
     freshLine(version),
     "Repertoire: module unresolved",
     libraryLine(root),
+    "Catalog: node_modules/0xray/SKILLS.md",
     `Plane: ${plane}`,
     "Judgement: start",
     "Payments: off",

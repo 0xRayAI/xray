@@ -342,7 +342,8 @@ describe('wear and setup outside a git checkout', () => {
       expect(existsSync(path.join(project, ".opencode", "skills", "orchestrator", "SKILL.md"))).toBe(true);
       expect(lstatSync(path.join(project, 'dist')).isSymbolicLink()).toBe(true);
       expect(lstatSync(path.join(project, 'scripts')).isSymbolicLink()).toBe(true);
-      expect(existsSync(path.join(project, 'AGENTS.md'))).toBe(true);
+      expect(readFileSync(path.join(project, 'AGENTS.md'), 'utf8')).toContain('node_modules/0xray/SKILLS.md');
+      expect(readFileSync(path.join(project, '.xray/state/STATION.md'), 'utf8')).toContain('Catalog: node_modules/0xray/SKILLS.md');
       expect(existsSync(path.join(project, '.gitignore'))).toBe(true);
       expect(existsSync(path.join(project, '.xray', 'codex.json'))).toBe(true);
       expect(existsSync(path.join(project, '.xray', 'features.json'))).toBe(true);
