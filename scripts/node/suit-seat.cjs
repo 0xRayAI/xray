@@ -220,6 +220,16 @@ function libraryLine(root) {
   return "Library: (none yet)";
 }
 
+function repertoireLine(root) {
+  try {
+    const heat = require("../../src/integrations/hooks/station-hook-runtime.cjs");
+    if (typeof heat.buildRepertoireResume === "function") return heat.buildRepertoireResume(root);
+  } catch {
+    /* the heat runtime is optional for a seed */
+  }
+  return "Repertoire: module unresolved";
+}
+
 function stationSeed(version, plane, root) {
   return [
     "# Station",
@@ -229,7 +239,7 @@ function stationSeed(version, plane, root) {
     "Plan: (none)",
     "Git: n/a",
     freshLine(version),
-    "Repertoire: module unresolved",
+    repertoireLine(root),
     libraryLine(root),
     "Catalog: node_modules/0xray/SKILLS.md",
     `Plane: ${plane}`,
