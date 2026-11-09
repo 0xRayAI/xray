@@ -1,5 +1,5 @@
 import { listenPort } from './free-port.mjs';
-// A plain read still shows a merged card. ?stale=1 lists merged, closed, and off-board lines. {stale:true} acks only those.
+// A plain read still shows a merged card. ?stale=1 lists lines with a GitHub close or merge. A done/closed card while the pull is open is not stale. {stale:true} acks only those.
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
@@ -25,20 +25,23 @@ before(async () => {
 after(async () => { srv.kill(); await new Promise(r => srv.exitCode != null || srv.signalCode ? r() : srv.once('exit', r)); fs.rmSync(DATA, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 }); });
 const CK = () => ({ Authorization: 'Bearer ' + CKEY });
 
-test('stale ack settles a close event or a closed or done card, and leaves a missing card on the plain read', async () => {
+test('stale ack settles a GitHub close or merge, not a done card while the pull is open', async () => {
   const R = 'example-org/stale';
   const t0 = new Date().toISOString();
   const mk = (id, n) => ({ id, t_ct: t0, seat: 'critic', type: 'pr_comment', repo: R, number: n, title: 'note', url: '', reason: 'ask' });
-  const posted = await fetch(BASE + '/inbox', { method: 'POST', body: JSON.stringify({ lines: [mk('stale:done', 71), mk('stale:closed', 72), mk('stale:gone', 73), mk('stale:live', 74)] }), headers: { 'X-Live-Ingest': INGEST, 'Content-Type': 'application/json' } });
+  const posted = await fetch(BASE + '/inbox', { method: 'POST', body: JSON.stringify({ lines: [mk('stale:done', 71), mk('stale:closed', 72), mk('stale:gone', 73), mk('stale:live', 74), mk('stale:ready', 75)] }), headers: { 'X-Live-Ingest': INGEST, 'Content-Type': 'application/json' } });
   assert.equal(posted.status, 200);
   const card = (n, stage, state) => ({ key: R + '#' + n, kind: 'pr', repo: R, number: n, title: 'c', url: '', owner: 'forge', stage, state, packet: {}, beats: [], last_beat_t: Date.now() });
-  const board = await fetch(BASE + '/ingest', { method: 'POST', body: JSON.stringify({ title: 't', event_count: 1, generated_at: new Date().toISOString(), events: [{ id: R + '#72:close', t_ct: t0, kind: 'issue_close', repo: R, number: 72 }], board: { updated_ct: 'x', cards: [card(71, 'done', 'live'), card(72, 'review', 'closed'), card(74, 'review', 'live')] } }), headers: { Authorization: 'Bearer ' + INGEST, 'Content-Type': 'application/json' } });
+  // #71 done/live card, PR still open on GitHub (no close event) — must NOT be stale (#962).
+  // #72 has issue_close — stale.
+  // #75 done/closed card while still open on GitHub — must NOT be stale (the #904 shape).
+  const board = await fetch(BASE + '/ingest', { method: 'POST', body: JSON.stringify({ title: 't', event_count: 1, generated_at: new Date().toISOString(), events: [{ id: R + '#72:close', t_ct: t0, kind: 'issue_close', repo: R, number: 72 }], board: { updated_ct: 'x', cards: [card(71, 'done', 'live'), card(72, 'review', 'closed'), card(74, 'review', 'live'), card(75, 'done', 'closed')] } }), headers: { Authorization: 'Bearer ' + INGEST, 'Content-Type': 'application/json' } });
   assert.equal(board.status, 200);
   const ids = async (q = '') => (await (await fetch(BASE + '/inbox/critic' + q, { headers: CK() })).json()).lines.map(l => l.id).filter(id => id.startsWith('stale:')).sort();
-  assert.deepEqual(await ids(), ['stale:closed', 'stale:done', 'stale:gone', 'stale:live']);
-  assert.deepEqual(await ids('?stale=1'), ['stale:closed', 'stale:done']);
+  assert.deepEqual(await ids(), ['stale:closed', 'stale:done', 'stale:gone', 'stale:live', 'stale:ready']);
+  assert.deepEqual(await ids('?stale=1'), ['stale:closed']);
   const acked = await (await fetch(BASE + '/inbox/critic/ack', { method: 'POST', body: JSON.stringify({ stale: true }), headers: { ...CK(), 'Content-Type': 'application/json' } })).json();
-  assert.equal(acked.acked, 2);
-  assert.deepEqual(await ids(), ['stale:gone', 'stale:live']);
-  assert.deepEqual((await ids('?all=1')).filter(id => id === 'stale:closed' || id === 'stale:done').sort(), ['stale:closed', 'stale:done']);
+  assert.equal(acked.acked, 1);
+  assert.deepEqual(await ids(), ['stale:done', 'stale:gone', 'stale:live', 'stale:ready']);
+  assert.deepEqual((await ids('?all=1')).filter(id => id === 'stale:closed'), ['stale:closed']);
 });
