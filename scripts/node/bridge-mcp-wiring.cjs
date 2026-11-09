@@ -696,6 +696,15 @@ function buildPluginMcpJson(targetDir) {
       env: launch.env,
     };
   }
+  const extras = detectConsumerExtraMcpServers(targetDir).openclaw || {};
+  for (const name of ["goggles", "repertoire"]) {
+    if (!extras[name]) continue;
+    mcpServers[name] = {
+      command: extras[name].command,
+      args: extras[name].args,
+      env: extras[name].env,
+    };
+  }
   return { mcpServers };
 }
 

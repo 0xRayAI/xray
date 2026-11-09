@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { spawnSync } from 'child_process';
 import { createRequire } from 'module';
-import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'fs';
+import { existsSync, mkdtempSync, mkdirSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'fs';
 import os from 'os';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -354,9 +354,17 @@ describe('bridge-mcp-wiring', () => {
       expect(mcp.mcpServers.repertoire).toBeTruthy();
       expect(first.toml).toContain('[mcp_servers.goggles]');
       expect(first.toml).toContain('[mcp_servers.repertoire]');
+      const pluginMcp = JSON.parse(readFileSync(path.join(targetDir, '.grok', 'plugins', '0xray', '.mcp.json'), 'utf8')) as {
+        mcpServers: Record<string, { args?: string[] }>;
+      };
+      expect(pluginMcp.mcpServers.goggles.args?.[0]).toBe(linkLaunch);
+      expect(pluginMcp.mcpServers.repertoire.args?.[0]).toBe(linkLaunch);
+      const skillDir = path.join(targetDir, '.grok', 'plugins', '0xray', 'skills');
+      const skills = existsSync(skillDir) ? readdirSync(skillDir).length : 0;
       expect(first.hooks).toContain(path.join(targetDir, 'node_modules', '0xray', 'scripts', 'mjs', 'run-grok-hook.mjs'));
       expect(first.hooks).not.toContain(path.join(packageRoot, 'scripts', 'mjs', 'run-grok-hook.mjs'));
       wear();
+      expect(existsSync(skillDir) ? readdirSync(skillDir).length : 0).toBe(skills);
       expect(readFileSync(mcpPath, 'utf8')).toBe(first.mcp);
       expect(readFileSync(grokToml, 'utf8')).toBe(first.toml);
       expect(readFileSync(grokHooks, 'utf8')).toBe(first.hooks);

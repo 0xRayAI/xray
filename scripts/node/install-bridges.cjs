@@ -344,11 +344,10 @@ function inventorySkillAllow(targetDir) {
 }
 
 function syncCostumeSkills(targetSkillsDir, packageRoot, targetDir) {
-  // A blip or sound seat keeps its plant. A suit that already has an inventory
-  // keeps those skills. A new mill suit still receives the catalog.
+  // A blip or sound seat keeps its plant. A mill suit wears the catalog on
+  // every wear, so an inventory written by the first wear cannot shrink it.
   if (targetDir && !plantIncludesMill(targetDir, packageRoot)) return 0;
-  const allow = targetDir && !wantsCostume(targetDir) ? inventorySkillAllow(targetDir) : null;
-  return syncBuiltinSkills(targetSkillsDir, packageRoot, allow);
+  return syncBuiltinSkills(targetSkillsDir, packageRoot, null);
 }
 
 function copyTree(src, dest, relPath = "") {
