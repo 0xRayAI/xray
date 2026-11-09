@@ -125,7 +125,8 @@ function launchersOutsideInstall(cwd: string, installRoot: string): string[] {
     const text = readFileSync(file, "utf8");
     for (const match of text.matchAll(pattern)) {
       const hit = match[1];
-      if (!hit.startsWith(`${installRoot}/`)) found.add(hit);
+      if (!hit || hit.startsWith(`${installRoot}/`)) continue;
+      found.add(hit);
     }
   }
   return [...found];
