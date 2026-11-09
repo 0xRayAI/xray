@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { spawnSync } from 'child_process';
 import { createRequire } from 'module';
-import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'fs';
 import os from 'os';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -270,6 +270,48 @@ describe('bridge-mcp-wiring', () => {
     } finally {
       rmSync(targetDir, { recursive: true, force: true });
       rmSync(other, { recursive: true, force: true });
+    }
+  });
+
+  it('a linked checkout pins the launcher on node_modules/0xray', () => {
+    const checkout = mkdtempSync(path.join(os.tmpdir(), 'xray-link-src-'));
+    const targetDir = mkdtempSync(path.join(os.tmpdir(), 'xray-link-app-'));
+    const launch = path.join(checkout, 'scripts', 'node', 'mcp-launch.cjs');
+    const goggles = path.join(checkout, 'scripts', 'mjs', 'run-goggles-mcp.mjs');
+    for (const file of [launch, goggles]) {
+      mkdirSync(path.dirname(file), { recursive: true });
+      writeFileSync(file, '#!/usr/bin/env node\n');
+    }
+    writeFileSync(path.join(checkout, 'package.json'), JSON.stringify({ name: '0xray', version: '4.2.1' }));
+    mkdirSync(path.join(targetDir, 'node_modules'), { recursive: true });
+    symlinkSync(checkout, path.join(targetDir, 'node_modules', '0xray'));
+    const linkLaunch = path.join(targetDir, 'node_modules', '0xray', 'scripts', 'node', 'mcp-launch.cjs');
+    const linkGoggles = path.join(targetDir, 'node_modules', '0xray', 'scripts', 'mjs', 'run-goggles-mcp.mjs');
+    writeFileSync(
+      path.join(targetDir, '.mcp.json'),
+      `${JSON.stringify({
+        mcpServers: {
+          goggles: {
+            command: 'node',
+            args: [launch, '--keep', 'PATH,HOME,XRAY_ROOT', '--', 'node', linkGoggles],
+          },
+        },
+      })}\n`,
+    );
+    const pin = wiring.launcherPinRoot(checkout, targetDir);
+    expect(pin).toBe(path.join(targetDir, 'node_modules', '0xray'));
+    wiring.pinLauncherPackageRoot(pin);
+    try {
+      wiring.deployPortableProjectMcpJson(targetDir);
+      const mcp = JSON.parse(readFileSync(path.join(targetDir, '.mcp.json'), 'utf8')) as {
+        mcpServers: { goggles: { args?: string[] } };
+      };
+      expect(mcp.mcpServers.goggles.args?.[0]).toBe(linkLaunch);
+      expect(innerAfterScoped(mcp.mcpServers.goggles.args || [])).toEqual(['node', linkGoggles]);
+    } finally {
+      wiring.pinLauncherPackageRoot('');
+      rmSync(checkout, { recursive: true, force: true });
+      rmSync(targetDir, { recursive: true, force: true });
     }
   });
 

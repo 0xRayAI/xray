@@ -36,6 +36,7 @@ const {
   isEphemeralInstallRoot,
   enableMemoryRoutingIfResolves,
   pinLauncherPackageRoot,
+  launcherPinRoot,
   writeProjectSuitMcp,
   trustGrokFolder,
 } = require("./bridge-mcp-wiring.cjs");
@@ -2626,7 +2627,7 @@ function wearCursorHooks(targetDir, packageRoot, log, opts) {
   const options = opts || {};
   const resolvedTarget = path.resolve(targetDir);
   const resolvedPackage = settlePackageRoot(path.resolve(packageRoot), resolvedTarget);
-  pinLauncherPackageRoot(resolvedPackage);
+  pinLauncherPackageRoot(launcherPinRoot(resolvedPackage, resolvedTarget));
   try {
   if (classifyCursorWearGit(resolvedTarget) === "not-work-tree") {
     wearSuitSkippingCursorHooks(resolvedPackage, resolvedTarget, write);
@@ -2900,7 +2901,7 @@ function installFrameworkDogfoodWear(packageRoot, log) {
 function installAllBridges(opts) {
   const targetDir = path.resolve(opts.targetDir);
   const packageRoot = settlePackageRoot(path.resolve(opts.packageRoot), targetDir);
-  pinLauncherPackageRoot(packageRoot);
+  pinLauncherPackageRoot(launcherPinRoot(packageRoot, targetDir));
   const logFn = opts.log;
   const log =
     logFn ||

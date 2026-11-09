@@ -392,6 +392,20 @@ function pinLauncherPackageRoot(packageRoot) {
   launcherPackageRoot = packageRoot ? path.resolve(packageRoot) : "";
 }
 
+function launcherPinRoot(packageRoot, targetDir) {
+  const root = packageRoot ? path.resolve(packageRoot) : "";
+  if (!root || !targetDir || isDogfoodXrayPackage(targetDir)) return root;
+  const link = path.join(targetDir, "node_modules", "0xray");
+  const launch = path.join(link, "scripts", "node", "mcp-launch.cjs");
+  try {
+    if (!fs.existsSync(launch)) return root;
+    if (fs.realpathSync(link) !== fs.realpathSync(root)) return root;
+    return link;
+  } catch {
+    return root;
+  }
+}
+
 function mcpLauncherPath() {
   if (launcherPackageRoot) {
     const candidate = path.join(launcherPackageRoot, "scripts", "node", "mcp-launch.cjs");
@@ -1300,6 +1314,7 @@ module.exports = {
   isEphemeralInstallRoot,
   isIsolatedHome,
   pinLauncherPackageRoot,
+  launcherPinRoot,
   copyHermesHookRuntimes,
   resolveOpenClawPreToolHookSource,
   resolveOpenClawPluginDir,
