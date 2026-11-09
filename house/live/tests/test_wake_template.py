@@ -282,12 +282,12 @@ class TurnFlag(unittest.TestCase):
 
     def test_prompt_at_skips_a_line_already_on_the_board(self):
         self.srv.history = [{"id": "act:x.1", "kind": "seat_prompt", "from": "Ada", "to": "forge",
-                             "t_ct": "2026-11-09T09:24:30-06:00"}]
+                             "t_ct": "2026-11-09T09:24:01-06:00"}]
         dup = self.run_turn("--prompt", "--at", "2026-11-09T09:24:00-06:00")
         self.assertEqual(dup.returncode, 0, dup.stderr)
         self.assertEqual(json.loads(dup.stdout), {"ok": True, "skipped": "dup", "id": "act:x.1"})
         self.assertEqual(self.srv.hits, [])
-        far = self.run_turn("--prompt", "--at", "2026-11-09T09:22:00-06:00")
+        far = self.run_turn("--prompt", "--at", "2026-11-09T09:24:15-06:00")  # a second real message 14s later still posts
         self.assertEqual(far.returncode, 0, far.stderr)
         self.assertEqual(len(self.srv.hits), 1)
 
