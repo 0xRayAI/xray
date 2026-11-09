@@ -190,6 +190,7 @@ function pinConsumerRepertoire(targetDir, vendor) {
   deps["@0xray/repertoire"] = spec;
   pkg.dependencies = deps;
   fs.writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`);
+  process.stdout.write("wear: pinned @0xray/repertoire\n");
   return true;
 }
 

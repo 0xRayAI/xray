@@ -136,6 +136,27 @@ function linkStdout(): string {
   return ['✅ Scripts symlink: created', '✅ Dist symlink: created', ''].join('\n');
 }
 
+const PIN_LINE = 'wear: pinned @0xray/repertoire\n';
+
+function runCliInspect(project: string, home: string) {
+  const machine = mkdtempSync(path.join(tmpdir(), 'xray-inspect-machine-'));
+  try {
+    return spawnSync(process.execPath, [path.join(repoRoot, 'dist/cli/index.js'), 'inspect', '--skip-live'], {
+      cwd: project,
+      encoding: 'utf8',
+      env: {
+        ...process.env,
+        HOME: home,
+        USERPROFILE: home,
+        FOUNDRY_MACHINE_HOME: machine,
+        FOUNDRY_ROOT: project,
+      },
+    });
+  } finally {
+    rmSync(machine, { recursive: true, force: true });
+  }
+}
+
 function runInspect(project: string, home: string) {
   const machine = mkdtempSync(path.join(tmpdir(), 'xray-wear-machine-'));
   try {
@@ -182,7 +203,7 @@ describe('wear and setup outside a git checkout', () => {
       const ran = runNode(wearScript, [project], project, home);
       expect(ran.status).toBe(0);
       expect(ran.stderr).toBe(`${SKIPPED}\n`);
-      expect(ran.stdout).toBe(linkStdout());
+      expect(ran.stdout).toBe(`${PIN_LINE}${linkStdout()}`);
       const wrote = listFiles(project).filter((rel) => rel !== 'package.json' && rel !== 'keep.txt');
       expect(wrote).toEqual(wornSuit());
       expect(wrote.some((rel) => rel === '.cursor' || rel.startsWith('.cursor/'))).toBe(false);
@@ -191,6 +212,40 @@ describe('wear and setup outside a git checkout', () => {
       const homeAfter = listFiles(home);
       expect(homeBefore).toEqual([]);
       expect(homeAfter.filter((rel) => !homeBefore.includes(rel))).toEqual(homeFromWear());
+    } finally {
+      rmSync(project, { recursive: true, force: true });
+      rmSync(home, { recursive: true, force: true });
+    }
+  });
+
+  it('a fresh non-git wear passes 0xray inspect --skip-live', () => {
+    const project = mkdtempSync(path.join(tmpdir(), 'xray-inspect-nogit-'));
+    const home = freshHome();
+    try {
+      writeFileSync(path.join(project, 'package.json'), `${JSON.stringify({ name: 'acme' })}\n`);
+      const wore = runNode(wearScript, [project], project, home);
+      expect(wore.status).toBe(0);
+      const inspected = runCliInspect(project, home);
+      expect(inspected.status, `${inspected.stdout}\n${inspected.stderr}`).toBe(0);
+    } finally {
+      rmSync(project, { recursive: true, force: true });
+      rmSync(home, { recursive: true, force: true });
+    }
+  });
+
+  it('leaves an existing non-file repertoire spec alone', () => {
+    const project = mkdtempSync(path.join(tmpdir(), 'xray-pin-keep-'));
+    const home = freshHome();
+    try {
+      writeFileSync(
+        path.join(project, 'package.json'),
+        `${JSON.stringify({ name: 'acme', dependencies: { '@0xray/repertoire': '0.2.9' } }, null, 2)}\n`,
+      );
+      const ran = runNode(wearScript, [project], project, home);
+      expect(ran.status).toBe(0);
+      expect(ran.stdout).not.toContain('wear: pinned @0xray/repertoire');
+      const pinned = JSON.parse(readFileSync(path.join(project, 'package.json'), 'utf8'));
+      expect(pinned.dependencies['@0xray/repertoire']).toBe('0.2.9');
     } finally {
       rmSync(project, { recursive: true, force: true });
       rmSync(home, { recursive: true, force: true });
@@ -222,7 +277,7 @@ describe('wear and setup outside a git checkout', () => {
       const ran = runNode(setupScript, ['setup'], project, home);
       expect(ran.status).toBe(0);
       expect(ran.stderr).toBe(`${SKIPPED}\n`);
-      expect(ran.stdout).toBe(`${linkStdout()}setup: wrote .mcp.json and chat bridges\n`);
+      expect(ran.stdout).toBe(`${PIN_LINE}${linkStdout()}setup: wrote .mcp.json and chat bridges\n`);
       const wrote = listFiles(project).filter((rel) => rel !== 'package.json');
       expect(wrote).toEqual(wornSuit());
       expect(existsSync(path.join(project, '.cursor'))).toBe(false);
@@ -247,7 +302,7 @@ describe('wear and setup outside a git checkout', () => {
       const ran = runNode(wearScript, [project], project, home);
       expect(ran.status).toBe(0);
       expect(ran.stderr).toBe('');
-      expect(ran.stdout).toBe(linkStdout());
+      expect(ran.stdout).toBe(`${PIN_LINE}${linkStdout()}`);
       expect(existsSync(path.join(project, '.cursor', 'hooks.json'))).toBe(true);
       expect(existsSync(path.join(project, '.cursor', 'hooks', 'pre-tool-use.sh'))).toBe(true);
       expect(existsSync(path.join(project, '.opencode', 'skills', 'mill', 'SKILL.md'))).toBe(true);
