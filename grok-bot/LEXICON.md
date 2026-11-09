@@ -263,3 +263,4 @@ Every bolded term in the pack OP-PROC and runbooks is defined here (`bifrost che
 | **check everything in** | Workstream | Every file the fleet depends on lives in git. Secrets, PEMs, `.env`, `node_modules`, and live logs stay out. A box-only file fails a receipt. Rule: [OP-PROC](OP-PROC.md#check-everything-in). |
 | **golden rule** | Workstream | Open an issue the same turn a bug or gap is found. Do not leave it for the next guy. Rule: [OP-PROC](OP-PROC.md#golden-rule). |
 | **turn and summary memory** | Workstream | Write NOTES.md and LENS.md at turn end; read them on wake and after a summary. Wire a pre-compaction hook when one ships. Rule: [OP-PROC](OP-PROC.md#turn-summary-memory). |
+| **one fresh bot per pack** | Workstream | A bot that has already worn or seen an earlier pack is not a newb; only one cold bot runs per pack on a computer. Rule: [OP-PROC](OP-PROC.md#one-fresh-bot-per-pack). |
