@@ -409,7 +409,47 @@ function ownerNameWarning(text) {
   return 'HOUSE.md has no name: under ## Owner';
 }
 
-function stationBootWarnings(cwd, env) {
+const CT_STAMP = /(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})/;
+
+function chicagoMs(stamp) {
+  const m = CT_STAMP.exec(stamp || '');
+  if (!m) return null;
+  const wall = Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]);
+  const parts = {};
+  for (const p of new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Chicago',
+    hourCycle: 'h23',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).formatToParts(new Date(wall))) {
+    parts[p.type] = p.value;
+  }
+  const seen = Date.UTC(+parts.year, +parts.month - 1, +parts.day, +parts.hour, +parts.minute);
+  return wall + (wall - seen);
+}
+
+function workingWarnings(card, notesFile, now) {
+  const working = /^Working:\s*(\d{4}-\d{2}-\d{2} \d{2}:\d{2})/m.exec(card);
+  if (!working) return [];
+  const warnings = [];
+  let newest = '';
+  if (fs.existsSync(notesFile)) {
+    for (const m of fs.readFileSync(notesFile, 'utf8').matchAll(/^##\s+(\d{4}-\d{2}-\d{2} \d{2}:\d{2})/gm)) {
+      if (m[1] > newest) newest = m[1];
+    }
+  }
+  if (newest > working[1]) warnings.push('STATION.md Working: is older than the newest NOTES entry; run the station way-out');
+  const at = chicagoMs(working[1]);
+  if (at !== null && now - at > STALE_LOG_MS) {
+    warnings.push('STATION.md Working: is older than 2h; a turn skipped station');
+  }
+  return warnings;
+}
+
+function stationBootWarnings(cwd, env, now = Date.now()) {
   const warnings = [];
   const profile = readProfile(cwd, env);
   if (profile) {
@@ -431,7 +471,7 @@ function stationBootWarnings(cwd, env) {
   const card = fs.readFileSync(station, 'utf8');
   if (!/^Skills:/m.test(card)) warnings.push('STATION.md has no Skills: line');
   if (!/^Keys:/m.test(card)) warnings.push('STATION.md has no Keys: line');
-  return warnings;
+  return warnings.concat(workingWarnings(card, notes, now));
 }
 
 function cadenceWarnings(houseFile, text, cwd, env, now) {
@@ -469,7 +509,7 @@ function inspectHouseFile(file, via, ctx = {}) {
       warnings: [],
     };
   }
-  const warnings = cadenceWarnings(file, text, cwd, env, now).concat(stationBootWarnings(cwd, env));
+  const warnings = cadenceWarnings(file, text, cwd, env, now).concat(stationBootWarnings(cwd, env, now));
   const ownerName = ownerNameWarning(text);
   if (ownerName) warnings.push(ownerName);
   const exampleSibling = path.join(path.dirname(file), 'EXAMPLE.md');

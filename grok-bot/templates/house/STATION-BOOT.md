@@ -8,7 +8,7 @@ Another fleet does this in order after `grok-bot house init`.
 4. Wear `@0xray/grok-bot` so `station`, `seat-github-key`, and `seat-label` are on the seat. The profile description opens with one line: `BOOT: on any owner message, after a summary, or on a wake, run the station skill first (suit <path>, seat <seat>).`
 5. `seat-label` writes `Plane:` and `Skills:` on `.xray/state/STATION.md`. `Keys:` names `gh-<seat>` only.
 6. Install `~/bin/gh-<seat>` so every call runs `~/.config/<seat>/github-app-mint-token.sh`. A seat with no App hands the branch and the PR body to a seat that has one. The wrapper prints neither the token nor the PEM.
-7. Keep `house/fleet/TRACKS.md`. Write the cloud id when the launch starts.
+7. Keep `ops/cloud-memory/TRACKS.md` in the suit. Write the cloud id when the launch starts.
 8. The board posts every pull-request handoff and every review handoff. The coordinator acks only dev lines.
 9. Do not launch or resume a cloud agent when the card id is missing. On the way out write the card title, url, owner seat, stage, and state.
 10. The public board is https://bifrost.0xray.dev. Docs are https://docs.0xray.dev/.
