@@ -114,6 +114,43 @@ class CiInbox(unittest.TestCase):
         self.assertEqual(len(lines), 1)
         self.assertEqual(lines[0]["sha"], SHA2)
 
+    def test_red_on_new_sha_does_not_ring_critic(self):
+        """A red required check on the new sha must not emit ci_pass, even when an
+        older head was green and a later job on the new sha is green. The url is
+        the new sha, never the prior head."""
+        old = SHA
+        new = SHA2
+        opened = ev("open", "pr_open", number=9, sha=old,
+                    source=f"https://github.com/{R}/pull/9/commits/{old}")
+        old_green = ev("ok_old", "check_suite", sha=old, conclusion="success",
+                       t_ct="2026-10-28T10:02:00-05:00")
+        prior_red = ev("bad_old", "ci_fail", number=9, sha=old,
+                       t_ct="2026-10-28T10:01:00-05:00")
+        push = ev("push", "pr_update", number=9, sha=new,
+                  source=f"https://github.com/{R}/pull/9/commits/{new}",
+                  t_ct="2026-10-28T10:03:00-05:00")
+        failed = ev("bad", "workflow_run", number=9, sha=new, status="completed",
+                    conclusion="failure", name="house/live tests",
+                    t_ct="2026-10-28T10:05:00-05:00")
+        later_ok = ev("ok_job", "check_run", number=9, sha=new, status="completed",
+                      conclusion="success", name="Data check",
+                      t_ct="2026-10-28T10:06:00-05:00")
+        events = [opened, prior_red, old_green, push, failed, later_ok]
+        self.assertEqual(ci_inbox.sha_color(events).get((R.lower(), new)), "red")
+        self.assertEqual(ci_inbox.critic_return_lines(events, [later_ok]), [])
+        # Same head fully green: ring, and url names that sha.
+        all_green = ev("ok_all", "workflow_run", number=9, sha=new, status="completed",
+                       conclusion="success", name="house/live tests",
+                       t_ct="2026-10-28T10:07:00-05:00")
+        green_events = [opened, prior_red, old_green, push, failed, later_ok, all_green]
+        self.assertEqual(ci_inbox.sha_color(green_events).get((R.lower(), new)), "green")
+        lines = ci_inbox.critic_return_lines(green_events, [all_green])
+        self.assertEqual(len(lines), 1)
+        self.assertEqual(lines[0]["sha"], new)
+        self.assertIn(new, lines[0]["url"])
+        self.assertNotIn(old, lines[0]["url"])
+
+
 
 if __name__ == "__main__":
     unittest.main()

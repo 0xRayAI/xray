@@ -114,9 +114,12 @@ def known_pulls(events):
 
 
 def sha_color(events):
-    """Newest completed suite wins. With no suite, the newest run or ci_* event wins."""
-    suites = {}
-    runs = {}
+    """Newest completed event per check name (or suite app). Any red name => red.
+
+    A later green job must not paint the sha green while another required check
+    on that same sha is still red. A re-run of the same name can flip that name.
+    """
+    latest = {}
     for event in _events(events):
         sha, repo = _sha(event), _repo(event).lower()
         if not sha or not repo:
@@ -124,23 +127,26 @@ def sha_color(events):
         kind = _kind(event)
         stamp = _stamp(event)
         if kind == "check_suite" and _conclusion(event):
-            prev = suites.get((repo, sha))
-            if not prev or stamp >= prev[0]:
-                suites[(repo, sha)] = (stamp, "green" if _conclusion(event) == "success" else "red" if _red(event) else "")
+            name = "suite:" + str(event.get("app") or "checks").strip().lower()
+            color = "green" if _conclusion(event) == "success" else "red" if _red(event) else ""
         elif kind in ("check_run", "workflow_run", "ci_pass", "ci_fail"):
             color = "green" if _conclusion(event) == "success" or kind == "ci_pass" else "red" if _red(event) else ""
-            if not color:
-                continue
-            prev = runs.get((repo, sha))
-            if not prev or stamp >= prev[0]:
-                runs[(repo, sha)] = (stamp, color)
+            name = str(event.get("name") or event.get("label") or "").strip().lower() or "ci"
+        else:
+            continue
+        if not color:
+            continue
+        key = (repo, sha, name)
+        prev = latest.get(key)
+        if not prev or stamp >= prev[0]:
+            latest[key] = (stamp, color)
     colors = {}
-    keys = set(suites) | set(runs)
-    for key in keys:
-        if key in suites and suites[key][1]:
-            colors[key] = suites[key][1]
-        elif key in runs:
-            colors[key] = runs[key][1]
+    for (repo, sha, _name), (_when, color) in latest.items():
+        key = (repo, sha)
+        if color == "red" or key not in colors:
+            colors[key] = color
+        elif colors[key] != "red" and color == "green":
+            colors[key] = "green"
     return colors
 
 
@@ -187,14 +193,24 @@ def _names(events, repo, sha):
 
 
 def _url(events, repo, number, sha):
+    """Prefer a source URL on this sha. Never return a prior head's commit URL."""
+    fallback = ""
     for event in _events(events):
         if _repo(event).lower() != repo or _num(event) != number:
             continue
-        if _kind(event) not in ("pr_open", "pr_update"):
+        if _kind(event) not in ("pr_open", "pr_update", "pr_commit", "pr_force_push"):
             continue
         source = str(event.get("source") or "")
-        if source.startswith("https://"):
+        if not source.startswith("https://"):
+            continue
+        if sha and _sha_match(_sha(event), sha):
             return source[:300]
+        if not fallback:
+            fallback = source[:300]
+    if repo and number and sha:
+        return f"https://github.com/{repo}/pull/{number}/commits/{sha}"[:300]
+    if fallback:
+        return fallback
     if repo and number:
         return f"https://github.com/{repo}/pull/{number}"[:300]
     return ""
