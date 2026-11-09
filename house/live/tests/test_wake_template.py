@@ -118,7 +118,7 @@ class WakeTemplate(unittest.TestCase):
     def test_cos_seat_does_not_post_a_handoff(self):
         handoff = self.steps[3]
         self.assertIn(
-            "The CoS seat does not post a handoff. The CoS seat only acks a dev line and sends no message about it.",
+            "The CoS seat does not post a handoff. The CoS seat only acks a dev line, in the step 0 `--repeat` order, and sends no message about it.",
             handoff,
         )
         self.assertIn("live-inbox <seat> --handoff", handoff)
