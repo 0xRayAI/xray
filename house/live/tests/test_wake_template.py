@@ -62,7 +62,8 @@ class WakeTemplate(unittest.TestCase):
         self.assertNotIn("--from blaze", self.steps[0])
         self.assertNotIn("--from blaze", self.text)
         self.assertIn('trap \'"$INBOX" <seat> --turn end --tag wake; "$INBOX" <seat> --release\' EXIT', self.text)
-        self.assertIn("${XRAY_MAIN:?set XRAY_MAIN to the main checkout}/house/live/tools/live-inbox", self.text)
+        self.assertIn(': "${XRAY_MAIN:?set XRAY_MAIN to the main checkout}"', self.text)
+        self.assertIn('INBOX="$XRAY_MAIN/house/live/tools/live-inbox"', self.text)
         bash = re.search(r"```bash\n(.*?)```", self.text, re.S)
         self.assertIsNotNone(bash)
         block = bash.group(1)
@@ -357,3 +358,30 @@ class AtDedupeLockstep(unittest.TestCase):
         text = TEMPLATE.read_text()
         self.assertIn('if [ -f "$R" ]', text)
         self.assertIn("exit gate FAIL", text)
+
+
+class NoCloneOnWake(unittest.TestCase):
+    def test_wake_fast_forwards_and_never_clones(self):
+        text = TEMPLATE.read_text()
+        block = text.split("```bash", 1)[1].split("```", 1)[0]
+        self.assertIn('fetch -q origin main', block)
+        self.assertIn('merge -q --ff-only origin/main', block)
+        self.assertNotIn("git clone", text)
+        self.assertNotIn("worktree add", text)
+        self.assertIn("never clones the repo", text)
+
+
+    def test_wake_stops_when_checkout_is_not_main(self):
+        text = TEMPLATE.read_text()
+        block = text.split("```bash", 1)[1].split("```", 1)[0]
+        self.assertNotIn("using it as is", text)
+        self.assertIn('rev-parse HEAD)" = "$(git -C "$XRAY_MAIN" rev-parse origin/main)"', block)
+        self.assertIn("not at origin/main (xray#959); stop", block)
+        self.assertIn("exit 3", block)
+        self.assertEqual(block.count("XRAY_MAIN:?"), 1)
+        guard = block.split("INBOX=", 1)[0]
+        with tempfile.TemporaryDirectory() as d:
+            subprocess.run(["git", "init", "-q", d], check=True)
+            r = subprocess.run(["bash", "-c", guard], env={**os.environ, "XRAY_MAIN": d}, capture_output=True, text=True)
+            self.assertEqual(r.returncode, 3, r.stderr)
+            self.assertIn("not at origin/main (xray#959); stop", r.stderr)

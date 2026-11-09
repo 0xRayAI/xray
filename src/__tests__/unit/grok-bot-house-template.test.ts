@@ -162,7 +162,8 @@ describe('grok-bot house template — USMail docs', () => {
     const wake = readFileSync(path.join(kit, 'templates/house/fleet/WAKE-ROUTINE.md'), 'utf8');
     expect(wake).not.toContain('--from blaze');
     expect(wake).toContain('trap \'"$INBOX" <seat> --turn end --tag wake; "$INBOX" <seat> --release\' EXIT');
-    expect(wake).toContain('${XRAY_MAIN:?set XRAY_MAIN to the main checkout}/house/live/tools/live-inbox');
+    expect(wake).toContain(': "${XRAY_MAIN:?set XRAY_MAIN to the main checkout}"');
+    expect(wake).toContain('INBOX="$XRAY_MAIN/house/live/tools/live-inbox"');
     const bash = wake.split('```bash\n')[1]?.split('```')[0] ?? '';
     expect(bash).not.toContain('LIVE_INBOX_BIN');
     expect(bash).not.toContain('export PATH');

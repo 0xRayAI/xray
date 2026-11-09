@@ -10,9 +10,15 @@ This routine is the Bifrost inbox wake, and it sets `LIVE_URL`. A seat with no `
 
 Env first, on every turn, in the same shell as the commands below. The routine runs `house/live/tools/live-inbox` from the main checkout (`XRAY_MAIN`). It does not run a copied binary, and it does not put `$HOME/.burst/bin` or `LIVE_INBOX_BIN` on `PATH`. The cursor folder rule is [Cursor folder](../../../OP-PROC.md#cursor-folder). A missing `LIVE_URL` or `SEAT_KEYS_DIR` exits 2 and names it. Another board may export its own `LIVE_URL` and `SEAT_KEYS_DIR` on the line before the block.
 
+The wake never clones the repo and never makes a new checkout or worktree; the box bars both, and a wake that tries dies before station runs (xray#959). It updates the checkout that is already at `XRAY_MAIN` with the first lines of the block: fetch, fast-forward, then check that HEAD is origin/main. When the fetch or the fast-forward fails, or HEAD is not origin/main after it, the wake prints `wake: XRAY_MAIN not at origin/main (xray#959); stop`, exits 3, and reports `exit gate FAIL` with that line (step 7); it never runs live-inbox on a stale checkout. Read a file from main with `git -C "$XRAY_MAIN" show origin/main:<path>`.
+
 ```bash
 # The file on main. Not ~/.burst/bin/live-inbox and not a copy under /tmp.
-INBOX="${XRAY_MAIN:?set XRAY_MAIN to the main checkout}/house/live/tools/live-inbox"
+: "${XRAY_MAIN:?set XRAY_MAIN to the main checkout}"
+git -C "$XRAY_MAIN" fetch -q origin main && git -C "$XRAY_MAIN" merge -q --ff-only origin/main \
+  && [ "$(git -C "$XRAY_MAIN" rev-parse HEAD)" = "$(git -C "$XRAY_MAIN" rev-parse origin/main)" ] \
+  || { echo "wake: XRAY_MAIN not at origin/main (xray#959); stop" >&2; exit 3; }
+INBOX="$XRAY_MAIN/house/live/tools/live-inbox"
 export LIVE_URL="${LIVE_URL:-https://bifrost.0xray.dev}"
 export SEAT_KEYS_DIR="${SEAT_KEYS_DIR:-$HOME/.burst/seat-keys}"
 export LIVE_CURSORS="$HOME/.burst/cursors"
