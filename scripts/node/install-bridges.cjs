@@ -2783,12 +2783,13 @@ function installCursorBridge(targetDir, packageRoot, log) {
 
 function installGitHooks(packageRoot, log, cwd) {
   const installHooks = path.join(packageRoot, "scripts", "hooks", "install-hooks.cjs");
-  if (!fs.existsSync(installHooks)) return;
+  if (!fs.existsSync(installHooks)) return false;
   try {
     execFileSync(process.execPath, [installHooks], { stdio: "pipe", cwd: cwd || process.cwd() });
     log("hooks", "pre-commit hook installed", "info");
+    return true;
   } catch {
-    // non-git or hook failure — not blocking
+    return false;
   }
 }
 
@@ -2820,7 +2821,7 @@ function setupProjectBridges(opts) {
         };
   if (classifyCursorWearGit(targetDir) === "not-work-tree") {
     wearSuitSkippingCursorHooks(packageRoot, targetDir, log);
-    return;
+    return { gitHooks: opts.gitHooks === true ? "skipped" : "off", reason: "not a git checkout" };
   }
   assertSetupGit(targetDir);
   if (!installConsumerProjectFiles(packageRoot, targetDir, log)) {
@@ -2831,7 +2832,11 @@ function setupProjectBridges(opts) {
     installHermesBridge(targetDir, packageRoot, log);
     installOpenclawBridge(targetDir, packageRoot, log);
   }
-  if (opts.gitHooks === true) installGitHooks(packageRoot, log, targetDir);
+  if (opts.gitHooks !== true) return { gitHooks: "off" };
+  const installed = installGitHooks(packageRoot, log, targetDir);
+  return installed
+    ? { gitHooks: "installed" }
+    : { gitHooks: "skipped", reason: "hook install failed" };
 }
 
 /**
@@ -3003,17 +3008,20 @@ if (require.main === module) {
   }
   const gitHooks = process.argv.includes("--git-hooks");
   try {
-    setupProjectBridges({
+    const result = setupProjectBridges({
       packageRoot: path.resolve(__dirname, "..", ".."),
       targetDir: path.resolve(process.cwd()),
       gitHooks,
       log: () => {},
     });
-    process.stdout.write(
-      gitHooks
-        ? "setup: wrote .mcp.json, chat bridges, and git hooks\n"
-        : "setup: wrote .mcp.json and chat bridges\n",
-    );
+    if (result && result.gitHooks === "installed") {
+      process.stdout.write("setup: wrote .mcp.json, chat bridges, and git hooks\n");
+    } else if (result && result.gitHooks === "skipped") {
+      const reason = result.reason ? ` because ${result.reason}` : "";
+      process.stdout.write(`setup: wrote .mcp.json and chat bridges; git hooks skipped${reason}\n`);
+    } else {
+      process.stdout.write("setup: wrote .mcp.json and chat bridges\n");
+    }
   } catch (err) {
     process.stderr.write(`${err && err.message ? err.message : err}\n`);
     process.exit(1);

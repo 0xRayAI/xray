@@ -212,7 +212,15 @@ function seedNotes(root) {
   return true;
 }
 
-function stationSeed(version, plane) {
+function libraryLine(root) {
+  const rel = ".agents/skills/record-map/SKILL.md";
+  if (root && fs.existsSync(path.join(root, rel))) {
+    return `Library: record-map — ${rel}`;
+  }
+  return "Library: (none yet)";
+}
+
+function stationSeed(version, plane, root) {
   return [
     "# Station",
     "",
@@ -222,7 +230,7 @@ function stationSeed(version, plane) {
     "Git: n/a",
     freshLine(version),
     "Repertoire: module unresolved",
-    "Library: record-map — .agents/skills/record-map/SKILL.md",
+    libraryLine(root),
     `Plane: ${plane}`,
     "Judgement: start",
     "Payments: off",
@@ -255,7 +263,7 @@ function seedSuitPages(root, packageRoot) {
   const dest = path.join(root, ".xray", "state", "STATION.md");
   fs.mkdirSync(path.dirname(dest), { recursive: true });
   if (!fs.existsSync(dest)) {
-    fs.writeFileSync(dest, stationSeed(version, plane));
+    fs.writeFileSync(dest, stationSeed(version, plane, root));
     return { version, plane, seeded: true };
   }
   const next = restampPlane(restampFresh(fs.readFileSync(dest, "utf8"), version), plane);

@@ -169,6 +169,30 @@ function linkVendoredRepertoire(packageRoot, targetDir) {
   return { linked: true, vendor, dest, unchanged: false };
 }
 
+function pinConsumerRepertoire(targetDir, vendor) {
+  if (!targetDir || !vendor) return false;
+  const pkgPath = path.join(targetDir, "package.json");
+  if (!fs.existsSync(pkgPath)) return false;
+  let pkg;
+  try {
+    pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
+  } catch {
+    return false;
+  }
+  if (!pkg || typeof pkg !== "object" || Array.isArray(pkg)) return false;
+  if (pkg.name === "0xray" || pkg.name === "@0xray/repertoire") return false;
+  const rel = path.relative(targetDir, vendor).split(path.sep).join("/");
+  const spec = `file:${rel}`;
+  const deps = pkg.dependencies && typeof pkg.dependencies === "object" ? pkg.dependencies : {};
+  const current = deps["@0xray/repertoire"];
+  if (current === spec) return false;
+  if (typeof current === "string" && !current.startsWith("file:")) return false;
+  deps["@0xray/repertoire"] = spec;
+  pkg.dependencies = deps;
+  fs.writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`);
+  return true;
+}
+
 function wearVendoredRepertoire(packageRoot, targetDir, log) {
   const vendor = resolveVendoredRepertoire(packageRoot);
   if (!vendor) return { worn: [], vendor: null };
@@ -176,6 +200,9 @@ function wearVendoredRepertoire(packageRoot, targetDir, log) {
   const worn = [];
   for (const dest of wearDestinations(packageRoot, targetDir)) {
     if (wearOne(vendor, dest, log)) worn.push(dest);
+  }
+  if (worn.some((dest) => dest === repertoireLinkDest(targetDir))) {
+    pinConsumerRepertoire(targetDir, vendor);
   }
   if (worn.length && typeof log === "function") {
     log("wear-repertoire", "vendored @0xray/repertoire worn", "info", {

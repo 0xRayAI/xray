@@ -2,7 +2,7 @@
 
 ![0xRay Bifrost. The suit wears the board. One card, one seat. Inbox wakes. Rules stay on.](docs-site/static/img/readme-hero.jpg)
 
-**4.1** — a suit that survives the context window
+A suit that survives the context window.
 
 Bifrost is the live board. Goggles views one plane. A search inside that card runs. A search of another plane returns the card. A path outside this checkout runs.
 
@@ -22,6 +22,8 @@ The product is the **skeleton you wear**.
 - **Wear** — Grok, OpenCode, Hermes, OpenClaw, plus Cursor project hooks. One SSOT gate
 - **Muscle** — **Repertoire is preferred.** Vendored 0.2.9 ships **on**. Dest is named laws, not hangar `repo-*` or git slugs. Station is the wake ticket — not a substitute for Repertoire.
 
+Node >= 24.22.1.
+
 ```bash
 npm init -y
 npm install 0xray
@@ -40,11 +42,11 @@ npm install 0xray
 npx 0xray wear
 npx 0xray look dev
 npx 0xray status
-npx 0xray setup --git-hooks # optional: git hooks only
-npx @0xray/foundry inspect --skip-live # mill receipt (chat is not a receipt)
+npx 0xray setup --git-hooks # optional: git hooks only. A folder that is not a git checkout skips them.
+npx 0xray inspect --skip-live # mill receipt from the foundry that ships in this package
 ```
 
-`npx 0xray look` opens one card and writes it to `.xray/state/LENS.md`. The planes are `dev`, `integration`, `domain`, and `ecosystem`. At the end of a turn, write the working notes in `.xray/state/NOTES.md`. The next wake reads `.xray/state/STATION.md`, then the notes, then the lens. Plates: [goggles](docs-site/docs/plates/goggles.md), [notes-page](docs-site/docs/plates/notes-page.md).
+`npx 0xray look` opens one card and writes it to `.xray/state/LENS.md`. The planes are `dev`, `integration`, `domain`, and `ecosystem`. A session starts on `dev`. A mill suit's station card says `integration`, which is that plant's plane. `look dev` still opens the dev card. At the end of a turn, write the working notes in `.xray/state/NOTES.md`. The next wake reads `.xray/state/STATION.md`, then the notes, then the lens. Plates: [goggles](docs-site/docs/plates/goggles.md), [notes-page](docs-site/docs/plates/notes-page.md).
 
 Manual per-platform install (idempotent, same bridges wear writes):
 
@@ -92,15 +94,15 @@ Patch notes are in [CHANGELOG.md](CHANGELOG.md).
 Wear links the vendored repertoire, including when npm did not run the install script. Wear then:
 
 1. Copies **`AGENTS-consumer.md` → `AGENTS.md`**. Does **not** write consumer-root **`SKILLS.md`**.
-2. Fastens **mill plant** (`mill` + `inspect`). Fasten is **foundry-plant/0**: builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill package declares — organs (looker, vibe, mixer) live in the mill, not an xray catalog. Nested mill `@0xray/foundry@0.1.12`. CLI shims `foundry blip|sound` still exist on foundry 0.1.11+; fasten is the new cut. Not a 45-skill / 42-agent costume dump. `foundry.json` `"costume": true` is the opt-in dump.
+2. Fastens **mill plant** (`mill` + `inspect`). Fasten is **foundry-plant/0**: builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill package declares — organs (looker, vibe, mixer) live in the mill, not an xray catalog. Inspect is `npx 0xray inspect`, the foundry that ships in this package, not a separate registry download. A mill suit wears the catalog. `foundry.json` `"costume": true` is a separate flag and does not decide that. A blip or sound seat fastens that plant only.
 3. Seeds **`.gitignore`** from `.gitignore.default` (if absent)
 4. Deploys **`.xray/`** config (`codex.json`, `features.json`, `config.json`) then overlays **their** plant
 5. Writes project **`.mcp.json`** with 7 MCPs servers (`npx -y 0xray mcp …`)
 6. Installs **4 chat bridges**: OpenCode, Grok, Hermes, OpenClaw, plus **Cursor** `.cursor/hooks.json` (PPE + wiring; mill plant, not costume)
 7. Factory shop plant (`shop-extract`, `shop-witness`, `shop-pin` from groover-hangar) may coexist when worn. Extra shops: `foundry.json` `shopPlant`. Not costume.
-8. Inside a git checkout, fastens Cursor `.cursor/hooks.json` and the hook scripts, and keeps an unwear snapshot. Outside a git checkout, skips those hooks and prints one warning. `npx 0xray setup --git-hooks` is what installs git hooks.
+8. Inside a git checkout, fastens Cursor `.cursor/hooks.json` and the hook scripts, and keeps an unwear snapshot. Outside a git checkout, skips those hooks and prints one warning. `npx 0xray setup --git-hooks` installs git hooks in a git checkout. Outside one, it says the hooks were skipped.
 
-See [llms.txt](llms.txt) for the agent map. Catalog of 45 skills lives in [SKILLS.md](SKILLS.md) — that is the exo catalog, not default consumer wear.
+See [llms.txt](llms.txt) for the agent map. The catalog in [SKILLS.md](SKILLS.md) is what a mill suit wears, plus the `mill` and `inspect` plant skills. `npx 0xray status` counts those worn skills. Role files under `.opencode/agents` are the agent count status prints.
 
 ## Seven MCP Servers (consumer)
 

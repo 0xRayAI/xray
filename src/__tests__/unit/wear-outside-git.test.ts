@@ -27,6 +27,7 @@ const SUIT_WITHOUT_CURSOR_HOOKS = [
   '.grok/config.toml',
   '.grok/hooks/0xray.json',
   '.grok/plugins/0xray/.mcp.json',
+  '.grok/plugins/0xray/bundle.md',
   '.grok/plugins/0xray/hooks/hooks.json',
   '.grok/plugins/0xray/skills/inspect/SKILL.md',
   '.grok/plugins/0xray/skills/mill/SKILL.md',
@@ -70,6 +71,7 @@ const SUIT_WITHOUT_CURSOR_HOOKS = [
 /** 4.0.28 isolated-HOME delta, excluding npm's own cache. */
 const HOME_FROM_428 = [
   '.grok/plugins/0xray/.mcp.json',
+  '.grok/plugins/0xray/bundle.md',
   '.grok/plugins/0xray/hooks/hooks.json',
   '.grok/trusted_folders.toml',
 ];
@@ -195,6 +197,22 @@ describe('wear and setup outside a git checkout', () => {
     }
   });
 
+  it('setup --git-hooks outside git does not claim the hooks were written', () => {
+    const project = mkdtempSync(path.join(tmpdir(), 'xray-setup-nogit-hooks-'));
+    const home = freshHome();
+    try {
+      writeFileSync(path.join(project, 'package.json'), `${JSON.stringify({ name: 'acme' })}\n`);
+      const ran = runNode(setupScript, ['setup', '--git-hooks'], project, home);
+      expect(ran.status).toBe(0);
+      expect(ran.stdout).toContain('git hooks skipped because not a git checkout');
+      expect(ran.stdout).not.toContain('and git hooks\n');
+      expect(existsSync(path.join(project, '.git'))).toBe(false);
+    } finally {
+      rmSync(project, { recursive: true, force: true });
+      rmSync(home, { recursive: true, force: true });
+    }
+  });
+
   it('setup outside git writes the same suit and the same warning', () => {
     const project = mkdtempSync(path.join(tmpdir(), 'xray-setup-nogit-suit-'));
     const home = freshHome();
@@ -275,6 +293,8 @@ describe('wear and setup outside a git checkout', () => {
       expect(existsSync(path.join(project, '.xray', 'features.json'))).toBe(true);
       expect(existsSync(path.join(project, '.xray', 'config.json'))).toBe(true);
       expect(lstatSync(path.join(project, 'node_modules', '@0xray', 'repertoire')).isSymbolicLink()).toBe(true);
+      const pinned = JSON.parse(readFileSync(path.join(project, 'package.json'), 'utf8'));
+      expect(pinned.dependencies['@0xray/repertoire']).toMatch(/^file:.*vendor\/@0xray\/repertoire$/);
       expect(listFiles(home).filter((rel) => !homeBefore.includes(rel))).toEqual(homeFromWear());
     } finally {
       rmSync(project, { recursive: true, force: true });

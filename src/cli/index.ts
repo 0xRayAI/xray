@@ -120,6 +120,22 @@ function runGoggles(args: string[]): void {
 }
 
 program
+  .command("inspect")
+  .description("Run the mill inspect that ships in this package. Chat is not a receipt.")
+  .allowUnknownOption()
+  .action(() => {
+    const script = join(packageRoot, "scripts", "foundry", "cli.js");
+    if (!existsSync(script)) {
+      process.stderr.write("inspect: shipped foundry is missing\n");
+      process.exit(1);
+    }
+    const idx = process.argv.indexOf("inspect");
+    const rest = idx >= 0 ? process.argv.slice(idx + 1) : [];
+    const result = spawnSync(process.execPath, [script, "inspect", ...rest], { stdio: "inherit" });
+    process.exit(result.status ?? 1);
+  });
+
+program
   .command("look")
   .argument("[args...]", "one card plane")
   .description(LOOK_HELP)

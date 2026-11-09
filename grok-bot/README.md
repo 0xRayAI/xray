@@ -23,13 +23,13 @@ Agents: read `llms.txt` → `AGENTS.md` → run skills in `SKILLS.md` (**one sui
 Humans: same files.
 
 ## Install
-The mill wears the suit. Install `0xray` and wear it before the kit.
+The mill wears the suit. Node >= 24.22.1. Install both packages, then wear, so a later install does not drop the repertoire link before the suit is worn.
 
 ```bash
 npm init -y
 npm install 0xray
-npx 0xray wear
 npm install @0xray/grok-bot
+npx 0xray wear
 npx @0xray/grok-bot doctor
 ```
 
