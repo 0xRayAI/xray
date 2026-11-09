@@ -9,6 +9,16 @@ TOOL = Path(__file__).resolve().parents[1] / "tools" / "live-inbox"
 BASE_PATH = "/usr/local/bin:/usr/bin:/bin"
 
 
+def git_main(main):
+    """Make main a checkout whose HEAD is origin/main, as the wake block requires (xray#959)."""
+    g = lambda *a: subprocess.run(["git", "-C", str(main), *a], check=True, capture_output=True)
+    origin = str(main) + ".origin.git"
+    subprocess.run(["git", "init", "-q", "--bare", origin], check=True)
+    g("init", "-q", "-b", "main"); g("add", "-A")
+    g("-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "stub")
+    g("remote", "add", "origin", origin); g("push", "-q", "origin", "main")
+
+
 class Hit(BaseHTTPRequestHandler):
     def do_POST(self):
         n = int(self.headers.get("Content-Length") or 0)
@@ -75,6 +85,7 @@ class WakeEnvFreshShell(unittest.TestCase):
         stub.parent.mkdir(parents=True)
         stub.write_text("#!/bin/bash\nprintf '%s\\n' \"$LIVE_URL\" \"$LIVE_CURSORS\" \"$SEAT_KEYS_DIR\" \"$WAKE_RUN\" \"$*\" >> \"$OUT\"\n")
         stub.chmod(0o755)
+        git_main(main)
         script = bash_block().replace("<seat>", "forge")
         self.assertIn("export LIVE_URL=", bash_block())
         self.assertIn('export LIVE_CURSORS="$HOME/.burst/cursors"', bash_block())
@@ -124,6 +135,7 @@ class WakeEnvFreshShell(unittest.TestCase):
         legacy = self.home / "legacy"
         (legacy / "workspace" / ".cursors").mkdir(parents=True)
         (legacy / "workspace" / ".cursors" / "forge.txt").write_text("work\n")
+        git_main(main)
         script = bash_block().replace("<seat>", "forge")
         r = self.sh(script, OUT=str(recorded), XRAY_MAIN=str(main), LIVE_CURSOR_ROOT=str(legacy))
         self.assertEqual(r.returncode, 0, r.stderr + r.stdout)
