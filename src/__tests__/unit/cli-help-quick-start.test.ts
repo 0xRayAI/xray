@@ -11,6 +11,7 @@ describe('--help Quick Start', () => {
     expect(ran.status).toBe(0);
     expect(text).toContain('npm install 0xray');
     expect(text).toContain('npm install ./0xray-<file>.tgz');
+    expect(text).toContain('git init');
     expect(text).toContain('npx 0xray wear');
     expect(text).not.toContain('Install: npx 0xray install');
   });

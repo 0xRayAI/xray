@@ -1206,9 +1206,10 @@ Quick Start:
    1. npm init -y
    2. npm install 0xray
       A local pack: npm install ./0xray-<file>.tgz
-   3. npx 0xray wear
-   4. npx 0xray look dev
-   5. npx 0xray status
+   3. git init
+   4. npx 0xray wear
+   5. npx 0xray look dev
+   6. npx 0xray status
 
 For more information, visit: https://github.com/0xRayAI/xray
 `,

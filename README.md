@@ -41,6 +41,7 @@ Wear links vendored `@0xray/repertoire` and writes the consumer suit, including 
 ```bash
 npm init -y
 npm install 0xray
+git init
 npx 0xray wear
 npx 0xray look dev
 npx 0xray status
@@ -104,7 +105,7 @@ Wear links the vendored repertoire, including when npm did not run the install s
 5. Writes project **`.mcp.json`** with 7 MCPs servers (`npx -y 0xray mcp …`)
 6. Installs **4 chat bridges**: OpenCode, Grok, Hermes, OpenClaw, plus **Cursor** `.cursor/hooks.json` (PPE + wiring; mill plant, not costume)
 7. Factory shop plant (`shop-extract`, `shop-witness`, `shop-pin` from groover-hangar) may coexist when worn. Extra shops: `foundry.json` `shopPlant`. Not costume.
-8. Inside a git checkout, fastens Cursor `.cursor/hooks.json` and the hook scripts, and keeps an unwear snapshot. Outside a git checkout, skips those hooks and prints one warning. `npx 0xray setup --git-hooks` installs git hooks in a git checkout. Outside one, it says the hooks were skipped.
+8. Fastens Cursor `.cursor/hooks.json` and the hook scripts even when the folder is not a git checkout, and keeps an unwear snapshot. `git init` before wear is what lets `npx 0xray setup --git-hooks` install git hooks. Outside a git checkout, that command says the git hooks were skipped.
 
 See [llms.txt](llms.txt) for the agent map. The catalog in [SKILLS.md](SKILLS.md) is what a mill suit wears, plus the `mill` and `inspect` plant skills. `npx 0xray status` counts those worn skills. Role files under `.opencode/agents` are the agent count status prints.
 

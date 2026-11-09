@@ -2355,7 +2355,7 @@ function assertCursorWearGit(targetDir) {
 }
 
 const CURSOR_HOOKS_SKIPPED_LINE =
-  "cursor-wear: hooks skipped because this folder is not a git checkout\n";
+  "cursor-wear: project hooks written; git hooks skipped because this folder is not a git checkout\n";
 
 function syncSetupSkillsAndRootLinks(packageRoot, targetDir) {
   require("./setup.cjs").syncSetupSkillsAndRootLinks(packageRoot, targetDir);
@@ -2450,6 +2450,7 @@ function wearSuitSkippingCursorHooks(packageRoot, targetDir, log) {
     }
     syncSetupSkillsAndRootLinks(packageRoot, targetDir);
   }
+  fastenCursorHooksAt(targetDir, packageRoot, write);
   process.stderr.write(CURSOR_HOOKS_SKIPPED_LINE);
 }
 

@@ -19,10 +19,17 @@ const repoRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../
 const wearScript = path.join(repoRoot, 'scripts/node/wear-cursor-hooks.cjs');
 const setupScript = path.join(repoRoot, 'scripts/node/install-bridges.cjs');
 const postinstallScript = path.join(repoRoot, 'scripts/node/postinstall.cjs');
-const SKIPPED = 'cursor-wear: hooks skipped because this folder is not a git checkout';
+const SKIPPED = 'cursor-wear: project hooks written; git hooks skipped because this folder is not a git checkout';
 
-/** 4.0.28 non-git `npm i` project files, minus Cursor hooks. */
+/** 4.0.28 non-git project files, including Cursor project hooks. */
 const SUIT_WITHOUT_CURSOR_HOOKS = [
+  '.cursor/hooks.json',
+  '.cursor/hooks/after-file-edit.sh',
+  '.cursor/hooks/before-read-file.sh',
+  '.cursor/hooks/before-shell-execution.sh',
+  '.cursor/hooks/pre-compact.sh',
+  '.cursor/hooks/pre-tool-use.sh',
+  '.cursor/hooks/xray-cloud-hook.sh',
   '.gitignore',
   '.grok/config.toml',
   '.grok/hooks/0xray.json',
@@ -64,6 +71,8 @@ const SUIT_WITHOUT_CURSOR_HOOKS = [
   '.xray/foundry-inventory.json',
   '.xray/state/NOTES.md',
   '.xray/state/STATION.md',
+  '.xray/state/cursor-hook-wear/hooks.json.written',
+  '.xray/state/cursor-hook-wear/meta.json',
   'AGENTS.md',
   'opencode.json',
 ];
@@ -136,8 +145,6 @@ function linkStdout(): string {
   return ['✅ Scripts symlink: created', '✅ Dist symlink: created', ''].join('\n');
 }
 
-const PIN_LINE = 'wear: pinned @0xray/repertoire\n';
-
 function runCliInspect(project: string, home: string) {
   const machine = mkdtempSync(path.join(tmpdir(), 'xray-inspect-machine-'));
   try {
@@ -203,11 +210,10 @@ describe('wear and setup outside a git checkout', () => {
       const ran = runNode(wearScript, [project], project, home);
       expect(ran.status).toBe(0);
       expect(ran.stderr).toBe(`${SKIPPED}\n`);
-      expect(ran.stdout).toBe(`${PIN_LINE}${linkStdout()}`);
+      expect(ran.stdout).toBe(`${linkStdout()}`);
       const wrote = listFiles(project).filter((rel) => rel !== 'package.json' && rel !== 'keep.txt');
       expect(wrote).toEqual(wornSuit());
-      expect(wrote.some((rel) => rel === '.cursor' || rel.startsWith('.cursor/'))).toBe(false);
-      expect(existsSync(path.join(project, '.cursor'))).toBe(false);
+      expect(existsSync(path.join(project, '.cursor', 'hooks.json'))).toBe(true);
       expect(readFileSync(path.join(project, 'keep.txt'), 'utf8')).toBe('stay\n');
       const homeAfter = listFiles(home);
       expect(homeBefore).toEqual([]);
@@ -277,10 +283,10 @@ describe('wear and setup outside a git checkout', () => {
       const ran = runNode(setupScript, ['setup'], project, home);
       expect(ran.status).toBe(0);
       expect(ran.stderr).toBe(`${SKIPPED}\n`);
-      expect(ran.stdout).toBe(`${PIN_LINE}${linkStdout()}setup: wrote .mcp.json and chat bridges\n`);
+      expect(ran.stdout).toBe(`${linkStdout()}setup: wrote .mcp.json and chat bridges\n`);
       const wrote = listFiles(project).filter((rel) => rel !== 'package.json');
       expect(wrote).toEqual(wornSuit());
-      expect(existsSync(path.join(project, '.cursor'))).toBe(false);
+      expect(existsSync(path.join(project, '.cursor', 'hooks.json'))).toBe(true);
       expect(listFiles(home).filter((rel) => !homeBefore.includes(rel))).toEqual(homeFromWear());
       const again = runNode(wearScript, [project], project, home);
       expect(again.status).toBe(0);
@@ -302,7 +308,7 @@ describe('wear and setup outside a git checkout', () => {
       const ran = runNode(wearScript, [project], project, home);
       expect(ran.status).toBe(0);
       expect(ran.stderr).toBe('');
-      expect(ran.stdout).toBe(`${PIN_LINE}${linkStdout()}`);
+      expect(ran.stdout).toBe(`${linkStdout()}`);
       expect(existsSync(path.join(project, '.cursor', 'hooks.json'))).toBe(true);
       expect(existsSync(path.join(project, '.cursor', 'hooks', 'pre-tool-use.sh'))).toBe(true);
       expect(existsSync(path.join(project, '.opencode', 'skills', 'mill', 'SKILL.md'))).toBe(true);
@@ -353,7 +359,7 @@ describe('wear and setup outside a git checkout', () => {
       expect(existsSync(path.join(project, '.xray', 'config.json'))).toBe(true);
       expect(lstatSync(path.join(project, 'node_modules', '@0xray', 'repertoire')).isSymbolicLink()).toBe(true);
       const pinned = JSON.parse(readFileSync(path.join(project, 'package.json'), 'utf8'));
-      expect(pinned.dependencies['@0xray/repertoire']).toMatch(/^file:.*vendor\/@0xray\/repertoire$/);
+      expect(pinned.dependencies?.['@0xray/repertoire']).toBeUndefined();
       expect(listFiles(home).filter((rel) => !homeBefore.includes(rel))).toEqual(homeFromWear());
     } finally {
       rmSync(project, { recursive: true, force: true });
