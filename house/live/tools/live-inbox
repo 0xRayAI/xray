@@ -53,6 +53,9 @@ KEYS = Path(os.environ["SEAT_KEYS_DIR"]).expanduser()
 # folders land under that dir. $HOME/.burst/cursors moves with HOME.
 
 
+
+AT_DEDUPE_SECONDS = 2  # --at skips a same-seat, same-from prompt this close; WAKE-ROUTINE step 0 says the same
+
 def norm_dir(path):
     return Path(path).expanduser().resolve()
 
@@ -599,7 +602,7 @@ def prompt_dup(seat, frm, t_ct):
             seen = datetime.fromisoformat(str(e.get("t_ct")))
         except ValueError:
             continue
-        if abs((seen - at).total_seconds()) <= 2:
+        if abs((seen - at).total_seconds()) <= AT_DEDUPE_SECONDS:
             return e.get("id") or True
     return None
 

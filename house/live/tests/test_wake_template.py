@@ -343,3 +343,17 @@ class TurnFlag(unittest.TestCase):
 if __name__ == "__main__":
     unittest.main()
 
+
+
+class AtDedupeLockstep(unittest.TestCase):
+    def test_step0_window_matches_tool_constant(self):
+        m = re.search(r"^AT_DEDUPE_SECONDS = (\d+)", TOOL.read_text(), re.M)
+        self.assertIsNotNone(m, "live-inbox has no AT_DEDUPE_SECONDS")
+        step0 = [s for s in steps(TEMPLATE.read_text()) if "--at" in s]
+        self.assertTrue(step0)
+        self.assertIn(f"within {m.group(1)}s", step0[0])
+
+    def test_step7_guards_missing_reflection_package(self):
+        text = TEMPLATE.read_text()
+        self.assertIn('if [ -f "$R" ]', text)
+        self.assertIn("exit gate FAIL", text)

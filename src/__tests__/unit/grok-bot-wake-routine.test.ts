@@ -20,6 +20,7 @@ describe('WAKE-ROUTINE — station Full and the way-out on every path (#913, #94
     }
     expect(wake).toContain('step 1 is station Full and step 7 is the station way-out, on every wake with no exception');
     expect(boot).toContain('on every path: an empty inbox, a duplicate, a still-waiting line, an early return, or an error');
+    expect(wake).toContain('A wake whose last gate run did not exit 0 never says done, filed, or wrote');
   });
 
   it('names one TRACKS path', () => {
