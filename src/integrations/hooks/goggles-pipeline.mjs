@@ -1136,11 +1136,13 @@ export function migrateLensSkills(root) {
   const prev = readLensText(root);
   if (!prev) return false;
   const cards = lensCards(prev);
+  const lens = seatLensOf(root);
   let next = prev;
   let changed = false;
   for (const [id, block] of cards) {
     const current = cardRow(block, 'Skills');
     const ranked = rankedSkillRow(id);
+    if (lens && lens.skills && current === lens.skills) continue;
     if (!ranked || !staleSkillRow(current) || current === ranked) continue;
     const updated = block.replace(/^Skills:.*$/m, `Skills: ${ranked}`);
     if (!next.includes(block)) continue;

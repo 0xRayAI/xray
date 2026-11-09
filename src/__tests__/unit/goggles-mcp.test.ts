@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
-import { look, lookCards } from '../../integrations/hooks/goggles-pipeline.mjs';
+import { look, lookCards, migrateLensSkills } from '../../integrations/hooks/goggles-pipeline.mjs';
 import { TOOLS, dispatchTool } from '../../integrations/hooks/goggles-mcp.mjs';
 
 const LAUNCHER = fileURLToPath(new URL('../../../scripts/mjs/run-goggles-mcp.mjs', import.meta.url));
@@ -223,6 +223,22 @@ describe('goggles MCP', () => {
     const status = await dispatchTool('goggles__status_lens', { extra: true }, tempRoot());
     expect(status.isError).toBe(true);
     expect(status.payload.error.code).toBe('invalid_args');
+  });
+
+  it('LENS Skills stay equal to the look card after migrate', () => {
+    const root = tempRoot();
+    try {
+      writeFileSync(join(root, 'package.json'), `${JSON.stringify({ name: 'acme' })}\n`);
+      writeFileSync(join(root, 'foundry.json'), `${JSON.stringify({ plant: 'mill' })}\n`);
+      const card = lookCards(['dev'], root)[0];
+      migrateLensSkills(root);
+      const lens = readFileSync(join(root, '.xray', 'state', 'LENS.md'), 'utf8');
+      const skills = (lens.match(/^Skills: (.+)$/m) || [])[1] || '';
+      expect(skills).toBe(card.skills);
+      expect(skills).toBe('mill, inspect');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 
   it('a named consumer look ignores an inherited checkout root', async () => {
