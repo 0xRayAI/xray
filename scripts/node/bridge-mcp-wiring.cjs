@@ -1226,10 +1226,15 @@ function suitMcpBlock(server, launch) {
  */
 function writeProjectSuitMcp(targetDir) {
   const root = path.resolve(targetDir);
-  const names = suitServerNames();
-  const blocks = XRAY_MCP_SERVERS.map((server) =>
-    suitMcpBlock(server, scopedMcpLaunch(root, server.mcpCmd, server.env)),
-  );
+  const extras = detectConsumerExtraMcpServers(root).openclaw || {};
+  const extra = ["goggles", "repertoire"]
+    .filter((name) => extras[name])
+    .map((name) => ({ name, launch: extras[name] }));
+  const names = new Set([...suitServerNames(), ...extra.map((server) => server.name)]);
+  const blocks = [
+    ...XRAY_MCP_SERVERS.map((server) => suitMcpBlock(server, scopedMcpLaunch(root, server.mcpCmd, server.env))),
+    ...extra.map((server) => suitMcpBlock(server, server.launch)),
+  ];
   const grokDir = path.join(root, ".grok");
   fs.mkdirSync(grokDir, { recursive: true });
   const tomlPath = path.join(grokDir, "config.toml");

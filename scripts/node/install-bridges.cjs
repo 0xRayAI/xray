@@ -2626,8 +2626,9 @@ function wearCursorHooks(targetDir, packageRoot, log, opts) {
   const write = typeof log === "function" ? log : () => {};
   const options = opts || {};
   const resolvedTarget = path.resolve(targetDir);
-  const resolvedPackage = settlePackageRoot(path.resolve(packageRoot), resolvedTarget);
-  pinLauncherPackageRoot(launcherPinRoot(resolvedPackage, resolvedTarget));
+  const settledPackage = settlePackageRoot(path.resolve(packageRoot), resolvedTarget);
+  const resolvedPackage = launcherPinRoot(settledPackage, resolvedTarget);
+  pinLauncherPackageRoot(resolvedPackage);
   try {
   if (classifyCursorWearGit(resolvedTarget) === "not-work-tree") {
     wearSuitSkippingCursorHooks(resolvedPackage, resolvedTarget, write);
@@ -2900,8 +2901,9 @@ function installFrameworkDogfoodWear(packageRoot, log) {
  */
 function installAllBridges(opts) {
   const targetDir = path.resolve(opts.targetDir);
-  const packageRoot = settlePackageRoot(path.resolve(opts.packageRoot), targetDir);
-  pinLauncherPackageRoot(launcherPinRoot(packageRoot, targetDir));
+  const settled = settlePackageRoot(path.resolve(opts.packageRoot), targetDir);
+  const packageRoot = launcherPinRoot(settled, targetDir);
+  pinLauncherPackageRoot(packageRoot);
   const logFn = opts.log;
   const log =
     logFn ||

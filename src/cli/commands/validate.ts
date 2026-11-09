@@ -111,6 +111,37 @@ function checkPath(root: string, rel: string): boolean {
   return existsSync(join(root, rel));
 }
 
+function launchersOutsideInstall(cwd: string, installRoot: string): string[] {
+  const files = [
+    join(cwd, ".mcp.json"),
+    join(cwd, ".grok", "config.toml"),
+    join(cwd, ".grok", "hooks", "0xray.json"),
+    join(cwd, ".grok", "plugins", "0xray", ".mcp.json"),
+  ];
+  const found = new Set<string>();
+  const pattern = /(?:^|["\s=])(\/[^"'\s]*\/(?:mcp-launch\.cjs|run-grok-hook\.mjs))/g;
+  for (const file of files) {
+    if (!existsSync(file)) continue;
+    const text = readFileSync(file, "utf8");
+    for (const match of text.matchAll(pattern)) {
+      const hit = match[1];
+      if (!hit.startsWith(`${installRoot}/`)) found.add(hit);
+    }
+  }
+  return [...found];
+}
+
+function mcpHasServer(cwd: string, name: string): boolean {
+  try {
+    const body = JSON.parse(readFileSync(join(cwd, ".mcp.json"), "utf8")) as {
+      mcpServers?: Record<string, unknown>;
+    };
+    return Boolean(body.mcpServers && body.mcpServers[name]);
+  } catch {
+    return false;
+  }
+}
+
 function stationDurableHoldsNpm(cwd: string): boolean {
   const dest = join(cwd, ".xray", "state", "STATION.md");
   if (!existsSync(dest)) return false;
@@ -198,6 +229,21 @@ export function collectValidateReport(cwd: string): ValidateReport {
           ? "no worn skill holds an older shipped body"
           : `older shipped body still worn: ${stale.join(", ")} — run npx 0xray wear`,
     });
+
+    const installRoot = join(cwd, "node_modules", "0xray");
+    if (existsSync(join(installRoot, "scripts", "node", "mcp-launch.cjs"))) {
+      const outside = launchersOutsideInstall(cwd, installRoot);
+      const goggles = mcpHasServer(cwd, "goggles");
+      checks.push({
+        id: "launcher-pin",
+        ok: outside.length === 0 && goggles,
+        detail: !goggles
+          ? "goggles server missing"
+          : outside.length === 0
+            ? "launchers and hooks stay on node_modules/0xray"
+            : `outside node_modules/0xray: ${outside[0]}`,
+      });
+    }
 
     const repertoire =
       existsSync(join(cwd, "node_modules", "@0xray", "repertoire", "package.json")) ||

@@ -315,6 +315,44 @@ describe('bridge-mcp-wiring', () => {
     }
   });
 
+  it('a linked wear keeps every launcher on node_modules/0xray', () => {
+    const targetDir = mkdtempSync(path.join(os.tmpdir(), 'xray-link-wear-'));
+    spawnSync('git', ['init', '-q'], { cwd: targetDir });
+    mkdirSync(path.join(targetDir, 'node_modules'), { recursive: true });
+    symlinkSync(packageRoot, path.join(targetDir, 'node_modules', '0xray'));
+    const bridges = require(path.join(packageRoot, 'scripts', 'node', 'install-bridges.cjs'));
+    const wear = () => bridges.installAllBridges({ targetDir, packageRoot, log: () => {} });
+    try {
+      wear();
+      const mcpPath = path.join(targetDir, '.mcp.json');
+      const grokToml = path.join(targetDir, '.grok', 'config.toml');
+      const grokHooks = path.join(targetDir, '.grok', 'hooks', '0xray.json');
+      const first = {
+        mcp: readFileSync(mcpPath, 'utf8'),
+        toml: readFileSync(grokToml, 'utf8'),
+        hooks: readFileSync(grokHooks, 'utf8'),
+      };
+      const mcp = JSON.parse(first.mcp) as { mcpServers: Record<string, { args?: string[] }> };
+      const linkLaunch = path.join(targetDir, 'node_modules', '0xray', 'scripts', 'node', 'mcp-launch.cjs');
+      for (const [name, server] of Object.entries(mcp.mcpServers)) {
+        expect(server.args?.[0], name).toBe(linkLaunch);
+      }
+      expect(mcp.mcpServers.goggles).toBeTruthy();
+      expect(mcp.mcpServers.repertoire).toBeTruthy();
+      expect(first.toml).toContain('[mcp_servers.goggles]');
+      expect(first.toml).toContain('[mcp_servers.repertoire]');
+      expect(first.hooks).toContain(path.join(targetDir, 'node_modules', '0xray', 'scripts', 'mjs', 'run-grok-hook.mjs'));
+      expect(first.hooks).not.toContain(path.join(packageRoot, 'scripts', 'mjs', 'run-grok-hook.mjs'));
+      wear();
+      expect(readFileSync(mcpPath, 'utf8')).toBe(first.mcp);
+      expect(readFileSync(grokToml, 'utf8')).toBe(first.toml);
+      expect(readFileSync(grokHooks, 'utf8')).toBe(first.hooks);
+    } finally {
+      wiring.pinLauncherPackageRoot('');
+      rmSync(targetDir, { recursive: true, force: true });
+    }
+  });
+
   it('uses node_modules/xray only when that legacy tree is the install', () => {
     const targetDir = mkdtempSync(path.join(os.tmpdir(), 'xray-mcp-legacy-'));
     const cli = path.join(targetDir, 'node_modules', 'xray', 'dist', 'cli', 'index.js');
