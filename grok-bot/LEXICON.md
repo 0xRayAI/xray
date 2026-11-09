@@ -253,3 +253,13 @@ Every bolded term in the pack OP-PROC and runbooks is defined here (`bifrost che
 | Term | Bucket | Plain |
 |------|--------|-------|
 | **sweep** | Workstream | Critic owns the backlog sweep. Every open issue and pull has a status and a next owner. Done means closed, with a reason. Fourteen days with no beat is a proposed close to Blaze. A squash keeps `Closes #`. Overnight triage files findings and does not merge. Rule: [OP-PROC](OP-PROC.md#sweep). |
+
+## Lexicon add (2026-11-09 — fleet rules)
+
+| Term | Bucket | Plain |
+|------|--------|-------|
+| **no-context tests** | Workstream | A fit receipt counts only from a bot with no context (New Bot, fresh cloud, or new Grok session). The test bot gets only the shipped package and its docs. Rule: [OP-PROC](OP-PROC.md#no-context-tests). |
+| **pack test** | Workstream | Pack the head, install the tarballs on a dummy, keep the logs, open an issue for every miss. No hand fixes. Rule: [OP-PROC](OP-PROC.md#pack-test). |
+| **check everything in** | Workstream | Every file the fleet depends on lives in git. Secrets, PEMs, `.env`, `node_modules`, and live logs stay out. A box-only file fails a receipt. Rule: [OP-PROC](OP-PROC.md#check-everything-in). |
+| **golden rule** | Workstream | Open an issue the same turn a bug or gap is found. Do not leave it for the next guy. Rule: [OP-PROC](OP-PROC.md#golden-rule). |
+| **turn and summary memory** | Workstream | Write NOTES.md and LENS.md at turn end; read them on wake and after a summary. Wire a pre-compaction hook when one ships. Rule: [OP-PROC](OP-PROC.md#turn-summary-memory). |
