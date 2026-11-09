@@ -320,6 +320,19 @@ describe('bridge-mcp-wiring', () => {
     spawnSync('git', ['init', '-q'], { cwd: targetDir });
     mkdirSync(path.join(targetDir, 'node_modules'), { recursive: true });
     symlinkSync(packageRoot, path.join(targetDir, 'node_modules', '0xray'));
+    const checkoutLaunch = path.join(packageRoot, 'scripts', 'node', 'mcp-launch.cjs');
+    const linkGoggles = path.join(targetDir, 'node_modules', '0xray', 'scripts', 'mjs', 'run-goggles-mcp.mjs');
+    writeFileSync(
+      path.join(targetDir, '.mcp.json'),
+      `${JSON.stringify({
+        mcpServers: {
+          goggles: {
+            command: 'node',
+            args: [checkoutLaunch, '--keep', 'PATH,HOME,XRAY_ROOT', '--', 'node', linkGoggles],
+          },
+        },
+      })}\n`,
+    );
     const bridges = require(path.join(packageRoot, 'scripts', 'node', 'install-bridges.cjs'));
     const wear = () => bridges.installAllBridges({ targetDir, packageRoot, log: () => {} });
     try {
