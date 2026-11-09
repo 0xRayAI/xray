@@ -2,7 +2,7 @@
 
 ![0xRay Bifrost. The suit wears the board. One card, one seat. Inbox wakes. Rules stay on.](docs-site/static/img/readme-hero.jpg)
 
-A suit that survives the context window.
+**4.2** — a suit that survives the context window.
 
 Bifrost is the live board. Goggles views one plane. A search inside that card runs. A search of another plane returns the card. A path outside this checkout runs.
 
