@@ -357,3 +357,14 @@ class AtDedupeLockstep(unittest.TestCase):
         text = TEMPLATE.read_text()
         self.assertIn('if [ -f "$R" ]', text)
         self.assertIn("exit gate FAIL", text)
+
+
+class NoCloneOnWake(unittest.TestCase):
+    def test_wake_fast_forwards_and_never_clones(self):
+        text = TEMPLATE.read_text()
+        block = text.split("```bash", 1)[1].split("```", 1)[0]
+        self.assertIn('fetch -q origin main', block)
+        self.assertIn('merge -q --ff-only origin/main', block)
+        self.assertNotIn("git clone", text)
+        self.assertNotIn("worktree add", text)
+        self.assertIn("never clones the repo", text)

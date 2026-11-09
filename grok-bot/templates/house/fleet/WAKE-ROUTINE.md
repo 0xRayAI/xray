@@ -10,8 +10,12 @@ This routine is the Bifrost inbox wake, and it sets `LIVE_URL`. A seat with no `
 
 Env first, on every turn, in the same shell as the commands below. The routine runs `house/live/tools/live-inbox` from the main checkout (`XRAY_MAIN`). It does not run a copied binary, and it does not put `$HOME/.burst/bin` or `LIVE_INBOX_BIN` on `PATH`. The cursor folder rule is [Cursor folder](../../../OP-PROC.md#cursor-folder). A missing `LIVE_URL` or `SEAT_KEYS_DIR` exits 2 and names it. Another board may export its own `LIVE_URL` and `SEAT_KEYS_DIR` on the line before the block.
 
+The wake never clones the repo and never makes a new checkout or worktree; the box bars both, and a wake that tries dies before station runs (xray#959). It updates the checkout that is already at `XRAY_MAIN` with the first two lines of the block: fetch, then fast-forward. When the fast-forward fails (local commits or edits), it prints one line and goes on with that checkout as it is. Read a file from main with `git -C "$XRAY_MAIN" show origin/main:<path>`.
+
 ```bash
 # The file on main. Not ~/.burst/bin/live-inbox and not a copy under /tmp.
+git -C "${XRAY_MAIN:?set XRAY_MAIN to the main checkout}" fetch -q origin main
+git -C "$XRAY_MAIN" merge -q --ff-only origin/main 2>/dev/null || echo "wake: $XRAY_MAIN did not fast-forward to origin/main; using it as is (xray#959)"
 INBOX="${XRAY_MAIN:?set XRAY_MAIN to the main checkout}/house/live/tools/live-inbox"
 export LIVE_URL="${LIVE_URL:-https://bifrost.0xray.dev}"
 export SEAT_KEYS_DIR="${SEAT_KEYS_DIR:-$HOME/.burst/seat-keys}"
