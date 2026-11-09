@@ -15,7 +15,7 @@ A read never acks. The ack is the receipt (the pop) and a seat sends it after it
 --ack or --pop <id> (one line) or --ack all / --pop all (everything open). A kind=merge handoff is rejected unless
 --review is a review or comment URL on that pull, and the acked line stores the link. Other kinds ack as today.
 --ack all and --ack stale leave a merge line open when it has no review link. --ack stale lists lines with a close or merge
-event, or a closed or done card, and does not ack them. A missing card stays. --ack stale --apply acks the ids just listed.
+event on GitHub, and does not ack them. A done or closed board card while the pull is open is not stale. A missing card stays. --ack stale --apply acks the ids just listed.
 --ack merged asks GitHub once per card and acks every open line whose issue or pull is CLOSED or MERGED. An open card stays.
 --upto <id> acks the stored prefix through that id. A plain read still shows a merged card until one of those receipts.
 --peek means the same as a plain read.
