@@ -154,3 +154,26 @@ class CiInbox(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class PendingKeepsHeadOffGreen(unittest.TestCase):
+    """xray#961 review 5832138826: a required check still running blocks green and ci_pass."""
+
+    def test_running_check_blocks_green(self):
+        opened = [ev("open", "pr_open", number=9, sha=SHA)]
+        build = ev("b", "check_run", number=9, sha=SHA, status="completed", conclusion="success", name="Build")
+        live = ev("l", "check_run", number=9, sha=SHA, status="in_progress", conclusion="", name="house/live tests")
+        self.assertEqual(ci_inbox.sha_color(opened + [build, live]).get((R, SHA)), "pending")
+        self.assertNotIn((R, SHA), ci_inbox.green_keys(opened + [build, live]))
+        red = ev("bad", "ci_fail", number=9, sha=SHA2, t_ct="2026-10-28T09:50:00-05:00")
+        build2 = dict(build, id="b2", sha=SHA, t_ct="2026-10-28T10:05:00-05:00")
+        self.assertEqual(ci_inbox.critic_return_lines([red, live, build2], [build2]), [])
+        done = ev("l2", "check_run", number=9, sha=SHA, status="completed", conclusion="success", name="house/live tests",
+                  t_ct="2026-10-28T10:09:00-05:00")
+        self.assertEqual(ci_inbox.sha_color(opened + [build, live, done]).get((R, SHA)), "green")
+
+    def test_url_with_other_sha_is_not_trusted(self):
+        other = SHA2
+        self.assertTrue(ci_inbox._names_other_sha(f"https://github.com/{R}/pull/9/commits/{other}", SHA))
+        self.assertFalse(ci_inbox._names_other_sha(f"https://github.com/{R}/pull/9/commits/{SHA}", SHA))
+        self.assertFalse(ci_inbox._names_other_sha(f"https://github.com/{R}/pull/9", SHA))
