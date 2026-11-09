@@ -258,9 +258,11 @@ Every bolded term in the pack OP-PROC and runbooks is defined here (`bifrost che
 
 | Term | Bucket | Plain |
 |------|--------|-------|
-| **no-context tests** | Workstream | A fit receipt counts only from a bot with no context (New Bot, fresh cloud, or new Grok session). The test bot gets only the shipped package and its docs. Rule: [OP-PROC](OP-PROC.md#no-context-tests). |
+| **no-context tests** | Workstream | A fit receipt counts only from a newly created bot that has never seen a pack (one per pack), or a fresh cloud with no seat checkout. Rule: [OP-PROC](OP-PROC.md#no-context-tests). |
 | **pack test** | Workstream | Pack the head, install the tarballs on a dummy, keep the logs, open an issue for every miss. No hand fixes. Rule: [OP-PROC](OP-PROC.md#pack-test). |
 | **check everything in** | Workstream | Every file the fleet depends on lives in git. Secrets, PEMs, `.env`, `node_modules`, and live logs stay out. A box-only file fails a receipt. Rule: [OP-PROC](OP-PROC.md#check-everything-in). |
 | **golden rule** | Workstream | Open an issue the same turn a bug or gap is found. Do not leave it for the next guy. Rule: [OP-PROC](OP-PROC.md#golden-rule). |
 | **turn and summary memory** | Workstream | Write NOTES.md and LENS.md at turn end; read them on wake and after a summary. Wire a pre-compaction hook when one ships. Rule: [OP-PROC](OP-PROC.md#turn-summary-memory). |
 | **one fresh bot per pack** | Workstream | A bot that has already worn or seen an earlier pack is not a newb; only one cold bot runs per pack on a computer. Rule: [OP-PROC](OP-PROC.md#one-fresh-bot-per-pack). |
+| **Grok CLI fit is Arch1's call** | Workstream | A Grok CLI fit row counts only from an Arch1 empty-folder pack session; forge and critic can't mark it WORKS. Rule: [OP-PROC](OP-PROC.md#grok-cli-fit-arch1). |
+| **every beat lives on the board** | Workstream | Forge owns the wave and beat lifecycle; every beat gets a board card; mill or doctor flags a beat with no card. Rule: [OP-PROC](OP-PROC.md#every-beat-on-board). |
