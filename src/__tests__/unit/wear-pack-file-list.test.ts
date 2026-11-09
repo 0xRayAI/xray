@@ -185,7 +185,7 @@ describe('packed tarball file list against 0xray@4.0.28', () => {
         const seededPages = ['.xray/state/NOTES.md', '.xray/state/STATION.md'];
         const wornBundle = '.grok/plugins/0xray/bundle.md';
         expect(plainExtra).toEqual(
-          ['.grok/config.toml', wornBundle, ...seededPages, ...GIT_HOOK_SNAPSHOT, ...plainAgents].sort(),
+          ['.cursor/mcp.json', '.grok/config.toml', wornBundle, ...seededPages, ...GIT_HOOK_SNAPSHOT, ...plainAgents].sort(),
         );
         expect(plainMissing).toEqual([]);
 
@@ -195,6 +195,7 @@ describe('packed tarball file list against 0xray@4.0.28', () => {
             ...oldGit,
             ...CURSOR_HOOK_FILES,
             ...GIT_HOOK_SNAPSHOT,
+            '.cursor/mcp.json',
             '.grok/config.toml',
             '.grok/plugins/0xray/bundle.md',
             ...seededPages,

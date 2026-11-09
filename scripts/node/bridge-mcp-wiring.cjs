@@ -37,8 +37,6 @@ function resolveRepertoireMcp(targetDir) {
   const selfRoot = targetDir;
   const siblingRoot = path.join(targetDir, "..", "repertoire");
   const candidates = [
-    path.join(targetDir, "node_modules", "@0xray", "repertoire", "dist", "mcp", "server.js"),
-    path.join(targetDir, "vendor", "@0xray", "repertoire", "dist", "mcp", "server.js"),
     path.join(
       targetDir,
       "node_modules",
@@ -50,6 +48,8 @@ function resolveRepertoireMcp(targetDir) {
       "mcp",
       "server.js",
     ),
+    path.join(targetDir, "vendor", "@0xray", "repertoire", "dist", "mcp", "server.js"),
+    path.join(targetDir, "node_modules", "@0xray", "repertoire", "dist", "mcp", "server.js"),
     isRepertoirePackageRoot(selfRoot) ? path.join(selfRoot, "dist", "mcp", "server.js") : null,
     isRepertoirePackageRoot(siblingRoot) ? path.join(siblingRoot, "dist", "mcp", "server.js") : null,
   ];
@@ -88,9 +88,9 @@ function resolveRepertoireProvider(targetDir) {
     "provider",
     "memory-routing-provider.js",
   );
-  if (fs.existsSync(nmProvider)) return nmProvider;
-  if (fs.existsSync(vendorProvider)) return vendorProvider;
   if (fs.existsSync(packedVendorProvider)) return packedVendorProvider;
+  if (fs.existsSync(vendorProvider)) return vendorProvider;
+  if (fs.existsSync(nmProvider)) return nmProvider;
   if (isRepertoirePackageRoot(siblingRoot) && fs.existsSync(siblingProvider)) return siblingProvider;
   return null;
 }
@@ -327,6 +327,18 @@ function packageScript(targetDir, kind) {
     const file = path.join(targetDir, "node_modules", "0xray", "scripts", "mjs", "run-goggles-mcp.mjs");
     return fs.existsSync(file) ? file : "";
   }
+  const packed = path.join(
+    targetDir,
+    "node_modules",
+    "0xray",
+    "vendor",
+    "@0xray",
+    "repertoire",
+    "dist",
+    "mcp",
+    "server.js",
+  );
+  if (fs.existsSync(packed)) return packed;
   const file = path.join(targetDir, "node_modules", "@0xray", "repertoire", "dist", "mcp", "server.js");
   return fs.existsSync(file) ? file : "";
 }

@@ -1210,6 +1210,8 @@ Quick Start:
    4. npx 0xray wear
    5. npx 0xray look dev
    6. npx 0xray status
+   7. npx 0xray setup --git-hooks
+   8. npx 0xray inspect --skip-live
 
 For more information, visit: https://github.com/0xRayAI/xray
 `,

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { execFileSync, spawnSync } from 'node:child_process';
+import { createRequire } from 'node:module';
 import {
   copyFileSync,
   existsSync,
@@ -19,7 +20,7 @@ const repoRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../
 const wearScript = path.join(repoRoot, 'scripts/node/wear-cursor-hooks.cjs');
 const setupScript = path.join(repoRoot, 'scripts/node/install-bridges.cjs');
 const postinstallScript = path.join(repoRoot, 'scripts/node/postinstall.cjs');
-const SKIPPED = 'cursor-wear: project hooks written; git hooks skipped because this folder is not a git checkout';
+const SKIPPED = 'cursor-wear: project hooks and .cursor/mcp.json written; git hooks skipped because this folder is not a git checkout';
 
 /** 4.0.28 non-git project files, including Cursor project hooks. */
 const SUIT_WITHOUT_CURSOR_HOOKS = [
@@ -30,6 +31,7 @@ const SUIT_WITHOUT_CURSOR_HOOKS = [
   '.cursor/hooks/pre-compact.sh',
   '.cursor/hooks/pre-tool-use.sh',
   '.cursor/hooks/xray-cloud-hook.sh',
+  '.cursor/mcp.json',
   '.gitignore',
   '.grok/config.toml',
   '.grok/hooks/0xray.json',
@@ -199,6 +201,26 @@ function runNode(script: string, args: string[], cwd: string, home: string) {
   });
 }
 
+describe('repertoire launcher path', () => {
+  it('prefers the vendored server inside 0xray when both links exist', () => {
+    const project = mkdtempSync(path.join(tmpdir(), 'xray-rep-path-'));
+    const packed = path.join(project, 'node_modules', '0xray', 'vendor', '@0xray', 'repertoire', 'dist', 'mcp');
+    const linked = path.join(project, 'node_modules', '@0xray', 'repertoire', 'dist', 'mcp');
+    try {
+      mkdirSync(packed, { recursive: true });
+      mkdirSync(linked, { recursive: true });
+      writeFileSync(path.join(packed, 'server.js'), 'packed\n');
+      writeFileSync(path.join(linked, 'server.js'), 'linked\n');
+      const { resolveRepertoireMcp } = createRequire(import.meta.url)(
+        path.join(repoRoot, 'scripts/node/bridge-mcp-wiring.cjs'),
+      ) as { resolveRepertoireMcp: (dir: string) => string };
+      expect(resolveRepertoireMcp(project)).toBe(path.join(packed, 'server.js'));
+    } finally {
+      rmSync(project, { recursive: true, force: true });
+    }
+  });
+});
+
 describe('wear and setup outside a git checkout', () => {
   it('wears the 4.0.28 suit minus cursor hooks and warns once', () => {
     const project = mkdtempSync(path.join(tmpdir(), 'xray-wear-nogit-'));
@@ -365,6 +387,13 @@ describe('wear and setup outside a git checkout', () => {
       expect(existsSync(path.join(project, '.xray', 'features.json'))).toBe(true);
       expect(existsSync(path.join(project, '.xray', 'config.json'))).toBe(true);
       expect(lstatSync(path.join(project, 'node_modules', '@0xray', 'repertoire')).isSymbolicLink()).toBe(true);
+      const mcp = JSON.parse(readFileSync(path.join(project, '.mcp.json'), 'utf8')) as {
+        mcpServers: { repertoire: { args: string[] } };
+      };
+      const repertoireArgs = mcp.mcpServers.repertoire.args.join(' ');
+      const repertoireServer = repertoireArgs.split(' ').find((part) => part.endsWith('server.js')) || '';
+      expect(existsSync(repertoireServer)).toBe(true);
+      expect(existsSync(path.join(project, '.cursor', 'mcp.json'))).toBe(true);
       const pinned = JSON.parse(readFileSync(path.join(project, 'package.json'), 'utf8'));
       expect(pinned.dependencies?.['@0xray/repertoire']).toBeUndefined();
       expect(listFiles(home).filter((rel) => !homeBefore.includes(rel))).toEqual(homeFromWear());

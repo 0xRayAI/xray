@@ -13,6 +13,8 @@ describe('--help Quick Start', () => {
     expect(text).toContain('npm install ./0xray-<file>.tgz');
     expect(text).toContain('git init');
     expect(text).toContain('npx 0xray wear');
+    expect(text).toContain('npx 0xray setup --git-hooks');
+    expect(text).toContain('npx 0xray inspect --skip-live');
     expect(text).not.toContain('Install: npx 0xray install');
   });
 });

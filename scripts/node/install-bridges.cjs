@@ -1494,7 +1494,19 @@ function fastenCursorHooksAt(targetDir, packageRoot, log) {
   }
 }
 
+function writeCursorProjectMcp(targetDir, log) {
+  const src = path.join(targetDir, ".mcp.json");
+  if (!fs.existsSync(src)) return false;
+  const dest = path.join(targetDir, ".cursor", "mcp.json");
+  fs.mkdirSync(path.dirname(dest), { recursive: true });
+  const body = fs.readFileSync(src, "utf8");
+  writeFileIfChanged(dest, body.endsWith("\n") ? body : `${body}\n`);
+  log("cursor-bridge", "mcp.json written", "info", { path: dest });
+  return true;
+}
+
 function fastenCursorHooksAtUnsafe(targetDir, packageRoot, log) {
+  writeCursorProjectMcp(targetDir, log);
   const dest = path.join(targetDir, ".cursor", "hooks.json");
   const copied = fastenCursorHookScripts(targetDir, packageRoot, log);
   let existing = null;
@@ -2355,7 +2367,7 @@ function assertCursorWearGit(targetDir) {
 }
 
 const CURSOR_HOOKS_SKIPPED_LINE =
-  "cursor-wear: project hooks written; git hooks skipped because this folder is not a git checkout\n";
+  "cursor-wear: project hooks and .cursor/mcp.json written; git hooks skipped because this folder is not a git checkout\n";
 
 function syncSetupSkillsAndRootLinks(packageRoot, targetDir) {
   require("./setup.cjs").syncSetupSkillsAndRootLinks(packageRoot, targetDir);
@@ -2688,6 +2700,7 @@ function wearCursorHooks(targetDir, packageRoot, log, opts) {
   if (options.suit !== false && packageShipsConsumerSuit(resolvedPackage)) {
     fastenCursorHookScripts(resolvedTarget, resolvedPackage, write);
   }
+  writeCursorProjectMcp(resolvedTarget, write);
   write("cursor-bridge", "hooks.json wired to installed dist", "info", { path: hooksPath });
   return hooksPath;
   } finally {
