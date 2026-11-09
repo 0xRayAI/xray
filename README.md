@@ -23,6 +23,7 @@ The product is the **skeleton you wear**.
 - **Muscle** — **Repertoire is preferred.** Vendored 0.2.9 ships **on**. Dest is named laws, not hangar `repo-*` or git slugs. Station is the wake ticket — not a substitute for Repertoire.
 
 ```bash
+npm init -y
 npm install 0xray
 npx 0xray wear
 ```
@@ -32,6 +33,7 @@ Wear links vendored `@0xray/repertoire` and writes the consumer suit, including 
 ## Quick Start
 
 ```bash
+npm init -y
 npm install 0xray
 npx 0xray wear
 npx 0xray status

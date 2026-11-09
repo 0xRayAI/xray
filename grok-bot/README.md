@@ -24,6 +24,7 @@ Humans: same files.
 
 ## Install
 ```bash
+npm init -y
 npm i @0xray/grok-bot
 npx @0xray/grok-bot
 ```
