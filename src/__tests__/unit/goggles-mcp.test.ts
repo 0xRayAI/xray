@@ -225,6 +225,20 @@ describe('goggles MCP', () => {
     expect(status.payload.error.code).toBe('invalid_args');
   });
 
+  it('a named consumer look ignores an inherited checkout root', async () => {
+    const root = tempRoot();
+    const repo = fileURLToPath(new URL('../../..', import.meta.url));
+    try {
+      writeFileSync(join(root, 'package.json'), `${JSON.stringify({ name: 'acme' })}\n`);
+      const card = await stdioLook(LAUNCHER, root, repo);
+      expect(card.files).toEqual(['.']);
+      expect(card.entry).toBe('package.json and the project root.');
+      expect(card.files).not.toContain('grok-bot');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it('the launcher speaks look and status_lens on stdio', async () => {
     const root = tempRoot();
     try {
@@ -247,6 +261,59 @@ describe('goggles MCP', () => {
     }
   });
 });
+
+function stdioLook(script: string, cwd: string, inheritedRoot: string): Promise<{ files: string[]; entry: string }> {
+  return new Promise((resolve, reject) => {
+    const proc = spawn(process.execPath, [script], {
+      cwd,
+      env: { ...process.env, GOGGLES_ROOT: inheritedRoot, GOGGLES_PLANES_PATH: join(inheritedRoot, 'dist/integrations/hooks/goggles-planes.json') },
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+    let out = '';
+    let err = '';
+    let asked = false;
+    let settled = false;
+    let timer: ReturnType<typeof setTimeout>;
+    const finish = (error: Error | null, card?: { files: string[]; entry: string }) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      proc.kill();
+      if (error) reject(error);
+      else resolve(card ?? { files: [], entry: '' });
+    };
+    timer = setTimeout(() => {
+      finish(new Error(`stdio timeout: ${out.slice(0, 400)} ${err.slice(0, 200)}`));
+    }, 8000);
+    proc.stdin.write(`${JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2024-11-05', capabilities: {}, clientInfo: { name: 'consumer-look', version: '0' } } })}\n`);
+    proc.stdout.on('data', (chunk) => {
+      out += chunk.toString();
+      const lines = out.split('\n').filter((line) => line.trim().startsWith('{'));
+      if (!asked && lines.some((line) => line.includes('"id":1') || line.includes('"id": 1'))) {
+        asked = true;
+        proc.stdin.write(`${JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' })}\n`);
+        proc.stdin.write(`${JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'tools/call', params: { name: 'look', arguments: { plane: 'dev' } } })}\n`);
+      }
+      const answered = lines.find((line) => line.includes('"id":2') || line.includes('"id": 2'));
+      if (!answered) return;
+      try {
+        const message = JSON.parse(answered);
+        const text = message.result?.content?.[0]?.text ?? '';
+        const payload = JSON.parse(text);
+        finish(null, { files: payload.content.files, entry: payload.content.entry });
+      } catch (error) {
+        finish(error instanceof Error ? error : new Error(String(error)));
+      }
+    });
+    proc.stderr.on('data', (chunk) => {
+      err += chunk.toString();
+    });
+    proc.on('error', (error) => finish(error));
+    proc.on('exit', () => {
+      if (!settled) finish(new Error(`stdio closed: ${out.slice(0, 400)} ${err.slice(0, 200)}`));
+    });
+  });
+}
 
 function stdioTools(script: string, cwd: string): Promise<string[]> {
   return new Promise((resolve, reject) => {
