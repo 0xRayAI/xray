@@ -38,10 +38,13 @@ Wear links vendored `@0xray/repertoire` and writes the consumer suit, including 
 npm init -y
 npm install 0xray
 npx 0xray wear
+npx 0xray look dev
 npx 0xray status
 npx 0xray setup --git-hooks # optional: git hooks only
 npx @0xray/foundry inspect --skip-live # mill receipt (chat is not a receipt)
 ```
+
+`npx 0xray look` opens one card and writes it to `.xray/state/LENS.md`. The planes are `dev`, `integration`, `domain`, and `ecosystem`. At the end of a turn, write the working notes in `.xray/state/NOTES.md`. The next wake reads `.xray/state/STATION.md`, then the notes, then the lens. Plates: [goggles](docs-site/docs/plates/goggles.md), [notes-page](docs-site/docs/plates/notes-page.md).
 
 Manual per-platform install (idempotent, same bridges wear writes):
 
