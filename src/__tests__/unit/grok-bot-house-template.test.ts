@@ -142,7 +142,7 @@ describe('grok-bot house template — USMail docs', () => {
     expect(skill).toContain('../../OP-PROC.md#station-boot');
     expect(skill).toContain('https://github.com/0xRayAI/xray/blob/main/house/OP-PROC.md');
     expect(skill).toContain('A chat turn uses station.');
-    expect(skill).toContain('does not also run station');
+    expect(skill).toContain('whose step 1 is station Full and step 7 the station way-out, on every wake.');
     const promptAt = skill.indexOf('live-inbox <seat> --prompt --from owner --note "<gist>"');
     const startAt = skill.indexOf('live-inbox <seat> --turn start --tag "bc-<first8> <track>"');
     const endAt = skill.indexOf('live-inbox <seat> --turn end --tag "bc-<first8>"');
@@ -157,8 +157,8 @@ describe('grok-bot house template — USMail docs', () => {
     expect(boot).toContain('Continue the reply');
     expect(boot).toContain('still run turn end on the way out');
     expect(boot).toContain('Prompt: <id>');
-    expect(boot).toContain('does not also run station');
-    expect(boot).toContain('does not also run WAKE-ROUTINE step 0');
+    expect(boot).toContain('Its step 1 is station Full and its step 7 is the station way-out');
+    expect(boot).toContain('runs station itself');
     const wake = readFileSync(path.join(kit, 'templates/house/fleet/WAKE-ROUTINE.md'), 'utf8');
     expect(wake).not.toContain('--from blaze');
     expect(wake).toContain('trap \'"$INBOX" <seat> --turn end --tag wake; "$INBOX" <seat> --release\' EXIT');

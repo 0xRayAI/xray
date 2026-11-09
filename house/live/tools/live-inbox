@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""live-inbox <seat> [--peek] | live-inbox <seat> --ack <id|all|stale> [--apply] [--review <url>] | live-inbox <seat> --pop <id|all> | live-inbox <seat> --upto <id> | live-inbox <seat> --turn start|end [--tag <tag>] | live-inbox <seat> --prompt [--from <name>] [--room <name>] [--note <line>]
+"""live-inbox <seat> [--peek] | live-inbox <seat> --ack <id|all|stale> [--apply] [--review <url>] | live-inbox <seat> --pop <id|all> | live-inbox <seat> --upto <id> | live-inbox <seat> --turn start|end [--tag <tag>] | live-inbox <seat> --prompt [--from <name>] [--room <name>] [--note <line>] [--at <ISO>]
 live-inbox <seat> --handoff <to> --pr <owner/repo#n> --kind <ready|critic_fail|live_pass|merge|ci_fail> --sha <head>
 live-inbox <seat> --card <owner/repo#n> --start-after <ISO>
 
@@ -27,6 +27,7 @@ when the key is already there and exits 1 for a new head. The claim is not this 
 A turn inside a cloud agent posts that same kind:turn line and does not post cloud_agent launch.
 --cloud launch|reply|finished|cancel --agent <bc-id> [--tag <owner/repo#n|xray#n>] posts {kind:cloud_agent, action, agent, t_ct, tag?} to POST /activity. The seat is the bearer. The body has no seat. xray#n is stored as 0xRayAI/xray#n so the board rebinds that card. Run it beside --turn, as its own command. It does not take the turn claim. The cloud agent does not post this line.
 --prompt posts {t_ct, seat, kind:prompt, action:sent, from, to:seat, room?, note?} to POST /activity. from defaults to the name: line under ## Owner in HOUSE.md. A missing name: warns and uses owner.
+--prompt --at <ISO-8601 with offset> stamps t_ct with the owner message's real time (America/Chicago, seconds) for a late or backfilled prompt. A time with no offset, a bad time, or a future time exits 2. With --at, a prompt line already on /history for the same from and seat within 60s is not posted again: it prints {ok:true, skipped:dup, id}. Without --at, t_ct is now.
 --note is one quoted line, at most 240 characters of letters, digits, spaces, and ._:@#+/?'",;!()-. It is the only prose the board stores. Keys named body, text, or message are refused.
 t_ct is America/Chicago with its offset. Both posts use the seat key. The key is never printed. There is no local file.
 Handoff: POST one packet to /inbox for <to> and print the one-line 1:1 message the seat sends. The same pull request,
@@ -321,7 +322,7 @@ USAGE = ("usage: live-inbox <seat> [--peek] | live-inbox <seat> --pass [id] | li
          "live-inbox <seat> --remember|--repeat --pr <owner/repo#n> --sha <head> --kind <kind> | "
          "live-inbox <seat> --turn start|end [--tag <tag>] | "
          "live-inbox <seat> --cloud launch|reply|finished|cancel --agent <bc-id> [--tag <owner/repo#n|xray#n>] | "
-         "live-inbox <seat> --prompt [--from <name>] [--room <name>] [--note <line>] | "
+         "live-inbox <seat> --prompt [--from <name>] [--room <name>] [--note <line>] [--at <ISO>] | "
          "live-inbox <seat> --station | "
          "live-inbox <seat> --handoff <to> --pr <owner/repo#n> --kind <" + "|".join(KINDS) + "> --sha <head> | "
          "live-inbox <seat> --card <owner/repo#n> --start-after <ISO> | "
@@ -383,6 +384,7 @@ tag = take("--tag")
 frm = take("--from")
 room = take("--room")
 note = take("--note")
+at_raw = take("--at")
 review = take("--review")
 prompt = "--prompt" in argv
 if prompt:
@@ -420,7 +422,7 @@ if cloud is not None and (busy or peek or cloud not in CLOUD_ACTIONS):
     sys.exit(USAGE)
 if prompt and (ack is not None or handoff_to is not None or card_raw is not None or release or handled_lookup):
     sys.exit(USAGE)
-if (frm is not None or room is not None or note is not None) and not prompt:
+if (frm is not None or room is not None or note is not None or at_raw is not None) and not prompt:
     sys.exit(USAGE)
 if review is not None and (ack_flag != "--ack" or not ack or ack in ("all", "stale")):
     sys.exit(USAGE)
@@ -566,6 +568,40 @@ def merge_handoff(line):
 
 def ct_now():
     return datetime.now(ZoneInfo("America/Chicago")).isoformat(timespec="seconds")
+
+
+def ct_at(raw):
+    """An ISO-8601 time with an offset, not in the future, as America/Chicago. Anything else exits 2."""
+    try:
+        got = datetime.fromisoformat(raw.strip().replace("Z", "+00:00"))
+    except ValueError:
+        got = None
+    if got is None or got.tzinfo is None:
+        print("live-inbox: --at needs an ISO-8601 time with an offset, e.g. 2026-11-09T09:24:00-06:00", file=sys.stderr)
+        sys.exit(2)
+    if got.timestamp() > datetime.now().timestamp() + 5:
+        print("live-inbox: --at is in the future", file=sys.stderr)
+        sys.exit(2)
+    return got.astimezone(ZoneInfo("America/Chicago")).isoformat(timespec="seconds")
+
+
+def prompt_dup(seat, frm, t_ct):
+    """The id of a prompt line on /history for this from and seat within 60s of t_ct, or None."""
+    at = datetime.fromisoformat(t_ct)
+    got = call("GET", f"/history?date={at.date().isoformat()}", exit_on_error=False)
+    events = got.get("events") if isinstance(got, dict) else None
+    for e in events if isinstance(events, list) else []:
+        if not isinstance(e, dict) or e.get("kind") not in ("prompt", "seat_prompt"):
+            continue
+        if frm not in ("owner", e.get("from")) or e.get("to") != seat:
+            continue
+        try:
+            seen = datetime.fromisoformat(str(e.get("t_ct")))
+        except ValueError:
+            continue
+        if abs((seen - at).total_seconds()) <= 60:
+            return e.get("id") or True
+    return None
 
 
 def owner_token():
@@ -796,7 +832,13 @@ if repeat or remember:
     print("repeat" if key in cursor_keys(seat) else "new")
     sys.exit(0 if key in cursor_keys(seat) else 1)
 if prompt:
-    body = {"t_ct": ct_now(), "seat": seat, "kind": "prompt", "action": "sent", "from": frm, "to": seat}
+    t_ct = ct_at(at_raw) if at_raw is not None else ct_now()
+    if at_raw is not None:
+        dup = prompt_dup(seat, frm, t_ct)
+        if dup is not None:
+            print(json.dumps({"ok": True, "skipped": "dup", "id": dup}))
+            sys.exit(0)
+    body = {"t_ct": t_ct, "seat": seat, "kind": "prompt", "action": "sent", "from": frm, "to": seat}
     if room is not None:
         body["room"] = room
     if note is not None:

@@ -35,10 +35,10 @@ After a nudge or a summary, Full before any ack. `--prompt` is step 1 of Light. 
 
 ## During the work
 
-Each step posts one activity line. Each cloud launch is written to `house/fleet/TRACKS.md` in that same step.
+Each step posts one activity line. Each cloud launch is written to `ops/cloud-memory/TRACKS.md` in the suit in that same step.
 
 ## Way out
 
 Ask anything new without a card, then update STATION, the card, TRACKS, and the closing line, as [Station boot](../../OP-PROC.md#station-boot) and [Card](../../OP-PROC.md#card) say. Before turn end, `house/live/tools/exit-gate.mjs` must pass. A named bug, gap, follow-up, or ask with no `repo#n` or GitHub issue, pull, or comment URL is an incomplete turn. The gate reads the first `##` section. Notes are prepended, so that section is this turn. A packet and its card follow [Packet](../../OP-PROC.md#packet). The card key is the issue or pull. Do not hand-post a card.
 
-Backstop: not built yet. Doctor does not flag a stale STATION or an incomplete card. It warns when `STATION.md` is older than `NOTES.md`, or when `Skills:` or `Keys:` is missing.
+Backstop: doctor warns when `STATION.md` is older than `NOTES.md`, when its `Working:` time is older than the newest NOTES `##` entry or older than 2h (a turn that skipped station), or when `Skills:` or `Keys:` is missing. It does not flag an incomplete card.

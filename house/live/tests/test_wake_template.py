@@ -141,6 +141,15 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(out)
 
+    def do_GET(self):
+        self.server.gets.append(self.path)
+        out = json.dumps({"events": getattr(self.server, "history", [])}).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(out)))
+        self.end_headers()
+        self.wfile.write(out)
+
     def log_message(self, fmt, *args):
         return
 
@@ -149,6 +158,7 @@ class TurnFlag(unittest.TestCase):
     def setUp(self):
         self.srv = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
         self.srv.hits = []
+        self.srv.gets = []
         self.thread = threading.Thread(target=self.srv.serve_forever, daemon=True)
         self.thread.start()
         self.tmp = tempfile.TemporaryDirectory()
@@ -254,6 +264,32 @@ class TurnFlag(unittest.TestCase):
         self.assertNotEqual(broken.returncode, 0)
         self.assertEqual(len(self.srv.hits), before)
         self.assertNotIn("blaze", (broken.stdout + broken.stderr).lower())
+
+    def test_prompt_at_stamps_the_real_time_in_chicago(self):
+        proc = self.run_turn("--prompt", "--room", "eng", "--at", "2026-11-09T15:24:07Z")
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertEqual(self.srv.gets, ["/history?date=2026-11-09"])
+        self.assertEqual(self.srv.hits[0]["body"]["t_ct"], "2026-11-09T09:24:07-06:00")
+        self.assertEqual(self.srv.hits[0]["body"]["room"], "eng")
+        self.assert_secret_hidden(proc)
+
+    def test_prompt_at_refuses_a_bad_or_future_time(self):
+        for bad in ("yesterday", "2026-11-09T09:24:00", "2999-01-01T00:00:00-06:00"):
+            proc = self.run_turn("--prompt", "--at", bad)
+            self.assertEqual(proc.returncode, 2, bad)
+            self.assertIn("--at", proc.stderr)
+        self.assertEqual(self.srv.hits, [])
+
+    def test_prompt_at_skips_a_line_already_on_the_board(self):
+        self.srv.history = [{"id": "act:x.1", "kind": "seat_prompt", "from": "Ada", "to": "forge",
+                             "t_ct": "2026-11-09T09:24:30-06:00"}]
+        dup = self.run_turn("--prompt", "--at", "2026-11-09T09:24:00-06:00")
+        self.assertEqual(dup.returncode, 0, dup.stderr)
+        self.assertEqual(json.loads(dup.stdout), {"ok": True, "skipped": "dup", "id": "act:x.1"})
+        self.assertEqual(self.srv.hits, [])
+        far = self.run_turn("--prompt", "--at", "2026-11-09T09:22:00-06:00")
+        self.assertEqual(far.returncode, 0, far.stderr)
+        self.assertEqual(len(self.srv.hits), 1)
 
     def test_prompt_from_override(self):
         proc = self.run_turn("--prompt", "--from", "mill")

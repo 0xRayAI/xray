@@ -965,6 +965,37 @@ describe('grok-bot seat doctor — station boot warnings', () => {
     }
   });
 
+  it('warns when STATION Working: lags the newest NOTES entry or is older than 2h', () => {
+    const dir = scratch();
+    try {
+      plant(dir);
+      const state = path.join(dir, '.xray', 'state');
+      mkdirSync(state, { recursive: true });
+      const ct = (ms: number) =>
+        new Intl.DateTimeFormat('sv-SE', {
+          timeZone: 'America/Chicago',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+        }).format(new Date(ms));
+      const now = Date.now();
+      const station = path.join(state, 'STATION.md');
+      const notes = path.join(state, 'NOTES.md');
+      writeFileSync(notes, `## ${ct(now - 60_000)} CT — room turn\n`);
+      writeFileSync(station, `Working: ${ct(now - 3 * 3600_000)} CT — old\nSkills: station\nKeys: gh-forge\n`);
+      const stale = diagnoseSeat({ cwd: dir, home: dir, env: {} }).house.warnings ?? [];
+      expect(stale).toContain('STATION.md Working: is older than the newest NOTES entry; run the station way-out');
+      expect(stale).toContain('STATION.md Working: is older than 2h; a turn skipped station');
+      writeFileSync(station, `Working: ${ct(now - 30_000)} CT — fresh\nSkills: station\nKeys: gh-forge\n`);
+      const fresh = diagnoseSeat({ cwd: dir, home: dir, env: {} }).house.warnings ?? [];
+      expect(fresh.filter((w) => w.includes('Working:'))).toEqual([]);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   it('stays quiet when the profile hook and the station lines are present', () => {
     const dir = scratch();
     try {
