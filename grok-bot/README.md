@@ -33,6 +33,8 @@ npx 0xray wear
 npx @0xray/grok-bot doctor
 ```
 
+Local packs use the same steps with files: `npm install ./0xray-<file>.tgz`, then `npm install ./0xray-grok-bot-<file>.tgz`. Do not extract the tarballs by hand. Each one unpacks into a directory named `package/`, so two extracts in one folder collide.
+
 On npm 11, `npm install` may print an allowScripts warning for the `0xray` postinstall. The warning is safe to ignore. The postinstall still runs, and wear links repertoire either way. `npm install-scripts approve 0xray` silences it.
 
 ## Seat doctor (prove plant)

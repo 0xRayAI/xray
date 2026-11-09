@@ -30,7 +30,7 @@ function namedConsumer(dir) {
 
 const cwd = resolve(process.cwd());
 const env = { ...process.env };
-// A parent session may export the factory checkout. A named consumer is its own root.
+// A named consumer overrides GOGGLES_ROOT on purpose, including a root the user exported.
 if (namedConsumer(cwd)) {
   env.GOGGLES_ROOT = cwd;
   delete env.GOGGLES_PLANES_PATH;

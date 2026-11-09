@@ -1183,7 +1183,7 @@ program.addHelpText(
   `
 
 Examples:
-    $ npx 0xray install       # Install xray in current project
+    $ npx 0xray wear          # Write the suit after npm install
     $ npx 0xray init          # Initialize configuration
     $ npx 0xray status        # Check installation status
     $ npx 0xray validate      # Validate framework setup
@@ -1203,13 +1203,12 @@ Examples:
     $ npx 0xray storyteller reflection "API Fix"     # Write a reflection
 
 Quick Start:
-   1. Install: npx 0xray install
-   2. Check health: npx 0xray health
-   3. Use agents: @security-auditor scan
-   4. Generate reports: npx 0xray report
-   5. Fix issues: npx 0xray fix
-   6. View analytics: npx 0xray analytics
-   7. Add skills: npx 0xray skill:install agency-agents
+   1. npm init -y
+   2. npm install 0xray
+      A local pack: npm install ./0xray-<file>.tgz
+   3. npx 0xray wear
+   4. npx 0xray look dev
+   5. npx 0xray status
 
 For more information, visit: https://github.com/0xRayAI/xray
 `,
