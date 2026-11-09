@@ -205,12 +205,13 @@ def _url(events, repo, number, sha):
             continue
         if sha and _sha_match(_sha(event), sha):
             return source[:300]
-        if not fallback:
+        # A bare pull URL names no head, so it is safe for any sha; a commit or run URL may name an older head.
+        if not fallback and source.rstrip("/").lower().endswith(f"/pull/{number}"):
             fallback = source[:300]
-    if repo and number and sha:
-        return f"https://github.com/{repo}/pull/{number}/commits/{sha}"[:300]
     if fallback:
         return fallback
+    if repo and number and sha:
+        return f"https://github.com/{repo}/pull/{number}/commits/{sha}"[:300]
     if repo and number:
         return f"https://github.com/{repo}/pull/{number}"[:300]
     return ""
