@@ -361,6 +361,15 @@ describe('bridge-mcp-wiring', () => {
       expect(pluginMcp.mcpServers.repertoire.args?.[0]).toBe(linkLaunch);
       const skillDir = path.join(targetDir, '.grok', 'plugins', '0xray', 'skills');
       const skills = existsSync(skillDir) ? readdirSync(skillDir).length : 0;
+      const catalog = new Set<string>();
+      for (const dir of ['src/skills', 'dist/skills']) {
+        const abs = path.join(packageRoot, dir);
+        if (!existsSync(abs)) continue;
+        for (const name of readdirSync(abs)) {
+          if (existsSync(path.join(abs, name, 'SKILL.md'))) catalog.add(name);
+        }
+      }
+      expect(skills).toBe(catalog.size);
       expect(first.hooks).toContain(path.join(targetDir, 'node_modules', '0xray', 'scripts', 'mjs', 'run-grok-hook.mjs'));
       expect(first.hooks).not.toContain(path.join(packageRoot, 'scripts', 'mjs', 'run-grok-hook.mjs'));
       wear();
