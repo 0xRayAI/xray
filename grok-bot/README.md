@@ -23,13 +23,17 @@ Agents: read `llms.txt` → `AGENTS.md` → run skills in `SKILLS.md` (**one sui
 Humans: same files.
 
 ## Install
+The mill wears the suit. Install `0xray` and wear it before the kit.
+
 ```bash
 npm init -y
-npm i @0xray/grok-bot
-npx @0xray/grok-bot
+npm install 0xray
+npx 0xray wear
+npm install @0xray/grok-bot
+npx @0xray/grok-bot doctor
 ```
 
-On npm 11, installing `0xray` may print an allowScripts warning for its postinstall. The warning is safe to ignore. The postinstall still runs, and wear links repertoire either way. `npm install-scripts approve 0xray` silences it.
+On npm 11, `npm install` may print an allowScripts warning for the `0xray` postinstall. The warning is safe to ignore. The postinstall still runs, and wear links repertoire either way. `npm install-scripts approve 0xray` silences it.
 
 ## Seat doctor (prove plant)
 From an agent project root:
