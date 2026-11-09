@@ -29,6 +29,8 @@ npm i @0xray/grok-bot
 npx @0xray/grok-bot
 ```
 
+On npm 11, installing `0xray` may print an allowScripts warning for its postinstall. The warning is safe to ignore. The postinstall still runs, and wear links repertoire either way. `npm install-scripts approve 0xray` silences it.
+
 ## Seat doctor (prove plant)
 From an agent project root:
 
