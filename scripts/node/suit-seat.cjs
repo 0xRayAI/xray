@@ -258,6 +258,14 @@ function restampFresh(text, version) {
   return text.replace(/^(Fresh:.*\bpackage\s+)\d+\.\d+\.\d+/m, `$1${version}`);
 }
 
+function restampRepertoire(text, root) {
+  const line = repertoireLine(root);
+  if (!line) return text;
+  if (/^Repertoire:.*$/m.test(text)) return text.replace(/^Repertoire:.*$/m, line);
+  if (/^Fresh:.*$/m.test(text)) return text.replace(/^(Fresh:.*)$/m, `$1\n${line}`);
+  return text;
+}
+
 function restampPlane(text, plane) {
   if (/^Plane:/m.test(text)) return text;
   if (!plane) return text;
@@ -277,7 +285,10 @@ function seedSuitPages(root, packageRoot) {
     fs.writeFileSync(dest, stationSeed(version, plane, root));
     return { version, plane, seeded: true };
   }
-  const next = restampPlane(restampFresh(fs.readFileSync(dest, "utf8"), version), plane);
+  const next = restampRepertoire(
+    restampPlane(restampFresh(fs.readFileSync(dest, "utf8"), version), plane),
+    root,
+  );
   if (next !== fs.readFileSync(dest, "utf8")) fs.writeFileSync(dest, next);
   return { version, plane, seeded: false };
 }

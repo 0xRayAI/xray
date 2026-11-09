@@ -349,10 +349,17 @@ describe('wear and setup outside a git checkout', () => {
       expect(lstatSync(path.join(project, 'dist')).isSymbolicLink()).toBe(true);
       expect(lstatSync(path.join(project, 'scripts')).isSymbolicLink()).toBe(true);
       expect(readFileSync(path.join(project, 'AGENTS.md'), 'utf8')).toContain('node_modules/0xray/SKILLS.md');
-      const station = readFileSync(path.join(project, '.xray/state/STATION.md'), 'utf8');
+      const stationPath = path.join(project, '.xray/state/STATION.md');
+      const station = readFileSync(stationPath, 'utf8');
       expect(station).toContain('Catalog: node_modules/0xray/SKILLS.md');
       expect(station).toMatch(/^Repertoire: on/m);
       expect(station).not.toContain('Repertoire: module unresolved');
+      writeFileSync(stationPath, station.replace(/^Repertoire:.*$/m, 'Repertoire: module unresolved'));
+      const restamp = runNode(wearScript, [project], project, home);
+      expect(restamp.status).toBe(0);
+      const restamped = readFileSync(stationPath, 'utf8');
+      expect(restamped).toMatch(/^Repertoire: on/m);
+      expect(restamped).not.toContain('Repertoire: module unresolved');
       expect(existsSync(path.join(project, '.gitignore'))).toBe(true);
       expect(existsSync(path.join(project, '.xray', 'codex.json'))).toBe(true);
       expect(existsSync(path.join(project, '.xray', 'features.json'))).toBe(true);
