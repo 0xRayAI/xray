@@ -29,3 +29,34 @@ describe('WAKE-ROUTINE — station Full and the way-out on every path (#913, #94
     expect(boot).not.toContain('house/fleet/TRACKS.md');
   });
 });
+
+describe('WAKE-ROUTINE — a wake never answers a nudge or another seat on GitHub (#976)', () => {
+  const wake = read('grok-bot/templates/house/fleet/WAKE-ROUTINE.md');
+  const nudge = read('grok-bot/OP-PROC.md').split('\n').find((row) => row.includes('id="nudge"')) ?? '';
+
+  it('records a still-waiting or nothing-changed line on the board and never comments', () => {
+    expect(wake).toContain('gets no GitHub comment: record it on the board only');
+    expect(wake).toContain('a still-waiting or nothing-changed line is recorded on the board');
+    expect(wake).toContain('never gets a GitHub comment');
+    expect(wake).not.toMatch(/still waiting gets one reply/i);
+    expect(wake).not.toMatch(/still-waiting[^.]*gets one reply/i);
+  });
+
+  it('answers a nudge on the board only and never acknowledges another seat comment', () => {
+    expect(wake).toContain('A nudge (L1, L2, L3, or station) is answered on the board only, never on GitHub');
+    expect(wake).toContain("A seat never posts a comment that only acknowledges another seat's comment");
+    expect(nudge).toContain('A nudge (L1, L2, L3, or station) is answered on the board only');
+    expect(nudge).toContain("A seat never posts a comment that only acknowledges another seat's comment");
+    expect(nudge).toContain('More than 3 fleet-seat comments on one issue or pull in a rolling hour pauses wakes');
+  });
+
+  it('keeps the outside party (Arch1) wakeable by an @-mention', () => {
+    expect(wake).toContain("a seat outside the fleet (the roster's `outside` list, Arch1) is never filtered");
+    expect(nudge).toContain("A seat outside the fleet (the roster's `outside` list, Arch1) is not filtered");
+  });
+
+  it('lets the exit gate accept a wait that cites the existing issue URL', () => {
+    expect(wake).toContain('the exit gate accepts that and does not need a new comment');
+  });
+});
+

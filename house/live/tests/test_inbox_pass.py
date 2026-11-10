@@ -70,6 +70,7 @@ class InboxPass(unittest.TestCase):
             box = run / "feed" / "inbox-spool"
             rd = lambda s: [json.loads(x) for x in (box / f"{s}.jsonl").read_text().splitlines()] if (box / f"{s}.jsonl").exists() else []
             self.assertEqual([l["id"] for l in rd("forge")], [cm["id"]])
+            self.assertEqual(rd("forge")[0].get("from"), "blinky")   # xray#976: a seat's comment names its author seat so Bifrost keeps it off the wake path
             self.assertEqual(rd("arch1"), [])
             before = {s: len(rd(s)) for s in ("blinky", "critic", "mill")}
             feed.write_text(json.dumps({"events": [seed, dict(cm, mentions=["forge0x1", "arch10x"])]}))   # edit adds @arch10x
@@ -80,6 +81,25 @@ class InboxPass(unittest.TestCase):
             self.assertEqual(self.run_pass(env, "pass"), "0 0")                     # same edit again: nothing
             feed.write_text(json.dumps({"events": [seed, dict(cm, mentions=["arch10x"])]}))   # a mention removed: nothing
             self.assertEqual(self.run_pass(env, "pass"), "0 0")
+
+    def test_human_comment_line_has_no_from(self):
+        """xray#976: only a comment a seat wrote carries `from`; a person's comment stays a plain wake."""
+        with tempfile.TemporaryDirectory() as d:
+            run = Path(d); (run / "feed").mkdir(); (run / "fleet").mkdir()
+            env = dict(os.environ, MESH_RUN=str(run), LIVE_BOARD="off")
+            R = "example-org/app"
+            feed = run / "feed" / "live-events.json"
+            seed = {"id": f"{R}#1:open", "t_ct": ct(900), "kind": "pr_open", "repo": R, "number": "1", "label": "old", "source": "https://github.com/x"}
+            feed.write_text(json.dumps({"events": [seed]}))
+            self.run_pass(env, "pass")
+            cm = {"id": f"{R}!8:comment:56", "t_ct": ct(60), "kind": "issue_comment", "repo": R, "number": "8", "from": "Others", "actor": "some-human",
+                  "label": "human comment · app issue #8", "source": "https://github.com/x/8", "mentions": ["forge0x1"]}
+            feed.write_text(json.dumps({"events": [seed, cm]}))
+            self.run_pass(env, "pass")
+            box = run / "feed" / "inbox-spool"
+            lines = [json.loads(x) for x in (box / "forge.jsonl").read_text().splitlines()]
+            self.assertEqual([l["id"] for l in lines], [cm["id"]])
+            self.assertNotIn("from", lines[0])
 
     def test_pr_open_mention_and_terminal_op_deploy_wake_forge(self):
         with tempfile.TemporaryDirectory() as d:

@@ -44,9 +44,9 @@ const ct = ago => new Date(Date.now() - ago * 1000).toISOString();
 const R = 'acme/one';
 const old = [{ id: `${R}#1:open`, t_ct: ct(900), kind: 'pr_open', repo: R, number: 1, label: 'old pr' }];
 const fresh = [
-  { id: `${R}#5:comment:1`, t_ct: ct(60), kind: 'pr_comment', repo: R, number: 5, label: 'comment on #5', from: 'critic', to: 'forge',
+  { id: `${R}#5:comment:1`, t_ct: ct(60), kind: 'pr_comment', repo: R, number: 5, label: 'comment on #5', from: 'Others', to: 'forge',
     pr_merged: true, mentions: ['mill'], source: 'https://github.com/acme/one/pull/5', body: 'SECRET body' },
-  { id: `${R}#6:comment:2`, t_ct: ct(30), kind: 'issue_comment', repo: R, number: 6, label: 'comment on issue #6', from: 'mill' }];
+  { id: `${R}#6:comment:2`, t_ct: ct(30), kind: 'issue_comment', repo: R, number: 6, label: 'comment on issue #6', from: 'Others' }];
 let gen = 0;
 function writeFeed(events) {
   fs.mkdirSync(path.join(DATA, 'feed'), { recursive: true });
@@ -109,8 +109,10 @@ test('same events again, and after a restart: nothing routed twice, no second wa
   writeFeed([...old, ...fresh, next]);
   assert.ok(await until(() => /route: pass 1 \d+/.test(logs)), logs);
   assert.ok(inbox('forge').some(l => l.id === next.id) && !inbox('blinky').some(l => l.id === next.id));
-  // the wake for `next` is async: wait for it here, or it lands inside the next test's count (the old 1-in-6 flake)
-  assert.ok(await until(() => wakes.length === before + 1), JSON.stringify(wakes));
+  // xray#976: a comment blinky wrote is stored for forge but never wakes it
+  await sleep(600);
+  assert.equal(wakes.length, before, JSON.stringify(wakes));
+  assert.match(logs, /wake: skip forge seat_comment acme\/one#5:comment:3/);
 });
 
 test('a stored-but-unmarked line (crash between store and sent) is not stored or woken twice', async () => {
