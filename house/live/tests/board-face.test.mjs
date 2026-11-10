@@ -5,7 +5,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { chromium } from 'playwright';
+import { launchBoard } from './board-browser.mjs';
 
 const PUB = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app', 'public');
 const ART = '/opt/cursor/artifacts';
@@ -101,7 +101,7 @@ test('the board face keeps the contract in both themes', async () => {
   const base = `http://127.0.0.1:${server.address().port}/index.html`;
   let browser;
   try {
-    browser = await chromium.launch();
+    browser = await launchBoard();
     const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1 });
     await page.addInitScript(() => {
       if (sessionStorage.getItem('bifrost-theme-cleared')) return;
@@ -324,7 +324,7 @@ test('the roster renders no state text', async () => {
   const base = `http://127.0.0.1:${server.address().port}/index.html`;
   let browser;
   try {
-    browser = await chromium.launch();
+    browser = await launchBoard();
     const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
     await page.goto(base, { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => document.querySelector('#seatGrid .seat'));
@@ -400,7 +400,7 @@ test('each stat tile lists the items its count includes', async () => {
   const base = `http://127.0.0.1:${server.address().port}/index.html`;
   let browser;
   try {
-    browser = await chromium.launch();
+    browser = await launchBoard();
     const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto(base, { waitUntil: 'domcontentloaded' });
@@ -448,7 +448,7 @@ test('an activity row expands to the full note and collapses again', async () =>
   const base = `http://127.0.0.1:${server.address().port}/index.html`;
   let browser;
   try {
-    browser = await chromium.launch();
+    browser = await launchBoard();
     const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto(base, { waitUntil: 'domcontentloaded' });
@@ -510,7 +510,7 @@ test('a working seat name rolls across two frames and a seen seat name does not'
   const base = `http://127.0.0.1:${server.address().port}/index.html?replay=0`;
   let browser;
   try {
-    browser = await chromium.launch();
+    browser = await launchBoard();
     const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1 });
     await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'no-preference' });
     await page.goto(base, { waitUntil: 'domcontentloaded' });
