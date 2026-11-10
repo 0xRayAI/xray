@@ -6,7 +6,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { chromium } from 'playwright';
+import { launchBoard } from './board-browser.mjs';
 
 const PUB = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app', 'public');
 const T0 = Date.parse('2026-10-23T16:00:00.000Z');
@@ -112,7 +112,7 @@ test('hide then show refreshes ages and the health strip when the feed answers 3
   const base = `http://127.0.0.1:${server.address().port}/index.html?replay=0`;
   let browser;
   try {
-    browser = await chromium.launch();
+    browser = await launchBoard();
     const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
     await page.clock.install({ time: T0 });
     await page.emulateMedia({ reducedMotion: 'reduce' });
