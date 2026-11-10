@@ -2702,6 +2702,7 @@ function wearCursorHooks(targetDir, packageRoot, log, opts) {
   }
   writeCursorProjectMcp(resolvedTarget, write);
   write("cursor-bridge", "hooks.json wired to installed dist", "info", { path: hooksPath });
+  process.stdout.write("cursor-wear: wrote .cursor/hooks.json and .cursor/mcp.json\n");
   return hooksPath;
   } finally {
     pinLauncherPackageRoot("");
