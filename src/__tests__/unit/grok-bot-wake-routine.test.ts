@@ -47,7 +47,12 @@ describe('WAKE-ROUTINE — a wake never answers a nudge or another seat on GitHu
     expect(wake).toContain("A seat never posts a comment that only acknowledges another seat's comment");
     expect(nudge).toContain('A nudge (L1, L2, L3, or station) is answered on the board only');
     expect(nudge).toContain("A seat never posts a comment that only acknowledges another seat's comment");
-    expect(nudge).toContain('More than 3 seat comments on one issue or pull in a rolling hour pauses wakes');
+    expect(nudge).toContain('More than 3 fleet-seat comments on one issue or pull in a rolling hour pauses wakes');
+  });
+
+  it('keeps the outside party (Arch1) wakeable by an @-mention', () => {
+    expect(wake).toContain("a seat outside the fleet (the roster's `outside` list, Arch1) is never filtered");
+    expect(nudge).toContain("A seat outside the fleet (the roster's `outside` list, Arch1) is not filtered");
   });
 
   it('lets the exit gate accept a wait that cites the existing issue URL', () => {

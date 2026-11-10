@@ -518,8 +518,29 @@ function wakeLineKept(line) {
   return true;
 }
 // A seat bot's own GitHub login (inbox-roles, fleet-nodes, LIVE_NODE_MAP, seat ids) marks a comment as seat-to-seat.
+// Seats outside the fleet (the roster's `outside` list, e.g. arch1, plus LIVE_OUTSIDE_SEATS). A comment to or from one of
+// them is never filtered by the seat-comment rule and never paused by the breaker.
+let outsideSeatSet = null;
+function outsideSeats() {
+  if (outsideSeatSet) return outsideSeatSet;
+  const out = new Set(String(process.env.LIVE_OUTSIDE_SEATS || '').split(',').map(x => x.trim().toLowerCase()).filter(Boolean));
+  const files = [
+    process.env.BIFROST_ROSTER,
+    path.join(COLLECTOR_DIR_EARLY(), 'fleet-roster.json'),
+    path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'feed', 'fleet-roster.json'),
+  ].filter(Boolean);
+  for (const file of files) {
+    try {
+      const data = JSON.parse(fs.readFileSync(file, 'utf8'));
+      if (data && Array.isArray(data.outside)) { for (const x of data.outside) out.add(String(x).trim().toLowerCase()); break; }
+    } catch { /* try the next roster */ }
+  }
+  outsideSeatSet = out;
+  return out;
+}
 function wakeCfg() {
   const cfg = wakeConfig(process.env);
+  cfg.isExternal = who => { const low = String(who || '').trim().toLowerCase(); return !!low && (outsideSeats().has(low) || outsideSeats().has(canonSeat(low))); };
   cfg.isSeat = from => {
     const low = String(from || '').trim().toLowerCase();
     if (!low) return false;

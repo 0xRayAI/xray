@@ -7,9 +7,9 @@ Read: OPEN lines from the Bifrost server inbox for <seat>, one JSON object per l
 seat acked. A closed or merged card does not hide an unacked line. For reviewer, a Reviewer verdict at the card's head does.
 A read claims each open line for this wake. The owner token is WAKE_RUN, or this process when WAKE_RUN is unset.
 The claim key is the pull request, the head sha, and the kind. A second run whose lines are already claimed prints
-nothing and exits 0. A nudge line (by id) and a comment a seat wrote (by issue or pull plus head sha, or `nosha`, never
-the comment id) stay claimed for LIVE_INBOX_TOMB_S (default 3600) after that wake ends, so a later wake does not answer
-the same nudge or seat comment again. Only the owner token may release that claim or post its turn end. A losing run's --turn start
+nothing and exits 0. A nudge line and a comment a seat wrote stay claimed, each by its own line id, for LIVE_INBOX_TOMB_S
+(default 3600) after that wake ends, so a later wake does not answer the same one again. Another comment on the same
+issue is another id and still reads. Only the owner token may release that claim or post its turn end. A losing run's --turn start
 and its --turn end post nothing and leave the claim file unchanged. `--release` drops this token's claims and posts
 nothing. The wake trap posts `--turn end` and then runs `--release` on any shell exit, so a crash still closes the turn.
 Before that post, WAKE-ROUTINE step 7 asks "anything new without a card?" and files each new item as a card (`From:`, `Waiting on:`, `Owner:`). This command posts the turn line. It does not open the card.
@@ -659,18 +659,18 @@ TOMB_SECONDS = int(os.environ.get("LIVE_INBOX_TOMB_S") or 3600)
 
 
 def soft_key(line):
-    """A claim that outlives its wake for TOMB_SECONDS: a nudge line (by id), and a comment a seat wrote (by issue or
-    pull plus head sha, or `nosha`, never the comment id). A second wake, even one that starts after the first ended,
-    does not answer the same nudge or the same seat comment again. A human comment is a plain claim."""
+    """A claim that outlives its wake for TOMB_SECONDS: a nudge line, and a comment a seat wrote, each by its own line id.
+    A second wake, even one that starts after the first ended, does not answer the same line again. Another comment on
+    the same issue is another id and still reads. Wake suppression is the gate's repo#n + sha key, not this claim.
+    A human comment is a plain claim."""
     kind = str(line.get("type") or line.get("kind") or "").strip().lower()
     ident = str(line.get("id") or "").strip()
-    if kind == "nudge" and ident:
+    if not ident:
+        return ""
+    if kind == "nudge":
         return f"id:{ident}"
-    repo = str(line.get("repo") or "").strip().lower()
-    number = line.get("number")
-    if kind in COMMENT_TYPES and str(line.get("from") or "").strip() and repo and number is not None and str(number) != "":
-        sha = str(line.get("sha") or line.get("head") or "").strip().lower() or "nosha"
-        return f"{repo}#{number}|{sha}|seat_comment"
+    if kind in COMMENT_TYPES and str(line.get("from") or "").strip():
+        return f"id:{ident}"
     return ""
 
 

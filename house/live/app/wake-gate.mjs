@@ -2,8 +2,11 @@
 // Unassigned issue_open (and a P1 label on an issue) wakes the default seat. That is forge, or arch1 when forge is dark. Blinky's routed copy is stored, not woken.
 // A pr_comment stored for blinky and the author wakes the author. Blinky is the extra copy.
 // A missing sha is never a repeat. The hour is a rolling 60 minutes. flag: hotfix skips the cap and the kind cooldown.
-// A comment authored by a seat bot (line.from is a seat id) never wakes another seat. It stays on the board only, unless it
-// carries a real change: a new head sha, a verdict, or a handoff kind. Human comments (no seat `from`) wake as before.
+// A comment authored by a fleet seat bot (line.from is a fleet seat id) never wakes another fleet seat. It stays on the
+// board only, unless it carries a real change: a new head sha, a verdict, or a handoff kind. Human comments (no seat
+// `from`) wake as before. A seat outside the fleet (cfg.isExternal, the roster's `outside` list, e.g. arch1) is not
+// filtered either way: a comment to it or from it wakes as before, and the breaker never pauses it. Forge tips an
+// outside party only by @-mentioning it in a comment.
 // The repeat key of a seat comment is repo#n plus the head sha, or `nosha`. It is never the comment id.
 // More than SEAT_COMMENT_LIMIT seat comments on one repo#n inside a rolling hour trips a breaker: that repo#n is paused
 // for an hour (a human comment clears it) and one needs_human line goes to the coordinator for Blaze.
@@ -240,11 +243,15 @@ function seatTest(cfg) {
   const known = new Set(DEFAULT_SEATS);
   return from => known.has(String(from || '').trim().toLowerCase());
 }
-/** True when a comment line was written by a seat bot. */
+/** True for a seat outside the fleet (the roster's `outside` list). Nothing is outside unless the config says so. */
+export function isExternalSeat(seat, cfg) {
+  return !!(cfg && typeof cfg.isExternal === 'function' && cfg.isExternal(String(seat || '').trim().toLowerCase()));
+}
+/** True when a comment line was written by a fleet seat bot. A comment from an outside seat is a person's comment here. */
 export function isSeatComment(line, cfg) {
   if (!isCommentLine(line)) return false;
   const from = String(line.from || '').trim().toLowerCase();
-  return !!from && seatTest(cfg)(from);
+  return !!from && seatTest(cfg)(from) && !isExternalSeat(from, cfg);
 }
 /** A comment that reports something CI or the board did not already say: a handoff kind or a verdict. */
 export function carriesRealChange(line) {
@@ -268,7 +275,8 @@ export function commentGuard(wake, state, now, cfg) {
     if (brk) state.breaker.delete(key);   // a person spoke: the pause on this repo#n ends
     return null;
   }
-  if (isSeatComment(line, cfg)) {
+  const outsideTarget = isExternalSeat(seat, cfg);   // a seat outside the fleet is never filtered and never paused
+  if (isSeatComment(line, cfg) && !outsideTarget) {
     const id = String(line.id || '');
     const rows = (state.seatComments.get(key) || []).filter(r => now - r.t < ROLLING_HOUR_MS && now - r.t >= 0);
     if (!rows.some(r => r.id === id)) rows.push({ t: now, id });
@@ -288,7 +296,7 @@ export function commentGuard(wake, state, now, cfg) {
     }
     return { op: 'skip', reason: sha ? 'repeat_sha' : 'seat_comment', seat, line };
   }
-  if (brk && brk.until > now && !isHotfix(line) && !isNeedsHuman(line) && !isClockLine(line)) {
+  if (brk && brk.until > now && !outsideTarget && !isHotfix(line) && !isNeedsHuman(line) && !isClockLine(line)) {
     return { op: 'skip', reason: 'breaker', seat, line };
   }
   if (brk && brk.until <= now) state.breaker.delete(key);

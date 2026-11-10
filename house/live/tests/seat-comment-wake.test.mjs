@@ -14,6 +14,7 @@ import {
 } from '../app/wake-gate.mjs';
 
 const cfg = wakeConfig({ WAKE_KIND_COOLDOWN_S: '0', WAKE_MAX_PER_HOUR: '60', LIVE_TURN_OPEN_MIN: '20', WAKE_BATCH_S: '0' });
+cfg.isExternal = seat => seat === 'arch1';   // the roster's `outside` list
 const T0 = 1_700_000_000_000;
 const c = (over) => ({
   id: 'c', type: 'pr_comment', repo: 'acme/one', number: 7, title: 't', url: 'https://github.com/acme/one/pull/7', reason: 'comment on your PR', ...over,
@@ -109,6 +110,34 @@ test('breaker: the pause and the count both age out after the rolling hour', () 
   assert.equal(offer(st, 'forge', c({ id: 'late', from: 'critic' }), T0 + ROLLING_HOUR_MS + 2000).reason, 'seat_comment');
 });
 
+test('outside party: a forge comment that mentions arch1 wakes arch1, and the same comment still does not wake critic', () => {
+  const st = createWakeState();
+  const mention = { id: 'tip1', from: 'forge', reason: 'mention @arch10x' };
+  assert.equal(offer(st, 'arch1', c(mention), T0).op, 'send');
+  assert.equal(offer(st, 'critic', c({ ...mention, reason: 'comment watch' }), T0).reason, 'seat_comment');
+  assert.equal(offer(st, 'blinky', c({ ...mention, reason: 'comment watch' }), T0).reason, 'seat_comment');
+  // Several tips in a row, with no sha, are never filtered for the outside party.
+  for (let i = 0; i < 6; i++) assert.equal(offer(st, 'arch1', c({ id: 'tip-n' + i, from: 'forge' }), T0 + 1000 + i).op, 'send');
+  // arch1's own comment is not a seat comment: it wakes forge.
+  assert.equal(isSeatComment(c({ from: 'arch1' }), cfg), false);
+  assert.equal(offer(st, 'forge', c({ id: 'reply1', from: 'arch1' }), T0 + 9000).op, 'send');
+});
+
+test('outside party: a breaker trip on the issue does not stop the arch1 tip, and arch1 tips do not count toward the breaker', () => {
+  const st = createWakeState();
+  for (let i = 0; i < SEAT_COMMENT_LIMIT + 1; i++) offer(st, 'forge', c({ id: 'loop' + i, from: 'critic', number: 9 }), T0 + i * 1000);
+  assert.equal(st.breaker.has('acme/one#9'), true);
+  assert.equal(offer(st, 'critic', c({ id: 'still-paused', from: 'forge', number: 9 }), T0 + 10_000).reason, 'breaker');
+  const tip = offer(st, 'arch1', c({ id: 'tip-after-trip', from: 'forge', number: 9, reason: 'mention @arch10x' }), T0 + 11_000);
+  assert.equal(tip.op, 'send');
+  assert.equal(offer(st, 'arch1', c({ id: 'ci-for-arch1', type: 'ci_fail', number: 9, sha: 'e1' }), T0 + 12_000).op, 'send');
+  // Tips to the outside party are not seat-to-seat traffic: ten of them trip nothing.
+  const fresh = createWakeState();
+  for (let i = 0; i < 10; i++) assert.equal(offer(fresh, 'arch1', c({ id: 'only-arch1-' + i, from: 'forge', number: 10 }), T0 + i * 1000).op, 'send');
+  assert.equal(fresh.breaker.has('acme/one#10'), false);
+  assert.equal(offer(fresh, 'critic', c({ id: 'next', from: 'forge', number: 10 }), T0 + 20_000).reason, 'seat_comment');
+});
+
 // ---- the real server ----
 const APP = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app');
 const got = [];
@@ -121,7 +150,7 @@ await new Promise(r => sink.listen(0, '127.0.0.1', r));
 const W = `http://127.0.0.1:${sink.address().port}`;
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'seat-comment-'));
 const ING = crypto.randomBytes(32).toString('hex');
-const hooks = ['forge', 'blinky', 'critic'].map(s => [s, { url: `${W}/${s}` }]);
+const hooks = ['forge', 'blinky', 'critic', 'arch1'].map(s => [s, { url: `${W}/${s}` }]);
 let logs = '';
 const srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], {
   env: {
@@ -129,7 +158,7 @@ const srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], {
     MESH_PASSWORD: 'pw-' + crypto.randomBytes(4).toString('hex'),
     SESSION_SECRET: crypto.randomBytes(32).toString('hex'),
     SEAT_WEBHOOKS: JSON.stringify(Object.fromEntries(hooks)),
-    WAKE_KEY_FORGE: 'kf', WAKE_KEY_BLINKY: 'kb', WAKE_KEY_CRITIC: 'kc',
+    WAKE_KEY_FORGE: 'kf', WAKE_KEY_BLINKY: 'kb', WAKE_KEY_CRITIC: 'kc', WAKE_KEY_ARCH1: 'ka',
     WAKE_BATCH_S: '0', WAKE_STAGGER_MS: '0', WAKE_COALESCE_MS: '20', WAKE_RETRY_MS: '10', LIVE_TURN_OPEN_MIN: '0',
     WAKE_KIND_COOLDOWN_S: '0', WAKE_MAX_PER_HOUR: '60',
   },
@@ -192,3 +221,25 @@ test('server: a seat comment with a new head sha wakes, the same head again does
   assert.equal((await post([row({ id: fresh, seat: 'critic', number: n, from: 'forge', sha: 'deadbeef02' })])).status, 200);
   assert.ok(await until(() => wakesFor('critic', [fresh]).length === 1), logs);
 });
+
+test('server: a forge comment that mentions arch1 wakes arch1, not critic, and still wakes arch1 after the breaker trips', async () => {
+  const n = 63;
+  const tip = 'tip-63-a-zz';
+  assert.equal((await post([
+    row({ id: tip, seat: 'arch1', number: n, from: 'forge', reason: 'mention @arch10x' }),
+    row({ id: tip, seat: 'critic', number: n, from: 'forge', reason: 'comment watch' }),
+  ])).status, 200);
+  assert.ok(await until(() => wakesFor('arch1', [tip]).length === 1), logs);
+  await quiet(300);
+  assert.equal(wakesFor('critic', [tip]).length, 0);
+  assert.match(logs, /wake: skip critic seat_comment tip-63-a-zz/);
+  for (let i = 0; i < SEAT_COMMENT_LIMIT + 1; i++) {
+    assert.equal((await post([row({ id: `loop-63-${i}-zz`, seat: i % 2 ? 'critic' : 'forge', number: n, from: i % 2 ? 'forge' : 'critic' })])).status, 200);
+  }
+  await quiet(300);
+  assert.match(logs, /wake: breaker acme\/one#63/);
+  const after = 'tip-63-b-zz';
+  assert.equal((await post([row({ id: after, seat: 'arch1', number: n, from: 'forge', reason: 'mention @arch10x' })])).status, 200);
+  assert.ok(await until(() => wakesFor('arch1', [after]).length === 1), logs);
+});
+

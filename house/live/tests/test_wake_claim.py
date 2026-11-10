@@ -292,16 +292,20 @@ class ConcurrentClaim(unittest.TestCase):
             thread.join()
         filled = [proc for proc in out.values() if proc.stdout.strip()]
         self.assertEqual(len(filled), 1)
-        # Same issue, no sha: one key, so both comments went to the one wake.
         self.assertEqual(self.ids(filled[0]), ["gh-comment-1", "gh-comment-2"])
 
-    def test_seat_comment_stays_claimed_after_the_wake_ends_but_a_new_head_does_not(self):
+    def test_handled_seat_comment_stays_claimed_but_a_second_comment_on_the_issue_still_reads(self):
         Inbox.lines = [SEAT_COMMENT]
         self.assertEqual(self.ids(self.inbox(owner=os.getpid())), ["gh-comment-1"])
         self.inbox("--release", owner=os.getpid())
+        # The exact comment already handled does not come back to another wake.
         self.assertEqual(self.inbox(owner=self.sleeper.pid).stdout, "")
-        Inbox.lines = [{**SEAT_COMMENT, "id": "gh-comment-3", "sha": "abc1234dead"}]
-        self.assertEqual(self.ids(self.inbox(owner=self.sleeper.pid)), ["gh-comment-3"])
+        # A second seat comment on the same issue, same head, still shows up in the read.
+        Inbox.lines = [SEAT_COMMENT, {**SEAT_COMMENT, "id": "gh-comment-2", "title": "Received"}]
+        self.assertEqual(self.ids(self.inbox(owner=self.sleeper.pid)), ["gh-comment-2"])
+        # A chat read by the same seat under a new token sees the new comment too, with or without a sha.
+        Inbox.lines = [{**SEAT_COMMENT, "id": "gh-comment-3", "sha": "abc1234dead"}, {**SEAT_COMMENT, "id": "gh-comment-4"}]
+        self.assertEqual(self.ids(self.inbox(owner=os.getpid())), ["gh-comment-3", "gh-comment-4"])
 
     def test_human_comment_is_a_plain_claim_and_is_read_again_after_release(self):
         Inbox.lines = [HUMAN_COMMENT]
