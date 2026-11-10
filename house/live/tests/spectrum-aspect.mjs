@@ -1,6 +1,6 @@
 // Display aspect must match the bitmap even when a host stylesheet forces #mesh { height: 300px }.
 // Kit example names only: blinky, forge, critic.
-import { chromium } from 'playwright';
+import { launchBoard } from './board-browser.mjs';
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -86,7 +86,7 @@ const results = [];
 fs.mkdirSync(OUT, { recursive: true });
 const server = await serve();
 const base = 'http://127.0.0.1:' + server.address().port;
-const browser = await chromium.launch();
+const browser = await launchBoard();
 try {
   const cases = [
     ['dark', 1440, 900],
