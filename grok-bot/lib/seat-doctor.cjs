@@ -39,6 +39,14 @@ function packageIdentity(cwd) {
   };
 }
 
+function kitIdentity() {
+  const pkg = readJson(path.join(__dirname, '..', 'package.json'));
+  return {
+    name: typeof pkg?.name === 'string' && pkg.name ? pkg.name : '@0xray/grok-bot',
+    version: typeof pkg?.version === 'string' ? pkg.version : null,
+  };
+}
+
 function findSkill(cwd, name) {
   for (const rel of SKILL_DIRS) {
     const file = path.join(cwd, ...rel, name, 'SKILL.md');
@@ -831,6 +839,8 @@ function diagnoseSeat(opts = {}) {
   const cwd = path.resolve(opts.cwd || process.cwd());
   const home = opts.home || os.homedir();
   const seat = packageIdentity(cwd);
+  const kit = kitIdentity();
+  const xray = packageIdentity(path.join(cwd, 'node_modules', '0xray'));
   const millFile = findSkill(cwd, 'mill');
   const inspectFile = findSkill(cwd, 'inspect');
   const inventory = loadInventory(cwd);
@@ -848,6 +858,8 @@ function diagnoseSeat(opts = {}) {
     ok: plantOk && house.status !== 'fail',
     cwd,
     seat,
+    kit,
+    xray,
     plant: {
       ok: plantOk,
       installed,
@@ -886,15 +898,24 @@ function plantLine(report) {
   return `Plant: FAIL — ${parts.join('; ')}`;
 }
 
+function doctorBanner(report) {
+  const kit = report.kit || {};
+  const kitName = kit.name || '@0xray/grok-bot';
+  const kitLabel = kit.version ? `${kitName}@${kit.version}` : kitName;
+  const xray = report.xray;
+  const xrayLabel = xray && xray.name && xray.version ? `${xray.name}@${xray.version}` : '0xray not installed';
+  return `${kitLabel} doctor — ${xrayLabel} — seat plant check`;
+}
+
 function formatDoctor(report) {
   const lines = [];
-  lines.push('@0xray/grok-bot doctor — seat plant check');
+  lines.push(doctorBanner(report));
   lines.push('');
   if (!report.seat) {
-    lines.push(`Seat: not a project (no package.json) @ ${report.cwd}`);
+    lines.push(`Project: not a project (no package.json) @ ${report.cwd}`);
   } else {
     const label = [report.seat.name, report.seat.version].filter(Boolean).join('@') || 'unnamed';
-    lines.push(`Seat: ${label}`);
+    lines.push(`Project: ${label}`);
     lines.push(`Root: ${report.cwd}`);
   }
   lines.push('');

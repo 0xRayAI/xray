@@ -469,7 +469,34 @@ describe('grok-bot seat doctor — CLI', () => {
       expect(report.house.status).toBe('pass');
       expect(report.ok).toBe(true);
       expect(formatDoctor(report)).toMatch(/House: PASS — .+\/house\/HOUSE\.md \(via walk-up\)/);
-      expect(formatDoctor(report)).toMatch(/Seat: anvil-seat@1\.0\.0/);
+      expect(formatDoctor(report)).toMatch(/Project: anvil-seat@1\.0\.0/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('names the kit and the worn suit, and labels the folder as the project', () => {
+    const dir = scratch();
+    try {
+      writeSeat(dir, 'cold');
+      installXrayPkg(dir);
+      const text = formatDoctor(diagnoseSeat({ cwd: dir, home: dir }));
+      const kit = JSON.parse(readFileSync(path.join(root, 'grok-bot', 'package.json'), 'utf8')) as { version: string };
+      expect(text.split('\n')[0]).toBe(`@0xray/grok-bot@${kit.version} doctor — 0xray@4.0.36 — seat plant check`);
+      expect(text).toContain('Project: cold@1.0.0');
+      expect(text).not.toContain('Seat: cold@1.0.0');
+
+      const bare = scratch();
+      try {
+        writeSeat(bare, 'cold');
+        const missing = formatDoctor(diagnoseSeat({ cwd: bare, home: bare }));
+        expect(missing.split('\n')[0]).toBe(
+          `@0xray/grok-bot@${kit.version} doctor — 0xray not installed — seat plant check`,
+        );
+        expect(missing).toContain('Project: cold@1.0.0');
+      } finally {
+        rmSync(bare, { recursive: true, force: true });
+      }
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
