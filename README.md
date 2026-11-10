@@ -49,6 +49,8 @@ npx 0xray setup --git-hooks # optional: git hooks only. A folder that is not a g
 npx 0xray inspect --skip-live # mill receipt from the foundry that ships in this package
 ```
 
+A machine-level `~/.grok/plugins/0xray` that this project did not plant makes `inspect` WARN with the `rm -rf` line to remove it. It fails only when that plugin pins a different `XRAY_ROOT`. Wear never deletes it.
+
 `npx 0xray look` opens one card and writes it to `.xray/state/LENS.md`. The planes are `dev`, `integration`, `domain`, and `ecosystem`. A session starts on `dev`. A mill suit's station card says `integration`, which is that plant's plane. `look dev` still opens the dev card. At the end of a turn, write the working notes in `.xray/state/NOTES.md`. The next wake reads `.xray/state/STATION.md`, then the notes, then the lens. Plates: [goggles](docs-site/docs/plates/goggles.md), [notes-page](docs-site/docs/plates/notes-page.md).
 
 A Grok session in this folder does not start the project MCP servers until the folder is trusted. Pass `--trust` on that session. `grok --trust` with no terminal exits 1 (`Device not configured`). A headless session also needs `--permission-mode bypassPermissions`. That mode lifts every permission prompt in the session. `--permission-mode dontAsk` stops on `goggles__look` with `permission required`.

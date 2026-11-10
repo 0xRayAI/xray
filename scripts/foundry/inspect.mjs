@@ -625,27 +625,52 @@ export function machineXrayPluginPaths(machine = mint.machineHome()) {
     .map((name) => path.join(pluginsDir, name));
 }
 
+/** XRAY_ROOT values a machine plugin pins in its .mcp.json (unpinned plugins pin none). */
+function pinnedXrayRoots(pluginDir) {
+  try {
+    const mcp = JSON.parse(fs.readFileSync(path.join(pluginDir, ".mcp.json"), "utf8"));
+    return Object.values(mcp.mcpServers || {})
+      .map((server) => server?.env?.XRAY_ROOT)
+      .filter((value) => typeof value === "string" && value !== "")
+      .map((value) => path.resolve(value));
+  } catch {
+    return [];
+  }
+}
+
 /**
- * `isolated` stays HOME != machine home. This check is whether a machine-level
- * 0xray Grok plugin exists. Overall inspect ok is false when this check fails.
+ * `isolated` stays HOME != machine home. A machine-level 0xray Grok plugin this
+ * project did not plant is a WARN. It fails only when the plugin pins a
+ * different XRAY_ROOT, which would point this seat's MCP servers at another seat.
  */
-export function checkMachinePlugin(machine = mint.machineHome()) {
+export function checkMachinePlugin(machine = mint.machineHome(), root = null) {
   const machinePlugin = machineGrokPluginDir(machine);
   const hits = machineXrayPluginPaths(machine);
-  if (hits.length > 0) {
+  if (hits.length === 0) {
+    return { id: "machinePlugin", ok: true, machinePlugin, hits: [] };
+  }
+  const remedy = `rm -rf ${hits.join(" ")}`;
+  const here = root ? path.resolve(root) : null;
+  const conflicts = here
+    ? hits.filter((hit) => pinnedXrayRoots(hit).some((pinned) => pinned !== here))
+    : [];
+  if (conflicts.length > 0) {
     return {
       id: "machinePlugin",
       ok: false,
       machinePlugin,
       hits,
-      detail: `machine-level ${hits.join(", ")} exists — delete it`,
+      conflicts,
+      detail: `machine-level ${conflicts.join(", ")} pins another XRAY_ROOT — delete it: ${remedy}`,
     };
   }
   return {
     id: "machinePlugin",
     ok: true,
+    warn: true,
     machinePlugin,
-    hits: [],
+    hits,
+    detail: `machine-level ${hits.join(", ")} exists and does not pin another XRAY_ROOT. Remove it if the project plugin is not the one loading: ${remedy}`,
   };
 }
 
@@ -695,7 +720,7 @@ export async function inspectSuit(root, opts = {}) {
   }
 
   checks.push(checkIsolatedHome(root, env, machineHome));
-  checks.push(checkMachinePlugin(machineHome));
+  checks.push(checkMachinePlugin(machineHome, root));
   checks.push(checkHarness(root, requireHarness));
 
   const failed = checks.filter((c) => c.ok === false);
@@ -704,6 +729,7 @@ export async function inspectSuit(root, opts = {}) {
   const report = {
     ok: failed.length === 0,
     failed: failed.map((c) => c.id),
+    warnings: checks.filter((c) => c.warn === true).map((c) => c.id),
     checks,
     dna: receipt.dna || null,
     pack: "0xray-suit",
