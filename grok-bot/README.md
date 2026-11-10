@@ -29,9 +29,14 @@ The mill wears the suit. Node >= 24.22.1. That is the runtime these packs are te
 npm init -y
 npm install 0xray
 npm install @0xray/grok-bot
+git init
 npx 0xray wear
+npx @0xray/grok-bot house init
+# Fill house/HOUSE.md from the owner's answers (skill setup-house). Doctor fails until the (example) lines are gone.
 npx @0xray/grok-bot doctor
 ```
+
+`git init` is needed for the git hooks and the Cursor hook line. `house init` is not part of wear. A doctor run before HOUSE.md is filled exits 1 with `House: FAIL`. That is the intended gate, not an install error. On a fresh seat, doctor also WARNs that the activity log has no JSON line and that STATION.md has no `Skills:` or `Keys:` line. Those WARNs do not fail doctor. They clear when the seat's first station run writes the Skills: and Keys: lines and its first activity line.
 
 Local packs use the same steps with files: `npm install ./0xray-<file>.tgz`, then `npm install ./0xray-grok-bot-<file>.tgz`. Do not extract the tarballs by hand. Each one unpacks into a directory named `package/`, so two extracts in one folder collide.
 
