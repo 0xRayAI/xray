@@ -32,6 +32,9 @@ rerun_*/
 0xray-*.tgz
 *.tmp
 
+# Test-only temp projects (machine-bridges-optin)
+.xray-machine-bridges-test-*
+
 # Machine-local Grok wear (absolute paths from `0xray grok install`). Template: src/integrations/grok/plugin/0xray
 .grok/
 

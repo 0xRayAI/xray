@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterAll, afterEach, describe, expect, it } from 'vitest';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import {
@@ -11,14 +11,14 @@ import {
   rmSync,
   writeFileSync,
 } from 'node:fs';
-import { homedir, tmpdir } from 'node:os';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const repoRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const wearScript = path.join(repoRoot, 'scripts/node/wear-cursor-hooks.cjs');
 const setupScript = path.join(repoRoot, 'scripts/node/install-bridges.cjs');
-const realHome = homedir();
+const projectPrefix = '.xray-machine-bridges-test-';
 
 /** sha256 of every file under the box-wide config trees a project install must leave alone. */
 function snapshot(home: string): Record<string, string> {
@@ -72,11 +72,21 @@ function run(script: string, args: string[], cwd: string, home: string, extra: R
 
 /**
  * The project must not sit under a tmp path, or the install treats it as an ephemeral
- * consumer and skips machine writes for that reason.
+ * consumer and skips machine writes for that reason. Create it under the repo, not
+ * os.homedir(): after #995, vitest sets HOME to a /tmp per-run dir.
  */
+function cleanupTestProjects() {
+  if (!existsSync(repoRoot)) return;
+  for (const name of readdirSync(repoRoot)) {
+    if (name.startsWith(projectPrefix)) {
+      rmSync(path.join(repoRoot, name), { recursive: true, force: true });
+    }
+  }
+}
+
 function withProject(body: (project: string, home: string) => void) {
   const home = mkdtempSync(path.join(tmpdir(), 'xray-machine-home-'));
-  const project = mkdtempSync(path.join(realHome, '.xray-machine-bridges-test-'));
+  const project = mkdtempSync(path.join(repoRoot, projectPrefix));
   try {
     writeFileSync(path.join(project, 'package.json'), `${JSON.stringify({ name: 'acme' })}\n`);
     spawnSync('git', ['init', '-q'], { cwd: project });
@@ -87,6 +97,9 @@ function withProject(body: (project: string, home: string) => void) {
     rmSync(home, { recursive: true, force: true });
   }
 }
+
+afterEach(cleanupTestProjects);
+afterAll(cleanupTestProjects);
 
 describe('machine-wide bridge writes need XRAY_MACHINE_BRIDGES=1', () => {
   it('setup leaves ~/.grok/plugins, ~/.hermes and ~/.openclaw untouched by default', () => {
