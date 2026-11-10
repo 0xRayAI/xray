@@ -53,8 +53,12 @@ async function boot(srv) {
   return base;
 }
 async function stop(srv) {
-  srv.kill();
-  await new Promise((r) => (srv.exitCode != null || srv.signalCode ? r() : srv.once('exit', r)));
+  if (!srv || srv.exitCode != null || srv.signalCode) return;
+  const done = new Promise((r) => srv.once('exit', r));
+  srv.kill('SIGTERM');
+  const timer = setTimeout(() => { try { srv.kill('SIGKILL'); } catch { /* already gone */ } }, 2000);
+  await done;
+  clearTimeout(timer);
 }
 function isoIn(days) {
   const d = new Date(Date.now() + days * 86400000);
@@ -74,6 +78,7 @@ const card = (n, extra = {}) => ({
 
 test('a future start_after parks the card with no nudge, survives restart, then one wake fires', async () => {
   let srv = spawnSrv();
+  try {
   let base = await boot(srv);
   const critic = { Authorization: 'Bearer ' + CKEY, 'Content-Type': 'application/json' };
   const forge = { Authorization: 'Bearer ' + FKEY };
@@ -88,7 +93,7 @@ test('a future start_after parks the card with no nudge, survives restart, then 
 
   await stop(srv);
   fs.mkdirSync(path.join(DATA, 'live'), { recursive: true });
-  const stale = '2026-11-10T12:00:00-05:00';
+  const stale = '2099-01-01T00:00:00-06:00';
   fs.writeFileSync(path.join(DATA, 'live', 'start-after.json'), JSON.stringify({
     overrides: { [`${R}#9`]: { start_after: stale, by: 'critic' } }, woke: {}, parked: {},
   }));
@@ -168,7 +173,9 @@ test('a future start_after parks the card with no nudge, survives restart, then 
   await new Promise((r) => setTimeout(r, 300));
   assert.equal((await lines()).filter((l) => l.type === 'start_after').length, 1);
   assert.equal(got.length, n);
-  await stop(srv);
-  sink.close();
-  fs.rmSync(DATA, { recursive: true, force: true, maxRetries: 10, retryDelay: 50 });
+  } finally {
+    if (srv) await stop(srv);
+    sink.close();
+    fs.rmSync(DATA, { recursive: true, force: true, maxRetries: 10, retryDelay: 50 });
+  }
 });
