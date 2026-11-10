@@ -1508,7 +1508,27 @@ describe('foundry mill — inspect organ', () => {
         expect(other.ok).toBe(false);
         expect(other.failed).toEqual(['machinePlugin']);
         const otherPlugin = other.checks.find((c) => c.id === 'machinePlugin') as { detail?: string };
-        expect(otherPlugin.detail).toMatch(/pins another XRAY_ROOT — delete it: rm -rf /);
+        expect(otherPlugin.detail).toMatch(/points at another root .* delete it: rm -rf /);
+        // Launcher paths count too: no XRAY_ROOT pin, but the servers run another checkout.
+        const launcher = (arg: string) =>
+          writeFileSync(
+            path.join(pinned, '.mcp.json'),
+            JSON.stringify({ mcpServers: { repertoire: { command: 'node', args: [arg], env: {} } } }),
+          );
+        launcher('/home/box/other-seat/node_modules/0xray/scripts/node/mcp-launch.cjs');
+        const viaLauncher = await inspectSuit(tmp, { millRoot: root, skipLive: true, env: { HOME: machineWithPlugin }, machineHome: machineWithPlugin });
+        expect(viaLauncher.failed).toEqual(['machinePlugin']);
+        launcher('/tmp/xray-setup-nogit-abc/node_modules/@0xray/repertoire/dist/mcp/server.js');
+        const viaDeadRoot = await inspectSuit(tmp, { millRoot: root, skipLive: true, env: { HOME: machineWithPlugin }, machineHome: machineWithPlugin });
+        expect(viaDeadRoot.failed).toEqual(['machinePlugin']);
+        launcher(path.join(tmp, 'node_modules', '0xray', 'scripts', 'node', 'mcp-launch.cjs'));
+        const ownLauncher = await inspectSuit(tmp, { millRoot: root, skipLive: true, env: { HOME: machineWithPlugin }, machineHome: machineWithPlugin });
+        expect(ownLauncher.ok, JSON.stringify(ownLauncher.checks, null, 2)).toBe(true);
+        // An isolated HOME never loads the machine plugin, so another root there is only a WARN.
+        launcher('/home/box/other-seat/node_modules/0xray/scripts/node/mcp-launch.cjs');
+        const isolatedOther = await inspectSuit(tmp, { millRoot: root, skipLive: true, env: { HOME: path.join(tmp, '.lastmile-home') }, machineHome: machineWithPlugin });
+        expect(isolatedOther.ok, JSON.stringify(isolatedOther.checks, null, 2)).toBe(true);
+        expect((isolatedOther as { warnings?: string[] }).warnings).toEqual(['machinePlugin']);
       } finally {
         rmSync(machineWithPlugin, { recursive: true, force: true });
       }

@@ -34,6 +34,8 @@ const {
   recordOpenClawProjectPlugin,
   maybeWriteOpenClawCliBackend,
   isEphemeralInstallRoot,
+  machineBridgesOptedIn,
+  noteMachineBridgesSkipped,
   enableMemoryRoutingIfResolves,
   pinLauncherPackageRoot,
   launcherPinRoot,
@@ -1008,6 +1010,9 @@ function installGrokBridge(targetDir, packageRoot, log, opts) {
     log("grok-bridge", "skip machine ~/.grok plugin — ephemeral consumer", "info");
   } else if (isolated) {
     log("grok-bridge", "skip machine ~/.grok plugin — isolated HOME", "info");
+  } else if (!machineBridgesOptedIn(env)) {
+    log("grok-bridge", "skip machine ~/.grok plugin — project-scoped wear (XRAY_MACHINE_BRIDGES unset)", "info");
+    noteMachineBridgesSkipped();
   } else {
     log("grok-bridge", "skip machine ~/.grok plugin — project-scoped wear", "info");
     const durable = settlePackageRoot(packageRoot, targetDir);
@@ -1067,14 +1072,16 @@ function installHermesBridge(targetDir, packageRoot, log) {
   }
 
   const ephemeral = isEphemeralInstallRoot(targetDir);
-  const isolated = isIsolatedHome();
+  const machineWrites = machineBridgesOptedIn();
+  const isolated = isIsolatedHome() || !machineWrites;
   const machine = machineHome();
+  if (!ephemeral && !isIsolatedHome() && !machineWrites) noteMachineBridgesSkipped();
   const targetPluginDir =
     ephemeral || isolated
       ? path.join(targetDir, ".hermes", "plugins", "xray-hermes")
       : path.join(machine, ".hermes", "plugins", "xray-hermes");
   if (isolated) {
-    log("hermes-bridge", "skip machine ~/.hermes plugin — isolated HOME", "info");
+    log("hermes-bridge", "skip machine ~/.hermes plugin — isolated HOME or XRAY_MACHINE_BRIDGES unset", "info");
   }
   fs.mkdirSync(targetPluginDir, { recursive: true });
   const hermesMcp = pluginMcpBody(targetDir);
@@ -1158,7 +1165,8 @@ function installOpenclawBridge(targetDir, packageRoot, log) {
   }
 
   const ephemeralOpenclaw = isEphemeralInstallRoot(targetDir);
-  const isolatedOpenclaw = isIsolatedHome();
+  const isolatedOpenclaw = isIsolatedHome() || !machineBridgesOptedIn();
+  if (!ephemeralOpenclaw && !isIsolatedHome() && !machineBridgesOptedIn()) noteMachineBridgesSkipped();
   if (!ephemeralOpenclaw && !isolatedOpenclaw) {
     const copied = syncCostumeSkills(
       path.join(machineHome(), ".openclaw", "skills"),
@@ -1172,7 +1180,7 @@ function installOpenclawBridge(targetDir, packageRoot, log) {
     log(
       "openclaw-bridge",
       isolatedOpenclaw
-        ? "skip machine ~/.openclaw skills — isolated HOME"
+        ? "skip machine ~/.openclaw skills — isolated HOME or XRAY_MACHINE_BRIDGES unset"
         : "skip machine ~/.openclaw skills — ephemeral consumer",
       "info",
     );
@@ -1199,7 +1207,7 @@ function installOpenclawBridge(targetDir, packageRoot, log) {
     log(
       "openclaw-bridge",
       isolatedOpenclaw
-        ? "skip machine PreToolUse wear — isolated HOME"
+        ? "skip machine PreToolUse wear — isolated HOME or XRAY_MACHINE_BRIDGES unset"
         : "skip machine PreToolUse wear — ephemeral consumer",
       "info",
     );

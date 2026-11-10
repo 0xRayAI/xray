@@ -743,6 +743,25 @@ function copyHermesFindProjectRootHelper(packageRoot, targetPluginDir) {
   return true;
 }
 
+/**
+ * A project wear or setup writes machine-wide config (~/.grok plugin pins,
+ * ~/.hermes, ~/.openclaw) only on an explicit XRAY_MACHINE_BRIDGES=1.
+ * Those files are shared by every project and seat on the box.
+ */
+function machineBridgesOptedIn(env = process.env) {
+  return /^(1|true|yes)$/i.test(String((env && env.XRAY_MACHINE_BRIDGES) || "").trim());
+}
+
+let machineSkipNoted = false;
+/** One stdout line per process naming what a project wear skipped. */
+function noteMachineBridgesSkipped() {
+  if (machineSkipNoted) return;
+  machineSkipNoted = true;
+  process.stdout.write(
+    "machine-bridges: skipped ~/.grok/plugins/0xray pins, ~/.hermes and ~/.openclaw (project copies written). Set XRAY_MACHINE_BRIDGES=1 to write them.\n",
+  );
+}
+
 function isEphemeralInstallRoot(targetDir) {
   const normalized = String(targetDir || "").replace(/\\/g, "/");
   return /\/T\/|\/tmp\/|\/var\/folders\/|\/Temp\//i.test(normalized);
@@ -1338,6 +1357,8 @@ module.exports = {
   isDefaultMemoryRoutingOff,
   enableMemoryRoutingIfResolves,
   isEphemeralInstallRoot,
+  machineBridgesOptedIn,
+  noteMachineBridgesSkipped,
   isIsolatedHome,
   pinLauncherPackageRoot,
   launcherPinRoot,

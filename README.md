@@ -49,7 +49,9 @@ npx 0xray setup --git-hooks # optional: git hooks only. A folder that is not a g
 npx 0xray inspect --skip-live # mill receipt from the foundry that ships in this package
 ```
 
-A machine-level `~/.grok/plugins/0xray` that this project did not plant makes `inspect` WARN with the `rm -rf` line to remove it. It fails only when that plugin pins a different `XRAY_ROOT`. Wear never deletes it.
+A machine-level `~/.grok/plugins/0xray` that this project did not plant makes `inspect` WARN with the `rm -rf` line to remove it. It fails when Grok would load that plugin (HOME is the machine home) and it points at another root, by a pinned `XRAY_ROOT` or by its launcher paths. Wear never deletes it.
+
+`wear` and `setup` write the project only: `.grok/`, `.hermes/`, `.openclaw/` and `.mcp.json` in the project folder. They do not touch `~/.grok/plugins/0xray`, `~/.hermes` or `~/.openclaw`, which every project on the machine shares, and they print one `machine-bridges: skipped` line. `XRAY_MACHINE_BRIDGES=1` opts in: it retargets the machine Grok plugin and writes the machine Hermes and OpenClaw config for this project. `~/.grok/trusted_folders.toml` is still written so Grok starts the project MCP servers.
 
 `npx 0xray look` opens one card and writes it to `.xray/state/LENS.md`. The planes are `dev`, `integration`, `domain`, and `ecosystem`. A session starts on `dev`. A mill suit's station card says `integration`, which is that plant's plane. `look dev` still opens the dev card. At the end of a turn, write the working notes in `.xray/state/NOTES.md`. The next wake reads `.xray/state/STATION.md`, then the notes, then the lens. Plates: [goggles](docs-site/docs/plates/goggles.md), [notes-page](docs-site/docs/plates/notes-page.md).
 

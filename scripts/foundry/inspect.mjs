@@ -625,14 +625,30 @@ export function machineXrayPluginPaths(machine = mint.machineHome()) {
     .map((name) => path.join(pluginsDir, name));
 }
 
-/** XRAY_ROOT values a machine plugin pins in its .mcp.json (unpinned plugins pin none). */
-function pinnedXrayRoots(pluginDir) {
+/** Absolute path args that name a checkout: `<root>/node_modules/...` or `<root>/scripts/node/mcp-launch.cjs`. */
+function launcherRoots(server) {
+  const roots = [];
+  for (const arg of Array.isArray(server?.args) ? server.args : []) {
+    if (typeof arg !== "string" || !path.isAbsolute(arg)) continue;
+    const norm = arg.replace(/\\/g, "/");
+    const nm = norm.indexOf("/node_modules/");
+    if (nm > 0) roots.push(path.resolve(norm.slice(0, nm)));
+    else if (norm.endsWith("/scripts/node/mcp-launch.cjs")) {
+      roots.push(path.resolve(norm.slice(0, -"/scripts/node/mcp-launch.cjs".length)));
+    }
+  }
+  return roots;
+}
+
+/** Roots a machine plugin points at: pinned XRAY_ROOT values and launcher checkouts. */
+function pluginRoots(pluginDir) {
   try {
     const mcp = JSON.parse(fs.readFileSync(path.join(pluginDir, ".mcp.json"), "utf8"));
-    return Object.values(mcp.mcpServers || {})
-      .map((server) => server?.env?.XRAY_ROOT)
-      .filter((value) => typeof value === "string" && value !== "")
-      .map((value) => path.resolve(value));
+    return Object.values(mcp.mcpServers || {}).flatMap((server) => {
+      const pin = server?.env?.XRAY_ROOT;
+      const pinned = typeof pin === "string" && pin !== "" ? [path.resolve(pin)] : [];
+      return pinned.concat(launcherRoots(server));
+    });
   } catch {
     return [];
   }
@@ -640,10 +656,11 @@ function pinnedXrayRoots(pluginDir) {
 
 /**
  * `isolated` stays HOME != machine home. A machine-level 0xray Grok plugin this
- * project did not plant is a WARN. It fails only when the plugin pins a
- * different XRAY_ROOT, which would point this seat's MCP servers at another seat.
+ * project did not plant is a WARN. It fails when Grok would load it (HOME is the
+ * machine home) and it points at a different root, by a pinned XRAY_ROOT or by
+ * launcher paths. That plugin would run another checkout's MCP servers.
  */
-export function checkMachinePlugin(machine = mint.machineHome(), root = null) {
+export function checkMachinePlugin(machine = mint.machineHome(), root = null, env = process.env) {
   const machinePlugin = machineGrokPluginDir(machine);
   const hits = machineXrayPluginPaths(machine);
   if (hits.length === 0) {
@@ -651,9 +668,11 @@ export function checkMachinePlugin(machine = mint.machineHome(), root = null) {
   }
   const remedy = `rm -rf ${hits.join(" ")}`;
   const here = root ? path.resolve(root) : null;
-  const conflicts = here
-    ? hits.filter((hit) => pinnedXrayRoots(hit).some((pinned) => pinned !== here))
-    : [];
+  const loaded = !isIsolatedHome(env, machine);
+  const conflicts =
+    here && loaded
+      ? hits.filter((hit) => pluginRoots(hit).some((other) => other !== here))
+      : [];
   if (conflicts.length > 0) {
     return {
       id: "machinePlugin",
@@ -661,7 +680,7 @@ export function checkMachinePlugin(machine = mint.machineHome(), root = null) {
       machinePlugin,
       hits,
       conflicts,
-      detail: `machine-level ${conflicts.join(", ")} pins another XRAY_ROOT — delete it: ${remedy}`,
+      detail: `machine-level ${conflicts.join(", ")} points at another root than ${here} (XRAY_ROOT or launcher paths) — delete it: ${remedy}`,
     };
   }
   return {
@@ -670,7 +689,7 @@ export function checkMachinePlugin(machine = mint.machineHome(), root = null) {
     warn: true,
     machinePlugin,
     hits,
-    detail: `machine-level ${hits.join(", ")} exists and does not pin another XRAY_ROOT. Remove it if the project plugin is not the one loading: ${remedy}`,
+    detail: `machine-level ${hits.join(", ")} exists and does not point at another root. Remove it if the project plugin is not the one loading: ${remedy}`,
   };
 }
 
@@ -720,7 +739,7 @@ export async function inspectSuit(root, opts = {}) {
   }
 
   checks.push(checkIsolatedHome(root, env, machineHome));
-  checks.push(checkMachinePlugin(machineHome, root));
+  checks.push(checkMachinePlugin(machineHome, root, env));
   checks.push(checkHarness(root, requireHarness));
 
   const failed = checks.filter((c) => c.ok === false);
