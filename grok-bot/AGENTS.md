@@ -38,7 +38,7 @@ Humans: same path; start at `README.md`.
 
 ## Adjust from plant (monitor)
 Current verified pins (change if live plant moves):
-- Suit: `0xray` (current npm) · mill nested in the tarball (`npx @0xray/foundry`)
+- Suit: `0xray` (current npm) · mill nested in the tarball (`npx 0xray inspect --skip-live`)
 - Registry MCP + website URLs — see `llms.txt`
 - Hangar: `npx groover-hangar` · catalog is Clearing `GET /v1/catalog` (Groover DID + pin, plus solar + live shop). Groover MCP `list_hangars` reads it. Settle USDC on Base.
 - OWS: keys in `~/.ows` · see Open Wallet docs
@@ -52,7 +52,7 @@ Cold-seat proof: [GROK-HOOK-PROOF.md](https://github.com/0xRayAI/xray/blob/main/
 - Grok Bot **chat** is not that plugin host — do not invent a fake PreToolUse floor in the assistant.
 - Where the Grok CLI plugin loads `hooks.json`, A-hooks are live; elsewhere rely on skills + Strict review + mill gates.
 
-**Wearing a suit in Grok Bot chat.** A seat wears its suit when its profile names its suit folder and DNA. Each time it wakes, or after its chat history is compacted, it reads the suit's `.xray/state/STATION.md`, then the board: hand-kept `house/WAVEBOARD.md` when `LIVE_URL` is unset, or its Bifrost cards (`GET /cards`) when `LIVE_URL` is set, and `house/ATTENTION_STATE.md`. Before it says ship or live work is done, it runs `npx @0xray/foundry inspect` from the suit folder and quotes `ok: true`. A doctor PASS alone doesn't prove the suit is worn.
+**Wearing a suit in Grok Bot chat.** A seat wears its suit when its profile names its suit folder and DNA. Each time it wakes, or after its chat history is compacted, it reads the suit's `.xray/state/STATION.md`, then the board: hand-kept `house/WAVEBOARD.md` when `LIVE_URL` is unset, or its Bifrost cards (`GET /cards`) when `LIVE_URL` is set, and `house/ATTENTION_STATE.md`. Before it says ship or live work is done, it runs `npx 0xray inspect --skip-live` from the suit folder and quotes `ok: true`. A doctor PASS alone doesn't prove the suit is worn.
 
 ## Survive compaction (Grok Bot chat)
 The host may summarize or trim a long thread. 0xRay compact hooks (PreCompact) and Repertoire do **not** run in this chat — do not wait for them.

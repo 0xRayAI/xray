@@ -221,7 +221,8 @@ describe('grok-bot seat doctor — diagnose', () => {
       const text = formatDoctor(report);
       expect(text).toMatch(/Plant: FAIL/);
       expect(text).toContain('missing node_modules/0xray/package.json');
-      expect(report.next).toContain('npm i 0xray && npx @0xray/foundry inspect --skip-live');
+      expect(report.next).toContain('npm i 0xray && npx 0xray inspect --skip-live');
+      expect(report.next.join('\n')).not.toContain('@0xray/foundry');
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
@@ -1035,6 +1036,24 @@ describe('grok-bot seat doctor — station boot warnings', () => {
       expect(formatDoctor(report)).toMatch(/House: WARN — HOUSE.md has no name: under ## Owner/);
     } finally {
       rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('shipped grok-bot docs name a runnable inspect command', () => {
+  it('no shipped doc or doctor line tells a user to run npx @0xray/foundry', () => {
+    // Neither pack ships @0xray/foundry, so npx would pull a different registry build.
+    const files = [
+      'grok-bot/README.md',
+      'grok-bot/AGENTS.md',
+      'grok-bot/llms.txt',
+      'grok-bot/lib/seat-doctor.cjs',
+      'grok-bot/skills/fasten-suit-per-agent/SKILL.md',
+      'grok-bot/skills/fasten-suit-and-hangar/SKILL.md',
+      'llms.txt',
+    ];
+    for (const rel of files) {
+      expect(readFileSync(path.join(root, rel), 'utf8'), rel).not.toMatch(/npx @0xray\/foundry/);
     }
   });
 });

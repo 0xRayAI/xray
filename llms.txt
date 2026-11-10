@@ -25,8 +25,8 @@ Default consumer wear is **mill plant** (`mill` + `inspect`), not a 45-skill / 4
 - MCP servers start through `scripts/node/mcp-launch.cjs`. They see PATH, HOME, and XRAY_ROOT, plus the names on their keep list. Tokens such as NPM_TOKEN are not inherited. User env values stay out of argv. Postinstall keeps user edits to AGENTS.md, `.mcp.json`, and `opencode.json`. `house init` does not copy EXAMPLE.md. Doctor FAILs while `house/EXAMPLE.md` exists. Inspect has a machinePlugin check. It WARNs on a machine `~/.grok/plugins/0xray` and fails when Grok would load it and it points at another root (pinned XRAY_ROOT or launcher paths). The Cursor hook defaults XRAY_ROOT to the suit directory.
 - `npx 0xray unwear` restores the pre-wear snapshot. Outside a git checkout, wear still writes the suit and skips only the Cursor hooks, with one warning.
 
-- `npx @0xray/foundry mint --skip-live` — re-fasten mill plant, then inspect.
-- `npx @0xray/foundry inspect --skip-live` — plant-vs-worn, receipt, CI. Chat is not a receipt.
+- `npx 0xray wear` — re-fasten mill plant.
+- `npx 0xray inspect --skip-live` — plant-vs-worn, receipt, CI. Chat is not a receipt.
 
 ## Shop plant (hangar coexistence)
 

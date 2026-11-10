@@ -771,14 +771,14 @@ function nextSteps(report) {
       steps.push('Turn goggles on. The suit keeps the lens.');
     }
   }
-  const installStep = 'npm i 0xray && npx @0xray/foundry inspect --skip-live';
+  const installStep = 'npm i 0xray && npx 0xray inspect --skip-live';
   if (!report.plant.installed) steps.push(installStep);
   const millReady = report.plant.mill && report.plant.inspect;
   if (!millReady) {
-    steps.push('Fasten mill+inspect: npm i 0xray && npx @0xray/foundry mint --skip-live');
-    steps.push('Prove plant: npx @0xray/foundry inspect --skip-live (expect mill + inspect, costume false)');
+    steps.push('Fasten mill+inspect: npm i 0xray && npx 0xray wear');
+    steps.push('Prove plant: npx 0xray inspect --skip-live (expect mill + inspect, costume false)');
   } else if (report.plant.ok) {
-    steps.push('Prove again later: npx @0xray/foundry inspect --skip-live');
+    steps.push('Prove again later: npx 0xray inspect --skip-live');
   } else if (report.plant.deadHooks.length > 0) {
     for (const dead of report.plant.deadHooks) {
       steps.push(`Repair dead hook ${dead.file}: ${dead.path} is missing`);

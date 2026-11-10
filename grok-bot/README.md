@@ -63,7 +63,7 @@ House lookup: `GROK_BOT_HOUSE` (the house directory or its `HOUSE.md`) wins. If 
 5. **Label** — `seat-label` in that seat’s own chat (`UpdateProfile` title only)  
 
 ## Plant pins (monitor / adjust)
-- `0xray` (current npm) · mill nested in the tarball (`npx @0xray/foundry`)
+- `0xray` (current npm) · mill nested in the tarball (`npx 0xray inspect --skip-live`)
 - Live URLs in `llms.txt`  
 
 This package orchestrates. It does not vendor the whole OS.
