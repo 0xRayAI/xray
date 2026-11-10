@@ -221,11 +221,19 @@ function libraryLine(root) {
 }
 
 function repertoireLine(root) {
-  try {
-    const heat = require("../../src/integrations/hooks/station-hook-runtime.cjs");
-    if (typeof heat.buildRepertoireResume === "function") return heat.buildRepertoireResume(root);
-  } catch {
-    /* the heat runtime is optional for a seed */
+  const packageRoot = path.resolve(__dirname, "..", "..");
+  const candidates = [
+    path.join(packageRoot, "dist", "integrations", "hooks", "station-hook-runtime.cjs"),
+    path.join(packageRoot, "src", "integrations", "hooks", "station-hook-runtime.cjs"),
+  ];
+  for (const file of candidates) {
+    try {
+      if (!fs.existsSync(file)) continue;
+      const heat = require(file);
+      if (typeof heat.buildRepertoireResume === "function") return heat.buildRepertoireResume(root);
+    } catch {
+      /* try the next shipped path */
+    }
   }
   return "Repertoire: module unresolved";
 }

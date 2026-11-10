@@ -625,27 +625,71 @@ export function machineXrayPluginPaths(machine = mint.machineHome()) {
     .map((name) => path.join(pluginsDir, name));
 }
 
+/** Absolute path args that name a checkout: `<root>/node_modules/...` or `<root>/scripts/node/mcp-launch.cjs`. */
+function launcherRoots(server) {
+  const roots = [];
+  for (const arg of Array.isArray(server?.args) ? server.args : []) {
+    if (typeof arg !== "string" || !path.isAbsolute(arg)) continue;
+    const norm = arg.replace(/\\/g, "/");
+    const nm = norm.indexOf("/node_modules/");
+    if (nm > 0) roots.push(path.resolve(norm.slice(0, nm)));
+    else if (norm.endsWith("/scripts/node/mcp-launch.cjs")) {
+      roots.push(path.resolve(norm.slice(0, -"/scripts/node/mcp-launch.cjs".length)));
+    }
+  }
+  return roots;
+}
+
+/** Roots a machine plugin points at: pinned XRAY_ROOT values and launcher checkouts. */
+function pluginRoots(pluginDir) {
+  try {
+    const mcp = JSON.parse(fs.readFileSync(path.join(pluginDir, ".mcp.json"), "utf8"));
+    return Object.values(mcp.mcpServers || {}).flatMap((server) => {
+      const pin = server?.env?.XRAY_ROOT;
+      const pinned = typeof pin === "string" && pin !== "" ? [path.resolve(pin)] : [];
+      return pinned.concat(launcherRoots(server));
+    });
+  } catch {
+    return [];
+  }
+}
+
 /**
- * `isolated` stays HOME != machine home. This check is whether a machine-level
- * 0xray Grok plugin exists. Overall inspect ok is false when this check fails.
+ * `isolated` stays HOME != machine home. A machine-level 0xray Grok plugin this
+ * project did not plant is a WARN. It fails when Grok would load it (HOME is the
+ * machine home) and it points at a different root, by a pinned XRAY_ROOT or by
+ * launcher paths. That plugin would run another checkout's MCP servers.
  */
-export function checkMachinePlugin(machine = mint.machineHome()) {
+export function checkMachinePlugin(machine = mint.machineHome(), root = null, env = process.env) {
   const machinePlugin = machineGrokPluginDir(machine);
   const hits = machineXrayPluginPaths(machine);
-  if (hits.length > 0) {
+  if (hits.length === 0) {
+    return { id: "machinePlugin", ok: true, machinePlugin, hits: [] };
+  }
+  const remedy = `rm -rf ${hits.join(" ")}`;
+  const here = root ? path.resolve(root) : null;
+  const loaded = !isIsolatedHome(env, machine);
+  const conflicts =
+    here && loaded
+      ? hits.filter((hit) => pluginRoots(hit).some((other) => other !== here))
+      : [];
+  if (conflicts.length > 0) {
     return {
       id: "machinePlugin",
       ok: false,
       machinePlugin,
       hits,
-      detail: `machine-level ${hits.join(", ")} exists — delete it`,
+      conflicts,
+      detail: `machine-level ${conflicts.join(", ")} points at another root than ${here} (XRAY_ROOT or launcher paths) — delete it: ${remedy}`,
     };
   }
   return {
     id: "machinePlugin",
     ok: true,
+    warn: true,
     machinePlugin,
-    hits: [],
+    hits,
+    detail: `machine-level ${hits.join(", ")} exists and does not point at another root. Remove it if the project plugin is not the one loading: ${remedy}`,
   };
 }
 
@@ -695,7 +739,7 @@ export async function inspectSuit(root, opts = {}) {
   }
 
   checks.push(checkIsolatedHome(root, env, machineHome));
-  checks.push(checkMachinePlugin(machineHome));
+  checks.push(checkMachinePlugin(machineHome, root, env));
   checks.push(checkHarness(root, requireHarness));
 
   const failed = checks.filter((c) => c.ok === false);
@@ -704,6 +748,7 @@ export async function inspectSuit(root, opts = {}) {
   const report = {
     ok: failed.length === 0,
     failed: failed.map((c) => c.id),
+    warnings: checks.filter((c) => c.warn === true).map((c) => c.id),
     checks,
     dna: receipt.dna || null,
     pack: "0xray-suit",

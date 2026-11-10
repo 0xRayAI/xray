@@ -332,7 +332,9 @@ describe('wear and setup outside a git checkout', () => {
       const ran = runNode(wearScript, [project], project, home);
       expect(ran.status).toBe(0);
       expect(ran.stderr).toBe('');
-      expect(ran.stdout).toBe(`grok-trust: wrote ${path.join(home, '.grok', 'trusted_folders.toml')}\n${linkStdout()}`);
+      expect(ran.stdout).toBe(
+        `grok-trust: wrote ${path.join(home, '.grok', 'trusted_folders.toml')}\n${linkStdout()}cursor-wear: wrote .cursor/hooks.json and .cursor/mcp.json\n`,
+      );
       expect(existsSync(path.join(project, '.cursor', 'hooks.json'))).toBe(true);
       expect(existsSync(path.join(project, '.cursor', 'hooks', 'pre-tool-use.sh'))).toBe(true);
       expect(existsSync(path.join(project, '.opencode', 'skills', 'mill', 'SKILL.md'))).toBe(true);

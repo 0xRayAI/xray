@@ -7,7 +7,7 @@ description: Inspect AI work — diffs, tool traces, mill receipts, CI. Factory 
 
 This mill **fastens** a suit for **inspecting AI work**. Not an empty suit. Not a copy of 0xRay's 45/42 costume.
 
-Mill **does** these checks (`npx @0xray/foundry inspect`). Mint fails on a costume dump. Live PUT GETs the `.tgz`. Isolated HOME refuses `~/.grok/plugins/0xray`. Not an 8th MCP.
+Mill **does** these checks (`npx 0xray inspect --skip-live`). Mint fails on a costume dump. Live PUT GETs the `.tgz`. Isolated HOME refuses `~/.grok/plugins/0xray`. Not an 8th MCP.
 
 ## What mill inspects
 
@@ -27,10 +27,10 @@ Mill **does** these checks (`npx @0xray/foundry inspect`). Mint fails on a costu
 - Fasten their plant on top; do not dump our costume.
 
 ```bash
-npx @0xray/foundry mint
-npx @0xray/foundry inspect
-npx @0xray/foundry inspect --skip-live --go --require-harness=bare
+npx 0xray wear
+npx 0xray inspect --skip-live
+npx 0xray inspect --skip-live --go --require-harness=bare
 npx @0xray/foundry ci --report
 ```
 
-CLI `mint` runs inspect after overlay (exit 1 if inspect fails). Postinstall mint does not; `--skip-live` skips the tarball GET. Chat is not a receipt.
+`npx 0xray wear` reapplies the overlay (the 0xray CLI has no mint command). `--skip-live` on inspect skips the tarball GET. Chat is not a receipt.

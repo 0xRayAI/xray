@@ -90,7 +90,7 @@ const TOOLS = [
         },
     },
 ];
-const server = new Server({ name: 'repertoire', version: '0.2.5' }, { capabilities: { tools: {} } });
+const server = new Server({ name: 'repertoire', version: '0.2.9' }, { capabilities: { tools: {} } });
 server.setRequestHandler(ListToolsRequestSchema, async () => ({
     tools: TOOLS.map((tool) => ({
         name: tool.name,
