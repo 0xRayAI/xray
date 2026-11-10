@@ -1608,6 +1608,25 @@ describe('foundry mill — inspect organ', () => {
       expect(bare.hooks.bound).toBe(false);
       expect(bare.repertoire.fastened).toBe(false);
       expect(bare.repertoire.vendorSource).toBe(true);
+      expect(bare.repertoire.packedVendor).toBe(false);
+
+      const packedRoot = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-packed-rep-'));
+      try {
+        writeFileSync(path.join(packedRoot, 'package.json'), `${JSON.stringify({ name: 'cold', version: '1.0.0' })}\n`);
+        const packedPkg = path.join(packedRoot, 'node_modules', '0xray', 'vendor', '@0xray', 'repertoire');
+        mkdirSync(packedPkg, { recursive: true });
+        writeFileSync(
+          path.join(packedPkg, 'package.json'),
+          `${JSON.stringify({ name: '@0xray/repertoire', version: '0.2.9' })}\n`,
+        );
+        const packed = probeHarness(packedRoot);
+        expect(packed.repertoire.nodeModules).toBe(false);
+        expect(packed.repertoire.vendorSource).toBe(false);
+        expect(packed.repertoire.packedVendor).toBe(true);
+        expect(packed.repertoire.fastened).toBe(true);
+      } finally {
+        rmSync(packedRoot, { recursive: true, force: true });
+      }
 
       mkdirSync(path.join(tmp, '.cursor'), { recursive: true });
       writeFileSync(

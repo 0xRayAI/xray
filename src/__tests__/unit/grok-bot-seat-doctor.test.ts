@@ -187,6 +187,22 @@ describe('grok-bot seat doctor — diagnose', () => {
     }
   });
 
+  it('counts the packed vendor repertoire when the top-level symlink is missing', () => {
+    const dir = scratch();
+    try {
+      writeSeat(dir);
+      const pkg = path.join(dir, 'node_modules', '0xray', 'vendor', '@0xray', 'repertoire', 'package.json');
+      mkdirSync(path.dirname(pkg), { recursive: true });
+      writeFileSync(pkg, `${JSON.stringify({ name: '@0xray/repertoire', version: '0.2.9' })}\n`);
+      const report = diagnoseSeat({ cwd: dir, home: dir });
+      expect(report.repertoire.status).toBe('on');
+      expect(report.repertoire.version).toBe('0.2.9');
+      expect(formatDoctor(report)).toMatch(/Repertoire: on — @0xray\/repertoire@0\.2\.9/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   it('passes from foundry-inventory millPlant even without skill files', () => {
     const dir = scratch();
     try {

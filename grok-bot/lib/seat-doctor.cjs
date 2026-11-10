@@ -164,16 +164,25 @@ function deadHookPaths(cwd) {
   return dead;
 }
 
+function repertoirePackage(cwd) {
+  const candidates = [
+    path.join(cwd, 'node_modules', '@0xray', 'repertoire', 'package.json'),
+    path.join(cwd, 'node_modules', '0xray', 'vendor', '@0xray', 'repertoire', 'package.json'),
+    path.join(cwd, 'vendor', '@0xray', 'repertoire', 'package.json'),
+  ];
+  return candidates.find((file) => fs.existsSync(file)) || null;
+}
+
 function probeRepertoire(cwd) {
-  const pkgPath = path.join(cwd, 'node_modules', '@0xray', 'repertoire', 'package.json');
-  if (!fs.existsSync(pkgPath)) {
+  const pkgPath = repertoirePackage(cwd);
+  if (!pkgPath) {
     return {
       status: 'miss',
-      detail: 'node_modules/@0xray/repertoire not found (optional — honest miss)',
+      detail: 'repertoire package not found (optional — honest miss)',
     };
   }
   const pkg = readJson(pkgPath) || {};
-  const signalsFile = path.join(cwd, 'node_modules', '@0xray', 'repertoire', 'data', 'curated_signals.json');
+  const signalsFile = path.join(path.dirname(pkgPath), 'data', 'curated_signals.json');
   const signalsJson = readJson(signalsFile);
   const signals = Array.isArray(signalsJson?.signals) ? signalsJson.signals.length : null;
   return {

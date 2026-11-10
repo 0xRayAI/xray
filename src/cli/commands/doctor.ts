@@ -5,7 +5,7 @@
  */
 import { createRequire } from "node:module";
 import { spawnSync } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { getConfigDir } from "../../core/config-paths.js";
 
@@ -42,6 +42,14 @@ export function runDoctor(cwd: string, nodeVersion: string = process.version): D
     fixes.push("Run: npm install xray");
   } else {
     lines.push("✅ xray package installed");
+  }
+
+  const repertoire = repertoireOnDisk(cwd);
+  if (repertoire) {
+    lines.push(`✅ repertoire: @0xray/repertoire@${repertoire}`);
+  } else {
+    issues.push("repertoire missing");
+    fixes.push("Run: npx 0xray wear");
   }
 
   lines.push(suitSeat.wearLine(cwd));
@@ -103,6 +111,28 @@ export function runDoctor(cwd: string, nodeVersion: string = process.version): D
   }
   lines.push("");
   return { text: `${lines.join("\n")}\n`, exitCode: gogglesOff ? 1 : 0 };
+}
+
+function repertoireOnDisk(cwd: string): string | null {
+  const candidates = [
+    ["node_modules", "@0xray", "repertoire", "package.json"],
+    ["node_modules", "0xray", "vendor", "@0xray", "repertoire", "package.json"],
+    ["vendor", "@0xray", "repertoire", "package.json"],
+  ];
+  for (const parts of candidates) {
+    const file = join(cwd, ...parts);
+    if (!existsSync(file)) continue;
+    try {
+      const parsed: unknown = JSON.parse(readFileSync(file, "utf8"));
+      if (parsed && typeof parsed === "object" && "version" in parsed && typeof parsed.version === "string") {
+        return parsed.version;
+      }
+    } catch {
+      return "?";
+    }
+    return "?";
+  }
+  return null;
 }
 
 /** October 2026 patched LTS. 24.10.0 and Node 18/20/22 stay below this floor. */

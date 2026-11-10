@@ -79,4 +79,21 @@ describe('doctor wear proof and goggles', () => {
     expect(result.text).not.toContain('not worn');
     expect(result.exitCode).toBe(0);
   });
+
+  it('names the packed vendor repertoire and misses when no copy is on disk', () => {
+    const missing = mkdtempSync(path.join(os.tmpdir(), '0xray-doctor-rep-miss-'));
+    const missed = runDoctor(missing);
+    expect(missed.text).toContain('repertoire missing');
+    expect(missed.text).not.toContain('No issues found');
+    expect(missed.exitCode).toBe(0);
+
+    const dir = mkdtempSync(path.join(os.tmpdir(), '0xray-doctor-rep-packed-'));
+    const pkg = path.join(dir, 'node_modules', '0xray', 'vendor', '@0xray', 'repertoire', 'package.json');
+    mkdirSync(path.dirname(pkg), { recursive: true });
+    writeFileSync(pkg, `${JSON.stringify({ name: '@0xray/repertoire', version: '0.2.9' })}\n`);
+    const found = runDoctor(dir);
+    expect(found.text).toContain('✅ repertoire: @0xray/repertoire@0.2.9');
+    expect(found.text).not.toContain('repertoire missing');
+    expect(found.exitCode).toBe(0);
+  });
 });
