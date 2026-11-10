@@ -161,6 +161,8 @@ function assertMcpPathsAfterBareInstall(dir: string, home: string): void {
       expect(existsSync(abs), arg).toBe(true);
     }
   }
+  const station = readFileSync(path.join(dir, '.xray', 'state', 'STATION.md'), 'utf8');
+  expect(station).toMatch(/^Repertoire: on/m);
   const repertoire = servers.repertoire?.args || [];
   const server = repertoire.find((arg) => arg.includes('node_modules/0xray/vendor/'));
   expect(server, repertoire.join(' ')).toBeTruthy();
