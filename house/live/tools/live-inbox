@@ -7,7 +7,9 @@ Read: OPEN lines from the Bifrost server inbox for <seat>, one JSON object per l
 seat acked. A closed or merged card does not hide an unacked line. For reviewer, a Reviewer verdict at the card's head does.
 A read claims each open line for this wake. The owner token is WAKE_RUN, or this process when WAKE_RUN is unset.
 The claim key is the pull request, the head sha, and the kind. A second run whose lines are already claimed prints
-nothing and exits 0. Only the owner token may release that claim or post its turn end. A losing run's --turn start
+nothing and exits 0. A nudge line (by id) and a comment a seat wrote (by issue or pull plus head sha, or `nosha`, never
+the comment id) stay claimed for LIVE_INBOX_TOMB_S (default 3600) after that wake ends, so a later wake does not answer
+the same nudge or seat comment again. Only the owner token may release that claim or post its turn end. A losing run's --turn start
 and its --turn end post nothing and leave the claim file unchanged. `--release` drops this token's claims and posts
 nothing. The wake trap posts `--turn end` and then runs `--release` on any shell exit, so a crash still closes the turn.
 Before that post, WAKE-ROUTINE step 7 asks "anything new without a card?" and files each new item as a card (`From:`, `Waiting on:`, `Owner:`). This command posts the turn line. It does not open the card.
@@ -652,6 +654,38 @@ def packet_key(line):
     return f"id:{ident}" if ident else ""
 
 
+COMMENT_TYPES = ("pr_comment", "issue_comment", "review_comment", "comment")
+TOMB_SECONDS = int(os.environ.get("LIVE_INBOX_TOMB_S") or 3600)
+
+
+def soft_key(line):
+    """A claim that outlives its wake for TOMB_SECONDS: a nudge line (by id), and a comment a seat wrote (by issue or
+    pull plus head sha, or `nosha`, never the comment id). A second wake, even one that starts after the first ended,
+    does not answer the same nudge or the same seat comment again. A human comment is a plain claim."""
+    kind = str(line.get("type") or line.get("kind") or "").strip().lower()
+    ident = str(line.get("id") or "").strip()
+    if kind == "nudge" and ident:
+        return f"id:{ident}"
+    repo = str(line.get("repo") or "").strip().lower()
+    number = line.get("number")
+    if kind in COMMENT_TYPES and str(line.get("from") or "").strip() and repo and number is not None and str(number) != "":
+        sha = str(line.get("sha") or line.get("head") or "").strip().lower() or "nosha"
+        return f"{repo}#{number}|{sha}|seat_comment"
+    return ""
+
+
+def settle(claims, token, now=None):
+    """Claims after this token ends its wake: its plain claims go, its soft claims stay as tombstones."""
+    now = time.time() if now is None else now
+    out = {}
+    for key, rec in claims.items():
+        if not owned_by(rec, token):
+            out[key] = rec
+        elif rec.get("soft"):
+            out[key] = {"tomb": True, "soft": True, "token": token, "pid": 0, "at": now, "until": now + TOMB_SECONDS, "id": rec.get("id")}
+    return out
+
+
 def claim_paths(seat):
     CUR.mkdir(parents=True, exist_ok=True)
     return CUR / f"{seat}.lock", CUR / f"{seat}.claims.json"
@@ -678,7 +712,9 @@ def write_claims(seat, claims):
 
 def live_claims(seat):
     """Claims whose owner pid is still alive. Caller holds the seat lock. Does not write."""
-    return {key: rec for key, rec in load_claims(seat).items() if pid_alive(rec.get("pid"))}
+    now = time.time()
+    return {key: rec for key, rec in load_claims(seat).items()
+            if pid_alive(rec.get("pid")) or (rec.get("tomb") and float(rec.get("until") or 0) > now)}
 
 
 def locked(seat):
@@ -698,12 +734,13 @@ def claim_open(seat, lines):
         now = time.time()
         mine = []
         for line in lines:
-            key = packet_key(line)
+            soft = soft_key(line)
+            key = soft or packet_key(line)
             rec = claims.get(key) if key else None
             if rec and not owned_by(rec, token):
                 continue
             if key:
-                claims[key] = {"pid": pid, "token": token, "at": now, "id": line.get("id")}
+                claims[key] = {"pid": pid, "token": token, "at": now, "id": line.get("id"), **({"soft": True} if soft else {})}
             mine.append(line)
         write_claims(seat, claims)
         return mine
@@ -738,7 +775,7 @@ def release_own(seat):
     try:
         claims = load_claims(seat)
         token = owner_token()
-        write_claims(seat, {key: rec for key, rec in claims.items() if not owned_by(rec, token)})
+        write_claims(seat, settle(claims, token))
     finally:
         handle.close()
 
@@ -778,7 +815,7 @@ def turn_gate(seat, action):
         if others and not mine:
             return False
         if action == "end":
-            write_claims(seat, {key: rec for key, rec in claims.items() if not owned_by(rec, token)})
+            write_claims(seat, settle(claims, token))
         return True
     finally:
         handle.close()

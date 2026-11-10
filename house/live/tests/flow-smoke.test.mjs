@@ -88,7 +88,7 @@ test('collector feed shows a card and packet, wakes the seat, and an ack clears 
     const now = Date.now();
     writeFeed(data, [
       { id: `${REPO}#1:open`, t_ct: ago(900), kind: 'pr_open', repo: REPO, number: 1, label: 'older pr' },
-      { id: LINE_ID, t_ct: ago(5), kind: 'pr_comment', repo: REPO, number: 7, label: 'please review', from: 'critic', to: 'forge' },
+      { id: LINE_ID, t_ct: ago(5), kind: 'pr_comment', repo: REPO, number: 7, label: 'please review', from: 'Others', to: 'forge' },
     ], { cards: [{
       key: `${REPO}#7`, kind: 'pr', repo: REPO, number: 7, title: 'Ship the board', state: 'live', stage: 'review',
       owner: 'forge', url: 'https://github.com/example/app/pull/7',

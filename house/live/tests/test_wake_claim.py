@@ -40,6 +40,20 @@ class Inbox(BaseHTTPRequestHandler):
         self.wfile.write(out)
 
 
+NUDGE = {
+    "id": "nudge:line:forge:crit-1:L1", "repo": "0xRayAI/xray", "number": 951, "type": "nudge",
+    "title": "quiet card", "reason": "nudge L1: next owner",
+}
+SEAT_COMMENT = {
+    "id": "gh-comment-1", "repo": "0xRayAI/xray", "number": 951, "type": "issue_comment", "from": "critic",
+    "title": "Seen", "reason": "comment on your issue",
+}
+HUMAN_COMMENT = {
+    "id": "gh-comment-h1", "repo": "0xRayAI/xray", "number": 951, "type": "issue_comment",
+    "title": "please look", "reason": "comment on your issue",
+}
+
+
 class ConcurrentClaim(unittest.TestCase):
     def setUp(self):
         Inbox.lines = [LINE, HANDOFF]
@@ -240,6 +254,73 @@ class ConcurrentClaim(unittest.TestCase):
         self.assertEqual(ended.returncode, 0, ended.stderr)
         nxt = self.inbox(owner=self.sleeper.pid)
         self.assertIn("crit-1", nxt.stdout)
+
+
+    def ids(self, proc):
+        return [json.loads(line)["id"] for line in proc.stdout.splitlines()]
+
+    def test_two_close_wakes_answer_one_nudge_once(self):
+        """xray#976: 'Received L1 nudge' was posted twice, 20s apart, by two wakes of one seat."""
+        Inbox.lines = [NUDGE]
+        first = self.inbox(owner=os.getpid())
+        self.assertEqual(self.ids(first), [NUDGE["id"]])
+        # The first wake ends its turn and releases. The second wake starts a moment later.
+        ended = self.inbox("--turn", "end", "--tag", "wake", owner=os.getpid())
+        self.assertEqual(ended.returncode, 0, ended.stderr)
+        second = self.inbox(owner=self.sleeper.pid)
+        self.assertEqual(second.returncode, 0, second.stderr)
+        self.assertEqual(second.stdout, "")
+        # A later level of the same ladder is a new line and is read.
+        Inbox.lines = [NUDGE, {**NUDGE, "id": "nudge:line:forge:crit-1:L2", "reason": "nudge L2: next owner"}]
+        third = self.inbox(owner=self.sleeper.pid)
+        self.assertEqual(self.ids(third), ["nudge:line:forge:crit-1:L2"])
+
+    def test_two_concurrent_wakes_read_a_seat_comment_once(self):
+        Inbox.lines = [SEAT_COMMENT, {**SEAT_COMMENT, "id": "gh-comment-2", "title": "Received"}]
+        out = {}
+
+        def go(name, owner):
+            out[name] = self.inbox(owner=owner)
+
+        threads = [
+            threading.Thread(target=go, args=("a", os.getpid())),
+            threading.Thread(target=go, args=("b", self.sleeper.pid)),
+        ]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+        filled = [proc for proc in out.values() if proc.stdout.strip()]
+        self.assertEqual(len(filled), 1)
+        # Same issue, no sha: one key, so both comments went to the one wake.
+        self.assertEqual(self.ids(filled[0]), ["gh-comment-1", "gh-comment-2"])
+
+    def test_seat_comment_stays_claimed_after_the_wake_ends_but_a_new_head_does_not(self):
+        Inbox.lines = [SEAT_COMMENT]
+        self.assertEqual(self.ids(self.inbox(owner=os.getpid())), ["gh-comment-1"])
+        self.inbox("--release", owner=os.getpid())
+        self.assertEqual(self.inbox(owner=self.sleeper.pid).stdout, "")
+        Inbox.lines = [{**SEAT_COMMENT, "id": "gh-comment-3", "sha": "abc1234dead"}]
+        self.assertEqual(self.ids(self.inbox(owner=self.sleeper.pid)), ["gh-comment-3"])
+
+    def test_human_comment_is_a_plain_claim_and_is_read_again_after_release(self):
+        Inbox.lines = [HUMAN_COMMENT]
+        self.assertEqual(self.ids(self.inbox(owner=os.getpid())), ["gh-comment-h1"])
+        self.inbox("--release", owner=os.getpid())
+        Inbox.lines = [HUMAN_COMMENT, {**HUMAN_COMMENT, "id": "gh-comment-h2"}]
+        again = self.inbox(owner=self.sleeper.pid)
+        self.assertEqual(self.ids(again), ["gh-comment-h1", "gh-comment-h2"])
+
+    def test_tombstone_expires(self):
+        Inbox.lines = [NUDGE]
+        self.inbox(owner=os.getpid())
+        self.inbox("--release", owner=os.getpid())
+        claims = json.loads((self.cur / "forge.claims.json").read_text())
+        self.assertTrue(all(rec.get("tomb") for rec in claims.values()))
+        for rec in claims.values():
+            rec["until"] = time.time() - 1
+        (self.cur / "forge.claims.json").write_text(json.dumps(claims))
+        self.assertEqual(self.ids(self.inbox(owner=self.sleeper.pid)), [NUDGE["id"]])
 
 
 if __name__ == "__main__":

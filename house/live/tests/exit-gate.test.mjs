@@ -67,3 +67,10 @@ test('the top notes section still fails a prose bug', () => {
   assert.equal(unbackedDefects(notes).length, 1);
   assert.equal(unbackedDefects('## new\nFU: gap unref\n## old\nok').length, 1);
 });
+
+test('a still-waiting wake that cites the existing issue URL passes without a new comment (xray#976)', () => {
+  const notes = '## 2026-11-10 07:00\n- still waiting on Arch1: the Closes lines in #904, ask: change them to Refs. https://github.com/0xRayAI/xray/issues/976\nFell out: nothing\n';
+  assert.deepEqual(unbackedDefects(notes), []);
+  const short = '## 2026-11-10 07:05\n- nothing changed. gap tracked on xray#976, board only, no comment posted\n';
+  assert.deepEqual(unbackedDefects(short), []);
+});
