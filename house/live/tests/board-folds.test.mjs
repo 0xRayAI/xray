@@ -5,7 +5,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { chromium } from 'playwright';
+import { launchBoard } from './board-browser.mjs';
 import { configuredRoster } from '../app/presence.mjs';
 
 const FEED = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'feed');
@@ -65,7 +65,7 @@ test('mesh, stats, roster, cards, and activity start open in both themes', async
   const base = `http://127.0.0.1:${server.address().port}/index.html`;
   let browser;
   try {
-    browser = await chromium.launch();
+    browser = await launchBoard();
     for (const width of [1280, 390]) {
       for (const theme of ['dark', 'light']) {
         const page = await browser.newPage({ viewport: { width, height: width === 390 ? 844 : 800 } });
@@ -212,7 +212,7 @@ test('roster chips follow the configured seats and the theme toggle is the right
   const base = `http://127.0.0.1:${server.address().port}/index.html`;
   let browser;
   try {
-    browser = await chromium.launch();
+    browser = await launchBoard();
     const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
     await page.addInitScript(() => {
       localStorage.removeItem('bifrost-folds');
@@ -301,7 +301,7 @@ test('see all history sits in the recent header and replaces the side pane', asy
   const base = `http://127.0.0.1:${server.address().port}/index.html`;
   let browser;
   try {
-    browser = await chromium.launch();
+    browser = await launchBoard();
     const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
     await page.goto(base, { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('#cardHistAll');
