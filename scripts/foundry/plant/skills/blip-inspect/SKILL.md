@@ -7,7 +7,7 @@ description: Inspect the last factory-blip — duration 4.44s, registry mode id,
 
 This is the **factory-blip** inspect, not mill inspect. Open the receipt. Quote the numbers. Do not invent a pass.
 
-`npx @0xray/foundry inspect` reports blip plant present, live registry ids, plus last blip `PASS`/`FAIL`. `npx @0xray/foundry blip inspect` is the same check.
+`npx 0xray inspect --skip-live` reports blip plant present, live registry ids, plus last blip `PASS`/`FAIL`. `npx @0xray/foundry blip inspect` is the same check.
 
 ## Gates (fail-closed)
 

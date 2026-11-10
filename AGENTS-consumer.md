@@ -29,7 +29,7 @@ A peer lead continues from this card + Repertoire + the `orchestrator` skill. Du
 `npx 0xray wear` writes the consumer suit:
 
 - Copies this file → **`AGENTS.md`** in your project root
-- Fastens mill plant (`mill` + `inspect`) then overlays **your** `src/skills` (same name wins). Fasten is **foundry-plant/0**: builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill package declares (blip-inspect, blip-vibe, blip-looker, sound-inspect, sound-mixer live in the mill). `npx @0xray/foundry sound mix` / `sound render` / `blip render` are CLI shims (0.1.11+). `npx @0xray/foundry inspect` runs mill-exported inspect; on a sound seat the last bed receipt; on a blip seat the last 4.44s receipt. Chat is not a receipt. The mill suit also wears every catalog skill and every role file. A blip or sound seat fastens that plant only. A name outside the fastened set still fails inspect. Does **not** write root **`SKILLS.md`**
+- Fastens mill plant (`mill` + `inspect`) then overlays **your** `src/skills` (same name wins). Fasten is **foundry-plant/0**: builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill package declares (blip-inspect, blip-vibe, blip-looker, sound-inspect, sound-mixer live in the mill). `npx @0xray/foundry sound mix` / `sound render` / `blip render` are CLI shims (0.1.11+). `npx 0xray inspect --skip-live` runs mill-exported inspect; on a sound seat the last bed receipt; on a blip seat the last 4.44s receipt. Chat is not a receipt. The mill suit also wears every catalog skill and every role file. A blip or sound seat fastens that plant only. A name outside the fastened set still fails inspect. Does **not** write root **`SKILLS.md`**
 - Factory shop plant (`shop-extract`, `shop-witness`, `shop-pin` from groover-hangar) is first-class with mill plant. Extra shops: `foundry.json` `"shopPlant"`. Not costume.
 - Seeds **`.gitignore`** (from template, if absent)
 - Deploys **`.xray/`** (`codex.json`, `features.json`, `config.json`) then overlays **your** mill SSOT (`xray/codex.json`, `xray/features.json`, `src/skills`, `src/opencode/agents`; remap with `foundry.json`)
@@ -69,7 +69,7 @@ Governance deliberation uses **code-review**, **security-audit** (via enforcer/s
 | `npx 0xray codex check` | Check codex rules |
 | `npx 0xray health` | Framework health check |
 | `npx 0xray mcp <server>` | Start an MCP server (stdio) |
-| `npx @0xray/foundry inspect` | Mill inspect (nested mill). Sound seat: plant + last bed PASS/FAIL. Blip seat: last 4.44s PASS/FAIL. Chat is not a receipt. |
+| `npx 0xray inspect --skip-live` | Mill inspect (nested mill). Sound seat: plant + last bed PASS/FAIL. Blip seat: last 4.44s PASS/FAIL. Chat is not a receipt. |
 | `npx @0xray/foundry sound render` | Factory-sound bed: brief → seed → genre → crystal mill wav → metrics receipt. |
 | `npx @0xray/foundry sound mix` | sound-mixer: level every genre × tempo × motif (hats / plate / glue). |
 | `npx @0xray/foundry blip render` | Factory-blip mill (`@0xray/blip`): brief → seed → still\|motion:<id> → 4.44s mp4 + audio bed. Motions are Rippel v2 VisualConfig at ≥720p. `kapow` is a design opt (two-tier comic stamp). Sparse seed mesh plus field accents are the NFT fingerprints. `still` is the Power Plant ident (plate dissolves, not a frozen poster). Fasten is foundry-plant/0 (`@0xray/foundry@0.1.12`); CLI shims remain (0.1.11+). |

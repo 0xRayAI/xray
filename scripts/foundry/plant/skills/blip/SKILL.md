@@ -27,11 +27,11 @@ Rippel five are **imports**. Four seed + flag axes: `--look focus|cage`, `--body
 6. **Receipt** → `.xray/blip/receipt.json` (`PASS` / `FAIL` + pictureMode + motionId + visualConfig).
 
 ```bash
-npx @0xray/foundry mint --skip-live
+npx 0xray wear
 npx @0xray/foundry blip render --brief "night alley still" --mode still
 npx @0xray/foundry blip render --brief "warehouse floor · Power Plant" --mode motion:orb --look focus
 npx @0xray/foundry blip inspect
-npx @0xray/foundry inspect --skip-live
+npx 0xray inspect --skip-live
 ```
 
 Mint fastens `blip` + `blip-inspect` + `blip-vibe`. Chat is not a receipt.

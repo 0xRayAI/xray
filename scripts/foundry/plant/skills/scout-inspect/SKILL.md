@@ -7,7 +7,7 @@ description: Scout feed inspect. Last digest receipt, fail-closed. Not mill insp
 
 This is the **feed** inspect, not mill inspect of AI work. Open the last receipt. Quote the status, the plane, the topic, and the paths. Do not invent a pass.
 
-`npx @0xray/foundry scout inspect` is the digest check. `npx @0xray/foundry inspect` reports the scout plant plus that receipt.
+`npx @0xray/foundry scout inspect` is the digest check. `npx 0xray inspect --skip-live` reports the scout plant plus that receipt.
 
 ## Gates (fail-closed)
 

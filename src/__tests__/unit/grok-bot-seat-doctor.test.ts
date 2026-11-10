@@ -1041,7 +1041,7 @@ describe('grok-bot seat doctor — station boot warnings', () => {
 });
 
 describe('shipped grok-bot docs name a runnable inspect command', () => {
-  it('no shipped doc or doctor line tells a user to run npx @0xray/foundry', () => {
+  it('no shipped doc or doctor line tells a user to run npx @0xray/foundry inspect|mint', () => {
     // Neither pack ships @0xray/foundry, so npx would pull a different registry build.
     const files = [
       'grok-bot/README.md',
@@ -1051,9 +1051,17 @@ describe('shipped grok-bot docs name a runnable inspect command', () => {
       'grok-bot/skills/fasten-suit-per-agent/SKILL.md',
       'grok-bot/skills/fasten-suit-and-hangar/SKILL.md',
       'llms.txt',
+      'AGENTS.md',
+      'AGENTS-consumer.md',
+      'scripts/foundry/README.md',
     ];
+    const plantDir = path.join(root, 'scripts/foundry/plant/skills');
+    for (const name of readdirSync(plantDir)) {
+      const rel = path.join('scripts/foundry/plant/skills', name, 'SKILL.md');
+      if (existsSync(path.join(root, rel))) files.push(rel);
+    }
     for (const rel of files) {
-      expect(readFileSync(path.join(root, rel), 'utf8'), rel).not.toMatch(/npx @0xray\/foundry/);
+      expect(readFileSync(path.join(root, rel), 'utf8'), rel).not.toMatch(/npx @0xray\/foundry (inspect|mint)/);
     }
   });
 });
