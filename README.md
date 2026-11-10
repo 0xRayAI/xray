@@ -22,7 +22,7 @@ The product is the **skeleton you wear**.
 - **Wear** — Grok, OpenCode, Hermes, OpenClaw, plus Cursor project hooks. One SSOT gate
 - **Muscle** — **Repertoire is preferred.** Vendored 0.2.9 ships **on**. Dest is named laws, not hangar `repo-*` or git slugs. Station is the wake ticket — not a substitute for Repertoire.
 
-Node >= 24.22.1.
+Node >= 24.22.1. That is the runtime these packs are tested on. On an older Node, `npm install` prints `EBADENGINE` and still exits 0 when `engine-strict` is off. The warning means the install is outside that runtime. It does not mean Node 22 is supported.
 
 ```bash
 npm init -y
@@ -34,7 +34,7 @@ A local pack uses the same steps with a file: `npm install ./0xray-<file>.tgz`. 
 
 On npm 11, `npm install` may print an allowScripts warning for the `0xray` postinstall. The warning is safe to ignore. The postinstall still runs, and wear links repertoire either way. `npm install-scripts approve 0xray` silences it.
 
-Wear links vendored `@0xray/repertoire` and writes the consumer suit, including when npm did not run the install script. When that script does run, it symlinks vendored `@0xray/repertoire` into `node_modules`, prints `npx 0xray wear`, and does not write `.mcp.json` or the chat bridges. Wear writes the consumer suit: managed `AGENTS.md`, `.xray` config, seven MCP servers, and the OpenCode, Grok, Hermes, and OpenClaw bridges (`install-bridges.cjs`). Inside a git checkout, wear also fastens Cursor project hooks. The Grok plugin includes `bundle.md`. Session boot reads it. **Repertoire is preferred** — vendored **0.2.9** ships on: factory + stack laws, in-process routing, extra host MCP `repertoire`. Not an eighth `xray-*` server. Dest is a judgment index. Explicit opt-out only: `"enabled": false, "provider": "repertoire"`. Do not pin 0.1.8.
+Wear links vendored `@0xray/repertoire` and writes the consumer suit, including when npm did not run the install script. When that script does run, it symlinks vendored `@0xray/repertoire` into `node_modules` and prints `Run npx 0xray wear`. npm may hide that lifecycle line, so the install log can omit it. The script does not write `.mcp.json` or the chat bridges. Wear writes the consumer suit: managed `AGENTS.md`, `.xray` config, seven MCP servers, and the OpenCode, Grok, Hermes, and OpenClaw bridges (`install-bridges.cjs`). Inside a git checkout, wear also fastens Cursor project hooks. The Grok plugin includes `bundle.md`. Session boot reads it. **Repertoire is preferred** — vendored **0.2.9** ships on: factory + stack laws, in-process routing, extra host MCP `repertoire`. Not an eighth `xray-*` server. Dest is a judgment index. Explicit opt-out only: `"enabled": false, "provider": "repertoire"`. Do not pin 0.1.8.
 
 ## Quick Start
 
@@ -107,7 +107,7 @@ Wear links the vendored repertoire, including when npm did not run the install s
 7. Factory shop plant (`shop-extract`, `shop-witness`, `shop-pin` from groover-hangar) may coexist when worn. Extra shops: `foundry.json` `shopPlant`. Not costume.
 8. Fastens Cursor `.cursor/hooks.json` and the hook scripts even when the folder is not a git checkout, and keeps an unwear snapshot. `git init` before wear is what lets `npx 0xray setup --git-hooks` install git hooks. Outside a git checkout, that command says the git hooks were skipped.
 
-See [llms.txt](llms.txt) for the agent map. The catalog in [SKILLS.md](SKILLS.md) is what a mill suit wears, plus the `mill` and `inspect` plant skills. `npx 0xray status` counts those worn skills. Role files under `.opencode/agents` are the agent count status prints.
+See [llms.txt](llms.txt) for the agent map. The catalog in [SKILLS.md](SKILLS.md) is what a mill suit wears, plus the `mill` and `inspect` plant skills. `npx 0xray status` counts those worn skills. `Agents: N configured` is the seven built-in names, or the names in `.xray/agents.json` when that file lists them. The `.opencode/agents/*.yml` files are the OpenCode role catalog, not that count. `repertoire__get_task_confidence` requires `description`.
 
 ## Seven MCP Servers (consumer)
 

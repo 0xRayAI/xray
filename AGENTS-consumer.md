@@ -24,7 +24,7 @@ A peer lead continues from this card + Repertoire + the `orchestrator` skill. Du
 
 ## Postinstall (automatic)
 
-`npm install 0xray` links vendored `@0xray/repertoire` and prints `npx 0xray wear`. It does not write `AGENTS.md`, `.mcp.json`, or the chat bridges.
+`npm install 0xray` links vendored `@0xray/repertoire`. The postinstall prints `Run npx 0xray wear`. npm may hide that lifecycle line. It does not write `AGENTS.md`, `.mcp.json`, or the chat bridges.
 
 `npx 0xray wear` writes the consumer suit:
 

@@ -23,7 +23,7 @@ Agents: read `llms.txt` → `AGENTS.md` → the catalog at `node_modules/0xray/S
 Humans: same files.
 
 ## Install
-The mill wears the suit. Node >= 24.22.1. Install both packages, then wear, so a later install does not drop the repertoire link before the suit is worn.
+The mill wears the suit. Node >= 24.22.1. That is the runtime these packs are tested on. On an older Node, `npm install` prints `EBADENGINE` and still exits 0 when `engine-strict` is off. The warning means the install is outside that runtime. Install both packages, then wear.
 
 ```bash
 npm init -y

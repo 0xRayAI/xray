@@ -181,6 +181,26 @@ function gogglesScopedLaunch(targetDir, launcher) {
 function detectConsumerExtraMcpServers(targetDir) {
   const extras = { hermes: {}, opencode: {}, openclaw: {} };
   try {
+    const gogglesMcp = resolveGogglesMcp(targetDir);
+    if (gogglesMcp) {
+      const launch = gogglesScopedLaunch(targetDir, gogglesMcp);
+      extras.hermes.goggles = {
+        command: launch.command,
+        args: launch.args,
+        env: launch.env,
+      };
+      extras.opencode.goggles = {
+        type: "local",
+        command: launch.commandList,
+        enabled: true,
+        environment: launch.env,
+      };
+      extras.openclaw.goggles = {
+        command: launch.command,
+        args: launch.args,
+        env: launch.env,
+      };
+    }
     const repertoireMcp = resolveRepertoireMcp(targetDir);
     if (repertoireMcp) {
       const launch = wrapScopedLaunch(
@@ -199,26 +219,6 @@ function detectConsumerExtraMcpServers(targetDir) {
         environment: launch.env,
       };
       extras.openclaw.repertoire = {
-        command: launch.command,
-        args: launch.args,
-        env: launch.env,
-      };
-    }
-    const gogglesMcp = resolveGogglesMcp(targetDir);
-    if (gogglesMcp) {
-      const launch = gogglesScopedLaunch(targetDir, gogglesMcp);
-      extras.hermes.goggles = {
-        command: launch.command,
-        args: launch.args,
-        env: launch.env,
-      };
-      extras.opencode.goggles = {
-        type: "local",
-        command: launch.commandList,
-        enabled: true,
-        environment: launch.env,
-      };
-      extras.openclaw.goggles = {
         command: launch.command,
         args: launch.args,
         env: launch.env,
