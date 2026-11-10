@@ -947,7 +947,8 @@ function formatDoctor(report) {
       }
     }
   }
-  if (report.board && report.board.read) lines.push(`Board: ${report.board.read}`);
+  const houseOff = !report.house || report.house.detail === 'house is not enabled here';
+  if (!houseOff && report.board && report.board.read) lines.push(`Board: ${report.board.read}`);
   lines.push('');
   lines.push('Next');
   report.next.forEach((step, i) => {
