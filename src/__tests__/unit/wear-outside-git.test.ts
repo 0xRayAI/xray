@@ -232,7 +232,7 @@ describe('wear and setup outside a git checkout', () => {
       const ran = runNode(wearScript, [project], project, home);
       expect(ran.status).toBe(0);
       expect(ran.stderr).toBe(`${SKIPPED}\n`);
-      expect(ran.stdout).toBe(`${linkStdout()}`);
+      expect(ran.stdout).toBe(`grok-trust: wrote ${path.join(home, '.grok', 'trusted_folders.toml')}\n${linkStdout()}`);
       const wrote = listFiles(project).filter((rel) => rel !== 'package.json' && rel !== 'keep.txt');
       expect(wrote).toEqual(wornSuit());
       expect(existsSync(path.join(project, '.cursor', 'hooks.json'))).toBe(true);
@@ -305,7 +305,9 @@ describe('wear and setup outside a git checkout', () => {
       const ran = runNode(setupScript, ['setup'], project, home);
       expect(ran.status).toBe(0);
       expect(ran.stderr).toBe(`${SKIPPED}\n`);
-      expect(ran.stdout).toBe(`${linkStdout()}setup: wrote .mcp.json and chat bridges\n`);
+      expect(ran.stdout).toBe(
+        `grok-trust: wrote ${path.join(home, '.grok', 'trusted_folders.toml')}\n${linkStdout()}setup: wrote .mcp.json and chat bridges\n`,
+      );
       const wrote = listFiles(project).filter((rel) => rel !== 'package.json');
       expect(wrote).toEqual(wornSuit());
       expect(existsSync(path.join(project, '.cursor', 'hooks.json'))).toBe(true);
@@ -330,7 +332,7 @@ describe('wear and setup outside a git checkout', () => {
       const ran = runNode(wearScript, [project], project, home);
       expect(ran.status).toBe(0);
       expect(ran.stderr).toBe('');
-      expect(ran.stdout).toBe(`${linkStdout()}`);
+      expect(ran.stdout).toBe(`grok-trust: wrote ${path.join(home, '.grok', 'trusted_folders.toml')}\n${linkStdout()}`);
       expect(existsSync(path.join(project, '.cursor', 'hooks.json'))).toBe(true);
       expect(existsSync(path.join(project, '.cursor', 'hooks', 'pre-tool-use.sh'))).toBe(true);
       expect(existsSync(path.join(project, '.opencode', 'skills', 'mill', 'SKILL.md'))).toBe(true);

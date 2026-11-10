@@ -51,7 +51,7 @@ npx 0xray inspect --skip-live # mill receipt from the foundry that ships in this
 
 `npx 0xray look` opens one card and writes it to `.xray/state/LENS.md`. The planes are `dev`, `integration`, `domain`, and `ecosystem`. A session starts on `dev`. A mill suit's station card says `integration`, which is that plant's plane. `look dev` still opens the dev card. At the end of a turn, write the working notes in `.xray/state/NOTES.md`. The next wake reads `.xray/state/STATION.md`, then the notes, then the lens. Plates: [goggles](docs-site/docs/plates/goggles.md), [notes-page](docs-site/docs/plates/notes-page.md).
 
-A Grok session in this folder does not start the project MCP servers until the folder is trusted. Pass `--trust` on that session. `grok --trust` with no terminal exits 1 (`Device not configured`). A headless session also needs `--permission-mode bypassPermissions`. That mode lifts every permission prompt in the session. `--permission-mode dontAsk` stops on `goggles__look` with `permission required`.
+A Grok session in this folder does not start the project MCP servers until the folder is trusted. Wear writes `~/.grok/trusted_folders.toml` for this folder and prints `grok-trust: wrote <path>`. Pass `--trust` on that session. `grok --trust` with no terminal exits 1 (`Device not configured`). A headless session also needs `--permission-mode bypassPermissions`. That mode lifts every permission prompt in the session. `--permission-mode dontAsk` stops on `goggles__look` with `permission required`.
 
 Manual per-platform install (idempotent, same bridges wear writes):
 
@@ -182,7 +182,7 @@ Docs: [memory routing](docs-site/docs/guides/memory-routing.md) · [Repertoire](
 |----------|---------|----------------------|
 | **OpenCode** | `npx 0xray opencode install` | Merges `opencode.json`, copies agent YML surfaces |
 | **Grok CLI / Build** | `npx 0xray grok install` | Project `.grok/plugins/0xray` (shared HOME does not clobber machine plugin), 7 MCPs servers |
-| **Hermes Agent** | `npx 0xray hermes install` | `~/.hermes/plugins/xray-hermes`, consumer root marker |
+| **Hermes Agent** | `npx 0xray hermes install` | Project `.hermes/plugins/xray-hermes` when the folder is under a temp directory or HOME is not the machine home. Otherwise `~/.hermes/plugins/xray-hermes`. |
 | **OpenClaw** | `npx 0xray openclaw install` | `.xray/config/openclaw.json`, skill sync |
 | **Cursor** | `npx 0xray wear` inside a git checkout | Fastens `.cursor/hooks.json` + relative `.cursor/hooks/*.sh`. Rewrites leftover env-assignment one-liners. Not a fifth chat TUI. |
 
