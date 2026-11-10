@@ -36,6 +36,7 @@ const {
   isEphemeralInstallRoot,
   enableMemoryRoutingIfResolves,
   pinLauncherPackageRoot,
+  launcherPinRoot,
   writeProjectSuitMcp,
   trustGrokFolder,
 } = require("./bridge-mcp-wiring.cjs");
@@ -343,11 +344,10 @@ function inventorySkillAllow(targetDir) {
 }
 
 function syncCostumeSkills(targetSkillsDir, packageRoot, targetDir) {
-  // A blip or sound seat keeps its plant. A suit that already has an inventory
-  // keeps those skills. A new mill suit still receives the catalog.
+  // A blip or sound seat keeps its plant. A mill suit wears the catalog on
+  // every wear, so an inventory written by the first wear cannot shrink it.
   if (targetDir && !plantIncludesMill(targetDir, packageRoot)) return 0;
-  const allow = targetDir && !wantsCostume(targetDir) ? inventorySkillAllow(targetDir) : null;
-  return syncBuiltinSkills(targetSkillsDir, packageRoot, allow);
+  return syncBuiltinSkills(targetSkillsDir, packageRoot, null);
 }
 
 function copyTree(src, dest, relPath = "") {
@@ -1494,7 +1494,19 @@ function fastenCursorHooksAt(targetDir, packageRoot, log) {
   }
 }
 
+function writeCursorProjectMcp(targetDir, log) {
+  const src = path.join(targetDir, ".mcp.json");
+  if (!fs.existsSync(src)) return false;
+  const dest = path.join(targetDir, ".cursor", "mcp.json");
+  fs.mkdirSync(path.dirname(dest), { recursive: true });
+  const body = fs.readFileSync(src, "utf8");
+  writeFileIfChanged(dest, body.endsWith("\n") ? body : `${body}\n`);
+  log("cursor-bridge", "mcp.json written", "info", { path: dest });
+  return true;
+}
+
 function fastenCursorHooksAtUnsafe(targetDir, packageRoot, log) {
+  writeCursorProjectMcp(targetDir, log);
   const dest = path.join(targetDir, ".cursor", "hooks.json");
   const copied = fastenCursorHookScripts(targetDir, packageRoot, log);
   let existing = null;
@@ -2355,7 +2367,7 @@ function assertCursorWearGit(targetDir) {
 }
 
 const CURSOR_HOOKS_SKIPPED_LINE =
-  "cursor-wear: hooks skipped because this folder is not a git checkout\n";
+  "cursor-wear: project hooks and .cursor/mcp.json written; git hooks skipped because this folder is not a git checkout\n";
 
 function syncSetupSkillsAndRootLinks(packageRoot, targetDir) {
   require("./setup.cjs").syncSetupSkillsAndRootLinks(packageRoot, targetDir);
@@ -2450,6 +2462,7 @@ function wearSuitSkippingCursorHooks(packageRoot, targetDir, log) {
     }
     syncSetupSkillsAndRootLinks(packageRoot, targetDir);
   }
+  fastenCursorHooksAt(targetDir, packageRoot, write);
   process.stderr.write(CURSOR_HOOKS_SKIPPED_LINE);
 }
 
@@ -2625,7 +2638,8 @@ function wearCursorHooks(targetDir, packageRoot, log, opts) {
   const write = typeof log === "function" ? log : () => {};
   const options = opts || {};
   const resolvedTarget = path.resolve(targetDir);
-  const resolvedPackage = settlePackageRoot(path.resolve(packageRoot), resolvedTarget);
+  const settledPackage = settlePackageRoot(path.resolve(packageRoot), resolvedTarget);
+  const resolvedPackage = launcherPinRoot(settledPackage, resolvedTarget);
   pinLauncherPackageRoot(resolvedPackage);
   try {
   if (classifyCursorWearGit(resolvedTarget) === "not-work-tree") {
@@ -2686,6 +2700,7 @@ function wearCursorHooks(targetDir, packageRoot, log, opts) {
   if (options.suit !== false && packageShipsConsumerSuit(resolvedPackage)) {
     fastenCursorHookScripts(resolvedTarget, resolvedPackage, write);
   }
+  writeCursorProjectMcp(resolvedTarget, write);
   write("cursor-bridge", "hooks.json wired to installed dist", "info", { path: hooksPath });
   return hooksPath;
   } finally {
@@ -2782,12 +2797,13 @@ function installCursorBridge(targetDir, packageRoot, log) {
 
 function installGitHooks(packageRoot, log, cwd) {
   const installHooks = path.join(packageRoot, "scripts", "hooks", "install-hooks.cjs");
-  if (!fs.existsSync(installHooks)) return;
+  if (!fs.existsSync(installHooks)) return false;
   try {
     execFileSync(process.execPath, [installHooks], { stdio: "pipe", cwd: cwd || process.cwd() });
     log("hooks", "pre-commit hook installed", "info");
+    return true;
   } catch {
-    // non-git or hook failure — not blocking
+    return false;
   }
 }
 
@@ -2819,7 +2835,7 @@ function setupProjectBridges(opts) {
         };
   if (classifyCursorWearGit(targetDir) === "not-work-tree") {
     wearSuitSkippingCursorHooks(packageRoot, targetDir, log);
-    return;
+    return { gitHooks: opts.gitHooks === true ? "skipped" : "off", reason: "not a git checkout" };
   }
   assertSetupGit(targetDir);
   if (!installConsumerProjectFiles(packageRoot, targetDir, log)) {
@@ -2830,7 +2846,11 @@ function setupProjectBridges(opts) {
     installHermesBridge(targetDir, packageRoot, log);
     installOpenclawBridge(targetDir, packageRoot, log);
   }
-  if (opts.gitHooks === true) installGitHooks(packageRoot, log, targetDir);
+  if (opts.gitHooks !== true) return { gitHooks: "off" };
+  const installed = installGitHooks(packageRoot, log, targetDir);
+  return installed
+    ? { gitHooks: "installed" }
+    : { gitHooks: "skipped", reason: "hook install failed" };
 }
 
 /**
@@ -2899,7 +2919,8 @@ function installFrameworkDogfoodWear(packageRoot, log) {
  */
 function installAllBridges(opts) {
   const targetDir = path.resolve(opts.targetDir);
-  const packageRoot = settlePackageRoot(path.resolve(opts.packageRoot), targetDir);
+  const settled = settlePackageRoot(path.resolve(opts.packageRoot), targetDir);
+  const packageRoot = launcherPinRoot(settled, targetDir);
   pinLauncherPackageRoot(packageRoot);
   const logFn = opts.log;
   const log =
@@ -3001,17 +3022,20 @@ if (require.main === module) {
   }
   const gitHooks = process.argv.includes("--git-hooks");
   try {
-    setupProjectBridges({
+    const result = setupProjectBridges({
       packageRoot: path.resolve(__dirname, "..", ".."),
       targetDir: path.resolve(process.cwd()),
       gitHooks,
       log: () => {},
     });
-    process.stdout.write(
-      gitHooks
-        ? "setup: wrote .mcp.json, chat bridges, and git hooks\n"
-        : "setup: wrote .mcp.json and chat bridges\n",
-    );
+    if (result && result.gitHooks === "installed") {
+      process.stdout.write("setup: wrote .mcp.json, chat bridges, and git hooks\n");
+    } else if (result && result.gitHooks === "skipped") {
+      const reason = result.reason ? ` because ${result.reason}` : "";
+      process.stdout.write(`setup: wrote .mcp.json and chat bridges; git hooks skipped${reason}\n`);
+    } else {
+      process.stdout.write("setup: wrote .mcp.json and chat bridges\n");
+    }
   } catch (err) {
     process.stderr.write(`${err && err.message ? err.message : err}\n`);
     process.exit(1);

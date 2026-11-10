@@ -19,14 +19,23 @@ Board: `house/WAVEBOARD.md` when `LIVE_URL` is unset, and Bifrost cards (`GET /c
 | owner prompt | Board rule. On every owner message run `live-inbox <seat> --prompt --from owner --note "<gist>"`. Ack a handled line with `live-inbox <seat> --ack <id>`, or `live-inbox <seat> --ack all` once every open line is handled. A cloud agent run uses `live-inbox <seat> --turn start --tag "bc-<first8> <track>"` beside `live-inbox <seat> --cloud launch --agent <bc-id> --tag <card>` on first start or `--cloud reply` on resume, and `live-inbox <seat> --turn end --tag "bc-<first8>"` beside `live-inbox <seat> --cloud finished --agent <bc-id> --tag <card>` (cancel is `--cloud cancel`). The tag is owner/repo#n or xray#n. The cloud agent does not post that line. `--from owner` is required today. Kanban note. The live page shows a read-only kanban above Activity. Columns are open, review, fix, merge, retest, and done. The deep link is `?card=`. History note. Every activity line is archived to history. The word owner is the owner via LIVE_OWNER or the owner-name. |
 Complete setup path for **Grok Bot agents** on the 0xRay mill.
 
-Agents: read `llms.txt` → `AGENTS.md` → run skills in `SKILLS.md` (**one suit per key agent**).  
+Agents: read `llms.txt` → `AGENTS.md` → the catalog at `node_modules/0xray/SKILLS.md` (**one suit per key agent**).  
 Humans: same files.
 
 ## Install
+The mill wears the suit. Node >= 24.22.1. Install both packages, then wear, so a later install does not drop the repertoire link before the suit is worn.
+
 ```bash
-npm i @0xray/grok-bot
-npx @0xray/grok-bot
+npm init -y
+npm install 0xray
+npm install @0xray/grok-bot
+npx 0xray wear
+npx @0xray/grok-bot doctor
 ```
+
+Local packs use the same steps with files: `npm install ./0xray-<file>.tgz`, then `npm install ./0xray-grok-bot-<file>.tgz`. Do not extract the tarballs by hand. Each one unpacks into a directory named `package/`, so two extracts in one folder collide.
+
+On npm 11, `npm install` may print an allowScripts warning for the `0xray` postinstall. The warning is safe to ignore. The postinstall still runs, and wear links repertoire either way. `npm install-scripts approve 0xray` silences it.
 
 ## Seat doctor (prove plant)
 From an agent project root:

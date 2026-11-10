@@ -1,6 +1,6 @@
 import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, utimesSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -14,6 +14,7 @@ import { mintAfterWear } from '../../cli/commands/foundry-mint-wear.js';
 import { millPackageDir, resolveHookInstaller } from '../../../scripts/foundry/mill-root.mjs';
 import {
   REQUIRED_PACK_PATHS,
+  assertDistCliOnDisk,
   assertPackedPaths,
   parseNpmPackJson,
 } from '../../../scripts/foundry/assert-packed-dist-cli.mjs';
@@ -65,6 +66,22 @@ describe('foundry mill — packed dist/cli gate', () => {
     expect(parseNpmPackJson(JSON.stringify({ files: REQUIRED_PACK_PATHS }))).toEqual(
       REQUIRED_PACK_PATHS,
     );
+  });
+
+  it('refuses a dist/cli older than src/cli/index.ts', () => {
+    const dir = mkdtempSync(path.join(os.tmpdir(), 'xray-stale-dist-'));
+    try {
+      mkdirSync(path.join(dir, 'dist', 'cli'), { recursive: true });
+      mkdirSync(path.join(dir, 'src', 'cli'), { recursive: true });
+      const cli = path.join(dir, 'dist', 'cli', 'index.js');
+      writeFileSync(cli, 'old\n');
+      writeFileSync(path.join(dir, 'src', 'cli', 'index.ts'), 'new\n');
+      const past = new Date(Date.now() - 60_000);
+      utimesSync(cli, past, past);
+      expect(() => assertDistCliOnDisk(dir)).toThrow(/older than src\/cli\/index\.ts/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 
   it('prepack and mill publish call the packed dist/cli assert', () => {

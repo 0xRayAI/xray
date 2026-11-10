@@ -212,7 +212,25 @@ function seedNotes(root) {
   return true;
 }
 
-function stationSeed(version, plane) {
+function libraryLine(root) {
+  const rel = ".agents/skills/record-map/SKILL.md";
+  if (root && fs.existsSync(path.join(root, rel))) {
+    return `Library: record-map — ${rel}`;
+  }
+  return "Library: (none yet)";
+}
+
+function repertoireLine(root) {
+  try {
+    const heat = require("../../src/integrations/hooks/station-hook-runtime.cjs");
+    if (typeof heat.buildRepertoireResume === "function") return heat.buildRepertoireResume(root);
+  } catch {
+    /* the heat runtime is optional for a seed */
+  }
+  return "Repertoire: module unresolved";
+}
+
+function stationSeed(version, plane, root) {
   return [
     "# Station",
     "",
@@ -221,8 +239,9 @@ function stationSeed(version, plane) {
     "Plan: (none)",
     "Git: n/a",
     freshLine(version),
-    "Repertoire: module unresolved",
-    "Library: record-map — .agents/skills/record-map/SKILL.md",
+    repertoireLine(root),
+    libraryLine(root),
+    "Catalog: node_modules/0xray/SKILLS.md",
     `Plane: ${plane}`,
     "Judgement: start",
     "Payments: off",
@@ -237,6 +256,14 @@ function restampFresh(text, version) {
   if (!version) return text;
   if (!/^Fresh:.*\bpackage\s+\d+\.\d+\.\d+/m.test(text)) return text;
   return text.replace(/^(Fresh:.*\bpackage\s+)\d+\.\d+\.\d+/m, `$1${version}`);
+}
+
+function restampRepertoire(text, root) {
+  const line = repertoireLine(root);
+  if (!line) return text;
+  if (/^Repertoire:.*$/m.test(text)) return text.replace(/^Repertoire:.*$/m, line);
+  if (/^Fresh:.*$/m.test(text)) return text.replace(/^(Fresh:.*)$/m, `$1\n${line}`);
+  return text;
 }
 
 function restampPlane(text, plane) {
@@ -255,10 +282,13 @@ function seedSuitPages(root, packageRoot) {
   const dest = path.join(root, ".xray", "state", "STATION.md");
   fs.mkdirSync(path.dirname(dest), { recursive: true });
   if (!fs.existsSync(dest)) {
-    fs.writeFileSync(dest, stationSeed(version, plane));
+    fs.writeFileSync(dest, stationSeed(version, plane, root));
     return { version, plane, seeded: true };
   }
-  const next = restampPlane(restampFresh(fs.readFileSync(dest, "utf8"), version), plane);
+  const next = restampRepertoire(
+    restampPlane(restampFresh(fs.readFileSync(dest, "utf8"), version), plane),
+    root,
+  );
   if (next !== fs.readFileSync(dest, "utf8")) fs.writeFileSync(dest, next);
   return { version, plane, seeded: false };
 }

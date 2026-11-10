@@ -17,7 +17,7 @@ import { fileURLToPath } from 'node:url';
 
 const repoRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 
-/** Cursor hook files 4.0.28 wrote into the project. Wear outside git skips these. */
+/** Cursor hook files written into the project, including a folder that is not a git checkout. */
 const CURSOR_HOOK_FILES = [
   '.cursor/hooks.json',
   '.cursor/hooks/after-file-edit.sh',
@@ -135,7 +135,7 @@ function installAndSetup(dir: string, spec: string, git: boolean, home: string):
 
 describe('packed tarball file list against 0xray@4.0.28', () => {
   it(
-    'matches 4.0.28 outside git except the role-skill mirror and the cursor hooks, and inside git except that mirror',
+    'matches 4.0.28 outside git except the role-skill mirror, and inside git except that mirror',
     { timeout: 240000, retry: 0 },
     () => {
       const work = mkdtempSync(path.join(tmpdir(), 'xray-pack-gate-'));
@@ -184,8 +184,10 @@ describe('packed tarball file list against 0xray@4.0.28', () => {
         // Wear seeds the station ticket and the notes page on every suit.
         const seededPages = ['.xray/state/NOTES.md', '.xray/state/STATION.md'];
         const wornBundle = '.grok/plugins/0xray/bundle.md';
-        expect(plainExtra).toEqual(['.grok/config.toml', wornBundle, ...seededPages, ...plainAgents].sort());
-        expect(plainMissing).toEqual([...CURSOR_HOOK_FILES].sort());
+        expect(plainExtra).toEqual(
+          ['.cursor/mcp.json', '.grok/config.toml', wornBundle, ...seededPages, ...GIT_HOOK_SNAPSHOT, ...plainAgents].sort(),
+        );
+        expect(plainMissing).toEqual([]);
 
         const gitAgents = roleAgentFiles(packedGit).filter((rel) => !oldGit.includes(rel));
         const expectedGit = [
@@ -193,6 +195,7 @@ describe('packed tarball file list against 0xray@4.0.28', () => {
             ...oldGit,
             ...CURSOR_HOOK_FILES,
             ...GIT_HOOK_SNAPSHOT,
+            '.cursor/mcp.json',
             '.grok/config.toml',
             '.grok/plugins/0xray/bundle.md',
             ...seededPages,

@@ -37,8 +37,6 @@ function resolveRepertoireMcp(targetDir) {
   const selfRoot = targetDir;
   const siblingRoot = path.join(targetDir, "..", "repertoire");
   const candidates = [
-    path.join(targetDir, "node_modules", "@0xray", "repertoire", "dist", "mcp", "server.js"),
-    path.join(targetDir, "vendor", "@0xray", "repertoire", "dist", "mcp", "server.js"),
     path.join(
       targetDir,
       "node_modules",
@@ -50,6 +48,8 @@ function resolveRepertoireMcp(targetDir) {
       "mcp",
       "server.js",
     ),
+    path.join(targetDir, "vendor", "@0xray", "repertoire", "dist", "mcp", "server.js"),
+    path.join(targetDir, "node_modules", "@0xray", "repertoire", "dist", "mcp", "server.js"),
     isRepertoirePackageRoot(selfRoot) ? path.join(selfRoot, "dist", "mcp", "server.js") : null,
     isRepertoirePackageRoot(siblingRoot) ? path.join(siblingRoot, "dist", "mcp", "server.js") : null,
   ];
@@ -88,9 +88,9 @@ function resolveRepertoireProvider(targetDir) {
     "provider",
     "memory-routing-provider.js",
   );
-  if (fs.existsSync(nmProvider)) return nmProvider;
-  if (fs.existsSync(vendorProvider)) return vendorProvider;
   if (fs.existsSync(packedVendorProvider)) return packedVendorProvider;
+  if (fs.existsSync(vendorProvider)) return vendorProvider;
+  if (fs.existsSync(nmProvider)) return nmProvider;
   if (isRepertoirePackageRoot(siblingRoot) && fs.existsSync(siblingProvider)) return siblingProvider;
   return null;
 }
@@ -327,6 +327,18 @@ function packageScript(targetDir, kind) {
     const file = path.join(targetDir, "node_modules", "0xray", "scripts", "mjs", "run-goggles-mcp.mjs");
     return fs.existsSync(file) ? file : "";
   }
+  const packed = path.join(
+    targetDir,
+    "node_modules",
+    "0xray",
+    "vendor",
+    "@0xray",
+    "repertoire",
+    "dist",
+    "mcp",
+    "server.js",
+  );
+  if (fs.existsSync(packed)) return packed;
   const file = path.join(targetDir, "node_modules", "@0xray", "repertoire", "dist", "mcp", "server.js");
   return fs.existsSync(file) ? file : "";
 }
@@ -390,6 +402,20 @@ let launcherPackageRoot = "";
 /** Wear sets this so a /tmp checkout is not the path written into a real project. */
 function pinLauncherPackageRoot(packageRoot) {
   launcherPackageRoot = packageRoot ? path.resolve(packageRoot) : "";
+}
+
+function launcherPinRoot(packageRoot, targetDir) {
+  const root = packageRoot ? path.resolve(packageRoot) : "";
+  if (!root || !targetDir || isDogfoodXrayPackage(targetDir)) return root;
+  const link = path.join(targetDir, "node_modules", "0xray");
+  const launch = path.join(link, "scripts", "node", "mcp-launch.cjs");
+  try {
+    if (!fs.existsSync(launch)) return root;
+    if (fs.realpathSync(link) !== fs.realpathSync(root)) return root;
+    return link;
+  } catch {
+    return root;
+  }
 }
 
 function mcpLauncherPath() {
@@ -680,6 +706,15 @@ function buildPluginMcpJson(targetDir) {
       command: launch.command,
       args: launch.args,
       env: launch.env,
+    };
+  }
+  const extras = detectConsumerExtraMcpServers(targetDir).openclaw || {};
+  for (const name of ["goggles", "repertoire"]) {
+    if (!extras[name]) continue;
+    mcpServers[name] = {
+      command: extras[name].command,
+      args: extras[name].args,
+      env: extras[name].env,
     };
   }
   return { mcpServers };
@@ -1212,10 +1247,15 @@ function suitMcpBlock(server, launch) {
  */
 function writeProjectSuitMcp(targetDir) {
   const root = path.resolve(targetDir);
-  const names = suitServerNames();
-  const blocks = XRAY_MCP_SERVERS.map((server) =>
-    suitMcpBlock(server, scopedMcpLaunch(root, server.mcpCmd, server.env)),
-  );
+  const extras = detectConsumerExtraMcpServers(root).openclaw || {};
+  const extra = ["goggles", "repertoire"]
+    .filter((name) => extras[name])
+    .map((name) => ({ name, launch: extras[name] }));
+  const names = new Set([...suitServerNames(), ...extra.map((server) => server.name)]);
+  const blocks = [
+    ...XRAY_MCP_SERVERS.map((server) => suitMcpBlock(server, scopedMcpLaunch(root, server.mcpCmd, server.env))),
+    ...extra.map((server) => suitMcpBlock(server, server.launch)),
+  ];
   const grokDir = path.join(root, ".grok");
   fs.mkdirSync(grokDir, { recursive: true });
   const tomlPath = path.join(grokDir, "config.toml");
@@ -1300,6 +1340,7 @@ module.exports = {
   isEphemeralInstallRoot,
   isIsolatedHome,
   pinLauncherPackageRoot,
+  launcherPinRoot,
   copyHermesHookRuntimes,
   resolveOpenClawPreToolHookSource,
   resolveOpenClawPluginDir,

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { spawnSync } from 'child_process';
 import { createRequire } from 'module';
-import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
+import { existsSync, mkdtempSync, mkdirSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'fs';
 import os from 'os';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -270,6 +270,116 @@ describe('bridge-mcp-wiring', () => {
     } finally {
       rmSync(targetDir, { recursive: true, force: true });
       rmSync(other, { recursive: true, force: true });
+    }
+  });
+
+  it('a linked checkout pins the launcher on node_modules/0xray', () => {
+    const checkout = mkdtempSync(path.join(os.tmpdir(), 'xray-link-src-'));
+    const targetDir = mkdtempSync(path.join(os.tmpdir(), 'xray-link-app-'));
+    const launch = path.join(checkout, 'scripts', 'node', 'mcp-launch.cjs');
+    const goggles = path.join(checkout, 'scripts', 'mjs', 'run-goggles-mcp.mjs');
+    for (const file of [launch, goggles]) {
+      mkdirSync(path.dirname(file), { recursive: true });
+      writeFileSync(file, '#!/usr/bin/env node\n');
+    }
+    writeFileSync(path.join(checkout, 'package.json'), JSON.stringify({ name: '0xray', version: '4.2.1' }));
+    mkdirSync(path.join(targetDir, 'node_modules'), { recursive: true });
+    symlinkSync(checkout, path.join(targetDir, 'node_modules', '0xray'));
+    const linkLaunch = path.join(targetDir, 'node_modules', '0xray', 'scripts', 'node', 'mcp-launch.cjs');
+    const linkGoggles = path.join(targetDir, 'node_modules', '0xray', 'scripts', 'mjs', 'run-goggles-mcp.mjs');
+    writeFileSync(
+      path.join(targetDir, '.mcp.json'),
+      `${JSON.stringify({
+        mcpServers: {
+          goggles: {
+            command: 'node',
+            args: [launch, '--keep', 'PATH,HOME,XRAY_ROOT', '--', 'node', linkGoggles],
+          },
+        },
+      })}\n`,
+    );
+    const pin = wiring.launcherPinRoot(checkout, targetDir);
+    expect(pin).toBe(path.join(targetDir, 'node_modules', '0xray'));
+    wiring.pinLauncherPackageRoot(pin);
+    try {
+      wiring.deployPortableProjectMcpJson(targetDir);
+      const mcp = JSON.parse(readFileSync(path.join(targetDir, '.mcp.json'), 'utf8')) as {
+        mcpServers: { goggles: { args?: string[] } };
+      };
+      expect(mcp.mcpServers.goggles.args?.[0]).toBe(linkLaunch);
+      expect(innerAfterScoped(mcp.mcpServers.goggles.args || [])).toEqual(['node', linkGoggles]);
+    } finally {
+      wiring.pinLauncherPackageRoot('');
+      rmSync(checkout, { recursive: true, force: true });
+      rmSync(targetDir, { recursive: true, force: true });
+    }
+  });
+
+  it('a linked wear keeps every launcher on node_modules/0xray', () => {
+    const targetDir = mkdtempSync(path.join(os.tmpdir(), 'xray-link-wear-'));
+    spawnSync('git', ['init', '-q'], { cwd: targetDir });
+    mkdirSync(path.join(targetDir, 'node_modules'), { recursive: true });
+    symlinkSync(packageRoot, path.join(targetDir, 'node_modules', '0xray'));
+    const checkoutLaunch = path.join(packageRoot, 'scripts', 'node', 'mcp-launch.cjs');
+    const linkGoggles = path.join(targetDir, 'node_modules', '0xray', 'scripts', 'mjs', 'run-goggles-mcp.mjs');
+    writeFileSync(
+      path.join(targetDir, '.mcp.json'),
+      `${JSON.stringify({
+        mcpServers: {
+          goggles: {
+            command: 'node',
+            args: [checkoutLaunch, '--keep', 'PATH,HOME,XRAY_ROOT', '--', 'node', linkGoggles],
+          },
+        },
+      })}\n`,
+    );
+    const bridges = require(path.join(packageRoot, 'scripts', 'node', 'install-bridges.cjs'));
+    const wear = () => bridges.installAllBridges({ targetDir, packageRoot, log: () => {} });
+    try {
+      wear();
+      const mcpPath = path.join(targetDir, '.mcp.json');
+      const grokToml = path.join(targetDir, '.grok', 'config.toml');
+      const grokHooks = path.join(targetDir, '.grok', 'hooks', '0xray.json');
+      const first = {
+        mcp: readFileSync(mcpPath, 'utf8'),
+        toml: readFileSync(grokToml, 'utf8'),
+        hooks: readFileSync(grokHooks, 'utf8'),
+      };
+      const mcp = JSON.parse(first.mcp) as { mcpServers: Record<string, { args?: string[] }> };
+      const linkLaunch = path.join(targetDir, 'node_modules', '0xray', 'scripts', 'node', 'mcp-launch.cjs');
+      for (const [name, server] of Object.entries(mcp.mcpServers)) {
+        expect(server.args?.[0], name).toBe(linkLaunch);
+      }
+      expect(mcp.mcpServers.goggles).toBeTruthy();
+      expect(mcp.mcpServers.repertoire).toBeTruthy();
+      expect(first.toml).toContain('[mcp_servers.goggles]');
+      expect(first.toml).toContain('[mcp_servers.repertoire]');
+      const pluginMcp = JSON.parse(readFileSync(path.join(targetDir, '.grok', 'plugins', '0xray', '.mcp.json'), 'utf8')) as {
+        mcpServers: Record<string, { args?: string[] }>;
+      };
+      expect(pluginMcp.mcpServers.goggles.args?.[0]).toBe(linkLaunch);
+      expect(pluginMcp.mcpServers.repertoire.args?.[0]).toBe(linkLaunch);
+      const skillDir = path.join(targetDir, '.grok', 'plugins', '0xray', 'skills');
+      const skills = existsSync(skillDir) ? readdirSync(skillDir).length : 0;
+      const catalog = new Set<string>();
+      for (const dir of ['src/skills', 'dist/skills']) {
+        const abs = path.join(packageRoot, dir);
+        if (!existsSync(abs)) continue;
+        for (const name of readdirSync(abs)) {
+          if (existsSync(path.join(abs, name, 'SKILL.md'))) catalog.add(name);
+        }
+      }
+      expect(skills).toBe(catalog.size);
+      expect(first.hooks).toContain(path.join(targetDir, 'node_modules', '0xray', 'scripts', 'mjs', 'run-grok-hook.mjs'));
+      expect(first.hooks).not.toContain(path.join(packageRoot, 'scripts', 'mjs', 'run-grok-hook.mjs'));
+      wear();
+      expect(existsSync(skillDir) ? readdirSync(skillDir).length : 0).toBe(skills);
+      expect(readFileSync(mcpPath, 'utf8')).toBe(first.mcp);
+      expect(readFileSync(grokToml, 'utf8')).toBe(first.toml);
+      expect(readFileSync(grokHooks, 'utf8')).toBe(first.hooks);
+    } finally {
+      wiring.pinLauncherPackageRoot('');
+      rmSync(targetDir, { recursive: true, force: true });
     }
   });
 

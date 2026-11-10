@@ -166,7 +166,7 @@ When the suit is worn, **lead dev mode** is ON via existing config + hooks:
 
 ## Skills
 
-Full catalog in root **`SKILLS.md`**. Wear does not write a consumer-root `SKILLS.md`. **`orchestrator`** skill documents lead-dev mode. Invoke via `@orchestrator` or `xray-skills` MCP (`invoke-skill`, `list-skills`).
+The catalog is `node_modules/0xray/SKILLS.md`. Wear does not copy it to the project root. The `xray-skills` MCP serves it (`invoke-skill`, `list-skills`). **`orchestrator`** skill documents lead-dev mode. Invoke via `@orchestrator`.
 
 ## File Organization
 

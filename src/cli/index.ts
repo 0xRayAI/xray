@@ -120,6 +120,22 @@ function runGoggles(args: string[]): void {
 }
 
 program
+  .command("inspect")
+  .description("Run the mill inspect that ships in this package. Chat is not a receipt.")
+  .allowUnknownOption()
+  .action(() => {
+    const script = join(packageRoot, "scripts", "foundry", "cli.js");
+    if (!existsSync(script)) {
+      process.stderr.write("inspect: shipped foundry is missing\n");
+      process.exit(1);
+    }
+    const idx = process.argv.indexOf("inspect");
+    const rest = idx >= 0 ? process.argv.slice(idx + 1) : [];
+    const result = spawnSync(process.execPath, [script, "inspect", ...rest], { stdio: "inherit" });
+    process.exit(result.status ?? 1);
+  });
+
+program
   .command("look")
   .argument("[args...]", "one card plane")
   .description(LOOK_HELP)
@@ -1167,7 +1183,7 @@ program.addHelpText(
   `
 
 Examples:
-    $ npx 0xray install       # Install xray in current project
+    $ npx 0xray wear          # Write the suit after npm install
     $ npx 0xray init          # Initialize configuration
     $ npx 0xray status        # Check installation status
     $ npx 0xray validate      # Validate framework setup
@@ -1187,13 +1203,15 @@ Examples:
     $ npx 0xray storyteller reflection "API Fix"     # Write a reflection
 
 Quick Start:
-   1. Install: npx 0xray install
-   2. Check health: npx 0xray health
-   3. Use agents: @security-auditor scan
-   4. Generate reports: npx 0xray report
-   5. Fix issues: npx 0xray fix
-   6. View analytics: npx 0xray analytics
-   7. Add skills: npx 0xray skill:install agency-agents
+   1. npm init -y
+   2. npm install 0xray
+      A local pack: npm install ./0xray-<file>.tgz
+   3. git init
+   4. npx 0xray wear
+   5. npx 0xray look dev
+   6. npx 0xray status
+   7. npx 0xray setup --git-hooks
+   8. npx 0xray inspect --skip-live
 
 For more information, visit: https://github.com/0xRayAI/xray
 `,
