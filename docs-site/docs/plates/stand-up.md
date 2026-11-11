@@ -23,4 +23,4 @@ Name the roles, suit each one, wire the record, set the ship gate, and cap spend
 
 Write consult@0xray.dev. The ops site is https://ops.0xray.dev/guides/stand-up/.
 
-stamped · 0xray 4.1.5
+stamped · 0xray 4.2.1
