@@ -77,7 +77,7 @@ Confer votes. Burst runs the swarm.
 - **MCP launch.** Servers start through `scripts/node/mcp-launch.cjs`. They see PATH, HOME, and XRAY_ROOT, plus the names on their keep list. Tokens such as NPM_TOKEN are not inherited. User env values stay in the env block and out of argv.
 - **Postinstall keeps user edits** to AGENTS.md, `.mcp.json`, and `opencode.json`.
 - **House.** `house init` no longer copies EXAMPLE.md. Doctor FAILs while `house/EXAMPLE.md` exists.
-- **Inspect** has a machinePlugin check. It fails when a machine `~/.grok/plugins` directory is named `0xray` or starts with `0xray`.
+- **Inspect** has a machinePlugin check. It WARNs when a machine `~/.grok/plugins` directory is named `0xray` or starts with `0xray`, and fails when Grok would load it and it points at another root (a pinned `XRAY_ROOT` or launcher paths).
 - **Cursor hook.** XRAY_ROOT defaults to the suit directory.
 - **@0xray/grok-bot 0.1.7** records the same house init and doctor change. `house init` copies HOUSE.md, WAVEBOARD.md, and ATTENTION_STATE.md only.
 

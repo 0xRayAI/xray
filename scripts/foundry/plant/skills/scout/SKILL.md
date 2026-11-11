@@ -22,7 +22,7 @@ This is not the eng mill catalog. It is not Dist beds. It is not sound. It is no
 ```bash
 npx @0xray/foundry scout look --brief "night board" --plane dev --body "the card is the feed"
 npx @0xray/foundry scout inspect
-npx @0xray/foundry inspect --skip-live
+npx 0xray inspect --skip-live
 ```
 
 Mint fastens `scout` + `scout-inspect` + `scout-look`. It does not dump mill inspect or the eng catalog onto a scout seat.

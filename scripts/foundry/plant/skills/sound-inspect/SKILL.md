@@ -7,7 +7,7 @@ description: Inspect the last factory-sound bed — loudness/smoothness gates, n
 
 This is the **bed** inspect, not mill inspect. Open the receipt. Quote the numbers. Do not invent a pass.
 
-`npx @0xray/foundry inspect` reports sound plant present plus last bed `PASS`/`FAIL`. `npx @0xray/foundry sound inspect` is the same bed check.
+`npx 0xray inspect --skip-live` reports sound plant present plus last bed `PASS`/`FAIL`. `npx @0xray/foundry sound inspect` is the same bed check.
 
 ## Gates (fail-closed)
 

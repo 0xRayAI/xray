@@ -5,7 +5,11 @@ import path from "node:path";
 import { beforeAll, afterAll, beforeEach, afterEach, expect } from "vitest";
 
 // A worn machine plugin must not fail seat inspect. Production still uses the passwd home.
-process.env.FOUNDRY_MACHINE_HOME = mkdtempSync(path.join(tmpdir(), "xray-test-machine-"));
+// Keep HOME in that same temp dir so wear cannot treat the real home as an isolated seat home (#991).
+const testMachineHome = mkdtempSync(path.join(tmpdir(), "xray-test-machine-"));
+process.env.FOUNDRY_MACHINE_HOME = testMachineHome;
+process.env.HOME = testMachineHome;
+process.env.USERPROFILE = testMachineHome;
 
 // Global type declarations
 declare global {

@@ -181,6 +181,26 @@ function gogglesScopedLaunch(targetDir, launcher) {
 function detectConsumerExtraMcpServers(targetDir) {
   const extras = { hermes: {}, opencode: {}, openclaw: {} };
   try {
+    const gogglesMcp = resolveGogglesMcp(targetDir);
+    if (gogglesMcp) {
+      const launch = gogglesScopedLaunch(targetDir, gogglesMcp);
+      extras.hermes.goggles = {
+        command: launch.command,
+        args: launch.args,
+        env: launch.env,
+      };
+      extras.opencode.goggles = {
+        type: "local",
+        command: launch.commandList,
+        enabled: true,
+        environment: launch.env,
+      };
+      extras.openclaw.goggles = {
+        command: launch.command,
+        args: launch.args,
+        env: launch.env,
+      };
+    }
     const repertoireMcp = resolveRepertoireMcp(targetDir);
     if (repertoireMcp) {
       const launch = wrapScopedLaunch(
@@ -199,26 +219,6 @@ function detectConsumerExtraMcpServers(targetDir) {
         environment: launch.env,
       };
       extras.openclaw.repertoire = {
-        command: launch.command,
-        args: launch.args,
-        env: launch.env,
-      };
-    }
-    const gogglesMcp = resolveGogglesMcp(targetDir);
-    if (gogglesMcp) {
-      const launch = gogglesScopedLaunch(targetDir, gogglesMcp);
-      extras.hermes.goggles = {
-        command: launch.command,
-        args: launch.args,
-        env: launch.env,
-      };
-      extras.opencode.goggles = {
-        type: "local",
-        command: launch.commandList,
-        enabled: true,
-        environment: launch.env,
-      };
-      extras.openclaw.goggles = {
         command: launch.command,
         args: launch.args,
         env: launch.env,
@@ -741,6 +741,25 @@ function copyHermesFindProjectRootHelper(packageRoot, targetPluginDir) {
   fs.mkdirSync(path.dirname(helperDst), { recursive: true });
   fs.copyFileSync(helperSrc, helperDst);
   return true;
+}
+
+/**
+ * A project wear or setup writes machine-wide config (~/.grok plugin pins,
+ * ~/.hermes, ~/.openclaw) only on an explicit XRAY_MACHINE_BRIDGES=1.
+ * Those files are shared by every project and seat on the box.
+ */
+function machineBridgesOptedIn(env = process.env) {
+  return /^(1|true|yes)$/i.test(String((env && env.XRAY_MACHINE_BRIDGES) || "").trim());
+}
+
+let machineSkipNoted = false;
+/** One stdout line per process naming what a project wear skipped. */
+function noteMachineBridgesSkipped() {
+  if (machineSkipNoted) return;
+  machineSkipNoted = true;
+  process.stdout.write(
+    "machine-bridges: skipped ~/.grok/plugins/0xray pins, ~/.hermes and ~/.openclaw (project copies written). Set XRAY_MACHINE_BRIDGES=1 to write them.\n",
+  );
 }
 
 function isEphemeralInstallRoot(targetDir) {
@@ -1338,6 +1357,8 @@ module.exports = {
   isDefaultMemoryRoutingOff,
   enableMemoryRoutingIfResolves,
   isEphemeralInstallRoot,
+  machineBridgesOptedIn,
+  noteMachineBridgesSkipped,
   isIsolatedHome,
   pinLauncherPackageRoot,
   launcherPinRoot,

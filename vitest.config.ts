@@ -41,7 +41,11 @@ export default defineConfig({
         test: {
           name: "all",
           testTimeout: 30000,
-          env: { FOUNDRY_MACHINE_HOME: testMachineHome },
+          env: {
+            FOUNDRY_MACHINE_HOME: testMachineHome,
+            HOME: testMachineHome,
+            USERPROFILE: testMachineHome,
+          },
           include: ["src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
           exclude: [
             ...base.exclude,
@@ -60,7 +64,11 @@ export default defineConfig({
         test: {
           name: "nucleus",
           testTimeout: 30000,
-          env: { FOUNDRY_MACHINE_HOME: testMachineHome },
+          env: {
+            FOUNDRY_MACHINE_HOME: testMachineHome,
+            HOME: testMachineHome,
+            USERPROFILE: testMachineHome,
+          },
           include: [
             "src/__tests__/unit/nucleus-*.test.ts",
             "src/__tests__/unit/default-plugins.test.ts",

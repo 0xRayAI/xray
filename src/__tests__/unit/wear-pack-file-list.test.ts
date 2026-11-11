@@ -7,6 +7,7 @@ import {
   mkdirSync,
   mkdtempSync,
   readdirSync,
+  readFileSync,
   readlinkSync,
   rmSync,
   writeFileSync,
@@ -133,6 +134,41 @@ function installAndSetup(dir: string, spec: string, git: boolean, home: string):
   return listProject(dir);
 }
 
+function assertMcpPathsAfterBareInstall(dir: string, home: string): void {
+  const env = {
+    ...process.env,
+    HOME: home,
+    USERPROFILE: home,
+    FOUNDRY_MACHINE_HOME: home,
+    npm_config_cache: path.join(home, '.npm'),
+    npm_config_fund: 'false',
+    npm_config_audit: 'false',
+    npm_config_update_notifier: 'false',
+  };
+  execFileSync('npm', ['install', '--ignore-scripts', '--no-fund', '--no-audit'], {
+    cwd: dir,
+    env,
+    stdio: 'pipe',
+  });
+  const mcp = JSON.parse(readFileSync(path.join(dir, '.mcp.json'), 'utf8')) as {
+    mcpServers?: Record<string, { args?: string[] }>;
+  };
+  const servers = mcp.mcpServers || {};
+  for (const spec of Object.values(servers)) {
+    for (const arg of spec.args || []) {
+      if (!arg.includes('/') && !arg.includes('\\')) continue;
+      const abs = path.isAbsolute(arg) ? arg : path.join(dir, arg);
+      expect(existsSync(abs), arg).toBe(true);
+    }
+  }
+  const station = readFileSync(path.join(dir, '.xray', 'state', 'STATION.md'), 'utf8');
+  expect(station).toMatch(/^Repertoire: on/m);
+  const repertoire = servers.repertoire?.args || [];
+  const server = repertoire.find((arg) => arg.includes('node_modules/0xray/vendor/'));
+  expect(server, repertoire.join(' ')).toBeTruthy();
+  expect(existsSync(server || '')).toBe(true);
+}
+
 describe('packed tarball file list against 0xray@4.0.28', () => {
   it(
     'matches 4.0.28 outside git except the role-skill mirror, and inside git except that mirror',
@@ -205,6 +241,7 @@ describe('packed tarball file list against 0xray@4.0.28', () => {
           .filter(keep)
           .sort();
         expect(packedGit.filter(keep)).toEqual(expectedGit);
+        assertMcpPathsAfterBareInstall(path.join(work, 'new-plain'), path.join(work, 'new-plain-home'));
       } finally {
         rmSync(work, { recursive: true, force: true });
       }

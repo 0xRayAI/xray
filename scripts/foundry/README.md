@@ -22,8 +22,8 @@ npx @0xray/foundry release [patch|minor|major] --dry-run
 npx @0xray/foundry release [patch|minor|major] --i-mean-it
 npx @0xray/foundry release --publish-only --dry-run
 npx @0xray/foundry release --publish-only --i-mean-it
-npx @0xray/foundry mint
-npx @0xray/foundry inspect [--skip-live] [--go] [--go-out PATH] [--require-harness=bare|suited|partial]
+npx 0xray wear
+npx 0xray inspect [--skip-live] [--go] [--go-out PATH] [--require-harness=bare|suited|partial]
 npx @0xray/foundry sound render [--brief TEXT] [--genre ambient|techno|jazz]
 npx @0xray/foundry sound inspect
 npx @0xray/foundry sound mix

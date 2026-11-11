@@ -16,5 +16,5 @@ The mill **fastens** a suit. Default mill plant is **inspect** (inspecting AI wo
 **Skills:** the mill suit wears every catalog skill and every role file. The mill plant stays `mill` and `inspect`. A blip, sound, or scout seat fastens that plant only.
 
 ```bash
-npx @0xray/foundry mint
+npx 0xray wear
 ```

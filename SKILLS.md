@@ -1,12 +1,12 @@
 # 0xray Skills
 
-**4.1** — a suit that survives the context window
+**4.2** — a suit that survives the context window
 
 Confer votes. Burst runs the swarm.
 
 Goggles views one plane. A search inside that card runs. A search of another plane returns the card. A path outside this checkout runs.
 
-A prompt pulse spins only the named card. Seen is not working. Tandem is several tracks at once. A card carries raci. A missed /healthz replaces the one replica. The OP cycle is digest, card, do, loop, ship. The catalog count stays 45.
+A prompt pulse spins only the named card. Seen is not working. Tandem is several tracks at once. A card carries raci. A missed /healthz replaces the one replica. The OP cycle is digest, card, do, loop, ship. This file is the exo catalog. A mill wear also loads `mill` and `inspect`, so `npx 0xray status` can print a higher worn count.
 
 0xRay is a three-subsystem autonomous engine. The suit is the wear. This file is the catalog.
 
