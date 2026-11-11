@@ -123,8 +123,11 @@ export function probeHarness(root) {
     nodeModules: fs.existsSync(path.join(root, "node_modules", "@0xray", "repertoire")),
     state: fs.existsSync(path.join(root, ".xray", "state", "repertoire")),
     vendorSource: fs.existsSync(path.join(root, "vendor", "@0xray", "repertoire")),
+    packedVendor: fs.existsSync(
+      path.join(root, "node_modules", "0xray", "vendor", "@0xray", "repertoire"),
+    ),
   };
-  repertoire.fastened = Boolean(repertoire.nodeModules || repertoire.state);
+  repertoire.fastened = Boolean(repertoire.nodeModules || repertoire.state || repertoire.packedVendor);
 
   const features =
     readJson(path.join(root, ".xray", "features.json")) ||

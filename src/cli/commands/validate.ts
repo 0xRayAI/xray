@@ -248,6 +248,7 @@ export function collectValidateReport(cwd: string): ValidateReport {
 
     const repertoire =
       existsSync(join(cwd, "node_modules", "@0xray", "repertoire", "package.json")) ||
+      existsSync(join(cwd, "node_modules", "0xray", "vendor", "@0xray", "repertoire", "package.json")) ||
       existsSync(join(packageRoot, "vendor", "@0xray", "repertoire", "package.json"));
     checks.push({
       id: "repertoire",

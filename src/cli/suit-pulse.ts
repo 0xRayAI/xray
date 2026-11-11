@@ -148,7 +148,16 @@ function readWorn(root: string, opts: SuitPulseOptions): SuitPulse["worn"] {
 }
 
 function repertoireVersion(root: string): string | null {
-  return readVersion(join(root, "node_modules", "@0xray", "repertoire", "package.json"));
+  const candidates = [
+    join(root, "node_modules", "@0xray", "repertoire", "package.json"),
+    join(root, "node_modules", "0xray", "vendor", "@0xray", "repertoire", "package.json"),
+    join(root, "vendor", "@0xray", "repertoire", "package.json"),
+  ];
+  for (const candidate of candidates) {
+    const version = readVersion(candidate);
+    if (version) return version;
+  }
+  return null;
 }
 
 function repertoireIndex(root: string): string | null {
