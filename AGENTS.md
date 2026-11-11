@@ -1,8 +1,10 @@
 # xray Agents
 
-Quick reference for the 0xRay suit (**4.1**).
+Quick reference for the 0xRay suit (**4.2**).
 
-**4.1** — a suit that survives the context window.
+**4.2** — a suit that survives the context window.
+
+Node >= 24.22.3. That is the patched 24 release from 11 Nov 2026.
 
 Confer votes. Burst runs the swarm.
 

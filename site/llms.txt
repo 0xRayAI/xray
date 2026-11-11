@@ -2,7 +2,9 @@
 
 > 0xRay is a three-subsystem autonomous engine. The suit is the wear.
 
-**4.1** — a suit that survives the context window. Inference remembers. External Governance judges. The Autonomous Engine runs the work. The host you already run wears it: Grok, OpenCode, Hermes, OpenClaw, or Cursor. When the window closes, the next session wakes with the job, the page, and the laws.
+**4.2** — a suit that survives the context window. Inference remembers. External Governance judges. The Autonomous Engine runs the work. The host you already run wears it: Grok, OpenCode, Hermes, OpenClaw, or Cursor. When the window closes, the next session wakes with the job, the page, and the laws.
+
+Node >= 24.22.3. That is the patched 24 release from 11 Nov 2026.
 
 Install:
 
