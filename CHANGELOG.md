@@ -1,6 +1,46 @@
 ## [Unreleased]
 
-- Node floor is `>=24.22.3`, the 11 Nov 2026 patched 24 release. Railway images install that binary from nodejs.org over `node:24.22.1-bookworm-slim`. Docker Hub has no `node:24.22.3` tag yet. CI stays on `24.22.1` until a workflows-permission push moves `.github/workflows`.
+- Node floor is `>=24.22.3`, the 11 Nov 2026 patched 24 release. Railway images install that binary from nodejs.org over `node:24.22.1-bookworm-slim`. Docker Hub has no `node:24.22.3` tag. Changelog, README, guides, engines, and doctor name that floor. CI workflows stay on `24.22.1`. #1014 #1015
+- A temp machine home is a durable wear. A plate id that is not a skill declines. Lens cards list three skills. A seat-kept station restamps Repertoire only when that row is already there. Push runs without GNU flock. Board and spectrum shots fall back when `/opt/cursor` is not writable. The 4.1.1 mill and inspect bodies are pinned so a sound-seat upgrade can strip them. #1013
+- OP-PROC records the eight 2026-11-09 fleet rules. #918
+- Plate stamps say `0xray 4.2.1`. The notes seed is Point, Open, Learned, Next cut. #1012
+- Doctor warns when a bridge points outside this folder. #1011
+- board-history binds a free port. #1010
+- Wear prints `grok-trust: wrote` and the trust file path. #1000
+- House off is `enabled: false`. The board line is omitted. #1009
+- A packed `node_modules/0xray/vendor/@0xray/repertoire` counts as the organ present. #1005
+- Doctor names the kit version and the project. A missing 0xray prints `0xray not installed`. #998
+- Inspect skips a 404 for the consumer's own unpublished package. A 404 for 0xray or the mill still fails. #997
+- Doctor omits the Board line when house is not enabled. #999
+- Vitest isolates HOME. #995
+- The cold-run docs say what the command printed. #987
+- The start-after test no longer holds the runner. #1006
+- Wear pins a linked checkout at `node_modules/0xray`.
+- A seat bot comment does not wake another seat. #976 #978
+- `ci_pass` rings only when that sha's checks are green. #961 #967
+- Wake does not clone. It fast-forwards the checkout that is already there. #959 #960
+- `--ack stale` runs only when GitHub closed or merged the card. #962 #968
+- Every wake runs station Full and the wrap-up. The TRACKS path and the room-turn check are on that path. #913 #942 #954
+- Critic owns the backlog sweep. #900
+- Wear repins a worktree `mcp-launch.cjs` onto the installed package. #898
+- The critical and high npm audit findings are cleared. #897
+- The grok-bot kit stamp is 0.1.13. #896
+- A closed beat cuts the next eng beat. #895
+- Goggles stamps the missing sight pairs. #894
+- Look hops to a named part of the plate. #893
+- Look opens the plate drawing. #892
+- The stamp-plate diagram reads left to right: goggles, stamp, lens, look. The kit edges match the piping. #885
+- The House goggles line is Nibbler only. The trailing clause is gone. #874 #882 #883
+
+## [4.2.1] - 2026-11-05
+
+### 🔄 Changes
+
+- Herald is the Dist write plant on foundry 0.1.15. #869 #871 #872
+- Scout is the feed plant on foundry 0.1.14. #870
+- The goggles plane map follows GOGGLES_ROOT. #877 #878
+- House/live CI uses ubuntu-24.04 so Playwright 1.55 can install. #880
+- OP-PROC: goggles is Nibbler only. Eng does not wear it on every turn. #873
 
 - Wear copies bundle.md into the Grok plugin. Session boot reads it. #848
 
@@ -159,12 +199,6 @@
 - A red CI check writes a card when the pull has none, then one `ci_fail` inbox line for that head. A green head clears it. #648.
 - Tandem is several tracks at once, on both loops, and no seat waits for a nod. #683.
 - A card carries raci. A live card missing R or A is amber on its own mark. #684.
-
-## [4.2.1] - 2026-11-05
-
-### 🔄 Changes
-
-- Version bump
 
 ---
 
