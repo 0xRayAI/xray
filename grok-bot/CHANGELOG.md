@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## [0.1.14] - 2026-11-11
+
 - `stand-up-fleet` is the one pass for a new fleet: house, routes, then one suit per seat. It links the board deploy page and stops before pay and hangar shops.
 - Node floor is `>=24.22.3`, the 11 Nov 2026 patched 24 release. README, AGENTS, and llms name that floor. #1015
 - Doctor first line is `@0xray/grok-bot@<version> doctor — 0xray@<version> — seat plant check`. A missing 0xray prints `0xray not installed`. The folder line is `Project:`. #998
