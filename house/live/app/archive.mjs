@@ -2,6 +2,7 @@
 // Day folders are America/Chicago. A 19:30 CT event belongs on that Chicago date, not the next UTC date.
 import fs from 'node:fs';
 import path from 'node:path';
+import { seatOwnerOrBuilder } from './card-owner.mjs';
 import { chicagoDay, chicagoStamp } from './chicago-stamp.mjs';
 
 export const KINDS = ['events', 'cards', 'inbox', 'nudges', 'acks', 'activity'];
@@ -720,7 +721,7 @@ function cardFromRows(key, arr) {
   arr.sort((a, b) => (Date.parse(cardStamp(a)) || 0) - (Date.parse(cardStamp(b)) || 0));
   const last = arr[arr.length - 1];
   const opened = arr.map(row => row.t_ct).filter(s => Number.isFinite(Date.parse(s))).sort()[0] || '';
-  const owner = [...arr].reverse().map(row => (typeof row.owner === 'string' ? row.owner : '')).find(Boolean) || '';
+  const owner = seatOwnerOrBuilder([...arr].reverse().map(row => (typeof row.owner === 'string' ? row.owner : '')).find(Boolean) || '');
   const closed = last.state === 'closed';
   const stamp = cardStamp(last);
   const beats = arr.flatMap(row => Array.isArray(row.beats) ? row.beats : []);
@@ -748,7 +749,7 @@ function cardFromTransition(row) {
   const closed = merged || row.transition === 'closed';
   const state = closed ? 'closed' : (row.to_state || '');
   return {
-    id: row.card, owner: row.actor && row.actor.seat || '', state,
+    id: row.card, owner: seatOwnerOrBuilder(row.actor && row.actor.seat || ''), state,
     verb: merged ? 'merged' : closed ? 'closed' : (state || row.transition),
     opened_ct: row.transition === 'opened' ? row.t_ct : '',
     closed_ct: closed ? row.t_ct : '',

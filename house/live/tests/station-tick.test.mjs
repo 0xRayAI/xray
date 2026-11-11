@@ -55,6 +55,9 @@ test('a due hour posts the sentence once', () => {
   assert.equal(stationDue('2026-10-26T07:29:00-05:00', '', IDS), null);
   const again = stationLines(due.hour, ['forge'], OPEN);
   assert.equal(again[0].reason, STATION_SENTENCE);
+  const counted = stationLines(due.hour, ['critic'], OPEN, () => 3);
+  assert.equal(counted[0].reason, `${STATION_SENTENCE}. Unread: 3`);
+  assert.equal(counted[0].title, counted[0].reason);
 });
 
 test('the server tick is the board path and the station gate does not deliver a nudge', () => {
@@ -114,7 +117,7 @@ test('a board boot inside the half hour posts one line per seat', async () => {
       assert.equal(stored[0].id, `nudge:station:${seat}:2026-10-26T07`);
       assert.equal(stored[0].type, 'nudge');
       assert.equal(stored[0].kind, 'station');
-      assert.equal(stored[0].reason, STATION_SENTENCE);
+      assert.equal(stored[0].reason, `${STATION_SENTENCE}. Unread: 0`);
     }
   } finally {
     await stop(srv, data);

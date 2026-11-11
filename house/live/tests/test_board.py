@@ -14,6 +14,32 @@ def ct(ago):
     return datetime.fromtimestamp(time.time() - ago, CT).isoformat(timespec="seconds")
 
 
+class CardOwner(unittest.TestCase):
+    def card(self, **kw):
+        import live_board
+        ev = {"id": "acme/app#9:open", "t_ct": ct(30), "kind": "issue_open", "repo": "acme/app", "number": 9,
+              "from": "Blaze", "source": "https://github.com/acme/app/issues/9", "title": "wave", "pr_state": "open"}
+        ev.update(kw)
+        rows = [c for c in live_board.model([ev])["cards"] if c.get("number") == 9]
+        self.assertEqual(len(rows), 1)
+        return rows[0]
+
+    def test_a_person_is_not_the_owner(self):
+        self.assertEqual(self.card()["owner"], "builder-cloud")
+
+    def test_board_owner_line_wins(self):
+        self.assertEqual(self.card(board_owner="critic")["owner"], "critic")
+
+    def test_a_seat_assignee_wins_over_the_person(self):
+        self.assertEqual(self.card(assignee_seat="forge")["owner"], "forge")
+
+    def test_a_cloud_agent_stays_with_the_operator(self):
+        self.assertEqual(self.card(**{"from": "CloudAgents"})["owner"], "operator")
+
+    def test_a_seat_opener_keeps_the_card(self):
+        self.assertEqual(self.card(**{"from": "Builder"})["owner"], "Builder")
+
+
 class Packet(unittest.TestCase):
     def test_block_and_single_line(self):
         import live_packet as p

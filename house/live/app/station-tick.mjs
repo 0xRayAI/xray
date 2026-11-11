@@ -32,29 +32,38 @@ export function stationSeats(ids) {
   return seats;
 }
 
-export function stationLines(hour, seats, now) {
-  const when = now instanceof Date ? now : new Date(now || Date.now());
-  const t = Number.isNaN(when.getTime()) ? new Date().toISOString() : when.toISOString();
-  return (seats || []).map((seat) => ({
-    id: `nudge:station:${seat}:${hour}`,
-    t_ct: t,
-    seat,
-    from: seat,
-    to: seat,
-    type: 'nudge',
-    kind: 'station',
-    repo: '',
-    number: 0,
-    title: STATION_SENTENCE,
-    url: '',
-    reason: STATION_SENTENCE,
-  }));
+export function stationText(unread) {
+  if (!Number.isInteger(unread) || unread < 0) return STATION_SENTENCE;
+  return `${STATION_SENTENCE}. Unread: ${unread}`;
 }
 
-export function stationDue(when, postedHour, ids) {
+export function stationLines(hour, seats, now, unreadOf) {
+  const when = now instanceof Date ? now : new Date(now || Date.now());
+  const t = Number.isNaN(when.getTime()) ? new Date().toISOString() : when.toISOString();
+  return (seats || []).map((seat) => {
+    const count = typeof unreadOf === 'function' ? unreadOf(seat) : null;
+    const text = stationText(count);
+    return {
+      id: `nudge:station:${seat}:${hour}`,
+      t_ct: t,
+      seat,
+      from: seat,
+      to: seat,
+      type: 'nudge',
+      kind: 'station',
+      repo: '',
+      number: 0,
+      title: text,
+      url: '',
+      reason: text,
+    };
+  });
+}
+
+export function stationDue(when, postedHour, ids, unreadOf) {
   const hour = stationHourKey(when);
   if (!hour || hour === postedHour) return null;
   const seats = stationSeats(ids);
   if (!seats.length) return null;
-  return { hour, lines: stationLines(hour, seats, when) };
+  return { hour, lines: stationLines(hour, seats, when, unreadOf) };
 }

@@ -9,6 +9,7 @@ import json, os, re, time, urllib.request, urllib.error, urllib.parse, http.clie
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+import card_owner
 import live_packet
 import live_site
 import next_parent
@@ -343,6 +344,27 @@ def cloud_ids_in(text) -> list[str] | None:
     return found or None
 
 
+def assignee_seat(x) -> str:
+    """A seat-mapped assignee. A person login is not a seat."""
+    login = ""
+    who = x.get("assignee") if isinstance(x.get("assignee"), dict) else None
+    if who and isinstance(who.get("login"), str):
+        login = who["login"]
+    if not login:
+        for item in x.get("assignees") or []:
+            if isinstance(item, dict) and isinstance(item.get("login"), str) and item["login"]:
+                login = item["login"]
+                break
+    if not login:
+        return ""
+    mapped = node(login)
+    if mapped and mapped.lower() in card_owner.SEATS:
+        return mapped.lower()
+    if login.lower() in card_owner.SEATS:
+        return login.lower()
+    return ""
+
+
 def card_fields(x) -> dict:
     """Board card fields from a PR / issue object this pass already fetched: branded title, state, labels and
     the packet block (sanitized, <= 200 chars a field). The body itself is discarded here, never stored.
@@ -352,6 +374,12 @@ def card_fields(x) -> dict:
               "labels": [lb.get("name") for lb in (x.get("labels") or []) if isinstance(lb, dict) and lb.get("name")][:8],
               "packet": live_packet.parse(body) or None,
               "fixes": closing_numbers(body, x.get("number"))}
+    named = card_owner.board_owner_line(body)
+    if named:
+        fields["board_owner"] = named
+    seat = assignee_seat(x)
+    if seat:
+        fields["assignee_seat"] = seat
     if live_packet.carries(body):
         fields["packet_file"] = True
     ids = cloud_ids_in(body)
@@ -878,7 +906,7 @@ class RepoCollector:
 
     def pr_commit_event(self, n, sha, date, msg, login):
         m = brand((msg or "").splitlines()[0] if msg else "")[:72]
-        self.put(f"{self.repo}#{n}:commit:{sha}", date, node(login), "GitHub", "pr_commit",
+        self.put(f"{self.repo}#{n}:commit:{sha}", date, shown_from(login), "GitHub", "pr_commit",
                  f"{self.short} #{n} push {sha[:7]} · {m}", f"https://github.com/{self.repo}/pull/{n}/commits/{sha}",
                  n, sha=sha, message=m, author=login, seat_trailer=seat_trailer(msg))
 
@@ -1088,6 +1116,9 @@ class RepoCollector:
                 self.put(f"{self.repo}#{n}:merged", p["merged_at"], node(merger or login), "GitHub", "merged",
                          f"merged {self.short} #{n} → {p['base']['ref']}", url, n, **extra)
                 self._put_parent_door(c, n, p.get("merged_at"), url, p.get("body"))
+            if not prev_head:
+                opened = self.ev.get(f"{self.repo}#{n}:open") or {}
+                prev_head = opened.get("sha") if isinstance(opened.get("sha"), str) else None
             if prev_head and head and prev_head != head:
                 self.pr_commit_event(n, head, p["updated_at"], p.get("title") or "", login)
                 self.st.setdefault("enrich", {})[str(n)] = True

@@ -239,7 +239,7 @@ exit 0
         self.assertIn("--ack closed-2", calls)
 
     def test_delivered_open_line_is_todo_and_a_new_id_prints(self):
-        """A later id is a new line. After the first print of a wake, a seen head stays quiet."""
+        """A later id is a new line. The head reprints on every poll. A seen line that is not the head stays quiet."""
         first = '{"id":"open-2","repo":"0xRayAI/xray","number":608,"title":"still open","type":"issue_comment"}'
         second = '{"id":"open-3","repo":"0xRayAI/xray","number":608,"title":"newer","type":"issue_comment"}'
         body = """
@@ -267,11 +267,11 @@ exit 0
             r, calls = self._run(body, ["arch1"], dict({"INBOX_WATCH_MAX": "3", "INBOX_TODO_DIR": str(Path(d) / "todo")}, **hooks))
             todo = (Path(d) / "todo" / "arch1.md").read_text()
         self.assertEqual(r.returncode, 0, r.stderr)
-        self.assertEqual(r.stdout.count("ACTION_REQUIRED"), 2)
-        self.assertEqual(r.stdout.count("unfinished:1"), 1)
+        self.assertEqual(r.stdout.count("ACTION_REQUIRED"), 3)
+        self.assertEqual(r.stdout.count("unfinished:1"), 2)
         self.assertEqual(r.stdout.count("unfinished:2"), 1)
         self.assertNotIn("pop ", r.stdout)
-        self.assertEqual(r.stdout.count("still open"), 2)
+        self.assertEqual(r.stdout.count("still open"), 3)
         self.assertEqual(r.stdout.count("newer"), 1)
         self.assertNotIn(first, r.stdout)
         self.assertNotIn(second, r.stdout)
@@ -279,11 +279,11 @@ exit 0
         self.assertNotIn("--ack all", calls)
         self.assertEqual(todo.count("id=open-2"), 1)
         self.assertEqual(todo.count("id=open-3"), 1)
-        self.assertEqual(calls.count("--turn start --tag wake"), 2)
+        self.assertEqual(calls.count("--turn start --tag wake"), 3)
         self.assertNotIn("--turn end", calls)
 
-    def test_a_seen_head_prints_once_per_wake(self):
-        """Process start prints the seen head and writes one token. The next poll reprints once. The poll after that stays quiet."""
+    def test_a_seen_head_reprints_until_ack(self):
+        """A seen head is printed on every poll until the seat acks it."""
         line = '{"id":"open-9","repo":"0xRayAI/xray","number":12,"title":"fleet","type":"packet"}'
         body = """
 if [[ "$*" == *"--turn"* || "$*" == *"--ack"* ]]; then exit 0; fi
@@ -297,11 +297,11 @@ exit 0
             hooks = self._hooks(d, "printf 'open\\t\\tbug\\n'")
             r, _calls = self._run(body, ["arch1"], dict({"INBOX_WATCH_MAX": "3", "INBOX_TODO_DIR": str(todo)}, **hooks))
         self.assertEqual(r.returncode, 0, r.stderr)
-        self.assertEqual(r.stdout.count("ACTION_REQUIRED"), 2)
-        self.assertEqual(r.stdout.count("fleet"), 2)
+        self.assertEqual(r.stdout.count("ACTION_REQUIRED"), 3)
+        self.assertEqual(r.stdout.count("fleet"), 3)
 
-    def test_a_new_wake_reprints_the_seen_head_once(self):
-        """Polls stay quiet. A wake token written during a poll reprints the head on the next poll only."""
+    def test_a_new_wake_does_not_silence_the_head(self):
+        """A wake token does not stop the head from reprinting on the later polls."""
         line = '{"id":"open-9","repo":"0xRayAI/xray","number":12,"title":"fleet","type":"packet"}'
         body = """
 if [[ "$*" == *"--turn"* || "$*" == *"--ack"* ]]; then exit 0; fi
@@ -319,8 +319,8 @@ exit 0
             hooks = self._hooks(d, "printf 'open\\t\\tbug\\n'")
             r, _calls = self._run(body, ["arch1"], dict({"INBOX_WATCH_MAX": "3", "INBOX_TODO_DIR": str(todo)}, **hooks))
         self.assertEqual(r.returncode, 0, r.stderr)
-        self.assertEqual(r.stdout.count("ACTION_REQUIRED"), 2)
-        self.assertEqual(r.stdout.count("fleet"), 2)
+        self.assertEqual(r.stdout.count("ACTION_REQUIRED"), 3)
+        self.assertEqual(r.stdout.count("fleet"), 3)
 
     def test_poison_id_all_is_not_acked(self):
         line = '{"id":"all","repo":"0xRayAI/xray","number":608,"title":"poison"}'

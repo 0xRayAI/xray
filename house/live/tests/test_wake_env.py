@@ -90,7 +90,7 @@ class WakeEnvFreshShell(unittest.TestCase):
         self.assertIn("export LIVE_URL=", bash_block())
         self.assertIn('export LIVE_CURSORS="$HOME/.burst/cursors"', bash_block())
         self.assertIn("house/live/tools/live-inbox", bash_block())
-        self.assertIn('trap \'"$INBOX" <seat> --turn end --tag wake; "$INBOX" <seat> --release\' EXIT', bash_block())
+        self.assertIn('trap \'"$INBOX" <seat> --peek || true; "$INBOX" <seat> --turn end --tag wake; "$INBOX" <seat> --release\' EXIT', bash_block())
         r = self.sh(script, OUT=str(recorded), XRAY_MAIN=str(main), LIVE_CURSORS="/workspace/.cursors")
         self.assertEqual(r.returncode, 0, r.stderr + r.stdout)
         rows = recorded.read_text().splitlines()
@@ -101,8 +101,9 @@ class WakeEnvFreshShell(unittest.TestCase):
         self.assertEqual(keys, str(self.home / ".burst" / "seat-keys"))
         self.assertRegex(wake_run, r"^\d+$")
         self.assertEqual(args, "forge")
-        self.assertEqual(rows[9], "forge --turn end --tag wake")
-        self.assertEqual(rows[14], "forge --release")
+        self.assertEqual(rows[9], "forge --peek")
+        self.assertEqual(rows[14], "forge --turn end --tag wake")
+        self.assertEqual(rows[19], "forge --release")
 
     def test_documented_ack_runs_with_seat(self):
         text = TEMPLATE.read_text()
@@ -142,8 +143,9 @@ class WakeEnvFreshShell(unittest.TestCase):
         rows = recorded.read_text().splitlines()
         self.assertEqual(rows[0], "--migrate-cursors")
         self.assertEqual(rows[1], "forge")
-        self.assertEqual(rows[2], "forge --turn end --tag wake")
-        self.assertEqual(rows[3], "forge --release")
+        self.assertEqual(rows[2], "forge --peek")
+        self.assertEqual(rows[3], "forge --turn end --tag wake")
+        self.assertEqual(rows[4], "forge --release")
 
     def test_migrate_reads_legacy_folders_under_the_root(self):
         legacy = self.home / "legacy"

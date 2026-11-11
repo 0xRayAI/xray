@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- The wake trap peeks the inbox before turn end. The open head reprints until it is acked.
+
 ## [0.1.14] - 2026-11-11
 
 - `stand-up-fleet` is the one pass for a new fleet: house, routes, then one suit per seat. It links the board deploy page and stops before pay and hangar shops.

@@ -3,9 +3,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { appendArchive, initArchive, recordId, appendTransition, transitionFromEvent } from './archive.mjs';
+import { boardOwnerLine, cardOwner } from './card-owner.mjs';
 import { chicagoDay } from './chicago-stamp.mjs';
 
 const PARKED = /\b(parked|blocked|waiting|icebox)\b/i;
+const CLOUD_LOGIN = /^cursor-?(?:cloud-?)?agents?(?:\[bot\])?$/i;
 const BC_ID = /\b(bc-[a-z0-9]+(?:-[a-z0-9]+)*)\b/gi;
 
 export function chooseRepos({ repos, collectorRepos, orgRepos } = {}) {
@@ -113,6 +115,14 @@ export function itemFromPull(repo, pull) {
   return item;
 }
 
+function assigneeLogin(row) {
+  const one = row && row.assignee && typeof row.assignee === 'object' ? row.assignee.login : '';
+  if (typeof one === 'string' && one) return one;
+  const list = Array.isArray(row && row.assignees) ? row.assignees : [];
+  const first = list.find((item) => item && typeof item.login === 'string' && item.login);
+  return first ? first.login : '';
+}
+
 function normalizeItem(repo, row, kind) {
   const user = row.user && typeof row.user === 'object' ? row.user.login : '';
   return {
@@ -120,6 +130,8 @@ function normalizeItem(repo, row, kind) {
     title: typeof row.title === 'string' ? row.title : '',
     url: typeof row.html_url === 'string' ? row.html_url : '',
     user: typeof user === 'string' ? user : '',
+    assignee: assigneeLogin(row),
+    board_owner: boardOwnerLine(row && row.body),
     created_at: typeof row.created_at === 'string' ? row.created_at : '',
     closed_at: typeof row.closed_at === 'string' ? row.closed_at : '',
     merged_at: '', merged_by: '', head_ref: '', draft: false,
@@ -199,9 +211,18 @@ function withSeat(row, login, seats) {
 
 function cardBase(item, seats) {
   const key = itemKey(item.repo, item.number);
+  const opener = seatOf(item.user, seats);
+  const assigned = seatOf(item.assignee, seats);
   return {
     key, repo: item.repo, number: item.number, title: item.title.slice(0, 120), url: item.url,
-    owner: seatOf(item.user, seats), kind: item.kind, labels: item.labels, agents: item.agents,
+    owner: cardOwner({
+      boardOwner: item.board_owner,
+      assignee: assigned,
+      opener,
+      cloud: CLOUD_LOGIN.test(String(item.user || '')),
+      operator: String(opener || '').toLowerCase() === 'operator' || String(item.user || '').toLowerCase() === 'operator',
+    }),
+    kind: item.kind, labels: item.labels, agents: item.agents,
     packet_ok: true,
   };
 }
