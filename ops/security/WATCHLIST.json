@@ -1564,16 +1564,15 @@
     "node": [
       {
         "where": "0xray engines",
-        "pin": ">=24.22.1",
+        "pin": ">=24.22.3",
         "watch": [
-          "Node 24 CVEs after 24.22.1",
-          "a later 24.x is allowed by engines and refused by CI until the pin moves"
+          "Node 24 CVEs after 24.22.3"
         ],
         "source": "package.json:41"
       },
       {
         "where": "xray-docs engines",
-        "pin": ">=24.22.1",
+        "pin": ">=24.22.3",
         "watch": [
           "same floor"
         ],
@@ -1581,7 +1580,7 @@
       },
       {
         "where": "@0xray/grok-bot engines",
-        "pin": ">=24.22.1",
+        "pin": ">=24.22.3",
         "watch": [
           "same floor"
         ],
@@ -1589,7 +1588,7 @@
       },
       {
         "where": "@0xray/foundry engines",
-        "pin": ">=24.22.1",
+        "pin": ">=24.22.3",
         "watch": [
           "same floor"
         ],
@@ -1597,7 +1596,7 @@
       },
       {
         "where": "@0xray/repertoire engines",
-        "pin": ">=24.22.1",
+        "pin": ">=24.22.3",
         "watch": [
           "same floor"
         ],
@@ -1605,7 +1604,7 @@
       },
       {
         "where": "live-board engines",
-        "pin": ">=24.22.1",
+        "pin": ">=24.22.3",
         "watch": [
           "same floor"
         ],
@@ -1613,7 +1612,7 @@
       },
       {
         "where": "recall-bench-dummy-app engines",
-        "pin": ">=24.22.1",
+        "pin": ">=24.22.3",
         "watch": [
           "same floor"
         ],
@@ -1623,7 +1622,7 @@
         "where": "CI env NODE_VERSION",
         "pin": "24.22.1",
         "watch": [
-          "security release newer than 24.22.1",
+          "CI is still 24.22.1 while engines are >=24.22.3",
           "no .nvmrc and no node-version matrix"
         ],
         "source": ".github/workflows/mill-ci.yml:20"

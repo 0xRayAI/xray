@@ -511,7 +511,7 @@ ${results.errors.length > 0 ? `**Errors:**\n${results.errors.map((e: string) => 
         "";
       const nodeVersion = nodeVersionOutput || "v1.2.0";
       if (!nodeMeetsPatchedLts(nodeVersion)) {
-        errors.push(`Node.js version ${nodeVersion} is too old. Requires 24.22.1+`);
+        errors.push(`Node.js version ${nodeVersion} is too old. Requires 24.22.3+`);
       }
     } catch (error) {
       errors.push("Cannot determine Node.js version");
@@ -1043,7 +1043,7 @@ ${results.warnings.length > 0 ? `**Warnings:**\n${results.warnings.map((w: strin
 
 }
 
-/** October 2026 patched LTS. 24.10.0 and Node 18/20/22 stay below this floor. */
+/** 11 Nov 2026 patched LTS. 24.22.1 and Node 18/20/22 stay below this floor. */
 function nodeMeetsPatchedLts(nodeVersion: string): boolean {
   const parts = nodeVersion.replace(/^v/, "").split(".");
   const major = parseInt(parts[0] || "0", 10);
@@ -1051,7 +1051,7 @@ function nodeMeetsPatchedLts(nodeVersion: string): boolean {
   const patch = parseInt(parts[2] || "0", 10);
   if (major !== 24) return major > 24;
   if (minor !== 22) return minor > 22;
-  return patch >= 1;
+  return patch >= 3;
 }
 
 // Start the server if run directly

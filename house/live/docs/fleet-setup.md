@@ -8,7 +8,7 @@ Seats (ours): blinky, critic, forge, herald, magnet, nibbler, sound, arch1 (`fee
 
 Other fleets upgrade the kit, then map seats. This install's seat files stay edited in place.
 
-- Node is 24.22.1. `engines.node` is `>=24.22.1`.
+- Node is 24.22.3. `engines.node` is `>=24.22.3`. Railway installs that binary from nodejs.org over `node:24.22.1-bookworm-slim`.
 - Seats. Copy the roster and the role map for the new fleet. Here, `feed/fleet-roster.json` lists the seats and `feed/routing/inbox-roles.json` is edited in place. A fresh install keeps the kit defaults in `feed/routing/inbox.py`.
 - Wake. `inbox-watch` posts `live-inbox <seat> --turn start --tag wake` after a poll that prints work. The seat posts `live-inbox <seat> --turn end` when the chat finishes. A cloud run posts `live-inbox <seat> --cloud` beside that turn. The cloud agent does not post the line.
 - Board rule. The stanza below is the owner prompt, the ack, and the cloud tags.

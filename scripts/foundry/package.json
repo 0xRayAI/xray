@@ -65,7 +65,7 @@
     "@elemaudio/offline-renderer": "^4.0.3"
   },
   "engines": {
-    "node": ">=24.22.1"
+    "node": ">=24.22.3"
   },
   "keywords": [
     "0xray",

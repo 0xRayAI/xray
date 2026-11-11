@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+- Node floor is `>=24.22.3`, the 11 Nov 2026 patched 24 release. Railway images install that binary from nodejs.org over `node:24.22.1-bookworm-slim`. Docker Hub has no `node:24.22.3` tag yet. CI stays on `24.22.1` until a workflows-permission push moves `.github/workflows`.
+
 - Wear copies bundle.md into the Grok plugin. Session boot reads it. #848
 
 - A green head acks a handoff ci_fail. The collector ci_fail line still clears too. #856

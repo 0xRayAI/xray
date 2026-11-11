@@ -22,7 +22,7 @@ The product is the **skeleton you wear**.
 - **Wear** — Grok, OpenCode, Hermes, OpenClaw, plus Cursor project hooks. One SSOT gate
 - **Muscle** — **Repertoire is preferred.** Vendored 0.2.9 ships **on**. Dest is named laws, not hangar `repo-*` or git slugs. Station is the wake ticket — not a substitute for Repertoire.
 
-Node >= 24.22.1. That is the runtime these packs are tested on. On an older Node, `npm install` prints `EBADENGINE` and still exits 0 when `engine-strict` is off. The warning means the install is outside that runtime. It does not mean Node 22 is supported.
+Node >= 24.22.3. That is the patched 24 release from 11 Nov 2026. Railway images install that binary from nodejs.org over `node:24.22.1-bookworm-slim`, because Docker Hub has no `node:24.22.3` tag yet. On an older Node, `npm install` prints `EBADENGINE` and still exits 0 when `engine-strict` is off. The warning means the install is outside that runtime. It does not mean Node 22 is supported.
 
 ```bash
 npm init -y
