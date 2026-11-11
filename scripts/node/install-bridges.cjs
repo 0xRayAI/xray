@@ -636,6 +636,7 @@ function registerGrokMcpServers(targetDir, log, env) {
   log("grok-bridge", "project mcp config written", "info", { path: tomlPath });
   const trustPath = trustGrokFolder(targetDir, env || process.env);
   log("grok-bridge", "folder trusted", "info", { path: trustPath });
+  process.stdout.write(`grok-trust: wrote ${trustPath}\n`);
 }
 
 
