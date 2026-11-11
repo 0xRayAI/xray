@@ -197,8 +197,8 @@ No .nvmrc and no .node-version in this checkout. CI is a single pin, not a versi
 | live-board engines | `>=24.22.1` | same floor | `house/live/app/package.json:12` |
 | recall-bench-dummy-app engines | `>=24.22.1` | same floor | `examples/ben-proof/dummy/package.json:14` |
 | CI env NODE_VERSION | `24.22.1` | security release newer than 24.22.1; no .nvmrc and no node-version matrix | `.github/workflows/mill-ci.yml:20` |
-| Docker root image | `node:24.22.1-bookworm-slim` | tag rebuild without a digest pin; bookworm CVEs; Node CVEs | `Dockerfile:2` |
-| Docker live-board image | `node:24.22.1-bookworm-slim` | same tag, plus apt python3 tzdata ca-certificates | `house/live/app/Dockerfile:2` |
+| Docker root image | `node:24.22.1-bookworm-slim + nodejs.org v24.22.3` | tag rebuild without a digest pin; bookworm CVEs; Node CVEs | `Dockerfile:2` |
+| Docker live-board image | `node:24.22.1-bookworm-slim + nodejs.org v24.22.3` | same tag, plus apt python3 tzdata ca-certificates | `house/live/app/Dockerfile:2` |
 
 Other workflow files that set `node-version` to `24.22.1` (or `${{ env.NODE_VERSION }}` where that env is `24.22.1`): `.github/workflows/auto-report.yml:43`, `.github/workflows/deploy-docs.yml:30`, `.github/workflows/dev-lane.yml:29`, `.github/workflows/enforce-agents-md.yml:22`, `.github/workflows/enforce-version-compliance.yml:22`, `.github/workflows/hermes-plugin.yml:41`, `.github/workflows/hermes-plugin.yml:66`, `.github/workflows/hermes-plugin.yml:123`, `.github/workflows/mill-ci.yml:20`, `.github/workflows/mill-ci.yml:30`, `.github/workflows/mill-ci.yml:45`, `.github/workflows/mill-ci.yml:65`, `.github/workflows/mill-ci.yml:82`, `.github/workflows/mill-ci.yml:101`, `.github/workflows/mill-ci.yml:117`, `.github/workflows/mill-ci.yml:130`, `.github/workflows/mill-ci.yml:144`, `.github/workflows/mill-monitor.yml:33`, `.github/workflows/processor-tests.yml:25`, `.github/workflows/processor-tests.yml:44`, `.github/workflows/processor-tests.yml:71`, `.github/workflows/publish.yml:16`, `.github/workflows/publish.yml:57`, `.github/workflows/release.yml:33`, `.github/workflows/security-audit.yml:19`, `.github/workflows/security-audit.yml:55`, `.github/workflows/security-monitoring.yml:23`, `.github/workflows/security.yml:18`.
 
@@ -297,6 +297,6 @@ Every `uses:` line. None are SHA-pinned.
 
 | Image | What to watch | Source |
 | --- | --- | --- |
-| `node:24.22.1-bookworm-slim` | digest drift; Node CVE; bookworm CVE | `Dockerfile:2` |
-| `node:24.22.1-bookworm-slim` | same, plus apt packages python3 tzdata ca-certificates | `house/live/app/Dockerfile:2` |
+| `node:24.22.1-bookworm-slim + nodejs.org v24.22.3` | digest drift; Node CVE; bookworm CVE | `Dockerfile:2` |
+| `node:24.22.1-bookworm-slim + nodejs.org v24.22.3` | same, plus apt packages python3 tzdata ca-certificates | `house/live/app/Dockerfile:2` |
 
