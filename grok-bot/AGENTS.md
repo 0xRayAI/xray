@@ -2,6 +2,8 @@
 
 **Read first:** [`OP-PROC.md`](OP-PROC.md) — the one-page operating procedure.
 
+Node >= 24.22.3. That is the patched 24 release from 11 Nov 2026.
+
 You are setting up **Grok Bot agents** on the 0xRay factory OS.
 
 ## Goal
@@ -15,7 +17,7 @@ For **each key agent** (coordinator, implementer, reviewer, publisher, …):
 Do **not** share one suit across all agents on a machine if you can avoid it. Multiplicity is the point.
 
 ## Prove this seat
-From the agent project root: `npx @0xray/grok-bot doctor` (alias `ready`). PASS means mill + inspect are fastened. House lookup uses `GROK_BOT_HOUSE` when set, otherwise a walk-up for `house/HOUSE.md`. It warns when that file is missing and fails when example lines are still unfilled. The same printout lists hangar (`npx groover-hangar`) and Clearing next steps (402, `~/.ows`, ZigZag), unless HOUSE.md has a line that is exactly `wallet off`. Do not mill-plant Clearing into 0xRay.
+From the agent project root: `npx @0xray/grok-bot doctor` (alias `ready`). The first line is `@0xray/grok-bot@<version> doctor — 0xray@<version> — seat plant check`. A missing 0xray prints `0xray not installed`. The folder line is `Project:`. PASS means mill + inspect are fastened. House lookup uses `GROK_BOT_HOUSE` when set, otherwise a walk-up for `house/HOUSE.md`. It warns when that file is missing and fails when example lines are still unfilled. House off is `enabled: false` with the detail `house is not enabled here`, and the Board line is omitted. A bridge that points outside this folder is `Bridges: WARN`. A packed `node_modules/0xray/vendor/@0xray/repertoire` counts as present. The same printout lists hangar (`npx groover-hangar`) and Clearing next steps (402, `~/.ows`, ZigZag), unless HOUSE.md has a line that is exactly `wallet off`. Do not mill-plant Clearing into 0xRay.
 
 ## Order (complete path)
 Follow `SKILLS.md` in this order **per agent**:

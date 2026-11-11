@@ -36,7 +36,7 @@ npx @0xray/grok-bot house init
 npx @0xray/grok-bot doctor
 ```
 
-`git init` is needed for the git hooks and the Cursor hook line. `house init` is not part of wear. A doctor run before HOUSE.md is filled exits 1 with `House: FAIL`. That is the intended gate, not an install error. On a fresh seat, doctor also WARNs that the activity log has no JSON line and that STATION.md has no `Skills:` or `Keys:` line. Those WARNs do not fail doctor. They clear when the seat's first station run writes the Skills: and Keys: lines and its first activity line.
+`git init` is needed for the git hooks and the Cursor hook line. `house init` is not part of wear. A doctor run before HOUSE.md is filled exits 1 with `House: FAIL`. That is the intended gate, not an install error. The first doctor line is `@0xray/grok-bot@<version> doctor — 0xray@<version> — seat plant check`. A missing 0xray prints `0xray not installed`. The folder line is `Project:`. House off is `enabled: false` with the detail `house is not enabled here`, and the Board line is omitted. A bridge that points outside this folder is `Bridges: WARN`. A packed `node_modules/0xray/vendor/@0xray/repertoire` counts as present. On a fresh seat, doctor also WARNs that the activity log has no JSON line and that STATION.md has no `Skills:` or `Keys:` line. Those WARNs do not fail doctor. They clear when the seat's first station run writes the Skills: and Keys: lines and its first activity line.
 
 Local packs use the same steps with files: `npm install ./0xray-<file>.tgz`, then `npm install ./0xray-grok-bot-<file>.tgz`. Do not extract the tarballs by hand. Each one unpacks into a directory named `package/`, so two extracts in one folder collide.
 
