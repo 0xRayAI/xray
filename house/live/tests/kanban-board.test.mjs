@@ -3,9 +3,22 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { launchBoard } from './board-browser.mjs';
+
+const ART = (() => {
+  const preferred = '/opt/cursor/artifacts';
+  try {
+    fs.mkdirSync(preferred, { recursive: true });
+    return preferred;
+  } catch {
+    const fallback = path.join(os.tmpdir(), 'kanban-board-artifacts');
+    fs.mkdirSync(fallback, { recursive: true });
+    return fallback;
+  }
+})();
 
 const PUB = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app', 'public');
 
@@ -409,8 +422,8 @@ test('column headers stay visible after the card area scrolls', async () => {
     assert.ok(scrolled.stuck.length >= 1, JSON.stringify(scrolled.stuck));
     assert.match(scrolled.stuck[0], /\(\d+\)/);
 
-    await page.locator('#kanbanBoard').screenshot({ path: '/opt/cursor/artifacts/kanban-column-headers.png' });
-    await page.locator('#wave').screenshot({ path: '/opt/cursor/artifacts/wave-status-header.png' });
+    await page.locator('#kanbanBoard').screenshot({ path: path.join(ART, 'kanban-column-headers.png') });
+    await page.locator('#wave').screenshot({ path: path.join(ART, 'wave-status-header.png') });
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
     const pinned = await page.evaluate(() => {
       const head = document.querySelector('main > header').getBoundingClientRect();
@@ -426,7 +439,7 @@ test('column headers stay visible after the card area scrolls', async () => {
     assert.ok(pinned.headTop <= 1, JSON.stringify(pinned));
     assert.ok(pinned.h1Bottom > 0 && pinned.h1Top < pinned.view, JSON.stringify(pinned));
 
-    await page.screenshot({ path: '/opt/cursor/artifacts/kanban-headers-stuck.png', fullPage: false });
+    await page.screenshot({ path: path.join(ART, 'kanban-headers-stuck.png'), fullPage: false });
   } finally {
     if (browser) await browser.close();
     await new Promise((resolve) => server.close(resolve));

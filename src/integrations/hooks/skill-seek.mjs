@@ -85,13 +85,14 @@ function skillFromPlate(plate, known, cardSkills) {
   if (!plate || typeof plate !== "object") return "";
   const id = String(plate.id || "").trim();
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(id)) return "";
+  // A plate id that is not a skill declines before the card's first skill is used.
+  if (PLATE_ONLY.has(id)) return "";
   if (typeof cardSkills === "function") {
     const first = skillIdsFromRow(cardSkills(id))[0] || "";
     if (first && (!known || known.has(first))) return first;
   }
   const mapped = Object.prototype.hasOwnProperty.call(PLATE_SKILL, id) ? PLATE_SKILL[id] : "";
   if (mapped && (!known || known.has(mapped))) return mapped;
-  if (PLATE_ONLY.has(id)) return "";
   if (known && !known.has(id)) return "";
   return id;
 }

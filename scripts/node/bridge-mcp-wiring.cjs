@@ -764,6 +764,18 @@ function noteMachineBridgesSkipped() {
 
 function isEphemeralInstallRoot(targetDir) {
   const normalized = String(targetDir || "").replace(/\\/g, "/");
+  // A simulated machine home lives under the temp dir in tests. That home is
+  // the durable wear, not an ephemeral package.
+  let home = "";
+  try {
+    home = String(millSuit.machineHome() || "").replace(/\\/g, "/");
+  } catch {
+    home = "";
+  }
+  if (home) {
+    const prefix = home.endsWith("/") ? home : `${home}/`;
+    if (normalized === home || normalized.startsWith(prefix)) return false;
+  }
   return /\/T\/|\/tmp\/|\/var\/folders\/|\/Temp\//i.test(normalized);
 }
 

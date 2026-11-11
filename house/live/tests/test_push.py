@@ -39,6 +39,21 @@ class Base(unittest.TestCase):
     def write(self, f):   # atomic replace, like live_mesh.write
         tmp = self.d / f"f.json.{os.getpid()}"; tmp.write_text(json.dumps(f)); os.replace(tmp, self.feed)
 
+    def lock_free(self, path):
+        """True when nothing holds the push lock. flock(1) on Linux, fcntl here otherwise."""
+        import shutil
+        if shutil.which("flock"):
+            return subprocess.run(["flock", "-n", str(path), "true"]).returncode == 0
+        import fcntl
+        fd = os.open(path, os.O_RDWR | os.O_CREAT, 0o600)
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            return True
+        except BlockingIOError:
+            return False
+        finally:
+            os.close(fd)
+
     def run_pusher(self, seconds, during=None, **env):
         p = subprocess.Popen(["bash", str(SCRIPT)], env=dict(self.env, **env))
         try:
@@ -103,8 +118,7 @@ class PushOnWriteTest(Base):
         self.assertLessEqual(len(Ingest.hits), 2)
         self.assertFalse((self.d / "acked.json").exists())
         time.sleep(0.3)                         # TERMed pusher's sleep must not keep the lock
-        rc = subprocess.run(["flock", "-n", str(self.d / "push.log.lock"), "true"]).returncode
-        self.assertEqual(rc, 0)
+        self.assertTrue(self.lock_free(self.d / "push.log.lock"))
 
 
 class FakeGitHub(http.server.BaseHTTPRequestHandler):

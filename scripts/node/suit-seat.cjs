@@ -269,8 +269,8 @@ function restampFresh(text, version) {
 function restampRepertoire(text, root) {
   const line = repertoireLine(root);
   if (!line) return text;
+  // A seat-kept station gains a Repertoire row only when it already has one.
   if (/^Repertoire:.*$/m.test(text)) return text.replace(/^Repertoire:.*$/m, line);
-  if (/^Fresh:.*$/m.test(text)) return text.replace(/^(Fresh:.*)$/m, `$1\n${line}`);
   return text;
 }
 

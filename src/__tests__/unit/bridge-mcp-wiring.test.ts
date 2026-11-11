@@ -360,7 +360,9 @@ describe('bridge-mcp-wiring', () => {
       expect(pluginMcp.mcpServers.goggles.args?.[0]).toBe(linkLaunch);
       expect(pluginMcp.mcpServers.repertoire.args?.[0]).toBe(linkLaunch);
       const skillDir = path.join(targetDir, '.grok', 'plugins', '0xray', 'skills');
-      const skills = existsSync(skillDir) ? readdirSync(skillDir).length : 0;
+      const skills = existsSync(skillDir)
+        ? readdirSync(skillDir).filter((name) => existsSync(path.join(skillDir, name, 'SKILL.md')))
+        : [];
       const catalog = new Set<string>();
       for (const dir of ['src/skills', 'dist/skills']) {
         const abs = path.join(packageRoot, dir);
@@ -369,11 +371,19 @@ describe('bridge-mcp-wiring', () => {
           if (existsSync(path.join(abs, name, 'SKILL.md'))) catalog.add(name);
         }
       }
-      expect(skills).toBe(catalog.size);
+      for (const name of ['mill', 'inspect']) {
+        if (existsSync(path.join(packageRoot, 'scripts/foundry/plant/skills', name, 'SKILL.md'))) {
+          catalog.add(name);
+        }
+      }
+      expect(new Set(skills)).toEqual(catalog);
       expect(first.hooks).toContain(path.join(targetDir, 'node_modules', '0xray', 'scripts', 'mjs', 'run-grok-hook.mjs'));
       expect(first.hooks).not.toContain(path.join(packageRoot, 'scripts', 'mjs', 'run-grok-hook.mjs'));
       wear();
-      expect(existsSync(skillDir) ? readdirSync(skillDir).length : 0).toBe(skills);
+      const again = existsSync(skillDir)
+        ? readdirSync(skillDir).filter((name) => existsSync(path.join(skillDir, name, 'SKILL.md')))
+        : [];
+      expect(again.sort()).toEqual([...skills].sort());
       expect(readFileSync(mcpPath, 'utf8')).toBe(first.mcp);
       expect(readFileSync(grokToml, 'utf8')).toBe(first.toml);
       expect(readFileSync(grokHooks, 'utf8')).toBe(first.hooks);
