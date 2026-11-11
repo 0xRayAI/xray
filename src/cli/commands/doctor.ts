@@ -31,7 +31,7 @@ export function runDoctor(cwd: string, nodeVersion: string = process.version): D
 
   if (!nodeMeetsPatchedLts(nodeVersion)) {
     issues.push("Node.js version too old");
-    fixes.push("Upgrade to Node.js 24.22.1+");
+    fixes.push("Upgrade to Node.js 24.22.3+");
   } else {
     lines.push(`✅ Node.js version: ${nodeVersion}`);
   }
@@ -135,7 +135,7 @@ function repertoireOnDisk(cwd: string): string | null {
   return null;
 }
 
-/** October 2026 patched LTS. 24.10.0 and Node 18/20/22 stay below this floor. */
+/** 11 Nov 2026 patched LTS. 24.22.1 and Node 18/20/22 stay below this floor. */
 function nodeMeetsPatchedLts(nodeVersion: string): boolean {
   const parts = nodeVersion.replace(/^v/, "").split(".");
   const major = parseInt(parts[0] || "0", 10);
@@ -143,5 +143,5 @@ function nodeMeetsPatchedLts(nodeVersion: string): boolean {
   const patch = parseInt(parts[2] || "0", 10);
   if (major !== 24) return major > 24;
   if (minor !== 22) return minor > 22;
-  return patch >= 1;
+  return patch >= 3;
 }

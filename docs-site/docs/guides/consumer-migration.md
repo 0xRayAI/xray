@@ -38,7 +38,7 @@ These steps are on main and are not stamped yet.
 A fleet on 4.1.3 follows this path. The v3 consumer steps below stay as they are.
 
 1. Install and wear. `npm install 0xray`, then `npx 0xray wear`. The version is the one in `package.json`.
-2. Node is 24.22.1. `engines.node` is `>=24.22.1`. A bare "Node 24" is not the pin.
+2. Node is 24.22.3. `engines.node` is `>=24.22.3`. A bare "Node 24" is not the pin. The 11 Nov 2026 release is the floor. Railway installs that binary from nodejs.org until Docker Hub publishes `node:24.22.3`.
 3. Board. When `LIVE_URL` is set, the board is the collector. The board rule is in `house/live/docs/fleet-setup.md`. On every owner message run `live-inbox <seat> --prompt --from owner --note "<gist>"`.
 4. Inbox watch. When Bifrost is on, the only TUI monitor is `$XRAY_MAIN/house/live/tools/inbox-watch.sh <seat>`. After a poll that prints work it posts `live-inbox <seat> --turn start --tag wake`. An empty poll does not end the turn. The seat posts `live-inbox <seat> --turn end` when the chat finishes.
 5. Cloud. A cloud run posts `live-inbox <seat> --cloud` beside the turn. The tag is `owner/repo#n` or `xray#n`. The cloud agent does not post that line. Turn start uses `--tag "bc-<first8> <track>"`. Turn end uses `--tag "bc-<first8>"`.

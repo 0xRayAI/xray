@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+Node floor is `>=24.22.3`, the 11 Nov 2026 patched 24 release. The 0.1.13 note below records the older floor.
+
 ## [0.1.15] - 2026-11-04
 
 Herald plant (`herald` + `herald-inspect` + `herald-write`), aliases `write` / `brand`. `foundry.json` `{ "plant": "herald", "costume": false }` fastens the H-lane Dist write mill and turns mill off (seat pin documented; not worn yet). `npx @0xray/foundry herald draft` writes `.xray/herald/draft.md` and `.xray/herald-write-receipt.json`; missing brief, non-H lane, missing friend-hear, empty body, or missing draft fail closed. Receipt is always `dist: HOLD`, `sent: false`. `herald inspect` quotes the last receipt. No network. Not the eng mill. Not scout. Not Dist packaging.

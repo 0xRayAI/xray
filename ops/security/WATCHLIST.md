@@ -189,14 +189,14 @@ No .nvmrc and no .node-version in this checkout. CI is a single pin, not a versi
 
 | Where | Pin | What to watch | Source |
 | --- | --- | --- | --- |
-| 0xray engines | `>=24.22.1` | Node 24 CVEs after 24.22.1; a later 24.x is allowed by engines and refused by CI until the pin moves | `package.json:41` |
-| xray-docs engines | `>=24.22.1` | same floor | `docs-site/package.json:46` |
-| @0xray/grok-bot engines | `>=24.22.1` | same floor | `grok-bot/package.json:56` |
-| @0xray/foundry engines | `>=24.22.1` | same floor | `scripts/foundry/package.json:61` |
-| @0xray/repertoire engines | `>=24.22.1` | same floor | `vendor/@0xray/repertoire/package.json:27` |
-| live-board engines | `>=24.22.1` | same floor | `house/live/app/package.json:12` |
-| recall-bench-dummy-app engines | `>=24.22.1` | same floor | `examples/ben-proof/dummy/package.json:14` |
-| CI env NODE_VERSION | `24.22.1` | security release newer than 24.22.1; no .nvmrc and no node-version matrix | `.github/workflows/mill-ci.yml:20` |
+| 0xray engines | `>=24.22.3` | Node 24 CVEs after 24.22.3 | `package.json:41` |
+| xray-docs engines | `>=24.22.3` | same floor | `docs-site/package.json:46` |
+| @0xray/grok-bot engines | `>=24.22.3` | same floor | `grok-bot/package.json:56` |
+| @0xray/foundry engines | `>=24.22.3` | same floor | `scripts/foundry/package.json:61` |
+| @0xray/repertoire engines | `>=24.22.3` | same floor | `vendor/@0xray/repertoire/package.json:27` |
+| live-board engines | `>=24.22.3` | same floor | `house/live/app/package.json:12` |
+| recall-bench-dummy-app engines | `>=24.22.3` | same floor | `examples/ben-proof/dummy/package.json:14` |
+| CI env NODE_VERSION | `24.22.1` | still the workflow pin; engines are now `>=24.22.3`. The app cannot edit `.github/workflows` | `.github/workflows/mill-ci.yml:20` |
 | Docker root image | `node:24.22.1-bookworm-slim + nodejs.org v24.22.3` | tag rebuild without a digest pin; bookworm CVEs; Node CVEs | `Dockerfile:2` |
 | Docker live-board image | `node:24.22.1-bookworm-slim + nodejs.org v24.22.3` | same tag, plus apt python3 tzdata ca-certificates | `house/live/app/Dockerfile:2` |
 
