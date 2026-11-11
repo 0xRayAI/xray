@@ -33,6 +33,15 @@
 - The stamp-plate diagram reads left to right: goggles, stamp, lens, look. The kit edges match the piping. #885
 - The House goggles line is Nibbler only. The trailing clause is gone. #874 #882 #883
 
+## [4.2.2] - 2026-11-11
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: live inbox maintenance (#1021) (acb5b60e5)
+
+---
+
 ## [4.2.1] - 2026-11-05
 
 ### 🔄 Changes
