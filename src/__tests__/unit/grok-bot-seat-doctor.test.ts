@@ -381,6 +381,7 @@ describe('grok-bot seat doctor — CLI', () => {
       expect(report.house.detail).toBe('house is not enabled here');
       expect(report.ok).toBe(true);
       expect(formatDoctor(report)).toMatch(/House: WARN — house is not enabled here/);
+      expect(formatDoctor(report)).not.toMatch(/^Board:/m);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

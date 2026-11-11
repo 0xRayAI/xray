@@ -216,9 +216,15 @@ describe('board when Bifrost is not configured', () => {
     try {
       const unset = diagnoseSeat({ cwd: dir, env: {} });
       expect(unset.board).toEqual({ board: 'waveboard', read: 'house/WAVEBOARD.md' });
-      expect(formatDoctor(unset as { ok: boolean; next: string[] })).toContain('Board: house/WAVEBOARD.md');
+      expect(formatDoctor(unset as { ok: boolean; next: string[] })).not.toMatch(/^Board:/m);
       const set = diagnoseSeat({ cwd: dir, env: { LIVE_URL: 'https://bifrost.0xray.dev' } });
-      expect(formatDoctor(set as { ok: boolean; next: string[] })).toContain('Board: GET /cards');
+      expect(formatDoctor(set as { ok: boolean; next: string[] })).not.toMatch(/^Board:/m);
+      mkdirSync(path.join(dir, 'house'));
+      writeFileSync(path.join(dir, 'house', 'HOUSE.md'), '# House\n\n## Owner\nAda.\n');
+      const housed = diagnoseSeat({ cwd: dir, env: {} });
+      expect(formatDoctor(housed as { ok: boolean; next: string[] })).toContain('Board: house/WAVEBOARD.md');
+      const housedLive = diagnoseSeat({ cwd: dir, env: { LIVE_URL: 'https://bifrost.0xray.dev' } });
+      expect(formatDoctor(housedLive as { ok: boolean; next: string[] })).toContain('Board: GET /cards');
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
