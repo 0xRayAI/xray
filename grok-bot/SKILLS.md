@@ -1,5 +1,7 @@
 # SKILLS.md — @0xray/grok-bot
 
+A new fleet runs [stand-up-fleet](skills/stand-up-fleet/SKILL.md) once. That pass is the house, the board routes, then one suit per seat. It stops before pay and hangar shops.
+
 Primary scripts for agents. Run in order for **each** key agent.
 
 | Skill | When to use |

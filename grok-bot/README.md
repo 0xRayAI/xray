@@ -5,7 +5,7 @@
 
 **Read first:** [`OP-PROC.md`](OP-PROC.md) — the one-page operating procedure.
 
-Board: `house/WAVEBOARD.md` when `LIVE_URL` is unset, and Bifrost cards (`GET /cards`) when `LIVE_URL` is set, plus `house/ATTENTION_STATE.md` (your project house, not in this package). If `house/` is missing, run `npx @0xray/grok-bot house init` (skill [`setup-house`](skills/setup-house/SKILL.md)). It copies [`templates/house/`](templates/house/), including `watchers/` and `fleet/`, and refuses to overwrite. `house init --migrate` moves an old `ops/WAVEBOARD.md` into `house/WAVEBOARD.md`, starts missing files, and appends the template `## Cadence` block when `HOUSE.md` lacks it. When both boards exist and `house/WAVEBOARD.md` is not the untouched template, migrate exits 1 and writes nothing. It does not overwrite a ledger.
+Board: `house/WAVEBOARD.md` when `LIVE_URL` is unset, and Bifrost cards (`GET /cards`) when `LIVE_URL` is set, plus `house/ATTENTION_STATE.md` (your project house, not in this package). A new fleet runs [`stand-up-fleet`](skills/stand-up-fleet/SKILL.md) once: house, routes, then one suit per seat. It does not start a Bifrost server. If `house/` is missing, run `npx @0xray/grok-bot house init` (skill [`setup-house`](skills/setup-house/SKILL.md)). It copies [`templates/house/`](templates/house/), including `watchers/` and `fleet/`, and refuses to overwrite. `house init --migrate` moves an old `ops/WAVEBOARD.md` into `house/WAVEBOARD.md`, starts missing files, and appends the template `## Cadence` block when `HOUSE.md` lacks it. When both boards exist and `house/WAVEBOARD.md` is not the untouched template, migrate exits 1 and writes nothing. It does not overwrite a ledger.
 
 | House file | What |
 |---|---|
