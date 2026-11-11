@@ -2,13 +2,26 @@
 
 ## Unreleased
 
-- Node floor is `>=24.22.3`, the 11 Nov 2026 patched 24 release.
-
-- Board rule. On every owner message run `live-inbox <seat> --prompt --from owner --note "<gist>"`. Ack a handled line with `live-inbox <seat> --ack <id>`, or `live-inbox <seat> --ack all` once every open line is handled. A cloud agent run uses `live-inbox <seat> --turn start --tag "bc-<first8> <track>"` beside `live-inbox <seat> --cloud launch --agent <bc-id> --tag <card>` on first start or `--cloud reply` on resume, and `live-inbox <seat> --turn end --tag "bc-<first8>"` beside `live-inbox <seat> --cloud finished --agent <bc-id> --tag <card>` (cancel is `--cloud cancel`). The tag is owner/repo#n or xray#n. The cloud agent does not post that line. `--from owner` is required today.
+- Node floor is `>=24.22.3`, the 11 Nov 2026 patched 24 release. README, AGENTS, and llms name that floor. #1015
+- Doctor first line is `@0xray/grok-bot@<version> doctor — 0xray@<version> — seat plant check`. A missing 0xray prints `0xray not installed`. The folder line is `Project:`. #998
+- House off is `enabled: false` and the detail `house is not enabled here`. The Board line is omitted. #999 #1009
+- A bridge that points outside this folder prints `Bridges: WARN`. The same folder prints `Bridges: ok`. #1011
+- A packed `node_modules/0xray/vendor/@0xray/repertoire` counts as present. #1005
+- OP-PROC records the eight 2026-11-09 fleet rules. #918
+- Every wake runs station Full and the wrap-up. #913 #942 #954
+- Critic owns the backlog sweep. #900
+- A seat bot comment does not wake another seat. #976 #978
+- Wake does not clone. It fast-forwards the checkout that is already there. #959 #960
+- A closed beat cuts the next eng beat. #895
 
 ## [0.1.13] - 2026-11-03
 
 - The owner-message board rule names the cloud tags on the same lines as turn start and turn end. The tag is owner/repo#n or xray#n. `--from owner` stays required. The cloud agent does not post that line.
+- Board rule. On every owner message run `live-inbox <seat> --prompt --from owner --note "<gist>"`. Ack a handled line with `live-inbox <seat> --ack <id>`, or `live-inbox <seat> --ack all` once every open line is handled. A cloud agent run uses `live-inbox <seat> --turn start --tag "bc-<first8> <track>"` beside `live-inbox <seat> --cloud launch --agent <bc-id> --tag <card>` on first start or `--cloud reply` on resume, and `live-inbox <seat> --turn end --tag "bc-<first8>"` beside `live-inbox <seat> --cloud finished --agent <bc-id> --tag <card>` (cancel is `--cloud cancel`). The tag is owner/repo#n or xray#n. The cloud agent does not post that line. `--from owner` is required today.
+- The pack ships `lib/next-wave.mjs` beside `lib/pulsar-game.mjs`. #749
+- The hotpack runbook names tip, soft follow-up, strip, rewear, mainstay, Dist GO, and graduate. #725
+- The wave rank lives in this package. It does not import the house tree. A dormant redeploy refuses `git push origin master` and `git reset --hard`. #517 #516
+- Goggles in OP-PROC is Nibbler only. The trailing clause is gone. #873 #874 #882 #883
 
 ## [0.1.12] - 2026-10-23
 
