@@ -25,4 +25,4 @@ Who does which job is a separate plate (`docs-site/docs/plates/fleet.md`).
 
 Write consult@0xray.dev. The ops site is https://ops.0xray.dev.
 
-stamped · 0xray 4.1.5
+stamped · 0xray 4.2.1

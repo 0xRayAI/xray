@@ -23,4 +23,4 @@ Spend, credentials, and destructive deletes stay with a person (`grok-bot/ops/OP
 
 The ops site is https://ops.0xray.dev/guides/compute-discipline/.
 
-stamped · 0xray 4.1.5
+stamped · 0xray 4.2.1

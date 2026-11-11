@@ -66,4 +66,4 @@ Each one is a card. One top file. The planes stay dev, integration, domain, and 
 
 One noun, one view. The four job names stay slots, not drawings.
 
-stamped · 0xray 4.1.5
+stamped · 0xray 4.2.1

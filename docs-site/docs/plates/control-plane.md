@@ -24,4 +24,4 @@ One issue or pull request is the record, on its own branch, and it does not sit 
 
 The ops site is https://ops.0xray.dev/guides/control-plane/.
 
-stamped · 0xray 4.1.5
+stamped · 0xray 4.2.1

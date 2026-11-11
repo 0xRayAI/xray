@@ -22,4 +22,4 @@ The public map reads left to right: start, run the work, gate it, then scale it.
 
 Write consult@0xray.dev. The ops site is https://ops.0xray.dev/guides/.
 
-stamped · 0xray 4.1.5
+stamped · 0xray 4.2.1
