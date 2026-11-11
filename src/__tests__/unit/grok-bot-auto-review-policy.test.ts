@@ -10,10 +10,10 @@ function readKit(rel: string): string {
 }
 
 describe('grok-bot Auto Review ops pack', () => {
-  it('pins the kit version to 0.1.13', () => {
+  it('pins the kit version to 0.1.14', () => {
     const pkg = JSON.parse(readKit('package.json')) as { name: string; version: string };
     expect(pkg.name).toBe('@0xray/grok-bot');
-    expect(pkg.version).toBe('0.1.13');
+    expect(pkg.version).toBe('0.1.14');
   });
 
   it('locks Ask-first capital rules and Dist/git Allow', () => {
