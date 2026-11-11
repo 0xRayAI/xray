@@ -4,7 +4,9 @@
 
 Quick reference for the 0xRay suit worn on **{{CONSUMER_NAME}}**{{CONSUMER_VERSION_PAREN}}.
 
-**4.1** — a suit that survives the context window
+**4.2** — a suit that survives the context window
+
+Node >= 24.22.3. That is the patched 24 release from 11 Nov 2026.
 
 Confer votes. Burst runs the swarm.
 
