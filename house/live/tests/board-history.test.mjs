@@ -85,23 +85,36 @@ test('an older card row with no updated_ct fills it from last_beat_t', () => {
   fs.rmSync(data, { recursive: true, force: true });
 });
 
-function start(data, extra) {
-  const port = 22000 + Math.floor(Math.random() * 20000);
+async function start(data, extra) {
   const ingest = crypto.randomBytes(32).toString('hex');
   const password = 'pw-' + crypto.randomBytes(4).toString('hex');
   const child = spawn(process.execPath, [path.join(APP, 'server.mjs')], {
     env: {
-      PORT: String(port), MESH_PASSWORD: password,
+      PORT: '0', MESH_PASSWORD: password,
       SESSION_SECRET: crypto.randomBytes(32).toString('hex'), INGEST_SECRET: ingest,
       PATH: process.env.PATH, MESH_DATA_DIR: data, COLLECTOR: 'on', ...extra,
     },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   let logs = '';
-  child.stdout.on('data', d => { logs += d; });
-  child.stderr.on('data', d => { logs += d; });
-  const base = `http://127.0.0.1:${port}`;
-  return { child, base, ingest, password, logs: () => logs };
+  const port = await new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('listen line missing\n' + logs)), 8000);
+    const onData = (chunk) => {
+      logs += chunk;
+      const match = /live mesh listening on :(\d+)/.exec(logs);
+      if (!match) return;
+      clearTimeout(timer);
+      child.stdout.off('data', onData);
+      child.stderr.off('data', onData);
+      resolve(match[1]);
+    };
+    child.stdout.on('data', onData);
+    child.stderr.on('data', onData);
+  });
+  const keep = (chunk) => { logs += chunk; };
+  child.stdout.on('data', keep);
+  child.stderr.on('data', keep);
+  return { child, base: `http://127.0.0.1:${port}`, ingest, password, logs: () => logs };
 }
 
 async function ready(base, logs) {
@@ -116,10 +129,12 @@ async function ready(base, logs) {
 }
 
 async function stop(child) {
-  if (!child || child.exitCode != null) return;
+  if (!child || child.exitCode != null || child.signalCode) return;
   const done = new Promise(r => child.once('exit', r));
-  child.kill();
+  child.kill('SIGTERM');
+  const timer = setTimeout(() => { try { child.kill('SIGKILL'); } catch { /* already gone */ } }, 2000);
   await done;
+  clearTimeout(timer);
 }
 
 test('a CI push after a merge does not move the card clock; the queue does not delete the inbox', async () => {
@@ -145,7 +160,7 @@ test('a CI push after a merge does not move the card clock; the queue does not d
       { id: 'gh-merge', t_ct: mergeCi, kind: 'check_run', conclusion: 'success', repo: 'example/repo', sha: 'abc9999deadbeef000000000', from: 'GitHub' },
     ],
   }));
-  const srv = start(data);
+  const srv = await start(data);
   try {
     await ready(srv.base, srv.logs);
     const login = await fetch(srv.base + '/login', { method: 'POST', redirect: 'manual', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'password=' + encodeURIComponent(srv.password) });
@@ -186,7 +201,7 @@ test('a merge on a closed card advances the card clock; a later check does not',
       { id: 'ci-317', t_ct: ciAt, kind: 'check_run', conclusion: 'success', repo: 'example/repo', number: 317, from: 'GitHub' },
     ],
   }));
-  const srv = start(data, { SERVER_ROUTING: 'off' });
+  const srv = await start(data, { SERVER_ROUTING: 'off' });
   try {
     await ready(srv.base, srv.logs);
     const login = await fetch(srv.base + '/login', { method: 'POST', redirect: 'manual', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'password=' + encodeURIComponent(srv.password) });
@@ -205,7 +220,7 @@ test('a saved wake is last_ok after restart; a seat that never woke stays null',
   const iso = '2026-10-14T17:40:00.000Z';
   fs.mkdirSync(path.join(data, 'live'), { recursive: true });
   fs.writeFileSync(path.join(data, 'live', 'wake-ok.json'), JSON.stringify({ forge: iso, sound: iso }));
-  const srv = start(data, {
+  const srv = await start(data, {
     COLLECTOR: 'off', SERVER_ROUTING: 'off',
     SEAT_WEBHOOKS: JSON.stringify({
       forge: { url: 'http://127.0.0.1:9/forge' },
@@ -233,7 +248,7 @@ test('the open queue hides parked seats and arch10x lines from a previous Chicag
   const day = ms => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(ms));
   let old = now - 26 * 3600 * 1000;
   if (day(old) >= day(now)) old = now - 48 * 3600 * 1000;
-  const srv = start(data, { COLLECTOR: 'off', SERVER_ROUTING: 'off' });
+  const srv = await start(data, { COLLECTOR: 'off', SERVER_ROUTING: 'off' });
   try {
     await ready(srv.base, srv.logs);
     const lines = [
@@ -268,7 +283,7 @@ test('openLines skips a parked seat until the roster reloads, and an owner promp
   const heraldKey = 'hk-' + crypto.randomBytes(8).toString('hex');
   const forgeKey = 'fk-' + crypto.randomBytes(8).toString('hex');
   const hash = (s) => crypto.createHash('sha256').update(s).digest('hex');
-  const srv = start(data, {
+  const srv = await start(data, {
     COLLECTOR: 'off', SERVER_ROUTING: 'off', BIFROST_ROSTER: roster, BIFROST_CLOCK_SEATS: 'forge',
     SEAT_KEYS: JSON.stringify({ herald: hash(heraldKey), forge: hash(forgeKey) }),
   });
@@ -320,7 +335,7 @@ test('a persisted mill ack today marks mill active over a 10/13 github last_ct',
     board: { cards: [] },
     events: [{ id: 'e1', t_ct: new Date().toISOString(), kind: 'issue_open', repo: 'example/repo', number: 1, from: 'forge' }],
   }));
-  const srv = start(data, { SERVER_ROUTING: 'off' });
+  const srv = await start(data, { SERVER_ROUTING: 'off' });
   try {
     await ready(srv.base, srv.logs);
     const login = await fetch(srv.base + '/login', { method: 'POST', redirect: 'manual', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'password=' + encodeURIComponent(srv.password) });
@@ -389,7 +404,7 @@ test('a display drop and a merged packet stay in history, and a restart does not
     ],
   }));
   async function session() {
-    const srv = start(data, { SERVER_ROUTING: 'off' });
+    const srv = await start(data, { SERVER_ROUTING: 'off' });
     await ready(srv.base, srv.logs);
     const login = await fetch(srv.base + '/login', { method: 'POST', redirect: 'manual', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'password=' + encodeURIComponent(srv.password) });
     const cookie = (login.headers.get('set-cookie') || '').split(';')[0];
@@ -455,7 +470,7 @@ test('transition pages do not repeat an id, and export rejects a bad date', asyn
     card: 'example/repo#8', transition: 'merged', source_id: 'merge-8', t_ct: '2026-10-20T19:00:00-05:00',
     to_state: 'closed', to_stage: 'done', actor: { seat: 'forge', login: 'forge', bc: 'bc-abc' }, packet: 'Still live',
   }), true);
-  const srv = start(data, { SERVER_ROUTING: 'off', ARCHIVE_KEY: 'archive-key' });
+  const srv = await start(data, { SERVER_ROUTING: 'off', ARCHIVE_KEY: 'archive-key' });
   try {
     await ready(srv.base, srv.logs);
     const bare = await fetch(srv.base + '/history/transitions');
