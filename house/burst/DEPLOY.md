@@ -144,7 +144,7 @@ second process. `server.mjs` spawns it as a child: `python3 -B -u collector/live
 
 ## 3. Start commands, builder and runtime
 
-- Builder: Dockerfile (`house/live/app/Dockerfile`): `node:24.22.1-bookworm-slim` plus Debian `python3` (3.11),
+- Builder: Dockerfile (`house/live/app/Dockerfile`): base `node:24.22.1-bookworm-slim`, then the Node.js 24.22.3 binary from nodejs.org, plus Debian `python3` (3.11),
   `tzdata`, `ca-certificates`. Stdlib Python only.
 - Start: `/app/docker-entrypoint.sh` (from `house/live/app/railway.json`, and from `house/live/app/.railway/railway.ts`). Setting the start command to `node server.mjs` replaces ENTRYPOINT, skips the volume chown, and leaves the server running as root. The child start is shown in section 1.
 - Repo-root `railway.json` (`node mcp-server.mjs`) belongs to the xray MCP server, not to this. Do not deploy the

@@ -1630,7 +1630,7 @@
       },
       {
         "where": "Docker root image",
-        "pin": "node:24.22.1-bookworm-slim",
+        "pin": "node:24.22.1-bookworm-slim + nodejs.org v24.22.3",
         "watch": [
           "tag rebuild without a digest pin",
           "bookworm CVEs",
@@ -1640,7 +1640,7 @@
       },
       {
         "where": "Docker live-board image",
-        "pin": "node:24.22.1-bookworm-slim",
+        "pin": "node:24.22.1-bookworm-slim + nodejs.org v24.22.3",
         "watch": [
           "same tag, plus apt python3 tzdata ca-certificates"
         ],
@@ -2476,7 +2476,7 @@
     ],
     "docker": [
       {
-        "image": "node:24.22.1-bookworm-slim",
+        "image": "node:24.22.1-bookworm-slim + nodejs.org v24.22.3",
         "watch": [
           "digest drift",
           "Node CVE",
@@ -2485,7 +2485,7 @@
         "source": "Dockerfile:2"
       },
       {
-        "image": "node:24.22.1-bookworm-slim",
+        "image": "node:24.22.1-bookworm-slim + nodejs.org v24.22.3",
         "watch": [
           "same, plus apt packages python3 tzdata ca-certificates"
         ],

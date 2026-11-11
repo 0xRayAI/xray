@@ -18,6 +18,8 @@ function read(name) {
 test('image stays on the Node 24 pin and does not drop at build time', () => {
   const docker = read('Dockerfile');
   assert.match(docker, /^FROM node:24\.22\.1-bookworm-slim\s*$/m);
+  assert.match(docker, /nodejs\.org\/dist\/v24\.22\.3\//);
+  assert.match(docker, /node -v \| grep -qx v24\.22\.3/);
   assert.equal(docker.includes('node:20'), false);
   assert.equal(docker.includes('22.23.4'), false);
   assert.equal(/^USER\s+/m.test(docker), false);
