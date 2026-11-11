@@ -841,6 +841,45 @@ function probeGoggles(cwd, inventoryPresent) {
   return { status: 'on', detail: 'goggles on' };
 }
 
+function bridgeFiles(cwd, home) {
+  return [
+    path.join(cwd, '.mcp.json'),
+    path.join(cwd, '.grok', 'plugins', '0xray', '.mcp.json'),
+    path.join(cwd, '.cursor', 'mcp.json'),
+    path.join(home, '.grok', 'plugins', '0xray', '.mcp.json'),
+    path.join(home, '.hermes', 'plugins', 'xray-hermes', '.mcp.json'),
+  ];
+}
+
+function pinnedRoots(data) {
+  const servers = data && data.mcpServers;
+  if (!servers || typeof servers !== 'object') return [];
+  const roots = [];
+  for (const server of Object.values(servers)) {
+    const pin = server && server.env && server.env.XRAY_ROOT;
+    if (typeof pin === 'string' && pin.trim()) roots.push(path.resolve(pin));
+  }
+  return roots;
+}
+
+function probeBridges(cwd, home) {
+  const here = path.resolve(cwd);
+  const hits = [];
+  for (const file of bridgeFiles(cwd, home)) {
+    const data = readJson(file);
+    if (!data) continue;
+    for (const root of pinnedRoots(data)) {
+      if (root !== here) hits.push({ file, root });
+    }
+  }
+  if (hits.length === 0) return { status: 'ok', hits: [] };
+  return {
+    status: 'warn',
+    hits,
+    detail: hits.map((hit) => `${hit.file} -> ${hit.root}`).join('; '),
+  };
+}
+
 function diagnoseSeat(opts = {}) {
   const cwd = path.resolve(opts.cwd || process.cwd());
   const home = opts.home || os.homedir();
@@ -860,6 +899,7 @@ function diagnoseSeat(opts = {}) {
   const plantOk = Boolean(seat) && mill && inspect && installed && deadHooks.length === 0 && goggles.status !== 'off';
   const env = opts.env || process.env;
   const house = probeHouse(cwd, env);
+  const bridges = probeBridges(cwd, home);
   const report = {
     ok: plantOk && house.status !== 'fail',
     cwd,
@@ -883,6 +923,7 @@ function diagnoseSeat(opts = {}) {
     repertoire: probeRepertoire(cwd),
     ows: probeOws(home),
     house,
+    bridges,
     board: boardSurface(env),
     urls: PLANT_URLS,
     next: [],
@@ -946,6 +987,11 @@ function formatDoctor(report) {
     );
   } else {
     lines.push(`Repertoire: miss — ${report.repertoire.detail}`);
+  }
+  if (report.bridges && report.bridges.status === 'warn') {
+    lines.push(`Bridges: WARN — points outside this folder: ${report.bridges.detail}`);
+  } else if (report.bridges) {
+    lines.push('Bridges: ok');
   }
   if (walletStepsOff(report)) {
     lines.push('OWS pay: skipped — house Scope wallet off');

@@ -1046,6 +1046,38 @@ describe('grok-bot seat doctor — station boot warnings', () => {
     }
   });
 
+  it('warns when a bridge XRAY_ROOT points outside this folder', () => {
+    const dir = scratch();
+    const home = scratch();
+    try {
+      writeFileSync(path.join(dir, 'package.json'), `${JSON.stringify({ name: 'cold', version: '1.0.0' })}\n`);
+      const local = path.join(dir, '.mcp.json');
+      writeFileSync(
+        local,
+        `${JSON.stringify({ mcpServers: { goggles: { env: { XRAY_ROOT: dir } } } })}\n`,
+      );
+      expect(formatDoctor(diagnoseSeat({ cwd: dir, home }))).toContain('Bridges: ok');
+
+      const other = scratch();
+      try {
+        const machine = path.join(home, '.grok', 'plugins', '0xray', '.mcp.json');
+        mkdirSync(path.dirname(machine), { recursive: true });
+        writeFileSync(
+          machine,
+          `${JSON.stringify({ mcpServers: { goggles: { env: { XRAY_ROOT: other } } } })}\n`,
+        );
+        const text = formatDoctor(diagnoseSeat({ cwd: dir, home }));
+        expect(text).toContain('Bridges: WARN — points outside this folder');
+        expect(text).toContain(other);
+      } finally {
+        rmSync(other, { recursive: true, force: true });
+      }
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+      rmSync(home, { recursive: true, force: true });
+    }
+  });
+
   it('stays quiet when the profile hook and the station lines are present', () => {
     const dir = scratch();
     try {
