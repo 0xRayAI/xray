@@ -1,6 +1,18 @@
 {
   "generatedFrom": "v4.0.0..HEAD",
   "skills": {
+    "inspect": [
+      {
+        "blob": "0f7ca5db43f00481d59a4d0ec28be2a09f0b9b12",
+        "since": "4.1.1"
+      }
+    ],
+    "mill": [
+      {
+        "blob": "9ce0c0eb06435afdec4863ceab742fe64818d856",
+        "since": "4.1.1"
+      }
+    ],
     "hermes-agent": [
       {
         "blob": "35b18d2d92586960b95d44d0f6898c27ecbfcb1a",

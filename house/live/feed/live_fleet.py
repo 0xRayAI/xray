@@ -54,8 +54,9 @@ WORKING_LOCAL_S = 60 * 60    # spinner: box-local fleet/activity.jsonl start wit
 LOCAL_TAG_RE = re.compile(r"[^A-Za-z0-9 ._:@#+/-]")
 # Lab work in progress (Tester, QA = QaOne + QaTwo + QA): a seat is working while files under its lab trees
 # changed in the last WORKING_FILES_S, or processes running inside those trees burned >= WORK_CPU_BUSY_S of CPU in a
-# pass (test runners write nothing for minutes), held WORKING_CPU_HOLD_S. mtimes, /proc cwd and CPU ticks only:
-# no file is opened, no command line or environment read, no path stored.
+# pass (test runners write nothing for minutes), held WORKING_CPU_HOLD_S. mtimes plus cwd and CPU ticks only
+# (/proc, or ps cputime and lsof cwd where /proc is absent): no file is opened, no command line or
+# environment read, no path stored.
 WORKING_FILES_S = 150
 WORKING_CPU_HOLD_S = 120
 WORK_CPU_BUSY_S = 1.0
@@ -204,6 +205,86 @@ def _cloud_pr(value):
     if not push_payload.PR_URL.fullmatch(text):
         return None
     return text
+
+
+def _cputime_seconds(text):
+    raw = str(text or "").strip()
+    if not raw:
+        return 0.0
+    days = 0
+    if "-" in raw:
+        day, raw = raw.split("-", 1)
+        days = int(day)
+    bits = raw.split(":")
+    sec = float(bits[-1])
+    minutes = int(bits[-2]) if len(bits) > 1 else 0
+    hours = int(bits[-3]) if len(bits) > 2 else 0
+    return days * 86400 + hours * 3600 + minutes * 60 + sec
+
+
+def _lab_cpu(roots, tck):
+    """(pid, seat, ticks) for a process whose cwd is inside a lab tree.
+
+    Linux reads /proc. A host without /proc uses ps cputime and lsof cwd.
+    Ticks stay clock ticks so the caller keeps one delta.
+    """
+    if not roots:
+        return []
+    if os.path.isdir("/proc"):
+        rows = []
+        for pid in os.listdir("/proc"):
+            if not pid.isdigit():
+                continue
+            try:
+                cwd = os.readlink(f"/proc/{pid}/cwd") + os.sep
+                seat = next((seat_ for root, seat_ in roots if cwd.startswith(root)), None)
+                if not seat:
+                    continue
+                with open(f"/proc/{pid}/stat") as fh:
+                    fields = fh.read().rsplit(")", 1)[1].split()
+                ticks = int(fields[11]) + int(fields[12])
+            except (OSError, ValueError, IndexError):
+                continue
+            rows.append((pid, seat, ticks))
+        return rows
+    cwd_of = {}
+    try:
+        listed = subprocess.check_output(
+            ["lsof", "-n", "-P", "-d", "cwd", "-Fn"], text=True, stderr=subprocess.DEVNULL,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return []
+    pid = ""
+    for line in listed.splitlines():
+        if line.startswith("p") and line[1:].isdigit():
+            pid = line[1:]
+        elif pid and line.startswith("n"):
+            try:
+                path = os.path.realpath(line[1:])
+            except OSError:
+                continue
+            if not path.endswith(os.sep):
+                path += os.sep
+            seat = next((seat_ for root, seat_ in roots if path.startswith(root)), None)
+            if seat:
+                cwd_of[pid] = seat
+    if not cwd_of:
+        return []
+    try:
+        ps = subprocess.check_output(["ps", "-ax", "-o", "pid=,cputime="], text=True, stderr=subprocess.DEVNULL)
+    except (OSError, subprocess.SubprocessError):
+        return []
+    rows = []
+    for line in ps.splitlines():
+        parts = line.split()
+        if len(parts) < 2 or parts[0] not in cwd_of:
+            continue
+        try:
+            ticks = int(_cputime_seconds(parts[1]) * tck)
+        except ValueError:
+            continue
+        rows.append((parts[0], cwd_of[parts[0]], ticks))
+    return rows
 
 
 class Fleet:
@@ -995,20 +1076,8 @@ class Fleet:
                 self._touch(seat, newest)
         # 2) CPU used by processes whose cwd is inside a lab tree since the last pass
         roots = [(os.path.realpath(r) + os.sep, seat) for r, seat in trees]
-        tck, cpu, seat_cpu = os.sysconf("SC_CLK_TCK"), {}, {}
-        for pid in os.listdir("/proc") if roots and os.path.isdir("/proc") else []:
-            if not pid.isdigit():
-                continue
-            try:
-                cwd = os.readlink(f"/proc/{pid}/cwd") + os.sep
-                seat = next((s_ for r, s_ in roots if cwd.startswith(r)), None)
-                if not seat:
-                    continue
-                with open(f"/proc/{pid}/stat") as fh:
-                    f = fh.read().rsplit(")", 1)[1].split()
-                ticks, start = int(f[11]) + int(f[12]), int(f[19]) / tck   # utime + stime; start since boot
-            except (OSError, ValueError, IndexError):
-                continue
+        tck, cpu, seat_cpu = os.sysconf("SC_CLK_TCK") or 100, {}, {}
+        for pid, seat, ticks in _lab_cpu(roots, tck):
             cpu[pid] = ticks
             prev = self._cpu.get(pid)
             if prev is None and not self._cpu:

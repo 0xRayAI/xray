@@ -3,11 +3,22 @@
 import { launchBoard } from './board-browser.mjs';
 import http from 'node:http';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const PUB = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app', 'public');
-const OUT = process.env.SPECTRUM_OUT || '/opt/cursor/artifacts/spectrum';
+const OUT = (() => {
+  const preferred = process.env.SPECTRUM_OUT || '/opt/cursor/artifacts/spectrum';
+  try {
+    fs.mkdirSync(preferred, { recursive: true });
+    return preferred;
+  } catch {
+    const fallback = path.join(os.tmpdir(), 'spectrum-artifacts');
+    fs.mkdirSync(fallback, { recursive: true });
+    return fallback;
+  }
+})();
 const SKEW = '#mesh { height: 300px }';
 
 function feed() {

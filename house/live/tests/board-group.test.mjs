@@ -3,12 +3,23 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { launchBoard } from './board-browser.mjs';
 
 const PUB = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app', 'public');
-const ART = '/opt/cursor/artifacts';
+const ART = (() => {
+  const preferred = '/opt/cursor/artifacts';
+  try {
+    fs.mkdirSync(preferred, { recursive: true });
+    return preferred;
+  } catch {
+    const fallback = path.join(os.tmpdir(), 'board-group-artifacts');
+    fs.mkdirSync(fallback, { recursive: true });
+    return fallback;
+  }
+})();
 
 function feed() {
   const now = Date.now();

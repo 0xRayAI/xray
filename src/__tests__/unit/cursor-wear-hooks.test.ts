@@ -989,9 +989,9 @@ describe('cursor wear wires installed dist hooks', () => {
       });
       expect(noGitRun.status).toBe(0);
       expect(noGitRun.stderr).toBe(
-        'cursor-wear: hooks skipped because this folder is not a git checkout\n',
+        'cursor-wear: project hooks and .cursor/mcp.json written; git hooks skipped because this folder is not a git checkout\n',
       );
-      expect(existsSync(path.join(noRepo, '.cursor'))).toBe(false);
+      expect(existsSync(path.join(noRepo, '.cursor', 'hooks.json'))).toBe(true);
 
       const missing = spawnSync(process.execPath, [script, noGit], {
         cwd: noGit,

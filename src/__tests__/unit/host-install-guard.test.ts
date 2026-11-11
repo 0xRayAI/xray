@@ -7,6 +7,7 @@ import {
   readdirSync,
   readFileSync,
   readlinkSync,
+  realpathSync,
   rmSync,
   statSync,
   writeFileSync,
@@ -98,7 +99,10 @@ function assertOnlyRepertoireLinkAdded(project: string, before: string[]) {
   const link = readlinkSync(dest);
   expect(path.isAbsolute(link)).toBe(false);
   expect(link).toBe(
-    path.relative(path.dirname(dest), path.join(repoRoot, 'vendor', '@0xray', 'repertoire')),
+    path.relative(
+      realpathSync(path.dirname(dest)),
+      realpathSync(path.join(repoRoot, 'vendor', '@0xray', 'repertoire')),
+    ),
   );
 }
 
@@ -266,7 +270,7 @@ describe('setup installs bridges without git hooks unless asked', () => {
     }
   });
 
-  it('setup outside a git checkout skips cursor hooks and writes the suit', () => {
+  it('setup outside a git checkout writes project hooks and skips git hooks', () => {
     const project = mkdtempSync(path.join(tmpdir(), 'xray-setup-nogit-'));
     const script = path.join(repoRoot, 'scripts/node/install-bridges.cjs');
     try {
@@ -274,9 +278,9 @@ describe('setup installs bridges without git hooks unless asked', () => {
       const ran = spawnSync(process.execPath, [script, 'setup'], { cwd: project, encoding: 'utf8' });
       expect(ran.status).toBe(0);
       expect(ran.stderr).toBe(
-        'cursor-wear: hooks skipped because this folder is not a git checkout\n',
+        'cursor-wear: project hooks and .cursor/mcp.json written; git hooks skipped because this folder is not a git checkout\n',
       );
-      expect(existsSync(path.join(project, '.cursor'))).toBe(false);
+      expect(existsSync(path.join(project, '.cursor', 'hooks.json'))).toBe(true);
       expect(existsSync(path.join(project, '.mcp.json'))).toBe(true);
       expect(readFileSync(path.join(project, 'keep.txt'), 'utf8')).toBe('stay\n');
     } finally {

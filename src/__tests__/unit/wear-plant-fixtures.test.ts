@@ -70,8 +70,8 @@ describe('wear fixtures for mill, sound, and git', () => {
       expect(wore[0].stderr).toContain('hooks skipped because this folder is not a git checkout');
       expect(wore[1].stderr).toContain('hooks skipped because this folder is not a git checkout');
       expect(wore[2].stderr).toBe('');
-      expect(existsSync(path.join(mill, '.cursor', 'hooks.json'))).toBe(false);
-      expect(existsSync(path.join(sound, '.cursor', 'hooks.json'))).toBe(false);
+      expect(existsSync(path.join(mill, '.cursor', 'hooks.json'))).toBe(true);
+      expect(existsSync(path.join(sound, '.cursor', 'hooks.json'))).toBe(true);
       expect(existsSync(path.join(git, '.cursor', 'hooks.json'))).toBe(true);
 
       const soundSkills = skillNames(sound, '.grok/plugins/0xray/skills');
