@@ -539,7 +539,15 @@ export async function checkLivePut(packages, fetchFn = fetch) {
       });
       continue;
     }
-    results.push({ name: pkg.name, version: pkg.version, url, status, ok: status === 200 });
+    const unpublishedConsumer = pkg.role === "consumer" && status === 404;
+    results.push({
+      name: pkg.name,
+      version: pkg.version,
+      url,
+      status,
+      ok: status === 200 || unpublishedConsumer,
+      ...(unpublishedConsumer ? { skipped: true, detail: "unpublished consumer package" } : {}),
+    });
   }
   return results;
 }
@@ -567,6 +575,7 @@ export function packagesToProbe(root) {
     pkgs.push({
       name: inventory.consumer.name,
       version: inventory.consumer.version,
+      role: "consumer",
     });
   }
   const seen = new Set();

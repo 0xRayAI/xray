@@ -1570,7 +1570,7 @@ describe('foundry mill — inspect organ', () => {
       expect(publicPkgs).toEqual(
         expect.arrayContaining([
           { name: '@0xray/foundry', version: '0.1.7' },
-          { name: '@0xray/review-suit', version: '0.0.1' },
+          { name: '@0xray/review-suit', version: '0.0.1', role: 'consumer' },
         ]),
       );
 
@@ -1604,6 +1604,59 @@ describe('foundry mill — inspect organ', () => {
     } finally {
       rmSync(publicDir, { recursive: true, force: true });
       rmSync(privateDir, { recursive: true, force: true });
+    }
+  });
+
+  it('live-put skips a 404 for an unpublished consumer and still fails a 404 for 0xray', async () => {
+    const { inspectSuit } = await import('../../../scripts/foundry/inspect.mjs');
+    const { mintConsumerSuit } = requireCjs(path.join(root, 'scripts/foundry/mint-suit.cjs')) as {
+      mintConsumerSuit: (pkg: string, target: string, log: (...a: unknown[]) => void) => unknown;
+    };
+    const tmp = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-unpublished-'));
+    const machine = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-machine-'));
+    try {
+      writeFileSync(
+        path.join(tmp, 'package.json'),
+        `${JSON.stringify({ name: 'cold', version: '1.0.0' }, null, 2)}\n`,
+      );
+      mintConsumerSuit(root, tmp, () => undefined);
+      const env = { HOME: path.join(tmp, '.lastmile-home') };
+      const pass = await inspectSuit(tmp, {
+        millRoot: root,
+        skipLive: false,
+        env,
+        machineHome: machine,
+        fetch: async (url: string) =>
+          ({ status: String(url).includes('/cold-') ? 404 : 200 }) as Response,
+      });
+      expect(pass.ok, JSON.stringify(pass.checks, null, 2)).toBe(true);
+      const live = pass.checks.find((c) => c.id === 'live-put') as {
+        packages?: Array<{ name?: string; ok?: boolean; skipped?: boolean; status?: number }>;
+      };
+      const cold = live.packages?.find((pkg) => pkg.name === 'cold');
+      expect(cold?.status).toBe(404);
+      expect(cold?.ok).toBe(true);
+      expect(cold?.skipped).toBe(true);
+      const xray = live.packages?.find((pkg) => pkg.name === '0xray');
+      expect(xray?.ok).toBe(true);
+
+      const red = await inspectSuit(tmp, {
+        millRoot: root,
+        skipLive: false,
+        env,
+        machineHome: machine,
+        fetch: async () => ({ status: 404 }) as Response,
+      });
+      expect(red.ok).toBe(false);
+      expect(red.failed).toContain('live-put');
+      const redLive = red.checks.find((c) => c.id === 'live-put') as {
+        packages?: Array<{ name?: string; ok?: boolean; skipped?: boolean }>;
+      };
+      expect(redLive.packages?.find((pkg) => pkg.name === '0xray')?.ok).toBe(false);
+      expect(redLive.packages?.find((pkg) => pkg.name === 'cold')?.skipped).toBe(true);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+      rmSync(machine, { recursive: true, force: true });
     }
   });
 
