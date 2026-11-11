@@ -510,6 +510,20 @@ function cadenceWarnings(houseFile, text, cwd, env, now) {
   return warnings;
 }
 
+const HOUSE_NOT_ENABLED = 'house is not enabled here';
+
+function houseOffReport(extra) {
+  return {
+    status: 'warn',
+    file: null,
+    via: null,
+    enabled: false,
+    detail: HOUSE_NOT_ENABLED,
+    warnings: [],
+    ...extra,
+  };
+}
+
 function inspectHouseFile(file, via, ctx = {}) {
   const cwd = ctx.cwd || path.dirname(file);
   const env = ctx.env || {};
@@ -518,13 +532,7 @@ function inspectHouseFile(file, via, ctx = {}) {
   try {
     text = fs.readFileSync(file, 'utf8');
   } catch {
-    return {
-      status: 'warn',
-      file: null,
-      via: null,
-      detail: 'house is not enabled here',
-      warnings: [],
-    };
+    return houseOffReport();
   }
   const warnings = cadenceWarnings(file, text, cwd, env, now).concat(stationBootWarnings(cwd, env, now));
   const ownerName = ownerNameWarning(text);
@@ -536,6 +544,7 @@ function inspectHouseFile(file, via, ctx = {}) {
       status: 'fail',
       file,
       via,
+      enabled: true,
       detail: 'house/EXAMPLE.md exists — delete it',
       scope,
       warnings,
@@ -547,13 +556,14 @@ function inspectHouseFile(file, via, ctx = {}) {
       status: 'fail',
       file,
       via,
+      enabled: true,
       detail: 'HOUSE.md still has unfilled example lines',
       unfilled: unfilled.length,
       scope,
       warnings,
     };
   }
-  return { status: 'pass', file, via, detail: file, scope, warnings };
+  return { status: 'pass', file, via, enabled: true, detail: file, scope, warnings };
 }
 
 function probeHouse(cwd, env) {
@@ -561,26 +571,13 @@ function probeHouse(cwd, env) {
   if (raw) {
     const file = fileFromHouseEnv(raw);
     if (!file) {
-      return {
-        status: 'warn',
-        file: null,
-        via: null,
-        detail: 'house is not enabled here',
-        missing: path.resolve(raw),
-        warnings: [],
-      };
+      return houseOffReport({ missing: path.resolve(raw) });
     }
     return inspectHouseFile(file, 'GROK_BOT_HOUSE', { cwd, env });
   }
   const walked = walkForHouse(cwd);
   if (!walked) {
-    return {
-      status: 'warn',
-      file: null,
-      via: null,
-      detail: 'house is not enabled here',
-      warnings: [],
-    };
+    return houseOffReport();
   }
   return inspectHouseFile(walked, 'walk-up', { cwd, env });
 }
@@ -977,7 +974,7 @@ function formatDoctor(report) {
       }
     }
   }
-  const houseOff = !report.house || report.house.detail === 'house is not enabled here';
+  const houseOff = !report.house || report.house.enabled !== true;
   if (!houseOff && report.board && report.board.read) lines.push(`Board: ${report.board.read}`);
   lines.push('');
   lines.push('Next');
