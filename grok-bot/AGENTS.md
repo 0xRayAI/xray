@@ -5,7 +5,6 @@
 Node >= 24.22.3. That is the patched 24 release from 11 Nov 2026.
 
 You are setting up **Grok Bot agents** on the 0xRay factory OS. A new fleet runs `stand-up-fleet` once before this per-agent path. That skill does the house, the board routes, and one suit per seat. It does not start a Bifrost server, and it stops before pay and hangar shops.
-
 ## Goal
 For **each key agent** (coordinator, implementer, reviewer, publisher, …):
 
