@@ -17,7 +17,14 @@ type HermesWiring = {
   wireHermesBridge: (targetDir: string) => { count: number };
   copyHermesFindProjectRootHelper: (packageRoot: string, targetPluginDir: string) => boolean;
   copyHermesHookRuntimes: (packageRoot: string) => boolean;
+  isEphemeralInstallRoot: (targetDir: string) => boolean;
 };
+
+export function hermesPluginDir(cwd: string, isolated: boolean, machineHome: string, ephemeral: boolean): string {
+  return isolated || ephemeral
+    ? path.join(cwd, '.hermes', 'plugins', 'xray-hermes')
+    : path.join(machineHome, '.hermes', 'plugins', 'xray-hermes');
+}
 
 function loadMillSuit(): MillSuit {
   return require(path.join(packageRoot, 'scripts', 'foundry', 'mint-suit.cjs')) as MillSuit;
@@ -52,9 +59,8 @@ async function installForHermes(options: HermesInstallOptions = {}): Promise<voi
   frameworkLogger.log('hermes-integration', 'install-start', 'info', { options });
 
   const isolated = millSuit.isIsolatedHome();
-  const targetPluginDir = isolated
-    ? path.join(process.cwd(), '.hermes/plugins/xray-hermes')
-    : path.join(millSuit.machineHome(), '.hermes/plugins/xray-hermes');
+  const ephemeral = wiring.isEphemeralInstallRoot(process.cwd());
+  const targetPluginDir = hermesPluginDir(process.cwd(), isolated, millSuit.machineHome(), ephemeral);
 
   const possibleSources = [
     path.join(__dirname, '..', '..', '..', 'dist/integrations/hermes-agent'),
