@@ -48,6 +48,27 @@ test('a merged pull keeps the merge verb, labels, and linked agent, and drops th
   assert.equal(Object.hasOwn(closed, 'body'), false);
 });
 
+test('a person opener is the builder seat, and Board-Owner names the seat', () => {
+  const plain = itemFromIssue('0xRayAI/xray', {
+    number: 12, title: 'wave', user: { login: 'htafolla' }, created_at: '2026-10-01T00:00:00Z',
+    state: 'open', body: 'no owner line',
+  });
+  const named = itemFromIssue('0xRayAI/xray', {
+    number: 13, title: 'wave', user: { login: 'htafolla' }, created_at: '2026-10-01T00:00:00Z',
+    state: 'open', body: 'Board-Owner: critic\n',
+    assignee: { login: 'forge0x1[bot]' },
+  });
+  const assigned = itemFromIssue('0xRayAI/xray', {
+    number: 14, title: 'wave', user: { login: 'htafolla' }, created_at: '2026-10-01T00:00:00Z',
+    state: 'open', assignee: { login: 'forge0x1[bot]' },
+  });
+  const plan = planBackfill([plain, named, assigned], readArchiveIndex(os.tmpdir()), seats);
+  assert.equal(plan.cards.find(row => row.number === 12).owner, 'builder-cloud');
+  assert.equal(plan.cards.find(row => row.number === 13).owner, 'critic');
+  assert.equal(plan.cards.find(row => row.number === 14).owner, 'forge');
+  assert.equal(plain.body, undefined);
+});
+
 test('an open parked issue and a closed unmerged pull take the matching verbs', () => {
   const issue = itemFromIssue('0xRayAI/xray', {
     number: 12, title: 'later', user: { login: 'someone' }, created_at: '2026-10-01T00:00:00Z',

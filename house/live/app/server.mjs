@@ -36,7 +36,7 @@ import { applySchedule, normalizeFleetMode, normalizeFleetRoute, scheduleBoundar
 import { createBatch } from './pr-batch.mjs';
 import { idsToAck, idsToAckOnClose } from './ci-clear.mjs';
 import { stationDue } from './station-tick.mjs';
-import { liveLine, backlogOf, keepStation, nudgeTargets, markShed } from './inbox-queue.mjs';
+import { liveLine, backlogOf, nudgeTargets, markShed } from './inbox-queue.mjs';
 const CI_NODES = loadCiNodes();
 const batch = createBatch();
 
@@ -397,6 +397,7 @@ const CHAT_DOORBELL = loadChatDoorbells(process.env, SEAT_IDS);
 const wakeQ = new Map();
 const wakeState = createWakeState();
 const turnDirty = new Set();
+const turnFollow = new Map();
 const turnTimers = new Map();
 let holdTimer = null;
 let holdAt = Infinity;
@@ -658,18 +659,22 @@ function observeTurn(seat, kind, action) {
     wakeState.turnOpen.delete(id);
     const now = Date.now();
     const due = started ? releaseForTurn(wakeState, id, started, now, wakeConfig(process.env).turnOpenMs) : [];
-    for (const line of due) enqueuePending(id, line);
     pumpHold();
-    if (started && turnDirty.has(id)) {
-      turnDirty.delete(id);
-      const fresh = seatOpenRows(id, false).filter((line) => {
-        const t = Date.parse(line && line.t_ct || '');
-        return Number.isFinite(t) && t >= started;
-      });
-      if (fresh.length) {
+    turnDirty.delete(id);
+    const fresh = started ? seatOpenRows(id, false).filter((line) => {
+      const t = Date.parse(line && line.t_ct || '');
+      return Number.isFinite(t) && t >= started;
+    }) : [];
+    if (fresh.length) {
+      const key = fresh.map((line) => line.id).sort().join('\n');
+      if (turnFollow.get(id) !== key) {
+        turnFollow.set(id, key);
         const newest = fresh.slice().sort((a, b) => Date.parse(a.t_ct) - Date.parse(b.t_ct)).pop();
-        try { offerLines([newest]); } catch { /* the line stays in the inbox */ }
+        enqueuePending(id, newest);
       }
+    } else {
+      turnFollow.delete(id);
+      for (const line of due) enqueuePending(id, line);
     }
   }
 }
@@ -912,10 +917,13 @@ function ackLines(seat, what, review) {
   for (const id of ids) {
     if (have.has(id)) continue;
     const line = lineOf(id);
-    if (line && isMergeHandoff(line) && !validMergeReview(review, line)) { blocked = true; continue; }
+    const settledMerge = line && isMergeHandoff(line) && settledLine(line);
+    if (line && isMergeHandoff(line) && !validMergeReview(review, line) && !settledMerge) { blocked = true; continue; }
     have.add(id); n++;
     const row = { seat, line: id, t_ct: ctStamp(Date.now()) };
-    if (line && isMergeHandoff(line)) row.review = review;
+    if (line && isMergeHandoff(line)) {
+      row.review = validMergeReview(review, line) ? review : String(line.url || '');
+    }
     appendArchive('acks', row);
   }
   const live = new Set(arr.map(l => l.id)); inboxAcks[seat] = [...have].filter(id => live.has(id)).slice(-6000);
@@ -1162,6 +1170,40 @@ function takeBatch(lines) {
   }
   return kept;
 }
+const STATION_NUDGE_ID = /^nudge:station:[a-z0-9-]{2,16}:\d{4}-\d{2}-\d{2}T\d{2}$/;
+const PR_HEAD_ID = /^pr:([a-z0-9_.-]+\/[a-z0-9_.-]+)#([1-9]\d{0,6})@([0-9a-f]{4,40})$/i;
+function rememberAcks(seat, ids, via) {
+  const arr = seatInbox[seat] || [];
+  const have = new Set(inboxAcks[seat] || []);
+  let n = 0;
+  for (const id of ids) {
+    if (!id || have.has(id)) continue;
+    have.add(id);
+    n++;
+    const row = { seat, line: id, t_ct: ctStamp(Date.now()) };
+    if (via) row.via = via;
+    appendArchive('acks', row);
+  }
+  if (!n) return;
+  const live = new Set(arr.map(l => l.id));
+  inboxAcks[seat] = [...have].filter(id => live.has(id)).slice(-6000);
+  bfWrite('acks.json', JSON.stringify(inboxAcks));
+}
+function supersedePosted(seat, line) {
+  const id = String(line && line.id || '');
+  const arr = seatInbox[seat] || [];
+  if (STATION_NUDGE_ID.test(id)) {
+    rememberAcks(seat, arr.filter(row => row && row.id && row.id !== id && STATION_NUDGE_ID.test(String(row.id))).map(row => row.id), 'station');
+    return;
+  }
+  const hit = PR_HEAD_ID.exec(id);
+  if (!hit) return;
+  const prefix = `pr:${hit[1].toLowerCase()}#${Number(hit[2])}@`;
+  rememberAcks(seat, arr.filter(row => {
+    const rid = String(row && row.id || '');
+    return rid && rid !== id && rid.toLowerCase().startsWith(prefix);
+  }).map(row => row.id), 'head');
+}
 function postSeatLines(parsed, onlySeat) {
   const incoming = parsed && Array.isArray(parsed.lines) ? parsed.lines : null;
   if (!incoming || incoming.length > 5000) return { status: 400, error: 'lines required' };
@@ -1195,13 +1237,15 @@ function postSeatLines(parsed, onlySeat) {
         dup.t_ct = l.t_ct || ctStamp(Date.now());
         fresh.push(dup); touched.add(s); added++;
       }
+      supersedePosted(s, dup);
       continue;
     }
     let stored = { ...l, seat: s };
     for (const k of ['from', 'to', 'kind', 'flag']) if (typeof stored[k] === 'string') stored[k] = stored[k].toLowerCase();
     if (s === 'arch1') stored = markShed(stored, seatOpenRows(s, false), queueOpts(s));
     arr.push(stored); touched.add(s); added++; fresh.push(stored);
-    if (s === 'builder') { const c = seatInbox['builder-cloud']; if (!c.some(x => x.id === l.id)) { const copy = { ...stored, seat: 'builder-cloud' }; c.push(copy); touched.add('builder-cloud'); fresh.push(copy); } } }
+    supersedePosted(s, stored);
+    if (s === 'builder') { const c = seatInbox['builder-cloud']; if (!c.some(x => x.id === l.id)) { const copy = { ...stored, seat: 'builder-cloud' }; c.push(copy); touched.add('builder-cloud'); fresh.push(copy); supersedePosted('builder-cloud', copy); } } }
   for (const s of touched) saveSeatInbox(s);
   if (fresh.length) { try { offerLines(fresh); } catch { /* keep the inbox write */ } }
   for (const l of fresh) ensurePacketCard(l);
@@ -2419,9 +2463,10 @@ function stationTick(now = new Date()) {
   if (!stationTickOn()) return;
   const when = stationClock(now);
   if (!when) return;
-  const due = stationDue(when, stationPosted, SEAT_IDS);
+  const due = stationDue(when, stationPosted, SEAT_IDS, (seat) => seatOpenRows(seat, false).length);
   if (!due) return;
-  const lines = due.lines.filter((line) => keepStation(seatOpenRows(line.seat, false)));
+  const postedAt = new Date().toISOString();
+  const lines = due.lines.map((line) => ({ ...line, t_ct: postedAt }));
   if (!lines.length) { stationPosted = due.hour; return; }
   const r = postSeatLines({ lines }, null);
   if (r.status !== 200) return;
@@ -4017,7 +4062,8 @@ async function handle(req, res) {
     if (n < 0) return json(req, res, 404, { error: 'no such line' });
     if (n) serverActivity(who, 'turn', 'end', 'ack');
     if (n > 0) publishHeader();   // work tracking moves the packet to acked
-    return json(req, res, 200, { ok: true, acked: n, open: seatOpenRows(who, false).length });
+    const left = seatOpenRows(who, false);
+    return json(req, res, 200, { ok: true, acked: n, open: liveLine(left, queueOpts(who)).length });
   }
   if (p === '/routing') {   // GET /routing: the routing map, read-only (seat, login, aliases, status). No keys, no webhook URLs.
     if (m !== 'GET') return json(req, res, 405, { error: 'method not allowed' }, { Allow: 'GET' });

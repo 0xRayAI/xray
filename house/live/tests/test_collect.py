@@ -829,6 +829,16 @@ def _collector(repo="acme/app"):
 class CardLifecycle(unittest.TestCase):
     """Each case fails if its collector fix is reverted."""
 
+    def test_an_unmapped_push_is_kept(self):
+        self.enterContext(mock.patch.object(uc, "SHOW_UNMAPPED", False))
+        self.assertEqual(uc.node("someone"), "Others")
+        col = _collector("example-org/app")
+        col.pr_commit_event(416, "d9bcc0ae" + "ab" * 16, "2026-11-10T18:06:00Z", "fix the head", "someone")
+        stored = col.ev["example-org/app#416:commit:" + "d9bcc0ae" + "ab" * 16]
+        self.assertEqual(stored["kind"], "pr_commit")
+        self.assertEqual(stored["from"], "GitHub")
+        self.assertNotEqual(stored["from"], "Others")
+
     def test_review_keeps_the_commit_it_was_posted_on(self):
         col = _collector("0xRayAI/xray")
         col.st.setdefault("prs", {})["556"] = {"head": "0e96754" + "b" * 33, "author": "forge0x1[bot]"}

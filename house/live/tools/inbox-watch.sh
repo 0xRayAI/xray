@@ -4,10 +4,8 @@
 # FAIL once per distinct error. The line names LIVE_URL and the expected URL, then backs off.
 # A JSON line whose GitHub item is closed or merged is acked and logged as auto-ack.
 # A held line (hold label, or a card whose state is held) prints once as "held: N" and is not popped.
-# An open, non-held line is printed once (ACTION_REQUIRED, unfinished:N, the line) and appended to the seat todo.
-# The watcher does not ack that id. The seat acks after the work. A seen id stays quiet on the next poll.
-# A new token in $HOME/.burst/inbox-wake/<seat> reprints that one head once. Later polls of the same token stay quiet.
-# The first head print of a process writes one fresh token after it has recorded the old one, so the next poll reprints once. Tag wake does not write that token.
+# The oldest open line in this poll is the head. It is printed on every poll until the seat acks it.
+# A seen id that is not the head stays quiet. The watcher does not ack an open id. The seat acks after the work.
 # A new event is a new line. A raw line with no id still reprints. A failed ack of a closed item leaves that line open.
 # After every poll that prints work, live-inbox <seat> --turn start --tag wake.
 # The start is after the todo write. An ack is the seat's, after the work.
@@ -363,7 +361,7 @@ for raw in open_path.read_text(encoding="utf-8").splitlines():
     if not isinstance(ident, str) or not ID_RE.match(ident):
         fresh.append(raw)
         continue
-    if ident in seen and not (head_open and reprint):
+    if ident in seen and not head_open:
         continue
     head_open = False
     fresh.append(raw)

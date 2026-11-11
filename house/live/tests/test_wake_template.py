@@ -61,7 +61,7 @@ class WakeTemplate(unittest.TestCase):
         self.assertRegex(self.steps[0], r"live-inbox <seat> --prompt")
         self.assertNotIn("--from blaze", self.steps[0])
         self.assertNotIn("--from blaze", self.text)
-        self.assertIn('trap \'"$INBOX" <seat> --turn end --tag wake; "$INBOX" <seat> --release\' EXIT', self.text)
+        self.assertIn('trap \'"$INBOX" <seat> --peek || true; "$INBOX" <seat> --turn end --tag wake; "$INBOX" <seat> --release\' EXIT', self.text)
         self.assertIn(': "${XRAY_MAIN:?set XRAY_MAIN to the main checkout}"', self.text)
         self.assertIn('INBOX="$XRAY_MAIN/house/live/tools/live-inbox"', self.text)
         bash = re.search(r"```bash\n(.*?)```", self.text, re.S)

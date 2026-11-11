@@ -126,7 +126,7 @@ The autonomous pipeline: who writes inbox lines, who ranks them, who wakes a sea
 ╠══════════════════════════════════════════════════════════════════════════════════════════════╣
 ║ IF                            │ THEN                              │ NEXT                     ║
 ╟──────────────────────────────────────────────────────────────────────────────────────────────╢
-║ new token in inbox-wake/<seat>│ reprint head once                 │ --turn start --tag wake  ║
+║ new token in inbox-wake/<seat>│ reprint head until ack            │ --turn start --tag wake  ║
 ║ poll prints work              │ claim seat; 2nd wake quiet        │ handle line              ║
 ║ line is repeat (--repeat 0)   │ ack, no cloud launch              │ next line                ║
 ║ new head                      │ full boot read (STATION/NOTES)    │ work, --remember         ║

@@ -1,5 +1,6 @@
 ## [Unreleased]
 
+- Ack `open` is the next queue read. A new station nudge acks the older ones. A merged pull's handoff acks with no review link. A new PR head is kept when the author is outside the fleet, and it replaces the older head line. The inbox head reprints until it is acked. A card owner is a seat: `Board-Owner:`, else the assignee, else builder-cloud. A turn that ends with lines from that turn gets one follow-up wake. The station nudge names the unread count. The wake trap peeks the inbox before turn end. #985 #996 #1001 #1002 #1003 #1004
 - Node floor is `>=24.22.3`, the 11 Nov 2026 patched 24 release. Railway images install that binary from nodejs.org over `node:24.22.1-bookworm-slim`. Docker Hub has no `node:24.22.3` tag. Changelog, README, guides, engines, and doctor name that floor. CI workflows stay on `24.22.1`. #1014 #1015
 - A temp machine home is a durable wear. A plate id that is not a skill declines. Lens cards list three skills. A seat-kept station restamps Repertoire only when that row is already there. Push runs without GNU flock. Board and spectrum shots fall back when `/opt/cursor` is not writable. The 4.1.1 mill and inspect bodies are pinned so a sound-seat upgrade can strip them. #1013
 - OP-PROC records the eight 2026-11-09 fleet rules. #918

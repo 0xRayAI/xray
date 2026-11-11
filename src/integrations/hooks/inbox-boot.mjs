@@ -2,7 +2,7 @@
  * One inbox poll when Grok session start has no live watcher.
  * The same message orders the seat to start that script as the session monitor.
  * A live watcher pid gets neither the poll nor the order.
- * Session start still writes one wake token so that watcher reprints the head once.
+ * Session start still writes one wake token. The open inbox head reprints on every poll until it is acked.
  * Grok reads a session-start systemMessage. It does not receive a webhook.
  * A hook http call leaves this machine. A detached loop is not a session event.
  * The poll uses the suit board and the sole seat key. It does not ack.

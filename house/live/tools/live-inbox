@@ -14,11 +14,10 @@ and its --turn end post nothing and leave the claim file unchanged. `--release` 
 nothing. The wake trap posts `--turn end` and then runs `--release` on any shell exit, so a crash still closes the turn.
 Before that post, WAKE-ROUTINE step 7 asks "anything new without a card?" and files each new item as a card (`From:`, `Waiting on:`, `Owner:`). This command posts the turn line. It does not open the card.
 A read never acks. The ack is the receipt (the pop) and a seat sends it after it handles the line, with
---ack or --pop <id> (one line) or --ack all / --pop all (everything open). A kind=merge handoff is rejected unless
---review is a review or comment URL on that pull, and the acked line stores the link. Other kinds ack as today.
---ack all and --ack stale leave a merge line open when it has no review link. --ack stale lists lines with a close or merge
-event on GitHub, and does not ack them. A done or closed board card while the pull is open is not stale. A missing card stays. --ack stale --apply acks the ids just listed.
---ack merged asks GitHub once per card and acks every open line whose issue or pull is CLOSED or MERGED. An open card stays.
+--ack or --pop <id> (one line) or --ack all / --pop all (everything open). A kind=merge handoff on an open pull is rejected unless
+--review is a review or comment URL on that pull, and the acked line stores the link. A merged or closed pull acks with no review link and stores the pull URL. Other kinds ack as today.
+--ack stale lists lines with a close or merge event on GitHub, and does not ack them. A done or closed board card while the pull is open is not stale. A missing card stays. --ack stale --apply acks the ids just listed, including a merge handoff whose pull is already closed.
+--ack merged asks GitHub once per card and acks every open line whose issue or pull is CLOSED or MERGED, including a merge handoff. An open card stays. An open merge handoff stays until it has a review link.
 --upto <id> acks the stored prefix through that id. A plain read still shows a merged card until one of those receipts.
 --peek means the same as a plain read.
 The cursor folder rule is grok-bot/OP-PROC.md#cursor-folder.
@@ -955,7 +954,7 @@ if ack == "stale":
     failed = None
     for l in lines:
         line_id = l.get("id")
-        if not isinstance(line_id, str) or not line_id or merge_handoff(l):
+        if not isinstance(line_id, str) or not line_id:
             continue
         result = call("POST", f"/inbox/{seat}/ack", {"id": line_id}, exit_on_error=False)
         if result.get("error"):
@@ -1013,13 +1012,15 @@ if ack == "merged":
         line_id = line.get("id") if isinstance(line, dict) else None
         repo = line.get("repo") if isinstance(line, dict) else None
         number = line.get("number") if isinstance(line, dict) else None
-        if not isinstance(line_id, str) or line_id in seen or merge_handoff(line):
+        if not isinstance(line_id, str) or line_id in seen:
             continue
         if not repo or number is None or not card_closed(repo, number, cache):
             continue
         seen.add(line_id)
         result = call("POST", f"/inbox/{seat}/ack", {"id": line_id}, exit_on_error=False)
         if result.get("error"):
+            if merge_handoff(line) and "review link" in str(result.get("error")):
+                continue
             failed = result["error"]
             break
         acked += int(result.get("acked") or 0)

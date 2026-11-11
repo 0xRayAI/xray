@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Write one inbox wake token for <seat>. The watcher reprints the head once for a new token.
+# Write one inbox wake token for <seat>. The open head reprints on every poll until it is acked.
 # The watcher's own --turn start --tag wake does not call this. A seat wake does.
 set -u
 seat="${1:-${XRAY_SEAT:-arch1}}"
