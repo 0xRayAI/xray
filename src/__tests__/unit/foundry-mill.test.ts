@@ -1823,6 +1823,9 @@ describe('foundry mill — flesh', () => {
       expect(log).toContain('## [1.2.4]');
       expect(log.indexOf('## [Unreleased]')).toBeLessThan(log.indexOf('## [1.2.4]'));
       expect(log.indexOf('## [1.2.4]')).toBeLessThan(log.indexOf('## [1.2.3]'));
+      const unreleasedBody = log.slice(log.indexOf('## [Unreleased]'), log.indexOf('## [1.2.4]'));
+      expect(unreleasedBody).not.toContain('- pending');
+      expect(log.slice(log.indexOf('## [1.2.4]'), log.indexOf('## [1.2.3]'))).toContain('- pending');
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }
