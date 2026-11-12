@@ -30,6 +30,36 @@ function readWorker(prevHash) {
   });
 }
 
+test('key order is the same hash, a nested change is not, and a few thousand events finish quickly', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-hash-'));
+  const file = path.join(dir, 'github-events.json');
+  const read = (prev) => new Promise((resolve, reject) => {
+    const w = new Worker(WORKER, { workerData: { file, prevHash: prev } });
+    w.once('message', (msg) => { w.terminate(); resolve(msg); });
+    w.once('error', reject);
+  });
+  const write = (events) => fs.writeFileSync(file, JSON.stringify({ generated_at: 't', events }));
+  const one = { id: 'k', z: 1, a: { b: 2, a: 1 }, t_ct: '2026-10-24T12:00:00Z', kind: 'pr_open' };
+  write([one]);
+  const first = await read('');
+  write([{ kind: 'pr_open', a: { a: 1, b: 2 }, id: 'k', z: 1, t_ct: '2026-10-24T12:00:00Z' }]);
+  const again = await read(first.eventHash);
+  assert.equal(again.same, true);
+  write([{ ...one, a: { a: 1, b: 3 } }]);
+  const changed = await read(again.eventHash);
+  assert.equal(changed.same, false);
+  const many = Array.from({ length: 5000 }, (_, i) => ({
+    id: 'e' + i, t_ct: '2026-10-24T12:00:00Z', kind: 'issue_comment', repo: 'acme/one', number: i,
+    label: 'x'.repeat(40), detail: { from: 'forge', note: 'n' },
+  }));
+  write(many);
+  const t0 = Date.now();
+  const bulk = await read('');
+  assert.equal(bulk.ok, true);
+  assert.ok(Date.now() - t0 < 2000, String(Date.now() - t0));
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
 test('same events are a header update; a new event is not', async () => {
   writeFeed('2026-10-24T12:00:00+00:00', [ev]);
   const first = await readWorker('');

@@ -2799,9 +2799,15 @@ function watchLimitMs() {
   const mult = Number.isFinite(n) && n > 0 ? n : 3;
   return interval * mult;
 }
+function feedMtimeMs(now = Date.now()) {
+  const ages = [fileAgeMs(GH_FEED, now), fileAgeMs(GH_BEAT, now)].filter((age) => age != null);
+  if (!ages.length) return 0;
+  return now - Math.min(...ages);
+}
 function collectorTick(fallback = 0) {
-  // Count a write only when it is newer than this child. A stale feed mtime must not be the stall clock.
-  const wrote = collector.lastWrite || 0;
+  // A write counts only when it is newer than this child. A stale file must not reset the stall clock.
+  // A file this child just wrote counts even when the reader has not published it yet.
+  const wrote = Math.max(collector.lastWrite || 0, feedMtimeMs());
   const started = collector.startedAt || 0;
   const tick = wrote > started ? wrote : started;
   return tick || fallback;
@@ -2961,13 +2967,20 @@ function readCollectorFeed() {   // every 2 s: ingest the collector's file when 
   const finish = () => {
     if (settled) return;
     settled = true;
+    clearTimeout(timer);
     w.terminate().catch(() => {});
     const again = feedRead && feedRead.again;
     feedRead = null;
     resolve();
     if (again) readCollectorFeed();
   };
-  w.once('message', (msg) => { try { applyFeedRead(msg); } finally { finish(); } });
+  // A read that never posts leaves the published queue on the last pass and the watchdog kills the writer.
+  const timer = setTimeout(finish, 20000);
+  timer.unref?.();
+  w.once('message', (msg) => {
+    if (settled) return;
+    try { applyFeedRead(msg); } finally { finish(); }
+  });
   w.once('error', () => finish());
   return promise;
 }

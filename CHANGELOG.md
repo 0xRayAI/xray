@@ -1,5 +1,8 @@
 ## [Unreleased]
 
+### 🔄 Changes
+
+- A quiet collector pass publishes the board queue without hashing one giant string per event. A feed file this collector just wrote is not a stall.
 
 ## [4.2.3] - 2026-11-12
 

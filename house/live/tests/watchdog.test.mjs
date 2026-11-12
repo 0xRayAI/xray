@@ -10,6 +10,47 @@ import { fileURLToPath } from 'node:url';
 
 const APP = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app');
 
+test('a feed file newer than this child is not a stall', async () => {
+  const data = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-watch-fresh-'));
+  const bin = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-py-'));
+  fs.writeFileSync(path.join(bin, 'python3'), '#!/bin/sh\nsleep 60\n');
+  fs.chmodSync(path.join(bin, 'python3'), 0o755);
+  const child = spawn(process.execPath, [path.join(APP, 'server.mjs')], {
+    env: {
+      PORT: '0', LIVE_PUBLIC: '1', PATH: bin + ':' + (process.env.PATH || ''),
+      MESH_DATA_DIR: data, GITHUB_READ_TOKEN: 'token-for-watchdog',
+      COLLECTOR_WATCH_S: '1', COLLECTOR_WATCHDOG_N: '2',
+      SESSION_SECRET: crypto.randomBytes(32).toString('hex'),
+      INGEST_SECRET: crypto.randomBytes(32).toString('hex'),
+    },
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  let logs = '';
+  child.stdout.on('data', d => { logs += d; });
+  child.stderr.on('data', d => { logs += d; });
+  try {
+    for (let i = 0; i < 80 && !/collector: started/.test(logs); i++) await new Promise(r => setTimeout(r, 50));
+    assert.match(logs, /collector: started/);
+    const feed = path.join(data, 'feed', 'github-events.json');
+    fs.mkdirSync(path.dirname(feed), { recursive: true });
+    // No events array: the reader refuses it and does not move lastWrite. A fresh mtime is still a live writer.
+    fs.writeFileSync(feed, '{"generated_at":"now"}\n');
+    const until = Date.now() + 4000;
+    while (Date.now() < until) {
+      const now = new Date();
+      fs.utimesSync(feed, now, now);
+      await new Promise(r => setTimeout(r, 400));
+    }
+    assert.doesNotMatch(logs, /feed loop stalled/);
+  } finally {
+    const done = new Promise(r => child.once('exit', r));
+    child.kill();
+    await done;
+    fs.rmSync(data, { recursive: true, force: true });
+    fs.rmSync(bin, { recursive: true, force: true });
+  }
+});
+
 test('hung feed loop restarts and is visible on the board and on healthz', async () => {
   const data = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-watch-'));
   const bin = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-py-'));
