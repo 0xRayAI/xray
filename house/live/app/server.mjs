@@ -2974,8 +2974,9 @@ function readCollectorFeed() {   // every 2 s: ingest the collector's file when 
     resolve();
     if (again) readCollectorFeed();
   };
-  // A read that never posts leaves the published queue on the last pass and the watchdog kills the writer.
-  const timer = setTimeout(finish, 20000);
+  // A read that never posts leaves the published queue on the last pass. 20s was shorter
+  // than one parse of the live file, so every quiet pass was dropped and the clock froze.
+  const timer = setTimeout(finish, 90000);
   timer.unref?.();
   w.once('message', (msg) => {
     if (settled) return;
