@@ -670,9 +670,9 @@ function pluginRoots(pluginDir) {
 
 /**
  * `isolated` stays HOME != machine home. A machine-level 0xray Grok plugin this
- * project did not plant is a WARN. It fails when Grok would load it (HOME is the
- * machine home) and it points at a different root, by a pinned XRAY_ROOT or by
- * launcher paths. That plugin would run another checkout's MCP servers.
+ * project did not plant is a WARN, including when it points at another root.
+ * Wear plants the project plugin and does not rewrite the machine plugin, so
+ * that leftover must not fail the receipt.
  */
 export function checkMachinePlugin(machine = mint.machineHome(), root = null, env = process.env) {
   const machinePlugin = machineGrokPluginDir(machine);
@@ -690,11 +690,12 @@ export function checkMachinePlugin(machine = mint.machineHome(), root = null, en
   if (conflicts.length > 0) {
     return {
       id: "machinePlugin",
-      ok: false,
+      ok: true,
+      warn: true,
       machinePlugin,
       hits,
       conflicts,
-      detail: `machine-level ${conflicts.join(", ")} points at another root than ${here} (XRAY_ROOT or launcher paths) — delete it: ${remedy}`,
+      detail: `machine-level ${conflicts.join(", ")} points at another root than ${here} (XRAY_ROOT or launcher paths). The project plugin is the one this wear planted. Remove the machine plugin if it should not load: ${remedy}`,
     };
   }
   return {

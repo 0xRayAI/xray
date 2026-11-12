@@ -1,6 +1,7 @@
 ## [Unreleased]
 
 - Inspect counts a Grok hook as bound when the command sits inside the nested hooks list. A worn Grok suit no longer looks unbound.
+- A machine Grok plugin that points at another project is a warning. It does not fail the wear. The project plugin is the one wear planted.
 
 ## [4.2.2] - 2026-11-11
 

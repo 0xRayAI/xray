@@ -1490,7 +1490,7 @@ describe('foundry mill — inspect organ', () => {
         const altHome = alt.checks.find((c) => c.id === 'isolated-home') as { ok?: boolean; isolated?: boolean };
         expect(altHome.ok).toBe(true);
         expect(altHome.isolated).toBe(false);
-        // A plugin pinning this project's XRAY_ROOT is a WARN. One pinning another root fails.
+        // A machine plugin is a WARN, including one that pins another root.
         rmSync(path.join(machineWithPlugin, '.grok', 'plugins', '0xray-alt'), { recursive: true, force: true });
         const pinned = path.join(machineWithPlugin, '.grok', 'plugins', '0xray');
         mkdirSync(pinned, { recursive: true });
@@ -1505,10 +1505,11 @@ describe('foundry mill — inspect organ', () => {
         expect((same as { warnings?: string[] }).warnings).toEqual(['machinePlugin']);
         pin('/home/box/other-seat');
         const other = await inspectSuit(tmp, { millRoot: root, skipLive: true, env: { HOME: machineWithPlugin }, machineHome: machineWithPlugin });
-        expect(other.ok).toBe(false);
-        expect(other.failed).toEqual(['machinePlugin']);
+        expect(other.ok).toBe(true);
+        expect(other.failed).not.toContain('machinePlugin');
+        expect((other as { warnings?: string[] }).warnings).toEqual(['machinePlugin']);
         const otherPlugin = other.checks.find((c) => c.id === 'machinePlugin') as { detail?: string };
-        expect(otherPlugin.detail).toMatch(/points at another root .* delete it: rm -rf /);
+        expect(otherPlugin.detail).toMatch(/points at another root .* Remove the machine plugin/);
         // Launcher paths count too: no XRAY_ROOT pin, but the servers run another checkout.
         const launcher = (arg: string) =>
           writeFileSync(
@@ -1517,10 +1518,12 @@ describe('foundry mill — inspect organ', () => {
           );
         launcher('/home/box/other-seat/node_modules/0xray/scripts/node/mcp-launch.cjs');
         const viaLauncher = await inspectSuit(tmp, { millRoot: root, skipLive: true, env: { HOME: machineWithPlugin }, machineHome: machineWithPlugin });
-        expect(viaLauncher.failed).toEqual(['machinePlugin']);
+        expect(viaLauncher.ok).toBe(true);
+        expect((viaLauncher as { warnings?: string[] }).warnings).toEqual(['machinePlugin']);
         launcher('/tmp/xray-setup-nogit-abc/node_modules/@0xray/repertoire/dist/mcp/server.js');
         const viaDeadRoot = await inspectSuit(tmp, { millRoot: root, skipLive: true, env: { HOME: machineWithPlugin }, machineHome: machineWithPlugin });
-        expect(viaDeadRoot.failed).toEqual(['machinePlugin']);
+        expect(viaDeadRoot.ok).toBe(true);
+        expect((viaDeadRoot as { warnings?: string[] }).warnings).toEqual(['machinePlugin']);
         launcher(path.join(tmp, 'node_modules', '0xray', 'scripts', 'node', 'mcp-launch.cjs'));
         const ownLauncher = await inspectSuit(tmp, { millRoot: root, skipLive: true, env: { HOME: machineWithPlugin }, machineHome: machineWithPlugin });
         expect(ownLauncher.ok, JSON.stringify(ownLauncher.checks, null, 2)).toBe(true);
