@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+- Inspect counts a Grok hook as bound when the command sits inside the nested hooks list. A worn Grok suit no longer looks unbound.
+
 ## [4.2.2] - 2026-11-11
 
 ### 🔄 Changes

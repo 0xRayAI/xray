@@ -91,16 +91,18 @@ export function parseInspectArgs(argv = process.argv.slice(2)) {
   return out;
 }
 
+function commandBound(entry) {
+  if (!entry || typeof entry !== "object") return false;
+  if (typeof entry.command === "string" && entry.command.trim()) return true;
+  return Array.isArray(entry.hooks) && entry.hooks.some(commandBound);
+}
+
 function hooksFileBound(file) {
   if (!fs.existsSync(file)) return false;
   const json = readJson(file);
   const hooks = json?.hooks;
   if (!hooks || typeof hooks !== "object") return false;
-  return Object.values(hooks).some(
-    (list) =>
-      Array.isArray(list) &&
-      list.some((entry) => typeof entry?.command === "string" && entry.command.trim()),
-  );
+  return Object.values(hooks).some((list) => Array.isArray(list) && list.some(commandBound));
 }
 
 export function classifyHarnessProfile({ hooksBound, repertoireFastened, stationPresent }) {
