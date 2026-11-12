@@ -1,5 +1,12 @@
 ## [Unreleased]
 
+## [4.2.2] - 2026-11-11
+
+### 🔄 Changes
+
+- `@0xray/grok-bot@0.1.14` is on npm. `stand-up-fleet` is the one pass for a new fleet. The kit docs name the doctor line, house off, and Node `>=24.22.3`. #1018 #1019 #1020
+- AGENTS.md, AGENTS-consumer.md, and llms.txt name era **4.2** and Node `>=24.22.3`. #1017
+- The 4.2.1 heading holds the notes that shipped in that tag. #1016
 - Ack `open` is the next queue read. A new station nudge acks the older ones. A merged pull's handoff acks with no review link. A new PR head is kept when the author is outside the fleet, and it replaces the older head line. The inbox head reprints until it is acked. A card owner is a seat: `Board-Owner:`, else the assignee, else builder-cloud. A turn that ends with lines from that turn gets one follow-up wake. The station nudge names the unread count. The wake trap peeks the inbox before turn end. #985 #996 #1001 #1002 #1003 #1004
 - Node floor is `>=24.22.3`, the 11 Nov 2026 patched 24 release. Railway images install that binary from nodejs.org over `node:24.22.1-bookworm-slim`. Docker Hub has no `node:24.22.3` tag. Changelog, README, guides, engines, and doctor name that floor. CI workflows stay on `24.22.1`. #1014 #1015
 - A temp machine home is a durable wear. A plate id that is not a skill declines. Lens cards list three skills. A seat-kept station restamps Repertoire only when that row is already there. Push runs without GNU flock. Board and spectrum shots fall back when `/opt/cursor` is not writable. The 4.1.1 mill and inspect bodies are pinned so a sound-seat upgrade can strip them. #1013
@@ -16,7 +23,7 @@
 - Vitest isolates HOME. #995
 - The cold-run docs say what the command printed. #987
 - The start-after test no longer holds the runner. #1006
-- Wear pins a linked checkout at `node_modules/0xray`.
+- Wear pins a linked checkout at `node_modules/0xray`. A second wear keeps the mill catalog and the Grok plugin servers, including goggles and repertoire. Quick Start says `npm init -y` before install, install the suit before the grok-bot kit, and that the npm 11 allowScripts warning is safe to ignore. `npx 0xray look` and `npx 0xray inspect --skip-live` are on that path.
 - A seat bot comment does not wake another seat. #976 #978
 - `ci_pass` rings only when that sha's checks are green. #961 #967
 - Wake does not clone. It fast-forwards the checkout that is already there. #959 #960
@@ -32,15 +39,6 @@
 - Look opens the plate drawing. #892
 - The stamp-plate diagram reads left to right: goggles, stamp, lens, look. The kit edges match the piping. #885
 - The House goggles line is Nibbler only. The trailing clause is gone. #874 #882 #883
-
-## [4.2.2] - 2026-11-11
-
-### 🔄 Changes
-
-### 🐛 Bug Fixes
-- fix: live inbox maintenance (#1021) (acb5b60e5)
-
----
 
 ## [4.2.1] - 2026-11-05
 
