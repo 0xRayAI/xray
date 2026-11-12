@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""live-inbox <seat> [--peek] | live-inbox <seat> --ack <id|all|stale> [--apply] [--review <url>] | live-inbox <seat> --pop <id|all> | live-inbox <seat> --upto <id> | live-inbox <seat> --turn start|end [--tag <tag>] | live-inbox <seat> --prompt [--from <name>] [--room <name>] [--note <line>] [--at <ISO>]
+"""live-inbox <seat> [--peek] [--watch] | live-inbox <seat> --ack <id|all|stale> [--apply] [--review <url>] | live-inbox <seat> --pop <id|all> | live-inbox <seat> --upto <id> | live-inbox <seat> --turn start|end [--tag <tag>] | live-inbox <seat> --prompt [--from <name>] [--room <name>] [--note <line>] [--at <ISO>]
 live-inbox <seat> --handoff <to> --pr <owner/repo#n> --kind <ready|critic_fail|live_pass|merge|ci_fail> --sha <head>
 live-inbox <seat> --card <owner/repo#n> --start-after <ISO>
 
@@ -321,7 +321,7 @@ def migrate_cursors():
 
 CUR = resolve_cursor_dir()
 KINDS = ("ready", "critic_fail", "live_pass", "merge", "ci_fail")
-USAGE = ("usage: live-inbox <seat> [--peek] | live-inbox <seat> --pass [id] | live-inbox <seat> --ack <id|all|stale> [--apply] | live-inbox <seat> --pop <id|all> | "
+USAGE = ("usage: live-inbox <seat> [--peek] [--watch] | live-inbox <seat> --pass [id] | live-inbox <seat> --ack <id|all|stale> [--apply] | live-inbox <seat> --pop <id|all> | "
          "live-inbox <seat> --upto <id> | live-inbox <seat> --release | "
          "live-inbox <seat> --remember|--repeat --pr <owner/repo#n> --sha <head> --kind <kind> | "
          "live-inbox <seat> --turn start|end [--tag <tag>] | "
@@ -405,6 +405,9 @@ if repeat:
 remember = "--remember" in argv
 if remember:
     argv.remove("--remember")
+watch = "--watch" in argv
+if watch:
+    argv.remove("--watch")
 handled_lookup = repeat or remember
 if any(a.startswith("--") for a in argv):
     sys.exit(USAGE)
@@ -1042,5 +1045,17 @@ if ack is not None:
     print(json.dumps(r))
     sys.exit(0)
 lines = claim_open(seat, call("GET", f"/inbox/{seat}?queue=1").get("lines") or [])
+if watch:
+    have = {l.get("id") for l in lines if isinstance(l, dict)}
+    got = call("GET", f"/inbox/{seat}", exit_on_error=False)
+    rest = got.get("lines") if isinstance(got, dict) else []
+    for line in rest or []:
+        if not isinstance(line, dict):
+            continue
+        ident = line.get("id")
+        if ident in have:
+            continue
+        have.add(ident)
+        lines.append(line)
 for l in lines:
     print(json.dumps(l, ensure_ascii=False))

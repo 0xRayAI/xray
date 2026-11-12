@@ -11,12 +11,22 @@ import { fileURLToPath } from 'node:url';
 import { listenPort } from './free-port.mjs';
 import {
   ROLLING_HOUR_MS, wakeConfig, createWakeState, classifyBatch, gateLine, noteSent, releaseDue, defaultIssueSeat,
-  publicStats, fullStats, isP1Issue, hasSha,
+  publicStats, fullStats, isP1Issue, hasSha, startTurn,
 } from '../app/wake-gate.mjs';
 
 const cfg = wakeConfig({ WAKE_KIND_COOLDOWN_S: '900', WAKE_MAX_PER_HOUR: '6', LIVE_TURN_OPEN_MIN: '20', WAKE_BATCH_S: '0' });
 const T0 = 1_700_000_000_000;
 const line = (over) => ({ id: over.id || 'l', type: over.type || 'pr_commit', repo: over.repo || 'acme/one', number: over.number ?? 1, title: 't', url: 'https://github.com/acme/one', reason: over.reason || 'ask', ...over });
+
+test('a start inside the open window keeps the original timestamp', () => {
+  const state = createWakeState();
+  assert.equal(startTurn(state, 'arch1', T0, cfg.turnOpenMs), T0);
+  assert.equal(startTurn(state, 'arch1', T0 + 60_000, cfg.turnOpenMs), T0);
+  assert.equal(state.turnOpen.get('arch1'), T0);
+  const later = T0 + cfg.turnOpenMs;
+  assert.equal(startTurn(state, 'arch1', later, cfg.turnOpenMs), later);
+  assert.equal(state.turnOpen.get('arch1'), later);
+});
 
 test('BIFROST_WAKES off, 0, false, and no pause every wake', () => {
   for (const v of ['off', '0', 'false', 'no', 'OFF']) assert.equal(wakeConfig({ BIFROST_WAKES: v }).paused, true, v);

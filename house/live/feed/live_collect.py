@@ -365,6 +365,38 @@ def assignee_seat(x) -> str:
     return ""
 
 
+def assign_rewalk_done(paged, left, miss):
+    """The 14-day walk latches only after a finished pass that still had budget.
+    A cap of 10, or a write that never reached GitHub, leaves the walk open."""
+    return paged == "done" and left > 0 and not miss
+
+
+def assignee_bot(item, nodes):
+    """Packet R as a fleet bot login when the card is open and unassigned.
+    A person login is never returned. An existing assignee is left alone."""
+    if not isinstance(item, dict) or not isinstance(nodes, dict):
+        return None
+    if str(item.get("state") or "").lower() != "open":
+        return None
+    if isinstance(item.get("assignee"), dict) and item["assignee"].get("login"):
+        return None
+    for row in item.get("assignees") or []:
+        if isinstance(row, dict) and row.get("login"):
+            return None
+    packet = item.get("packet") if isinstance(item.get("packet"), dict) else None
+    if packet is None:
+        packet = live_packet.parse(item.get("body")) or None
+    if not isinstance(packet, dict):
+        return None
+    seat = str(live_packet.raci_roles(packet.get("raci")).get("R") or "").strip().lower()
+    if not seat:
+        return None
+    for login, mapped in nodes.items():
+        if str(mapped).strip().lower() == seat and str(login).endswith("[bot]"):
+            return str(login)
+    return None
+
+
 def card_fields(x) -> dict:
     """Board card fields from a PR / issue object this pass already fetched: branded title, state, labels and
     the packet block (sanitized, <= 200 chars a field). The body itself is discarded here, never stored.
@@ -539,6 +571,24 @@ class Client:
             if e.code == 401:
                 raise AuthExpired("HTTP 401 on REST") from None
             raise
+
+    def write_json(self, path, payload):
+        """POST JSON. 401, 403, 404, and 422 are statuses. They are not AuthExpired."""
+        data = json.dumps(payload).encode()
+        url = path if str(path).startswith("http") else API + path
+        self.calls += 1
+        try:
+            with urllib.request.urlopen(self._req(url, "POST", data), timeout=40) as r:
+                r.read()
+                return r.status
+        except urllib.error.HTTPError as e:
+            try:
+                e.read()
+            finally:
+                e.close()
+            return e.code
+        except (urllib.error.URLError, http.client.HTTPException, TimeoutError, OSError, ValueError):
+            return 0
 
     def gql(self, query, variables):
         if self.gql_remaining is not None and self.gql_remaining < GQL_FLOOR:
@@ -1028,6 +1078,39 @@ class RepoCollector:
             if login:
                 self._stamp_merger(int(n), login)
 
+    def maybe_assign(self, c, item):
+        """Best-effort assignee write. A read-only token must not stop the feed.
+        A network miss is not remembered, so the next pass can try the same card.
+        A real HTTP status is remembered, so a refusal does not fill the next cap."""
+        if getattr(self, "_assign_left", 0) <= 0 or not getattr(c, "token", None):
+            return
+        login = assignee_bot(item, NODE)
+        if not login:
+            return
+        try:
+            number = int(item.get("number"))
+        except (TypeError, ValueError):
+            return
+        tried = self.st.setdefault("assign_tried", [])
+        if not isinstance(tried, list):
+            tried = []
+            self.st["assign_tried"] = tried
+        key = f"{self.repo}#{number}"
+        if key in tried:
+            return
+        try:
+            code = c.write_json(f"/repos/{self.repo}/issues/{number}/assignees", {"assignees": [login]})
+        except AuthExpired:
+            self._assign_miss = True
+            return
+        if not code:
+            self._assign_miss = True
+            return
+        tried.append(key)
+        if len(tried) > 500:
+            del tried[:-500]
+        self._assign_left -= 1
+
     def poll_pulls(self, c):
         if not getattr(c, "token", None):
             return
@@ -1067,6 +1150,11 @@ class RepoCollector:
             back = (datetime.now(timezone.utc) - timedelta(hours=36)).strftime("%Y-%m-%dT%H:%M:%SZ")
             cur = min(cur, back)
             self.st["etags"].pop("pulls", None)
+        assign_rewalk = not self.st["bf"].get("assign:r")
+        if cur and assign_rewalk:
+            back = (datetime.now(timezone.utc) - timedelta(days=14)).strftime("%Y-%m-%dT%H:%M:%SZ")
+            cur = min(cur, back)
+            self.st["etags"].pop("pulls", None)
         # Stop walks the whole list. The stored cursor stays until a strictly newer update,
         # so a same-instant +00:00 stamp does not replace the Z form.
         walk_from = cur
@@ -1093,6 +1181,8 @@ class RepoCollector:
                                       "merged_at": p.get("merged_at"), "state": p["state"], "base": p["base"]["ref"]}
             url = p["html_url"]
             fields = card_fields(p)
+            if str(p.get("state") or "").lower() == "open":
+                self.maybe_assign(c, p)
             if not fields.get("packet_file") and head and packet_file_on_ref(c, self.repo, head):
                 fields["packet_file"] = True
             self.put(f"{self.repo}#{n}:open", p["created_at"], shown_from(login), "GitHub", "pr_open",
@@ -1135,6 +1225,9 @@ class RepoCollector:
             self.st["bf"]["cards:pulls"] = True
         if bc_rewalk and getattr(self, "_paged_status", None) == "done":
             self.st["bf"]["bc:body"] = True
+        if assign_rewalk and assign_rewalk_done(
+                getattr(self, "_paged_status", None), self._assign_left, getattr(self, "_assign_miss", False)):
+            self.st["bf"]["assign:r"] = True
         self._backfill_parent_doors(c)
 
     def enrich_prs(self, c, limit=20):
@@ -1458,6 +1551,7 @@ class RepoCollector:
                 return
             if st != 200 or not isinstance(data, dict):
                 return
+            self.maybe_assign(c, data)
             self._put_open_card(data)
             if f"{self.repo}!{n}:open" not in self.ev and f"{self.repo}#{n}:open" not in self.ev:
                 return
@@ -1467,6 +1561,11 @@ class RepoCollector:
         # One walk of every issue. The time cursor skips a number that was not updated after it,
         # and that number never becomes a card. put() is idempotent.
         stored = cur
+        assign_rewalk = not self.st["bf"].get("assign:issues")
+        if cur and assign_rewalk:
+            back = (datetime.now(timezone.utc) - timedelta(days=14)).strftime("%Y-%m-%dT%H:%M:%SZ")
+            cur = min(cur, back)
+            self.st["etags"].pop("issues", None)
         cards_rewalk = not self.st["bf"].get("cards:issues")
         if cards_rewalk:
             cur = None
@@ -1484,11 +1583,16 @@ class RepoCollector:
             self.put(f"{self.repo}!{n}:open", i["created_at"], shown_from(login), "GitHub", "issue_open",
                      f"{self.short} issue #{n} opened · {i['title']}", i["html_url"], n, actor=login,
                      mentions=mentions(i.get("body")), **card_fields(i))
+            if str(i.get("state") or "").lower() == "open":
+                self.maybe_assign(c, i)
         self.st["cur"]["issues"] = newest
         if self._etag_new:
             self.st["etags"]["issues"] = self._etag_new
         if cards_rewalk and getattr(self, "_paged_status", None) == "done":
             self.st["bf"]["cards:issues"] = True
+        if assign_rewalk and assign_rewalk_done(
+                getattr(self, "_paged_status", None), self._assign_left, getattr(self, "_assign_miss", False)):
+            self.st["bf"]["assign:issues"] = True
 
     def poll_comments(self, c):
         cur = self.st["cur"].get("comments")
@@ -1789,6 +1893,8 @@ class RepoCollector:
     # ---------------------------------------------------------------- one pass
     def run(self, c, deadline):
         self._denied = None
+        self._assign_left = 10
+        self._assign_miss = False
         steps = [("pulls", self.poll_pulls), ("issues", self.poll_issues),
                  ("open cards", self.backfill_open_cards), ("issue events", self.poll_issue_events),
                  ("merger backfill", self.backfill_mergers),

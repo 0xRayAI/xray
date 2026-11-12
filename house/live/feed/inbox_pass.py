@@ -427,12 +427,50 @@ def cmd_pull(path):
     if d.get("reset"):   # a full resync (first pull, server restart): history, never delivered
         st = _load(STATE, {})
         seen = st.get("seen") or {}
+        skip = set(st.get("seed_skip") or []) if isinstance(st.get("seed_skip"), list) else set()
         for e in d.get("events") or []:
             if isinstance(e, dict) and isinstance(e.get("id"), str):
                 seen.setdefault(e["id"], int(_t(e)))
+                skip.add(e["id"])
         st["seen"] = seen
+        st["seed_skip"] = sorted(skip)
         _save(STATE, st)
     print(c.get("cursor") or "")
+
+
+REFILL_S = 14 * 24 * 3600
+_OPEN_CARD = {"pr_open", "issue_open"}
+
+
+def _line_covered(known, event_id, seat, line_id):
+    if line_id in known or event_id in known:
+        return True
+    return f"{event_id}:r:{seat}" in known
+
+
+def _refill_open_cards(ev, ids, roles, now, new_ids, skip, directory):
+    """File a missing seat line for an open card inside the refill window.
+    A seed-skipped id stays silent. deliver() is not used, so stall lines are not added."""
+    written = 0
+    for k in ids:
+        e = ev.get(k)
+        if not isinstance(e, dict) or k in new_ids or k in skip:
+            continue
+        if str(e.get("kind") or "") not in _OPEN_CARD:
+            continue
+        ts = _t(e)
+        if not ts or now - ts > REFILL_S:
+            continue
+        for line in _direct_all(e, roles):
+            seat = str(line.get("seat") or "")
+            line_id = str(line.get("id") or "")
+            if not seat or not line_id or set(line) - set(inbox._FIELDS):
+                continue
+            path = directory / f"{seat}.jsonl"
+            if _line_covered(inbox._known_ids(path), k, seat, line_id):
+                continue
+            written += inbox._append(path, [line])
+    return written
 
 
 def cmd_pass(now=None):
@@ -461,6 +499,7 @@ def cmd_pass(now=None):
     first = not st.get("seeded")
     seeded_at = now if first else float(st.get("seeded_at") or 0)
     floor = max(seeded_at - SEED_GRACE_S, now - ROUTE_MAX_AGE_S)
+    before = set(seen)
     for e in new:
         seen[e["id"]] = int(_t(e))
     if len(seen) > MAX_SEEN:
@@ -470,6 +509,12 @@ def cmd_pass(now=None):
     if bad:
         print(f"inbox_pass: {bad} event(s) with missing/bad t_ct marked seen, not delivered", file=sys.stderr)
     new = [e for e in new if _t(e) >= floor]   # history (pre-seed or late backfill) is marked seen, never delivered
+    skip_set = set(st.get("seed_skip") or []) if isinstance(st.get("seed_skip"), list) else set()
+    delivered = {e["id"] for e in new}
+    for eid in list(seen):
+        if eid not in before and eid not in delivered:
+            skip_set.add(eid)
+    skip_set = {k for k in skip_set if k in ev}
     changed = [e for e in changed if _t(e)]   # a kind change is live even when the original t_ct is old
     # Edited comments (#300 follow-up): the collector re-reads a comment when updated_at moves and puts it again under the
     # same id, so `seen` alone would drop a mention added on edit. Remember each comment's @handles; a handle added later
@@ -586,8 +631,10 @@ def cmd_pass(now=None):
                 fresh.append(line)
             lines += inbox._append(path, fresh)
         inbox.maybe_board(len(new), log=lambda m: print(m, file=sys.stderr))
+    if not first:
+        lines += _refill_open_cards(ev, ids, r_roles, now, new_ids, skip_set, INBOX)
     sig = {k: v for k, v in sig.items() if k in seen or k in ev}
-    _save(STATE, {"seeded": True, "seeded_at": seeded_at, "seen": seen, "sent": st.get("sent") or [], "ments": ments, "sig": sig, "r_sent": r_sent})
+    _save(STATE, {"seeded": True, "seeded_at": seeded_at, "seen": seen, "sent": st.get("sent") or [], "ments": ments, "sig": sig, "r_sent": r_sent, "seed_skip": sorted(skip_set)})
     ring()
     _save(CACHE, c)
     print(f"{len(new)} {lines}")

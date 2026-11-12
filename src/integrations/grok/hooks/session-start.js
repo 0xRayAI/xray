@@ -17,7 +17,7 @@ import {
 } from './grok-hook-utils.js';
 import { appendHookActivity } from './grok-hook-activity.js';
 import { notifyBifrost, ownerLine } from '../../hooks/bifrost-send.mjs';
-import { pollInboxOnce } from '../../hooks/inbox-boot.mjs';
+import { inboxStartOrder, pollInboxOnce } from '../../hooks/inbox-boot.mjs';
 import { recordSynthesisTurnSlice } from '../../hooks/synthesis-hook-runtime.mjs';
 import { archiveStaleLeadDevPlan } from '../../hooks/plan-hook-runtime.mjs';
 import {
@@ -202,12 +202,21 @@ async function main() {
     }
 
     let inboxMessage = '';
-    if (HOOK_EVENT === 'session_start') {
-      try {
-        inboxMessage = await pollInboxOnce({ root: eventRoot, env: process.env });
-      } catch {
-        inboxMessage = '';
+    try {
+      if (HOOK_EVENT === 'session_start') {
+        inboxMessage = await pollInboxOnce({
+          root: eventRoot,
+          env: process.env,
+          sessionId: sessionId || '',
+        });
+      } else if (HOOK_EVENT === 'user_prompt_submit') {
+        inboxMessage = inboxStartOrder({
+          env: process.env,
+          sessionId: sessionId || '',
+        });
       }
+    } catch {
+      inboxMessage = '';
     }
     const out = inboxMessage ? { ...payload, systemMessage: inboxMessage } : payload;
     if (!compact) process.stdout.write(`${JSON.stringify(out)}\n`);

@@ -116,6 +116,23 @@ export function monitorStartOrder(script, seat, origin, keys, sessionId, foreign
   ].join('\n');
 }
 
+/** Repeat the start order when the watcher is down. No poll. A live pid stays quiet. */
+export function inboxStartOrder(opts = {}) {
+  const env = opts.env || {};
+  const home = typeof opts.home === 'string' && opts.home.trim()
+    ? opts.home.trim()
+    : ((typeof env.HOME === 'string' && env.HOME.trim()) || os.homedir());
+  const pidFile = opts.pidFile || watcherPidFile(env, home);
+  if (watcherAlive(pidFile)) return '';
+  const cfg = suitConfig(env, home);
+  if (!cfg) return '';
+  const script = opts.script || inboxWatchScript(env);
+  if (!script || !fs.existsSync(script)) return '';
+  const sessionId = String(opts.sessionId || env.GROK_SESSION_ID || '').trim();
+  recordInboxWake(home, cfg.seat);
+  return monitorStartOrder(script, cfg.seat, cfg.origin, cfg.keys, sessionId, 0);
+}
+
 export function composeInboxMessage(pollText, order) {
   const poll = formatInboxMessage(pollText);
   const tail = String(order || '').trim();

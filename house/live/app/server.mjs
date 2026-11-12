@@ -22,7 +22,8 @@ import { fingerprint, tripwire, createClock, wakeTitle, mutedSeats, selectStallS
 import { acceptWaveCards, applyBrief, attachPacketCards, burnQuiet, faceFromGithubIssue, handoffLabel, isPacketBorn, isPlanCard, liveWorkCount, packetCardFace, postedCards, restoreHandoffFace, retainSeedCards, resolveWaveSeed, scheduleWaves } from './wave-schedule.mjs';
 import { createArch1Launch, ARCH1_CANON, cardKeyOf } from './arch1-launch.mjs';
 import { configureWorkTrack, acceptCursorWebhook, appendWake, applyCloudOwners, boardCloudAgents, canonSeatToken, cloudIdsAlias, cloudTurnId, deriveTrackFromDir, displaySeat, isPacket, loadSeatAgentMap, openCloudTurns, readJsonl, readWakeRows, safePrUrl, seatForAgentId, stampCriticCloud, toToken } from './worktrack.mjs';
-import { wakeConfig, createWakeState, classifyBatch, gateLine, noteSent, releaseDue, releaseForTurn, publicStats, fullStats, restoreWakeBook, viewLine, defaultIssueSeat } from './wake-gate.mjs';
+import { wakeConfig, createWakeState, classifyBatch, gateLine, noteSent, releaseDue, releaseForTurn, publicStats, fullStats, restoreWakeBook, viewLine, defaultIssueSeat, startTurn } from './wake-gate.mjs';
+import { defectDraft, defectIssue, claimTitle, openGithubIssue } from './defect-issue.mjs';
 import { appendDoorbell, criticHeads, loadChatDoorbells, postSeatMessage, seatMessage } from './chat-doorbell.mjs';
 const COLLECTOR_DIR_EARLY = () => path.join(path.dirname(fileURLToPath(import.meta.url)), 'collector');
 import { initArchive, appendArchive, backfillArchive, readArchive, validArchiveDate, KINDS as ARCHIVE_KINDS, cardHistory, archiveDays, archivedLineBytes, appendTransition, transitionFromEvent, queryTransitions, exportTransitions, archiveRoot, setArchiveSink, foldCardRows, useCardRows, reloadCardRows, adoptFoldedCards, adoptCardBook } from './archive.mjs';
@@ -637,13 +638,14 @@ function observeTurn(seat, kind, action) {
   if (!id) return;
   if (action === 'start') {
     const now = Date.now();
-    wakeState.turnOpen.set(id, now);
+    const wait = wakeConfig(process.env).turnOpenMs;
+    const opened = startTurn(wakeState, id, now, wait);
+    if (opened !== now) return;
     const prev = turnTimers.get(id);
     if (prev) clearTimeout(prev);
-    const wait = wakeConfig(process.env).turnOpenMs;
     const t = setTimeout(() => {
       turnTimers.delete(id);
-      if (wakeState.turnOpen.get(id) !== now) return;
+      if (wakeState.turnOpen.get(id) !== opened) return;
       wakeState.turnOpen.delete(id);
       pumpHold();
     }, wait);
@@ -2061,11 +2063,14 @@ function applyTrackWorking(fleet, track, now) {
 }
 const PARKED_QUEUE = new Set(['herald', 'magnet', 'nibbler', 'sound']);
 const OPEN_ASKS = new Set(['packet', 'dispatch', 'ready', 'critic_fail', 'needs_human', 'issue_comment', 'pr_comment', 'pr_open', 'issue_open', 'comment', 'pr', 'issue']);
+const COMMENT_NOISE = new Set(['issue_comment', 'pr_comment', 'comment']);
 function chicagoDay(ms) {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(ms));
 }
-// Parked seats stay in the inbox file and off the open queue. arch10x lines from a previous Chicago day do too.
+// Parked seats stay in the inbox file and off the open queue.
+// The Chicago-day cut is only the comment noise filter. An open ask that names the arch10x login stays, including one with no timestamp.
 function queueStale(line, now) {
+  if (!COMMENT_NOISE.has(String(line && line.type || ''))) return false;
   const blob = `${line && line.title || ''} ${line && line.id || ''}`;
   if (!/arch10x/i.test(blob)) return false;
   const t = Date.parse(line && line.t_ct || '');
@@ -2077,11 +2082,15 @@ function openQueue(now = Date.now()) {
   for (const seat of SEAT_IDS) {
     for (const l of openLines(seat)) {
       if (!l || l.id == null || queueStale(l, now) || !OPEN_ASKS.has(String(l.type || ''))) continue;
+      const n = Number(l.number);
       lines.push({
         id: String(l.id).slice(0, 120), seat,
         title: String(l.title || '').slice(0, 120),
         t_ct: typeof l.t_ct === 'string' ? l.t_ct : '',
         type: typeof l.type === 'string' ? l.type : '',
+        repo: typeof l.repo === 'string' ? l.repo.slice(0, 120) : '',
+        number: Number.isInteger(n) && n > 0 ? n : null,
+        reason: typeof l.reason === 'string' ? l.reason.slice(0, 120) : '',
       });
     }
   }
@@ -4032,6 +4041,42 @@ async function handle(req, res) {
     const events = parsed.events.map(e => (e && typeof e === 'object' && e.source == null && source ? { ...e, source } : e));
     const r = acceptWork(events);
     return json(req, res, 200, { ok: true, accepted: r.accepted, rejected: r.rejected });
+  }
+  if (p === '/defect') {
+    if (m !== 'POST') return json(req, res, 405, { error: 'method not allowed' }, { Allow: 'POST' });
+    let who;
+    try { who = await seatOf(req); } catch { return json(req, res, 503, { error: 'could not verify token, retry' }, { 'Retry-After': '30' }); }
+    if (!who) { req.resume(); return json(req, res, 401, { error: 'unauthorized' }); }
+    let d;
+    try { d = JSON.parse((await readBody(req, 8192)).toString('utf8')); }
+    catch (e) { return json(req, res, e && e.code === 413 ? 413 : 400, { error: e && e.code === 413 ? 'too large' : 'invalid json' }); }
+    const draft = defectDraft(d && d.text);
+    const repo = d && typeof d.repo === 'string' && /^[A-Za-z0-9][A-Za-z0-9._-]{0,38}\/[A-Za-z0-9_][A-Za-z0-9._-]{0,99}$/.test(d.repo)
+      ? d.repo : (process.env.DEFECT_REPO || '0xRayAI/xray');
+    const issue = draft ? defectIssue(draft, who, repo) : null;
+    if (!issue) return json(req, res, 422, { error: 'not a defect' });
+    const storePath = path.join(STATE_DIR, 'defect-titles.json');
+    let store = {};
+    try {
+      const raw = JSON.parse(fs.readFileSync(storePath, 'utf8'));
+      if (raw && typeof raw === 'object' && !Array.isArray(raw)) store = raw;
+    } catch { /* first defect */ }
+    const nowMs = Date.now();
+    if (!claimTitle(store, draft.mark, nowMs, 7 * 24 * 3600 * 1000)) {
+      return json(req, res, 200, { ok: true, duplicate: true });
+    }
+    const token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN || process.env.GITHUB_READ_TOKEN || '';
+    let opened;
+    try { opened = await openGithubIssue(GITHUB_API, issue, token, globalThis.fetch); }
+    catch { opened = { ok: false, reason: 'network' }; }
+    if (opened && opened.ok) {
+      try {
+        fs.mkdirSync(STATE_DIR, { recursive: true });
+        fs.writeFileSync(storePath, JSON.stringify(store));
+      } catch { /* the issue exists; the next post is a duplicate only after this write */ }
+      return json(req, res, 200, { ok: true, number: opened.number || null, url: opened.url || '' });
+    }
+    return json(req, res, 200, { ok: false, reason: (opened && opened.reason) || 'not-opened' });
   }
   const inboxM = /^\/inbox\/([a-z0-9-]{2,16})$/.exec(p);
   if (inboxM && m === 'GET') {   // a seat reads its own inbox: GET /inbox/<seat>?since=<id>

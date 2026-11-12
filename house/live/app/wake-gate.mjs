@@ -303,6 +303,15 @@ export function commentGuard(wake, state, now, cfg) {
   return null;
 }
 
+// A repeat start inside the open window keeps the original timestamp.
+// The caller leaves the existing timer alone. A start after the window opens a new turn.
+export function startTurn(state, seat, now, turnOpenMs) {
+  const prev = state.turnOpen.get(seat) || 0;
+  if (prev && now >= prev && now - prev < turnOpenMs) return prev;
+  state.turnOpen.set(seat, now);
+  return now;
+}
+
 // A new sha inside the cooldown or the rolling hour is queued, not dropped.
 // An unchanged sha is a drop. An empty sha never matches. A hotfix skips both waits.
 export function gateLine(wake, state, now, cfg) {
