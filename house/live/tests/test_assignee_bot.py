@@ -39,7 +39,7 @@ class AssigneeBot(unittest.TestCase):
         body = "## Packet\n\nR: critic\nA: Blaze\n"
         self.assertEqual(live_collect.assignee_bot(card(body), NODES), "critic0x[bot]")
 
-    def test_a_refusal_is_remembered_and_a_miss_is_not(self):
+    def test_a_refusal_is_not_remembered_and_a_success_is(self):
         calls = []
 
         class Writer:
@@ -64,13 +64,17 @@ class AssigneeBot(unittest.TestCase):
             item = card("## Packet\n\nR: arch1\nA: Blaze\n")
             col.maybe_assign(Writer(403), item)
             self.assertEqual(col._assign_left, 9)
+            self.assertEqual(col.st.get("assign_tried") or [], [])
+            self.assertTrue(col._assign_miss)
+            col._assign_miss = False
+            col.maybe_assign(Writer(201), item)
             self.assertEqual(col.st["assign_tried"], ["example/repo#1039"])
-            col.maybe_assign(Writer(403), item)
-            self.assertEqual(len(calls), 1)
-            self.assertFalse(col._assign_miss)
+            self.assertEqual(len(calls), 2)
+            col.maybe_assign(Writer(201), item)
+            self.assertEqual(len(calls), 2)
             col.st["assign_tried"].clear()
             col.maybe_assign(Writer(0), item)
-            self.assertEqual(col._assign_left, 9)
+            self.assertEqual(col._assign_left, 8)
             self.assertEqual(col.st["assign_tried"], [])
             self.assertTrue(col._assign_miss)
         finally:

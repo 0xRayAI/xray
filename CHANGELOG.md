@@ -9,7 +9,7 @@
 - An open ask that names the arch10x login stays on the queue across Chicago days. A comment from a previous Chicago day stays hidden.
 - A watch poll prints the queue head and the other open lines. A turn start inside the open window does not extend it. Open lines are not acked.
 - An open card whose seat line is missing is filed again within 14 days. The seed pass does not replay history. The 48 hour packet R backfill stays.
-- Packet R sets the GitHub assignee when the card has none and R names a fleet bot. A person login is not assigned. A write error does not stop the collector. A pass that spends its ten writes, or a write that never reaches GitHub, walks the open cards again.
+- Packet R sets the GitHub assignee when the card has none and R names a fleet bot. A person login is not assigned. A write error does not stop the collector. The assignee write uses its own token. The collector read token stays read-only. A refusal is tried again on the next pass. A pass that spends its ten writes, or a write that never reaches GitHub, walks the open cards again. A collector that has not started a pass still has that budget, so a poll finishes.
 - Restoring burst-live calls Railway `deploymentRollback` with the deployment id. `railway redeploy` rebuilds only the latest deployment. `railway down` removes it.
 - A prompt that names a bug and no issue number asks the board to open one issue. A log dump and a line that already names a number do not.
 - A later prompt repeats the inbox monitor start order when that pid is down. It does not poll.

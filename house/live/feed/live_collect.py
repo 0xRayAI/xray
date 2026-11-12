@@ -535,9 +535,9 @@ class Client:
         self.gql_points = 0
         self.remaining = self.gql_remaining = None
 
-    def _req(self, url, method="GET", data=None, etag=None):
+    def _req(self, url, method="GET", data=None, etag=None, token=None):
         h = {"Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28",
-             "User-Agent": "live-board-feed", "Authorization": f"Bearer {self.token}"}
+             "User-Agent": "live-board-feed", "Authorization": f"Bearer {token or self.token}"}
         if etag:
             h["If-None-Match"] = etag
         if data is not None:
@@ -573,12 +573,16 @@ class Client:
             raise
 
     def write_json(self, path, payload):
-        """POST JSON. 401, 403, 404, and 422 are statuses. They are not AuthExpired."""
+        """POST JSON with the assignee token. No assignee token is a miss, not a read-token write.
+        401, 403, 404, and 422 are statuses. They are not AuthExpired."""
+        auth = getattr(self, "assign_token", "") or ""
+        if not auth:
+            return 0
         data = json.dumps(payload).encode()
         url = path if str(path).startswith("http") else API + path
         self.calls += 1
         try:
-            with urllib.request.urlopen(self._req(url, "POST", data), timeout=40) as r:
+            with urllib.request.urlopen(self._req(url, "POST", data, token=auth), timeout=40) as r:
                 r.read()
                 return r.status
         except urllib.error.HTTPError as e:
@@ -679,9 +683,14 @@ class RepoCollector:
         for k, v in (("etags", {}), ("cur", {}), ("prs", {}), ("ci", {}), ("reviewer", {}), ("bf", {}),
                      ("branch_shas", {}), ("tag_time", {}), ("gaps", {})):
             self.st.setdefault(k, v)
+        if self.st.get("assign_gen") != 2:
+            self.st["assign_tried"] = []
+            self.st["assign_gen"] = 2
         self._sha_who = {}
         self.unreadable = None
         self._denied = None
+        self._assign_left = 10
+        self._assign_miss = False
         for e in self.ev.values():
             self._index_sha(e)
         for e in self.ev.values():   # every stored event gets a credit (never blank), also ones from before the map
@@ -1103,8 +1112,10 @@ class RepoCollector:
         except AuthExpired:
             self._assign_miss = True
             return
-        if not code:
+        if code in (401, 403) or not code:
             self._assign_miss = True
+            if code in (401, 403):
+                self._assign_left -= 1
             return
         tried.append(key)
         if len(tried) > 500:
@@ -1226,7 +1237,9 @@ class RepoCollector:
         if bc_rewalk and getattr(self, "_paged_status", None) == "done":
             self.st["bf"]["bc:body"] = True
         if assign_rewalk and assign_rewalk_done(
-                getattr(self, "_paged_status", None), self._assign_left, getattr(self, "_assign_miss", False)):
+                getattr(self, "_paged_status", None),
+                getattr(self, "_assign_left", 0),
+                getattr(self, "_assign_miss", False)):
             self.st["bf"]["assign:r"] = True
         self._backfill_parent_doors(c)
 
@@ -1591,7 +1604,9 @@ class RepoCollector:
         if cards_rewalk and getattr(self, "_paged_status", None) == "done":
             self.st["bf"]["cards:issues"] = True
         if assign_rewalk and assign_rewalk_done(
-                getattr(self, "_paged_status", None), self._assign_left, getattr(self, "_assign_miss", False)):
+                getattr(self, "_paged_status", None),
+                getattr(self, "_assign_left", 0),
+                getattr(self, "_assign_miss", False)):
             self.st["bf"]["assign:issues"] = True
 
     def poll_comments(self, c):
