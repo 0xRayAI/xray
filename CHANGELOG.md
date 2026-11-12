@@ -2,7 +2,7 @@
 
 ### 🔄 Changes
 
-- A quiet collector pass publishes the board queue without hashing one giant string per event. A feed file this collector just wrote is not a stall. The image copies `card-owner.mjs`, which the archive loads.
+- A quiet collector pass publishes the board queue without hashing one giant string per event. A feed file this collector just wrote is not a stall. The image copies `card-owner.mjs`, and the collector copies `card_owner.py`.
 
 ## [4.2.3] - 2026-11-12
 
