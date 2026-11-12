@@ -190,6 +190,132 @@ class InboxPass(unittest.TestCase):
             self.assertFalse(any(l["id"] == self_open["id"] for l in rd("critic")))
             self.assertFalse(any(l["id"] == self_open["id"] for l in rd("arch1")))
 
+    def test_packet_r_assigns_arch1_without_a_mention(self):
+        """R: arch1 is the queue assignment. No @arch10x mention. The opener's own R line stays.
+        A pull still tips critic. An open with no R still falls through to blinky."""
+        with tempfile.TemporaryDirectory() as d:
+            run = Path(d); (run / "feed").mkdir(); (run / "fleet").mkdir()
+            env = dict(os.environ, MESH_RUN=str(run), LIVE_BOARD="off")
+            repo = "0xRayAI/xray"
+            feed = run / "feed" / "live-events.json"
+            seed = {"id": f"{repo}#1:open", "t_ct": ct(900), "kind": "pr_open", "repo": repo, "number": 1, "label": "old", "source": "https://github.com/x"}
+            feed.write_text(json.dumps({"events": [seed]}))
+            self.assertEqual(self.run_pass(env, "pass"), "0 0")
+            raci = "R=arch1 A=Blaze"
+            issue = {"id": f"{repo}!1031:open", "t_ct": ct(40), "kind": "issue_open", "repo": repo, "number": 1031,
+                     "from": "critic", "actor": "critic0x[bot]", "label": "xray issue #1031 opened",
+                     "source": "https://github.com/0xRayAI/xray/issues/1031", "packet": {"raci": raci}}
+            own = {"id": f"{repo}!1033:open", "t_ct": ct(30), "kind": "issue_open", "repo": repo, "number": 1033,
+                   "from": "arch1", "actor": "arch10x[bot]", "author": "arch10x[bot]",
+                   "label": "xray issue #1033 opened", "source": "https://github.com/0xRayAI/xray/issues/1033",
+                   "packet": {"raci": raci}}
+            pull = {"id": f"{repo}#1030:open", "t_ct": ct(20), "kind": "pr_open", "repo": repo, "number": 1030,
+                    "from": "arch1", "actor": "arch10x[bot]", "author": "arch10x[bot]",
+                    "label": "xray #1030 opened", "source": "https://github.com/0xRayAI/xray/pull/1030",
+                    "packet": {"raci": raci, "next owner": "critic"}}
+            stray = {"id": f"{repo}!9:open", "t_ct": ct(10), "kind": "issue_open", "repo": repo, "number": 9,
+                     "from": "GitHub", "actor": "someone", "label": "unowned issue", "source": "https://github.com/x/9"}
+            feed.write_text(json.dumps({"events": [seed, issue, own, pull, stray]}))
+            self.run_pass(env, "pass")
+            box = run / "feed" / "inbox-spool"
+            rd = lambda s: [json.loads(x) for x in (box / f"{s}.jsonl").read_text().splitlines()] if (box / f"{s}.jsonl").exists() else []
+            arch_ids = [l["id"] for l in rd("arch1") if l["reason"] == "packet R"]
+            self.assertEqual(sorted(arch_ids), sorted([issue["id"], own["id"], pull["id"]]))
+            self.assertFalse(any(l["id"] in (issue["id"], own["id"]) for l in rd("blinky")))
+            self.assertTrue(any(l["id"].startswith(f"pr:{repo}#1030@") for l in rd("critic")))
+            self.assertTrue(any(l["id"] == stray["id"] for l in rd("blinky")))
+            self.assertFalse(any(l["id"] == stray["id"] for l in rd("arch1")))
+            self.assertEqual(self.run_pass(env, "pass"), "0 0")
+            again = [l["id"] for l in rd("arch1") if l["reason"] == "packet R"]
+            self.assertEqual(sorted(again), sorted([issue["id"], own["id"], pull["id"]]))
+            self.assertFalse(any(":r:" in l["id"] for l in rd("arch1")))
+
+    def test_seen_packet_r_is_filed_once(self):
+        """An open already marked seen is filed once on its R seat. A second pass is quiet.
+        A missing review line inside 14 days is filed once. An open older than 14 days stays where it was."""
+        with tempfile.TemporaryDirectory() as d:
+            run = Path(d); (run / "feed").mkdir(); (run / "fleet").mkdir()
+            env = dict(os.environ, MESH_RUN=str(run), LIVE_BOARD="off")
+            repo = "0xRayAI/xray"
+            feed = run / "feed" / "live-events.json"
+            seed = {"id": f"{repo}#1:open", "t_ct": ct(900), "kind": "pr_open", "repo": repo, "number": 1, "label": "old", "source": "https://github.com/x"}
+            feed.write_text(json.dumps({"events": [seed]}))
+            self.assertEqual(self.run_pass(env, "pass"), "0 0")
+            raci = "R=arch1 A=Blaze"
+            issue = {"id": f"{repo}!1031:open", "t_ct": ct(40), "kind": "issue_open", "repo": repo, "number": 1031,
+                     "from": "critic", "actor": "critic0x[bot]", "label": "xray issue #1031 opened",
+                     "source": "https://github.com/0xRayAI/xray/issues/1031", "packet": {"raci": raci}}
+            own = {"id": f"{repo}!1033:open", "t_ct": ct(30), "kind": "issue_open", "repo": repo, "number": 1033,
+                   "from": "arch1", "actor": "arch10x[bot]", "label": "xray issue #1033 opened",
+                   "source": "https://github.com/0xRayAI/xray/issues/1033", "packet": {"raci": raci}}
+            pull = {"id": f"{repo}#1030:open", "t_ct": ct(20), "kind": "pr_open", "repo": repo, "number": 1030,
+                    "from": "arch1", "actor": "arch10x[bot]", "label": "xray #1030 opened",
+                    "source": "https://github.com/0xRayAI/xray/pull/1030", "packet": {"raci": raci}}
+            ancient = {"id": f"{repo}!8:open", "t_ct": ct(15 * 24 * 3600), "kind": "issue_open", "repo": repo, "number": 8,
+                       "from": "critic", "actor": "critic0x[bot]", "label": "old open",
+                       "source": "https://github.com/x/8", "packet": {"raci": raci}}
+            feed.write_text(json.dumps({"events": [seed, issue, own, pull, ancient]}))
+            state_path = run / "feed" / "inbox-state.json"
+            st = json.loads(state_path.read_text())
+            for ev in (issue, own, pull, ancient):
+                st["seen"][ev["id"]] = 1
+                st.setdefault("sig", {})[ev["id"]] = ev["kind"]
+            state_path.write_text(json.dumps(st))
+            self.run_pass(env, "pass")
+            box = run / "feed" / "inbox-spool"
+            rd = lambda s: [json.loads(x) for x in (box / f"{s}.jsonl").read_text().splitlines()] if (box / f"{s}.jsonl").exists() else []
+            filed = [l for l in rd("arch1") if l["reason"] == "packet R"]
+            self.assertEqual(sorted(l["id"] for l in filed), sorted([
+                f"{issue['id']}:r:arch1", f"{own['id']}:r:arch1", f"{pull['id']}:r:arch1"]))
+            self.assertEqual([l["type"] for l in filed if l["number"] == 1031], ["issue_open"])
+            self.assertEqual(len([l for l in rd("critic") if l["id"].startswith(f"pr:{repo}#1030@")]), 1)
+            self.assertEqual(len([l for l in rd("blinky") if l.get("number") == 1030]), 1)
+            self.assertFalse(any(l.get("number") in (1031, 1033, 8) for l in rd("blinky")))
+            self.assertFalse(any(l.get("number") == 8 for l in rd("arch1")))
+            self.assertEqual(self.run_pass(env, "pass"), "0 0")
+            self.assertEqual(len([l for l in rd("arch1") if l["reason"] == "packet R"]), 3)
+            self.assertEqual(len([l for l in rd("critic") if l["id"].startswith(f"pr:{repo}#1030@")]), 1)
+
+    def test_missing_seat_line_on_a_seen_open_is_filed_once(self):
+        """Blinky already has the open. Arch1 does not. One later pass files arch1 once and leaves blinky alone."""
+        with tempfile.TemporaryDirectory() as d:
+            run = Path(d); (run / "feed").mkdir(); (run / "fleet").mkdir()
+            env = dict(os.environ, MESH_RUN=str(run), LIVE_BOARD="off")
+            repo = "0xRayAI/xray"
+            feed = run / "feed" / "live-events.json"
+            seed = {"id": f"{repo}#1:open", "t_ct": ct(900), "kind": "pr_open", "repo": repo, "number": 1, "label": "old", "source": "https://github.com/x"}
+            feed.write_text(json.dumps({"events": [seed]}))
+            self.assertEqual(self.run_pass(env, "pass"), "0 0")
+            raci = "R=arch1 A=Blaze"
+            fresh = {"id": f"{repo}!1040:open", "t_ct": ct(30), "kind": "issue_open", "repo": repo, "number": 1040,
+                     "from": "blinky", "actor": "someone", "label": "seen open", "source": "https://github.com/x/1040",
+                     "packet": {"raci": raci}}
+            older = {"id": f"{repo}!1044:open", "t_ct": ct(49 * 3600), "kind": "issue_open", "repo": repo, "number": 1044,
+                     "from": "blinky", "actor": "someone", "label": "older open", "source": "https://github.com/x/1044",
+                     "packet": {"raci": raci}}
+            feed.write_text(json.dumps({"events": [seed, fresh, older]}))
+            state_path = run / "feed" / "inbox-state.json"
+            st = json.loads(state_path.read_text())
+            for ev in (fresh, older):
+                st["seen"][ev["id"]] = 1
+                st.setdefault("sig", {})[ev["id"]] = ev["kind"]
+            state_path.write_text(json.dumps(st))
+            box = run / "feed" / "inbox-spool"
+            box.mkdir()
+            blinky_line = {"id": fresh["id"], "t_ct": fresh["t_ct"], "seat": "blinky", "type": "issue_open",
+                           "repo": repo, "number": 1040, "title": "seen open", "url": fresh["source"], "reason": "unowned"}
+            older_line = dict(blinky_line, id=older["id"], t_ct=older["t_ct"], number=1044, title="older open", url=older["source"])
+            (box / "blinky.jsonl").write_text(json.dumps(blinky_line) + "\n" + json.dumps(older_line) + "\n")
+            self.run_pass(env, "pass")
+            rd = lambda s: [json.loads(x) for x in (box / f"{s}.jsonl").read_text().splitlines()] if (box / f"{s}.jsonl").exists() else []
+            arch = [l for l in rd("arch1") if l["reason"] == "packet R"]
+            self.assertEqual(sorted(l["id"] for l in arch), sorted([f"{fresh['id']}:r:arch1", older["id"]]))
+            self.assertEqual(len(rd("blinky")), 2)
+            self.assertFalse(any(l["id"].startswith("pr:") for l in rd("critic")))
+            self.assertEqual(self.run_pass(env, "pass"), "0 0")
+            self.assertEqual(len(rd("arch1")), 2)
+            self.assertEqual(len(rd("blinky")), 2)
+
 
     def test_ci_fail_is_one_line_per_head(self):
         """A red suite opens one ci_fail line. A second event on that sha does not."""

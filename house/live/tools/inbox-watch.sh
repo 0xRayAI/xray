@@ -4,6 +4,7 @@
 # FAIL once per distinct error. The line names LIVE_URL and the expected URL, then backs off.
 # A JSON line whose GitHub item is closed or merged is acked and logged as auto-ack.
 # A held line (hold label, or a card whose state is held) prints once as "held: N" and is not popped.
+# The poll is live-inbox <seat> --watch: the queue head, then every other open line.
 # The oldest open line in this poll is the head. It is printed on every poll until the seat acks it.
 # A seen id that is not the head stays quiet. The watcher does not ack an open id. The seat acks after the work.
 # A new event is a new line. A raw line with no id still reprints. A failed ack of a closed item leaves that line open.
@@ -255,13 +256,13 @@ while true; do
     reprint=1
   fi
   errf="$(mktemp)"
-  out="$("$bin" "$seat" 2>"$errf")"
+  out="$("$bin" "$seat" --watch 2>"$errf")"
   code=$?
   err="$(cat "$errf")"
   rm -f "$errf"
   if [[ "$code" -ne 0 ]]; then
     errf="$(mktemp)"
-    out2="$("$bin" "$seat" 2>"$errf")"
+    out2="$("$bin" "$seat" --watch 2>"$errf")"
     code2=$?
     err2="$(cat "$errf")"
     rm -f "$errf"

@@ -1,5 +1,18 @@
 ## [Unreleased]
 
+### 🔄 Changes
+
+- A quiet collector pass publishes the board queue without hashing one giant string per event. A feed file this collector just wrote is not a stall. The image copies `card-owner.mjs`, and the collector copies `card_owner.py`.
+- Packet R assigns the queue. `R: arch1` files the line on arch1 without an `@arch10x` mention, including when arch1 opened it. An already-seen open from the last 48 hours is filed once.
+- The board reader waits 90 seconds for one pass of the live feed. A 20 second cut dropped the publish and froze the queue clock.
+- The public queue row keeps the repo, the number, and the reason.
+- An open ask that names the arch10x login stays on the queue across Chicago days. A comment from a previous Chicago day stays hidden.
+- A watch poll prints the queue head and the other open lines. A turn start inside the open window does not extend it. Open lines are not acked.
+- An open card whose seat line is missing is filed again within 14 days. The seed pass does not replay history. The 48 hour packet R backfill stays.
+- Packet R sets the GitHub assignee when the card has none and R names a fleet bot. A person login is not assigned. A write error does not stop the collector. The assignee write uses its own token. The collector read token stays read-only. A refusal is tried again on the next pass. A pass that spends its ten writes, or a write that never reaches GitHub, walks the open cards again. A collector that has not started a pass still has that budget, so a poll finishes.
+- Restoring burst-live calls Railway `deploymentRollback` with the deployment id. `railway redeploy` rebuilds only the latest deployment. `railway down` removes it.
+- A prompt that names a bug and no issue number asks the board to open one issue. A log dump and a line that already names a number do not.
+- A later prompt repeats the inbox monitor start order when that pid is down. It does not poll.
 
 ## [4.2.3] - 2026-11-12
 

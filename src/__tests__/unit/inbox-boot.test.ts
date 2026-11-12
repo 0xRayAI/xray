@@ -275,6 +275,44 @@ printf 'ACTION_REQUIRED\\nunfinished:1\\n'
     });
     expect(prompt.status).toBe(0);
     const promptOut = JSON.parse(prompt.stdout) as { systemMessage?: string };
+    expect(promptOut.systemMessage).toContain('Start the inbox monitor before other work.');
+    expect(promptOut.systemMessage).toContain(path.join(tools, 'inbox-watch.sh'));
+    expect(promptOut.systemMessage).not.toContain('ACTION_REQUIRED');
+  });
+
+  it('a prompt does not order a start while the watcher pid is live', () => {
+    const project = tmp('inbox-boot-prompt-live-');
+    const home = tmp('inbox-boot-prompt-live-home-');
+    const machine = tmp('inbox-boot-prompt-live-machine-');
+    const pidFile = path.join(home, '.burst', 'inbox-watch.pid');
+    fs.mkdirSync(path.dirname(pidFile), { recursive: true });
+    fs.writeFileSync(pidFile, `${process.pid}\n`);
+    fs.writeFileSync(path.join(project, 'package.json'), `${JSON.stringify({ name: 'acme' })}\n`);
+    const hook = path.join(
+      path.dirname(new URL(import.meta.url).pathname),
+      '../../integrations/grok/hooks/session-start.js',
+    );
+    const prompt = spawnSync(process.execPath, [hook, '--hook-event=user_prompt_submit'], {
+      cwd: project,
+      input: JSON.stringify({
+        workspaceRoot: project,
+        cwd: project,
+        hookEventName: 'UserPromptSubmit',
+        prompt: 'inbox',
+      }),
+      encoding: 'utf8',
+      env: {
+        ...process.env,
+        HOME: home,
+        USERPROFILE: home,
+        FOUNDRY_MACHINE_HOME: machine,
+        INBOX_WATCH_PID: pidFile,
+        XRAY_SEAT: 'arch1',
+      },
+    });
+    expect(prompt.status).toBe(0);
+    const promptOut = JSON.parse(prompt.stdout) as { systemMessage?: string };
     expect(promptOut.systemMessage).toBeUndefined();
+    expect(fs.existsSync(path.join(home, '.burst', 'inbox-wake', 'arch1'))).toBe(false);
   });
 });

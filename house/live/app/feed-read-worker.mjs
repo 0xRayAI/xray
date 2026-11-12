@@ -4,12 +4,33 @@ import { parentPort, workerData } from 'node:worker_threads';
 import fs from 'node:fs';
 import crypto from 'node:crypto';
 
-function stable(v) {
-  if (Array.isArray(v)) return '[' + v.map(stable).join(',') + ']';
-  if (v && typeof v === 'object') {
-    return '{' + Object.keys(v).sort().map(k => JSON.stringify(k) + ':' + stable(v[k])).join(',') + '}';
+// Hash into the digest. Building one sorted string per event stalls a 60k-event quiet pass,
+// the reader never publishes, and the watchdog then kills a collector that is still writing.
+function hashValue(h, v) {
+  if (v === null || v === undefined) {
+    h.update('null');
+    return;
   }
-  return JSON.stringify(v);
+  if (Array.isArray(v)) {
+    h.update('[');
+    for (const item of v) hashValue(h, item);
+    h.update(']');
+    return;
+  }
+  if (typeof v === 'object') {
+    const keys = Object.keys(v).sort();
+    h.update('{');
+    for (const key of keys) {
+      h.update(key);
+      h.update(':');
+      hashValue(h, v[key]);
+    }
+    h.update('}');
+    return;
+  }
+  h.update(typeof v);
+  h.update(':');
+  h.update(String(v));
 }
 
 try {
@@ -21,8 +42,10 @@ try {
     parentPort.postMessage({ ok: false, error: 'invalid', sig });
   } else {
     const h = crypto.createHash('sha1');
-    for (const e of f.events) h.update(stable(e));
-    h.update('\n');
+    for (const e of f.events) {
+      hashValue(h, e);
+      h.update('\n');
+    }
     const eventHash = h.digest('hex') + ':' + f.events.length;
     const same = !!workerData.prevHash && workerData.prevHash === eventHash;
     if (same) {

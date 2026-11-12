@@ -35,8 +35,11 @@ test('Dockerfile COPY names every local module server.mjs imports', () => {
   const copy = docker.split('\n').filter(line => /^\s*COPY\s/.test(line)).join('\n');
   const imported = [...localImports(path.join(APP, 'server.mjs'))];
   assert.ok(imported.length >= 2, 'server imports local modules');
+  const deploy = fs.readFileSync(path.join(APP, 'deploy.sh'), 'utf8');
   for (const file of imported) {
     const base = path.basename(file);
-    assert.match(copy, new RegExp(`\\b${base.replace('.', '\\.')}\\b`), base);
+    const named = new RegExp(`\\b${base.replace('.', '\\.')}\\b`);
+    assert.match(copy, named, base);
+    assert.match(deploy, named, 'deploy.sh ' + base);
   }
 });

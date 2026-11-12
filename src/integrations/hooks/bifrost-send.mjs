@@ -84,6 +84,24 @@ export function refsFromText(text) {
   return { issues: issues.slice(0, 4), prs: prs.slice(0, 4) };
 }
 
+const DEFECT_NAMED = /[A-Za-z0-9][A-Za-z0-9._-]{0,38}\/[A-Za-z0-9_][A-Za-z0-9._-]{0,99}#\d+/;
+const DEFECT_HASH = /(?:^|[\s(])#\d{2,}\b/;
+const DEFECT_WORD = /\b(bug|defect)\b/i;
+
+/** One defect with no issue number. A log dump and a named number are not a draft. */
+export function defectDraft(text) {
+  const src = String(text || '').replace(/\r/g, '');
+  if (src.length < 20 || src.length > 1500) return null;
+  const lines = src.split('\n').map((line) => line.trim()).filter(Boolean);
+  if (!lines.length || lines.length > 8) return null;
+  if (!DEFECT_WORD.test(src)) return null;
+  if (DEFECT_NAMED.test(src) || DEFECT_HASH.test(src)) return null;
+  const title = lines[0].slice(0, 100);
+  const norm = title.toLowerCase().replace(/\s+/g, ' ').trim();
+  if (!norm) return null;
+  return { title, body: src.slice(0, 1500), mark: `defect:${norm}` };
+}
+
 export function handoffFromText(text, fromSeat, now = new Date()) {
   const src = String(text || '').slice(0, 8000);
   if (!src.includes('--handoff') || !SEAT.test(fromSeat)) return null;
@@ -287,9 +305,16 @@ async function postJson(url, key, body, fetchImpl, timeoutMs) {
       body: JSON.stringify(body),
       signal: ac.signal,
     });
-    return !!(res && (res.status === 200 || res.status === 202));
+    if (!res || (res.status !== 200 && res.status !== 202)) return null;
+    let parsed = null;
+    try {
+      if (typeof res.json === 'function') parsed = await res.json();
+    } catch {
+      parsed = null;
+    }
+    return { ok: true, body: parsed };
   } catch {
-    return false;
+    return null;
   } finally {
     clearTimeout(timer);
   }
@@ -359,11 +384,29 @@ export async function notifyBifrost(opts = {}) {
     if (packet && !(state.tags[packet.id] > nowMs)) {
       posts.push({ path: '/inbox', body: { lines: [packet] }, mark: packet.id });
     }
+    if (opts.phase === 'prompt') {
+      const draft = defectDraft(opts.text);
+      if (draft && !(state.tags[draft.mark] > nowMs)) {
+        posts.push({ path: '/defect', body: { text: opts.text }, mark: draft.mark, ttl: 7 * 24 * 60 * 60 * 1000, defect: true });
+      }
+    }
   }
 
   for (const post of posts) {
-    const ok = await postJson(`${cfg.origin}${post.path}`, key, post.body, fetchImpl, opts.timeoutMs || 2000);
-    if (!ok) continue;
+    const posted = await postJson(`${cfg.origin}${post.path}`, key, post.body, fetchImpl, opts.timeoutMs || 2000);
+    if (!posted) continue;
+    if (post.defect) {
+      const opened = posted.body;
+      if (!opened || opened.ok !== true) {
+        if (opened && typeof opened.reason === 'string' && opened.reason.startsWith('github-')) {
+          state.tags[post.mark] = nowMs + 60 * 60 * 1000;
+        }
+        continue;
+      }
+      sent.push('defect');
+      state.tags[post.mark] = nowMs + (post.ttl || 60 * 60 * 1000);
+      continue;
+    }
     if (post.path === '/inbox') sent.push('packet');
     else if (post.body.kind === 'prompt') sent.push('prompt');
     else if (post.body.kind === 'subagent') sent.push(`subagent:${post.body.action}`);

@@ -8,6 +8,7 @@ import {
   notifyBifrost,
   ownerLine,
   promptNote,
+  defectDraft,
   refsFromText,
   subagentMark,
 } from '../../integrations/hooks/bifrost-send.mjs';
@@ -240,5 +241,34 @@ describe('bifrost send', () => {
     expect(lines[0]).toMatchObject({ kind: 'subagent', action: 'start', tag });
     expect(lines[1]).toMatchObject({ kind: 'subagent', action: 'end', tag });
     expect(calls.map((call) => call.body).join('\n')).not.toContain('hunter2');
+  });
+
+  it('opens one issue for a bug that names no number', async () => {
+    expect(defectDraft('bug')).toBeNull();
+    expect(defectDraft('bug: see 0xRayAI/xray#1043 on the queue row')).toBeNull();
+    expect(defectDraft('bug: see #1043 on the queue row today')).toBeNull();
+    const dump = Array.from({ length: 9 }, (_, i) => `bug line ${i} in the log`).join('\n');
+    expect(defectDraft(dump)).toBeNull();
+    const text = 'bug: the queue row drops the reason and the card number';
+    expect(defectDraft(text)?.title).toBe(text);
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bifrost-send-'));
+    const keys = fs.mkdtempSync(path.join(os.tmpdir(), 'bifrost-keys-'));
+    dirs.push(root, keys);
+    fs.writeFileSync(path.join(keys, 'arch1.key'), `${KEY}\n`, { mode: 0o600 });
+    const env = { LIVE_URL: 'https://bifrost.example/board', XRAY_SEAT: 'arch1', SEAT_KEYS_DIR: keys };
+    const now = new Date('2026-10-24T18:00:00Z');
+    const calls: Array<{ url: string; body: string; auth: string }> = [];
+    const fetchImpl = liveFetch(calls);
+    const opened = await notifyBifrost({ root, phase: 'prompt', env, fetchImpl, now, text });
+    expect(opened.sent).toContain('defect');
+    expect(calls.filter((call) => call.url.endsWith('/defect'))).toHaveLength(1);
+    const again = await notifyBifrost({ root, phase: 'prompt', env, fetchImpl, now, text });
+    expect(again.sent).not.toContain('defect');
+    expect(calls.filter((call) => call.url.endsWith('/defect'))).toHaveLength(1);
+    const named = await notifyBifrost({
+      root, phase: 'prompt', env, fetchImpl, now,
+      text: 'bug: see 0xRayAI/xray#1043 on the queue row',
+    });
+    expect(named.sent).not.toContain('defect');
   });
 });

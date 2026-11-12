@@ -220,7 +220,7 @@
   "fallback": {
     "seat": "blinky"
   },
-  "_note_fallback": "Actionable events whose lines all go to a seat outside our 8 (unknown, sample, unkeyed) also go to blinky (CoS). Lines to seats outside our 8 are dropped. Pulses never route. Arch1 is outside the fleet and reached only by an explicit @arch10x mention; his lines are never copied to blinky.",
+  "_note_fallback": "Actionable events whose lines all go to a seat outside our 8 (unknown, sample, unkeyed) also go to blinky (CoS). Lines to seats outside our 8 are dropped. Pulses never route. A mention reaches arch1 only by an explicit @arch10x. Packet R assigns him without that mention: R: arch1 is his queue line and is not copied to blinky.",
   "comment_watch": {
     "kinds": [
       "pr_comment",

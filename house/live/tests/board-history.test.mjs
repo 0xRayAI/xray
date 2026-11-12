@@ -254,6 +254,7 @@ test('the open queue hides parked seats and arch10x lines from a previous Chicag
     const lines = [
       { id: 'parked-herald', t_ct: new Date(now).toISOString(), seat: 'herald', type: 'issue', repo: 'example/repo', number: 1, title: 'verify herald', url: 'https://github.com/example/repo/issues/1', reason: 'parked' },
       { id: 'arch-old', t_ct: new Date(old).toISOString(), seat: 'critic', type: 'issue_comment', repo: 'example/repo', number: 269, title: 'arch10x[bot] comment on 269', url: 'https://github.com/example/repo/issues/269', reason: 'comment' },
+      { id: 'arch-open-old', t_ct: new Date(old).toISOString(), seat: 'forge', type: 'issue_open', repo: 'example/repo', number: 1043, title: 'arch10x[bot] opened yesterday', url: 'https://github.com/example/repo/issues/1043', reason: 'packet R' },
       { id: 'arch-today', t_ct: new Date(now - 60000).toISOString(), seat: 'critic', type: 'issue_comment', repo: 'example/repo', number: 310, title: 'arch10x[bot] comment today', url: 'https://github.com/example/repo/issues/310', reason: 'comment' },
       { id: 'forge-live', t_ct: new Date(now - 30000).toISOString(), seat: 'forge', type: 'pr', repo: 'example/repo', number: 9, title: 'Needs a look', url: 'https://github.com/example/repo/pull/9', reason: 'review' },
     ];
@@ -265,8 +266,16 @@ test('the open queue hides parked seats and arch10x lines from a previous Chicag
     const ids = queue.map(l => l.id);
     assert.ok(ids.includes('arch-today'));
     assert.ok(ids.includes('forge-live'));
+    assert.ok(ids.includes('arch-open-old'));
     assert.ok(!ids.includes('parked-herald'));
     assert.ok(!ids.includes('arch-old'));
+    const live = queue.find((row) => row.id === 'forge-live');
+    assert.equal(live.repo, 'example/repo');
+    assert.equal(live.number, 9);
+    assert.equal(live.reason, 'review');
+    const kept = queue.find((row) => row.id === 'arch-open-old');
+    assert.equal(kept.number, 1043);
+    assert.equal(kept.reason, 'packet R');
     assert.ok(fs.readFileSync(path.join(data, 'live', 'inbox', 'herald.jsonl'), 'utf8').includes('parked-herald'));
     assert.ok(fs.readFileSync(path.join(data, 'live', 'inbox', 'critic.jsonl'), 'utf8').includes('arch-old'));
   } finally {

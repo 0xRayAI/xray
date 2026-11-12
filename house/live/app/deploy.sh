@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # Deploy app/ to one Railway service. The only supported deploy: a Railway build straight from git has no
 # assembled collector/ and the Dockerfile refuses it (#292).
+# A crashed upload stays. Do not run `railway down`. That removes the live deployment.
+# `railway redeploy` rebuilds the latest deployment and ignores an id.
+# Restore a previous SUCCESS with house/live/app/rollback.sh <deployment-id>.
 # LIVE_RAILWAY_PROJECT (default burst-live), LIVE_RAILWAY_SERVICE (default burst-live),
 # MESH_APP_DEPLOY_DIR (default /srv/live/deploy). LIVE_PUBLIC_OVERLAY, when set, is a directory
 # copied onto public/ after the kit files (live-config.js, avatars). Secret files in the deploy dir stay.
@@ -14,7 +17,7 @@ if [ ! -d "$DST" ]; then   # fresh machine: create and link the deploy dir inste
     || { echo "deploy dir $DST missing and railway link failed (log in with the railway CLI first)" >&2; exit 1; }
 fi
 [ "$(cd "$DST" && pwd -P)" = "$APP" ] || {
-  cp "$APP"/server.mjs "$APP"/health-exit.mjs "$APP"/feed-read-worker.mjs "$APP"/presence.mjs "$APP"/source.mjs "$APP"/archive.mjs "$APP"/ci-credit.mjs "$APP"/resp.mjs "$APP"/history-store.mjs "$APP"/compact-cards.mjs "$APP"/origin.mjs "$APP"/routes.mjs "$APP"/governor.mjs "$APP"/arch1-launch.mjs "$APP"/worktrack.mjs "$APP"/handoff.mjs "$APP"/wave-schedule.mjs "$APP"/fleet-mode.mjs "$APP"/bifrost-waves.json "$APP"/chicago-stamp.mjs "$APP"/pr-batch.mjs "$APP"/ci-clear.mjs "$APP"/wake-gate.mjs "$APP"/station-tick.mjs "$APP"/inbox-queue.mjs "$APP"/chat-doorbell.mjs "$APP"/package.json "$APP"/railway.json "$APP"/.railwayignore "$APP"/Dockerfile "$APP"/docker-entrypoint.sh "$DST"/
+  cp "$APP"/server.mjs "$APP"/health-exit.mjs "$APP"/feed-read-worker.mjs "$APP"/presence.mjs "$APP"/source.mjs "$APP"/archive.mjs "$APP"/card-owner.mjs "$APP"/ci-credit.mjs "$APP"/resp.mjs "$APP"/history-store.mjs "$APP"/compact-cards.mjs "$APP"/origin.mjs "$APP"/routes.mjs "$APP"/governor.mjs "$APP"/arch1-launch.mjs "$APP"/worktrack.mjs "$APP"/handoff.mjs "$APP"/wave-schedule.mjs "$APP"/fleet-mode.mjs "$APP"/bifrost-waves.json "$APP"/chicago-stamp.mjs "$APP"/pr-batch.mjs "$APP"/ci-clear.mjs "$APP"/wake-gate.mjs "$APP"/station-tick.mjs "$APP"/inbox-queue.mjs "$APP"/chat-doorbell.mjs "$APP"/defect-issue.mjs "$APP"/package.json "$APP"/railway.json "$APP"/.railwayignore "$APP"/Dockerfile "$APP"/docker-entrypoint.sh "$DST"/
   rm -rf "$DST/public.new"; cp -r "$APP/public" "$DST/public.new"; rm -rf "$DST/public"; mv "$DST/public.new" "$DST/public"
   # our install's committed page overlay (seats, nodes, avatars, favicon); another install has no house/live/site/
   if [ -d "$APP/../site/public" ]; then cp -a "$APP/../site/public"/. "$DST/public/"; fi
