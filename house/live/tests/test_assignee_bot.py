@@ -81,6 +81,17 @@ class AssigneeBot(unittest.TestCase):
             live_collect.NODE.clear()
             live_collect.NODE.update(saved)
 
+    def test_the_shipped_fleet_file_names_arch1_when_the_env_map_does_not(self):
+        saved = dict(live_collect.NODE)
+        live_collect.NODE.clear()
+        live_collect.NODE.update({"critic0x[bot]": "critic"})
+        try:
+            body = "## Packet\n\nR: arch1\nA: Blaze\n"
+            self.assertEqual(live_collect.assignee_bot(card(body), live_collect.assignee_nodes()), "arch10x[bot]")
+        finally:
+            live_collect.NODE.clear()
+            live_collect.NODE.update(saved)
+
     def test_the_rewalk_stays_open_when_the_cap_is_spent(self):
         self.assertFalse(live_collect.assign_rewalk_done("done", 0, False))
         self.assertFalse(live_collect.assign_rewalk_done("done", 10, True))

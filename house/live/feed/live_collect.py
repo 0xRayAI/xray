@@ -365,6 +365,18 @@ def assignee_seat(x) -> str:
     return ""
 
 
+def assignee_nodes():
+    """Shipped fleet-nodes.json, then the live env map. The env wins on the same login."""
+    path = Path(__file__).with_name("fleet-nodes.json")
+    try:
+        data = json.loads(path.read_text())
+    except (OSError, ValueError):
+        data = {}
+    nodes = {str(k): v for k, v in data.items() if isinstance(v, str) and v} if isinstance(data, dict) else {}
+    nodes.update(NODE)
+    return nodes
+
+
 def assign_rewalk_done(paged, left, miss):
     """The 14-day walk latches only after a finished pass that still had budget.
     A cap of 10, or a write that never reached GitHub, leaves the walk open."""
@@ -683,13 +695,13 @@ class RepoCollector:
         for k, v in (("etags", {}), ("cur", {}), ("prs", {}), ("ci", {}), ("reviewer", {}), ("bf", {}),
                      ("branch_shas", {}), ("tag_time", {}), ("gaps", {})):
             self.st.setdefault(k, v)
-        if self.st.get("assign_gen") != 3:
+        if self.st.get("assign_gen") != 4:
             self.st["assign_tried"] = []
             bf = self.st.get("bf")
             if isinstance(bf, dict):
                 bf.pop("assign:r", None)
                 bf.pop("assign:issues", None)
-            self.st["assign_gen"] = 3
+            self.st["assign_gen"] = 4
         self._sha_who = {}
         self.unreadable = None
         self._denied = None
@@ -1097,7 +1109,7 @@ class RepoCollector:
         A real HTTP status is remembered, so a refusal does not fill the next cap."""
         if getattr(self, "_assign_left", 0) <= 0 or not getattr(c, "token", None):
             return
-        login = assignee_bot(item, NODE)
+        login = assignee_bot(item, assignee_nodes())
         if not login:
             return
         try:
