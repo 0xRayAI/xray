@@ -683,9 +683,13 @@ class RepoCollector:
         for k, v in (("etags", {}), ("cur", {}), ("prs", {}), ("ci", {}), ("reviewer", {}), ("bf", {}),
                      ("branch_shas", {}), ("tag_time", {}), ("gaps", {})):
             self.st.setdefault(k, v)
-        if self.st.get("assign_gen") != 2:
+        if self.st.get("assign_gen") != 3:
             self.st["assign_tried"] = []
-            self.st["assign_gen"] = 2
+            bf = self.st.get("bf")
+            if isinstance(bf, dict):
+                bf.pop("assign:r", None)
+                bf.pop("assign:issues", None)
+            self.st["assign_gen"] = 3
         self._sha_who = {}
         self.unreadable = None
         self._denied = None

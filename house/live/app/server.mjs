@@ -2672,7 +2672,8 @@ async function startCollector() {
   fs.mkdirSync(path.join(DATA_DIR, 'feed'), { recursive: true }); fs.mkdirSync(path.join(DATA_DIR, 'home'), { recursive: true });
   seedStore();
   const assign = await assignToken();
-  if (!assign && process.env.GITHUB_ASSIGN_APP_ID) process.stdout.write('collector: assignee mint failed\n');
+  if (assign) process.stdout.write('collector: assignee token set\n');
+  else if (process.env.GITHUB_ASSIGN_APP_ID) process.stdout.write('collector: assignee mint failed\n');
   const env = { PATH: process.env.PATH || '/usr/local/bin:/usr/bin:/bin', HOME: path.join(DATA_DIR, 'home'), LANG: 'C.UTF-8',
     TZ: 'America/Chicago', PYTHONDONTWRITEBYTECODE: '1', LIVE_MODE: 'github', LIVE_NO_CHECKS: '1', GH_TOKEN: tok,
     LIVE_MESH_SRC: path.join(COLLECTOR_DIR, 'upstream'),
