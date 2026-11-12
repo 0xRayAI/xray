@@ -1,6 +1,7 @@
 /**
  * One inbox poll when Grok session start has no live watcher.
  * The same message orders the seat to start that script as the session monitor.
+ * A later prompt, while that pid is still down, repeats the order and does not poll.
  * A live watcher pid gets neither the poll nor the order.
  * Session start still writes one wake token. The open inbox head reprints on every poll until it is acked.
  * Grok reads a session-start systemMessage. It does not receive a webhook.
@@ -114,6 +115,23 @@ export function monitorStartOrder(script, seat, origin, keys, sessionId, foreign
     hold,
     `Command: ${command}`,
   ].join('\n');
+}
+
+/** Repeat the start order when the watcher is down. No poll. A live pid stays quiet. */
+export function inboxStartOrder(opts = {}) {
+  const env = opts.env || {};
+  const home = typeof opts.home === 'string' && opts.home.trim()
+    ? opts.home.trim()
+    : ((typeof env.HOME === 'string' && env.HOME.trim()) || os.homedir());
+  const pidFile = opts.pidFile || watcherPidFile(env, home);
+  if (watcherAlive(pidFile)) return '';
+  const cfg = suitConfig(env, home);
+  if (!cfg) return '';
+  const script = opts.script || inboxWatchScript(env);
+  if (!script || !fs.existsSync(script)) return '';
+  const sessionId = String(opts.sessionId || env.GROK_SESSION_ID || '').trim();
+  recordInboxWake(home, cfg.seat);
+  return monitorStartOrder(script, cfg.seat, cfg.origin, cfg.keys, sessionId, 0);
 }
 
 export function composeInboxMessage(pollText, order) {

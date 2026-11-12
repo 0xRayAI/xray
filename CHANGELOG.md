@@ -1,5 +1,8 @@
 ## [Unreleased]
 
+### 🔄 Changes
+
+- A Grok prompt orders the one inbox monitor when no watcher pid is live. It does not poll again. A live pid stays quiet.
 
 ## [4.2.3] - 2026-11-12
 
