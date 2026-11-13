@@ -39,7 +39,7 @@ class AssigneeBot(unittest.TestCase):
         body = "## Packet\n\nR: critic\nA: Blaze\n"
         self.assertEqual(live_collect.assignee_bot(card(body), NODES), "critic0x[bot]")
 
-    def test_a_refusal_is_not_remembered_and_a_success_is(self):
+    def test_a_refusal_is_remembered_and_a_network_miss_is_not(self):
         calls = []
 
         class Writer:
@@ -49,7 +49,7 @@ class AssigneeBot(unittest.TestCase):
                 self.code = code
 
             def write_json(self, path, payload):
-                calls.append(payload)
+                calls.append((self.code, payload))
                 return self.code
 
         col = live_collect.RepoCollector.__new__(live_collect.RepoCollector)
@@ -64,19 +64,30 @@ class AssigneeBot(unittest.TestCase):
             item = card("## Packet\n\nR: arch1\nA: Blaze\n")
             col.maybe_assign(Writer(403), item)
             self.assertEqual(col._assign_left, 9)
-            self.assertEqual(col.st.get("assign_tried") or [], [])
+            self.assertEqual(col.st.get("assign_tried"), ["example/repo#1039"])
+            self.assertFalse(col._assign_miss)
+            self.assertFalse(getattr(col, "_assign_auth_dead", False))
+            col.maybe_assign(Writer(201), item)
+            self.assertEqual(len(calls), 1)
+            other = card("## Packet\n\nR: arch1\nA: Blaze\n", number=1040)
+            col.maybe_assign(Writer(201), other)
+            self.assertEqual(col.st["assign_tried"], ["example/repo#1039", "example/repo#1040"])
+            self.assertEqual(col._assign_left, 8)
+            self.assertEqual(len(calls), 2)
+            missed = card("## Packet\n\nR: arch1\nA: Blaze\n", number=1044)
+            col.maybe_assign(Writer(0), missed)
+            self.assertEqual(col._assign_left, 8)
+            self.assertNotIn("example/repo#1044", col.st["assign_tried"])
             self.assertTrue(col._assign_miss)
             col._assign_miss = False
-            col.maybe_assign(Writer(201), item)
-            self.assertEqual(col.st["assign_tried"], ["example/repo#1039"])
-            self.assertEqual(len(calls), 2)
-            col.maybe_assign(Writer(201), item)
-            self.assertEqual(len(calls), 2)
-            col.st["assign_tried"].clear()
-            col.maybe_assign(Writer(0), item)
+            expired = card("## Packet\n\nR: arch1\nA: Blaze\n", number=1045)
+            col.maybe_assign(Writer(401), expired)
+            self.assertNotIn("example/repo#1045", col.st["assign_tried"])
+            self.assertFalse(col._assign_miss)
+            self.assertTrue(col._assign_auth_dead)
             self.assertEqual(col._assign_left, 8)
-            self.assertEqual(col.st["assign_tried"], [])
-            self.assertTrue(col._assign_miss)
+            col.maybe_assign(Writer(201), card("## Packet\n\nR: arch1\nA: Blaze\n", number=1046))
+            self.assertEqual(len(calls), 4)
         finally:
             live_collect.NODE.clear()
             live_collect.NODE.update(saved)
@@ -96,6 +107,9 @@ class AssigneeBot(unittest.TestCase):
         self.assertFalse(live_collect.assign_rewalk_done("done", 0, False))
         self.assertFalse(live_collect.assign_rewalk_done("done", 10, True))
         self.assertTrue(live_collect.assign_rewalk_done("done", 10, False))
+        self.assertTrue(live_collect.assign_rewalk_done("done", 0, False, True))
+        self.assertFalse(live_collect.assign_rewalk_done("partial", 10, False, True))
+        self.assertFalse(live_collect.assign_rewalk_done("done", 10, True, True))
 
 
 if __name__ == "__main__":

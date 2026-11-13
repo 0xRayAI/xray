@@ -377,10 +377,15 @@ def assignee_nodes():
     return nodes
 
 
-def assign_rewalk_done(paged, left, miss):
-    """The 14-day walk latches only after a finished pass that still had budget.
+def assign_rewalk_done(paged, left, miss, auth_dead=False):
+    """The 14-day walk latches after a finished pass that still had budget,
+    or after the assignee token is dead for this process.
     A cap of 10, or a write that never reached GitHub, leaves the walk open."""
-    return paged == "done" and left > 0 and not miss
+    if paged != "done" or miss:
+        return False
+    if auth_dead:
+        return True
+    return left > 0
 
 
 def assignee_bot(item, nodes):
@@ -707,6 +712,7 @@ class RepoCollector:
         self._denied = None
         self._assign_left = 10
         self._assign_miss = False
+        self._assign_auth_dead = False
         for e in self.ev.values():
             self._index_sha(e)
         for e in self.ev.values():   # every stored event gets a credit (never blank), also ones from before the map
@@ -1106,7 +1112,10 @@ class RepoCollector:
     def maybe_assign(self, c, item):
         """Best-effort assignee write. A read-only token must not stop the feed.
         A network miss is not remembered, so the next pass can try the same card.
-        A real HTTP status is remembered, so a refusal does not fill the next cap."""
+        403, 404, and any other 4xx except 401 are remembered, so a refusal is not posted again.
+        401 marks the assignee token dead for this process and does not remember the card."""
+        if getattr(self, "_assign_auth_dead", False):
+            return
         if getattr(self, "_assign_left", 0) <= 0 or not getattr(c, "token", None):
             return
         login = assignee_bot(item, assignee_nodes())
@@ -1126,12 +1135,13 @@ class RepoCollector:
         try:
             code = c.write_json(f"/repos/{self.repo}/issues/{number}/assignees", {"assignees": [login]})
         except AuthExpired:
-            self._assign_miss = True
+            self._assign_auth_dead = True
             return
-        if code in (401, 403) or not code:
+        if code == 401:
+            self._assign_auth_dead = True
+            return
+        if not code or code >= 500:
             self._assign_miss = True
-            if code in (401, 403):
-                self._assign_left -= 1
             return
         tried.append(key)
         if len(tried) > 500:
@@ -1255,7 +1265,8 @@ class RepoCollector:
         if assign_rewalk and assign_rewalk_done(
                 getattr(self, "_paged_status", None),
                 getattr(self, "_assign_left", 0),
-                getattr(self, "_assign_miss", False)):
+                getattr(self, "_assign_miss", False),
+                getattr(self, "_assign_auth_dead", False)):
             self.st["bf"]["assign:r"] = True
         self._backfill_parent_doors(c)
 
@@ -1622,7 +1633,8 @@ class RepoCollector:
         if assign_rewalk and assign_rewalk_done(
                 getattr(self, "_paged_status", None),
                 getattr(self, "_assign_left", 0),
-                getattr(self, "_assign_miss", False)):
+                getattr(self, "_assign_miss", False),
+                getattr(self, "_assign_auth_dead", False)):
             self.st["bf"]["assign:issues"] = True
 
     def poll_comments(self, c):
