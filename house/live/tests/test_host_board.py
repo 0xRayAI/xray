@@ -54,11 +54,13 @@ out = root/"feed"/"github-events.json"
 ev = [{"id": f"e{i}", "t_ct": "2026-10-13T09:00:00-05:00", "kind": "pr_open"} for i in range(5)]
 n1 = lm._write({"events": ev, "generated_at": "t1"}, out)
 raw = out.read_bytes()
-n2 = lm._write({"events": ev, "generated_at": "t2"}, out)
+board = {"cards": [{"key": "k", "title": "t" * 40} for _ in range(30)]}
+n2 = lm._write({"events": ev, "generated_at": "t2", "board": board}, out)
 kept = out.read_bytes() == raw
-beat = json.loads((root/"feed"/"github-events.beat.json").read_text())
+beat_path = root/"feed"/"github-events.beat.json"
+beat = json.loads(beat_path.read_text())
 ev[0] = dict(ev[0], label="changed"); n3 = lm._write({"events": ev, "generated_at": "t3"}, out)
-print(json.dumps([n1, n2, n3, (root/"feed"/"live-events.jsonl").exists(), kept, beat.get("generated_at")]))
+print(json.dumps([n1, n2, n3, (root/"feed"/"live-events.jsonl").exists(), kept, beat.get("generated_at"), "board" not in beat, beat_path.stat().st_size < 2 * 1024 * 1024]))
 '''
 
 
@@ -110,7 +112,7 @@ class GithubModeDedupe(unittest.TestCase):
         """burst-live logged 26440 (26440 new) every pass: github mode never persisted the seen hashes."""
         r = subprocess.run([sys.executable, "-B", "-c", DEDUPE % FEED], capture_output=True, text=True, timeout=60)
         self.assertEqual(r.returncode, 0, r.stderr)
-        self.assertEqual(json.loads(r.stdout.strip().splitlines()[-1]), [5, 0, 1, False, True, "t2"])
+        self.assertEqual(json.loads(r.stdout.strip().splitlines()[-1]), [5, 0, 1, False, True, "t2", True, True])
 
     def test_github_document_keeps_the_newest_events(self):
         r = subprocess.run([sys.executable, "-B", "-c", CAP % FEED], capture_output=True, text=True, timeout=60)
