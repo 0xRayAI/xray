@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## [0.1.16] - 2026-11-15
+
+- OP-PROC: a seat has at most two tasks in progress and all work is on the board (Two at a time). A seat makes only few-line edits on its own computer, and a new cloud agent needs Blaze's GO (Compute). #1063 #1062
+
 ## [0.1.15] - 2026-11-15
 
 Fixes from the 0xRay Fleet Setup v7 cold test.
