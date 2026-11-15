@@ -99,13 +99,34 @@ async function ingestStationFeedback(root, sessionId, hookEvent, matchedSignals)
 async function main() {
   const root = workspaceRoot();
   let HOOK_EVENT = 'session_start';
+  let inboxMessage = '';
   try {
     const event = await readStdinJson();
     HOOK_EVENT = resolveGrokHookEvent(event);
     const eventRoot = normalizeWorkspaceRoot(event.workspaceRoot || event.cwd || root);
     const sessionId = resolveSessionId(event);
+    try {
+      if (HOOK_EVENT === 'session_start') {
+        inboxMessage = await pollInboxOnce({
+          root: eventRoot,
+          env: process.env,
+          sessionId: sessionId || '',
+        });
+      } else if (HOOK_EVENT === 'user_prompt_submit') {
+        inboxMessage = inboxStartOrder({
+          env: process.env,
+          sessionId: sessionId || '',
+        });
+      }
+    } catch {
+      inboxMessage = '';
+    }
     if (HOOK_EVENT === 'user_prompt_submit' && sessionId) {
-      recordSynthesisTurnSlice(eventRoot, sessionId);
+      try {
+        recordSynthesisTurnSlice(eventRoot, sessionId);
+      } catch {
+        /* a synthesis load must not skip the inbox start */
+      }
     }
     if (clearPendingDelegationsForSessionChange(sessionId, eventRoot)) {
       appendHookActivity(eventRoot, 'grok-session-start', 'stale-pending-cleared', 'info', {
@@ -201,23 +222,6 @@ async function main() {
       /* non-blocking pipeline facets */
     }
 
-    let inboxMessage = '';
-    try {
-      if (HOOK_EVENT === 'session_start') {
-        inboxMessage = await pollInboxOnce({
-          root: eventRoot,
-          env: process.env,
-          sessionId: sessionId || '',
-        });
-      } else if (HOOK_EVENT === 'user_prompt_submit') {
-        inboxMessage = inboxStartOrder({
-          env: process.env,
-          sessionId: sessionId || '',
-        });
-      }
-    } catch {
-      inboxMessage = '';
-    }
     const out = inboxMessage ? { ...payload, systemMessage: inboxMessage } : payload;
     if (!compact) process.stdout.write(`${JSON.stringify(out)}\n`);
     process.exit(0);
@@ -226,6 +230,7 @@ async function main() {
       error: err.message,
       hookEvent: HOOK_EVENT,
     });
+    if (inboxMessage) process.stdout.write(`${JSON.stringify({ systemMessage: inboxMessage })}\n`);
     process.exit(0);
   }
 }

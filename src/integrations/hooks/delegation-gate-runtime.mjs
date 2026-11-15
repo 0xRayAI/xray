@@ -7,7 +7,7 @@ import { createRequire } from 'node:module';
 import { existsSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -73,10 +73,10 @@ function loadDelegationGate() {
       { code: 'ERR_MODULE_NOT_FOUND' },
     );
   }
-  return createRequire(import.meta.url)(found);
+  return import(pathToFileURL(found).href);
 }
 
-const gate = loadDelegationGate();
+const gate = await loadDelegationGate();
 
 export const writeSuitSessionBoot = gate.writeSuitSessionBoot;
 export const maybeHeatHostStation = gate.maybeHeatHostStation;

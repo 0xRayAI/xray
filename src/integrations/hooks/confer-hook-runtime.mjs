@@ -5,7 +5,7 @@
 import { createRequire } from 'node:module';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -30,7 +30,7 @@ function resolvePackageRoot() {
   return resolve(__dirname, '../../..');
 }
 
-function loadConfer() {
+async function loadConfer() {
   const root = resolvePackageRoot();
   const candidates = [
     join(__dirname, '../../nucleus/confer.js'),
@@ -39,13 +39,18 @@ function loadConfer() {
   ];
   const found = candidates.find((p) => existsSync(p));
   if (!found) return null;
-  return createRequire(import.meta.url)(found);
+  try {
+    return await import(pathToFileURL(found).href);
+  } catch {
+    return null;
+  }
 }
 
+const confer = await loadConfer();
+
 export function isConferPendingForSession(projectRoot, sessionId = null) {
-  const mod = loadConfer();
-  if (!mod?.isConferPending) return false;
-  return mod.isConferPending(projectRoot, sessionId);
+  if (!confer?.isConferPending) return false;
+  return confer.isConferPending(projectRoot, sessionId);
 }
 
 /** 'UNREVIEWED' when a consult receipt recorded abstain-without-model. */

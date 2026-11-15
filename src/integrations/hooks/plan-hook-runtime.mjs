@@ -6,7 +6,7 @@
 import { createRequire } from 'node:module';
 import { existsSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -34,7 +34,7 @@ function resolvePackageRoot() {
   return resolve(__dirname, '../../..');
 }
 
-function loadPlanPersistence() {
+async function loadPlanPersistence() {
   const root = resolvePackageRoot();
   const candidates = [
     join(__dirname, '../../nucleus/lead-dev-plan-persistence.js'),
@@ -47,14 +47,23 @@ function loadPlanPersistence() {
       'lead-dev-plan-persistence.js missing — run npm run build in 0xray',
     );
   }
-  return createRequire(import.meta.url)(found);
+  return import(pathToFileURL(found).href);
 }
 
 let persistence;
+let persistenceError;
+try {
+  persistence = await loadPlanPersistence();
+} catch (err) {
+  persistenceError = err;
+}
 
 function getPersistence() {
+  if (persistenceError) throw persistenceError;
   if (!persistence) {
-    persistence = loadPlanPersistence();
+    throw new Error(
+      'lead-dev-plan-persistence.js missing — run npm run build in 0xray',
+    );
   }
   return persistence;
 }
