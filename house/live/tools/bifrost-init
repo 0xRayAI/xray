@@ -173,6 +173,44 @@ def role_targets(roles: dict) -> dict[str, set[str]]:
     return out
 
 
+def routing_shape_errors(roles: dict) -> list[str]:
+    """Every routing entry needs role and plane. Every plane needs one primary."""
+    bad = []
+    routing = roles.get("routing") or {}
+    if not isinstance(routing, dict):
+        return ["routing is not a map"]
+    primaries: dict[str, list[str]] = {}
+    planes: set[str] = set()
+    for seat, entry in routing.items():
+        if not isinstance(entry, dict):
+            bad.append(f"{seat}: missing role")
+            bad.append(f"{seat}: missing plane")
+            continue
+        if not str(entry.get("role") or "").strip():
+            bad.append(f"{seat}: missing role")
+        plane = str(entry.get("plane") or "").strip()
+        if not plane:
+            bad.append(f"{seat}: missing plane")
+            continue
+        planes.add(plane)
+        if entry.get("primary") is True:
+            primaries.setdefault(plane, []).append(str(seat))
+    declared = roles.get("planes") if isinstance(roles.get("planes"), dict) else {}
+    for plane in sorted(planes | set(declared)):
+        named = ""
+        block = declared.get(plane) if isinstance(declared.get(plane), dict) else {}
+        if isinstance(block, dict) and str(block.get("primary") or "").strip():
+            named = str(block["primary"]).strip()
+            if named not in routing:
+                bad.append(f"{plane}: primary {named} is not a seat")
+        owners = primaries.get(plane) or []
+        if named:
+            continue
+        if len(owners) != 1:
+            bad.append(f"{plane}: no primary")
+    return bad
+
+
 def unknown_targets(roles: dict, seats) -> list[str]:
     """Rules pointing at a seat that is not in the fleet (a line nobody reads)."""
     return sorted(set(role_targets(roles)) - set(seats))
@@ -204,6 +242,12 @@ def add_seats(roles: dict, seats, logins: dict | None = None, raw_logins: dict |
         for al in (s, s.capitalize()):
             if al not in ent["aliases"]:
                 ent["aliases"].append(al)
+        if not str(ent.get("role") or "").strip():
+            ent["role"] = s
+        if not str(ent.get("plane") or "").strip():
+            ent["plane"] = s
+        if "primary" not in ent:
+            ent["primary"] = True
     return roles
 
 
@@ -277,13 +321,16 @@ def main(argv=None) -> int:
         outside = outside_keyword_routes(roles)
         if outside:
             print("bifrost init: FAIL, outside-fleet seat routed without an explicit @login: " + "; ".join(outside), file=sys.stderr)
+        shape = routing_shape_errors(roles) if (roles.get("routing") or {}) else []
+        if shape:
+            print("bifrost init: FAIL, routing table: " + "; ".join(shape), file=sys.stderr)
         if a.table:
             targets = role_targets(roles)
             print("seat | mention | login | api | OK")
             for s, m, l, ok in rows:
                 api = resolved.get(s, ("", "-" if not a.no_resolve else "skipped"))[1]
                 print(f"{s} | {m} | {l} | {api} | {'OK' if ok and api != 'missing' else 'FAIL'}  ({', '.join(sorted(targets.get(s, ())))})")
-        if miss or ghost or nick or outside or gone:
+        if miss or ghost or nick or outside or gone or shape:
             return 1
         print(f"bifrost init: routing OK for {len(seats)} seat(s)")
         return 0

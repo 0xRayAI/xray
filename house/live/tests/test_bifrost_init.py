@@ -22,7 +22,12 @@ class BifrostInit(unittest.TestCase):
             self.assertEqual(sorted(hooks), ["alpha", "beta"])
             self.assertEqual(hooks["alpha"]["key_env"], "WAKE_KEY_ALPHA")
             self.assertNotIn("http", json.dumps(hooks))
-            self.assertEqual(run("--check", "--seats", "alpha,beta,gamma", "--routing-dir", d).returncode, 0)
+            checked = run("--check", "--seats", "alpha,beta,gamma", "--routing-dir", d)
+            self.assertEqual(checked.returncode, 0, checked.stderr)
+            for s in ("alpha", "beta", "gamma"):
+                self.assertEqual(roles["routing"][s]["role"], s)
+                self.assertEqual(roles["routing"][s]["plane"], s)
+                self.assertIs(roles["routing"][s]["primary"], True)
 
     def test_interactive_wake_url_never_written(self):
         with tempfile.TemporaryDirectory() as d:
@@ -73,6 +78,21 @@ class BifrostInit(unittest.TestCase):
 
     def test_our_routing_routes_every_roster_seat(self):
         self.assertEqual(run("--check").returncode, 0)
+
+    def test_check_fails_when_a_plane_has_no_primary(self):
+        with tempfile.TemporaryDirectory() as d:
+            table = {"routing": {
+                "forge": {"login": "forge0x1[bot]", "aliases": ["forge"], "role": "builder", "plane": "eng", "primary": False},
+                "mill": {"login": None, "aliases": ["mill"], "role": "builder", "plane": "eng", "primary": False},
+            }, "extra_seats": {"forge": {"needles": ["@forge", "@forge0x1"]}, "mill": {"needles": ["@mill"]}}}
+            (Path(d) / "inbox-roles.json").write_text(json.dumps(table))
+            r = run("--check", "--seats", "forge,mill", "--routing-dir", d, "--nodes", str(Path(d) / "none.json"))
+            self.assertEqual(r.returncode, 1)
+            self.assertIn("eng: no primary", r.stderr)
+            table["routing"]["forge"]["primary"] = True
+            (Path(d) / "inbox-roles.json").write_text(json.dumps(table))
+            ok = run("--check", "--no-resolve", "--seats", "forge,mill", "--routing-dir", d, "--nodes", str(Path(d) / "none.json"))
+            self.assertEqual(ok.returncode, 0, ok.stderr)
 
 
 if __name__ == "__main__":
@@ -126,7 +146,10 @@ class RoutingMap(unittest.TestCase):
                     "--nodes", str(Path(d) / "none.json"), "--yes")
             self.assertEqual(r.returncode, 0, r.stderr)
             roles = json.loads((Path(d) / "inbox-roles.json").read_text())
-            self.assertEqual(roles["routing"]["forge"], {"login": "forge0x1[bot]", "aliases": ["forge", "Forge"]})
+            self.assertEqual(roles["routing"]["forge"], {
+                "login": "forge0x1[bot]", "aliases": ["forge", "Forge"],
+                "role": "forge", "plane": "forge", "primary": True,
+            })
             self.assertEqual(roles["routing"]["arch1"]["login"], "arch10x[bot]")
             self.assertIn("@forge0x1", roles["extra_seats"]["forge"]["needles"])
             self.assertIn("@arch10x", roles["extra_seats"]["arch1"]["needles"])
