@@ -242,6 +242,12 @@ def add_seats(roles: dict, seats, logins: dict | None = None, raw_logins: dict |
         for al in (s, s.capitalize()):
             if al not in ent["aliases"]:
                 ent["aliases"].append(al)
+        if not str(ent.get("role") or "").strip():
+            ent["role"] = s
+        if not str(ent.get("plane") or "").strip():
+            ent["plane"] = s
+        if "primary" not in ent:
+            ent["primary"] = True
     return roles
 
 

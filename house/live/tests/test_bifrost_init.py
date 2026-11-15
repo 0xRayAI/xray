@@ -23,9 +23,11 @@ class BifrostInit(unittest.TestCase):
             self.assertEqual(hooks["alpha"]["key_env"], "WAKE_KEY_ALPHA")
             self.assertNotIn("http", json.dumps(hooks))
             checked = run("--check", "--seats", "alpha,beta,gamma", "--routing-dir", d)
-            self.assertEqual(checked.returncode, 1)
-            self.assertIn("missing role", checked.stderr)
-            self.assertIn("missing plane", checked.stderr)
+            self.assertEqual(checked.returncode, 0, checked.stderr)
+            for s in ("alpha", "beta", "gamma"):
+                self.assertEqual(roles["routing"][s]["role"], s)
+                self.assertEqual(roles["routing"][s]["plane"], s)
+                self.assertIs(roles["routing"][s]["primary"], True)
 
     def test_interactive_wake_url_never_written(self):
         with tempfile.TemporaryDirectory() as d:
@@ -144,7 +146,10 @@ class RoutingMap(unittest.TestCase):
                     "--nodes", str(Path(d) / "none.json"), "--yes")
             self.assertEqual(r.returncode, 0, r.stderr)
             roles = json.loads((Path(d) / "inbox-roles.json").read_text())
-            self.assertEqual(roles["routing"]["forge"], {"login": "forge0x1[bot]", "aliases": ["forge", "Forge"]})
+            self.assertEqual(roles["routing"]["forge"], {
+                "login": "forge0x1[bot]", "aliases": ["forge", "Forge"],
+                "role": "forge", "plane": "forge", "primary": True,
+            })
             self.assertEqual(roles["routing"]["arch1"]["login"], "arch10x[bot]")
             self.assertIn("@forge0x1", roles["extra_seats"]["forge"]["needles"])
             self.assertIn("@arch10x", roles["extra_seats"]["arch1"]["needles"])
