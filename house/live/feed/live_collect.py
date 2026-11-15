@@ -643,6 +643,19 @@ def raci_comment(responsible, answer):
     return f"## Packet\nraci: R={responsible} A={answer}\n"
 
 
+def raci_text(body):
+    """R and A already written on a comment or a packet. Empty when either name is missing."""
+    packet = live_packet.parse(body) or {}
+    roles = live_packet.raci_roles(packet.get("raci") if isinstance(packet, dict) else "")
+    if not (roles.get("R") and roles.get("A")):
+        match = re.search(r"(?im)^[ \t]*raci:[ \t]*(.+)$", str(body or ""))
+        if match:
+            roles = live_packet.raci_roles(match.group(1))
+    if roles.get("R") and roles.get("A"):
+        return f"R={roles['R']} A={roles['A']}"
+    return ""
+
+
 def card_fields(x) -> dict:
     """Board card fields from a PR / issue object this pass already fetched: branded title, state, labels and
     the packet block (sanitized, <= 200 chars a field). The body itself is discarded here, never stored.
@@ -1410,6 +1423,17 @@ class RepoCollector:
         spec = default_raci(item, held=self._raci_held)
         if not spec:
             return
+        found = self.posted_raci(c, number)
+        if found is False:
+            self._release_raci(spec.get("R"))
+            return
+        if found:
+            self._release_raci(spec.get("R"))
+            item["packet"] = {"raci": found}
+            item.pop("raci_reason", None)
+            tried.append(key)
+            self._remember_raci(item)
+            return
         if spec.get("queued"):
             item["raci_reason"] = spec.get("reason") or "at the cap"
             self._raci_queued = True
@@ -1438,6 +1462,25 @@ class RepoCollector:
         prior = item.get("body") if isinstance(item.get("body"), str) else ""
         item["body"] = f"{prior}\n{body}" if prior else body
         self._remember_raci(item)
+
+    def posted_raci(self, c, number):
+        """The R A line already on a comment. None when the card has none.
+        False when the comment read failed: the caller must not post."""
+        if not callable(getattr(c, "rest", None)):
+            return None
+        try:
+            rows = self._all(c, f"/repos/{self.repo}/issues/{number}/comments")
+        except (urllib.error.HTTPError, urllib.error.URLError, http.client.HTTPException,
+                TimeoutError, OSError, ValueError, KeyError, TypeError):
+            self._assign_miss = True
+            return False
+        for row in rows or []:
+            if not isinstance(row, dict):
+                continue
+            text = raci_text(row.get("body"))
+            if text:
+                return text
+        return None
 
     def _open_eid(self, item):
         n = int(item["number"])
@@ -1478,30 +1521,36 @@ class RepoCollector:
             fields["raci_reason"] = reason.strip()
 
     def fill_open_raci(self, c):
-        """One walk of currently open issues and pulls. The updated-at cursor, and the
-        rewalk flags already latched on the volume, never visit a quiet live card again.
-        Parked cards stay quiet. The ten-write budget still applies. A card left at the
-        cap keeps the walk open so a later pass can move R."""
+        """One walk of currently open issues and pulls, then a conditional GET.
+        A card at the cap does not keep the list open. The page-1 ETag stays, so the
+        next pass is a 304 and not another download. A quiet card whose own event
+        later moves is filled by the pull and issue polls."""
         bf = self.st.setdefault("bf", {})
-        if bf.get("raci:open"):
-            return
         if not getattr(c, "token", None) or not callable(getattr(c, "write_json", None)):
             return
         if not (getattr(c, "assign_token", "") or ""):
             return
-        self._raci_queued = False
-        for item in self.paged(
-                c, f"/repos/{self.repo}/issues",
-                {"state": "open", "sort": "updated", "direction": "desc"},
-                "raci-open", essential=False):
+        self.st.setdefault("etags", {})
+        params = {"state": "open", "sort": "updated", "direction": "desc"}
+        path = f"/repos/{self.repo}/issues"
+        if bf.get("raci:open"):
+            gen = self.paged(c, path, params, "raci-open", essential=False)
+            next(gen, None)
+            if getattr(self, "_paged_status", None) == "not_modified" and getattr(self, "_etag_new", None):
+                self.st["etags"]["raci-open"] = self._etag_new
+            return
+        stopped = False
+        for item in self.paged(c, path, params, "raci-open", essential=False):
             if getattr(self, "_assign_left", 0) <= 0:
                 self._paged_status = "budget"
+                stopped = True
                 break
             self.maybe_fill_raci(c, item)
             self.maybe_assign(c, item)
-        self._etag_new = None
-        if getattr(self, "_raci_queued", False):
+        if stopped or getattr(self, "_paged_status", None) != "done":
             return
+        if getattr(self, "_etag_new", None):
+            self.st["etags"]["raci-open"] = self._etag_new
         if assign_rewalk_done(
                 getattr(self, "_paged_status", None),
                 getattr(self, "_assign_left", 0),
