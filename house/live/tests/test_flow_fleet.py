@@ -698,6 +698,22 @@ class FleetSeatsConfig(unittest.TestCase):
         finally:
             live_fleet.SEATS, live_fleet.BOARD, live_fleet.BOARD_SEATS = saved
 
+    def test_board_seat_credit_counts_without_an_inbox(self):
+        """Mill is counted on the board and is not an inbox seat. Seat: mill still marks mill active."""
+        saved = live_fleet.SEATS, live_fleet.BOARD, live_fleet.BOARD_SEATS
+        live_fleet.SEATS, live_fleet.BOARD, live_fleet.BOARD_SEATS = ["forge"], {}, ["forge", "mill"]
+        try:
+            with tempfile.TemporaryDirectory() as d:
+                now = time.time()
+                ev = {"src_file": "github-api", "from": "forge", "actor": "forge0x1[bot]", "credit": "mill",
+                      "t_ct": datetime.fromtimestamp(now - 60, CT).isoformat()}
+                fs = live_fleet.Fleet(Path(d) / "state.json", CT).fleet_state([ev], now=now)
+            self.assertTrue(fs["seats"]["mill"]["active"])
+            self.assertFalse(fs["seats"]["forge"]["active"])
+            self.assertEqual(fs["seats"]["mill"]["via"], "github")
+        finally:
+            live_fleet.SEATS, live_fleet.BOARD, live_fleet.BOARD_SEATS = saved
+
     def test_presence_follows_credit_not_pusher(self):
         """A forge0x1 push with a 'Seat: mill' trailer (credit mill) marks mill active, not forge."""
         saved = live_fleet.SEATS, live_fleet.BOARD, live_fleet.BOARD_SEATS

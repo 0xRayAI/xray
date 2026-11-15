@@ -116,7 +116,7 @@ class FleetRoster(unittest.TestCase):
     def test_roster_is_the_nine_seats_and_blaze_is_not_one(self):
         import live_fleet
         seats, fold, board = live_fleet.load_seat_config(str(FEED / "fleet-roster.json"))
-        self.assertEqual(board, ["blinky", "critic", "forge", "near", "nibbler"])
+        self.assertEqual(board, ["blinky", "critic", "forge", "near", "nibbler", "mill"])
         self.assertEqual(sorted(seats), sorted(self.ROSTER))
         raw = json.loads((FEED / "fleet-roster.json").read_text())
         self.assertEqual(raw["outside"], ["arch1"])
