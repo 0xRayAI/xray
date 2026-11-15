@@ -73,6 +73,7 @@
   L.REVIEW_SEAT = 'critic';
   // avatars we ship in avatars/ (arch1 = minime0x); Blaze = x.com/Blaze0x1 profile picture;
   // the rest use the drawn letter badge (no 404s).
-  L.setAvatars({ blinky: 'blinky', critic: 'critic', forge: 'forge', near: 'near', nibbler: 'nibbler', arch1: 'arch1', Blaze: 'blaze' });
+  L.setAvatars({ blinky: 'blinky', critic: 'critic', forge: 'forge', near: 'near', arch1: 'arch1', Blaze: 'blaze' });
+  L.GLYPH = Object.assign(L.GLYPH || {}, { nibbler: '🪱' });
   L.SITE_FOOT = 'Bifrost · built in public';
 })(window.LiveMesh);
