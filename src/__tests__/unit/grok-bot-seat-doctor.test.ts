@@ -711,6 +711,33 @@ describe('grok-bot seat doctor — CLI', () => {
   });
 });
 
+describe('grok-bot bifrost init (#1050)', () => {
+  it('writes collector/routing in the working folder, then --check passes', () => {
+    const dir = scratch();
+    try {
+      const env = { BIFROST_GITHUB_API: 'http://127.0.0.1:9' };
+      const empty = runBin(['bifrost', 'init', '--check', '--no-resolve'], dir, env);
+      expect(empty.status).toBe(1);
+      expect(empty.stderr).toMatch(/no routing file/);
+      const init = runBin(['bifrost', 'init', '--seats', 'lead,builder', '--yes'], dir, env);
+      expect(init.status, init.stderr).toBe(0);
+      const roles = JSON.parse(readFileSync(path.join(dir, 'collector', 'routing', 'inbox-roles.json'), 'utf8'));
+      expect(Object.keys(roles.extra_seats).sort()).toEqual(['builder', 'lead']);
+      const check = runBin(['bifrost', 'init', '--check', '--seats', 'lead,builder', '--no-resolve'], dir, env);
+      expect(check.status, check.stderr).toBe(0);
+      expect(check.stdout).toMatch(/routing OK for 2 seat/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('prints usage for an unknown bifrost subcommand', () => {
+    const r = runBin(['bifrost'], tmpdir());
+    expect(r.status).toBe(2);
+    expect(r.stderr).toMatch(/grok-bot bifrost init/);
+  });
+});
+
 describe('grok-bot seat doctor — cadence warnings', () => {
   function writeHouse(dir: string, body: string): void {
     mkdirSync(path.join(dir, 'house'), { recursive: true });

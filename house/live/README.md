@@ -83,7 +83,7 @@ Work tracking (per-seat activity keys, packet phases, the Cursor webhook): [`doc
 ## Deploy
 
 ```bash
-app/deploy.sh                                      # copies app/ + assembles collector/, railway up --service burst-live --detach
+LIVE_RAILWAY_PROJECT=burst-live LIVE_RAILWAY_SERVICE=burst-live app/deploy.sh   # ours; both names are required (#1047)
 railway deployment list --service burst-live       # expect SUCCESS
 ```
 

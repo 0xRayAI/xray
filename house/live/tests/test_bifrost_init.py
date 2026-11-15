@@ -54,6 +54,19 @@ class BifrostInit(unittest.TestCase):
             f = json.loads((Path(d) / "inbox-roles.json").read_text())["extra_seats"]["forge"]
             self.assertEqual((f["kinds"], f["needles"]), (["ci_fail"], ["@forge", "@forge0x1", "merge ask"]))
 
+    def test_check_fails_without_a_routing_file(self):
+        with tempfile.TemporaryDirectory() as d:
+            r = run("--check", "--seats", "forge", "--routing-dir", d)
+            self.assertEqual(r.returncode, 1)
+            self.assertIn("no routing file", r.stderr)
+
+    def test_bifrost_feed_env_moves_the_default_dirs(self):
+        with tempfile.TemporaryDirectory() as d:
+            env = {**os.environ, "BIFROST_FEED": d, "BIFROST_GITHUB_API": "http://127.0.0.1:9"}
+            r = subprocess.run([sys.executable, str(TOOL), "--seats", "lead", "--yes"], capture_output=True, text=True, env=env)
+            self.assertEqual(r.returncode, 0, r.stderr)
+            self.assertTrue((Path(d) / "routing" / "inbox-roles.json").is_file())
+
     def test_bad_seat_name_rejected(self):
         with tempfile.TemporaryDirectory() as d:
             self.assertNotEqual(run("--seats", "Bad Seat!", "--routing-dir", d, "--yes").returncode, 0)

@@ -669,6 +669,22 @@ function startedFolderPhrase(copied, destDir, folder) {
   return `started ${rels.join(', ')}`;
 }
 
+// ISO-8601 with the box's numeric offset (activity.schema.json t_ct).
+function localStamp(ms) {
+  const d = new Date(ms);
+  const pad = (n) => String(Math.abs(n)).padStart(2, '0');
+  const off = -d.getTimezoneOffset();
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+    + `${off < 0 ? '-' : '+'}${pad(Math.trunc(off / 60))}:${pad(off % 60)}`;
+}
+
+// A new house starts its activity log with one line, so doctor has a JSON line to read (#1053).
+function seedActivity(file, now) {
+  if (!isFile(file) || fs.readFileSync(file, 'utf8').trim() !== '') return;
+  const line = { t_ct: localStamp(typeof now === 'number' ? now : Date.now()), seat: 'house', kind: 'watcher', action: 'start', tag: 'house-init' };
+  fs.writeFileSync(file, `${JSON.stringify(line)}\n`);
+}
+
 function legacyBoardPath(seatRoot) {
   return path.join(seatRoot, 'ops', 'WAVEBOARD.md');
 }
@@ -701,6 +717,7 @@ function initHouse(opts = {}) {
     const result = copyMissingHouseFile(srcDir, destDir, name);
     if (result.copied) files.push(result.dest);
   }
+  seedActivity(path.join(destDir, 'fleet', 'activity.jsonl'), opts.now);
   return {
     ok: true,
     code: 0,
@@ -778,6 +795,11 @@ function migrateHouse({ seatRoot, srcDir, destDir, names }) {
 
 function nextSteps(report) {
   const steps = [];
+  if (report.plant.houseOnly) {
+    // Before seats are suited the fleet stops short of pay, hangar shops, and Groover (#1051).
+    steps.push('Seats: each seat fastens mill+inspect in its own chat (fasten-suit-per-agent); run doctor there');
+    return steps;
+  }
   if (report.goggles && report.goggles.status === 'off') {
     if (report.goggles.detail === 'goggles organ missing') {
       steps.push('Restore the goggles organ. The suit keeps the lens.');
@@ -900,14 +922,17 @@ function diagnoseSeat(opts = {}) {
   const env = opts.env || process.env;
   const house = probeHouse(cwd, env);
   const bridges = probeBridges(cwd, home);
+  // A house folder with no seat in it yet (no package.json, no 0xray, no suit) is the fleet stage, not a failed seat.
+  const houseOnly = house.enabled === true && !seat && !installed && !inventoryPresent && !mill && !inspect;
   const report = {
-    ok: plantOk && house.status !== 'fail',
+    ok: (plantOk || houseOnly) && house.status !== 'fail',
     cwd,
     seat,
     kit,
     xray,
     plant: {
       ok: plantOk,
+      houseOnly,
       installed,
       deadHooks,
       mill,
@@ -934,6 +959,7 @@ function diagnoseSeat(opts = {}) {
 
 function plantLine(report) {
   if (report.plant.ok) return 'Plant: PASS — mill+inspect fastened';
+  if (report.plant.houseOnly) return 'Plant: PASS — house only; no seat suited here yet';
   const parts = [];
   if (!report.plant.mill || !report.plant.inspect) parts.push('mill+inspect not fastened');
   if (!report.plant.installed) parts.push('missing node_modules/0xray/package.json');
@@ -954,6 +980,19 @@ function doctorBanner(report) {
   return `${kitLabel} doctor — ${xrayLabel} — seat plant check`;
 }
 
+function pushPlantDetail(lines, report) {
+  lines.push(`  mill: ${report.plant.mill ? 'yes' : 'miss'}${report.plant.millFile ? ` (${report.plant.millFile})` : ''}`);
+  lines.push(
+    `  inspect: ${report.plant.inspect ? 'yes' : 'miss'}${report.plant.inspectFile ? ` (${report.plant.inspectFile})` : ''}`,
+  );
+  if (report.plant.inventoryPresent) {
+    lines.push(`  inventory: ${report.plant.suit || 'present'}${report.plant.dna ? ` dna=${report.plant.dna}` : ''}`);
+  } else {
+    lines.push('  inventory: miss (.xray/foundry-inventory.json)');
+  }
+  lines.push(`  costume: ${report.plant.costume ? 'true (do not dump 45 skills)' : 'false'}`);
+}
+
 function formatDoctor(report) {
   const lines = [];
   lines.push(doctorBanner(report));
@@ -967,16 +1006,7 @@ function formatDoctor(report) {
   }
   lines.push('');
   lines.push(plantLine(report));
-  lines.push(`  mill: ${report.plant.mill ? 'yes' : 'miss'}${report.plant.millFile ? ` (${report.plant.millFile})` : ''}`);
-  lines.push(
-    `  inspect: ${report.plant.inspect ? 'yes' : 'miss'}${report.plant.inspectFile ? ` (${report.plant.inspectFile})` : ''}`,
-  );
-  if (report.plant.inventoryPresent) {
-    lines.push(`  inventory: ${report.plant.suit || 'present'}${report.plant.dna ? ` dna=${report.plant.dna}` : ''}`);
-  } else {
-    lines.push('  inventory: miss (.xray/foundry-inventory.json)');
-  }
-  lines.push(`  costume: ${report.plant.costume ? 'true (do not dump 45 skills)' : 'false'}`);
+  if (!report.plant.houseOnly) pushPlantDetail(lines, report);
   if (report.goggles && report.goggles.status === 'on') lines.push('Goggles: on');
   else if (report.goggles && report.goggles.status === 'off') lines.push(`Goggles: FAIL — ${report.goggles.detail}`);
   lines.push('');
@@ -993,7 +1023,9 @@ function formatDoctor(report) {
   } else if (report.bridges) {
     lines.push('Bridges: ok');
   }
-  if (walletStepsOff(report)) {
+  if (report.plant.houseOnly) {
+    lines.push('OWS pay: not checked — house only (pay is opt-in, per seat)');
+  } else if (walletStepsOff(report)) {
     lines.push('OWS pay: skipped — house Scope wallet off');
   } else {
     lines.push(
@@ -1099,6 +1131,7 @@ Commands:
   house init       Copy templates/house into ./house, including watchers/ and fleet/. Refuses if a target file exists. Writes a file only when it is missing
   house init --migrate
                    Move ops/WAVEBOARD.md to house/WAVEBOARD.md when that old board is a file. That file is the board when LIVE_URL is unset. Bifrost (GET /cards) is the board only when LIVE_URL is set. Start ATTENTION_STATE.md from the template when it is missing. Append the template ## Cadence block when HOUSE.md has none. Start missing watchers/ and fleet/ files. Never overwrite a ledger or any other house file you already changed. Refuse when both boards exist and the house board is not the untouched template
+  bifrost init     Write the board's seat routes (collector/routing/inbox-roles.json in a bifrost clone; BIFROST_FEED overrides). --check validates and writes nothing. Needs python3
   (default)        Point at AGENTS.md / SKILLS.md / llms.txt
 
 Flags:

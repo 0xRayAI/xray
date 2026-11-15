@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## [0.1.15] - 2026-11-15
+
+Fixes from the 0xRay Fleet Setup v7 cold test.
+
+- `grok-bot bifrost init [--check]` ships seat-route setup in the kit. It runs `house/live/tools/bifrost-init` (packed as `lib/bifrost-init.py`, needs `python3`) against `./collector` (a bifrost clone; `BIFROST_FEED` overrides). `--check` fails when there is no routing file. #1050
+- `stand-up-fleet` gives a fresh install a full own-board path: clone the public bifrost repo, reset its fleet files, `grok-bot bifrost init`, then `railway up` into a NEW project and service the owner names. It never offers a shared or public board. #1047 #1046
+- `house/live/app/deploy.sh` requires `LIVE_RAILWAY_PROJECT` and `LIVE_RAILWAY_SERVICE` (no `burst-live` default) and refuses a deploy dir linked to another project before copying. `seat_keys.sh publish` requires `LIVE_RAILWAY_SERVICE`. #1047
+- Every `npx @0xray/grok-bot` line in the kit docs pins `@0.1.15`. #1049
+- Doctor passes a house-only folder (`Plant: PASS — house only`) and leaves pay, hangar, Clearing, and Groover out of its Next list there. #1051
+- Kit engines are `node >=24`. The `0xray` package keeps the `>=24.22.3` floor. #1052
+- `house init` seeds `fleet/activity.jsonl` with one `house-init` line, so a new house has no empty-log warning. #1053
 - The wake trap peeks the inbox before turn end. The open head reprints until it is acked.
 
 ## [0.1.14] - 2026-11-11
