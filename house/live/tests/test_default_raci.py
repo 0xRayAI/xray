@@ -123,6 +123,270 @@ class DefaultRaci(unittest.TestCase):
         still = live_collect.default_raci(card(number=5, body="Board-Owner: forge\n"), NODES, roles=down, held=almost)
         self.assertEqual(still, {"queued": True, "reason": "at the cap"})
 
+    def test_a_card_that_already_has_r_gets_a(self):
+        partial = card(body="## Packet\nraci: R=forge\n")
+        self.assertEqual(live_collect.default_raci(partial, NODES), {"R": "forge", "A": "forge"})
+
+    def test_open_walk_fills_a_quiet_card_and_stamps_the_event(self):
+        calls = []
+
+        class Writer:
+            token = "read-token"
+            assign_token = "ghs_test"
+
+            def write_json(self, path, payload):
+                calls.append((path, payload))
+                return 201
+
+        col = live_collect.RepoCollector.__new__(live_collect.RepoCollector)
+        col.st = {"bf": {"cards:issues": True, "assign:issues": True}, "etags": {}}
+        col.repo = "0xRayAI/xray"
+        col.ev = {"0xRayAI/xray!1093:open": {"kind": "issue_open", "number": 1093, "packet": {"goal": "keep"}}}
+        col._assign_left = 10
+        col._assign_miss = False
+        item = card(number=1093, body="Board-Owner: forge\n", assignees=[{"login": "kept"}])
+
+        def paged(c, path, params, key, stop=None, essential=True, max_pages=400):
+            col._paged_status = "done"
+            yield item
+
+        col.paged = paged
+        col.fill_open_raci(Writer())
+        self.assertEqual(calls[0][0], "/repos/0xRayAI/xray/issues/1093/comments")
+        self.assertIn("R=forge A=forge", calls[0][1]["body"])
+        self.assertEqual(col.ev["0xRayAI/xray!1093:open"]["packet"]["raci"], "R=forge A=forge")
+        self.assertEqual(col.ev["0xRayAI/xray!1093:open"]["packet"]["goal"], "keep")
+        self.assertTrue(col.st["bf"].get("raci:open"))
+        parked = card(number=1105, body="Board-Owner: forge\n", labels=[{"name": "parked"}])
+
+        def parked_only(c, path, params, key, stop=None, essential=True, max_pages=400):
+            col._paged_status = "done"
+            yield parked
+
+        col.st["bf"].pop("raci:open")
+        col.paged = parked_only
+        before = len(calls)
+        col.fill_open_raci(Writer())
+        self.assertEqual(len(calls), before)
+        self.assertTrue(col.st["bf"].get("raci:open"))
+
+    def test_open_walk_stays_open_when_the_budget_is_spent(self):
+        col = live_collect.RepoCollector.__new__(live_collect.RepoCollector)
+        col.st = {"bf": {}, "etags": {}}
+        col.repo = "0xRayAI/xray"
+        col.ev = {}
+        col._assign_left = 0
+        col._assign_miss = False
+
+        def paged(c, path, params, key, stop=None, essential=True, max_pages=400):
+            col._paged_status = "done"
+            yield card(number=1110, body="Board-Owner: forge\n")
+
+        col.paged = paged
+
+        class Writer:
+            token = "read-token"
+            assign_token = "ghs_test"
+
+            def write_json(self, path, payload):
+                raise AssertionError("budget spent")
+
+        col.fill_open_raci(Writer())
+        self.assertNotIn("raci:open", col.st["bf"])
+
+    def test_second_pass_is_a_304_and_writes_nothing(self):
+        item = card(number=1093, body="Board-Owner: forge\n", assignees=[{"login": "kept"}])
+        writes = []
+        lists = []
+
+        class Client:
+            token = "read-token"
+            assign_token = "ghs_test"
+
+            def rest(self, path, params=None, etag=None, essential=True):
+                if str(path).endswith("/comments"):
+                    return 200, [], None, None
+                lists.append(etag)
+                if etag:
+                    return 304, None, etag, None
+                return 200, [item], "W/open", None
+
+            def write_json(self, path, payload):
+                writes.append(payload)
+                return 201
+
+        col = live_collect.RepoCollector.__new__(live_collect.RepoCollector)
+        col.st = {"bf": {}, "etags": {}}
+        col.repo = "0xRayAI/xray"
+        col.ev = {"0xRayAI/xray!1093:open": {
+            "kind": "issue_open", "repo": "0xRayAI/xray", "number": 1093,
+            "pr_state": "open", "packet": {"goal": "keep"}}}
+        col._assign_left = 10
+        col._assign_miss = False
+        col.fill_open_raci(Client())
+        self.assertEqual(len(writes), 1)
+        self.assertEqual(lists, [None])
+        self.assertEqual(col.st["etags"].get("raci-open"), "W/open")
+        self.assertTrue(col.st["bf"].get("raci:open"))
+        col._assign_left = 10
+        col.fill_open_raci(Client())
+        self.assertEqual(len(writes), 1)
+        self.assertEqual(lists, [None, "W/open"])
+
+    def test_a_card_at_the_cap_still_latches(self):
+        item = card(number=1105, body="Board-Owner: sound\n", assignees=[{"login": "kept"}])
+        lists = []
+
+        class Client:
+            token = "read-token"
+            assign_token = "ghs_test"
+
+            def rest(self, path, params=None, etag=None, essential=True):
+                if str(path).endswith("/comments"):
+                    return 200, [], None, None
+                lists.append(etag)
+                if etag:
+                    return 304, None, etag, None
+                return 200, [item], "W/cap", None
+
+            def write_json(self, path, payload):
+                raise AssertionError(payload)
+
+        def held(n):
+            return {"kind": "issue_open", "repo": "0xRayAI/xray", "number": n, "pr_state": "open",
+                    "packet": {"raci": "R=sound A=blinky"}}
+
+        col = live_collect.RepoCollector.__new__(live_collect.RepoCollector)
+        col.st = {"bf": {}, "etags": {}}
+        col.repo = "0xRayAI/xray"
+        col.ev = {f"0xRayAI/xray!{n}:open": held(n) for n in (1, 2)}
+        col.ev["0xRayAI/xray!1105:open"] = {"kind": "issue_open", "repo": "0xRayAI/xray", "number": 1105, "packet": {}}
+        col._assign_left = 10
+        col._assign_miss = False
+        col.fill_open_raci(Client())
+        self.assertEqual(lists, [None])
+        self.assertTrue(col.st["bf"].get("raci:open"))
+        self.assertEqual(col.ev["0xRayAI/xray!1105:open"]["raci_reason"], "at the cap")
+        col._assign_left = 10
+        col.fill_open_raci(Client())
+        self.assertEqual(lists, [None, "W/cap"])
+
+    def test_an_existing_packet_comment_is_not_posted_again(self):
+        item = card(number=1110, body="Board-Owner: forge\n", assignees=[{"login": "kept"}])
+        writes = []
+
+        class Client:
+            token = "read-token"
+            assign_token = "ghs_test"
+
+            def rest(self, path, params=None, etag=None, essential=True):
+                if str(path).endswith("/comments"):
+                    return 200, [{"body": "## Packet\nraci: R=forge A=forge\n",
+                                  "user": {"login": "forge0x1[bot]"}}], None, None
+                return 200, [item], "W/open", None
+
+            def write_json(self, path, payload):
+                writes.append(payload)
+                return 201
+
+        col = live_collect.RepoCollector.__new__(live_collect.RepoCollector)
+        col.st = {"bf": {}, "etags": {}}
+        col.repo = "0xRayAI/xray"
+        col.ev = {"0xRayAI/xray!1110:open": {"kind": "issue_open", "number": 1110, "packet": {}}}
+        col._assign_left = 10
+        col._assign_miss = False
+        col.fill_open_raci(Client())
+        self.assertEqual(writes, [])
+        self.assertEqual(col.ev["0xRayAI/xray!1110:open"]["packet"]["raci"], "R=forge A=forge")
+        self.assertIn("0xRayAI/xray#1110", col.st["raci_tried"])
+
+    def test_a_persons_raci_line_does_not_suppress_the_fill(self):
+        item = card(number=1082, body="Board-Owner: forge\n", assignees=[{"login": "kept"}])
+        writes = []
+
+        class Client:
+            token = "read-token"
+            assign_token = "ghs_test"
+
+            def rest(self, path, params=None, etag=None, essential=True):
+                if str(path).endswith("/comments"):
+                    return 200, [{"body": "raci: R=near A=near\n", "user": {"login": "blaze"}}], None, None
+                return 200, [item], "W/open", None
+
+            def write_json(self, path, payload):
+                writes.append(payload)
+                return 201
+
+        col = live_collect.RepoCollector.__new__(live_collect.RepoCollector)
+        col.st = {"bf": {}, "etags": {}}
+        col.repo = "0xRayAI/xray"
+        col.ev = {"0xRayAI/xray!1082:open": {"kind": "issue_open", "number": 1082, "packet": {}}}
+        col._assign_left = 10
+        col._assign_miss = False
+        col.fill_open_raci(Client())
+        self.assertEqual(len(writes), 1)
+        self.assertIn("R=forge A=forge", writes[0]["body"])
+
+    def test_a_dead_assign_token_does_not_latch(self):
+        item = card(number=1090, body="Board-Owner: forge\n", assignees=[{"login": "kept"}])
+
+        class Client:
+            token = "read-token"
+            assign_token = "ghs_test"
+
+            def rest(self, path, params=None, etag=None, essential=True):
+                if str(path).endswith("/comments"):
+                    return 200, [], None, None
+                return 200, [item], "W/dead", None
+
+            def write_json(self, path, payload):
+                return 401
+
+        col = live_collect.RepoCollector.__new__(live_collect.RepoCollector)
+        col.st = {"bf": {}, "etags": {}}
+        col.repo = "0xRayAI/xray"
+        col.ev = {"0xRayAI/xray!1090:open": {"kind": "issue_open", "number": 1090, "packet": {}}}
+        col._assign_left = 10
+        col._assign_miss = False
+        col.fill_open_raci(Client())
+        self.assertTrue(col._assign_auth_dead)
+        self.assertNotIn("raci:open", col.st["bf"])
+        self.assertNotIn("raci-open", col.st["etags"])
+
+    def test_a_changed_list_stores_the_new_tag(self):
+        item = card(number=1093, body="no packet\n", state="closed")
+        lists = []
+
+        class Client:
+            token = "read-token"
+            assign_token = "ghs_test"
+
+            def rest(self, path, params=None, etag=None, essential=True):
+                if str(path).endswith("/comments"):
+                    return 200, [], None, None
+                lists.append(etag)
+                if etag == "W/1":
+                    return 200, [item], "W/2", None
+                if etag == "W/2":
+                    return 304, None, "W/2", None
+                return 200, [item], "W/1", None
+
+            def write_json(self, path, payload):
+                raise AssertionError(payload)
+
+        col = live_collect.RepoCollector.__new__(live_collect.RepoCollector)
+        col.st = {"bf": {"raci:open": True}, "etags": {"raci-open": "W/1"}}
+        col.repo = "0xRayAI/xray"
+        col.ev = {}
+        col._assign_left = 10
+        col._assign_miss = False
+        col.fill_open_raci(Client())
+        self.assertEqual(lists, ["W/1"])
+        self.assertEqual(col.st["etags"]["raci-open"], "W/2")
+        col.fill_open_raci(Client())
+        self.assertEqual(lists, ["W/1", "W/2"])
+        self.assertEqual(col.st["etags"]["raci-open"], "W/2")
+
 
 if __name__ == "__main__":
     unittest.main()
