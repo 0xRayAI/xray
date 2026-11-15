@@ -132,7 +132,7 @@ Public words are friend-speak. Test them on a person before they go out.
 - **In the dark.** A shared limit is hit. Name it. Do not route around it.
 - **Lights on.** The limit has cleared. The normal Queue rule applies again.
 - **Queue.** A non-empty live-inbox read is the queue, in order, this turn.
-- **Packet.** Goal, constraints, path, acceptance, gates, evidence, next owner, escalate (the same eight fields as the pack).
+- **Packet.** Goal, constraints, path, acceptance, gates, evidence, next owner, escalate, raci (the same nine fields as the pack). Every open card carries `raci: R=<seat> A=<seat>` in its `## Packet`. R is the seat doing the work, and setting it assigns and wakes that seat. A is the seat that answers for it. A card without R and A shows amber **needs R A** and moves only on an @mention.
 - **Handoff = packet + wake.** See **Two loops** and the handoff rule in the pack OP-PROC (`grok-bot/OP-PROC.md`). House detail: until a seat has an inbox key, the fallback is a PR comment plus the room.
 - **Card.** See [Card](../grok-bot/OP-PROC.md#card).
 - **Role card.** Standing board ticket (+ `kb/ROLE-CARD.md`) that makes a Dist hire announcement operational for that seat.
