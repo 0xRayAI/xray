@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { unbackedDefects, unclosedAfterMerge } from '../tools/exit-gate.mjs';
+import { openCardsMissingRaci, unbackedDefects, unclosedAfterMerge } from '../tools/exit-gate.mjs';
 
 test('a prose-only bug fails the exit gate', () => {
   const bad = unbackedDefects('- bug: the wake token is never stamped\n');
@@ -66,6 +66,18 @@ test('the top notes section still fails a prose bug', () => {
   const notes = '## now\n- bug: still prose\n## old\n- fine\n';
   assert.equal(unbackedDefects(notes).length, 1);
   assert.equal(unbackedDefects('## new\nFU: gap unref\n## old\nok').length, 1);
+});
+
+test('an open card without raci is flagged; a closed card is quiet', () => {
+  const cards = {
+    cards: [
+      { key: 'xray#1104', state: 'live', packet: {} },
+      { key: 'xray#1100', state: 'closed', packet: {} },
+      { key: 'xray#9', state: 'live', packet: { raci: 'R=forge A=forge' } },
+      { key: 'pin', pinned: true, state: 'live' },
+    ],
+  };
+  assert.deepEqual(openCardsMissingRaci(cards), ['xray#1104']);
 });
 
 test('a still-waiting wake that cites the existing issue URL passes without a new comment (xray#976)', () => {

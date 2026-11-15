@@ -2,6 +2,7 @@
 // A named bug, gap, follow-up, or ask without a GitHub issue, pull, or comment URL fails the turn.
 import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
+import { openCardsMissingRaci } from './packet-body.mjs';
 
 const REF = /[A-Za-z0-9_.-]+#\d+|https:\/\/github\.com\/\S+\/(?:issues|pull|pulls)\/\d+/;
 const DEFECT = /\b(?:bug|gap|follow-up|follow up|FU)\b|\bask:/i;
@@ -47,6 +48,8 @@ export function unclosedAfterMerge(text) {
   return [...fixes].filter((r) => !merged.has(r) && !closed.has(r));
 }
 
+export { openCardsMissingRaci };
+
 export function unbackedDefects(text) {
   const bad = [];
   for (const raw of turnSlice(text).split('\n')) {
@@ -72,6 +75,19 @@ function main() {
     } catch (err) {
       if (err && err.code === 'ENOENT') continue;
       throw err;
+    }
+    const trimmed = text.trim();
+    if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        const missing = openCardsMissingRaci(parsed);
+        if (missing.length || Array.isArray(parsed) || (parsed && Array.isArray(parsed.cards))) {
+          for (const key of missing) bad.push(`${file}: open card ${key} needs R A`);
+          continue;
+        }
+      } catch {
+        /* prose that happens to start with a brace */
+      }
     }
     for (const line of unbackedDefects(text)) bad.push(`${file}: ${line}`);
     for (const ref of unclosedAfterMerge(text)) bad.push(`${file}: merged turn left ${ref} open`);

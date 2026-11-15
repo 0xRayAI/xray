@@ -108,7 +108,7 @@ test('refuses when no App token is set and ignores GITHUB_TOKEN', async () => {
     assert.equal(proc.status, 1, proc.stderr);
     assert.match(proc.stdout, /handoff for forge/);
     assert.match(proc.stdout, /branch: cursor\/topic/);
-    assert.match(proc.stdout, /body:\nFix the gate\./);
+    assert.match(proc.stdout, /body:\nFix the gate\.\n\n## Packet\nraci: R=forge A=forge\n/);
     assert.equal(hits.length, 0);
     assertHidden(proc, [OWNER_TOKEN]);
   } finally {
@@ -145,7 +145,7 @@ test('opens a pull request with a minted App token', async () => {
     assert.equal(posted.head, 'cursor/topic');
     assert.equal(posted.base, 'main');
     assert.equal(posted.title, 'Owner-free');
-    assert.equal(posted.body, BODY);
+    assert.match(posted.body, /^Fix the gate\.\n\n## Packet\nraci: R=forge A=forge\n$/);
     assertHidden(proc, [TOKEN, OWNER_TOKEN, LIVE_KEY, key]);
   } finally {
     server.close();
