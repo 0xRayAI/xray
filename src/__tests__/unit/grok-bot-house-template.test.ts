@@ -120,7 +120,7 @@ describe('grok-bot house template — USMail docs', () => {
       expect(board).toMatch(/^## Card rule$/m);
       expect(board).toMatch(/^## Waiting on owner$/m);
       expect(board).toMatch(/^## Standing$/m);
-      expect(readFileSync(path.join(kit, 'templates', 'house', 'HOUSE.md'), 'utf8')).toContain(cadenceDoc);
+      expect(readFileSync(path.join(kit, 'templates', 'house', 'HOUSE.md'), 'utf8')).toContain('https://github.com/0xRayAI/xray/blob/main/grok-bot/CADENCE.md#seat-loop');
       const houseFile = path.join(dir, 'house', 'HOUSE.md');
       const filled = readFileSync(houseFile, 'utf8').replace(/^\s*[-*]?\s*\(example\).*$/gm, 'filled.');
       writeFileSync(houseFile, filled);
@@ -183,7 +183,8 @@ describe('grok-bot house template — USMail docs', () => {
     };
     bullet(path.join(kit, 'OP-PROC.md'));
     bullet(path.join(root, 'house/OP-PROC.md'));
-    bullet(path.join(kit, 'templates/house/HOUSE.md'));
+    // xray#1066: station boot lives in OP-PROC, not in the HOUSE template.
+    expect(readFileSync(path.join(kit, 'templates/house/HOUSE.md'), 'utf8')).not.toContain('runs the station skill first');
     expect(readFileSync(path.join(kit, 'templates/house/HOUSE.md'), 'utf8')).toMatch(/^name: Ada$/m);
     expect(readFileSync(path.join(root, 'house/HOUSE.md'), 'utf8')).toMatch(/^name: owner$/m);
   });

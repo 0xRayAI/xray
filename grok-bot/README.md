@@ -5,11 +5,11 @@
 
 **Read first:** [`OP-PROC.md`](OP-PROC.md) — the one-page operating procedure.
 
-Board: `house/WAVEBOARD.md` when `LIVE_URL` is unset, and Bifrost cards (`GET /cards`) when `LIVE_URL` is set, plus `house/ATTENTION_STATE.md` (your project house, not in this package). A new fleet runs [`stand-up-fleet`](skills/stand-up-fleet/SKILL.md) once: house, routes, then one suit per seat. It does not start a Bifrost server. If `house/` is missing, run `npx @0xray/grok-bot@0.1.17 house init` (skill [`setup-house`](skills/setup-house/SKILL.md)). It copies [`templates/house/`](templates/house/), including `watchers/` and `fleet/`, and refuses to overwrite. `house init --migrate` moves an old `ops/WAVEBOARD.md` into `house/WAVEBOARD.md`, starts missing files, and appends the template `## Cadence` block when `HOUSE.md` lacks it. When both boards exist and `house/WAVEBOARD.md` is not the untouched template, migrate exits 1 and writes nothing. It does not overwrite a ledger.
+Board: `house/WAVEBOARD.md` when `LIVE_URL` is unset, and Bifrost cards (`GET /cards`) when `LIVE_URL` is set, plus `house/ATTENTION_STATE.md` (your project house, not in this package). A new fleet runs [`stand-up-fleet`](skills/stand-up-fleet/SKILL.md) once: house, routes, then one suit per seat. It does not start a Bifrost server. If `house/` is missing, run `npx @0xray/grok-bot@0.1.18 house init` (skill [`setup-house`](skills/setup-house/SKILL.md)). It copies [`templates/house/`](templates/house/), including `watchers/` and `fleet/`, and refuses to overwrite. `house init --migrate` moves an old `ops/WAVEBOARD.md` into `house/WAVEBOARD.md`, starts missing files, and appends the template `## Cadence` block when `HOUSE.md` lacks it. When both boards exist and `house/WAVEBOARD.md` is not the untouched template, migrate exits 1 and writes nothing. It does not overwrite a ledger.
 
 | House file | What |
 |---|---|
-| `house/HOUSE.md` `## Cadence` | Optional. Delete it when the house has no code loop. Defaults: [opproc-cadence.md](https://github.com/0xRayAI/xray/blob/main/docs/opproc-cadence.md) |
+| `house/HOUSE.md` `## Cadence` | Optional. Delete it when the house has no code loop. Defaults: [CADENCE.md Seat loop](https://github.com/0xRayAI/xray/blob/main/grok-bot/CADENCE.md#seat-loop) |
 | `house/watchers/merge-queue.md` | Lab tester's retest ledger |
 | `house/watchers/review-sent.log` | Reviewer dedupe log (PR + SHA) |
 | `house/watchers/stall-sweep.log` | One line per stall nudge |
@@ -33,9 +33,9 @@ npm install 0xray
 npm install @0xray/grok-bot
 git init
 npx 0xray wear
-npx @0xray/grok-bot@0.1.17 house init
+npx @0xray/grok-bot@0.1.18 house init
 # Fill house/HOUSE.md from the owner's answers (skill setup-house). Doctor fails until the (example) lines are gone.
-npx @0xray/grok-bot@0.1.17 doctor
+npx @0xray/grok-bot@0.1.18 doctor
 ```
 
 `git init` is needed for the git hooks and the Cursor hook line. `house init` is not part of wear. A doctor run before HOUSE.md is filled exits 1 with `House: FAIL`. That is the intended gate, not an install error. The first doctor line is `@0xray/grok-bot@<version> doctor — 0xray@<version> — seat plant check`. A missing 0xray prints `0xray not installed`. The folder line is `Project:`. House off is `enabled: false` with the detail `house is not enabled here`, and the Board line is omitted. A bridge that points outside this folder is `Bridges: WARN`. A packed `node_modules/0xray/vendor/@0xray/repertoire` counts as present. On a fresh seat, doctor also WARNs that the activity log has no JSON line and that STATION.md has no `Skills:` or `Keys:` line. Those WARNs do not fail doctor. They clear when the seat's first station run writes the Skills: and Keys: lines and its first activity line.
@@ -48,9 +48,9 @@ On npm 11, `npm install` may print an allowScripts warning for the `0xray` posti
 From an agent project root:
 
 ```bash
-npx @0xray/grok-bot@0.1.17 doctor
-npx @0xray/grok-bot@0.1.17 ready          # same command
-npx @0xray/grok-bot@0.1.17 doctor --json
+npx @0xray/grok-bot@0.1.18 doctor
+npx @0xray/grok-bot@0.1.18 ready          # same command
+npx @0xray/grok-bot@0.1.18 doctor --json
 ```
 
 **Plain:** this checks that mill + inspect are fastened on *this* seat, says whether Repertoire and Open Wallet (`~/.ows`) are present, then prints what to do next for hangar shops and Clearing (402 / USDC on Base). A HOUSE.md line that is exactly `wallet off` skips those wallet steps. It does not mill-plant Clearing into 0xRay. Product MCP name is `clearing`, never `xray-clearing`.
@@ -71,4 +71,4 @@ House lookup: `GROK_BOT_HOUSE` (the house directory or its `HOUSE.md`) wins. If 
 This package orchestrates. It does not vendor the whole OS.
 
 ## Fleet ops
-Read `house/` first (this team's board and rules). If `house/` is missing, run `grok-bot house init` to copy `templates/house/`. Longer notes under `ops/` stay in the git repo and are not in the npm package. Cadence defaults live in [opproc-cadence.md](https://github.com/0xRayAI/xray/blob/main/docs/opproc-cadence.md).
+Read `house/` first (this team's board and rules). If `house/` is missing, run `grok-bot house init` to copy `templates/house/`. Longer notes under `ops/` stay in the git repo and are not in the npm package. Cadence defaults live in [CADENCE.md Seat loop](https://github.com/0xRayAI/xray/blob/main/grok-bot/CADENCE.md#seat-loop).
