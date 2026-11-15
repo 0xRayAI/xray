@@ -53,7 +53,7 @@ function chicagoParts(now) {
   return { weekday: parts.weekday, mins: Number(parts.hour) * 60 + Number(parts.minute) };
 }
 
-const WEEKDAYS = new Set(['Mon', 'Tue', 'Wed', 'Thu', 'Fri']);
+const WEEKDAYS = new Set(['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri']); // Blaze: Sunday is a work day; only Saturday is off
 
 function officeOpen(now) {
   const { weekday, mins } = chicagoParts(now);

@@ -25,7 +25,8 @@ test('P1 and a scheduled run pass in every mode', () => {
   assert.equal(scheduledFleetMode(Date.parse('2026-11-02T14:00:00Z')), 'full');
   assert.equal(scheduledFleetMode(Date.parse('2026-11-02T13:29:00Z')), 'lights-on');
   assert.equal(scheduledFleetMode(Date.parse('2026-11-02T21:30:00Z')), 'lights-on');
-  assert.equal(scheduledFleetMode(Date.parse('2026-11-01T18:00:00Z')), 'lights-on');
+  assert.equal(scheduledFleetMode(Date.parse('2026-11-01T18:00:00Z')), 'full'); // Sunday is a work day
+  assert.equal(scheduledFleetMode(Date.parse('2026-10-31T18:00:00Z')), 'lights-on'); // Saturday off
   const held = { mode: 'dark', route: 'none', by: 'blaze', source: 'manual', boundary: '2026-11-02 full' };
   assert.equal(applySchedule(held, Date.parse('2026-11-02T14:00:00Z')).mode, 'dark');
   assert.equal(applySchedule(held, Date.parse('2026-11-02T21:30:00Z')).mode, 'lights-on');
