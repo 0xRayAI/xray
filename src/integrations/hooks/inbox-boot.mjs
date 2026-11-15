@@ -1,12 +1,11 @@
 /**
  * One inbox poll when Grok session start has no live watcher.
- * The same message orders the seat to start that script as the session monitor.
- * A live watcher pid gets neither the poll nor the order.
+ * A dead pid starts one detached copy of that script. A live pid stays untouched.
  * Session start still writes one wake token. The open inbox head reprints on every poll until it is acked.
  * Grok reads a session-start systemMessage. It does not receive a webhook.
- * A hook http call leaves this machine. A detached loop is not a session event.
+ * A hook http call leaves this machine. Later lines from the detached copy are not chat events.
  * The poll uses the suit board and the sole seat key. It does not ack.
- * Its pid file is a scratch file, so a live watcher pid stays the watcher.
+ * Its pid file is a scratch file, so the detached copy keeps the watcher pid.
  */
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
@@ -102,7 +101,7 @@ function shQuote(value) {
   return `'${String(value).replace(/'/g, `'\\''`)}'`;
 }
 
-/** The session monitor command. The hook does not spawn the loop. */
+/** Fallback command when the hook cannot start the process. */
 export function monitorStartOrder(script, seat, origin, keys, sessionId, foreignPid) {
   const session = sessionId ? ` INBOX_WATCH_SESSION=${shQuote(sessionId)}` : '';
   const command = `LIVE_URL=${shQuote(origin)} SEAT_KEYS_DIR=${shQuote(keys)}${session} ${shQuote(script)} ${shQuote(seat)}`;
@@ -116,7 +115,64 @@ export function monitorStartOrder(script, seat, origin, keys, sessionId, foreign
   ].join('\n');
 }
 
-/** Repeat the start order when the watcher is down. No poll. A live pid stays quiet. */
+export function inboxWatchRunning(pid) {
+  return `Inbox watch is running. pid ${pid}. One copy. Leave that pid alone.`;
+}
+
+/** One detached copy. The hook process can exit. The script writes the real pid file. */
+export function startInboxWatcher(opts = {}) {
+  const script = opts.script;
+  const seat = opts.seat;
+  if (!script || !seat) return 0;
+  const spawnImpl = opts.spawnImpl || spawn;
+  const env = { ...(opts.env || {}) };
+  delete env.INBOX_WATCH_ONCE;
+  delete env.LIVE_INBOX;
+  if (opts.home) env.HOME = opts.home;
+  if (opts.pidFile) env.INBOX_WATCH_PID = opts.pidFile;
+  if (opts.stateFile) env.INBOX_WATCH_STATE = opts.stateFile;
+  if (opts.origin) env.LIVE_URL = opts.origin;
+  if (opts.keys) env.SEAT_KEYS_DIR = opts.keys;
+  if (opts.sessionId) env.INBOX_WATCH_SESSION = opts.sessionId;
+  let child;
+  try {
+    child = spawnImpl(script, [seat], {
+      detached: true,
+      stdio: 'ignore',
+      env,
+    });
+  } catch {
+    return 0;
+  }
+  const pid = child && Number(child.pid);
+  if (!Number.isInteger(pid) || pid <= 0) return 0;
+  if (typeof child.unref === 'function') child.unref();
+  return pid;
+}
+
+function ensureInboxWatch(opts) {
+  const startImpl = opts.startImpl || startInboxWatcher;
+  let pid = 0;
+  try {
+    pid = Number(startImpl({
+      script: opts.script,
+      seat: opts.seat,
+      origin: opts.origin,
+      keys: opts.keys,
+      sessionId: opts.sessionId,
+      home: opts.home,
+      pidFile: opts.pidFile,
+      stateFile: opts.stateFile,
+      env: opts.env,
+    })) || 0;
+  } catch {
+    pid = 0;
+  }
+  if (pid > 0) return inboxWatchRunning(pid);
+  return monitorStartOrder(opts.script, opts.seat, opts.origin, opts.keys, opts.sessionId, 0);
+}
+
+/** Start the watch when the pid is dead. No poll. A live pid stays quiet. */
 export function inboxStartOrder(opts = {}) {
   const env = opts.env || {};
   const home = typeof opts.home === 'string' && opts.home.trim()
@@ -129,8 +185,20 @@ export function inboxStartOrder(opts = {}) {
   const script = opts.script || inboxWatchScript(env);
   if (!script || !fs.existsSync(script)) return '';
   const sessionId = String(opts.sessionId || env.GROK_SESSION_ID || '').trim();
+  const stateFile = opts.stateFile || path.join(path.dirname(pidFile), 'inbox-watch.state');
   recordInboxWake(home, cfg.seat);
-  return monitorStartOrder(script, cfg.seat, cfg.origin, cfg.keys, sessionId, 0);
+  return ensureInboxWatch({
+    script,
+    seat: cfg.seat,
+    origin: cfg.origin,
+    keys: cfg.keys,
+    sessionId,
+    home,
+    pidFile,
+    stateFile,
+    env,
+    startImpl: opts.startImpl,
+  });
 }
 
 export function composeInboxMessage(pollText, order) {
@@ -168,7 +236,20 @@ export async function pollInboxOnce(opts = {}) {
   if (!cfg) return '';
   const script = opts.script || inboxWatchScript(env);
   if (!script || !fs.existsSync(script)) return '';
-  const order = monitorStartOrder(script, cfg.seat, cfg.origin, cfg.keys, sessionId, alive ? pid : 0);
+  const order = alive
+    ? ''
+    : ensureInboxWatch({
+      script,
+      seat: cfg.seat,
+      origin: cfg.origin,
+      keys: cfg.keys,
+      sessionId,
+      home,
+      pidFile,
+      stateFile,
+      env,
+      startImpl: opts.startImpl,
+    });
   const timeoutMs = Number(opts.timeoutMs) > 0 ? Number(opts.timeoutMs) : TIMEOUT_MS;
   const ownScratch = !opts.scratch;
   const scratch = opts.scratch || fs.mkdtempSync(path.join(os.tmpdir(), 'inbox-boot-'));

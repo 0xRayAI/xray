@@ -2,6 +2,8 @@
 
 ### 🔄 Changes
 
+- The session hook starts one inbox watch when the pid is dead. A live pid stays. The seat is not asked to start a second copy. #1057
+
 - A quiet collector pass publishes the board queue without hashing one giant string per event. A feed file this collector just wrote is not a stall. The image copies `card-owner.mjs`, and the collector copies `card_owner.py`.
 - Packet R assigns the queue. `R: arch1` files the line on arch1 without an `@arch10x` mention, including when arch1 opened it. An already-seen open from the last 48 hours is filed once.
 - The board reader waits 90 seconds for one pass of the live feed. A 20 second cut dropped the publish and froze the queue clock.
