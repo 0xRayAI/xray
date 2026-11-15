@@ -1,4 +1,4 @@
-// Weekday station reminder for the board process. The plist template is not loaded.
+// Station reminder (Sun–Fri, Saturday off) for the board process. The plist template is not loaded.
 import { chicagoStamp } from './chicago-stamp.mjs';
 
 export const STATION_SENTENCE = 'Run station and re-read OP-PROC';
@@ -14,7 +14,7 @@ export function stationHourKey(when) {
     timeZone: 'America/Chicago',
     weekday: 'short',
   }).format(d);
-  if (weekday === 'Sat' || weekday === 'Sun') return null;
+  if (weekday === 'Sat') return null;
   const hour = Number(match[2]);
   const minute = Number(match[3]);
   if (hour < 7 || hour > 17 || minute < 30) return null;

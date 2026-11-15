@@ -23,7 +23,7 @@ test('the half hour is the only open weekday slot', () => {
   assert.equal(stationHourKey('2026-10-26T17:30:00-05:00'), '2026-10-26T17');
   assert.equal(stationHourKey('2026-10-26T17:59:00-05:00'), '2026-10-26T17');
   assert.equal(stationHourKey('2026-10-26T18:00:00-05:00'), null);
-  assert.equal(stationHourKey('2026-10-25T13:30:00-05:00'), null);
+  assert.equal(stationHourKey('2026-10-25T13:30:00-05:00'), '2026-10-25T13');
   assert.equal(stationHourKey('2026-10-24T13:30:00-05:00'), null);
 });
 
