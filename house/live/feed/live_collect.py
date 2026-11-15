@@ -624,7 +624,7 @@ def default_raci(item, nodes=None, roles=None, held=None):
         if not seat or not answer:
             return None
         return {"R": seat, "A": answer}
-    owner = named_owner(table, item, nodes) or role_holder(table, item)
+    owner = named_owner(table, item, nodes) or role_holder(table, item) or builder_seat(table)
     if not owner:
         return None
     seat, why = place_r(table, owner, book)
@@ -637,6 +637,14 @@ def default_raci(item, nodes=None, roles=None, held=None):
         book[seat] = max(0, int(book.get(seat) or 1) - 1)
         return None
     return {"R": seat, "A": answer}
+
+
+def builder_seat(roles):
+    """The builder rule's seat. A card with no owner still gets a route from the table."""
+    rule = (roles.get("seats") or {}).get("builder")
+    if not isinstance(rule, dict):
+        return ""
+    return resolve_seat(roles, rule.get("seat"))
 
 
 def raci_comment(responsible, answer):
@@ -967,6 +975,15 @@ class RepoCollector:
                 bf.pop("assign:r", None)
                 bf.pop("assign:issues", None)
             self.st["assign_gen"] = 4
+        if self.st.get("raci_gen") != 2:
+            bf = self.st.get("bf")
+            if isinstance(bf, dict):
+                bf.pop("raci:open", None)
+            etags = self.st.get("etags")
+            if isinstance(etags, dict):
+                etags.pop("raci-open", None)
+            self.st["raci_tried"] = []
+            self.st["raci_gen"] = 2
         self._sha_who = {}
         self.unreadable = None
         self._denied = None
@@ -1015,6 +1032,14 @@ class RepoCollector:
                 e["from"] = seat
                 if e.get("to") == seat:
                     e["to"] = "GitHub"
+        if kind in ("pr_open", "issue_open"):
+            prev = self.ev.get(eid)
+            old = prev.get("packet") if isinstance(prev, dict) and isinstance(prev.get("packet"), dict) else {}
+            new = e.get("packet") if isinstance(e.get("packet"), dict) else {}
+            if old.get("raci") and not new.get("raci"):
+                e["packet"] = {**new, "raci": old["raci"]}
+            if isinstance(prev, dict) and prev.get("raci_reason") and not e.get("raci_reason"):
+                e["raci_reason"] = prev["raci_reason"]
         self.ev[eid] = e
 
     def _index_sha(self, e):   # sha -> (commit author login, Seat: trailer) for check / workflow / deploy fallbacks
