@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## [0.1.18] - 2026-11-15
+
+HOUSE.md holds house values only (#1066).
+
+- The house template keeps the six `(example)` value lines and drops the restated process rules: verdicts, review plate, merge gate, watcher duties, stall sweep, live mesh, station boot, station nudge, the owner-chat line and the live-inbox steps. Its `## Cadence` section now holds only values (watcher owners, stall thresholds, watcher files, merge target, cloud cap, wake routine) and links OP-PROC and CADENCE. `house init --migrate` appends that shorter block.
+- The process rules that were only in the template moved, in the same wording, to a new `## Seat loop` section in `CADENCE.md`. Station boot, the station nudge, the owner-chat line, the board rule and the kanban and history notes were already in OP-PROC.
+- OP-PROC Review: the green gates sentence now says it covers every tier, Strict included.
+- README and llms.txt link the cadence defaults at `CADENCE.md#seat-loop` instead of the missing `docs/opproc-cadence.md`.
+- Every `npx @0xray/grok-bot` line in the kit docs pins `@0.1.18`.
+
 ## [0.1.17] - 2026-11-15
 
 Fixes from the 0.1.16 cold test.

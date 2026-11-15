@@ -19,7 +19,6 @@ const INTERIM =
 const FILES = [
   'grok-bot/OP-PROC.md',
   'house/OP-PROC.md',
-  'grok-bot/templates/house/HOUSE.md',
   'grok-bot/templates/house/fleet/WAKE-ROUTINE.md',
   'grok-bot/skills/station/SKILL.md',
 ];
@@ -57,7 +56,6 @@ describe('owner-prompt interim line', () => {
     const inboundFiles = [
       'grok-bot/OP-PROC.md',
       'house/OP-PROC.md',
-      'grok-bot/templates/house/HOUSE.md',
     ];
     for (const rel of inboundFiles) {
       const line = readFileSync(path.join(root, rel), 'utf8')
@@ -66,13 +64,6 @@ describe('owner-prompt interim line', () => {
       expect(line, rel).not.toBe('');
       expect(line, rel).not.toContain('board-prompt skill first');
       expect(line, rel).not.toContain('no `--from`');
-      if (rel.endsWith('HOUSE.md')) {
-        for (const phrase of [TURN_START, TURN_END, CLOUD_LAUNCH, CLOUD_FINISH]) {
-          expect(line, rel).toContain(phrase);
-        }
-        expect(line, rel).toContain('The tag is owner/repo#n or xray#n.');
-        expect(line, rel).toContain('The cloud agent does not post that line.');
-      }
     }
 
     const skill = readFileSync(path.join(root, 'grok-bot/skills/board-prompt/SKILL.md'), 'utf8');
@@ -95,13 +86,10 @@ describe('owner-prompt interim line', () => {
     expect(step3).not.toContain('with no `--from`');
     expect(step3).not.toContain('--turn end --tag "bc-<first8> <track>"');
 
-    const mesh = readFileSync(path.join(root, 'grok-bot/templates/house/HOUSE.md'), 'utf8')
-      .split('\n')
-      .find((row) => row.includes('Live mesh')) ?? '';
-    for (const phrase of [PROMPT, ACK, ACK_ALL, TURN_START, TURN_END]) {
-      expect(mesh).toContain(phrase);
-    }
-    expect(mesh).not.toContain('--turn end --tag "bc-<first8> <track>"');
+    // xray#1066: the HOUSE template holds values only; the live-inbox steps live in OP-PROC.
+    const house = readFileSync(path.join(root, 'grok-bot/templates/house/HOUSE.md'), 'utf8');
+    expect(house).not.toContain('live-inbox');
+    expect(house).not.toContain(INTERIM);
 
     const skill = readFileSync(path.join(root, 'grok-bot/skills/board-prompt/SKILL.md'), 'utf8');
     expect(skill).toContain('../station/SKILL.md');

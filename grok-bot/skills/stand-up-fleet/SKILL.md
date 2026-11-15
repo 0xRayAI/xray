@@ -18,13 +18,13 @@ Every `npx` line pins the kit version. An unpinned `npx @0xray/grok-bot` can run
 Follow [setup-house](https://github.com/0xRayAI/xray/blob/main/grok-bot/skills/setup-house/SKILL.md).
 
 ```bash
-npx --yes @0xray/grok-bot@0.1.17 house init
+npx --yes @0xray/grok-bot@0.1.18 house init
 ```
 
 Fill `house/HOUSE.md` from what the owner has already said. Ask only for what is missing, one question at a time. Show the filled file. Nothing in Allowed counts until the owner approves it. Paste the same Ask first and Allow lines into `house/AUTO-REVIEW.md`.
 
 ```bash
-npx --yes @0xray/grok-bot@0.1.17 doctor
+npx --yes @0xray/grok-bot@0.1.18 doctor
 ```
 
 Doctor must pass before the next step. In a house-only folder (no seat suited yet) it passes with `Plant: PASS — house only`. A line that is exactly `wallet off` skips Open Wallet, Clearing, and hangar pay. That skip stays in force below.
@@ -42,8 +42,8 @@ printf '{}\n' > collector/fleet-nodes.json                    # login -> seat; f
 printf '{"seats": ["<seat>", "<seat>"]}\n' > collector/fleet-roster.json
 printf '{"public": false, "name": "<fleet> Bifrost"}\n' > collector/site.json
 : > owner-name
-npx --yes @0xray/grok-bot@0.1.17 bifrost init --seats <seat>,<seat> --logins <seat>=<login>,<seat>=<login> --yes
-npx --yes @0xray/grok-bot@0.1.17 bifrost init --check --seats <seat>,<seat>
+npx --yes @0xray/grok-bot@0.1.18 bifrost init --seats <seat>,<seat> --logins <seat>=<login>,<seat>=<login> --yes
+npx --yes @0xray/grok-bot@0.1.18 bifrost init --check --seats <seat>,<seat>
 ```
 
 `bifrost init` writes `collector/routing/inbox-roles.json` and `collector/routing/seat-webhooks.json` (placeholders and env names only). `--check` fails a missing route, a nickname-only route, and a login GitHub does not know. It needs `python3`. Look a login up at the board's `GET /routing` before an @-mention.

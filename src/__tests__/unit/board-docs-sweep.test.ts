@@ -31,7 +31,6 @@ const BANNED = [
 const SENTENCE_PATHS = [
   'grok-bot/skills/setup-house/SKILL.md',
   'grok-bot/README.md',
-  'grok-bot/templates/house/HOUSE.md',
   'grok-bot/templates/house/STATION-BOOT.md',
   'grok-bot/templates/house/BOARD-PROMPT.md',
   'grok-bot/skills/board-prompt/SKILL.md',
@@ -49,6 +48,7 @@ const SENTENCE_PATHS = [
 
 const ALL_PATHS = [
   ...SENTENCE_PATHS,
+  'grok-bot/templates/house/HOUSE.md',
   'house/live/app/BOARD-DATA-MAP.md',
   'grok-bot/ops/packets/PACKET-KANBAN.md',
 ];
@@ -87,16 +87,19 @@ describe('board docs sweep', () => {
     expect(step3).not.toContain(TRACK_FINISH);
   });
 
-  it('slices the HOUSE live-mesh bullet to the one finish tag', () => {
-    const line = read('grok-bot/templates/house/HOUSE.md')
+  it('keeps the live mesh in CADENCE and out of the HOUSE template (#1066)', () => {
+    const house = read('grok-bot/templates/house/HOUSE.md');
+    expect(house).not.toContain('live-inbox');
+    expect(house).not.toContain('Live mesh');
+    expect(house).toContain('https://github.com/0xRayAI/xray/blob/main/grok-bot/OP-PROC.md');
+    const line = read('grok-bot/CADENCE.md')
       .split('\n')
       .find((row) => row.includes('Live mesh')) ?? '';
-    for (const phrase of COMMANDS) {
-      expect(line).toContain(phrase);
-    }
-    expect(line).not.toMatch(/live-inbox <seat> --prompt(?! --from owner)/);
-    expect(line).not.toContain(TRACK_FINISH);
+    expect(line).toContain('`fleet/activity.jsonl`');
+    expect(line).toContain('`fleet/cloud-agents.jsonl`');
     expect(line).toContain('--room <name>');
+    expect(line).not.toContain(TRACK_FINISH);
+    expect(read('grok-bot/OP-PROC.md')).toContain(BOARD_RULE);
   });
 
   it('points board-prompt at station and keeps the board rule', () => {
