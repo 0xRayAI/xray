@@ -90,6 +90,20 @@ describe('grok-bot house init --migrate', () => {
     }
   });
 
+  it('seeds activity.jsonl with one init line on a fresh house (#1053)', () => {
+    const dir = scratch();
+    try {
+      expect(initHouse({ dir, kitRoot: kit }).ok).toBe(true);
+      const lines = readFileSync(path.join(dir, 'house', 'fleet', 'activity.jsonl'), 'utf8').trim().split('\n');
+      expect(lines).toHaveLength(1);
+      const line = JSON.parse(lines[0]);
+      expect(line).toMatchObject({ seat: 'house', kind: 'watcher', action: 'start', tag: 'house-init' });
+      expect(line.t_ct).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   it('refuses when both boards exist and the house board was edited', () => {
     const dir = scratch();
     try {
@@ -238,10 +252,29 @@ describe('board when Bifrost is not configured', () => {
 });
 
 describe('grok-bot doctor Scope wallet opt-out', () => {
+  // A seat project (package.json) with a house: the wallet Scope applies to seats.
   function writeHouse(dir: string, body: string): void {
     mkdirSync(path.join(dir, 'house'), { recursive: true });
     writeFileSync(path.join(dir, 'house', 'HOUSE.md'), body);
+    writeFileSync(path.join(dir, 'package.json'), '{"name":"seat","version":"1.0.0"}\n');
   }
+
+  it('passes a house-only folder and keeps pay, hangar, and Groover out of Next (#1051)', () => {
+    const dir = scratch();
+    try {
+      mkdirSync(path.join(dir, 'house'), { recursive: true });
+      writeFileSync(path.join(dir, 'house', 'HOUSE.md'), '# House\n\n## Owner\nAda.\n');
+      const report = diagnoseSeat({ cwd: dir, home: dir, env: {} }) as ReturnType<typeof diagnoseSeat> & { ok: boolean };
+      expect(report.ok).toBe(true);
+      const text = formatDoctor(report as { ok: boolean; next: string[] });
+      expect(text).toMatch(/Plant: PASS — house only/);
+      expect(text).toMatch(/OWS pay: not checked/);
+      expect(text).not.toMatch(/groover-hangar|Clearing|Groover|OWS missing/);
+      expect(text).toMatch(/fasten-suit-per-agent/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
 
   it('still nags when HOUSE.md has no wallet line', () => {
     const dir = scratch();

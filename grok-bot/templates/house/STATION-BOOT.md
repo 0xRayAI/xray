@@ -11,8 +11,8 @@ Another fleet does this in order after `grok-bot house init`.
 7. Keep `ops/cloud-memory/TRACKS.md` in the suit. Write the cloud id when the launch starts.
 8. The board posts every pull-request handoff and every review handoff. The coordinator acks only dev lines.
 9. Do not launch or resume a cloud agent when the card id is missing. On the way out write the card title, url, owner seat, stage, and state.
-10. The public board is https://bifrost.0xray.dev. Docs are https://docs.0xray.dev/.
-11. Run `npx @0xray/grok-bot doctor`. A warning names a missing hook, a station card older than NOTES, or a missing `Skills:` or `Keys:` line. A warning does not fail the plant.
+10. The board is this fleet's own Bifrost on Railway, and `LIVE_URL` is its origin ([stand-up-fleet](https://github.com/0xRayAI/xray/blob/main/grok-bot/skills/stand-up-fleet/SKILL.md)). Never another fleet's board. Docs are https://docs.0xray.dev/.
+11. Run `npx @0xray/grok-bot@0.1.15 doctor`. A warning names a missing hook, a station card older than NOTES, or a missing `Skills:` or `Keys:` line. A warning does not fail the plant.
 
 ## MIGRATION
 
@@ -26,6 +26,6 @@ From `@0xray/grok-bot` 0.1.10. `house init` will not overwrite a house file you 
 6. Put `Plane:`, `Skills:`, and `Keys:` on `.xray/state/STATION.md`. `Keys:` is `gh-<seat>`, never a secret.
 7. Stop sending pull-request and review handoffs as direct messages. The board posts them. The coordinator acks only dev lines.
 8. Do not launch without a card id. On the way out write title, url, owner seat, stage, and state, plus STATION judgement, TRACKS, and the closing activity line.
-9. Set `LIVE_URL` to https://bifrost.0xray.dev when this fleet uses the public board.
+9. Set `LIVE_URL` to this fleet's own Bifrost origin. Never point it at another fleet's board.
 10. Read docs at https://docs.0xray.dev/.
-11. Run `npx @0xray/grok-bot doctor`.
+11. Run `npx @0xray/grok-bot@0.1.15 doctor`.

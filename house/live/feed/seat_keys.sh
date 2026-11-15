@@ -4,10 +4,10 @@
 #   publish  set SEAT_KEYS (sha256 hashes only) on Railway
 # Seats: SEAT_KEYS_SEATS (space-separated tokens) or SEATS_JSON (a JSON list, or {"seats":[...]}
 # of strings or objects with id / plate.seat). Unset keeps the example seat list.
-# Service: LIVE_RAILWAY_SERVICE (default burst-live). Deploy dir: MESH_APP_DEPLOY_DIR (default /srv/live/deploy).
+# Service: LIVE_RAILWAY_SERVICE (required for publish, no default; ours is burst-live, #1047). Deploy dir: MESH_APP_DEPLOY_DIR (default /srv/live/deploy).
 set -euo pipefail
 DIR=${SEAT_KEYS_DIR:-/srv/live/run/secrets/seat-keys}
-SERVICE=${LIVE_RAILWAY_SERVICE:-burst-live}
+SERVICE=${LIVE_RAILWAY_SERVICE:-}
 DEPLOY=${MESH_APP_DEPLOY_DIR:-/srv/live/deploy}
 DEFAULT_SEATS="assistant builder-cloud arch1 forge critic blinky herald nibbler sound magnet"   # our seats + emitter + kit cloud builder
 
@@ -54,6 +54,7 @@ case "${1:-}" in
     done
     echo "keys in $DIR: $(ls "$DIR" | tr '\n' ' ')" ;;
   publish)
+    [ -n "$SERVICE" ] || { echo "set LIVE_RAILWAY_SERVICE to this fleet's own Railway service (no default)" >&2; exit 1; }
     json=$(python3 -c '
 import hashlib, json, os, sys
 d, seats = sys.argv[1], sys.argv[2:]

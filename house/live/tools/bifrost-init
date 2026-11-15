@@ -24,7 +24,8 @@ import re
 import sys
 from pathlib import Path
 
-FEED = Path(__file__).resolve().parent.parent / "feed"
+# BIFROST_FEED: the board's feed dir (collector/ in a bifrost clone). `grok-bot bifrost init` sets it (#1050).
+FEED = Path(os.environ.get("BIFROST_FEED") or Path(__file__).resolve().parent.parent / "feed")
 SEAT_RE = re.compile(r"^[a-z][a-z0-9-]{0,31}$")
 PLACEHOLDER = "<set the real URL in the SEAT_WEBHOOKS host variable>"
 
@@ -253,6 +254,9 @@ def main(argv=None) -> int:
     logins.update({k: [re.sub(r"\[bot\]$", "", v).lower()] for k, v in raw_logins.items()})
 
     if a.check:
+        if not roles_path.exists():
+            print(f"bifrost init: FAIL, no routing file at {roles_path}. Run bifrost init --seats a,b --logins a=login first.", file=sys.stderr)
+            return 1
         seats = parse_seats(a.seats) if a.seats else default_seats(roles)
         miss, ghost = unrouted(roles, seats), unknown_targets(roles, seats)
         if miss:

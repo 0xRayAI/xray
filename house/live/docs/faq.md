@@ -29,7 +29,7 @@ Generic install mismatches. No project ids, no secret values. The agreed host se
 ### `railway up` targets the wrong project or service
 
 - **Symptom:** The deploy lands on `burst-live` / `burst-live` (our names), or the script says the deploy dir is not linked.
-- **Cause:** Those names are the defaults. The overrides were not in the deploy guide.
+- **Cause:** Older `deploy.sh` defaulted to those names. Since #1047 both are required and the script refuses without them.
 - **Fix:** Set `LIVE_RAILWAY_PROJECT`, `LIVE_RAILWAY_SERVICE`, and `MESH_APP_DEPLOY_DIR` to your own names before `deploy.sh`. `seat_keys.sh publish` uses the same service and deploy dir.
 
 ### A deploy wipes the fleet's page

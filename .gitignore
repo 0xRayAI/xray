@@ -150,3 +150,6 @@ house/live/**/__pycache__/
 # house/live/app/collector is assembled by assemble-collector.sh; only its README is committed (#292)
 house/live/app/collector/*
 !house/live/app/collector/README.md
+
+# packed copy of house/live/tools/bifrost-init (grok-bot prepack, #1050)
+grok-bot/lib/bifrost-init.py

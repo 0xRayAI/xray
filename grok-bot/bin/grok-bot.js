@@ -11,6 +11,9 @@ if (args[0] === 'range') {
       process.stderr.write('The range is closed.\n');
       process.exitCode = 2;
     });
+} else if (args[0] === 'bifrost') {
+  const { runBifrostCli } = require('../lib/bifrost-cli.cjs');
+  process.exitCode = runBifrostCli(args.slice(1));
 } else {
   const { runDoctorCli } = require('../lib/seat-doctor.cjs');
   process.exitCode = runDoctorCli(args);

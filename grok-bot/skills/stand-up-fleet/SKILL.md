@@ -9,35 +9,61 @@ description: >-
 
 Run this once for the fleet. Then stop. Do not register a Groover identity, do not set up OWS pay, and do not plant hangar shops unless the owner asked for those in this turn.
 
-Each fleet runs its own Bifrost board on Railway. Its `LIVE_URL` is that service's Railway URL.
+Each fleet runs its own Bifrost board on Railway, in a new Railway project and service the owner names. Its `LIVE_URL` is that service's Railway URL. Never point a new fleet at another fleet's board, and never offer a shared or public board as a choice.
 
-## 1. Board
+Every `npx` line pins the kit version. An unpinned `npx @0xray/grok-bot` can run an old cached copy.
 
-Deploy this fleet's own Bifrost on Railway by following [DEPLOY.md](https://github.com/0xRayAI/xray/blob/main/house/burst/DEPLOY.md). Deploy only with the owner's GO in this turn and their Railway login. Set every secret by name in Railway. Never write a value into a file.
-
-When `GET /healthz` on the Railway service returns 200, `LIVE_URL` is that Railway origin (for example `https://<service>.up.railway.app`). If the owner already runs a Bifrost for this fleet, use its URL and skip the deploy. Do not point a new fleet at another fleet's board.
-
-## 2. House
+## 1. House
 
 Follow [setup-house](https://github.com/0xRayAI/xray/blob/main/grok-bot/skills/setup-house/SKILL.md).
 
 ```bash
-npx @0xray/grok-bot house init
+npx --yes @0xray/grok-bot@0.1.15 house init
 ```
 
 Fill `house/HOUSE.md` from what the owner has already said. Ask only for what is missing, one question at a time. Show the filled file. Nothing in Allowed counts until the owner approves it. Paste the same Ask first and Allow lines into `house/AUTO-REVIEW.md`.
 
 ```bash
-npx @0xray/grok-bot doctor
+npx --yes @0xray/grok-bot@0.1.15 doctor
 ```
 
-Doctor must pass before the next step. A line that is exactly `wallet off` skips Open Wallet, Clearing, and hangar pay. That skip stays in force below.
+Doctor must pass before the next step. In a house-only folder (no seat suited yet) it passes with `Plant: PASS — house only`. A line that is exactly `wallet off` skips Open Wallet, Clearing, and hangar pay. That skip stays in force below.
 
-## 3. Routes
+## 2. Routes
 
-Every seat needs a route or the board does not wake them. The rule is [OP-PROC #routing](https://github.com/0xRayAI/xray/blob/main/grok-bot/OP-PROC.md#routing).
+Every seat needs a route or the board does not wake them. The rule is [OP-PROC #routing](https://github.com/0xRayAI/xray/blob/main/grok-bot/OP-PROC.md#routing). Each seat is one row: its real GitHub login, plus nicknames as aliases. Ask the owner for each login. Do not invent one. A seat with no login yet can wait; add it later and redeploy.
 
-`bifrost init` writes `inbox-roles.json`. Each seat is one row: real GitHub login, plus nicknames as aliases. `bifrost init --check` fails a missing route and a nickname-only route. Look the login up at the board's `GET /routing` before an @-mention. Do not invent a login.
+The board code is the public repo [0xRayAI/bifrost](https://github.com/0xRayAI/bifrost). Its `collector/` holds the burst-live fleet's own roster and routes, so reset those files for this fleet before anything else:
+
+```bash
+git clone https://github.com/0xRayAI/bifrost.git <fleet>-bifrost && cd <fleet>-bifrost
+rm collector/routing/inbox-roles.json                        # burst-live's routes
+printf '{}\n' > collector/fleet-nodes.json                    # login -> seat; fill with this fleet's logins
+printf '{"seats": ["<seat>", "<seat>"]}\n' > collector/fleet-roster.json
+printf '{"public": false, "name": "<fleet> Bifrost"}\n' > collector/site.json
+: > owner-name
+npx --yes @0xray/grok-bot@0.1.15 bifrost init --seats <seat>,<seat> --logins <seat>=<login>,<seat>=<login> --yes
+npx --yes @0xray/grok-bot@0.1.15 bifrost init --check --seats <seat>,<seat>
+```
+
+`bifrost init` writes `collector/routing/inbox-roles.json` and `collector/routing/seat-webhooks.json` (placeholders and env names only). `--check` fails a missing route, a nickname-only route, and a login GitHub does not know. It needs `python3`. Look a login up at the board's `GET /routing` before an @-mention.
+
+## 3. Board
+
+Deploy only with the owner's GO in this turn and their Railway login. Use a NEW Railway project and service with names the owner gives. Never reuse another fleet's project or service. From the `<fleet>-bifrost` folder:
+
+```bash
+railway init --name <project>
+railway add --service <service>
+railway service <service>
+railway volume add --mount-path /data
+railway up --service <service> --detach
+railway domain --service <service>
+```
+
+Set the boot secrets on the service by name, in the Railway dashboard or with `railway variables --service <service> --set`: `SESSION_SECRET` and `INGEST_SECRET` (32+ characters each), `MESH_PASSWORD` (the board is gated), `APP_PUBLIC_ORIGIN` (the `https://` domain from `railway domain`), then `GITHUB_READ_TOKEN` and `SEAT_KEYS`. Never write a value into a file. The full list is [DEPLOY.md](https://github.com/0xRayAI/xray/blob/main/house/burst/DEPLOY.md).
+
+When `GET /healthz` on that domain returns 200, `LIVE_URL` is that origin (for example `https://<service>-production.up.railway.app`). If the owner already runs a Bifrost for this fleet, use its URL and skip the deploy. A routes change means another `railway up` from the same folder, with the owner's GO.
 
 ## 4. Seats
 
