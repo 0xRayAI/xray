@@ -17,7 +17,7 @@ import {
 } from './grok-hook-utils.js';
 import { appendHookActivity } from './grok-hook-activity.js';
 import { notifyBifrost, ownerLine } from '../../hooks/bifrost-send.mjs';
-import { inboxStartOrder, pollInboxOnce } from '../../hooks/inbox-boot.mjs';
+import { inboxStartOrder, inboxStopDecision, pollInboxOnce } from '../../hooks/inbox-boot.mjs';
 import { recordSynthesisTurnSlice } from '../../hooks/synthesis-hook-runtime.mjs';
 import { archiveStaleLeadDevPlan } from '../../hooks/plan-hook-runtime.mjs';
 import {
@@ -105,17 +105,33 @@ async function main() {
     HOOK_EVENT = resolveGrokHookEvent(event);
     const eventRoot = normalizeWorkspaceRoot(event.workspaceRoot || event.cwd || root);
     const sessionId = resolveSessionId(event);
+    if (HOOK_EVENT === 'stop') {
+      let decision = null;
+      try {
+        decision = inboxStopDecision({
+          env: process.env,
+          sessionId: sessionId || '',
+          backgroundTasks: event.backgroundTasks,
+        });
+      } catch {
+        decision = null;
+      }
+      if (decision) process.stdout.write(`${JSON.stringify(decision)}\n`);
+      process.exit(0);
+    }
     try {
       if (HOOK_EVENT === 'session_start') {
         inboxMessage = await pollInboxOnce({
           root: eventRoot,
           env: process.env,
           sessionId: sessionId || '',
+          backgroundTasks: event.backgroundTasks,
         });
       } else if (HOOK_EVENT === 'user_prompt_submit') {
         inboxMessage = inboxStartOrder({
           env: process.env,
           sessionId: sessionId || '',
+          backgroundTasks: event.backgroundTasks,
         });
       }
     } catch {

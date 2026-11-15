@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Poll live-inbox <seat> (default arch1) every 60s.
-# The session hook starts one detached copy when the pid file is dead. Do not launchd a second copy.
+# The session hook orders one CLI monitor. Do not launchd a copy. A detached copy is not heard.
 # FAIL once per distinct error. The line names LIVE_URL and the expected URL, then backs off.
 # A JSON line whose GitHub item is closed or merged is acked and logged as auto-ack.
 # A held line (hold label, or a card whose state is held) prints once as "held: N" and is not popped.
@@ -18,6 +18,14 @@ seat="${1:-arch1}"
 if ! [[ "$seat" =~ ^[a-z0-9-]{2,16}$ ]]; then
   echo "usage: inbox-watch.sh [seat]" >&2
   exit 2
+fi
+# One copy. A live pid in this file is the copy this chat can hear. A second start exits.
+pid_file="${INBOX_WATCH_PID:-$HOME/.burst/inbox-watch.pid}"
+if [[ -f "$pid_file" ]]; then
+  existing="$(awk 'NR==1{print; exit}' "$pid_file" | tr -cd '0-9')"
+  if [[ -n "$existing" && "$existing" != "$$" ]] && ps -p "$existing" >/dev/null 2>&1; then
+    exit 0
+  fi
 fi
 interval="${INBOX_WATCH_INTERVAL:-60}"
 : "${LIVE_URL:=https://bifrost.0xray.dev}"
