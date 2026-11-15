@@ -5,6 +5,7 @@
  * A pid outside this CLI is named so the seat can stop it. One monitor. One copy.
  * Session start still writes one wake token when it prints that order.
  */
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -107,6 +108,40 @@ export function sessionHasInboxMonitor(tasks) {
   });
 }
 
+/** Parent and command of a pid. A miss is an empty command and parent 0. */
+export function watchProcess(pid) {
+  if (!Number.isInteger(pid) || pid <= 0) return { parent: 0, command: '' };
+  try {
+    const out = execFileSync('ps', ['-o', 'ppid=,command=', '-p', String(pid)], {
+      encoding: 'utf8',
+      timeout: 1000,
+    });
+    const match = /^(\d+)\s+([\s\S]*)$/.exec(String(out).trim());
+    if (!match) return { parent: 0, command: '' };
+    return { parent: Number(match[1]) || 0, command: match[2] || '' };
+  } catch {
+    return { parent: 0, command: '' };
+  }
+}
+
+/**
+ * True when this session's inbox-watch is already heard.
+ * A prompt does not receive the monitor list. The pid file, the session
+ * line, and a parent other than pid 1 are the proof. Pid 1 is detached.
+ */
+export function inboxMonitorHeard(opts, pidFile, stateFile) {
+  if (sessionHasInboxMonitor(opts.backgroundTasks)) return true;
+  const env = opts.env || {};
+  const sessionId = String(opts.sessionId || env.GROK_SESSION_ID || '').trim();
+  if (!sessionId || watcherSession(stateFile) !== sessionId) return false;
+  const pid = watcherAlive(pidFile) ? watcherPid(pidFile) : 0;
+  if (!pid) return false;
+  const looked = typeof opts.inspectProcess === 'function' ? opts.inspectProcess(pid) : watchProcess(pid);
+  const parent = Number(looked && looked.parent) || 0;
+  const command = String((looked && looked.command) || '');
+  return parent > 1 && command.includes('inbox-watch.sh');
+}
+
 /** The seat calls the monitor tool. The hook does not spawn. */
 export function cliMonitorOrder(script, seat, origin, keys, sessionId, externalPid) {
   const session = sessionId ? ` INBOX_WATCH_SESSION=${shQuote(sessionId)}` : '';
@@ -124,7 +159,6 @@ export function cliMonitorOrder(script, seat, origin, keys, sessionId, externalP
 }
 
 function inboxOrder(opts, cfg, script) {
-  if (sessionHasInboxMonitor(opts.backgroundTasks)) return '';
   const env = opts.env || {};
   const home = typeof opts.home === 'string' && opts.home.trim()
     ? opts.home.trim()
@@ -142,7 +176,9 @@ export function inboxStartOrder(opts = {}) {
   const home = typeof opts.home === 'string' && opts.home.trim()
     ? opts.home.trim()
     : ((typeof env.HOME === 'string' && env.HOME.trim()) || os.homedir());
-  if (sessionHasInboxMonitor(opts.backgroundTasks)) return '';
+  const pidFile = opts.pidFile || watcherPidFile(env, home);
+  const stateFile = opts.stateFile || path.join(path.dirname(pidFile), 'inbox-watch.state');
+  if (inboxMonitorHeard(opts, pidFile, stateFile)) return '';
   const cfg = suitConfig(env, home);
   if (!cfg) return '';
   const script = opts.script || inboxWatchScript(env);

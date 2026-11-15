@@ -242,6 +242,39 @@ printf 'ACTION_REQUIRED\\nunfinished:1\\n'
     expect(quiet).toBe('');
   });
 
+  it('stays quiet when this session already hears inbox-watch', () => {
+    const home = tmp('inbox-boot-heard-');
+    const keys = path.join(home, 'keys');
+    fs.mkdirSync(keys);
+    fs.writeFileSync(path.join(keys, 'arch1.key'), 'not-a-real-key\n', { mode: 0o600 });
+    const file = script(home, '#!/bin/sh\nexit 0\n');
+    const pidFile = path.join(home, 'inbox-watch.pid');
+    const stateFile = path.join(home, 'inbox-watch.state');
+    fs.writeFileSync(pidFile, `${process.pid}\n`);
+    fs.writeFileSync(stateFile, 'session=sess-heard\n');
+    const heard = inboxStartOrder({
+      env: { SEAT_KEYS_DIR: keys, XRAY_SEAT: 'arch1', LIVE_URL: 'https://bifrost.example' },
+      home,
+      pidFile,
+      stateFile,
+      script: file,
+      sessionId: 'sess-heard',
+      inspectProcess: () => ({ parent: 50, command: `${file} arch1` }),
+    });
+    expect(heard).toBe('');
+    const detached = inboxStartOrder({
+      env: { SEAT_KEYS_DIR: keys, XRAY_SEAT: 'arch1', LIVE_URL: 'https://bifrost.example' },
+      home,
+      pidFile,
+      stateFile,
+      script: file,
+      sessionId: 'sess-heard',
+      inspectProcess: () => ({ parent: 1, command: `${file} arch1` }),
+    });
+    expect(detached).toContain(`Stop inbox-watch pid ${process.pid}`);
+    expect(detached).toContain('Call the monitor tool');
+  });
+
   it('orders the CLI monitor on session start and does not run the script', () => {
     const project = tmp('inbox-boot-session-');
     const home = tmp('inbox-boot-session-home-');
