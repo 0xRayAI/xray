@@ -10,7 +10,7 @@ Row 20 lists two repos, so this report covers 21 repositories. All 21 clones suc
 
 | # | Repo | License ok | Primitives in the core file | Kit | Fit |
 |---|---|---|---|---|---|
-| 1 | [johnservil/sigil](https://github.com/johnservil/sigil) | MIT or Apache-2.0 available, but also TGPPL and BOSL | none (not a NEAR project) | (catalog: two-seat signer) | **weak** |
+| 1 | [mitchuski/caesura](https://github.com/mitchuski/caesura) | Apache-2.0 yes; [NOTICE](https://github.com/mitchuski/caesura/blob/main/NOTICE) must be kept | two-party gate (`propose`, `assay`); NEAR AI Cloud is in `lib/nearai.mjs`, not the contract. *johnservil/sigil was the wrong repo.* | 2-party key gate | **strong** |
 | 2 | [Bronxydrone/Veto](https://github.com/Bronxydrone/Veto) | MIT yes | none of the catalog keywords; this is a `spend()` policy contract | agent allowance guard | **strong** |
 | 3 | [soldanoandrea/allowance](https://github.com/soldanoandrea/allowance) | MIT yes | none of the catalog keywords; this is a `pay()` policy vault | agent allowance guard | **strong** |
 | 4 | [amiller/abalone](https://github.com/amiller/abalone) | MIT yes; [THIRD_PARTY_NOTICES.md](https://github.com/amiller/abalone/blob/main/THIRD_PARTY_NOTICES.md) must be kept | TEE attestation | private-inference provider | **strong** |
@@ -42,25 +42,27 @@ Row 20 lists two repos, so this report covers 21 repositories. All 21 clones suc
 4. **Fulfil** and **Pinky** — escrow kit. Fulfil's contract takes Intents deposits and releases only after an OutLayer TEE verifier returns; Pinky is a keyless mainnet escrow (0 access keys) with a relayer that cannot redirect funds. Use them together: Pinky for the keyless lock, Fulfil for TEE-verified release.
 5. **HyperNear** — Chain Signatures kit. The contract holds Hyperliquid keys through NEAR MPC and caps the agent. Same pattern would apply to an EVM / Base signer. Testnet only; mainnet is not deployed.
 
-Also strong, and worth a first look after those five: **BitLens** (`check_transaction` pre-sign MCP), **Keyturn** (2-of-N hash approval, OutLayer TEE publishes to npm), and **ProvenExit** (on-chain Intel TDX build registry).
+Also strong, and worth a first look after those five: **Caesura** (two-party key gate: one seat proposes, a held-apart seat assays, the contract holds the only keys; Apache-2.0, keep NOTICE), **BitLens** (`check_transaction` pre-sign MCP), **Keyturn** (2-of-N hash approval, OutLayer TEE publishes to npm), and **ProvenExit** (on-chain Intel TDX build registry).
 
-Do not start from **johnservil/sigil** for the two-seat signer kit. That repository is a hash-to-word encoding library, not the Caesura propose-and-check flow described in the catalog.
+The catalog first pointed Caesura at **johnservil/sigil**. That was the wrong repo (a hash-to-word encoder, multi-licensed MIT / Apache-2.0 / TGPPL / BOSL). The real project is [mitchuski/caesura](https://github.com/mitchuski/caesura).
 
 ## Per-repo notes
 
-### 1. Caesura — [johnservil/sigil](https://github.com/johnservil/sigil) (catalog: Apache-2.0)
+### 1. Caesura — [mitchuski/caesura](https://github.com/mitchuski/caesura) (Apache-2.0)
 
-Core file: [`rust/src/lib.rs`](https://github.com/johnservil/sigil/blob/main/rust/src/lib.rs). Last commit: 2026-11-04 00:48 CT. Tests: yes (`rust/tests/`, plus other language tests). Network: not a chain project.
+Core file: [`contract/src/lib.rs`](https://github.com/mitchuski/caesura/blob/main/contract/src/lib.rs). Last commit: 2026-11-11 11:02 CT. Tests: yes (`test/hybrid.test.mjs`, `test/evidence.test.mjs`; README: `npm test` 12 tests). Network: NEAR testnet only (`pause.caesura.testnet`, `gap.caesura.testnet`, registry `gates.caesura.testnet`). README: no mainnet.
 
-What it actually does: encodes a 256-bit hash as a 25-letter "sigil" and decodes it back (`encode`, `decode` in the Rust library). The README is about typography and Unicode, not agents or contracts.
+What it actually does: a two-party key gate. One seat calls `propose` with an action and a proposal hash; a held-apart assayer calls `assay`. The contract checks `paused`, `verdict`, `receiver`, `method`, `cap_action`, `cap_day`, and `cooldown`, then either executes or records a named refusal. `commit_root` stores an evidence-bundle root next to the proposal. Seat keys are function-call keys scoped to one method each (`set_seat_keys`). Live board: https://caesura.mages.city.
 
-Primitives: none of the catalog primitives appear in the README or the core file. This is not a two-seat signer and there is no locked contract holding keys.
+Primitives in the core file: the two-party gate itself (`propose` at line 200, `assay` at line 227). A test string "intent mismatch" is a verdict reason, not NEAR Intents. TEE / NEAR AI Cloud is not in the contract. The seats call the official cloud API from [`lib/nearai.mjs`](https://github.com/mitchuski/caesura/blob/main/lib/nearai.mjs) (default `https://cloud-api.near.ai`; `GET /v1/attestation/report` at lines 24–36, then `POST /v1/chat/completions`).
 
-Reuse: not usable as a contract, TypeScript module, or MCP tool for the claimed kit. At most a display encoding library, which is off-scope here.
+Reuse: as-is Rust gate contract, plus the local no-network demo (`seats/round.mjs` with `--chain off`) and `tools/verify.mjs`. Start from `contract/src/lib.rs`. Carry `NOTICE`.
 
-License: `LICENSE-MIT` and `LICENSE-APACHE` are present and match MIT / Apache-2.0. The README also offers TGPPL 1.0 and BOSL v1.0 (`LICENSE-TGPPL`, `LICENSE-BOSL.txt`), plus SIL OFL fonts. You may choose MIT or Apache-2.0, but this is a multi-license tree, not a plain Apache-2.0 repo.
+License: `LICENSE` is Apache License 2.0. `NOTICE` is present (Copyright 2026 Soulbis / mages.city) and must be kept. It also lists `lib/dcbor.mjs` from mitchuski/agentprivacy-harness (Apache-2.0).
 
-Fit: **weak**. The catalog row points at the wrong project.
+Fit: **strong** for the 2-party key gate.
+
+Note: **johnservil/sigil** was the wrong repo. It is a hash-to-word encoding library (multi-licensed MIT, Apache-2.0, TGPPL, and BOSL), not this project.
 
 ### 2. Veto — [Bronxydrone/Veto](https://github.com/Bronxydrone/Veto) (MIT)
 
