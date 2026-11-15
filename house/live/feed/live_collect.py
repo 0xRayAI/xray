@@ -1378,10 +1378,13 @@ class RepoCollector:
 
     def maybe_fill_raci(self, c, item):
         """One packet comment when a live card has no R. The same write budget as assignee posts.
-        Parked, pinned, and closed cards are skipped. A later maybe_assign uses the R just written."""
+        Parked, pinned, and closed cards are skipped. A later maybe_assign uses the R just written.
+        A client that can only read is left alone, so a poll still records the card."""
         if getattr(self, "_assign_auth_dead", False):
             return
         if getattr(self, "_assign_left", 0) <= 0 or not getattr(c, "token", None):
+            return
+        if not callable(getattr(c, "write_json", None)):
             return
         try:
             number = int(item.get("number"))

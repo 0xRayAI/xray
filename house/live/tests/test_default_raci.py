@@ -86,6 +86,22 @@ class DefaultRaci(unittest.TestCase):
             live_collect.NODE.clear()
             live_collect.NODE.update(saved)
 
+    def test_a_read_only_client_does_not_post(self):
+        class Read:
+            token = "assign-token"
+
+        col = live_collect.RepoCollector.__new__(live_collect.RepoCollector)
+        col.st = {}
+        col.repo = "0xRayAI/xray"
+        col.ev = {}
+        col._assign_left = 10
+        col._assign_miss = False
+        item = card(body="Board-Owner: forge\n")
+        col.maybe_fill_raci(Read(), item)
+        self.assertNotIn("packet", item)
+        self.assertNotIn("raci_reason", item)
+        self.assertEqual(col._assign_left, 10)
+
     def test_role_seat_when_the_card_has_no_owner(self):
         lab = card(labels=[{"name": "lab"}])
         self.assertEqual(live_collect.default_raci(lab, NODES), {"R": "forge", "A": "forge"})
