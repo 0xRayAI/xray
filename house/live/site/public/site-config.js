@@ -6,7 +6,7 @@
 (function (L) {
   'use strict';
   function reset(obj, next) { Object.keys(obj).forEach(function (k) { delete obj[k]; }); for (var k in next) obj[k] = next[k]; }
-  var ROLE = { blinky: 'chief of staff', critic: 'reviewer', forge: 'eng primary', near: 'NEAR ecosystem scout', nibbler: 'feed scout', arch1: 'outside party' };
+  var ROLE = { blinky: 'chief of staff', critic: 'reviewer', forge: 'eng primary', near: 'near eco scout', nibbler: 'feed scout', arch1: 'outside party' };
   // The kit list is a template. The live roster replaces it when the feed arrives.
   L.AGENTS.splice(0, L.AGENTS.length);
   L.SEAT_NAMES.splice(0, L.SEAT_NAMES.length);
@@ -73,6 +73,6 @@
   L.REVIEW_SEAT = 'critic';
   // avatars we ship in avatars/ (arch1 = minime0x); Blaze = x.com/Blaze0x1 profile picture;
   // the rest use the drawn letter badge (no 404s).
-  L.setAvatars({ blinky: 'blinky', critic: 'critic', forge: 'forge', near: 'near', arch1: 'arch1', Blaze: 'blaze' });
+  L.setAvatars({ blinky: 'blinky', critic: 'critic', forge: 'forge', near: 'near', nibbler: 'nibbler', arch1: 'arch1', Blaze: 'blaze' });
   L.SITE_FOOT = 'Bifrost · built in public';
 })(window.LiveMesh);
