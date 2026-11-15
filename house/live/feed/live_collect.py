@@ -629,12 +629,10 @@ def default_raci(item, nodes=None, roles=None, held=None):
         return None
     seat, why = place_r(table, owner, book)
     if why == "at the cap":
-        plane = plane_of(table, owner)
-        seat = primary_of(table, plane) or owner
-        answer = primary_of(table, plane_of(table, seat) or plane)
-        if not seat or not answer:
+        answer = primary_of(table, plane_of(table, owner))
+        if not answer:
             return {"queued": True, "reason": "at the cap"}
-        return {"R": seat, "A": answer, "reason": "at the cap"}
+        return {"queued": True, "reason": "at the cap", "A": answer}
     if not seat:
         return None
     answer = primary_of(table, plane_of(table, owner) or plane_of(table, seat))
@@ -1486,15 +1484,15 @@ class RepoCollector:
             self._raci_note("adopted")
             self._remember_raci(item)
             return
-        if spec.get("queued") and not spec.get("R"):
+        if spec.get("queued"):
             item["raci_reason"] = spec.get("reason") or "at the cap"
+            answer = str(spec.get("A") or "").strip()
+            if answer:
+                item["packet"] = {"raci": f"R=queued A={answer}"}
             self._raci_note("capped")
             self._raci_queued = True
             self._remember_raci(item)
             return
-        if spec.get("reason") == "at the cap":
-            item["raci_reason"] = "at the cap"
-            self._raci_note("capped")
         body = raci_comment(spec["R"], spec["A"])
         try:
             code = c.write_json(f"/repos/{self.repo}/issues/{number}/comments", {"body": body})

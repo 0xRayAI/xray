@@ -792,6 +792,25 @@ def _card_transitions(card, beats, by_id, merged, explicit_close, close_id):
     return rows
 
 
+def _queued_cap(card, pk):
+    """A card at the cap is queued. R is not a seat, A is the plane primary, and it is not missing."""
+    if str(card.get("raci_reason") or "") != "at the cap":
+        return
+    roles = live_packet.raci_roles(pk.get("raci"))
+    if roles.get("R") and roles.get("A"):
+        return
+    import live_collect
+    table = live_collect.load_routing()
+    owner = str(card.get("owner") or "").strip().lower()
+    plane = live_collect.plane_of(table, owner)
+    answer = live_collect.primary_of(table, plane)
+    if not answer:
+        seat = live_collect.builder_seat(table)
+        answer = live_collect.primary_of(table, live_collect.plane_of(table, seat))
+    if answer:
+        pk["raci"] = f"R=queued A={answer}"
+
+
 def model(extra_events=None, now=None, prompts=None, held=None):
     now = now or time.time()
     evs = _events(extra_events)
@@ -1028,6 +1047,7 @@ def model(extra_events=None, now=None, prompts=None, held=None):
             c.pop("nudge_to", None); c.pop("nudge_via", None)
             stall = False
         missing = [] if brief_exempt(c, pk) else ["PACKET.md"]
+        _queued_cap(c, pk)
         raci_missing = live_packet.raci_gaps(pk, state, c.get("pinned"))
         if resolved:
             c["resolved"] = resolved
