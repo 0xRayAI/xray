@@ -37,7 +37,7 @@ def seat_of(name):
     for cand in (v, v.rsplit(":", 1)[-1].strip(), re.sub(r"\s*\(.*?\)\s*", " ", v).strip()):
         if cand in PROMPT_SEATS:
             return PROMPT_SEATS[cand]
-        for s in SEATS:
+        for s in activity_names():
             if cand == s.lower():
                 return s
     return None
@@ -937,7 +937,7 @@ class Fleet:
                 if not isinstance(d, dict):
                     continue
                 seat, kind, action, t = seat_of(d.get("seat")), d.get("kind"), d.get("action"), _ts(d.get("t_ct"))
-                if seat not in SEATS or not isinstance(kind, str) or t is None or t > now + 300:
+                if seat not in set(activity_names()) or not isinstance(kind, str) or t is None or t > now + 300:
                     continue
                 lst = A.setdefault("seat_t", {})   # any valid line counts against the missing_activity flag
                 lst[seat] = max(lst.get(seat, 0), t)
@@ -994,7 +994,8 @@ class Fleet:
             raw_seat = d.get("seat")
             if kind == "cloud_agent":
                 named = raw_seat if isinstance(raw_seat, str) else ""
-                seat = named if named in SEATS or named in CLOUD_SEATS else seat_of(named)
+                known = set(activity_names()) | set(CLOUD_SEATS)
+                seat = named if named in known else seat_of(named)
                 if not seat:
                     continue
             elif raw_seat not in ACT_SEATS:
@@ -1140,7 +1141,7 @@ class Fleet:
             t = _ts(e.get("t_ct"))
             if t:
                 last[b] = max(last.get(b, 0), t)
-        for s in SEATS:
+        for s in activity_names():
             b = BOARD.get(s, s)
             for t in (self.seat_mtime.get(s, 0), self.prompts.get("seat_t", {}).get(s, 0),
                       self.cloud.get("by_t", {}).get(s, 0), self.activity.get("seat_t", {}).get(s, 0)):

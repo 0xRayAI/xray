@@ -698,6 +698,33 @@ class FleetSeatsConfig(unittest.TestCase):
         finally:
             live_fleet.SEATS, live_fleet.BOARD, live_fleet.BOARD_SEATS = saved
 
+    def test_board_seat_activity_counts_without_an_inbox(self):
+        """Mill is on the board and not in SEATS. A cloud activity line still marks mill active."""
+        saved = live_fleet.SEATS, live_fleet.BOARD, live_fleet.BOARD_SEATS
+        live_fleet.SEATS, live_fleet.BOARD, live_fleet.BOARD_SEATS = ["forge"], {}, ["forge", "mill"]
+        try:
+            with tempfile.TemporaryDirectory() as d:
+                root = Path(d)
+                (root / "fleet").mkdir()
+                (root / "feed").mkdir()
+                live_fleet.WS = root
+                now = time.time()
+                iso = datetime.fromtimestamp(now - 60, CT).replace(microsecond=0).isoformat()
+                (root / "fleet" / "remote-activity.jsonl").write_text(
+                    json.dumps({
+                        "t_ct": iso, "seat": "mill", "kind": "cloud_agent", "action": "finished",
+                        "agent": "bc-mill", "tag": "xray#1111",
+                    }) + "\n"
+                )
+                fleet = live_fleet.Fleet(root / "feed" / "fleet-state.json", CT)
+                fleet.scan()
+                fs = fleet.fleet_state([], now)
+            self.assertTrue(fs["seats"]["mill"]["active"])
+            self.assertEqual(fs["seats"]["mill"]["via"], "activity")
+            self.assertFalse(fs["seats"]["forge"]["active"])
+        finally:
+            live_fleet.SEATS, live_fleet.BOARD, live_fleet.BOARD_SEATS = saved
+
     def test_board_seat_credit_counts_without_an_inbox(self):
         """Mill is counted on the board and is not an inbox seat. Seat: mill still marks mill active."""
         saved = live_fleet.SEATS, live_fleet.BOARD, live_fleet.BOARD_SEATS
