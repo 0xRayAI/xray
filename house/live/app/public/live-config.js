@@ -155,17 +155,62 @@
   L.SITE_FOOT = '';   // footer line; the kit shows none (a fleet overlay sets its own)
   // Lens label box: centred on the node, shifted so it never runs off the canvas edge.
   L.labelX = function (x, w, width) { return Math.min(Math.max(x, w / 2 + 2), width - w / 2 - 2); };
+  function beatCarriesCard(b) {
+    return !!(b && (b.what || b.state || b.stage || b.owner || b.next_owner || b.nextOwner || b['next owner']));
+  }
+  // Replay folds beats at or before t. A beat's what moves stage and state. Owner and next owner
+  // come from the latest beat that names them. Live fields stay when no beat carries them.
+  L.cardAsOf = function (card, beats) {
+    var kind = card && card.kind === 'issue' ? 'issue' : 'pr';
+    var stage = kind === 'issue' ? 'open' : 'review';
+    var state = 'live';
+    var owner = '';
+    var nextOwner = '';
+    (beats || []).forEach(function (b) {
+      var what = String(b.what || '');
+      if (what === 'parked') state = 'parked';
+      else if (what === 'held') state = 'held';
+      else if (what === 'merged' || what === 'closed') { state = 'closed'; stage = 'done'; }
+      else if (what === 'opened' || what === 'reopened') {
+        state = 'live';
+        stage = kind === 'pr' ? 'review' : (what === 'reopened' ? 'open' : stage);
+      } else if (what === 'pushed') stage = kind === 'pr' ? 'review' : stage;
+      else if (what === 'Reviewer FIX' || what === 'Reviewer FAIL' || what === 'Reviewer HOLD' || what === 'CI failure' || what === 'CI timed_out') stage = 'fix';
+      else if (what.indexOf('Reviewer PASS') === 0) stage = 'merge';
+      else if (what === 'retest PASS' || what === 'retest FAIL') stage = 'done';
+      if (b.state) state = String(b.state);
+      if (b.stage) stage = String(b.stage);
+      if (b.owner) owner = String(b.owner);
+      var nxt = b.next_owner || b.nextOwner || b['next owner'];
+      if (nxt) nextOwner = String(nxt);
+    });
+    var packet = Object.assign({}, (card && card.packet) || {});
+    if (nextOwner) packet['next owner'] = nextOwner;
+    else if (!packet['next owner'] && card && card.next_owner) packet['next owner'] = card.next_owner;
+    return {
+      state: state,
+      stage: stage,
+      owner: owner || (card && card.owner) || '',
+      packet: packet
+    };
+  };
   // Board as of a timeline point (rewound / replay): only cards that existed then (first beat at or before t), with
-  // beats up to t. Live (t == null) = every card. Pinned cards always show.
+  // beats up to t. State, stage, owner, and next owner come from those beats. Live (t == null) = every card.
+  // Pinned cards always show.
   L.boardAt = function (cards, t) {
     if (t == null) return cards;
     var out = [];
     (cards || []).forEach(function (c) {
-      if (c.pinned) { out.push(c); return; }
-      var bs = (c.beats || []).filter(function (b) { return b.t <= t; });
-      var first = (c.beats || []).length ? c.beats[0].t : c.last_beat_t;
-      if (first != null && first > t) return;
-      out.push(bs.length === (c.beats || []).length ? c : Object.assign({}, c, { beats: bs, last_beat_t: bs.length ? bs[bs.length - 1].t : c.last_beat_t }));
+      var all = c.beats || [];
+      var bs = all.filter(function (b) { return b.t <= t; });
+      var first = all.length ? all[0].t : c.last_beat_t;
+      if (!c.pinned && first != null && first > t) return;
+      var trimmed = bs.length === all.length ? c : Object.assign({}, c, {
+        beats: bs,
+        last_beat_t: bs.length ? bs[bs.length - 1].t : c.last_beat_t
+      });
+      if (!bs.some(beatCarriesCard)) { out.push(trimmed); return; }
+      out.push(Object.assign({}, trimmed, L.cardAsOf(c, bs)));
     });
     return out;
   };
