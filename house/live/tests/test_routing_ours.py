@@ -12,7 +12,9 @@ os.environ.setdefault("MESH_RUN", tempfile.mkdtemp())
 import inbox_pass  # noqa: E402  (patches routing/inbox.py: our seats, kit role -> seat)
 inbox = inbox_pass.inbox
 
-OURS = set(json.loads((FEED / "fleet-roster.json").read_text())["seats"])
+_ROSTER = json.loads((FEED / "fleet-roster.json").read_text())
+OURS = set(_ROSTER["seats"])
+BOARD = set(_ROSTER.get("board") or [])
 ROLES = json.loads((FEED / "routing" / "inbox-roles.json").read_text())
 KIT_ROLES = {"reviewer", "builder", "tester", "operator", "coord"}
 R = "0xRayAI/xray"
@@ -46,7 +48,7 @@ class EverySeatIsOurs(unittest.TestCase):
         for role, rule in ROLES["seats"].items():
             if not rule.get("off"):
                 refs.append(("seats." + role + ".seat", rule.get("seat")))
-        bad = [(where, s) for where, s in refs if s not in OURS]
+        bad = [(where, s) for where, s in refs if s not in OURS and s not in BOARD]
         self.assertEqual(bad, [], "seat references outside our seats")
 
     def test_server_and_key_defaults_name_no_sample_seat(self):

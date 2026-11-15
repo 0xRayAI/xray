@@ -414,15 +414,158 @@ def assignee_bot(item, nodes):
     return None
 
 
-# A is the plane primary. Eng answers to forge. Core and dist answer to blinky.
-_CORE_DIST = frozenset({"blinky", "sound", "nibbler", "herald", "magnet"})
+def load_routing():
+    """The committed routing table. R, A, and overflow come from this file."""
+    path = Path(__file__).resolve().parent / "routing" / "inbox-roles.json"
+    try:
+        data = json.loads(path.read_text())
+    except (OSError, ValueError):
+        return {}
+    return data if isinstance(data, dict) else {}
 
 
-def plane_primary(owner):
-    seat = str(owner or "").strip().lower()
-    if seat in _CORE_DIST:
-        return "blinky"
-    return "forge"
+def _routing_entry(roles, seat):
+    entry = (roles.get("routing") or {}).get(str(seat or "").strip().lower())
+    return entry if isinstance(entry, dict) else {}
+
+
+def plane_of(roles, seat):
+    return str(_routing_entry(roles, seat).get("plane") or "").strip()
+
+
+def primary_of(roles, plane):
+    """The seat that answers for a plane: the planes table, else the one entry marked primary."""
+    block = (roles.get("planes") or {}).get(plane)
+    if isinstance(block, dict) and str(block.get("primary") or "").strip():
+        named = str(block["primary"]).strip().lower()
+        if named in (roles.get("routing") or {}):
+            return named
+    for seat, entry in (roles.get("routing") or {}).items():
+        if isinstance(entry, dict) and str(entry.get("plane") or "") == plane and entry.get("primary") is True:
+            return str(seat).lower()
+    return ""
+
+
+def route_up(roles, seat):
+    entry = _routing_entry(roles, seat)
+    if not entry:
+        return False
+    return entry.get("up", True) is not False
+
+
+def overflow_of(roles, plane):
+    block = (roles.get("planes") or {}).get(plane)
+    if not isinstance(block, dict):
+        return []
+    names = []
+    for seat in block.get("overflow") or []:
+        name = str(seat or "").strip().lower()
+        if name:
+            names.append(name)
+    return names
+
+
+def resolve_seat(roles, name):
+    """A routing seat, or the seat a kit role rule names."""
+    seat = str(name or "").strip().lower()
+    if not seat:
+        return ""
+    routing = roles.get("routing") or {}
+    if seat in routing:
+        return seat
+    rule = (roles.get("seats") or {}).get(seat)
+    if isinstance(rule, dict) and not rule.get("off") and rule.get("seat"):
+        mapped = str(rule["seat"]).strip().lower()
+        if mapped in routing:
+            return mapped
+    return ""
+
+
+def role_holder(roles, item):
+    """The seat that holds the card's role, from a label, a needle, or the role name."""
+    labels = set(_label_names(item))
+    text = " ".join(str(item.get(k) or "") for k in ("title", "body")).lower()
+    for role, rule in (roles.get("seats") or {}).items():
+        if not isinstance(rule, dict) or rule.get("off") or not rule.get("seat"):
+            continue
+        seat = resolve_seat(roles, rule.get("seat"))
+        if not seat:
+            continue
+        for lab in rule.get("labels") or []:
+            if str(lab).lower() in labels:
+                return seat
+        for needle in rule.get("needles") or []:
+            word = str(needle).lower()
+            if word and not word.startswith("@") and word in text:
+                return seat
+        if str(item.get("role") or "").strip().lower() == str(role).lower():
+            return seat
+    named = str(item.get("role") or "").strip().lower()
+    if not named:
+        return ""
+    first = ""
+    for seat, entry in (roles.get("routing") or {}).items():
+        if not isinstance(entry, dict) or str(entry.get("role") or "").lower() != named:
+            continue
+        if entry.get("primary") is True:
+            return str(seat).lower()
+        if not first:
+            first = str(seat).lower()
+    return first
+
+
+def named_owner(roles, item, nodes):
+    board = item.get("board_owner") or card_owner.board_owner_line(item.get("body"))
+    assignee = item.get("assignee_seat") or assignee_seat(item)
+    opener = _opener_seat(item, nodes if isinstance(nodes, dict) else assignee_nodes())
+    for candidate in (board, assignee, opener):
+        seat = resolve_seat(roles, candidate)
+        if seat:
+            return seat
+    who = card_owner.card_owner(board, assignee, opener)
+    if who == "builder-cloud":
+        return ""
+    return resolve_seat(roles, who)
+
+
+def place_r(roles, owner, held):
+    """R stays on the owner until that seat holds two in-progress cards, then the plane's overflow."""
+    if not isinstance(held, dict):
+        held = {}
+    if not owner:
+        return "", "no owner"
+    order = [owner] + overflow_of(roles, plane_of(roles, owner))
+    for seat in order:
+        if not route_up(roles, seat):
+            continue
+        if int(held.get(seat) or 0) < 2:
+            held[seat] = int(held.get(seat) or 0) + 1
+            return seat, ""
+    return "", "at the cap"
+
+
+def in_progress_load(collector):
+    """Open cards on this repo that already name R. One count per number."""
+    counts = {}
+    ev = getattr(collector, "ev", None) or {}
+    repo = str(getattr(collector, "repo", "") or "")
+    seen = set()
+    for event in ev.values():
+        if not isinstance(event, dict) or event.get("kind") not in ("pr_open", "issue_open"):
+            continue
+        if repo and event.get("repo") != repo:
+            continue
+        if str(event.get("pr_state") or "").lower() != "open":
+            continue
+        number = event.get("number")
+        if number in seen:
+            continue
+        seen.add(number)
+        packet = event.get("packet") if isinstance(event.get("packet"), dict) else {}
+        seat = str(live_packet.raci_roles(packet.get("raci")).get("R") or "").strip().lower()
+        if seat:
+            counts[seat] = int(counts.get(seat) or 0) + 1
+    return counts
 
 
 def _label_names(item):
@@ -453,8 +596,10 @@ def _opener_seat(item, nodes):
     return low if low in card_owner.SEATS else ""
 
 
-def default_raci(item, nodes=None):
-    """R and A for a live card that has no R. None when the card is skipped or already has R."""
+def default_raci(item, nodes=None, roles=None, held=None):
+    """R and A for a live card that has no R. None when the card is skipped or already has R.
+    R is the card owner, else the seat that holds the card's role. A is the primary of that plane.
+    A seat that already holds two in-progress cards yields to the plane's overflow. A full plane queues."""
     if not isinstance(item, dict):
         return None
     if item.get("pinned") or item.get("draft"):
@@ -469,11 +614,21 @@ def default_raci(item, nodes=None):
         packet = live_packet.parse(item.get("body")) or {}
     if "R" not in live_packet.raci_gaps(packet if isinstance(packet, dict) else {}, "live", False):
         return None
-    board = item.get("board_owner") or card_owner.board_owner_line(item.get("body"))
-    assignee = item.get("assignee_seat") or assignee_seat(item)
-    opener = _opener_seat(item, nodes if isinstance(nodes, dict) else assignee_nodes())
-    responsible = card_owner.card_owner(board, assignee, opener)
-    return {"R": responsible, "A": plane_primary(responsible)}
+    table = roles if isinstance(roles, dict) else load_routing()
+    book = held if isinstance(held, dict) else {}
+    owner = named_owner(table, item, nodes) or role_holder(table, item)
+    if not owner:
+        return None
+    seat, why = place_r(table, owner, book)
+    if why == "at the cap":
+        return {"queued": True, "reason": "at the cap"}
+    if not seat:
+        return None
+    answer = primary_of(table, plane_of(table, owner) or plane_of(table, seat))
+    if not answer:
+        book[seat] = max(0, int(book.get(seat) or 1) - 1)
+        return None
+    return {"R": seat, "A": answer}
 
 
 def raci_comment(responsible, answer):
@@ -489,6 +644,9 @@ def card_fields(x) -> dict:
               "labels": [lb.get("name") for lb in (x.get("labels") or []) if isinstance(lb, dict) and lb.get("name")][:8],
               "packet": live_packet.parse(body) or None,
               "fixes": closing_numbers(body, x.get("number"))}
+    reason = x.get("raci_reason")
+    if isinstance(reason, str) and reason.strip():
+        fields["raci_reason"] = reason.strip()
     named = card_owner.board_owner_line(body)
     if named:
         fields["board_owner"] = named
@@ -1214,15 +1372,16 @@ class RepoCollector:
             del tried[:-500]
         self._assign_left -= 1
 
+    def _release_raci(self, seat):
+        if seat and hasattr(self, "_raci_held"):
+            self._raci_held[seat] = max(0, int(self._raci_held.get(seat) or 1) - 1)
+
     def maybe_fill_raci(self, c, item):
         """One packet comment when a live card has no R. The same write budget as assignee posts.
         Parked, pinned, and closed cards are skipped. A later maybe_assign uses the R just written."""
         if getattr(self, "_assign_auth_dead", False):
             return
         if getattr(self, "_assign_left", 0) <= 0 or not getattr(c, "token", None):
-            return
-        spec = default_raci(item)
-        if not spec:
             return
         try:
             number = int(item.get("number"))
@@ -1235,17 +1394,28 @@ class RepoCollector:
         key = f"{self.repo}#{number}"
         if key in tried:
             return
+        if not hasattr(self, "_raci_held"):
+            self._raci_held = in_progress_load(self)
+        spec = default_raci(item, held=self._raci_held)
+        if not spec:
+            return
+        if spec.get("queued"):
+            item["raci_reason"] = spec.get("reason") or "at the cap"
+            return
         body = raci_comment(spec["R"], spec["A"])
         try:
             code = c.write_json(f"/repos/{self.repo}/issues/{number}/comments", {"body": body})
         except AuthExpired:
             self._assign_auth_dead = True
+            self._release_raci(spec.get("R"))
             return
         if code == 401:
             self._assign_auth_dead = True
+            self._release_raci(spec.get("R"))
             return
         if not code or code >= 500:
             self._assign_miss = True
+            self._release_raci(spec.get("R"))
             return
         tried.append(key)
         if len(tried) > 500:
@@ -1328,6 +1498,8 @@ class RepoCollector:
             if str(p.get("state") or "").lower() == "open":
                 self.maybe_fill_raci(c, p)
                 self.maybe_assign(c, p)
+                if isinstance(p.get("raci_reason"), str) and p["raci_reason"].strip():
+                    fields["raci_reason"] = p["raci_reason"].strip()
             if not fields.get("packet_file") and head and packet_file_on_ref(c, self.repo, head):
                 fields["packet_file"] = True
             self.put(f"{self.repo}#{n}:open", p["created_at"], shown_from(login), "GitHub", "pr_open",
@@ -1735,6 +1907,10 @@ class RepoCollector:
             if str(i.get("state") or "").lower() == "open":
                 self.maybe_fill_raci(c, i)
                 self.maybe_assign(c, i)
+                reason = i.get("raci_reason")
+                opened = self.ev.get(f"{self.repo}!{n}:open")
+                if isinstance(reason, str) and reason.strip() and isinstance(opened, dict):
+                    opened["raci_reason"] = reason.strip()
         self.st["cur"]["issues"] = newest
         if self._etag_new:
             self.st["etags"]["issues"] = self._etag_new

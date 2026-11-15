@@ -1,4 +1,5 @@
 """A live card with no R gets one packet comment and then the existing assignee write."""
+import json
 import sys
 import unittest
 from pathlib import Path
@@ -84,6 +85,27 @@ class DefaultRaci(unittest.TestCase):
         finally:
             live_collect.NODE.clear()
             live_collect.NODE.update(saved)
+
+    def test_role_seat_when_the_card_has_no_owner(self):
+        lab = card(labels=[{"name": "lab"}])
+        self.assertEqual(live_collect.default_raci(lab, NODES), {"R": "forge", "A": "forge"})
+
+    def test_third_forge_card_goes_to_mill_and_a_full_plane_queues(self):
+        held = {}
+        first = live_collect.default_raci(card(number=1, body="Board-Owner: forge\n"), NODES, held=held)
+        second = live_collect.default_raci(card(number=2, body="Board-Owner: forge\n"), NODES, held=held)
+        third = live_collect.default_raci(card(number=3, body="Board-Owner: forge\n"), NODES, held=held)
+        self.assertEqual(first, {"R": "forge", "A": "forge"})
+        self.assertEqual(second, {"R": "forge", "A": "forge"})
+        self.assertEqual(third, {"R": "mill", "A": "forge"})
+        full = {"forge": 2, "mill": 2, "arch1": 2}
+        queued = live_collect.default_raci(card(number=4, body="Board-Owner: forge\n"), NODES, held=full)
+        self.assertEqual(queued, {"queued": True, "reason": "at the cap"})
+        down = json.loads(json.dumps(live_collect.load_routing()))
+        down["routing"]["arch1"]["up"] = False
+        almost = {"forge": 2, "mill": 2}
+        still = live_collect.default_raci(card(number=5, body="Board-Owner: forge\n"), NODES, roles=down, held=almost)
+        self.assertEqual(still, {"queued": True, "reason": "at the cap"})
 
 
 if __name__ == "__main__":

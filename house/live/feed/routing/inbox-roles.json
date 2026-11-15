@@ -13,64 +13,113 @@
       "aliases": [
         "Blinky",
         "blinky"
-      ]
+      ],
+      "role": "coord",
+      "plane": "core",
+      "primary": true
     },
     "critic": {
       "login": "critic0x[bot]",
       "aliases": [
         "Critic",
         "critic"
-      ]
+      ],
+      "role": "reviewer",
+      "plane": "eng",
+      "primary": false
     },
     "forge": {
       "login": "forge0x1[bot]",
       "aliases": [
         "Forge",
         "forge"
-      ]
+      ],
+      "role": "builder",
+      "plane": "eng",
+      "primary": true
     },
     "herald": {
       "login": "herald0x[bot]",
       "aliases": [
         "Herald",
         "herald"
-      ]
+      ],
+      "role": "voice",
+      "plane": "dist",
+      "primary": false
     },
     "magnet": {
       "login": null,
       "aliases": [
         "Magnet",
         "magnet"
-      ]
+      ],
+      "role": "voice",
+      "plane": "dist",
+      "primary": false
     },
     "near": {
-      "login": null,
+      "login": "near10x[bot]",
       "aliases": [
         "Near",
         "near"
-      ]
+      ],
+      "role": "scout",
+      "plane": "dist",
+      "primary": false
     },
     "nibbler": {
       "login": null,
       "aliases": [
         "Nibbler",
         "nibbler"
-      ]
+      ],
+      "role": "scout",
+      "plane": "dist",
+      "primary": false
     },
     "sound": {
       "login": null,
       "aliases": [
         "Sound",
         "sound"
-      ]
+      ],
+      "role": "scout",
+      "plane": "dist",
+      "primary": false
+    },
+    "mill": {
+      "login": null,
+      "aliases": [
+        "Mill",
+        "mill"
+      ],
+      "role": "builder",
+      "plane": "eng",
+      "primary": false
     },
     "arch1": {
       "login": "arch10x[bot]",
       "aliases": [],
-      "outside": true
+      "outside": true,
+      "role": "builder",
+      "plane": "eng",
+      "primary": false
     }
   },
-  "_note_routing": "The routing map: each seat once, with its real GitHub login (App seats as their bot login, people by handle; null = no GitHub login, reached in the inner loop only) and its nicknames as aliases. burst-live resolves every login against GitHub at startup and on each audit, refuses an unresolved entry and flags it on the board; GET /routing serves it read-only. Look a login up there before you @-mention anyone, never from memory. Logins verified against the GitHub users API on 2026-10-14: forge0x1[bot], critic0x[bot], herald0x[bot], arch10x[bot] exist; blinky has no App login found (null).",
+  "planes": {
+    "eng": {
+      "overflow": ["mill", "arch1"]
+    },
+    "core": {
+      "overflow": []
+    },
+    "dist": {
+      "primary": "blinky",
+      "overflow": []
+    }
+  },
+  "_note_routing": "The routing map: each seat once, with its real GitHub login (App seats as their bot login, people by handle; null = no GitHub login, reached in the inner loop only), its nicknames as aliases, and role, plane, and primary. planes names each plane's primary when that seat lives on another plane, plus the overflow order. burst-live resolves every login against GitHub at startup and on each audit, refuses an unresolved entry and flags it on the board; GET /routing serves it read-only. Look a login up there before you @-mention anyone, never from memory. Logins verified against the GitHub users API: forge0x1[bot], critic0x[bot], herald0x[bot], arch10x[bot], near10x[bot]. blinky and mill have no App login (null).",
   "seats": {
     "reviewer": {
       "off": true,
@@ -198,7 +247,8 @@
     },
     "near": {
       "needles": [
-        "@near"
+        "@near",
+        "@near10x"
       ],
       "reason": "NEAR ecosystem ask for near"
     }

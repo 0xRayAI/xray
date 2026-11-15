@@ -1662,7 +1662,7 @@ footer a { color: var(--foot); }
       if (unknown) meta.appendChild(wbEl('span', 'wbadge held', 'unknown'));
       if (c.pinned) meta.appendChild(wbEl('span', 'wbadge pin', 'pinned'));
       else if (c.packet_ok === false) meta.appendChild(wbEl('span', 'wbadge', 'needs a brief'));
-      if (c.raci_missing && c.raci_missing.length) meta.appendChild(wbEl('span', 'wbadge raci', 'needs ' + c.raci_missing.join(' ')));
+      if (c.raci_missing && c.raci_missing.length) meta.appendChild(wbEl('span', 'wbadge raci', c.raci_reason || ('needs ' + c.raci_missing.join(' '))));
       if (statusId(c.state) === 'held') meta.appendChild(wbEl('span', 'wbadge held', L.parkedLabel(c)));
       if (c.start_after) meta.appendChild(wbEl('span', 'wbadge', 'start after ' + c.start_after));
       if (c.stall) meta.appendChild(wbEl('span', 'wbadge stall', 'quiet 60 min+'));

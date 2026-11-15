@@ -22,7 +22,10 @@ class BifrostInit(unittest.TestCase):
             self.assertEqual(sorted(hooks), ["alpha", "beta"])
             self.assertEqual(hooks["alpha"]["key_env"], "WAKE_KEY_ALPHA")
             self.assertNotIn("http", json.dumps(hooks))
-            self.assertEqual(run("--check", "--seats", "alpha,beta,gamma", "--routing-dir", d).returncode, 0)
+            checked = run("--check", "--seats", "alpha,beta,gamma", "--routing-dir", d)
+            self.assertEqual(checked.returncode, 1)
+            self.assertIn("missing role", checked.stderr)
+            self.assertIn("missing plane", checked.stderr)
 
     def test_interactive_wake_url_never_written(self):
         with tempfile.TemporaryDirectory() as d:
@@ -73,6 +76,21 @@ class BifrostInit(unittest.TestCase):
 
     def test_our_routing_routes_every_roster_seat(self):
         self.assertEqual(run("--check").returncode, 0)
+
+    def test_check_fails_when_a_plane_has_no_primary(self):
+        with tempfile.TemporaryDirectory() as d:
+            table = {"routing": {
+                "forge": {"login": "forge0x1[bot]", "aliases": ["forge"], "role": "builder", "plane": "eng", "primary": False},
+                "mill": {"login": None, "aliases": ["mill"], "role": "builder", "plane": "eng", "primary": False},
+            }, "extra_seats": {"forge": {"needles": ["@forge", "@forge0x1"]}, "mill": {"needles": ["@mill"]}}}
+            (Path(d) / "inbox-roles.json").write_text(json.dumps(table))
+            r = run("--check", "--seats", "forge,mill", "--routing-dir", d, "--nodes", str(Path(d) / "none.json"))
+            self.assertEqual(r.returncode, 1)
+            self.assertIn("eng: no primary", r.stderr)
+            table["routing"]["forge"]["primary"] = True
+            (Path(d) / "inbox-roles.json").write_text(json.dumps(table))
+            ok = run("--check", "--no-resolve", "--seats", "forge,mill", "--routing-dir", d, "--nodes", str(Path(d) / "none.json"))
+            self.assertEqual(ok.returncode, 0, ok.stderr)
 
 
 if __name__ == "__main__":

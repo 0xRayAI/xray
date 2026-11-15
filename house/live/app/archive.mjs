@@ -10,7 +10,7 @@ const CAP = 300;
 const DROP = /body|text|message|secret|token|password|authorization/i;
 const FIELDS = {
   events: ['t_ct', 'from', 'to', 'kind', 'direction', 'label', 'source', 'src_file', 'repo', 'number', 'credit', 'status', 'sha', 'actor', 'author', 'merged_by', 'app'],
-  cards: ['key', 'repo', 'number', 'title', 'url', 'owner', 'stage', 'state', 'kind', 'verb', 'merged_by', 'labels', 'agents', 'pinned', 'section', 'stall', 'nudge', 'last_beat_t', 'packet_ok', 'raci_missing', 'waiting', 'packet', 'hold', 'beats', 't_ct', 'updated_ct'],
+  cards: ['key', 'repo', 'number', 'title', 'url', 'owner', 'stage', 'state', 'kind', 'verb', 'merged_by', 'labels', 'agents', 'pinned', 'section', 'stall', 'nudge', 'last_beat_t', 'packet_ok', 'raci_missing', 'raci_reason', 'waiting', 'packet', 'hold', 'beats', 't_ct', 'updated_ct'],
   inbox: ['t_ct', 'seat', 'type', 'repo', 'number', 'sha', 'title', 'url', 'reason'],
   nudges: ['kind', 't', 't_ct', 'card', 'repo', 'number', 'title', 'url', 'stage', 'level', 'seat', 'via', 'beat_t', 'closed_at', 'about'],
   acks: ['seat', 'line', 't_ct', 'review'],

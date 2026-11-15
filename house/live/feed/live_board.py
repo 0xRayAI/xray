@@ -822,6 +822,9 @@ def model(extra_events=None, now=None, prompts=None, held=None):
                     "packet": pk, "packet_file": bool(e.get("packet_file")),
                     "_closed": e.get("pr_state") == "closed", "_closed_t": _t({"t_ct": e.get("closed_at")}) if e.get("closed_at") else 0,
                     "_draft": bool(e.get("draft")), "_beats": [], "_stop": False, "_known": "pr_state" in e}
+        reason = str(e.get("raci_reason") or "").strip()
+        if reason:
+            cards[k]["raci_reason"] = reason
     for row in ci_inbox.missing_cards(evs, cards):
         cards[row["key"]] = row
     _claim_owners(cards, evs, sha_num)             # mill (trailer, credit, or git name) takes a card forge opened
