@@ -656,6 +656,21 @@ def raci_text(body):
     return ""
 
 
+def own_bot(login, roles=None):
+    """A fleet seat's GitHub App login. A person's comment is not one of ours."""
+    name = str(login or "").strip()
+    if not name.lower().endswith("[bot]"):
+        return False
+    table = roles if isinstance(roles, dict) else load_routing()
+    for entry in (table.get("routing") or {}).values():
+        if isinstance(entry, dict) and str(entry.get("login") or "").strip().lower() == name.lower():
+            return True
+    for known in assignee_nodes():
+        if str(known).strip().lower() == name.lower():
+            return True
+    return False
+
+
 def card_fields(x) -> dict:
     """Board card fields from a PR / issue object this pass already fetched: branded title, state, labels and
     the packet block (sanitized, <= 200 chars a field). The body itself is discarded here, never stored.
@@ -1477,6 +1492,9 @@ class RepoCollector:
         for row in rows or []:
             if not isinstance(row, dict):
                 continue
+            user = row.get("user") if isinstance(row.get("user"), dict) else {}
+            if not own_bot(user.get("login")):
+                continue
             text = raci_text(row.get("body"))
             if text:
                 return text
@@ -1536,7 +1554,7 @@ class RepoCollector:
         if bf.get("raci:open"):
             gen = self.paged(c, path, params, "raci-open", essential=False)
             next(gen, None)
-            if getattr(self, "_paged_status", None) == "not_modified" and getattr(self, "_etag_new", None):
+            if getattr(self, "_etag_new", None):
                 self.st["etags"]["raci-open"] = self._etag_new
             return
         stopped = False
@@ -1549,13 +1567,15 @@ class RepoCollector:
             self.maybe_assign(c, item)
         if stopped or getattr(self, "_paged_status", None) != "done":
             return
+        if getattr(self, "_assign_auth_dead", False):
+            return
         if getattr(self, "_etag_new", None):
             self.st["etags"]["raci-open"] = self._etag_new
         if assign_rewalk_done(
                 getattr(self, "_paged_status", None),
                 getattr(self, "_assign_left", 0),
                 getattr(self, "_assign_miss", False),
-                getattr(self, "_assign_auth_dead", False)):
+                False):
             bf["raci:open"] = True
 
     def poll_pulls(self, c):
