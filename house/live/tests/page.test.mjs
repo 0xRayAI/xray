@@ -359,7 +359,9 @@ test('our overlay does not install a fixed roster strip; the canvas still draws 
   const L = loadCfg(true);
   assert.deepEqual(L.SEAT_NAMES, []);
   assert.deepEqual(L.AGENTS, []);
-  for (const s of ['blinky', 'critic', 'forge']) assert.ok(s in L.SATS, s);
+  for (const s of ['blinky', 'critic', 'forge', 'near']) assert.ok(s in L.SATS, s);
+  assert.equal(L.SUB.near, 'NEAR ecosystem scout');
+  assert.equal(L.botImage('near'), 'avatars/near.png');
   assert.equal(L.SUB.arch1, 'outside party'); assert.equal(L.LABEL.arch1, 'Arch1'); assert.ok('arch1' in L.SATS);
   for (const parked of ['herald', 'magnet', 'nibbler', 'sound']) assert.ok(!(parked in L.SATS), parked);
   for (const k of ['Lead', 'X', 'Builder', 'Reviewer', 'Operator', 'Tester', 'QA']) assert.ok(!(k in L.SATS), k);

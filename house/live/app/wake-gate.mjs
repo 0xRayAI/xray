@@ -15,7 +15,7 @@ export const ROLLING_HOUR_MS = 60 * 60 * 1000;
 const COMMENT = new Set(['pr_comment', 'issue_comment', 'review_comment', 'comment']);
 export const SEAT_COMMENT_LIMIT = 3;
 const REAL_CHANGE_KINDS = new Set(['ready', 'critic_fail', 'live_pass', 'merge', 'ci_fail', 'ci_pass', 'review', 'verdict']);
-const DEFAULT_SEATS = ['builder', 'builder-cloud', 'arch1', 'forge', 'critic', 'blinky', 'herald', 'nibbler', 'sound', 'magnet'];
+const DEFAULT_SEATS = ['builder', 'builder-cloud', 'arch1', 'forge', 'critic', 'blinky', 'herald', 'nibbler', 'sound', 'magnet', 'near'];
 
 const num = (env, name) => {
   if (env[name] == null || String(env[name]).trim() === '') return null;

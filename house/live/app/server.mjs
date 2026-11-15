@@ -329,7 +329,7 @@ const OPERATOR_NAMES = new Set(['operator', 'tester', 'qa', 'lab']);
 // LIVE_SEAT_IDS (comma list) replaces the fleet's seat ids; builder / builder-cloud are kit plumbing and always kept.
 const SEAT_IDS = process.env.LIVE_SEAT_IDS
   ? [...new Set(['builder', 'builder-cloud', ...process.env.LIVE_SEAT_IDS.split(',').map(x => x.trim().toLowerCase()).filter(x => /^[a-z0-9][a-z0-9_-]{0,31}$/.test(x))])]
-  : ['builder', 'builder-cloud', 'arch1', 'forge', 'critic', 'blinky', 'herald', 'nibbler', 'sound', 'magnet'];
+  : ['builder', 'builder-cloud', 'arch1', 'forge', 'critic', 'blinky', 'herald', 'nibbler', 'sound', 'magnet', 'near'];
 function canonSeat(name) {
   const id = String(name || '').toLowerCase();
   if (SEAT_IDS.includes(id)) return id;

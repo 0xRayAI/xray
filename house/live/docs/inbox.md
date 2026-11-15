@@ -63,7 +63,7 @@ D12 (seats never woken by an inbox packet) is closed under this path.
 
 **Server routing.** After each collector pass the server runs `feed/inbox_pass.py` (the box pusher's rules, `feed/routing/inbox-roles.json`) on the collector's events, stores the new lines in the seat inboxes and fires the seat's webhook. Seen and sent ids live on the volume (`$MESH_DATA_DIR/route/`), so an event is routed once, also across restarts. The first pass on an empty volume marks history seen and delivers only events inside the seed grace (10 minutes before that pass). Older history is not delivered. `SERVER_ROUTING=off` turns it off. The box pusher is no longer needed for collector events; if it runs too, its lines carry the same ids and are not stored twice.
 
-**Route table (our 8 seats).** Every route in `feed/routing/inbox-roles.json` lands on one of our 8 seats (`feed/fleet-roster.json`: blinky, critic, forge, arch1, herald, magnet, nibbler, sound); `tests/test_routing_ours.py` fails on any other name. The mill seat is gone. `@mill`, an implement ask, a rebase ask, a dev ask, and `mill wave` land on forge.
+**Route table (our 9 seats).** Every route in `feed/routing/inbox-roles.json` lands on one of our 9 seats (`feed/fleet-roster.json`: blinky, critic, forge, near, arch1, herald, magnet, nibbler, sound); `tests/test_routing_ours.py` fails on any other name. The mill seat is gone. `@mill`, an implement ask, a rebase ask, a dev ask, and `mill wave` land on forge.
 
 | Event | Seat(s) | Rule |
 |---|---|---|
@@ -75,9 +75,9 @@ D12 (seats never woken by an inbox packet) is closed under this path.
 | Merge to develop, main or bifrost/main; PR ready to merge | forge | `seats.tester.seat`, `extra_seats.forge`, `seats.builder.seat` |
 | Implement / rebase / dev ask, `mill wave`, `@mill` | forge | `extra_seats.forge.needles` |
 | needs-decision / lead label or ask | blinky | `seats.coord.seat` |
-| `@seat` mention (`@forge`, `@critic`, `@blinky`, `@herald`, `@nibbler`, `@sound`, `@magnet`) | that seat | `extra_seats.<seat>.needles` |
+| `@seat` mention (`@forge`, `@critic`, `@blinky`, `@herald`, `@nibbler`, `@sound`, `@magnet`, `@near`) | that seat | `extra_seats.<seat>.needles` |
 | `@arch10x` (the only handle; `@arch1` is a different GitHub user and never routes): Arch1 is outside the fleet, reached only by this explicit mention; bare deep-review / Gate B words never route to him and nothing is copied to blinky | arch1 | `extra_seats.arch1.needles` |
-| Anything actionable routed to a seat outside our 8, or to no seat | blinky | `fallback` |
+| Anything actionable routed to a seat outside our 9, or to no seat | blinky | `fallback` |
 
 An order or yes in a comment must @-mention the next seat, because the inbox reads only a comment's label and @handles, never its body; the words "may merge" are not a merge ask.
 
@@ -85,7 +85,7 @@ An order or yes in a comment must @-mention the next seat, because the inbox rea
 
 **Routing guardrails (#275).** Each has a test in `tests/test_fleet_seats.py` (`Guardrails275`):
 
-1. **Coordinator fallback.** If an actionable event has no owner seat, only seats outside our 8 (unknown, sample, unkeyed; those lines are dropped), or only `arch1` (no webhook), blinky also gets a line. The seated turn that reads it drains it that turn. The seat and the list come from `fallback` in `inbox-roles.json`. Blinky does not assign the dev work.
+1. **Coordinator fallback.** If an actionable event has no owner seat, only seats outside our 9 (unknown, sample, unkeyed; those lines are dropped), or only `arch1` (no webhook), blinky also gets a line. The seated turn that reads it drains it that turn. The seat and the list come from `fallback` in `inbox-roles.json`. Blinky does not assign the dev work.
 2. **Actionable kinds only.** The fallback covers new PRs and issues, reviews, review requests, comments, @-mentions, nudges and packets. An unowned push or CI status never creates a line. The existing `pr_heads` route still sends critic and blinky one line per new PR head, because that line is critic's re-Light ask.
 3. **No self-wakes.** A seat's own action never lands in its own inbox. The actor is matched by board alias, by bot login in `feed/fleet-nodes.json`, or by `SEAT_BOTS` (env, `{"seat": "login"}` or `{"seat": ["login", ...]}`). The exception is the merge and close info line: that line is still stored for the author's seat when that seat did the merge or the close.
 4. **No double wakes.** `SEAT_WATCHERS` (env, `{"seat": {"repos": ["owner/repo" | "*"], "kinds": ["pr_comment" | "*"]}}`) lists the repos and kinds a seat already watches itself. The server skips those for that seat.

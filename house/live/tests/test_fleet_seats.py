@@ -6,10 +6,10 @@ sys.path.insert(0, str(FEED))
 import inbox_pass, inbox  # noqa: E402,F401  (inbox_pass adds extra_seats routing)
 
 ROLES = json.loads((FEED / "routing" / "inbox-roles.json").read_text())
-SEATS = ["arch1", "forge", "critic", "blinky", "herald", "nibbler", "sound", "magnet"]
+SEATS = ["arch1", "forge", "critic", "blinky", "herald", "nibbler", "sound", "magnet", "near"]
 ASKS = {"forge": "@forge merge ask #262", "critic": "@critic re-Light please",
         "blinky": "@blinky board update", "herald": "@herald Dist post", "nibbler": "@nibbler take a look",
-        "sound": "@sound check this", "magnet": "@magnet hangar listing", "arch1": "@arch10x deep-review #262"}
+        "sound": "@sound check this", "magnet": "@magnet hangar listing", "near": "@near take a look", "arch1": "@arch10x deep-review #262"}
 
 
 def seats(label, kind="issue_comment", watch=False, **kw):
@@ -31,7 +31,7 @@ class FleetSeats(unittest.TestCase):
 
     def test_unrelated_and_bare_names_route_nowhere(self):
         self.assertEqual(seats("unrelated comment"), [])
-        self.assertEqual(seats("forge critic mill blinky herald nibbler sound magnet arch1 mentioned in passing"), [])
+        self.assertEqual(seats("forge critic mill blinky herald nibbler sound magnet near arch1 mentioned in passing"), [])
 
     def test_forge_gets_merges_into_main_and_bifrost(self):
         self.assertIn("forge", seats("merged", kind="merged", base="main"))
@@ -43,7 +43,7 @@ class FleetSeats(unittest.TestCase):
 
     def test_aliases(self):
         for name, sid in {"forge": "forge", "critic": "critic", "blinky": "blinky", "herald": "herald",
-                          "Nibbler": "nibbler", "sound": "sound", "magnet": "magnet", "arch1": "arch1"}.items():
+                          "Nibbler": "nibbler", "sound": "sound", "magnet": "magnet", "Near": "near", "arch1": "arch1"}.items():
             self.assertEqual(inbox_pass.aliases_of(ROLES).get(name), sid, name)
 
     # N3 (#262 handoff): critic's four checks; each fails if its fix is reverted.
@@ -111,12 +111,12 @@ class FleetSeats(unittest.TestCase):
 
 class FleetRoster(unittest.TestCase):
     """burst-live roster is committed (fleet-roster.json + fleet-nodes.json, shipped by deploy.sh), never a hand-set var."""
-    ROSTER = ["blinky", "critic", "forge", "herald", "magnet", "nibbler", "sound", "arch1"]
+    ROSTER = ["blinky", "critic", "forge", "near", "herald", "magnet", "nibbler", "sound", "arch1"]
 
     def test_roster_is_the_nine_seats_and_blaze_is_not_one(self):
         import live_fleet
         seats, fold, board = live_fleet.load_seat_config(str(FEED / "fleet-roster.json"))
-        self.assertEqual(board, ["blinky", "critic", "forge"])
+        self.assertEqual(board, ["blinky", "critic", "forge", "near"])
         self.assertEqual(sorted(seats), sorted(self.ROSTER))
         raw = json.loads((FEED / "fleet-roster.json").read_text())
         self.assertEqual(raw["outside"], ["arch1"])

@@ -149,7 +149,7 @@ Our pictures live in `house/live/site/public/avatars/` (copied over the kit page
 
 | Node | File | Source |
 |---|---|---|
-| blinky, critic, forge, herald | `<seat>.png` | the repo's `docs-site/static/live/bots/` |
+| blinky, critic, forge, herald, near | `<seat>.png` | the repo's `docs-site/static/live/bots/` |
 | arch1 | `arch1.png` | `docs-site/static/live/bots/minime0x.png` (image reused; the `minime0x[bot]` login runs workflows and credits `github`, not arch1) |
 | Blaze | `blaze.png` | his X profile picture (@Blaze0x1) |
 
