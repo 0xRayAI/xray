@@ -359,10 +359,14 @@ test('our overlay does not install a fixed roster strip; the canvas still draws 
   const L = loadCfg(true);
   assert.deepEqual(L.SEAT_NAMES, []);
   assert.deepEqual(L.AGENTS, []);
-  for (const s of ['blinky', 'critic', 'forge', 'near', 'nibbler']) assert.ok(s in L.SATS, s);
+  for (const s of ['blinky', 'critic', 'forge', 'near', 'nibbler', 'mill']) assert.ok(s in L.SATS, s);
   assert.equal(L.SUB.near, 'near eco scout');
+  assert.equal(L.SUB.mill, 'code mill');
   assert.equal(L.botImage('near'), 'avatars/near.png');
   assert.equal(L.GLYPH.nibbler, '🪱');
+  assert.equal(L.GLYPH.mill, '⚙️');
+  const meshY = new Set(['blinky', 'critic', 'forge', 'near', 'nibbler', 'mill', 'arch1'].map((s) => L.SATS[s][1]));
+  assert.ok(meshY.size >= 3, 'seats spread down the canvas');
   assert.equal(L.SUB.arch1, 'outside party'); assert.equal(L.LABEL.arch1, 'Arch1'); assert.ok('arch1' in L.SATS);
   for (const parked of ['herald', 'magnet', 'sound']) assert.ok(!(parked in L.SATS), parked);
   for (const k of ['Lead', 'X', 'Builder', 'Reviewer', 'Operator', 'Tester', 'QA']) assert.ok(!(k in L.SATS), k);
@@ -381,7 +385,7 @@ test('our overlay does not install a fixed roster strip; the canvas still draws 
   assert.ok(!ev[2].hops || ev[2].hops.length < 2);   // one hop is a self-pulse; the kit draws a ring
   assert.deepEqual(ev[3].hops, ['GitHub', 'Railway']);
   assert.ok('Blaze' in L.SATS); assert.equal(L.LABEL.Blaze, 'Blaze');
-  assert.deepEqual(L.SATS.CloudAgents, [150, 330]);
+  assert.deepEqual(L.SATS.CloudAgents, [350, 330]);
   assert.equal(L.LABEL.CloudAgents, 'Cloud agents');
   assert.equal(L.SUB.CloudAgents, 'cursor agents');
   assert.deepEqual(L.COLOR.CloudAgents, [130, 190, 255]);
