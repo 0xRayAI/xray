@@ -414,6 +414,72 @@ def assignee_bot(item, nodes):
     return None
 
 
+# A is the plane primary. Eng answers to forge. Core and dist answer to blinky.
+_CORE_DIST = frozenset({"blinky", "sound", "nibbler", "herald", "magnet"})
+
+
+def plane_primary(owner):
+    seat = str(owner or "").strip().lower()
+    if seat in _CORE_DIST:
+        return "blinky"
+    return "forge"
+
+
+def _label_names(item):
+    names = []
+    for label in item.get("labels") or []:
+        if isinstance(label, dict):
+            name = label.get("name")
+        else:
+            name = label
+        if isinstance(name, str) and name.strip():
+            names.append(name.strip().lower())
+    return names
+
+
+def _opener_seat(item, nodes):
+    user = item.get("user") if isinstance(item.get("user"), dict) else {}
+    login = user.get("login") if isinstance(user, dict) else ""
+    if not isinstance(login, str) or not login.strip():
+        return ""
+    mapped = ""
+    for key, val in (nodes or {}).items():
+        if str(key).lower() == login.lower() and isinstance(val, str):
+            mapped = val
+            break
+    if not mapped:
+        mapped = node(login)
+    low = str(mapped or login).strip().lower()
+    return low if low in card_owner.SEATS else ""
+
+
+def default_raci(item, nodes=None):
+    """R and A for a live card that has no R. None when the card is skipped or already has R."""
+    if not isinstance(item, dict):
+        return None
+    if item.get("pinned") or item.get("draft"):
+        return None
+    state = str(item.get("state") or item.get("pr_state") or "").lower()
+    if state in ("closed", "parked"):
+        return None
+    if any(name == "parked" or name.startswith("parked") for name in _label_names(item)):
+        return None
+    packet = item.get("packet") if isinstance(item.get("packet"), dict) else None
+    if packet is None:
+        packet = live_packet.parse(item.get("body")) or {}
+    if "R" not in live_packet.raci_gaps(packet if isinstance(packet, dict) else {}, "live", False):
+        return None
+    board = item.get("board_owner") or card_owner.board_owner_line(item.get("body"))
+    assignee = item.get("assignee_seat") or assignee_seat(item)
+    opener = _opener_seat(item, nodes if isinstance(nodes, dict) else assignee_nodes())
+    responsible = card_owner.card_owner(board, assignee, opener)
+    return {"R": responsible, "A": plane_primary(responsible)}
+
+
+def raci_comment(responsible, answer):
+    return f"## Packet\nraci: R={responsible} A={answer}\n"
+
+
 def card_fields(x) -> dict:
     """Board card fields from a PR / issue object this pass already fetched: branded title, state, labels and
     the packet block (sanitized, <= 200 chars a field). The body itself is discarded here, never stored.
@@ -1148,6 +1214,47 @@ class RepoCollector:
             del tried[:-500]
         self._assign_left -= 1
 
+    def maybe_fill_raci(self, c, item):
+        """One packet comment when a live card has no R. The same write budget as assignee posts.
+        Parked, pinned, and closed cards are skipped. A later maybe_assign uses the R just written."""
+        if getattr(self, "_assign_auth_dead", False):
+            return
+        if getattr(self, "_assign_left", 0) <= 0 or not getattr(c, "token", None):
+            return
+        spec = default_raci(item)
+        if not spec:
+            return
+        try:
+            number = int(item.get("number"))
+        except (TypeError, ValueError):
+            return
+        tried = self.st.setdefault("raci_tried", [])
+        if not isinstance(tried, list):
+            tried = []
+            self.st["raci_tried"] = tried
+        key = f"{self.repo}#{number}"
+        if key in tried:
+            return
+        body = raci_comment(spec["R"], spec["A"])
+        try:
+            code = c.write_json(f"/repos/{self.repo}/issues/{number}/comments", {"body": body})
+        except AuthExpired:
+            self._assign_auth_dead = True
+            return
+        if code == 401:
+            self._assign_auth_dead = True
+            return
+        if not code or code >= 500:
+            self._assign_miss = True
+            return
+        tried.append(key)
+        if len(tried) > 500:
+            del tried[:-500]
+        self._assign_left -= 1
+        item["packet"] = {"raci": f"R={spec['R']} A={spec['A']}"}
+        prior = item.get("body") if isinstance(item.get("body"), str) else ""
+        item["body"] = f"{prior}\n{body}" if prior else body
+
     def poll_pulls(self, c):
         if not getattr(c, "token", None):
             return
@@ -1219,6 +1326,7 @@ class RepoCollector:
             url = p["html_url"]
             fields = card_fields(p)
             if str(p.get("state") or "").lower() == "open":
+                self.maybe_fill_raci(c, p)
                 self.maybe_assign(c, p)
             if not fields.get("packet_file") and head and packet_file_on_ref(c, self.repo, head):
                 fields["packet_file"] = True
@@ -1591,6 +1699,7 @@ class RepoCollector:
                 return
             if st != 200 or not isinstance(data, dict):
                 return
+            self.maybe_fill_raci(c, data)
             self.maybe_assign(c, data)
             self._put_open_card(data)
             if f"{self.repo}!{n}:open" not in self.ev and f"{self.repo}#{n}:open" not in self.ev:
@@ -1624,6 +1733,7 @@ class RepoCollector:
                      f"{self.short} issue #{n} opened · {i['title']}", i["html_url"], n, actor=login,
                      mentions=mentions(i.get("body")), **card_fields(i))
             if str(i.get("state") or "").lower() == "open":
+                self.maybe_fill_raci(c, i)
                 self.maybe_assign(c, i)
         self.st["cur"]["issues"] = newest
         if self._etag_new:
