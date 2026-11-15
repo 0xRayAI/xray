@@ -161,13 +161,16 @@ describe('grok-bot house template — USMail docs', () => {
     expect(boot).toContain('runs station itself');
     const wake = readFileSync(path.join(kit, 'templates/house/fleet/WAKE-ROUTINE.md'), 'utf8');
     expect(wake).not.toContain('--from blaze');
-    expect(wake).toContain('trap \'"$INBOX" <seat> --peek || true; "$INBOX" <seat> --turn end --tag wake; "$INBOX" <seat> --release\' EXIT');
-    expect(wake).toContain(': "${XRAY_MAIN:?set XRAY_MAIN to the main checkout}"');
-    expect(wake).toContain('INBOX="$XRAY_MAIN/house/live/tools/live-inbox"');
+    expect(wake).toContain("trap 'inbox <seat> --peek || true; inbox <seat> --turn end --tag wake; inbox <seat> --release' EXIT");
+    // Generic kit template (xray#1055, #1071): no default board, no fleet names, no xray checkout.
+    expect(wake).toContain(': "${LIVE_URL:?set LIVE_URL to the board URL of this fleet}"');
+    expect(wake).toContain(': "${SEAT_KEYS_DIR:?set SEAT_KEYS_DIR to the folder that holds <seat>.key}"');
+    expect(wake).toContain('inbox() { npx --no-install grok-bot live-inbox "$@"; }');
+    expect(wake).not.toMatch(/bifrost\.0xray\.dev|burst|blinky|forge|arch1|XRAY_MAIN|house\/live\//i);
     const bash = wake.split('```bash\n')[1]?.split('```')[0] ?? '';
     expect(bash).not.toContain('LIVE_INBOX_BIN');
     expect(bash).not.toContain('export PATH');
-    expect(wake).toContain('does not run a copied binary');
+    expect(wake).toContain('It needs no repo checkout and puts nothing on `PATH`.');
     const steps = [...wake.matchAll(/^\d+\.\s+(.*)$/gm)].map((match) => match[1]);
     expect(steps[0]).toContain('live-inbox <seat> --prompt');
     expect(steps[0]).not.toContain('--from blaze');

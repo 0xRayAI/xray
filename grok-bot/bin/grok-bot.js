@@ -14,6 +14,9 @@ if (args[0] === 'range') {
 } else if (args[0] === 'bifrost') {
   const { runBifrostCli } = require('../lib/bifrost-cli.cjs');
   process.exitCode = runBifrostCli(args.slice(1));
+} else if (args[0] === 'live-inbox' || args[0] === 'exit-gate') {
+  const { runKitTool } = require('../lib/kit-tools.cjs');
+  process.exitCode = runKitTool(args[0], args.slice(1));
 } else {
   const { runDoctorCli } = require('../lib/seat-doctor.cjs');
   process.exitCode = runDoctorCli(args);

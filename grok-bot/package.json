@@ -1,6 +1,6 @@
 {
   "name": "@0xray/grok-bot",
-  "version": "0.1.16",
+  "version": "0.1.17",
   "description": "Complete setup path for Grok Bot agents on 0xRay: per-agent suits, Groover identity, OWS pay, hangar shops. Seat doctor/ready proves mill+inspect and prints hangar/Clearing next steps.",
   "license": "MIT",
   "bin": {
@@ -37,8 +37,8 @@
   ],
   "scripts": {
     "start": "node bin/grok-bot.js",
-    "prepack": "cp ../house/live/tools/bifrost-init lib/bifrost-init.py",
-    "postpack": "rm -f lib/bifrost-init.py"
+    "prepack": "cp ../house/live/tools/bifrost-init lib/bifrost-init.py && cp ../house/live/tools/live-inbox lib/live-inbox.py && cp ../house/live/tools/exit-gate.mjs lib/exit-gate.mjs",
+    "postpack": "rm -f lib/bifrost-init.py lib/live-inbox.py lib/exit-gate.mjs"
   },
   "keywords": [
     "grok-bot",

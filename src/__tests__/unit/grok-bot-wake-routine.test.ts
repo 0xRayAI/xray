@@ -51,7 +51,8 @@ describe('WAKE-ROUTINE — a wake never answers a nudge or another seat on GitHu
   });
 
   it('keeps the outside party (Arch1) wakeable by an @-mention', () => {
-    expect(wake).toContain("a seat outside the fleet (the roster's `outside` list, Arch1) is never filtered");
+    expect(wake).toContain("a seat outside the fleet (the roster's `outside` list) is never filtered");
+    expect(read('house/fleet/WAKE-ROUTINE.md')).toContain("a seat outside the fleet (the roster's `outside` list, Arch1) is never filtered");
     expect(nudge).toContain("A seat outside the fleet (the roster's `outside` list, Arch1) is not filtered");
   });
 

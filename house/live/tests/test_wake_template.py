@@ -5,7 +5,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-TEMPLATE = Path(os.environ.get("WAKE_TEMPLATE") or Path(__file__).resolve().parents[3] / "grok-bot" / "templates" / "house" / "fleet" / "WAKE-ROUTINE.md")
+TEMPLATE = Path(os.environ.get("WAKE_TEMPLATE") or Path(__file__).resolve().parents[3] / "house" / "fleet" / "WAKE-ROUTINE.md")  # 0xRay fleet routine (xray#1055)
 TOOL = Path(__file__).resolve().parents[1] / "tools" / "live-inbox"
 CT = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$")
 

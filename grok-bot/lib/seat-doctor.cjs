@@ -807,14 +807,14 @@ function nextSteps(report) {
       steps.push('Turn goggles on. The suit keeps the lens.');
     }
   }
-  const installStep = 'npm i 0xray && npx 0xray inspect --skip-live';
+  const installStep = 'npm i 0xray && npx 0xray validate';
   if (!report.plant.installed) steps.push(installStep);
   const millReady = report.plant.mill && report.plant.inspect;
   if (!millReady) {
     steps.push('Fasten mill+inspect: npm i 0xray && npx 0xray wear');
-    steps.push('Prove plant: npx 0xray inspect --skip-live (expect mill + inspect, costume false)');
+    steps.push('Prove plant: npx 0xray validate (expect plant: mill + inspect fastened)');
   } else if (report.plant.ok) {
-    steps.push('Prove again later: npx 0xray inspect --skip-live');
+    steps.push('Prove again later: npx 0xray validate');
   } else if (report.plant.deadHooks.length > 0) {
     for (const dead of report.plant.deadHooks) {
       steps.push(`Repair dead hook ${dead.file}: ${dead.path} is missing`);
@@ -1131,6 +1131,10 @@ Commands:
   house init       Copy templates/house into ./house, including watchers/ and fleet/. Refuses if a target file exists. Writes a file only when it is missing
   house init --migrate
                    Move ops/WAVEBOARD.md to house/WAVEBOARD.md when that old board is a file. That file is the board when LIVE_URL is unset. Bifrost (GET /cards) is the board only when LIVE_URL is set. Start ATTENTION_STATE.md from the template when it is missing. Append the template ## Cadence block when HOUSE.md has none. Start missing watchers/ and fleet/ files. Never overwrite a ledger or any other house file you already changed. Refuse when both boards exist and the house board is not the untouched template
+  live-inbox <seat> ...
+                   The board inbox tool (packed as lib/live-inbox.py): --prompt, --ack, --handoff, --turn. Needs python3, LIVE_URL and SEAT_KEYS_DIR
+  exit-gate <NOTES.md>
+                   The wake's step 7 gate: a named bug or ask with no repo#n fails the turn
   bifrost init     Write the board's seat routes (collector/routing/inbox-roles.json in a bifrost clone; BIFROST_FEED overrides). --check validates and writes nothing. Needs python3
   (default)        Point at AGENTS.md / SKILLS.md / llms.txt
 

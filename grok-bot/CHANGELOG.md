@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## [0.1.17] - 2026-11-15
+
+Fixes from the 0.1.16 cold test.
+
+- The suit proof is `npx 0xray validate` (`✅ plant: mill + inspect fastened`). `0xray inspect` is not in 0xray 4.2.1, which npm installs on Node below 24.22.3. README, AGENTS, llms, the fasten and stand-up-fleet skills, and doctor's Next line now name `validate`. #1068
+- The shipped `templates/house/fleet/WAKE-ROUTINE.md` is generic: no default board (`LIVE_URL` and `SEAT_KEYS_DIR` are required and the wake stops when either is unset), no fleet seat names or paths, and no xray checkout. It runs `npx --no-install grok-bot live-inbox` and `grok-bot exit-gate`. The 0xRay fleet's own routine moved to `house/fleet/WAKE-ROUTINE.md`. #1055
+- `grok-bot live-inbox <seat> ...` and `grok-bot exit-gate <NOTES.md>` ship in the kit. prepack copies `house/live/tools/live-inbox` (as `lib/live-inbox.py`, needs `python3`) and `exit-gate.mjs` into `lib/`. The docs say how to run them. #1071
+- Every `npx @0xray/grok-bot` line in the kit docs pins `@0.1.17`.
+
 ## [0.1.16] - 2026-11-15
 
 - OP-PROC: a seat has at most two tasks in progress and all work is on the board (Two at a time). A seat makes only few-line edits on its own computer, and a new cloud agent needs Blaze's GO (Compute). #1063 #1062
