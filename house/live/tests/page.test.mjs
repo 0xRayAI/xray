@@ -447,6 +447,37 @@ test('board: review cards also wait on the review seat; grouping by seat; board 
   assert.equal(L.boardAt(cards, null), cards);
   assert.match(html, /var cards = L\.boardAt\(wb\.allCards \|\| wb\.cards, asOf\);/);
 });
+test('replay boardAt moves a card across columns from the beats at t', () => {
+  const L = loadCfg(true);
+  const card = {
+    key: 'xray#1100', kind: 'pr', owner: 'forge', stage: 'done', state: 'closed',
+    packet: { 'next owner': 'forge' },
+    beats: [
+      { t: 100, what: 'opened', owner: 'arch1' },
+      { t: 200, what: 'Reviewer PASS', owner: 'critic', next_owner: 'forge' },
+      { t: 300, what: 'merged', owner: 'forge' },
+    ],
+  };
+  const atOpen = L.boardAt([card], 150)[0];
+  assert.equal(atOpen.state, 'live');
+  assert.equal(atOpen.stage, 'review');
+  assert.equal(atOpen.owner, 'arch1');
+  assert.equal(L.cardBucket(atOpen), 'review');
+  const atPass = L.boardAt([card], 250)[0];
+  assert.equal(atPass.stage, 'merge');
+  assert.equal(atPass.state, 'live');
+  assert.equal(atPass.owner, 'critic');
+  assert.equal(atPass.packet['next owner'], 'forge');
+  assert.equal(L.cardBucket(atPass), 'waiting');
+  const atMerge = L.boardAt([card], 300)[0];
+  assert.equal(atMerge.state, 'closed');
+  assert.equal(atMerge.stage, 'done');
+  assert.equal(atMerge.owner, 'forge');
+  assert.equal(L.cardBucket(atMerge), 'done');
+  assert.equal(card.state, 'closed');
+  assert.equal(card.stage, 'done');
+  assert.equal(card.owner, 'forge');
+});
 test('packets: longer flight, halo + path so a hop is visible seat to seat', () => {
   assert.match(html, /var FLASH_MS = 2600/);
   assert.match(html, /arc\(q\[0\], q\[1\], 18, 0, 7\)/);
