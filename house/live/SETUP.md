@@ -34,7 +34,7 @@ Logins map to seats in the committed `feed/fleet-nodes.json`, which beats the `L
 | Seat | Credential |
 |---|---|
 | builder | its builder-app installation token (`ghs_…`, verified with GitHub; unchanged) |
-| forge, critic, blinky, herald, nibbler, sound, magnet | a per-seat key: `Authorization: Bearer <key>`. Our 8 seats (with arch1 below); routes: [route table](docs/inbox.md#server-routing) |
+| forge, critic, blinky, herald, nibbler, sound, magnet, near | a per-seat key: `Authorization: Bearer <key>`. Our 9 seats (with arch1 below); routes: [route table](docs/inbox.md#server-routing) |
 
 Keys live only on the box: `$SEAT_KEYS_DIR/<seat>.key` (default `~/.burst/seat-keys`; dir 0700, files 0600). The
 server holds only their SHA-256 hashes, in the Railway variable `SEAT_KEYS` (JSON `{seat: sha256hex}`).
@@ -50,6 +50,7 @@ Rotate: `feed/seat_keys.sh mint` (writes new keys, never prints them) then `feed
 | nibbler | a per-seat key (`seat-keys/nibbler.key`). `GET /inbox/nibbler` = asks to `@nibbler`; read with `tools/live-inbox nibbler`. Key delivered 1:1 by Blaze, never in room/repo |
 | sound | a per-seat key (`seat-keys/sound.key`). `GET /inbox/sound` = asks to `@sound`; read with `tools/live-inbox sound`. Key delivered 1:1 by Blaze, never in room/repo |
 | magnet | a per-seat key (`seat-keys/magnet.key`). `GET /inbox/magnet` = hangar / listing asks (`@magnet`); read with `tools/live-inbox magnet`. Key delivered 1:1 by Blaze, never in room/repo |
+| near | a per-seat key (`seat-keys/near.key`). `GET /inbox/near` = NEAR ecosystem asks (`@near`); read with `tools/live-inbox near`. Key delivered 1:1 by Blaze, never in room/repo |
 | assistant | a per-seat key, **write-only**: `POST /emit` only (no inbox / cards). Used by the sample MCP server (env `LIVE_KEY`) |
 
 Seat inbox wakes (`SEAT_WEBHOOKS`): see [Seat wake URLs and webhooks](docs/inbox.md#seat-wake-urls-and-webhooks).

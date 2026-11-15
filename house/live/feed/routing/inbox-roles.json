@@ -43,6 +43,13 @@
         "magnet"
       ]
     },
+    "near": {
+      "login": null,
+      "aliases": [
+        "Near",
+        "near"
+      ]
+    },
     "nibbler": {
       "login": null,
       "aliases": [
@@ -188,6 +195,12 @@
         "@magnet"
       ],
       "reason": "hangar / listing ask for magnet"
+    },
+    "near": {
+      "needles": [
+        "@near"
+      ],
+      "reason": "NEAR ecosystem ask for near"
     }
   },
   "pr_heads": {
@@ -215,12 +228,12 @@
     }
   },
   "_note_handoffs": "Who the packet goes to, and who owes sending it, for live-inbox --handoff. reviewer and merger name seats in this file. author is the PR author's seat. The server never posts the packet. A room post does not clear a missed handoff.",
-  "_note_extra_seats": "extra_seats are routed by feed/inbox_pass.py (kinds / merge_bases / needles); every key is one of our 8 seats (feed/fleet-roster.json)",
+  "_note_extra_seats": "extra_seats are routed by feed/inbox_pass.py (kinds / merge_bases / needles); every key is one of our 9 seats (feed/fleet-roster.json)",
   "_note_builder_cloud": "builder / builder-cloud are kit plumbing in app/server.mjs (installation-token auth, mirror); no route writes to them",
   "fallback": {
     "seat": "blinky"
   },
-  "_note_fallback": "Actionable events whose lines all go to a seat outside our 8 (unknown, sample, unkeyed) also go to blinky (CoS). Lines to seats outside our 8 are dropped. Pulses never route. A mention reaches arch1 only by an explicit @arch10x. Packet R assigns him without that mention: R: arch1 is his queue line and is not copied to blinky.",
+  "_note_fallback": "Actionable events whose lines all go to a seat outside our 9 (unknown, sample, unkeyed) also go to blinky (CoS). Lines to seats outside our 9 are dropped. Pulses never route. A mention reaches arch1 only by an explicit @arch10x. Packet R assigns him without that mention: R: arch1 is his queue line and is not copied to blinky.",
   "comment_watch": {
     "kinds": [
       "pr_comment",
@@ -238,5 +251,5 @@
     }
   },
   "_note_comment_watch": "Every PR/issue comment (incl. merged PRs) routes to blinky, and PR/issue comments also to the PR or issue author's seat (aliases on the author node), mention or not. @-mentions come from the collector's mentions[] (handles only, never bodies).",
-  "_note_seats": "seats: the kit's role rules (reviewer / builder / tester / operator / coord, read by routing/inbox.py), each mapped to one of our 8 by \"seat\" (or \"off\"); inbox_pass.py rewrites every line to that seat. Kit defaults stay in inbox.py."
+  "_note_seats": "seats: the kit's role rules (reviewer / builder / tester / operator / coord, read by routing/inbox.py), each mapped to one of our 9 by \"seat\" (or \"off\"); inbox_pass.py rewrites every line to that seat. Kit defaults stay in inbox.py."
 }

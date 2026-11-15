@@ -1,8 +1,8 @@
 # Fleet setup: mapping seats
 
-Every file a new fleet edits to map its seats. Each section shows **ours** (Bifrost, 8 seats) beside the **kit default** a fresh install gets. Paths are under `house/live/`. Secrets never go in any of these files.
+Every file a new fleet edits to map its seats. Each section shows **ours** (Bifrost, 9 seats) beside the **kit default** a fresh install gets. Paths are under `house/live/`. Secrets never go in any of these files.
 
-Seats (ours): blinky, critic, forge, herald, magnet, nibbler, sound, arch1 (`feed/fleet-roster.json`).
+Seats (ours): blinky, critic, forge, near, herald, magnet, nibbler, sound, arch1 (`feed/fleet-roster.json`).
 
 ## Upgrade from 4.1.3
 
@@ -37,8 +37,8 @@ The public board serves the kanban and GET /history, /history/cards, and /histor
 | `mirror_seat` | `forge` | `builder` (`MIRROR_SEAT` in inbox.py) |
 | `watcher_seats` | `[]` (Arch1's `inbox-watch.sh` is an approved exception, run on Arch1's box, not a watcher seat here) | `[]` |
 | `seats` roles | reviewer, builder, tester, operator, coord, each with `"seat"` or `"off"` | `{}` |
-| `mentions` (`aliases`) | handle -> seat for our 8 (`Arch1` -> `arch1`, ...); @-mentions come from the collector's `mentions[]`, handles only | none |
-| `fallback` | `{"seat": "blinky"}`: lines to seats outside our 8 are dropped and the event goes to blinky (Arch1's lines are never copied) | none |
+| `mentions` (`aliases`) | handle -> seat for our 9 (`Arch1` -> `arch1`, ...); @-mentions come from the collector's `mentions[]`, handles only | none |
+| `fallback` | `{"seat": "blinky"}`: lines to seats outside our 9 are dropped and the event goes to blinky (Arch1's lines are never copied) | none |
 | `pr_heads`, `comment_watch` | critic + blinky per PR head; every comment -> blinky (+ PR author's seat) | none |
 
 ## routing/inbox.py kit defaults
@@ -53,7 +53,7 @@ Precedence (`feed/live_collect.py`): `LIVE_NODE_MAP` env (JSON, set from this fi
 
 ## fleet-roster.json
 
-`feed/fleet-roster.json`: `seats` (who gets an inbox / key; the 8 above, including parked and Arch1) and `board` (the counted strip: blinky, critic, forge). `outside` is Arch1. `parked` (herald, magnet, nibbler, sound) is not drawn. Kit default: no roster; the server uses `LIVE_FLEET_SEATS`, else the nodes in `LIVE_NODE_MAP` (`feed/live_fleet.py`).
+`feed/fleet-roster.json`: `seats` (who gets an inbox / key; the 9 above, including parked and Arch1) and `board` (the counted strip: blinky, critic, forge, near, nibbler). `outside` is Arch1. `parked` (herald, magnet, sound) is not drawn. Kit default: no roster; the server uses `LIVE_FLEET_SEATS`, else the nodes in `LIVE_NODE_MAP` (`feed/live_fleet.py`).
 
 ## site.json
 

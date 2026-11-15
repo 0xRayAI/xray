@@ -143,7 +143,7 @@ test('mesh and wave align and kanban spans the page', async () => {
   }
 });
 
-const ROSTER_NAMES = ['forge', 'critic', 'blinky', 'herald', 'magnet', 'nibbler', 'sound', 'arch1'];
+const ROSTER_NAMES = ['forge', 'critic', 'blinky', 'herald', 'magnet', 'nibbler', 'sound', 'arch1', 'near'];
 
 function rosterServe() {
   const types = { '.html': 'text/html', '.js': 'text/javascript', '.json': 'application/json' };
@@ -173,7 +173,7 @@ function rosterServe() {
   });
 }
 
-test('eight seats wrap into columns and stay inside a narrow viewport', async () => {
+test('nine seats wrap into columns and stay inside a narrow viewport', async () => {
   const server = await rosterServe();
   const base = `http://127.0.0.1:${server.address().port}/index.html`;
   let browser;
@@ -194,7 +194,7 @@ test('eight seats wrap into columns and stay inside a narrow viewport', async ()
     const rows = new Set(desktop.seats.map((seat) => seat.y));
     const cols = new Set(desktop.seats.map((seat) => seat.x));
     assert.equal(desktop.display, 'grid');
-    assert.equal(desktop.seats.length, 8);
+    assert.equal(desktop.seats.length, 9);
     assert.ok(cols.size >= 2 && rows.size >= 2, JSON.stringify(desktop.seats));
     assert.ok(desktop.scroll <= desktop.view + 1, JSON.stringify(desktop));
     await wide.close();

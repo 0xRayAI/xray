@@ -2,7 +2,7 @@
 
 export const SEATS = new Set([
   'builder', 'builder-cloud', 'arch1', 'forge', 'critic', 'blinky',
-  'herald', 'nibbler', 'sound', 'magnet', 'operator',
+  'herald', 'nibbler', 'sound', 'magnet', 'near', 'operator',
 ]);
 
 const BOARD_OWNER_RE = /^[ \t]*Board-Owner:[ \t]*([A-Za-z][A-Za-z0-9_-]{0,31})[ \t]*$/im;
