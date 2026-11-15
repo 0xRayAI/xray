@@ -116,12 +116,13 @@ class DefaultRaci(unittest.TestCase):
         self.assertEqual(third, {"R": "mill", "A": "forge"})
         full = {"forge": 2, "mill": 2, "arch1": 2}
         queued = live_collect.default_raci(card(number=4, body="Board-Owner: forge\n"), NODES, held=full)
-        self.assertEqual(queued, {"queued": True, "reason": "at the cap"})
+        self.assertEqual(queued, {"R": "forge", "A": "forge", "reason": "at the cap"})
         down = json.loads(json.dumps(live_collect.load_routing()))
         down["routing"]["arch1"]["up"] = False
         almost = {"forge": 2, "mill": 2}
         still = live_collect.default_raci(card(number=5, body="Board-Owner: forge\n"), NODES, roles=down, held=almost)
-        self.assertEqual(still, {"queued": True, "reason": "at the cap"})
+        self.assertEqual(still["R"], "forge")
+        self.assertEqual(still["A"], "forge")
 
     def test_a_card_that_already_has_r_gets_a(self):
         partial = card(body="## Packet\nraci: R=forge\n")
@@ -256,6 +257,7 @@ class DefaultRaci(unittest.TestCase):
     def test_a_card_at_the_cap_still_latches(self):
         item = card(number=1105, body="Board-Owner: sound\n", assignees=[{"login": "kept"}])
         lists = []
+        writes = []
 
         class Client:
             token = "read-token"
@@ -270,7 +272,8 @@ class DefaultRaci(unittest.TestCase):
                 return 200, [item], "W/cap", None
 
             def write_json(self, path, payload):
-                raise AssertionError(payload)
+                writes.append(payload)
+                return 201
 
         def held(n):
             return {"kind": "issue_open", "repo": "0xRayAI/xray", "number": n, "pr_state": "open",
@@ -285,6 +288,9 @@ class DefaultRaci(unittest.TestCase):
         col._assign_miss = False
         col.fill_open_raci(Client())
         self.assertEqual(lists, [None])
+        self.assertEqual(len(writes), 1)
+        self.assertIn("R=blinky A=blinky", writes[0]["body"])
+        self.assertEqual(col.ev["0xRayAI/xray!1105:open"]["packet"]["raci"], "R=blinky A=blinky")
         self.assertTrue(col.st["bf"].get("raci:open"))
         self.assertEqual(col.ev["0xRayAI/xray!1105:open"]["raci_reason"], "at the cap")
         col._assign_left = 10
