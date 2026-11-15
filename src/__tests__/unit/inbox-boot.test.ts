@@ -206,6 +206,33 @@ printf 'ACTION_REQUIRED\\nunfinished:1\\n'
       backgroundTasks: [{ type: 'monitor', description: `${file} arch1` }],
     });
     expect(open).toBeNull();
+    const continuing = inboxStopDecision({
+      env: { SEAT_KEYS_DIR: keys, XRAY_SEAT: 'arch1', LIVE_URL: 'https://bifrost.example' },
+      home: tmp('inbox-boot-stop-active-'),
+      script: file,
+      sessionId: 'sess-stop',
+      stopHookActive: true,
+    });
+    expect(continuing).toBeNull();
+  });
+
+  it('a second stop in the same session ends the turn', () => {
+    const home = tmp('inbox-boot-stop-once-');
+    const keys = path.join(home, 'keys');
+    fs.mkdirSync(keys);
+    fs.writeFileSync(path.join(keys, 'arch1.key'), 'not-a-real-key\n', { mode: 0o600 });
+    const file = script(home, '#!/bin/sh\nexit 0\n');
+    const opts = {
+      env: { SEAT_KEYS_DIR: keys, XRAY_SEAT: 'arch1', LIVE_URL: 'https://bifrost.example' },
+      home,
+      script: file,
+      sessionId: 'sess-once',
+    };
+    const first = inboxStopDecision(opts);
+    expect(first && first.decision).toBe('block');
+    expect(first && first.reason).toContain('Call the monitor tool');
+    const second = inboxStopDecision(opts);
+    expect(second).toBeNull();
   });
 
   it('a prompt orders the CLI monitor and names an outside pid', () => {

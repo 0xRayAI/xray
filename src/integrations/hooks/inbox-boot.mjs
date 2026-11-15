@@ -186,10 +186,57 @@ export function inboxStartOrder(opts = {}) {
   return inboxOrder(opts, cfg, script);
 }
 
-/** Stop stays blocked until this CLI has the inbox monitor. */
+function stopCountFile(stateFile) {
+  return path.join(path.dirname(stateFile), 'inbox-watch.stop.json');
+}
+
+function stopCount(file, sessionId) {
+  try {
+    const data = JSON.parse(fs.readFileSync(file, 'utf8'));
+    const count = data && typeof data === 'object' ? Number(data[sessionId]) : 0;
+    return Number.isInteger(count) && count > 0 ? count : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function markStop(file, sessionId) {
+  const counts = {};
+  try {
+    const data = JSON.parse(fs.readFileSync(file, 'utf8'));
+    if (data && typeof data === 'object') Object.assign(counts, data);
+  } catch {
+    /* a new file starts at one */
+  }
+  counts[sessionId] = 1;
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, `${JSON.stringify(counts)}\n`, { mode: 0o600 });
+}
+
+/**
+ * Block one stop per session while the monitor is missing.
+ * A second stop in that session ends the turn. The prompt still prints the order.
+ * stopHookActive means this turn is already continuing from a block.
+ */
 export function inboxStopDecision(opts = {}) {
+  if (opts.stopHookActive === true) return null;
+  const env = opts.env || {};
+  const home = typeof opts.home === 'string' && opts.home.trim()
+    ? opts.home.trim()
+    : ((typeof env.HOME === 'string' && env.HOME.trim()) || os.homedir());
+  const pidFile = opts.pidFile || watcherPidFile(env, home);
+  const stateFile = opts.stateFile || path.join(path.dirname(pidFile), 'inbox-watch.state');
+  if (inboxMonitorHeard(opts, pidFile, stateFile)) return null;
+  const sessionId = String(opts.sessionId || env.GROK_SESSION_ID || '').trim() || 'none';
+  const file = stopCountFile(stateFile);
+  if (stopCount(file, sessionId) >= 1) return null;
   const reason = inboxStartOrder(opts);
   if (!reason) return null;
+  try {
+    markStop(file, sessionId);
+  } catch {
+    return null;
+  }
   return { decision: 'block', reason };
 }
 

@@ -112,6 +112,7 @@ async function main() {
           env: process.env,
           sessionId: sessionId || '',
           backgroundTasks: event.backgroundTasks,
+          stopHookActive: event.stopHookActive === true || event.stop_hook_active === true,
         });
       } catch {
         decision = null;
