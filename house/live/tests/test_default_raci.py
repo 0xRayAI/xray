@@ -127,6 +127,26 @@ class DefaultRaci(unittest.TestCase):
         partial = card(body="## Packet\nraci: R=forge\n")
         self.assertEqual(live_collect.default_raci(partial, NODES), {"R": "forge", "A": "forge"})
 
+    def test_a_card_with_no_owner_takes_the_builder_route(self):
+        bare = card(user={"login": "octocat"}, body="Ship the gate.\n")
+        self.assertEqual(live_collect.default_raci(bare, {}), {"R": "forge", "A": "forge"})
+
+    def test_a_later_open_put_keeps_the_raci_line(self):
+        col = live_collect.RepoCollector.__new__(live_collect.RepoCollector)
+        col.ev = {}
+        col.st = {"prs": {}}
+        col._sha_who = {}
+        col.repo = "0xRayAI/xray"
+        eid = "0xRayAI/xray!1120:open"
+        col.put(eid, "2026-11-15T16:00:00", "GitHub", "GitHub", "issue_open",
+                "opened", "https://github.com/0xRayAI/xray/issues/1120", 1120,
+                packet={"raci": "R=forge A=forge"})
+        col.put(eid, "2026-11-15T16:01:00", "GitHub", "GitHub", "issue_open",
+                "opened", "https://github.com/0xRayAI/xray/issues/1120", 1120,
+                packet={"goal": "keep"})
+        self.assertEqual(col.ev[eid]["packet"]["raci"], "R=forge A=forge")
+        self.assertEqual(col.ev[eid]["packet"]["goal"], "keep")
+
     def test_open_walk_fills_a_quiet_card_and_stamps_the_event(self):
         calls = []
 
