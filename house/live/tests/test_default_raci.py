@@ -123,6 +123,77 @@ class DefaultRaci(unittest.TestCase):
         still = live_collect.default_raci(card(number=5, body="Board-Owner: forge\n"), NODES, roles=down, held=almost)
         self.assertEqual(still, {"queued": True, "reason": "at the cap"})
 
+    def test_a_card_that_already_has_r_gets_a(self):
+        partial = card(body="## Packet\nraci: R=forge\n")
+        self.assertEqual(live_collect.default_raci(partial, NODES), {"R": "forge", "A": "forge"})
+
+    def test_open_walk_fills_a_quiet_card_and_stamps_the_event(self):
+        calls = []
+
+        class Writer:
+            token = "read-token"
+            assign_token = "ghs_test"
+
+            def write_json(self, path, payload):
+                calls.append((path, payload))
+                return 201
+
+        col = live_collect.RepoCollector.__new__(live_collect.RepoCollector)
+        col.st = {"bf": {"cards:issues": True, "assign:issues": True}, "etags": {}}
+        col.repo = "0xRayAI/xray"
+        col.ev = {"0xRayAI/xray!1093:open": {"kind": "issue_open", "number": 1093, "packet": {"goal": "keep"}}}
+        col._assign_left = 10
+        col._assign_miss = False
+        item = card(number=1093, body="Board-Owner: forge\n", assignees=[{"login": "kept"}])
+
+        def paged(c, path, params, key, stop=None, essential=True, max_pages=400):
+            col._paged_status = "done"
+            yield item
+
+        col.paged = paged
+        col.fill_open_raci(Writer())
+        self.assertEqual(calls[0][0], "/repos/0xRayAI/xray/issues/1093/comments")
+        self.assertIn("R=forge A=forge", calls[0][1]["body"])
+        self.assertEqual(col.ev["0xRayAI/xray!1093:open"]["packet"]["raci"], "R=forge A=forge")
+        self.assertEqual(col.ev["0xRayAI/xray!1093:open"]["packet"]["goal"], "keep")
+        self.assertTrue(col.st["bf"].get("raci:open"))
+        parked = card(number=1105, body="Board-Owner: forge\n", labels=[{"name": "parked"}])
+
+        def parked_only(c, path, params, key, stop=None, essential=True, max_pages=400):
+            col._paged_status = "done"
+            yield parked
+
+        col.st["bf"].pop("raci:open")
+        col.paged = parked_only
+        before = len(calls)
+        col.fill_open_raci(Writer())
+        self.assertEqual(len(calls), before)
+        self.assertTrue(col.st["bf"].get("raci:open"))
+
+    def test_open_walk_stays_open_when_the_budget_is_spent(self):
+        col = live_collect.RepoCollector.__new__(live_collect.RepoCollector)
+        col.st = {"bf": {}, "etags": {}}
+        col.repo = "0xRayAI/xray"
+        col.ev = {}
+        col._assign_left = 0
+        col._assign_miss = False
+
+        def paged(c, path, params, key, stop=None, essential=True, max_pages=400):
+            col._paged_status = "done"
+            yield card(number=1110, body="Board-Owner: forge\n")
+
+        col.paged = paged
+
+        class Writer:
+            token = "read-token"
+            assign_token = "ghs_test"
+
+            def write_json(self, path, payload):
+                raise AssertionError("budget spent")
+
+        col.fill_open_raci(Writer())
+        self.assertNotIn("raci:open", col.st["bf"])
+
 
 if __name__ == "__main__":
     unittest.main()

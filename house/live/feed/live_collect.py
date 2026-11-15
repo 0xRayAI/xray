@@ -597,9 +597,10 @@ def _opener_seat(item, nodes):
 
 
 def default_raci(item, nodes=None, roles=None, held=None):
-    """R and A for a live card that has no R. None when the card is skipped or already has R.
-    R is the card owner, else the seat that holds the card's role. A is the primary of that plane.
-    A seat that already holds two in-progress cards yields to the plane's overflow. A full plane queues."""
+    """R and A for a live card that is missing either. None when the card is skipped or already has both.
+    R is the card owner, else the seat that holds the card's role. A card that already has R keeps it.
+    A is the primary of that plane. A seat that already holds two in-progress cards yields to the plane's overflow.
+    A full plane queues."""
     if not isinstance(item, dict):
         return None
     if item.get("pinned") or item.get("draft"):
@@ -612,10 +613,17 @@ def default_raci(item, nodes=None, roles=None, held=None):
     packet = item.get("packet") if isinstance(item.get("packet"), dict) else None
     if packet is None:
         packet = live_packet.parse(item.get("body")) or {}
-    if "R" not in live_packet.raci_gaps(packet if isinstance(packet, dict) else {}, "live", False):
+    gaps = live_packet.raci_gaps(packet if isinstance(packet, dict) else {}, "live", False)
+    if not gaps:
         return None
     table = roles if isinstance(roles, dict) else load_routing()
     book = held if isinstance(held, dict) else {}
+    if "R" not in gaps:
+        seat = str(live_packet.raci_roles((packet or {}).get("raci")).get("R") or "").strip().lower()
+        answer = primary_of(table, plane_of(table, seat))
+        if not seat or not answer:
+            return None
+        return {"R": seat, "A": answer}
     owner = named_owner(table, item, nodes) or role_holder(table, item)
     if not owner:
         return None
@@ -1404,6 +1412,8 @@ class RepoCollector:
             return
         if spec.get("queued"):
             item["raci_reason"] = spec.get("reason") or "at the cap"
+            self._raci_queued = True
+            self._remember_raci(item)
             return
         body = raci_comment(spec["R"], spec["A"])
         try:
@@ -1427,6 +1437,77 @@ class RepoCollector:
         item["packet"] = {"raci": f"R={spec['R']} A={spec['A']}"}
         prior = item.get("body") if isinstance(item.get("body"), str) else ""
         item["body"] = f"{prior}\n{body}" if prior else body
+        self._remember_raci(item)
+
+    def _open_eid(self, item):
+        n = int(item["number"])
+        url = str(item.get("html_url") or "")
+        if "pull_request" in item or "/pull/" in url:
+            return f"{self.repo}#{n}:open"
+        return f"{self.repo}!{n}:open"
+
+    def _remember_raci(self, item):
+        """The board reads the stored open event. A comment posted later is not that event."""
+        if not isinstance(item, dict):
+            return
+        packet = item.get("packet") if isinstance(item.get("packet"), dict) else None
+        raci = str(packet.get("raci") or "") if packet else ""
+        reason = item.get("raci_reason") if isinstance(item.get("raci_reason"), str) else ""
+        if not raci and not reason.strip():
+            return
+        try:
+            eid = self._open_eid(item)
+        except (TypeError, ValueError, KeyError):
+            return
+        event = self.ev.get(eid) if isinstance(getattr(self, "ev", None), dict) else None
+        if not isinstance(event, dict):
+            return
+        if raci:
+            current = event.get("packet") if isinstance(event.get("packet"), dict) else {}
+            event["packet"] = {**current, "raci": raci}
+        if reason.strip():
+            event["raci_reason"] = reason.strip()
+
+    def _copy_raci_fields(self, fields, item):
+        packet = item.get("packet") if isinstance(item, dict) and isinstance(item.get("packet"), dict) else None
+        if packet and packet.get("raci"):
+            current = fields.get("packet") if isinstance(fields.get("packet"), dict) else {}
+            fields["packet"] = {**current, "raci": packet["raci"]}
+        reason = item.get("raci_reason") if isinstance(item, dict) else ""
+        if isinstance(reason, str) and reason.strip():
+            fields["raci_reason"] = reason.strip()
+
+    def fill_open_raci(self, c):
+        """One walk of currently open issues and pulls. The updated-at cursor, and the
+        rewalk flags already latched on the volume, never visit a quiet live card again.
+        Parked cards stay quiet. The ten-write budget still applies. A card left at the
+        cap keeps the walk open so a later pass can move R."""
+        bf = self.st.setdefault("bf", {})
+        if bf.get("raci:open"):
+            return
+        if not getattr(c, "token", None) or not callable(getattr(c, "write_json", None)):
+            return
+        if not (getattr(c, "assign_token", "") or ""):
+            return
+        self._raci_queued = False
+        for item in self.paged(
+                c, f"/repos/{self.repo}/issues",
+                {"state": "open", "sort": "updated", "direction": "desc"},
+                "raci-open", essential=False):
+            if getattr(self, "_assign_left", 0) <= 0:
+                self._paged_status = "budget"
+                break
+            self.maybe_fill_raci(c, item)
+            self.maybe_assign(c, item)
+        self._etag_new = None
+        if getattr(self, "_raci_queued", False):
+            return
+        if assign_rewalk_done(
+                getattr(self, "_paged_status", None),
+                getattr(self, "_assign_left", 0),
+                getattr(self, "_assign_miss", False),
+                getattr(self, "_assign_auth_dead", False)):
+            bf["raci:open"] = True
 
     def poll_pulls(self, c):
         if not getattr(c, "token", None):
@@ -1501,8 +1582,7 @@ class RepoCollector:
             if str(p.get("state") or "").lower() == "open":
                 self.maybe_fill_raci(c, p)
                 self.maybe_assign(c, p)
-                if isinstance(p.get("raci_reason"), str) and p["raci_reason"].strip():
-                    fields["raci_reason"] = p["raci_reason"].strip()
+                self._copy_raci_fields(fields, p)
             if not fields.get("packet_file") and head and packet_file_on_ref(c, self.repo, head):
                 fields["packet_file"] = True
             self.put(f"{self.repo}#{n}:open", p["created_at"], shown_from(login), "GitHub", "pr_open",
@@ -1910,10 +1990,7 @@ class RepoCollector:
             if str(i.get("state") or "").lower() == "open":
                 self.maybe_fill_raci(c, i)
                 self.maybe_assign(c, i)
-                reason = i.get("raci_reason")
-                opened = self.ev.get(f"{self.repo}!{n}:open")
-                if isinstance(reason, str) and reason.strip() and isinstance(opened, dict):
-                    opened["raci_reason"] = reason.strip()
+                self._remember_raci(i)
         self.st["cur"]["issues"] = newest
         if self._etag_new:
             self.st["etags"]["issues"] = self._etag_new
@@ -2228,6 +2305,7 @@ class RepoCollector:
         self._assign_left = 10
         self._assign_miss = False
         steps = [("pulls", self.poll_pulls), ("issues", self.poll_issues),
+                 ("open raci", self.fill_open_raci),
                  ("open cards", self.backfill_open_cards), ("issue events", self.poll_issue_events),
                  ("merger backfill", self.backfill_mergers),
                  ("comments", self.poll_comments), ("review comments", self.poll_review_comments),
