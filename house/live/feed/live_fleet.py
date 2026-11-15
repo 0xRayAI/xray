@@ -136,6 +136,19 @@ def load_seat_config(raw=None):
 
 
 SEATS, BOARD, BOARD_SEATS = load_seat_config()   # file owners, fold, counted header seats
+
+
+def activity_names():
+    """Inbox seats, then any counted board seat that is not an inbox seat."""
+    names = list(SEATS)
+    have = set(names)
+    for board_seat in BOARD_SEATS:
+        if board_seat not in have:
+            names.append(board_seat)
+            have.add(board_seat)
+    return names
+
+
 SEAT_OF = {"tester": "Tester", "qa-one": "QaOne", "qa-two": "QaTwo"}
 SEV_RE = re.compile(r"(?i)severity\W{0,8}(S[0-4])\b")
 STATUS_RE = re.compile(r"(?im)^\W{0,4}status\W{0,6}(OPEN|FIXED|REOPENED|PARTLY|WITHDRAWN|PASS|FAIL|CLOSED|WONTFIX|DUPLICATE)\b")
@@ -1303,17 +1316,19 @@ class Fleet:
     def fleet_state(self, feed_events, now=None):
         """Seat active = owned file, GitHub, or a message the seat sent, in the last 15 min. Working = spinner only."""
         now = now or time.time()
+        names = activity_names()
+        counted = set(names)
         gh_last = {}
         for e in feed_events:
-            who = e.get("credit") if e.get("credit") in SEATS else e.get("from")   # same credit as the feed (Seat: trailer > login)
-            if e.get("src_file") == "github-api" and who in SEATS:
+            who = e.get("credit") if e.get("credit") in counted else e.get("from")   # same credit as the feed (Seat: trailer > login)
+            if e.get("src_file") == "github-api" and who in counted:
                 try:
                     t = datetime.fromisoformat(e["t_ct"]).timestamp()
                 except (KeyError, ValueError):
                     continue
                 gh_last[who] = max(gh_last.get(who, 0), t)
         last_by = {}
-        for s in SEATS:   # fold file owners into board seats: a board seat is active if any member is
+        for s in names:   # inbox seats plus a board seat that has no inbox (mill)
             b = BOARD.get(s, s)
             for src, t in (("files", self.seat_mtime.get(s, 0)), ("github", gh_last.get(s, 0)),
                            ("message", self.prompts.get("seat_t", {}).get(s, 0)),

@@ -53,7 +53,7 @@ Precedence (`feed/live_collect.py`): `LIVE_NODE_MAP` env (JSON, set from this fi
 
 ## fleet-roster.json
 
-`feed/fleet-roster.json`: `seats` (who gets an inbox / key; the 9 above, including parked and Arch1) and `board` (the counted strip: blinky, critic, forge, near, nibbler, mill). Mill is drawn and counted. Mill is not an inbox seat, and `@mill` still lands on forge. `outside` is Arch1. `parked` (herald, magnet, sound) is not drawn. Kit default: no roster; the server uses `LIVE_FLEET_SEATS`, else the nodes in `LIVE_NODE_MAP` (`feed/live_fleet.py`).
+`feed/fleet-roster.json`: `seats` (who gets an inbox / key; the 9 above, including parked and Arch1) and `board` (the counted strip: blinky, critic, forge, near, nibbler, mill). Mill is drawn and counted. Mill is not an inbox seat, and a mill mention still lands on forge. A GitHub event credited to mill still marks mill active. `outside` is Arch1. `parked` (herald, magnet, sound) is not drawn. Kit default: no roster; the server uses `LIVE_FLEET_SEATS`, else the nodes in `LIVE_NODE_MAP` (`feed/live_fleet.py`).
 
 ## site.json
 
