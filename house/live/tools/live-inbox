@@ -920,14 +920,22 @@ if turn is not None:
     # "anything new without a card?" and files each card (From, Waiting on, Owner)
     # before this post. A crash still reaches the trap without that question.
     # A wake that lost the lines does not start a turn and does not end the winner's claim.
-    # kind: turn only. A cloud row is live-inbox --cloud, a second command. This path does not post it.
+    # kind: turn. A turn end whose tag names bc- also posts cloud_agent finished.
     if not turn_gate(seat, turn):
         sys.exit(0)
     note_external_wake(seat)
     body = {"kind": "turn", "action": turn, "t_ct": ct_now()}
     if tag is not None:
         body["tag"] = tag
-    print(json.dumps(call("POST", "/activity", body)))
+    posted = call("POST", "/activity", body)
+    feed = Path(__file__).resolve().parents[1] / "feed"
+    if str(feed) not in sys.path:
+        sys.path.insert(0, str(feed))
+    import cloud_line
+    extra = cloud_line.cloud_body(turn, tag, body["t_ct"])
+    if extra:
+        call("POST", "/activity", extra)
+    print(json.dumps(posted))
     sys.exit(0)
 if pass_id is not None:
     print(json.dumps({"ok": False, "error": "the board has no pass route"}))
