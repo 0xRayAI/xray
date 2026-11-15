@@ -77,6 +77,13 @@ class WakeEnvFreshShell(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertEqual([p for p, _ in self.srv.posts], ["/activity", "/activity"])
         self.assertNotIn("k-test", r.stdout + r.stderr)
+        self.srv.posts.clear()
+        r = self.sh(export_line() + f"\n{tool} forge --turn end --tag 'bc-abc123 xray#1092'", LIVE_URL=url, XRAY_MAIN=str(ROOT))
+        self.assertEqual(r.returncode, 0, r.stderr)
+        kinds = [body.get("kind") for _, body in self.srv.posts]
+        self.assertEqual(kinds, ["turn", "cloud_agent"])
+        self.assertEqual(self.srv.posts[1][1]["action"], "finished")
+        self.assertEqual(self.srv.posts[1][1]["agent"], "bc-abc123")
 
     def test_documented_command_runs_as_written(self):
         recorded = self.home / "ran.txt"
