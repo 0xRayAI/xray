@@ -5,7 +5,7 @@
 import { createRequire } from 'node:module';
 import { existsSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -30,7 +30,7 @@ function resolvePackageRoot() {
   return resolve(__dirname, '../../..');
 }
 
-function loadUserAside() {
+async function loadUserAside() {
   const root = resolvePackageRoot();
   const candidates = [
     join(__dirname, '../../nucleus/user-aside.js'),
@@ -39,11 +39,16 @@ function loadUserAside() {
   ];
   const found = candidates.find((p) => existsSync(p));
   if (!found) return null;
-  return createRequire(import.meta.url)(found);
+  try {
+    return await import(pathToFileURL(found).href);
+  } catch {
+    return null;
+  }
 }
 
+const userAside = await loadUserAside();
+
 export function getActiveUserAsideBoot(projectRoot, sessionId = null) {
-  const mod = loadUserAside();
-  if (!mod?.getUserAsideBootHints) return null;
-  return mod.getUserAsideBootHints(projectRoot, sessionId);
+  if (!userAside?.getUserAsideBootHints) return null;
+  return userAside.getUserAsideBootHints(projectRoot, sessionId);
 }

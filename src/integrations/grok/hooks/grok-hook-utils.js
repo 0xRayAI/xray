@@ -291,6 +291,7 @@ export function resolveGrokHookEvent(event = {}, argv = process.argv, env = proc
     .replace(/[-_\s]/g, '');
   if (named === 'precompact') return 'pre_compact';
   if (named === 'postcompact') return 'post_compact';
+  if (named === 'stop') return 'stop';
   if (named === 'sessionstart') return 'session_start';
   if (
     (event && (event.prompt != null || event.userMessage != null || event.user_prompt != null)) ||

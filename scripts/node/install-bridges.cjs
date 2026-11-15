@@ -659,6 +659,7 @@ function patchedGrokHooksBody(hooks, packageRoot, targetDir, opts) {
   patchGrokHookEntry(hooks.hooks?.PostToolUse?.[0]?.hooks?.[0], packageRoot, targetDir, "post-tool-use.js", "", opts);
   ensureGrokHookEvent(hooks, "PreCompact");
   ensureGrokHookEvent(hooks, "PostCompact");
+  ensureGrokHookEvent(hooks, "Stop");
   patchGrokHookEntry(
     hooks.hooks?.PreCompact?.[0]?.hooks?.[0],
     packageRoot,
@@ -673,6 +674,14 @@ function patchedGrokHooksBody(hooks, packageRoot, targetDir, opts) {
     targetDir,
     "session-start.js",
     "--hook-event=post_compact",
+    opts,
+  );
+  patchGrokHookEntry(
+    hooks.hooks?.Stop?.[0]?.hooks?.[0],
+    packageRoot,
+    targetDir,
+    "session-start.js",
+    "--hook-event=stop",
     opts,
   );
   return JSON.stringify(hooks, null, 2) + "\n";

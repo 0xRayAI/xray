@@ -2,6 +2,8 @@
 
 ### 🔄 Changes
 
+- The session hook orders one inbox monitor inside the CLI. It does not start inbox-watch.sh. A prompt stays quiet when this session's inbox-watch is alive and its parent is not pid 1. Stop blocks one turn per session while that monitor is missing, then the turn ends. The prompt still prints the order. An outside inbox-watch pid is named so the seat can stop it. A second copy of the script exits when that pid file names a live process. The built hook loads the nucleus modules so that order can finish. #1057
+
 - A quiet collector pass publishes the board queue without hashing one giant string per event. A feed file this collector just wrote is not a stall. The image copies `card-owner.mjs`, and the collector copies `card_owner.py`.
 - Packet R assigns the queue. `R: arch1` files the line on arch1 without an `@arch10x` mention, including when arch1 opened it. An already-seen open from the last 48 hours is filed once.
 - The board reader waits 90 seconds for one pass of the live feed. A 20 second cut dropped the publish and froze the queue clock.

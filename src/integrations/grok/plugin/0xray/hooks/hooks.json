@@ -65,6 +65,17 @@
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "XRAY_AI_PATH=\"${XRAY_AI_PATH:-node_modules/0xray}\" node \"${XRAY_AI_PATH:-node_modules/0xray}/scripts/mjs/run-grok-hook.mjs\" session-start.js --hook-event=stop",
+            "timeout": 30
+          }
+        ]
+      }
     ]
   }
 }

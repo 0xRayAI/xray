@@ -1,14 +1,11 @@
 /**
- * One inbox poll when Grok session start has no live watcher.
- * The same message orders the seat to start that script as the session monitor.
- * A live watcher pid gets neither the poll nor the order.
- * Session start still writes one wake token. The open inbox head reprints on every poll until it is acked.
- * Grok reads a session-start systemMessage. It does not receive a webhook.
- * A hook http call leaves this machine. A detached loop is not a session event.
- * The poll uses the suit board and the sole seat key. It does not ack.
- * Its pid file is a scratch file, so a live watcher pid stays the watcher.
+ * The order to start the CLI monitor.
+ * The monitor tool is the only watch this chat can hear.
+ * The hook never starts inbox-watch.sh. A child process is not heard here.
+ * A pid outside this CLI is named so the seat can stop it. One monitor. One copy.
+ * Session start still writes one wake token when it prints that order.
  */
-import { spawn } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -16,7 +13,6 @@ import { fileURLToPath } from 'node:url';
 import { suitConfig } from './bifrost-send.mjs';
 
 const CAP = 3500;
-const TIMEOUT_MS = 12000;
 const PREFACE = 'Inbox. Ack a line only after that work is done. A station nudge stays until station has run.';
 
 export function inboxWatchScript(env = process.env) {
@@ -102,35 +98,146 @@ function shQuote(value) {
   return `'${String(value).replace(/'/g, `'\\''`)}'`;
 }
 
-/** The session monitor command. The hook does not spawn the loop. */
-export function monitorStartOrder(script, seat, origin, keys, sessionId, foreignPid) {
-  const session = sessionId ? ` INBOX_WATCH_SESSION=${shQuote(sessionId)}` : '';
-  const command = `LIVE_URL=${shQuote(origin)} SEAT_KEYS_DIR=${shQuote(keys)}${session} ${shQuote(script)} ${shQuote(seat)}`;
-  const hold = foreignPid
-    ? `Stop inbox-watch pid ${foreignPid}. It is not this session.`
-    : 'Leave a live inbox-watch pid alone.';
-  return [
-    'Start the inbox monitor before other work. One copy. Persistent.',
-    hold,
-    `Command: ${command}`,
-  ].join('\n');
+/** This chat hears a monitor. A detached process does not count. */
+export function sessionHasInboxMonitor(tasks) {
+  const list = Array.isArray(tasks) ? tasks : [];
+  return list.some((task) => {
+    if (!task || String(task.type) !== 'monitor') return false;
+    const text = `${task.description || ''} ${task.command || ''}`;
+    return text.includes('inbox-watch.sh');
+  });
 }
 
-/** Repeat the start order when the watcher is down. No poll. A live pid stays quiet. */
+/** Parent and command of a pid. A miss is an empty command and parent 0. */
+export function watchProcess(pid) {
+  if (!Number.isInteger(pid) || pid <= 0) return { parent: 0, command: '' };
+  try {
+    const out = execFileSync('ps', ['-o', 'ppid=,command=', '-p', String(pid)], {
+      encoding: 'utf8',
+      timeout: 1000,
+    });
+    const match = /^(\d+)\s+([\s\S]*)$/.exec(String(out).trim());
+    if (!match) return { parent: 0, command: '' };
+    return { parent: Number(match[1]) || 0, command: match[2] || '' };
+  } catch {
+    return { parent: 0, command: '' };
+  }
+}
+
+/**
+ * True when this session's inbox-watch is already heard.
+ * A prompt does not receive the monitor list. The pid file, the session
+ * line, and a parent other than pid 1 are the proof. Pid 1 is detached.
+ */
+export function inboxMonitorHeard(opts, pidFile, stateFile) {
+  if (sessionHasInboxMonitor(opts.backgroundTasks)) return true;
+  const env = opts.env || {};
+  const sessionId = String(opts.sessionId || env.GROK_SESSION_ID || '').trim();
+  if (!sessionId || watcherSession(stateFile) !== sessionId) return false;
+  const pid = watcherAlive(pidFile) ? watcherPid(pidFile) : 0;
+  if (!pid) return false;
+  const looked = typeof opts.inspectProcess === 'function' ? opts.inspectProcess(pid) : watchProcess(pid);
+  const parent = Number(looked && looked.parent) || 0;
+  const command = String((looked && looked.command) || '');
+  return parent > 1 && command.includes('inbox-watch.sh');
+}
+
+/** The seat calls the monitor tool. The hook does not spawn. */
+export function cliMonitorOrder(script, seat, origin, keys, sessionId, externalPid) {
+  const session = sessionId ? ` INBOX_WATCH_SESSION=${shQuote(sessionId)}` : '';
+  const command = `LIVE_URL=${shQuote(origin)} SEAT_KEYS_DIR=${shQuote(keys)}${session} ${shQuote(script)} ${shQuote(seat)}`;
+  const lines = [
+    'Start the inbox monitor in this CLI before other work. One copy. Persistent.',
+    'Call the monitor tool with this command. This chat hears its lines.',
+    'Do not spawn a detached process.',
+  ];
+  if (externalPid) {
+    lines.push(`Stop inbox-watch pid ${externalPid}. This chat cannot hear it.`);
+  }
+  lines.push(`Command: ${command}`);
+  return lines.join('\n');
+}
+
+function inboxOrder(opts, cfg, script) {
+  const env = opts.env || {};
+  const home = typeof opts.home === 'string' && opts.home.trim()
+    ? opts.home.trim()
+    : ((typeof env.HOME === 'string' && env.HOME.trim()) || os.homedir());
+  const pidFile = opts.pidFile || watcherPidFile(env, home);
+  const sessionId = String(opts.sessionId || env.GROK_SESSION_ID || '').trim();
+  const externalPid = watcherAlive(pidFile) ? watcherPid(pidFile) : 0;
+  recordInboxWake(home, cfg.seat);
+  return cliMonitorOrder(script, cfg.seat, cfg.origin, cfg.keys, sessionId, externalPid);
+}
+
+/** Order the CLI monitor. No poll. An outside pid does not count as the monitor. */
 export function inboxStartOrder(opts = {}) {
   const env = opts.env || {};
   const home = typeof opts.home === 'string' && opts.home.trim()
     ? opts.home.trim()
     : ((typeof env.HOME === 'string' && env.HOME.trim()) || os.homedir());
   const pidFile = opts.pidFile || watcherPidFile(env, home);
-  if (watcherAlive(pidFile)) return '';
+  const stateFile = opts.stateFile || path.join(path.dirname(pidFile), 'inbox-watch.state');
+  if (inboxMonitorHeard(opts, pidFile, stateFile)) return '';
   const cfg = suitConfig(env, home);
   if (!cfg) return '';
   const script = opts.script || inboxWatchScript(env);
   if (!script || !fs.existsSync(script)) return '';
-  const sessionId = String(opts.sessionId || env.GROK_SESSION_ID || '').trim();
-  recordInboxWake(home, cfg.seat);
-  return monitorStartOrder(script, cfg.seat, cfg.origin, cfg.keys, sessionId, 0);
+  return inboxOrder(opts, cfg, script);
+}
+
+function stopCountFile(stateFile) {
+  return path.join(path.dirname(stateFile), 'inbox-watch.stop.json');
+}
+
+function stopCount(file, sessionId) {
+  try {
+    const data = JSON.parse(fs.readFileSync(file, 'utf8'));
+    const count = data && typeof data === 'object' ? Number(data[sessionId]) : 0;
+    return Number.isInteger(count) && count > 0 ? count : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function markStop(file, sessionId) {
+  const counts = {};
+  try {
+    const data = JSON.parse(fs.readFileSync(file, 'utf8'));
+    if (data && typeof data === 'object') Object.assign(counts, data);
+  } catch {
+    /* a new file starts at one */
+  }
+  counts[sessionId] = 1;
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, `${JSON.stringify(counts)}\n`, { mode: 0o600 });
+}
+
+/**
+ * Block one stop per session while the monitor is missing.
+ * A second stop in that session ends the turn. The prompt still prints the order.
+ * stopHookActive means this turn is already continuing from a block.
+ */
+export function inboxStopDecision(opts = {}) {
+  if (opts.stopHookActive === true) return null;
+  const env = opts.env || {};
+  const home = typeof opts.home === 'string' && opts.home.trim()
+    ? opts.home.trim()
+    : ((typeof env.HOME === 'string' && env.HOME.trim()) || os.homedir());
+  const pidFile = opts.pidFile || watcherPidFile(env, home);
+  const stateFile = opts.stateFile || path.join(path.dirname(pidFile), 'inbox-watch.state');
+  if (inboxMonitorHeard(opts, pidFile, stateFile)) return null;
+  const sessionId = String(opts.sessionId || env.GROK_SESSION_ID || '').trim() || 'none';
+  const file = stopCountFile(stateFile);
+  if (stopCount(file, sessionId) >= 1) return null;
+  const reason = inboxStartOrder(opts);
+  if (!reason) return null;
+  try {
+    markStop(file, sessionId);
+  } catch {
+    return null;
+  }
+  return { decision: 'block', reason };
 }
 
 export function composeInboxMessage(pollText, order) {
@@ -146,84 +253,7 @@ export function composeInboxMessage(pollText, order) {
   return `${poll.slice(0, room - 2).trimEnd()}\n…${extra}`;
 }
 
-function delivered(text) {
-  return /^(ACTION_REQUIRED|FAIL|held:|unfinished:|auto-ack |open )/m.test(String(text || ''));
-}
-
-export async function pollInboxOnce(opts = {}) {
-  const env = opts.env || {};
-  const home = typeof opts.home === 'string' && opts.home.trim()
-    ? opts.home.trim()
-    : ((typeof env.HOME === 'string' && env.HOME.trim()) || os.homedir());
-  const pidFile = opts.pidFile || watcherPidFile(env, home);
-  const stateFile = opts.stateFile || path.join(path.dirname(pidFile), 'inbox-watch.state');
-  const sessionId = String(opts.sessionId || env.GROK_SESSION_ID || '').trim();
-  const pid = watcherPid(pidFile);
-  const alive = pid > 0 && watcherAlive(pidFile);
-  const owned = alive && sessionId !== '' && watcherSession(stateFile) === sessionId;
-  const seat = String(env.XRAY_SEAT || 'arch1').trim();
-  recordInboxWake(home, seat);
-  if (opts.force !== true && owned) return '';
-  const cfg = suitConfig(env, home);
-  if (!cfg) return '';
-  const script = opts.script || inboxWatchScript(env);
-  if (!script || !fs.existsSync(script)) return '';
-  const order = monitorStartOrder(script, cfg.seat, cfg.origin, cfg.keys, sessionId, alive ? pid : 0);
-  const timeoutMs = Number(opts.timeoutMs) > 0 ? Number(opts.timeoutMs) : TIMEOUT_MS;
-  const ownScratch = !opts.scratch;
-  const scratch = opts.scratch || fs.mkdtempSync(path.join(os.tmpdir(), 'inbox-boot-'));
-  fs.mkdirSync(scratch, { recursive: true });
-  const childEnv = { ...env, HOME: home };
-  childEnv.INBOX_WATCH_ONCE = '1';
-  childEnv.INBOX_WATCH_PID = path.join(scratch, 'pid');
-  childEnv.INBOX_WATCH_STATE = path.join(scratch, 'state');
-  childEnv.LIVE_INBOX_TIMEOUT = String(Math.max(1, Math.floor(timeoutMs / 1000) - 2));
-  childEnv.LIVE_URL = cfg.origin;
-  childEnv.SEAT_KEYS_DIR = cfg.keys;
-  delete childEnv.LIVE_INBOX;
-  const spawnImpl = opts.spawnImpl || spawn;
-  const text = await new Promise((resolve) => {
-    let out = '';
-    let settled = false;
-    const finish = (value) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      resolve(value);
-    };
-    let child;
-    try {
-      child = spawnImpl(script, [cfg.seat], {
-        env: childEnv,
-        stdio: ['ignore', 'pipe', 'ignore'],
-      });
-    } catch {
-      finish('');
-      return;
-    }
-    const timer = setTimeout(() => {
-      try {
-        child.kill('SIGTERM');
-      } catch {
-        /* already gone */
-      }
-      finish(delivered(out) ? out : '');
-    }, timeoutMs);
-    if (child.stdout) {
-      child.stdout.on('data', (buf) => {
-        out += buf.toString('utf8');
-        if (out.length > 16000) out = out.slice(0, 16000);
-      });
-    }
-    child.on('error', () => finish(''));
-    child.on('close', () => finish(out));
-  });
-  if (ownScratch) {
-    try {
-      fs.rmSync(scratch, { recursive: true, force: true });
-    } catch {
-      /* scratch is disposable */
-    }
-  }
-  return composeInboxMessage(text, order);
+/** Session start orders the CLI monitor. It does not run inbox-watch.sh. */
+export function pollInboxOnce(opts = {}) {
+  return inboxStartOrder(opts);
 }
