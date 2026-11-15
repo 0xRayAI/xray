@@ -153,3 +153,6 @@ house/live/app/collector/*
 
 # packed copy of house/live/tools/bifrost-init (grok-bot prepack, #1050)
 grok-bot/lib/bifrost-init.py
+# packed copies of house/live/tools/live-inbox and exit-gate.mjs (grok-bot prepack, xray#1071)
+grok-bot/lib/live-inbox.py
+grok-bot/lib/exit-gate.mjs

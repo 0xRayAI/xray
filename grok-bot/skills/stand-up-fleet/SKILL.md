@@ -18,13 +18,13 @@ Every `npx` line pins the kit version. An unpinned `npx @0xray/grok-bot` can run
 Follow [setup-house](https://github.com/0xRayAI/xray/blob/main/grok-bot/skills/setup-house/SKILL.md).
 
 ```bash
-npx --yes @0xray/grok-bot@0.1.16 house init
+npx --yes @0xray/grok-bot@0.1.17 house init
 ```
 
 Fill `house/HOUSE.md` from what the owner has already said. Ask only for what is missing, one question at a time. Show the filled file. Nothing in Allowed counts until the owner approves it. Paste the same Ask first and Allow lines into `house/AUTO-REVIEW.md`.
 
 ```bash
-npx --yes @0xray/grok-bot@0.1.16 doctor
+npx --yes @0xray/grok-bot@0.1.17 doctor
 ```
 
 Doctor must pass before the next step. In a house-only folder (no seat suited yet) it passes with `Plant: PASS — house only`. A line that is exactly `wallet off` skips Open Wallet, Clearing, and hangar pay. That skip stays in force below.
@@ -42,8 +42,8 @@ printf '{}\n' > collector/fleet-nodes.json                    # login -> seat; f
 printf '{"seats": ["<seat>", "<seat>"]}\n' > collector/fleet-roster.json
 printf '{"public": false, "name": "<fleet> Bifrost"}\n' > collector/site.json
 : > owner-name
-npx --yes @0xray/grok-bot@0.1.16 bifrost init --seats <seat>,<seat> --logins <seat>=<login>,<seat>=<login> --yes
-npx --yes @0xray/grok-bot@0.1.16 bifrost init --check --seats <seat>,<seat>
+npx --yes @0xray/grok-bot@0.1.17 bifrost init --seats <seat>,<seat> --logins <seat>=<login>,<seat>=<login> --yes
+npx --yes @0xray/grok-bot@0.1.17 bifrost init --check --seats <seat>,<seat>
 ```
 
 `bifrost init` writes `collector/routing/inbox-roles.json` and `collector/routing/seat-webhooks.json` (placeholders and env names only). `--check` fails a missing route, a nickname-only route, and a login GitHub does not know. It needs `python3`. Look a login up at the board's `GET /routing` before an @-mention.
@@ -69,7 +69,7 @@ When `GET /healthz` on that domain returns 200, `LIVE_URL` is that origin (for e
 
 For each seat, in that seat's own chat:
 
-1. Follow [fasten-suit-per-agent](https://github.com/0xRayAI/xray/blob/main/grok-bot/skills/fasten-suit-per-agent/SKILL.md). One project, then `npm i 0xray`, `npx 0xray wear`, `npx 0xray inspect --skip-live`. Expect `ok: true`, mill + inspect, `costume: false`.
+1. Follow [fasten-suit-per-agent](https://github.com/0xRayAI/xray/blob/main/grok-bot/skills/fasten-suit-per-agent/SKILL.md). One project, then `npm i 0xray`, `npx 0xray wear`, `npx 0xray validate`. Expect `✅ plant: mill + inspect fastened` and `🎉 Wear checks passed.`
 2. That seat runs [seat-label](https://github.com/0xRayAI/xray/blob/main/grok-bot/skills/seat-label/SKILL.md). One seat does not set another seat's title.
 3. Install `~/bin/gh-<seat>` from [seat-github-key](https://github.com/0xRayAI/xray/blob/main/grok-bot/skills/seat-github-key/SKILL.md). A seat with no App hands the branch and the PR body to a seat that has one.
 
@@ -77,7 +77,7 @@ For each seat, in that seat's own chat:
 
 Set `LIVE_URL` and `SEAT_KEYS_DIR` as names only. Never write a key value into a file this skill creates.
 
-The wake commands are [WAKE-ROUTINE](https://github.com/0xRayAI/xray/blob/main/grok-bot/templates/house/fleet/WAKE-ROUTINE.md). They run `live-inbox` from the main checkout. The order after `house init` is [STATION-BOOT](https://github.com/0xRayAI/xray/blob/main/grok-bot/templates/house/STATION-BOOT.md).
+The wake commands are [WAKE-ROUTINE](https://github.com/0xRayAI/xray/blob/main/grok-bot/templates/house/fleet/WAKE-ROUTINE.md). They run `live-inbox` from the kit (`npx --no-install grok-bot live-inbox`), with no repo checkout. The order after `house init` is [STATION-BOOT](https://github.com/0xRayAI/xray/blob/main/grok-bot/templates/house/STATION-BOOT.md).
 
 Owner prompts, acks, and cloud tags stay on those two pages. Do not restate them here.
 

@@ -237,7 +237,7 @@ describe('grok-bot seat doctor — diagnose', () => {
       const text = formatDoctor(report);
       expect(text).toMatch(/Plant: FAIL/);
       expect(text).toContain('missing node_modules/0xray/package.json');
-      expect(report.next).toContain('npm i 0xray && npx 0xray inspect --skip-live');
+      expect(report.next).toContain('npm i 0xray && npx 0xray validate');
       expect(report.next.join('\n')).not.toContain('@0xray/foundry');
     } finally {
       rmSync(dir, { recursive: true, force: true });

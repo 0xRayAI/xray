@@ -4,7 +4,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
-TEMPLATE = ROOT / "grok-bot" / "templates" / "house" / "fleet" / "WAKE-ROUTINE.md"
+TEMPLATE = ROOT / "house" / "fleet" / "WAKE-ROUTINE.md"  # the 0xRay fleet routine; the kit template is generic (xray#1055)
 TOOL = Path(__file__).resolve().parents[1] / "tools" / "live-inbox"
 BASE_PATH = "/usr/local/bin:/usr/bin:/bin"
 
