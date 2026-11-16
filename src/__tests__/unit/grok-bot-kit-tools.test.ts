@@ -1,9 +1,12 @@
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
 import { describe, expect, it } from 'vitest';
+
+const requireCjs = createRequire(import.meta.url);
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const bin = path.join(root, 'grok-bot', 'bin', 'grok-bot.js');
@@ -13,6 +16,23 @@ function run(args: string[], env: NodeJS.ProcessEnv) {
 }
 
 describe('grok-bot live-inbox and exit-gate ship in the kit (xray#1071)', () => {
+  it('uses the checkout tool when a packed copy is also present', () => {
+    const { toolScript } = requireCjs(path.join(root, 'grok-bot', 'lib', 'kit-tools.cjs')) as {
+      toolScript: (kitRoot: string, name: string) => string | null;
+    };
+    const dir = mkdtempSync(path.join(tmpdir(), 'gb-tool-'));
+    try {
+      const kit = path.join(dir, 'grok-bot');
+      mkdirSync(path.join(kit, 'lib'), { recursive: true });
+      mkdirSync(path.join(dir, 'house', 'live', 'tools'), { recursive: true });
+      writeFileSync(path.join(kit, 'lib', 'live-inbox.py'), 'packed\n');
+      writeFileSync(path.join(dir, 'house', 'live', 'tools', 'live-inbox'), 'source\n');
+      expect(toolScript(kit, 'live-inbox')).toBe(path.join(dir, 'house', 'live', 'tools', 'live-inbox'));
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   const bare = { PATH: process.env.PATH, HOME: tmpdir() };
 
   it('live-inbox with no board env exits 2 and names both vars', () => {

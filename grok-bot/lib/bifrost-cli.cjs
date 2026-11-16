@@ -7,10 +7,12 @@ const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 
 function initScript(kitRoot) {
-  const packed = path.join(kitRoot, 'lib', 'bifrost-init.py');
-  if (fs.existsSync(packed)) return packed;
+  // Prefer the checkout copy. prepack writes lib/bifrost-init.py and postpack
+  // removes it, so a parallel test must not launch that temporary file.
   const repo = path.join(kitRoot, '..', 'house', 'live', 'tools', 'bifrost-init');
-  return fs.existsSync(repo) ? repo : null;
+  if (fs.existsSync(repo)) return repo;
+  const packed = path.join(kitRoot, 'lib', 'bifrost-init.py');
+  return fs.existsSync(packed) ? packed : null;
 }
 
 function runBifrostCli(argv, io = {}) {
