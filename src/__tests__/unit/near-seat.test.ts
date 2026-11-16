@@ -60,7 +60,7 @@ function scratch(): string {
   return mkdtempSync(path.join(tmpdir(), 'near-seat-'));
 }
 
-async function grantAgainstMethods(methodNamesOnKey: string[], methodNames: string): Promise<{
+async function grantAgainstPermission(permission: unknown, methodNames = 'ping'): Promise<{
   grants: number;
   addedKey: boolean;
   grantArgv: string[] | null;
@@ -86,13 +86,7 @@ async function grantAgainstMethods(methodNamesOnKey: string[], methodNames: stri
       log: (line) => logs.push(line),
       viewAccount: async () => ({ amount: '10' }),
       viewAccessKeys: async () => ({
-        keys: [{
-          access_key: {
-            permission: {
-              FunctionCall: { receiver_id: accountId, method_names: methodNamesOnKey },
-            },
-          },
-        }],
+        keys: [{ access_key: { permission } }],
       }),
       runners: {
         createAccount: async () => { throw new Error('create must not run'); },
@@ -108,6 +102,16 @@ async function grantAgainstMethods(methodNamesOnKey: string[], methodNames: stri
     rmSync(home, { recursive: true, force: true });
     rmSync(creds, { recursive: true, force: true });
   }
+}
+
+async function grantAgainstMethods(methodNamesOnKey: string[], methodNames: string): Promise<{
+  grants: number;
+  addedKey: boolean;
+  grantArgv: string[] | null;
+}> {
+  return grantAgainstPermission({
+    FunctionCall: { receiver_id: 'millfc1ca97ca3.testnet', method_names: methodNamesOnKey },
+  }, methodNames);
 }
 
 describe('near-seat', () => {
@@ -551,6 +555,28 @@ describe('near-seat', () => {
     const result = await grantAgainstMethods(['ping', 'pay'], 'ping');
     expect(result.grants).toBe(0);
     expect(result.addedKey).toBe(false);
+  });
+
+  it('counts a function_call key for the same contract', async () => {
+    const result = await grantAgainstPermission({
+      function_call: { receiver_id: 'millfc1ca97ca3.testnet', method_names: [] },
+    });
+    expect(result.grants).toBe(0);
+    expect(result.addedKey).toBe(false);
+  });
+
+  it('does not count a function-call key for a different receiver', async () => {
+    const result = await grantAgainstPermission({
+      FunctionCall: { receiver_id: 'other.testnet', method_names: ['ping'] },
+    });
+    expect(result.grants).toBe(1);
+    expect(result.addedKey).toBe(true);
+  });
+
+  it('does not count a full-access key as a function-call key', async () => {
+    const result = await grantAgainstPermission('FullAccess');
+    expect(result.grants).toBe(1);
+    expect(result.addedKey).toBe(true);
   });
 
   it('adds a key when the existing function-call key is missing a granted method', async () => {

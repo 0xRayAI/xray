@@ -201,6 +201,16 @@ function probeRepertoire(cwd) {
   };
 }
 
+function probeFoundry(cwd) {
+  const file = path.join(cwd, '.xray', 'state', 'foundry.json');
+  const data = readJson(file);
+  if (!data || typeof data.id !== 'string' || data.id.length === 0) {
+    return { present: false, id: null, receiver: null, file: null };
+  }
+  const receiver = typeof data.receiver === 'string' && data.receiver.length > 0 ? data.receiver : null;
+  return { present: true, id: data.id, receiver, file };
+}
+
 function probeNear(cwd) {
   const seats = path.join(cwd, '.xray', 'state', 'seats');
   if (!fs.existsSync(seats)) return { present: false, accountId: null, file: null };
@@ -975,6 +985,7 @@ function diagnoseSeat(opts = {}) {
     repertoire: probeRepertoire(cwd),
     ows: probeOws(walletHome),
     near: probeNear(cwd),
+    foundry: probeFoundry(cwd),
     house,
     bridges,
     board: boardSurface(env),
@@ -1067,6 +1078,13 @@ function formatDoctor(report) {
       report.near.present
         ? `NEAR: ${report.near.accountId} (testnet)`
         : 'NEAR: miss — near-seat has not recorded an account',
+    );
+  }
+  if (report.foundry) {
+    lines.push(
+      report.foundry.present
+        ? `Foundry: ${report.foundry.id} — receiver ${report.foundry.receiver || 'miss'}`
+        : 'Foundry: miss — create has not recorded a foundry',
     );
   }
   if (report.house) {
@@ -1171,6 +1189,8 @@ Commands:
   exit-gate <NOTES.md>
                    The wake's step 7 gate: a named bug or ask with no repo#n fails the turn
   bifrost init     Write the board's seat routes (collector/routing/inbox-roles.json in a bifrost clone; BIFROST_FEED overrides). --check validates and writes nothing. Needs python3
+  foundry-create --id <id> --seat <seat> --account <account>
+                   Record the foundry and its NEAR receiver. The same id and receiver keeps the record. --force replaces a different one
   (default)        Point at AGENTS.md / SKILLS.md / llms.txt
 
 Flags:

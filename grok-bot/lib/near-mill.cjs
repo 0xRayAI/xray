@@ -50,6 +50,9 @@ async function installNearMill(opts = {}) {
     credentialsHome: opts.credentialsHome,
     fetch: opts.fetch,
     sleep: opts.sleep,
+    viewAccessKeys: opts.viewAccessKeys,
+    methodNames: opts.methodNames,
+    contractId: opts.contractId,
   });
   return { dest, seatHome, seatId: opts.seatId, manifestPath, npmPublish: false, manifest, seated };
 }
