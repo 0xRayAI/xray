@@ -208,7 +208,8 @@ function probeFoundry(cwd) {
     return { present: false, id: null, receiver: null, file: null };
   }
   const receiver = typeof data.receiver === 'string' && data.receiver.length > 0 ? data.receiver : null;
-  return { present: true, id: data.id, receiver, file };
+  const listingId = typeof data.listingId === 'string' && data.listingId.length > 0 ? data.listingId : null;
+  return { present: true, id: data.id, receiver, listingId, file };
 }
 
 function probeNear(cwd) {
@@ -1086,6 +1087,9 @@ function formatDoctor(report) {
         ? `Foundry: ${report.foundry.id} — receiver ${report.foundry.receiver || 'miss'}`
         : 'Foundry: miss — create has not recorded a foundry',
     );
+    if (report.foundry.present && report.foundry.listingId) {
+      lines.push(`Hangar: ${report.foundry.listingId}`);
+    }
   }
   if (report.house) {
     let label = 'WARN';
@@ -1191,6 +1195,8 @@ Commands:
   bifrost init     Write the board's seat routes (collector/routing/inbox-roles.json in a bifrost clone; BIFROST_FEED overrides). --check validates and writes nothing. Needs python3
   foundry-create --id <id> --seat <seat> --account <account>
                    Record the foundry and its NEAR receiver. The same id and receiver keeps the record. --force replaces a different one
+  hangar-list --agent-id <id> --url <https-shop>
+                   Read .xray/state/foundry.json and check GET /v1/listings. A stored listing id skips the call. Pin payment is not signed here.
   (default)        Point at AGENTS.md / SKILLS.md / llms.txt
 
 Flags:

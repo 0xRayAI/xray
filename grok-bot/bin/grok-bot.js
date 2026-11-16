@@ -28,6 +28,17 @@ if (args[0] === 'range') {
       process.stderr.write(`${message}\n`);
       process.exitCode = 1;
     });
+} else if (args[0] === 'hangar-list') {
+  const { runHangarListCli } = require('../lib/hangar-list.cjs');
+  runHangarListCli(args.slice(1))
+    .then((code) => {
+      process.exitCode = code;
+    })
+    .catch((err) => {
+      const message = err instanceof Error ? err.message : String(err);
+      process.stderr.write(`${message}\n`);
+      process.exitCode = 1;
+    });
 } else {
   const { runDoctorCli } = require('../lib/seat-doctor.cjs');
   process.exitCode = runDoctorCli(args);
