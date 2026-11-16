@@ -13,6 +13,7 @@ const sidebars: SidebarsConfig = {
         'architecture/GROK_GUIDE',
         'guides/autonomy-command',
         'guides/consumer-migration',
+        'guides/migrate-from-openai-agent-builder',
       ],
     },
     {
