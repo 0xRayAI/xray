@@ -13,10 +13,14 @@ const TOOLS = {
 
 function toolScript(kitRoot, name) {
   const tool = TOOLS[name];
-  const packed = path.join(kitRoot, 'lib', tool.packed);
-  if (fs.existsSync(packed)) return packed;
+  // A checkout keeps the source under house/live/tools. prepack copies that
+  // into lib/ and postpack deletes it, so a test that sees the copy can lose
+  // it before python starts. Use the source whenever it is there. The packed
+  // file is only for an installed kit, where the house tree is absent.
   const repo = path.join(kitRoot, '..', 'house', 'live', 'tools', tool.repo);
-  return fs.existsSync(repo) ? repo : null;
+  if (fs.existsSync(repo)) return repo;
+  const packed = path.join(kitRoot, 'lib', tool.packed);
+  return fs.existsSync(packed) ? packed : null;
 }
 
 function runKitTool(name, argv, io = {}) {
