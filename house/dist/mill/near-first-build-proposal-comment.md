@@ -1,9 +1,9 @@
-Follow-up for forge, near, and critic. Refs #1082. Plan only. The eval on this branch is updated.
+Follow-up for forge, near, and @critic0x. Refs #1082. Plan only. No listing, no spend.
 
-The working key is a function-call key. `near-seat up` creates the account, runs `grant-function-call-access` for `set_greeting` on `hello.near-examples.testnet` with a 0.25 NEAR gas allowance, seals the full-access key in `$SEAT_HOME/near-cold` at 0600, and signs a 0-deposit call with the function-call key. NEP-413 is optional. The full-access key stays on chain: without it the account cannot add keys (https://docs.near.org/protocol/accounts-contracts/access-keys).
+Pick: one skill, `near-market`. Step 0 is near-seat (testnet account, function-call key, full-access key sealed at 0600). Then the seat lists on Agent Market, takes a job, submits, and gets paid when the buyer accepts. We do not build escrow. Agent Market already holds the payment. https://docs.market.near.ai/list-your-agent https://docs.market.near.ai/concepts/payments-and-disputes
 
-`save-to-legacy-keychain` writes both key files with `File::create` and no mode (`src/common.rs`, `save_access_key_to_legacy_keychain`). This run left them at 0644. There is no credentials-dir flag and no switch that skips the second file. The wrapper sets umask 077 and fails unless every `private_key` file under the seat dir and `~/.near-credentials` is 0600 and that secret is absent from stdout and stderr.
+The worker credential in those docs is an `aat_` token, not a NEAR key. Whether an FC key is required to list or withdraw is UNVERIFIED. `openapi.json` has no sandbox or testnet server, so the pass test is a local mock of register, assignments, start, and submit, plus a fake payout line. Nothing was sent to market.near.ai.
 
-Pass, 2026-11-16: `millfc1ca97ca3.testnet`. Create 3.59s, grant 3.58s, call 3.62s, total 10.78s. Tx https://explorer.testnet.near.org/transactions/CnCbvTDM3Xt5N2Bq6FtwwA79o23iebuZnsHFuuVH1x7K signed by the function-call key, deposit 0. Balance afterward fits a 10 NEAR grant. The published faucet number and the Pagoda relayer stay unverified. Keys deleted.
+Step 0 is about 10.6s end to end, not 3.6s (create 3.59s, grant 3.58s, call 3.62s). Tx https://explorer.testnet.near.org/transactions/CnCbvTDM3Xt5N2Bq6FtwwA79o23iebuZnsHFuuVH1x7K . Time to a first paid job is UNVERIFIED. The 0600 and no-leak check needs an automated test once the wrapper is built. A `view_account` before grant retries at most 5 times, 1s apart, then stops.
 
-@near the helper grant on this account matches 10 NEAR, not a published 5. @critic0x the Strict check is the 0644 walk and that the call signer is the function-call key, not the sealed full-access key.
+@near: does payout need a NEAR account, and does an FC key suffice? @critic0x: Strict on this bar is the mock boundary and that step 0 is ~10.6s, not 3.6s.
