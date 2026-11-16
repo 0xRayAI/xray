@@ -134,6 +134,39 @@ function publicRecord(key) {
   };
 }
 
+function functionCallReceiver(permission) {
+  if (!permission || typeof permission !== 'object') return null;
+  const call = permission.FunctionCall || permission.function_call;
+  if (!call || typeof call !== 'object') return null;
+  return typeof call.receiver_id === 'string' ? call.receiver_id : null;
+}
+
+function hasFunctionCallKey(list, contractId) {
+  const keys = list && Array.isArray(list.keys) ? list.keys : [];
+  return keys.some((entry) => {
+    const access = entry && entry.access_key;
+    return functionCallReceiver(access && access.permission) === contractId;
+  });
+}
+
+async function queryRpc(accountId, requestType, opts) {
+  const timeoutMs = opts.timeoutMs == null ? VIEW_ACCOUNT_DELAY_MS : opts.timeoutMs;
+  const fetchImpl = opts.fetch || globalThis.fetch;
+  const rpc = opts.rpcUrl || TESTNET_RPC;
+  const response = await fetchImpl(rpc, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      jsonrpc: '2.0',
+      id: 'near-seat',
+      method: 'query',
+      params: { request_type: requestType, finality: 'final', account_id: accountId },
+    }),
+    signal: AbortSignal.timeout(timeoutMs),
+  });
+  return response.json();
+}
+
 function rememberSecrets(secrets, key) {
   if (key && typeof key.private_key === 'string') secrets.push(key.private_key);
   if (key && typeof key.master_seed_phrase === 'string') secrets.push(key.master_seed_phrase);
@@ -143,24 +176,10 @@ async function viewAccount(accountId, opts = {}) {
   const attempts = opts.attempts == null ? VIEW_ACCOUNT_ATTEMPTS : opts.attempts;
   const delayMs = opts.delayMs == null ? VIEW_ACCOUNT_DELAY_MS : opts.delayMs;
   const sleep = opts.sleep || ((ms) => new Promise((resolve) => { setTimeout(resolve, ms); }));
-  const rpc = opts.rpcUrl || TESTNET_RPC;
-  const fetchImpl = opts.fetch || globalThis.fetch;
   let lastError = null;
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
     try {
-      const timeoutMs = opts.timeoutMs == null ? delayMs : opts.timeoutMs;
-      const response = await fetchImpl(rpc, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          id: 'near-seat',
-          method: 'query',
-          params: { request_type: 'view_account', finality: 'final', account_id: accountId },
-        }),
-        signal: AbortSignal.timeout(timeoutMs),
-      });
-      const body = await response.json();
+      const body = await queryRpc(accountId, 'view_account', { ...opts, timeoutMs: opts.timeoutMs == null ? delayMs : opts.timeoutMs });
       if (body && body.result && body.result.amount != null) return body.result;
       lastError = body && body.error ? body.error : body;
     } catch (err) {
@@ -171,6 +190,22 @@ async function viewAccount(accountId, opts = {}) {
   const error = new Error(`view_account failed after ${attempts} attempts`);
   error.attempts = attempts;
   error.detail = lastError;
+  throw error;
+}
+
+async function listAccessKeys(accountId, opts) {
+  if (typeof opts.viewAccessKeys === 'function') return opts.viewAccessKeys(accountId, opts);
+  // A CLI double replaces add-key. It does not answer the chain. Production
+  // (no runners) queries view_access_key_list before granting.
+  if (opts.runners && !opts.fetch) return { keys: [] };
+  return viewAccessKeyList(accountId, opts);
+}
+
+async function viewAccessKeyList(accountId, opts = {}) {
+  const body = await queryRpc(accountId, 'view_access_key_list', opts);
+  if (body && body.result && Array.isArray(body.result.keys)) return body.result;
+  const error = new Error('view_access_key_list failed');
+  error.detail = body && body.error ? body.error : body;
   throw error;
 }
 
@@ -247,7 +282,14 @@ async function prepareNearSeat(opts) {
       else await viewAccount(opts.accountId, opts);
     }
     rememberSecrets(secrets, key);
-    if (kept) emit(opts, secrets, `near-seat: account ${opts.accountId} already exists`);
+    if (kept) {
+      emit(opts, secrets, `near-seat: account ${opts.accountId} already exists`);
+      const legacy = legacyKeyPath(credentialsHome(opts), 'testnet', opts.accountId);
+      if (!fs.existsSync(legacy)) {
+        writeCreatedFile(legacy, `${JSON.stringify(key, null, 2)}\n`);
+        emit(opts, secrets, `near-seat: restored legacy keychain ${legacy}`);
+      }
+    }
     const coldPath = path.join(opts.seatHome, 'near-cold', `${opts.accountId}.json`);
     const mode = writeCreatedFile(coldPath, `${JSON.stringify(key, null, 2)}\n`);
     const publicPath = path.join(opts.seatHome, 'near', 'account.json');
@@ -255,11 +297,15 @@ async function prepareNearSeat(opts) {
       ...publicRecord(key),
       cold: path.relative(opts.seatHome, coldPath),
     }, null, 2)}\n`);
-    const grantArgv = functionCallKeyArgv(
-      opts.accountId,
-      opts.contractId || opts.accountId,
-      opts.methodNames || 'ping',
-    );
+    const contractId = opts.contractId || opts.accountId;
+    const grantArgv = functionCallKeyArgv(opts.accountId, contractId, opts.methodNames || 'ping');
+    const listed = await listAccessKeys(opts.accountId, opts);
+    if (hasFunctionCallKey(listed, contractId)) {
+      emit(opts, secrets, 'near-seat: function-call key already present');
+      emit(opts, secrets, `near-seat: account ${opts.accountId}`);
+      emit(opts, secrets, `near-seat: full-access key sealed ${coldPath}`);
+      return { accountId: opts.accountId, coldPath, publicPath, mode, grantArgv: null, addedKey: false };
+    }
     const granted = typeof runners.addFunctionCallKey === 'function'
       ? await runners.addFunctionCallKey(grantArgv)
       : runNearCli(grantArgv, opts);
@@ -270,7 +316,7 @@ async function prepareNearSeat(opts) {
     emit(opts, secrets, `near-seat: account ${opts.accountId}`);
     emit(opts, secrets, `near-seat: full-access key sealed ${coldPath}`);
     emit(opts, secrets, 'near-seat: function-call key granted');
-    return { accountId: opts.accountId, coldPath, publicPath, mode, grantArgv };
+    return { accountId: opts.accountId, coldPath, publicPath, mode, grantArgv, addedKey: true };
   } finally {
     process.umask(prev);
   }
@@ -288,7 +334,9 @@ module.exports = {
   fileCreateMode,
   functionCallKeyArgv,
   legacyKeyPath,
+  hasFunctionCallKey,
   prepareNearSeat,
+  viewAccessKeyList,
   redact,
   viewAccount,
   writeCreatedFile,

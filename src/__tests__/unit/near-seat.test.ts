@@ -21,14 +21,17 @@ const seat = requireCjs(path.join(root, 'grok-bot', 'lib', 'near-seat.cjs')) as 
   prepareNearSeat: (opts: {
     accountId: string;
     seatHome: string;
+    credentialsHome?: string;
     log?: (line: string) => void;
     stdout?: { write: (chunk: string) => void };
+    fetch?: (url: string, init: { body: string; signal: AbortSignal }) => Promise<{ json: () => Promise<unknown> }>;
     viewAccount?: (accountId: string) => Promise<unknown>;
+    viewAccessKeys?: (accountId: string) => Promise<{ keys: unknown[] }>;
     runners: {
       createAccount: (argv: string[]) => Promise<{ stdout: string; stderr: string; key: KeyFile }>;
       addFunctionCallKey: (argv: string[]) => Promise<{ stdout: string; key?: KeyFile }>;
     };
-  }) => Promise<{ mode: number; coldPath: string; grantArgv: string[] }>;
+  }) => Promise<{ mode: number; coldPath: string; grantArgv: string[] | null; addedKey: boolean }>;
   viewAccount: (accountId: string, opts: {
     attempts?: number;
     delayMs?: number;
@@ -279,6 +282,7 @@ describe('near-seat', () => {
 
   it('skips account create when the cold key and the account already exist', async () => {
     const home = scratch();
+    const creds = scratch();
     const accountId = 'millfc1ca97ca3.testnet';
     const cold = path.join(home, 'near-cold', `${accountId}.json`);
     mkdirSync(path.dirname(cold), { recursive: true });
@@ -294,7 +298,9 @@ describe('near-seat', () => {
         accountId,
         seatHome: home,
         log: (line) => logs.push(line),
+        credentialsHome: creds,
         viewAccount: async () => ({ amount: '10' }),
+        viewAccessKeys: async () => ({ keys: [] }),
         runners: {
           createAccount: async () => {
             created += 1;
@@ -309,6 +315,178 @@ describe('near-seat', () => {
       expect(logs.join('\n')).not.toContain(SECRET);
     } finally {
       rmSync(home, { recursive: true, force: true });
+      rmSync(creds, { recursive: true, force: true });
+    }
+  });
+
+  it('restores a missing legacy credentials file from the cold copy at 0600', async () => {
+    const home = scratch();
+    const creds = scratch();
+    const accountId = 'millfc1ca97ca3.testnet';
+    const cold = path.join(home, 'near-cold', `${accountId}.json`);
+    mkdirSync(path.dirname(cold), { recursive: true });
+    writeFileSync(cold, `${JSON.stringify({
+      account_id: accountId,
+      public_key: 'ed25519:public-only',
+      private_key: SECRET,
+    })}\n`, { mode: 0o600 });
+    const logs: string[] = [];
+    const stdout: string[] = [];
+    let created = 0;
+    try {
+      const result = await seat.prepareNearSeat({
+        accountId,
+        seatHome: home,
+        credentialsHome: creds,
+        log: (line) => logs.push(line),
+        stdout: { write: (chunk) => stdout.push(chunk) },
+        viewAccount: async () => ({ amount: '10' }),
+        viewAccessKeys: async () => ({ keys: [] }),
+        runners: {
+          createAccount: async () => {
+            created += 1;
+            throw new Error('create must not run');
+          },
+          addFunctionCallKey: async () => ({ status: 0, stdout: '' }),
+        },
+      });
+      const legacy = seat.legacyKeyPath(creds, 'testnet', accountId);
+      expect(created).toBe(0);
+      expect(result.addedKey).toBe(true);
+      expect(statSync(legacy).mode & 0o777).toBe(0o600);
+      const shown = `${logs.join('\n')}${stdout.join('')}`;
+      expect(readFileSync(legacy, 'utf8')).toContain(SECRET);
+      expect(shown).not.toContain(SECRET);
+      expect(shown).toContain('restored legacy keychain');
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+      rmSync(creds, { recursive: true, force: true });
+    }
+  });
+
+  it('sends no add-key on a second reinstall when that contract key exists', async () => {
+    const home = scratch();
+    const creds = scratch();
+    const accountId = 'millfc1ca97ca3.testnet';
+    const logs: string[] = [];
+    let grants = 0;
+    let creates = 0;
+    const key: KeyFile = {
+      account_id: accountId,
+      public_key: 'ed25519:public-only',
+      private_key: SECRET,
+    };
+    const present = {
+      keys: [{
+        public_key: 'ed25519:function-call',
+        access_key: {
+          permission: {
+            FunctionCall: {
+              receiver_id: accountId,
+              method_names: ['ping'],
+            },
+          },
+        },
+      }],
+    };
+    try {
+      await seat.prepareNearSeat({
+        accountId,
+        seatHome: home,
+        credentialsHome: creds,
+        log: (line) => logs.push(line),
+        viewAccount: async () => ({ amount: '10' }),
+        viewAccessKeys: async () => ({ keys: [] }),
+        runners: {
+          createAccount: async () => {
+            creates += 1;
+            return { status: 0, stdout: '', stderr: '', key };
+          },
+          addFunctionCallKey: async () => {
+            grants += 1;
+            return { status: 0, stdout: '' };
+          },
+        },
+      });
+      const second = await seat.prepareNearSeat({
+        accountId,
+        seatHome: home,
+        credentialsHome: creds,
+        log: (line) => logs.push(line),
+        viewAccount: async () => ({ amount: '10' }),
+        viewAccessKeys: async () => present,
+        runners: {
+          createAccount: async () => {
+            creates += 1;
+            throw new Error('create must not run');
+          },
+          addFunctionCallKey: async () => {
+            grants += 1;
+            return { status: 0, stdout: '' };
+          },
+        },
+      });
+      expect(creates).toBe(1);
+      expect(grants).toBe(1);
+      expect(second.addedKey).toBe(false);
+      expect(second.grantArgv).toBeNull();
+      expect(logs.join('\n')).toContain('function-call key already present');
+      expect(logs.join('\n')).not.toContain(SECRET);
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+      rmSync(creds, { recursive: true, force: true });
+    }
+  });
+
+  it('queries view_access_key_list and skips add-key for the same contract', async () => {
+    const home = scratch();
+    const creds = scratch();
+    const accountId = 'millfc1ca97ca3.testnet';
+    const cold = path.join(home, 'near-cold', `${accountId}.json`);
+    mkdirSync(path.dirname(cold), { recursive: true });
+    writeFileSync(cold, `${JSON.stringify({
+      account_id: accountId,
+      public_key: 'ed25519:public-only',
+      private_key: SECRET,
+    })}\n`, { mode: 0o600 });
+    const bodies: string[] = [];
+    let grants = 0;
+    try {
+      const result = await seat.prepareNearSeat({
+        accountId,
+        seatHome: home,
+        credentialsHome: creds,
+        viewAccount: async () => ({ amount: '10' }),
+        fetch: async (_url, init) => {
+          bodies.push(init.body);
+          return {
+            json: async () => ({
+              result: {
+                keys: [{
+                  access_key: {
+                    permission: { FunctionCall: { receiver_id: accountId, method_names: ['ping'] } },
+                  },
+                }],
+              },
+            }),
+          };
+        },
+        runners: {
+          createAccount: async () => { throw new Error('create must not run'); },
+          addFunctionCallKey: async () => {
+            grants += 1;
+            return { status: 0, stdout: '' };
+          },
+        },
+      });
+      expect(grants).toBe(0);
+      expect(result.addedKey).toBe(false);
+      expect(bodies).toHaveLength(1);
+      expect(bodies[0]).toContain('"request_type":"view_access_key_list"');
+      expect(bodies[0]).toContain(`"account_id":"${accountId}"`);
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+      rmSync(creds, { recursive: true, force: true });
     }
   });
 
