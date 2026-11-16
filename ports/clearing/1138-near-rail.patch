@@ -1,0 +1,761 @@
+diff --git a/mcp/src/blip.ts b/mcp/src/blip.ts
+index 3666ab9..4dbb201 100644
+--- a/mcp/src/blip.ts
++++ b/mcp/src/blip.ts
+@@ -35,6 +35,13 @@ import {
+ import { FileBlipsStore } from './blips-store.js';
+ import { withMintLock } from './mint-lock.js';
+ import { BLIP_DURATION_SEC, BLIP_PLANT_VERSION } from './blips-plant.js';
++import {
++  issueNearQuote,
++  nearAccept,
++  parseNearPayment,
++  readNearTestnetReceipt,
++  verifyPayment,
++} from './near-rail.js';
+ import {
+   buildQuote,
+   buildRequirements,
+@@ -113,12 +120,72 @@ export async function handleBlip(req: Request, ctx: ClearingContext): Promise<Re
+     requirements,
+     `X-PAYMENT required · Blips escalator LOCKED · ${priceCents}¢ at mintIndex ${mintIndex} · ${BLIPS_ESCALATOR_FORMULA}`,
+   );
++  const nearPayTo = ctx.config.nearPayTo;
++  if (nearPayTo) {
++    const issued = issueNearQuote({
++      receiver: nearPayTo,
++      amount: requirements.maxAmountRequired,
++      nowMs: ctx.now().getTime(),
++    });
++    quote.accepts.push(
++      nearAccept({
++        amount: requirements.maxAmountRequired,
++        payTo: nearPayTo,
++        resource: requirements.resource,
++        description: requirements.description,
++        memo: issued.nonce,
++      }),
++    );
++  }
+ 
+   const paymentHeader = paymentHeaderFromRequest(req.headers);
+   if (!paymentHeader) {
+     return new Response(JSON.stringify(quote), { status: 402, headers: quoteHeaders(quote) });
+   }
+ 
++  const nearAttempt = parseNearPayment(paymentHeader);
++  if (nearAttempt) {
++    if (!nearPayTo) {
++      return json({ error: 'near rail is off', paid: false }, 402);
++    }
++    const ownerWallet = ownerFrom({ x402Version: 1, paymentId: '', nonce: '', accepted: requirements }, input.owner);
++    if (!ownerWallet) {
++      return json({ error: 'ownerWallet required (owner=)', paid: false }, 400);
++    }
++    const verdict = await verifyPayment({
++      txHash: nearAttempt.txHash,
++      senderAccountId: nearAttempt.senderAccountId,
++      nonce: nearAttempt.nonce,
++      nowMs: ctx.now().getTime(),
++      readReceipt:
++        ctx.nearReceipts ??
++        ((txHash, senderAccountId) => readNearTestnetReceipt(txHash, senderAccountId, ctx.fetch)),
++    });
++    if (!verdict.ok) {
++      return json({ error: verdict.code, paid: false }, 402);
++    }
++    return withMintLock(ctx.config.dataDir, () =>
++      fulfillPaidBlip({
++        ctx,
++        picture,
++        input,
++        payload: {
++          x402Version: 1,
++          paymentId: `near:${verdict.txHash}`,
++          nonce: nearAttempt.nonce,
++          accepted: requirements,
++        },
++        ownerWallet,
++        mintIndex,
++        priceCents,
++        amountUsd,
++        paymentHeader,
++        requirements,
++        nearPaid: { txHash: verdict.txHash },
++      }),
++    );
++  }
++
+   let payload: PayloadBody;
+   try {
+     payload = decodePayload(paymentHeader);
+@@ -161,6 +228,7 @@ async function fulfillPaidBlip(args: {
+   amountUsd: number;
+   paymentHeader: string;
+   requirements: PaymentRequirements;
++  nearPaid?: { txHash: string };
+ }): Promise<Response> {
+   const {
+     ctx,
+@@ -173,6 +241,7 @@ async function fulfillPaidBlip(args: {
+     amountUsd,
+     paymentHeader,
+     requirements,
++    nearPaid,
+   } = args;
+   const prior = ctx.blips.getByPaymentId(payload.paymentId);
+   if (prior) {
+@@ -249,7 +318,9 @@ async function fulfillPaidBlip(args: {
+     }
+   }
+ 
+-  const settle = await ctx.facilitator.settle(paymentHeader, requirements);
++  const settle = nearPaid
++    ? { ok: true as const, replayed: false, txHash: nearPaid.txHash, error: undefined }
++    : await ctx.facilitator.settle(paymentHeader, requirements);
+   if (!settle.ok) {
+     return json({ error: settle.error ?? 'payment not settled', paid: false, charged: false }, 402);
+   }
+@@ -289,7 +360,7 @@ async function fulfillPaidBlip(args: {
+     ownerWallet: minted.ownerWallet,
+     mintTx: minted.mintTx,
+     paymentId: payload.paymentId,
+-    payTx: settle.txHash,
++    payTx: nearPaid ? undefined : (settle.txHash as `0x${string}` | undefined),
+     priceCents,
+     picture: picture.picture,
+     brief: input.brief,
+diff --git a/mcp/src/config.ts b/mcp/src/config.ts
+index 04e58a3..7ad186a 100644
+--- a/mcp/src/config.ts
++++ b/mcp/src/config.ts
+@@ -2,6 +2,7 @@ import { homedir } from 'node:os';
+ import { join } from 'node:path';
+ import { randomUUID } from 'node:crypto';
+ import { fail } from './errors.js';
++import { isNearAccountId } from './near-rail.js';
+ import { isHexAddress, normalizeAddress } from './bytes.js';
+ import {
+   ALWAYS_ALLOW_ORIGIN,
+@@ -112,9 +113,17 @@ export function defaultConfig(overrides: Partial<ClearingConfig> = {}): Clearing
+     sessionToken: overrides.sessionToken ?? env('CLEARING_SESSION_TOKEN'),
+     listedSeed: overrides.listedSeed ?? defaultListedSeed(),
+     blipsNft: parseOptionalAddress(overrides.blipsNft ?? env('BLIPS_NFT') ?? env('BLIPS_NFT_ADDRESS')),
++    nearPayTo: parseNearPayTo(overrides.nearPayTo ?? env('CLEARING_NEAR_PAY_TO')),
+   };
+ }
+ 
++function parseNearPayTo(raw: string | undefined): string | undefined {
++  if (!raw) return undefined;
++  const id = raw.trim().toLowerCase();
++  if (!isNearAccountId(id)) fail('config', 'CLEARING_NEAR_PAY_TO must be a NEAR account id');
++  return id;
++}
++
+ function parseOptionalAddress(raw: string | undefined): import('./types.js').HexAddress | undefined {
+   if (!raw) return undefined;
+   if (!isHexAddress(raw)) fail('config', 'BLIPS_NFT must be a 20-byte hex address');
+diff --git a/mcp/src/context.ts b/mcp/src/context.ts
+index 12052cd..71418e2 100644
+--- a/mcp/src/context.ts
++++ b/mcp/src/context.ts
+@@ -18,6 +18,7 @@ import { FileBlipsStore, MemoryBlipsStore, blipsPath, type BlipsStore } from './
+ import { decodePayload } from './x402.js';
+ import { FileCardStore, MemoryCardStore, cardsPath, type CardStore } from './card-store.js';
+ import { createCardRegistrar, MemoryCardRegistrar, type CardRegistrar } from './card-register.js';
++import type { NearReceiptReader } from './near-rail.js';
+ import type { ClearingConfig, FetchFn } from './types.js';
+ 
+ export type JsRenderer = (url: string) => Promise<{ html: string; finalUrl: string }>;
+@@ -39,6 +40,8 @@ export type ClearingContext = {
+   cards: CardStore;
+   cardRegistrar: CardRegistrar;
+   renderer?: JsRenderer;
++  /** Test double for NEAR tx_status. Production uses the public testnet RPC. */
++  nearReceipts?: NearReceiptReader;
+   resolveHost: (hostname: string) => Promise<string[]>;
+   liveDiscoverOrigins: () => Set<string>;
+   setLiveDiscoverOrigins: (origins: Set<string>) => void;
+@@ -61,6 +64,7 @@ export type ContextOverrides = {
+   cards?: CardStore;
+   cardRegistrar?: CardRegistrar;
+   renderer?: JsRenderer;
++  nearReceipts?: NearReceiptReader;
+   resolveHost?: (hostname: string) => Promise<string[]>;
+   persist?: boolean;
+ };
+@@ -146,6 +150,7 @@ export function createContext(overrides: ContextOverrides = {}): ClearingContext
+             rpcUrl: process.env.CLEARING_RPC_URL,
+           })),
+     renderer: overrides.renderer,
++    nearReceipts: overrides.nearReceipts,
+     resolveHost: overrides.resolveHost ?? (async (hostname) => {
+       const { promises: dns } = await import('node:dns');
+       const records = await dns.lookup(hostname, { all: true });
+diff --git a/mcp/src/near-rail.ts b/mcp/src/near-rail.ts
+new file mode 100644
+index 0000000..17b11f2
+--- /dev/null
++++ b/mcp/src/near-rail.ts
+@@ -0,0 +1,277 @@
++/**
++ * NEAR USDC rail for one Clearing 402.
++ *
++ * Borrowed idea, not copied code: a 402 quote nonce checked against an
++ * ft_transfer after the tx is final.
++ * Cite: MihenkAI/near-pay-per-call@1da0b45c4f9ad29cdf654e773a2c9e878bcc2d3d server.mjs
++ * Rewritten here: Circle testnet USDC, amount string equality, 180s TTL,
++ * final_execution_status FINAL, memo taken from the nep141 event log.
++ *
++ * RPC: tx_status with wait_until FINAL.
++ * https://docs.near.org/api/rpc/transactions
++ * EXPERIMENTAL_tx_status is the deprecated alias (nearcore 2.14).
++ * Event shape: NEP-141 EVENT_JSON ft_transfer.
++ * https://docs.near.org/primitives/ft
++ * Account ids: https://docs.near.org/protocol/account-id
++ *
++ * No plain-NEAR accept. A native Transfer has no memo field
++ * (nearcore 2.14 core/primitives/src/views.rs Transfer { deposit }).
++ */
++import { randomBytes } from 'node:crypto';
++import type { NearRailAccept } from './types.js';
++
++/** Circle USDC on NEAR testnet. Confirmed by ft_metadata (symbol USDC, decimals 6). */
++export const CIRCLE_USDC_NEAR_TESTNET =
++  '3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af';
++
++/** Same window as the blip quote maxTimeoutSeconds. */
++export const NEAR_QUOTE_TTL_MS = 180_000;
++
++export const NEAR_TESTNET_RPC = 'https://rpc.testnet.near.org';
++
++const ACCOUNT_ID =
++  /^(([a-z\d]+[-_])*[a-z\d]+\.)*([a-z\d]+[-_])*[a-z\d]+$/;
++
++export function isNearAccountId(id: string): boolean {
++  return id.length >= 2 && id.length <= 64 && ACCOUNT_ID.test(id);
++}
++
++export type StoredNearQuote = {
++  receiver: string;
++  amount: string;
++  nonce: string;
++  expiresAt: number;
++};
++
++export type NearTransferView = {
++  finalExecutionStatus: string;
++  executionSucceeded: boolean;
++  senderAccountId: string;
++  tokenContract: string;
++  receiverId: string;
++  amount: string;
++  memo?: string;
++};
++
++export type NearReceiptReader = (
++  txHash: string,
++  senderAccountId: string,
++) => Promise<NearTransferView>;
++
++export type VerifyCode =
++  | 'missing_nonce'
++  | 'nonce_past_ttl'
++  | 'replayed_nonce'
++  | 'replayed_tx'
++  | 'wrong_receiver'
++  | 'amount_not_equal'
++  | 'not_final'
++  | 'memo_mismatch'
++  | 'sender_mismatch'
++  | 'wrong_asset';
++
++export type VerifyResult =
++  | { ok: true; txHash: string; senderAccountId: string; amount: string }
++  | { ok: false; code: VerifyCode };
++
++type IssueInput = {
++  receiver: string;
++  amount: string;
++  nowMs: number;
++};
++
++const liveQuotes = new Map<string, StoredNearQuote>();
++const usedNonces = new Set<string>();
++const usedTx = new Set<string>();
++
++export function resetNearRailForTests(): void {
++  liveQuotes.clear();
++  usedNonces.clear();
++  usedTx.clear();
++}
++
++export function issueNearQuote(input: IssueInput): StoredNearQuote {
++  const nonce = randomBytes(16).toString('hex');
++  const quote: StoredNearQuote = {
++    receiver: input.receiver,
++    amount: input.amount,
++    nonce,
++    expiresAt: input.nowMs + NEAR_QUOTE_TTL_MS,
++  };
++  liveQuotes.set(nonce, quote);
++  return quote;
++}
++
++export function nearAccept(args: {
++  amount: string;
++  payTo: string;
++  resource: string;
++  description: string;
++  memo: string;
++}): NearRailAccept {
++  return {
++    scheme: 'exact',
++    network: 'near:testnet',
++    maxAmountRequired: args.amount,
++    amount: args.amount,
++    asset: CIRCLE_USDC_NEAR_TESTNET,
++    payTo: args.payTo,
++    resource: args.resource,
++    description: args.description,
++    mimeType: 'application/json',
++    maxTimeoutSeconds: NEAR_QUOTE_TTL_MS / 1000,
++    extra: { method: 'ft_transfer', memo: args.memo },
++  };
++}
++
++export type NearPaymentAttempt = {
++  txHash: string;
++  senderAccountId: string;
++  nonce: string;
++};
++
++/** Caller supplies tx hash, sender, and nonce. Receiver and amount stay in the store. */
++export function parseNearPayment(header: string): NearPaymentAttempt | undefined {
++  let parsed: unknown;
++  try {
++    parsed = JSON.parse(Buffer.from(header, 'base64').toString('utf8'));
++  } catch {
++    return undefined;
++  }
++  if (typeof parsed !== 'object' || parsed === null) return undefined;
++  const body = parsed as Record<string, unknown>;
++  if (body.network !== 'near:testnet') return undefined;
++  const txHash = body.txHash;
++  const senderAccountId = body.senderAccountId;
++  const nonce = body.nonce;
++  if (typeof txHash !== 'string' || typeof senderAccountId !== 'string' || typeof nonce !== 'string') {
++    return undefined;
++  }
++  if (!txHash || !nonce || !isNearAccountId(senderAccountId)) return undefined;
++  return { txHash, senderAccountId, nonce };
++}
++
++export function encodeNearPayment(attempt: NearPaymentAttempt): string {
++  return Buffer.from(JSON.stringify({ network: 'near:testnet', ...attempt })).toString('base64');
++}
++
++export async function verifyPayment(args: {
++  txHash: string;
++  senderAccountId: string;
++  nonce: string;
++  nowMs: number;
++  readReceipt: NearReceiptReader;
++}): Promise<VerifyResult> {
++  if (usedNonces.has(args.nonce)) return { ok: false, code: 'replayed_nonce' };
++  const quote = liveQuotes.get(args.nonce);
++  if (!quote) return { ok: false, code: 'missing_nonce' };
++  if (args.nowMs > quote.expiresAt) return { ok: false, code: 'nonce_past_ttl' };
++  if (usedTx.has(args.txHash)) return { ok: false, code: 'replayed_tx' };
++
++  let view: NearTransferView;
++  try {
++    view = await args.readReceipt(args.txHash, args.senderAccountId);
++  } catch {
++    return { ok: false, code: 'not_final' };
++  }
++  if (view.finalExecutionStatus !== 'FINAL' || !view.executionSucceeded) {
++    return { ok: false, code: 'not_final' };
++  }
++  if (view.senderAccountId !== args.senderAccountId) return { ok: false, code: 'sender_mismatch' };
++  if (view.tokenContract !== CIRCLE_USDC_NEAR_TESTNET) return { ok: false, code: 'wrong_asset' };
++  if (view.receiverId !== quote.receiver) return { ok: false, code: 'wrong_receiver' };
++  if (view.amount !== quote.amount) return { ok: false, code: 'amount_not_equal' };
++  if (view.memo !== args.nonce) return { ok: false, code: 'memo_mismatch' };
++
++  liveQuotes.delete(args.nonce);
++  usedNonces.add(args.nonce);
++  usedTx.add(args.txHash);
++  return { ok: true, txHash: args.txHash, senderAccountId: args.senderAccountId, amount: quote.amount };
++}
++
++type TxStatusBody = {
++  final_execution_status?: string;
++  status?: { SuccessValue?: string; Failure?: unknown };
++  transaction?: { signer_id?: string; receiver_id?: string };
++  receipts_outcome?: Array<{
++    outcome?: { executor_id?: string; status?: { Failure?: unknown }; logs?: string[] };
++  }>;
++};
++
++/**
++ * Pull the nep141 ft_transfer the USDC contract logged.
++ * Memo is read from that event, not from a caller-supplied quote.
++ */
++export function transferFromTxStatus(body: unknown, senderAccountId: string): NearTransferView {
++  const tx = (body ?? {}) as TxStatusBody;
++  const finalExecutionStatus = String(tx.final_execution_status ?? '');
++  const success = Boolean(tx.status && 'SuccessValue' in tx.status && !tx.status.Failure);
++  const failedReceipt = (tx.receipts_outcome ?? []).some((row) => row.outcome?.status?.Failure);
++  const event = findTransferEvent(tx, senderAccountId);
++  return {
++    finalExecutionStatus,
++    executionSucceeded: success && !failedReceipt && finalExecutionStatus === 'FINAL',
++    senderAccountId: String(tx.transaction?.signer_id ?? ''),
++    tokenContract: String(tx.transaction?.receiver_id ?? ''),
++    receiverId: event?.receiverId ?? '',
++    amount: event?.amount ?? '',
++    memo: event?.memo,
++  };
++}
++
++function findTransferEvent(
++  tx: TxStatusBody,
++  senderAccountId: string,
++): { receiverId: string; amount: string; memo?: string } | undefined {
++  for (const row of tx.receipts_outcome ?? []) {
++    const outcome = row.outcome;
++    if (outcome?.executor_id !== CIRCLE_USDC_NEAR_TESTNET) continue;
++    for (const line of outcome.logs ?? []) {
++      if (!line.startsWith('EVENT_JSON:')) continue;
++      let parsed: unknown;
++      try {
++        parsed = JSON.parse(line.slice('EVENT_JSON:'.length));
++      } catch {
++        continue;
++      }
++      const event = parsed as {
++        standard?: string;
++        event?: string;
++        data?: Array<{ old_owner_id?: string; new_owner_id?: string; amount?: string; memo?: string }>;
++      };
++      if (event.standard !== 'nep141' || event.event !== 'ft_transfer') continue;
++      const rowData = event.data?.find((item) => item.old_owner_id === senderAccountId);
++      if (!rowData?.new_owner_id || typeof rowData.amount !== 'string') continue;
++      return {
++        receiverId: rowData.new_owner_id,
++        amount: rowData.amount,
++        memo: typeof rowData.memo === 'string' ? rowData.memo : undefined,
++      };
++    }
++  }
++  return undefined;
++}
++
++export async function readNearTestnetReceipt(
++  txHash: string,
++  senderAccountId: string,
++  fetchFn: typeof fetch = fetch,
++): Promise<NearTransferView> {
++  const res = await fetchFn(NEAR_TESTNET_RPC, {
++    method: 'POST',
++    headers: { 'content-type': 'application/json' },
++    body: JSON.stringify({
++      jsonrpc: '2.0',
++      id: 'near-rail',
++      method: 'tx_status',
++      params: {
++        tx_hash: txHash,
++        sender_account_id: senderAccountId,
++        wait_until: 'FINAL',
++      },
++    }),
++  });
++  const payload = (await res.json()) as { result?: unknown };
++  if (!payload.result) throw new Error('tx_status missing result');
++  return transferFromTxStatus(payload.result, senderAccountId);
++}
+diff --git a/mcp/src/types.ts b/mcp/src/types.ts
+index bb25116..11bed27 100644
+--- a/mcp/src/types.ts
++++ b/mcp/src/types.ts
+@@ -46,6 +46,11 @@ export type ClearingConfig = {
+   listedSeed: ListedSeed[];
+   /** Deployed Blips ERC-721 on Base (optional until Blaze deploys). */
+   blipsNft?: HexAddress;
++  /**
++   * Foundry NEAR account that receives USDC. When set, blip advertises a second
++   * `near:testnet` accept. Unset keeps the Base-only 402.
++   */
++  nearPayTo?: string;
+ };
+ 
+ export type ListedSeed = {
+@@ -86,6 +91,21 @@ export type PaymentRequirements = {
+   extra: PaymentExtra;
+ };
+ 
++/** Second 402 accept. Not an EIP-3009 requirement. No plain-NEAR entry. */
++export type NearRailAccept = {
++  scheme: 'exact';
++  network: 'near:testnet';
++  maxAmountRequired: string;
++  amount: string;
++  asset: string;
++  payTo: string;
++  resource: string;
++  description: string;
++  mimeType: 'application/json';
++  maxTimeoutSeconds: number;
++  extra: { method: 'ft_transfer'; memo: string };
++};
++
+ export type PaymentExtra = {
+   name: typeof USDC_EIP712_NAME;
+   version: typeof USDC_EIP712_VERSION;
+@@ -130,7 +150,7 @@ export type X402Quote = {
+     serviceName: string;
+     tags?: string[];
+   };
+-  accepts: Array<PaymentRequirements & { amount: string }>;
++  accepts: Array<(PaymentRequirements & { amount: string }) | NearRailAccept>;
+   extensions: { bazaar: BazaarExtension };
+ };
+ 
+diff --git a/tests/near-rail.test.ts b/tests/near-rail.test.ts
+new file mode 100644
+index 0000000..9bcbda1
+--- /dev/null
++++ b/tests/near-rail.test.ts
+@@ -0,0 +1,231 @@
++import { describe, expect, it, beforeEach } from 'vitest';
++import { handleBlip } from '../mcp/src/blip.js';
++import { MemoryFacilitator } from '../mcp/src/facilitator.js';
++import {
++  CIRCLE_USDC_NEAR_TESTNET,
++  encodeNearPayment,
++  issueNearQuote,
++  NEAR_QUOTE_TTL_MS,
++  resetNearRailForTests,
++  transferFromTxStatus,
++  verifyPayment,
++  type NearTransferView,
++} from '../mcp/src/near-rail.js';
++import { makeCtx, PAYER_A } from './helpers.js';
++
++const FOUNDRY = 'foundry.testnet';
++const SENDER = 'vault.testnet';
++const AMOUNT = '50000';
++
++function view(over: Partial<NearTransferView> = {}): NearTransferView {
++  return {
++    finalExecutionStatus: 'FINAL',
++    executionSucceeded: true,
++    senderAccountId: SENDER,
++    tokenContract: CIRCLE_USDC_NEAR_TESTNET,
++    receiverId: FOUNDRY,
++    amount: AMOUNT,
++    memo: 'pending',
++    ...over,
++  };
++}
++
++function reader(seen: NearTransferView) {
++  return async () => seen;
++}
++
++describe('NEAR USDC rail', () => {
++  beforeEach(() => resetNearRailForTests());
++
++  it('rejects_wrong_receiver', async () => {
++    const quote = issueNearQuote({ receiver: FOUNDRY, amount: AMOUNT, nowMs: 0 });
++    const result = await verifyPayment({
++      txHash: 'tx-wrong-receiver',
++      senderAccountId: SENDER,
++      nonce: quote.nonce,
++      nowMs: 1,
++      readReceipt: reader(view({ receiverId: 'other.testnet', memo: quote.nonce })),
++    });
++    expect(result).toEqual({ ok: false, code: 'wrong_receiver' });
++  });
++
++  it('rejects_amount_not_equal_quote', async () => {
++    const over = issueNearQuote({ receiver: FOUNDRY, amount: AMOUNT, nowMs: 0 });
++    const overpay = await verifyPayment({
++      txHash: 'tx-over',
++      senderAccountId: SENDER,
++      nonce: over.nonce,
++      nowMs: 1,
++      readReceipt: reader(view({ amount: '50001', memo: over.nonce })),
++    });
++    expect(overpay).toEqual({ ok: false, code: 'amount_not_equal' });
++
++    const under = issueNearQuote({ receiver: FOUNDRY, amount: AMOUNT, nowMs: 0 });
++    const underpay = await verifyPayment({
++      txHash: 'tx-under',
++      senderAccountId: SENDER,
++      nonce: under.nonce,
++      nowMs: 1,
++      readReceipt: reader(view({ amount: '49999', memo: under.nonce })),
++    });
++    expect(underpay).toEqual({ ok: false, code: 'amount_not_equal' });
++  });
++
++  it('rejects_missing_nonce', async () => {
++    const result = await verifyPayment({
++      txHash: 'tx-missing',
++      senderAccountId: SENDER,
++      nonce: 'never-issued',
++      nowMs: 1,
++      readReceipt: reader(view()),
++    });
++    expect(result).toEqual({ ok: false, code: 'missing_nonce' });
++  });
++
++  it('rejects_nonce_past_180s_ttl', async () => {
++    const quote = issueNearQuote({ receiver: FOUNDRY, amount: AMOUNT, nowMs: 0 });
++    const result = await verifyPayment({
++      txHash: 'tx-late',
++      senderAccountId: SENDER,
++      nonce: quote.nonce,
++      nowMs: NEAR_QUOTE_TTL_MS + 1,
++      readReceipt: reader(view({ memo: quote.nonce })),
++    });
++    expect(result).toEqual({ ok: false, code: 'nonce_past_ttl' });
++  });
++
++  it('rejects_replayed_nonce', async () => {
++    const quote = issueNearQuote({ receiver: FOUNDRY, amount: AMOUNT, nowMs: 0 });
++    const tx = 'tx-nonce-once';
++    const first = await verifyPayment({
++      txHash: tx,
++      senderAccountId: SENDER,
++      nonce: quote.nonce,
++      nowMs: 1,
++      readReceipt: reader(view({ memo: quote.nonce })),
++    });
++    expect(first.ok).toBe(true);
++    const second = await verifyPayment({
++      txHash: 'tx-nonce-again',
++      senderAccountId: SENDER,
++      nonce: quote.nonce,
++      nowMs: 2,
++      readReceipt: reader(view({ memo: quote.nonce })),
++    });
++    expect(second).toEqual({ ok: false, code: 'replayed_nonce' });
++  });
++
++  it('rejects_replayed_tx_hash', async () => {
++    const firstQuote = issueNearQuote({ receiver: FOUNDRY, amount: AMOUNT, nowMs: 0 });
++    const tx = 'tx-replay';
++    const first = await verifyPayment({
++      txHash: tx,
++      senderAccountId: SENDER,
++      nonce: firstQuote.nonce,
++      nowMs: 1,
++      readReceipt: reader(view({ memo: firstQuote.nonce })),
++    });
++    expect(first.ok).toBe(true);
++    const secondQuote = issueNearQuote({ receiver: FOUNDRY, amount: AMOUNT, nowMs: 2 });
++    const second = await verifyPayment({
++      txHash: tx,
++      senderAccountId: SENDER,
++      nonce: secondQuote.nonce,
++      nowMs: 3,
++      readReceipt: reader(view({ memo: secondQuote.nonce })),
++    });
++    expect(second).toEqual({ ok: false, code: 'replayed_tx' });
++  });
++
++  it('rejects_non_final_or_failed_status', async () => {
++    const pending = issueNearQuote({ receiver: FOUNDRY, amount: AMOUNT, nowMs: 0 });
++    const notFinal = await verifyPayment({
++      txHash: 'tx-pending',
++      senderAccountId: SENDER,
++      nonce: pending.nonce,
++      nowMs: 1,
++      readReceipt: reader(view({ finalExecutionStatus: 'EXECUTED', memo: pending.nonce })),
++    });
++    expect(notFinal).toEqual({ ok: false, code: 'not_final' });
++
++    const failed = issueNearQuote({ receiver: FOUNDRY, amount: AMOUNT, nowMs: 0 });
++    const failedTx = await verifyPayment({
++      txHash: 'tx-failed',
++      senderAccountId: SENDER,
++      nonce: failed.nonce,
++      nowMs: 1,
++      readReceipt: reader(view({ executionSucceeded: false, memo: failed.nonce })),
++    });
++    expect(failedTx).toEqual({ ok: false, code: 'not_final' });
++  });
++
++  it('reads memo from the nep141 event log, not from a caller quote', () => {
++    const parsed = transferFromTxStatus(
++      {
++        final_execution_status: 'FINAL',
++        status: { SuccessValue: '' },
++        transaction: { signer_id: SENDER, receiver_id: CIRCLE_USDC_NEAR_TESTNET },
++        receipts_outcome: [
++          {
++            outcome: {
++              executor_id: CIRCLE_USDC_NEAR_TESTNET,
++              logs: [
++                `EVENT_JSON:${JSON.stringify({
++                  standard: 'nep141',
++                  version: '1.0.0',
++                  event: 'ft_transfer',
++                  data: [{ old_owner_id: SENDER, new_owner_id: FOUNDRY, amount: AMOUNT, memo: 'quote-nonce' }],
++                })}`,
++              ],
++            },
++          },
++        ],
++      },
++      SENDER,
++    );
++    expect(parsed.memo).toBe('quote-nonce');
++    expect(parsed.amount).toBe(AMOUNT);
++    expect(parsed.receiverId).toBe(FOUNDRY);
++    expect(parsed.executionSucceeded).toBe(true);
++  });
++
++  it('3.6 mock done: unpaid GET returns both accepts and a mocked FINAL receipt serves the blip', async () => {
++    const ctx = makeCtx({}, { config: { nearPayTo: FOUNDRY } });
++    const url = `https://api.clearing.dev/v1/blip?picture=still&brief=night%20alley%20still&owner=${PAYER_A}`;
++    const unpaid = await handleBlip(new Request(url), ctx);
++    expect(unpaid?.status).toBe(402);
++    const quote = (await unpaid!.json()) as {
++      accepts: Array<{ network: string; asset?: string; payTo?: string; maxAmountRequired?: string; extra?: { method?: string; memo?: string } }>;
++    };
++    expect(quote.accepts[0]?.network).toBe('eip155:8453');
++    const near = quote.accepts.find((row) => row.network === 'near:testnet');
++    expect(near?.asset).toBe(CIRCLE_USDC_NEAR_TESTNET);
++    expect(near?.payTo).toBe(FOUNDRY);
++    expect(near?.maxAmountRequired).toBe(quote.accepts[0]?.maxAmountRequired);
++    expect(near?.extra?.method).toBe('ft_transfer');
++    expect(near?.extra?.memo).toMatch(/^[0-9a-f]{32}$/);
++    expect(quote.accepts.some((row) => row.network === 'near')).toBe(false);
++
++    const nonce = near!.extra!.memo!;
++    const amount = near!.maxAmountRequired!;
++    ctx.nearReceipts = async () => view({ amount, memo: nonce });
++    const paid = await handleBlip(
++      new Request(url, {
++        headers: {
++          'X-PAYMENT': encodeNearPayment({
++            txHash: 'mock-final-tx',
++            senderAccountId: SENDER,
++            nonce,
++          }),
++        },
++      }),
++      ctx,
++    );
++    expect(paid?.status).toBe(200);
++    const body = (await paid!.json()) as { paid: boolean; videoUrl: string; txHash: string };
++    expect(body.paid).toBe(true);
++    expect(body.videoUrl).toMatch(/\.mp4$/);
++    expect(body.txHash).toBe('mock-final-tx');
++    expect((ctx.facilitator as MemoryFacilitator).debitCount()).toBe(0);
++  });
++});
