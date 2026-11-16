@@ -23,8 +23,10 @@ test('the half hour is the only open weekday slot', () => {
   assert.equal(stationHourKey('2026-10-26T17:30:00-05:00'), '2026-10-26T17');
   assert.equal(stationHourKey('2026-10-26T17:59:00-05:00'), '2026-10-26T17');
   assert.equal(stationHourKey('2026-10-26T18:00:00-05:00'), null);
-  assert.equal(stationHourKey('2026-10-25T13:30:00-05:00'), '2026-10-25T13');
-  assert.equal(stationHourKey('2026-10-24T13:30:00-05:00'), null);
+  assert.equal(stationHourKey('2026-10-25T13:30:00-05:00'), '2026-10-25T13'); // Sunday fires
+  assert.equal(stationHourKey('2026-11-01T13:30:00-06:00'), '2026-11-01T13'); // Sunday fires
+  assert.equal(stationHourKey('2026-10-24T13:30:00-05:00'), null); // Saturday off
+  assert.equal(stationHourKey('2026-10-31T13:30:00-05:00'), null); // Saturday off
 });
 
 test('arch1 is included only when that id is in the list', () => {
@@ -153,6 +155,41 @@ test('Railway posts on a real port inside the half hour', async () => {
     assert.equal(station[0].id, 'nudge:station:forge:2026-10-26T07');
   } finally {
     await stop(srv, data);
+  }
+});
+
+test('Sunday posts a station line and Saturday does not', async () => {
+  const sunday = '2026-11-01T13:30:00-06:00';
+  const { srv, data, raw } = spawnBoard({ STATION_NOW: sunday });
+  let logs = '';
+  srv.stdout.on('data', (d) => { logs += d; });
+  srv.stderr.on('data', (d) => { logs += d; });
+  try {
+    const port = await listenPort(srv);
+    const seen = await (await fetch('http://127.0.0.1:' + port + '/inbox/forge?all=1', {
+      headers: { Authorization: 'Bearer ' + raw.forge },
+    })).json();
+    const stored = (seen.lines || []).filter((line) => line.kind === 'station');
+    assert.equal(stored.length, 1);
+    assert.equal(stored[0].id, 'nudge:station:forge:2026-11-01T13');
+    const health = await (await fetch('http://127.0.0.1:' + port + '/healthz')).json();
+    assert.equal(health.station_nudge.action, 'post');
+    assert.equal(health.station_nudge.hour, '2026-11-01T13');
+    assert.match(logs, /station nudge post 2026-11-01T13/);
+  } finally {
+    await stop(srv, data);
+  }
+  const off = spawnBoard({ STATION_NOW: '2026-10-31T13:30:00-05:00' });
+  try {
+    const port = await listenPort(off.srv);
+    const seen = await (await fetch('http://127.0.0.1:' + port + '/inbox/forge?all=1', {
+      headers: { Authorization: 'Bearer ' + off.raw.forge },
+    })).json();
+    assert.equal((seen.lines || []).filter((line) => line.kind === 'station').length, 0);
+    const health = await (await fetch('http://127.0.0.1:' + port + '/healthz')).json();
+    assert.equal(health.station_nudge.action, 'skip');
+  } finally {
+    await stop(off.srv, off.data);
   }
 });
 
