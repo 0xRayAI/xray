@@ -1,4 +1,6 @@
-From Grok Bot, put your agent to work on NEAR. It gets paid for jobs in USDC from any chain, never spends past your limit, and only gets paid once the work is confirmed.
+Plan only, nothing built yet. What we're building toward:
+"From Grok Bot, put your agent to work on NEAR. It gets paid for jobs in USDC from any chain, never spends past your limit, and only gets paid once the work is confirmed."
+First demo scope: NEAR testnet USDC + Base x402. 'Any chain' needs the 1Click leg (mainnet only), not in the demo.
 
 # NEAR first-build eval
 
@@ -63,7 +65,7 @@ Open the site. Choose Grok Bot, or open a CLI and run the same xray skill. The r
 
 One source: [Basssoman/pinky](https://github.com/Basssoman/pinky) at `c94cb144abcc755dfabd7fab96bf0f418c79fcd4` (2026-11-14). GitHub license: MIT. Core file `contract/src/lib.rs`. Catalog row: [near-reuse report](https://github.com/0xRayAI/xray/blob/nibbler/near-hackathon-catalog/house/dist/mill/near-reuse-report-2026-11.md) and the escrow row in [near-kit-plan](https://github.com/0xRayAI/xray/blob/nibbler/near-hackathon-catalog/house/dist/mill/near-kit-plan-2026-11.md).
 
-Against core NEAR, this is the catalog contract that takes USDC through NEP-141. `ft_transfer_call` delivers tokens and calls `ft_on_transfer`; the returned amount is what `ft_resolve_transfer` refunds ([NEP-141](https://docs.near.org/primitives/ft/standard), [core](https://nomicon.io/Standards/Tokens/FungibleToken/Core)). Pinky `ft_on_transfer` (lines 1087–1101) accepts only `self.token_id` and returns `0` for that token. `token_id` is an init argument (`new`, line 717), not a hardcoded contract. The msg `{"deal_id":N}` credits the deal (`credit_deal`). A wrong token is returned in full. A bad or unknown deal id on the configured token is recorded as orphan funds and is not refunded.
+Against core NEAR, this is the catalog contract that takes USDC through NEP-141. `ft_transfer_call` delivers tokens and calls `ft_on_transfer`; the returned amount is what `ft_resolve_transfer` refunds ([NEP-141](https://docs.near.org/primitives/ft/standard), [core](https://nomicon.io/Standards/Tokens/FungibleToken/Core)). Pinky `ft_on_transfer` (lines 1087–1101) accepts only `self.token_id` and returns `0` for that token. `token_id` is an init argument (`new`, line 717), not a hardcoded contract. The msg `{"deal_id":N}` credits the deal (`credit_deal`). A wrong token is returned in full. A bad or unknown deal id on the configured token is recorded as orphan funds and is not refunded. Before any USDC, the orphan path is a rewrite: a bad msg must return the amount so `ft_resolve_transfer` refunds it. Returning `0` locks the tokens until an owner sweep.
 
 Release is only after work:
 
@@ -75,7 +77,7 @@ Release is only after work:
 
 `credit` takes one arrival that covers the deal amount. Excess is client payout, not a larger escrow. That is not the shop rule of an equal 6-decimal string.
 
-**Port the release machine** (deliver, client accept, review timeout, dispute, 50/50). **Rewrite the demo init.** Do not send funds to the mainnet deployment named in the reuse report (`escrow.pinkydeals.near`). A testnet deploy passes `token_id` = Circle testnet USDC `3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af`, short periods (the init comment allows that only for a test instance), and `fee_bps` `0`. `MIN_AMOUNT` is 1 USDC (`1000000`, line 88), so a nickel shop price cannot fund a deal. Parties are one-time ed25519 keys, not the foundry account; binding the foundry key as `creator_pk` is new work. The relayer may submit `create_deal` and `act` and cannot forge the signature (`escrow-v1|…`). Whether that relayer is one we run is **UNVERIFIED**. Before any USDC, the orphan path is a rewrite: a bad msg must return the amount so `ft_resolve_transfer` refunds it. Returning `0` locks the tokens until an owner sweep.
+**Port the release machine** (deliver, client accept, review timeout, dispute, 50/50). **Rewrite the demo init.** Do not send funds to the mainnet deployment named in the reuse report (`escrow.pinkydeals.near`). A testnet deploy passes `token_id` = Circle testnet USDC `3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af`, short periods (the init comment allows that only for a test instance), and `fee_bps` `0`. `MIN_AMOUNT` is 1 USDC (`1000000`, line 88), so a nickel shop price cannot fund a deal. Parties are one-time ed25519 keys, not the foundry account; binding the foundry key as `creator_pk` is new work. The relayer may submit `create_deal` and `act` and cannot forge the signature (`escrow-v1|…`). Whether that relayer is one we run is **UNVERIFIED**.
 
 ### Pinky or Fulfil
 

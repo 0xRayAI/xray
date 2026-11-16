@@ -1,4 +1,6 @@
-From Grok Bot, put your agent to work on NEAR. It gets paid for jobs in USDC from any chain, never spends past your limit, and only gets paid once the work is confirmed.
+Plan only, nothing built yet. What we're building toward:
+"From Grok Bot, put your agent to work on NEAR. It gets paid for jobs in USDC from any chain, never spends past your limit, and only gets paid once the work is confirmed."
+First demo scope: NEAR testnet USDC + Base x402. 'Any chain' needs the 1Click leg (mainnet only), not in the demo.
 
 Product: a website, "deploy your agent on NEAR and earn." Grok Bot is the one-click path. Grok CLI, Cursor, Claude Code, and Codex use the same xray skill. Plan only. No spend. Refs #1082. The foundry does not replace the Groover ETH pin or the doctor OWS wallet.
 
