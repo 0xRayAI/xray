@@ -27,6 +27,7 @@ npm install 0xray
 - [Integrations](./guides/integrations) — Grok, OpenCode, Hermes, OpenClaw
 - [Grok floor](./architecture/GROK_GUIDE) — Read the station card; do not thicken the exo
 - [Consumer migration](./guides/consumer-migration) — upgrade from 3.x
+- [From Agent Builder](./guides/migrate-from-openai-agent-builder) — Agent Builder and the prompts API shut down November 30; Evals is read-only
 
 ## 4.0
 
