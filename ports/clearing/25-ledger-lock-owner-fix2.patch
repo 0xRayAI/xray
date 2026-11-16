@@ -1,0 +1,336 @@
+diff --git a/mcp/src/ledger.ts b/mcp/src/ledger.ts
+index 0dd169c..67f0473 100644
+--- a/mcp/src/ledger.ts
++++ b/mcp/src/ledger.ts
+@@ -4,7 +4,7 @@ import {
+   closeSync,
+   constants,
+   existsSync,
+-  linkSync,
++  fstatSync,
+   mkdirSync,
+   openSync,
+   readFileSync,
+@@ -23,6 +23,15 @@ function staleLockMs(): number {
+   return Number.isFinite(raw) && raw >= 0 ? raw : 30_000;
+ }
+ 
++/**
++ * A crashed stealer's guard is swept after this. Tests set
++ * CLEARING_LEDGER_STEAL_STALE_MS. A live steal finishes well inside it.
++ */
++function stealGuardStaleMs(): number {
++  const raw = Number(process.env.CLEARING_LEDGER_STEAL_STALE_MS ?? 5_000);
++  return Number.isFinite(raw) && raw >= 0 ? raw : 5_000;
++}
++
+ const COUNTED: ReceiptStatus[] = ['submitted', 'settled', 'replayed'];
+ 
+ export interface Ledger {
+@@ -85,8 +94,9 @@ export class FileLedger extends MemoryLedger {
+ 
+   /**
+    * Append-only. A later line for the same paymentId wins on load.
+-   * Exclusive lock is O_CREAT|O_EXCL (open(2)). Steal and release take the
+-   * directory entry with rename, then unlink only the renamed file.
++   * Exclusive lock is O_CREAT|O_EXCL (open(2)). Stealers share one
++   * path.steal guard. Inside it, a lock is renamed only when a fresh
++   * snapshot is still the stale one. Release renames only its own inode.
+    */
+   override put(receipt: Receipt): void {
+     super.put(receipt);
+@@ -107,6 +117,8 @@ export class FileLedger extends MemoryLedger {
+ 
+ export type LedgerLock = { fd: number; token: string };
+ 
++export type LedgerRelease = 'released' | 'lost';
++
+ /** Exclusive lock. The file holds `pid:random` so only that owner may remove it. */
+ export function acquireLedgerLock(path: string): LedgerLock {
+   const started = Date.now();
+@@ -129,24 +141,23 @@ export function acquireLedgerLock(path: string): LedgerLock {
+ }
+ 
+ /**
+- * Drop our lock. rename claims the directory entry. The loser sees ENOENT
+- * and leaves the file alone. We unlink only the renamed file, and only when
+- * it still holds our token.
++ * Drop our lock. Design (a): the same path.steal guard serializes this with
++ * stealers, so path is renamed only while its inode is still ours. A mismatch
++ * means the lock was already taken; that is reported as lost and nothing is
++ * put back. A restore is never attempted, so path is not empty for a live holder.
+  */
+-export function releaseLedgerLock(path: string, held: LedgerLock): void {
++export function releaseLedgerLock(path: string, held: LedgerLock): LedgerRelease {
++  let result: LedgerRelease = 'lost';
+   try {
+-    closeSync(held.fd);
+-  } catch {
+-    /* already closed */
+-  }
+-  const grave = `${path}.rel.${held.token}`;
+-  try {
+-    renameSync(path, grave);
+-  } catch (err) {
+-    if (errorCode(err) === 'ENOENT') return;
+-    throw err;
++    result = withStealGuard(path, () => releaseOwnedLock(path, held));
++  } finally {
++    try {
++      closeSync(held.fd);
++    } catch {
++      /* already closed */
++    }
+   }
+-  settleRenamed(path, grave, held.token, false);
++  return result;
+ }
+ 
+ function lockSnapshot(path: string): { token: string; mtimeMs: number } | undefined {
+@@ -166,67 +177,140 @@ function isStale(mtimeMs: number): boolean {
+ }
+ 
+ /**
+- * Take a stale lock by renaming it aside. Only one rename wins. ENOENT means
+- * another stealer or a release already moved `path`, so the caller retries
+- * the exclusive create. The token and mtime are checked on the renamed file,
+- * and only that file is unlinked.
++ * Design (a). Stealers and releasers take path.steal with O_EXCL before they
++ * look again. Inside that guard the snapshot is repeated. The lock is renamed
++ * only when the token and mtime still match that stale snapshot, so a second
++ * stealer cannot rename a fresh lock and no restore is required. Grave names
++ * carry the token plus a random suffix. Leftover graves are ignored. A steal
++ * guard older than its own timeout is renamed aside and deleted only when
++ * that renamed file is still stale, so a crash cannot block the next acquire.
+  */
+ function stealStaleLock(path: string): boolean {
+   const seen = lockSnapshot(path);
+   if (!seen || !isStale(seen.mtimeMs)) return false;
+-  const grave = `${path}.stale.${seen.token}`;
+-  if (existsSync(grave)) return false;
++  return withStealGuard(path, () => {
++    const again = lockSnapshot(path);
++    if (!again || again.token !== seen.token || again.mtimeMs !== seen.mtimeMs) return false;
++    if (!isStale(again.mtimeMs)) return false;
++    const grave = `${path}.stale.${again.token}.${randomBytes(8).toString('hex')}`;
++    try {
++      renameSync(path, grave);
++    } catch (err) {
++      if (errorCode(err) === 'ENOENT') return false;
++      throw err;
++    }
++    const moved = lockSnapshot(grave);
++    if (moved && moved.token === again.token && isStale(moved.mtimeMs)) {
++      try {
++        unlinkSync(grave);
++      } catch {
++        /* already gone */
++      }
++    }
++    return true;
++  });
++}
++
++function releaseOwnedLock(path: string, held: LedgerLock): LedgerRelease {
++  let currentIno: number;
++  try {
++    currentIno = statSync(path).ino;
++  } catch {
++    return 'lost';
++  }
++  if (currentIno !== fstatSync(held.fd).ino) return 'lost';
++  const grave = `${path}.rel.${held.token}.${randomBytes(8).toString('hex')}`;
+   try {
+     renameSync(path, grave);
+   } catch (err) {
+-    if (errorCode(err) === 'ENOENT') return false;
++    if (errorCode(err) === 'ENOENT') return 'lost';
+     throw err;
+   }
+-  return settleRenamed(path, grave, seen.token, true);
+-}
+-
+-/**
+- * Unlink `grave` when it is the file we meant to drop. Never unlink `path`.
+- *
+- * A token mismatch, or a file that is still fresh, is put back with
+- * linkSync(grave, path) and then the renamed name is removed. linkSync
+- * throws EEXIST when a new lock already occupies `path`. A stale renamed
+- * file is then deleted, because the live lock is the one at `path`. A fresh
+- * renamed file is kept and this throws. Deleting it would drop a lock a
+- * holder still has, and overwriting `path` would drop the new lock. Leaving
+- * the fresh file at `grave` is the fail-closed choice.
+- */
+-function settleRenamed(path: string, grave: string, expectedToken: string, requireStale: boolean): boolean {
+   const moved = lockSnapshot(grave);
+-  if (!moved) return false;
+-  const stale = isStale(moved.mtimeMs);
+-  const expected = moved.token === expectedToken && (!requireStale || stale);
+-  if (expected) {
++  if (moved?.token === held.token) {
+     try {
+       unlinkSync(grave);
+     } catch {
+       /* already gone */
+     }
+-    return true;
++    return 'released';
+   }
++  return 'lost';
++}
++
++function withStealGuard<T>(lockPath: string, fn: () => T): T {
++  const held = acquireStealGuard(lockPath);
+   try {
+-    linkSync(grave, path);
+-  } catch (err) {
+-    if (errorCode(err) !== 'EEXIST') throw err;
+-    if (stale) {
+-      try {
+-        unlinkSync(grave);
+-      } catch {
+-        /* already gone */
++    return fn();
++  } finally {
++    releaseStealGuard(`${lockPath}.steal`, held);
++  }
++}
++
++function acquireStealGuard(lockPath: string): LedgerLock {
++  const guard = `${lockPath}.steal`;
++  const started = Date.now();
++  for (;;) {
++    try {
++      const fd = openSync(guard, constants.O_CREAT | constants.O_EXCL | constants.O_WRONLY);
++      const token = `${process.pid}:${randomBytes(8).toString('hex')}`;
++      writeSync(fd, token);
++      return { fd, token };
++    } catch (err) {
++      if (errorCode(err) !== 'EEXIST') throw err;
++      if (sweepStaleGuard(guard)) continue;
++      if (Date.now() - started > staleLockMs() + stealGuardStaleMs() + 5_000) {
++        throw new Error(`ledger steal guard timeout: ${guard}`);
+       }
+-      return false;
++      sleepMs(15);
+     }
+-    throw new Error(`ledger lock fail closed: ${grave} is a fresh lock and ${path} is already taken`);
+   }
++}
++
++function releaseStealGuard(guard: string, held: LedgerLock): void {
+   try {
+-    unlinkSync(grave);
++    const current = statSync(guard);
++    if (current.ino === fstatSync(held.fd).ino) {
++      const grave = `${guard}.rel.${held.token}.${randomBytes(8).toString('hex')}`;
++      renameSync(guard, grave);
++      const moved = lockSnapshot(grave);
++      if (moved?.token === held.token) {
++        try {
++          unlinkSync(grave);
++        } catch {
++          /* already gone */
++        }
++      }
++    }
+   } catch {
+-    /* already gone */
++    /* a sweep already moved a crashed guard */
++  } finally {
++    try {
++      closeSync(held.fd);
++    } catch {
++      /* already closed */
++    }
++  }
++}
++
++function sweepStaleGuard(guard: string): boolean {
++  const seen = lockSnapshot(guard);
++  if (!seen || Date.now() - seen.mtimeMs <= stealGuardStaleMs()) return false;
++  const grave = `${guard}.old.${randomBytes(8).toString('hex')}`;
++  try {
++    renameSync(guard, grave);
++  } catch (err) {
++    if (errorCode(err) === 'ENOENT') return false;
++    throw err;
++  }
++  const moved = lockSnapshot(grave);
++  if (moved && Date.now() - moved.mtimeMs > stealGuardStaleMs()) {
++    try {
++      unlinkSync(grave);
++    } catch {
++      /* already gone */
++    }
++    return true;
+   }
+   return false;
+ }
+diff --git a/tests/ledger.file.test.ts b/tests/ledger.file.test.ts
+index 642bbf1..44b8999 100644
+--- a/tests/ledger.file.test.ts
++++ b/tests/ledger.file.test.ts
+@@ -43,7 +43,7 @@ describe('file ledger', () => {
+       const past = new Date(Date.now() - 5_000);
+       utimesSync(lock, past, past);
+       const second = acquireLedgerLock(lock);
+-      releaseLedgerLock(lock, first);
++      expect(releaseLedgerLock(lock, first)).toBe('lost');
+       expect(existsSync(lock)).toBe(true);
+       expect(readFileSync(lock, 'utf8')).toBe(second.token);
+       releaseLedgerLock(lock, second);
+@@ -87,6 +87,53 @@ describe('file ledger', () => {
+       else process.env.CLEARING_LEDGER_LOCK_STALE_MS = previous;
+     }
+   });
++
++  it('a fresh holder is not evicted and steal does not throw on the old restore path', async () => {
++    const dir = mkdtempSync(join(tmpdir(), 'clearing-ledger-fresh-'));
++    const lock = join(dir, 'receipts.jsonl.lock');
++    const log = join(dir, 'holders.log');
++    const previous = process.env.CLEARING_LEDGER_LOCK_STALE_MS;
++    process.env.CLEARING_LEDGER_LOCK_STALE_MS = '1000';
++    try {
++      const held = acquireLedgerLock(lock);
++      const child = enterLock(lock, log);
++      await new Promise((resolve) => setTimeout(resolve, 400));
++      expect(readFileSync(lock, 'utf8')).toBe(held.token);
++      expect(existsSync(log)).toBe(false);
++      expect(releaseLedgerLock(lock, held)).toBe('released');
++      await child;
++      expect(holderDepth(readFileSync(log, 'utf8'))).toEqual({ max: 1, enters: 1, open: 0 });
++    } finally {
++      if (previous === undefined) delete process.env.CLEARING_LEDGER_LOCK_STALE_MS;
++      else process.env.CLEARING_LEDGER_LOCK_STALE_MS = previous;
++    }
++  });
++
++  it('a leftover grave and steal guard do not block the next acquire', () => {
++    const dir = mkdtempSync(join(tmpdir(), 'clearing-ledger-crash-'));
++    const lock = join(dir, 'receipts.jsonl.lock');
++    const previousLock = process.env.CLEARING_LEDGER_LOCK_STALE_MS;
++    const previousGuard = process.env.CLEARING_LEDGER_STEAL_STALE_MS;
++    process.env.CLEARING_LEDGER_LOCK_STALE_MS = '1000';
++    process.env.CLEARING_LEDGER_STEAL_STALE_MS = '1000';
++    try {
++      writeFileSync(lock, `0:${'ab'.repeat(16)}`);
++      writeFileSync(`${lock}.steal`, 'crashed-stealer');
++      writeFileSync(`${lock}.stale.0.${'cd'.repeat(8)}.deadbeef`, 'leftover-grave');
++      const past = new Date(Date.now() - 5_000);
++      utimesSync(lock, past, past);
++      utimesSync(`${lock}.steal`, past, past);
++      const held = acquireLedgerLock(lock);
++      expect(readFileSync(lock, 'utf8')).toBe(held.token);
++      expect(releaseLedgerLock(lock, held)).toBe('released');
++      expect(existsSync(lock)).toBe(false);
++    } finally {
++      if (previousLock === undefined) delete process.env.CLEARING_LEDGER_LOCK_STALE_MS;
++      else process.env.CLEARING_LEDGER_LOCK_STALE_MS = previousLock;
++      if (previousGuard === undefined) delete process.env.CLEARING_LEDGER_STEAL_STALE_MS;
++      else process.env.CLEARING_LEDGER_STEAL_STALE_MS = previousGuard;
++    }
++  });
+ });
+ 
+ function holderDepth(log: string): { max: number; enters: number; open: number } {
