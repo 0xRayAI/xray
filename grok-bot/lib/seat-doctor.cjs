@@ -201,6 +201,16 @@ function probeRepertoire(cwd) {
   };
 }
 
+function probeFoundry(cwd) {
+  const file = path.join(cwd, '.xray', 'state', 'foundry.json');
+  const data = readJson(file);
+  if (!data || typeof data.id !== 'string' || data.id.length === 0) {
+    return { present: false, id: null, receiver: null, file: null };
+  }
+  const receiver = typeof data.receiver === 'string' && data.receiver.length > 0 ? data.receiver : null;
+  return { present: true, id: data.id, receiver, file };
+}
+
 function probeNear(cwd) {
   const seats = path.join(cwd, '.xray', 'state', 'seats');
   if (!fs.existsSync(seats)) return { present: false, accountId: null, file: null };
@@ -975,6 +985,7 @@ function diagnoseSeat(opts = {}) {
     repertoire: probeRepertoire(cwd),
     ows: probeOws(walletHome),
     near: probeNear(cwd),
+    foundry: probeFoundry(cwd),
     house,
     bridges,
     board: boardSurface(env),
@@ -1067,6 +1078,13 @@ function formatDoctor(report) {
       report.near.present
         ? `NEAR: ${report.near.accountId} (testnet)`
         : 'NEAR: miss — near-seat has not recorded an account',
+    );
+  }
+  if (report.foundry) {
+    lines.push(
+      report.foundry.present
+        ? `Foundry: ${report.foundry.id} — receiver ${report.foundry.receiver || 'miss'}`
+        : 'Foundry: miss — create has not recorded a foundry',
     );
   }
   if (report.house) {
