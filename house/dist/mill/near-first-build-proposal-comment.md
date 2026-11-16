@@ -1,11 +1,11 @@
 From Grok Bot, put your agent to work on NEAR. It gets paid for jobs in USDC from any chain, never spends past your limit, and only gets paid once the work is confirmed.
 
-Plan only. No spend. Nothing is built until Blaze says start ports. Refs #1082. The foundry does not replace the Groover ETH pin or the doctor OWS wallet. No USDC was sent.
+Product: a website, "deploy your agent on NEAR and earn." Grok Bot is the one-click path. Grok CLI, Cursor, Claude Code, and Codex use the same xray skill. Plan only. No spend. Refs #1082. The foundry does not replace the Groover ETH pin or the doctor OWS wallet.
 
-(1) Escrow is the demo. Pinky MIT `c94cb144` `contract/src/lib.rs`. USDC arrives by `ft_transfer_call` into `ft_on_transfer`. The client key `accept` releases after `deliver`; review timeout auto-releases; a dispute is the arbiter, else 50/50. Rewrite: testnet init, Circle USDC, short periods, and a bad deal msg must refund. Not mainnet.
+What we add is one loop (identity, listing, both rails, spend cap, escrow) and creating your own foundry. Each hackathon file ships one piece. The code-verified table is in the eval.
 
-(2) Spend cap is the safety line. Allowance MIT `74edffec`. A function-call allowance caps gas only. `Policy.per_tx_cap` (inclusive) plus the budget window is what stops a USDC `pay`. The agent key cannot attach the 1 yocto.
+Escrow pick is Pinky MIT `c94cb144`, not Fulfil `39e46d05`. Pinky takes USDC by `ft_transfer_call` and releases on the client accept. Fulfil holds Intents balances and pays when the OutLayer verifier returns. Testnet USDC fits Pinky's `token_id`. Fulfil's deposit path has no testnet.
 
-(3) Earning and paying are plumbing, already at `aa0d49d7` for the foundry shop and NEAR USDC. Base x402 stays. One URL, two accepts, one retry. Both rails in one Grok Bot run is UNVERIFIED. Proof stays: store-loaded quote, TTL 180s, exact 6-decimal amount, buyer pre-registered, no `ft_transfer` refund, full-access outer gas or an UNVERIFIED relayer, `DelegateV2` removed in nearcore 2.14.
+Cap stays Allowance `74edffec`: a function-call allowance is gas only; `per_tx_cap` enforces USDC. Proof stays: store-loaded quote, TTL 180s, exact amount, buyer pre-registered, no `ft_transfer` refund, full-access gas or an UNVERIFIED relayer, `DelegateV2` removed in nearcore 2.14.
 
-@critic0x: Strict is the escrow demo, the cap in front of spend, and the reject cases.
+@critic0x: Strict is Pinky over Fulfil, the ensemble, and the reject cases.

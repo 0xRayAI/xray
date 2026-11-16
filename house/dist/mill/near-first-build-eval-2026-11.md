@@ -16,6 +16,34 @@ Seat: mill. Date: 2026-11-16 (UTC). Plan only. No kit code, no port, no listing,
 
 "From any chain" in the headline is the story. The rails this plan can cite are Base and NEAR. A third chain is **UNVERIFIED**.
 
+Product, from [6905090495](https://github.com/0xRayAI/xray/pull/1135#issuecomment-6905090495): a website, "deploy your agent on NEAR and earn." The site stays thin. Grok Bot is the one-click path. Grok CLI, Cursor, Claude Code, and Codex run the same xray skill. The agent runtime does the setup.
+
+## What we add over the hackathon
+
+(a) The ensemble. One loop runs identity, hangar listing, dual-rail pay, the spend cap, and escrow together. Each hackathon file below does one of those jobs. None of them runs the loop.
+
+(b) Creating your own foundry is a first-class step. `mintAfterWear` in `src/cli/commands/foundry-mint-wear.ts` only re-applies the mill plant overlay onto a consumer project. It does not create the foundry the person earns with. That step is new.
+
+## Shipped vs what we add
+
+Read from the files named here. Not from a README.
+
+| Row | What a hackathon file ships | What xray adds | Call |
+|---|---|---|---|
+| Identity | Allowance `src/lib.rs` `74edffec` lines 483–491 adds a function-call key on the vault. Pinky `contract/src/lib.rs` `c94cb144` lines 1–10 uses a one-time ed25519 key per party. Neither creates the person's NEAR account. | `near-seat`: the testnet account, measured at about 10.6s. `grok-bot/lib/seat-doctor.cjs` `probeOws` (lines 204–210) only checks that `~/.ows` is a directory. `nextSteps` (line 838) names Groover register as an optional DID. That pin stays. The NEAR account does not replace it. | new |
+| Foundry creation | No file read in Pinky, Fulfil `contracts/escrow/src/lib.rs` `39e46d05`, Allowance, or Mihenk `server.mjs` `1da0b45c` creates a foundry. | The website step that creates the person's foundry. `foundry-mint-wear.ts` does not do that. | new |
+| Hangar listing | None of those contracts register a shop. | Doctor `nextSteps` (line 826) prints `npx groover-hangar`. It does not call Groover. The ensemble lists the foundry on the hangar the plant skill already names. | new |
+| NEAR USDC rail | Mihenk `server.mjs` `1da0b45c` `verify` (lines 63–113) reads an `ft_transfer` after a 402. Token default in `lib.mjs` line 14 is `usdc.fakes.testnet`. | The Circle testnet id, store-loaded quote, 180s TTL, equal 6-decimal amount, `final_execution_status` FINAL. | rewrite |
+| Base x402 rail | x402-near `facilitator.mjs` `a16e87c3` settles `wrap.testnet` on `near-testnet` (lines 17–26 and `lib.mjs` line 20). It does not settle Base. | Keep Base. `seat-doctor.cjs` lines 827–834 names the Clearing 402 and the OWS folder. Clearing `mcp/src/blip.ts` `619d1e7e` returns one `eip155:8453` accept and settles `eip3009`. The second accept is the NEAR rail. | new accept beside the Base path |
+| Spend cap | Allowance `src/policy.rs` `74edffec` `per_tx_cap` and `Budget`. `evaluate` rejects `amount > per_tx_cap`. | No USDC cap in xray source. Wire this vault in front of spend. Rewrite the memo to the quote nonce. | rewrite |
+| Escrow | Pinky, picked below. Fulfil is the other candidate and is not the pick. | No escrow contract in xray. Deploy the Pinky release machine on testnet. Do not use the mainnet deployment. | rewrite init |
+| One-click path | No website in the files above. | The site, with Grok Bot as the button that runs the loop. Doctor today is a check (`diagnoseSeat`), not that button. | new |
+| CLI path | No shared skill runner in the files above. | The same loop through the xray skill. Doctor already tells a missing plant to run `npx 0xray wear` (line 814). Grok CLI, Cursor, Claude Code, and Codex use that skill. | new |
+
+## How a person uses it
+
+Open the site. Choose Grok Bot, or open a CLI and run the same xray skill. The runtime creates the foundry, lists it, and the foundry gets paid for a job once the work is confirmed, inside the owner's limit. No USDC has moved. This has not been run.
+
 ## 1. Escrow — the demo proof point
 
 One source: [Basssoman/pinky](https://github.com/Basssoman/pinky) at `c94cb144abcc755dfabd7fab96bf0f418c79fcd4` (2026-11-14). GitHub license: MIT. Core file `contract/src/lib.rs`. Catalog row: [near-reuse report](https://github.com/0xRayAI/xray/blob/nibbler/near-hackathon-catalog/house/dist/mill/near-reuse-report-2026-11.md) and the escrow row in [near-kit-plan](https://github.com/0xRayAI/xray/blob/nibbler/near-hackathon-catalog/house/dist/mill/near-kit-plan-2026-11.md).
@@ -34,7 +62,21 @@ Release is only after work:
 
 **Port the release machine** (deliver, client accept, review timeout, dispute, 50/50). **Rewrite the demo init.** Do not send funds to the mainnet deployment named in the reuse report (`escrow.pinkydeals.near`). A testnet deploy passes `token_id` = Circle testnet USDC `3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af`, short periods (the init comment allows that only for a test instance), and `fee_bps` `0`. `MIN_AMOUNT` is 1 USDC (`1000000`, line 88), so a nickel shop price cannot fund a deal. Parties are one-time ed25519 keys, not the foundry account; binding the foundry key as `creator_pk` is new work. The relayer may submit `create_deal` and `act` and cannot forge the signature (`escrow-v1|…`). Whether that relayer is one we run is **UNVERIFIED**. Before any USDC, the orphan path is a rewrite: a bad msg must return the amount so `ft_resolve_transfer` refunds it. Returning `0` locks the tokens until an owner sweep.
 
-Not this demo: [bemlerlabs/foreman](https://github.com/bemlerlabs/foreman) `082fff9b` (Apache-2.0) locks native NEAR with `attached_deposit` and pays with `Promise::transfer` (`accept`, lines 229–254). [cuongdcdev/fullfil](https://github.com/cuongdcdev/fullfil) `39e46d05` (MIT) holds NEP-245 Intents balances (`mt_on_transfer`), not an `ft_transfer_call`.
+### Pinky or Fulfil
+
+Both were read at the shas above. Fulfil is [cuongdcdev/fullfil](https://github.com/cuongdcdev/fullfil) MIT `39e46d050148fb0c284b3b6c403cb04145633b32`, file `contracts/escrow/src/lib.rs`.
+
+| Check | Pinky | Fulfil |
+|---|---|---|
+| USDC in | NEP-141. `ft_transfer_call` lands in `ft_on_transfer`. `token_id` is an init argument, so the Circle testnet id can be set. | NEP-245. Header lines 3–7: funds are balances inside `intents_contract`. `mt_on_transfer` (lines 1003–1050) is called by that contract. There is no `ft_on_transfer`. |
+| Confirm, then release | Client key signs `accept` only while `Delivered`. That credits the creator. | `on_verify_result` (lines 1096–1148) pays when the OutLayer worker returns and `challenge_window_ns` is 0. `confirm_delivery` (line 1497) checks a secret hex from the caller. It is not the buyer accepting the job. |
+| Timeout | Review timeout releases to the creator. Delivery-deadline timeout lets the client refund. Dispute timeout is 50/50. | `timeout` (lines 1203–1267) unclaims a slow claim or sends a missing proof to review. `expire` (lines 1182–1199) refunds the buyer. |
+| Dispute | Client opens it during review. Arbiter decides inside the window. | Buyer or fulfiller opens it (`op_dispute`, lines 2540–2564). `resolve_dispute` (lines 1402–1416) is the arbiter only: buyer, fulfiller, or split. |
+| Testnet | Init comment: short periods only on a test instance. Token id is a parameter. | Deposit path is `intents_contract`. 1Click has no testnet ([docs](https://docs.near-intents.org/resources/faqs)). A testnet USDC `ft_transfer_call` cannot fund this contract. |
+
+Pick: Pinky. The demo is testnet USDC held until the buyer confirms the work. Fulfil confirms by an email-verifier worker, then pays, and it cannot take the NEP-141 testnet USDC this rail uses.
+
+Foreman stays out. [bemlerlabs/foreman](https://github.com/bemlerlabs/foreman) `082fff9b` (Apache-2.0) locks native NEAR with `attached_deposit` and pays with `Promise::transfer` (`accept`, lines 229–254).
 
 The demo, when Blaze says start, and not before: create a deal, `ft_transfer_call` the testnet USDC in, deliver, client-accept, and show the creator payout credited. Not run. A transfer would spend.
 
