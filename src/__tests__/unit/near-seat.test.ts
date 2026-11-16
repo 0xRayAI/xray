@@ -90,6 +90,8 @@ describe('near-seat', () => {
       expect(shown).toContain('millfc1ca97ca3.testnet');
       expect(shown).toContain('[redacted]');
       expect(result.grantArgv).toContain('grant-function-call-access');
+      expect(result.grantArgv).toContain('sign-with-legacy-keychain');
+      expect(result.grantArgv).not.toContain('sign-with-keychain');
       expect(result.grantArgv).toContain('--function-names');
       expect(result.grantArgv).toContain('ping');
     } finally {
@@ -261,6 +263,51 @@ describe('near-seat', () => {
       expect(process.umask()).toBe(0o022);
     } finally {
       process.umask(prior);
+      rmSync(home, { recursive: true, force: true });
+    }
+  });
+
+  it('signs the grant with the same legacy keychain the create saved', () => {
+    const accountId = 'millfc1ca97ca3.testnet';
+    const create = seat.createAccountArgv(accountId);
+    const grant = seat.functionCallKeyArgv(accountId, accountId, 'ping');
+    expect(create).toContain('save-to-legacy-keychain');
+    expect(grant).toContain('save-to-legacy-keychain');
+    expect(grant).toContain('sign-with-legacy-keychain');
+    expect(grant).not.toContain('sign-with-keychain');
+  });
+
+  it('skips account create when the cold key and the account already exist', async () => {
+    const home = scratch();
+    const accountId = 'millfc1ca97ca3.testnet';
+    const cold = path.join(home, 'near-cold', `${accountId}.json`);
+    mkdirSync(path.dirname(cold), { recursive: true });
+    writeFileSync(cold, `${JSON.stringify({
+      account_id: accountId,
+      public_key: 'ed25519:public-only',
+      private_key: SECRET,
+    })}\n`);
+    let created = 0;
+    const logs: string[] = [];
+    try {
+      const result = await seat.prepareNearSeat({
+        accountId,
+        seatHome: home,
+        log: (line) => logs.push(line),
+        viewAccount: async () => ({ amount: '10' }),
+        runners: {
+          createAccount: async () => {
+            created += 1;
+            throw new Error('create must not run');
+          },
+          addFunctionCallKey: async () => ({ status: 0, stdout: '' }),
+        },
+      });
+      expect(created).toBe(0);
+      expect(result.grantArgv).toContain('sign-with-legacy-keychain');
+      expect(logs.join('\n')).toContain('already exists');
+      expect(logs.join('\n')).not.toContain(SECRET);
+    } finally {
       rmSync(home, { recursive: true, force: true });
     }
   });

@@ -54,7 +54,7 @@ function functionCallKeyArgv(accountId, contractId, methodNames) {
     'save-to-legacy-keychain',
     'network-config',
     'testnet',
-    'sign-with-keychain',
+    'sign-with-legacy-keychain',
     'send',
   ];
 }
@@ -204,6 +204,27 @@ function runNearCli(args, opts = {}) {
   };
 }
 
+async function accountAlreadyThere(opts) {
+  const coldPath = path.join(opts.seatHome, 'near-cold', `${opts.accountId}.json`);
+  if (!fs.existsSync(coldPath)) return null;
+  let key;
+  try {
+    key = readLegacyKey(coldPath, opts.accountId);
+  } catch {
+    return null;
+  }
+  let account = null;
+  try {
+    account = typeof opts.viewAccount === 'function'
+      ? await opts.viewAccount(opts.accountId, opts)
+      : await viewAccount(opts.accountId, opts);
+  } catch {
+    return null;
+  }
+  if (!account || account.amount == null) return null;
+  return key;
+}
+
 async function prepareNearSeat(opts) {
   if (!opts || !opts.accountId) throw new Error('accountId is required');
   if (!opts.seatHome) throw new Error('seatHome is required');
@@ -211,16 +232,22 @@ async function prepareNearSeat(opts) {
   const runners = opts.runners || {};
   const prev = process.umask(SEAT_UMASK);
   try {
-    const created = typeof runners.createAccount === 'function'
-      ? await runners.createAccount(createAccountArgv(opts.accountId))
-      : runNearCli(createAccountArgv(opts.accountId), opts);
-    const key = loadCreatedKey(created, opts, opts.accountId);
+    const kept = await accountAlreadyThere(opts);
+    let key = kept;
+    if (!key) {
+      const created = typeof runners.createAccount === 'function'
+        ? await runners.createAccount(createAccountArgv(opts.accountId))
+        : runNearCli(createAccountArgv(opts.accountId), opts);
+      key = loadCreatedKey(created, opts, opts.accountId);
+      rememberSecrets(secrets, key);
+      if (created && created.stdout) emit(opts, secrets, created.stdout);
+      if (created && created.stderr) emit(opts, secrets, created.stderr);
+      assertCliOk(created, 'account create');
+      if (typeof opts.viewAccount === 'function') await opts.viewAccount(opts.accountId, opts);
+      else await viewAccount(opts.accountId, opts);
+    }
     rememberSecrets(secrets, key);
-    if (created && created.stdout) emit(opts, secrets, created.stdout);
-    if (created && created.stderr) emit(opts, secrets, created.stderr);
-    assertCliOk(created, 'account create');
-    if (typeof opts.viewAccount === 'function') await opts.viewAccount(opts.accountId, opts);
-    else await viewAccount(opts.accountId, opts);
+    if (kept) emit(opts, secrets, `near-seat: account ${opts.accountId} already exists`);
     const coldPath = path.join(opts.seatHome, 'near-cold', `${opts.accountId}.json`);
     const mode = writeCreatedFile(coldPath, `${JSON.stringify(key, null, 2)}\n`);
     const publicPath = path.join(opts.seatHome, 'near', 'account.json');
