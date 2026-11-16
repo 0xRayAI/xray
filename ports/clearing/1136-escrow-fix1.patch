@@ -1,0 +1,136 @@
+diff --git a/near/escrow/src/lib.rs b/near/escrow/src/lib.rs
+index 5e48c2f..b95ced0 100644
+--- a/near/escrow/src/lib.rs
++++ b/near/escrow/src/lib.rs
+@@ -25,7 +25,7 @@ use near_sdk::json_types::U128;
+ use near_sdk::store::LookupMap;
+ use near_sdk::{
+     env, near, require, AccountId, BorshStorageKey, Gas, NearToken, PanicOnDefault, Promise,
+-    PromiseOrValue,
++    PromiseOrValue, PromiseResult,
+ };
+ 
+ /// Circle USDC on NEAR testnet (ft_metadata: symbol USDC, decimals 6).
+@@ -33,7 +33,12 @@ pub const CIRCLE_USDC_NEAR_TESTNET: &str =
+     "3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af";
+ 
+ const GAS_FT_TRANSFER: Gas = Gas::from_tgas(20);
++const GAS_STORAGE_DEPOSIT: Gas = Gas::from_tgas(15);
++const GAS_ON_WITHDRAW: Gas = Gas::from_tgas(10);
+ const ONE_YOCTO: NearToken = NearToken::from_yoctonear(1);
++/// Circle USDC `storage_balance_bounds` min = max on testnet.
++/// NEP-145: https://nomicon.io/Standards/Tokens/StorageManagement
++const USDC_STORAGE_DEPOSIT: NearToken = NearToken::from_yoctonear(1_250_000_000_000_000_000_000);
+ const MAX_BPS: u128 = 10_000;
+ /// Half, rounding the odd unit to the client.
+ const TIMEOUT_SPLIT_BPS: u128 = 5_000;
+@@ -296,15 +301,42 @@ impl Escrow {
+     }
+ 
+     /// Pay the caller's withdrawable balance out through `ft_transfer`.
++    /// The balance is held aside first. `on_withdraw` puts it back if that
++    /// promise fails, the same rule NEP-141 uses when `ft_resolve_transfer`
++    /// sees a failed call: the unused amount goes back to the sender.
++    /// https://nomicon.io/Standards/Tokens/FungibleToken/Core
++    /// Before the transfer, register the receiver (NEP-145 `storage_deposit`,
++    /// `registration_only`). Circle USDC rejects an unregistered receiver.
+     pub fn withdraw(&mut self) -> Promise {
+         let caller = env::predecessor_account_id();
+         let amount = self.balances.get(&caller).copied().unwrap_or(0);
+         require!(amount > 0, "nothing to withdraw");
+         self.balances.insert(caller.clone(), 0);
+-        ext_ft::ext(self.token_id.clone())
+-            .with_attached_deposit(ONE_YOCTO)
+-            .with_static_gas(GAS_FT_TRANSFER)
+-            .ft_transfer(caller, U128(amount), Some("escrow withdraw".to_string()))
++        let token = self.token_id.clone();
++        ext_ft::ext(token.clone())
++            .with_attached_deposit(USDC_STORAGE_DEPOSIT)
++            .with_static_gas(GAS_STORAGE_DEPOSIT)
++            .storage_deposit(Some(caller.clone()), Some(true))
++            .then(
++                ext_ft::ext(token)
++                    .with_attached_deposit(ONE_YOCTO)
++                    .with_static_gas(GAS_FT_TRANSFER)
++                    .ft_transfer(caller.clone(), U128(amount), Some("escrow withdraw".to_string())),
++            )
++            .then(
++                ext_self::ext(env::current_account_id())
++                    .with_static_gas(GAS_ON_WITHDRAW)
++                    .on_withdraw(caller, U128(amount)),
++            )
++    }
++
++    /// Runs only as the callback of `withdraw`. A failed `ft_transfer`
++    /// restores the balance. A success leaves it at zero.
++    #[private]
++    pub fn on_withdraw(&mut self, account_id: AccountId, amount: U128) {
++        if !matches!(env::promise_result(0), PromiseResult::Successful(_)) {
++            self.credit(&account_id, amount.0);
++        }
+     }
+ 
+     pub fn get_deal(&self, deal_id: u64) -> Option<Deal> {
+@@ -323,9 +355,16 @@ impl Escrow {
+ #[near_sdk::ext_contract(ext_ft)]
+ #[allow(dead_code)]
+ trait FungibleToken {
++    fn storage_deposit(&mut self, account_id: Option<AccountId>, registration_only: Option<bool>);
+     fn ft_transfer(&mut self, receiver_id: AccountId, amount: U128, memo: Option<String>);
+ }
+ 
++#[near_sdk::ext_contract(ext_self)]
++#[allow(dead_code)]
++trait WithdrawCallback {
++    fn on_withdraw(&mut self, account_id: AccountId, amount: U128);
++}
++
+ struct Open {
+     creator: AccountId,
+     price: u128,
+@@ -568,6 +607,45 @@ mod tests {
+         assert_eq!(escrow.get_balance(creator()).0, 0);
+     }
+ 
++    fn set_callback(result: PromiseResult) {
++        let ctx = VMContextBuilder::new()
++            .current_account_id(escrow())
++            .predecessor_account_id(escrow())
++            .signer_account_id(escrow())
++            .block_timestamp(50)
++            .account_balance(NearToken::from_near(50))
++            .build();
++        // near-sdk 5: promise results are an argument of testing_env!, not the builder.
++        // https://docs.rs/near-sdk/5.7.0/near_sdk/macro.testing_env.html
++        testing_env!(
++            ctx,
++            near_sdk::test_vm_config(),
++            near_sdk::RuntimeFeesConfig::test(),
++            std::collections::HashMap::new(),
++            vec![result],
++        );
++    }
++
++    #[test]
++    fn failed_withdraw_puts_the_balance_back() {
++        let mut escrow = contract();
++        fund(&mut escrow, 50_000, &open_msg(50_000));
++        set_caller(creator(), 10);
++        escrow.deliver(1, "hash-1".to_string());
++        set_caller(client(), 20);
++        escrow.accept(1);
++        set_caller(creator(), 30);
++        let _promise = escrow.withdraw();
++        assert_eq!(escrow.get_balance(creator()).0, 0);
++        set_callback(PromiseResult::Failed);
++        escrow.on_withdraw(creator(), U128(50_000));
++        assert_eq!(escrow.get_balance(creator()).0, 50_000);
++        escrow.balances.insert(creator(), 0);
++        set_callback(PromiseResult::Successful(vec![]));
++        escrow.on_withdraw(creator(), U128(50_000));
++        assert_eq!(escrow.get_balance(creator()).0, 0);
++    }
++
+     #[test]
+     fn late_delivery_refunds_the_client() {
+         let mut escrow = contract();
