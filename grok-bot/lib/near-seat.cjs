@@ -1,6 +1,7 @@
 'use strict';
 
 const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 
@@ -27,7 +28,7 @@ function createAccountArgv(accountId) {
     'sponsor-by-faucet-service',
     accountId,
     'autogenerate-new-keypair',
-    'save-to-keychain',
+    'save-to-legacy-keychain',
     'network-config',
     'testnet',
     'create',
@@ -50,12 +51,41 @@ function functionCallKeyArgv(accountId, contractId, methodNames) {
     '--function-names',
     methodNames,
     'autogenerate-new-keypair',
-    'save-to-keychain',
+    'save-to-legacy-keychain',
     'network-config',
     'testnet',
     'sign-with-keychain',
     'send',
   ];
+}
+
+// save-to-keychain uses the OS keyring (common.rs save_access_key_to_keychain).
+// save-to-legacy-keychain writes
+// {credentials_home}/{network}/{account}.json via File::create
+// (common.rs save_access_key_to_legacy_keychain). Default home is ~/.near-credentials.
+function credentialsHome(opts = {}) {
+  if (opts.credentialsHome) return opts.credentialsHome;
+  if (process.env.NEAR_CREDENTIALS_HOME) return process.env.NEAR_CREDENTIALS_HOME;
+  return path.join(os.homedir(), '.near-credentials');
+}
+
+function legacyKeyPath(credentialsDir, network, accountId) {
+  return path.join(credentialsDir, network, `${accountId}.json`);
+}
+
+function readLegacyKey(file, accountId) {
+  const data = JSON.parse(fs.readFileSync(file, 'utf8'));
+  const privateKey = typeof data.private_key === 'string' ? data.private_key : data.secret_keypair_str;
+  const publicKey = typeof data.public_key === 'string' ? data.public_key : data.public_key_str;
+  if (typeof privateKey !== 'string' || typeof publicKey !== 'string') {
+    throw new Error(`legacy keychain is missing the key: ${file}`);
+  }
+  return {
+    account_id: typeof data.account_id === 'string' ? data.account_id : (data.implicit_account_id || accountId),
+    public_key: publicKey,
+    private_key: privateKey,
+    master_seed_phrase: typeof data.master_seed_phrase === 'string' ? data.master_seed_phrase : undefined,
+  };
 }
 
 function fileCreateMode(umask) {
@@ -118,6 +148,7 @@ async function viewAccount(accountId, opts = {}) {
   let lastError = null;
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
     try {
+      const timeoutMs = opts.timeoutMs == null ? delayMs : opts.timeoutMs;
       const response = await fetchImpl(rpc, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -127,6 +158,7 @@ async function viewAccount(accountId, opts = {}) {
           method: 'query',
           params: { request_type: 'view_account', finality: 'final', account_id: accountId },
         }),
+        signal: AbortSignal.timeout(timeoutMs),
       });
       const body = await response.json();
       if (body && body.result && body.result.amount != null) return body.result;
@@ -140,6 +172,22 @@ async function viewAccount(accountId, opts = {}) {
   error.attempts = attempts;
   error.detail = lastError;
   throw error;
+}
+
+function assertCliOk(result, what) {
+  if (!result || result.status !== 0) {
+    const status = result ? result.status : 'missing';
+    throw new Error(`${what} failed with status ${status}`);
+  }
+}
+
+function loadCreatedKey(result, opts, accountId) {
+  if (result && result.key && result.key.private_key && result.key.public_key) return result.key;
+  const file = legacyKeyPath(credentialsHome(opts), 'testnet', accountId);
+  if (!fs.existsSync(file)) throw new Error(`full-access key missing: ${file}`);
+  const key = readLegacyKey(file, accountId);
+  fs.chmodSync(file, SEALED_MODE);
+  return key;
 }
 
 function runNearCli(args, opts = {}) {
@@ -166,14 +214,13 @@ async function prepareNearSeat(opts) {
     const created = typeof runners.createAccount === 'function'
       ? await runners.createAccount(createAccountArgv(opts.accountId))
       : runNearCli(createAccountArgv(opts.accountId), opts);
-    rememberSecrets(secrets, created && created.key);
+    const key = loadCreatedKey(created, opts, opts.accountId);
+    rememberSecrets(secrets, key);
     if (created && created.stdout) emit(opts, secrets, created.stdout);
     if (created && created.stderr) emit(opts, secrets, created.stderr);
+    assertCliOk(created, 'account create');
     if (typeof opts.viewAccount === 'function') await opts.viewAccount(opts.accountId, opts);
     else await viewAccount(opts.accountId, opts);
-    const key = created && created.key ? created.key : null;
-    if (!key || !key.private_key || !key.public_key) throw new Error('full-access key missing');
-    rememberSecrets(secrets, key);
     const coldPath = path.join(opts.seatHome, 'near-cold', `${opts.accountId}.json`);
     const mode = writeCreatedFile(coldPath, `${JSON.stringify(key, null, 2)}\n`);
     const publicPath = path.join(opts.seatHome, 'near', 'account.json');
@@ -192,6 +239,7 @@ async function prepareNearSeat(opts) {
     rememberSecrets(secrets, granted && granted.key);
     if (granted && granted.stdout) emit(opts, secrets, granted.stdout);
     if (granted && granted.stderr) emit(opts, secrets, granted.stderr);
+    assertCliOk(granted, 'function-call key');
     emit(opts, secrets, `near-seat: account ${opts.accountId}`);
     emit(opts, secrets, `near-seat: full-access key sealed ${coldPath}`);
     emit(opts, secrets, 'near-seat: function-call key granted');
@@ -209,8 +257,10 @@ module.exports = {
   VIEW_ACCOUNT_DELAY_MS,
   TESTNET_RPC,
   createAccountArgv,
+  credentialsHome,
   fileCreateMode,
   functionCallKeyArgv,
+  legacyKeyPath,
   prepareNearSeat,
   redact,
   viewAccount,

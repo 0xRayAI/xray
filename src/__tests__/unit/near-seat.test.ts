@@ -1,4 +1,4 @@
-import { mkdtempSync, openSync, writeSync, closeSync, statSync, rmSync, unlinkSync } from 'node:fs';
+import { closeSync, mkdirSync, mkdtempSync, openSync, readFileSync, rmSync, statSync, unlinkSync, writeFileSync, writeSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -14,6 +14,8 @@ const seat = requireCjs(path.join(root, 'grok-bot', 'lib', 'near-seat.cjs')) as 
   VIEW_ACCOUNT_ATTEMPTS: number;
   VIEW_ACCOUNT_DELAY_MS: number;
   createAccountArgv: (accountId: string) => string[];
+  credentialsHome: (opts: { credentialsHome?: string }) => string;
+  legacyKeyPath: (dir: string, network: string, accountId: string) => string;
   fileCreateMode: (umask: number) => number;
   functionCallKeyArgv: (accountId: string, contractId: string, methodNames: string) => string[];
   prepareNearSeat: (opts: {
@@ -31,7 +33,8 @@ const seat = requireCjs(path.join(root, 'grok-bot', 'lib', 'near-seat.cjs')) as 
     attempts?: number;
     delayMs?: number;
     sleep?: (ms: number) => Promise<void>;
-    fetch?: (url: string, init: { body: string }) => Promise<{ json: () => Promise<RpcBody> }>;
+    timeoutMs?: number;
+    fetch?: (url: string, init: { body: string; signal: AbortSignal }) => Promise<{ json: () => Promise<RpcBody> }>;
   }) => Promise<{ amount: string }>;
   writeCreatedFile: (dest: string, body: string) => number;
 };
@@ -72,11 +75,12 @@ describe('near-seat', () => {
         viewAccount: async () => ({ amount: '10000000000000000000000000' }),
         runners: {
           createAccount: async () => ({
+            status: 0,
             stdout: `created ${key.account_id}\n${SECRET}\n`,
             stderr: `seed ${SECRET}`,
             key,
           }),
-          addFunctionCallKey: async () => ({ stdout: `granted\n${SECRET}` }),
+          addFunctionCallKey: async () => ({ status: 0, stdout: `granted\n${SECRET}` }),
         },
       });
       expect(result.mode).toBe(seat.SEALED_MODE);
@@ -152,6 +156,115 @@ describe('near-seat', () => {
     expect(calls).toBe(3);
   });
 
+  it('seals a legacy keychain file when the CLI result has no key', async () => {
+    const home = scratch();
+    const creds = scratch();
+    const logs: string[] = [];
+    const stdout: string[] = [];
+    const accountId = 'millfc1ca97ca3.testnet';
+    const keyFile = seat.legacyKeyPath(creds, 'testnet', accountId);
+    mkdirSync(path.dirname(keyFile), { recursive: true });
+    writeFileSync(keyFile, `${JSON.stringify({
+      account_id: accountId,
+      public_key: 'ed25519:public-only',
+      private_key: SECRET,
+    })}\n`);
+    try {
+      const result = await seat.prepareNearSeat({
+        accountId,
+        seatHome: home,
+        credentialsHome: creds,
+        log: (line) => logs.push(line),
+        stdout: { write: (chunk) => stdout.push(chunk) },
+        viewAccount: async () => ({ amount: '1' }),
+        runners: {
+          createAccount: async () => ({
+            status: 0,
+            stdout: 'account created\n',
+            stderr: `key file written ${SECRET}`,
+          }),
+          addFunctionCallKey: async () => ({ status: 0, stdout: 'key added\n' }),
+        },
+      });
+      expect(statSync(result.coldPath).mode & 0o777).toBe(0o600);
+      expect(readFileSync(result.coldPath, 'utf8')).toContain(SECRET);
+      expect(`${logs.join('\n')}${stdout.join('')}`).not.toContain(SECRET);
+      expect(statSync(keyFile).mode & 0o777).toBe(0o600);
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+      rmSync(creds, { recursive: true, force: true });
+    }
+  });
+
+  it('fails when the function-call key command is not status 0', async () => {
+    const home = scratch();
+    const logs: string[] = [];
+    try {
+      await expect(seat.prepareNearSeat({
+        accountId: 'millfc1ca97ca3.testnet',
+        seatHome: home,
+        log: (line) => logs.push(line),
+        viewAccount: async () => ({ amount: '1' }),
+        runners: {
+          createAccount: async () => ({
+            status: 0,
+            stdout: '',
+            stderr: '',
+            key: {
+              account_id: 'millfc1ca97ca3.testnet',
+              public_key: 'ed25519:public-only',
+              private_key: SECRET,
+            },
+          }),
+          addFunctionCallKey: async () => ({ status: 1, stdout: '', stderr: 'rejected' }),
+        },
+      })).rejects.toThrow('function-call key failed with status 1');
+      expect(logs.join('\n')).not.toContain('function-call key granted');
+      expect(logs.join('\n')).not.toContain(SECRET);
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+    }
+  });
+
+  it('aborts a hung view_account and restores umask', async () => {
+    const prior = process.umask(0o022);
+    const home = scratch();
+    try {
+      await expect(seat.viewAccount('hung.testnet', {
+        attempts: 1,
+        timeoutMs: 30,
+        fetch: (_url, init) => new Promise((_resolve, reject) => {
+          init.signal.addEventListener('abort', () => {
+            reject(Object.assign(new Error('The operation was aborted'), { name: 'TimeoutError' }));
+          });
+        }),
+        sleep: async () => { throw new Error('sleep after the last attempt'); },
+      })).rejects.toThrow('view_account failed after 1 attempts');
+      await expect(seat.prepareNearSeat({
+        accountId: 'millfc1ca97ca3.testnet',
+        seatHome: home,
+        viewAccount: async () => { throw new Error('rpc down'); },
+        runners: {
+          createAccount: async () => ({
+            status: 0,
+            stdout: '',
+            stderr: '',
+            key: {
+              account_id: 'millfc1ca97ca3.testnet',
+              public_key: 'ed25519:public-only',
+              private_key: SECRET,
+            },
+          }),
+          addFunctionCallKey: async () => ({ status: 0, stdout: '' }),
+        },
+      })).rejects.toThrow('rpc down');
+      expect(process.umask()).toBe(0o022);
+    } finally {
+      process.umask(prior);
+      rmSync(home, { recursive: true, force: true });
+    }
+  });
+
   it('builds the faucet create command from the measured flow', () => {
     expect(seat.createAccountArgv('millfc1ca97ca3.testnet')).toEqual([
       'account',
@@ -159,7 +272,7 @@ describe('near-seat', () => {
       'sponsor-by-faucet-service',
       'millfc1ca97ca3.testnet',
       'autogenerate-new-keypair',
-      'save-to-keychain',
+      'save-to-legacy-keychain',
       'network-config',
       'testnet',
       'create',
