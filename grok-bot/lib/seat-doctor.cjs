@@ -831,7 +831,7 @@ function nextSteps(report) {
       'Signer is ZigZag (approved=true). Hosted /sign may be 410. Product MCP name is clearing — never xray-clearing. Do not mill-plant Clearing into this 0xRay suit.',
     );
     if (!report.ows.present) {
-      steps.push('OWS missing: create/fund a local Open Wallet under ~/.ows, then retry a 402 shop');
+      steps.push(`OWS missing: create a wallet at ${report.ows.path}, then retry a 402 shop`);
     }
   }
   steps.push(
@@ -902,9 +902,18 @@ function probeBridges(cwd, home) {
   };
 }
 
+function owsRoot(cwd, env, explicit) {
+  if (explicit) return explicit;
+  const named = String((env && env.OWS_HOME) || '').trim();
+  if (named) return named;
+  return cwd;
+}
+
 function diagnoseSeat(opts = {}) {
   const cwd = path.resolve(opts.cwd || process.cwd());
+  const env = opts.env || process.env;
   const home = opts.home || os.homedir();
+  const walletHome = owsRoot(cwd, env, opts.home);
   const seat = packageIdentity(cwd);
   const kit = kitIdentity();
   const xray = packageIdentity(path.join(cwd, 'node_modules', '0xray'));
@@ -919,7 +928,6 @@ function diagnoseSeat(opts = {}) {
   const inventoryPresent = Boolean(inventory);
   const goggles = probeGoggles(cwd, inventoryPresent);
   const plantOk = Boolean(seat) && mill && inspect && installed && deadHooks.length === 0 && goggles.status !== 'off';
-  const env = opts.env || process.env;
   const house = probeHouse(cwd, env);
   const bridges = probeBridges(cwd, home);
   // A house folder with no seat in it yet (no package.json, no 0xray, no suit) is the fleet stage, not a failed seat.
@@ -946,7 +954,7 @@ function diagnoseSeat(opts = {}) {
     },
     goggles,
     repertoire: probeRepertoire(cwd),
-    ows: probeOws(home),
+    ows: probeOws(walletHome),
     house,
     bridges,
     board: boardSurface(env),
