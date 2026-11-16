@@ -4,7 +4,7 @@ Why every wake runs station, with no exception: there is no pre-compaction hook,
 
 A line `nudge:station:<seat>:<hour>` says to run station and re-read OP-PROC. Boot on every turn stays the rule. The poll is the reminder after a summary. A memory note is not that re-read. On that line, Full before `--ack`. Write one `Full: OP-PROC read` line on STATION after the read. `--prompt` is [Station boot](../../../OP-PROC.md#station-boot).
 
-The prompt each seat installs as its webhook-triggered Bifrost inbox wake routine (the flags are `npx grok-bot live-inbox --help`). Copy the commands below as they are. Replace `<seat>` only, with a seat name from `house/HOUSE.md`. Set `LIVE_URL` to your own fleet's board and `SEAT_KEYS_DIR` to the folder that holds `<seat>.key`, as a URL or a folder name only, never a key value. There is no default board: a missing one stops the wake. These commands post straight to the board with the seat's own key. The box pusher is not in this routine.
+The prompt each seat installs as its webhook-triggered Bifrost inbox wake routine (the flags are `npx --no-install grok-bot live-inbox --help`). Copy the commands below as they are. Replace `<seat>` only, with a seat name from `house/HOUSE.md`. Set `LIVE_URL` to your own fleet's board and `SEAT_KEYS_DIR` to the folder that holds `<seat>.key`, as a URL or a folder name only, never a key value. There is no default board: a missing one stops the wake. These commands post straight to the board with the seat's own key. The box pusher is not in this routine.
 
 This routine is the Bifrost inbox wake, and it sets `LIVE_URL`. A seat with no `LIVE_URL` does not use it: that seat reads and writes `house/WAVEBOARD.md`.
 
