@@ -1033,6 +1033,20 @@ function pushPlantDetail(lines, report) {
   lines.push(`  costume: ${report.plant.costume ? 'true (do not dump 45 skills)' : 'false'}`);
 }
 
+function nearStatusFromReport(report) {
+  const account = report.near && report.near.present && report.near.accountId ? report.near.accountId : 'pending';
+  const foundryId = report.foundry && report.foundry.present && report.foundry.id ? report.foundry.id : 'pending';
+  const listing = report.foundry && report.foundry.listingId ? report.foundry.listingId : 'pending';
+  return `NEAR account: ${account}\nFoundry: ${foundryId}\nListing: ${listing}\n`;
+}
+
+function nearStatusBlock(cwd) {
+  return nearStatusFromReport({
+    near: probeNear(cwd),
+    foundry: probeFoundry(cwd),
+  });
+}
+
 function formatDoctor(report) {
   const lines = [];
   lines.push(doctorBanner(report));
@@ -1090,6 +1104,7 @@ function formatDoctor(report) {
     if (report.foundry.present && report.foundry.listingId) {
       lines.push(`Hangar: ${report.foundry.listingId}`);
     }
+    lines.push(nearStatusFromReport(report).trimEnd());
   }
   if (report.house) {
     let label = 'WARN';
@@ -1193,6 +1208,7 @@ Commands:
   exit-gate <NOTES.md>
                    The wake's step 7 gate: a named bug or ask with no repo#n fails the turn
   bifrost init     Write the board's seat routes (collector/routing/inbox-roles.json in a bifrost clone; BIFROST_FEED overrides). --check validates and writes nothing. Needs python3
+  near-status          Print NEAR account, foundry id, and listing id. Absent is pending
   foundry-create --id <id> --seat <seat> --account <account>
                    Record the foundry and its NEAR receiver. The same id and receiver keeps the record. --force replaces a different one
   hangar-list --agent-id <id> --url <https-shop>
@@ -1255,13 +1271,42 @@ function runDoctorCli(argv, io = {}) {
   return report.ok ? 0 : 1;
 }
 
+function runNearStatusCli(argv, io = {}) {
+  const stdout = io.stdout || process.stdout;
+  const stderr = io.stderr || process.stderr;
+  let cwd = io.cwd || process.cwd();
+  for (let i = 0; i < argv.length; i += 1) {
+    const arg = argv[i];
+    if (arg === '--help' || arg === '-h') {
+      stdout.write('grok-bot near-status [--cwd <dir>]\n');
+      return 0;
+    }
+    if (arg === '--cwd') {
+      const value = argv[i + 1];
+      if (!value || value.startsWith('-')) {
+        stderr.write('--cwd needs a path\n');
+        return 2;
+      }
+      cwd = value;
+      i += 1;
+      continue;
+    }
+    stderr.write(`unknown argument ${arg}\n`);
+    return 2;
+  }
+  stdout.write(nearStatusBlock(cwd));
+  return 0;
+}
+
 module.exports = {
   PLANT_URLS,
   boardSurface,
   diagnoseSeat,
   formatDoctor,
   initHouse,
+  nearStatusBlock,
   parseDoctorArgs,
+  runNearStatusCli,
   runDoctorCli,
   usageText,
 };
