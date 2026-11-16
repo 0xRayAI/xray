@@ -1,0 +1,487 @@
+diff --git a/mcp/src/ledger.ts b/mcp/src/ledger.ts
+index 33a6237..3baf0c4 100644
+--- a/mcp/src/ledger.ts
++++ b/mcp/src/ledger.ts
+@@ -1,8 +1,25 @@
+-import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
++import {
++  appendFileSync,
++  closeSync,
++  constants,
++  existsSync,
++  mkdirSync,
++  openSync,
++  readFileSync,
++  statSync,
++  unlinkSync,
++  writeSync,
++} from 'node:fs';
+ import { dirname, join } from 'node:path';
+ import type { Receipt, ReceiptStatus } from './types.js';
+ import { parseUsd } from './money.js';
+ 
++/** A lock older than this is removed. Tests set CLEARING_LEDGER_LOCK_STALE_MS. */
++function staleLockMs(): number {
++  const raw = Number(process.env.CLEARING_LEDGER_LOCK_STALE_MS ?? 30_000);
++  return Number.isFinite(raw) && raw >= 0 ? raw : 30_000;
++}
++
+ const COUNTED: ReceiptStatus[] = ['submitted', 'settled', 'replayed'];
+ 
+ export interface Ledger {
+@@ -10,6 +27,8 @@ export interface Ledger {
+   put(receipt: Receipt): void;
+   list(filter?: { since?: string; paymentId?: string; limit?: number }): Receipt[];
+   spentUsd(opts: { sessionId?: string; day?: string }): number;
++  /** Run `fn` with exclusive access. FileLedger re-reads the file inside the lock. */
++  withLock<T>(fn: () => T): T;
+ }
+ 
+ export class MemoryLedger implements Ledger {
+@@ -45,6 +64,15 @@ export class MemoryLedger implements Ledger {
+     }
+     return total;
+   }
++
++  withLock<T>(fn: () => T): T {
++    return fn();
++  }
++
++  protected replaceAll(rows: Receipt[]): void {
++    this.byId.clear();
++    for (const row of rows) this.byId.set(row.paymentId, { ...row });
++  }
+ }
+ 
+ export class FileLedger extends MemoryLedger {
+@@ -52,16 +80,62 @@ export class FileLedger extends MemoryLedger {
+     super(loadJsonl(path));
+   }
+ 
++  /**
++   * Append-only. A later line for the same paymentId wins on load.
++   * Exclusive lock is O_CREAT|O_EXCL (open(2)). A stale lock file is removed.
++   */
+   override put(receipt: Receipt): void {
+-    const existed = this.get(receipt.paymentId);
+     super.put(receipt);
+     mkdirSync(dirname(this.path), { recursive: true });
+-    if (!existed) {
+-      appendFileSync(this.path, `${JSON.stringify(receipt)}\n`, 'utf8');
+-      return;
++    appendFileSync(this.path, `${JSON.stringify(receipt)}\n`, 'utf8');
++  }
++
++  override withLock<T>(fn: () => T): T {
++    const fd = acquireLock(`${this.path}.lock`);
++    try {
++      this.replaceAll(loadJsonl(this.path));
++      return fn();
++    } finally {
++      try {
++        closeSync(fd);
++      } catch {
++        /* already closed */
++      }
++      try {
++        unlinkSync(`${this.path}.lock`);
++      } catch {
++        /* a stale-lock breaker may have removed it */
++      }
++    }
++  }
++}
++
++function sleepMs(ms: number): void {
++  const view = new Int32Array(new SharedArrayBuffer(4));
++  Atomics.wait(view, 0, 0, ms);
++}
++
++function acquireLock(path: string): number {
++  const started = Date.now();
++  for (;;) {
++    try {
++      const fd = openSync(path, constants.O_CREAT | constants.O_EXCL | constants.O_WRONLY);
++      writeSync(fd, `${process.pid}\n`);
++      return fd;
++    } catch (err) {
++      const code = (err as NodeJS.ErrnoException).code;
++      if (code !== 'EEXIST') throw err;
++      try {
++        const age = Date.now() - statSync(path).mtimeMs;
++        if (age > staleLockMs()) unlinkSync(path);
++      } catch {
++        /* the holder removed it between stat and unlink */
++      }
++      if (Date.now() - started > staleLockMs() + 5_000) {
++        throw new Error(`ledger lock timeout: ${path}`);
++      }
++      sleepMs(15);
+     }
+-    const rows = this.list({}).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+-    writeFileSync(this.path, rows.map((r) => JSON.stringify(r)).join('\n') + (rows.length ? '\n' : ''), 'utf8');
+   }
+ }
+ 
+diff --git a/mcp/src/near-rail.ts b/mcp/src/near-rail.ts
+index 2e4d07a..c3f4a36 100644
+--- a/mcp/src/near-rail.ts
++++ b/mcp/src/near-rail.ts
+@@ -97,11 +97,14 @@ export function nearQuotePaymentId(nonce: string): string {
+   return `${QUOTE_PREFIX}${nonce}`;
+ }
+ 
+-function nearTxPaymentId(txHash: string): string {
++export function nearTxPaymentId(txHash: string): string {
+   return `${TX_PREFIX}${txHash}`;
+ }
+ 
+-type QuoteBody = StoredNearQuote & { chain: 'near:testnet' };
++type QuoteBody = StoredNearQuote & { chain: 'near:testnet'; txHash?: string };
++
++/** A submitted claim older than this is recovered or reclaimed. */
++export const DEFAULT_STALE_SUBMIT_MS = 60_000;
+ 
+ function nearRow(paymentId: string, status: Receipt['status'], body: unknown, nowMs: number): Receipt {
+   const at = new Date(nowMs).toISOString();
+@@ -129,7 +132,14 @@ function quoteBody(row: Receipt | undefined): QuoteBody | undefined {
+     return undefined;
+   }
+   if (typeof rec.expiresAt !== 'number') return undefined;
+-  return { receiver: rec.receiver, amount: rec.amount, nonce: rec.nonce, expiresAt: rec.expiresAt, chain: 'near:testnet' };
++  return {
++    receiver: rec.receiver,
++    amount: rec.amount,
++    nonce: rec.nonce,
++    expiresAt: rec.expiresAt,
++    chain: 'near:testnet',
++    txHash: typeof rec.txHash === 'string' ? rec.txHash : undefined,
++  };
+ }
+ 
+ /**
+@@ -149,21 +159,55 @@ export function issueNearQuote(ledger: Ledger, input: IssueInput): StoredNearQuo
+   return quote;
+ }
+ 
+-type Claim = { ok: true; quote: QuoteBody } | { ok: false; code: VerifyCode };
++type Claim =
++  | { ok: true; quote: QuoteBody; recover?: false }
++  | { ok: true; quote: QuoteBody; recover: true; txHash: string }
++  | { ok: false; code: VerifyCode };
++
++function ageMs(updatedAt: string, nowMs: number): number {
++  return nowMs - Date.parse(updatedAt);
++}
+ 
+-/** Synchronous. Runs before any RPC await so two callers cannot both pass. */
+-function claimNonce(ledger: Ledger, nonce: string, nowMs: number): Claim {
++/**
++ * Synchronous. The caller holds ledger.withLock, which re-reads the file first.
++ * A fresh `submitted` row is a replay. A stale one with a tx hash is finished
++ * from chain; a stale one with no tx hash is claimed again.
++ */
++function claimNonce(ledger: Ledger, nonce: string, nowMs: number, staleSubmitMs: number): Claim {
+   const row = ledger.get(nearQuotePaymentId(nonce));
+   if (!row) return { ok: false, code: 'missing_nonce' };
+-  if (row.status === 'settled' || row.status === 'submitted') return { ok: false, code: 'replayed_nonce' };
+-  if (row.status !== 'quoted') return { ok: false, code: 'missing_nonce' };
+   const quote = quoteBody(row);
+   if (!quote) return { ok: false, code: 'missing_nonce' };
++  if (row.status === 'settled') return { ok: false, code: 'replayed_nonce' };
++  if (row.status === 'submitted') {
++    if (ageMs(row.updatedAt, nowMs) <= staleSubmitMs) return { ok: false, code: 'replayed_nonce' };
++    const at = new Date(nowMs).toISOString();
++    if (quote.txHash) {
++      ledger.put({ ...row, status: 'submitted', updatedAt: at });
++      return { ok: true, quote, recover: true, txHash: quote.txHash };
++    }
++    if (nowMs > quote.expiresAt) return { ok: false, code: 'nonce_past_ttl' };
++    ledger.put({ ...row, status: 'submitted', updatedAt: at });
++    return { ok: true, quote };
++  }
++  if (row.status !== 'quoted') return { ok: false, code: 'missing_nonce' };
+   if (nowMs > quote.expiresAt) return { ok: false, code: 'nonce_past_ttl' };
+   ledger.put({ ...row, status: 'submitted', updatedAt: new Date(nowMs).toISOString() });
+   return { ok: true, quote };
+ }
+ 
++function stampTx(ledger: Ledger, nonce: string, txHash: string, nowMs: number): void {
++  const row = ledger.get(nearQuotePaymentId(nonce));
++  const quote = quoteBody(row);
++  if (!row || !quote) return;
++  ledger.put({
++    ...row,
++    status: 'submitted',
++    body: { ...quote, txHash },
++    updatedAt: new Date(nowMs).toISOString(),
++  });
++}
++
+ function claimTx(ledger: Ledger, txHash: string, nowMs: number): boolean {
+   const id = nearTxPaymentId(txHash);
+   const row = ledger.get(id);
+@@ -189,12 +233,15 @@ function releaseTx(ledger: Ledger, txHash: string, nowMs: number): void {
+   ledger.put({ ...row, status: 'failed', updatedAt: new Date(nowMs).toISOString() });
+ }
+ 
+-function commitClaim(ledger: Ledger, nonce: string, txHash: string, nowMs: number): void {
+-  const at = new Date(nowMs).toISOString();
++function commitClaim(ledger: Ledger, nonce: string, txHash: string, nowMs: number): boolean {
+   const quote = ledger.get(nearQuotePaymentId(nonce));
+   const tx = ledger.get(nearTxPaymentId(txHash));
+-  if (quote) ledger.put({ ...quote, status: 'settled', updatedAt: at });
+-  if (tx) ledger.put({ ...tx, status: 'settled', updatedAt: at });
++  if (!quote || quote.status !== 'submitted') return false;
++  if (!tx || tx.status !== 'submitted') return false;
++  const at = new Date(nowMs).toISOString();
++  ledger.put({ ...quote, status: 'settled', updatedAt: at });
++  ledger.put({ ...tx, status: 'settled', updatedAt: at });
++  return true;
+ }
+ 
+ export function nearAccept(args: {
+@@ -257,32 +304,49 @@ export async function verifyPayment(args: {
+   nonce: string;
+   nowMs: number;
+   readReceipt: NearReceiptReader;
++  /** How long a `submitted` row stays exclusive before crash recovery. */
++  staleSubmitMs?: number;
+ }): Promise<VerifyResult> {
+-  const claimed = claimNonce(args.ledger, args.nonce, args.nowMs);
++  const staleSubmitMs = args.staleSubmitMs ?? DEFAULT_STALE_SUBMIT_MS;
++  const claimed = args.ledger.withLock(() => {
++    const nonceClaim = claimNonce(args.ledger, args.nonce, args.nowMs, staleSubmitMs);
++    if (!nonceClaim.ok) return nonceClaim;
++    if (nonceClaim.recover) return nonceClaim;
++    if (!claimTx(args.ledger, args.txHash, args.nowMs)) {
++      releaseNonce(args.ledger, args.nonce, args.nowMs);
++      return { ok: false as const, code: 'replayed_tx' as const };
++    }
++    stampTx(args.ledger, args.nonce, args.txHash, args.nowMs);
++    return nonceClaim;
++  });
+   if (!claimed.ok) return { ok: false, code: claimed.code };
+-  if (!claimTx(args.ledger, args.txHash, args.nowMs)) {
+-    releaseNonce(args.ledger, args.nonce, args.nowMs);
+-    return { ok: false, code: 'replayed_tx' };
+-  }
+ 
++  const txHash = claimed.recover ? claimed.txHash : args.txHash;
+   const release = () => {
+-    releaseNonce(args.ledger, args.nonce, args.nowMs);
+-    releaseTx(args.ledger, args.txHash, args.nowMs);
++    args.ledger.withLock(() => {
++      releaseNonce(args.ledger, args.nonce, args.nowMs);
++      releaseTx(args.ledger, txHash, args.nowMs);
++    });
+   };
+   let view: NearTransferView;
+   try {
+-    view = await args.readReceipt(args.txHash, args.senderAccountId);
++    view = await args.readReceipt(txHash, args.senderAccountId);
+   } catch {
+     release();
+     return { ok: false, code: 'not_final' };
+   }
+-  const failed = checkView(view, claimed.quote, args.senderAccountId, args.nonce);
+-  if (failed) {
+-    release();
+-    return { ok: false, code: failed };
+-  }
+-  commitClaim(args.ledger, args.nonce, args.txHash, args.nowMs);
+-  return { ok: true, txHash: args.txHash, senderAccountId: args.senderAccountId, amount: claimed.quote.amount };
++  return args.ledger.withLock(() => {
++    const failed = checkView(view, claimed.quote, args.senderAccountId, args.nonce);
++    if (failed) {
++      releaseNonce(args.ledger, args.nonce, args.nowMs);
++      releaseTx(args.ledger, txHash, args.nowMs);
++      return { ok: false, code: failed };
++    }
++    if (!commitClaim(args.ledger, args.nonce, txHash, args.nowMs)) {
++      return { ok: false, code: 'replayed_nonce' };
++    }
++    return { ok: true, txHash, senderAccountId: args.senderAccountId, amount: claimed.quote.amount };
++  });
+ }
+ 
+ function checkView(
+diff --git a/tests/near-rail.test.ts b/tests/near-rail.test.ts
+index 490a83d..c379288 100644
+--- a/tests/near-rail.test.ts
++++ b/tests/near-rail.test.ts
+@@ -1,6 +1,9 @@
+-import { mkdtempSync } from 'node:fs';
++import { spawn } from 'node:child_process';
++import { mkdtempSync, readFileSync } from 'node:fs';
++import { createRequire } from 'node:module';
+ import { tmpdir } from 'node:os';
+-import { join } from 'node:path';
++import { dirname, join } from 'node:path';
++import { fileURLToPath } from 'node:url';
+ import { beforeEach, describe, expect, it } from 'vitest';
+ import { handleBlip } from '../mcp/src/blip.js';
+ import { MemoryFacilitator } from '../mcp/src/facilitator.js';
+@@ -11,6 +14,7 @@ import {
+   issueNearQuote,
+   NEAR_QUOTE_TTL_MS,
+   nearQuotePaymentId,
++  nearTxPaymentId,
+   transferFromTxStatus,
+   verifyPayment,
+   type NearTransferView,
+@@ -278,6 +282,117 @@ describe('NEAR USDC rail', () => {
+     expect([sameA, sameB].filter((row) => row.ok)).toHaveLength(1);
+   });
+ 
++  it('a stale submitted row with a tx hash is settled from that receipt', async () => {
++    const quote = issue(ledger);
++    const row = ledger.get(nearQuotePaymentId(quote.nonce));
++    expect(row).toBeDefined();
++    const crashedAt = new Date(0).toISOString();
++    ledger.put({
++      ...row!,
++      status: 'submitted',
++      updatedAt: crashedAt,
++      body: { ...(row!.body as object), txHash: 'crashed-tx' },
++    });
++    ledger.put({
++      ...row!,
++      paymentId: nearTxPaymentId('crashed-tx'),
++      status: 'submitted',
++      updatedAt: crashedAt,
++      body: { txHash: 'crashed-tx', chain: 'near:testnet' },
++    });
++    let readHash = '';
++    const result = await verifyPayment({
++      ledger,
++      txHash: 'ignored-by-recovery',
++      senderAccountId: SENDER,
++      nonce: quote.nonce,
++      nowMs: 120_000,
++      staleSubmitMs: 1_000,
++      readReceipt: async (txHash) => {
++        readHash = txHash;
++        return view({ memo: quote.nonce });
++      },
++    });
++    expect(readHash).toBe('crashed-tx');
++    expect(result).toMatchObject({ ok: true, txHash: 'crashed-tx', amount: AMOUNT });
++    expect(ledger.get(nearQuotePaymentId(quote.nonce))?.status).toBe('settled');
++    expect(ledger.get(nearTxPaymentId('crashed-tx'))?.status).toBe('settled');
++  });
++
++  it('a stale submitted row with no tx hash can be claimed again', async () => {
++    const quote = issue(ledger);
++    const row = ledger.get(nearQuotePaymentId(quote.nonce));
++    ledger.put({ ...row!, status: 'submitted', updatedAt: new Date(0).toISOString() });
++    const result = await verifyPayment({
++      ledger,
++      txHash: 'retry-tx',
++      senderAccountId: SENDER,
++      nonce: quote.nonce,
++      nowMs: 5_000,
++      staleSubmitMs: 1_000,
++      readReceipt: reader(view({ memo: quote.nonce })),
++    });
++    expect(result).toMatchObject({ ok: true, txHash: 'retry-tx' });
++  });
++
++  it('a fresh submitted row is still replayed_nonce', async () => {
++    const quote = issue(ledger);
++    const row = ledger.get(nearQuotePaymentId(quote.nonce));
++    ledger.put({ ...row!, status: 'submitted', updatedAt: new Date(1).toISOString() });
++    const result = await verifyPayment({
++      ledger,
++      txHash: 'tx-fresh',
++      senderAccountId: SENDER,
++      nonce: quote.nonce,
++      nowMs: 2,
++      staleSubmitMs: 60_000,
++      readReceipt: reader(view({ memo: quote.nonce })),
++    });
++    expect(result).toEqual({ ok: false, code: 'replayed_nonce' });
++  });
++
++  it('two processes racing one file produce one claim', async () => {
++    const dir = mkdtempSync(join(tmpdir(), 'near-rail-race-'));
++    const path = ledgerPath(dir);
++    const first = new FileLedger(path);
++    const nowMs = Date.now();
++    const quote = issueNearQuote(first, { receiver: FOUNDRY, amount: AMOUNT, nowMs });
++    const worker = fileURLToPath(new URL('./near-claim-worker.ts', import.meta.url));
++    const tsx = createRequire(import.meta.url).resolve('tsx/cli');
++    const run = (txHash: string) =>
++      new Promise<string>((resolve, reject) => {
++        const child = spawn(
++          process.execPath,
++          [tsx, worker, path, quote.nonce, txHash, SENDER, FOUNDRY, AMOUNT, String(nowMs)],
++          { cwd: dirname(worker) },
++        );
++        let out = '';
++        let err = '';
++        child.stdout.on('data', (chunk: Buffer) => {
++          out += chunk.toString();
++        });
++        child.stderr.on('data', (chunk: Buffer) => {
++          err += chunk.toString();
++        });
++        child.on('error', reject);
++        child.on('close', (code) => {
++          if (code !== 0) {
++            reject(new Error(`worker ${code}: ${err}`));
++            return;
++          }
++          resolve(out.trim());
++        });
++      });
++    const [left, right] = await Promise.all([run('tx-proc-a'), run('tx-proc-b')]);
++    const results = [JSON.parse(left), JSON.parse(right)] as Array<{ ok: boolean }>;
++    expect(results.filter((row) => row.ok)).toHaveLength(1);
++    const settled = new FileLedger(path);
++    expect(settled.get(nearQuotePaymentId(quote.nonce))?.status).toBe('settled');
++    const lines = readFileSync(path, 'utf8').trim().split('\n');
++    const quoteLines = lines.filter((line) => line.includes(quote.nonce));
++    expect(quoteLines.length).toBeGreaterThan(1);
++  });
++
+   it('a second ledger opened on the same file sees the quote', () => {
+     const dir = mkdtempSync(join(tmpdir(), 'near-rail-'));
+     const path = ledgerPath(dir);
+diff --git a/tests/near-claim-worker.ts b/tests/near-claim-worker.ts
+new file mode 100644
+index 0000000..59ad60f
+--- /dev/null
++++ b/tests/near-claim-worker.ts
+@@ -0,0 +1,31 @@
++/**
++ * One FileLedger process. The parent spawns two of these against one file.
++ * Prints a single JSON VerifyResult on stdout.
++ */
++import { FileLedger } from '../mcp/src/ledger.js';
++import { CIRCLE_USDC_NEAR_TESTNET, verifyPayment } from '../mcp/src/near-rail.js';
++
++const [file, nonce, txHash, sender, receiver, amount, nowMsRaw] = process.argv.slice(2);
++
++const ledger = new FileLedger(file);
++const result = await verifyPayment({
++  ledger,
++  txHash,
++  senderAccountId: sender,
++  nonce,
++  nowMs: Number(nowMsRaw),
++  readReceipt: async () => {
++    await new Promise((resolve) => setTimeout(resolve, 50));
++    return {
++      finalExecutionStatus: 'FINAL',
++      executionSucceeded: true,
++      senderAccountId: sender,
++      tokenContract: CIRCLE_USDC_NEAR_TESTNET,
++      receiverId: receiver,
++      amount,
++      memo: nonce,
++    };
++  },
++});
++
++process.stdout.write(`${JSON.stringify(result)}\n`);
