@@ -629,7 +629,10 @@ def default_raci(item, nodes=None, roles=None, held=None):
         return None
     seat, why = place_r(table, owner, book)
     if why == "at the cap":
-        return {"queued": True, "reason": "at the cap"}
+        answer = primary_of(table, plane_of(table, owner))
+        if not answer:
+            return {"queued": True, "reason": "at the cap"}
+        return {"queued": True, "reason": "at the cap", "A": answer}
     if not seat:
         return None
     answer = primary_of(table, plane_of(table, owner) or plane_of(table, seat))
@@ -975,7 +978,7 @@ class RepoCollector:
                 bf.pop("assign:r", None)
                 bf.pop("assign:issues", None)
             self.st["assign_gen"] = 4
-        if self.st.get("raci_gen") != 2:
+        if self.st.get("raci_gen") != 3:
             bf = self.st.get("bf")
             if isinstance(bf, dict):
                 bf.pop("raci:open", None)
@@ -983,7 +986,7 @@ class RepoCollector:
             if isinstance(etags, dict):
                 etags.pop("raci-open", None)
             self.st["raci_tried"] = []
-            self.st["raci_gen"] = 2
+            self.st["raci_gen"] = 3
         self._sha_who = {}
         self.unreadable = None
         self._denied = None
@@ -1437,6 +1440,11 @@ class RepoCollector:
         if seat and hasattr(self, "_raci_held"):
             self._raci_held[seat] = max(0, int(self._raci_held.get(seat) or 1) - 1)
 
+    def _raci_note(self, key):
+        counts = getattr(self, "_raci_counts", None)
+        if isinstance(counts, dict):
+            counts[key] = int(counts.get(key) or 0) + 1
+
     def maybe_fill_raci(self, c, item):
         """One packet comment when a live card has no R. The same write budget as assignee posts.
         Parked, pinned, and closed cards are skipped. A later maybe_assign uses the R just written.
@@ -1463,6 +1471,7 @@ class RepoCollector:
         spec = default_raci(item, held=self._raci_held)
         if not spec:
             return
+        self._raci_note("seen")
         found = self.posted_raci(c, number)
         if found is False:
             self._release_raci(spec.get("R"))
@@ -1472,10 +1481,15 @@ class RepoCollector:
             item["packet"] = {"raci": found}
             item.pop("raci_reason", None)
             tried.append(key)
+            self._raci_note("adopted")
             self._remember_raci(item)
             return
         if spec.get("queued"):
             item["raci_reason"] = spec.get("reason") or "at the cap"
+            answer = str(spec.get("A") or "").strip()
+            if answer:
+                item["packet"] = {"raci": f"R=queued A={answer}"}
+            self._raci_note("capped")
             self._raci_queued = True
             self._remember_raci(item)
             return
@@ -1498,6 +1512,7 @@ class RepoCollector:
         if len(tried) > 500:
             del tried[:-500]
         self._assign_left -= 1
+        self._raci_note("wrote")
         item["packet"] = {"raci": f"R={spec['R']} A={spec['A']}"}
         prior = item.get("body") if isinstance(item.get("body"), str) else ""
         item["body"] = f"{prior}\n{body}" if prior else body
@@ -2398,6 +2413,7 @@ class RepoCollector:
         self._denied = None
         self._assign_left = 10
         self._assign_miss = False
+        self._raci_counts = {"seen": 0, "wrote": 0, "adopted": 0, "capped": 0}
         steps = [("pulls", self.poll_pulls), ("issues", self.poll_issues),
                  ("open raci", self.fill_open_raci),
                  ("open cards", self.backfill_open_cards), ("issue events", self.poll_issue_events),
@@ -2433,5 +2449,11 @@ class RepoCollector:
                     self.note_denied(e, name)
                     self.log(f"{self.short}: {name} failed ({type(e).__name__}: {str(e)[:80]})")
         self.unreadable = self.repo if self._denied else None
+        counts = getattr(self, "_raci_counts", {}) or {}
+        latched = bool((self.st.get("bf") or {}).get("raci:open"))
+        self.log(
+            f"{self.short}: raci seen={counts.get('seen', 0)} wrote={counts.get('wrote', 0)} "
+            f"adopted={counts.get('adopted', 0)} capped={counts.get('capped', 0)} latched={latched}"
+        )
         self.save()
         return done
