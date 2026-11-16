@@ -42,8 +42,10 @@ The second storage row for `e1144fmwjld5rl.testnet` is the same account as the e
 
 ## Funded run
 
+Superseded first attempt for deal 1. Escrow was deployed on the foundry account, so the withdraw token receipt failed: Smart contract panicked: Sender and receiver should be different. The shop pay and over-cap rows in this section stand.
+
 Circle faucet funded the buyer with 20 testnet USDC. The faucet page showed no transaction hash.
-Same accounts and the contracts above. No new accounts and no redeploy. Base x402 stays skipped.
+Same buyer, foundry, and cap owner. Base x402 stays skipped.
 
 | Step | Result | Tx | Explorer |
 | --- | --- | --- | --- |
@@ -60,7 +62,8 @@ Same accounts and the contracts above. No new accounts and no redeploy. Base x40
 | escrow fund | ok | G6QzTSm7JL9FGqXUghzHPno1MFTZHte9Mqbu1vSh2r4a | https://testnet.nearblocks.io/txns/G6QzTSm7JL9FGqXUghzHPno1MFTZHte9Mqbu1vSh2r4a |
 | escrow deliver | ok | F6S618mEqrcbx6RceanoCWpfFDgwZadP2LwvqYv7HNZf | https://testnet.nearblocks.io/txns/F6S618mEqrcbx6RceanoCWpfFDgwZadP2LwvqYv7HNZf |
 | escrow accept | ok | GX5xeCCpX6H9Mj2eqBNfU6n9k2PdUAQZowFkbFLisySp | https://testnet.nearblocks.io/txns/GX5xeCCpX6H9Mj2eqBNfU6n9k2PdUAQZowFkbFLisySp |
-| escrow withdraw | ok | 7nSCGJAcq8GQc1byZtQsfF3FWrwKVZohD8u2VGUd3QNT | https://testnet.nearblocks.io/txns/7nSCGJAcq8GQc1byZtQsfF3FWrwKVZohD8u2VGUd3QNT |
+| escrow withdraw | fail | 7nSCGJAcq8GQc1byZtQsfF3FWrwKVZohD8u2VGUd3QNT | https://testnet.nearblocks.io/txns/7nSCGJAcq8GQc1byZtQsfF3FWrwKVZohD8u2VGUd3QNT |
+|  | The outer transaction succeeded and the callback restored the internal balance. An inner receipt failed: Smart contract panicked: Sender and receiver should be different. The escrow contract is the foundry account, so the payout transfer is to itself. Accept already set deal 1 to Released. |  |  |
 | rail pay | ok | BBDHrZUnRAjzV7hX7n4aaiZeCDGKdKSRxBnWvrq2d4tB | https://testnet.nearblocks.io/txns/BBDHrZUnRAjzV7hX7n4aaiZeCDGKdKSRxBnWvrq2d4tB |
 |  | 10000 to e1144fmwjld5rl.testnet |  |  |
 | fund vault | ok | 6GXK9r6PSNmJRPPYLveSUjPgEbN5C8Vpw8rw1MdW5pTy | https://testnet.nearblocks.io/txns/6GXK9r6PSNmJRPPYLveSUjPgEbN5C8Vpw8rw1MdW5pTy |
@@ -70,4 +73,35 @@ Same accounts and the contracts above. No new accounts and no redeploy. Base x40
 | over-cap pay funded | ok | 58jJT8dBPrYiACyfh3NeybrgQCKLYrdSRUxXhxjh9Pkk | https://testnet.nearblocks.io/txns/58jJT8dBPrYiACyfh3NeybrgQCKLYrdSRUxXhxjh9Pkk |
 |  | balance before 2000000 after 2000000 |  |  |
 |  | {"index":0,"kind":{"index":0,"kind":{"FunctionCallError":{"ExecutionError":"Smart contract panicked: over per_tx_cap"}}}} |  |  |
+
+
+## Escrow on its own account
+
+Escrow is its own account. Buyer, foundry, shop pay, and the funded over-cap rows above stay.
+
+| Step | Result | Tx | Explorer |
+| --- | --- | --- | --- |
+| account buyer | ok |  |  |
+|  | e1144bmwjld5rl.testnet |  |  |
+| account foundry | ok |  |  |
+|  | e1144fmwjld5rl.testnet |  |  |
+| account owner | ok |  |  |
+|  | e1144cmwjld5rl.testnet |  |  |
+| account escrow | ok |  |  |
+|  | e1144emwjm13df.testnet |  |  |
+| deploy escrow | ok | 4qLVBRMWNDq5so6bckutDHS7DjnRAfAYr23jSaPARibq | https://testnet.nearblocks.io/txns/4qLVBRMWNDq5so6bckutDHS7DjnRAfAYr23jSaPARibq |
+|  | e1144emwjm13df.testnet |  |  |
+| init escrow | ok | AGhp8fDTx9spNGzHCLCkDwPUvfZgLKFH4i35PAXzcAAH | https://testnet.nearblocks.io/txns/AGhp8fDTx9spNGzHCLCkDwPUvfZgLKFH4i35PAXzcAAH |
+| storage escrow | ok | BBRqD9H1v36HPCebAwLXruLqXcpwQmoAnTFMVhD8tzVW | https://testnet.nearblocks.io/txns/BBRqD9H1v36HPCebAwLXruLqXcpwQmoAnTFMVhD8tzVW |
+| foundry usdc before | ok |  |  |
+|  | 1010000 |  |  |
+| escrow open | ok | E7u8yRfhU9KemnNfb7XbvNc8DUghR8AmLS2AbhnffN5y | https://testnet.nearblocks.io/txns/E7u8yRfhU9KemnNfb7XbvNc8DUghR8AmLS2AbhnffN5y |
+|  | deal 1 |  |  |
+| escrow fund | ok | 76i1MavarMGwFV4V52q2jZZgWUQ62Wwuv8VxMSjQ5Hun | https://testnet.nearblocks.io/txns/76i1MavarMGwFV4V52q2jZZgWUQ62Wwuv8VxMSjQ5Hun |
+| escrow deliver | ok | 9TXJRj7TCepueBV81XEzKXbMRjHBHKkqhCJ6XCeycpsT | https://testnet.nearblocks.io/txns/9TXJRj7TCepueBV81XEzKXbMRjHBHKkqhCJ6XCeycpsT |
+| escrow accept | ok | C1UCjFP2RavDtt2pPmoQTXCTr4L1pm8Kbh7E5Ks4EWg5 | https://testnet.nearblocks.io/txns/C1UCjFP2RavDtt2pPmoQTXCTr4L1pm8Kbh7E5Ks4EWg5 |
+| escrow withdraw | ok | EZTDcMwtPHH69R7GYksDhKXHUhC4eACuLKBgGgVCRKdT | https://testnet.nearblocks.io/txns/EZTDcMwtPHH69R7GYksDhKXHUhC4eACuLKBgGgVCRKdT |
+|  | token receipt SuccessValue |  |  |
+| foundry usdc after | ok |  |  |
+|  | 1010000 -> 2010000 delta 1000000 |  |  |
 

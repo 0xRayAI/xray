@@ -141,12 +141,39 @@ async function view(account, contractId, methodName, args) {
   return account.viewFunction({ contractId, methodName, args });
 }
 
+async function usdcReceipt(hash, signer) {
+  const response = await fetch(RPC, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      jsonrpc: '2.0',
+      id: 'ensemble',
+      method: 'EXPERIMENTAL_tx_status',
+      params: [hash, signer],
+    }),
+    signal: AbortSignal.timeout(20000),
+  });
+  const body = await response.json();
+  const rows = body.result?.receipts_outcome || [];
+  let tokenSuccess = false;
+  let failure = '';
+  for (const row of rows) {
+    const outcome = row.outcome || {};
+    const status = outcome.status || {};
+    if (status.Failure) failure = JSON.stringify(status.Failure);
+    if (outcome.executor_id === USDC && Object.prototype.hasOwnProperty.call(status, 'SuccessValue')) {
+      tokenSuccess = true;
+    }
+  }
+  return { tokenSuccess, failure };
+}
+
 async function balanceOf(account, accountId) {
   const value = await view(account, USDC, 'ft_balance_of', { account_id: accountId });
   return String(value);
 }
 
-function writeReceipts() {
+function writeReceipts(appendTitle) {
   const lines = [
     '# xray#1144 testnet ensemble receipts',
     '',
@@ -166,13 +193,15 @@ function writeReceipts() {
     if (step.error) lines.push(`|  | ${step.error} |  |  |`);
   }
   lines.push('');
-  if (process.env.ENSEMBLE_FINISH === '1') {
+  const appendTitleUsed = appendTitle || (process.env.ENSEMBLE_FINISH === '1' ? 'Funded run' : '');
+  if (appendTitleUsed) {
     const rows = [
       '',
-      '## Funded run',
+      `## ${appendTitleUsed}`,
       '',
-      'Circle faucet funded the buyer with 20 testnet USDC. The faucet page showed no transaction hash.',
-      'Same accounts and the contracts above. No new accounts and no redeploy. Base x402 stays skipped.',
+      appendTitle
+        ? 'Escrow is its own account. Buyer, foundry, shop pay, and the funded over-cap rows above stay.'
+        : 'Circle faucet funded the buyer with 20 testnet USDC. The faucet page showed no transaction hash.',
       '',
       '| Step | Result | Tx | Explorer |',
       '| --- | --- | --- | --- |',
@@ -196,10 +225,11 @@ async function main() {
     buyer: `e1144b${suffix}.testnet`,
     foundry: `e1144f${suffix}.testnet`,
     owner: `e1144c${suffix}.testnet`,
+    escrow: `e1144e${suffix}.testnet`,
   };
   const keyStore = new keyStores.InMemoryKeyStore();
   const accounts = {};
-  for (const role of ['buyer', 'foundry', 'owner']) {
+  for (const role of ['buyer', 'foundry', 'owner', 'escrow']) {
     try {
       const loaded = await ensureAccount(role, wanted[role]);
       accounts[role] = loaded;
@@ -219,7 +249,7 @@ async function main() {
     nodeUrl: RPC,
     keyStore,
   });
-  for (const role of ['buyer', 'foundry', 'owner']) {
+  for (const role of ['buyer', 'foundry', 'owner', 'escrow']) {
     const id = accounts[role].accountId;
     let ready = false;
     for (let attempt = 0; attempt < 20; attempt += 1) {
@@ -241,8 +271,51 @@ async function main() {
   const buyer = await near.account(accounts.buyer.accountId);
   const foundry = await near.account(accounts.foundry.accountId);
   const owner = await near.account(accounts.owner.accountId);
-  const escrowId = accounts.foundry.accountId;
+  const escrowAccount = await near.account(accounts.escrow.accountId);
+  const escrowId = accounts.escrow.accountId;
   const vaultId = accounts.owner.accountId;
+  if (process.env.ENSEMBLE_REESCROW === '1') {
+    const escrowWasm = process.env.ENSEMBLE_ESCROW_WASM
+      || '/tmp/clearing-main/near/escrow/target/wasm32-unknown-unknown/release/clearing_escrow.wasm';
+    try {
+      const deployed = await escrowAccount.deployContract(fs.readFileSync(escrowWasm));
+      record('deploy escrow', { ok: true, hash: deployed.transaction.hash, detail: escrowId });
+      const creatorPk = hex(accounts.foundry.keyPair.getPublicKey().data);
+      const init = await call(escrowAccount, escrowId, 'new', {
+        token_id: USDC,
+        arbiter_id: accounts.owner.accountId,
+        creator_id: accounts.foundry.accountId,
+        creator_pk: creatorPk,
+        chain_id: CHAIN_ID,
+        min_window_ns: 1_000_000_000,
+      }, '100000000000000', '0');
+      record('init escrow', { ok: true, hash: init.hash });
+      const registered = await call(buyer, USDC, 'storage_deposit', {
+        account_id: escrowId,
+        registration_only: true,
+      }, '30000000000000', STORAGE);
+      record('storage escrow', { ok: true, hash: registered.hash });
+    } catch (err) {
+      const pub = publicError(err);
+      record('deploy escrow', { ok: false, hash: pub.hash, error: pub.text });
+      writeReceipts('Escrow on its own account');
+      process.exitCode = 1;
+      return;
+    }
+    const before = await balanceOf(buyer, accounts.foundry.accountId);
+    record('foundry usdc before', { ok: true, detail: before });
+    await runEscrow(buyer, foundry, accounts, escrowId);
+    const after = await balanceOf(buyer, accounts.foundry.accountId);
+    const delta = BigInt(after) - BigInt(before);
+    record('foundry usdc after', {
+      ok: delta === 1000000n,
+      detail: `${before} -> ${after} delta ${delta}`,
+      error: delta === 1000000n ? '' : `expected delta 1000000, got ${delta}`,
+    });
+    writeReceipts('Escrow on its own account');
+    say(`receipts ${RECEIPTS}`);
+    return;
+  }
   if (process.env.ENSEMBLE_FINISH === '1') {
     let buyerUsdc = 'unknown';
     try {
@@ -316,15 +389,15 @@ async function main() {
     || '/tmp/clearing-main/near/spend-cap/target/wasm32-unknown-unknown/release/clearing_spend_cap.wasm';
 
   try {
-    const deployed = await foundry.deployContract(fs.readFileSync(escrowWasm));
-    record('deploy escrow', { ok: true, hash: deployed.transaction.hash });
+    const deployed = await escrowAccount.deployContract(fs.readFileSync(escrowWasm));
+    record('deploy escrow', { ok: true, hash: deployed.transaction.hash, detail: escrowId });
   } catch (err) {
     const pub = publicError(err);
     record('deploy escrow', { ok: false, hash: pub.hash, error: pub.text });
   }
   try {
     const creatorPk = hex(accounts.foundry.keyPair.getPublicKey().data);
-    const init = await call(foundry, escrowId, 'new', {
+    const init = await call(escrowAccount, escrowId, 'new', {
       token_id: USDC,
       arbiter_id: accounts.owner.accountId,
       creator_id: accounts.foundry.accountId,
@@ -510,7 +583,16 @@ async function runEscrow(buyer, foundry, accounts, escrowId) {
   }
   try {
     const withdrawn = await call(foundry, escrowId, 'withdraw', {}, '100000000000000', '0');
-    record('escrow withdraw', { ok: true, hash: withdrawn.hash });
+    const proof = await usdcReceipt(withdrawn.hash, accounts.foundry.accountId);
+    if (proof.failure || !proof.tokenSuccess) {
+      record('escrow withdraw', {
+        ok: false,
+        hash: withdrawn.hash,
+        error: proof.failure || 'token receipt was not SuccessValue',
+      });
+      return;
+    }
+    record('escrow withdraw', { ok: true, hash: withdrawn.hash, detail: 'token receipt SuccessValue' });
   } catch (err) {
     const pub = publicError(err);
     record('escrow withdraw', { ok: false, hash: pub.hash, error: pub.text });
