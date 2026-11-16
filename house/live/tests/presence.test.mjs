@@ -87,4 +87,5 @@ test('the server publishes that roster on the feed header', () => {
   assert.match(src, /configuredRoster\(process\.env/);
   assert.match(src, /h\.roster = roster\.names/);
   assert.match(src, /h\.roster_roles = roster\.roles/);
+  assert.match(src, /h\.seats = roster\.names/);
 });

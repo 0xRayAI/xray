@@ -1968,6 +1968,9 @@ function mergedHeader(now = Date.now()) {
   if (roster.names.length) {
     h.roster = roster.names;
     h.roster_roles = roster.roles;
+    // The collector freezes header seats from LIVE_FLEET_SEATS at process start.
+    // The page does not filter on it. Publish the configured roster so the field cannot stay on the old list.
+    h.seats = roster.names;
   }
   return h;
 }

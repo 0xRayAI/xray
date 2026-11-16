@@ -180,6 +180,9 @@ def board_wave(events, write, prompts=None):
 
 def build(args, gh):
     ff._live_pass_t0 = time.time()
+    seats, _fold, board = live_fleet.load_seat_config()
+    live_fleet.SEATS, live_fleet.BOARD_SEATS = seats, board
+    ff.SEATS = list(board)
     token_check()
     token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
     if not token and MODE != "box":

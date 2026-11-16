@@ -459,6 +459,56 @@
     return out.length ? out : null;
   }
 
+  /* A seat in fleet.seats still chips when the roster list omitted it. The header
+     seats array is the collector's startup copy and is not a filter. */
+  function fleetRows(rows, feed) {
+    var out = Array.isArray(rows) ? rows.slice() : [];
+    var seats = feed && feed.fleet && feed.fleet.seats;
+    if (!seats || typeof seats !== 'object') return out.length ? out : null;
+    var seen = {};
+    out.forEach(function (a) { seen[String(a && a[0] || '').toLowerCase()] = 1; });
+    Object.keys(seats).forEach(function (name) {
+      var low = String(name).toLowerCase();
+      if (!low || seen[low]) return;
+      seen[low] = 1;
+      out.push([name, '']);
+    });
+    return out.length ? out : null;
+  }
+
+  /* The kit node list has no mill or near. A configured seat still gets a spot and a color. */
+  function ensureNodes(names) {
+    var slots = [], x, y;
+    for (y = 70; y <= 340; y += 70) for (x = 100; x <= 820; x += 90) slots.push([x, y]);
+    function busy(p) {
+      var keys = Object.keys(SATS), i, q;
+      for (i = 0; i < keys.length; i++) {
+        q = SATS[keys[i]];
+        if (q && Math.abs(q[0] - p[0]) < 50 && Math.abs(q[1] - p[1]) < 36) return true;
+      }
+      return false;
+    }
+    var slot = 0;
+    (names || []).forEach(function (raw) {
+      var name = String(raw || '').trim();
+      if (!name || own(SATS, name)) return;
+      var p = null, cand;
+      while (slot < slots.length) {
+        cand = slots[slot++];
+        if (!busy(cand)) { p = cand; break; }
+      }
+      if (!p) p = [120 + (Object.keys(SATS).length * 37) % 680, 200];
+      SATS[name] = p;
+      if (!own(COLOR, name)) {
+        var h = 0, c;
+        for (c = 0; c < name.length; c++) h = (h * 33 + name.charCodeAt(c)) >>> 0;
+        COLOR[name] = [70 + (h % 150), 90 + ((h >>> 8) % 120), 110 + ((h >>> 16) % 120)];
+      }
+      if (!own(LABEL, name)) LABEL[name] = name;
+      if (own(SATS, 'GitHub') && !EDGES.some(function (ed) { return ed[0] === name && ed[1] === 'GitHub'; })) EDGES.push([name, 'GitHub']);
+    });
+  }
+
   /* One poll. mem carries { etag, apiBlockedUntil } between polls. Resolves to
      { source, feed } (feed null on a 304) or rejects when every source fails. */
   function fetchFeed(fetchFn, nowMs, mem) {
@@ -497,6 +547,7 @@
     headline: headline, parseT: parseT, mergeEvents: mergeEvents, countUpTo: countUpTo,
     eventsUpTo: eventsUpTo, pingsAt: pingsAt, hotNodes: hotNodes, applyFeed: applyFeed,
     bounds: bounds, fmtCt: fmtCt, ago: ago, feedUrl: feedUrl, fetchFeed: fetchFeed, rosterEntries: rosterEntries,
+    fleetRows: fleetRows, ensureNodes: ensureNodes,
     own: own, botImage: botImage, badgeLetter: badgeLetter, bob: bob, pulse: pulse, entry: entry,
     ENTRY_MS: ENTRY_MS, PULSE_MS: PULSE_MS, MARK: MARK, markCells: markCells,
     isPlaying: isPlaying, sliderAction: sliderAction, edgeTraffic: edgeTraffic, orbitStep: orbitStep,

@@ -2374,7 +2374,9 @@ footer a { color: var(--foot); }
       feedLoaded = true;
       if (L.rosterEntries) {
         var rosterRows = L.rosterEntries(r.feed);
+        if (L.fleetRows) rosterRows = L.fleetRows(rosterRows, r.feed);
         if (rosterRows && L.rosterKept) rosterRows = L.rosterKept(rosterRows, r.feed);
+        if (rosterRows && L.ensureNodes) L.ensureNodes(rosterRows.map(function (a) { return a[0]; }));
         if (rosterRows) paintRoster(rosterRows, r.feed);
       }
       if (r.feed.freshness) {

@@ -396,6 +396,25 @@ test('our overlay does not install a fixed roster strip; the canvas still draws 
   for (const x of Object.values(L.SATS)) assert.ok(x[0] >= 80 && x[0] <= 840, String(x));
   assert.match(L.SITE_FOOT, /Bifrost/);
 });
+test('every configured seat renders, including one the header seats list omitted', () => {
+  const g = {};
+  new Function('globalThis', fs.readFileSync(path.join(APP, 'public', 'live.js'), 'utf8'))(g);
+  const L = g.LiveMesh;
+  const feed = {
+    seats: ['mill', 'forge', 'critic', 'blinky'],
+    roster: ['mill', 'forge', 'critic', 'blinky', 'nibbler'],
+    fleet: { seats: { mill: {}, forge: {}, critic: {}, blinky: {}, near: {}, nibbler: {} } },
+  };
+  const rows = L.fleetRows(L.rosterEntries(feed), feed);
+  L.ensureNodes(rows.map((a) => a[0]));
+  for (const name of ['mill', 'near', 'nibbler', 'forge', 'critic', 'blinky']) {
+    assert.ok(rows.some((a) => a[0] === name), name);
+    assert.ok(L.SATS[name], 'node ' + name);
+    assert.ok(L.COLOR[name], 'color ' + name);
+    assert.ok(L.SATS[name][0] >= 80 && L.SATS[name][0] <= 840, name);
+  }
+  assert.match(html, /L\.ensureNodes\(rosterRows\.map/);
+});
 test('rosterEntries reads the feed roster and its roles, and ignores a missing list', () => {
   const live = fs.readFileSync(path.join(APP, 'public', 'live.js'), 'utf8');
   const g = {};
