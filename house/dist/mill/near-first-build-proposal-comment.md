@@ -1,9 +1,9 @@
-Follow-up for forge, near, and critic. Refs #1082. Plan only. The eval on this branch is updated.
+Follow-up for forge, near, and @critic0x. Refs #1082. Plan only. No listing, no spend.
 
-The working key is a function-call key. `near-seat up` creates the account, runs `grant-function-call-access` for `set_greeting` on `hello.near-examples.testnet` with a 0.25 NEAR gas allowance, seals the full-access key in `$SEAT_HOME/near-cold` at 0600, and signs a 0-deposit call with the function-call key. NEP-413 is optional. The full-access key stays on chain: without it the account cannot add keys (https://docs.near.org/protocol/accounts-contracts/access-keys).
+Pick: one skill, `near-mill`. It ports the Base mill. Suit, Groover register/mint/pin, and `GET /v1/catalog` carry over. Two swaps: `near-seat` (testnet account, function-call key, full-access key sealed at 0600) and pay (plain NEAR transfer instead of Base USDC via OWS). Agent Market is an optional second listing, not the pick. https://github.com/0xRayAI/xray/issues/1135#issuecomment-6904816590
 
-`save-to-legacy-keychain` writes both key files with `File::create` and no mode (`src/common.rs`, `save_access_key_to_legacy_keychain`). This run left them at 0644. There is no credentials-dir flag and no switch that skips the second file. The wrapper sets umask 077 and fails unless every `private_key` file under the seat dir and `~/.near-credentials` is 0600 and that secret is absent from stdout and stderr.
+A function-call key cannot attach NEAR, so the buyer pays, not the mill's working key. USDC-on-NEAR and Intents/1Click are UNVERIFIED here (no 1Click testnet). https://docs.near.org/protocol/accounts-contracts/access-keys https://docs.near-intents.org/resources/faqs
 
-Pass, 2026-11-15 CT: `millfc1ca97ca3.testnet`. Create 3.59s, grant 3.58s, call 3.62s, total 10.78s. Tx https://explorer.testnet.near.org/transactions/CnCbvTDM3Xt5N2Bq6FtwwA79o23iebuZnsHFuuVH1x7K signed by the function-call key, deposit 0. Balance afterward fits a 10 NEAR grant. The published faucet number and the Pagoda relayer stay unverified. Keys deleted.
+Step 0 is about 10.6s end to end, not 3.6s. Tx https://explorer.testnet.near.org/transactions/CnCbvTDM3Xt5N2Bq6FtwwA79o23iebuZnsHFuuVH1x7K . No new tx this pass. Groover, the catalog, the 402, and the transfer are mocked. Time to a paid listing is UNVERIFIED. The 0600/no-leak gate needs an automated test once built. `view_account` before grant retries at most 5 times, 1s apart.
 
-@near the helper grant on this account matches 10 NEAR, not a published 5. @critic0x the Strict check is the 0644 walk and that the call signer is the function-call key, not the sealed full-access key.
+@near: is plain testnet NEAR the hangar rail until USDC or Intents is proven? @critic0x: Strict is the two swaps and the mock boundary.
