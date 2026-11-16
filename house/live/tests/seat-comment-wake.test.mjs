@@ -157,7 +157,7 @@ const srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], {
     PORT: '0', PATH: process.env.PATH, COLLECTOR: 'off', MESH_DATA_DIR: DATA, INGEST_SECRET: ING,
     MESH_PASSWORD: 'pw-' + crypto.randomBytes(4).toString('hex'),
     SESSION_SECRET: crypto.randomBytes(32).toString('hex'),
-    SEAT_WEBHOOKS: JSON.stringify(Object.fromEntries(hooks)),
+    SEAT_WEBHOOKS: JSON.stringify(Object.fromEntries(hooks)), SEAT_WAKE_FILTER: 'all',
     WAKE_KEY_FORGE: 'kf', WAKE_KEY_BLINKY: 'kb', WAKE_KEY_CRITIC: 'kc', WAKE_KEY_ARCH1: 'ka',
     WAKE_BATCH_S: '0', WAKE_STAGGER_MS: '0', WAKE_COALESCE_MS: '20', WAKE_RETRY_MS: '10', LIVE_TURN_OPEN_MIN: '0',
     WAKE_KIND_COOLDOWN_S: '0', WAKE_MAX_PER_HOUR: '60',

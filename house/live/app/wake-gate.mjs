@@ -53,6 +53,7 @@ export function createWakeState() {
     sentSha: new Map(), queuedSha: new Map(), cool: new Map(), sentAt: new Map(), turnOpen: new Map(),
     commentSha: new Map(), seatComments: new Map(), breaker: new Map(),
     hold: [], sent: [], skips: [],
+    stationAt: new Map(), greenHeads: new Set(),
   };
 }
 

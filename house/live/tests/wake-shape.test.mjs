@@ -21,7 +21,7 @@ const hooks = { forge: { url: `${W}/forge/${AUTO}`, key_env: 'FORGE_WAKE_KEY' },
 let logs = '';
 const srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], { env: { PORT: '0', PATH: process.env.PATH, COLLECTOR: 'off',
   MESH_PASSWORD: 'x1', SESSION_SECRET: crypto.randomBytes(32).toString('hex'), INGEST_SECRET: ING, MESH_DATA_DIR: DATA,
-  SEAT_WEBHOOKS: JSON.stringify(hooks), FORGE_WAKE_KEY: KEY, CRITIC_WAKE_KEY: KEY, WAKE_KEY_FORGE: 'not-this-one',
+  SEAT_WEBHOOKS: JSON.stringify(hooks), SEAT_WAKE_FILTER: 'all', FORGE_WAKE_KEY: KEY, CRITIC_WAKE_KEY: KEY, WAKE_KEY_FORGE: 'not-this-one',
   WAKE_RETRY_MS: '10', WAKE_STAGGER_MS: '2000', WAKE_BATCH_S: '0', WAKE_KIND_COOLDOWN_S: '0', LIVE_TURN_OPEN_MIN: '0' }, stdio: ['ignore', 'pipe', 'pipe'] });
 srv.stdout.on('data', d => logs += d); srv.stderr.on('data', d => logs += d);
 PORT = await listenPort(srv); BASE = `http://127.0.0.1:${PORT}`;   // #304: port 0, read the assigned port

@@ -256,17 +256,19 @@ const row = (over) => ({
   ...(over.labels ? { labels: over.labels } : {}), ...(over.flag ? { flag: over.flag } : {}), ...(over.sha ? { sha: over.sha } : {}),
 });
 
-test('server: unassigned issue and a P1 label wake only forge; health has no skip id', async () => {
+test('server: an unassigned issue and a P1 label stay on the board and do not wake forge', async () => {
   const bad = await post([row({ id: 'bad-label', seat: 'forge', type: 'issue_open', number: 1, reason: 'bad', labels: ['has space'] })]);
   assert.equal(bad.status, 400);
   assert.match(bad.body.error || '', /labels must be a list of short names/);
   const issueId = 'issue-open-unassigned-zz9';
   assert.equal((await post([row({ id: issueId, seat: 'blinky', type: 'issue_open', number: 11, reason: 'opened' })])).status, 200);
-  assert.ok(await until(() => got.some(g => g.path === '/forge' && g.body.inbox_id === issueId)), logs);
+  assert.ok(await until(() => logs.includes('wake: skip forge filter ' + issueId)), logs);
+  assert.equal(got.some(g => g.path === '/forge' && g.body.inbox_id === issueId), false);
   assert.equal(got.some(g => g.path === '/blinky' && g.body.inbox_id === issueId), false);
   const p1 = 'issue-p1-zz9';
   assert.equal((await post([row({ id: p1, seat: 'blinky', type: 'issue_labeled', number: 12, reason: 'labeled', labels: ['P1'] })])).status, 200);
-  assert.ok(await until(() => got.some(g => g.path === '/forge' && g.body.inbox_id === p1)), logs);
+  assert.ok(await until(() => logs.includes('wake: skip forge filter ' + p1)), logs);
+  assert.equal(got.some(g => g.path === '/forge' && g.body.inbox_id === p1), false);
   assert.equal(got.some(g => g.path === '/blinky' && g.body.inbox_id === p1), false);
   const health = await (await fetch(BASE + '/healthz')).json();
   assert.equal(JSON.stringify(health).includes(issueId), false);
@@ -285,27 +287,29 @@ test('server: a pr_comment wakes the author and the mention, not blinky', async 
     row({ id, seat: 'herald', type: 'pr_comment', number: 21, reason: 'mention @herald' }),
   ];
   assert.equal((await post(lines)).status, 200);
-  assert.ok(await until(() => got.some(g => g.path === '/forge' && g.body.inbox_id === id) && got.some(g => g.path === '/herald' && g.body.inbox_id === id)), logs);
+  assert.ok(await until(() => got.some(g => g.path === '/herald' && g.body.inbox_id === id)), logs);
+  assert.equal(got.some(g => g.path === '/forge' && g.body.inbox_id === id), false);
+  assert.match(logs, new RegExp('wake: skip forge filter ' + id));
   assert.equal(got.some(g => g.path === '/blinky' && g.body.inbox_id === id), false);
 });
 
 test('server: three lines batch into one POST; a missing sha is cooldown; a hotfix still posts', async () => {
   const before = got.filter(g => g.path === '/forge').length;
-  const batch = [1, 2, 3].map(n => row({ id: 'batch-' + n, seat: 'forge', type: 'ready', number: 40 + n, reason: 'ready ' + n }));
+  const batch = [1, 2, 3].map(n => row({ id: 'batch-' + n, seat: 'forge', type: 'ready', number: 40 + n, reason: '@forge ready ' + n }));
   assert.equal((await post(batch)).status, 200);
   assert.ok(await until(() => got.filter(g => g.path === '/forge').length > before), logs);
   const hit = got.filter(g => g.path === '/forge').at(-1);
   assert.equal(hit.body.lines.length, 3);
   assert.deepEqual(hit.body.ids, ['batch-1', 'batch-2', 'batch-3']);
   const first = got.length;
-  assert.equal((await post([row({ id: 'nosha-1', seat: 'forge', type: 'issue_open', number: 50, reason: 'one' })])).status, 200);
+  assert.equal((await post([row({ id: 'nosha-1', seat: 'forge', type: 'issue_open', number: 50, reason: '@forge one' })])).status, 200);
   assert.ok(await until(() => got.length > first), logs);
   const mid = got.length;
-  assert.equal((await post([row({ id: 'nosha-2', seat: 'forge', type: 'issue_open', number: 50, reason: 'two' })])).status, 200);
+  assert.equal((await post([row({ id: 'nosha-2', seat: 'forge', type: 'issue_open', number: 50, reason: '@forge two' })])).status, 200);
   await new Promise(r => setTimeout(r, 200));
   assert.equal(got.length, mid);
   assert.match(logs, /wake: skip forge cooldown nosha-2/);
   assert.equal(logs.includes('repeat_sha nosha-2'), false);
-  assert.equal((await post([row({ id: 'nosha-3', seat: 'forge', type: 'issue_open', number: 50, reason: 'hot', flag: 'hotfix' })])).status, 200);
+  assert.equal((await post([row({ id: 'nosha-3', seat: 'forge', type: 'issue_open', number: 50, reason: '@forge hot', flag: 'hotfix' })])).status, 200);
   assert.ok(await until(() => got.some(g => g.body.inbox_id === 'nosha-3')), logs);
 });
