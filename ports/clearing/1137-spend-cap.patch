@@ -4506,10 +4506,10 @@ index 0000000..d7da37e
 +SOFTWARE.
 diff --git a/near/spend-cap/src/lib.rs b/near/spend-cap/src/lib.rs
 new file mode 100644
-index 0000000..8e9a9af
+index 0000000..2ac02e7
 --- /dev/null
 +++ b/near/spend-cap/src/lib.rs
-@@ -0,0 +1,467 @@
+@@ -0,0 +1,597 @@
 +//! USDC spend vault. The vault is the payer on `ft_transfer`. An agent key
 +//! may call only `pay` and `ping`. Its NEAR allowance pays gas, not tokens.
 +//!
@@ -4524,7 +4524,11 @@ index 0000000..8e9a9af
 +//! - `Allowance::limited` and `add_access_key_allowance` (the allowance is gas):
 +//!   https://docs.rs/near-sdk/5.7.0/near_sdk/struct.Promise.html
 +//! - Function-call keys: https://docs.near.org/protocol/access-keys
-+//! - `ft_transfer` attaches 1 yoctoNEAR: https://docs.near.org/primitives/ft
++//! - `ft_transfer` attaches 1 yoctoNEAR, and the sender must hold the amount:
++//!   https://github.com/near/NEPs/blob/master/neps/nep-0141.md
++//! - `storage_deposit` with `registration_only` runs before that transfer.
++//!   NEP-145 refunds the deposit when the account is already registered:
++//!   https://github.com/near/NEPs/blob/master/neps/nep-0145.md
 +//!
 +//! Allowance MIT notice: `near/spend-cap/THIRD_PARTY_NOTICES`.
 +#![deny(unused)]
@@ -4546,10 +4550,16 @@ index 0000000..8e9a9af
 +/// Gas the agent key may burn. This is not a USDC budget.
 +pub const KEY_GAS_ALLOWANCE: NearToken = NearToken::from_near(1);
 +
++const GAS_STORAGE_DEPOSIT: Gas = Gas::from_tgas(15);
 +const GAS_FT_TRANSFER: Gas = Gas::from_tgas(20);
 +const GAS_ON_PAID: Gas = Gas::from_tgas(20);
 +const MIN_GAS_PAY: Gas = Gas::from_tgas(80);
 +const ONE_YOCTO: NearToken = NearToken::from_yoctonear(1);
++/// One account on the reference fungible token.
++/// near-contract-standards 5.7 measures it in `FungibleToken::new`
++/// (`measure_account_storage_usage`) and `storage_balance_bounds` multiplies
++/// that by the protocol byte cost, 10^19 yoctoNEAR. Excess is refunded.
++const FT_STORAGE_DEPOSIT: NearToken = NearToken::from_yoctonear(1_250_000_000_000_000_000_000);
 +const MAX_MEMO_LEN: usize = 128;
 +
 +#[near(serializers = [borsh])]
@@ -4583,6 +4593,8 @@ index 0000000..8e9a9af
 +    max_open_approvals: u32,
 +    spent: u128,
 +    reserved: u128,
++    /// USDC held for an in-flight owner withdraw. `on_withdraw` releases it.
++    withdraw_inflight: u128,
 +    window_start_ns: u64,
 +    last_payment_ns: u64,
 +    next_approval: u64,
@@ -4632,6 +4644,7 @@ index 0000000..8e9a9af
 +            max_open_approvals,
 +            spent: 0,
 +            reserved: 0,
++            withdraw_inflight: 0,
 +            window_start_ns: 0,
 +            last_payment_ns: 0,
 +            next_approval: 1,
@@ -4682,6 +4695,30 @@ index 0000000..8e9a9af
 +        self.start_pay(receiver_id, amount.0, memo, false)
 +    }
 +
++    /// Owner takes USDC out. The cap, window, and allowlist do not apply.
++    /// The agent key cannot call this: its method list is `pay,ping`, and a
++    /// function-call key cannot attach the 1 yoctoNEAR NEP-141 requires.
++    #[payable]
++    pub fn withdraw(&mut self, receiver_id: AccountId, amount: U128) -> Promise {
++        self.assert_owner();
++        require!(env::attached_deposit() == ONE_YOCTO, "attach 1 yoctoNEAR");
++        require!(amount.0 > 0, "amount must be positive");
++        require!(receiver_id != env::current_account_id(), "receiver must not be the vault");
++        require!(env::prepaid_gas() >= MIN_GAS_PAY, "attach at least 80 TGas");
++        self.withdraw_inflight = self
++            .withdraw_inflight
++            .checked_add(amount.0)
++            .unwrap_or_else(|| env::panic_str("withdraw overflow"));
++        self.transfer_out(
++            receiver_id,
++            amount.0,
++            Some("owner-withdraw".to_string()),
++            Self::ext(env::current_account_id())
++                .with_static_gas(GAS_ON_PAID)
++                .on_withdraw(U128(amount.0)),
++        )
++    }
++
 +    /// Owner confirms a pay that was above the approval threshold.
 +    pub fn confirm(&mut self, request_id: u64) -> Promise {
 +        self.assert_owner();
@@ -4705,6 +4742,15 @@ index 0000000..8e9a9af
 +        }
 +    }
 +
++    /// The token keeps the vault's balance when `ft_transfer` fails.
++    /// Releasing the hold lets the owner withdraw that amount again.
++    #[private]
++    pub fn on_withdraw(&mut self, amount: U128) -> bool {
++        let ok = matches!(env::promise_result(0), PromiseResult::Successful(_));
++        self.withdraw_inflight = self.withdraw_inflight.saturating_sub(amount.0);
++        ok
++    }
++
 +    pub fn get_spent(&self) -> U128 {
 +        U128(self.spent)
 +    }
@@ -4720,11 +4766,16 @@ index 0000000..8e9a9af
 +    pub fn get_agent_methods(&self) -> String {
 +        AGENT_METHODS.to_string()
 +    }
++
++    pub fn get_withdraw_inflight(&self) -> U128 {
++        U128(self.withdraw_inflight)
++    }
 +}
 +
 +#[near_sdk::ext_contract(ext_ft)]
 +#[allow(dead_code)]
 +trait FungibleToken {
++    fn storage_deposit(&mut self, account_id: Option<AccountId>, registration_only: Option<bool>);
 +    fn ft_transfer(&mut self, receiver_id: AccountId, amount: U128, memo: Option<String>);
 +}
 +
@@ -4805,18 +4856,40 @@ index 0000000..8e9a9af
 +            Ok(Decision::Pay) => {
 +                require!(env::prepaid_gas() >= MIN_GAS_PAY, "attach at least 80 TGas");
 +                self.reserve(amount);
-+                let promise = ext_ft::ext(self.token_id.clone())
-+                    .with_attached_deposit(ONE_YOCTO)
-+                    .with_static_gas(GAS_FT_TRANSFER)
-+                    .ft_transfer(receiver_id, U128(amount), Some(memo))
-+                    .then(
-+                        Self::ext(env::current_account_id())
-+                            .with_static_gas(GAS_ON_PAID)
-+                            .on_paid(U128(amount)),
-+                    );
++                let promise = self.transfer_out(
++                    receiver_id,
++                    amount,
++                    Some(memo),
++                    Self::ext(env::current_account_id())
++                        .with_static_gas(GAS_ON_PAID)
++                        .on_paid(U128(amount)),
++                );
 +                PromiseOrValue::Promise(promise)
 +            }
 +        }
++    }
++
++    /// NEP-145 registration, then NEP-141 transfer. The callback's
++    /// `promise_result(0)` is the transfer. A failed registration still
++    /// reaches the callback, which releases the reserved amount.
++    fn transfer_out(
++        &self,
++        receiver_id: AccountId,
++        amount: u128,
++        memo: Option<String>,
++        callback: Promise,
++    ) -> Promise {
++        ext_ft::ext(self.token_id.clone())
++            .with_attached_deposit(FT_STORAGE_DEPOSIT)
++            .with_static_gas(GAS_STORAGE_DEPOSIT)
++            .storage_deposit(Some(receiver_id.clone()), Some(true))
++            .then(
++                ext_ft::ext(self.token_id.clone())
++                    .with_attached_deposit(ONE_YOCTO)
++                    .with_static_gas(GAS_FT_TRANSFER)
++                    .ft_transfer(receiver_id, U128(amount), memo),
++            )
++            .then(callback)
 +    }
 +
 +    fn reserve(&mut self, amount: u128) {
@@ -4975,6 +5048,63 @@ index 0000000..8e9a9af
 +        set_owner(1_000);
 +        let rolled = spend.pay(shop(), U128(1_000_000), "nonce-d".to_string());
 +        assert!(matches!(rolled, PromiseOrValue::Promise(_)));
++    }
++
++    fn set_owner_deposit(now: u64, deposit: NearToken) {
++        let ctx = VMContextBuilder::new()
++            .current_account_id(vault())
++            .predecessor_account_id(owner())
++            .signer_account_id(owner())
++            .block_timestamp(now)
++            .prepaid_gas(Gas::from_tgas(300))
++            .attached_deposit(deposit)
++            .account_balance(NearToken::from_near(20))
++            .build();
++        testing_env!(ctx);
++    }
++
++    #[test]
++    fn withdraw_rejects_anyone_but_the_owner() {
++        let mut spend = open_vault();
++        let ctx = VMContextBuilder::new()
++            .current_account_id(vault())
++            .predecessor_account_id(shop())
++            .signer_account_id(shop())
++            .prepaid_gas(Gas::from_tgas(300))
++            .attached_deposit(ONE_YOCTO)
++            .build();
++        testing_env!(ctx);
++        let caught = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
++            spend.withdraw(shop(), U128(1));
++        }));
++        assert!(caught.is_err());
++        assert_eq!(spend.get_withdraw_inflight().0, 0);
++    }
++
++    #[test]
++    fn a_failed_withdraw_releases_the_hold() {
++        let mut spend = open_vault();
++        set_owner_deposit(1, ONE_YOCTO);
++        let _ = spend.withdraw(shop(), U128(50));
++        assert_eq!(spend.get_withdraw_inflight().0, 50);
++        assert_eq!(spend.get_spent().0, 0);
++        assert_eq!(spend.get_reserved().0, 0);
++        let ctx = VMContextBuilder::new()
++            .current_account_id(vault())
++            .predecessor_account_id(vault())
++            .block_timestamp(2)
++            .prepaid_gas(Gas::from_tgas(300))
++            .build();
++        testing_env!(
++            ctx,
++            near_sdk::test_vm_config(),
++            near_sdk::RuntimeFeesConfig::test(),
++            Default::default(),
++            vec![PromiseResult::Failed],
++        );
++        assert!(!spend.on_withdraw(U128(50)));
++        assert_eq!(spend.get_withdraw_inflight().0, 0);
++        assert_eq!(spend.get_spent().0, 0);
 +    }
 +}
 diff --git a/near/spend-cap/src/policy.rs b/near/spend-cap/src/policy.rs
@@ -5192,10 +5322,10 @@ index 0000000..1bc6798
 +}
 diff --git a/near/spend-cap/tests/sandbox.rs b/near/spend-cap/tests/sandbox.rs
 new file mode 100644
-index 0000000..db52b99
+index 0000000..ff7336f
 --- /dev/null
 +++ b/near/spend-cap/tests/sandbox.rs
-@@ -0,0 +1,272 @@
+@@ -0,0 +1,382 @@
 +//! Sandbox checks for the spend vault.
 +//! Token: near-contract-standards 5.7, compiled from the escrow test token.
 +//! near-workspaces 0.24: https://docs.rs/near-workspaces/0.24.0
@@ -5258,6 +5388,10 @@ index 0000000..db52b99
 +}
 +
 +async fn rig(budget_limit: u128, budget_period_ns: u64) -> Rig {
++    rig_with(budget_limit, budget_period_ns, 10_000_000).await
++}
++
++async fn rig_with(budget_limit: u128, budget_period_ns: u64, mint_amount: u128) -> Rig {
 +    let worker = near_workspaces::sandbox().await.expect("sandbox");
 +    let token = worker.dev_deploy(token_wasm()).await.expect("token");
 +    let vault = worker.dev_deploy(vault_wasm()).await.expect("vault");
@@ -5284,16 +5418,22 @@ index 0000000..db52b99
 +    );
 +    register(&owner, &token, vault.id()).await;
 +    register(&owner, &token, shop.id()).await;
++    if mint_amount > 0 {
++        mint(&token, vault.id(), mint_amount).await;
++    }
++    Rig { worker, token, vault, owner, shop }
++}
++
++async fn mint(token: &Contract, account: &AccountId, amount: u128) {
 +    must(
 +        token
 +            .call("mint")
-+            .args_json(json!({ "account_id": vault.id(), "amount": "10000000" }))
++            .args_json(json!({ "account_id": account, "amount": amount.to_string() }))
 +            .gas(Gas::from_tgas(30))
 +            .transact()
 +            .await
 +            .expect("mint"),
 +    );
-+    Rig { worker, token, vault, owner, shop }
 +}
 +
 +async fn register(payer: &Account, token: &Contract, account: &AccountId) {
@@ -5335,7 +5475,7 @@ index 0000000..db52b99
 +            "amount": amount.to_string(),
 +            "memo": memo,
 +        }))
-+        .gas(Gas::from_tgas(100))
++        .gas(Gas::from_tgas(150))
 +        .transact()
 +        .await
 +        .expect("pay submitted")
@@ -5373,38 +5513,29 @@ index 0000000..db52b99
 +
 +#[tokio::test]
 +async fn budget_window_rolls_over() {
-+    let rig = rig(CAP, 2 * SEC).await;
++    // Chain time follows the host clock in the sandbox. A 2s window can
++    // elapse between two pays when the suite runs in parallel.
++    let rig = rig(CAP, 60 * SEC).await;
 +    must(pay(&rig, CAP, "nonce-window").await);
 +    let blocked = pay(&rig, 1, "nonce-blocked").await;
-+    assert!(!blocked.is_success());
-+    rig.worker.fast_forward(40).await.expect("fast forward");
++    assert!(!blocked.is_success(), "second pay in the window must fail");
++    rig.worker.fast_forward(120).await.expect("fast forward");
 +    must(pay(&rig, CAP, "nonce-next-window").await);
 +    assert_eq!(balance(&rig.token, rig.shop.id()).await, CAP * 2);
 +}
 +
 +#[tokio::test]
 +async fn budget_released_on_failed_transfer() {
-+    let rig = rig(CAP, 60 * SEC).await;
-+    let stranger = rig.worker.dev_create_account().await.expect("stranger");
-+    let failed = rig
-+        .owner
-+        .call(rig.vault.id(), "pay")
-+        .args_json(json!({
-+            "receiver_id": stranger.id(),
-+            "amount": CAP.to_string(),
-+            "memo": "nonce-unregistered",
-+        }))
-+        .gas(Gas::from_tgas(100))
-+        .transact()
-+        .await
-+        .expect("pay submitted");
++    let rig = rig_with(CAP, 60 * SEC, 0).await;
++    let failed = pay(&rig, CAP, "nonce-empty-vault").await;
 +    assert!(
 +        !failed.receipt_failures().is_empty(),
-+        "unregistered receiver must fail the transfer: {:?}",
++        "an empty vault must fail the transfer: {:?}",
 +        failed.failures()
 +    );
 +    let reserved: String = rig.vault.view("get_reserved").await.expect("view").json().expect("json");
 +    assert_eq!(reserved, "0");
++    mint(&rig.token, rig.vault.id(), CAP).await;
 +    must(pay(&rig, CAP, "nonce-after-release").await);
 +    assert_eq!(balance(&rig.token, rig.shop.id()).await, CAP);
 +}
@@ -5458,7 +5589,7 @@ index 0000000..db52b99
 +                "amount": CAP.to_string(),
 +                "memo": "nonce-via-agent-key",
 +            }))
-+            .gas(Gas::from_tgas(100))
++            .gas(Gas::from_tgas(150))
 +            .transact()
 +            .await
 +            .expect("agent pay"),
@@ -5466,5 +5597,114 @@ index 0000000..db52b99
 +    assert!(through.logs().join("\n").contains("nonce-via-agent-key"));
 +    let methods: String = rig.vault.view("get_agent_methods").await.expect("methods").json().expect("json");
 +    assert_eq!(methods, AGENT_METHODS);
-+    assert!(!AGENT_METHODS.split(',').any(|name| name == "ft_transfer" || name == "confirm"));
++    assert!(!AGENT_METHODS.split(',').any(|name| name == "ft_transfer" || name == "confirm" || name == "withdraw"));
++}
++
++#[tokio::test]
++async fn pay_unregistered_receiver_succeeds() {
++    let rig = rig(5_000_000, 60 * SEC).await;
++    let fresh = rig.worker.dev_create_account().await.expect("fresh");
++    let before = balance(&rig.token, rig.vault.id()).await;
++    must(
++        rig.owner
++            .call(rig.vault.id(), "pay")
++            .args_json(json!({
++                "receiver_id": fresh.id(),
++                "amount": CAP.to_string(),
++                "memo": "nonce-unregistered-shop",
++            }))
++            .gas(Gas::from_tgas(150))
++            .transact()
++            .await
++            .expect("pay submitted"),
++    );
++    assert_eq!(balance(&rig.token, fresh.id()).await, CAP);
++    assert_eq!(balance(&rig.token, rig.vault.id()).await, before - CAP);
++    let reserved: String = rig.vault.view("get_reserved").await.expect("view").json().expect("json");
++    assert_eq!(reserved, "0");
++}
++
++#[tokio::test]
++async fn owner_withdraw_restores_on_failure_then_pays_out() {
++    let rig = rig(5_000_000, 60 * SEC).await;
++    let fresh = rig.worker.dev_create_account().await.expect("fresh");
++    let before = balance(&rig.token, rig.vault.id()).await;
++    let too_much = rig
++        .owner
++        .call(rig.vault.id(), "withdraw")
++        .args_json(json!({
++            "receiver_id": fresh.id(),
++            "amount": (before + 1).to_string(),
++        }))
++        .deposit(NearToken::from_yoctonear(1))
++        .gas(Gas::from_tgas(150))
++        .transact()
++        .await
++        .expect("withdraw submitted");
++    assert!(
++        !too_much.receipt_failures().is_empty(),
++        "a withdraw above the token balance must fail: {:?}",
++        too_much.failures()
++    );
++    assert_eq!(balance(&rig.token, rig.vault.id()).await, before);
++    assert_eq!(balance(&rig.token, fresh.id()).await, 0);
++    let inflight: String = rig.vault.view("get_withdraw_inflight").await.expect("view").json().expect("json");
++    assert_eq!(inflight, "0");
++    let spent: String = rig.vault.view("get_spent").await.expect("view").json().expect("json");
++    assert_eq!(spent, "0");
++
++    let out = CAP * 2;
++    must(
++        rig.owner
++            .call(rig.vault.id(), "withdraw")
++            .args_json(json!({
++                "receiver_id": fresh.id(),
++                "amount": out.to_string(),
++            }))
++            .deposit(NearToken::from_yoctonear(1))
++            .gas(Gas::from_tgas(150))
++            .transact()
++            .await
++            .expect("withdraw"),
++    );
++    assert_eq!(balance(&rig.token, fresh.id()).await, out);
++    assert_eq!(balance(&rig.token, rig.vault.id()).await, before - out);
++    let spent_after: String = rig.vault.view("get_spent").await.expect("view").json().expect("json");
++    assert_eq!(spent_after, "0");
++}
++
++#[tokio::test]
++async fn agent_key_cannot_withdraw() {
++    let rig = rig(5_000_000, 60 * SEC).await;
++    let secret = SecretKey::from_seed(KeyType::ED25519, "clearing-spend-agent-withdraw");
++    let public = secret.public_key();
++    must(
++        rig.owner
++            .call(rig.vault.id(), "add_agent_key")
++            .args_json(json!({ "public_key": public.to_string() }))
++            .gas(Gas::from_tgas(50))
++            .transact()
++            .await
++            .expect("add key"),
++    );
++    let signer = InMemorySigner::from_secret_key(rig.vault.id().clone(), secret);
++    let before = balance(&rig.token, rig.vault.id()).await;
++    let direct = rig
++        .worker
++        .call(&signer, rig.vault.id(), "withdraw")
++        .args_json(json!({
++            "receiver_id": rig.shop.id(),
++            "amount": CAP.to_string(),
++        }))
++        .deposit(NearToken::from_yoctonear(1))
++        .gas(Gas::from_tgas(150))
++        .transact()
++        .await;
++    if let Ok(outcome) = direct {
++        assert!(!outcome.is_success(), "agent key must not withdraw: {:?}", outcome.failures());
++    }
++    assert_eq!(balance(&rig.token, rig.vault.id()).await, before);
++    let methods: String = rig.vault.view("get_agent_methods").await.expect("methods").json().expect("json");
++    assert_eq!(methods, AGENT_METHODS);
++    assert!(!methods.split(',').any(|name| name == "withdraw"));
 +}
