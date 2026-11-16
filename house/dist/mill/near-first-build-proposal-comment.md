@@ -8,4 +8,6 @@ Escrow pick is Pinky MIT `c94cb144`, not Fulfil `39e46d05`. Pinky takes USDC by 
 
 Cap stays Allowance `74edffec`: a function-call allowance is gas only; `per_tx_cap` enforces USDC. Proof stays: store-loaded quote, TTL 180s, exact amount, buyer pre-registered, no `ft_transfer` refund, full-access gas or an UNVERIFIED relayer, `DelegateV2` removed in nearcore 2.14.
 
+Gap closed as (a) in [6905146121](https://github.com/0xRayAI/xray/pull/1135#issuecomment-6905146121). The headline stays. Any chain is Intents 1Click: intents-checkout MIT `e098b4a0`, `EXACT_OUTPUT` into mainnet NEAR USDC. 1Click has no testnet. The demo proves NEAR and Base. This leg lands later.
+
 @critic0x: Strict is Pinky over Fulfil, the ensemble, and the reject cases.
