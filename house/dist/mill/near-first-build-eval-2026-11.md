@@ -2,110 +2,99 @@
 
 Refs xray#1082
 
-Seat: mill. Date: 2026-11-16 (UTC). Plan only. No kit code, no port.
+Seat: mill. Date: 2026-11-16 (UTC). Plan only. No kit code, no port. Reworked after [near](https://github.com/0xRayAI/xray/pull/1135#issuecomment-6904632647), [near's reply](https://github.com/0xRayAI/xray/pull/1135#issuecomment-6904676165), [forge](https://github.com/0xRayAI/xray/pull/1135#issuecomment-6904666584), and [critic](https://github.com/0xRayAI/xray/pull/1135#issuecomment-6904589719).
 
 ## 1. Pick
 
-Install `near-seat` (one CLI wrapper around `near-cli-rs` 0.31.1); the agent can then create a testnet account and prove it with a NEP-413 signature, with the full-access key only in the seat folder.
+Install `near-seat` (one CLI wrapper around `near-cli-rs` 0.31.1); the agent can then create a testnet account, hold a function-call key, and send a 0-deposit call as itself.
 
-The wrapper runs the official faucet create, forces the key file into the seat folder at mode `0600`, then signs and checks one off-chain message. It does not print the key, does not open mainnet, and does not send tokens. The binary is not built yet. The pass test below ran the official CLI the wrapper will call.
+The wrapper creates the account, runs `grant-function-call-access`, seals the full-access key, and signs `set_greeting` on `hello.near-examples.testnet` with the function-call key only. NEP-413 stays an optional extra. The binary is not built. Section 4 ran the official CLI the wrapper will call.
 
-## 2. Steps it saves
+## 2. Keys
 
-Today, core docs, 7 steps:
+The agent does not use the full-access key. A function-call key names one `receiver_id`, optional `method_names`, and an `allowance` for gas, and it cannot attach NEAR ([access keys](https://docs.near.org/protocol/accounts-contracts/access-keys)). A full-access key can transfer NEAR, delete the account, and add or remove keys. The same page says an account that has only function-call keys cannot add a key. Dropping the faucet key would lock the account to one contract. **Seal it.** Copy it to `$SEAT_HOME/near-cold/` (directory `0700`, file `0600`), do not pass that path to any sign command, and do not delete it on chain. The working file is the function-call key.
 
-1. Install `near-cli-rs` ([CLI](https://docs.near.org/tools/cli), [tools for AI](https://docs.near.org/getting-started/tools-for-ai)).
-2. Choose an account id.
-3. Create it with the faucet: `near account create-account sponsor-by-faucet-service $ACCOUNT_ID autogenerate-new-keypair save-to-keychain network-config testnet create` ([named accounts](https://docs.near.org/protocol/tutorials/creating-implicit-and-named-accounts)). That save target is the OS keychain ([CLI guide](https://github.com/near/near-cli-rs/blob/main/docs/GUIDE.en.md)).
-4. To get a file instead, use `save-to-legacy-keychain`. The file lands under `credentials_home_dir`, default `~/.near-credentials`, not a seat folder ([config source, v0.31.1](https://github.com/near/near-cli-rs/blob/v0.31.1/src/config/mod.rs)).
-5. Build the NEP-413 payload: tag `2^31+413`, Borsh message, 32-byte nonce, recipient, optional callback, then SHA-256 ([NEP-413](https://github.com/near/NEPs/blob/master/neps/nep-0413.md)).
-6. Sign with the full-access key: `near message sign-nep413 utf8 … nonce … recipient … sign-as … sign-with-access-key-file <file>` (same CLI; NEP requires a full-access key and no transaction).
-7. Verify the ed25519 signature over that hash.
+`save-to-legacy-keychain` is the headless store ([quickstart](https://docs.near.org/smart-contracts/quickstart)). `save_access_key_to_legacy_keychain` in [`src/common.rs`](https://github.com/near/near-cli-rs/blob/v0.31.1/src/common.rs) writes two files with `std::fs::File::create` and no mode:
 
-`near-api-js` v7 `Account.createAccount` is not this path. It needs an already funded parent account, and the official sample prints the new private key ([API libraries](https://docs.near.org/tools/near-api)). The browser faucet needs a browser and is documented as 5 testnet NEAR ([tools for AI](https://docs.near.org/getting-started/tools-for-ai)). The CLI faucet URL in 0.31.1 is `https://helper.nearprotocol.com/account` ([config source](https://github.com/near/near-cli-rs/blob/v0.31.1/src/config/mod.rs)). Mainnet's `faucet_url` in that file is null.
+- `<credentials_home_dir>/<network>/<account_id>/<public_key with ':' replaced by '_'>.json`
+- `<credentials_home_dir>/<network>/<account_id>.json`
 
-After: 1 command, `near-seat up`. It does steps 3–7 with `network-config testnet`, `save-to-legacy-keychain`, `credentials_home_dir` set to the seat folder, and no `print-to-terminal`.
+`credentials_home_dir` comes from `config.toml`, default `~/.near-credentials` ([config, v0.31.1](https://github.com/near/near-cli-rs/blob/v0.31.1/src/config/mod.rs)). There is no CLI flag for that directory, and no flag that skips the second file. `save-to-keychain` on a headless host falls through to the same function. `File::create` uses `0o666` masked by umask, so a typical `022` umask leaves both files at `0644`. This run's create wrote all four files at `0644`, including `accounts.json` and `ft_contracts.json` beside the two key files.
 
-## 3. Why this one
+Fix in the wrapper, since this plan does not patch near-cli-rs: set umask `077` before the CLI process, then walk the seat directory and `~/.near-credentials`. Fail the command unless every JSON file that contains `private_key` is mode `0600` or absent, and unless stdout and stderr do not contain that `private_key` string or the text `SECRET KEYPAIR`.
 
-An agent with no account cannot quote, sign on Base, or call a contract as itself. This command is the identity those need, and the proof does not spend. NEP-413 is off-chain ([NEP-413](https://github.com/near/NEPs/blob/master/neps/nep-0413.md)). The key never enters the prompt.
+Test spec. Fresh empty `SEAT_HOME`, no prior file for this account under `~/.near-credentials`. Run `near-seat up`. Pass when all of these hold: exit 0; a transaction id is printed; the signer public key on that transaction is the function-call key, not the full-access key; every `private_key` file under `SEAT_HOME` and under `~/.near-credentials` is mode `0600` or that path has no such file; stdout and stderr do not contain the secret. Fail on `0644`, on a secret in the log, or if the call was signed by the full-access key.
 
-| Other candidate | Why it waits |
-|---|---|
-| `near-cli-rs` as a skill that only reprints help | The CLI is the engine. A skill that teaches `ft_metadata` does not create an identity. |
-| Intents pay kit, mock 1Click | No testnet ([FAQ](https://docs.near-intents.org/resources/faqs)). A live quote can spend. Anyfare on `master` matches `GET /v0/tokens`, `POST /v0/quote`, `GET /v0/status` ([oneClick.ts L3–5, L544](https://github.com/baking-bad/anyfare/blob/master/packages/topups/src/oneClick.ts), [making a request](https://docs.near-intents.org/integration/distribution-channels/1click-api/quickstart/making-a-request)). **Leg up** later. The plan's `blob/main` URL 404s. |
-| Chain Signatures to Base | Five official steps, and relaying can move funds ([implementation](https://docs.near.org/chain-abstraction/chain-signatures/implementation)). HyperNear `mpc_sign` L688–710 signs a Hyperliquid digest ([lib.rs](https://github.com/0xMaxyz/HyperNear/blob/main/contract/src/lib.rs)). **Reference only.** |
-| Private inference / attestation | `GET /v1/attestation/report` is non-billable ([report API](https://docs.near.ai/api-reference/attestation/get-attestation-report)). Completions cost credits ([SDK](https://docs.near.ai/cloud/inference-sdk/index)). The SGLang report (2026-11-09) says in-flight confidential requests on one server were observable ([incident](https://near.ai/blog/security-incident-report-sglang-vulnerability)). Abalone `reportPath` L115 matches the path. **Leg up** later, not the first identity. |
-| TEE worker | OutLayer is third-party ([near's pass](https://github.com/0xRayAI/xray/issues/1082#issuecomment-6899755628)). Fulfil `request_execution` L192–206 does not create an account. **Reference only.** |
-| presign / `check_transaction` | Bitlens L233–241 never signs. No official pre-sign API. **Reference only.** |
-| Docs MCPs | Lookup, not an account. Endpoints are on [tools for AI](https://docs.near.org/getting-started/tools-for-ai) plus the gap scan's two other hosts. |
-| `near-api-js` createAccount | Needs a parent key and the sample prints the secret ([API libraries](https://docs.near.org/tools/near-api)). **Skip** for this command. |
-| OS keychain (`save-to-keychain`) | Not a seat folder an agent can chmod and delete ([CLI guide](https://github.com/near/near-cli-rs/blob/main/docs/GUIDE.en.md)). |
-| Shade | Dropped. "Do not use the Shade Agent Framework" ([tools for AI](https://docs.near.org/getting-started/tools-for-ai)). |
+## 3. Steps it saves
 
-Hackathon start files that do not create a faucet account are **skip** for this command: HyperNear, Abalone's display file, Fulfil, ProvenExit, Caesura, Pinky, Bitlens, Hasp. nearswaps `checkPermission` L109–118 is **reference only**: it reads a key file for an existing account and refuses `FullAccess` ([keys.ts](https://github.com/nearswaps/nearswaps-agents/blob/main/packages/agent/src/keys.ts)). A new identity needs that full-access key; NEP-413 requires it.
+Today, 7 steps:
 
-## 4. Pass test
+1. Install `near-cli-rs` ([CLI](https://docs.near.org/tools/cli)).
+2. Faucet-create into the legacy keychain ([named accounts](https://docs.near.org/protocol/tutorials/creating-implicit-and-named-accounts)). The docs' sample uses `save-to-keychain`. Headless hosts need `save-to-legacy-keychain`.
+3. Point `credentials_home_dir` at the seat folder. The default is `~/.near-credentials`.
+4. `grant-function-call-access` for one contract and method, signed by the full-access key ([access keys](https://docs.near.org/protocol/accounts-contracts/access-keys)). The wallet-login doc uses allowance `0.25 NEAR` for this contract ([wallet login](https://docs.near.org/web3-apps/tutorials/wallet-login)). An omitted allowance is unlimited gas.
+5. Move the full-access file to cold storage and chmod both files the CLI just created at `0644`.
+6. Sign `set_greeting` with attached deposit `0` using `sign-with-access-key-file` on the function-call file. `sign-with-legacy-keychain` prefers a full-access key.
+7. Read the transaction id.
 
-Run 2026-11-16 with `near-cli-rs` 0.31.1. `XDG_CONFIG_HOME` and `HOME` pointed at an empty temp dir. `credentials_home_dir` was set to `/tmp/near-seat-pass/seat` before create. The key file was not printed. It was deleted after the checks. The account remains on testnet.
+After: 1 command, `near-seat up`.
 
-Command that created it:
+`near-api-js` `Account.createAccount` needs a funded parent and the sample prints the new key ([API libraries](https://docs.near.org/tools/near-api)). **Skip** for this command.
 
-```text
-near account create-account sponsor-by-faucet-service millb40a714e.testnet autogenerate-new-keypair save-to-legacy-keychain network-config testnet create
-```
+## 4. Why this one
 
-| Step | Result |
-|---|---|
-| Create | exit 0 in **3.22s**. `--quiet` printed nothing. |
-| View at once | exit 1 in **0.24s**: `account millb40a714e.testnet does not exist while viewing`. |
-| Sign | exit 0 in **0.18s**. |
-| Create through sign | **3.64s**. |
+Time to a first on-chain action from zero, measured or ruled out today:
 
-Retry of `near account view-account-summary millb40a714e.testnet network-config testnet now` (exit 0): balance **10 NEAR**, storage 182 B, no contract, **1 full access key** and 0 function-call keys, block `#277883502`. `view_account` on `https://rpc.testnet.near.org` returned amount `10000000000000000000000000` (10 NEAR). `view_access_key_list` returned one key, `ed25519:FsbPYPhgGjZZTW4gfPPxpbV4HTLfDtcnnvk6J8KoiBGU`, permission FullAccess. That matches the public key in the seat file.
+| Candidate | First on-chain action | Why it waits |
+|---|---|---|
+| **near-seat** | 0-deposit `set_greeting` by the function-call key. **10.78s** this run. | This is the pick. |
+| Read-only `ft_metadata` | Not an action by an account. Under 1s, no key. | Proves the CLI, not an identity. |
+| Intents mock / live 1Click | No testnet ([FAQ](https://docs.near-intents.org/resources/faqs)). A live quote can spend. | Anyfare `oneClick.ts` L3–5 and L544 match the official paths. **Leg up** later. |
+| Chain Signatures | Derive is a view. `sign` can spend ([implementation](https://docs.near.org/chain-abstraction/chain-signatures/implementation)). | HyperNear `mpc_sign` L688–710 is a Hyperliquid digest. **Reference only.** |
+| Attestation / inference | HTTP, not an account. Report GET is non-billable; completions cost credits. | Abalone `reportPath` L115. **Leg up** later. SGLang: in-flight confidential requests were observable ([incident](https://near.ai/blog/security-incident-report-sglang-vulnerability)). |
+| OutLayer / Bitlens / Docs MCPs | Not an account create. | Fulfil and Bitlens: **reference only**. Shade: do not use ([tools for AI](https://docs.near.org/getting-started/tools-for-ai)). |
 
-NEP-413 sign of UTF-8 `mill seat check`, recipient `seat.local`, with `sign-with-access-key-file`:
+nearswaps `checkPermission` L109–118 is **reference only**: it checks a function-call key that already exists and refuses `FullAccess` ([keys.ts](https://github.com/nearswaps/nearswaps-agents/blob/main/packages/agent/src/keys.ts)). HyperNear, Abalone's display file, Fulfil, ProvenExit, Caesura, Pinky, Bitlens, and Hasp do not create a faucet account. **Skip** for this command.
 
-```json
-{
-  "accountId": "millb40a714e.testnet",
-  "publicKey": "ed25519:FsbPYPhgGjZZTW4gfPPxpbV4HTLfDtcnnvk6J8KoiBGU",
-  "signature": "ed25519:2y28CArZnKu4CGFDkZUVpVZn6fFS3rBAcM5GQR45FeSNp5ntpNn1Pqp7cJgEg4VTvwscPMMgikYTnyh2GWk2AxAp"
-}
-```
+## 5. Pass test
 
-Local check: SHA-256 of tag `2^31+413` plus Borsh `(message, nonce, recipient, callbackUrl = None)` verifies with that public key (`cryptography` Ed25519). Pass.
+Run 2026-11-16, `near-cli-rs` 0.31.1. `HOME` and `XDG_CONFIG_HOME` were empty temp dirs. `credentials_home_dir` was the temp seat folder. Keys were not printed. The seat folder was deleted after. The account remains on testnet.
 
-The wrapper's single command cannot be run until it is built. The CLI sequence above is the body of that command.
+Contract: `hello.near-examples.testnet` `set_greeting`, deposit 0, gas 30 TGas ([wallet login](https://docs.near.org/web3-apps/tutorials/wallet-login)). Allowance `0.25 NEAR`. `get_greeting` answered before the run, so the contract was up.
 
-## 5. Safety
+| Step | Time | Result |
+|---|---|---|
+| Create `millfc1ca97ca3.testnet` | **3.59s** | exit 0. Every file under the seat dir was mode `0644`. |
+| `grant-function-call-access` | **3.58s** | exit 0. On-chain function-call key for `hello.near-examples.testnet` method `set_greeting`, allowance `249846713045166000000000` yocto. |
+| `set_greeting` signed with that key file | **3.62s** | exit 0. Deposit 0. Fee `0.000153286954834 NEAR`. |
+| Total | **10.78s** | |
 
-- Seat folder: `$SEAT_HOME/near/`, directory mode `0700`. Default `SEAT_HOME` is `.xray/state/seats/<seat>`. It is gitignored. `credentials_home_dir` points here, not at `~/.near-credentials`. The doctor wallet stays on its own path (`OWS_HOME` or the seat project, #1134). Do not put the NEAR key in `~/.ows`.
-- Every key file mode `0600` after write. This run left `testnet/<account>.json` at `0600` and `testnet/<account>/ed25519_<public>.json` at `0644`. The wrapper chmods both.
-- Never `print-to-terminal`. Never `sign-with-plaintext-private-key`. Logs must not contain `private_key`.
-- Network is testnet only. Do not call `send-near` or attach a deposit. The faucet's 10 NEAR stays put. NEP-413 does not spend it.
-- Delete the key file when the seat is done. The account on testnet is not deleted by deleting the file.
+Transaction: [`CnCbvTDM3Xt5N2Bq6FtwwA79o23iebuZnsHFuuVH1x7K`](https://explorer.testnet.near.org/transactions/CnCbvTDM3Xt5N2Bq6FtwwA79o23iebuZnsHFuuVH1x7K). The log says the call succeeded and the signer public key was the function-call key. `view_access_key_list` on `https://rpc.testnet.near.org` showed two keys: one FullAccess (the faucet key) and one FunctionCall (the signer). `~/.near-credentials` on this machine had no file for this account. Balance after the two transactions: `9999804652614305400000000` yocto, about 9.9998 NEAR.
 
-## 6. Parked
+The single `near-seat up` command cannot be run until the wrapper exists. The three CLI commands above are its body.
 
-- A getting-started skill whose action is `ft_metadata` on `wrap.testnet`.
-- A skill that only reprints `near-cli-rs` help.
+## 6. Safety
+
+- Working key: function-call only, allowance set (here 0.25 NEAR). Unlimited allowance is what you get if `--allowance` is omitted ([access keys](https://docs.near.org/protocol/accounts-contracts/access-keys)).
+- Full-access key: `$SEAT_HOME/near-cold/`, mode `0600`, never printed, never the signer. Not deleted on chain.
+- Seat dir `$SEAT_HOME/near/`, default `.xray/state/seats/<seat>/near`, mode `0700`, gitignored. Not `~/.ows` (doctor wallet, #1134) and not the default `~/.near-credentials`.
+- umask `077` plus the post-write mode check in section 2. No `print-to-terminal`. No `sign-with-plaintext-private-key`.
+- Testnet only. The 0.31.1 mainnet config has `faucet_url: None` and `meta_transaction_relayer_url: None` ([config](https://github.com/near/near-cli-rs/blob/v0.31.1/src/config/mod.rs)). No mainnet without a funded sponsor and Blaze's GO.
+- Do not attach a deposit. Gas for the grant and the call comes from the faucet balance.
+
+## 7. Parked
+
+- NEP-413 as the proof. Optional extra, off-chain.
+- A skill whose only action is `ft_metadata`.
 - Intents mock 1Click, then a live quote.
 - Chain Signatures that relay a Base transaction.
-- Private inference completions, and attestation as the first action.
-- OutLayer / TEE worker.
-- Bitlens `check_transaction`.
-- The three Docs MCPs as the thing we ship.
-- `near-api-js` `createAccount` from a parent account.
-- `save-to-keychain` (OS keychain).
-- Shade, NEAR Connect, universal accounts, gas keys, NEAR Business, escrow, Caesura.
+- Inference completions, and attestation as the first action.
+- OutLayer, Bitlens, the Docs MCPs as the thing we ship.
+- `near-api-js` `createAccount`, OS keychain, Shade, NEAR Connect, universal accounts, gas keys, NEAR Business, escrow, Caesura.
 
-## 7. Unverified
+## 8. Unverified
 
-- The helper's HTTP body. The chain shows 10 NEAR. The browser-faucet doc says 5. I did not read the helper response.
-- The create transaction id. `--quiet` hid it.
-- How long until every RPC sees a new account. One view failed; a later view and three RPCs succeeded.
-- `save-to-keychain` on macOS. Not run.
-- A CLI flag for `credentials_home_dir`. This run edited `config.toml` under a temp `XDG_CONFIG_HOME`.
-- Faucet rate limits and which account ids the helper rejects.
-- Whether `near-api-js` v7 has a file keystore this page does not show. The page I read takes a key string and prints it.
+- The helper does not publish the grant. This account's balance after a 0.000153 NEAR call fee and a grant on the order of 0.000042 NEAR is what a **10 NEAR** grant leaves. [tools for AI](https://docs.near.org/getting-started/tools-for-ai) has described the browser faucet as 5 NEAR; the [faucet page](https://docs.near.org/getting-started/faucet) fetched today says only "a small amount". Treat 10 as observed on this run, not a stable published number. `near-seat` should read the balance back.
+- Pagoda `https://near-testnet.api.pagoda.co/relay` and any other relayer. Not called. CLI defaults leave `meta_transaction_relayer_url` unset ([near's comment](https://github.com/0xRayAI/xray/pull/1135#issuecomment-6904632647)).
+- How the CLI turns `0.25 NEAR` into allowance `249846713045166000000000`. Not traced in source this pass.
+- `accounts.json` and `ft_contracts.json` (also `0644`). Not opened. The mode check still has to cover every `private_key` file, not only the two key names.

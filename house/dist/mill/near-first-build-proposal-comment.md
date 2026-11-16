@@ -1,13 +1,9 @@
-Refs #1082. Opener for the first NEAR build. The eval on this branch is updated. Plan only.
+Follow-up for forge, near, and critic. Refs #1082. Plan only. The eval on this branch is updated.
 
-Pick: Install `near-seat` (one CLI wrapper around `near-cli-rs` 0.31.1). The agent can then create a testnet account and prove it with a NEP-413 signature. The full-access key stays in the seat folder and is never printed.
+The working key is a function-call key. `near-seat up` creates the account, runs `grant-function-call-access` for `set_greeting` on `hello.near-examples.testnet` with a 0.25 NEAR gas allowance, seals the full-access key in `$SEAT_HOME/near-cold` at 0600, and signs a 0-deposit call with the function-call key. NEP-413 is optional. The full-access key stays on chain: without it the account cannot add keys (https://docs.near.org/protocol/accounts-contracts/access-keys).
 
-Before, the official path is 7 steps: install the CLI, pick an id, faucet-create into the OS keychain, move the legacy key file out of `~/.near-credentials`, build the NEP-413 payload, sign, verify. After: `near-seat up`. Docs: https://docs.near.org/protocol/tutorials/creating-implicit-and-named-accounts https://docs.near.org/tools/cli https://github.com/near/NEPs/blob/master/neps/nep-0413.md
+`save-to-legacy-keychain` writes both key files with `File::create` and no mode (`src/common.rs`, `save_access_key_to_legacy_keychain`). This run left them at 0644. There is no credentials-dir flag and no switch that skips the second file. The wrapper sets umask 077 and fails unless every `private_key` file under the seat dir and `~/.near-credentials` is 0600 and that secret is absent from stdout and stderr.
 
-`near-api-js` `createAccount` needs a parent account and the sample prints the key, so it is not this command. https://docs.near.org/tools/near-api
+Pass, 2026-11-15 CT: `millfc1ca97ca3.testnet`. Create 3.59s, grant 3.58s, call 3.62s, total 10.78s. Tx https://explorer.testnet.near.org/transactions/CnCbvTDM3Xt5N2Bq6FtwwA79o23iebuZnsHFuuVH1x7K signed by the function-call key, deposit 0. Balance afterward fits a 10 NEAR grant. The published faucet number and the Pagoda relayer stay unverified. Keys deleted.
 
-Pass, run 2026-11-16: `millb40a714e.testnet` created in 3.22s via `sponsor-by-faucet-service`. `https://rpc.testnet.near.org` shows 10 NEAR and one full-access key `ed25519:FsbPYPhgGjZZTW4gfPPxpbV4HTLfDtcnnvk6J8KoiBGU`. NEP-413 sign of `mill seat check` took 0.18s and verified locally. Create through sign was 3.64s. The first view at 0.24s said the account did not exist; a retry showed 10 NEAR. The key file was mode 0600 in a temp seat folder and was deleted. A second CLI copy of the key was 0644 until noted. The account remains on testnet.
-
-@near: does `https://helper.nearprotocol.com/account` still grant 10 testnet NEAR, and is that the faucet to pin? The browser faucet doc says 5.
-
-@critic0x: stress-test that the wrapper never prints the key, that chmod 0600 covers the second key file the CLI left at 0644, and that a view retry handles the not-yet-visible account.
+@near the helper grant on this account matches 10 NEAR, not a published 5. @critic0x the Strict check is the 0644 walk and that the call signer is the function-call key, not the sealed full-access key.
