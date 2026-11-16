@@ -166,6 +166,27 @@ function writeReceipts() {
     if (step.error) lines.push(`|  | ${step.error} |  |  |`);
   }
   lines.push('');
+  if (process.env.ENSEMBLE_FINISH === '1') {
+    const rows = [
+      '',
+      '## Funded run',
+      '',
+      'Circle faucet funded the buyer with 20 testnet USDC. The faucet page showed no transaction hash.',
+      'Same accounts and the contracts above. No new accounts and no redeploy. Base x402 stays skipped.',
+      '',
+      '| Step | Result | Tx | Explorer |',
+      '| --- | --- | --- | --- |',
+    ];
+    for (const step of steps) {
+      const hash = step.hash || '';
+      rows.push(`| ${step.step} | ${step.ok ? 'ok' : 'fail'} | ${hash} | ${hash ? link(hash) : ''} |`);
+      if (step.detail) rows.push(`|  | ${step.detail} |  |  |`);
+      if (step.error) rows.push(`|  | ${step.error} |  |  |`);
+    }
+    rows.push('');
+    fs.appendFileSync(RECEIPTS, `${rows.join('\n')}\n`);
+    return;
+  }
   fs.writeFileSync(RECEIPTS, `${lines.join('\n')}\n`);
 }
 
@@ -222,6 +243,73 @@ async function main() {
   const owner = await near.account(accounts.owner.accountId);
   const escrowId = accounts.foundry.accountId;
   const vaultId = accounts.owner.accountId;
+  if (process.env.ENSEMBLE_FINISH === '1') {
+    let buyerUsdc = 'unknown';
+    try {
+      buyerUsdc = await balanceOf(buyer, accounts.buyer.accountId);
+      record('buyer usdc', { ok: true, detail: buyerUsdc });
+    } catch (err) {
+      const pub = publicError(err);
+      record('buyer usdc', { ok: false, error: pub.text });
+    }
+    if (buyerUsdc === '0' || buyerUsdc === 'unknown') {
+      record('escrow', { ok: false, error: `buyer USDC is ${buyerUsdc}` });
+      writeReceipts();
+      process.exitCode = 1;
+      return;
+    }
+    await runEscrow(buyer, foundry, accounts, escrowId);
+    await runRail(buyer, accounts);
+    try {
+      const funded = await call(buyer, USDC, 'ft_transfer', {
+        receiver_id: vaultId,
+        amount: '2000000',
+        memo: 'ensemble-vault',
+      }, '40000000000000', '1');
+      record('fund vault', { ok: true, hash: funded.hash, detail: '2000000 to the cap vault' });
+    } catch (err) {
+      const pub = publicError(err);
+      record('fund vault', { ok: false, hash: pub.hash, error: pub.text });
+    }
+    let before = 'unknown';
+    try {
+      before = await balanceOf(buyer, vaultId);
+      record('cap balance before', { ok: true, detail: before });
+    } catch (err) {
+      const pub = publicError(err);
+      record('cap balance before', { ok: false, error: pub.text });
+    }
+    try {
+      const paid = await call(owner, vaultId, 'pay', {
+        receiver_id: accounts.foundry.accountId,
+        amount: OVER_CAP,
+        memo: 'ensemble-over-cap',
+      }, '100000000000000', '0');
+      const after = await balanceOf(buyer, vaultId);
+      record('over-cap pay funded', {
+        ok: false,
+        hash: paid.hash,
+        error: `pay succeeded unexpectedly. balance before ${before} after ${after}`,
+      });
+    } catch (err) {
+      const pub = publicError(err);
+      let after = 'unknown';
+      try {
+        after = await balanceOf(buyer, vaultId);
+      } catch {
+        after = 'unread';
+      }
+      record('over-cap pay funded', {
+        ok: pub.text.includes('over per_tx_cap'),
+        hash: pub.hash,
+        detail: `balance before ${before} after ${after}`,
+        error: pub.text,
+      });
+    }
+    writeReceipts();
+    say(`receipts ${RECEIPTS}`);
+    return;
+  }
   const escrowWasm = process.env.ENSEMBLE_ESCROW_WASM
     || '/tmp/clearing-main/near/escrow/target/wasm32-unknown-unknown/release/clearing_escrow.wasm';
   const capWasm = process.env.ENSEMBLE_CAP_WASM
