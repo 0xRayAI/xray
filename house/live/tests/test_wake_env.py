@@ -175,6 +175,35 @@ class WakeEnvFreshShell(unittest.TestCase):
         text = set((home_cur / "forge.txt").read_text().splitlines())
         self.assertEqual(text, {"0xrayai/xray#1|aaaaaaa|ready", "0xrayai/xray#2|bbbbbbb|ready"})
 
+    def test_standalone_turn_end_falls_back_to_the_installed_package(self):
+        stand = self.home / "standalone"
+        stand.mkdir()
+        script = stand / "live-inbox"
+        script.write_bytes(TOOL.read_bytes())
+        script.chmod(0o755)
+        proj = self.home / "proj"
+        pkg = proj / "node_modules" / "@0xray" / "grok-bot" / "lib"
+        pkg.mkdir(parents=True)
+        (pkg / "cloud_line.py").write_bytes((TOOL.parent.parent / "feed" / "cloud_line.py").read_bytes())
+        url = f"http://127.0.0.1:{self.srv.server_address[1]}"
+        env = {
+            "HOME": str(self.home), "PATH": BASE_PATH, "LIVE_URL": url,
+            "SEAT_KEYS_DIR": str(self.home / ".burst" / "seat-keys"),
+            "LIVE_CURSOR_ROOT": str(self.home / "cursors-root"),
+        }
+        cmd = ["python3", str(script), "forge", "--turn", "end", "--tag", "bc-abc123 xray#942"]
+        hit = subprocess.run(cmd, cwd=proj, env=env, capture_output=True, text=True, timeout=20)
+        self.assertEqual(hit.returncode, 0, hit.stderr)
+        self.assertNotIn("ModuleNotFoundError", hit.stderr)
+        self.assertEqual([body.get("kind") for _, body in self.srv.posts], ["turn", "cloud_agent"])
+        self.assertEqual(self.srv.posts[1][1]["agent"], "bc-abc123")
+        self.srv.posts.clear()
+        (pkg / "cloud_line.py").unlink()
+        quiet = subprocess.run(cmd, cwd=proj, env=env, capture_output=True, text=True, timeout=20)
+        self.assertEqual(quiet.returncode, 0, quiet.stderr)
+        self.assertNotIn("ModuleNotFoundError", quiet.stderr)
+        self.assertEqual([body.get("kind") for _, body in self.srv.posts], ["turn"])
+
     def test_missing_env_fails_loudly(self):
         r = self.sh(f"{TOOL} forge --turn end --tag wake")
         self.assertEqual(r.returncode, 2)
