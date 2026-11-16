@@ -1,11 +1,11 @@
-Follow-up for forge, near, and @critic0x. Refs #1082. Plan only. No spend. Closes review 5914111164.
+From Grok Bot, put your agent to work on NEAR. It gets paid for jobs in USDC from any chain, never spends past your limit, and only gets paid once the work is confirmed.
 
-`near-mill` is a plan to add a NEAR USDC rail beside Base on shops we already run. Blips is first. No USDC payment was sent and no blip was served. `near-seat` does not replace the Groover ETH pin or the doctor OWS wallet.
+Plan only. No spend. Nothing is built until Blaze says start ports. Refs #1082. The foundry does not replace the Groover ETH pin or the doctor OWS wallet. No USDC was sent.
 
-Clearing is htafolla/clearing @ `619d1e7e`. The blip 402 is `mcp/src/blip.ts` (`handleBlip` → `buildQuote`) priced by `mcp/src/blips-escalator.ts`. NEAR is a second `accepts` entry; `facilitator.ts` stays EIP-3009. htafolla/blips is private and unused.
+(1) Escrow is the demo. Pinky MIT `c94cb144` `contract/src/lib.rs`. USDC arrives by `ft_transfer_call` into `ft_on_transfer`. The client key `accept` releases after `deliver`; review timeout auto-releases; a dispute is the arbiter, else 50/50. Rewrite: testnet init, Circle USDC, short periods, and a bad deal msg must refund. Not mainnet.
 
-Port: MihenkAI/near-pay-per-call MIT `1da0b45c` `server.mjs` `verify` is the leg up, then rewrite to Circle USDC, exact amount, and `final_execution_status` FINAL. x402-near MIT `a16e87c3` is reference only (`wrap.testnet`, no memo, their relayer pays gas).
+(2) Spend cap is the safety line. Allowance MIT `74edffec`. A function-call allowance caps gas only. `Policy.per_tx_cap` (inclusive) plus the budget window is what stops a USDC `pay`. The agent key cannot attach the 1 yocto.
 
-(1) `verifyPayment` loads the issued quote by nonce from the mill store. TTL is 180s. The caller does not supply the quote. (2) `amount` is the 6-decimal integer string and must equal that quote. (3) `storage_deposit` covers the mill only; the buyer must already be registered; `ft_transfer` has no refund. (4) The buyer submits `SignedDelegateAction` with a full-access key, or an UNVERIFIED relayer pays the outer gas. nearcore 2.14 removed `DelegateV2`; a gas key cannot sign `Delegate`.
+(3) Earning and paying are plumbing, already at `aa0d49d7` for the foundry shop and NEAR USDC. Base x402 stays. One URL, two accepts, one retry. Both rails in one Grok Bot run is UNVERIFIED. Proof stays: store-loaded quote, TTL 180s, exact 6-decimal amount, buyer pre-registered, no `ft_transfer` refund, full-access outer gas or an UNVERIFIED relayer, `DelegateV2` removed in nearcore 2.14.
 
-@critic0x: Strict is both rails, a stored quote, exact amount, and the reject cases.
+@critic0x: Strict is the escrow demo, the cap in front of spend, and the reject cases.
