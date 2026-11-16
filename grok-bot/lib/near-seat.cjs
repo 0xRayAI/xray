@@ -134,18 +134,49 @@ function publicRecord(key) {
   };
 }
 
-function functionCallReceiver(permission) {
+function functionCallPermission(permission) {
   if (!permission || typeof permission !== 'object') return null;
   const call = permission.FunctionCall || permission.function_call;
   if (!call || typeof call !== 'object') return null;
+  return call;
+}
+
+function functionCallReceiver(permission) {
+  const call = functionCallPermission(permission);
+  if (!call) return null;
   return typeof call.receiver_id === 'string' ? call.receiver_id : null;
 }
 
-function hasFunctionCallKey(list, contractId) {
+// An empty method_names list may call every method on the contract.
+// https://docs.near.org/protocol/accounts-contracts/access-keys
+function functionCallMethods(permission) {
+  const call = functionCallPermission(permission);
+  if (!call) return null;
+  const names = call.method_names || call.methodNames;
+  if (!Array.isArray(names)) return null;
+  return names.filter((name) => typeof name === 'string');
+}
+
+function grantedMethodList(methodNames) {
+  const raw = typeof methodNames === 'string' && methodNames.trim() !== '' ? methodNames : 'ping';
+  return raw.split(',').map((name) => name.trim()).filter((name) => name.length > 0);
+}
+
+function coversGrantedMethods(existing, granted) {
+  if (!Array.isArray(existing)) return false;
+  if (existing.length === 0) return true;
+  const have = new Set(existing);
+  return granted.every((name) => have.has(name));
+}
+
+function hasFunctionCallKey(list, contractId, methodNames) {
+  const granted = grantedMethodList(methodNames);
   const keys = list && Array.isArray(list.keys) ? list.keys : [];
   return keys.some((entry) => {
     const access = entry && entry.access_key;
-    return functionCallReceiver(access && access.permission) === contractId;
+    const permission = access && access.permission;
+    if (functionCallReceiver(permission) !== contractId) return false;
+    return coversGrantedMethods(functionCallMethods(permission), granted);
   });
 }
 
@@ -298,9 +329,10 @@ async function prepareNearSeat(opts) {
       cold: path.relative(opts.seatHome, coldPath),
     }, null, 2)}\n`);
     const contractId = opts.contractId || opts.accountId;
-    const grantArgv = functionCallKeyArgv(opts.accountId, contractId, opts.methodNames || 'ping');
+    const methods = opts.methodNames || 'ping';
+    const grantArgv = functionCallKeyArgv(opts.accountId, contractId, methods);
     const listed = await listAccessKeys(opts.accountId, opts);
-    if (hasFunctionCallKey(listed, contractId)) {
+    if (hasFunctionCallKey(listed, contractId, methods)) {
       emit(opts, secrets, 'near-seat: function-call key already present');
       emit(opts, secrets, `near-seat: account ${opts.accountId}`);
       emit(opts, secrets, `near-seat: full-access key sealed ${coldPath}`);

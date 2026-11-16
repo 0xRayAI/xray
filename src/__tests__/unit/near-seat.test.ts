@@ -25,6 +25,7 @@ const seat = requireCjs(path.join(root, 'grok-bot', 'lib', 'near-seat.cjs')) as 
     log?: (line: string) => void;
     stdout?: { write: (chunk: string) => void };
     fetch?: (url: string, init: { body: string; signal: AbortSignal }) => Promise<{ json: () => Promise<unknown> }>;
+    methodNames?: string;
     viewAccount?: (accountId: string) => Promise<unknown>;
     viewAccessKeys?: (accountId: string) => Promise<{ keys: unknown[] }>;
     runners: {
@@ -57,6 +58,56 @@ const SECRET = 'ed25519:near-seat-test-secret-do-not-print';
 
 function scratch(): string {
   return mkdtempSync(path.join(tmpdir(), 'near-seat-'));
+}
+
+async function grantAgainstMethods(methodNamesOnKey: string[], methodNames: string): Promise<{
+  grants: number;
+  addedKey: boolean;
+  grantArgv: string[] | null;
+}> {
+  const home = scratch();
+  const creds = scratch();
+  const accountId = 'millfc1ca97ca3.testnet';
+  const cold = path.join(home, 'near-cold', `${accountId}.json`);
+  mkdirSync(path.dirname(cold), { recursive: true });
+  writeFileSync(cold, `${JSON.stringify({
+    account_id: accountId,
+    public_key: 'ed25519:public-only',
+    private_key: SECRET,
+  })}\n`, { mode: 0o600 });
+  let grants = 0;
+  const logs: string[] = [];
+  try {
+    const result = await seat.prepareNearSeat({
+      accountId,
+      seatHome: home,
+      credentialsHome: creds,
+      methodNames,
+      log: (line) => logs.push(line),
+      viewAccount: async () => ({ amount: '10' }),
+      viewAccessKeys: async () => ({
+        keys: [{
+          access_key: {
+            permission: {
+              FunctionCall: { receiver_id: accountId, method_names: methodNamesOnKey },
+            },
+          },
+        }],
+      }),
+      runners: {
+        createAccount: async () => { throw new Error('create must not run'); },
+        addFunctionCallKey: async () => {
+          grants += 1;
+          return { status: 0, stdout: '' };
+        },
+      },
+    });
+    expect(logs.join('\n')).not.toContain(SECRET);
+    return { grants, addedKey: result.addedKey, grantArgv: result.grantArgv };
+  } finally {
+    rmSync(home, { recursive: true, force: true });
+    rmSync(creds, { recursive: true, force: true });
+  }
 }
 
 describe('near-seat', () => {
@@ -488,6 +539,26 @@ describe('near-seat', () => {
       rmSync(home, { recursive: true, force: true });
       rmSync(creds, { recursive: true, force: true });
     }
+  });
+
+  it('counts a function-call key whose method list is empty', async () => {
+    const result = await grantAgainstMethods([], 'ping,pay');
+    expect(result.grants).toBe(0);
+    expect(result.addedKey).toBe(false);
+  });
+
+  it('counts a function-call key whose methods are a superset of the grant', async () => {
+    const result = await grantAgainstMethods(['ping', 'pay'], 'ping');
+    expect(result.grants).toBe(0);
+    expect(result.addedKey).toBe(false);
+  });
+
+  it('adds a key when the existing function-call key is missing a granted method', async () => {
+    const result = await grantAgainstMethods(['ping'], 'ping,pay');
+    expect(result.grants).toBe(1);
+    expect(result.addedKey).toBe(true);
+    expect(result.grantArgv).toContain('--function-names');
+    expect(result.grantArgv).toContain('ping,pay');
   });
 
   it('builds the faucet create command from the measured flow', () => {
