@@ -1062,7 +1062,7 @@ function formatDoctor(report) {
         : `OWS pay: miss — ${report.ows.path} (hangar shops return 402 until paid)`,
     );
   }
-  if (!report.plant.houseOnly && report.near) {
+  if (report.near) {
     lines.push(
       report.near.present
         ? `NEAR: ${report.near.accountId} (testnet)`
