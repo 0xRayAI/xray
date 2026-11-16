@@ -1,0 +1,5490 @@
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index 9ba7df7..c7fc951 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -33,6 +33,8 @@ jobs:
+       - uses: dtolnay/rust-toolchain@stable
+         with:
+           targets: wasm32-unknown-unknown
++      # near-workspaces talks to the sandbox over reqwest's native-tls.
++      - run: sudo apt-get update && sudo apt-get install -y libssl-dev pkg-config
+       - run: cargo test --locked
+       - run: cargo build --locked --release --target wasm32-unknown-unknown
+       - run: ls -l target/wasm32-unknown-unknown/release/*.wasm
+diff --git a/near/escrow/Cargo.lock b/near/escrow/Cargo.lock
+index a564371..fa19f17 100644
+--- a/near/escrow/Cargo.lock
++++ b/near/escrow/Cargo.lock
+@@ -7,6 +7,25 @@ name = "Inflector"
+ version = "0.11.4"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "fe438c63458706e03479442743baae6c88256498e6431708f6dfc520a26515d3"
++dependencies = [
++ "lazy_static",
++ "regex",
++]
++
++[[package]]
++name = "adler2"
++version = "2.0.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "320119579fcad9c21884f5c4861d16174d0e06250625266f50fe6898340abefa"
++
++[[package]]
++name = "aho-corasick"
++version = "1.1.5"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "c982642fa9e8606056828ee9a8505737230110bb1099153c79efe865c59d12ba"
++dependencies = [
++ "memchr",
++]
+ 
+ [[package]]
+ name = "allocator-api2"
+@@ -38,12 +57,53 @@ dependencies = [
+  "derive_arbitrary",
+ ]
+ 
++[[package]]
++name = "async-trait"
++version = "0.1.92"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "82f6aeea286b8eb4dd3431a1be1b59d290ace00f5bfd8e2a159bc2a05e2c1667"
++dependencies = [
++ "proc-macro2",
++ "quote",
++ "syn 3.0.10",
++]
++
++[[package]]
++name = "atomic-waker"
++version = "1.1.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "1505bd5d3d116872e7271a6d4e16d81d0c8570876c8de68093a09ac269d8aac0"
++
+ [[package]]
+ name = "autocfg"
+ version = "1.5.1"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "f2032f911046de80f0a198e0901378627c33f59ea0ac00e363d481118bd70a53"
+ 
++[[package]]
++name = "aws-lc-rs"
++version = "1.19.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "048006790404103c488e6c5616b3e7e702a71292aadda08e8f7698a9e0d2eb53"
++dependencies = [
++ "aws-lc-sys",
++ "untrusted 0.7.1",
++ "zeroize",
++]
++
++[[package]]
++name = "aws-lc-sys"
++version = "0.47.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "8bfbe32ac36b3c428696ce315464181bc4029d689fd58e3f2a4e58c252242f52"
++dependencies = [
++ "cc",
++ "cmake",
++ "dunce",
++ "fs_extra",
++ "pkg-config",
++]
++
+ [[package]]
+ name = "base64"
+ version = "0.21.7"
+@@ -62,6 +122,18 @@ version = "0.23.1"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "ac07cdecf99051d9a5238b80f35af32cdeba5b336e55d957b318b50137e18da5"
+ 
++[[package]]
++name = "base64ct"
++version = "1.8.3"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "2af50177e190e07a26ab74f8b1efbfe2ef87da2116221318cb1c2e82baf7de06"
++
++[[package]]
++name = "bitflags"
++version = "1.3.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
++
+ [[package]]
+ name = "bitflags"
+ version = "2.13.2"
+@@ -206,6 +278,17 @@ version = "0.2.2"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "f079e83a288787bcd14a6aea84cee5c87a67c5a3e660c30f557a3d24761b3527"
+ 
++[[package]]
++name = "chacha20"
++version = "0.10.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "65c35e4b699c7e15ccbe7ee35c005e4fc0a278d22238a2857e6ce2dadeda1b06"
++dependencies = [
++ "cfg-if 1.0.5",
++ "cpufeatures 0.3.1",
++ "rand_core 0.10.1",
++]
++
+ [[package]]
+ name = "chrono"
+ version = "0.4.45"
+@@ -213,8 +296,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "1aa79e62e7697b8e29b513a68abacf485adcd1fe8284a4316c5ae868e6633327"
+ dependencies = [
+  "iana-time-zone",
++ "js-sys",
+  "num-traits",
+  "serde",
++ "wasm-bindgen",
+  "windows-link",
+ ]
+ 
+@@ -222,15 +307,99 @@ dependencies = [
+ name = "clearing-escrow"
+ version = "0.1.0"
+ dependencies = [
++ "ed25519-dalek",
+  "near-sdk",
++ "near-workspaces",
++ "serde",
++ "serde_json",
++ "tokio",
++]
++
++[[package]]
++name = "cmake"
++version = "0.1.58"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "c0f78a02292a74a88ac736019ab962ece0bc380e3f977bf72e376c5d78ff0678"
++dependencies = [
++ "cc",
++]
++
++[[package]]
++name = "combine"
++version = "4.6.9"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "4356eba6976435498d05a311ee9fc486da3bc81c200d3f0d7dd9703b41913f92"
++dependencies = [
++ "bytes",
++ "memchr",
+ ]
+ 
++[[package]]
++name = "const-oid"
++version = "0.9.6"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "c2459377285ad874054d797f3ccebf984978aa39129f6eafde5cdc8315b612f8"
++
+ [[package]]
+ name = "convert_case"
+ version = "0.4.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "6245d59a3e82a7fc217c5828a6692dbc6dfb63a0c8c90495621f7b9d79704a0e"
+ 
++[[package]]
++name = "convert_case"
++version = "0.5.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "fb4a24b1aaf0fd0ce8b45161144d6f42cd91677fd5940fd431183eb023b3a2b8"
++
++[[package]]
++name = "convert_case"
++version = "0.10.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "633458d4ef8c78b72454de2d54fd6ab2e60f9e02be22f3c6104cdc8a4e0fceb9"
++dependencies = [
++ "unicode-segmentation",
++]
++
++[[package]]
++name = "cookie"
++version = "0.18.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "1a373e3602691c3cdea496d2f0ee5935151e6168fe87739483c463db1b2f2f87"
++dependencies = [
++ "percent-encoding",
++ "time",
++ "version_check",
++]
++
++[[package]]
++name = "cookie_store"
++version = "0.22.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "15b2c103cf610ec6cae3da84a766285b42fd16aad564758459e6ecf128c75206"
++dependencies = [
++ "cookie",
++ "document-features",
++ "idna",
++ "indexmap 2.14.2",
++ "log",
++ "serde",
++ "serde_derive",
++ "serde_json",
++ "time",
++ "url",
++]
++
++[[package]]
++name = "core-foundation"
++version = "0.10.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "b2a6cd9ae233e7f62ba4e9353e81a88df7fc8a5987b8d445b4d90c879bd156f6"
++dependencies = [
++ "core-foundation-sys",
++ "libc",
++]
++
+ [[package]]
+ name = "core-foundation-sys"
+ version = "0.8.7"
+@@ -246,6 +415,24 @@ dependencies = [
+  "libc",
+ ]
+ 
++[[package]]
++name = "cpufeatures"
++version = "0.3.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "5ca28b0ae3115b884660db4118d803791fd6756b6e88f39c0f3f7859060d7566"
++dependencies = [
++ "libc",
++]
++
++[[package]]
++name = "crc32fast"
++version = "1.5.5"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "2b929dd2a135771f40afabd1073f85eed59c800b7c61901e5c254270497dad64"
++dependencies = [
++ "cfg-if 1.0.5",
++]
++
+ [[package]]
+ name = "crossbeam-deque"
+ version = "0.8.8"
+@@ -294,7 +481,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "97fb8b7c4503de7d6ae7b42ab72a5a59857b4c937ec27a3d4539dba95b5ab2be"
+ dependencies = [
+  "cfg-if 1.0.5",
+- "cpufeatures",
++ "cpufeatures 0.2.17",
+  "curve25519-dalek-derive",
+  "digest",
+  "fiat-crypto",
+@@ -344,6 +531,7 @@ dependencies = [
+  "ident_case",
+  "proc-macro2",
+  "quote",
++ "strsim",
+  "syn 2.0.119",
+ ]
+ 
+@@ -382,6 +570,16 @@ dependencies = [
+  "syn 3.0.10",
+ ]
+ 
++[[package]]
++name = "der"
++version = "0.7.10"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "e7c1832837b905bbfb5101e07cc24c8deddf52f93225eee6ead5f4d63d53ddcb"
++dependencies = [
++ "const-oid",
++ "zeroize",
++]
++
+ [[package]]
+ name = "deranged"
+ version = "0.5.9"
+@@ -402,17 +600,71 @@ dependencies = [
+  "syn 3.0.10",
+ ]
+ 
++[[package]]
++name = "derive_builder"
++version = "0.20.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "507dfb09ea8b7fa618fcf76e953f4f5e192547945816d5358edffe39f6f94947"
++dependencies = [
++ "derive_builder_macro",
++]
++
++[[package]]
++name = "derive_builder_core"
++version = "0.20.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "2d5bcf7b024d6835cfb3d473887cd966994907effbe9227e8c8219824d06c4e8"
++dependencies = [
++ "darling 0.20.11",
++ "proc-macro2",
++ "quote",
++ "syn 2.0.119",
++]
++
++[[package]]
++name = "derive_builder_macro"
++version = "0.20.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "ab63b0e2bf4d5928aff72e83a7dace85d7bba5fe12dcc3c5a572d78caffd3f3c"
++dependencies = [
++ "derive_builder_core",
++ "syn 2.0.119",
++]
++
+ [[package]]
+ name = "derive_more"
+ version = "0.99.20"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "6edb4b64a43d977b8e99788fe3a04d483834fba1215a7e02caa415b626497f7f"
+ dependencies = [
+- "convert_case",
++ "convert_case 0.4.0",
++ "proc-macro2",
++ "quote",
++ "rustc_version",
++ "syn 2.0.119",
++]
++
++[[package]]
++name = "derive_more"
++version = "2.1.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "d751e9e49156b02b44f9c1815bcb94b984cdcc4396ecc32521c739452808b134"
++dependencies = [
++ "derive_more-impl",
++]
++
++[[package]]
++name = "derive_more-impl"
++version = "2.1.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "799a97264921d8623a957f6c3b9011f3b5492f557bbb7a5a19b7fa6d06ba8dcb"
++dependencies = [
++ "convert_case 0.10.0",
+  "proc-macro2",
+  "quote",
+  "rustc_version",
+  "syn 2.0.119",
++ "unicode-xid",
+ ]
+ 
+ [[package]]
+@@ -426,6 +678,32 @@ dependencies = [
+  "subtle",
+ ]
+ 
++[[package]]
++name = "displaydoc"
++version = "0.2.7"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "c6232dd377dcc64799954cbd3a9bb882e9cdc1308ccd87b1c098f1fb2eaf82a8"
++dependencies = [
++ "proc-macro2",
++ "quote",
++ "syn 3.0.10",
++]
++
++[[package]]
++name = "document-features"
++version = "0.2.12"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "d4b8a88685455ed29a21542a33abd9cb6510b6b129abadabdcef0f4c55bc8f61"
++dependencies = [
++ "litrs",
++]
++
++[[package]]
++name = "dunce"
++version = "1.0.5"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "92773504d58c093f6de2459af4af33faa518c13451eb8f2b5698ed3d36e7c813"
++
+ [[package]]
+ name = "dyn-clone"
+ version = "1.0.20"
+@@ -444,6 +722,7 @@ version = "2.2.3"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "115531babc129696a58c64a4fef0a8bf9e9698629fb97e9e40767d235cfbcd53"
+ dependencies = [
++ "pkcs8",
+  "signature",
+ ]
+ 
+@@ -455,8 +734,11 @@ checksum = "70e796c081cee67dc755e1a36a0a172b897fab85fc3f6bc48307991f64e4eca9"
+ dependencies = [
+  "curve25519-dalek",
+  "ed25519",
++ "rand_core 0.6.4",
++ "serde",
+  "sha2",
+  "subtle",
++ "zeroize",
+ ]
+ 
+ [[package]]
+@@ -513,6 +795,16 @@ version = "0.2.9"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "28dea519a9695b9977216879a3ebfddf92f1c08c05d984f8996aecd6ecdc811d"
+ 
++[[package]]
++name = "filetime"
++version = "0.2.29"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "5c287a33c7f0a620c38e641e7f60827713987b3c0f26e8ddc9462cc69cf75759"
++dependencies = [
++ "cfg-if 1.0.5",
++ "libc",
++]
++
+ [[package]]
+ name = "find-msvc-tools"
+ version = "0.1.15"
+@@ -528,6 +820,25 @@ dependencies = [
+  "static_assertions",
+ ]
+ 
++[[package]]
++name = "flate2"
++version = "1.1.11"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "626d4928326b646e70f65ed36fc7cf9f206bdb68a0019ee7c6b4709da4e084c4"
++dependencies = [
++ "crc32fast",
++ "miniz_oxide",
++]
++
++[[package]]
++name = "fluent-uri"
++version = "0.1.4"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "17c704e9dbe1ddd863da1e6ff3567795087b1eb201ce80d8fa81162e1516500d"
++dependencies = [
++ "bitflags 1.3.2",
++]
++
+ [[package]]
+ name = "fnv"
+ version = "1.0.7"
+@@ -540,12 +851,71 @@ version = "0.1.5"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "d9c4f5dac5e15c24eb999c26181a6ca40b39fe946cbe4c263c7209467bc83af2"
+ 
++[[package]]
++name = "foreign-types"
++version = "0.3.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "f6f339eb8adc052cd2ca78910fda869aefa38d22d5cb648e6485e4d3fc06f3b1"
++dependencies = [
++ "foreign-types-shared",
++]
++
++[[package]]
++name = "foreign-types-shared"
++version = "0.1.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "00b0228411908ca8685dba7fc2cdd70ec9990a6e753e89b6ac91a84c40fbaf4b"
++
++[[package]]
++name = "form_urlencoded"
++version = "1.2.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "cb4cb245038516f5f85277875cdaa4f7d2c9a0fa0468de06ed190163b1581fcf"
++dependencies = [
++ "percent-encoding",
++]
++
++[[package]]
++name = "fs2"
++version = "0.4.3"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "9564fc758e15025b46aa6643b1b77d047d1a56a1aea6e01002ac0c7026876213"
++dependencies = [
++ "libc",
++ "winapi",
++]
++
++[[package]]
++name = "fs4"
++version = "0.13.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "8640e34b88f7652208ce9e88b1a37a2ae95227d84abec377ccd3c5cfeb141ed4"
++dependencies = [
++ "rustix 1.1.6",
++ "windows-sys 0.59.0",
++]
++
++[[package]]
++name = "fs_extra"
++version = "1.3.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "42703706b716c37f96a77aea830392ad231f44c9e9a67872fa5548707e11b11c"
++
+ [[package]]
+ name = "funty"
+ version = "2.0.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "e6d5a32815ae3f33302d95fdcb2ce17862f8c65363dcfd29360480ba1001fc9c"
+ 
++[[package]]
++name = "futures-channel"
++version = "0.3.34"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "b1f9e3d69d39e4862ffed03ed071a76f9a13ba1d9109d355b0f0aa6b15e393c4"
++dependencies = [
++ "futures-core",
++]
++
+ [[package]]
+ name = "futures-core"
+ version = "0.3.34"
+@@ -580,6 +950,19 @@ dependencies = [
+  "version_check",
+ ]
+ 
++[[package]]
++name = "getrandom"
++version = "0.2.17"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "ff2abc00be7fca6ebc474524697ae276ad847ad0a6b3faa4bcb027e9a4614ad0"
++dependencies = [
++ "cfg-if 1.0.5",
++ "js-sys",
++ "libc",
++ "wasi",
++ "wasm-bindgen",
++]
++
+ [[package]]
+ name = "getrandom"
+ version = "0.4.3"
+@@ -587,8 +970,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "300e883d756b2e4ec94e02791f39b04b522276138852cfc41d9fb7e904106099"
+ dependencies = [
+  "cfg-if 1.0.5",
++ "js-sys",
+  "libc",
+  "r-efi",
++ "rand_core 0.10.1",
++ "wasm-bindgen",
+ ]
+ 
+ [[package]]
+@@ -648,8 +1034,121 @@ dependencies = [
+ ]
+ 
+ [[package]]
+-name = "iana-time-zone"
+-version = "0.1.65"
++name = "http"
++version = "1.5.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "918d3568bebf352712bc2ef3d46a8bcf1a75b373be6539de198e9105cbbf9ce0"
++dependencies = [
++ "bytes",
++ "itoa",
++]
++
++[[package]]
++name = "http-body"
++version = "1.1.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "ca2a8f2913ee65f60facd6a5905613afaa448497a0230cc41ce022d93290bc2c"
++dependencies = [
++ "bytes",
++ "http",
++]
++
++[[package]]
++name = "http-body-util"
++version = "0.1.5"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "23169fe34a5fbcdd3f3862e78fb9b6fccd5f02a6dc6f732547005d45631ce71c"
++dependencies = [
++ "bytes",
++ "futures-core",
++ "http",
++ "http-body",
++ "pin-project-lite",
++]
++
++[[package]]
++name = "httparse"
++version = "1.10.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "6dbf3de79e51f3d586ab4cb9d5c3e2c14aa28ed23d180cf89b4df0454a69cc87"
++
++[[package]]
++name = "hyper"
++version = "1.12.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "2c3e324da4c95177d6291d4c8730197c0d1822f8a9766814a4a44fa5ab797c9c"
++dependencies = [
++ "atomic-waker",
++ "bytes",
++ "futures-core",
++ "http",
++ "http-body",
++ "httparse",
++ "itoa",
++ "pin-project-lite",
++ "smallvec",
++ "tokio",
++ "want",
++]
++
++[[package]]
++name = "hyper-rustls"
++version = "0.27.10"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "dfa8e654703247911e29c23fbeaa261834bd9bb74efba2f9acddc37bfb127f53"
++dependencies = [
++ "http",
++ "hyper",
++ "hyper-util",
++ "rustls",
++ "tokio",
++ "tokio-rustls",
++ "tower-service",
++]
++
++[[package]]
++name = "hyper-tls"
++version = "0.6.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "70206fc6890eaca9fde8a0bf71caa2ddfc9fe045ac9e5c70df101a7dbde866e0"
++dependencies = [
++ "bytes",
++ "http-body-util",
++ "hyper",
++ "hyper-util",
++ "native-tls",
++ "tokio",
++ "tokio-native-tls",
++ "tower-service",
++]
++
++[[package]]
++name = "hyper-util"
++version = "0.1.21"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "ddc03d96684f9226b8a787cdb71488417b53ab5ea8fdb1dac946cb9431cc8bff"
++dependencies = [
++ "base64 0.23.1",
++ "bytes",
++ "futures-channel",
++ "futures-util",
++ "http",
++ "http-body",
++ "httparse",
++ "hyper",
++ "ipnet",
++ "libc",
++ "percent-encoding",
++ "pin-project-lite",
++ "socket2",
++ "tokio",
++ "tower-service",
++ "tracing",
++]
++
++[[package]]
++name = "iana-time-zone"
++version = "0.1.65"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "e31bc9ad994ba00e440a8aa5c9ef0ec67d5cb5e5cb0cc7f8b744a35b389cc470"
+ dependencies = [
+@@ -671,12 +1170,116 @@ dependencies = [
+  "cc",
+ ]
+ 
++[[package]]
++name = "icu_collections"
++version = "2.4.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "fe090a42a0d3140fed8c63263ed1fecc02422cb2f4bfe55cd8de2de1b8e105dd"
++dependencies = [
++ "displaydoc",
++ "potential_utf",
++ "utf8_iter",
++ "yoke",
++ "zerofrom",
++ "zerovec",
++]
++
++[[package]]
++name = "icu_locale_core"
++version = "2.4.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "25d29b57c17c6528d0dc4c2141cfa2d08200465acb537a3909c8b9b8a4a984c0"
++dependencies = [
++ "displaydoc",
++ "litemap",
++ "tinystr",
++ "writeable",
++ "zerovec",
++]
++
++[[package]]
++name = "icu_normalizer"
++version = "2.4.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "404a3b8c486f205c87fe7f23ab6894d84a4ad76d6e4671ae1981ba7def87c599"
++dependencies = [
++ "icu_collections",
++ "icu_normalizer_data",
++ "icu_properties",
++ "icu_provider",
++ "smallvec",
++ "zerovec",
++]
++
++[[package]]
++name = "icu_normalizer_data"
++version = "2.4.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "20f0088bfb7441f7a37fa0c9e20cb1e9cba1cac6b9ce8cd2a6dc44294f8e8cbc"
++
++[[package]]
++name = "icu_properties"
++version = "2.4.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "2ea83d991c56158f7cf898bf86436c1dfe7c07ee82fe88951f2695c9f37a379f"
++dependencies = [
++ "displaydoc",
++ "icu_collections",
++ "icu_locale_core",
++ "icu_properties_data",
++ "icu_provider",
++ "zerotrie",
++ "zerovec",
++]
++
++[[package]]
++name = "icu_properties_data"
++version = "2.4.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "b98f29af82d02b163fe50161388350e743bb3107cc8e8c2f7314cb505faddfcf"
++
++[[package]]
++name = "icu_provider"
++version = "2.4.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "413099315636c588ee8f011190b329b971a09a8fae9d157e01dcae8379468514"
++dependencies = [
++ "displaydoc",
++ "icu_locale_core",
++ "writeable",
++ "yoke",
++ "zerofrom",
++ "zerotrie",
++ "zerovec",
++]
++
+ [[package]]
+ name = "ident_case"
+ version = "1.0.1"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "b9e0384b61958566e926dc50660321d12159025e767c18e043daf26b70104c39"
+ 
++[[package]]
++name = "idna"
++version = "1.1.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "3b0875f23caa03898994f6ddc501886a45c7d3d62d04d2d90788d47be1b1e4de"
++dependencies = [
++ "idna_adapter",
++ "smallvec",
++ "utf8_iter",
++]
++
++[[package]]
++name = "idna_adapter"
++version = "1.2.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "cb68373c0d6620ef8105e855e7745e18b0d00d3bdb07fb532e434244cdb9a714"
++dependencies = [
++ "icu_normalizer",
++ "icu_properties",
++]
++
+ [[package]]
+ name = "indexmap"
+ version = "1.9.3"
+@@ -700,6 +1303,12 @@ dependencies = [
+  "serde_core",
+ ]
+ 
++[[package]]
++name = "ipnet"
++version = "2.12.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "791930b43c0d5973160d90a8f3894509f2b273430f5c5c73b668636d0287c5c0"
++
+ [[package]]
+ name = "itertools"
+ version = "0.10.5"
+@@ -709,6 +1318,15 @@ dependencies = [
+  "either",
+ ]
+ 
++[[package]]
++name = "itertools"
++version = "0.14.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "2b192c782037fadd9cfa75548310488aabdbf3d2da73885b31bd0abd03351285"
++dependencies = [
++ "either",
++]
++
+ [[package]]
+ name = "itoa"
+ version = "1.0.19"
+@@ -767,13 +1385,62 @@ dependencies = [
+  "jiff-tzdb",
+ ]
+ 
++[[package]]
++name = "jni"
++version = "0.22.4"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "5efd9a482cf3a427f00d6b35f14332adc7902ce91efb778580e180ff90fa3498"
++dependencies = [
++ "cfg-if 1.0.5",
++ "combine",
++ "jni-macros",
++ "jni-sys",
++ "log",
++ "simd_cesu8",
++ "thiserror 2.0.21",
++ "walkdir",
++ "windows-link",
++]
++
++[[package]]
++name = "jni-macros"
++version = "0.22.4"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "a00109accc170f0bdb141fed3e393c565b6f5e072365c3bd58f5b062591560a3"
++dependencies = [
++ "proc-macro2",
++ "quote",
++ "rustc_version",
++ "simd_cesu8",
++ "syn 2.0.119",
++]
++
++[[package]]
++name = "jni-sys"
++version = "0.4.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "c6377a88cb3910bee9b0fa88d4f42e1d2da8e79915598f65fb0c7ee14c878af2"
++dependencies = [
++ "jni-sys-macros",
++]
++
++[[package]]
++name = "jni-sys-macros"
++version = "0.4.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "38c0b942f458fe50cdac086d2f946512305e5631e720728f2a61aabcd47a6264"
++dependencies = [
++ "quote",
++ "syn 2.0.119",
++]
++
+ [[package]]
+ name = "jobserver"
+ version = "0.1.35"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "1c00acbd29eabad4a2392fa0e921c874934dbbf4194312ad20f04a0ed67a3cb3"
+ dependencies = [
+- "getrandom",
++ "getrandom 0.4.3",
+  "libc",
+ ]
+ 
+@@ -788,19 +1455,64 @@ dependencies = [
+  "wasm-bindgen",
+ ]
+ 
++[[package]]
++name = "json-patch"
++version = "2.0.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "5b1fb8864823fad91877e6caea0baca82e49e8db50f8e5c9f9a453e27d3330fc"
++dependencies = [
++ "jsonptr 0.4.7",
++ "serde",
++ "serde_json",
++ "thiserror 1.0.69",
++]
++
++[[package]]
++name = "json-patch"
++version = "4.2.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "7421438de105a0827e44fadd05377727847d717c80ce29a229f85fd04c427b72"
++dependencies = [
++ "jsonptr 0.7.1",
++ "serde",
++ "serde_json",
++ "thiserror 2.0.21",
++]
++
+ [[package]]
+ name = "json_comments"
+ version = "0.2.2"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "9dbbfed4e59ba9750e15ba154fdfd9329cee16ff3df539c2666b70f58cc32105"
+ 
++[[package]]
++name = "jsonptr"
++version = "0.4.7"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "1c6e529149475ca0b2820835d3dce8fcc41c6b943ca608d32f35b449255e4627"
++dependencies = [
++ "fluent-uri",
++ "serde",
++ "serde_json",
++]
++
++[[package]]
++name = "jsonptr"
++version = "0.7.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "a5a3cc660ba5d72bce0b3bb295bf20847ccbb40fd423f3f05b61273672e561fe"
++dependencies = [
++ "serde",
++ "serde_json",
++]
++
+ [[package]]
+ name = "keccak"
+ version = "0.1.6"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "cb26cec98cce3a3d96cbb7bced3c4b16e3d13f27ec56dbd62cbc8f39cfb9d653"
+ dependencies = [
+- "cpufeatures",
++ "cpufeatures 0.2.17",
+ ]
+ 
+ [[package]]
+@@ -830,6 +1542,28 @@ version = "0.12.1"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "32a66949e030da00e8c7d4434b251670a91556f4144941d37452769c25d58a53"
+ 
++[[package]]
++name = "litemap"
++version = "0.8.3"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "47d9d19d1d6efa0109d2f65ff4c85cddd50bd572e5a00127ab10987290bcefae"
++
++[[package]]
++name = "litrs"
++version = "1.0.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "4744e383959f0db86ede514b809b1c53251889093803c05267acc7d4e7030d70"
++
++[[package]]
++name = "lock_api"
++version = "0.4.14"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "224399e74b87b5f3557511d98dff8b14089b3dadafcab6bb93eab67d3aace965"
++dependencies = [
++ "scopeguard",
++ "serde",
++]
++
+ [[package]]
+ name = "log"
+ version = "0.4.35"
+@@ -845,6 +1579,12 @@ dependencies = [
+  "hashbrown 0.15.5",
+ ]
+ 
++[[package]]
++name = "lru-slab"
++version = "0.1.3"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "4050469837a6ff301cd14c1f8f24f88549e6d548f24f64e2148eb0f72cebc51f"
++
+ [[package]]
+ name = "memchr"
+ version = "2.8.3"
+@@ -857,6 +1597,96 @@ version = "0.4.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "8452105ba047068f40ff7093dd1d9da90898e63dd61736462e9cdda6a90ad3c3"
+ 
++[[package]]
++name = "miniz_oxide"
++version = "0.9.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "b63fbc4a50860e98e7b2aa7804ded1db5cbc3aff9193adaff57a6931bf7c4b4c"
++dependencies = [
++ "adler2",
++ "simd-adler32",
++]
++
++[[package]]
++name = "mio"
++version = "1.2.5"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "20521a903f02b0a573cd6840e9d0a5a0cc043d361fe924092cd70f8556cc9c4a"
++dependencies = [
++ "libc",
++ "wasi",
++ "windows-sys 0.61.2",
++]
++
++[[package]]
++name = "native-tls"
++version = "0.2.18"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "465500e14ea162429d264d44189adc38b199b62b1c21eea9f69e4b73cb03bbf2"
++dependencies = [
++ "libc",
++ "log",
++ "openssl",
++ "openssl-probe",
++ "openssl-sys",
++ "schannel",
++ "security-framework",
++ "security-framework-sys",
++ "tempfile",
++]
++
++[[package]]
++name = "near-abi"
++version = "0.4.5"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "70883145898d496f9946cdf0a5a3ed0c62a131ec9377e456b317ef09f4d56b2f"
++dependencies = [
++ "borsh",
++ "schemars 0.8.22",
++ "semver",
++ "serde",
++]
++
++[[package]]
++name = "near-abi-client"
++version = "0.1.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "879ac02b2e8d6498294adce1de7a2424a5474b35a73e9262c851be39c89d7f92"
++dependencies = [
++ "anyhow",
++ "convert_case 0.5.0",
++ "near-abi-client-impl",
++ "near-abi-client-macros",
++ "prettyplease",
++ "quote",
++ "syn 1.0.109",
++]
++
++[[package]]
++name = "near-abi-client-impl"
++version = "0.1.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "1139e8a6f60fd8ed1c53c700b67bcecbf6deb4b1f47bbe9a9d5eea760d8a8e91"
++dependencies = [
++ "anyhow",
++ "near-abi",
++ "near_schemafy_lib",
++ "proc-macro2",
++ "quote",
++ "schemars 0.8.22",
++ "serde_json",
++]
++
++[[package]]
++name = "near-abi-client-macros"
++version = "0.1.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "ebaf2aae80086b310bf96e657bbee0c599c3452afd35e72999f8d6764d6b1899"
++dependencies = [
++ "near-abi-client-impl",
++ "syn 1.0.109",
++]
++
+ [[package]]
+ name = "near-account-id"
+ version = "1.1.4"
+@@ -867,6 +1697,41 @@ dependencies = [
+  "serde",
+ ]
+ 
++[[package]]
++name = "near-account-id"
++version = "3.0.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "7d2c8642aeca89873dbcf2a2f74ff90cd87f6691f11b66aeed2af7c136192d10"
++dependencies = [
++ "borsh",
++ "serde",
++]
++
++[[package]]
++name = "near-chain-configs"
++version = "0.38.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "136dff187522e9be0c7466d804a5f76387df21456c674e369349c6e2effea701"
++dependencies = [
++ "anyhow",
++ "bytesize",
++ "chrono",
++ "derive_more 2.1.1",
++ "near-config-utils 0.38.1",
++ "near-crypto 0.38.1",
++ "near-parameters 0.38.1",
++ "near-primitives 0.38.1",
++ "near-time 0.38.1",
++ "num-rational",
++ "parking_lot",
++ "serde",
++ "serde_json",
++ "sha2",
++ "smart-default 0.7.1",
++ "time",
++ "tracing",
++]
++
+ [[package]]
+ name = "near-config-utils"
+ version = "0.28.0"
+@@ -875,7 +1740,19 @@ checksum = "bedc768765dd8229a1d960c94f517317f40771a003e78916124784c7d6ea9d74"
+ dependencies = [
+  "anyhow",
+  "json_comments",
+- "thiserror",
++ "thiserror 2.0.21",
++ "tracing",
++]
++
++[[package]]
++name = "near-config-utils"
++version = "0.38.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "eaf8d98a92ec11e179d16f00604bd5d19693d5ea691bcecb5e369036b6a4907c"
++dependencies = [
++ "anyhow",
++ "json_comments",
++ "thiserror 2.0.21",
+  "tracing",
+ ]
+ 
+@@ -889,19 +1766,47 @@ dependencies = [
+  "borsh",
+  "bs58 0.4.0",
+  "curve25519-dalek",
+- "derive_more",
++ "derive_more 0.99.20",
++ "ed25519-dalek",
++ "hex",
++ "near-account-id 1.1.4",
++ "near-config-utils 0.28.0",
++ "near-schema-checker-lib 0.28.0",
++ "near-stdx 0.28.0",
++ "primitive-types",
++ "secp256k1",
++ "serde",
++ "serde_json",
++ "subtle",
++ "thiserror 2.0.21",
++]
++
++[[package]]
++name = "near-crypto"
++version = "0.38.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "84d03fe03c28e1d72a0dc1d5df753079b7c266aa009a60dcbf4fe6d06704cc39"
++dependencies = [
++ "aws-lc-rs",
++ "blake2",
++ "borsh",
++ "bs58 0.4.0",
++ "curve25519-dalek",
++ "derive_more 2.1.1",
+  "ed25519-dalek",
+  "hex",
+- "near-account-id",
+- "near-config-utils",
+- "near-schema-checker-lib",
+- "near-stdx",
++ "near-account-id 3.0.0",
++ "near-config-utils 0.38.1",
++ "near-schema-checker-lib 0.38.1",
++ "near-stdx 0.38.1",
+  "primitive-types",
++ "rand 0.8.8",
+  "secp256k1",
+  "serde",
+  "serde_json",
++ "sha3",
+  "subtle",
+- "thiserror",
++ "thiserror 2.0.21",
+ ]
+ 
+ [[package]]
+@@ -910,7 +1815,16 @@ version = "0.28.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "f14f36eee2dcb0ecd8febb9f198e0e1fa768c834db9e1982ad2acfcd04b45acf"
+ dependencies = [
+- "near-primitives-core",
++ "near-primitives-core 0.28.0",
++]
++
++[[package]]
++name = "near-fmt"
++version = "0.38.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "ba24852cd0face10cd4b7530cba73bcf98af43af2f101a3978256f4cad5c9c6a"
++dependencies = [
++ "near-primitives-core 0.38.1",
+ ]
+ 
+ [[package]]
+@@ -920,7 +1834,56 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "26c6d9abf62601c341659a47bd801b714e9fa1fa18bd3ed5ae8597635680c868"
+ dependencies = [
+  "borsh",
++ "schemars 0.8.22",
++ "serde",
++]
++
++[[package]]
++name = "near-indexer-primitives"
++version = "0.38.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "8786a2e66010eb3b623a3b024fea1cdb700a6d86c9e5b1fdc44f414c5782096e"
++dependencies = [
++ "near-primitives 0.38.1",
++ "serde",
++]
++
++[[package]]
++name = "near-jsonrpc-client"
++version = "0.23.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "ec831333bc2736c784544fb9d5d4df15976bc0dc2577091b1ba84faed2fe36d1"
++dependencies = [
++ "borsh",
++ "lazy_static",
++ "log",
++ "near-chain-configs",
++ "near-crypto 0.38.1",
++ "near-jsonrpc-primitives",
++ "near-primitives 0.38.1",
++ "reqwest 0.12.28",
++ "serde",
++ "serde_json",
++ "thiserror 2.0.21",
++]
++
++[[package]]
++name = "near-jsonrpc-primitives"
++version = "0.38.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "8aee3d48dde6efaa696430617bea7d11c9106de9aec8c9c9507577bfab78a2c2"
++dependencies = [
++ "arbitrary",
++ "near-chain-configs",
++ "near-crypto 0.38.1",
++ "near-indexer-primitives",
++ "near-primitives 0.38.1",
++ "near-schema-checker-lib 0.38.1",
++ "near-time 0.38.1",
+  "serde",
++ "serde_json",
++ "thiserror 2.0.21",
++ "time",
+ ]
+ 
+ [[package]]
+@@ -931,15 +1894,34 @@ checksum = "1279baa276725971d5e2b80c524d1aa42d5ad8bccf8901466fd579374cf58a14"
+ dependencies = [
+  "borsh",
+  "enum-map",
+- "near-account-id",
+- "near-primitives-core",
+- "near-schema-checker-lib",
++ "near-account-id 1.1.4",
++ "near-primitives-core 0.28.0",
++ "near-schema-checker-lib 0.28.0",
+  "num-rational",
+  "serde",
+  "serde_repr",
+  "serde_yaml",
+  "strum 0.24.1",
+- "thiserror",
++ "thiserror 2.0.21",
++]
++
++[[package]]
++name = "near-parameters"
++version = "0.38.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "a15c15c9eb07341e0797ae39010f3502e3cea60abfbc996412843fd854639408"
++dependencies = [
++ "borsh",
++ "enum-map",
++ "near-account-id 3.0.0",
++ "near-primitives-core 0.38.1",
++ "near-schema-checker-lib 0.38.1",
++ "num-rational",
++ "serde",
++ "serde_repr",
++ "serde_yaml",
++ "strum 0.24.1",
++ "thiserror 2.0.21",
+ ]
+ 
+ [[package]]
+@@ -956,18 +1938,18 @@ dependencies = [
+  "bytesize",
+  "cfg-if 1.0.5",
+  "chrono",
+- "derive_more",
++ "derive_more 0.99.20",
+  "easy-ext",
+  "enum-map",
+  "hex",
+- "itertools",
+- "near-crypto",
+- "near-fmt",
+- "near-parameters",
+- "near-primitives-core",
+- "near-schema-checker-lib",
+- "near-stdx",
+- "near-time",
++ "itertools 0.10.5",
++ "near-crypto 0.28.0",
++ "near-fmt 0.28.0",
++ "near-parameters 0.28.0",
++ "near-primitives-core 0.28.0",
++ "near-schema-checker-lib 0.28.0",
++ "near-stdx 0.28.0",
++ "near-time 0.28.0",
+  "num-rational",
+  "ordered-float",
+  "primitive-types",
+@@ -975,32 +1957,121 @@ dependencies = [
+  "serde_json",
+  "serde_with",
+  "sha3",
+- "smart-default",
++ "smart-default 0.6.0",
+  "strum 0.24.1",
+- "thiserror",
++ "thiserror 2.0.21",
+  "tracing",
+- "zstd",
++ "zstd 0.13.5",
++]
++
++[[package]]
++name = "near-primitives"
++version = "0.38.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "5716d47a50336047cece824433bfd507cfbdb8b5673829efeeb5cdd67c75860d"
++dependencies = [
++ "arbitrary",
++ "base64 0.21.7",
++ "bitvec",
++ "borsh",
++ "bytes",
++ "bytesize",
++ "chrono",
++ "derive_builder",
++ "derive_more 2.1.1",
++ "easy-ext",
++ "enum-map",
++ "hex",
++ "itertools 0.14.0",
++ "near-crypto 0.38.1",
++ "near-fmt 0.38.1",
++ "near-parameters 0.38.1",
++ "near-primitives-core 0.38.1",
++ "near-schema-checker-lib 0.38.1",
++ "near-stdx 0.38.1",
++ "near-time 0.38.1",
++ "num-rational",
++ "ordered-float",
++ "primitive-types",
++ "rand 0.8.8",
++ "rand_chacha",
++ "serde",
++ "serde_json",
++ "serde_with",
++ "sha3",
++ "smallvec",
++ "smart-default 0.7.1",
++ "strum 0.24.1",
++ "thiserror 2.0.21",
++ "tracing",
++ "zstd 0.14.4",
++]
++
++[[package]]
++name = "near-primitives-core"
++version = "0.28.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "d597af103bb7881d1fb9031fb126cfe6c1acb9c9a6c8296dca45b5b3beb0893d"
++dependencies = [
++ "arbitrary",
++ "base64 0.21.7",
++ "borsh",
++ "bs58 0.4.0",
++ "derive_more 0.99.20",
++ "enum-map",
++ "near-account-id 1.1.4",
++ "near-schema-checker-lib 0.28.0",
++ "num-rational",
++ "serde",
++ "serde_repr",
++ "sha2",
++ "thiserror 2.0.21",
+ ]
+ 
+ [[package]]
+ name = "near-primitives-core"
+-version = "0.28.0"
++version = "0.38.1"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "d597af103bb7881d1fb9031fb126cfe6c1acb9c9a6c8296dca45b5b3beb0893d"
++checksum = "d93b725e23aaff320b854a0c3f9445934aed8eb49022ffe0d0db53d7eed2238b"
+ dependencies = [
+  "arbitrary",
+  "base64 0.21.7",
+  "borsh",
+  "bs58 0.4.0",
+- "derive_more",
++ "derive_more 2.1.1",
+  "enum-map",
+- "near-account-id",
+- "near-schema-checker-lib",
++ "near-account-id 3.0.0",
++ "near-gas",
++ "near-schema-checker-lib 0.38.1",
++ "near-token",
+  "num-rational",
+  "serde",
+  "serde_repr",
++ "serde_with",
+  "sha2",
+- "thiserror",
++ "thiserror 2.0.21",
++]
++
++[[package]]
++name = "near-sandbox"
++version = "0.4.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "739518dec1824a85391d926cd87f452970c7b04e126764c435d29ab1303947ea"
++dependencies = [
++ "flate2",
++ "fs4",
++ "json-patch 4.2.0",
++ "libc",
++ "near-account-id 3.0.0",
++ "near-token",
++ "serde",
++ "serde_json",
++ "tar",
++ "tempfile",
++ "thiserror 2.0.21",
++ "tokio",
++ "tracing",
++ "ureq",
+ ]
+ 
+ [[package]]
+@@ -1009,14 +2080,30 @@ version = "0.28.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "a48405425eca34de98e680416310df33fdb75768a78481cc75b43172b2748613"
+ 
++[[package]]
++name = "near-schema-checker-core"
++version = "0.38.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "6cab07deeea6db21f26c9b390e90239370e52261458da8939b7e41a83e03e6e1"
++
+ [[package]]
+ name = "near-schema-checker-lib"
+ version = "0.28.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "dfb720bf5cc256af687a9eb7a6e05baf3668dc75cfd43098e83ba1b3d3900f08"
+ dependencies = [
+- "near-schema-checker-core",
+- "near-schema-checker-macro",
++ "near-schema-checker-core 0.28.0",
++ "near-schema-checker-macro 0.28.0",
++]
++
++[[package]]
++name = "near-schema-checker-lib"
++version = "0.38.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "87a30c66b6dcb0a7a24c28753ca13906347128e6b5c5864ba4484c13753410e5"
++dependencies = [
++ "near-schema-checker-core 0.38.1",
++ "near-schema-checker-macro 0.38.1",
+ ]
+ 
+ [[package]]
+@@ -1025,6 +2112,12 @@ version = "0.28.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "b41a159cbf732acc0279febdde046d9036330a32a951796bce42f9529bce799d"
+ 
++[[package]]
++name = "near-schema-checker-macro"
++version = "0.38.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "5443816b87b37431216e7469ac57ede56518d74d0888b03ad4d53c4c54429060"
++
+ [[package]]
+ name = "near-sdk"
+ version = "5.7.0"
+@@ -1034,12 +2127,12 @@ dependencies = [
+  "base64 0.22.1",
+  "borsh",
+  "bs58 0.5.1",
+- "near-account-id",
+- "near-crypto",
++ "near-account-id 1.1.4",
++ "near-crypto 0.28.0",
+  "near-gas",
+- "near-parameters",
+- "near-primitives",
+- "near-primitives-core",
++ "near-parameters 0.28.0",
++ "near-primitives 0.28.0",
++ "near-primitives-core 0.28.0",
+  "near-sdk-macros",
+  "near-sys",
+  "near-token",
+@@ -1073,6 +2166,12 @@ version = "0.28.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "7a91674768828a593f4bac4aeca9334c4b56fe19344a2ccf7bd795b2325f0b5e"
+ 
++[[package]]
++name = "near-stdx"
++version = "0.38.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "151c6744cc44e22e3f86f2a7e7da9f645e05ee0c3a8df2565cc91326f5e56518"
++
+ [[package]]
+ name = "near-sys"
+ version = "0.2.14"
+@@ -1089,6 +2188,17 @@ dependencies = [
+  "time",
+ ]
+ 
++[[package]]
++name = "near-time"
++version = "0.38.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "b8f8fe6e36bc5274e7ea19098e8b25cf22c9ff7b7235b5e0b4ada5d0ed0e6efb"
++dependencies = [
++ "parking_lot",
++ "serde",
++ "time",
++]
++
+ [[package]]
+ name = "near-token"
+ version = "0.3.6"
+@@ -1111,11 +2221,11 @@ dependencies = [
+  "ed25519-dalek",
+  "enum-map",
+  "lru",
+- "near-crypto",
+- "near-parameters",
+- "near-primitives-core",
+- "near-schema-checker-lib",
+- "near-stdx",
++ "near-crypto 0.28.0",
++ "near-parameters 0.28.0",
++ "near-primitives-core 0.28.0",
++ "near-schema-checker-lib 0.28.0",
++ "near-stdx 0.28.0",
+  "num-rational",
+  "rayon",
+  "ripemd",
+@@ -1126,11 +2236,73 @@ dependencies = [
+  "sha3",
+  "strum 0.24.1",
+  "tempfile",
+- "thiserror",
++ "thiserror 2.0.21",
+  "tracing",
+  "zeropool-bn",
+ ]
+ 
++[[package]]
++name = "near-workspaces"
++version = "0.24.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "12bcbc26de21739f9d0f0d8aea3c1214eab267ad5161bdba77640a05010100ed"
++dependencies = [
++ "async-trait",
++ "base64 0.22.1",
++ "bs58 0.5.1",
++ "chrono",
++ "fs2",
++ "json-patch 2.0.0",
++ "libc",
++ "near-abi-client",
++ "near-account-id 3.0.0",
++ "near-crypto 0.38.1",
++ "near-gas",
++ "near-jsonrpc-client",
++ "near-jsonrpc-primitives",
++ "near-primitives 0.38.1",
++ "near-sandbox",
++ "near-token",
++ "rand 0.8.8",
++ "reqwest 0.13.5",
++ "serde",
++ "serde_json",
++ "sha2",
++ "tempfile",
++ "thiserror 1.0.69",
++ "tokio",
++ "tokio-retry",
++ "tracing",
++ "url",
++]
++
++[[package]]
++name = "near_schemafy_core"
++version = "0.7.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "42d7a1f809a319578773329389529dbf8c8f0abfbb05a429b37f437105f7caf6"
++dependencies = [
++ "serde",
++ "serde_json",
++]
++
++[[package]]
++name = "near_schemafy_lib"
++version = "0.7.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "c39ccae55df51adaa1a4e567b7a79ab4380826a695121cebf41f518076d8c3dd"
++dependencies = [
++ "Inflector",
++ "near_schemafy_core",
++ "proc-macro2",
++ "quote",
++ "serde",
++ "serde_derive",
++ "serde_json",
++ "syn 1.0.109",
++ "uriparse",
++]
++
+ [[package]]
+ name = "num-bigint"
+ version = "0.3.3"
+@@ -1195,6 +2367,49 @@ version = "1.21.4"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "9f7c3e4beb33f85d45ae3e3a1792185706c8e16d043238c593331cc7cd313b50"
+ 
++[[package]]
++name = "openssl"
++version = "0.10.82"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "4de8111e94a56adca7ebfe6c365b6d42f99deb69b74b6becacd4204e2f193aa2"
++dependencies = [
++ "bitflags 2.13.2",
++ "cfg-if 1.0.5",
++ "foreign-types",
++ "libc",
++ "openssl-macros",
++ "openssl-sys",
++]
++
++[[package]]
++name = "openssl-macros"
++version = "0.1.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "a948666b637a0f465e8564c73e89d4dde00d72d4d473cc972f390fc3dcee7d9c"
++dependencies = [
++ "proc-macro2",
++ "quote",
++ "syn 2.0.119",
++]
++
++[[package]]
++name = "openssl-probe"
++version = "0.2.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "7e036b411754132fd6b74e94b74e9a13c5cf606fa93d1885c35860d3060820b1"
++
++[[package]]
++name = "openssl-sys"
++version = "0.9.118"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "19c413d6ec9ebaf5e1c829d355cb3e9f783778d700f135be0921d52fce3c60ae"
++dependencies = [
++ "cc",
++ "libc",
++ "pkg-config",
++ "vcpkg",
++]
++
+ [[package]]
+ name = "ordered-float"
+ version = "4.6.0"
+@@ -1203,16 +2418,55 @@ checksum = "7bb71e1b3fa6ca1c61f383464aaf2bb0e2f8e772a1f01d486832464de363b951"
+ dependencies = [
+  "borsh",
+  "num-traits",
+- "rand",
++ "rand 0.8.8",
+  "serde",
+ ]
+ 
++[[package]]
++name = "parking_lot"
++version = "0.12.5"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "93857453250e3077bd71ff98b6a65ea6621a19bb0f559a85248955ac12c45a1a"
++dependencies = [
++ "lock_api",
++ "parking_lot_core",
++]
++
++[[package]]
++name = "parking_lot_core"
++version = "0.9.12"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "2621685985a2ebf1c516881c026032ac7deafcda1a2c9b7850dc81e3dfcb64c1"
++dependencies = [
++ "cfg-if 1.0.5",
++ "libc",
++ "redox_syscall",
++ "smallvec",
++ "windows-link",
++]
++
++[[package]]
++name = "percent-encoding"
++version = "2.3.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "9b4f627cb1b25917193a259e49bdad08f671f8d9708acfd5fe0a8c1455d87220"
++
+ [[package]]
+ name = "pin-project-lite"
+ version = "0.2.17"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "a89322df9ebe1c1578d689c92318e070967d1042b512afbe49518723f4e6d5cd"
+ 
++[[package]]
++name = "pkcs8"
++version = "0.10.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "f950b2377845cebe5cf8b5165cb3cc1a5e0fa5cfa3e1f7f55707d8fd82e0a7b7"
++dependencies = [
++ "der",
++ "spki",
++]
++
+ [[package]]
+ name = "pkg-config"
+ version = "0.3.34"
+@@ -1234,12 +2488,40 @@ dependencies = [
+  "portable-atomic",
+ ]
+ 
++[[package]]
++name = "potential_utf"
++version = "0.1.6"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "d83eb9bc6d8e5cf568e7a1101d60ee05e81ed50ea106026f3d18deeb046d7661"
++dependencies = [
++ "zerovec",
++]
++
+ [[package]]
+ name = "powerfmt"
+ version = "0.2.1"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "4a6394b9e965e73d0a289ee54f589087e2c676aedf60885baf52c76b771e4958"
+ 
++[[package]]
++name = "ppv-lite86"
++version = "0.2.21"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "85eae3c4ed2f50dcfe72643da4befc30deadb458a9b590d720cde2f2b1e97da9"
++dependencies = [
++ "zerocopy",
++]
++
++[[package]]
++name = "prettyplease"
++version = "0.1.25"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "6c8646e95016a7a6c4adea95bafa8a16baab64b583356217f2c85db4a39d9a86"
++dependencies = [
++ "proc-macro2",
++ "syn 1.0.109",
++]
++
+ [[package]]
+ name = "primitive-types"
+ version = "0.10.1"
+@@ -1268,6 +2550,63 @@ dependencies = [
+  "unicode-ident",
+ ]
+ 
++[[package]]
++name = "quinn"
++version = "0.11.12"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "4051e23e9185c255a7e33ef59cdbca87a22d359052eecd22fc6b901fb37d9d11"
++dependencies = [
++ "bytes",
++ "cfg_aliases",
++ "pin-project-lite",
++ "quinn-proto",
++ "quinn-udp",
++ "rustc-hash",
++ "rustls",
++ "socket2",
++ "thiserror 2.0.21",
++ "tokio",
++ "tracing",
++ "web-time",
++]
++
++[[package]]
++name = "quinn-proto"
++version = "0.11.19"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "0e750cca55fe4f0439a15d0bb529da9651e79993e8e72c61a899a36d462befbe"
++dependencies = [
++ "aws-lc-rs",
++ "bytes",
++ "getrandom 0.4.3",
++ "lru-slab",
++ "rand 0.10.4",
++ "rand_pcg",
++ "ring",
++ "rustc-hash",
++ "rustls",
++ "rustls-pki-types",
++ "slab",
++ "thiserror 2.0.21",
++ "tinyvec",
++ "tracing",
++ "web-time",
++]
++
++[[package]]
++name = "quinn-udp"
++version = "0.5.16"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "af66907df18639dcf4db56ca65490cabc4b27a97dbadd96f2926cca73298f016"
++dependencies = [
++ "cfg_aliases",
++ "libc",
++ "once_cell",
++ "socket2",
++ "tracing",
++ "windows-sys 0.61.2",
++]
++
+ [[package]]
+ name = "quote"
+ version = "1.0.47"
+@@ -1295,19 +2634,58 @@ version = "0.8.8"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "e058c7de0b26af77780c769414d6257830bb240f3c38477dbc2c16e5f54d6d4c"
+ dependencies = [
+- "rand_core",
++ "libc",
++ "rand_chacha",
++ "rand_core 0.6.4",
+  "serde",
+ ]
+ 
++[[package]]
++name = "rand"
++version = "0.10.4"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "8f6fa277c67e6ea590466f04c3fe82cb509f0864fe470643e5570de9514a9b11"
++dependencies = [
++ "chacha20",
++ "getrandom 0.4.3",
++ "rand_core 0.10.1",
++]
++
++[[package]]
++name = "rand_chacha"
++version = "0.3.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "e6c10a63a0fa32252be49d21e7709d4d4baf8d231c2dbce1eaa8141b9b127d88"
++dependencies = [
++ "ppv-lite86",
++ "rand_core 0.6.4",
++]
++
+ [[package]]
+ name = "rand_core"
+ version = "0.6.4"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "ec0be4795e2f6a28069bec0b5ff3e2ac9bafc99e6a9a7dc3547996c5c816922c"
+ dependencies = [
++ "getrandom 0.2.17",
+  "serde",
+ ]
+ 
++[[package]]
++name = "rand_core"
++version = "0.10.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "63b8176103e19a2643978565ca18b50549f6101881c443590420e4dc998a3c69"
++
++[[package]]
++name = "rand_pcg"
++version = "0.10.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "caa0f4137e1c0a72f4c651489402276c8e8e1cf081f3b0ba156d2cbeef09e86a"
++dependencies = [
++ "rand_core 0.10.1",
++]
++
+ [[package]]
+ name = "rayon"
+ version = "1.12.0"
+@@ -1329,23 +2707,148 @@ dependencies = [
+ ]
+ 
+ [[package]]
+-name = "ref-cast"
+-version = "1.0.27"
++name = "redox_syscall"
++version = "0.5.18"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "ed2bf2547551a7053d6fdfafda3f938979645c44812fbfcda098faae3f1a362d"
++dependencies = [
++ "bitflags 2.13.2",
++]
++
++[[package]]
++name = "ref-cast"
++version = "1.0.27"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "7e440fb4e4b4147295338efb76001ab9e4efc0e5839df2c47fc5ac2381d365c3"
++dependencies = [
++ "ref-cast-impl",
++]
++
++[[package]]
++name = "ref-cast-impl"
++version = "1.0.27"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "92ecd8964f8453721699a1ed72037b0db49ce2f5a5138486ee89bed6f67cdf3a"
++dependencies = [
++ "proc-macro2",
++ "quote",
++ "syn 3.0.10",
++]
++
++[[package]]
++name = "regex"
++version = "1.13.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "f020237b6c8eed93db2e2cb53c00c60a8e1bc73da7d073199a1180401450218d"
++dependencies = [
++ "aho-corasick",
++ "memchr",
++ "regex-automata",
++ "regex-syntax",
++]
++
++[[package]]
++name = "regex-automata"
++version = "0.4.18"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "ad8553b9b26413251cbf30e620595c7a41b3887f03da04579c0e6b0d6a06b4b2"
++dependencies = [
++ "aho-corasick",
++ "memchr",
++ "regex-syntax",
++]
++
++[[package]]
++name = "regex-syntax"
++version = "0.8.11"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
++
++[[package]]
++name = "reqwest"
++version = "0.12.28"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "eddd3ca559203180a307f12d114c268abf583f59b03cb906fd0b3ff8646c1147"
++dependencies = [
++ "base64 0.22.1",
++ "bytes",
++ "futures-core",
++ "http",
++ "http-body",
++ "http-body-util",
++ "hyper",
++ "hyper-tls",
++ "hyper-util",
++ "js-sys",
++ "log",
++ "native-tls",
++ "percent-encoding",
++ "pin-project-lite",
++ "rustls-pki-types",
++ "serde",
++ "serde_json",
++ "serde_urlencoded",
++ "sync_wrapper",
++ "tokio",
++ "tokio-native-tls",
++ "tower",
++ "tower-http",
++ "tower-service",
++ "url",
++ "wasm-bindgen",
++ "wasm-bindgen-futures",
++ "web-sys",
++]
++
++[[package]]
++name = "reqwest"
++version = "0.13.5"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "7e440fb4e4b4147295338efb76001ab9e4efc0e5839df2c47fc5ac2381d365c3"
++checksum = "16a1cfa75cc186dd73d5818e510e042e40927bccc9c236b061cea97e1eb08029"
+ dependencies = [
+- "ref-cast-impl",
++ "base64 0.23.1",
++ "bytes",
++ "futures-core",
++ "http",
++ "http-body",
++ "http-body-util",
++ "hyper",
++ "hyper-rustls",
++ "hyper-util",
++ "js-sys",
++ "log",
++ "percent-encoding",
++ "pin-project-lite",
++ "quinn",
++ "rustls",
++ "rustls-pki-types",
++ "rustls-platform-verifier",
++ "serde",
++ "serde_json",
++ "sync_wrapper",
++ "tokio",
++ "tokio-rustls",
++ "tower",
++ "tower-http",
++ "tower-service",
++ "url",
++ "wasm-bindgen",
++ "wasm-bindgen-futures",
++ "web-sys",
+ ]
+ 
+ [[package]]
+-name = "ref-cast-impl"
+-version = "1.0.27"
++name = "ring"
++version = "0.17.14"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "92ecd8964f8453721699a1ed72037b0db49ce2f5a5138486ee89bed6f67cdf3a"
++checksum = "a4689e6c2294d81e88dc6261c768b63bc4fcdb852be6d1352498b114f61383b7"
+ dependencies = [
+- "proc-macro2",
+- "quote",
+- "syn 3.0.10",
++ "cc",
++ "cfg-if 1.0.5",
++ "getrandom 0.2.17",
++ "libc",
++ "untrusted 0.9.0",
++ "windows-sys 0.52.0",
+ ]
+ 
+ [[package]]
+@@ -1357,6 +2860,12 @@ dependencies = [
+  "digest",
+ ]
+ 
++[[package]]
++name = "rustc-hash"
++version = "2.1.3"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "6b1e7f9a428571be2dc5bc0505c13fb6bf936822b894ec87abf8a08a4e51742d"
++
+ [[package]]
+ name = "rustc-hex"
+ version = "2.1.0"
+@@ -1378,7 +2887,7 @@ version = "0.38.44"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "fdb5bc1ae2baa591800df16c9ca78619bf65c0488b41b96ccec5d11220d8c154"
+ dependencies = [
+- "bitflags",
++ "bitflags 2.13.2",
+  "errno",
+  "libc",
+  "linux-raw-sys 0.4.15",
+@@ -1391,13 +2900,90 @@ version = "1.1.6"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "e5e76742e5294153d4dde1207dbec5bdd81eef6fabdc0d2118babadabfd858aa"
+ dependencies = [
+- "bitflags",
++ "bitflags 2.13.2",
+  "errno",
+  "libc",
+  "linux-raw-sys 0.12.1",
+  "windows-sys 0.61.2",
+ ]
+ 
++[[package]]
++name = "rustls"
++version = "0.23.46"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "48e13bd8c0e9365c43cfa5c9e8f9ad49d3c8444926c9aac819e0e4dc503c8fdf"
++dependencies = [
++ "aws-lc-rs",
++ "log",
++ "once_cell",
++ "ring",
++ "rustls-pki-types",
++ "rustls-webpki",
++ "subtle",
++ "zeroize",
++]
++
++[[package]]
++name = "rustls-native-certs"
++version = "0.8.5"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "4a073f5dc7469f984c52ad2752b63b0807745133b6de880b7b64c1ac4c48aec4"
++dependencies = [
++ "openssl-probe",
++ "rustls-pki-types",
++ "schannel",
++ "security-framework",
++]
++
++[[package]]
++name = "rustls-pki-types"
++version = "1.16.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "102f35f7de7b06d8c61f1cff6592f5253e0dea431c74867aad5dfd70f44663fb"
++dependencies = [
++ "web-time",
++ "zeroize",
++]
++
++[[package]]
++name = "rustls-platform-verifier"
++version = "0.7.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "1167586491e2b18b8bfbb293e8180ec17c201c4f076d7cb3070ca964e7598f98"
++dependencies = [
++ "core-foundation",
++ "core-foundation-sys",
++ "jni",
++ "log",
++ "once_cell",
++ "rustls",
++ "rustls-native-certs",
++ "rustls-platform-verifier-android",
++ "rustls-webpki",
++ "security-framework",
++ "security-framework-sys",
++ "webpki-root-certs",
++ "windows-sys 0.61.2",
++]
++
++[[package]]
++name = "rustls-platform-verifier-android"
++version = "0.2.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "eec689c0bc40ff2458a5977b6619cb718087084a18e02a131c599b62d05e1a5f"
++
++[[package]]
++name = "rustls-webpki"
++version = "0.103.17"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "e3a0760a887c14823fca5a1c970b01d47c328c696c0c64829d1df50e8f853fd5"
++dependencies = [
++ "aws-lc-rs",
++ "ring",
++ "rustls-pki-types",
++ "untrusted 0.9.0",
++]
++
+ [[package]]
+ name = "rustversion"
+ version = "1.0.23"
+@@ -1410,6 +2996,36 @@ version = "1.0.23"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "9774ba4a74de5f7b1c1451ed6cd5285a32eddb5cccb8cc655a4e50009e06477f"
+ 
++[[package]]
++name = "same-file"
++version = "1.0.6"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "93fc1dc3aaa9bfed95e02e6eadabb4baf7e3078b0bd1b4d7b6b0b68378900502"
++dependencies = [
++ "winapi-util",
++]
++
++[[package]]
++name = "schannel"
++version = "0.1.30"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "9cb23c424d8ee841bb4d813677ca237e2a610067d594fec130f87d6093495ab5"
++dependencies = [
++ "windows-sys 0.61.2",
++]
++
++[[package]]
++name = "schemars"
++version = "0.8.22"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "3fbf2ae1b8bc8e02df939598064d22402220cd5bbcca1c76f7d6a310974d5615"
++dependencies = [
++ "dyn-clone",
++ "schemars_derive",
++ "serde",
++ "serde_json",
++]
++
+ [[package]]
+ name = "schemars"
+ version = "0.9.0"
+@@ -1434,12 +3050,31 @@ dependencies = [
+  "serde_json",
+ ]
+ 
++[[package]]
++name = "schemars_derive"
++version = "0.8.22"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "32e265784ad618884abaea0600a9adf15393368d840e0222d101a072f3f7534d"
++dependencies = [
++ "proc-macro2",
++ "quote",
++ "serde_derive_internals",
++ "syn 2.0.119",
++]
++
++[[package]]
++name = "scopeguard"
++version = "1.2.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
++
+ [[package]]
+ name = "secp256k1"
+ version = "0.27.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "25996b82292a7a57ed3508f052cfff8640d38d32018784acd714758b43da9c8f"
+ dependencies = [
++ "rand 0.8.8",
+  "secp256k1-sys",
+ ]
+ 
+@@ -1452,6 +3087,29 @@ dependencies = [
+  "cc",
+ ]
+ 
++[[package]]
++name = "security-framework"
++version = "3.7.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "b7f4bc775c73d9a02cde8bf7b2ec4c9d12743edf609006c7facc23998404cd1d"
++dependencies = [
++ "bitflags 2.13.2",
++ "core-foundation",
++ "core-foundation-sys",
++ "libc",
++ "security-framework-sys",
++]
++
++[[package]]
++name = "security-framework-sys"
++version = "2.17.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "6ce2691df843ecc5d231c0b14ece2acc3efb62c0a398c7e1d875f3983ce020e3"
++dependencies = [
++ "core-foundation-sys",
++ "libc",
++]
++
+ [[package]]
+ name = "semver"
+ version = "1.0.28"
+@@ -1488,6 +3146,17 @@ dependencies = [
+  "syn 3.0.10",
+ ]
+ 
++[[package]]
++name = "serde_derive_internals"
++version = "0.29.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "18d26a20a969b9e3fdf2fc2d9f21eda6c40e2de84c9408bb5d3b05d499aae711"
++dependencies = [
++ "proc-macro2",
++ "quote",
++ "syn 2.0.119",
++]
++
+ [[package]]
+ name = "serde_json"
+ version = "1.0.154"
+@@ -1512,6 +3181,18 @@ dependencies = [
+  "syn 3.0.10",
+ ]
+ 
++[[package]]
++name = "serde_urlencoded"
++version = "0.7.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "d3491c14715ca2294c4d6a88f15e84739788c1d030eed8c110436aafdaa2f3fd"
++dependencies = [
++ "form_urlencoded",
++ "itoa",
++ "ryu",
++ "serde",
++]
++
+ [[package]]
+ name = "serde_with"
+ version = "3.24.0"
+@@ -1565,7 +3246,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "a7507d819769d01a365ab707794a4084392c824f54a7a6a7862f8c3d0892b283"
+ dependencies = [
+  "cfg-if 1.0.5",
+- "cpufeatures",
++ "cpufeatures 0.2.17",
+  "digest",
+ ]
+ 
+@@ -1585,11 +3266,46 @@ version = "2.0.1"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "f8fadd59c855ef2080decdef8ff161eb6661b86933c9d82e5ba29dc602a55aba"
+ 
++[[package]]
++name = "signal-hook-registry"
++version = "1.4.8"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "c4db69cba1110affc0e9f7bcd48bbf87b3f4fc7c61fc9155afd4c469eb3d6c1b"
++dependencies = [
++ "errno",
++ "libc",
++]
++
+ [[package]]
+ name = "signature"
+ version = "2.2.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "77549399552de45a898a580c1b41d445bf730df867cc44e6c0233bbc4b8329de"
++dependencies = [
++ "rand_core 0.6.4",
++]
++
++[[package]]
++name = "simd-adler32"
++version = "0.3.10"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "3a219298ac11a56ea9a6d2120044824d6f01aeb034955e7af7bc16858527deea"
++
++[[package]]
++name = "simd_cesu8"
++version = "1.2.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "11031e251abf8611c80f460e19dbdeb54a66db918e49c65a7065b46ac7aec520"
++dependencies = [
++ "rustc_version",
++ "simdutf8",
++]
++
++[[package]]
++name = "simdutf8"
++version = "0.1.5"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "e3a9fe34e3e7a50316060351f37187a3f546bce95496156754b601a5fa71b76e"
+ 
+ [[package]]
+ name = "slab"
+@@ -1597,6 +3313,12 @@ version = "0.4.12"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "0c790de23124f9ab44544d7ac05d60440adc586479ce501c1d6d7da3cd8c9cf5"
+ 
++[[package]]
++name = "smallvec"
++version = "1.16.5"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "149309498a5f7334b12ddae0cad8aba81ce785fe91755068867e017cf98fee46"
++
+ [[package]]
+ name = "smart-default"
+ version = "0.6.0"
+@@ -1608,12 +3330,49 @@ dependencies = [
+  "syn 1.0.109",
+ ]
+ 
++[[package]]
++name = "smart-default"
++version = "0.7.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "0eb01866308440fc64d6c44d9e86c5cc17adfe33c4d6eed55da9145044d0ffc1"
++dependencies = [
++ "proc-macro2",
++ "quote",
++ "syn 2.0.119",
++]
++
++[[package]]
++name = "socket2"
++version = "0.6.5"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "c3d1e2c7f27f8d4cb10542a02c49005dbd6e93095799d6f3be745fae9f8fedd4"
++dependencies = [
++ "libc",
++ "windows-sys 0.61.2",
++]
++
+ [[package]]
+ name = "spin"
+ version = "0.9.9"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "3763264f6b73151db08c50ff20d7d8a0b8796e021cdea7ceedad07b80155fa0e"
+ 
++[[package]]
++name = "spki"
++version = "0.7.3"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "d91ed6c858b01f942cd56b37a94b3e0a1798290327d1236e4d9cf4eaca44d29d"
++dependencies = [
++ "base64ct",
++ "der",
++]
++
++[[package]]
++name = "stable_deref_trait"
++version = "1.2.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "6ce2be8dc25455e1f91df71bfa12ad37d7af1092ae736f3a6cd0e37bc7810596"
++
+ [[package]]
+ name = "static_assertions"
+ version = "1.1.0"
+@@ -1706,12 +3465,42 @@ dependencies = [
+  "unicode-ident",
+ ]
+ 
++[[package]]
++name = "sync_wrapper"
++version = "1.0.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "0bf256ce5efdfa370213c1dabab5935a12e49f2c58d15e9eac2870d3b4f27263"
++dependencies = [
++ "futures-core",
++]
++
++[[package]]
++name = "synstructure"
++version = "0.14.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "901704edd0dfe137f1987838ee4f259e4e063c31371bdb423f7ae38ec6f77f02"
++dependencies = [
++ "proc-macro2",
++ "quote",
++ "syn 3.0.10",
++]
++
+ [[package]]
+ name = "tap"
+ version = "1.0.1"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "55937e1799185b12863d447f42597ed69d9928686b8d88a1df17376a097d8369"
+ 
++[[package]]
++name = "tar"
++version = "0.4.46"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "3f6221d9a6003c78398e3b239969f352578258df48c8eb051caadae0015bc840"
++dependencies = [
++ "filetime",
++ "libc",
++]
++
+ [[package]]
+ name = "tempfile"
+ version = "3.27.0"
+@@ -1719,19 +3508,39 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "32497e9a4c7b38532efcdebeef879707aa9f794296a4f0244f6f69e9bc8574bd"
+ dependencies = [
+  "fastrand",
+- "getrandom",
++ "getrandom 0.4.3",
+  "once_cell",
+  "rustix 1.1.6",
+  "windows-sys 0.61.2",
+ ]
+ 
++[[package]]
++name = "thiserror"
++version = "1.0.69"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "b6aaf5339b578ea85b50e080feb250a3e8ae8cfcdff9a461c9ec2904bc923f52"
++dependencies = [
++ "thiserror-impl 1.0.69",
++]
++
+ [[package]]
+ name = "thiserror"
+ version = "2.0.21"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "09e52cb86a36cede5cb101bf8908837b3e4c6e5e59fe7fd85c23fb56200d189e"
+ dependencies = [
+- "thiserror-impl",
++ "thiserror-impl 2.0.21",
++]
++
++[[package]]
++name = "thiserror-impl"
++version = "1.0.69"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "4fee6c4efc90059e10f81e6d42c60a18f76588c3d74cb83a0b242a2b6c7504c1"
++dependencies = [
++ "proc-macro2",
++ "quote",
++ "syn 2.0.119",
+ ]
+ 
+ [[package]]
+@@ -1755,40 +3564,109 @@ dependencies = [
+ ]
+ 
+ [[package]]
+-name = "time"
+-version = "0.3.55"
++name = "time"
++version = "0.3.55"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "cdb87b95ec50ddfa440816d227a17b2ccbdda963a316a727fda0fc4334f7d134"
++dependencies = [
++ "deranged",
++ "num-conv",
++ "powerfmt",
++ "serde_core",
++ "time-core",
++ "time-macros",
++]
++
++[[package]]
++name = "time-core"
++version = "0.1.9"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "9e1c906769ad99c88eaa54e728060edef082f8e358ff32030cb7c7d315e81109"
++
++[[package]]
++name = "time-macros"
++version = "0.2.32"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "7e689342a48d2ea927c87ea50cabf8594854bf940e9310208848d680d668ed85"
++dependencies = [
++ "num-conv",
++ "time-core",
++]
++
++[[package]]
++name = "tinystr"
++version = "0.8.5"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "abc840c238154d58f9e86b2792261edfde565a17696e1cda1a449de27979801a"
++dependencies = [
++ "displaydoc",
++ "zerovec",
++]
++
++[[package]]
++name = "tinyvec"
++version = "1.13.3"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "fd3ca314f692efd6c868f8408f53fe444634a845f96c028b97d35f6a1f79f0ee"
++
++[[package]]
++name = "tokio"
++version = "1.54.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "b52fd3255258d26fac7264ab5a76b53c13367136dc011d3d6ad4f8ed070396a3"
++dependencies = [
++ "bytes",
++ "libc",
++ "mio",
++ "parking_lot",
++ "pin-project-lite",
++ "signal-hook-registry",
++ "socket2",
++ "tokio-macros",
++ "windows-sys 0.61.2",
++]
++
++[[package]]
++name = "tokio-macros"
++version = "2.7.2"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "cdb87b95ec50ddfa440816d227a17b2ccbdda963a316a727fda0fc4334f7d134"
++checksum = "78773a2a397f451582ce068015985c33193cf6dea8b74d2a639fe457b2f07b0e"
+ dependencies = [
+- "deranged",
+- "num-conv",
+- "powerfmt",
+- "serde_core",
+- "time-core",
+- "time-macros",
++ "proc-macro2",
++ "quote",
++ "syn 3.0.10",
+ ]
+ 
+ [[package]]
+-name = "time-core"
+-version = "0.1.9"
++name = "tokio-native-tls"
++version = "0.3.1"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "9e1c906769ad99c88eaa54e728060edef082f8e358ff32030cb7c7d315e81109"
++checksum = "bbae76ab933c85776efabc971569dd6119c580d8f5d448769dec1764bf796ef2"
++dependencies = [
++ "native-tls",
++ "tokio",
++]
+ 
+ [[package]]
+-name = "time-macros"
+-version = "0.2.32"
++name = "tokio-retry"
++version = "0.3.2"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "7e689342a48d2ea927c87ea50cabf8594854bf940e9310208848d680d668ed85"
++checksum = "4a129d95275ebf4c493ec53bf0f8cd95f5ac161bc4f381700809a54f595d4470"
+ dependencies = [
+- "num-conv",
+- "time-core",
++ "pin-project-lite",
++ "rand 0.10.4",
++ "tokio",
+ ]
+ 
+ [[package]]
+-name = "tinyvec"
+-version = "1.13.3"
++name = "tokio-rustls"
++version = "0.26.6"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "fd3ca314f692efd6c868f8408f53fe444634a845f96c028b97d35f6a1f79f0ee"
++checksum = "c9cc2678c2cdd569ef8215e2afd7954ada2ae20b4fdd2c5fe6139a3b02d105db"
++dependencies = [
++ "rustls",
++ "tokio",
++]
+ 
+ [[package]]
+ name = "toml_datetime"
+@@ -1820,6 +3698,51 @@ dependencies = [
+  "winnow",
+ ]
+ 
++[[package]]
++name = "tower"
++version = "0.5.3"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "ebe5ef63511595f1344e2d5cfa636d973292adc0eec1f0ad45fae9f0851ab1d4"
++dependencies = [
++ "futures-core",
++ "futures-util",
++ "pin-project-lite",
++ "sync_wrapper",
++ "tokio",
++ "tower-layer",
++ "tower-service",
++]
++
++[[package]]
++name = "tower-http"
++version = "0.6.11"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "4cfcf7e2740e6fc6d4d688b4ef00650406bb94adf4731e43c096c3a19fe40840"
++dependencies = [
++ "bitflags 2.13.2",
++ "bytes",
++ "futures-util",
++ "http",
++ "http-body",
++ "pin-project-lite",
++ "tower",
++ "tower-layer",
++ "tower-service",
++ "url",
++]
++
++[[package]]
++name = "tower-layer"
++version = "0.3.3"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "121c2a6cda46980bb0fcd1647ffaf6cd3fc79a013de288782836f6df9c48780e"
++
++[[package]]
++name = "tower-service"
++version = "0.3.3"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "8df9b6e13f2d32c91b9bd719c00d1958837bc7dec474d94952798cc8e69eeec3"
++
+ [[package]]
+ name = "tracing"
+ version = "0.1.44"
+@@ -1851,6 +3774,12 @@ dependencies = [
+  "once_cell",
+ ]
+ 
++[[package]]
++name = "try-lock"
++version = "0.2.5"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
++
+ [[package]]
+ name = "typenum"
+ version = "1.20.1"
+@@ -1875,18 +3804,148 @@ version = "1.0.27"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "a2c754d6c33795a1c324727428e5a7dedb5b06195f9890bdbcba760d3e246563"
+ 
++[[package]]
++name = "unicode-segmentation"
++version = "1.13.3"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "c6f5d3c3b1bf09027a88a6bc961fc00497d651009560b5463668dc81b0fa87a8"
++
++[[package]]
++name = "unicode-xid"
++version = "0.2.6"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "ebc1c04c71510c7f702b52b7c350734c9ff1295c464a03335b00bb84fc54f853"
++
+ [[package]]
+ name = "unsafe-libyaml"
+ version = "0.2.11"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "673aac59facbab8a9007c7f6108d11f63b603f7cabff99fabf650fea5c32b861"
+ 
++[[package]]
++name = "untrusted"
++version = "0.7.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "a156c684c91ea7d62626509bce3cb4e1d9ed5c4d978f7b4352658f96a4c26b4a"
++
++[[package]]
++name = "untrusted"
++version = "0.9.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "8ecb6da28b8a351d773b68d5825ac39017e680750f980f3a1a85cd8dd28a47c1"
++
++[[package]]
++name = "ureq"
++version = "3.5.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "3ac5cecf619ca81f66a96482db09687c9f7465af65f4300a8c30cca05bd5a59d"
++dependencies = [
++ "base64 0.23.1",
++ "cookie_store",
++ "log",
++ "percent-encoding",
++ "rustls",
++ "rustls-pki-types",
++ "serde",
++ "serde_json",
++ "ureq-proto",
++ "utf8-zero",
++ "webpki-roots",
++]
++
++[[package]]
++name = "ureq-proto"
++version = "0.7.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "622dce33c252115466d83f63e9744a18f12b4406aae51a01c15ad8fcf1185eb3"
++dependencies = [
++ "base64 0.23.1",
++ "http",
++ "httparse",
++ "log",
++]
++
++[[package]]
++name = "uriparse"
++version = "0.6.4"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "0200d0fc04d809396c2ad43f3c95da3582a2556eba8d453c1087f4120ee352ff"
++dependencies = [
++ "fnv",
++ "lazy_static",
++]
++
++[[package]]
++name = "url"
++version = "2.5.8"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "ff67a8a4397373c3ef660812acab3268222035010ab8680ec4215f38ba3d0eed"
++dependencies = [
++ "form_urlencoded",
++ "idna",
++ "percent-encoding",
++ "serde",
++ "serde_derive",
++]
++
++[[package]]
++name = "utf8-zero"
++version = "0.8.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "b8c0a043c9540bae7c578c88f91dda8bd82e59ae27c21baca69c8b191aaf5a6e"
++
++[[package]]
++name = "utf8_iter"
++version = "1.1.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "af3bd9d3e571c26fcce9d033b87ea5ab061b8d2ffe9b7a5675d810d68f03edf0"
++dependencies = [
++ "utf_types",
++]
++
++[[package]]
++name = "utf_types"
++version = "1.0.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "3a3b425286980a367278453f3b6d28cdcb134b574e5a35824a6ff5eebad50bb6"
++
++[[package]]
++name = "vcpkg"
++version = "0.2.15"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "accd4ea62f7bb7a82fe23066fb0957d48ef677f6eeb8215f372f52e48bb32426"
++
+ [[package]]
+ name = "version_check"
+ version = "0.9.5"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
+ 
++[[package]]
++name = "walkdir"
++version = "2.5.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "29790946404f91d9c5d06f9874efddea1dc06c5efe94541a7d6863108e3a5e4b"
++dependencies = [
++ "same-file",
++ "winapi-util",
++]
++
++[[package]]
++name = "want"
++version = "0.3.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "ec4cdd0dd910afe868b7ef477227d8d538b46b3075031afee8a9f2acb0a2ed0b"
++dependencies = [
++ "try-lock",
++]
++
++[[package]]
++name = "wasi"
++version = "0.11.1+wasi-snapshot-preview1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "ccf3ec651a847eb01de73ccad15eb7d99f80485de043efb2f370cd654f4ea44b"
++
+ [[package]]
+ name = "wasm-bindgen"
+ version = "0.2.130"
+@@ -1899,6 +3958,17 @@ dependencies = [
+  "wasm-bindgen-shared",
+ ]
+ 
++[[package]]
++name = "wasm-bindgen-futures"
++version = "0.4.80"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "5e14e0327cb5368ad60ccb22d04a9827a693c95a926d8d125e9fa39e0baec501"
++dependencies = [
++ "js-sys",
++ "tokio",
++ "wasm-bindgen",
++]
++
+ [[package]]
+ name = "wasm-bindgen-macro"
+ version = "0.2.130"
+@@ -1931,6 +4001,44 @@ dependencies = [
+  "unicode-ident",
+ ]
+ 
++[[package]]
++name = "web-sys"
++version = "0.3.107"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "d7d179596ff5ec0f6de4db64d54011bde6289cc49603d3a6e4ce3f329207ab88"
++dependencies = [
++ "js-sys",
++ "wasm-bindgen",
++]
++
++[[package]]
++name = "web-time"
++version = "1.1.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "5a6580f308b1fad9207618087a65c04e7a10bc77e02c8e84e9b00dd4b12fa0bb"
++dependencies = [
++ "js-sys",
++ "wasm-bindgen",
++]
++
++[[package]]
++name = "webpki-root-certs"
++version = "1.0.12"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "293198dcebfb821155b5092ab94b5a82ff180eddd7241df3bd6e66a4ffd1a585"
++dependencies = [
++ "rustls-pki-types",
++]
++
++[[package]]
++name = "webpki-roots"
++version = "1.0.12"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "7265c9301c16a8711c992c2d8da90ee77ef54b1ed51482d6dfeb00dc756b1297"
++dependencies = [
++ "rustls-pki-types",
++]
++
+ [[package]]
+ name = "wee_alloc"
+ version = "0.4.5"
+@@ -1959,6 +4067,15 @@ version = "0.4.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "ac3b87c63620426dd9b991e5ce0329eff545bccbbb34f3be09ff6fb6ab51b7b6"
+ 
++[[package]]
++name = "winapi-util"
++version = "0.1.11"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
++dependencies = [
++ "windows-sys 0.61.2",
++]
++
+ [[package]]
+ name = "winapi-x86_64-pc-windows-gnu"
+ version = "0.4.0"
+@@ -2024,6 +4141,15 @@ dependencies = [
+  "windows-link",
+ ]
+ 
++[[package]]
++name = "windows-sys"
++version = "0.52.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "282be5f36a8ce781fad8c8ae18fa3f9beff57ec1b52cb3de0789201425d9a33d"
++dependencies = [
++ "windows-targets",
++]
++
+ [[package]]
+ name = "windows-sys"
+ version = "0.59.0"
+@@ -2115,6 +4241,12 @@ dependencies = [
+  "memchr",
+ ]
+ 
++[[package]]
++name = "writeable"
++version = "0.6.4"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "3ad82d2a33cdc9674dc7465672f271e096168fcdbe0f799d9e6db8c5892679dc"
++
+ [[package]]
+ name = "wyz"
+ version = "0.5.1"
+@@ -2124,6 +4256,70 @@ dependencies = [
+  "tap",
+ ]
+ 
++[[package]]
++name = "yoke"
++version = "0.8.4"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "417ef3fcf6c300b7dbd25c85531a746931c02ad536f3cf4786ed1e88223340b3"
++dependencies = [
++ "stable_deref_trait",
++ "yoke-derive",
++ "zerofrom",
++]
++
++[[package]]
++name = "yoke-derive"
++version = "0.8.4"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "ec8ebde2db3681e8c9980cc27822030e68752690ddfa9473e739aeb4dbde6d71"
++dependencies = [
++ "proc-macro2",
++ "quote",
++ "syn 3.0.10",
++ "synstructure",
++]
++
++[[package]]
++name = "zerocopy"
++version = "0.8.63"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "e5fe1f8f1b06191a00962174c61aa5005e0bb391a6d80d07e24d115c01a92ed8"
++dependencies = [
++ "zerocopy-derive",
++]
++
++[[package]]
++name = "zerocopy-derive"
++version = "0.8.63"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "863ad3ac83293fb4d740aedbfdc9240dd8d1a50c1099acd76ce80ce7c7230c7f"
++dependencies = [
++ "proc-macro2",
++ "quote",
++ "syn 2.0.119",
++]
++
++[[package]]
++name = "zerofrom"
++version = "0.1.8"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "0ec05a11813ea801ff6d75110ad09cd0824ddba17dfe17128ea0d5f68e6c5272"
++dependencies = [
++ "zerofrom-derive",
++]
++
++[[package]]
++name = "zerofrom-derive"
++version = "0.1.8"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "f75b4683f6c7f45248d4d64056a24298c6281e0993356d7d1b4a1a962ef10d4a"
++dependencies = [
++ "proc-macro2",
++ "quote",
++ "syn 3.0.10",
++ "synstructure",
++]
++
+ [[package]]
+ name = "zeroize"
+ version = "1.9.1"
+@@ -2153,10 +4349,43 @@ dependencies = [
+  "byteorder",
+  "crunchy",
+  "lazy_static",
+- "rand",
++ "rand 0.8.8",
+  "rustc-hex",
+ ]
+ 
++[[package]]
++name = "zerotrie"
++version = "0.2.5"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "4ea269c3bd32f0a32c321907a2ae912ba6f4649bb0fc764a15627e99a7095a3f"
++dependencies = [
++ "displaydoc",
++ "yoke",
++ "zerofrom",
++]
++
++[[package]]
++name = "zerovec"
++version = "0.11.9"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "f58a2799cfe9a1670c7ea8edbd52ef8edb93cb37a7f83bf31ba9e35d9dae6a40"
++dependencies = [
++ "yoke",
++ "zerofrom",
++ "zerovec-derive",
++]
++
++[[package]]
++name = "zerovec-derive"
++version = "0.11.7"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "c3743ddbf47738d929cd1ae2e199d40d0162979dfe31aef8ae646d2bf00bf97a"
++dependencies = [
++ "proc-macro2",
++ "quote",
++ "syn 3.0.10",
++]
++
+ [[package]]
+ name = "zmij"
+ version = "1.0.23"
+@@ -2169,7 +4398,16 @@ version = "0.13.5"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "50adf04cf3ec914b0b9905c9dde90c80fe74bfd701e331fc80a39c512c525278"
+ dependencies = [
+- "zstd-safe",
++ "zstd-safe 7.4.1",
++]
++
++[[package]]
++name = "zstd"
++version = "0.14.4"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "ad5020ab8f27bfc0024ad0a07aed6bf022a16208f479686fbed4fdd0c85eb0b3"
++dependencies = [
++ "zstd-safe 8.3.0",
+ ]
+ 
+ [[package]]
+@@ -2181,6 +4419,15 @@ dependencies = [
+  "zstd-sys",
+ ]
+ 
++[[package]]
++name = "zstd-safe"
++version = "8.3.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "5a9ea9cc2576c2fcc104e9cec04f46e3ede564f4fbc206831e4ef7e859a4140d"
++dependencies = [
++ "zstd-sys",
++]
++
+ [[package]]
+ name = "zstd-sys"
+ version = "2.1.3+zstd.1.5.7"
+diff --git a/near/escrow/Cargo.toml b/near/escrow/Cargo.toml
+index 5476422..509d2b3 100644
+--- a/near/escrow/Cargo.toml
++++ b/near/escrow/Cargo.toml
+@@ -11,6 +11,16 @@ near-sdk = "=5.7.0"
+ 
+ [dev-dependencies]
+ near-sdk = { version = "=5.7.0", features = ["unit-testing"] }
++ed25519-dalek = "2.2"
++near-workspaces = { version = "0.24", default-features = false, features = ["install", "rustls"] }
++serde = { version = "1", features = ["derive"] }
++serde_json = "1"
++tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
++
++[features]
++# Test-only. `cargo build --release` does not enable it. Sandbox cannot create
++# the Circle implicit account, so the sandbox binary accepts the token it deploys.
++sandbox-token = []
+ 
+ [lib]
+ crate-type = ["cdylib", "rlib"]
+diff --git a/near/escrow/src/lib.rs b/near/escrow/src/lib.rs
+index 5e48c2f..412cd63 100644
+--- a/near/escrow/src/lib.rs
++++ b/near/escrow/src/lib.rs
+@@ -1,44 +1,63 @@
+ //! Testnet USDC escrow. The buyer locks a price. The creator is paid after the
+-//! buyer accepts the work, or when the review window ends with no dispute.
++//! buyer accepts the work, when the review window ends, or when both keys sign
++//! a split.
+ //!
+-//! Pattern, not a copy: Basssoman/pinky@c94cb144 `contract/src/lib.rs`
+-//! (`ft_on_transfer` funding, deliver, client `accept`, `release_after_timeout`,
+-//! arbiter `resolve_dispute`, 50/50 after the dispute window).
++//! Patterns, not copied code, from Basssoman/pinky@c94cb144 `contract/src/lib.rs`:
++//! `escrow-v1|` signed actions, `creator_pk`, `settle` with both signatures,
++//! `close_unpaid` after an unpaid funding window, a fee taken only from the
++//! creator's share (fixed here at 0), and a private callback after `ft_transfer`.
++//! This message also binds the chain id and a nonce, so a signature cannot be
++//! replayed on another chain or twice on this contract.
+ //!
+ //! Unused-amount refund idea, path and sha only, nothing copied:
+ //! Balloon-DefAI/balloons-contracts@eb1f045 `src/ft_receiver.rs`.
+-//! A bad message, or any tokens above the price, are returned from
+-//! `ft_on_transfer` so the token's `ft_resolve_transfer` sends them back.
++//! A bad message, a short payment, or any tokens above the price are returned
++//! from `ft_on_transfer` so the token's `ft_resolve_transfer` sends them back.
+ //!
+-//! Standards checked against the docs, not against those repos:
+-//! - NEP-141 `ft_on_transfer` return value is the refund:
+-//!   https://nomicon.io/Standards/Tokens/FungibleToken/Core
+-//! - `ft_transfer` attaches 1 yoctoNEAR:
+-//!   https://docs.near.org/primitives/ft
+-//! - Contract API is near-sdk 5 (`#[near]`, `PromiseOrValue`, `require`):
+-//!   https://docs.near.org/smart-contracts/anatomy/near-bindgen
++//! APIs checked against near-sdk 5.7, not against those repos:
++//! - `env::ed25519_verify`: https://docs.rs/near-sdk/5.7.0/near_sdk/env/fn.ed25519_verify.html
++//! - `#[private]` (predecessor must be this contract):
++//!   https://docs.rs/near-sdk/5.7.0/near_sdk/attr.near.html
++//! - `PromiseResult`: https://docs.rs/near-sdk/5.7.0/near_sdk/enum.PromiseResult.html
++//! - NEP-141 refund: https://nomicon.io/Standards/Tokens/FungibleToken/Core
++//! - `ft_transfer` attaches 1 yoctoNEAR: https://docs.near.org/primitives/ft
+ //!
+ //! Init accepts only Circle USDC on NEAR testnet.
+ #![deny(unused)]
+ 
+ use near_sdk::json_types::U128;
+-use near_sdk::store::LookupMap;
++use near_sdk::serde::Deserialize;
++use near_sdk::store::{LookupMap, LookupSet};
+ use near_sdk::{
+     env, near, require, AccountId, BorshStorageKey, Gas, NearToken, PanicOnDefault, Promise,
+-    PromiseOrValue,
++    PromiseOrValue, PromiseResult,
+ };
+ 
+ /// Circle USDC on NEAR testnet (ft_metadata: symbol USDC, decimals 6).
+ pub const CIRCLE_USDC_NEAR_TESTNET: &str =
+     "3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af";
+ 
++/// Every signed string starts with this. The rest is chain, contract, deal,
++/// action, nonce, and the exact payload.
++pub const MESSAGE_PREFIX: &str = "escrow-v1";
++
++/// Jobs below 1 USDC (6 decimals) are not escrowed. The direct rail covers them.
++pub const MIN_AMOUNT: u128 = 1_000_000;
++
++/// The card fixes the fee at zero. Nothing is skimmed from the creator's share.
++pub const FEE_BPS: u16 = 0;
++
+ const GAS_FT_TRANSFER: Gas = Gas::from_tgas(20);
++const GAS_ON_WITHDRAW: Gas = Gas::from_tgas(20);
++/// `ft_transfer` plus the callback, with room for the host.
++const MIN_GAS_WITHDRAW: Gas = Gas::from_tgas(80);
+ const ONE_YOCTO: NearToken = NearToken::from_yoctonear(1);
+ const MAX_BPS: u128 = 10_000;
+ /// Half, rounding the odd unit to the client.
+ const TIMEOUT_SPLIT_BPS: u128 = 5_000;
+ const MAX_HASH_LEN: usize = 128;
+-/// 90 days. Tests use a much shorter window.
++const MAX_PAYLOAD_LEN: usize = 1024;
++/// 90 days. A window above this is refused.
+ const MAX_WINDOW_NS: u64 = 90 * 24 * 3600 * 1_000_000_000;
+ 
+ #[near(serializers = [borsh])]
+@@ -46,56 +65,56 @@ const MAX_WINDOW_NS: u64 = 90 * 24 * 3600 * 1_000_000_000;
+ enum Prefix {
+     Deals,
+     Balances,
++    Used,
+ }
+ 
+ #[near(serializers = [borsh, json])]
+ #[derive(Clone, Copy, PartialEq, Eq, Debug)]
+ pub enum DealState {
++    /// Opened by the creator key. No tokens yet.
++    Created,
+     Funded,
+     Delivered,
+     Disputed,
+     Released,
+     Refunded,
++    /// Funding window ended with no payment (`close_unpaid`).
++    Expired,
+ }
+ 
+ #[near(serializers = [borsh, json])]
+ #[derive(Clone, Debug)]
+ pub struct Deal {
+     pub id: u64,
+-    pub client: AccountId,
+-    pub creator: AccountId,
++    pub client: Option<AccountId>,
++    pub client_pk: [u8; 32],
+     pub price: u128,
+     pub state: DealState,
+-    pub deliver_by_ns: u64,
++    pub fund_by_ns: u64,
++    pub deliver_ns: u64,
+     pub review_ns: u64,
++    pub dispute_ns: u64,
++    pub deliver_by_ns: Option<u64>,
+     pub review_ends_ns: Option<u64>,
+     pub dispute_ends_ns: Option<u64>,
+     pub deliverable_hash: Option<String>,
+ }
+ 
+-#[near(serializers = [json])]
+-struct OpenMsg {
+-    creator: AccountId,
+-    price: U128,
+-    deliver_ns: U64ish,
+-    review_ns: U64ish,
+-}
+-
+-/// Accepts a JSON number or a decimal string. Callers should send strings.
+-#[near(serializers = [json])]
+-#[serde(untagged)]
+-enum U64ish {
+-    Num(u64),
+-    Str(String),
++#[derive(Deserialize)]
++#[serde(crate = "near_sdk::serde")]
++struct OpenPayload {
++    client_pk: String,
++    price: String,
++    deliver_ns: u64,
++    review_ns: u64,
++    dispute_ns: u64,
++    fund_ns: u64,
+ }
+ 
+-impl U64ish {
+-    fn get(&self) -> Option<u64> {
+-        match self {
+-            Self::Num(n) => Some(*n),
+-            Self::Str(s) => s.parse().ok(),
+-        }
+-    }
++#[derive(Deserialize)]
++#[serde(crate = "near_sdk::serde")]
++struct FundMsg {
++    deal_id: u64,
+ }
+ 
+ #[near(contract_state)]
+@@ -103,36 +122,118 @@ impl U64ish {
+ pub struct Escrow {
+     token_id: AccountId,
+     arbiter_id: AccountId,
++    /// Account that receives the creator's share.
++    creator_id: AccountId,
++    /// Foundry key. Signs deliver, open, and the creator half of settle.
++    creator_pk: [u8; 32],
++    /// Bound into every signed message. A testnet signature fails on mainnet.
++    chain_id: String,
++    /// Payer-chosen windows below this are refused.
++    min_window_ns: u64,
+     next_id: u64,
+     deals: LookupMap<u64, Deal>,
+-    /// Withdrawable token units, for creators and for clients after a refund.
++    /// Withdrawable token units.
+     balances: LookupMap<AccountId, u128>,
++    /// `deal|action|nonce` already accepted.
++    used: LookupSet<String>,
++}
++
++/// `escrow-v1|{chain_id}|{contract_id}|{deal_id}|{action}|{nonce}|{payload}`
++pub fn signed_message(
++    chain_id: &str,
++    contract_id: &str,
++    deal_id: u64,
++    action: &str,
++    nonce: &str,
++    payload: &str,
++) -> String {
++    format!("{MESSAGE_PREFIX}|{chain_id}|{contract_id}|{deal_id}|{action}|{nonce}|{payload}")
+ }
+ 
+ #[near]
+ impl Escrow {
+-    /// `token_id` must be Circle USDC on testnet. `arbiter_id` decides disputes.
++    /// `token_id` must be Circle USDC on testnet. `creator_pk` is the foundry
++    /// ed25519 key (64 hex chars). `fee_bps` is not a parameter: it is 0.
+     #[init]
+-    pub fn new(token_id: AccountId, arbiter_id: AccountId) -> Self {
++    pub fn new(
++        token_id: AccountId,
++        arbiter_id: AccountId,
++        creator_id: AccountId,
++        creator_pk: String,
++        chain_id: String,
++        min_window_ns: u64,
++    ) -> Self {
+         require!(
+-            token_id.as_str() == CIRCLE_USDC_NEAR_TESTNET,
++            cfg!(feature = "sandbox-token") || token_id.as_str() == CIRCLE_USDC_NEAR_TESTNET,
+             "token_id must be Circle USDC on NEAR testnet"
+         );
+         require!(
+-            arbiter_id.as_str() != token_id.as_str(),
+-            "arbiter must not be the token"
++            arbiter_id != token_id && creator_id != token_id && arbiter_id != creator_id,
++            "token, arbiter, and creator must be distinct"
+         );
++        require!(
++            !chain_id.is_empty() && chain_id.len() <= 32 && !chain_id.contains('|'),
++            "bad chain_id"
++        );
++        require!(min_window_ns > 0 && min_window_ns <= MAX_WINDOW_NS, "bad min window");
++        let creator_pk = decode_fixed::<32>(&creator_pk).unwrap_or_else(|| env::panic_str("bad creator_pk"));
+         Self {
+             token_id,
+             arbiter_id,
++            creator_id,
++            creator_pk,
++            chain_id,
++            min_window_ns,
+             next_id: 1,
+             deals: LookupMap::new(Prefix::Deals),
+             balances: LookupMap::new(Prefix::Balances),
++            used: LookupSet::new(Prefix::Used),
+         }
+     }
+ 
+-    /// NEP-141 receiver. A valid open message locks `price` and returns the
+-    /// rest. Anything we will not lock is returned so the token refunds it.
++    /// Creator key opens an unpaid deal. The payload is the exact signed JSON.
++    /// Windows below `min_window_ns` are refused. `deal_id` in the message is 0.
++    pub fn open(&mut self, payload: String, nonce: String, signature: String) -> u64 {
++        require!(payload.len() <= MAX_PAYLOAD_LEN, "payload too long");
++        let open: OpenPayload =
++            near_sdk::serde_json::from_str(&payload).unwrap_or_else(|_| env::panic_str("bad open payload"));
++        let price: u128 = open.price.parse().unwrap_or_else(|_| env::panic_str("bad price"));
++        require!(price >= MIN_AMOUNT, "amount below the minimum (1 USDC)");
++        self.require_window(open.deliver_ns);
++        self.require_window(open.review_ns);
++        self.require_window(open.dispute_ns);
++        self.require_window(open.fund_ns);
++        let client_pk = decode_fixed::<32>(&open.client_pk).unwrap_or_else(|| env::panic_str("bad client_pk"));
++        require!(client_pk != self.creator_pk, "client key and creator key must differ");
++        self.check_sig(0, "open", &nonce, &payload, &signature, &self.creator_pk);
++        self.commit_nonce(0, "open", &nonce);
++        let id = self.next_id;
++        self.next_id += 1;
++        let now = env::block_timestamp();
++        self.deals.insert(
++            id,
++            Deal {
++                id,
++                client: None,
++                client_pk,
++                price,
++                state: DealState::Created,
++                fund_by_ns: now.saturating_add(open.fund_ns),
++                deliver_ns: open.deliver_ns,
++                review_ns: open.review_ns,
++                dispute_ns: open.dispute_ns,
++                deliver_by_ns: None,
++                review_ends_ns: None,
++                dispute_ends_ns: None,
++                deliverable_hash: None,
++            },
++        );
++        env::log_str(&format!("escrow:opened|id={id}|price={price}"));
++        id
++    }
++
++    /// NEP-141 receiver. `msg` is `{"deal_id":N}`. Windows are not read from
++    /// the payer. Anything we will not lock is returned so the token refunds it.
+     pub fn ft_on_transfer(
+         &mut self,
+         sender_id: AccountId,
+@@ -142,73 +243,73 @@ impl Escrow {
+         if env::predecessor_account_id() != self.token_id {
+             return PromiseOrValue::Value(amount);
+         }
+-        let Some(open) = parse_open(&msg) else {
++        if amount.0 < MIN_AMOUNT {
++            return PromiseOrValue::Value(amount);
++        }
++        let Some(deal_id) = parse_fund_msg(&msg) else {
+             return PromiseOrValue::Value(amount);
+         };
+-        if open.creator == sender_id || open.price == 0 || amount.0 < open.price {
++        let Some(mut deal) = self.deals.get(&deal_id).cloned() else {
+             return PromiseOrValue::Value(amount);
+-        }
+-        if open.deliver_ns == 0
+-            || open.review_ns == 0
+-            || open.deliver_ns > MAX_WINDOW_NS
+-            || open.review_ns > MAX_WINDOW_NS
+-        {
++        };
++        if deal.state != DealState::Created || sender_id == self.creator_id {
+             return PromiseOrValue::Value(amount);
+         }
+-        let id = self.next_id;
+-        self.next_id += 1;
+         let now = env::block_timestamp();
+-        self.deals.insert(
+-            id,
+-            Deal {
+-                id,
+-                client: sender_id,
+-                creator: open.creator,
+-                price: open.price,
+-                state: DealState::Funded,
+-                deliver_by_ns: now.saturating_add(open.deliver_ns),
+-                review_ns: open.review_ns,
+-                review_ends_ns: None,
+-                dispute_ends_ns: None,
+-                deliverable_hash: None,
+-            },
+-        );
+-        env::log_str(&format!("escrow:opened|id={id}|price={}", open.price));
+-        PromiseOrValue::Value(U128(amount.0 - open.price))
++        if now > deal.fund_by_ns || amount.0 < deal.price {
++            return PromiseOrValue::Value(amount);
++        }
++        deal.client = Some(sender_id);
++        deal.state = DealState::Funded;
++        deal.deliver_by_ns = Some(now.saturating_add(deal.deliver_ns));
++        let price = deal.price;
++        self.deals.insert(deal_id, deal);
++        env::log_str(&format!("escrow:funded|id={deal_id}|price={price}"));
++        PromiseOrValue::Value(U128(amount.0 - price))
+     }
+ 
+-    /// Creator marks the work done, before the delivery deadline.
+-    pub fn deliver(&mut self, deal_id: u64, deliverable_hash: String) {
++    /// Anyone, after the funding window, if the deal was never paid.
++    pub fn close_unpaid(&mut self, deal_id: u64) {
+         let mut deal = self.deal_or_panic(deal_id);
++        require!(deal.state == DealState::Created, "deal must be unpaid");
+         require!(
+-            env::predecessor_account_id() == deal.creator,
+-            "only the creator delivers"
++            env::block_timestamp() > deal.fund_by_ns,
++            "the funding window is not over yet"
+         );
++        deal.state = DealState::Expired;
++        self.deals.insert(deal_id, deal);
++    }
++
++    /// Creator key, before the delivery deadline. `payload` is the hash.
++    pub fn deliver(&mut self, deal_id: u64, nonce: String, payload: String, signature: String) {
++        let mut deal = self.deal_or_panic(deal_id);
+         require!(deal.state == DealState::Funded, "deal is not funded");
+         let now = env::block_timestamp();
+-        require!(now <= deal.deliver_by_ns, "delivery deadline has passed");
+         require!(
+-            !deliverable_hash.is_empty() && deliverable_hash.len() <= MAX_HASH_LEN,
++            now <= deal.deliver_by_ns.unwrap_or(0),
++            "delivery deadline has passed"
++        );
++        require!(
++            !payload.is_empty() && payload.len() <= MAX_HASH_LEN,
+             "bad deliverable_hash"
+         );
++        self.check_sig(deal_id, "deliver", &nonce, &payload, &signature, &self.creator_pk);
++        self.commit_nonce(deal_id, "deliver", &nonce);
+         deal.state = DealState::Delivered;
+-        deal.deliverable_hash = Some(deliverable_hash);
++        deal.deliverable_hash = Some(payload);
+         deal.review_ends_ns = Some(now.saturating_add(deal.review_ns));
+         self.deals.insert(deal_id, deal);
+     }
+ 
+-    /// Client confirms the work. The price becomes withdrawable by the creator.
+-    pub fn accept(&mut self, deal_id: u64) {
++    /// Client key, during review. The price becomes withdrawable by the creator.
++    pub fn accept(&mut self, deal_id: u64, nonce: String, signature: String) {
+         let mut deal = self.deal_or_panic(deal_id);
+-        require!(
+-            env::predecessor_account_id() == deal.client,
+-            "only the client accepts"
+-        );
+         require!(deal.state == DealState::Delivered, "deal is not delivered");
+         let now = env::block_timestamp();
+-        let ends = deal.review_ends_ns.unwrap_or(0);
+-        require!(now <= ends, "review period is over");
+-        self.credit(&deal.creator, deal.price);
++        require!(now <= deal.review_ends_ns.unwrap_or(0), "review period is over");
++        self.check_sig(deal_id, "accept", &nonce, "", &signature, &deal.client_pk);
++        self.commit_nonce(deal_id, "accept", &nonce);
++        self.credit(&self.creator_id.clone(), deal.price);
+         deal.state = DealState::Released;
+         self.deals.insert(deal_id, deal);
+     }
+@@ -218,42 +319,65 @@ impl Escrow {
+         let mut deal = self.deal_or_panic(deal_id);
+         require!(deal.state == DealState::Delivered, "deal is not delivered");
+         let ends = deal.review_ends_ns.unwrap_or(u64::MAX);
+-        require!(
+-            env::block_timestamp() > ends,
+-            "review period is not over yet"
+-        );
+-        self.credit(&deal.creator, deal.price);
++        require!(env::block_timestamp() > ends, "review period is not over yet");
++        self.credit(&self.creator_id.clone(), deal.price);
+         deal.state = DealState::Released;
+         self.deals.insert(deal_id, deal);
+     }
+ 
+-    /// Client, during review. Stops the auto-release.
+-    pub fn dispute(&mut self, deal_id: u64) {
++    /// Client key, during review. Stops the auto-release.
++    pub fn dispute(&mut self, deal_id: u64, nonce: String, signature: String) {
+         let mut deal = self.deal_or_panic(deal_id);
+-        require!(
+-            env::predecessor_account_id() == deal.client,
+-            "only the client disputes"
+-        );
+         require!(deal.state == DealState::Delivered, "deal is not delivered");
+         let now = env::block_timestamp();
+-        let ends = deal.review_ends_ns.unwrap_or(0);
+-        require!(now <= ends, "review period is over");
++        require!(now <= deal.review_ends_ns.unwrap_or(0), "review period is over");
++        self.check_sig(deal_id, "dispute", &nonce, "", &signature, &deal.client_pk);
++        self.commit_nonce(deal_id, "dispute", &nonce);
+         deal.state = DealState::Disputed;
+-        deal.dispute_ends_ns = Some(now.saturating_add(deal.review_ns));
++        deal.dispute_ends_ns = Some(now.saturating_add(deal.dispute_ns));
++        self.deals.insert(deal_id, deal);
++    }
++
++    /// Both keys sign `split_bps` as a decimal string. Allowed only while the
++    /// current timer is still running. Fee is 0, so the split is the whole price.
++    pub fn settle(
++        &mut self,
++        deal_id: u64,
++        nonce: String,
++        split_bps: u16,
++        creator_signature: String,
++        client_signature: String,
++    ) {
++        require!(u128::from(split_bps) <= MAX_BPS, "split_bps must be <= 10000");
++        let mut deal = self.deal_or_panic(deal_id);
++        let now = env::block_timestamp();
++        match deal.state {
++            DealState::Funded => require!(
++                now <= deal.deliver_by_ns.unwrap_or(0),
++                "the deal timer is over"
++            ),
++            DealState::Delivered => require!(
++                now <= deal.review_ends_ns.unwrap_or(0),
++                "the deal timer is over"
++            ),
++            DealState::Disputed => require!(
++                now <= deal.dispute_ends_ns.unwrap_or(0),
++                "the deal timer is over"
++            ),
++            _ => env::panic_str("settle: deal must be Funded, Delivered or Disputed"),
++        }
++        let payload = split_bps.to_string();
++        self.check_sig(deal_id, "settle", &nonce, &payload, &creator_signature, &self.creator_pk);
++        self.check_sig(deal_id, "settle", &nonce, &payload, &client_signature, &deal.client_pk);
++        self.commit_nonce(deal_id, "settle", &nonce);
++        self.split(&mut deal, u128::from(split_bps));
+         self.deals.insert(deal_id, deal);
+     }
+ 
+     /// Arbiter, while the dispute window is open. `creator_bps` is 0..=10000.
+-    /// The client receives the rest.
+     pub fn resolve_dispute(&mut self, deal_id: u64, creator_bps: u16) {
+-        require!(
+-            env::predecessor_account_id() == self.arbiter_id,
+-            "only the arbiter"
+-        );
+-        require!(
+-            u128::from(creator_bps) <= MAX_BPS,
+-            "creator_bps must be <= 10000"
+-        );
++        require!(env::predecessor_account_id() == self.arbiter_id, "only the arbiter");
++        require!(u128::from(creator_bps) <= MAX_BPS, "creator_bps must be <= 10000");
+         let mut deal = self.deal_or_panic(deal_id);
+         require!(deal.state == DealState::Disputed, "deal is not disputed");
+         let ends = deal.dispute_ends_ns.unwrap_or(0);
+@@ -270,33 +394,30 @@ impl Escrow {
+         let mut deal = self.deal_or_panic(deal_id);
+         require!(deal.state == DealState::Disputed, "deal is not disputed");
+         let ends = deal.dispute_ends_ns.unwrap_or(u64::MAX);
+-        require!(
+-            env::block_timestamp() > ends,
+-            "dispute period is not over yet"
+-        );
++        require!(env::block_timestamp() > ends, "dispute period is not over yet");
+         self.split(&mut deal, TIMEOUT_SPLIT_BPS);
+         self.deals.insert(deal_id, deal);
+     }
+ 
+-    /// Client, after the delivery deadline, if nothing was delivered.
++    /// Client account, after the delivery deadline, if nothing was delivered.
+     pub fn refund_late(&mut self, deal_id: u64) {
+         let mut deal = self.deal_or_panic(deal_id);
+-        require!(
+-            env::predecessor_account_id() == deal.client,
+-            "only the client refunds"
+-        );
++        let client = deal.client.clone().unwrap_or_else(|| env::panic_str("unfunded"));
++        require!(env::predecessor_account_id() == client, "only the client refunds");
+         require!(deal.state == DealState::Funded, "deal is not still funded");
+         require!(
+-            env::block_timestamp() > deal.deliver_by_ns,
++            env::block_timestamp() > deal.deliver_by_ns.unwrap_or(u64::MAX),
+             "delivery deadline has not passed"
+         );
+-        self.credit(&deal.client, deal.price);
++        self.credit(&client, deal.price);
+         deal.state = DealState::Refunded;
+         self.deals.insert(deal_id, deal);
+     }
+ 
+-    /// Pay the caller's withdrawable balance out through `ft_transfer`.
++    /// Pay the caller's balance out. On a failed `ft_transfer` the callback
++    /// writes the amount back. Attach at least 80 TGas so the callback can run.
+     pub fn withdraw(&mut self) -> Promise {
++        require!(env::prepaid_gas() >= MIN_GAS_WITHDRAW, "attach at least 80 TGas");
+         let caller = env::predecessor_account_id();
+         let amount = self.balances.get(&caller).copied().unwrap_or(0);
+         require!(amount > 0, "nothing to withdraw");
+@@ -304,7 +425,20 @@ impl Escrow {
+         ext_ft::ext(self.token_id.clone())
+             .with_attached_deposit(ONE_YOCTO)
+             .with_static_gas(GAS_FT_TRANSFER)
+-            .ft_transfer(caller, U128(amount), Some("escrow withdraw".to_string()))
++            .ft_transfer(caller.clone(), U128(amount), Some("escrow withdraw".to_string()))
++            .then(
++                Self::ext(env::current_account_id())
++                    .with_static_gas(GAS_ON_WITHDRAW)
++                    .on_withdraw_resolve(caller, U128(amount)),
++            )
++    }
++
++    /// Restores `amount` when the transfer receipt did not succeed.
++    #[private]
++    pub fn on_withdraw_resolve(&mut self, account_id: AccountId, amount: U128) {
++        if !matches!(env::promise_result(0), PromiseResult::Successful(_)) {
++            self.credit(&account_id, amount.0);
++        }
+     }
+ 
+     pub fn get_deal(&self, deal_id: u64) -> Option<Deal> {
+@@ -318,6 +452,22 @@ impl Escrow {
+     pub fn get_token_id(&self) -> AccountId {
+         self.token_id.clone()
+     }
++
++    pub fn get_creator_pk(&self) -> String {
++        hex_encode(&self.creator_pk)
++    }
++
++    pub fn get_chain_id(&self) -> String {
++        self.chain_id.clone()
++    }
++
++    pub fn get_fee_bps(&self) -> u16 {
++        FEE_BPS
++    }
++
++    pub fn get_min_window_ns(&self) -> u64 {
++        self.min_window_ns
++    }
+ }
+ 
+ #[near_sdk::ext_contract(ext_ft)]
+@@ -326,49 +476,106 @@ trait FungibleToken {
+     fn ft_transfer(&mut self, receiver_id: AccountId, amount: U128, memo: Option<String>);
+ }
+ 
+-struct Open {
+-    creator: AccountId,
+-    price: u128,
+-    deliver_ns: u64,
+-    review_ns: u64,
++fn parse_fund_msg(msg: &str) -> Option<u64> {
++    let parsed: FundMsg = near_sdk::serde_json::from_str(msg).ok()?;
++    Some(parsed.deal_id)
++}
++
++fn decode_fixed<const N: usize>(hex_str: &str) -> Option<[u8; N]> {
++    if hex_str.len() != N * 2 {
++        return None;
++    }
++    let bytes = hex_str.as_bytes();
++    let mut out = [0u8; N];
++    for i in 0..N {
++        let hi = hex_nibble(bytes[i * 2])?;
++        let lo = hex_nibble(bytes[i * 2 + 1])?;
++        out[i] = (hi << 4) | lo;
++    }
++    Some(out)
+ }
+ 
+-fn parse_open(msg: &str) -> Option<Open> {
+-    let parsed: OpenMsg = near_sdk::serde_json::from_str(msg).ok()?;
+-    Some(Open {
+-        creator: parsed.creator,
+-        price: parsed.price.0,
+-        deliver_ns: parsed.deliver_ns.get()?,
+-        review_ns: parsed.review_ns.get()?,
+-    })
++fn hex_nibble(byte: u8) -> Option<u8> {
++    match byte {
++        b'0'..=b'9' => Some(byte - b'0'),
++        b'a'..=b'f' => Some(byte - b'a' + 10),
++        b'A'..=b'F' => Some(byte - b'A' + 10),
++        _ => None,
++    }
++}
++
++fn hex_encode(bytes: &[u8]) -> String {
++    const HEX: &[u8; 16] = b"0123456789abcdef";
++    let mut out = String::with_capacity(bytes.len() * 2);
++    for byte in bytes {
++        out.push(HEX[(byte >> 4) as usize] as char);
++        out.push(HEX[(byte & 0x0f) as usize] as char);
++    }
++    out
+ }
+ 
+ impl Escrow {
++    fn require_window(&self, window: u64) {
++        require!(
++            window >= self.min_window_ns && window <= MAX_WINDOW_NS,
++            "window is outside the on-chain bounds"
++        );
++    }
++
+     fn deal_or_panic(&self, deal_id: u64) -> Deal {
+-        self.deals
+-            .get(&deal_id)
+-            .cloned()
+-            .unwrap_or_else(|| env::panic_str("unknown deal"))
++        self.deals.get(&deal_id).cloned().unwrap_or_else(|| env::panic_str("unknown deal"))
++    }
++
++    fn check_sig(
++        &self,
++        deal_id: u64,
++        action: &str,
++        nonce: &str,
++        payload: &str,
++        signature_hex: &str,
++        public_key: &[u8; 32],
++    ) {
++        require!(
++            (16..=64).contains(&nonce.len()) && nonce.bytes().all(|b| b.is_ascii_alphanumeric()),
++            "bad nonce"
++        );
++        let message = signed_message(
++            &self.chain_id,
++            env::current_account_id().as_str(),
++            deal_id,
++            action,
++            nonce,
++            payload,
++        );
++        let signature = decode_fixed::<64>(signature_hex).unwrap_or_else(|| env::panic_str("bad signature"));
++        require!(
++            env::ed25519_verify(&signature, message.as_bytes(), public_key),
++            "invalid signature"
++        );
++    }
++
++    fn commit_nonce(&mut self, deal_id: u64, action: &str, nonce: &str) {
++        let key = format!("{deal_id}|{action}|{nonce}");
++        require!(self.used.insert(key), "replayed signature");
+     }
+ 
+     fn credit(&mut self, account: &AccountId, amount: u128) {
+-        let next = self
+-            .balances
+-            .get(account)
+-            .copied()
+-            .unwrap_or(0)
+-            .saturating_add(amount);
++        let next = self.balances.get(account).copied().unwrap_or(0).saturating_add(amount);
+         self.balances.insert(account.clone(), next);
+     }
+ 
+     fn split(&mut self, deal: &mut Deal, creator_bps: u128) {
++        // FEE_BPS is 0, so the creator's share is not reduced.
++        let _fee = FEE_BPS;
+         let to_creator = deal.price * creator_bps / MAX_BPS;
+         let to_client = deal.price - to_creator;
+         if to_creator > 0 {
+-            self.credit(&deal.creator, to_creator);
++            self.credit(&self.creator_id.clone(), to_creator);
+         }
+-        if to_client > 0 {
+-            self.credit(&deal.client, to_client);
++        if let Some(client) = deal.client.clone() {
++            if to_client > 0 {
++                self.credit(&client, to_client);
++            }
+         }
+         deal.state = DealState::Released;
+     }
+@@ -377,13 +584,34 @@ impl Escrow {
+ #[cfg(test)]
+ mod tests {
+     use super::*;
++    use ed25519_dalek::{Signer, SigningKey};
+     use near_sdk::test_utils::VMContextBuilder;
+-    use near_sdk::testing_env;
++    use near_sdk::{test_vm_config, testing_env, RuntimeFeesConfig};
++    use std::panic::{catch_unwind, AssertUnwindSafe};
++
++    const PRICE: u128 = 1_000_000;
++    const WINDOW: u64 = 1_000;
++
++    struct Key {
++        secret: [u8; 32],
++        public_hex: String,
++    }
++
++    fn key(fill: u8) -> Key {
++        let secret = [fill; 32];
++        let signing = SigningKey::from_bytes(&secret);
++        Key { secret, public_hex: hex_encode(&signing.verifying_key().to_bytes()) }
++    }
++
++    fn sign(key: &Key, message: &str) -> String {
++        let signing = SigningKey::from_bytes(&key.secret);
++        hex_encode(&signing.sign(message.as_bytes()).to_bytes())
++    }
+ 
+     fn token() -> AccountId {
+         CIRCLE_USDC_NEAR_TESTNET.parse().unwrap()
+     }
+-    fn escrow() -> AccountId {
++    fn escrow_id() -> AccountId {
+         "escrow.testnet".parse().unwrap()
+     }
+     fn client() -> AccountId {
+@@ -398,183 +626,386 @@ mod tests {
+ 
+     fn set_caller(predecessor: AccountId, now: u64) {
+         let ctx = VMContextBuilder::new()
+-            .current_account_id(escrow())
++            .current_account_id(escrow_id())
+             .predecessor_account_id(predecessor.clone())
+             .signer_account_id(predecessor)
+             .block_timestamp(now)
+             .account_balance(NearToken::from_near(50))
++            .prepaid_gas(Gas::from_tgas(300))
+             .build();
+         testing_env!(ctx);
+     }
+ 
++    fn set_callback(now: u64, result: PromiseResult) {
++        let ctx = VMContextBuilder::new()
++            .current_account_id(escrow_id())
++            .predecessor_account_id(escrow_id())
++            .block_timestamp(now)
++            .prepaid_gas(Gas::from_tgas(300))
++            .build();
++        testing_env!(ctx, test_vm_config(), RuntimeFeesConfig::test(), Default::default(), vec![result]);
++    }
++
+     fn contract() -> Escrow {
+         set_caller(arbiter(), 0);
+-        Escrow::new(token(), arbiter())
++        Escrow::new(token(), arbiter(), creator(), key(1).public_hex, "testnet".into(), WINDOW)
++    }
++
++    fn message(deal_id: u64, action: &str, nonce: &str, payload: &str) -> String {
++        signed_message("testnet", escrow_id().as_str(), deal_id, action, nonce, payload)
+     }
+ 
+-    fn open_msg(price: u128) -> String {
++    fn open_payload(client_key: &Key, price: u128) -> String {
+         format!(
+-            r#"{{"creator":"{}","price":"{}","deliver_ns":"1000","review_ns":"1000"}}"#,
+-            creator(),
+-            price
++            r#"{{"client_pk":"{}","price":"{price}","deliver_ns":{WINDOW},"review_ns":{WINDOW},"dispute_ns":{WINDOW},"fund_ns":{WINDOW}}}"#,
++            client_key.public_hex
+         )
+     }
+ 
+-    fn fund(escrow: &mut Escrow, amount: u128, msg: &str) -> u128 {
+-        set_caller(token(), 0);
++    fn open_deal(escrow: &mut Escrow, payload: &str, nonce: &str) -> u64 {
++        let creator_key = key(1);
++        let signature = sign(&creator_key, &message(0, "open", nonce, payload));
++        set_caller(creator(), 0);
++        escrow.open(payload.to_string(), nonce.to_string(), signature)
++    }
++
++    fn fund(escrow: &mut Escrow, deal_id: u64, amount: u128, now: u64) -> u128 {
++        set_caller(token(), now);
+         let PromiseOrValue::Value(refund) =
+-            escrow.ft_on_transfer(client(), U128(amount), msg.to_string())
++            escrow.ft_on_transfer(client(), U128(amount), format!(r#"{{"deal_id":{deal_id}}}"#))
+         else {
+             panic!("refund must be a value, not a promise");
+         };
+         refund.0
+     }
+ 
++    fn deliver(escrow: &mut Escrow, deal_id: u64, now: u64, nonce: &str) {
++        let payload = "hash-1";
++        let signature = sign(&key(1), &message(deal_id, "deliver", nonce, payload));
++        set_caller("relayer.testnet".parse().unwrap(), now);
++        escrow.deliver(deal_id, nonce.to_string(), payload.to_string(), signature);
++    }
++
++    fn accept(escrow: &mut Escrow, deal_id: u64, now: u64, nonce: &str) {
++        let signature = sign(&key(2), &message(deal_id, "accept", nonce, ""));
++        set_caller("relayer.testnet".parse().unwrap(), now);
++        escrow.accept(deal_id, nonce.to_string(), signature);
++    }
++
+     #[test]
+     fn init_rejects_a_token_that_is_not_circle_testnet_usdc() {
+         set_caller(arbiter(), 0);
+-        let caught = std::panic::catch_unwind(|| {
+-            Escrow::new("usdc.fakes.testnet".parse().unwrap(), arbiter());
++        let caught = catch_unwind(|| {
++            Escrow::new(
++                "usdc.fakes.testnet".parse().unwrap(),
++                arbiter(),
++                creator(),
++                key(1).public_hex,
++                "testnet".into(),
++                WINDOW,
++            );
+         });
+         assert!(caught.is_err());
+     }
+ 
+     #[test]
+-    fn bad_msg_is_refunded_in_full() {
++    fn fee_bps_is_zero_and_creator_pk_is_bound() {
++        let escrow = contract();
++        assert_eq!(escrow.get_fee_bps(), 0);
++        assert_eq!(escrow.get_chain_id(), "testnet");
++        assert_eq!(escrow.get_creator_pk(), key(1).public_hex);
++        assert_eq!(escrow.get_min_window_ns(), WINDOW);
++    }
++
++    #[test]
++    fn bad_msg_refunds_full_amount() {
+         let mut escrow = contract();
+-        let refund = fund(&mut escrow, 50_000, "not-json");
+-        assert_eq!(refund, 50_000);
+-        assert!(escrow.get_deal(1).is_none());
++        let payload = open_payload(&key(2), PRICE);
++        open_deal(&mut escrow, &payload, "nonceopen00000001");
++        set_caller(token(), 1);
++        let PromiseOrValue::Value(refund) =
++            escrow.ft_on_transfer(client(), U128(PRICE), "not-json".to_string())
++        else {
++            panic!("value");
++        };
++        assert_eq!(refund.0, PRICE);
++        assert_eq!(escrow.get_deal(1).unwrap().state, DealState::Created);
+     }
+ 
+     #[test]
+-    fn wrong_token_is_refunded_in_full() {
++    fn wrong_token_refunds() {
+         let mut escrow = contract();
+         set_caller("other.token.testnet".parse().unwrap(), 0);
+         let PromiseOrValue::Value(refund) =
+-            escrow.ft_on_transfer(client(), U128(50_000), open_msg(50_000))
++            escrow.ft_on_transfer(client(), U128(PRICE), r#"{"deal_id":1}"#.to_string())
+         else {
+             panic!("value");
+         };
+-        assert_eq!(refund.0, 50_000);
+-        assert!(escrow.get_deal(1).is_none());
++        assert_eq!(refund.0, PRICE);
+     }
+ 
+     #[test]
+-    fn underpay_is_refunded_and_overpay_returns_only_the_unused_amount() {
++    fn below_min_amount_rejected() {
+         let mut escrow = contract();
+-        let under = fund(&mut escrow, 40_000, &open_msg(50_000));
+-        assert_eq!(under, 40_000);
+-        assert!(escrow.get_deal(1).is_none());
++        let payload = open_payload(&key(2), PRICE);
++        open_deal(&mut escrow, &payload, "nonceopen00000001");
++        let refund = fund(&mut escrow, 1, 999_999, 1);
++        assert_eq!(refund, 999_999);
++        assert_eq!(escrow.get_deal(1).unwrap().state, DealState::Created);
++    }
+ 
+-        let unused = fund(&mut escrow, 80_000, &open_msg(50_000));
+-        assert_eq!(unused, 30_000);
++    #[test]
++    fn underpay_is_refunded_and_overpay_returns_only_the_unused_amount() {
++        let mut escrow = contract();
++        let payload = open_payload(&key(2), PRICE + 1);
++        open_deal(&mut escrow, &payload, "nonceopen00000001");
++        let under = fund(&mut escrow, 1, PRICE, 1);
++        assert_eq!(under, PRICE);
++        assert_eq!(escrow.get_deal(1).unwrap().state, DealState::Created);
++
++        let unused = fund(&mut escrow, 1, PRICE + 50, 1);
++        assert_eq!(unused, 49);
+         let deal = escrow.get_deal(1).unwrap();
+-        assert_eq!(deal.price, 50_000);
++        assert_eq!(deal.price, PRICE + 1);
+         assert_eq!(deal.state, DealState::Funded);
+-        assert_eq!(deal.client, client());
+-        assert_eq!(deal.creator, creator());
++        assert_eq!(deal.client, Some(client()));
+     }
+ 
+     #[test]
+-    fn accept_after_deliver_credits_the_creator() {
++    fn a_one_nanosecond_window_is_refused() {
++        let escrow = contract();
++        let mut bad = open_payload(&key(2), PRICE);
++        bad = bad.replace(r#""deliver_ns":1000"#, r#""deliver_ns":1"#);
++        let signature = sign(&key(1), &message(0, "open", "nonceopen00000001", &bad));
++        set_caller(creator(), 0);
++        let mut escrow = escrow;
++        let refused = catch_unwind(AssertUnwindSafe(|| {
++            escrow.open(bad, "nonceopen00000001".to_string(), signature);
++        }));
++        assert!(refused.is_err());
++        assert!(escrow.get_deal(1).is_none());
++    }
++
++    #[test]
++    fn close_unpaid_after_the_funding_window() {
+         let mut escrow = contract();
+-        fund(&mut escrow, 50_000, &open_msg(50_000));
+-        set_caller(creator(), 10);
+-        escrow.deliver(1, "hash-1".to_string());
+-        set_caller(client(), 20);
+-        escrow.accept(1);
++        let payload = open_payload(&key(2), PRICE);
++        open_deal(&mut escrow, &payload, "nonceopen00000001");
++        set_caller("anyone.testnet".parse().unwrap(), WINDOW);
++        let early = catch_unwind(AssertUnwindSafe(|| escrow.close_unpaid(1)));
++        assert!(early.is_err());
++        set_caller("anyone.testnet".parse().unwrap(), WINDOW + 1);
++        escrow.close_unpaid(1);
++        assert_eq!(escrow.get_deal(1).unwrap().state, DealState::Expired);
++        let late = fund(&mut escrow, 1, PRICE, WINDOW + 2);
++        assert_eq!(late, PRICE);
++    }
++
++    #[test]
++    fn a_signature_for_another_chain_or_a_replayed_nonce_fails() {
++        let mut escrow = contract();
++        let payload = open_payload(&key(2), PRICE);
++        let nonce = "nonceopen00000001";
++        let foreign = signed_message("mainnet", escrow_id().as_str(), 0, "open", nonce, &payload);
++        let signature = sign(&key(1), &foreign);
++        set_caller(creator(), 0);
++        let rejected = catch_unwind(AssertUnwindSafe(|| {
++            escrow.open(payload.clone(), nonce.to_string(), signature);
++        }));
++        assert!(rejected.is_err());
++
++        open_deal(&mut escrow, &payload, nonce);
++        let again = sign(&key(1), &message(0, "open", nonce, &payload));
++        set_caller(creator(), 0);
++        let replay = catch_unwind(AssertUnwindSafe(|| {
++            escrow.open(payload, nonce.to_string(), again);
++        }));
++        assert!(replay.is_err());
++        assert!(escrow.get_deal(2).is_none());
++    }
++
++    #[test]
++    fn deal_release_on_client_accept() {
++        let mut escrow = contract();
++        let payload = open_payload(&key(2), PRICE);
++        open_deal(&mut escrow, &payload, "nonceopen00000001");
++        fund(&mut escrow, 1, PRICE, 1);
++        deliver(&mut escrow, 1, 10, "noncedeliver000001");
++        accept(&mut escrow, 1, 20, "nonceaccept0000001");
+         assert_eq!(escrow.get_deal(1).unwrap().state, DealState::Released);
+-        assert_eq!(escrow.get_balance(creator()).0, 50_000);
++        assert_eq!(escrow.get_balance(creator()).0, PRICE);
+         assert_eq!(escrow.get_balance(client()).0, 0);
++        assert_eq!(escrow.get_fee_bps(), 0);
+     }
+ 
+     #[test]
+     fn client_cannot_accept_before_delivery() {
+         let mut escrow = contract();
+-        fund(&mut escrow, 50_000, &open_msg(50_000));
++        let payload = open_payload(&key(2), PRICE);
++        open_deal(&mut escrow, &payload, "nonceopen00000001");
++        fund(&mut escrow, 1, PRICE, 1);
++        let signature = sign(&key(2), &message(1, "accept", "nonceaccept0000001", ""));
+         set_caller(client(), 10);
+-        let panicked = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+-            escrow.accept(1);
++        let panicked = catch_unwind(AssertUnwindSafe(|| {
++            escrow.accept(1, "nonceaccept0000001".to_string(), signature);
+         }));
+         assert!(panicked.is_err());
+         assert_eq!(escrow.get_deal(1).unwrap().state, DealState::Funded);
+     }
+ 
+     #[test]
+-    fn review_timeout_pays_the_creator_and_dispute_blocks_it() {
++    fn deal_release_after_review_timeout() {
+         let mut escrow = contract();
+-        fund(&mut escrow, 50_000, &open_msg(50_000));
+-        set_caller(creator(), 10);
+-        escrow.deliver(1, "hash-1".to_string());
+-        set_caller(client(), 2_000);
++        let payload = open_payload(&key(2), PRICE);
++        open_deal(&mut escrow, &payload, "nonceopen00000001");
++        fund(&mut escrow, 1, PRICE, 1);
++        deliver(&mut escrow, 1, 10, "noncedeliver000001");
++        set_caller("anyone.testnet".parse().unwrap(), 10 + WINDOW);
++        let edge = catch_unwind(AssertUnwindSafe(|| escrow.release_after_timeout(1)));
++        assert!(edge.is_err());
++        set_caller("anyone.testnet".parse().unwrap(), 10 + WINDOW + 1);
+         escrow.release_after_timeout(1);
+-        assert_eq!(escrow.get_balance(creator()).0, 50_000);
++        assert_eq!(escrow.get_balance(creator()).0, PRICE);
++    }
+ 
++    #[test]
++    fn dispute_blocks_the_timeout_release() {
+         let mut escrow = contract();
+-        fund(&mut escrow, 50_000, &open_msg(50_000));
+-        set_caller(creator(), 10);
+-        escrow.deliver(1, "hash-1".to_string());
++        let payload = open_payload(&key(2), PRICE);
++        open_deal(&mut escrow, &payload, "nonceopen00000001");
++        fund(&mut escrow, 1, PRICE, 1);
++        deliver(&mut escrow, 1, 10, "noncedeliver000001");
++        let signature = sign(&key(2), &message(1, "dispute", "noncedispute000001", ""));
+         set_caller(client(), 20);
+-        escrow.dispute(1);
++        escrow.dispute(1, "noncedispute000001".to_string(), signature);
+         set_caller("anyone.testnet".parse().unwrap(), 5_000);
+-        let blocked = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+-            escrow.release_after_timeout(1);
+-        }));
++        let blocked = catch_unwind(AssertUnwindSafe(|| escrow.release_after_timeout(1)));
+         assert!(blocked.is_err());
+         assert_eq!(escrow.get_deal(1).unwrap().state, DealState::Disputed);
+     }
+ 
+     #[test]
+-    fn arbiter_split_and_timeout_half() {
++    fn dispute_resolved_by_arbiter() {
+         let mut escrow = contract();
+-        fund(&mut escrow, 100, &open_msg(100));
+-        set_caller(creator(), 10);
+-        escrow.deliver(1, "hash-1".to_string());
++        let payload = open_payload(&key(2), PRICE);
++        open_deal(&mut escrow, &payload, "nonceopen00000001");
++        fund(&mut escrow, 1, PRICE, 1);
++        deliver(&mut escrow, 1, 10, "noncedeliver000001");
++        let signature = sign(&key(2), &message(1, "dispute", "noncedispute000001", ""));
+         set_caller(client(), 20);
+-        escrow.dispute(1);
+-        set_caller(arbiter(), 30);
++        escrow.dispute(1, "noncedispute000001".to_string(), signature);
++        let ends = escrow.get_deal(1).unwrap().dispute_ends_ns.unwrap();
++        set_caller(arbiter(), ends);
+         escrow.resolve_dispute(1, 7_000);
+-        assert_eq!(escrow.get_balance(creator()).0, 70);
+-        assert_eq!(escrow.get_balance(client()).0, 30);
++        assert_eq!(escrow.get_balance(creator()).0, 700_000);
++        assert_eq!(escrow.get_balance(client()).0, 300_000);
++    }
+ 
++    #[test]
++    fn dispute_timeout_splits_50_50() {
+         let mut escrow = contract();
+-        fund(&mut escrow, 101, &open_msg(101));
+-        set_caller(creator(), 10);
+-        escrow.deliver(1, "hash-1".to_string());
++        let payload = open_payload(&key(2), 1_000_001);
++        open_deal(&mut escrow, &payload, "nonceopen00000001");
++        fund(&mut escrow, 1, 1_000_001, 1);
++        deliver(&mut escrow, 1, 10, "noncedeliver000001");
++        let signature = sign(&key(2), &message(1, "dispute", "noncedispute000001", ""));
+         set_caller(client(), 20);
+-        escrow.dispute(1);
+-        set_caller("anyone.testnet".parse().unwrap(), 2_000);
++        escrow.dispute(1, "noncedispute000001".to_string(), signature);
++        let ends = escrow.get_deal(1).unwrap().dispute_ends_ns.unwrap();
++        set_caller("anyone.testnet".parse().unwrap(), ends);
++        let early = catch_unwind(AssertUnwindSafe(|| escrow.resolve_dispute_timeout(1)));
++        assert!(early.is_err());
++        set_caller("anyone.testnet".parse().unwrap(), ends + 1);
+         escrow.resolve_dispute_timeout(1);
+-        // 50/50, odd unit stays with the client.
+-        assert_eq!(escrow.get_balance(creator()).0, 50);
+-        assert_eq!(escrow.get_balance(client()).0, 51);
++        assert_eq!(escrow.get_balance(creator()).0, 500_000);
++        assert_eq!(escrow.get_balance(client()).0, 500_001);
+     }
+ 
+     #[test]
+     fn only_the_arbiter_resolves_a_dispute() {
+         let mut escrow = contract();
+-        fund(&mut escrow, 100, &open_msg(100));
+-        set_caller(creator(), 10);
+-        escrow.deliver(1, "hash-1".to_string());
++        let payload = open_payload(&key(2), PRICE);
++        open_deal(&mut escrow, &payload, "nonceopen00000001");
++        fund(&mut escrow, 1, PRICE, 1);
++        deliver(&mut escrow, 1, 10, "noncedeliver000001");
++        let signature = sign(&key(2), &message(1, "dispute", "noncedispute000001", ""));
+         set_caller(client(), 20);
+-        escrow.dispute(1);
++        escrow.dispute(1, "noncedispute000001".to_string(), signature);
+         set_caller(client(), 30);
+-        let rejected = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+-            escrow.resolve_dispute(1, 10_000);
+-        }));
++        let rejected = catch_unwind(AssertUnwindSafe(|| escrow.resolve_dispute(1, 10_000)));
+         assert!(rejected.is_err());
+         assert_eq!(escrow.get_deal(1).unwrap().state, DealState::Disputed);
+         assert_eq!(escrow.get_balance(creator()).0, 0);
+     }
+ 
++    #[test]
++    fn settle_pays_the_signed_split_and_cannot_be_replayed() {
++        let mut escrow = contract();
++        let payload = open_payload(&key(2), PRICE);
++        open_deal(&mut escrow, &payload, "nonceopen00000001");
++        fund(&mut escrow, 1, PRICE, 1);
++        let nonce = "noncesettle0000001";
++        let body = "4000";
++        let creator_sig = sign(&key(1), &message(1, "settle", nonce, body));
++        let client_sig = sign(&key(2), &message(1, "settle", nonce, body));
++        set_caller("anyone.testnet".parse().unwrap(), 10);
++        escrow.settle(1, nonce.to_string(), 4_000, creator_sig.clone(), client_sig.clone());
++        assert_eq!(escrow.get_balance(creator()).0, 400_000);
++        assert_eq!(escrow.get_balance(client()).0, 600_000);
++        assert_eq!(escrow.get_deal(1).unwrap().state, DealState::Released);
++        set_caller("anyone.testnet".parse().unwrap(), 11);
++        let replay = catch_unwind(AssertUnwindSafe(|| {
++            escrow.settle(1, nonce.to_string(), 4_000, creator_sig, client_sig);
++        }));
++        assert!(replay.is_err());
++    }
++
+     #[test]
+     fn late_delivery_refunds_the_client() {
+         let mut escrow = contract();
+-        fund(&mut escrow, 50_000, &open_msg(50_000));
+-        set_caller(client(), 1_001);
++        let payload = open_payload(&key(2), PRICE);
++        open_deal(&mut escrow, &payload, "nonceopen00000001");
++        fund(&mut escrow, 1, PRICE, 1);
++        let deadline = escrow.get_deal(1).unwrap().deliver_by_ns.unwrap();
++        set_caller(client(), deadline);
++        let early = catch_unwind(AssertUnwindSafe(|| escrow.refund_late(1)));
++        assert!(early.is_err());
++        set_caller(client(), deadline + 1);
+         escrow.refund_late(1);
+         assert_eq!(escrow.get_deal(1).unwrap().state, DealState::Refunded);
+-        assert_eq!(escrow.get_balance(client()).0, 50_000);
++        assert_eq!(escrow.get_balance(client()).0, PRICE);
++    }
++
++    #[test]
++    fn deliver_at_the_deadline_is_accepted() {
++        let mut escrow = contract();
++        let payload = open_payload(&key(2), PRICE);
++        open_deal(&mut escrow, &payload, "nonceopen00000001");
++        fund(&mut escrow, 1, PRICE, 1);
++        let deadline = escrow.get_deal(1).unwrap().deliver_by_ns.unwrap();
++        deliver(&mut escrow, 1, deadline, "noncedeliver000001");
++        assert_eq!(escrow.get_deal(1).unwrap().state, DealState::Delivered);
++        let ends = escrow.get_deal(1).unwrap().review_ends_ns.unwrap();
++        accept(&mut escrow, 1, ends, "nonceaccept0000001");
++        assert_eq!(escrow.get_balance(creator()).0, PRICE);
++    }
++
++    #[test]
++    fn failed_withdraw_puts_the_balance_back() {
++        let mut escrow = contract();
++        let payload = open_payload(&key(2), PRICE);
++        open_deal(&mut escrow, &payload, "nonceopen00000001");
++        fund(&mut escrow, 1, PRICE, 1);
++        deliver(&mut escrow, 1, 10, "noncedeliver000001");
++        accept(&mut escrow, 1, 20, "nonceaccept0000001");
++        set_caller(creator(), 30);
++        let _promise = escrow.withdraw();
++        assert_eq!(escrow.get_balance(creator()).0, 0);
++        set_callback(31, PromiseResult::Failed);
++        escrow.on_withdraw_resolve(creator(), U128(PRICE));
++        assert_eq!(escrow.get_balance(creator()).0, PRICE);
++        set_callback(32, PromiseResult::Successful(Vec::new()));
++        escrow.on_withdraw_resolve(creator(), U128(PRICE));
++        assert_eq!(escrow.get_balance(creator()).0, PRICE);
+     }
+ }
+diff --git a/near/escrow/tests/ft/Cargo.lock b/near/escrow/tests/ft/Cargo.lock
+new file mode 100644
+index 0000000..4a5d215
+--- /dev/null
++++ b/near/escrow/tests/ft/Cargo.lock
+@@ -0,0 +1,468 @@
++# This file is automatically @generated by Cargo.
++# It is not intended for manual editing.
++version = 4
++
++[[package]]
++name = "Inflector"
++version = "0.11.4"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "fe438c63458706e03479442743baae6c88256498e6431708f6dfc520a26515d3"
++
++[[package]]
++name = "base64"
++version = "0.22.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
++
++[[package]]
++name = "borsh"
++version = "1.8.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "553c5d846a6ba5150c65e3b1b8ec073bcf1abc20f9b7220de384a4443ea4e20a"
++dependencies = [
++ "borsh-derive",
++ "bytes",
++ "cfg_aliases",
++]
++
++[[package]]
++name = "borsh-derive"
++version = "1.8.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "12cdfe656708a01f89b451a7d36466e6fe6c414de0aa18fc54f864f6f9ca9f56"
++dependencies = [
++ "once_cell",
++ "proc-macro-crate",
++ "proc-macro2",
++ "quote",
++ "syn 3.0.10",
++]
++
++[[package]]
++name = "bs58"
++version = "0.5.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "bf88ba1141d185c399bee5288d850d63b8369520c1eafc32a0430b5b6c287bf4"
++dependencies = [
++ "tinyvec",
++]
++
++[[package]]
++name = "bytes"
++version = "1.12.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "fc652a48c352aef3ea3aed32080501cf3ef6ed5da78602a020c991775b0aff04"
++
++[[package]]
++name = "cfg-if"
++version = "0.1.10"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "4785bdd1c96b2a846b2bd7cc02e86b6b3dbf14e7e53446c4f54c92a361040822"
++
++[[package]]
++name = "cfg_aliases"
++version = "0.2.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "f079e83a288787bcd14a6aea84cee5c87a67c5a3e660c30f557a3d24761b3527"
++
++[[package]]
++name = "clearing-escrow-token"
++version = "0.1.0"
++dependencies = [
++ "near-contract-standards",
++ "near-sdk",
++]
++
++[[package]]
++name = "darling"
++version = "0.20.11"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "fc7f46116c46ff9ab3eb1597a45688b6715c6e628b5c133e288e709a29bcb4ee"
++dependencies = [
++ "darling_core",
++ "darling_macro",
++]
++
++[[package]]
++name = "darling_core"
++version = "0.20.11"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "0d00b9596d185e565c2207a0b01f8bd1a135483d02d9b7b0a54b11da8d53412e"
++dependencies = [
++ "fnv",
++ "ident_case",
++ "proc-macro2",
++ "quote",
++ "syn 2.0.119",
++]
++
++[[package]]
++name = "darling_macro"
++version = "0.20.11"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "fc34b93ccb385b40dc71c6fceac4b2ad23662c7eeb248cf10d529b7e055b6ead"
++dependencies = [
++ "darling_core",
++ "quote",
++ "syn 2.0.119",
++]
++
++[[package]]
++name = "equivalent"
++version = "1.0.3"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "00d174d5400e5e8fd687ad1049e2f578285fa914201b1af7e8b112a4546bd826"
++
++[[package]]
++name = "fnv"
++version = "1.0.7"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "3f9eec918d3f24069decb9af1554cad7c880e2da24a9afd88aca000531ab82c1"
++
++[[package]]
++name = "hashbrown"
++version = "0.17.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "ed5909b6e89a2db4456e54cd5f673791d7eca6732202bbf2a9cc504fe2f9b84a"
++
++[[package]]
++name = "heck"
++version = "0.5.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
++
++[[package]]
++name = "ident_case"
++version = "1.0.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "b9e0384b61958566e926dc50660321d12159025e767c18e043daf26b70104c39"
++
++[[package]]
++name = "indexmap"
++version = "2.14.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "cc4e190f5d26ca7051642629da2c52fc03bde85a03197c99408dcd291734c855"
++dependencies = [
++ "equivalent",
++ "hashbrown",
++]
++
++[[package]]
++name = "itoa"
++version = "1.0.19"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "3bd1574e617a9a6c1f8f8181bd7e841e1f20e4277607ef28945765188d6284d4"
++
++[[package]]
++name = "libc"
++version = "0.2.191"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "65cd87c9a6d60536580b316ad985726104730a5151c99845f2490428ef91240a"
++
++[[package]]
++name = "memchr"
++version = "2.8.3"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "cf8baf1c55e62ffcace7a9f06f4bd9cd3f0c4beb022d3b367256b91b87513d98"
++
++[[package]]
++name = "memory_units"
++version = "0.4.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "8452105ba047068f40ff7093dd1d9da90898e63dd61736462e9cdda6a90ad3c3"
++
++[[package]]
++name = "near-account-id"
++version = "1.1.4"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "975bb8e272af403d97656893f71e095e1b178ccee571b3ec4a193152be0248f5"
++dependencies = [
++ "borsh",
++ "serde",
++]
++
++[[package]]
++name = "near-contract-standards"
++version = "5.7.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "6b8bc68a8c2bac5e44b38e322e41cadeefe33f766993bf067375b63cc860a73b"
++dependencies = [
++ "near-sdk",
++]
++
++[[package]]
++name = "near-gas"
++version = "0.3.7"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "26c6d9abf62601c341659a47bd801b714e9fa1fa18bd3ed5ae8597635680c868"
++dependencies = [
++ "borsh",
++ "serde",
++]
++
++[[package]]
++name = "near-sdk"
++version = "5.7.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "befb9df6da1a6a0b6656388c0db76084867062a87f1cbc066c188a8e360b6463"
++dependencies = [
++ "base64",
++ "borsh",
++ "bs58",
++ "near-account-id",
++ "near-gas",
++ "near-sdk-macros",
++ "near-sys",
++ "near-token",
++ "once_cell",
++ "serde",
++ "serde_json",
++ "wee_alloc",
++]
++
++[[package]]
++name = "near-sdk-macros"
++version = "5.7.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "d080babc80823326f71514e2e7a947d5fec433b93e868bb3899361cecc56f198"
++dependencies = [
++ "Inflector",
++ "darling",
++ "proc-macro2",
++ "quote",
++ "serde",
++ "serde_json",
++ "strum",
++ "strum_macros",
++ "syn 2.0.119",
++]
++
++[[package]]
++name = "near-sys"
++version = "0.2.14"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "6fd93a6d05dd22e6b6409942eae90b08865a496a4979d75dba9b5e1d2538a637"
++
++[[package]]
++name = "near-token"
++version = "0.3.6"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "5a1acd9d19bc586db24cf5e212a8a8113c3d3c4a2c74838a8c26532641bf560f"
++dependencies = [
++ "borsh",
++ "serde",
++]
++
++[[package]]
++name = "once_cell"
++version = "1.21.4"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "9f7c3e4beb33f85d45ae3e3a1792185706c8e16d043238c593331cc7cd313b50"
++
++[[package]]
++name = "proc-macro-crate"
++version = "3.5.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "e67ba7e9b2b56446f1d419b1d807906278ffa1a658a8a5d8a39dcb1f5a78614f"
++dependencies = [
++ "toml_edit",
++]
++
++[[package]]
++name = "proc-macro2"
++version = "1.0.107"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "985e7ec9bb745e6ce6535b544d84d6cd6f7ad8bd711c398938ae983b91a766d9"
++dependencies = [
++ "unicode-ident",
++]
++
++[[package]]
++name = "quote"
++version = "1.0.47"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "1fbf4db142a473a8d80c26bbf18454ed458bf8d26c8219c331daecfdbd079001"
++dependencies = [
++ "proc-macro2",
++]
++
++[[package]]
++name = "rustversion"
++version = "1.0.23"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "cf54715a573b99ac80df0bc206da022bcd442c974952c7b9720069370852e21f"
++
++[[package]]
++name = "serde"
++version = "1.0.229"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "4148590afebada386688f18773da617792bf2ef03ffc1e4cbd2b1d45b023e0ba"
++dependencies = [
++ "serde_core",
++ "serde_derive",
++]
++
++[[package]]
++name = "serde_core"
++version = "1.0.229"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "67dca2c9c51e58a4791a4b1ed58308b39c64224d349a935ab5039aa360942a48"
++dependencies = [
++ "serde_derive",
++]
++
++[[package]]
++name = "serde_derive"
++version = "1.0.229"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "e7a5d71263a5a7d47b41f6b3f06ba276f10cc18b0931f1799f710578e2309348"
++dependencies = [
++ "proc-macro2",
++ "quote",
++ "syn 3.0.10",
++]
++
++[[package]]
++name = "serde_json"
++version = "1.0.154"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "e7e9cc8b1b85264074fbcc02a88680c4096b1e47df8f739dceb03bf482f04bd6"
++dependencies = [
++ "itoa",
++ "memchr",
++ "serde",
++ "serde_core",
++ "zmij",
++]
++
++[[package]]
++name = "strum"
++version = "0.26.3"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "8fec0f0aef304996cf250b31b5a10dee7980c85da9d759361292b8bca5a18f06"
++
++[[package]]
++name = "strum_macros"
++version = "0.26.4"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "4c6bee85a5a24955dc440386795aa378cd9cf82acd5f764469152d2270e581be"
++dependencies = [
++ "heck",
++ "proc-macro2",
++ "quote",
++ "rustversion",
++ "syn 2.0.119",
++]
++
++[[package]]
++name = "syn"
++version = "2.0.119"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "872831b642d1a07999a962a351ed35b955ea2cfc8f3862091e2a240a84f17297"
++dependencies = [
++ "proc-macro2",
++ "quote",
++ "unicode-ident",
++]
++
++[[package]]
++name = "syn"
++version = "3.0.10"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "4ae9ccbea3a7b0b09443036490c8f34a8b1b760fd345e5c0dae0aac718faea79"
++dependencies = [
++ "proc-macro2",
++ "quote",
++ "unicode-ident",
++]
++
++[[package]]
++name = "tinyvec"
++version = "1.13.3"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "fd3ca314f692efd6c868f8408f53fe444634a845f96c028b97d35f6a1f79f0ee"
++
++[[package]]
++name = "toml_datetime"
++version = "1.1.3+spec-1.1.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "173f25c883cd2176a2d8212155638c0a60d484a9d84546d270866f40f56b6e49"
++dependencies = [
++ "serde_core",
++]
++
++[[package]]
++name = "toml_edit"
++version = "0.25.19+spec-1.1.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "dd43688c4858d7264ae1cf9a9f874a67c3feb74a883b1cd7bebd6a4ea8307218"
++dependencies = [
++ "indexmap",
++ "toml_datetime",
++ "toml_parser",
++ "winnow",
++]
++
++[[package]]
++name = "toml_parser"
++version = "1.1.5+spec-1.1.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "baa693a8032d7e1cada7d0041e96126df243179ff061456783ac7f12bda4744c"
++dependencies = [
++ "winnow",
++]
++
++[[package]]
++name = "unicode-ident"
++version = "1.0.27"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "a2c754d6c33795a1c324727428e5a7dedb5b06195f9890bdbcba760d3e246563"
++
++[[package]]
++name = "wee_alloc"
++version = "0.4.5"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "dbb3b5a6b2bb17cb6ad44a2e68a43e8d2722c997da10e928665c72ec6c0a0b8e"
++dependencies = [
++ "cfg-if",
++ "libc",
++ "memory_units",
++ "winapi",
++]
++
++[[package]]
++name = "winapi"
++version = "0.3.9"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "5c839a674fcd7a98952e593242ea400abe93992746761e38641405d28b00f419"
++dependencies = [
++ "winapi-i686-pc-windows-gnu",
++ "winapi-x86_64-pc-windows-gnu",
++]
++
++[[package]]
++name = "winapi-i686-pc-windows-gnu"
++version = "0.4.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "ac3b87c63620426dd9b991e5ce0329eff545bccbbb34f3be09ff6fb6ab51b7b6"
++
++[[package]]
++name = "winapi-x86_64-pc-windows-gnu"
++version = "0.4.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f"
++
++[[package]]
++name = "winnow"
++version = "1.0.5"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "8c3b93199df0ab874cdf0c6a94f0a0dc3423fe41f1cafb62b8bd7b1deb277aef"
++dependencies = [
++ "memchr",
++]
++
++[[package]]
++name = "zmij"
++version = "1.0.23"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "29666d0abbfad1e3dc4dcf6144730dd3a3ab225bbbdac83319345b1b44ccfc1b"
+diff --git a/near/escrow/tests/ft/Cargo.toml b/near/escrow/tests/ft/Cargo.toml
+new file mode 100644
+index 0000000..ae20b5b
+--- /dev/null
++++ b/near/escrow/tests/ft/Cargo.toml
+@@ -0,0 +1,21 @@
++[package]
++name = "clearing-escrow-token"
++version = "0.1.0"
++edition = "2021"
++license = "MIT"
++publish = false
++description = "Test USDC stand-in. The real ft_resolve_transfer comes from near-contract-standards 5.7."
++
++[dependencies]
++near-sdk = "=5.7.0"
++near-contract-standards = "=5.7.0"
++
++[lib]
++crate-type = ["cdylib"]
++
++[profile.release]
++opt-level = "z"
++lto = true
++codegen-units = 1
++panic = "abort"
++overflow-checks = true
+diff --git a/near/escrow/tests/ft/src/lib.rs b/near/escrow/tests/ft/src/lib.rs
+new file mode 100644
+index 0000000..8ed3e77
+--- /dev/null
++++ b/near/escrow/tests/ft/src/lib.rs
+@@ -0,0 +1,106 @@
++//! A fungible token whose `ft_resolve_transfer` is the standard one.
++//! The sandbox suite uses it to prove a bad `msg` is refunded by the token,
++//! not only by the escrow's return value.
++//! Trait shape: near-contract-standards 5.7 `FungibleTokenCore` and
++//! `FungibleTokenResolver` (https://docs.rs/near-contract-standards/5.7.0).
++use near_contract_standards::fungible_token::core::FungibleTokenCore;
++use near_contract_standards::fungible_token::resolver::FungibleTokenResolver;
++use near_contract_standards::fungible_token::FungibleToken;
++use near_contract_standards::storage_management::{
++    StorageBalance, StorageBalanceBounds, StorageManagement,
++};
++use near_sdk::json_types::U128;
++use near_sdk::{near, AccountId, NearToken, PanicOnDefault, PromiseOrValue};
++
++#[near(contract_state)]
++#[derive(PanicOnDefault)]
++pub struct Token {
++    token: FungibleToken,
++}
++
++#[near]
++impl Token {
++    #[init]
++    pub fn new() -> Self {
++        Self { token: FungibleToken::new(b"t".to_vec()) }
++    }
++
++    /// Test mint. Registers the account when it is not registered yet.
++    pub fn mint(&mut self, account_id: AccountId, amount: U128) {
++        if self.token.storage_balance_of(account_id.clone()).is_none() {
++            self.token.internal_register_account(&account_id);
++        }
++        self.token.internal_deposit(&account_id, amount.0);
++    }
++}
++
++#[near]
++impl FungibleTokenCore for Token {
++    #[payable]
++    fn ft_transfer(&mut self, receiver_id: AccountId, amount: U128, memo: Option<String>) {
++        self.token.ft_transfer(receiver_id, amount, memo);
++    }
++
++    #[payable]
++    fn ft_transfer_call(
++        &mut self,
++        receiver_id: AccountId,
++        amount: U128,
++        memo: Option<String>,
++        msg: String,
++    ) -> PromiseOrValue<U128> {
++        self.token.ft_transfer_call(receiver_id, amount, memo, msg)
++    }
++
++    fn ft_total_supply(&self) -> U128 {
++        self.token.ft_total_supply()
++    }
++
++    fn ft_balance_of(&self, account_id: AccountId) -> U128 {
++        self.token.ft_balance_of(account_id)
++    }
++}
++
++#[near]
++impl FungibleTokenResolver for Token {
++    #[private]
++    fn ft_resolve_transfer(
++        &mut self,
++        sender_id: AccountId,
++        receiver_id: AccountId,
++        amount: U128,
++    ) -> U128 {
++        let (used, _burned) = self.token.internal_ft_resolve_transfer(&sender_id, receiver_id, amount);
++        used.into()
++    }
++}
++
++#[near]
++impl StorageManagement for Token {
++    #[payable]
++    fn storage_deposit(
++        &mut self,
++        account_id: Option<AccountId>,
++        registration_only: Option<bool>,
++    ) -> StorageBalance {
++        self.token.storage_deposit(account_id, registration_only)
++    }
++
++    #[payable]
++    fn storage_withdraw(&mut self, amount: Option<NearToken>) -> StorageBalance {
++        self.token.storage_withdraw(amount)
++    }
++
++    #[payable]
++    fn storage_unregister(&mut self, force: Option<bool>) -> bool {
++        self.token.storage_unregister(force)
++    }
++
++    fn storage_balance_bounds(&self) -> StorageBalanceBounds {
++        self.token.storage_balance_bounds()
++    }
++
++    fn storage_balance_of(&self, account_id: AccountId) -> Option<StorageBalance> {
++        self.token.storage_balance_of(account_id)
++    }
++}
+diff --git a/near/escrow/tests/sandbox.rs b/near/escrow/tests/sandbox.rs
+new file mode 100644
+index 0000000..412e501
+--- /dev/null
++++ b/near/escrow/tests/sandbox.rs
+@@ -0,0 +1,450 @@
++//! Sandbox flows. The token is near-contract-standards 5.7, so `ft_resolve_transfer`
++//! is the standard callback, not a stub.
++//! near-workspaces 0.24: https://docs.rs/near-workspaces/0.24.0
++use clearing_escrow::{signed_message, MIN_AMOUNT};
++use ed25519_dalek::{Signer, SigningKey};
++use near_workspaces::types::{Gas, NearToken};
++use near_workspaces::{Account, AccountId, Contract, Worker};
++use near_workspaces::network::Sandbox;
++use serde::de::DeserializeOwned;
++use serde_json::json;
++use std::path::PathBuf;
++use std::process::Command;
++use std::sync::OnceLock;
++
++const SEC: u64 = 1_000_000_000;
++const LONG: u64 = 600 * SEC;
++const SHORT: u64 = 2 * SEC;
++
++struct Key {
++    secret: [u8; 32],
++    public_hex: String,
++}
++
++fn key(fill: u8) -> Key {
++    let secret = [fill; 32];
++    let signing = SigningKey::from_bytes(&secret);
++    Key { secret, public_hex: hex_encode(signing.verifying_key().as_bytes()) }
++}
++
++fn sign(key: &Key, message: &str) -> String {
++    let signing = SigningKey::from_bytes(&key.secret);
++    hex_encode(&signing.sign(message.as_bytes()).to_bytes())
++}
++
++fn hex_encode(bytes: &[u8]) -> String {
++    const HEX: &[u8; 16] = b"0123456789abcdef";
++    let mut out = String::with_capacity(bytes.len() * 2);
++    for byte in bytes {
++        out.push(HEX[(byte >> 4) as usize] as char);
++        out.push(HEX[(byte & 0x0f) as usize] as char);
++    }
++    out
++}
++
++fn build_wasm(manifest: &str, artifact: &str, feature: Option<&str>) -> Vec<u8> {
++    let target = std::env::temp_dir().join(format!("clearing-escrow-{artifact}"));
++    let mut cmd = Command::new(env!("CARGO"));
++    cmd.args([
++        "build",
++        "--locked",
++        "--release",
++        "--target",
++        "wasm32-unknown-unknown",
++        "--manifest-path",
++        manifest,
++        "--target-dir",
++        target.to_str().expect("utf8 target dir"),
++    ]);
++    if let Some(feature) = feature {
++        cmd.args(["--features", feature]);
++    }
++    let status = cmd.status().expect("spawn cargo");
++    assert!(status.success(), "wasm build failed for {manifest}");
++    let path = target.join(format!("wasm32-unknown-unknown/release/{artifact}.wasm"));
++    std::fs::read(&path).unwrap_or_else(|err| panic!("read {}: {err}", path.display()))
++}
++
++fn manifest(rel: &str) -> String {
++    let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
++    path.push(rel);
++    path.to_str().expect("utf8 manifest").to_string()
++}
++
++fn escrow_wasm() -> &'static [u8] {
++    static WASM: OnceLock<Vec<u8>> = OnceLock::new();
++    WASM.get_or_init(|| build_wasm(&manifest("Cargo.toml"), "clearing_escrow", Some("sandbox-token")))
++        .as_slice()
++}
++
++fn token_wasm() -> &'static [u8] {
++    static WASM: OnceLock<Vec<u8>> = OnceLock::new();
++    WASM.get_or_init(|| build_wasm(&manifest("tests/ft/Cargo.toml"), "clearing_escrow_token", None)).as_slice()
++}
++
++struct Rig {
++    worker: Worker<Sandbox>,
++    token: Contract,
++    escrow: Contract,
++    buyer: Account,
++    creator: Account,
++    arbiter: Account,
++    creator_key: Key,
++    client_key: Key,
++}
++
++async fn rig() -> Rig {
++    let worker = near_workspaces::sandbox().await.expect("sandbox");
++    let token = worker.dev_deploy(token_wasm()).await.expect("deploy token");
++    let escrow = worker.dev_deploy(escrow_wasm()).await.expect("deploy escrow");
++    let buyer = worker.dev_create_account().await.expect("buyer");
++    let creator = worker.dev_create_account().await.expect("creator");
++    let arbiter = worker.dev_create_account().await.expect("arbiter");
++    let creator_key = key(1);
++    let client_key = key(2);
++    must(
++        escrow
++            .call("new")
++            .args_json(json!({
++                "token_id": token.id(),
++                "arbiter_id": arbiter.id(),
++                "creator_id": creator.id(),
++                "creator_pk": creator_key.public_hex,
++                "chain_id": "testnet",
++                "min_window_ns": SEC,
++            }))
++            .gas(Gas::from_tgas(100))
++            .transact()
++            .await
++            .expect("init call"),
++    );
++    must(
++        token.call("new").gas(Gas::from_tgas(50)).transact().await.expect("token init"),
++    );
++    register(&buyer, &token, buyer.id()).await;
++    register(&buyer, &token, escrow.id()).await;
++    must(
++        token
++            .call("mint")
++            .args_json(json!({ "account_id": buyer.id(), "amount": "5000000" }))
++            .gas(Gas::from_tgas(30))
++            .transact()
++            .await
++            .expect("mint"),
++    );
++    Rig { worker, token, escrow, buyer, creator, arbiter, creator_key, client_key }
++}
++
++async fn register(payer: &Account, token: &Contract, account: &AccountId) {
++    let bounds: serde_json::Value = token
++        .view("storage_balance_bounds")
++        .await
++        .expect("bounds call")
++        .json()
++        .expect("bounds json");
++    let min: u128 = bounds["min"].as_str().expect("min").parse().unwrap();
++    must(
++        payer
++            .call(token.id(), "storage_deposit")
++            .args_json(json!({ "account_id": account, "registration_only": true }))
++            .deposit(NearToken::from_yoctonear(min))
++            .gas(Gas::from_tgas(30))
++            .transact()
++            .await
++            .expect("storage_deposit"),
++    );
++}
++
++fn must(outcome: near_workspaces::result::ExecutionFinalResult) {
++    assert!(
++        outcome.is_success(),
++        "call failed: {:?}",
++        outcome.failures()
++    );
++}
++
++async fn balance(token: &Contract, account: &AccountId) -> u128 {
++    let value: serde_json::Value = token
++        .view("ft_balance_of")
++        .args_json(json!({ "account_id": account }))
++        .await
++        .expect("balance call")
++        .json()
++        .expect("balance json");
++    value.as_str().expect("balance string").parse().unwrap()
++}
++
++async fn deal_state(escrow: &Contract, deal_id: u64) -> String {
++    let value: serde_json::Value = escrow
++        .view("get_deal")
++        .args_json(json!({ "deal_id": deal_id }))
++        .await
++        .expect("deal call")
++        .json()
++        .expect("deal json");
++    value["state"].as_str().unwrap_or("missing").to_string()
++}
++
++async fn escrow_balance(escrow: &Contract, account: &AccountId) -> u128 {
++    let value: serde_json::Value = escrow
++        .view("get_balance")
++        .args_json(json!({ "account_id": account }))
++        .await
++        .expect("escrow balance")
++        .json()
++        .expect("escrow balance json");
++    value.as_str().expect("u128 string").parse().unwrap()
++}
++
++fn payload(client_pk: &str, price: u128, deliver: u64, review: u64, dispute: u64, fund: u64) -> String {
++    format!(
++        r#"{{"client_pk":"{client_pk}","price":"{price}","deliver_ns":{deliver},"review_ns":{review},"dispute_ns":{dispute},"fund_ns":{fund}}}"#
++    )
++}
++
++async fn open_and_fund(rig: &Rig, price: u128, deliver: u64, review: u64, dispute: u64, fund: u64) -> u64 {
++    let body = payload(&rig.client_key.public_hex, price, deliver, review, dispute, fund);
++    let nonce = format!("open{:016}", price);
++    let signature = sign(
++        &rig.creator_key,
++        &signed_message("testnet", rig.escrow.id().as_str(), 0, "open", &nonce, &body),
++    );
++    let id: u64 = must_json(
++        rig.buyer
++            .call(rig.escrow.id(), "open")
++            .args_json(json!({ "payload": body, "nonce": nonce, "signature": signature }))
++            .gas(Gas::from_tgas(80))
++            .transact()
++            .await
++            .expect("open"),
++    );
++    pay(rig, id, price.to_string(), format!(r#"{{"deal_id":{id}}}"#)).await;
++    id
++}
++
++async fn pay(rig: &Rig, _id: u64, amount: String, msg: String) {
++    must(
++        rig.buyer
++            .call(rig.token.id(), "ft_transfer_call")
++            .args_json(json!({
++                "receiver_id": rig.escrow.id(),
++                "amount": amount,
++                "memo": null,
++                "msg": msg,
++            }))
++            .deposit(NearToken::from_yoctonear(1))
++            .gas(Gas::from_tgas(300))
++            .transact()
++            .await
++            .expect("ft_transfer_call"),
++    );
++}
++
++fn must_json<T: DeserializeOwned>(outcome: near_workspaces::result::ExecutionFinalResult) -> T {
++    assert!(outcome.is_success(), "call failed: {:?}", outcome.failures());
++    outcome.json().expect("json result")
++}
++
++async fn deliver(rig: &Rig, deal_id: u64) {
++    let payload = "hash-1";
++    let nonce = format!("deliver{:020}", deal_id);
++    let signature = sign(
++        &rig.creator_key,
++        &signed_message("testnet", rig.escrow.id().as_str(), deal_id, "deliver", &nonce, payload),
++    );
++    must(
++        rig.buyer
++            .call(rig.escrow.id(), "deliver")
++            .args_json(json!({
++                "deal_id": deal_id,
++                "nonce": nonce,
++                "payload": payload,
++                "signature": signature,
++            }))
++            .gas(Gas::from_tgas(80))
++            .transact()
++            .await
++            .expect("deliver"),
++    );
++}
++
++async fn accept(rig: &Rig, deal_id: u64) {
++    let nonce = format!("accept{:020}", deal_id);
++    let signature = sign(
++        &rig.client_key,
++        &signed_message("testnet", rig.escrow.id().as_str(), deal_id, "accept", &nonce, ""),
++    );
++    must(
++        rig.buyer
++            .call(rig.escrow.id(), "accept")
++            .args_json(json!({ "deal_id": deal_id, "nonce": nonce, "signature": signature }))
++            .gas(Gas::from_tgas(80))
++            .transact()
++            .await
++            .expect("accept"),
++    );
++}
++
++async fn dispute(rig: &Rig, deal_id: u64) {
++    let nonce = format!("dispute{:020}", deal_id);
++    let signature = sign(
++        &rig.client_key,
++        &signed_message("testnet", rig.escrow.id().as_str(), deal_id, "dispute", &nonce, ""),
++    );
++    must(
++        rig.buyer
++            .call(rig.escrow.id(), "dispute")
++            .args_json(json!({ "deal_id": deal_id, "nonce": nonce, "signature": signature }))
++            .gas(Gas::from_tgas(80))
++            .transact()
++            .await
++            .expect("dispute"),
++    );
++}
++
++#[tokio::test]
++async fn bad_msg_refunds_full_amount() {
++    let rig = rig().await;
++    let before = balance(&rig.token, rig.buyer.id()).await;
++    pay(&rig, 0, MIN_AMOUNT.to_string(), "not-json".to_string()).await;
++    assert_eq!(balance(&rig.token, rig.buyer.id()).await, before);
++}
++
++#[tokio::test]
++async fn wrong_token_refunds() {
++    let rig = rig().await;
++    let other = rig.worker.dev_deploy(token_wasm()).await.expect("other token");
++    must(other.call("new").gas(Gas::from_tgas(50)).transact().await.expect("other init"));
++    register(&rig.buyer, &other, rig.buyer.id()).await;
++    register(&rig.buyer, &other, rig.escrow.id()).await;
++    must(
++        other
++            .call("mint")
++            .args_json(json!({ "account_id": rig.buyer.id(), "amount": MIN_AMOUNT.to_string() }))
++            .gas(Gas::from_tgas(30))
++            .transact()
++            .await
++            .expect("mint other"),
++    );
++    must(
++        rig.buyer
++            .call(other.id(), "ft_transfer_call")
++            .args_json(json!({
++                "receiver_id": rig.escrow.id(),
++                "amount": MIN_AMOUNT.to_string(),
++                "memo": null,
++                "msg": r#"{"deal_id":1}"#,
++            }))
++            .deposit(NearToken::from_yoctonear(1))
++            .gas(Gas::from_tgas(300))
++            .transact()
++            .await
++            .expect("wrong token transfer"),
++    );
++    assert_eq!(balance(&other, rig.buyer.id()).await, MIN_AMOUNT);
++}
++
++#[tokio::test]
++async fn below_min_amount_rejected() {
++    let rig = rig().await;
++    let before = balance(&rig.token, rig.buyer.id()).await;
++    pay(&rig, 0, "999999".to_string(), r#"{"deal_id":1}"#.to_string()).await;
++    assert_eq!(balance(&rig.token, rig.buyer.id()).await, before);
++}
++
++#[tokio::test]
++async fn deal_release_on_client_accept() {
++    let rig = rig().await;
++    let before = balance(&rig.token, rig.buyer.id()).await;
++    let id = open_and_fund(&rig, MIN_AMOUNT, LONG, LONG, LONG, LONG).await;
++    assert_eq!(balance(&rig.token, rig.buyer.id()).await, before - MIN_AMOUNT);
++    deliver(&rig, id).await;
++    accept(&rig, id).await;
++    assert_eq!(deal_state(&rig.escrow, id).await, "Released");
++    assert_eq!(escrow_balance(&rig.escrow, rig.creator.id()).await, MIN_AMOUNT);
++    let fee: u16 = rig
++        .escrow
++        .view("get_fee_bps")
++        .await
++        .unwrap()
++        .json()
++        .unwrap();
++    assert_eq!(fee, 0);
++}
++
++#[tokio::test]
++async fn deal_release_after_review_timeout() {
++    let rig = rig().await;
++    let id = open_and_fund(&rig, MIN_AMOUNT, LONG, SHORT, SHORT, LONG).await;
++    deliver(&rig, id).await;
++    rig.worker.fast_forward(40).await.expect("fast forward");
++    must(
++        rig.buyer
++            .call(rig.escrow.id(), "release_after_timeout")
++            .args_json(json!({ "deal_id": id }))
++            .gas(Gas::from_tgas(50))
++            .transact()
++            .await
++            .expect("release"),
++    );
++    assert_eq!(deal_state(&rig.escrow, id).await, "Released");
++    assert_eq!(escrow_balance(&rig.escrow, rig.creator.id()).await, MIN_AMOUNT);
++}
++
++#[tokio::test]
++async fn dispute_resolved_by_arbiter() {
++    let rig = rig().await;
++    let id = open_and_fund(&rig, MIN_AMOUNT, LONG, LONG, LONG, LONG).await;
++    deliver(&rig, id).await;
++    dispute(&rig, id).await;
++    must(
++        rig.arbiter
++            .call(rig.escrow.id(), "resolve_dispute")
++            .args_json(json!({ "deal_id": id, "creator_bps": 7000 }))
++            .gas(Gas::from_tgas(50))
++            .transact()
++            .await
++            .expect("resolve"),
++    );
++    assert_eq!(escrow_balance(&rig.escrow, rig.creator.id()).await, 700_000);
++    assert_eq!(escrow_balance(&rig.escrow, rig.buyer.id()).await, 300_000);
++}
++
++#[tokio::test]
++async fn dispute_timeout_splits_50_50() {
++    let rig = rig().await;
++    let price = 1_000_001u128;
++    let id = open_and_fund(&rig, price, LONG, LONG, SHORT, LONG).await;
++    deliver(&rig, id).await;
++    dispute(&rig, id).await;
++    rig.worker.fast_forward(40).await.expect("fast forward");
++    must(
++        rig.buyer
++            .call(rig.escrow.id(), "resolve_dispute_timeout")
++            .args_json(json!({ "deal_id": id }))
++            .gas(Gas::from_tgas(50))
++            .transact()
++            .await
++            .expect("timeout split"),
++    );
++    assert_eq!(escrow_balance(&rig.escrow, rig.creator.id()).await, 500_000);
++    assert_eq!(escrow_balance(&rig.escrow, rig.buyer.id()).await, 500_001);
++}
++
++#[tokio::test]
++async fn failed_withdraw_puts_the_balance_back() {
++    let rig = rig().await;
++    let id = open_and_fund(&rig, MIN_AMOUNT, LONG, LONG, LONG, LONG).await;
++    deliver(&rig, id).await;
++    accept(&rig, id).await;
++    assert_eq!(escrow_balance(&rig.escrow, rig.creator.id()).await, MIN_AMOUNT);
++    let outcome = rig
++        .creator
++        .call(rig.escrow.id(), "withdraw")
++        .gas(Gas::from_tgas(100))
++        .transact()
++        .await
++        .expect("withdraw submitted");
++    assert!(!outcome.receipt_failures().is_empty(), "ft_transfer should fail for an unregistered creator");
++    assert_eq!(escrow_balance(&rig.escrow, rig.creator.id()).await, MIN_AMOUNT);
++}
