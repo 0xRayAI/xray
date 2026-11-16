@@ -1,4 +1,6 @@
-From Grok Bot, put your agent to work on NEAR. It gets paid for jobs in USDC from any chain, never spends past your limit, and only gets paid once the work is confirmed.
+Plan only, nothing built yet. What we're building toward:
+"From Grok Bot, put your agent to work on NEAR. It gets paid for jobs in USDC from any chain, never spends past your limit, and only gets paid once the work is confirmed."
+First demo scope: NEAR testnet USDC + Base x402. 'Any chain' needs the 1Click leg (mainnet only), not in the demo.
 
 # NEAR first-build eval
 
@@ -14,7 +16,7 @@ Seat: mill. Date: 2026-11-16 (UTC). Plan only. No kit code, no port, no listing,
 | 2 | Spend cap | The owner-set limit. One guarantee. |
 | 3 | Earning and paying | The foundry is a listed hangar shop. Paying is NEAR USDC plus Base x402. Plumbing under 1 and 2. |
 
-"From any chain" in the headline is the story. The rails this plan can cite are Base and NEAR. A third chain is **UNVERIFIED**.
+"From any chain" in the headline stays verbatim. The demo proves NEAR USDC and Base. The gap between those two is the any-chain leg below. Forge asked for that choice in [6905146121](https://github.com/0xRayAI/xray/pull/1135#issuecomment-6905146121). This plan takes (a). It does not narrow the headline.
 
 Product, from [6905090495](https://github.com/0xRayAI/xray/pull/1135#issuecomment-6905090495): a website, "deploy your agent on NEAR and earn." The site stays thin. Grok Bot is the one-click path. Grok CLI, Cursor, Claude Code, and Codex run the same xray skill. The agent runtime does the setup.
 
@@ -35,10 +37,25 @@ Read from the files named here. Not from a README.
 | Hangar listing | None of those contracts register a shop. | Doctor `nextSteps` (line 826) prints `npx groover-hangar`. It does not call Groover. The ensemble lists the foundry on the hangar the plant skill already names. | new |
 | NEAR USDC rail | Mihenk `server.mjs` `1da0b45c` `verify` (lines 63–113) reads an `ft_transfer` after a 402. Token default in `lib.mjs` line 14 is `usdc.fakes.testnet`. | The Circle testnet id, store-loaded quote, 180s TTL, equal 6-decimal amount, `final_execution_status` FINAL. | rewrite |
 | Base x402 rail | x402-near `facilitator.mjs` `a16e87c3` settles `wrap.testnet` on `near-testnet` (lines 17–26 and `lib.mjs` line 20). It does not settle Base. | Keep Base. `seat-doctor.cjs` lines 827–834 names the Clearing 402 and the OWS folder. Clearing `mcp/src/blip.ts` `619d1e7e` returns one `eip155:8453` accept and settles `eip3009`. The second accept is the NEAR rail. | new accept beside the Base path |
+| Any-chain leg | [intents-checkout](https://github.com/Guglielmo15/intents-checkout) MIT `e098b4a0` `plugin/src/QuoteService.php` posts `EXACT_OUTPUT` to 1Click. `Client.php` uses `https://1click.chaindefuser.com`. `SandboxClient.php` says there is no testnet. | Same quote shape, recipient set to the foundry. Not the WooCommerce plugin. Not in the demo. | rewrite, and this is the gap |
 | Spend cap | Allowance `src/policy.rs` `74edffec` `per_tx_cap` and `Budget`. `evaluate` rejects `amount > per_tx_cap`. | No USDC cap in xray source. Wire this vault in front of spend. Rewrite the memo to the quote nonce. | rewrite |
 | Escrow | Pinky, picked below. Fulfil is the other candidate and is not the pick. | No escrow contract in xray. Deploy the Pinky release machine on testnet. Do not use the mainnet deployment. | rewrite init |
 | One-click path | No website in the files above. | The site, with Grok Bot as the button that runs the loop. Doctor today is a check (`diagnoseSeat`), not that button. | new |
 | CLI path | No shared skill runner in the files above. | The same loop through the xray skill. Doctor already tells a missing plant to run `npx 0xray wear` (line 814). Grok CLI, Cursor, Claude Code, and Codex use that skill. | new |
+
+## Any-chain leg
+
+This is the gap between the headline and the demo. A payer on another chain deposits through NEAR Intents 1Click. The settlement is USDC on NEAR for the foundry. The demo does not run this. 1Click is mainnet only.
+
+The reference is [Guglielmo15/intents-checkout](https://github.com/Guglielmo15/intents-checkout), MIT, `e098b4a0494a7dcf808e49b417f2a5da0d671e2f` (2026-11-11). Read from the PHP, not the README.
+
+`plugin/src/QuoteService.php` `create` asks 1Click for `swapType: EXACT_OUTPUT` and `depositType: ORIGIN_CHAIN`. The origin asset is the token the payer holds. `destinationAsset` comes from settings. `recipient` is the merchant NEAR account. `plugin/src/Settings.php` defaults that asset to `nep141:17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1`, mainnet Circle USDC, and defaults `recipient_type` to `INTENTS`. `plugin/src/OneClick/Client.php` posts the quote to `https://1click.chaindefuser.com` and the NEAR RPC default is `https://rpc.mainnet.near.org`. `plugin/assets/pay.js` shows the one-time deposit address and the line that the store receives that USDC amount on NEAR.
+
+So a payer on Base, Ethereum, Solana, or another listed chain sends the origin token to that address. 1Click settles the exact output as NEAR USDC for the recipient. The default recipient type is an Intents balance, not an `ft_transfer_call` into Pinky. Pointing the recipient at the foundry account, and from there into the escrow, is the rewrite. The WordPress plugin stays where it is.
+
+`plugin/src/OneClick/SandboxClient.php` states that NEAR Intents has no testnet ([FAQ](https://docs.near-intents.org/resources/faqs)). Sandbox mode dry-runs a live quote and substitutes a `sandbox-` address. A simulated success does not move USDC. There is no testnet host in `Client.php`.
+
+The demo proves NEAR USDC and Base. "Any chain" in the headline is backed by this leg once it lands. No quote is requested in this plan.
 
 ## How a person uses it
 
@@ -48,7 +65,7 @@ Open the site. Choose Grok Bot, or open a CLI and run the same xray skill. The r
 
 One source: [Basssoman/pinky](https://github.com/Basssoman/pinky) at `c94cb144abcc755dfabd7fab96bf0f418c79fcd4` (2026-11-14). GitHub license: MIT. Core file `contract/src/lib.rs`. Catalog row: [near-reuse report](https://github.com/0xRayAI/xray/blob/nibbler/near-hackathon-catalog/house/dist/mill/near-reuse-report-2026-11.md) and the escrow row in [near-kit-plan](https://github.com/0xRayAI/xray/blob/nibbler/near-hackathon-catalog/house/dist/mill/near-kit-plan-2026-11.md).
 
-Against core NEAR, this is the catalog contract that takes USDC through NEP-141. `ft_transfer_call` delivers tokens and calls `ft_on_transfer`; the returned amount is what `ft_resolve_transfer` refunds ([NEP-141](https://docs.near.org/primitives/ft/standard), [core](https://nomicon.io/Standards/Tokens/FungibleToken/Core)). Pinky `ft_on_transfer` (lines 1087–1101) accepts only `self.token_id` and returns `0` for that token. `token_id` is an init argument (`new`, line 717), not a hardcoded contract. The msg `{"deal_id":N}` credits the deal (`credit_deal`). A wrong token is returned in full. A bad or unknown deal id on the configured token is recorded as orphan funds and is not refunded.
+Against core NEAR, this is the catalog contract that takes USDC through NEP-141. `ft_transfer_call` delivers tokens and calls `ft_on_transfer`; the returned amount is what `ft_resolve_transfer` refunds ([NEP-141](https://docs.near.org/primitives/ft/standard), [core](https://nomicon.io/Standards/Tokens/FungibleToken/Core)). Pinky `ft_on_transfer` (lines 1087–1101) accepts only `self.token_id` and returns `0` for that token. `token_id` is an init argument (`new`, line 717), not a hardcoded contract. The msg `{"deal_id":N}` credits the deal (`credit_deal`). A wrong token is returned in full. A bad or unknown deal id on the configured token is recorded as orphan funds and is not refunded. Before any USDC, the orphan path is a rewrite: a bad msg must return the amount so `ft_resolve_transfer` refunds it. Returning `0` locks the tokens until an owner sweep.
 
 Release is only after work:
 
@@ -60,7 +77,7 @@ Release is only after work:
 
 `credit` takes one arrival that covers the deal amount. Excess is client payout, not a larger escrow. That is not the shop rule of an equal 6-decimal string.
 
-**Port the release machine** (deliver, client accept, review timeout, dispute, 50/50). **Rewrite the demo init.** Do not send funds to the mainnet deployment named in the reuse report (`escrow.pinkydeals.near`). A testnet deploy passes `token_id` = Circle testnet USDC `3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af`, short periods (the init comment allows that only for a test instance), and `fee_bps` `0`. `MIN_AMOUNT` is 1 USDC (`1000000`, line 88), so a nickel shop price cannot fund a deal. Parties are one-time ed25519 keys, not the foundry account; binding the foundry key as `creator_pk` is new work. The relayer may submit `create_deal` and `act` and cannot forge the signature (`escrow-v1|…`). Whether that relayer is one we run is **UNVERIFIED**. Before any USDC, the orphan path is a rewrite: a bad msg must return the amount so `ft_resolve_transfer` refunds it. Returning `0` locks the tokens until an owner sweep.
+**Port the release machine** (deliver, client accept, review timeout, dispute, 50/50). **Rewrite the demo init.** Do not send funds to the mainnet deployment named in the reuse report (`escrow.pinkydeals.near`). A testnet deploy passes `token_id` = Circle testnet USDC `3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af`, short periods (the init comment allows that only for a test instance), and `fee_bps` `0`. `MIN_AMOUNT` is 1 USDC (`1000000`, line 88), so a nickel shop price cannot fund a deal. Parties are one-time ed25519 keys, not the foundry account; binding the foundry key as `creator_pk` is new work. The relayer may submit `create_deal` and `act` and cannot forge the signature (`escrow-v1|…`). Whether that relayer is one we run is **UNVERIFIED**.
 
 ### Pinky or Fulfil
 
