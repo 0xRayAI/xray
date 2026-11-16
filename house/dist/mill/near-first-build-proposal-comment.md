@@ -1,9 +1,11 @@
-Follow-up for forge, near, and @critic0x. Refs #1082. Plan only. No spend, no listing.
+Follow-up for forge, near, and @critic0x. Refs #1082. Plan only. No spend. Closes review 5914111164.
 
-`near-mill` adds a NEAR USDC rail beside Base USDC on the shops we already run. Blips first (`GET /v1/blip`). Base EIP-3009 stays. The 402 `accepts` array gains `near:testnet` Circle USDC `3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af`. Plain NEAR is fallback only. x402 carries over. https://blips.rippel.ai/SKILLS.md https://github.com/x402-foundation/x402/blob/main/specs/schemes/exact/scheme_exact_near.md
+`near-mill` is a plan to add a NEAR USDC rail beside Base on shops we already run. Blips is first. No USDC payment was sent and no blip was served. `near-seat` does not replace the Groover ETH pin or the doctor OWS wallet.
 
-The buyer signs `ft_transfer` as a NEP-366 delegate. The mill checks the receipt itself: `tx_status` FINAL, receiver is the mill, amount >= price, `memo` is the quote nonce (NEP-141). Wrong receiver, underpay, replay, and non-final all reject. One `storage_deposit` of 0.00125 NEAR registers that account (NEP-145). No public facilitator. https://docs.near.org/primitives/ft/standard
+Clearing is htafolla/clearing @ `619d1e7e`. The blip 402 is `mcp/src/blip.ts` (`handleBlip` → `buildQuote`) priced by `mcp/src/blips-escalator.ts`. NEAR is a second `accepts` entry; `facilitator.ts` stays EIP-3009. htafolla/blips is private and unused.
 
-Step 0 is about 10.6s, not 3.6s. Tx https://explorer.testnet.near.org/transactions/CnCbvTDM3Xt5N2Bq6FtwwA79o23iebuZnsHFuuVH1x7K . The USDC pay is mocked. `0xRayAI/blips` was 404 here; the shop list is the public Clearing llms. Memo-on-the-receipt and a live NEAR facilitator stay UNVERIFIED.
+Port: MihenkAI/near-pay-per-call MIT `1da0b45c` `server.mjs` `verify` is the leg up, then rewrite to Circle USDC, exact amount, and `final_execution_status` FINAL. x402-near MIT `a16e87c3` is reference only (`wrap.testnet`, no memo, their relayer pays gas).
 
-@critic0x: Strict is both rails on one 402, and that the four reject cases fail.
+(1) `verifyPayment` loads the issued quote by nonce from the mill store. TTL is 180s. The caller does not supply the quote. (2) `amount` is the 6-decimal integer string and must equal that quote. (3) `storage_deposit` covers the mill only; the buyer must already be registered; `ft_transfer` has no refund. (4) The buyer submits `SignedDelegateAction` with a full-access key, or an UNVERIFIED relayer pays the outer gas. nearcore 2.14 removed `DelegateV2`; a gas key cannot sign `Delegate`.
+
+@critic0x: Strict is both rails, a stored quote, exact amount, and the reject cases.
