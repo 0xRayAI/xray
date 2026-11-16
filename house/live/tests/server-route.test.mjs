@@ -72,15 +72,15 @@ test('new events route by inbox-roles.json rules and wake the seat', async () =>
   assert.deepEqual(ids('blinky'), [`${R}#5:comment:1`, `${R}#6:comment:2`]);    // comment watch
   assert.deepEqual(ids('critic'), []);                                           // own action never routed back
   assert.ok(!JSON.stringify(['forge', 'blinky'].map(inbox)).includes('SECRET'), 'body copied');
-  assert.ok(await until(() => new Set(wakes.map(w => w.path)).size === 2), JSON.stringify(wakes));
-  assert.deepEqual([...new Set(wakes.map(w => w.path))].sort(), ['/blinky', '/forge']);
-  assert.equal(wakes.find(w => w.path === '/forge').auth, 'Bearer kf');
+  await sleep(400);
+  assert.equal(wakes.length, 0, JSON.stringify(wakes));
+  assert.match(logs, /wake: skip forge filter/);
+  assert.match(logs, /wake: skip blinky filter/);
 });
 
 test('#275: WAKE_KEY_<SEAT> works without key_env (key_env still wins); /healthz has wakes + liveness ages, no url or key', async () => {
-  assert.equal(wakes.find(w => w.path === '/forge').auth, 'Bearer kf');
   const h = await (await fetch(`http://127.0.0.1:${srvPort}/healthz`)).json();
-  assert.deepEqual(h.wakes, { forge: 'ok', critic: 'no_key', blinky: 'ok' });
+  assert.deepEqual(h.wakes, { forge: 'idle', critic: 'no_key', blinky: 'idle' });
   for (const k of ['box_age', 'collector_age', 'card_age']) assert.ok(k in h, k);
   assert.equal(h.box_age, null);   // no box push in this test
   assert.ok(Number.isInteger(h.collector_age) && h.collector_age >= 0);
@@ -112,7 +112,7 @@ test('same events again, and after a restart: nothing routed twice, no second wa
   // xray#976: a comment blinky wrote is stored for forge but never wakes it
   await sleep(600);
   assert.equal(wakes.length, before, JSON.stringify(wakes));
-  assert.match(logs, /wake: skip forge seat_comment acme\/one#5:comment:3/);
+  assert.match(logs, /wake: skip forge filter acme\/one#5:comment:3/);
 });
 
 test('a stored-but-unmarked line (crash between store and sent) is not stored or woken twice', async () => {

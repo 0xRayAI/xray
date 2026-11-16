@@ -1,4 +1,4 @@
-// A pr_open that mentions mill wakes forge. A terminal op_deploy wakes forge.
+// A pr_open that mentions mill stays on the board. The operator nudge still wakes forge.
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
@@ -47,7 +47,7 @@ function base() {
 }
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-test('a mill mention and a terminal deploy wake forge', async () => {
+test('a mill mention and a terminal deploy stay on the board, and an operator nudge wakes forge', async () => {
   fs.mkdirSync(path.join(DATA, 'feed'), { recursive: true });
   const feed = path.join(DATA, 'feed', 'github-events.json');
   const old = [{ id: 'acme/one#1:open', t_ct: new Date(Date.now() - 900000).toISOString(), kind: 'pr_open', repo: 'acme/one', number: 1, label: 'old' }];
@@ -60,9 +60,10 @@ test('a mill mention and a terminal deploy wake forge', async () => {
   ]);
   fs.writeFileSync(feed + '.tmp', JSON.stringify({ generated_at: new Date().toISOString(), events: fresh }));
   fs.renameSync(feed + '.tmp', feed);
-  for (let i = 0; i < 80 && !wakes.includes('/forge'); i++) await sleep(100);
+  for (let i = 0; i < 40 && !/wake: skip forge filter/.test(logs); i++) await sleep(100);
+  assert.match(logs, /wake: skip forge filter/);
   assert.ok(!wakes.includes('/mill'), logs + '\n' + JSON.stringify(wakes));
-  assert.ok(wakes.includes('/forge'), logs + '\n' + JSON.stringify(wakes));
+  assert.ok(!wakes.includes('/forge'), logs + '\n' + JSON.stringify(wakes));
   const line = { id: 'op-line', t_ct: new Date().toISOString(), seat: 'operator', type: 'nudge', repo: 'acme/one', number: 1, title: 't', url: 'https://github.com/acme/one/pull/1', reason: 'operator line' };
   const posted = await fetch(base() + '/inbox', { method: 'POST', headers: { 'X-Live-Ingest': secret, 'Content-Type': 'application/json' }, body: JSON.stringify({ lines: [line] }) });
   assert.equal(posted.status, 200);
