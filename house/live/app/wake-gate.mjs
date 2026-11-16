@@ -53,7 +53,7 @@ export function createWakeState() {
     sentSha: new Map(), queuedSha: new Map(), cool: new Map(), sentAt: new Map(), turnOpen: new Map(),
     commentSha: new Map(), seatComments: new Map(), breaker: new Map(),
     hold: [], sent: [], skips: [],
-    stationAt: new Map(), greenHeads: new Set(),
+    stationAt: new Map(), greenHeads: new Set(), // memory only: a restart clears the hour and the green head
   };
 }
 
@@ -117,6 +117,13 @@ export function viewLine(line) {
   return out;
 }
 
+function mentionsSeat(line, seat) {
+  const list = Array.isArray(line && line.mentions) ? line.mentions : [];
+  if (list.some(item => String(item).replace(/^@/, '').toLowerCase() === seat)) return true;
+  const hay = `${line && line.title || ''}\n${line && line.reason || ''}`;
+  return new RegExp(`(^|[^A-Za-z0-9])@${seat}([^A-Za-z0-9]|$)`, 'i').test(hay);
+}
+
 function authorIndex(rows, idxs) {
   const named = idxs.find(i => /comment on your/i.test(String(rows[i].line.reason || '')));
   if (named != null) return named;
@@ -145,7 +152,7 @@ export function classifyBatch(lines, ctx = {}) {
     const author = authorIndex(rows, idxs);
     if (author == null) continue;
     for (const i of idxs) {
-      if (rows[i].seat === 'blinky' && i !== author) {
+      if (rows[i].seat === 'blinky' && i !== author && !mentionsSeat(rows[i].line, 'blinky')) {
         skips.push({ seat: 'blinky', line: rows[i].line, reason: 'fanout' });
         consumed.add(i);
       }
@@ -168,7 +175,7 @@ export function classifyBatch(lines, ctx = {}) {
     let woke = false;
     for (const i of idxs) {
       const row = rows[i];
-      if (row.seat === 'blinky' && target !== 'blinky') {
+      if (row.seat === 'blinky' && target !== 'blinky' && !mentionsSeat(row.line, 'blinky')) {
         skips.push({ seat: 'blinky', line: row.line, reason: 'fanout' });
         consumed.add(i);
         continue;

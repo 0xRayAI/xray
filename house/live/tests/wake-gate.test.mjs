@@ -105,6 +105,14 @@ test('a pr_comment stored for blinky and the author wakes the author, and a ment
   ]);
   assert.deepEqual(out.wakes.map(w => w.seat).sort(), ['forge', 'mill']);
   assert.equal(out.skips.filter(s => s.seat === 'blinky' && s.reason === 'fanout').length, 1);
+  const named = classifyBatch([
+    line({ id: 'c3', seat: 'blinky', type: 'pr_comment', reason: 'please @blinky', mentions: ['blinky'] }),
+    line({ id: 'c3', seat: 'forge', type: 'pr_comment', reason: 'comment on your PR' }),
+  ]);
+  assert.ok(named.wakes.some(w => w.seat === 'blinky'));
+  assert.ok(named.wakes.some(w => w.seat === 'forge'));
+  const prompt = classifyBatch([line({ id: 'bp', seat: 'blinky', type: 'prompt', kind: 'seat_prompt', reason: 'owner prompt' })]);
+  assert.deepEqual(prompt.wakes.map(w => w.seat), ['blinky']);
   const plain = classifyBatch([
     line({ id: 'c2', seat: 'blinky', type: 'pr_comment', reason: 'comment watch' }),
     line({ id: 'c2', seat: 'herald', type: 'pr_comment', reason: 'note' }),

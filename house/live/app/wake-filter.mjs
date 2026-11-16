@@ -6,6 +6,7 @@
 const HOUR_MS = 60 * 60 * 1000;
 const REVIEW = new Set(['review', 'critic_pass', 'critic_fail', 'verdict']);
 const GREEN = new Set(['ci_pass', 'ready', 'live_pass']);
+const DIRECT = new Set(['dispatch', 'packet', 'handoff', 'start_after']);
 const ROUTED = new Set(['near', 'mill']);
 
 function kindOf(line) {
@@ -57,8 +58,10 @@ function cancelled(line) {
 function currentHead(line, head) {
   if (cancelled(line)) return false;
   const sha = String(line && line.sha || '').trim().toLowerCase();
+  // An empty sha is not a superseded head. That ci_fail wakes.
+  if (!sha) return true;
   const cur = String(head || '').trim().toLowerCase();
-  if (!sha || !cur) return Boolean(sha || !head);
+  if (!cur) return true;
   return sha === cur || cur.startsWith(sha) || sha.startsWith(cur);
 }
 
@@ -69,19 +72,34 @@ function assignedR(line, seat) {
   return new RegExp(`\\bR\\s*=\\s*${seat}\\b`, 'i').test(raci);
 }
 
-function markStation(state, seat, now) {
-  const prev = state.stationAt.get(seat) || 0;
-  if (prev && now - prev < HOUR_MS) return false;
-  state.stationAt.set(seat, now);
-  return true;
+function greenKey(line) {
+  const sha = String(line && line.sha || '').trim().toLowerCase();
+  return `${String(line && line.repo || '').toLowerCase()}#${Number(line && line.number) || 0}|${sha || String(line && line.id || '')}`;
 }
 
-function markGreen(state, line) {
-  const sha = String(line.sha || '').trim().toLowerCase();
-  const key = `${String(line.repo || '').toLowerCase()}#${Number(line.number) || 0}|${sha || String(line.id || '')}`;
-  if (state.greenHeads.has(key)) return false;
-  state.greenHeads.add(key);
-  return true;
+function stationOpen(state, seat, now) {
+  const prev = state.stationAt.get(seat) || 0;
+  return !(prev && now - prev < HOUR_MS);
+}
+
+function greenOpen(state, line) {
+  return !state.greenHeads.has(greenKey(line));
+}
+
+// The hour and the green head live on the wake state. A restart clears both.
+// Call this only after the gate sends or queues. A skip must leave the slot open.
+export function commitWake(state, seat, line, now) {
+  const who = String(seat || '').toLowerCase();
+  if (stationLine(line)) state.stationAt.set(who, now);
+  if (who === 'critic' && GREEN.has(kindOf(line))) state.greenHeads.add(greenKey(line));
+}
+
+// Assignee, then owner. classifyBatch and allowWake both use this, so a review
+// offered to one of them is not filtered for the other.
+export function owedSeat(card, idOf) {
+  const id = typeof idOf === 'function' ? idOf : (value => String(value || '').trim().toLowerCase());
+  if (!card) return '';
+  return id(card.assignee) || id(card.owner) || '';
 }
 
 export function allowWake(config, seat, line, ctx) {
@@ -89,15 +107,16 @@ export function allowWake(config, seat, line, ctx) {
   if (filterMode(config, who) === 'all') return { allow: true };
   const state = ctx.state;
   const now = ctx.now;
-  if (stationLine(line)) return markStation(state, who, now) ? { allow: true } : { allow: false, reason: 'filter' };
+  if (stationLine(line)) return stationOpen(state, who, now) ? { allow: true } : { allow: false, reason: 'filter' };
   const kind = kindOf(line);
   // The ladder and the stall clock are already the act-now signal. The filter cuts the GitHub noise.
   if (kind === 'nudge' || kind === 'timed_run' || kind === 'clock' || String(line.type || '').toLowerCase() === 'nudge') return { allow: true };
+  if (DIRECT.has(kind)) return { allow: true };
   if (/^nudge L\d/i.test(String(line.reason || ''))) return { allow: true };
   if (ownerPrompt(line) || mentioned(line, who)) return { allow: true };
   if (REVIEW.has(kind) && ctx.owner === who) return { allow: true };
   if (kind === 'ci_fail' && ctx.owner === who && currentHead(line, ctx.head)) return { allow: true };
-  if (who === 'critic' && GREEN.has(kind) && markGreen(state, line)) return { allow: true };
+  if (who === 'critic' && GREEN.has(kind) && greenOpen(state, line)) return { allow: true };
   if (who === 'critic' && GREEN.has(kind)) return { allow: false, reason: 'filter' };
   if (assignedR(line, who)) return { allow: true };
   return { allow: false, reason: 'filter' };
