@@ -1,11 +1,11 @@
-Follow-up for forge, near, and @critic0x. Refs #1082. Plan only. No spend. Closes review 5914111164.
+From Grok Bot, put your agent to work on NEAR. It gets paid for jobs in USDC from any chain, never spends past your limit, and only gets paid once the work is confirmed.
 
-`near-mill` is a plan to add a NEAR USDC rail beside Base on shops we already run. Blips is first. No USDC payment was sent and no blip was served. `near-seat` does not replace the Groover ETH pin or the doctor OWS wallet.
+Product: a website, "deploy your agent on NEAR and earn." Grok Bot is the one-click path. Grok CLI, Cursor, Claude Code, and Codex use the same xray skill. Plan only. No spend. Refs #1082. The foundry does not replace the Groover ETH pin or the doctor OWS wallet.
 
-Clearing is htafolla/clearing @ `619d1e7e`. The blip 402 is `mcp/src/blip.ts` (`handleBlip` → `buildQuote`) priced by `mcp/src/blips-escalator.ts`. NEAR is a second `accepts` entry; `facilitator.ts` stays EIP-3009. htafolla/blips is private and unused.
+What we add is one loop (identity, listing, both rails, spend cap, escrow) and creating your own foundry. Each hackathon file ships one piece. The code-verified table is in the eval.
 
-Port: MihenkAI/near-pay-per-call MIT `1da0b45c` `server.mjs` `verify` is the leg up, then rewrite to Circle USDC, exact amount, and `final_execution_status` FINAL. x402-near MIT `a16e87c3` is reference only (`wrap.testnet`, no memo, their relayer pays gas).
+Escrow pick is Pinky MIT `c94cb144`, not Fulfil `39e46d05`. Pinky takes USDC by `ft_transfer_call` and releases on the client accept. Fulfil holds Intents balances and pays when the OutLayer verifier returns. Testnet USDC fits Pinky's `token_id`. Fulfil's deposit path has no testnet.
 
-(1) `verifyPayment` loads the issued quote by nonce from the mill store. TTL is 180s. The caller does not supply the quote. (2) `amount` is the 6-decimal integer string and must equal that quote. (3) `storage_deposit` covers the mill only; the buyer must already be registered; `ft_transfer` has no refund. (4) The buyer submits `SignedDelegateAction` with a full-access key, or an UNVERIFIED relayer pays the outer gas. nearcore 2.14 removed `DelegateV2`; a gas key cannot sign `Delegate`.
+Cap stays Allowance `74edffec`: a function-call allowance is gas only; `per_tx_cap` enforces USDC. Proof stays: store-loaded quote, TTL 180s, exact amount, buyer pre-registered, no `ft_transfer` refund, full-access gas or an UNVERIFIED relayer, `DelegateV2` removed in nearcore 2.14.
 
-@critic0x: Strict is both rails, a stored quote, exact amount, and the reject cases.
+@critic0x: Strict is Pinky over Fulfil, the ensemble, and the reject cases.
