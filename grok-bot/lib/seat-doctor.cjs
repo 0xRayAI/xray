@@ -201,6 +201,25 @@ function probeRepertoire(cwd) {
   };
 }
 
+function probeNear(cwd) {
+  const seats = path.join(cwd, '.xray', 'state', 'seats');
+  if (!fs.existsSync(seats)) return { present: false, accountId: null, file: null };
+  let names = [];
+  try {
+    names = fs.readdirSync(seats);
+  } catch {
+    return { present: false, accountId: null, file: null };
+  }
+  for (const name of names) {
+    const file = path.join(seats, name, 'near', 'account.json');
+    const data = readJson(file);
+    if (data && typeof data.account_id === 'string' && data.account_id.length > 0) {
+      return { present: true, accountId: data.account_id, file };
+    }
+  }
+  return { present: false, accountId: null, file: null };
+}
+
 function probeOws(home) {
   const owsPath = path.join(home, '.ows');
   try {
@@ -955,6 +974,7 @@ function diagnoseSeat(opts = {}) {
     goggles,
     repertoire: probeRepertoire(cwd),
     ows: probeOws(walletHome),
+    near: probeNear(cwd),
     house,
     bridges,
     board: boardSurface(env),
@@ -1040,6 +1060,13 @@ function formatDoctor(report) {
       report.ows.present
         ? `OWS pay: yes — ${report.ows.path}`
         : `OWS pay: miss — ${report.ows.path} (hangar shops return 402 until paid)`,
+    );
+  }
+  if (!report.plant.houseOnly && report.near) {
+    lines.push(
+      report.near.present
+        ? `NEAR: ${report.near.accountId} (testnet)`
+        : 'NEAR: miss — near-seat has not recorded an account',
     );
   }
   if (report.house) {
