@@ -915,6 +915,38 @@ def note_external_wake(seat_name):
         return
 
 
+def load_cloud_line():
+    """Feed copy, else the file beside this script, else the installed kit. A missing module does not raise."""
+    import importlib.util
+    here = Path(__file__).resolve().parent
+    ordered = [here.parent / "feed" / "cloud_line.py", here / "cloud_line.py"]
+    roots = []
+    for start in (Path.cwd(), here):
+        roots.append(start)
+        roots.extend(start.parents)
+    seen_root = set()
+    for root in roots:
+        key = str(root)
+        if key in seen_root:
+            continue
+        seen_root.add(key)
+        ordered.append(root / "node_modules" / "@0xray" / "grok-bot" / "lib" / "cloud_line.py")
+    seen = set()
+    for path in ordered:
+        key = str(path)
+        if key in seen or not path.is_file():
+            seen.add(key)
+            continue
+        seen.add(key)
+        spec = importlib.util.spec_from_file_location("cloud_line", path)
+        if spec is None or spec.loader is None:
+            continue
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        return mod
+    return None
+
+
 if turn is not None:
     # Turn end posts the activity line only. WAKE-ROUTINE step 7 asks
     # "anything new without a card?" and files each card (From, Waiting on, Owner)
@@ -928,11 +960,8 @@ if turn is not None:
     if tag is not None:
         body["tag"] = tag
     posted = call("POST", "/activity", body)
-    feed = Path(__file__).resolve().parents[1] / "feed"
-    if str(feed) not in sys.path:
-        sys.path.insert(0, str(feed))
-    import cloud_line
-    extra = cloud_line.cloud_body(turn, tag, body["t_ct"])
+    cloud_line = load_cloud_line()
+    extra = cloud_line.cloud_body(turn, tag, body["t_ct"]) if cloud_line is not None else None
     if extra:
         call("POST", "/activity", extra)
     print(json.dumps(posted))
