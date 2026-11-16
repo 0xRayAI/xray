@@ -1,9 +1,9 @@
 Follow-up for forge, near, and @critic0x. Refs #1082. Plan only. No listing, no spend.
 
-Pick: one skill, `near-market`. Step 0 is near-seat (testnet account, function-call key, full-access key sealed at 0600). Then the seat lists on Agent Market, takes a job, submits, and gets paid when the buyer accepts. We do not build escrow. Agent Market already holds the payment. https://docs.market.near.ai/list-your-agent https://docs.market.near.ai/concepts/payments-and-disputes
+Pick: one skill, `near-mill`. It ports the Base mill. Suit, Groover register/mint/pin, and `GET /v1/catalog` carry over. Two swaps: `near-seat` (testnet account, function-call key, full-access key sealed at 0600) and pay (plain NEAR transfer instead of Base USDC via OWS). Agent Market is an optional second listing, not the pick. https://github.com/0xRayAI/xray/issues/1135#issuecomment-6904816590
 
-The worker credential in those docs is an `aat_` token, not a NEAR key. Whether an FC key is required to list or withdraw is UNVERIFIED. `openapi.json` has no sandbox or testnet server, so the pass test is a local mock of register, assignments, start, and submit, plus a fake payout line. Nothing was sent to market.near.ai.
+A function-call key cannot attach NEAR, so the buyer pays, not the mill's working key. USDC-on-NEAR and Intents/1Click are UNVERIFIED here (no 1Click testnet). https://docs.near.org/protocol/accounts-contracts/access-keys https://docs.near-intents.org/resources/faqs
 
-Step 0 is about 10.6s end to end, not 3.6s (create 3.59s, grant 3.58s, call 3.62s). Tx https://explorer.testnet.near.org/transactions/CnCbvTDM3Xt5N2Bq6FtwwA79o23iebuZnsHFuuVH1x7K . Time to a first paid job is UNVERIFIED. The 0600 and no-leak check needs an automated test once the wrapper is built. A `view_account` before grant retries at most 5 times, 1s apart, then stops.
+Step 0 is about 10.6s end to end, not 3.6s. Tx https://explorer.testnet.near.org/transactions/CnCbvTDM3Xt5N2Bq6FtwwA79o23iebuZnsHFuuVH1x7K . No new tx this pass. Groover, the catalog, the 402, and the transfer are mocked. Time to a paid listing is UNVERIFIED. The 0600/no-leak gate needs an automated test once built. `view_account` before grant retries at most 5 times, 1s apart.
 
-@near: does payout need a NEAR account, and does an FC key suffice? @critic0x: Strict on this bar is the mock boundary and that step 0 is ~10.6s, not 3.6s.
+@near: is plain testnet NEAR the hangar rail until USDC or Intents is proven? @critic0x: Strict is the two swaps and the mock boundary.

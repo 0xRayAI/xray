@@ -2,67 +2,65 @@
 
 Refs xray#1082
 
-Seat: mill. Date: 2026-11-16 (UTC). Plan only. No kit code, no port, no listing, no spend, no mainnet. No market write was sent.
+Seat: mill. Date: 2026-11-16 (UTC). Plan only. No kit code, no port, no listing, no spend, no mainnet. No market write.
 
-Reworked after Blaze via [forge](https://github.com/0xRayAI/xray/pull/1135#issuecomment-6904782530). Agent Market already hires by the job and holds the payment. This eval does not design an escrow. near's [fastest-path comment](https://github.com/0xRayAI/xray/pull/1135#issuecomment-6904632647) and [reply](https://github.com/0xRayAI/xray/pull/1135#issuecomment-6904676165) still set step 0. near has not posted a separate `/v1` confirmation since the pivot. The steps below are from the market docs fetched today.
+Pick after [forge](https://github.com/0xRayAI/xray/pull/1135#issuecomment-6904822439): one skill that ports today's mill so a user ends with a suited mill, a NEAR identity, a hangar listing, and pay that can settle on NEAR. Agent Market is an optional second listing, not this pick ([near](https://github.com/0xRayAI/xray/pull/1135#issuecomment-6904816590)).
 
 ## 1. Pick
 
-Install one skill, `near-market`. It runs step 0, then lists the seat on Agent Market and carries a job through delivery. The metric is time to the first paid job.
+Install `near-mill`. It runs the Base flow with two swaps: `near-seat` for the identity, and a plain testnet NEAR transfer for the payment. Groover, the suit, and the hangar catalog stay as they are.
 
-Step 0 is `near-seat`: a testnet account, a function-call key, and the full-access key sealed at `0600`. End to end that step is **about 10.6s**, not 3.6s. The measured pieces were create 3.59s, grant 3.58s, and the first call 3.62s (10.78s). The 3.6s figure was only create-through-sign on an earlier account.
+Step 0, `near-seat`, is **about 10.6s** end to end, not 3.6s. Measured: create 3.59s, grant 3.58s, first call 3.62s (10.78s). The 3.6s figure was an earlier create-through-sign only.
 
-## 2. Step list
+## 2. Base step to NEAR step
 
-| Step | What | Source |
+| Base step | NEAR step | Tag |
 |---|---|---|
-| 0a | Faucet-create a `.testnet` account with `save-to-legacy-keychain`. | [named accounts](https://docs.near.org/protocol/tutorials/creating-implicit-and-named-accounts), [CLI](https://docs.near.org/tools/cli) |
-| 0b | Before `grant-function-call-access`, `view_account` at most **5** times, **1s** apart. If the account is still missing, stop. Do not grant. | This run's first view failed at 0.24s; a later view saw the account. Cap is 5. |
-| 0c | Grant a function-call key. Seal the full-access key in `$SEAT_HOME/near-cold/` at `0600`. Do not delete it on chain: an account with only function-call keys cannot add a key. | [access keys](https://docs.near.org/protocol/accounts-contracts/access-keys) |
-| 1 | Owner confirms email (Google sign-in counts). Create the listing: name, handle, tagline. It stays a `draft`. | [List your agent](https://docs.market.near.ai/list-your-agent) |
-| 2 | Set price and delivery SLA. Live requires a price. | same page |
-| 3 | Mint an `aat_` token. The docs say this is the only credential the agent needs for the job loop. | same page; [worker skill](https://market.near.ai/skill/SKILL.md) |
-| 4 | `GET /v1/agents/me/assignments`. A row with `startedAt: null` is a fresh hire. | [list your agent](https://docs.market.near.ai/list-your-agent), [OpenAPI](https://market.near.ai/openapi.json) |
-| 5 | `POST /v1/assignments/{id}/start` before work. Until then the buyer can cancel for a full refund. | same |
-| 6 | `POST /v1/assignments/{id}/submit` with `deliverableMarkdown`. A thread message is not delivery. | [FAQ](https://docs.market.near.ai/faq), [how it works](https://docs.market.near.ai/concepts/how-it-works) |
-| 7 | Buyer accepts, or silence accepts after 3 days (up to 7). Payout is price minus a 5% fee, in the currency the buyer paid. | [payments](https://docs.market.near.ai/concepts/payments-and-disputes) |
+| `house init` and `doctor` ([stand-up-fleet](https://github.com/0xRayAI/xray/blob/main/grok-bot/skills/stand-up-fleet/SKILL.md)) | Same commands. | CARRIES OVER |
+| Fasten mill + inspect | Same fasten. | CARRIES OVER |
+| Groover `register` → Dynamo citation → `mint_suit` → ERC-8004 pin ([groover-factory-parity](https://github.com/0xRayAI/xray/blob/main/grok-bot/skills/groover-factory-parity/SKILL.md)) | Same MCP host `https://groover.rippel.ai/mcp`. Pin stays the existing USDC pin. Do not replace it with a NEAR account. | CARRIES OVER |
+| OWS wallet, USDC on Base, EIP-3009 `X-PAYMENT` ([setup-ows-pay](https://github.com/0xRayAI/xray/blob/main/grok-bot/skills/setup-ows-pay/SKILL.md)) | Buyer pays the mill's testnet account with a plain NEAR transfer. The mill's working key is not the signer. | SWAP |
+| `npx groover-hangar`, `GET /v1/catalog`, unpaid GET returns 402 ([plant-hangar-shops](https://github.com/0xRayAI/xray/blob/main/grok-bot/skills/plant-hangar-shops/SKILL.md)) | Same plant and catalog. The paid retry uses the NEAR transfer instead of Base USDC. | CARRIES OVER, pay rail SWAP |
+| `near-seat`: faucet account, function-call key, full-access key sealed | New identity beside Groover. Not a replacement. | SWAP |
+| `0600` / no-leak check | umask `077`, then fail unless every `private_key` file under the seat dir and `~/.near-credentials` is `0600` and the secret is absent from stdout and stderr. | NEW |
+| Agent Market list / job / payout | Optional later channel. Off-chain ledger, no sandbox ([near](https://github.com/0xRayAI/xray/pull/1135#issuecomment-6904816590)). | NEW, not the pick |
 
-The same four calls exist as MCP tools on `https://market.near.ai/mcp` ([list your agent](https://docs.market.near.ai/list-your-agent)). Register is `POST /v1/agents/register` in the [OpenAPI](https://market.near.ai/openapi.json) (info title `agents-market API`, version `2.0.0`). That file lists no `servers` entry, and the words sandbox, testnet, and staging do not appear.
+`view_account` before `grant-function-call-access` retries at most **5** times, **1s** apart, then stops. Do not grant if the account is still missing.
 
-Seat files live under `.xray/state/seats/<seat>/near`. That directory is gitignored on the forge branch. This eval does not change `.gitignore`.
+The full-access key stays sealed in `$SEAT_HOME/near-cold/` at `0600`. It is not deleted on chain: without it the account cannot add a key ([access keys](https://docs.near.org/protocol/accounts-contracts/access-keys)). A function-call key cannot attach NEAR, so it cannot be the payer. Its `allowance` caps gas only. The buyer pays with their own key. Seat files sit under `.xray/state/seats/<seat>/near`, gitignored on the forge branch. This eval does not change `.gitignore`. The `0600` gate needs an automated test once the wrapper is built. This plan does not add that test.
 
-## 3. Keys, and what the market actually checks
+`save-to-legacy-keychain` writes both key files with `File::create` and no mode, so umask `022` leaves them `0644` ([`src/common.rs`](https://github.com/near/near-cli-rs/blob/v0.31.1/src/common.rs)).
 
-A function-call key cannot attach NEAR. Its `allowance` caps gas only. Omit the allowance and the key can burn unlimited gas. It is not a budget on the job price ([access keys](https://docs.near.org/protocol/accounts-contracts/access-keys)).
+## 3. Settlement
 
-The market loop does not ask for that key. Auth on the worker skill is `Authorization: Bearer aat_…`. The token cannot accept work, move money, or read the owner's wallet ([worker skill](https://market.near.ai/skill/SKILL.md)). Held payment is the marketplace balance: USD by card, or USDC from a crypto deposit (BTC, ETH, USDC, USDT, NEAR, SOL, or DAI) via a one-time deposit address ([wallets](https://docs.market.near.ai/buyers/wallets-and-billing)). USDC withdrawal is "a wallet address that you enter" ([payments](https://docs.market.near.ai/concepts/payments-and-disputes)).
+Plain NEAR transfer is the minimal rail that the core docs specify and that testnet can do ([CLI `send-near`](https://docs.near.org/tools/cli), [access keys](https://docs.near.org/protocol/accounts-contracts/access-keys)).
 
-Whether an FC key is enough to list or to withdraw is **UNVERIFIED**. The pages above never name `ed25519` or a function-call key. The May 14, 2026 post says Agent Market USDC rides Confidential Intents ([blog](https://near.ai/blog/usdc-confidential-intents-private-agent-payments)). It does not say the worker must sign with an FC key.
+| Rail | Why not first |
+|---|---|
+| NEP-141 / USDC | `ft_transfer` needs 1 yocto attached. A function-call key cannot attach it. Testnet USDC via Circle was not used. **UNVERIFIED** as the hangar rail. |
+| Intents / 1Click | No testnet ([FAQ](https://docs.near-intents.org/resources/faqs)). Host is `https://1click.chaindefuser.com` ([making a request](https://docs.near-intents.org/integration/distribution-channels/1click-api/quickstart/making-a-request)). |
+| Chain Signatures to Base | Five steps, and relaying can move real Base funds ([implementation](https://docs.near.org/chain-abstraction/chain-signatures/implementation)). |
 
-`save-to-legacy-keychain` writes two key files with `File::create` and no mode, so umask `022` leaves them at `0644` ([`src/common.rs`](https://github.com/near/near-cli-rs/blob/v0.31.1/src/common.rs)). There is no credentials-dir flag. The wrapper sets umask `077`, then fails unless every `private_key` file under the seat dir and `~/.near-credentials` is `0600` and the secret is absent from stdout and stderr. **That gate needs an automated test once the wrapper is built.** This plan does not add the test.
+near asked USDC versus Intents ([forge](https://github.com/0xRayAI/xray/pull/1135#issuecomment-6904822439)). Neither is proven here. The first payable proof is a plain transfer.
 
-## 4. Mock
+## 4. Pass test
 
-No sandbox was found, so the pass test does not call production. The mock is a local HTTP stand-in of four routes and one ledger line:
+What ran live is step 0 only, on 2026-11-16, `near-cli-rs` 0.31.1. Account `millfc1ca97ca3.testnet`. Transaction [`CnCbvTDM3Xt5N2Bq6FtwwA79o23iebuZnsHFuuVH1x7K`](https://explorer.testnet.near.org/transactions/CnCbvTDM3Xt5N2Bq6FtwwA79o23iebuZnsHFuuVH1x7K): `set_greeting` on `hello.near-examples.testnet`, deposit 0, function-call key. Keys were deleted. No new transaction this pass.
 
-- `POST /v1/agents/register` returns a fake agent id and a fake `aat_` token.
-- `GET /v1/agents/me/assignments` returns one row, `startedAt: null`.
-- `POST /v1/assignments/{id}/start` and `POST /v1/assignments/{id}/submit` return 200.
-- A fixture `{ "kind": "payout" }` stands in for acceptance.
+Mocked, and not sent:
 
-Not mocked as success, and not run: email confirmation, Discover going Live, a test run on market.near.ai, Stripe, a USDC withdrawal, an Intents deposit address, and any chain transaction. A draft "test run" on the real site is a production write and pays nothing ([list your agent](https://docs.market.near.ai/list-your-agent)). It is out.
+- Groover register, mint, and pin.
+- `GET /v1/catalog` row and the 402.
+- The buyer's NEAR transfer and the paid retry.
+- Agent Market `POST /v1/agents/register`, assignments, start, and submit.
 
-## 5. Time to first paid job
+A listed, payable mill is those mocks plus the live near-seat account. Time from zero to a paid listing is **UNVERIFIED**.
 
-**UNVERIFIED.** Nothing was listed and nothing was hired. The docs put payout within seconds of acceptance, or on the 3-to-7-day silence clock ([payments](https://docs.market.near.ai/concepts/payments-and-disputes)). A test run does not pay. Step 0, already measured, is about 10.6s and is not a paid job.
+## 5. Unverified
 
-No new testnet transaction this pass. The step-0 proof remains [tx `CnCbvTDM3Xt5N2Bq6FtwwA79o23iebuZnsHFuuVH1x7K`](https://explorer.testnet.near.org/transactions/CnCbvTDM3Xt5N2Bq6FtwwA79o23iebuZnsHFuuVH1x7K) on `millfc1ca97ca3.testnet`: `set_greeting`, deposit 0, function-call key. Account `millb40a714e.testnet` was the earlier faucet account.
-
-## 6. Unverified
-
-- Market sandbox or testnet. Absent from `openapi.json` and from the docs index.
-- Whether listing or payout requires a NEAR key, and whether an FC key suffices.
-- The helper's published grant. This chain showed 10 NEAR on `millb40a714e.testnet`. The [faucet page](https://docs.near.org/getting-started/faucet) says "a small amount." `near-seat` reads the balance back.
-- Pagoda relay and any other relayer. Not called. CLI defaults leave `meta_transaction_relayer_url` unset ([near](https://github.com/0xRayAI/xray/pull/1135#issuecomment-6904632647)).
-- How `0.25 NEAR` became on-chain allowance `249846713045166000000000`.
-- `accounts.json` and `ft_contracts.json`, left at `0644` and not opened.
+- USDC-on-NEAR and Intents as the hangar rail.
+- Pagoda relay. CLI defaults leave `meta_transaction_relayer_url` unset ([near](https://github.com/0xRayAI/xray/pull/1135#issuecomment-6904632647)).
+- Helper grant as a published number. The chain showed 10 NEAR. The [faucet page](https://docs.near.org/getting-started/faucet) says "a small amount."
+- How `0.25 NEAR` became allowance `249846713045166000000000`.
+- `accounts.json` and `ft_contracts.json` (left `0644`, not opened).
+- Agent Market accept/dispute (not in the OpenAPI near fetched) and any on-chain escrow. near found none ([6904816590](https://github.com/0xRayAI/xray/pull/1135#issuecomment-6904816590)).
