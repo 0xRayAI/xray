@@ -1,0 +1,108 @@
+diff --git a/near/escrow/src/lib.rs b/near/escrow/src/lib.rs
+index 412cd63..343ee44 100644
+--- a/near/escrow/src/lib.rs
++++ b/near/escrow/src/lib.rs
+@@ -8,6 +8,7 @@
+ //! creator's share (fixed here at 0), and a private callback after `ft_transfer`.
+ //! This message also binds the chain id and a nonce, so a signature cannot be
+ //! replayed on another chain or twice on this contract.
++//! Pinky's copyright and MIT permission text: `near/escrow/THIRD_PARTY_NOTICES`.
+ //!
+ //! Unused-amount refund idea, path and sha only, nothing copied:
+ //! Balloon-DefAI/balloons-contracts@eb1f045 `src/ft_receiver.rs`.
+@@ -560,7 +561,13 @@ impl Escrow {
+     }
+ 
+     fn credit(&mut self, account: &AccountId, amount: u128) {
+-        let next = self.balances.get(account).copied().unwrap_or(0).saturating_add(amount);
++        let next = self
++            .balances
++            .get(account)
++            .copied()
++            .unwrap_or(0)
++            .checked_add(amount)
++            .unwrap_or_else(|| env::panic_str("balance overflow"));
+         self.balances.insert(account.clone(), next);
+     }
+ 
+@@ -912,9 +919,14 @@ mod tests {
+         set_caller(client(), 20);
+         escrow.dispute(1, "noncedispute000001".to_string(), signature);
+         let ends = escrow.get_deal(1).unwrap().dispute_ends_ns.unwrap();
++        set_caller("anyone.testnet".parse().unwrap(), ends - 1);
++        let before = catch_unwind(AssertUnwindSafe(|| escrow.resolve_dispute_timeout(1)));
++        assert!(before.is_err());
+         set_caller("anyone.testnet".parse().unwrap(), ends);
+-        let early = catch_unwind(AssertUnwindSafe(|| escrow.resolve_dispute_timeout(1)));
+-        assert!(early.is_err());
++        let at_deadline = catch_unwind(AssertUnwindSafe(|| escrow.resolve_dispute_timeout(1)));
++        assert!(at_deadline.is_err());
++        assert_eq!(escrow.get_deal(1).unwrap().state, DealState::Disputed);
++        assert_eq!(escrow.get_balance(creator()).0, 0);
+         set_caller("anyone.testnet".parse().unwrap(), ends + 1);
+         escrow.resolve_dispute_timeout(1);
+         assert_eq!(escrow.get_balance(creator()).0, 500_000);
+@@ -967,9 +979,14 @@ mod tests {
+         open_deal(&mut escrow, &payload, "nonceopen00000001");
+         fund(&mut escrow, 1, PRICE, 1);
+         let deadline = escrow.get_deal(1).unwrap().deliver_by_ns.unwrap();
++        set_caller(client(), deadline - 1);
++        let before = catch_unwind(AssertUnwindSafe(|| escrow.refund_late(1)));
++        assert!(before.is_err());
+         set_caller(client(), deadline);
+-        let early = catch_unwind(AssertUnwindSafe(|| escrow.refund_late(1)));
+-        assert!(early.is_err());
++        let at_deadline = catch_unwind(AssertUnwindSafe(|| escrow.refund_late(1)));
++        assert!(at_deadline.is_err());
++        assert_eq!(escrow.get_deal(1).unwrap().state, DealState::Funded);
++        assert_eq!(escrow.get_balance(client()).0, 0);
+         set_caller(client(), deadline + 1);
+         escrow.refund_late(1);
+         assert_eq!(escrow.get_deal(1).unwrap().state, DealState::Refunded);
+@@ -990,6 +1007,15 @@ mod tests {
+         assert_eq!(escrow.get_balance(creator()).0, PRICE);
+     }
+ 
++    #[test]
++    fn credit_panics_on_overflow() {
++        let mut escrow = contract();
++        escrow.balances.insert(creator(), u128::MAX);
++        let overflowed = catch_unwind(AssertUnwindSafe(|| escrow.credit(&creator(), 1)));
++        assert!(overflowed.is_err());
++        assert_eq!(escrow.get_balance(creator()).0, u128::MAX);
++    }
++
+     #[test]
+     fn failed_withdraw_puts_the_balance_back() {
+         let mut escrow = contract();
+diff --git a/near/escrow/THIRD_PARTY_NOTICES b/near/escrow/THIRD_PARTY_NOTICES
+new file mode 100644
+index 0000000..cf48519
+--- /dev/null
++++ b/near/escrow/THIRD_PARTY_NOTICES
+@@ -0,0 +1,25 @@
++Basssoman/pinky @ c94cb144, contract/src/lib.rs. The release machine follows
++those patterns. The notice below is that repository's LICENSE at c94cb144,
++copied unchanged.
++
++MIT License
++
++Copyright (c) 2026 the Pinky contributors
++
++Permission is hereby granted, free of charge, to any person obtaining a copy
++of this software and associated documentation files (the "Software"), to deal
++in the Software without restriction, including without limitation the rights
++to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
++copies of the Software, and to permit persons to whom the Software is
++furnished to do so, subject to the following conditions:
++
++The above copyright notice and this permission notice shall be included in all
++copies or substantial portions of the Software.
++
++THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
++AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
++OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++SOFTWARE.
