@@ -23,6 +23,25 @@ test('speed fits the span into 15 to 30 seconds', () => {
   assert.throws(() => replaySpeed(to, from, 20), /before/);
 });
 
+test('a morning window fills the requested 30 seconds', () => {
+  const to = Date.parse('2026-11-16T10:30:00Z');
+  const from = parseWhen('2026-11-16T03:00', to);
+  const plan = replaySpeed(from, to, 30);
+  assert.equal(Math.round(plan.spanMs / plan.speed / 1000), 30);
+  assert.ok(plan.speed > 1 && plan.speed < 600);
+});
+
+test('the recorder defaults to dark and drives the speed control', () => {
+  const src = fs.readFileSync(path.join(root, 'tools/record-board-replay.mjs'), 'utf8');
+  assert.match(src, /colorScheme: theme/);
+  assert.match(src, /bifrost-theme/);
+  assert.match(src, /data-theme/);
+  assert.match(src, /getElementById\('speed'\)/);
+  assert.match(src, /--theme/);
+  assert.match(src, /-ss/);
+  assert.doesNotMatch(src, /window\.speed/);
+});
+
 test('rewind does not rebuild the seat nodes', () => {
   const html = fs.readFileSync(path.join(root, 'app/public/index.html'), 'utf8');
   const site = fs.readFileSync(path.join(root, 'site/public/site-config.js'), 'utf8');
