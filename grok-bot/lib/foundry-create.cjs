@@ -232,4 +232,5 @@ module.exports = {
   foundryRecordPath,
   parseFoundryCreateArgs,
   runFoundryCreateCli,
+  writeFoundryRecord,
 };
