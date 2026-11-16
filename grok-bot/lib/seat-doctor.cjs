@@ -1189,6 +1189,8 @@ Commands:
   exit-gate <NOTES.md>
                    The wake's step 7 gate: a named bug or ask with no repo#n fails the turn
   bifrost init     Write the board's seat routes (collector/routing/inbox-roles.json in a bifrost clone; BIFROST_FEED overrides). --check validates and writes nothing. Needs python3
+  foundry-create --id <id> --seat <seat> --account <account>
+                   Record the foundry and its NEAR receiver. The same id and receiver keeps the record. --force replaces a different one
   (default)        Point at AGENTS.md / SKILLS.md / llms.txt
 
 Flags:

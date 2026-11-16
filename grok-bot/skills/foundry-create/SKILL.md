@@ -7,7 +7,9 @@ description: >-
 ---
 # foundry-create
 
-One step on a fresh project. It runs near-mill, which runs near-seat, then records the foundry.
+`grok-bot foundry-create --id <id> --seat <seat> --account <account>`
+
+That command creates the foundry on a fresh project. It runs near-mill, which runs near-seat, then records the foundry. The same id and receiver keeps the record. A different id or receiver stops unless you pass `--force`.
 
 The record is `.xray/state/foundry.json`:
 

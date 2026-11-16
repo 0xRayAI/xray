@@ -17,6 +17,17 @@ if (args[0] === 'range') {
 } else if (args[0] === 'live-inbox' || args[0] === 'exit-gate') {
   const { runKitTool } = require('../lib/kit-tools.cjs');
   process.exitCode = runKitTool(args[0], args.slice(1));
+} else if (args[0] === 'foundry-create') {
+  const { runFoundryCreateCli } = require('../lib/foundry-create.cjs');
+  runFoundryCreateCli(args.slice(1))
+    .then((code) => {
+      process.exitCode = code;
+    })
+    .catch((err) => {
+      const message = err instanceof Error ? err.message : String(err);
+      process.stderr.write(`${message}\n`);
+      process.exitCode = 1;
+    });
 } else {
   const { runDoctorCli } = require('../lib/seat-doctor.cjs');
   process.exitCode = runDoctorCli(args);
