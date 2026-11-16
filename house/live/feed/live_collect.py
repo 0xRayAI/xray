@@ -624,7 +624,7 @@ def default_raci(item, nodes=None, roles=None, held=None):
         if not seat or not answer:
             return None
         return {"R": seat, "A": answer}
-    owner = named_owner(table, item, nodes) or role_holder(table, item) or builder_seat(table)
+    owner = named_owner(table, item, nodes) or role_holder(table, item) or builder_seat(table, item)
     if not owner:
         return None
     seat, why = place_r(table, owner, book)
@@ -642,12 +642,49 @@ def default_raci(item, nodes=None, roles=None, held=None):
     return {"R": seat, "A": answer}
 
 
-def builder_seat(roles):
-    """The builder rule's seat. A card with no owner still gets a route from the table."""
+_PLANE_HINTS = ("dist", "core", "ecosystem", "eng")
+
+
+def plane_hint(item):
+    """A plane named by a label or a title prefix. Empty when the card does not say."""
+    labels = set(_label_names(item if isinstance(item, dict) else {}))
+    for name in _PLANE_HINTS:
+        if name in labels:
+            return name
+    title = str((item or {}).get("title") if isinstance(item, dict) else "").strip().lower()
+    for name in _PLANE_HINTS:
+        if title.startswith(name + ":") or title.startswith(name + " "):
+            return name
+    return ""
+
+
+def plane_builder(roles, plane):
+    """A builder on that plane, else the plane primary. Empty when the plane has neither."""
+    chosen = ""
+    for seat, entry in (roles.get("routing") or {}).items():
+        if not isinstance(entry, dict) or str(entry.get("plane") or "") != plane:
+            continue
+        if str(entry.get("role") or "").lower() != "builder":
+            continue
+        if entry.get("primary") is True:
+            return str(seat).lower()
+        if not chosen:
+            chosen = str(seat).lower()
+    if chosen:
+        return chosen
+    return primary_of(roles, plane)
+
+
+def builder_seat(roles, item=None):
+    """The plane named on the card, else eng. Eng is the last resort."""
+    hint = plane_hint(item)
+    if hint:
+        seat = plane_builder(roles, hint)
+        if seat:
+            return seat
     rule = (roles.get("seats") or {}).get("builder")
-    if not isinstance(rule, dict):
-        return ""
-    return resolve_seat(roles, rule.get("seat"))
+    named = resolve_seat(roles, rule.get("seat")) if isinstance(rule, dict) else ""
+    return plane_builder(roles, "eng") or named
 
 
 def raci_comment(responsible, answer):
