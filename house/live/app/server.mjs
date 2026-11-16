@@ -2455,6 +2455,15 @@ function bindSeatWorkToCards(fleet) {
 setInterval(() => governorRun(), GOV_MS).unref();
 // Weekday half hour. A test bind stays quiet. Railway posts unless STATION_NUDGE=off.
 let stationPosted = '';
+let lastStation = null;
+function stationNote(action, detail) {
+  const info = detail && typeof detail === 'object' ? detail : {};
+  lastStation = { action, at: new Date().toISOString(), hour: info.hour || '', why: info.why || '', seats: info.seats || [] };
+  const hour = lastStation.hour ? ` ${lastStation.hour}` : '';
+  const seats = lastStation.seats.length ? ` ${lastStation.seats.join(',')}` : '';
+  const why = lastStation.why ? ` ${lastStation.why}` : '';
+  console.log(`station nudge ${action}${hour}${seats}${why}`);
+}
 function stationClock(now) {
   const raw = String(process.env.STATION_NOW || '').trim();
   if (!raw) return now;
@@ -2469,17 +2478,18 @@ function stationTickOn() {
   return process.env.PORT !== '0';
 }
 function stationTick(now = new Date()) {
-  if (!stationTickOn()) return;
+  if (!stationTickOn()) { stationNote('skip', { why: 'off' }); return; }
   const when = stationClock(now);
-  if (!when) return;
+  if (!when) { stationNote('skip', { why: 'clock' }); return; }
   const due = stationDue(when, stationPosted, SEAT_IDS, (seat) => seatOpenRows(seat, false).length);
-  if (!due) return;
+  if (!due) { stationNote('skip', { why: 'not due' }); return; }
   const postedAt = new Date().toISOString();
   const lines = due.lines.map((line) => ({ ...line, t_ct: postedAt }));
-  if (!lines.length) { stationPosted = due.hour; return; }
+  if (!lines.length) { stationPosted = due.hour; stationNote('skip', { hour: due.hour, why: 'no seats' }); return; }
   const r = postSeatLines({ lines }, null);
-  if (r.status !== 200) return;
+  if (r.status !== 200) { stationNote('skip', { hour: due.hour, why: `post ${r.status}` }); return; }
   stationPosted = due.hour;
+  stationNote('post', { hour: due.hour, seats: lines.map((line) => line.seat) });
   if (r.added) { seq++; header = mergedHeader(); fullDirty = true; }
 }
 setInterval(() => { try { stationTick(); } catch { /* the next minute retries */ } }, 60000).unref();
@@ -2934,7 +2944,7 @@ function healthBody() {   // public: counts, times, ages (s) and wake states; no
     cards_behind: behind, stale_status: staleStatus,
     last_tick: passAt ? new Date(passAt).toISOString() : null, stalled,
     history_ready: historyState.ready, history_redis: historyState.redis, history_cards: historyState.cards,
-    origin: ORIGIN || null, wakes: wakeHealth(), wake_stats: publicStats(wakeState, now, wakeConfig(process.env).statMs), fleet_mode: { mode: fleetMode.mode, route: fleetMode.route, by: fleetMode.by, at: fleetMode.at }, arch1_launch: arch1Launch.health(), arch1_inbox: arch1InboxDepth(), nudged_lines: nudges.filter(n => n.kind === 'line' && !n.closed_at).length, routing: ROUTING.ok ? 'ok' : 'fail', governor_changes: governorChanges };
+    origin: ORIGIN || null, wakes: wakeHealth(), wake_stats: publicStats(wakeState, now, wakeConfig(process.env).statMs), fleet_mode: { mode: fleetMode.mode, route: fleetMode.route, by: fleetMode.by, at: fleetMode.at }, arch1_launch: arch1Launch.health(), arch1_inbox: arch1InboxDepth(), nudged_lines: nudges.filter(n => n.kind === 'line' && !n.closed_at).length, station_nudge: lastStation, routing: ROUTING.ok ? 'ok' : 'fail', governor_changes: governorChanges };
   if (warming) body.status = 'warming';
   return body;
 }
