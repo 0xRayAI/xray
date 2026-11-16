@@ -63,7 +63,7 @@ D12 (seats never woken by an inbox packet) is closed under this path.
 
 **Server routing.** After each collector pass the server runs `feed/inbox_pass.py` (the box pusher's rules, `feed/routing/inbox-roles.json`) on the collector's events, stores the new lines in the seat inboxes and fires the seat's webhook. Seen and sent ids live on the volume (`$MESH_DATA_DIR/route/`), so an event is routed once, also across restarts. The first pass on an empty volume marks history seen and delivers only events inside the seed grace (10 minutes before that pass). Older history is not delivered. `SERVER_ROUTING=off` turns it off. The box pusher is no longer needed for collector events; if it runs too, its lines carry the same ids and are not stored twice.
 
-**Route table (our 9 seats).** Every route in `feed/routing/inbox-roles.json` lands on one of our 9 seats (`feed/fleet-roster.json`: blinky, critic, forge, near, arch1, herald, magnet, nibbler, sound); `tests/test_routing_ours.py` fails on any other name. The mill seat is gone. `@mill`, an implement ask, a rebase ask, a dev ask, and `mill wave` land on forge.
+**Route table (our seats).** Every route in `feed/routing/inbox-roles.json` lands on one of our seats (`feed/fleet-roster.json`: blinky, critic, forge, mill, near, arch1, herald, magnet, nibbler, sound); `tests/test_routing_ours.py` fails on any other name. `@mill` lands on mill. An implement ask, a rebase ask, a dev ask, and `mill wave` land on forge.
 
 | Event | Seat(s) | Rule |
 |---|---|---|
@@ -73,7 +73,8 @@ D12 (seats never woken by an inbox packet) is closed under this path.
 | Review requested; Light / Strict / re-Light ask | critic | `extra_seats.critic` |
 | Deploy / deploy fail / Railway hold, CI failure (`ci_fail`), lab or Railway asks | forge | `seats.operator.seat` + `extra_seats.forge.kinds` |
 | Merge to develop, main or bifrost/main; PR ready to merge | forge | `seats.tester.seat`, `extra_seats.forge`, `seats.builder.seat` |
-| Implement / rebase / dev ask, `mill wave`, `@mill` | forge | `extra_seats.forge.needles` |
+| Implement / rebase / dev ask, `mill wave` | forge | `extra_seats.forge.needles` |
+| `@mill` | mill | `extra_seats.mill.needles` |
 | needs-decision / lead label or ask | blinky | `seats.coord.seat` |
 | `@seat` mention (`@forge`, `@critic`, `@blinky`, `@herald`, `@nibbler`, `@sound`, `@magnet`, `@near`) | that seat | `extra_seats.<seat>.needles` |
 | `@arch10x` (the only handle; `@arch1` is a different GitHub user and never routes): Arch1 is outside the fleet, reached only by this explicit mention; bare deep-review / Gate B words never route to him and nothing is copied to blinky | arch1 | `extra_seats.arch1.needles` |

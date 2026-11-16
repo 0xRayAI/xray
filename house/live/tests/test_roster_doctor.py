@@ -20,7 +20,7 @@ class RosterDoctorTest(unittest.TestCase):
         self.assertEqual(modes["forge"], "active")
         self.assertEqual(modes["nibbler"], "active")
         self.assertNotIn("arch1", modes)
-        self.assertNotIn("mill", modes)
+        self.assertEqual(modes["mill"], "active")
 
     def test_active_seat_without_webhook_or_recent_wake_is_flagged(self):
         roster = {"seats": ["forge", "herald"], "parked": ["herald"], "outside": []}
