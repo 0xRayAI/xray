@@ -362,6 +362,7 @@ class DefaultRaci(unittest.TestCase):
 
     def test_a_dead_assign_token_does_not_latch(self):
         item = card(number=1090, body="Board-Owner: forge\n", assignees=[{"login": "kept"}])
+        lists = []
 
         class Client:
             token = "read-token"
@@ -370,6 +371,9 @@ class DefaultRaci(unittest.TestCase):
             def rest(self, path, params=None, etag=None, essential=True):
                 if str(path).endswith("/comments"):
                     return 200, [], None, None
+                lists.append(etag)
+                if etag == "W/dead":
+                    return 304, None, etag, None
                 return 200, [item], "W/dead", None
 
             def write_json(self, path, payload):
@@ -384,7 +388,11 @@ class DefaultRaci(unittest.TestCase):
         col.fill_open_raci(Client())
         self.assertTrue(col._assign_auth_dead)
         self.assertNotIn("raci:open", col.st["bf"])
-        self.assertNotIn("raci-open", col.st["etags"])
+        self.assertEqual(col.st["etags"].get("raci-open"), "W/dead")
+        col._assign_auth_dead = False
+        col._assign_left = 10
+        col.fill_open_raci(Client())
+        self.assertEqual(lists, [None, "W/dead"])
 
     def test_a_changed_list_stores_the_new_tag(self):
         item = card(number=1093, body="no packet\n", state="closed")

@@ -1607,10 +1607,10 @@ class RepoCollector:
             self.maybe_assign(c, item)
         if stopped or getattr(self, "_paged_status", None) != "done":
             return
-        if getattr(self, "_assign_auth_dead", False):
-            return
         if getattr(self, "_etag_new", None):
             self.st["etags"]["raci-open"] = self._etag_new
+        if getattr(self, "_assign_auth_dead", False):
+            return
         if assign_rewalk_done(
                 getattr(self, "_paged_status", None),
                 getattr(self, "_assign_left", 0),
