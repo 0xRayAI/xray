@@ -6,7 +6,7 @@ const { foundryRecordPath, writeFoundryRecord } = require('./foundry-create.cjs'
 // Clearing main. Paths: mcp/src/http.ts:17 `/v1/pin`, :33 `/v1/listings`.
 // GET /v1/listings?agentId= is the unpaid check (mcp/src/listings.ts:12-39).
 // catalog.shops is { id, url } when the agent is on the listed board.
-// The catalog body is listed rows (mcp/src/listed.ts:187-191).
+// /v1/catalog is liveListedRows then catalogFromListed (mcp/src/listed.ts:190-191, catalogFromListed at :275).
 // A row is written only by a settled pin (mcp/src/pin.ts:63-79) when the card
 // has a live shop and Groover + solar. Quote is 402 until PAYMENT-SIGNATURE
 // or X-PAYMENT (mcp/src/x402.ts paymentHeaderFromRequest). This client does
@@ -14,6 +14,8 @@ const { foundryRecordPath, writeFoundryRecord } = require('./foundry-create.cjs'
 // TECH-SPEC.md:177 — pin + Groover DID/GRVR + Dynamo solar + live HTTPS shop.
 const CLEARING_ORIGIN = 'https://clearing.rippel.ai';
 const LIST_USAGE = 'grok-bot hangar-list --agent-id <id> --url <https-shop>';
+// listings.ts probe timeout is AbortSignal.timeout(4000).
+const LIST_TIMEOUT_MS = 4000;
 
 function originOf(value) {
   const raw = typeof value === 'string' && value.trim() ? value.trim() : CLEARING_ORIGIN;
@@ -57,34 +59,41 @@ async function responseBody(res) {
   return JSON.parse(text);
 }
 
-function shopIdForUrl(body, shopUrl) {
-  const catalog = body && body.catalog;
+function shopIdForUrl(result, shopUrl) {
+  if (!result || result.ok !== true) return null;
+  const catalog = result.body && result.body.catalog;
   if (!catalog || catalog.ok !== true || !Array.isArray(catalog.shops)) return null;
   const hit = catalog.shops.find((shop) => shop && shop.url === shopUrl && typeof shop.id === 'string' && shop.id.length > 0);
   return hit ? hit.id : null;
 }
 
-async function getJson(fetchImpl, url, headers) {
-  const res = await fetchImpl(url, { method: 'GET', headers });
+async function getJson(fetchImpl, url, headers, timeoutMs) {
+  const res = await fetchImpl(url, {
+    method: 'GET',
+    headers,
+    signal: AbortSignal.timeout(timeoutMs),
+  });
   const body = await responseBody(res);
-  return { status: res.status, body };
+  return { status: res.status, ok: res.ok === true, body };
 }
 
-async function listingsCheck(fetchImpl, origin, agentId) {
+async function listingsCheck(fetchImpl, origin, agentId, timeoutMs) {
   const url = `${origin}/v1/listings?agentId=${encodeURIComponent(String(agentId))}`;
-  const result = await getJson(fetchImpl, url);
+  const result = await getJson(fetchImpl, url, undefined, timeoutMs);
   return { url, ...result };
 }
 
-async function pinForListing(fetchImpl, origin, agentId, pay) {
+async function pinForListing(fetchImpl, origin, agentId, pay, timeoutMs) {
   const url = `${origin}/v1/pin?agentId=${encodeURIComponent(String(agentId))}`;
-  const first = await getJson(fetchImpl, url);
-  if (first.status !== 402) return { url, ...first, paid: first.body && first.body.paid === true };
+  const first = await getJson(fetchImpl, url, undefined, timeoutMs);
+  if (first.status !== 402) {
+    return { url, ...first, paid: first.ok === true && first.body && first.body.paid === true };
+  }
   if (typeof pay !== 'function') return { url, ...first, paid: false };
   const header = await pay(first.body);
   if (typeof header !== 'string' || header.length === 0) return { url, ...first, paid: false };
-  const second = await getJson(fetchImpl, url, { 'PAYMENT-SIGNATURE': header });
-  return { url, ...second, paid: second.body && second.body.paid === true };
+  const second = await getJson(fetchImpl, url, { 'PAYMENT-SIGNATURE': header }, timeoutMs);
+  return { url, ...second, paid: second.ok === true && second.body && second.body.paid === true };
 }
 
 function storeListingId(file, record, listingId) {
@@ -106,14 +115,15 @@ async function listFoundry(opts = {}) {
   if (agentId == null) throw new Error('agentId is required (uint)');
   const fetchImpl = opts.fetch || globalThis.fetch;
   const origin = originOf(opts.origin);
-  const checked = await listingsCheck(fetchImpl, origin, agentId);
-  let listingId = shopIdForUrl(checked.body, payload.shopUrl);
+  const timeoutMs = opts.timeoutMs == null ? LIST_TIMEOUT_MS : opts.timeoutMs;
+  const checked = await listingsCheck(fetchImpl, origin, agentId, timeoutMs);
+  let listingId = shopIdForUrl(checked, payload.shopUrl);
   let pin = null;
   if (!listingId) {
-    pin = await pinForListing(fetchImpl, origin, agentId, opts.pay);
+    pin = await pinForListing(fetchImpl, origin, agentId, opts.pay, timeoutMs);
     if (pin.paid && pin.body && pin.body.listed === true) {
-      const again = await listingsCheck(fetchImpl, origin, agentId);
-      listingId = shopIdForUrl(again.body, payload.shopUrl);
+      const again = await listingsCheck(fetchImpl, origin, agentId, timeoutMs);
+      listingId = shopIdForUrl(again, payload.shopUrl);
     }
   }
   if (!listingId) {

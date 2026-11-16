@@ -14,4 +14,17 @@ The mill plant stays: suit, Groover register, `mint_suit`, pin, and `npx groover
 
 Install from this skill inside `@0xray/grok-bot`. Do not `npm publish` the `0xray` package.
 
-`grok-bot doctor` prints the NEAR account id when `near-seat` has recorded one, and it still prints the Groover register, mint, and pin step. The Open Wallet path is unchanged.
+Grok CLI, Cursor, Claude Code, and Codex run these commands. Grok Bot runs the same ones.
+
+1. `grok-bot foundry-create --id <id> --seat <seat> --account <account>`
+   Creates the foundry and runs near-seat for the NEAR testnet account.
+2. `grok-bot hangar-list --agent-id <id> --url <https-shop>`
+   Checks the Clearing listing for that shop. It does not pay.
+3. `grok-bot near-status`
+   Prints one block: NEAR account, foundry id, and listing id. An absent value is `pending`.
+
+`grok-bot doctor` prints that same block, the NEAR account when near-seat has recorded one, and the Groover register, mint, and pin step. The Open Wallet path is unchanged.
+
+## Pending
+
+Pay, Cap, and Escrow are not wired. Leave them pending. Do not invent a payment, a cap, or an escrow call.

@@ -14,8 +14,9 @@ const hangar = requireCjs(path.join(root, 'grok-bot', 'lib', 'hangar-list.cjs'))
     dest: string;
     shopUrl: string;
     agentId: number;
-    fetch?: (url: string, init?: { method?: string; headers?: Record<string, string> }) => Promise<{
+    fetch?: (url: string, init?: { method?: string; headers?: Record<string, string>; signal?: AbortSignal }) => Promise<{
       status: number;
+      ok?: boolean;
       json: () => Promise<unknown>;
     }>;
     pay?: (quote: unknown) => Promise<string | null>;
@@ -65,10 +66,11 @@ describe('hangar-list', () => {
     const calls: Array<{ url: string; method?: string; headers?: Record<string, string> }> = [];
     try {
       writeFoundry(dest);
-      const fetch = async (url: string, init?: { method?: string; headers?: Record<string, string> }) => {
-        calls.push({ url, method: init?.method, headers: init?.headers });
+      const fetch = async (url: string, init?: { method?: string; headers?: Record<string, string>; signal?: AbortSignal }) => {
+        calls.push({ url, method: init?.method, headers: init?.headers, signal: init?.signal });
         return {
           status: 200,
+          ok: true,
           json: async () => ({
             agentId: 7,
             directories: 4,
@@ -84,11 +86,10 @@ describe('hangar-list', () => {
         fetch,
         pay: async () => { throw new Error('pay must not run'); },
       });
-      expect(calls).toEqual([{
-        url: `${hangar.CLEARING_ORIGIN}/v1/listings?agentId=7`,
-        method: 'GET',
-        headers: undefined,
-      }]);
+      expect(calls).toHaveLength(1);
+      expect(calls[0]?.url).toBe(`${hangar.CLEARING_ORIGIN}/v1/listings?agentId=7`);
+      expect(calls[0]?.method).toBe('GET');
+      expect(calls[0]?.signal).toBeInstanceOf(AbortSignal);
       expect(listed.payload).toEqual({
         shopUrl,
         receiver,
@@ -127,6 +128,27 @@ describe('hangar-list', () => {
     }
   });
 
+  it('does not store a listing id when the listings response is not ok', async () => {
+    const dest = mkdtempSync(path.join(tmpdir(), 'hangar-list-bad-'));
+    try {
+      const file = writeFoundry(dest);
+      await expect(hangar.listFoundry({
+        dest,
+        shopUrl,
+        agentId: 7,
+        fetch: async () => ({
+          status: 500,
+          ok: false,
+          json: async () => ({ catalog: { ok: true, shops: [{ id: 'ada', url: shopUrl }] } }),
+        }),
+        pay: async () => null,
+      })).rejects.toThrow('hangar listing id missing');
+      expect(readFileSync(file, 'utf8')).not.toContain('listingId');
+    } finally {
+      rmSync(dest, { recursive: true, force: true });
+    }
+  });
+
   it('injects a pin payment header and does not sign one', async () => {
     const dest = mkdtempSync(path.join(tmpdir(), 'hangar-list-pin-'));
     const calls: Array<{ url: string; headers?: Record<string, string> }> = [];
@@ -137,15 +159,15 @@ describe('hangar-list', () => {
       const fetch = async (url: string, init?: { headers?: Record<string, string> }) => {
         calls.push({ url, headers: init?.headers });
         if (url.includes('/v1/listings') && calls.filter((call) => call.url.includes('/v1/listings')).length === 1) {
-          return { status: 200, json: async () => ({ agentId: 7, catalog: { ok: false, catalog: `${hangar.CLEARING_ORIGIN}/v1/catalog` } }) };
+          return { status: 200, ok: true, json: async () => ({ agentId: 7, catalog: { ok: false, catalog: `${hangar.CLEARING_ORIGIN}/v1/catalog` } }) };
         }
         if (url.includes('/v1/pin') && !init?.headers?.['PAYMENT-SIGNATURE']) {
-          return { status: 402, json: async () => quote };
+          return { status: 402, ok: false, json: async () => quote };
         }
         if (url.includes('/v1/pin')) {
-          return { status: 200, json: async () => ({ paid: true, listed: true, agentId: 7, chainId: 8453 }) };
+          return { status: 200, ok: true, json: async () => ({ paid: true, listed: true, agentId: 7, chainId: 8453 }) };
         }
-        return { status: 200, json: async () => ({ agentId: 7, catalog: { ok: true, shops: [{ id: 'ada', url: shopUrl }] } }) };
+        return { status: 200, ok: true, json: async () => ({ agentId: 7, catalog: { ok: true, shops: [{ id: 'ada', url: shopUrl }] } }) };
       };
       const listed = await hangar.listFoundry({
         dest,
