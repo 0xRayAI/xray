@@ -17,9 +17,9 @@ Thanks for Pinky. This is a small arithmetic fix on `main` at `c94cb144abcc755df
 
 ## Tests
 
-From `contract/`, `cargo test --lib` (rustc 1.93 and 1.100):
+From `contract/`:
 
 - `credit_rejects_an_overflowing_client_payout`
 - `credit_deal_rejects_an_overflowing_liability`
 
-The lib suite is 195 passed, 0 failed.
+Both pass on rustc 1.93 and on stable 1.100. The full lib suite on stable 1.100 is 195 passed, 0 failed.
