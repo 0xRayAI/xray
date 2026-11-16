@@ -133,6 +133,12 @@ class DefaultRaci(unittest.TestCase):
     def test_a_card_with_no_owner_takes_the_builder_route(self):
         bare = card(user={"login": "octocat"}, body="Ship the gate.\n")
         self.assertEqual(live_collect.default_raci(bare, {}), {"R": "forge", "A": "forge"})
+        dist = card(user={"login": "octocat"}, title="dist: night board", body="no owner\n")
+        got = live_collect.default_raci(dist, {})
+        self.assertEqual(got["R"], "blinky")
+        self.assertNotEqual(got["R"], "forge")
+        core = card(user={"login": "octocat"}, labels=[{"name": "core"}], body="no owner\n")
+        self.assertEqual(live_collect.default_raci(core, {})["R"], "blinky")
 
     def test_a_later_open_put_keeps_the_raci_line(self):
         col = live_collect.RepoCollector.__new__(live_collect.RepoCollector)
