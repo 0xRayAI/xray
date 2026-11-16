@@ -148,6 +148,23 @@ describe('grok-bot seat doctor — diagnose', () => {
     }
   });
 
+  it('does not read a wallet outside the seat folder', () => {
+    const seat = scratch();
+    const box = scratch();
+    try {
+      writeSeat(seat);
+      mkdirSync(path.join(box, '.ows'));
+      const report = diagnoseSeat({ cwd: seat, env: { HOME: box } });
+      expect(report.ows.present).toBe(false);
+      expect(report.ows.path).toBe(path.join(seat, '.ows'));
+      expect(formatDoctor(report)).toMatch(/OWS pay: miss/);
+      expect(formatDoctor(report)).not.toContain(box);
+    } finally {
+      rmSync(seat, { recursive: true, force: true });
+      rmSync(box, { recursive: true, force: true });
+    }
+  });
+
   it('fails a seat without mill+inspect and still prints hangar/Clearing next steps', () => {
     const dir = scratch();
     try {
