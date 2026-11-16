@@ -190,7 +190,6 @@
       "needles": [
         "@forge",
         "@forge0x1",
-        "@mill",
         "merge ask",
         "deploy ask",
         "run gate b",
@@ -251,6 +250,12 @@
         "@near10x"
       ],
       "reason": "NEAR ecosystem ask for near"
+    },
+    "mill": {
+      "needles": [
+        "@mill"
+      ],
+      "reason": "explicit @mill ask for mill"
     }
   },
   "pr_heads": {

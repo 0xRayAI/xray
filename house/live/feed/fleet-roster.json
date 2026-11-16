@@ -1,5 +1,5 @@
 {
-  "seats": ["blinky", "critic", "forge", "near", "herald", "magnet", "nibbler", "sound", "arch1"],
+  "seats": ["blinky", "critic", "forge", "mill", "near", "herald", "magnet", "nibbler", "sound", "arch1"],
   "board": ["blinky", "critic", "forge", "near", "nibbler", "mill"],
   "outside": ["arch1"],
   "parked": ["herald", "magnet", "sound"],

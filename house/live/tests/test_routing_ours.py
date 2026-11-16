@@ -33,7 +33,7 @@ def deliver(events, roles=ROLES):
 
 class EverySeatIsOurs(unittest.TestCase):
     def test_roster_is_our_nine(self):
-        self.assertEqual(OURS, {"blinky", "critic", "forge", "near", "arch1", "herald", "magnet", "nibbler", "sound"})
+        self.assertEqual(OURS, {"blinky", "critic", "forge", "mill", "near", "arch1", "herald", "magnet", "nibbler", "sound"})
 
     def test_every_seat_reference(self):
         refs = [("mirror_seat", ROLES["mirror_seat"]), ("fallback.seat", ROLES["fallback"]["seat"])]

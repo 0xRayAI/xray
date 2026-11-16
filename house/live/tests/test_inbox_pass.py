@@ -121,8 +121,8 @@ class InboxPass(unittest.TestCase):
             self.run_pass(env, "pass")
             box = run / "feed" / "inbox-spool"
             rd = lambda s: [json.loads(x) for x in (box / f"{s}.jsonl").read_text().splitlines()] if (box / f"{s}.jsonl").exists() else []
-            self.assertTrue(any("9" in str(l.get("number")) or "#9" in str(l.get("id")) for l in rd("forge")))
-            self.assertFalse(rd("mill"))
+            self.assertTrue(any("9" in str(l.get("number")) or "#9" in str(l.get("id")) for l in rd("mill")))
+            self.assertFalse(any("9" in str(l.get("number")) or "#9" in str(l.get("id")) for l in rd("forge")))
             self.assertTrue(any(l.get("id") == "op:rw:abcd1234:SUCCESS" for l in rd("forge")))
             self.assertFalse(any(l.get("id") == "op:rw:abcd1234:BUILDING" for l in rd("forge")))
 

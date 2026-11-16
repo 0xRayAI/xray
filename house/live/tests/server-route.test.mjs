@@ -21,7 +21,8 @@ function start() {
     MESH_PASSWORD: 'x' + crypto.randomBytes(4).toString('hex'), SESSION_SECRET: crypto.randomBytes(32).toString('hex'),
     INGEST_SECRET: crypto.randomBytes(32).toString('hex'), MESH_DATA_DIR: DATA, SEAT_WEBHOOKS: JSON.stringify(hooks),
     K_FORGE: 'kf', WAKE_KEY_MILL: 'km', WAKE_KEY_FORGE: 'ignored', K_BLINKY: 'kb', WAKE_DEBOUNCE_S: '0',
-    WAKE_KIND_COOLDOWN_S: '0', LIVE_TURN_OPEN_MIN: '0' }, stdio: ['ignore', 'pipe', 'pipe'] });
+    WAKE_KIND_COOLDOWN_S: '0', LIVE_TURN_OPEN_MIN: '0',
+    LIVE_SEAT_IDS: 'arch1,forge,critic,blinky,herald,nibbler,sound,magnet,near,mill' }, stdio: ['ignore', 'pipe', 'pipe'] });
   srv.stdout.on('data', d => { logs += d; const m = /listening on :(\d+)/.exec(logs); if (m) srvPort = Number(m[1]); }); srv.stderr.on('data', d => logs += d);
 }
 async function stop() { if (!srv) return; const p = new Promise(r => srv.once('exit', r)); srv.kill(); await p; srv = null; }
@@ -46,7 +47,9 @@ const old = [{ id: `${R}#1:open`, t_ct: ct(900), kind: 'pr_open', repo: R, numbe
 const fresh = [
   { id: `${R}#5:comment:1`, t_ct: ct(60), kind: 'pr_comment', repo: R, number: 5, label: 'comment on #5', from: 'Others', to: 'forge',
     pr_merged: true, mentions: ['mill'], source: 'https://github.com/acme/one/pull/5', body: 'SECRET body' },
-  { id: `${R}#6:comment:2`, t_ct: ct(30), kind: 'issue_comment', repo: R, number: 6, label: 'comment on issue #6', from: 'Others' }];
+  { id: `${R}#6:comment:2`, t_ct: ct(30), kind: 'issue_comment', repo: R, number: 6, label: 'comment on issue #6', from: 'Others' },
+  { id: `${R}#7:comment:impl`, t_ct: ct(20), kind: 'issue_comment', repo: R, number: 7, label: 'implement ask on #7', from: 'Others' },
+  { id: `${R}#8:comment:wave`, t_ct: ct(15), kind: 'issue_comment', repo: R, number: 8, label: 'mill wave 4', from: 'Others' }];
 let gen = 0;
 function writeFeed(events) {
   fs.mkdirSync(path.join(DATA, 'feed'), { recursive: true });
@@ -64,23 +67,28 @@ test('first pass seeds silently: history is never delivered', async () => {
 
 test('new events route by inbox-roles.json rules and wake the seat', async () => {
   writeFeed([...old, ...fresh]);
-  assert.ok(await until(() => /route: pass 2 \d+/.test(logs)), logs);
+  assert.ok(await until(() => /route: pass 4 \d+/.test(logs)), logs);
   const ids = s => inbox(s).map(l => l.id).sort();
-  assert.deepEqual(ids('forge'), [`${R}#5:comment:1`]);                         // PR author, and @mill retargeted to forge
-  assert.match(inbox('forge')[0].reason, /comment on your PR \(merged PR\)|implement|rebase|dev ask|@mill|cloud agent/);
-  assert.deepEqual(ids('mill'), []);                                            // mill is not a seat
-  assert.deepEqual(ids('blinky'), [`${R}#5:comment:1`, `${R}#6:comment:2`]);    // comment watch
-  assert.deepEqual(ids('critic'), []);                                           // own action never routed back
-  assert.ok(!JSON.stringify(['forge', 'blinky'].map(inbox)).includes('SECRET'), 'body copied');
-  await sleep(400);
-  assert.equal(wakes.length, 0, JSON.stringify(wakes));
+  assert.deepEqual(ids('forge'), [`${R}#5:comment:1`, `${R}#7:comment:impl`, `${R}#8:comment:wave`]);
+  assert.match(inbox('forge').find(l => l.id.endsWith('comment:1')).reason, /comment on your PR \(merged PR\)/);
+  assert.match(inbox('forge').find(l => l.id.endsWith('comment:impl')).reason, /implement/);
+  assert.match(inbox('forge').find(l => l.id.endsWith('comment:wave')).title, /mill wave/);
+  assert.equal(ids('mill').includes(`${R}#8:comment:wave`), false);
+  assert.equal(ids('mill').includes(`${R}#7:comment:impl`), false);
+  assert.deepEqual(ids('mill'), [`${R}#5:comment:1`]);
+  assert.deepEqual(ids('blinky'), [`${R}#5:comment:1`, `${R}#6:comment:2`, `${R}#7:comment:impl`, `${R}#8:comment:wave`]);
+  assert.deepEqual(ids('critic'), []);
+  assert.ok(!JSON.stringify(['forge', 'blinky', 'mill'].map(inbox)).includes('SECRET'), 'body copied');
+  assert.ok(await until(() => wakes.some(w => w.path === '/mill')), JSON.stringify(wakes) + '\n' + logs);
+  assert.deepEqual([...new Set(wakes.map(w => w.path))], ['/mill']);
+  assert.equal(wakes.find(w => w.path === '/mill').auth, 'Bearer km');
   assert.match(logs, /wake: skip forge filter/);
   assert.match(logs, /wake: skip blinky filter/);
 });
 
 test('#275: WAKE_KEY_<SEAT> works without key_env (key_env still wins); /healthz has wakes + liveness ages, no url or key', async () => {
   const h = await (await fetch(`http://127.0.0.1:${srvPort}/healthz`)).json();
-  assert.deepEqual(h.wakes, { forge: 'idle', critic: 'no_key', blinky: 'idle' });
+  assert.deepEqual(h.wakes, { forge: 'idle', critic: 'no_key', blinky: 'idle', mill: 'ok' });
   for (const k of ['box_age', 'collector_age', 'card_age']) assert.ok(k in h, k);
   assert.equal(h.box_age, null);   // no box push in this test
   assert.ok(Number.isInteger(h.collector_age) && h.collector_age >= 0);
@@ -89,7 +97,7 @@ test('#275: WAKE_KEY_<SEAT> works without key_env (key_env still wins); /healthz
 });
 
 test('same events again, and after a restart: nothing routed twice, no second wake', async () => {
-  const before = wakes.length, n = ['forge', 'blinky'].map(s => inbox(s).length);
+  const before = wakes.length, n = ['forge', 'blinky', 'mill'].map(s => inbox(s).length);
   const passes = count(/route: pass /);
   const prev = await tick();
   writeFeed([...old, ...fresh]);
@@ -103,7 +111,7 @@ test('same events again, and after a restart: nothing routed twice, no second wa
   assert.ok(await sawNewTick(prev2), logs);
   assert.equal(count(/route: pass /), passes2, logs);
   await sleep(300);
-  assert.deepEqual(['forge', 'blinky'].map(s => inbox(s).length), n);
+  assert.deepEqual(['forge', 'blinky', 'mill'].map(s => inbox(s).length), n);
   assert.equal(wakes.length, before);
   const next = { id: `${R}#5:comment:3`, t_ct: ct(5), kind: 'pr_comment', repo: R, number: 5, label: 'comment on #5', from: 'blinky', to: 'forge' };
   writeFeed([...old, ...fresh, next]);
@@ -118,11 +126,11 @@ test('same events again, and after a restart: nothing routed twice, no second wa
 test('a stored-but-unmarked line (crash between store and sent) is not stored or woken twice', async () => {
   const st = path.join(DATA, 'route', 'inbox-state.json'); const s = JSON.parse(fs.readFileSync(st, 'utf8'));
   s.sent = []; fs.writeFileSync(st, JSON.stringify(s));
-  const before = wakes.length, n = ['forge', 'blinky'].map(x => inbox(x).length);
+  const before = wakes.length, n = ['forge', 'blinky', 'mill'].map(x => inbox(x).length);
   await stop(); start();
   assert.ok(await until(() => /route: pass 0 0/.test(logs)), logs);
   await sleep(300);
-  assert.deepEqual(['forge', 'blinky'].map(x => inbox(x).length), n);
+  assert.deepEqual(['forge', 'blinky', 'mill'].map(x => inbox(x).length), n);
   assert.equal(wakes.length, before);
 });
 
