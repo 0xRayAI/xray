@@ -87,7 +87,7 @@ jobs:
         run: node scripts/check-grok-bot-pack.mjs
       - name: Read clearing pin
         id: clearing-pin
-        run: node --input-type=module -e "import { CLEARING_SETTLE_SHA } from './grok-bot/templates/foundry/self-settle.mjs'; process.stdout.write('sha=' + CLEARING_SETTLE_SHA)" >> "$GITHUB_OUTPUT"
+        run: node --input-type=module -e "import { CLEARING_SETTLE_SHA } from './grok-bot/templates/foundry/self-settle.mjs'; process.stdout.write('sha=' + CLEARING_SETTLE_SHA + '\n')" >> "$GITHUB_OUTPUT"
       - name: Checkout pinned clearing
         uses: actions/checkout@v4.4.0
         with:
