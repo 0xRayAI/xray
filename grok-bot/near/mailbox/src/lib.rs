@@ -24,6 +24,7 @@ const ONE_YOCTO: NearToken = NearToken::from_yoctonear(1);
 #[derive(BorshStorageKey)]
 enum Prefix {
     Jobs,
+    Deals,
 }
 
 #[near(serializers = [json])]
@@ -70,11 +71,14 @@ pub struct Mailbox {
     escrow_account: AccountId,
     token_id: AccountId,
     payee: Option<AccountId>,
+    foundry_id: AccountId,
+    foundry_pk: String,
     claim_window_ns: u64,
     submit_window_ns: u64,
     network: String,
     next_id: u64,
     jobs: Vector<Job>,
+    deals: near_sdk::store::LookupMap<u64, u64>,
 }
 
 #[ext_contract(ext_escrow)]
@@ -85,6 +89,9 @@ trait EscrowOps {
     fn refund_late(&mut self, deal_id: u64);
     fn withdraw(&mut self);
     fn get_deal(&self, deal_id: u64) -> near_sdk::serde_json::Value;
+    fn get_token_id(&self) -> AccountId;
+    fn get_creator_pk(&self) -> String;
+    fn get_balance(&self, account_id: AccountId) -> U128;
 }
 
 #[ext_contract(ext_ft)]
@@ -106,6 +113,8 @@ impl Mailbox {
         escrow_account: AccountId,
         token_id: AccountId,
         payee: Option<AccountId>,
+        foundry_id: AccountId,
+        foundry_pk: String,
         claim_window_ns: u64,
         submit_window_ns: u64,
         network: String,
@@ -114,6 +123,8 @@ impl Mailbox {
         let here = env::current_account_id().to_string();
         require!(here.ends_with(".testnet"), "mailbox is testnet only");
         require!(escrow_account.as_str().ends_with(".testnet"), "escrow is testnet only");
+        require!(foundry_id.as_str().ends_with(".testnet"), "foundry is testnet only");
+        require!(foundry_pk.len() == 64, "foundry key is required");
         require!(token_id.as_str() == USDC, "token must be testnet USDC");
         if let Some(payee) = &payee {
             require!(payee.as_str().ends_with(".testnet"), "payee is testnet only");
@@ -124,11 +135,14 @@ impl Mailbox {
             escrow_account,
             token_id,
             payee,
+            foundry_id,
+            foundry_pk,
             claim_window_ns,
             submit_window_ns,
             network,
             next_id: 1,
             jobs: Vector::new(Prefix::Jobs),
+            deals: near_sdk::store::LookupMap::new(Prefix::Deals),
         }
     }
 
@@ -222,13 +236,26 @@ impl Mailbox {
         brief: String,
         deal_id: u64,
     ) -> U128 {
+        let token_id = self.token_id.clone();
+        let foundry_pk = self.foundry_pk.clone();
+        let bound = self.deals.get(&deal_id).is_some();
         let funded = match env::promise_result(0) {
-            PromiseResult::Successful(bytes) => deal_funded(&bytes, amount.0),
+            PromiseResult::Successful(bytes) => deal_funded(
+                &bytes,
+                amount.0,
+                sender_id.as_str(),
+                &[],
+                &[],
+                token_id.as_str(),
+                &foundry_pk,
+                bound,
+            ),
             _ => false,
         };
         if !funded || deal_id == 0 {
             return amount;
         }
+        self.deals.insert(deal_id, self.next_id);
         let window = self.claim_window_ns;
         let id = self.next_id;
         self.next_id += 1;
@@ -360,19 +387,135 @@ impl Mailbox {
             )
     }
 
-    pub fn retry_settle(&mut self, id: u64) {
+    /// Read the escrow deal and the foundry's withdrawable balance. Advance only
+    /// when that view shows the money moved. Otherwise leave the job alone.
+    pub fn retry_settle(&mut self, id: u64) -> Promise {
+        let (deal_id, status) = {
+            let job = self.job_mut(id);
+            (job.escrow_id, job.status.clone())
+        };
+        require!(status == "settling", "job is not settling");
+        let foundry = self.foundry_id.clone();
+        ext_escrow::ext(self.escrow_account.clone())
+            .with_static_gas(Gas::from_tgas(15))
+            .get_deal(deal_id)
+            .and(
+                ext_escrow::ext(self.escrow_account.clone())
+                    .with_static_gas(Gas::from_tgas(15))
+                    .get_balance(foundry),
+            )
+            .then(
+                Self::ext(env::current_account_id())
+                    .with_static_gas(Gas::from_tgas(20))
+                    .on_retry_checked(id),
+            )
+    }
+
+    #[private]
+    pub fn on_retry_checked(&mut self, id: u64) {
+        let released = match env::promise_result(0) {
+            PromiseResult::Successful(bytes) => {
+                near_sdk::serde_json::from_slice::<near_sdk::serde_json::Value>(&bytes)
+                    .ok()
+                    .and_then(|value| value.get("state").and_then(|item| item.as_str()).map(|s| s.to_string()))
+                    .unwrap_or_default()
+                    == "Released"
+            }
+            _ => false,
+        };
+        let balance = match env::promise_result(1) {
+            PromiseResult::Successful(bytes) => parse_u128(&bytes).unwrap_or(u128::MAX),
+            _ => u128::MAX,
+        };
         let job = self.job_mut(id);
-        require!(job.status == "settling", "job is not settling");
-        if job.settle_step == "withdraw" {
+        if job.status != "settling" {
+            return;
+        }
+        if job.settle_step == "withdraw" && released {
             job.settle_step = "transfer".to_string();
             return;
         }
-        if job.settle_step == "transfer" {
+        if job.settle_step == "transfer" && released && balance == 0 {
             job.settle_step = "done".to_string();
             job.status = "accepted".to_string();
-            return;
         }
-        env::panic_str("retry the accept with a new nonce");
+    }
+
+    pub fn bind_job(&mut self, deal_id: u64, brief: String) -> Promise {
+        require!(!brief.is_empty() && brief.len() <= MAX_TEXT, "bad brief");
+        require!(self.deals.get(&deal_id).is_none(), "deal is already bound");
+        let buyer = env::predecessor_account_id();
+        ext_escrow::ext(self.escrow_account.clone())
+            .with_static_gas(Gas::from_tgas(15))
+            .get_deal(deal_id)
+            .and(
+                ext_escrow::ext(self.escrow_account.clone())
+                    .with_static_gas(Gas::from_tgas(10))
+                    .get_token_id(),
+            )
+            .and(
+                ext_escrow::ext(self.escrow_account.clone())
+                    .with_static_gas(Gas::from_tgas(10))
+                    .get_creator_pk(),
+            )
+            .then(
+                Self::ext(env::current_account_id())
+                    .with_static_gas(Gas::from_tgas(30))
+                    .on_bind(buyer, deal_id, brief),
+            )
+    }
+
+    #[private]
+    pub fn on_bind(&mut self, buyer: AccountId, deal_id: u64, brief: String) {
+        require!(self.deals.get(&deal_id).is_none(), "deal is already bound");
+        let deal_bytes = match env::promise_result(0) {
+            PromiseResult::Successful(bytes) => bytes,
+            _ => env::panic_str("escrow deal was not read"),
+        };
+        let token_bytes = match env::promise_result(1) {
+            PromiseResult::Successful(bytes) => bytes,
+            _ => env::panic_str("escrow token was not read"),
+        };
+        let pk_bytes = match env::promise_result(2) {
+            PromiseResult::Successful(bytes) => bytes,
+            _ => env::panic_str("escrow creator was not read"),
+        };
+        let price = near_sdk::serde_json::from_slice::<near_sdk::serde_json::Value>(&deal_bytes)
+            .ok()
+            .map(|value| deal_price(&value))
+            .unwrap_or(0);
+        require!(
+            deal_funded(
+                &deal_bytes,
+                price,
+                buyer.as_str(),
+                &token_bytes,
+                &pk_bytes,
+                self.token_id.as_str(),
+                &self.foundry_pk,
+                false,
+            ),
+            "deal is not bound to this post"
+        );
+        let window = self.claim_window_ns;
+        let id = self.next_id;
+        self.next_id += 1;
+        self.deals.insert(deal_id, id);
+        let expires = env::block_timestamp().saturating_add(window);
+        self.jobs.push(Job {
+            id,
+            buyer,
+            brief,
+            escrow_id: deal_id,
+            status: "posted".to_string(),
+            claimer: None,
+            result: None,
+            expires_at: expires.to_string(),
+            claim_deadline: String::new(),
+            settle_step: String::new(),
+            payout: None,
+            amount: price,
+        });
     }
 
     /// The escrow credits its creator account, so this callback only records
@@ -421,16 +564,51 @@ fn parse_u64(bytes: &[u8]) -> Option<u64> {
     near_sdk::serde_json::from_slice::<u64>(bytes).ok()
 }
 
-fn deal_funded(bytes: &[u8], amount: u128) -> bool {
-    let value: near_sdk::serde_json::Value = match near_sdk::serde_json::from_slice(bytes) {
+fn parse_u128(bytes: &[u8]) -> Option<u128> {
+    near_sdk::serde_json::from_slice::<U128>(bytes).ok().map(|value| value.0)
+        .or_else(|| near_sdk::serde_json::from_slice::<u128>(bytes).ok())
+        .or_else(|| json_text(bytes).parse().ok())
+}
+
+fn json_text(bytes: &[u8]) -> String {
+    near_sdk::serde_json::from_slice::<String>(bytes).unwrap_or_default()
+}
+
+fn deal_price(value: &near_sdk::serde_json::Value) -> u128 {
+    value.get("price").and_then(|item| {
+        item.as_u64().map(|n| n as u128).or_else(|| item.as_str().and_then(|text| text.parse().ok()))
+    }).unwrap_or(0)
+}
+
+/// A funded deal counts only when the buyer, token, and escrow creator match
+/// this post, and the deal id is not already a job.
+fn deal_funded(
+    deal_bytes: &[u8],
+    amount: u128,
+    buyer: &str,
+    token_bytes: &[u8],
+    creator_pk_bytes: &[u8],
+    want_token: &str,
+    want_pk: &str,
+    already_bound: bool,
+) -> bool {
+    if already_bound || deal_bytes.is_empty() {
+        return false;
+    }
+    let value: near_sdk::serde_json::Value = match near_sdk::serde_json::from_slice(deal_bytes) {
         Ok(value) => value,
         Err(_) => return false,
     };
     let state = value.get("state").and_then(|item| item.as_str()).unwrap_or("");
-    let price = value.get("price").and_then(|item| {
-        item.as_u64().map(|n| n as u128).or_else(|| item.as_str().and_then(|text| text.parse().ok()))
-    }).unwrap_or(0);
-    state == "Funded" && price == amount
+    let client = value.get("client").and_then(|item| item.as_str()).unwrap_or("");
+    let price = deal_price(&value);
+    let token = if token_bytes.is_empty() { String::new() } else { json_text(token_bytes) };
+    let creator_pk = if creator_pk_bytes.is_empty() { String::new() } else { json_text(creator_pk_bytes) };
+    state == "Funded"
+        && price == amount
+        && client == buyer
+        && token == want_token
+        && creator_pk == want_pk
 }
 
 impl Mailbox {

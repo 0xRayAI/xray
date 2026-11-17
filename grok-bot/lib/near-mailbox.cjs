@@ -85,12 +85,24 @@ function createMailbox(opts = {}) {
   return {
     nextId: 1,
     payee: opts.payee || null,
+    foundry: opts.foundry || null,
     escrowAccount: opts.escrowAccount || '',
     claimWindowNs: BigInt(opts.claimWindowNs || 600000000000),
     submitWindowNs: BigInt(opts.submitWindowNs || 600000000000),
     network: opts.network || 'testnet',
     jobs: [],
+    deals: {},
   };
+}
+
+function dealFunded(deal, ctx) {
+  if (ctx.bound) return 'deal is already bound';
+  if (!deal || deal.state !== 'Funded') return 'escrow is not funded';
+  if (String(deal.price) !== String(ctx.amount)) return 'escrow amount does not match';
+  if (deal.client !== ctx.buyer) return 'escrow buyer does not match';
+  if (deal.token !== ctx.token) return 'escrow token is not testnet USDC';
+  if (deal.payee !== ctx.payee) return 'escrow payee does not match';
+  return '';
 }
 
 function payoutAccount(state, job) {
@@ -112,13 +124,23 @@ function assertTestnet(state) {
 
 function recordFundedJob(state, input) {
   assertTestnet(state);
-  if (input.funded !== true) throw new Error('escrow is not funded');
-  if (input.token !== USDC) throw new Error('escrow token is not testnet USDC');
-  if (!state.escrowAccount || input.receiver !== state.escrowAccount) throw new Error('escrow receiver does not match');
-  if (!input.price || input.amount !== input.price) throw new Error('escrow amount does not match');
   if (!input.brief) throw new Error('brief is required');
   if (!input.buyer) throw new Error('buyer is required');
   if (!input.escrowId) throw new Error('escrow id is required');
+  const reason = dealFunded({
+    state: input.state || (input.funded === true ? 'Funded' : ''),
+    price: input.price,
+    client: input.client || input.buyer,
+    token: input.token,
+    payee: input.payee,
+  }, {
+    amount: input.amount,
+    buyer: input.buyer,
+    token: USDC,
+    payee: state.foundry,
+    bound: Boolean(state.deals[String(input.escrowId)]),
+  });
+  if (reason) throw new Error(reason);
   const job = {
     id: state.nextId,
     buyer: input.buyer,
@@ -133,6 +155,7 @@ function recordFundedJob(state, input) {
     payout: null,
   };
   state.nextId += 1;
+  state.deals[String(input.escrowId)] = job.id;
   state.jobs.push(job);
   return job;
 }
@@ -192,25 +215,18 @@ function failSettle(state, id) {
   return job;
 }
 
-function advanceSettle(state, id) {
+function observeSettle(state, id, escrowView) {
   const job = jobById(state, id);
   if (job.status !== 'settling') throw new Error('job is not settling');
-  const index = STEPS.indexOf(job.settle_step);
-  if (index < 0) throw new Error('job is not settling');
-  if (index === STEPS.length - 1) {
+  const released = Boolean(escrowView) && escrowView.state === 'Released';
+  const balance = BigInt(escrowView && escrowView.balance != null ? escrowView.balance : '1');
+  if (job.settle_step === 'withdraw' && released) {
+    job.settle_step = 'transfer';
+  } else if (job.settle_step === 'transfer' && released && balance === 0n) {
     job.settle_step = 'done';
     job.status = 'accepted';
-    return job;
   }
-  job.settle_step = STEPS[index + 1];
   return job;
-}
-
-function retrySettle(state, id) {
-  const job = jobById(state, id);
-  if (job.status !== 'settling') throw new Error('job is not settling');
-  if (!STEPS.includes(job.settle_step)) throw new Error('job is not settling');
-  return { job, step: job.settle_step, payee: job.payout };
 }
 
 function releaseTimeout(state, input) {
@@ -276,19 +292,26 @@ function postPlan(opts) {
   if (!opts.brief) throw new Error('brief is required');
   if (!opts.price || opts.price === '0') throw new Error('price is required');
   if (!opts.mailboxId || !String(opts.mailboxId).endsWith('.testnet')) throw new Error('mailbox is testnet only');
-  const open = openMaterial(opts);
+  if (!opts.escrowId || !opts.escrowDealId) throw new Error('escrow id is required');
   return [{
     signerId: opts.buyerId,
     receiverId: USDC,
     method: 'ft_transfer_call',
     args: {
-      receiver_id: opts.mailboxId,
+      receiver_id: opts.escrowId,
       amount: opts.price,
       memo: 'near-mailbox',
-      msg: JSON.stringify({ brief: opts.brief, ...open }),
+      msg: JSON.stringify({ deal_id: Number(opts.escrowDealId) }),
     },
-    gas: '280 Tgas',
+    gas: '120 Tgas',
     deposit: '1 yoctoNEAR',
+  }, {
+    signerId: opts.buyerId,
+    receiverId: opts.mailboxId,
+    method: 'bind_job',
+    args: { deal_id: Number(opts.escrowDealId), brief: opts.brief },
+    gas: '150 Tgas',
+    deposit: '0 NEAR',
   }];
 }
 
@@ -315,13 +338,16 @@ async function runNearMailbox(opts = {}) {
   }
   if (opts.action === 'post') {
     const plan = postPlan(opts);
-    const sent = await submit(plan[0], opts);
+    let last = null;
+    for (const action of plan) {
+      last = await submit(action, opts);
+    }
     rememberRow(opts.dest, 'mailbox', {
       account: opts.mailboxId,
       contract: opts.mailboxId,
-      lastTx: sent.hash,
+      lastTx: last.hash,
     });
-    return { hash: sent.hash, account: opts.mailboxId, payee: opts.payee || null };
+    return { hash: last.hash, account: opts.mailboxId, payee: opts.payee || null };
   }
   const methods = {
     claim: { method: 'claim_job', args: { id: Number(opts.jobId) } },
@@ -408,8 +434,8 @@ module.exports = {
   USDC,
   MAILBOX_USAGE,
   STEPS,
-  advanceSettle,
   beginSettle,
+  dealFunded,
   claimJob,
   createMailbox,
   failSettle,
@@ -419,10 +445,10 @@ module.exports = {
   payoutAccount,
   postPlan,
   recordFundedJob,
+  observeSettle,
   refundExpired,
   releaseCall,
   releaseTimeout,
-  retrySettle,
   runNearMailbox,
   runNearMailboxCli,
   submitResult,

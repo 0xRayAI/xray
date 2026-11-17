@@ -50,3 +50,28 @@ Explorer links use `https://explorer.testnet.near.org/transactions/<hash>`.
 | withdraw to the claimer | [5MZ8vE15nfvtkBhXnXMup6mJ1vBnzd6R43acCNFaoW79](https://explorer.testnet.near.org/transactions/5MZ8vE15nfvtkBhXnXMup6mJ1vBnzd6R43acCNFaoW79) |
 | retry settle, withdraw step | [EDbXBF1xUagGRPjk4K827PcsCeGiTRPCrhXmYdMtzKDD](https://explorer.testnet.near.org/transactions/EDbXBF1xUagGRPjk4K827PcsCeGiTRPCrhXmYdMtzKDD) |
 | retry settle, transfer step | [Ar46TTjrk2HnAM2GUdsZ7naEVS372PQhqq8i9zxa91tN](https://explorer.testnet.near.org/transactions/Ar46TTjrk2HnAM2GUdsZ7naEVS372PQhqq8i9zxa91tN) |
+
+## Bound deal, fresh mailbox
+
+`boxe.m1191k3n7.testnet` is a new contract. The buyer funds deal 3 on `escn.m1191k3n7.testnet` directly, then calls `bind_job`. The mailbox stores the job only after the escrow shows that buyer, the testnet USDC token, the foundry key, and the price. `retry_settle` reads the escrow. The first retry, before withdraw, moved the step from withdraw to transfer and left the job settling. The second retry, after the foundry withdrew and paid the treasury, marked the job accepted.
+
+| Account | Before | After | Delta |
+| --- | --- | --- | --- |
+| clearing-treasury-0xray.testnet | 2020000 | 3020000 | +1000000 |
+| fnd.m1191k3n7.testnet | 1000000 | 1000000 | 0 |
+
+| Step | Tx |
+| --- | --- |
+| create mailbox | [6HFtN4NT81HDb6eKESUaxCLPvYzgrgemNGfVuH72tJV9](https://explorer.testnet.near.org/transactions/6HFtN4NT81HDb6eKESUaxCLPvYzgrgemNGfVuH72tJV9) |
+| deploy mailbox | [FWYCXcNvE4L4axMqrstc8abcXrwcaXqmYZCf6kZSEnSb](https://explorer.testnet.near.org/transactions/FWYCXcNvE4L4axMqrstc8abcXrwcaXqmYZCf6kZSEnSb) |
+| init mailbox | [EMxueqE9UG44cb4U9HSZKKdBu7W1Q7kzSogezuhgv1Kd](https://explorer.testnet.near.org/transactions/EMxueqE9UG44cb4U9HSZKKdBu7W1Q7kzSogezuhgv1Kd) |
+| open deal 3 | [JD8Amooe9fyhdYTSBqYDzdoq8yR9gLwTsfU79D7E3gWc](https://explorer.testnet.near.org/transactions/JD8Amooe9fyhdYTSBqYDzdoq8yR9gLwTsfU79D7E3gWc) |
+| fund escrow and bind job | [Ficnu4XbWPXHv6u834jmCXCX5AW5aHMUNZ387gtkwnQA](https://explorer.testnet.near.org/transactions/Ficnu4XbWPXHv6u834jmCXCX5AW5aHMUNZ387gtkwnQA) |
+| claim | [3tByqVh8tqrHC8TLDMogorK3JJ4VLyZVrpKFeJPUUDvj](https://explorer.testnet.near.org/transactions/3tByqVh8tqrHC8TLDMogorK3JJ4VLyZVrpKFeJPUUDvj) |
+| submit | [hscQ2Q8D4R5aMT6Lot7FtnA3AHEUgRzjwaRsyMpGvpn](https://explorer.testnet.near.org/transactions/hscQ2Q8D4R5aMT6Lot7FtnA3AHEUgRzjwaRsyMpGvpn) |
+| deliver | [Gwiso8vi79hdg8y6WymQCJDWMhA9JqJywj7ghmAj4vSN](https://explorer.testnet.near.org/transactions/Gwiso8vi79hdg8y6WymQCJDWMhA9JqJywj7ghmAj4vSN) |
+| accept | [BLca1hnYTMqHkVHuXQKhbF5CuBQmCQhJey38WSNUPG64](https://explorer.testnet.near.org/transactions/BLca1hnYTMqHkVHuXQKhbF5CuBQmCQhJey38WSNUPG64) |
+| retry while the foundry balance remains | [DhNGJdhUdKKUrHnjzMvLNejjoX3mHpWcdNJM194R4bKh](https://explorer.testnet.near.org/transactions/DhNGJdhUdKKUrHnjzMvLNejjoX3mHpWcdNJM194R4bKh) |
+| withdraw | [A6GuSBZLKs5ZupnfjdPujr87LKcr5MTSxVTrNKYqUcsm](https://explorer.testnet.near.org/transactions/A6GuSBZLKs5ZupnfjdPujr87LKcr5MTSxVTrNKYqUcsm) |
+| pay treasury | [yZgYC5ggJGKTNrMYWdbekY8Nfdoyv1RU5YGaSx5gPuV](https://explorer.testnet.near.org/transactions/yZgYC5ggJGKTNrMYWdbekY8Nfdoyv1RU5YGaSx5gPuV) |
+| retry after the escrow balance is zero | [2ZPFA7LXW1KSZGNUkjXBv8M6LYjRmCawwtsYv6XVCAkL](https://explorer.testnet.near.org/transactions/2ZPFA7LXW1KSZGNUkjXBv8M6LYjRmCawwtsYv6XVCAkL) |
