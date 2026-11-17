@@ -271,3 +271,9 @@ Every bolded term in the pack OP-PROC and runbooks is defined here (`bifrost che
 | **Two at a time** | Workstream | A seat has at most two tasks in progress; other work goes to a subordinate or onto the board as a parked card, and all work has a card. Rule: [OP-PROC](OP-PROC.md#two-at-a-time). |
 | **Compute** | Workstream | A seat may make a few-line edit or a quick check on its own computer; anything bigger is a follow-up to a cloud agent already in context, and a new cloud agent needs Blaze's GO. Rule: [OP-PROC](OP-PROC.md#compute). |
 | **gate** | Workstream | A merge gate. The green gates are CI green plus the reviewer's PASS at the PR's tier (Strict for ship, live, security or identity). When both are green the publisher merges; no separate owner OK is needed (Blaze, 2026-11-15). Rule: [OP-PROC](OP-PROC.md#review). |
+
+## Lexicon add (2026-11-17 — hand walk)
+
+| Term | Bucket | Plain |
+|------|--------|-------|
+| **hand walk** | Practice | The agent walks the test by hand, running it directly in the browser or CLI. It fixes what breaks and keeps walking until the test passes, recording each step as it goes. Then it updates the test scripts from those steps and runs them again for a pass receipt. |
