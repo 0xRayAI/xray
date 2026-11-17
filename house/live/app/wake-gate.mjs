@@ -51,7 +51,7 @@ export function defaultIssueSeat(env = {}) {
 export function createWakeState() {
   return {
     sentSha: new Map(), queuedSha: new Map(), cool: new Map(), sentAt: new Map(), turnOpen: new Map(),
-    commentSha: new Map(), seatComments: new Map(), breaker: new Map(),
+    commentSha: new Map(), seatComments: new Map(), breaker: new Map(), woken: new Set(),
     hold: [], sent: [], skips: [],
     stationAt: new Map(), greenHeads: new Set(), // memory only: a restart clears the hour and the green head
   };
@@ -71,6 +71,27 @@ export function hasSha(line) {
   return !!(line && typeof line.sha === 'string' && line.sha.trim());
 }
 function shaOf(line) { return hasSha(line) ? line.sha.trim() : ''; }
+
+// One delivered item per seat. A sha, when the line has one, keeps a new head as a new item.
+function replayKey(seat, line) {
+  const who = String(seat || '').trim().toLowerCase();
+  const kind = typeOf(line);
+  const repo = String(line && line.repo || '').trim().toLowerCase();
+  const n = Number(line && line.number);
+  if (!who || !kind || !repo || !Number.isInteger(n) || n < 1) return '';
+  const sha = shaOf(line).toLowerCase();
+  return sha ? `${who}|${repo}#${n}|${kind}|${sha}` : `${who}|${repo}#${n}|${kind}`;
+}
+
+function wokenSet(state) {
+  if (!state.woken) state.woken = new Set();
+  return state.woken;
+}
+
+function rememberWoken(state, seat, line) {
+  const key = replayKey(seat, line);
+  if (key) wokenSet(state).add(key);
+}
 
 export function labelsOf(line) {
   const raw = line && line.labels;
@@ -335,6 +356,9 @@ export function gateLine(wake, state, now, cfg) {
     if (inTurn) return { op: 'queue', until: turnAt + cfg.turnOpenMs, seat, line };
     return { op: 'send', seat, line };
   }
+  const hotfix = isHotfix(line);
+  const replay = replayKey(seat, line);
+  if (!hotfix && replay && wokenSet(state).has(replay)) return { op: 'skip', reason: 'replay', seat, line };
   const sha = shaOf(line);
   const shaKey = shaKeyOf(seat, line);
   const sentSha = state.sentSha.get(shaKey) || '';
@@ -342,7 +366,6 @@ export function gateLine(wake, state, now, cfg) {
   // A green head is a new ring on the same card. The earlier ready must not swallow it.
   const green = typeOf(line) === 'ci_pass';
   if (sha && (sha === sentSha || sha === queuedSha) && !green) return { op: 'skip', reason: 'repeat_sha', seat, line };
-  const hotfix = isHotfix(line);
   const lastCool = state.cool.get(coolKeyOf(seat, line)) || 0;
   const inCool = !hotfix && !!lastCool && now - lastCool < cfg.cooldownMs;
   const freshSha = (!!sha && sha !== sentSha) || green;
@@ -377,6 +400,7 @@ export function noteSent(state, seat, lines, now) {
       if (state.queuedSha.get(key) === sha) state.queuedSha.delete(key);
     }
     state.cool.set(coolKeyOf(seat, line), now);
+    rememberWoken(state, seat, line);
   }
   if (counted) {
     const arr = (state.sentAt.get(seat) || []).concat(now).filter(t => now - t < 48 * 3600000);
@@ -440,9 +464,10 @@ export function fullStats(state, now, windowMs) {
 export function restoreWakeBook(state, wakeRows, skipRows, now, windowMs) {
   for (const row of wakeRows || []) {
     if (!row || !row.ok || !row.seat) continue;
+    const seat = String(row.seat).toLowerCase();
+    rememberWoken(state, seat, { repo: row.repo, number: row.number, type: row.kind || row.type || '', sha: row.sha });
     const t = Date.parse(row.t_ct || '');
     if (!Number.isFinite(t) || now - t > windowMs || now - t < 0) continue;
-    const seat = String(row.seat).toLowerCase();
     state.sent.push({ t, seat, id: String(row.id || '') });
     const arr = state.sentAt.get(seat) || [];
     arr.push(t);
