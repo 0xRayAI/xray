@@ -110,12 +110,14 @@ async function runNearCap(opts = {}) {
     gas: action.gas,
     deposit: action.deposit,
   }, opts);
-  rememberRow(opts.dest, 'cap', {
+  const row = {
     account: opts.ownerId,
     contract: opts.contractId,
     lastTx: sent.hash,
     method: action.method,
-  });
+  };
+  if (opts.action === 'init') row.perTxCap = opts.perTxCap;
+  rememberRow(opts.dest, 'cap', row);
   return { hash: sent.hash, method: action.method, account: opts.ownerId, contract: opts.contractId };
 }
 

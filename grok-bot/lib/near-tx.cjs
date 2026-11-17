@@ -15,6 +15,32 @@ function railPath(dest) {
   return path.join(dest, '.xray', 'state', 'near-rail.json');
 }
 
+function lockPath(dest) {
+  return `${railPath(dest)}.lock`;
+}
+
+function acquireRailLock(dest) {
+  const file = lockPath(dest);
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  try {
+    const fd = fs.openSync(file, 'wx');
+    return { file, fd };
+  } catch (err) {
+    if (err && err.code === 'EEXIST') {
+      const error = new Error('rail file is locked');
+      error.code = 'LOCKED';
+      throw error;
+    }
+    throw err;
+  }
+}
+
+function releaseRailLock(lock) {
+  if (!lock) return;
+  fs.closeSync(lock.fd);
+  fs.rmSync(lock.file, { force: true });
+}
+
 function emptyRail() {
   return { pay: {}, cap: {}, escrow: {} };
 }
@@ -324,6 +350,41 @@ async function submit(action, opts) {
   return { hash, value };
 }
 
+async function viewFunction(contract, method, args, opts = {}) {
+  if (typeof opts.rpc === 'function') {
+    const body = await opts.rpc('query', {
+      request_type: 'call_function',
+      account_id: contract,
+      method_name: method,
+      args,
+    });
+    if (body && Object.prototype.hasOwnProperty.call(body, 'parsed')) return body.parsed;
+    return null;
+  }
+  const result = await rpc('query', {
+    request_type: 'call_function',
+    finality: 'final',
+    account_id: contract,
+    method_name: method,
+    args_base64: Buffer.from(JSON.stringify(args)).toString('base64'),
+  }, opts);
+  const bytes = result && result.result;
+  if (!Array.isArray(bytes) || bytes.length === 0) return null;
+  const text = Buffer.from(bytes).toString('utf8');
+  if (!text || text === 'null') return null;
+  return JSON.parse(text);
+}
+
+async function blockTimeNs(opts = {}) {
+  if (typeof opts.rpc === 'function') {
+    const body = await opts.rpc('block', { finality: 'final' });
+    const stamp = body && body.header && body.header.timestamp_nanosec;
+    return BigInt(stamp || 0);
+  }
+  const result = await rpc('block', { finality: 'final' }, opts);
+  return BigInt(result && result.header && result.header.timestamp_nanosec ? result.header.timestamp_nanosec : 0);
+}
+
 module.exports = {
   USDC,
   TESTNET_RPC,
@@ -334,7 +395,10 @@ module.exports = {
   publicHexFromKey,
   quoteOf,
   railLines,
+  acquireRailLock,
+  lockPath,
   railPath,
+  releaseRailLock,
   readKeyFile,
   readRail,
   redact,
@@ -344,6 +408,8 @@ module.exports = {
   installLegacyKey,
   legacyKeyFile,
   removeLegacyKey,
+  blockTimeNs,
   submit,
   txHashFrom,
+  viewFunction,
 };

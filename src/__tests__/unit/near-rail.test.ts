@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -21,7 +21,13 @@ function scratch(): string {
 }
 
 function rpcOk(hash: string, calls: Array<{ method: string; params: { method?: string; args?: { per_tx_cap?: string } } }>) {
-  return async (method: string, params: { method?: string; args?: { per_tx_cap?: string } }) => {
+  return async (method: string, params: { method_name?: string; method?: string; args?: { per_tx_cap?: string } }) => {
+    if (method === 'query') {
+      if (params.method_name === 'get_deal') return { parsed: { state: 'Funded', deliver_by_ns: '1' } };
+      return { parsed: { total: '1' } };
+    }
+    if (method === 'block') return { header: { timestamp_nanosec: '5' } };
+    if (method === 'ft_transfers') return null;
     calls.push({ method, params });
     return {
       transaction: { hash },
@@ -254,7 +260,17 @@ describe('near rail commands', () => {
         rpc: rpcOk('EscrowDeliverHash111111111111111111111111', calls),
       });
       expect(calls[2].params.method).toBe('deliver');
-      await escrow.runNearEscrow({
+      await expect(escrow.runNearEscrow({
+        dest,
+        action: 'accept',
+        escrowId: 'escrow.testnet',
+        creatorId: 'foundry.testnet',
+        dealId: '1',
+        keyFile: clientFile,
+        payoutKeyFile: keyFile,
+        rpc: rpcOk('no-signer', calls),
+      })).rejects.toThrow('--signer is required');
+      const accepted = await escrow.runNearEscrow({
         dest,
         action: 'accept',
         escrowId: 'escrow.testnet',
@@ -262,9 +278,23 @@ describe('near rail commands', () => {
         signerId: 'buyer.testnet',
         dealId: '1',
         keyFile: clientFile,
+        payoutKeyFile: keyFile,
         rpc: rpcOk('EscrowAcceptHash1111111111111111111111111', calls),
       });
       expect(calls[3].params.method).toBe('accept');
+      expect(calls[4].params.method).toBe('withdraw');
+      expect(calls[4].params.signerId).toBe('foundry.testnet');
+      expect(accepted.method).toBe('withdraw');
+      const zero = escrow.escrowCall({
+        action: 'open',
+        escrowId: 'escrow.testnet',
+        creatorId: 'foundry.testnet',
+        clientPk: client.publicHex,
+        price: '1000000',
+        keyFile,
+        deliverNs: 0,
+      });
+      expect(JSON.parse(String(zero.args.payload)).deliver_ns).toBe(0);
       await escrow.runNearEscrow({
         dest,
         action: 'refund',
@@ -275,11 +305,68 @@ describe('near rail commands', () => {
         keyFile: clientFile,
         rpc: rpcOk('EscrowRefundHash1111111111111111111111111', calls),
       });
-      expect(calls[4].params.method).toBe('refund_late');
+      expect(calls[5].params.method).toBe('refund_late');
+      expect(calls[6].params.method).toBe('withdraw');
+      expect(calls[6].params.signerId).toBe('buyer.testnet');
       const status = doctor.nearStatusBlock(dest);
       expect(status).toContain('Escrow: escrow.testnet contract escrow.testnet tx EscrowRefundHash1111111111111111111111111');
       expect(status).not.toContain(pair.privateKey);
       expect(status).not.toContain(client.privateKey);
+    } finally {
+      rmSync(dest, { recursive: true, force: true });
+    }
+  });
+
+  it('does not resend a pending payment, refuses a lock, and adopts a chain hash', async () => {
+    const dest = scratch();
+    const quote = { receiver: 'shop.testnet', amount: '10000', nonce: 'quote-lock' };
+    const base = {
+      dest,
+      signerId: 'payer.testnet',
+      receiver: quote.receiver,
+      amount: quote.amount,
+      nonce: quote.nonce,
+      quote,
+    };
+    let broadcasts = 0;
+    const rpc = async (method: string) => {
+      if (method === 'query') return { parsed: { total: '1' } };
+      if (method === 'ft_transfers') return null;
+      broadcasts += 1;
+      throw new Error('lost response');
+    };
+    try {
+      await expect(pay.payNear({ ...base, rpc })).rejects.toThrow('lost response');
+      expect(broadcasts).toBe(1);
+      const pending = tx.readRail(dest).pay.payments['near-pay:quote-lock'];
+      expect(pending.status).toBe('pending');
+      await expect(pay.payNear({ ...base, rpc })).rejects.toThrow('pending, unconfirmed');
+      expect(broadcasts).toBe(1);
+      const recovered = await pay.payNear({
+        ...base,
+        rpc: async (method: string) => {
+          if (method === 'query') return { parsed: { total: '1' } };
+          if (method === 'ft_transfers') return { hash: 'ChainHash1111111111111111111111111111' };
+          broadcasts += 1;
+          throw new Error('must not resend');
+        },
+      });
+      expect(recovered.recovered).toBe(true);
+      expect(recovered.hash).toBe('ChainHash1111111111111111111111111111');
+      expect(broadcasts).toBe(1);
+      mkdirSync(path.dirname(tx.railPath(dest)), { recursive: true });
+      writeFileSync(tx.lockPath(dest), '');
+      await expect(pay.payNear({ ...base, rpc })).rejects.toThrow('rail file is locked');
+      expect(broadcasts).toBe(1);
+      tx.rememberRow(dest, 'cap', { account: 'owner.testnet', contract: 'vault.testnet', lastTx: 'h', perTxCap: '100' });
+      rmSync(tx.lockPath(dest), { force: true });
+      await expect(pay.payNear({
+        ...base,
+        amount: '1000',
+        quote: { ...quote, amount: '1000', nonce: 'over-cap' },
+        nonce: 'over-cap',
+        rpc,
+      })).rejects.toThrow('spend cap');
     } finally {
       rmSync(dest, { recursive: true, force: true });
     }

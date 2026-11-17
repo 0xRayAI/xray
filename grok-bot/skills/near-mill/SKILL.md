@@ -25,7 +25,7 @@ Grok CLI, Cursor, Claude Code, and Codex run these commands. Grok Bot runs the s
 4. `grok-bot near-cap init|allow|deny|add-agent-key`
    Drives the spend vault. `init` sets `per_tx_cap`. `allow` and `deny` set the lists. `add-agent-key` adds a function-call key limited to `pay,ping`. Owner calls sign with the sealed cold key.
 5. `grok-bot near-escrow init|open|fund|deliver|accept|refund`
-   The escrow account is its own account, never the foundry. `fund` locks testnet USDC. `deliver` and `accept` use the contract signatures. `refund` is `refund_late`.
+   The escrow account is its own account, never the foundry. `fund` locks testnet USDC. `accept` and `refund` then `withdraw`, which is the transfer that pays the foundry or the payer. `accept` needs `--signer` and `--payout-key`.
 6. `grok-bot near-status`
    Prints NEAR account, foundry id, listing id, and Pay, Cap, and Escrow. An absent value is `pending`.
 

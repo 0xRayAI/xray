@@ -1,5 +1,30 @@
 # xray#1178 testnet receipts
 
+## Withdraw run
+
+`accept` and `refund_late` only credit an internal balance. `withdraw` is the `ft_transfer` that pays it out. Fresh accounts: escrow `n1178ewt7enk.testnet`, foundry `n1178fwt7enk.testnet`, payer `n1178pwt7enk.testnet`. Amounts are testnet USDC base units (6 decimals).
+
+| Step | Tx | Escrow | Foundry | Payer |
+| --- | --- | --- | --- | --- |
+| before accept |  | 1000000 | 0 | 2000000 |
+| accept + withdraw | GjKfnSjwVHkJ9VzYJwR2CPb5mWyHCCKTNF2zK8x8s4Ns | 0 | 1000000 | 2000000 |
+| before refund |  | 1000000 | 1000000 | 1000000 |
+| refund + withdraw | AnG2xsN1ymsmAjWiddbKFZY4sDPun6rmmhpsxkBheLdZ | 0 | 1000000 | 2000000 |
+
+| Step | Tx |
+| --- | --- |
+| deploy | BMJVzLg823rm45j8JsiLPkn9MVQUwAGqXAH9q93XBopp |
+| init | Eg5SxbeLUN7bPrjgpWJXGS7f3wwiABtvqQorL1BF8Gdc |
+| open deal 1 | G47c1MT7P7deC6D7MEnhAFwJkFwdKCZ5kU7xPERDKva3 |
+| fund deal 1 | BVM5TseN4m5rbN1SrtVoxQrXJkiAfLXc35YMmeBkn5Uy |
+| deliver deal 1 | 8TGC4zDo5VnMdvuKoNcN11LVTFHdjV67zWZjhbeq2YZd |
+| open deal 2 | 47Mmt5WCEmmA2Us9APiEX8biEi7DvK6newnQ2wnpRDYy |
+| fund deal 2 | XzdgoWw7GWn6f8rvRRNLE5GMuysaiNXx8wct5wwbtK2 |
+
+## First run
+
+The first accept and refund changed deal state and did not transfer USDC. Those hashes stay below. The withdraw run above is the one that credits the foundry and repays the payer.
+
 Network: NEAR testnet. No mainnet call. No keys in this file.
 
 Throwaway accounts: payer `n1178pig53p2.testnet`, payee `n1178qig53p2.testnet`, vault `n1178oig53p2.testnet`, foundry `n1178fig53p2.testnet`, escrow `n1178eig53p2.testnet`.

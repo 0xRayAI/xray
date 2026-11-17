@@ -2,10 +2,12 @@
 
 const {
   USDC,
+  blockTimeNs,
   readKeyFile,
   rememberRow,
   signHex,
   submit,
+  viewFunction,
 } = require('./near-tx.cjs');
 
 // clearing near/escrow. The escrow account is never the foundry.
@@ -38,6 +40,7 @@ function parseNearEscrowArgs(argv) {
     price: null,
     deal: null,
     hash: null,
+    payoutKey: null,
     windowNs: null,
     fundNs: null,
     deliverNs: null,
@@ -53,7 +56,7 @@ function parseNearEscrowArgs(argv) {
       out.action = arg;
       continue;
     }
-    const flags = ['--escrow', '--creator', '--arbiter', '--signer', '--key', '--creator-pk', '--client-pk', '--price', '--deal', '--hash', '--window-ns', '--fund-ns', '--deliver-ns', '--cwd'];
+    const flags = ['--escrow', '--creator', '--arbiter', '--signer', '--key', '--payout-key', '--creator-pk', '--client-pk', '--price', '--deal', '--hash', '--window-ns', '--fund-ns', '--deliver-ns', '--cwd'];
     if (flags.includes(arg)) {
       const value = take(argv, i, arg);
       if (arg === '--escrow') out.escrow = value;
@@ -61,6 +64,7 @@ function parseNearEscrowArgs(argv) {
       else if (arg === '--arbiter') out.arbiter = value;
       else if (arg === '--signer') out.signer = value;
       else if (arg === '--key') out.keyFile = value;
+      else if (arg === '--payout-key') out.payoutKey = value;
       else if (arg === '--creator-pk') out.creatorPk = value;
       else if (arg === '--client-pk') out.clientPk = value;
       else if (arg === '--price') out.price = value;
@@ -119,8 +123,8 @@ function escrowCall(opts) {
     const price = opts.price;
     if (!/^[0-9]+$/.test(price || '')) throw new Error('price is required');
     const key = readKeyFile(opts.keyFile);
-    const deliverNs = opts.deliverNs || opts.windowNs || 600000000000;
-    const fundNs = opts.fundNs || deliverNs;
+    const deliverNs = opts.deliverNs ?? opts.windowNs ?? 600000000000;
+    const fundNs = opts.fundNs ?? deliverNs;
     const payload = JSON.stringify({
       client_pk: opts.clientPk,
       price,
@@ -156,8 +160,22 @@ function escrowCall(opts) {
       deposit: '1 yoctoNEAR',
     };
   }
-  if (opts.action === 'deliver' || opts.action === 'accept' || opts.action === 'refund') {
-    if (!opts.dealId) throw new Error('deal is required');
+  if (opts.action === 'deliver' || opts.action === 'accept' || opts.action === 'refund' || opts.action === 'withdraw') {
+    if (opts.action !== 'withdraw' && !opts.dealId) throw new Error('deal is required');
+    if ((opts.action === 'accept' || opts.action === 'refund' || opts.action === 'fund') && !opts.signerId) {
+      throw new Error('--signer is required');
+    }
+    if (opts.action === 'withdraw') {
+      if (!opts.signerId) throw new Error('--signer is required');
+      return {
+        signerId: opts.signerId,
+        receiverId: opts.escrowId,
+        method: 'withdraw',
+        args: {},
+        gas: '120 Tgas',
+        deposit: '0 NEAR',
+      };
+    }
     if (opts.action === 'refund') {
       return {
         signerId: opts.signerId,
@@ -187,17 +205,57 @@ function escrowCall(opts) {
   throw new Error(ESCROW_USAGE);
 }
 
+async function assertRefundDeadline(opts) {
+  const deal = await viewFunction(opts.escrowId, 'get_deal', { deal_id: Number(opts.dealId) }, opts);
+  if (!deal || deal.state !== 'Funded') throw new Error('deal is not still funded');
+  const deadline = deal.deliver_by_ns == null ? 0n : BigInt(deal.deliver_by_ns);
+  const now = await blockTimeNs(opts);
+  if (deadline === 0n || now <= deadline) throw new Error('delivery deadline has not passed');
+}
+
+async function ensureStorage(accountId, keyFile, opts) {
+  const stored = await viewFunction(USDC, 'storage_balance_of', { account_id: accountId }, opts);
+  if (stored && stored.total) return;
+  await submit({
+    signerId: accountId,
+    receiverId: USDC,
+    method: 'storage_deposit',
+    args: { account_id: accountId },
+    gas: '30 Tgas',
+    deposit: '0.00125 NEAR',
+  }, { ...opts, keyFile });
+}
+
 async function runNearEscrow(opts = {}) {
   if (!opts.dest) throw new Error('dest is required');
+  if (opts.action === 'refund') await assertRefundDeadline(opts);
+  if (opts.action === 'accept' && !opts.payoutKeyFile) throw new Error('payout key is required');
   const action = escrowCall(opts);
   const sent = await submit(action, opts);
+  let hash = sent.hash;
+  let method = action.method;
+  if (opts.action === 'accept' || opts.action === 'refund') {
+    const payer = opts.action === 'accept' ? opts.creatorId : opts.signerId;
+    const payoutKey = opts.action === 'accept' ? opts.payoutKeyFile : opts.keyFile;
+    await ensureStorage(payer, payoutKey, opts);
+    const withdrawn = await submit({
+      signerId: payer,
+      receiverId: opts.escrowId,
+      method: 'withdraw',
+      args: {},
+      gas: '120 Tgas',
+      deposit: '0 NEAR',
+    }, { ...opts, keyFile: payoutKey });
+    hash = withdrawn.hash;
+    method = 'withdraw';
+  }
   rememberRow(opts.dest, 'escrow', {
     account: opts.escrowId,
     contract: opts.escrowId,
-    lastTx: sent.hash,
-    method: action.method,
+    lastTx: hash,
+    method,
   });
-  return { hash: sent.hash, method: action.method, account: opts.escrowId, contract: opts.escrowId, value: sent.value };
+  return { hash, method, account: opts.escrowId, contract: opts.escrowId, value: sent.value, actionHash: sent.hash };
 }
 
 async function runNearEscrowCli(argv, io = {}) {
@@ -223,23 +281,33 @@ async function runNearEscrowCli(argv, io = {}) {
       stderr.write('creator_pk is required\n');
       return 2;
     }
+    if ((parsed.action === 'accept' || parsed.action === 'refund' || parsed.action === 'fund' || parsed.action === 'withdraw') && !parsed.signer) {
+      stderr.write('--signer is required\n');
+      return 2;
+    }
+    if (parsed.action === 'accept' && !parsed.payoutKey) {
+      stderr.write('--payout-key is required\n');
+      return 2;
+    }
     const creatorPk = parsed.creatorPk;
+    const ns = (value) => (value == null || value === '' ? undefined : Number(value));
     const result = await runNearEscrow({
       dest: parsed.cwd || io.cwd || process.cwd(),
       action: parsed.action,
       escrowId: parsed.escrow,
       creatorId: parsed.creator,
       arbiterId: parsed.arbiter,
-      signerId: parsed.signer || parsed.creator,
+      signerId: parsed.signer,
       keyFile: parsed.keyFile,
+      payoutKeyFile: parsed.payoutKey,
       creatorPk,
       clientPk: parsed.clientPk,
       price: parsed.price,
       dealId: parsed.deal,
       deliverable: parsed.hash,
-      windowNs: parsed.windowNs ? Number(parsed.windowNs) : undefined,
-      fundNs: parsed.fundNs ? Number(parsed.fundNs) : undefined,
-      deliverNs: parsed.deliverNs ? Number(parsed.deliverNs) : undefined,
+      windowNs: ns(parsed.windowNs),
+      fundNs: ns(parsed.fundNs),
+      deliverNs: ns(parsed.deliverNs),
       rpc: io.rpc,
       spawn: io.spawn,
       bin: io.bin,
