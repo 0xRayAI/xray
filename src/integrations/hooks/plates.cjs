@@ -54,6 +54,7 @@ const PLATE_IDS = Object.freeze([
   "repertoire",
   "dynamo",
   "foundry",
+  "foundry-architecture",
   "delegation-gate",
   "temperament",
   "asides",
@@ -306,7 +307,12 @@ const CUES = {
   "foundry": [
     [/foundry plate/i, 6],
     [/foundry release/i, 5],
-    [/plates\/foundry/i, 6],
+    [/plates\/foundry(?!-architecture)/i, 6],
+  ],
+  "foundry-architecture": [
+    [/foundry architecture/i, 6],
+    [/near sprint plate/i, 6],
+    [/plates\/foundry-architecture/i, 6],
   ],
   "delegation-gate": [
     [/delegation gate/i, 6],
