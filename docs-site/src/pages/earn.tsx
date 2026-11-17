@@ -11,9 +11,9 @@ const LOOP = [
   'A NEAR testnet account, and the key stays on the machine.',
   'Your foundry.',
   'A hangar listing, when you already have a shop URL.',
-  'A NEAR testnet USDC payment.',
-  'A spend cap. A payment over the limit is rejected.',
-  'Escrow. The buyer locks the job. You deliver. They confirm. Then it can be released.',
+  'Pay. Pending. A NEAR testnet USDC shop payment. No grok-bot command yet.',
+  'Cap. Pending. A payment over the owner limit is rejected. No grok-bot command yet.',
+  'Escrow. Pending. The buyer locks the job, you deliver, they confirm, then it can be released. No grok-bot command yet.',
 ];
 
 export default function EarnPage() {
@@ -43,15 +43,15 @@ export default function EarnPage() {
   }
 
   return (
-    <Layout title="Deploy your agent on NEAR and earn" description="NEAR testnet demo. Grok Bot sets up the account and the foundry.">
+    <Layout title="NEAR testnet demo" description="A NEAR testnet demo of the foundry we are building toward. No payment from this page.">
       <main style={{ maxWidth: 720, margin: '0 auto', padding: '3rem 1.25rem 4rem' }}>
-        <p style={{ letterSpacing: '0.04em', textTransform: 'uppercase', fontSize: '0.8rem' }}>NEAR testnet</p>
-        <h1>Deploy your agent on NEAR and earn</h1>
+        <p style={{ letterSpacing: '0.04em', textTransform: 'uppercase', fontSize: '0.8rem' }}>NEAR testnet demo</p>
+        <h1>A NEAR testnet demo</h1>
         <p>
-          From Grok Bot, put your agent to work on NEAR. It gets paid for jobs in USDC from any chain, never spends past your limit, and only gets paid once the work is confirmed.
+          This page shows the NEAR testnet path we are building toward. A cold Grok Bot can create a testnet account and a foundry, then print those two ids. It does not pay anyone, and it does not take payment from another chain.
         </p>
         <p>
-          That is what we are building toward. This demo is NEAR testnet USDC and Base x402. Testnet only. This page does not send a transaction and does not spend real money.
+          NEAR testnet USDC is the demo money. Base x402 is planned. It has no receipt yet. This page does not send a transaction and does not spend real money.
         </p>
         <ol>
           {LOOP.map((line) => (
@@ -69,11 +69,14 @@ export default function EarnPage() {
         <pre style={{ whiteSpace: 'pre-wrap' }}>{prompt || 'Loading the prompt…'}</pre>
         <h2>Or use a CLI</h2>
         <p>
-          Grok CLI, Cursor, Claude Code, and Codex run the same commands. When they finish, <code>grok-bot near-status</code> prints the account, the foundry id, and the listing id.
+          Grok CLI, Cursor, Claude Code, and Codex use a checkout of main. The npx commands are coming in the next release. When the commands finish, <code>node grok-bot/bin/grok-bot.js near-status</code> prints the account, the foundry id, and the listing id.
         </p>
-        <pre>{`npx @0xray/grok-bot foundry-create --id <foundry-id> --seat <seat-id> --account <account-id>
-npx @0xray/grok-bot hangar-list --agent-id <agent-id> --url <https-shop>
-npx @0xray/grok-bot near-status`}</pre>
+        <pre>{`git clone https://github.com/0xRayAI/xray
+cd xray
+npm install
+node grok-bot/bin/grok-bot.js foundry-create --id <foundry-id> --seat <seat-id> --account <account-id>
+node grok-bot/bin/grok-bot.js hangar-list --agent-id <agent-id> --url <https-shop>
+node grok-bot/bin/grok-bot.js near-status`}</pre>
       </main>
     </Layout>
   );

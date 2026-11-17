@@ -1,18 +1,25 @@
-Set up a NEAR testnet foundry. Testnet only. Do not send a mainnet transaction. Do not spend real money. Do not print a private key or a seed phrase. Keep key files mode 0600.
+Set up a NEAR testnet foundry. This is a testnet demo of what we are building toward. Testnet only. Do not send a mainnet transaction. Do not spend real money. Do not print a private key or a seed phrase. Keep key files mode 0600.
 
-Use npx @0xray/grok-bot, or node grok-bot/bin/grok-bot.js from an xray checkout that already has these commands.
+The npx commands are coming in the next release. Use a checkout of main:
+
+git clone https://github.com/0xRayAI/xray
+cd xray
+npm install
 
 1. Near-seat and foundry. Pick a foundry id, a seat id, and a new account id that ends in .testnet. Run:
-npx @0xray/grok-bot foundry-create --id <foundry-id> --seat <seat-id> --account <account-id>
+node grok-bot/bin/grok-bot.js foundry-create --id <foundry-id> --seat <seat-id> --account <account-id>
 That creates the testnet account and the foundry record.
 
 2. Hangar listing. If you already have an ERC-8004 agent id and a live https shop URL, run:
-npx @0xray/grok-bot hangar-list --agent-id <agent-id> --url <https-shop>
+node grok-bot/bin/grok-bot.js hangar-list --agent-id <agent-id> --url <https-shop>
 If you do not have both, leave the listing pending. Do not invent a listing endpoint.
 
-3. Rail, spend cap, and escrow are the testnet USDC job: a shop payment, a payment over the owner's limit that is rejected, and a job of at least 1 testnet USDC that is released only after the client accepts the work. There is no grok-bot command for those three. Do not send a transaction for them from this prompt. Say they are pending.
+3. These three are pending. There is no grok-bot command for them yet. Do not send a transaction for them from this prompt.
+- Pay. Pending. A NEAR testnet USDC shop payment.
+- Cap. Pending. A payment over the owner's limit is rejected.
+- Escrow. Pending. A job of at least 1 testnet USDC is released only after the client accepts the work.
 
 4. Run:
-npx @0xray/grok-bot near-status
+node grok-bot/bin/grok-bot.js near-status
 
 5. Stop. Print the NEAR testnet account id and the foundry id from that block.
