@@ -54,6 +54,7 @@ export const PLATE_IDS = [
   'repertoire',
   'dynamo',
   'foundry',
+  'foundry-architecture',
   'delegation-gate',
   'temperament',
   'asides',

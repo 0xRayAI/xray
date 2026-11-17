@@ -101,6 +101,7 @@ const sidebars: SidebarsConfig = {
         'plates/repertoire',
         'plates/dynamo',
         'plates/foundry',
+        'plates/foundry-architecture',
         'plates/delegation-gate',
         'plates/temperament',
         'plates/asides',
