@@ -68,6 +68,7 @@ describe('pipeline plates', () => {
       'repertoire',
       'dynamo',
       'foundry',
+      'foundry-architecture',
       'delegation-gate',
       'temperament',
       'asides',
@@ -267,6 +268,7 @@ describe('pipeline plates', () => {
     expect(recallPlate('repertoire plate')?.id).toBe('repertoire');
     expect(recallPlate('dynamo plate')?.id).toBe('dynamo');
     expect(recallPlate('foundry plate')?.id).toBe('foundry');
+    expect(recallPlate('foundry architecture plate')?.id).toBe('foundry-architecture');
     expect(recallPlate('delegation gate')?.id).toBe('delegation-gate');
     expect(recallPlate('temperament plate')?.id).toBe('temperament');
     expect(recallPlate('asides plate')?.id).toBe('asides');
@@ -540,7 +542,7 @@ function readKit(): PlateKit {
 }
 
 const NO_LENS_CARD = new Set(['review', 'goggles', 'suit', 'kits', 'host-pack', 'glossary']);
-const ASCII_FIRST = new Set(['pipeline', 'component', 'artifact', 'watcher', 'hook', 'facet', 'feature', 'factory', 'mill', 'hangar', 'plant', 'seat', 'board', 'lens', 'plane']);
+const ASCII_FIRST = new Set(['pipeline', 'component', 'artifact', 'watcher', 'hook', 'facet', 'feature', 'factory', 'mill', 'hangar', 'plant', 'seat', 'board', 'lens', 'plane', 'foundry-architecture']);
 const LEFT_SIDE = new Set(['│', '├', '┼']);
 const RIGHT_EDGE = new Set(['│', '┐', '┘', '┤', '┼']);
 
