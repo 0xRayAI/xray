@@ -6,33 +6,33 @@ plate_type: domain model
 
 # Foundry architecture
 
-The foundry, and what sits inside it. The buyer and the NEAR escrow sit outside the foundry. Clearing and the hangar listing are outside it too.
+The foundry, and what sits inside it. This matches the image the owner posted and chose to keep (forge chat, 2026-11-17 15:24 CT). The buyer and the NEAR escrow sit outside the foundry. Clearing and the hangar listing are outside it too.
 
 ```
                                      ┌──────────────────────────────────────────────────────────────────┐                                        
-                                     │ FOUNDRY                                                          │                                        
-┌──────────────────┐                 │ ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐ │                    ┌──────────────────┐
-│BUYER             │                 │ │JOB MAILBOX       │  │foundry.json      │  │FOUNDRY AGENT     │ │                    │NEAR ESCROW       │
-│NEAR testnet USDC │  ──bind_job──►  │ │briefs and results│  │id · receiver     │  │NEAR identity     │ │  ◄──accept pays──  │holds the deposit │
-│signs bind_job    │                 │ │web4 status page  │  │near:testnet      │  │claims and submits│ │                    │pays on accept    │
-│                  │                 │ └──────────────────┘  └──────────────────┘  └──────────────────┘ │                    │refunds late      │
-│                  │                 │ ┌──────────────────┐  ┌──────────────────┐                       │                    │                  │
-│                  │                 │ │SKILLS            │  │TOOLS             │                       │                    │                  │
-└──────────────────┘                 │ │near-seat         │  │grok-bot CLI      │                       │                    └──────────────────┘
-                                     │ │near-mill         │  │foundry-create    │                       │                                        
+┌──────────────────┐                 │ FOUNDRY                                                          │                    ┌──────────────────┐
+│BUYER             │                 │ ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐ │                    │NEAR ESCROW       │
+│NEAR testnet USDC │                 │ │JOB MAILBOX       │  │foundry.json      │  │FOUNDRY AGENT     │ │                    │holds the deposit │
+│signs the job     │  ──post_job──►  │ │briefs and results│  │id · receiver     │  │NEAR identity     │ │  ◄──accept pays──  │pays on accept    │
+└──────────────────┘                 │ │web4 status page  │  │near:testnet      │  │claims and submits│ │                    └──────────────────┘
+                                     │ └──────────────────┘  └──────────────────┘  └──────────────────┘ │                                        
+┌──────────────────┐                 │ ┌──────────────────┐  ┌──────────────────┐                       │                    ┌──────────────────┐
+│HANGAR LISTING    │                 │ │SKILLS            │  │TOOLS             │                       │                    │CLEARING          │
+│pending           │                 │ │NEAR identity     │  │grok-bot CLI      │                       │                    │optional          │
+└──────────────────┘                 │ │NEAR payments     │  │foundry-create    │                       │                    └──────────────────┘
                                      │ └──────────────────┘  └──────────────────┘                       │                                        
                                      └──────────────────────────────────────────────────────────────────┘                                        
 deposit ──► the buyer funds NEAR ESCROW directly, then calls bind_job on the JOB MAILBOX                                                         
 result ◄── the agent claims the job and submits the result; the buyer reads it at <acct>.testnet.page                                            
 refund ◄── if nothing is delivered by the deadline, refund_expired returns the deposit to the buyer                                              
-outside: CLEARING is optional hosted settlement; HANGAR LISTING is pending (hangar-list)                                                         
+post_job is the mailbox call bind_job; CLEARING is optional and not on the pay path                                                              
 ```
 
 **Inside the foundry.**
 - **Job mailbox:** one NEAR testnet contract per foundry (`grok-bot/near/mailbox/src/lib.rs:1`). `bind_job` posts a job only after the buyer has funded the escrow (`:2`, `:299`). `claim_job` is the agent taking the job (`:150`), and `submit_result` writes the result back (`:162`). `web4_get` serves the job status as a web page at `<acct>.testnet.page` (`:389`). A plain USDC transfer to the mailbox is refunded in full and doesn't post a job (`:3`, `:122`).
-- **`foundry.json`:** the foundry's record, written by `foundry-create` to `.xray/state/foundry.json` with `id`, `receiver` and `network: near:testnet` (`grok-bot/lib/foundry-create.cjs:120-129`). The receiver is the foundry's NEAR account (`:105-106`).
-- **Foundry agent:** uses its own NEAR account as its identity, called `near-seat` (`grok-bot/lib/near-mill.cjs:30`). It claims jobs and submits results.
-- **Skills:** the two NEAR skills `near-seat` and `near-mill` (`grok-bot/skills/near-seat/SKILL.md`, `grok-bot/skills/near-mill/SKILL.md`).
+- **`foundry.json`:** the foundry's record file, written by `foundry-create`. It holds the foundry's id, its receiver and its network, which is NEAR testnet (`grok-bot/lib/foundry-create.cjs:120-129`). The receiver is the foundry's NEAR account (`:105-106`).
+- **Foundry agent:** uses its own NEAR account as its identity (`grok-bot/lib/near-mill.cjs:30`). It claims jobs and submits results.
+- **Skills:** two NEAR skills, one for the agent's NEAR identity and one for getting paid on NEAR (`grok-bot/skills/near-seat/SKILL.md`, `grok-bot/skills/near-mill/SKILL.md`).
 - **Tools:** the `grok-bot` command line, including `foundry-create` and `near-mailbox` (`grok-bot/bin/grok-bot.js:20`, `:56`).
 
 **Outside the foundry.**
