@@ -71,37 +71,116 @@ function savePayment(dest, signerId, paymentId, record, lastTx) {
   });
 }
 
-async function findPaidMemo(opts, quote) {
-  if (typeof opts.rpc === 'function') {
-    const found = await opts.rpc('ft_transfers', {
-      signerId: opts.signerId,
-      token: USDC,
-      memo: quote.nonce,
-    });
-    if (found && typeof found.hash === 'string' && found.hash.length > 0) return found.hash;
-    return null;
-  }
-  const fetchImpl = opts.fetch || globalThis.fetch;
-  const url = `https://api-testnet.nearblocks.io/v1/account/${encodeURIComponent(opts.signerId)}/ft-txns?per_page=25`;
-  const response = await fetchImpl(url, { signal: AbortSignal.timeout(opts.timeoutMs || 20000) });
-  const body = await response.json();
-  const rows = Array.isArray(body.txns) ? body.txns : [];
-  for (const row of rows) {
-    const events = row.ft || row.outcomes || [];
-    const list = Array.isArray(events) ? events : [events];
-    const hit = list.some((item) => item && (item.memo === quote.nonce || (item.delta_amount && item.memo === quote.nonce)));
-    const memo = row.memo || (row.ft && row.ft.memo);
-    if (hit || memo === quote.nonce) {
-      const hash = row.transaction_hash || row.receipt_id;
-      if (typeof hash === 'string' && hash.length > 0) return hash;
+function argsOf(row) {
+  const actions = row && Array.isArray(row.actions) ? row.actions : [];
+  for (const action of actions) {
+    if (action.method && action.method !== 'ft_transfer') continue;
+    if (typeof action.args !== 'string') continue;
+    try {
+      return JSON.parse(action.args);
+    } catch {
+      return null;
     }
   }
   return null;
 }
 
-function pendingError(quote, signerId) {
+function factsOf(row) {
+  const args = argsOf(row);
+  const token = (row.ft && row.ft.contract) || row.token || null;
+  const delta = row.delta_amount == null ? null : String(row.delta_amount);
+  const amount = row.amount != null
+    ? String(row.amount)
+    : (args && args.amount != null ? String(args.amount) : (delta == null ? null : delta.replace(/^-/, '')));
+  const receiver = row.receiver || row.payTo || row.involved_account_id || (args && args.receiver_id) || null;
+  const memo = row.memo || (row.ft && row.ft.memo) || (args && typeof args.memo === 'string' ? args.memo : null);
+  const hash = row.hash || row.transaction_hash || null;
+  return {
+    token,
+    receiver,
+    amount,
+    memo,
+    hash,
+    outgoing: delta == null || delta.startsWith('-'),
+  };
+}
+
+function rowsOf(found) {
+  if (!found) return [];
+  if (Array.isArray(found)) return found;
+  if (Array.isArray(found.txns)) return found.txns;
+  return [found];
+}
+
+function judgeRows(rows, quote) {
+  const payTo = quote.payTo || quote.receiver;
+  let mismatch = null;
+  for (const row of rows) {
+    const facts = factsOf(row);
+    if (facts.memo !== quote.nonce) continue;
+    const problems = [];
+    if (!facts.outgoing) problems.push('the signer received the tokens');
+    if (facts.token !== USDC) problems.push(`token ${facts.token || 'missing'}`);
+    if (facts.receiver !== payTo) problems.push(`receiver ${facts.receiver || 'missing'}`);
+    if (facts.amount !== quote.amount) problems.push(`amount ${facts.amount || 'missing'}`);
+    if (problems.length === 0 && facts.hash) return { hash: facts.hash };
+    if (problems.length > 0) mismatch = problems.join(', ');
+  }
+  return { mismatch };
+}
+
+async function nearblocksRows(opts) {
+  const fetchImpl = opts.fetch || globalThis.fetch;
+  const timeout = opts.timeoutMs || 20000;
+  const listUrl = `https://api-testnet.nearblocks.io/v1/account/${encodeURIComponent(opts.signerId)}/ft-txns?per_page=25`;
+  const listed = await fetchImpl(listUrl, { signal: AbortSignal.timeout(timeout) });
+  const body = await listed.json();
+  const rows = Array.isArray(body.txns) ? body.txns.slice(0, 25) : [];
+  const detailed = [];
+  for (const row of rows) {
+    if (row.memo || (row.ft && row.ft.memo) || (Array.isArray(row.actions) && row.actions.length > 0)) {
+      detailed.push(row);
+      continue;
+    }
+    if (!row.transaction_hash) continue;
+    const detailUrl = `https://api-testnet.nearblocks.io/v1/txns/${row.transaction_hash}`;
+    const detail = await fetchImpl(detailUrl, { signal: AbortSignal.timeout(timeout) });
+    const detailBody = await detail.json();
+    const txn = detailBody.txns && detailBody.txns[0];
+    detailed.push({
+      ...row,
+      actions: txn && txn.actions,
+      receiver_account_id: txn && txn.receiver_account_id,
+    });
+  }
+  return detailed;
+}
+
+async function findPaidMemo(opts, quote) {
+  const rows = typeof opts.rpc === 'function'
+    ? rowsOf(await opts.rpc('ft_transfers', {
+      signerId: opts.signerId,
+      token: USDC,
+      receiver: quote.payTo,
+      amount: quote.amount,
+      memo: quote.nonce,
+    }))
+    : await nearblocksRows(opts);
+  const judged = judgeRows(rows, quote);
+  if (judged.hash) return judged.hash;
+  if (judged.mismatch) {
+    throw pendingError(quote, opts.signerId, judged.mismatch);
+  }
+  return null;
+}
+
+function pendingError(quote, signerId, why) {
+  const payTo = quote.payTo || quote.receiver;
+  const detail = why
+    ? `A transfer with memo ${quote.nonce} was found but it does not match the quote (${why}).`
+    : `No ft_transfer of ${quote.amount} testnet USDC to ${payTo} with memo ${quote.nonce} was found for ${signerId} in the latest 25 token rows.`;
   return new Error(
-    `payment ${quote.paymentId} is pending, unconfirmed. No ft_transfer to USDC with memo ${quote.nonce} was found for ${signerId}. Confirm on the explorer, then delete that pending payment from .xray/state/near-rail.json before paying again.`,
+    `payment ${quote.paymentId} is pending, unconfirmed. ${detail} Do not send again. Confirm on the explorer, then delete that pending payment from .xray/state/near-rail.json before paying again.`,
   );
 }
 

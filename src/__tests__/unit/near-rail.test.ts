@@ -346,7 +346,15 @@ describe('near rail commands', () => {
         ...base,
         rpc: async (method: string) => {
           if (method === 'query') return { parsed: { total: '1' } };
-          if (method === 'ft_transfers') return { hash: 'ChainHash1111111111111111111111111111' };
+          if (method === 'ft_transfers') {
+            return {
+              hash: 'ChainHash1111111111111111111111111111',
+              token: tx.USDC,
+              receiver: quote.receiver,
+              amount: quote.amount,
+              memo: quote.nonce,
+            };
+          }
           broadcasts += 1;
           throw new Error('must not resend');
         },
@@ -356,7 +364,7 @@ describe('near rail commands', () => {
       expect(broadcasts).toBe(1);
       mkdirSync(path.dirname(tx.railPath(dest)), { recursive: true });
       writeFileSync(tx.lockPath(dest), '');
-      await expect(pay.payNear({ ...base, rpc })).rejects.toThrow('rail file is locked');
+      await expect(pay.payNear({ ...base, rpc })).rejects.toThrow(`rail file is locked (${tx.lockPath(dest)})`);
       expect(broadcasts).toBe(1);
       tx.rememberRow(dest, 'cap', { account: 'owner.testnet', contract: 'vault.testnet', lastTx: 'h', perTxCap: '100' });
       rmSync(tx.lockPath(dest), { force: true });
@@ -367,6 +375,72 @@ describe('near rail commands', () => {
         nonce: 'over-cap',
         rpc,
       })).rejects.toThrow('spend cap');
+    } finally {
+      rmSync(dest, { recursive: true, force: true });
+    }
+  });
+
+  it('adopts a nearblocks row only when token, receiver, amount, and memo match', async () => {
+    const dest = scratch();
+    const quote = { receiver: 'shop.testnet', amount: '10000', nonce: 'memo-match' };
+    const base = {
+      dest,
+      signerId: 'payer.testnet',
+      receiver: quote.receiver,
+      amount: quote.amount,
+      nonce: quote.nonce,
+      quote,
+    };
+    const row = (patch: Record<string, unknown>) => ({
+      transaction_hash: 'MatchHash11111111111111111111111111111',
+      delta_amount: '-10000',
+      involved_account_id: 'shop.testnet',
+      ft: { contract: tx.USDC },
+      actions: [{
+        method: 'ft_transfer',
+        args: JSON.stringify({
+          memo: 'memo-match',
+          amount: '10000',
+          receiver_id: 'shop.testnet',
+        }),
+      }],
+      ...patch,
+    });
+    let broadcasts = 0;
+    const rpc = async (method: string) => {
+      if (method === 'query') return { parsed: { total: '1' } };
+      broadcasts += 1;
+      throw new Error('lost response');
+    };
+    try {
+      await expect(pay.payNear({ ...base, rpc })).rejects.toThrow('lost response');
+      const wrong = async (patch: Record<string, unknown>, reason: string) => {
+        await expect(pay.payNear({
+          ...base,
+          rpc: async (method: string) => {
+            if (method === 'query') return { parsed: { total: '1' } };
+            if (method === 'ft_transfers') return row(patch);
+            broadcasts += 1;
+            throw new Error('must not resend');
+          },
+        })).rejects.toThrow(reason);
+        expect(broadcasts).toBe(1);
+      };
+      await wrong({ delta_amount: '-1', actions: [{ method: 'ft_transfer', args: JSON.stringify({ memo: 'memo-match', amount: '1', receiver_id: 'shop.testnet' }) }] }, 'pending, unconfirmed');
+      await wrong({ involved_account_id: 'other.testnet', actions: [{ method: 'ft_transfer', args: JSON.stringify({ memo: 'memo-match', amount: '10000', receiver_id: 'other.testnet' }) }] }, 'receiver other.testnet');
+      await wrong({ ft: { contract: 'other.token' } }, 'token other.token');
+      const adopted = await pay.payNear({
+        ...base,
+        rpc: async (method: string) => {
+          if (method === 'query') return { parsed: { total: '1' } };
+          if (method === 'ft_transfers') return row({});
+          broadcasts += 1;
+          throw new Error('must not resend');
+        },
+      });
+      expect(adopted.recovered).toBe(true);
+      expect(adopted.hash).toBe('MatchHash11111111111111111111111111111');
+      expect(broadcasts).toBe(1);
     } finally {
       rmSync(dest, { recursive: true, force: true });
     }

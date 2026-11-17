@@ -21,7 +21,7 @@ Grok CLI, Cursor, Claude Code, and Codex run these commands. Grok Bot runs the s
 2. `grok-bot hangar-list --agent-id <id> --url <https-shop>`
    Checks the Clearing listing for that shop. It does not pay.
 3. `grok-bot near-pay --receiver <account> --amount <u128> --nonce <nonce> --signer <account> --key <cold.json>`
-   Sends testnet USDC `ft_transfer` with the nonce as the memo. The payee and the amount are that quote. The same nonce returns the stored transaction and does not send again.
+   Sends testnet USDC `ft_transfer` with the nonce as the memo. The payee and the amount are that quote. The same nonce returns the stored transaction and does not send again. A pending payment is adopted only when the latest 25 nearblocks token rows show that USDC contract, that receiver, that amount, and that memo. A payment with no `perTxCap` on the rail is uncapped. If pay says the rail file is locked, and no pay is running, delete `.xray/state/near-rail.json.lock` and try again.
 4. `grok-bot near-cap init|allow|deny|add-agent-key`
    Drives the spend vault. `init` sets `per_tx_cap`. `allow` and `deny` set the lists. `add-agent-key` adds a function-call key limited to `pay,ping`. Owner calls sign with the sealed cold key.
 5. `grok-bot near-escrow init|open|fund|deliver|accept|refund`

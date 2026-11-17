@@ -27,7 +27,7 @@ function acquireRailLock(dest) {
     return { file, fd };
   } catch (err) {
     if (err && err.code === 'EEXIST') {
-      const error = new Error('rail file is locked');
+      const error = new Error(`rail file is locked (${file}). If no pay is running, delete that lock file and try again.`);
       error.code = 'LOCKED';
       throw error;
     }
@@ -118,8 +118,9 @@ function quoteOf(input) {
   if (!nonce || /[\r\n]/.test(nonce)) throw new Error('quote nonce is required');
   if (input.receiver && input.receiver !== receiver) throw new Error('payee is bound to the quote');
   if (input.amount && input.amount !== amount) throw new Error('amount is bound to the quote');
-  return {
+    return {
     receiver,
+    payTo: receiver,
     amount,
     nonce,
     paymentId: paymentIdFor(nonce),
