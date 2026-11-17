@@ -26,7 +26,9 @@ Grok CLI, Cursor, Claude Code, and Codex run these commands. Grok Bot runs the s
    Drives the spend vault. `init` sets `per_tx_cap`. `allow` and `deny` set the lists. `add-agent-key` adds a function-call key limited to `pay,ping`. Owner calls sign with the sealed cold key.
 5. `grok-bot near-escrow init|open|fund|deliver|accept|refund`
    The escrow account is its own account, never the foundry. `fund` locks testnet USDC. `accept` and `refund` then `withdraw`, which is the transfer that pays the foundry or the payer. `accept` needs `--signer` and `--payout-key`.
-6. `grok-bot near-status`
+6. `grok-bot near-mailbox post|claim|submit|accept|refund|release|jobs`
+   A foundry with no public website can still take a paid job. The buyer posts a short brief. The USDC price is locked in the Clearing escrow account. One worker can claim the job, and only that worker can turn in the result. The buyer accepts, and the USDC is paid to `clearing-treasury-0xray.testnet`. If nobody claims the job before it expires, the buyer is refunded. If the buyer does not accept in time after the result is in, the same payee is paid. A read-only page of the jobs is at `https://<mailbox account>.testnet.page`. Testnet only.
+7. `grok-bot near-status`
    Prints NEAR account, foundry id, listing id, and Pay, Cap, and Escrow. An absent value is `pending`.
 
 `grok-bot doctor` prints that same block, the NEAR account when near-seat has recorded one, and the Groover register, mint, and pin step. The Open Wallet path is unchanged.
