@@ -72,15 +72,21 @@ export function hasSha(line) {
 }
 function shaOf(line) { return hasSha(line) ? line.sha.trim() : ''; }
 
-// One delivered item per seat. A sha, when the line has one, keeps a new head as a new item.
-function replayKey(seat, line) {
+const OPEN_CARD = new Set(['issue_open', 'pr_open']);
+
+export function wokenItemKey(seat, line) {
   const who = String(seat || '').trim().toLowerCase();
+  if (!who || !line) return '';
   const kind = typeOf(line);
-  const repo = String(line && line.repo || '').trim().toLowerCase();
-  const n = Number(line && line.number);
-  if (!who || !kind || !repo || !Number.isInteger(n) || n < 1) return '';
+  if (kind === 'station' || String(line.id || '').startsWith('nudge:station:')) return '';
+  const repo = String(line.repo || '').trim().toLowerCase();
+  const n = Number(line.number);
   const sha = shaOf(line).toLowerCase();
-  return sha ? `${who}|${repo}#${n}|${kind}|${sha}` : `${who}|${repo}#${n}|${kind}`;
+  const id = String(line.id || '').trim();
+  if (OPEN_CARD.has(kind) && repo && Number.isInteger(n) && n > 0) return `${who}|${repo}#${n}|${kind}`;
+  if (sha && kind && repo && Number.isInteger(n) && n > 0) return `${who}|${repo}#${n}|${kind}|${sha}`;
+  if (id) return `${who}|${id}`;
+  return '';
 }
 
 function wokenSet(state) {
@@ -88,9 +94,44 @@ function wokenSet(state) {
   return state.woken;
 }
 
-function rememberWoken(state, seat, line) {
-  const key = replayKey(seat, line);
-  if (key) wokenSet(state).add(key);
+function wakingSet(state) {
+  if (!state.waking) state.waking = new Set();
+  return state.waking;
+}
+
+export function rememberWoken(state, seat, line) {
+  const key = wokenItemKey(seat, line);
+  if (!key) return;
+  wokenSet(state).add(key);
+  if (state.waking) state.waking.delete(key);
+}
+
+export function loadWoken(state, keys) {
+  const set = wokenSet(state);
+  for (const key of Array.isArray(keys) ? keys : []) if (typeof key === 'string' && key) set.add(key);
+}
+
+export function dumpWoken(state) {
+  return [...wokenSet(state)];
+}
+
+export function releaseWaking(state, seat, lines) {
+  for (const line of lines || []) {
+    const key = wokenItemKey(seat, line);
+    if (key && state.waking) state.waking.delete(key);
+  }
+}
+
+function claimWoken(state, seat, line) {
+  if (isHotfix(line)) return;
+  const key = wokenItemKey(seat, line);
+  if (key) wakingSet(state).add(key);
+}
+
+export function nextLineNudge(stored, visible) {
+  const count = Math.max(Number(stored) || 0, Number(visible) || 0);
+  if (count >= 3) return 0;
+  return count + 1;
 }
 
 export function labelsOf(line) {
@@ -357,8 +398,10 @@ export function gateLine(wake, state, now, cfg) {
     return { op: 'send', seat, line };
   }
   const hotfix = isHotfix(line);
-  const replay = replayKey(seat, line);
-  if (!hotfix && replay && wokenSet(state).has(replay)) return { op: 'skip', reason: 'replay', seat, line };
+  const woke = wokenItemKey(seat, line);
+  if (!hotfix && woke && (wokenSet(state).has(woke) || (state.waking && state.waking.has(woke)))) {
+    return { op: 'skip', reason: 'already_woke', seat, line };
+  }
   const sha = shaOf(line);
   const shaKey = shaKeyOf(seat, line);
   const sentSha = state.sentSha.get(shaKey) || '';
@@ -384,6 +427,7 @@ export function gateLine(wake, state, now, cfg) {
     if (sha) state.queuedSha.set(shaKey, sha);
     return { op: 'queue', until, seat, line };
   }
+  claimWoken(state, seat, line);
   return { op: 'send', seat, line };
 }
 
