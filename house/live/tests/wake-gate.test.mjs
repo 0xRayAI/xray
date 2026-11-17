@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 import { listenPort } from './free-port.mjs';
 import {
   ROLLING_HOUR_MS, wakeConfig, createWakeState, classifyBatch, gateLine, noteSent, releaseDue, defaultIssueSeat,
-  publicStats, fullStats, isP1Issue, hasSha, startTurn,
+  publicStats, fullStats, isP1Issue, hasSha, startTurn, restoreWakeBook,
 } from '../app/wake-gate.mjs';
 
 const cfg = wakeConfig({ WAKE_KIND_COOLDOWN_S: '900', WAKE_MAX_PER_HOUR: '6', LIVE_TURN_OPEN_MIN: '20', WAKE_BATCH_S: '0' });
@@ -130,8 +130,38 @@ test('a missing sha is not a shared sha; the same key with no sha is a cooldown'
   const other = gateLine({ seat: 'forge', line: line({ id: 'i2', type: 'issue_open', number: 9 }) }, st, T0 + 1000, cfg);
   assert.equal(other.op, 'send');
   const again = gateLine({ seat: 'forge', line: line({ id: 'i3', type: 'issue_open', number: 4 }) }, st, T0 + 1000, cfg);
-  assert.equal(again.reason, 'cooldown');
+  assert.equal(again.reason, 'already_woke');
   assert.notEqual(again.reason, 'repeat_sha');
+});
+
+test('the same issue_open wakes once, and a reopen or a new sha still wakes', () => {
+  const st = createWakeState();
+  const open = line({ id: 'open-1', type: 'issue_open', repo: 'acme/one', number: 50, sha: '' });
+  assert.equal(gateLine({ seat: 'forge', line: open }, st, T0, cfg).op, 'send');
+  noteSent(st, 'forge', [open], T0);
+  for (let i = 0; i < 5; i++) {
+    const again = gateLine({ seat: 'forge', line: line({ id: 'open-' + (i + 2), type: 'issue_open', repo: 'acme/one', number: 50, sha: '' }) }, st, T0 + (i + 2) * 1000 + 901000, cfg);
+    assert.equal(again.reason, 'already_woke');
+  }
+  const otherSeat = gateLine({ seat: 'mill', line: line({ id: 'open-mill', type: 'issue_open', repo: 'acme/one', number: 50, sha: '' }) }, st, T0 + 2000, cfg);
+  assert.equal(otherSeat.op, 'send');
+  const comment = gateLine({ seat: 'forge', line: line({ id: 'cmt', type: 'issue_comment', repo: 'acme/one', number: 50, sha: '' }) }, st, T0 + 3000, cfg);
+  assert.equal(comment.op, 'send');
+  const reopened = gateLine({ seat: 'forge', line: line({ id: 're', type: 'issue_reopen', repo: 'acme/one', number: 50, sha: '' }) }, st, T0 + 4000, cfg);
+  assert.equal(reopened.op, 'send');
+  const head = line({ id: 'sha-1', type: 'ci_fail', repo: 'acme/one', number: 50, sha: 'abc123' });
+  assert.equal(gateLine({ seat: 'forge', line: head }, st, T0 + 5000, cfg).op, 'send');
+  noteSent(st, 'forge', [head], T0 + 5000);
+  assert.equal(gateLine({ seat: 'forge', line: line({ id: 'sha-1b', type: 'ci_fail', repo: 'acme/one', number: 50, sha: 'abc123' }) }, st, T0 + 6000, cfg).reason, 'already_woke');
+  const newer = gateLine({ seat: 'forge', line: line({ id: 'sha-2', type: 'ci_fail', repo: 'acme/one', number: 50, sha: 'def456' }) }, st, T0 + 7000, cfg);
+  assert.notEqual(newer.reason, 'already_woke');
+  assert.ok(newer.op === 'send' || newer.op === 'queue');
+
+  const fresh = createWakeState();
+  restoreWakeBook(fresh, [{
+    ok: true, seat: 'forge', repo: 'acme/one', number: 50, kind: 'issue_open', t_ct: new Date(T0 - 86_400_000).toISOString(),
+  }], [], T0, 1000);
+  assert.equal(gateLine({ seat: 'forge', line: line({ id: 'open-restored', type: 'issue_open', repo: 'acme/one', number: 50, sha: '' }) }, fresh, T0, cfg).reason, 'already_woke');
 });
 
 test('two readys on different PRs inside 900s both send; the same sha is repeat_sha', () => {
@@ -142,7 +172,7 @@ test('two readys on different PRs inside 900s both send; the same sha is repeat_
   const b = gateLine({ seat: 'forge', line: line({ id: 'r2', type: 'ready', number: 2, sha: 'bbb' }) }, st, T0 + 1000, cfg);
   assert.equal(b.op, 'send');
   const same = gateLine({ seat: 'forge', line: line({ id: 'r3', type: 'ready', number: 1, sha: 'aaa' }) }, st, T0 + 1000, cfg);
-  assert.equal(same.reason, 'repeat_sha');
+  assert.equal(same.reason, 'already_woke');
   const green = gateLine({ seat: 'forge', line: line({ id: 'g1', type: 'ci_pass', number: 1, sha: 'aaa' }) }, st, T0 + 1000, cfg);
   assert.equal(green.op, 'send');
   const inside = gateLine({ seat: 'forge', line: line({ id: 'r4', type: 'ready', number: 1, sha: 'ccc' }) }, st, T0 + 899999, cfg);
@@ -316,7 +346,7 @@ test('server: three lines batch into one POST; a missing sha is cooldown; a hotf
   assert.equal((await post([row({ id: 'nosha-2', seat: 'forge', type: 'issue_open', number: 50, reason: '@forge two' })])).status, 200);
   await new Promise(r => setTimeout(r, 200));
   assert.equal(got.length, mid);
-  assert.match(logs, /wake: skip forge cooldown nosha-2/);
+  assert.match(logs, /wake: skip forge already_woke nosha-2/);
   assert.equal(logs.includes('repeat_sha nosha-2'), false);
   assert.equal((await post([row({ id: 'nosha-3', seat: 'forge', type: 'issue_open', number: 50, reason: '@forge hot', flag: 'hotfix' })])).status, 200);
   assert.ok(await until(() => got.some(g => g.body.inbox_id === 'nosha-3')), logs);
