@@ -57,6 +57,11 @@ const config: Config = {
           position: 'left',
         },
         {
+          to: '/earn',
+          label: 'Earn',
+          position: 'left',
+        },
+        {
           href: 'https://github.com/0xRayAI/xray',
           label: 'GitHub',
           position: 'right',
