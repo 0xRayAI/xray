@@ -15,9 +15,9 @@ const LOOP = [
   'A NEAR testnet account, and the key stays on the machine.',
   'Your foundry.',
   'Listing. Pending. A new user has no agent id. That id is an ETH register, and the pin is a USDC payment.',
-  'Pay. Pending. A NEAR testnet USDC shop payment. No grok-bot command yet.',
-  'Cap. Pending. A payment over the owner limit is rejected. No grok-bot command yet.',
-  'Escrow. Pending. The buyer locks the job, you deliver, they confirm, then it can be released. No grok-bot command yet.',
+  'Pay. grok-bot near-pay sends testnet USDC with the quote memo.',
+  'Cap. grok-bot near-cap drives the spend vault.',
+  'Escrow. grok-bot near-escrow uses its own account, never the foundry.',
 ];
 
 export default function EarnPage() {
@@ -65,6 +65,9 @@ export PATH="$HOME/.npm-global/bin:$PATH"
 npm install -g near-cli-rs@0.31.1
 near --version
 node grok-bot/bin/grok-bot.js foundry-create --id <foundry-id> --seat <seat-id> --account <new-name>.testnet
+node grok-bot/bin/grok-bot.js near-pay --receiver <account> --amount <u128> --nonce <nonce> --signer <account> --key <cold.json>
+node grok-bot/bin/grok-bot.js near-cap init --contract <account> --owner <account> --per-tx-cap <u128> --key <cold.json>
+node grok-bot/bin/grok-bot.js near-escrow init --escrow <account> --creator <account> --key <cold.json>
 node grok-bot/bin/grok-bot.js near-status`}</pre>
       </main>
     </Layout>

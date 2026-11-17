@@ -212,6 +212,24 @@ function probeFoundry(cwd) {
   return { present: true, id: data.id, receiver, listingId, file };
 }
 
+function probeRail(cwd) {
+  const file = path.join(cwd, '.xray', 'state', 'near-rail.json');
+  const data = readJson(file);
+  if (!data || typeof data !== 'object') return { pay: {}, cap: {}, escrow: {} };
+  return {
+    pay: data.pay && typeof data.pay === 'object' ? data.pay : {},
+    cap: data.cap && typeof data.cap === 'object' ? data.cap : {},
+    escrow: data.escrow && typeof data.escrow === 'object' ? data.escrow : {},
+  };
+}
+
+function railRow(label, row) {
+  if (!row || typeof row.account !== 'string' || !row.account) return `${label}: pending`;
+  if (typeof row.contract !== 'string' || !row.contract) return `${label}: pending`;
+  if (typeof row.lastTx !== 'string' || !row.lastTx) return `${label}: pending`;
+  return `${label}: ${row.account} contract ${row.contract} tx ${row.lastTx}`;
+}
+
 function probeNear(cwd) {
   const seats = path.join(cwd, '.xray', 'state', 'seats');
   if (!fs.existsSync(seats)) return { present: false, accountId: null, file: null };
@@ -987,6 +1005,7 @@ function diagnoseSeat(opts = {}) {
     ows: probeOws(walletHome),
     near: probeNear(cwd),
     foundry: probeFoundry(cwd),
+    rail: probeRail(cwd),
     house,
     bridges,
     board: boardSurface(env),
@@ -1037,13 +1056,23 @@ function nearStatusFromReport(report) {
   const account = report.near && report.near.present && report.near.accountId ? report.near.accountId : 'pending';
   const foundryId = report.foundry && report.foundry.present && report.foundry.id ? report.foundry.id : 'pending';
   const listing = report.foundry && report.foundry.listingId ? report.foundry.listingId : 'pending';
-  return `NEAR account: ${account}\nFoundry: ${foundryId}\nListing: ${listing}\n`;
+  const rail = report.rail || {};
+  return [
+    `NEAR account: ${account}`,
+    `Foundry: ${foundryId}`,
+    `Listing: ${listing}`,
+    railRow('Pay', rail.pay),
+    railRow('Cap', rail.cap),
+    railRow('Escrow', rail.escrow),
+    '',
+  ].join('\n');
 }
 
 function nearStatusBlock(cwd) {
   return nearStatusFromReport({
     near: probeNear(cwd),
     foundry: probeFoundry(cwd),
+    rail: probeRail(cwd),
   });
 }
 
@@ -1208,7 +1237,10 @@ Commands:
   exit-gate <NOTES.md>
                    The wake's step 7 gate: a named bug or ask with no repo#n fails the turn
   bifrost init     Write the board's seat routes (collector/routing/inbox-roles.json in a bifrost clone; BIFROST_FEED overrides). --check validates and writes nothing. Needs python3
-  near-status          Print NEAR account, foundry id, and listing id. Absent is pending
+  near-status          Print NEAR account, foundry id, listing id, and Pay, Cap, Escrow. Absent is pending
+  near-pay             Testnet USDC ft_transfer. Payee and amount come from the quote. A replay returns the stored result
+  near-cap             Init the spend vault, set_allow, set_deny, or add the pay,ping agent key. Owner calls use the cold key
+  near-escrow          Escrow on its own account: init, open, fund, deliver, accept, refund
   foundry-create --id <id> --seat <seat> --account <account>
                    Record the foundry and its NEAR receiver. The same id and receiver keeps the record. --force replaces a different one
   hangar-list --agent-id <id> --url <https-shop>
