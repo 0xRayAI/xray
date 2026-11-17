@@ -1,22 +1,22 @@
 Set up a NEAR testnet foundry. This is a testnet demo of what we are building toward. Testnet only. Do not send a mainnet transaction. Do not spend real money. Do not print a private key or a seed phrase. Keep key files mode 0600.
 
-You need Node >= 24.22.3. The npx commands are coming in the next release. Use a checkout of main:
+Node >= 24.22.1 is enough for this path. package.json asks for Node >= 24.22.3, and that check is not enforced. The npx commands are coming in the next release. Use a checkout of main:
 
 git clone https://github.com/0xRayAI/xray
 cd xray
 npm install
+If install prints Run npx 0xray wear, ignore it for this path.
 npm config set prefix ~/.npm-global
 export PATH="$HOME/.npm-global/bin:$PATH"
 npm install -g near-cli-rs@0.31.1
 near --version
+The testnet faucet sponsors account creation. A near-cli-rs allowScripts warning is harmless.
 
 1. foundry-create creates the NEAR account. Pass a new name that ends in .testnet. Pick a foundry id and a seat id (a short name for this machine; the key folder uses it). Run:
 node grok-bot/bin/grok-bot.js foundry-create --id <foundry-id> --seat <seat-id> --account <new-name>.testnet
-That creates the testnet account and the foundry record.
+That creates the testnet account and the foundry record. If it fails with Transaction has expired, rerun that same command with the same name.
 
-2. Hangar listing. If you already have an ERC-8004 agent id, run:
-node grok-bot/bin/grok-bot.js hangar-list --agent-id <agent-id> --url https://clearing.rippel.ai/v1/ping
-https://clearing.rippel.ai/v1/ping is the Clearing ping shop. If you do not have an agent id, leave the listing pending. Do not invent a listing endpoint.
+2. Listing stays pending. A new user has no ERC-8004 agent id. That id is an ETH register, and the hangar pin is a USDC payment. This testnet path does not do either. Do not run hangar-list. Do not invent an agent id.
 
 3. These three are pending. There is no grok-bot command for them yet. Do not send a transaction for them from this prompt.
 - Pay. Pending. A NEAR testnet USDC shop payment.
@@ -26,4 +26,4 @@ https://clearing.rippel.ai/v1/ping is the Clearing ping shop. If you do not have
 4. Run:
 node grok-bot/bin/grok-bot.js near-status
 
-5. Stop. Print the NEAR testnet account id and the foundry id from that block.
+5. Stop. Print the NEAR testnet account id, the foundry id, and Listing: pending.
