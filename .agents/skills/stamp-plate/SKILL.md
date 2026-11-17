@@ -10,9 +10,9 @@ description: >
 
 Do this. Do not explore the tree to rediscover it.
 
-The default plate style is now the left-to-right architecture/network ASCII in `.agents/skills/0xray-ascii-plate-default/SKILL.md`.
+The default plate style is now the left-to-right architecture/network ASCII in `.agents/skills/0xray-ascii-plate-default/SKILL.md`: its Pillow render is the default X PNG. The locked-kit route below (`plates/kit/` plus `layered-flow/render.py`) applies only when the owner asks for the riveted kit style. Either way the X PNG must flow the same as the `.md` plate.
 
-Work from a new branch and worktree off current `origin/main`. One plate, one ASCII file. Its X copy is a PNG at `docs-site/static/plates/x/<id>.png`. An X PNG is assembled from the locked kit and must flow the same as the `.md` plate: same nodes, text, order, edges and layers, checked by the flow-equivalence test in `src/__tests__/unit/plates.test.ts`. Every visual part comes from `plates/kit/`. Run that test before the PR.
+Work from a new branch and worktree off current `origin/main`. One plate, one ASCII file. Its X copy is a PNG at `docs-site/static/plates/x/<id>.png`. A kit-style X PNG is assembled from the locked kit and must flow the same as the `.md` plate: same nodes, text, order, edges and layers, checked by the flow-equivalence test in `src/__tests__/unit/plates.test.ts`. Every visual part comes from `plates/kit/`. Run that test before the PR.
 
 ## Which kind of plate
 
