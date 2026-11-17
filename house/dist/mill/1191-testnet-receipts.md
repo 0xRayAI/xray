@@ -66,7 +66,8 @@ Explorer links use `https://explorer.testnet.near.org/transactions/<hash>`.
 | deploy mailbox | [FWYCXcNvE4L4axMqrstc8abcXrwcaXqmYZCf6kZSEnSb](https://explorer.testnet.near.org/transactions/FWYCXcNvE4L4axMqrstc8abcXrwcaXqmYZCf6kZSEnSb) |
 | init mailbox | [EMxueqE9UG44cb4U9HSZKKdBu7W1Q7kzSogezuhgv1Kd](https://explorer.testnet.near.org/transactions/EMxueqE9UG44cb4U9HSZKKdBu7W1Q7kzSogezuhgv1Kd) |
 | open deal 3 | [JD8Amooe9fyhdYTSBqYDzdoq8yR9gLwTsfU79D7E3gWc](https://explorer.testnet.near.org/transactions/JD8Amooe9fyhdYTSBqYDzdoq8yR9gLwTsfU79D7E3gWc) |
-| fund escrow and bind job | [Ficnu4XbWPXHv6u834jmCXCX5AW5aHMUNZ387gtkwnQA](https://explorer.testnet.near.org/transactions/Ficnu4XbWPXHv6u834jmCXCX5AW5aHMUNZ387gtkwnQA) |
+| fund escrow deal 3 | [J8quqcyMRZeD7xjbjck8cpixiyj3TXiFy4doQJDinCiU](https://explorer.testnet.near.org/transactions/J8quqcyMRZeD7xjbjck8cpixiyj3TXiFy4doQJDinCiU) |
+| bind job | [Ficnu4XbWPXHv6u834jmCXCX5AW5aHMUNZ387gtkwnQA](https://explorer.testnet.near.org/transactions/Ficnu4XbWPXHv6u834jmCXCX5AW5aHMUNZ387gtkwnQA) |
 | claim | [3tByqVh8tqrHC8TLDMogorK3JJ4VLyZVrpKFeJPUUDvj](https://explorer.testnet.near.org/transactions/3tByqVh8tqrHC8TLDMogorK3JJ4VLyZVrpKFeJPUUDvj) |
 | submit | [hscQ2Q8D4R5aMT6Lot7FtnA3AHEUgRzjwaRsyMpGvpn](https://explorer.testnet.near.org/transactions/hscQ2Q8D4R5aMT6Lot7FtnA3AHEUgRzjwaRsyMpGvpn) |
 | deliver | [Gwiso8vi79hdg8y6WymQCJDWMhA9JqJywj7ghmAj4vSN](https://explorer.testnet.near.org/transactions/Gwiso8vi79hdg8y6WymQCJDWMhA9JqJywj7ghmAj4vSN) |
