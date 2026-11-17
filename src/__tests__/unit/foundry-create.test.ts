@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -175,6 +175,65 @@ describe('foundry-create', () => {
       expect(replaced.record.id).toBe('other-foundry');
       expect(readFileSync(replaced.foundryPath, 'utf8')).not.toContain(SECRET);
       expect(readFileSync(replaced.foundryPath, 'utf8')).toContain('"id": "other-foundry"');
+    } finally {
+      rmSync(dest, { recursive: true, force: true });
+      rmSync(creds, { recursive: true, force: true });
+    }
+  });
+
+  it('a rerun continues when the account already exists and the key is on disk', async () => {
+    const dest = mkdtempSync(path.join(tmpdir(), 'foundry-create-'));
+    const creds = mkdtempSync(path.join(tmpdir(), 'foundry-create-creds-'));
+    const accountId = 'millfc1ca97ca3.testnet';
+    const implicit = 'c'.repeat(64);
+    let creates = 0;
+    const runners = {
+      createAccount: async () => {
+        creates += 1;
+        const file = path.join(creds, 'testnet', `${accountId}.json`);
+        mkdirSync(path.dirname(file), { recursive: true });
+        writeFileSync(file, `${JSON.stringify({
+          account_id: implicit,
+          implicit_account_id: implicit,
+          public_key: 'ed25519:public',
+          private_key: SECRET,
+        })}\n`);
+        return {
+          status: 1,
+          stdout: '',
+          stderr: `Error: The account ${accountId} already exists`,
+          key: {
+            account_id: implicit,
+            public_key: 'ed25519:public',
+            private_key: SECRET,
+          },
+        };
+      },
+      addFunctionCallKey: async () => ({ status: 0, stdout: '' }),
+    };
+    const opts = {
+      dest,
+      foundryId: 'ada-foundry',
+      seatId: 'mill-seat',
+      accountId,
+      credentialsHome: creds,
+      viewAccount: async () => ({ amount: '1' }),
+      runners,
+    };
+    try {
+      const created = await foundry.createFoundry(opts);
+      expect(creates).toBe(1);
+      expect(created.receiver).toBe(accountId);
+      expect(created.kept).toBe(false);
+      const coldPath = path.join(dest, '.xray', 'state', 'seats', 'mill-seat', 'near-cold', `${accountId}.json`);
+      const cold = JSON.parse(readFileSync(coldPath, 'utf8')) as { account_id: string };
+      expect(cold.account_id).toBe(accountId);
+      expect(readFileSync(coldPath, 'utf8')).not.toContain(implicit);
+      rmSync(created.foundryPath);
+      const again = await foundry.createFoundry(opts);
+      expect(creates).toBe(1);
+      expect(again.receiver).toBe(accountId);
+      expect(JSON.parse(readFileSync(again.foundryPath, 'utf8')).receiver).toBe(accountId);
     } finally {
       rmSync(dest, { recursive: true, force: true });
       rmSync(creds, { recursive: true, force: true });

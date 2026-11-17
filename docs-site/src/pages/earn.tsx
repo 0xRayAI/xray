@@ -1,6 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import Layout from '@theme/Layout';
-import useBaseUrl from '@docusaurus/useBaseUrl';
+import promptFile from '../../static/earn/one-click.txt';
+
+const PROMPT = promptFile.trim();
+const NODE_LINE = 'Node >= 24.22.3';
 
 /**
  * Thin page on the existing docs host (docs-site/src/pages, same as index.tsx).
@@ -17,28 +20,10 @@ const LOOP = [
 ];
 
 export default function EarnPage() {
-  const promptUrl = useBaseUrl('/earn/one-click.txt');
-  const [prompt, setPrompt] = useState('');
   const [copied, setCopied] = useState(false);
 
-  useEffect(() => {
-    let cancelled = false;
-    fetch(promptUrl)
-      .then((response) => response.text())
-      .then((text) => {
-        if (!cancelled) setPrompt(text.trim());
-      })
-      .catch(() => {
-        if (!cancelled) setPrompt('');
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [promptUrl]);
-
   async function handOff(): Promise<void> {
-    if (!prompt) return;
-    await navigator.clipboard.writeText(prompt);
+    await navigator.clipboard.writeText(PROMPT);
     setCopied(true);
   }
 
@@ -59,25 +44,27 @@ export default function EarnPage() {
           ))}
         </ol>
         <p>
-          <button type="button" onClick={() => { void handOff(); }} disabled={!prompt}>
+          <button type="button" onClick={() => { void handOff(); }}>
             {copied ? 'Prompt copied. Paste it into Grok Bot.' : 'Copy the Grok Bot prompt'}
           </button>
         </p>
         <p>
-          The button copies the whole prompt. A cold Grok Bot can run it with no extra step. It ends by printing the NEAR testnet account id and the foundry id.
+          The button copies the whole prompt. The same text is at <a href="/earn/one-click.txt">/earn/one-click.txt</a>. You need {NODE_LINE}. A cold Grok Bot can run it with no extra step. It ends by printing the NEAR testnet account id and the foundry id.
         </p>
-        <pre style={{ whiteSpace: 'pre-wrap' }}>{prompt || 'Loading the prompt…'}</pre>
+        <pre style={{ whiteSpace: 'pre-wrap' }}>{PROMPT}</pre>
         <h2>Or use a CLI</h2>
         <p>
-          Grok CLI, Cursor, Claude Code, and Codex use a checkout of main. The npx commands are coming in the next release. Install near-cli-rs 0.31.1 first, so the near command is on your PATH. A seat id is a short name for this machine; the key folder uses it. When the commands finish, <code>node grok-bot/bin/grok-bot.js near-status</code> prints the account, the foundry id, and the listing id.
+          Grok CLI, Cursor, Claude Code, and Codex use a checkout of main. You need {NODE_LINE}. The npx commands are coming in the next release. On Linux, set a user prefix before the global install so npm can write the near command. foundry-create creates the NEAR account. Pass a new name. A seat id is a short name for this machine; the key folder uses it. When the commands finish, <code>node grok-bot/bin/grok-bot.js near-status</code> prints the account, the foundry id, and the listing id.
         </p>
         <pre>{`git clone https://github.com/0xRayAI/xray
 cd xray
 npm install
+npm config set prefix ~/.npm-global
+export PATH="$HOME/.npm-global/bin:$PATH"
 npm install -g near-cli-rs@0.31.1
 near --version
-node grok-bot/bin/grok-bot.js foundry-create --id <foundry-id> --seat <seat-id> --account <account-id>
-node grok-bot/bin/grok-bot.js hangar-list --agent-id <agent-id> --url <https-shop>
+node grok-bot/bin/grok-bot.js foundry-create --id <foundry-id> --seat <seat-id> --account <new-name>.testnet
+node grok-bot/bin/grok-bot.js hangar-list --agent-id <agent-id> --url https://clearing.rippel.ai/v1/ping
 node grok-bot/bin/grok-bot.js near-status`}</pre>
       </main>
     </Layout>

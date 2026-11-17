@@ -13,6 +13,9 @@ const seat = requireCjs(path.join(root, 'grok-bot', 'lib', 'near-seat.cjs')) as 
   SEALED_MODE: number;
   VIEW_ACCOUNT_ATTEMPTS: number;
   VIEW_ACCOUNT_DELAY_MS: number;
+  RPC_TIMEOUT_MS: number;
+  rpcTimeoutMs: (opts?: { timeoutMs?: number }) => number;
+  readLegacyKey: (file: string, accountId?: string) => KeyFile;
   createAccountArgv: (accountId: string) => string[];
   credentialsHome: (opts: { credentialsHome?: string }) => string;
   legacyKeyPath: (dir: string, network: string, accountId: string) => string;
@@ -200,6 +203,102 @@ describe('near-seat', () => {
     expect(calls).toBe(5);
     expect(delays).toEqual([1000, 1000, 1000, 1000]);
     expect(bodies[0]).toContain('"request_type":"view_account"');
+  });
+
+  it('uses a 15s RPC timeout and keeps the 1s retry delay', async () => {
+    expect(seat.RPC_TIMEOUT_MS).toBe(15000);
+    expect(seat.VIEW_ACCOUNT_DELAY_MS).toBe(1000);
+    expect(seat.rpcTimeoutMs({})).toBe(15000);
+    const seen: number[] = [];
+    const original = AbortSignal.timeout;
+    AbortSignal.timeout = ((ms: number) => {
+      seen.push(ms);
+      return original(ms);
+    }) as typeof AbortSignal.timeout;
+    const prev = process.env.NEAR_RPC_TIMEOUT_MS;
+    delete process.env.NEAR_RPC_TIMEOUT_MS;
+    try {
+      await seat.viewAccount('millfc1ca97ca3.testnet', {
+        fetch: async () => ({ json: async () => ({ result: { amount: '1' } }) }),
+        sleep: async () => { throw new Error('retry delay must not run on success'); },
+      });
+      expect(seen).toEqual([15000]);
+      process.env.NEAR_RPC_TIMEOUT_MS = '8000';
+      expect(seat.rpcTimeoutMs({})).toBe(8000);
+      seen.length = 0;
+      await seat.viewAccount('millfc1ca97ca3.testnet', {
+        fetch: async () => ({ json: async () => ({ result: { amount: '1' } }) }),
+        sleep: async () => {},
+      });
+      expect(seen).toEqual([8000]);
+      seen.length = 0;
+      await seat.viewAccount('millfc1ca97ca3.testnet', {
+        timeoutMs: 2500,
+        fetch: async () => ({ json: async () => ({ result: { amount: '1' } }) }),
+        sleep: async () => {},
+      });
+      expect(seen).toEqual([2500]);
+      expect(seat.rpcTimeoutMs({ timeoutMs: 2500 })).toBe(2500);
+    } finally {
+      AbortSignal.timeout = original;
+      if (prev == null) delete process.env.NEAR_RPC_TIMEOUT_MS;
+      else process.env.NEAR_RPC_TIMEOUT_MS = prev;
+    }
+  });
+
+  it('keeps the passed account id ahead of the implicit account id', () => {
+    const dir = scratch();
+    const implicit = 'a'.repeat(64);
+    const file = path.join(dir, 'named.testnet.json');
+    writeFileSync(file, `${JSON.stringify({
+      account_id: implicit,
+      implicit_account_id: implicit,
+      public_key: 'ed25519:public',
+      private_key: SECRET,
+    })}\n`);
+    try {
+      expect(seat.readLegacyKey(file, 'named.testnet').account_id).toBe('named.testnet');
+      expect(seat.readLegacyKey(file).account_id).toBe(implicit);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('skips create when the key is on disk and view_account succeeds', async () => {
+    const home = scratch();
+    const creds = scratch();
+    const accountId = 'named.testnet';
+    const legacy = seat.legacyKeyPath(creds, 'testnet', accountId);
+    mkdirSync(path.dirname(legacy), { recursive: true });
+    writeFileSync(legacy, `${JSON.stringify({
+      account_id: 'b'.repeat(64),
+      implicit_account_id: 'b'.repeat(64),
+      public_key: 'ed25519:public',
+      private_key: SECRET,
+    })}\n`);
+    let creates = 0;
+    try {
+      const result = await seat.prepareNearSeat({
+        accountId,
+        seatHome: home,
+        credentialsHome: creds,
+        viewAccount: async () => ({ amount: '10' }),
+        runners: {
+          createAccount: async () => {
+            creates += 1;
+            throw new Error('create must not run');
+          },
+          addFunctionCallKey: async () => ({ status: 0, stdout: '' }),
+        },
+      });
+      expect(creates).toBe(0);
+      expect(result.addedKey).toBe(true);
+      const cold = JSON.parse(readFileSync(result.coldPath, 'utf8')) as { account_id: string };
+      expect(cold.account_id).toBe(accountId);
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+      rmSync(creds, { recursive: true, force: true });
+    }
   });
 
   it('returns the account on a later view_account and does not call again', async () => {

@@ -15,8 +15,11 @@ const SEAT_UMASK = 0o077;
 const SEALED_MODE = 0o600;
 
 // query view_account: https://docs.near.org/api/rpc/contracts#view-account
+// rpc.testnet.near.org takes about 3.2s, so the per-call limit is not the 1s retry gap.
+// NEAR_RPC_TIMEOUT_MS overrides the per-call limit.
 const VIEW_ACCOUNT_ATTEMPTS = 5;
 const VIEW_ACCOUNT_DELAY_MS = 1000;
+const RPC_TIMEOUT_MS = 15000;
 const TESTNET_RPC = 'https://rpc.testnet.near.org';
 
 // Faucet create, measured as CnCbvTDM3Xt5N2Bq6FtwwA79o23iebuZnsHFuuVH1x7K.
@@ -73,6 +76,11 @@ function legacyKeyPath(credentialsDir, network, accountId) {
   return path.join(credentialsDir, network, `${accountId}.json`);
 }
 
+function namedAccountId(accountId) {
+  if (typeof accountId !== 'string') return '';
+  return accountId.trim();
+}
+
 function readLegacyKey(file, accountId) {
   const data = JSON.parse(fs.readFileSync(file, 'utf8'));
   const privateKey = typeof data.private_key === 'string' ? data.private_key : data.secret_keypair_str;
@@ -80,8 +88,15 @@ function readLegacyKey(file, accountId) {
   if (typeof privateKey !== 'string' || typeof publicKey !== 'string') {
     throw new Error(`legacy keychain is missing the key: ${file}`);
   }
+  // The passed --account wins. A key file often also stores the 64-hex implicit id.
+  const named = namedAccountId(accountId);
+  const fromFile = typeof data.account_id === 'string' && data.account_id.trim() !== ''
+    ? data.account_id
+    : (typeof data.implicit_account_id === 'string' ? data.implicit_account_id : '');
+  const id = named || fromFile;
+  if (!id) throw new Error(`legacy keychain is missing the account: ${file}`);
   return {
-    account_id: typeof data.account_id === 'string' ? data.account_id : (data.implicit_account_id || accountId),
+    account_id: id,
     public_key: publicKey,
     private_key: privateKey,
     master_seed_phrase: typeof data.master_seed_phrase === 'string' ? data.master_seed_phrase : undefined,
@@ -180,8 +195,20 @@ function hasFunctionCallKey(list, contractId, methodNames) {
   });
 }
 
+function rpcTimeoutMs(opts = {}) {
+  if (opts.timeoutMs != null) {
+    const given = Number(opts.timeoutMs);
+    if (Number.isFinite(given) && given > 0) return given;
+  }
+  if (process.env.NEAR_RPC_TIMEOUT_MS) {
+    const fromEnv = Number(process.env.NEAR_RPC_TIMEOUT_MS);
+    if (Number.isFinite(fromEnv) && fromEnv > 0) return fromEnv;
+  }
+  return RPC_TIMEOUT_MS;
+}
+
 async function queryRpc(accountId, requestType, opts) {
-  const timeoutMs = opts.timeoutMs == null ? VIEW_ACCOUNT_DELAY_MS : opts.timeoutMs;
+  const timeoutMs = rpcTimeoutMs(opts);
   const fetchImpl = opts.fetch || globalThis.fetch;
   const rpc = opts.rpcUrl || TESTNET_RPC;
   const response = await fetchImpl(rpc, {
@@ -210,7 +237,7 @@ async function viewAccount(accountId, opts = {}) {
   let lastError = null;
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
     try {
-      const body = await queryRpc(accountId, 'view_account', { ...opts, timeoutMs: opts.timeoutMs == null ? delayMs : opts.timeoutMs });
+      const body = await queryRpc(accountId, 'view_account', opts);
       if (body && body.result && body.result.amount != null) return body.result;
       lastError = body && body.error ? body.error : body;
     } catch (err) {
@@ -270,24 +297,51 @@ function runNearCli(args, opts = {}) {
   };
 }
 
-async function accountAlreadyThere(opts) {
-  const coldPath = path.join(opts.seatHome, 'near-cold', `${opts.accountId}.json`);
-  if (!fs.existsSync(coldPath)) return null;
-  let key;
+function readKeyFile(file, accountId) {
   try {
-    key = readLegacyKey(coldPath, opts.accountId);
+    const key = readLegacyKey(file, accountId);
+    fs.chmodSync(file, SEALED_MODE);
+    return key;
   } catch {
     return null;
   }
-  let account = null;
+}
+
+function keyOnDisk(opts) {
+  const coldPath = path.join(opts.seatHome, 'near-cold', `${opts.accountId}.json`);
+  const legacy = legacyKeyPath(credentialsHome(opts), 'testnet', opts.accountId);
+  if (fs.existsSync(coldPath)) {
+    const cold = readKeyFile(coldPath, opts.accountId);
+    if (cold) return cold;
+  }
+  if (fs.existsSync(legacy)) return readKeyFile(legacy, opts.accountId);
+  return null;
+}
+
+function accountExistsMessage(result) {
+  const text = [result && result.stdout, result && result.stderr, result && result.error]
+    .filter((part) => typeof part === 'string')
+    .join('\n');
+  return /already exists/i.test(text);
+}
+
+async function viewExistingAccount(opts) {
   try {
-    account = typeof opts.viewAccount === 'function'
+    const account = typeof opts.viewAccount === 'function'
       ? await opts.viewAccount(opts.accountId, opts)
       : await viewAccount(opts.accountId, opts);
+    if (!account || account.amount == null) return null;
+    return account;
   } catch {
     return null;
   }
-  if (!account || account.amount == null) return null;
+}
+
+async function accountAlreadyThere(opts) {
+  const key = keyOnDisk(opts);
+  if (!key) return null;
+  const account = await viewExistingAccount(opts);
+  if (!account) return null;
   return key;
 }
 
@@ -298,19 +352,40 @@ async function prepareNearSeat(opts) {
   const runners = opts.runners || {};
   const prev = process.umask(SEAT_UMASK);
   try {
-    const kept = await accountAlreadyThere(opts);
+    let kept = await accountAlreadyThere(opts);
     let key = kept;
     if (!key) {
-      const created = typeof runners.createAccount === 'function'
-        ? await runners.createAccount(createAccountArgv(opts.accountId))
-        : runNearCli(createAccountArgv(opts.accountId), opts);
-      key = loadCreatedKey(created, opts, opts.accountId);
-      rememberSecrets(secrets, key);
+      let created;
+      try {
+        created = typeof runners.createAccount === 'function'
+          ? await runners.createAccount(createAccountArgv(opts.accountId))
+          : runNearCli(createAccountArgv(opts.accountId), opts);
+      } catch (err) {
+        created = { status: 1, stdout: '', stderr: err instanceof Error ? err.message : String(err) };
+      }
+      if (created && created.status === 0) {
+        key = loadCreatedKey(created, opts, opts.accountId);
+        rememberSecrets(secrets, key);
+      } else if (accountExistsMessage(created)) {
+        const onDisk = keyOnDisk(opts);
+        if (onDisk) {
+          key = onDisk;
+          kept = key;
+          rememberSecrets(secrets, key);
+        }
+      }
       if (created && created.stdout) emit(opts, secrets, created.stdout);
       if (created && created.stderr) emit(opts, secrets, created.stderr);
-      assertCliOk(created, 'account create');
-      if (typeof opts.viewAccount === 'function') await opts.viewAccount(opts.accountId, opts);
-      else await viewAccount(opts.accountId, opts);
+      if (created && created.status === 0) {
+        if (typeof opts.viewAccount === 'function') await opts.viewAccount(opts.accountId, opts);
+        else await viewAccount(opts.accountId, opts);
+      } else if (!key) {
+        if (accountExistsMessage(created)) {
+          const seen = await viewExistingAccount(opts);
+          if (seen) throw new Error(`account ${opts.accountId} already exists and the full-access key is not on disk`);
+        }
+        assertCliOk(created, 'account create');
+      }
     }
     rememberSecrets(secrets, key);
     if (kept) {
@@ -360,12 +435,15 @@ module.exports = {
   SEALED_MODE,
   VIEW_ACCOUNT_ATTEMPTS,
   VIEW_ACCOUNT_DELAY_MS,
+  RPC_TIMEOUT_MS,
   TESTNET_RPC,
   createAccountArgv,
   credentialsHome,
   fileCreateMode,
   functionCallKeyArgv,
   legacyKeyPath,
+  readLegacyKey,
+  rpcTimeoutMs,
   hasFunctionCallKey,
   prepareNearSeat,
   viewAccessKeyList,

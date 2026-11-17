@@ -37,6 +37,25 @@ const config: Config = {
   markdown: {
     format: 'detect',
   },
+  plugins: [
+    function earnPromptRaw() {
+      return {
+        name: 'earn-prompt-raw',
+        configureWebpack() {
+          return {
+            module: {
+              rules: [
+                {
+                  test: /one-click\.txt$/,
+                  type: 'asset/source',
+                },
+              ],
+            },
+          };
+        },
+      };
+    },
+  ],
   themeConfig: {
     image: 'img/social-card.png',
     colorMode: {
