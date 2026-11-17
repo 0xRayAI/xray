@@ -6,7 +6,7 @@ plate_type: domain model
 
 # Foundry architecture
 
-The foundry, and what sits inside it. This matches the image the owner posted and chose to keep (forge chat, 2026-11-17 15:24 CT). The buyer and the NEAR escrow sit outside the foundry. Clearing and the hangar listing are outside it too.
+The foundry, and what sits inside it. This matches the posted image. The buyer and the NEAR escrow sit outside the foundry. Clearing and the hangar listing are outside it too.
 
 ```
                                      ┌──────────────────────────────────────────────────────────────────┐                                        
