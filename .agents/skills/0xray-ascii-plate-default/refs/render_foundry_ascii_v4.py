@@ -1,6 +1,7 @@
 # House ASCII plate v4: foundry and its parts. No posting.
 from PIL import Image, ImageDraw, ImageFont
-D='/workspace/herald-suit/ops/plates/2026-11-17-foundry-architecture/'
+import os, sys
+D=os.path.join(sys.argv[1] if len(sys.argv)>1 else os.environ.get('PLATE_OUT','.'),'')
 MONO='/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf'
 BOLD='/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf'
 BG=(8,9,11);CY=(61,224,232);YE=(245,197,24);WH=(245,247,250);GR=(120,126,135)
