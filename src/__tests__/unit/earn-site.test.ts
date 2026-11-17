@@ -7,11 +7,22 @@ const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../..')
 const prompt = readFileSync(path.join(root, 'docs-site/static/earn/one-click.txt'), 'utf8');
 const page = readFileSync(path.join(root, 'docs-site/src/pages/earn.tsx'), 'utf8');
 const checkout = 'git clone https://github.com/0xRayAI/xray';
+const nearCliInstall = 'npm install -g near-cli-rs@0.31.1';
+const nearVersionCheck = 'near --version';
+
+function beforeFoundryCreate(text: string): boolean {
+  const installAt = text.indexOf(nearCliInstall);
+  const versionAt = text.indexOf(nearVersionCheck);
+  const createAt = text.indexOf('node grok-bot/bin/grok-bot.js foundry-create');
+  return installAt >= 0 && versionAt > installAt && createAt > versionAt;
+}
 
 describe('earn site', () => {
   it('hands Grok Bot a checkout of main and keeps the copy plain', () => {
     expect(prompt).toContain(checkout);
     expect(prompt).toContain('npm install');
+    expect(prompt).toContain('a short name for this machine');
+    expect(beforeFoundryCreate(prompt)).toBe(true);
     expect(prompt).toContain('node grok-bot/bin/grok-bot.js foundry-create --id <foundry-id> --seat <seat-id> --account <account-id>');
     expect(prompt).toContain('node grok-bot/bin/grok-bot.js hangar-list --agent-id <agent-id> --url <https-shop>');
     expect(prompt).toContain('node grok-bot/bin/grok-bot.js near-status');
@@ -24,6 +35,8 @@ describe('earn site', () => {
     expect(prompt).toContain('Testnet only');
     expect(prompt).toContain('Do not print a private key');
     expect(page).toContain(checkout);
+    expect(page).toContain('a short name for this machine');
+    expect(beforeFoundryCreate(page)).toBe(true);
     expect(page).toContain('node grok-bot/bin/grok-bot.js near-status');
     expect(page).toContain('The npx commands are coming in the next release.');
     expect(page).not.toContain('npx @0xray/grok-bot');

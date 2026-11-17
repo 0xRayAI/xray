@@ -5,8 +5,10 @@ The npx commands are coming in the next release. Use a checkout of main:
 git clone https://github.com/0xRayAI/xray
 cd xray
 npm install
+npm install -g near-cli-rs@0.31.1
+near --version
 
-1. Near-seat and foundry. Pick a foundry id, a seat id, and a new account id that ends in .testnet. Run:
+1. Near-seat and foundry. Pick a foundry id, a seat id (a short name for this machine; the key folder uses it), and a new account id that ends in .testnet. Run:
 node grok-bot/bin/grok-bot.js foundry-create --id <foundry-id> --seat <seat-id> --account <account-id>
 That creates the testnet account and the foundry record.
 

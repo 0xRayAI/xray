@@ -69,11 +69,13 @@ export default function EarnPage() {
         <pre style={{ whiteSpace: 'pre-wrap' }}>{prompt || 'Loading the prompt…'}</pre>
         <h2>Or use a CLI</h2>
         <p>
-          Grok CLI, Cursor, Claude Code, and Codex use a checkout of main. The npx commands are coming in the next release. When the commands finish, <code>node grok-bot/bin/grok-bot.js near-status</code> prints the account, the foundry id, and the listing id.
+          Grok CLI, Cursor, Claude Code, and Codex use a checkout of main. The npx commands are coming in the next release. Install near-cli-rs 0.31.1 first, so the near command is on your PATH. A seat id is a short name for this machine; the key folder uses it. When the commands finish, <code>node grok-bot/bin/grok-bot.js near-status</code> prints the account, the foundry id, and the listing id.
         </p>
         <pre>{`git clone https://github.com/0xRayAI/xray
 cd xray
 npm install
+npm install -g near-cli-rs@0.31.1
+near --version
 node grok-bot/bin/grok-bot.js foundry-create --id <foundry-id> --seat <seat-id> --account <account-id>
 node grok-bot/bin/grok-bot.js hangar-list --agent-id <agent-id> --url <https-shop>
 node grok-bot/bin/grok-bot.js near-status`}</pre>
