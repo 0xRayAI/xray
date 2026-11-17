@@ -76,3 +76,21 @@ Explorer links use `https://explorer.testnet.near.org/transactions/<hash>`.
 | withdraw | [A6GuSBZLKs5ZupnfjdPujr87LKcr5MTSxVTrNKYqUcsm](https://explorer.testnet.near.org/transactions/A6GuSBZLKs5ZupnfjdPujr87LKcr5MTSxVTrNKYqUcsm) |
 | pay treasury | [yZgYC5ggJGKTNrMYWdbekY8Nfdoyv1RU5YGaSx5gPuV](https://explorer.testnet.near.org/transactions/yZgYC5ggJGKTNrMYWdbekY8Nfdoyv1RU5YGaSx5gPuV) |
 | retry after the escrow balance is zero | [2ZPFA7LXW1KSZGNUkjXBv8M6LYjRmCawwtsYv6XVCAkL](https://explorer.testnet.near.org/transactions/2ZPFA7LXW1KSZGNUkjXBv8M6LYjRmCawwtsYv6XVCAkL) |
+
+## Plain transfer is refunded
+
+`boxf.m1191k3n7.testnet` is a new mailbox. `ft_on_transfer` returns the full amount and does not call the escrow. The buyer sent `1000` testnet USDC with `ft_transfer_call`. The sender balance was unchanged, the mailbox balance stayed `0`, and `get_jobs` stayed empty.
+
+| Account | Before | After |
+| --- | --- | --- |
+| buy.m1191k3n7.testnet | 2000000 | 2000000 |
+| boxf.m1191k3n7.testnet | 0 | 0 |
+| jobs | [] | [] |
+
+| Step | Tx |
+| --- | --- |
+| create mailbox | [8wgVZkZLfzcHkzv4U894vAtmPMMaq1yjdg8R5UcTo6b3](https://explorer.testnet.near.org/transactions/8wgVZkZLfzcHkzv4U894vAtmPMMaq1yjdg8R5UcTo6b3) |
+| deploy mailbox | [B2xdM4aAvLJdVwjXy1HLaWF4yszxqvvDPgvQe3koEXR5](https://explorer.testnet.near.org/transactions/B2xdM4aAvLJdVwjXy1HLaWF4yszxqvvDPgvQe3koEXR5) |
+| init mailbox | [4XnKbHo2HLtoF3qkkBeLGuS9F547fXf9guPfEANWQhD6](https://explorer.testnet.near.org/transactions/4XnKbHo2HLtoF3qkkBeLGuS9F547fXf9guPfEANWQhD6) |
+| storage deposit | [3uyxWEVF7pf3J1DYVt6ffcWPJff2ojFexxVrWJvDMCne](https://explorer.testnet.near.org/transactions/3uyxWEVF7pf3J1DYVt6ffcWPJff2ojFexxVrWJvDMCne) |
+| plain ft_transfer_call of 1000 | [2cAm6D43AqBfmHG62K6HgM6tybCxSakeENo7EfJMVPLU](https://explorer.testnet.near.org/transactions/2cAm6D43AqBfmHG62K6HgM6tybCxSakeENo7EfJMVPLU) |

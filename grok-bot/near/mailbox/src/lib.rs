@@ -1,38 +1,22 @@
 //! One foundry's job mailbox on NEAR testnet.
-//! USDC arrives by `ft_on_transfer`. This contract opens the Clearing escrow,
-//! locks that USDC, and only then stores the job.
+//! A job is posted only by `bind_job`, after the buyer has funded the Clearing escrow.
+//! `ft_on_transfer` refunds the full amount and does not move tokens.
 
 use near_sdk::json_types::{Base64VecU8, U128};
-use near_sdk::serde_json::json;
 use near_sdk::store::Vector;
-use near_sdk::{env, ext_contract, near, require, AccountId, BorshStorageKey, Gas, NearToken, PanicOnDefault, Promise, PromiseOrValue, PromiseResult};
+use near_sdk::{env, ext_contract, near, require, AccountId, BorshStorageKey, Gas, PanicOnDefault, Promise, PromiseOrValue, PromiseResult};
 
 const MAX_TEXT: usize = 280;
 const MAX_PAGE: u64 = 50;
-const MIN_AMOUNT: u128 = 1_000_000;
 const USDC: &str = "3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af";
-const GAS_OPEN: Gas = Gas::from_tgas(40);
-const GAS_AFTER_OPEN: Gas = Gas::from_tgas(120);
-const GAS_FT_CALL: Gas = Gas::from_tgas(50);
-const GAS_AFTER_FUND: Gas = Gas::from_tgas(20);
 const GAS_ESCROW: Gas = Gas::from_tgas(40);
 const GAS_CONTINUE: Gas = Gas::from_tgas(80);
-const GAS_FT_TRANSFER: Gas = Gas::from_tgas(20);
-const ONE_YOCTO: NearToken = NearToken::from_yoctonear(1);
 
 #[near(serializers = [borsh])]
 #[derive(BorshStorageKey)]
 enum Prefix {
     Jobs,
     Deals,
-}
-
-#[near(serializers = [json])]
-struct OpenMsg {
-    brief: String,
-    payload: String,
-    nonce: String,
-    signature: String,
 }
 
 #[near(serializers = [borsh, json])]
@@ -83,7 +67,6 @@ pub struct Mailbox {
 
 #[ext_contract(ext_escrow)]
 trait EscrowOps {
-    fn open(&mut self, payload: String, nonce: String, signature: String) -> u64;
     fn accept(&mut self, deal_id: u64, nonce: String, signature: String);
     fn release_after_timeout(&mut self, deal_id: u64);
     fn refund_late(&mut self, deal_id: u64);
@@ -92,18 +75,6 @@ trait EscrowOps {
     fn get_token_id(&self) -> AccountId;
     fn get_creator_pk(&self) -> String;
     fn get_balance(&self, account_id: AccountId) -> U128;
-}
-
-#[ext_contract(ext_ft)]
-trait FungibleToken {
-    fn ft_transfer(&mut self, receiver_id: AccountId, amount: U128, memo: Option<String>);
-    fn ft_transfer_call(
-        &mut self,
-        receiver_id: AccountId,
-        amount: U128,
-        memo: Option<String>,
-        msg: String,
-    ) -> PromiseOrValue<U128>;
 }
 
 #[near]
@@ -146,135 +117,16 @@ impl Mailbox {
         }
     }
 
-    /// The buyer sends USDC here. `msg` carries the brief and the foundry's
-    /// escrow `open` signature. The job is stored only after the escrow is funded.
+    /// A direct USDC transfer is not a post. Refund the full amount.
+    /// The buyer funds the escrow, then calls `bind_job`.
     pub fn ft_on_transfer(
         &mut self,
         sender_id: AccountId,
         amount: U128,
         msg: String,
     ) -> PromiseOrValue<U128> {
-        if env::predecessor_account_id() != self.token_id || amount.0 < MIN_AMOUNT {
-            return PromiseOrValue::Value(amount);
-        }
-        let parsed: OpenMsg = match near_sdk::serde_json::from_str(&msg) {
-            Ok(value) => value,
-            Err(_) => return PromiseOrValue::Value(amount),
-        };
-        if parsed.brief.is_empty() || parsed.brief.len() > MAX_TEXT {
-            return PromiseOrValue::Value(amount);
-        }
-        PromiseOrValue::Promise(
-            ext_escrow::ext(self.escrow_account.clone())
-                .with_static_gas(GAS_OPEN)
-                .open(parsed.payload, parsed.nonce, parsed.signature)
-                .then(
-                    Self::ext(env::current_account_id())
-                        .with_static_gas(GAS_AFTER_OPEN)
-                        .on_escrow_opened(sender_id, amount, parsed.brief),
-                ),
-        )
-    }
-
-    #[private]
-    pub fn on_escrow_opened(
-        &mut self,
-        sender_id: AccountId,
-        amount: U128,
-        brief: String,
-    ) -> PromiseOrValue<U128> {
-        let deal_id = match env::promise_result(0) {
-            PromiseResult::Successful(bytes) => parse_u64(&bytes).unwrap_or(0),
-            _ => 0,
-        };
-        if deal_id == 0 {
-            return PromiseOrValue::Value(amount);
-        }
-        PromiseOrValue::Promise(
-            ext_ft::ext(self.token_id.clone())
-                .with_attached_deposit(ONE_YOCTO)
-                .with_static_gas(GAS_FT_CALL)
-                .ft_transfer_call(
-                    self.escrow_account.clone(),
-                    amount,
-                    None,
-                    json!({ "deal_id": deal_id }).to_string(),
-                )
-                .then(
-                    Self::ext(env::current_account_id())
-                        .with_static_gas(Gas::from_tgas(70))
-                        .on_escrow_funded(sender_id, amount, brief, deal_id),
-                ),
-        )
-    }
-
-    #[private]
-    pub fn on_escrow_funded(
-        &mut self,
-        sender_id: AccountId,
-        amount: U128,
-        brief: String,
-        deal_id: u64,
-    ) -> Promise {
-        ext_escrow::ext(self.escrow_account.clone())
-            .with_static_gas(GAS_AFTER_FUND)
-            .get_deal(deal_id)
-            .then(
-                Self::ext(env::current_account_id())
-                    .with_static_gas(GAS_AFTER_FUND)
-                    .on_deal_checked(sender_id, amount, brief, deal_id),
-            )
-    }
-
-    /// `ft_resolve_transfer` returns the amount kept by the receiver. A funded
-    /// deal is the proof. Anything else refunds the buyer.
-    #[private]
-    pub fn on_deal_checked(
-        &mut self,
-        sender_id: AccountId,
-        amount: U128,
-        brief: String,
-        deal_id: u64,
-    ) -> U128 {
-        let token_id = self.token_id.clone();
-        let foundry_pk = self.foundry_pk.clone();
-        let bound = self.deals.get(&deal_id).is_some();
-        let funded = match env::promise_result(0) {
-            PromiseResult::Successful(bytes) => deal_funded(
-                &bytes,
-                amount.0,
-                sender_id.as_str(),
-                &[],
-                &[],
-                token_id.as_str(),
-                &foundry_pk,
-                bound,
-            ),
-            _ => false,
-        };
-        if !funded || deal_id == 0 {
-            return amount;
-        }
-        self.deals.insert(deal_id, self.next_id);
-        let window = self.claim_window_ns;
-        let id = self.next_id;
-        self.next_id += 1;
-        let expires = env::block_timestamp().saturating_add(window);
-        self.jobs.push(Job {
-            id,
-            buyer: sender_id,
-            brief,
-            escrow_id: deal_id,
-            status: "posted".to_string(),
-            claimer: None,
-            result: None,
-            expires_at: expires.to_string(),
-            claim_deadline: String::new(),
-            settle_step: String::new(),
-            payout: None,
-            amount: amount.0,
-        });
-        U128(0)
+        let _keep = (sender_id, msg);
+        PromiseOrValue::Value(amount)
     }
 
     pub fn get_jobs(&self, status: Option<String>, from: u64, limit: u64) -> Vec<Job> {
@@ -387,8 +239,11 @@ impl Mailbox {
             )
     }
 
-    /// Read the escrow deal and the foundry's withdrawable balance. Advance only
-    /// when that view shows the money moved. Otherwise leave the job alone.
+    /// Read the escrow deal and the foundry's withdrawable balance.
+    /// Move from withdraw to transfer only when the deal is Released.
+    /// Mark the job accepted only when it is Released and that balance is zero.
+    /// Accepted means the escrow released the funds and the foundry withdrew.
+    /// It does not prove the payee or treasury was paid. That transfer is a client step.
     pub fn retry_settle(&mut self, id: u64) -> Promise {
         let (deal_id, status) = {
             let job = self.job_mut(id);
@@ -518,8 +373,9 @@ impl Mailbox {
         });
     }
 
-    /// The escrow credits its creator account, so this callback only records
-    /// the step. `retry_settle` resumes withdraw, then the creator transfer.
+    /// The escrow call succeeded, so record the withdraw step.
+    /// `retry_settle` marks the job accepted only after the foundry's escrow
+    /// balance is zero. Accepted does not prove the payee was paid.
     #[private]
     pub fn on_settle_step(&mut self, id: u64) {
         if !matches!(env::promise_result(0), PromiseResult::Successful(_)) {
@@ -558,10 +414,6 @@ impl Mailbox {
 
 fn parse_ns(text: &str) -> u64 {
     text.parse().unwrap_or_else(|_| env::panic_str("bad expires_at"))
-}
-
-fn parse_u64(bytes: &[u8]) -> Option<u64> {
-    near_sdk::serde_json::from_slice::<u64>(bytes).ok()
 }
 
 fn parse_u128(bytes: &[u8]) -> Option<u128> {

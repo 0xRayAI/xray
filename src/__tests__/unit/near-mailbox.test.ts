@@ -21,6 +21,7 @@ const box = requireCjs(path.join(root, 'grok-bot/lib/near-mailbox.cjs')) as {
   payoutAccount: (state: Mailbox, job: Job) => string | null;
   postPlan: (opts: { brief: string; price: string; mailboxId: string; escrowId: string; escrowDealId: string; buyerId: string }) => Array<{ method: string; receiverId: string; args: { receiver_id?: string; amount?: string; deal_id?: number; brief?: string } }>;
   recordFundedJob: (state: Mailbox, input: Record<string, unknown>) => Job;
+  rejectPlainTransfer: (state: Mailbox, amount: string) => { refund: string; jobs: number; deals: number };
   refundExpired: (state: Mailbox, input: { id: number; now: bigint }) => { job: Job; buyer: string };
   releaseCall: (opts: { escrowId: string; creatorId: string; signerId: string; escrowDealId: string }) => { method: string; args: { deal_id: number } };
   releaseTimeout: (state: Mailbox, input: { id: number; now: bigint }) => { payee: string; method: string };
@@ -45,7 +46,14 @@ type Job = {
   result: string | null;
 };
 
-type Mailbox = { jobs: Job[]; payee: string | null; escrowAccount: string; network: string };
+type Mailbox = {
+  jobs: Job[];
+  deals: Record<string, number>;
+  nextId: number;
+  payee: string | null;
+  escrowAccount: string;
+  network: string;
+};
 
 const NOW = 1_000n;
 const BUYER = 'buyer.testnet';
@@ -93,6 +101,22 @@ describe('foundry job mailbox', () => {
     box.claimJob(named.state, { id: 1, claimer: WORKER, now: NOW + 5n });
     box.submitResult(named.state, { id: 1, claimer: WORKER, result: 'page is up', now: NOW + 10n });
     expect(box.beginSettle(named.state, { id: 1, buyer: BUYER }).payee).toBe(TREASURY);
+  });
+
+  it('refunds a plain transfer and stores no job', () => {
+    const state = box.createMailbox({ foundry: FOUNDRY, escrowAccount: ESCROW });
+    const refund = box.rejectPlainTransfer(state, '1000');
+    expect(refund.refund).toBe('1000');
+    expect(refund.jobs).toBe(0);
+    expect(refund.deals).toBe(0);
+    expect(state.jobs).toEqual([]);
+    expect(state.deals).toEqual({});
+    expect(state.nextId).toBe(1);
+    const rust = readFileSync(path.join(root, 'grok-bot/near/mailbox/src/lib.rs'), 'utf8');
+    expect(rust).toContain('PromiseOrValue::Value(amount)');
+    expect(rust).not.toContain('on_deal_checked');
+    expect(rust).not.toContain('on_escrow_funded');
+    expect(rust).not.toContain('ft_transfer_call');
   });
 
   it('stores a job only after the escrow funding is verified', () => {

@@ -5,6 +5,9 @@ const { USDC, readKeyFile, rememberRow, signHex, submit, viewFunction } = requir
 
 // The USDC price is locked in the Clearing escrow. The payee is chosen at init.
 // When no payee is set, the claimer is paid.
+// A plain transfer to the mailbox is refunded. Posting is bind_job.
+// Accepted means the escrow released the deal and the foundry withdrew.
+// It does not prove the payee was paid. That transfer is a client step.
 
 const MAILBOX_USAGE = 'grok-bot near-mailbox <post|claim|submit|accept|refund|release|retry|jobs> --mailbox <account> --escrow <account> --signer <account> --key <cold.json>';
 const STEPS = ['escrow', 'withdraw', 'transfer'];
@@ -120,6 +123,14 @@ function assertTestnet(state) {
   if (state.escrowAccount && !String(state.escrowAccount).endsWith('.testnet')) {
     throw new Error('mailbox is testnet only');
   }
+}
+
+function rejectPlainTransfer(state, amount) {
+  return {
+    refund: String(amount),
+    jobs: state.jobs.length,
+    deals: Object.keys(state.deals).length,
+  };
 }
 
 function recordFundedJob(state, input) {
@@ -445,6 +456,7 @@ module.exports = {
   payoutAccount,
   postPlan,
   recordFundedJob,
+  rejectPlainTransfer,
   observeSettle,
   refundExpired,
   releaseCall,
