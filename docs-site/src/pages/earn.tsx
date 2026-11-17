@@ -14,9 +14,9 @@ const LOOP = [
   'A NEAR testnet account, and the key stays on the machine.',
   'Your foundry.',
   'A hangar listing, when you already have a shop URL.',
-  'Pay. Pending. A NEAR testnet USDC shop payment. No grok-bot command yet.',
-  'Cap. Pending. A payment over the owner limit is rejected. No grok-bot command yet.',
-  'Escrow. Pending. The buyer locks the job, you deliver, they confirm, then it can be released. No grok-bot command yet.',
+  'Pay. grok-bot near-pay sends testnet USDC with the quote memo.',
+  'Cap. grok-bot near-cap drives the spend vault.',
+  'Escrow. grok-bot near-escrow uses its own account, never the foundry.',
 ];
 
 export default function EarnPage() {

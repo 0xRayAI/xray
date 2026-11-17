@@ -18,10 +18,10 @@ That creates the testnet account and the foundry record.
 node grok-bot/bin/grok-bot.js hangar-list --agent-id <agent-id> --url https://clearing.rippel.ai/v1/ping
 https://clearing.rippel.ai/v1/ping is the Clearing ping shop. If you do not have an agent id, leave the listing pending. Do not invent a listing endpoint.
 
-3. These three are pending. There is no grok-bot command for them yet. Do not send a transaction for them from this prompt.
-- Pay. Pending. A NEAR testnet USDC shop payment.
-- Cap. Pending. A payment over the owner's limit is rejected.
-- Escrow. Pending. A job of at least 1 testnet USDC is released only after the client accepts the work.
+3. These three are grok-bot commands on NEAR testnet. Do not send a mainnet transaction.
+- Pay. node grok-bot/bin/grok-bot.js near-pay sends testnet USDC with the quote memo.
+- Cap. node grok-bot/bin/grok-bot.js near-cap drives the spend vault.
+- Escrow. node grok-bot/bin/grok-bot.js near-escrow uses its own account, never the foundry.
 
 4. Run:
 node grok-bot/bin/grok-bot.js near-status
