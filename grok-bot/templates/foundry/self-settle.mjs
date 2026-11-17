@@ -8,7 +8,7 @@ import { pathToFileURL } from 'node:url';
  * Re-pin CLEARING_SETTLE_SHA to the merge SHA of clearing#40 when that pull merges.
  * The foundry supplies allowPayTo. Mainnet stays off unless allowMainnet is true.
  */
-export const CLEARING_SETTLE_SHA = '67a106908acf67da17fbe53216d8b4448df48afb';
+export const CLEARING_SETTLE_SHA = '373ef3f380b9938f70e79941f6ca42a6933b2758';
 export const CLEARING_BASE_SETTLE = 'dist/mcp/src/base-settle.js';
 
 export function pinnedSettleFile(clearingRoot) {

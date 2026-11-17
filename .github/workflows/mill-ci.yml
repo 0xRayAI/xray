@@ -85,7 +85,22 @@ jobs:
       - run: npm run build
       - name: grok-bot pack
         run: node scripts/check-grok-bot-pack.mjs
+      - name: Read clearing pin
+        id: clearing-pin
+        run: node --input-type=module -e "import { CLEARING_SETTLE_SHA } from './grok-bot/templates/foundry/self-settle.mjs'; process.stdout.write('sha=' + CLEARING_SETTLE_SHA)" >> "$GITHUB_OUTPUT"
+      - name: Checkout pinned clearing
+        uses: actions/checkout@v4.4.0
+        with:
+          repository: 0xRayAI/clearing
+          ref: ${{ steps.clearing-pin.outputs.sha }}
+          path: clearing-pin
+          persist-credentials: false
+      - name: Build pinned clearing
+        working-directory: clearing-pin
+        run: npm ci && npx tsc --pretty false
       - name: Curated unit suites
+        env:
+          CLEARING_ROOT: ${{ github.workspace }}/clearing-pin
         run: npm run test:comprehensive
       - name: Confer verify
         run: npm run verify:confer

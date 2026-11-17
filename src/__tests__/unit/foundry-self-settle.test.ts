@@ -54,11 +54,11 @@ describe('foundry self-settle template', () => {
       const mod = await import(${JSON.stringify(pathToFile(templatePath))});
       const payer = privateKeyToAccount('0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80');
       const nonce = '0x${'ab'.repeat(32)}';
-      const asset = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
+      const asset = '0x036CbD53842c5426634e7929541eC2318f3dCF7e';
       const payTo = ${JSON.stringify(PAYTO)};
       const now = 1700000000n;
       const signature = await payer.signTypedData({
-        domain: { name: 'USD Coin', version: '2', chainId: 84532, verifyingContract: asset },
+        domain: { name: 'USDC', version: '2', chainId: 84532, verifyingContract: asset },
         types: { TransferWithAuthorization: [
           { name: 'from', type: 'address' },
           { name: 'to', type: 'address' },
