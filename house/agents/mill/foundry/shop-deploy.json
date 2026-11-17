@@ -1,0 +1,13 @@
+{
+  "project": "xray-mcp",
+  "service": "mill-foundry",
+  "startCommand": "node shop/server.mjs",
+  "env": [
+    "PORT",
+    "FOUNDRY_PAY_TO",
+    "FOUNDRY_PRICE_ATOMIC",
+    "FOUNDRY_ALLOW_MAINNET",
+    "CLEARING_ROOT",
+    "CLEARING_SHA"
+  ]
+}

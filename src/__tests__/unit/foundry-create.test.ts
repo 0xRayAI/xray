@@ -14,6 +14,8 @@ const foundry = requireCjs(path.join(root, 'grok-bot', 'lib', 'foundry-create.cj
     foundryId: string;
     seatId: string;
     accountId: string;
+    wallet?: string;
+    price?: string;
     force?: boolean;
     credentialsHome?: string;
     log?: (line: string) => void;
@@ -44,6 +46,8 @@ const foundry = requireCjs(path.join(root, 'grok-bot', 'lib', 'foundry-create.cj
       accountId: string;
       dest: string;
       force: boolean;
+      wallet?: string;
+      price?: string;
       stdout?: { write: (chunk: string) => void };
     }) => Promise<{ foundryId: string; receiver: string }>;
   }) => Promise<number>;
@@ -58,6 +62,8 @@ const doctor = requireCjs(path.join(root, 'grok-bot', 'lib', 'seat-doctor.cjs'))
 };
 
 const SECRET = 'ed25519:foundry-create-secret-do-not-print';
+const WALLET = '0x772cde67735fc8cc0f8922f103e09353c2d479fd';
+const PRICE = '10000';
 
 describe('foundry-create', () => {
   it('foundry_create_fresh_project', async () => {
@@ -72,6 +78,8 @@ describe('foundry-create', () => {
         foundryId: 'ada-foundry',
         seatId: 'mill-seat',
         accountId: 'millfc1ca97ca3.testnet',
+        wallet: WALLET,
+        price: PRICE,
         credentialsHome: creds,
         log: (line) => logs.push(line),
         stdout: { write: (chunk) => stdout.push(chunk) },
@@ -102,6 +110,11 @@ describe('foundry-create', () => {
       const onDisk = readFileSync(created.foundryPath, 'utf8');
       expect(onDisk).not.toContain(SECRET);
       expect(JSON.parse(onDisk).receiver).toBe('millfc1ca97ca3.testnet');
+      expect(JSON.parse(onDisk).shop.payTo).toBe(WALLET);
+      expect(JSON.parse(onDisk).shop.price).toBe(PRICE);
+      const shopFile = JSON.parse(readFileSync(path.join(dest, 'shop', 'shop.json'), 'utf8')) as { payTo: string; amount: string };
+      expect(shopFile.payTo).toBe(WALLET);
+      expect(shopFile.amount).toBe(PRICE);
       const skill = readFileSync(path.join(dest, 'skills', 'foundry-create', 'SKILL.md'), 'utf8');
       expect(skill).toContain(foundry.CREATE_USAGE);
       expect(skill).not.toMatch(/\bplanes\b/i);
@@ -153,6 +166,8 @@ describe('foundry-create', () => {
       foundryId: 'ada-foundry',
       seatId: 'mill-seat',
       accountId: 'millfc1ca97ca3.testnet',
+      wallet: WALLET,
+      price: PRICE,
       credentialsHome: creds,
       viewAccount: async () => ({ amount: '1' }),
       runners,
@@ -216,6 +231,8 @@ describe('foundry-create', () => {
       foundryId: 'ada-foundry',
       seatId: 'mill-seat',
       accountId,
+      wallet: WALLET,
+      price: PRICE,
       credentialsHome: creds,
       viewAccount: async () => ({ amount: '1' }),
       runners,
@@ -249,10 +266,10 @@ describe('foundry-create', () => {
     const dest = mkdtempSync(path.join(tmpdir(), 'foundry-create-cli-'));
     const stdout: string[] = [];
     const stderr: string[] = [];
-    const seen: Array<{ foundryId: string; seatId: string; accountId: string; dest: string; force: boolean }> = [];
+    const seen: Array<{ foundryId: string; seatId: string; accountId: string; dest: string; force: boolean; wallet?: string; price?: string }> = [];
     try {
       const code = await foundry.runFoundryCreateCli(
-        ['--id', 'ada-foundry', '--seat', 'mill-seat', '--account', 'millfc1ca97ca3.testnet', '--cwd', dest],
+        ['--id', 'ada-foundry', '--seat', 'mill-seat', '--account', 'millfc1ca97ca3.testnet', '--wallet', WALLET, '--price', PRICE, '--cwd', dest],
         {
           stdout: { write: (chunk) => stdout.push(chunk) },
           stderr: { write: (chunk) => stderr.push(chunk) },
@@ -263,6 +280,8 @@ describe('foundry-create', () => {
               accountId: opts.accountId,
               dest: opts.dest,
               force: opts.force,
+              wallet: opts.wallet,
+              price: opts.price,
             });
             opts.stdout?.write(`Foundry: ${opts.foundryId} — receiver ${opts.accountId}\n`);
             return { foundryId: opts.foundryId, receiver: opts.accountId };
@@ -276,6 +295,8 @@ describe('foundry-create', () => {
         accountId: 'millfc1ca97ca3.testnet',
         dest,
         force: false,
+        wallet: WALLET,
+        price: PRICE,
       }]);
       expect(stdout.join('')).toContain('Foundry: ada-foundry — receiver millfc1ca97ca3.testnet');
       expect(`${stdout.join('')}${stderr.join('')}`).not.toContain(SECRET);

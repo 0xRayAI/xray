@@ -1,0 +1,7 @@
+{
+  "payTo": "0x772cde67735fc8cc0f8922f103e09353c2d479fd",
+  "amount": "10000",
+  "network": "eip155:8453",
+  "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+  "route": "/v1/job"
+}

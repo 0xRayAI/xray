@@ -4,13 +4,14 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { randomBytes } = require('node:crypto');
 const { installNearMill } = require('./near-mill.cjs');
+const { walletOf, priceOf, writeFoundryShop } = require('./foundry-shop.cjs');
 
 // mintAfterWear only re-applies the mill plant overlay
 // (src/cli/commands/foundry-mint-wear.ts). This command records the foundry the
 // person earns with. The shop config and the NEAR receiver come from
 // near-mill, which seats the account through near-seat.
 // Plan: house/dist/mill/near-first-build-eval-2026-11.md (b) and section 3.3.
-const CREATE_USAGE = 'grok-bot foundry-create --id <id> --seat <seat> --account <account>';
+const CREATE_USAGE = 'grok-bot foundry-create --id <id> --seat <seat> --account <account> --wallet <0x address> --price <atomic> [--cwd dir] [--force]';
 
 function foundryRecordPath(dest) {
   return path.join(dest, '.xray', 'state', 'foundry.json');
@@ -94,9 +95,14 @@ async function createFoundry(opts = {}) {
   if (!opts.dest) throw new Error('dest is required');
   if (!opts.seatId) throw new Error('seatId is required');
   if (!opts.accountId) throw new Error('accountId is required');
+  const wallet = walletOf(opts.wallet);
+  const price = priceOf(opts.price);
+  if (!wallet) throw new Error('wallet must be an EVM address');
+  if (!price) throw new Error('price must be a positive atomic amount');
   const foundryPath = foundryRecordPath(opts.dest);
   const existing = readFoundryFile(foundryPath);
   if (existing.kind === 'record' && sameFoundry(existing.data, foundryId, opts.accountId)) {
+    writeFoundryShop(opts.dest, { wallet, price }, opts.kitRoot);
     emitFoundry(opts, existing.data);
     return keptResult(opts, foundryId, foundryPath, existing.data);
   }
@@ -117,6 +123,7 @@ async function createFoundry(opts = {}) {
   const skillTarget = path.join(opts.dest, 'skills', 'foundry-create', 'SKILL.md');
   fs.mkdirSync(path.dirname(skillTarget), { recursive: true });
   fs.copyFileSync(skillSrc, skillTarget);
+  const shop = writeFoundryShop(opts.dest, { wallet, price }, opts.kitRoot);
   const record = {
     id: foundryId,
     receiver,
@@ -125,6 +132,9 @@ async function createFoundry(opts = {}) {
       hangar: installed.manifest.groover.hangar,
       steps: installed.manifest.groover.steps,
       accepts: installed.manifest.accepts,
+      payTo: shop.config.payTo,
+      price: shop.config.amount,
+      route: shop.config.route,
     },
   };
   writeFoundryRecord(foundryPath, `${JSON.stringify(record, null, 2)}\n`);
@@ -171,6 +181,13 @@ function parseFoundryCreateArgs(argv) {
       out.force = true;
       continue;
     }
+    if (arg === '--wallet' || arg === '--price') {
+      const value = takeValue(argv, i, arg);
+      if (arg === '--wallet') out.wallet = value;
+      else out.price = value;
+      i += 1;
+      continue;
+    }
     if (arg === '--id' || arg === '--seat' || arg === '--account' || arg === '--cwd') {
       const value = takeValue(argv, i, arg);
       if (arg === '--id') out.foundryId = value;
@@ -203,7 +220,7 @@ async function runFoundryCreateCli(argv, io = {}) {
     stdout.write(`${CREATE_USAGE}\n`);
     return 0;
   }
-  if (!parsed.foundryId || !parsed.seatId || !parsed.accountId) {
+  if (!parsed.foundryId || !parsed.seatId || !parsed.accountId || !parsed.wallet || !parsed.price) {
     stderr.write(`${CREATE_USAGE}\n`);
     return 2;
   }
@@ -213,6 +230,8 @@ async function runFoundryCreateCli(argv, io = {}) {
       foundryId: parsed.foundryId,
       seatId: parsed.seatId,
       accountId: parsed.accountId,
+      wallet: parsed.wallet,
+      price: parsed.price,
       force: parsed.force,
       credentialsHome: io.credentialsHome,
       kitRoot: io.kitRoot,
@@ -227,8 +246,9 @@ async function runFoundryCreateCli(argv, io = {}) {
 }
 
 module.exports = {
-  CREATE_USAGE,
-  createFoundry,
+    CREATE_USAGE,
+    createFoundry,
+    writeFoundryShop,
   foundryRecordPath,
   parseFoundryCreateArgs,
   runFoundryCreateCli,
