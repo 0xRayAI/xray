@@ -20,7 +20,7 @@ describe('foundry self-settle template', () => {
   it('pins the clearing settler to a commit and takes allowPayTo from the foundry', () => {
     expect(source).toContain('createBaseSettler');
     expect(source).toContain(template.CLEARING_SETTLE_SHA);
-    expect(source).toContain('Re-pin CLEARING_SETTLE_SHA to the merge SHA of clearing#40');
+    expect(source).toContain('CLEARING_SETTLE_SHA is the merge commit of clearing#40');
     expect(source).not.toContain('HOSTED_NEAR_PAYEES');
     expect(template.CLEARING_SETTLE_SHA).toMatch(/^[0-9a-f]{40}$/);
     expect(() => template.pinnedSettleFile('')).toThrow(/not present/);

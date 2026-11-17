@@ -5,10 +5,10 @@ import { pathToFileURL } from 'node:url';
 
 /**
  * Built embeddable settler from 0xRayAI/clearing.
- * Re-pin CLEARING_SETTLE_SHA to the merge SHA of clearing#40 when that pull merges.
+ * CLEARING_SETTLE_SHA is the merge commit of clearing#40.
  * The foundry supplies allowPayTo. Mainnet stays off unless allowMainnet is true.
  */
-export const CLEARING_SETTLE_SHA = '373ef3f380b9938f70e79941f6ca42a6933b2758';
+export const CLEARING_SETTLE_SHA = 'ee6089b45cb050e2db0d1bb8f1a2f9c061592aac';
 export const CLEARING_BASE_SETTLE = 'dist/mcp/src/base-settle.js';
 
 export function pinnedSettleFile(clearingRoot) {
