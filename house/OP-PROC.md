@@ -138,6 +138,7 @@ Public words are friend-speak. Test them on a person before they go out.
 - **Role card.** Standing board ticket (+ `kb/ROLE-CARD.md`) that makes a Dist hire announcement operational for that seat.
 - **Station.** A seat's short survival note on disk.
 - **Ping-pong.** Seat to seat on a pull request or an issue: review, fix, check again, merge. Not a public post.
+- **Hand walk.** Walk the test by hand in the browser or CLI, fix as you go until it passes, record the steps, update the test scripts, then rerun them for a pass receipt.
 - **Beat.** A real event, not a timer.
 - **Arch1.** The builder outside the fleet. Specs are friend-speak.
 - **Organ gate.** Useful, fit for purpose, production grade, powers up the suit.
