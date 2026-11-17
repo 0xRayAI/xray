@@ -2,36 +2,51 @@
 
 Network: NEAR testnet. No mainnet call. No keys in this file.
 
-Parent `m1191k3n7.testnet` was created by the helper faucet `https://helper.nearprotocol.com/account` on the first try of this retry. The mailbox contract is the sub-account `box.m1191k3n7.testnet`. The Clearing escrow is `esc.m1191k3n7.testnet`. The buyer is `buy.m1191k3n7.testnet`. The foundry signer is `fnd.m1191k3n7.testnet`.
+Parent `m1191k3n7.testnet` came from `https://helper.nearprotocol.com/account`. The escrow is `escn.m1191k3n7.testnet`. Its creator is `fnd.m1191k3n7.testnet`, so a funded deal is not the mailbox paying itself. Testnet USDC still comes from `e1144bmwjld5rl.testnet`, the same sender as the #1178 receipts.
 
-Testnet USDC came the same way as the #1178 receipts: `e1144bmwjld5rl.testnet` sent `2000000` base units (6 decimals) to the buyer. The job price is `1000000`. Posting locks that price in the escrow. Accept withdraws it to the foundry account, then `ft_transfer` pays `clearing-treasury-0xray.testnet`. That treasury balance moved from `20000` to `1020000`.
+`boxn.m1191k3n7.testnet` was created with payee `clearing-treasury-0xray.testnet`. `boxd.m1191k3n7.testnet` was created with no payee, so the claimer is paid. Each post is one `ft_transfer_call` of `1000000` USDC to the mailbox. The mailbox opens the escrow and locks that USDC. Accept calls the escrow, the creator withdraws, and the USDC is paid to the payee or the claimer. `retry_settle` records the withdraw step and then the transfer step.
 
 Explorer links use `https://explorer.testnet.near.org/transactions/<hash>`.
 
-| Step | Account | Tx |
-| --- | --- | --- |
-| create parent | m1191k3n7.testnet | [BUShLbG6rEAwL1rLz39jvycWwjgMJcijJ5iYiyCnTgEz](https://explorer.testnet.near.org/transactions/BUShLbG6rEAwL1rLz39jvycWwjgMJcijJ5iYiyCnTgEz) |
-| create mailbox sub-account | box.m1191k3n7.testnet | [9XnMJjyYtgXTEgKcwTVkT9Vr4LWLLuJC8mLRhryubfhF](https://explorer.testnet.near.org/transactions/9XnMJjyYtgXTEgKcwTVkT9Vr4LWLLuJC8mLRhryubfhF) |
-| create escrow sub-account | esc.m1191k3n7.testnet | [F7cH9yAYLyiiZ13oirAXZXGN7cQVwjAWW8j4DJGN2Sca](https://explorer.testnet.near.org/transactions/F7cH9yAYLyiiZ13oirAXZXGN7cQVwjAWW8j4DJGN2Sca) |
-| create buyer sub-account | buy.m1191k3n7.testnet | [8EDgf8AFeQ49mDepeG515dTiwY6Aupktk9ymm295Cqgr](https://explorer.testnet.near.org/transactions/8EDgf8AFeQ49mDepeG515dTiwY6Aupktk9ymm295Cqgr) |
-| create foundry sub-account | fnd.m1191k3n7.testnet | [AGmzyWe1oPdzgJ8Aw3iFj38BmXKnpvsFWH4yYC6Ud7kq](https://explorer.testnet.near.org/transactions/AGmzyWe1oPdzgJ8Aw3iFj38BmXKnpvsFWH4yYC6Ud7kq) |
-| deploy mailbox | box.m1191k3n7.testnet | [EdY4XCveXoWieUw4jfptQAZHV9xVTQ2GT7bmpuuDjWLq](https://explorer.testnet.near.org/transactions/EdY4XCveXoWieUw4jfptQAZHV9xVTQ2GT7bmpuuDjWLq) |
-| deploy escrow | esc.m1191k3n7.testnet | [3cWth5MqVsLeS8QV5gB7LrHFfuZ1sUTHPNjWTKs4LLS9](https://explorer.testnet.near.org/transactions/3cWth5MqVsLeS8QV5gB7LrHFfuZ1sUTHPNjWTKs4LLS9) |
-| init mailbox | box.m1191k3n7.testnet | [7zwxPi4ZirFWSMf9VGsZrcbm2E4mSwA7JkKDHrB46d2L](https://explorer.testnet.near.org/transactions/7zwxPi4ZirFWSMf9VGsZrcbm2E4mSwA7JkKDHrB46d2L) |
-| init escrow | esc.m1191k3n7.testnet | [6Js7JoNk5RaxzxKf1oHq5j4FRvVhyVRXMD5AJi9k3dFA](https://explorer.testnet.near.org/transactions/6Js7JoNk5RaxzxKf1oHq5j4FRvVhyVRXMD5AJi9k3dFA) |
-| register buyer on USDC | buy.m1191k3n7.testnet | [4zH7H22EnVoBhxgMw4xrcxnkUgtoCxA7adfZEz3PpYJm](https://explorer.testnet.near.org/transactions/4zH7H22EnVoBhxgMw4xrcxnkUgtoCxA7adfZEz3PpYJm) |
-| register foundry on USDC | fnd.m1191k3n7.testnet | [E3ThFX5vyKGmKUkyt2dHFVHTkjkY26aB3imMTD6hiM4F](https://explorer.testnet.near.org/transactions/E3ThFX5vyKGmKUkyt2dHFVHTkjkY26aB3imMTD6hiM4F) |
-| register escrow on USDC | esc.m1191k3n7.testnet | [AdYzH5jqc1L5LT1nKeRRHCgciktDxDZvw2zPvRXsztAP](https://explorer.testnet.near.org/transactions/AdYzH5jqc1L5LT1nKeRRHCgciktDxDZvw2zPvRXsztAP) |
-| send testnet USDC to buyer | e1144bmwjld5rl.testnet | [96qRkybwY8NvSEHJJtTMHhw7jJn6pBv2cTZPEMuZCyrB](https://explorer.testnet.near.org/transactions/96qRkybwY8NvSEHJJtTMHhw7jJn6pBv2cTZPEMuZCyrB) |
-| open escrow deal 1 | esc.m1191k3n7.testnet | [DLmujYZRiGdxP3gtwfyeFgxfJ9jFvViK2Cqj7zMvu1R3](https://explorer.testnet.near.org/transactions/DLmujYZRiGdxP3gtwfyeFgxfJ9jFvViK2Cqj7zMvu1R3) |
-| post: lock 1000000 USDC in escrow | buy.m1191k3n7.testnet | [Gz3pKamTy3KEwWRgFRcoJrqEtis8LLswqgAjtbSogkQP](https://explorer.testnet.near.org/transactions/Gz3pKamTy3KEwWRgFRcoJrqEtis8LLswqgAjtbSogkQP) |
-| post: write the job | box.m1191k3n7.testnet | [GAE44RTVR5CLWxjq4hhBxWrV7W5R42hcQnNMx4wJDpuZ](https://explorer.testnet.near.org/transactions/GAE44RTVR5CLWxjq4hhBxWrV7W5R42hcQnNMx4wJDpuZ) |
-| claim | box.m1191k3n7.testnet | [BkgpieiBLTafgd58WiTHXEQSanHxJM2hUH2Fk34MPRQW](https://explorer.testnet.near.org/transactions/BkgpieiBLTafgd58WiTHXEQSanHxJM2hUH2Fk34MPRQW) |
-| submit | box.m1191k3n7.testnet | [A9GcnGUuhezZ2GGrSNZDGXEVmfCVzeRXg2sEJRZTeq9M](https://explorer.testnet.near.org/transactions/A9GcnGUuhezZ2GGrSNZDGXEVmfCVzeRXg2sEJRZTeq9M) |
-| deliver to escrow | esc.m1191k3n7.testnet | [BFwvQPa4exJEJSbYRKNhpSQz6EUhYiBB8XMdWrfVmjdE](https://explorer.testnet.near.org/transactions/BFwvQPa4exJEJSbYRKNhpSQz6EUhYiBB8XMdWrfVmjdE) |
-| accept the job | box.m1191k3n7.testnet | [BG2Nbg1zMrXnMU9hFB8j88YobmVPqa7TVWgYPsyY3Mqq](https://explorer.testnet.near.org/transactions/BG2Nbg1zMrXnMU9hFB8j88YobmVPqa7TVWgYPsyY3Mqq) |
-| accept the escrow deal | esc.m1191k3n7.testnet | [EpqkijFnsNiz6VRSLrCwLRXaQkvY5wTi1rqkYwNNhDXY](https://explorer.testnet.near.org/transactions/EpqkijFnsNiz6VRSLrCwLRXaQkvY5wTi1rqkYwNNhDXY) |
-| withdraw USDC to the foundry | esc.m1191k3n7.testnet | [5rRAWCDRToizT9AcqySummqXWKyfgz2Ge8sWsr1snNFK](https://explorer.testnet.near.org/transactions/5rRAWCDRToizT9AcqySummqXWKyfgz2Ge8sWsr1snNFK) |
-| pay clearing-treasury-0xray.testnet | fnd.m1191k3n7.testnet | [3fG3nE6b28NChPM6BjFTzjErPdDtNm635nXpHQoaEDMx](https://explorer.testnet.near.org/transactions/3fG3nE6b28NChPM6BjFTzjErPdDtNm635nXpHQoaEDMx) |
+## Balances read from chain
 
-The read-only page is `https://box.m1191k3n7.testnet.page`.
+| Account | Before | After | Delta |
+| --- | --- | --- | --- |
+| clearing-treasury-0xray.testnet | 1020000 | 2020000 | +1000000 |
+| fnd.m1191k3n7.testnet (claimer) | 0 | 1000000 | +1000000 |
+
+## Named payee
+
+| Step | Tx |
+| --- | --- |
+| create escrow | [49Lw81XCSZ48b625RNDtfeQxgJe36tjVR5qbFaG4Pue8](https://explorer.testnet.near.org/transactions/49Lw81XCSZ48b625RNDtfeQxgJe36tjVR5qbFaG4Pue8) |
+| create mailbox | [9ZN3S15Wqars2g8efzEHtBeiyN52qX9KhqvHeftwanaq](https://explorer.testnet.near.org/transactions/9ZN3S15Wqars2g8efzEHtBeiyN52qX9KhqvHeftwanaq) |
+| deploy escrow | [5T3HqsSSHk3JRxnZ6hD4HXy3pb3MxsESTkUnwk97itmX](https://explorer.testnet.near.org/transactions/5T3HqsSSHk3JRxnZ6hD4HXy3pb3MxsESTkUnwk97itmX) |
+| init escrow | [7DQ6YWVJ11obhppCiDQRzvCku5tCrVnJZFzGtKsJmQSW](https://explorer.testnet.near.org/transactions/7DQ6YWVJ11obhppCiDQRzvCku5tCrVnJZFzGtKsJmQSW) |
+| deploy mailbox | [8hMEiygNb6MjWWUqMEfwb2MKWwh13Gpyaxv6z3jNRacy](https://explorer.testnet.near.org/transactions/8hMEiygNb6MjWWUqMEfwb2MKWwh13Gpyaxv6z3jNRacy) |
+| init mailbox with treasury payee | [5kpc9gTb14v4y3TD2zH8mUayTeXPZ3X23D9Eo9krCB7y](https://explorer.testnet.near.org/transactions/5kpc9gTb14v4y3TD2zH8mUayTeXPZ3X23D9Eo9krCB7y) |
+| post and fund deal 1 | [9aeXis2yscB7uTef1QZYCKft18GNH1CJHUMa3uy4E4bk](https://explorer.testnet.near.org/transactions/9aeXis2yscB7uTef1QZYCKft18GNH1CJHUMa3uy4E4bk) |
+| claim | [5Dkx4QGnKvsPSm3ZNAn2D8y9yCBCgczhVRVEc1h6at44](https://explorer.testnet.near.org/transactions/5Dkx4QGnKvsPSm3ZNAn2D8y9yCBCgczhVRVEc1h6at44) |
+| submit | [B9Vzm9PkEMnaLNnMDuXFgMN7h79eqUGgjMFZ31K6JEpU](https://explorer.testnet.near.org/transactions/B9Vzm9PkEMnaLNnMDuXFgMN7h79eqUGgjMFZ31K6JEpU) |
+| deliver | [EAfaVRorhApCH74WtcyCjigxyALFKp4bsckNUN9xSrwu](https://explorer.testnet.near.org/transactions/EAfaVRorhApCH74WtcyCjigxyALFKp4bsckNUN9xSrwu) |
+| accept | [HGJrdeAJNoXW1LG68rLuNkB7vJjgMk6uKRuGaWqYKmGZ](https://explorer.testnet.near.org/transactions/HGJrdeAJNoXW1LG68rLuNkB7vJjgMk6uKRuGaWqYKmGZ) |
+| withdraw | [9zsN3JwYEuSak8ewAusS4BB6B9kJ3thR4ezrhzBoHpKF](https://explorer.testnet.near.org/transactions/9zsN3JwYEuSak8ewAusS4BB6B9kJ3thR4ezrhzBoHpKF) |
+| pay treasury | [4vc3oWerRrsWTsaHY1cTN8RngY3VoYjRasHWAtYhegQZ](https://explorer.testnet.near.org/transactions/4vc3oWerRrsWTsaHY1cTN8RngY3VoYjRasHWAtYhegQZ) |
+| retry settle, withdraw step | [DFq69fTHPtw9YnohGFZmPGLcaejPWxTtcooEqMTVqVH8](https://explorer.testnet.near.org/transactions/DFq69fTHPtw9YnohGFZmPGLcaejPWxTtcooEqMTVqVH8) |
+| retry settle, transfer step | [31KeyqzZQX1GLokJT6fnKuWtLvKvhuwnNnrdb9j3uzDN](https://explorer.testnet.near.org/transactions/31KeyqzZQX1GLokJT6fnKuWtLvKvhuwnNnrdb9j3uzDN) |
+
+## No payee, claimer is paid
+
+| Step | Tx |
+| --- | --- |
+| create mailbox | [DANdfgozMhwmPPmdNFRMDpfUfFkR2oneuyfcPQCeFbyR](https://explorer.testnet.near.org/transactions/DANdfgozMhwmPPmdNFRMDpfUfFkR2oneuyfcPQCeFbyR) |
+| deploy mailbox | [AjM6h7tRxLtSDBz13ExPzK3GAp7mZSmos5Q9UmN33akJ](https://explorer.testnet.near.org/transactions/AjM6h7tRxLtSDBz13ExPzK3GAp7mZSmos5Q9UmN33akJ) |
+| init mailbox with no payee | [HdDq5TpQk675KHiznVwEcHiTtzYzSV6dQs8dehJqk7hT](https://explorer.testnet.near.org/transactions/HdDq5TpQk675KHiznVwEcHiTtzYzSV6dQs8dehJqk7hT) |
+| post and fund deal 2 | [8CkMfLD8nRjeh7VbbtVWWvq82JT2v58nyWGRLvdjCQWe](https://explorer.testnet.near.org/transactions/8CkMfLD8nRjeh7VbbtVWWvq82JT2v58nyWGRLvdjCQWe) |
+| claim | [CMLLcCDvS534TdZcgpCAPueCV4xmqkC27gaMkJQUuoyn](https://explorer.testnet.near.org/transactions/CMLLcCDvS534TdZcgpCAPueCV4xmqkC27gaMkJQUuoyn) |
+| submit | [C22TDGxzg4WcCG4FfLrCeGc44hemFreT49DSeA7RARLn](https://explorer.testnet.near.org/transactions/C22TDGxzg4WcCG4FfLrCeGc44hemFreT49DSeA7RARLn) |
+| deliver | [4AGT4cFJNL2rgtmrXeBu5QjXC3YsqP6kVrAxjyE9oxwN](https://explorer.testnet.near.org/transactions/4AGT4cFJNL2rgtmrXeBu5QjXC3YsqP6kVrAxjyE9oxwN) |
+| accept | [9ZcHkexDbj4P3FxtSi5fZeE96uwdY1TbRTXCfpjc5VgT](https://explorer.testnet.near.org/transactions/9ZcHkexDbj4P3FxtSi5fZeE96uwdY1TbRTXCfpjc5VgT) |
+| withdraw to the claimer | [5MZ8vE15nfvtkBhXnXMup6mJ1vBnzd6R43acCNFaoW79](https://explorer.testnet.near.org/transactions/5MZ8vE15nfvtkBhXnXMup6mJ1vBnzd6R43acCNFaoW79) |
+| retry settle, withdraw step | [EDbXBF1xUagGRPjk4K827PcsCeGiTRPCrhXmYdMtzKDD](https://explorer.testnet.near.org/transactions/EDbXBF1xUagGRPjk4K827PcsCeGiTRPCrhXmYdMtzKDD) |
+| retry settle, transfer step | [Ar46TTjrk2HnAM2GUdsZ7naEVS372PQhqq8i9zxa91tN](https://explorer.testnet.near.org/transactions/Ar46TTjrk2HnAM2GUdsZ7naEVS372PQhqq8i9zxa91tN) |

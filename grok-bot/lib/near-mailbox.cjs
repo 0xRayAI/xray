@@ -1,13 +1,13 @@
 'use strict';
 
-const { escrowCall } = require('./near-escrow.cjs');
-const { USDC, rememberRow, submit, viewFunction } = require('./near-tx.cjs');
+const { escrowCall, escrowMessage } = require('./near-escrow.cjs');
+const { USDC, readKeyFile, rememberRow, signHex, submit, viewFunction } = require('./near-tx.cjs');
 
-// The USDC price is locked in the Clearing escrow. This mailbox stores the job.
-// Payee for a released job is the foundry treasury on testnet.
+// The USDC price is locked in the Clearing escrow. The payee is chosen at init.
+// When no payee is set, the claimer is paid.
 
-const PAYEE = 'clearing-treasury-0xray.testnet';
-const MAILBOX_USAGE = 'grok-bot near-mailbox <post|claim|submit|accept|refund|release|jobs> --mailbox <account> --escrow <account> --signer <account> --key <cold.json>';
+const MAILBOX_USAGE = 'grok-bot near-mailbox <post|claim|submit|accept|refund|release|retry|jobs> --mailbox <account> --escrow <account> --signer <account> --key <cold.json>';
+const STEPS = ['escrow', 'withdraw', 'transfer'];
 
 function take(argv, index, flag) {
   const value = argv[index + 1];
@@ -35,7 +35,10 @@ function parseNearMailboxArgs(argv) {
     deal: null,
     job: null,
     result: null,
-    payee: PAYEE,
+    payee: null,
+    payload: null,
+    nonce: null,
+    signature: null,
     cwd: null,
   };
   for (let i = 0; i < argv.length; i += 1) {
@@ -48,7 +51,7 @@ function parseNearMailboxArgs(argv) {
       out.action = arg;
       continue;
     }
-    const flags = ['--mailbox', '--escrow', '--signer', '--key', '--payout-key', '--creator', '--buyer', '--brief', '--price', '--deal', '--job', '--result', '--payee', '--cwd'];
+    const flags = ['--mailbox', '--escrow', '--signer', '--key', '--payout-key', '--creator', '--buyer', '--brief', '--price', '--deal', '--job', '--result', '--payee', '--payload', '--nonce', '--signature', '--cwd'];
     if (flags.includes(arg)) {
       const value = take(argv, i, arg);
       if (arg === '--mailbox') out.mailbox = value;
@@ -64,6 +67,9 @@ function parseNearMailboxArgs(argv) {
       else if (arg === '--job') out.job = value;
       else if (arg === '--result') out.result = value;
       else if (arg === '--payee') out.payee = value;
+      else if (arg === '--payload') out.payload = value;
+      else if (arg === '--nonce') out.nonce = value;
+      else if (arg === '--signature') out.signature = value;
       else out.cwd = value;
       i += 1;
       continue;
@@ -78,12 +84,17 @@ function parseNearMailboxArgs(argv) {
 function createMailbox(opts = {}) {
   return {
     nextId: 1,
-    payee: opts.payee || PAYEE,
+    payee: opts.payee || null,
     escrowAccount: opts.escrowAccount || '',
     claimWindowNs: BigInt(opts.claimWindowNs || 600000000000),
     submitWindowNs: BigInt(opts.submitWindowNs || 600000000000),
+    network: opts.network || 'testnet',
     jobs: [],
   };
+}
+
+function payoutAccount(state, job) {
+  return state.payee || job.claimer;
 }
 
 function jobById(state, id) {
@@ -92,11 +103,22 @@ function jobById(state, id) {
   return job;
 }
 
-function postJob(state, input) {
-  if (!input.deposit || input.deposit === '0') throw new Error('deposit is required');
-  if (!input.brief || typeof input.brief !== 'string') throw new Error('brief is required');
-  if (!input.escrowId) throw new Error('escrow id is required');
+function assertTestnet(state) {
+  if (state.network !== 'testnet') throw new Error('mailbox is testnet only');
+  if (state.escrowAccount && !String(state.escrowAccount).endsWith('.testnet')) {
+    throw new Error('mailbox is testnet only');
+  }
+}
+
+function recordFundedJob(state, input) {
+  assertTestnet(state);
+  if (input.funded !== true) throw new Error('escrow is not funded');
+  if (input.token !== USDC) throw new Error('escrow token is not testnet USDC');
+  if (!state.escrowAccount || input.receiver !== state.escrowAccount) throw new Error('escrow receiver does not match');
+  if (!input.price || input.amount !== input.price) throw new Error('escrow amount does not match');
+  if (!input.brief) throw new Error('brief is required');
   if (!input.buyer) throw new Error('buyer is required');
+  if (!input.escrowId) throw new Error('escrow id is required');
   const job = {
     id: state.nextId,
     buyer: input.buyer,
@@ -106,6 +128,9 @@ function postJob(state, input) {
     claimer: null,
     result: null,
     expires_at: (BigInt(input.now) + state.claimWindowNs).toString(),
+    claim_deadline: null,
+    settle_step: '',
+    payout: null,
   };
   state.nextId += 1;
   state.jobs.push(job);
@@ -118,7 +143,7 @@ function claimJob(state, input) {
   if (BigInt(input.now) > BigInt(job.expires_at)) throw new Error('job has expired');
   job.status = 'claimed';
   job.claimer = input.claimer;
-  job.expires_at = (BigInt(input.now) + state.submitWindowNs).toString();
+  job.claim_deadline = (BigInt(input.now) + state.submitWindowNs).toString();
   return job;
 }
 
@@ -126,36 +151,76 @@ function submitResult(state, input) {
   const job = jobById(state, input.id);
   if (job.status !== 'claimed') throw new Error('job is not claimed');
   if (job.claimer !== input.claimer) throw new Error('only the claimer submits');
-  if (BigInt(input.now) > BigInt(job.expires_at)) throw new Error('submit window has passed');
+  if (BigInt(input.now) > BigInt(job.claim_deadline)) throw new Error('submit window has passed');
   if (!input.result) throw new Error('result is required');
   job.status = 'submitted';
   job.result = input.result;
-  job.expires_at = (BigInt(input.now) + state.submitWindowNs).toString();
   return job;
 }
 
-function acceptJob(state, input) {
+function refundExpired(state, input) {
+  const job = jobById(state, input.id);
+  const now = BigInt(input.now);
+  if (job.status === 'posted') {
+    if (now <= BigInt(job.expires_at)) throw new Error('job has not expired');
+  } else if (job.status === 'claimed') {
+    if (now <= BigInt(job.claim_deadline)) throw new Error('claim deadline has not passed');
+  } else {
+    throw new Error('job is not refundable');
+  }
+  job.status = 'refunded';
+  return { job, buyer: job.buyer, escrowId: job.escrow_id };
+}
+
+function beginSettle(state, input) {
   const job = jobById(state, input.id);
   if (job.buyer !== input.buyer) throw new Error('only the buyer accepts');
   if (job.status !== 'submitted') throw new Error('job is not submitted');
-  job.status = 'accepted';
-  return { job, escrowId: job.escrow_id, payee: state.payee };
+  job.status = 'settling';
+  job.settle_step = 'escrow';
+  job.payout = payoutAccount(state, job);
+  return { job, payee: job.payout, escrowId: job.escrow_id, step: job.settle_step };
+}
+
+function failSettle(state, id) {
+  const job = jobById(state, id);
+  if (job.status !== 'settling') throw new Error('job is not settling');
+  if (job.settle_step === 'escrow') {
+    job.status = 'submitted';
+    job.settle_step = '';
+  }
+  return job;
+}
+
+function advanceSettle(state, id) {
+  const job = jobById(state, id);
+  if (job.status !== 'settling') throw new Error('job is not settling');
+  const index = STEPS.indexOf(job.settle_step);
+  if (index < 0) throw new Error('job is not settling');
+  if (index === STEPS.length - 1) {
+    job.settle_step = 'done';
+    job.status = 'accepted';
+    return job;
+  }
+  job.settle_step = STEPS[index + 1];
+  return job;
+}
+
+function retrySettle(state, id) {
+  const job = jobById(state, id);
+  if (job.status !== 'settling') throw new Error('job is not settling');
+  if (!STEPS.includes(job.settle_step)) throw new Error('job is not settling');
+  return { job, step: job.settle_step, payee: job.payout };
 }
 
 function releaseTimeout(state, input) {
   const job = jobById(state, input.id);
   if (job.status !== 'submitted') throw new Error('job is not submitted');
   if (BigInt(input.now) <= BigInt(job.expires_at)) throw new Error('submit window has not passed');
+  const payee = payoutAccount(state, job);
   job.status = 'released';
-  return { job, escrowId: job.escrow_id, payee: state.payee };
-}
-
-function refundExpired(state, input) {
-  const job = jobById(state, input.id);
-  if (job.status !== 'posted') throw new Error('job is not posted');
-  if (BigInt(input.now) <= BigInt(job.expires_at)) throw new Error('job has not expired');
-  job.status = 'refunded';
-  return { job, buyer: job.buyer, escrowId: job.escrow_id };
+  job.payout = payee;
+  return { job, escrowId: job.escrow_id, payee, method: 'release_after_timeout' };
 }
 
 function getJobs(state, query = {}) {
@@ -186,65 +251,60 @@ function web4Response(jobs, requestPath) {
   };
 }
 
-function fundEscrowAction(opts) {
-  return escrowCall({
-    action: 'fund',
-    escrowId: opts.escrowId,
-    creatorId: opts.creatorId,
-    signerId: opts.buyerId,
+function openMaterial(opts) {
+  if (opts.payload && opts.nonce && opts.signature) {
+    return { payload: opts.payload, nonce: opts.nonce, signature: opts.signature };
+  }
+  if (!opts.creatorKeyFile) throw new Error('escrow open signature is required');
+  const raw = `${Date.now().toString(36)}${process.pid}n${Math.floor(Math.random() * 1e6).toString(36)}`;
+  const nonce = raw.replace(/[^a-z0-9]/gi, '').slice(0, 32);
+  const windowNs = opts.windowNs || 600000000000;
+  const payload = JSON.stringify({
+    client_pk: opts.clientPk,
     price: opts.price,
-    dealId: opts.escrowDealId,
+    deliver_ns: windowNs,
+    review_ns: windowNs,
+    dispute_ns: windowNs,
+    fund_ns: windowNs,
   });
-}
-
-function postJobAction(opts) {
-  return {
-    signerId: opts.buyerId,
-    receiverId: opts.mailboxId,
-    method: 'post_job',
-    args: { brief: opts.brief, escrow_id: Number(opts.escrowDealId) },
-    gas: '50 Tgas',
-    deposit: '0.02 NEAR',
-  };
+  const key = readKeyFile(opts.creatorKeyFile);
+  const message = escrowMessage(opts.escrowId, 0, 'open', nonce, payload);
+  return { payload, nonce, signature: signHex(key.private_key, message) };
 }
 
 function postPlan(opts) {
   if (!opts.brief) throw new Error('brief is required');
-  if (opts.escrowId === opts.creatorId) throw new Error('escrow account must not be the foundry');
-  return [fundEscrowAction(opts), postJobAction(opts)];
-}
-
-function mailboxMethod(action, opts) {
-  if (action === 'claim') {
-    return { method: 'claim_job', args: { id: Number(opts.jobId) }, deposit: '0 NEAR' };
-  }
-  if (action === 'submit') {
-    if (!opts.result) throw new Error('result is required');
-    return { method: 'submit_result', args: { id: Number(opts.jobId), result: opts.result }, deposit: '0 NEAR' };
-  }
-  if (action === 'accept') return { method: 'accept', args: { id: Number(opts.jobId) }, deposit: '0 NEAR' };
-  if (action === 'refund') return { method: 'refund_expired', args: { id: Number(opts.jobId) }, deposit: '0 NEAR' };
-  if (action === 'release') return { method: 'release_timeout', args: { id: Number(opts.jobId) }, deposit: '0 NEAR' };
-  throw new Error(MAILBOX_USAGE);
-}
-
-function payoutTransfer(opts) {
-  return {
-    signerId: opts.creatorId,
-    receiverId: opts.tokenId,
-    method: 'ft_transfer',
+  if (!opts.price || opts.price === '0') throw new Error('price is required');
+  if (!opts.mailboxId || !String(opts.mailboxId).endsWith('.testnet')) throw new Error('mailbox is testnet only');
+  const open = openMaterial(opts);
+  return [{
+    signerId: opts.buyerId,
+    receiverId: USDC,
+    method: 'ft_transfer_call',
     args: {
-      receiver_id: opts.payee || PAYEE,
+      receiver_id: opts.mailboxId,
       amount: opts.price,
-      memo: `mailbox-job-${opts.jobId}`,
+      memo: 'near-mailbox',
+      msg: JSON.stringify({ brief: opts.brief, ...open }),
     },
-    gas: '40 Tgas',
+    gas: '280 Tgas',
     deposit: '1 yoctoNEAR',
-  };
+  }];
+}
+
+function releaseCall(opts) {
+  return escrowCall({
+    action: 'release',
+    escrowId: opts.escrowId,
+    creatorId: opts.creatorId,
+    signerId: opts.signerId,
+    dealId: opts.escrowDealId,
+  });
 }
 
 async function runNearMailbox(opts = {}) {
   if (!opts.dest) throw new Error('dest is required');
+  if (opts.network && opts.network !== 'testnet') throw new Error('mailbox is testnet only');
   if (opts.action === 'jobs') {
     const jobs = await viewFunction(opts.mailboxId, 'get_jobs', {
       status: opts.status || null,
@@ -255,90 +315,39 @@ async function runNearMailbox(opts = {}) {
   }
   if (opts.action === 'post') {
     const plan = postPlan(opts);
-    let last = null;
-    for (const action of plan) {
-      last = await submit(action, opts);
-    }
+    const sent = await submit(plan[0], opts);
     rememberRow(opts.dest, 'mailbox', {
       account: opts.mailboxId,
       contract: opts.mailboxId,
-      lastTx: last.hash,
+      lastTx: sent.hash,
     });
-    return { hash: last.hash, account: opts.mailboxId, payee: opts.payee || PAYEE };
+    return { hash: sent.hash, account: opts.mailboxId, payee: opts.payee || null };
   }
-  const call = mailboxMethod(opts.action, opts);
+  const methods = {
+    claim: { method: 'claim_job', args: { id: Number(opts.jobId) } },
+    submit: { method: 'submit_result', args: { id: Number(opts.jobId), result: opts.result } },
+    accept: { method: 'accept', args: { id: Number(opts.jobId), nonce: opts.nonce, signature: opts.signature } },
+    refund: { method: 'refund_expired', args: { id: Number(opts.jobId) } },
+    release: { method: 'release_timeout', args: { id: Number(opts.jobId) } },
+    retry: { method: 'retry_settle', args: { id: Number(opts.jobId) } },
+  };
+  const call = methods[opts.action];
+  if (!call) throw new Error(MAILBOX_USAGE);
+  if (opts.action === 'submit' && !opts.result) throw new Error('result is required');
   const sent = await submit({
     signerId: opts.signerId,
     receiverId: opts.mailboxId,
     method: call.method,
     args: call.args,
-    gas: '50 Tgas',
-    deposit: call.deposit,
+    gas: opts.action === 'accept' || opts.action === 'release' || opts.action === 'retry' ? '250 Tgas' : '50 Tgas',
+    deposit: '0 NEAR',
   }, opts);
-  let hash = sent.hash;
-  if (opts.action === 'accept' || opts.action === 'release' || opts.action === 'refund') {
-    const escrowAction = opts.action === 'refund'
-      ? escrowCall({
-        action: 'refund',
-        escrowId: opts.escrowId,
-        creatorId: opts.creatorId,
-        signerId: opts.buyerId || opts.signerId,
-        dealId: opts.escrowDealId,
-      })
-      : opts.action === 'release'
-        ? {
-          signerId: opts.signerId,
-          receiverId: opts.escrowId,
-          method: 'release_after_timeout',
-          args: { deal_id: Number(opts.escrowDealId) },
-          gas: '40 Tgas',
-          deposit: '0 NEAR',
-        }
-        : escrowCall({
-          action: 'accept',
-          escrowId: opts.escrowId,
-          creatorId: opts.creatorId,
-          signerId: opts.buyerId || opts.signerId,
-          dealId: opts.escrowDealId,
-          keyFile: opts.keyFile,
-        });
-    const released = await submit(escrowAction, opts);
-    const withdrawn = await submit(escrowCall({
-      action: 'withdraw',
-      escrowId: opts.escrowId,
-      creatorId: opts.creatorId,
-      signerId: opts.action === 'refund' ? (opts.buyerId || opts.signerId) : opts.creatorId,
-    }), { ...opts, keyFile: opts.payoutKeyFile || opts.keyFile });
-    const paid = opts.action === 'refund'
-      ? withdrawn
-      : await submit(payoutTransfer({
-        creatorId: opts.creatorId,
-        tokenId: opts.tokenId || USDC,
-        payee: opts.payee || PAYEE,
-        price: opts.price,
-        jobId: opts.jobId,
-      }), { ...opts, keyFile: opts.payoutKeyFile || opts.keyFile });
-    hash = paid.hash;
-    rememberRow(opts.dest, 'mailbox', {
-      account: opts.mailboxId,
-      contract: opts.mailboxId,
-      lastTx: hash,
-      escrowTx: released.hash,
-      withdrawTx: withdrawn.hash,
-    });
-    return {
-      hash,
-      account: opts.mailboxId,
-      payee: opts.action === 'refund' ? (opts.buyerId || opts.signerId) : (opts.payee || PAYEE),
-      escrowTx: released.hash,
-    };
-  }
   rememberRow(opts.dest, 'mailbox', {
     account: opts.mailboxId,
     contract: opts.mailboxId,
-    lastTx: hash,
+    lastTx: sent.hash,
   });
-  return { hash, account: opts.mailboxId };
+  return { hash: sent.hash, account: opts.mailboxId, payee: opts.payee || null };
 }
 
 async function runNearMailboxCli(argv, io = {}) {
@@ -368,17 +377,19 @@ async function runNearMailboxCli(argv, io = {}) {
       signerId: parsed.signer,
       buyerId: parsed.buyer || parsed.signer,
       creatorId: parsed.creator,
+      creatorKeyFile: parsed.payoutKey,
       keyFile: parsed.keyFile,
-      payoutKeyFile: parsed.payoutKey,
       brief: parsed.brief,
       price: parsed.price,
       escrowDealId: parsed.deal,
       jobId: parsed.job,
       result: parsed.result,
       payee: parsed.payee,
-      status: null,
-      rpc: io.rpc,
+      payload: parsed.payload,
+      nonce: parsed.nonce,
+      signature: parsed.signature,
       network: 'testnet',
+      rpc: io.rpc,
     });
     if (parsed.action === 'jobs') {
       stdout.write(`${JSON.stringify(result.jobs)}\n`);
@@ -394,21 +405,24 @@ async function runNearMailboxCli(argv, io = {}) {
 }
 
 module.exports = {
-  PAYEE,
+  USDC,
   MAILBOX_USAGE,
-  acceptJob,
+  STEPS,
+  advanceSettle,
+  beginSettle,
   claimJob,
   createMailbox,
-  fundEscrowAction,
+  failSettle,
   getJobs,
-  mailboxMethod,
+  openMaterial,
   parseNearMailboxArgs,
-  payoutTransfer,
-  postJob,
-  postJobAction,
+  payoutAccount,
   postPlan,
+  recordFundedJob,
   refundExpired,
+  releaseCall,
   releaseTimeout,
+  retrySettle,
   runNearMailbox,
   runNearMailboxCli,
   submitResult,

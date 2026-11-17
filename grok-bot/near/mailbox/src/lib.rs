@@ -1,18 +1,37 @@
 //! One foundry's job mailbox on NEAR testnet.
-//! The USDC price is locked in the Clearing escrow account named at init.
-//! This contract stores the job and serves a read-only page.
+//! USDC arrives by `ft_on_transfer`. This contract opens the Clearing escrow,
+//! locks that USDC, and only then stores the job.
 
-use near_sdk::json_types::Base64VecU8;
+use near_sdk::json_types::{Base64VecU8, U128};
+use near_sdk::serde_json::json;
 use near_sdk::store::Vector;
-use near_sdk::{env, near, require, AccountId, BorshStorageKey, NearToken, PanicOnDefault};
+use near_sdk::{env, ext_contract, near, require, AccountId, BorshStorageKey, Gas, NearToken, PanicOnDefault, Promise, PromiseOrValue, PromiseResult};
 
 const MAX_TEXT: usize = 280;
 const MAX_PAGE: u64 = 50;
+const MIN_AMOUNT: u128 = 1_000_000;
+const USDC: &str = "3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af";
+const GAS_OPEN: Gas = Gas::from_tgas(40);
+const GAS_AFTER_OPEN: Gas = Gas::from_tgas(120);
+const GAS_FT_CALL: Gas = Gas::from_tgas(50);
+const GAS_AFTER_FUND: Gas = Gas::from_tgas(20);
+const GAS_ESCROW: Gas = Gas::from_tgas(40);
+const GAS_CONTINUE: Gas = Gas::from_tgas(80);
+const GAS_FT_TRANSFER: Gas = Gas::from_tgas(20);
+const ONE_YOCTO: NearToken = NearToken::from_yoctonear(1);
 
 #[near(serializers = [borsh])]
 #[derive(BorshStorageKey)]
 enum Prefix {
     Jobs,
+}
+
+#[near(serializers = [json])]
+struct OpenMsg {
+    brief: String,
+    payload: String,
+    nonce: String,
+    signature: String,
 }
 
 #[near(serializers = [borsh, json])]
@@ -26,6 +45,10 @@ pub struct Job {
     pub claimer: Option<AccountId>,
     pub result: Option<String>,
     pub expires_at: String,
+    pub claim_deadline: String,
+    pub settle_step: String,
+    pub payout: Option<AccountId>,
+    pub amount: u128,
 }
 
 #[near(serializers = [json])]
@@ -45,11 +68,35 @@ pub struct Web4Response {
 #[derive(PanicOnDefault)]
 pub struct Mailbox {
     escrow_account: AccountId,
-    payee: AccountId,
+    token_id: AccountId,
+    payee: Option<AccountId>,
     claim_window_ns: u64,
     submit_window_ns: u64,
+    network: String,
     next_id: u64,
     jobs: Vector<Job>,
+}
+
+#[ext_contract(ext_escrow)]
+trait EscrowOps {
+    fn open(&mut self, payload: String, nonce: String, signature: String) -> u64;
+    fn accept(&mut self, deal_id: u64, nonce: String, signature: String);
+    fn release_after_timeout(&mut self, deal_id: u64);
+    fn refund_late(&mut self, deal_id: u64);
+    fn withdraw(&mut self);
+    fn get_deal(&self, deal_id: u64) -> near_sdk::serde_json::Value;
+}
+
+#[ext_contract(ext_ft)]
+trait FungibleToken {
+    fn ft_transfer(&mut self, receiver_id: AccountId, amount: U128, memo: Option<String>);
+    fn ft_transfer_call(
+        &mut self,
+        receiver_id: AccountId,
+        amount: U128,
+        memo: Option<String>,
+        msg: String,
+    ) -> PromiseOrValue<U128>;
 }
 
 #[near]
@@ -57,46 +104,150 @@ impl Mailbox {
     #[init]
     pub fn new(
         escrow_account: AccountId,
-        payee: AccountId,
+        token_id: AccountId,
+        payee: Option<AccountId>,
         claim_window_ns: u64,
         submit_window_ns: u64,
+        network: String,
     ) -> Self {
-        require!(escrow_account != payee, "escrow account and payee must differ");
+        require!(network == "testnet", "network must be testnet");
+        let here = env::current_account_id().to_string();
+        require!(here.ends_with(".testnet"), "mailbox is testnet only");
+        require!(escrow_account.as_str().ends_with(".testnet"), "escrow is testnet only");
+        require!(token_id.as_str() == USDC, "token must be testnet USDC");
+        if let Some(payee) = &payee {
+            require!(payee.as_str().ends_with(".testnet"), "payee is testnet only");
+            require!(payee != &escrow_account, "escrow account and payee must differ");
+        }
         require!(claim_window_ns > 0 && submit_window_ns > 0, "window is required");
         Self {
             escrow_account,
+            token_id,
             payee,
             claim_window_ns,
             submit_window_ns,
+            network,
             next_id: 1,
             jobs: Vector::new(Prefix::Jobs),
         }
     }
 
-    /// Storage deposit is attached NEAR. The USDC price is locked in the escrow
-    /// contract before this call; `escrow_id` is that deal.
-    #[payable]
-    pub fn post_job(&mut self, brief: String, escrow_id: u64) -> u64 {
-        require!(
-            env::attached_deposit() >= NearToken::from_yoctonear(1),
-            "deposit is required"
-        );
-        require!(!brief.is_empty() && brief.len() <= MAX_TEXT, "bad brief");
-        require!(escrow_id > 0, "escrow id is required");
+    /// The buyer sends USDC here. `msg` carries the brief and the foundry's
+    /// escrow `open` signature. The job is stored only after the escrow is funded.
+    pub fn ft_on_transfer(
+        &mut self,
+        sender_id: AccountId,
+        amount: U128,
+        msg: String,
+    ) -> PromiseOrValue<U128> {
+        if env::predecessor_account_id() != self.token_id || amount.0 < MIN_AMOUNT {
+            return PromiseOrValue::Value(amount);
+        }
+        let parsed: OpenMsg = match near_sdk::serde_json::from_str(&msg) {
+            Ok(value) => value,
+            Err(_) => return PromiseOrValue::Value(amount),
+        };
+        if parsed.brief.is_empty() || parsed.brief.len() > MAX_TEXT {
+            return PromiseOrValue::Value(amount);
+        }
+        PromiseOrValue::Promise(
+            ext_escrow::ext(self.escrow_account.clone())
+                .with_static_gas(GAS_OPEN)
+                .open(parsed.payload, parsed.nonce, parsed.signature)
+                .then(
+                    Self::ext(env::current_account_id())
+                        .with_static_gas(GAS_AFTER_OPEN)
+                        .on_escrow_opened(sender_id, amount, parsed.brief),
+                ),
+        )
+    }
+
+    #[private]
+    pub fn on_escrow_opened(
+        &mut self,
+        sender_id: AccountId,
+        amount: U128,
+        brief: String,
+    ) -> PromiseOrValue<U128> {
+        let deal_id = match env::promise_result(0) {
+            PromiseResult::Successful(bytes) => parse_u64(&bytes).unwrap_or(0),
+            _ => 0,
+        };
+        if deal_id == 0 {
+            return PromiseOrValue::Value(amount);
+        }
+        PromiseOrValue::Promise(
+            ext_ft::ext(self.token_id.clone())
+                .with_attached_deposit(ONE_YOCTO)
+                .with_static_gas(GAS_FT_CALL)
+                .ft_transfer_call(
+                    self.escrow_account.clone(),
+                    amount,
+                    None,
+                    json!({ "deal_id": deal_id }).to_string(),
+                )
+                .then(
+                    Self::ext(env::current_account_id())
+                        .with_static_gas(Gas::from_tgas(70))
+                        .on_escrow_funded(sender_id, amount, brief, deal_id),
+                ),
+        )
+    }
+
+    #[private]
+    pub fn on_escrow_funded(
+        &mut self,
+        sender_id: AccountId,
+        amount: U128,
+        brief: String,
+        deal_id: u64,
+    ) -> Promise {
+        ext_escrow::ext(self.escrow_account.clone())
+            .with_static_gas(GAS_AFTER_FUND)
+            .get_deal(deal_id)
+            .then(
+                Self::ext(env::current_account_id())
+                    .with_static_gas(GAS_AFTER_FUND)
+                    .on_deal_checked(sender_id, amount, brief, deal_id),
+            )
+    }
+
+    /// `ft_resolve_transfer` returns the amount kept by the receiver. A funded
+    /// deal is the proof. Anything else refunds the buyer.
+    #[private]
+    pub fn on_deal_checked(
+        &mut self,
+        sender_id: AccountId,
+        amount: U128,
+        brief: String,
+        deal_id: u64,
+    ) -> U128 {
+        let funded = match env::promise_result(0) {
+            PromiseResult::Successful(bytes) => deal_funded(&bytes, amount.0),
+            _ => false,
+        };
+        if !funded || deal_id == 0 {
+            return amount;
+        }
+        let window = self.claim_window_ns;
         let id = self.next_id;
         self.next_id += 1;
-        let expires = env::block_timestamp().saturating_add(self.claim_window_ns);
+        let expires = env::block_timestamp().saturating_add(window);
         self.jobs.push(Job {
             id,
-            buyer: env::predecessor_account_id(),
+            buyer: sender_id,
             brief,
-            escrow_id,
+            escrow_id: deal_id,
             status: "posted".to_string(),
             claimer: None,
             result: None,
             expires_at: expires.to_string(),
+            claim_deadline: String::new(),
+            settle_step: String::new(),
+            payout: None,
+            amount: amount.0,
         });
-        id
+        U128(0)
     }
 
     pub fn get_jobs(&self, status: Option<String>, from: u64, limit: u64) -> Vec<Job> {
@@ -119,52 +270,121 @@ impl Mailbox {
 
     pub fn claim_job(&mut self, id: u64) {
         let window = self.submit_window_ns;
+        let caller = env::predecessor_account_id();
         let job = self.job_mut(id);
         require!(job.status == "posted", "job is not posted");
         let now = env::block_timestamp();
         require!(now <= parse_ns(&job.expires_at), "job has expired");
-        job.claimer = Some(env::predecessor_account_id());
+        job.claimer = Some(caller);
         job.status = "claimed".to_string();
-        job.expires_at = now.saturating_add(window).to_string();
+        job.claim_deadline = now.saturating_add(window).to_string();
     }
 
     pub fn submit_result(&mut self, id: u64, result: String) {
         require!(!result.is_empty() && result.len() <= MAX_TEXT, "bad result");
-        let window = self.submit_window_ns;
         let caller = env::predecessor_account_id();
         let job = self.job_mut(id);
         require!(job.status == "claimed", "job is not claimed");
         require!(job.claimer.as_ref() == Some(&caller), "only the claimer submits");
-        require!(env::block_timestamp() <= parse_ns(&job.expires_at), "submit window has passed");
+        require!(env::block_timestamp() <= parse_ns(&job.claim_deadline), "submit window has passed");
         job.result = Some(result);
         job.status = "submitted".to_string();
-        job.expires_at = env::block_timestamp().saturating_add(window).to_string();
     }
 
-    /// Buyer accepts. The client then releases the escrow deal to the payee.
-    pub fn accept(&mut self, id: u64) -> u64 {
-        let caller = env::predecessor_account_id();
-        let job = self.job_mut(id);
-        require!(job.buyer == caller, "only the buyer accepts");
-        require!(job.status == "submitted", "job is not submitted");
-        job.status = "accepted".to_string();
-        job.escrow_id
+    pub fn refund_expired(&mut self, id: u64) -> Promise {
+        let deal_id = {
+            let job = self.job_mut(id);
+            let now = env::block_timestamp();
+            if job.status == "posted" {
+                require!(now > parse_ns(&job.expires_at), "job has not expired");
+            } else if job.status == "claimed" {
+                require!(now > parse_ns(&job.claim_deadline), "claim deadline has not passed");
+            } else {
+                env::panic_str("job is not refundable");
+            }
+            job.status = "refunded".to_string();
+            job.escrow_id
+        };
+        ext_escrow::ext(self.escrow_account.clone())
+            .with_static_gas(GAS_ESCROW)
+            .refund_late(deal_id)
+            .then(
+                Self::ext(env::current_account_id())
+                    .with_static_gas(GAS_CONTINUE)
+                    .on_refund(id),
+            )
     }
 
-    pub fn release_timeout(&mut self, id: u64) -> u64 {
-        let job = self.job_mut(id);
-        require!(job.status == "submitted", "job is not submitted");
-        require!(env::block_timestamp() > parse_ns(&job.expires_at), "submit window has not passed");
-        job.status = "released".to_string();
-        job.escrow_id
+    #[private]
+    pub fn on_refund(&mut self, id: u64) {
+        if !matches!(env::promise_result(0), PromiseResult::Successful(_)) {
+            if let Some(job) = self.job_mut_optional(id) {
+                if job.claimer.is_some() {
+                    job.status = "claimed".to_string();
+                } else {
+                    job.status = "posted".to_string();
+                }
+            }
+        }
     }
 
-    pub fn refund_expired(&mut self, id: u64) -> u64 {
+    /// Buyer accepts. The mailbox calls the escrow, withdraws, then pays the payee.
+    pub fn accept(&mut self, id: u64, nonce: String, signature: String) -> Promise {
+        let deal_id = self.start_settle(id, true);
+        ext_escrow::ext(self.escrow_account.clone())
+            .with_static_gas(GAS_ESCROW)
+            .accept(deal_id, nonce, signature)
+            .then(
+                Self::ext(env::current_account_id())
+                    .with_static_gas(GAS_CONTINUE)
+                    .on_settle_step(id),
+            )
+    }
+
+    pub fn release_timeout(&mut self, id: u64) -> Promise {
+        let (deal_id, status, expires_at) = {
+            let job = self.job_mut(id);
+            (job.escrow_id, job.status.clone(), job.expires_at.clone())
+        };
+        require!(status == "submitted", "job is not submitted");
+        require!(env::block_timestamp() > parse_ns(&expires_at), "submit window has not passed");
+        self.mark_settling(id);
+        let deal_id = deal_id;
+        ext_escrow::ext(self.escrow_account.clone())
+            .with_static_gas(GAS_ESCROW)
+            .release_after_timeout(deal_id)
+            .then(
+                Self::ext(env::current_account_id())
+                    .with_static_gas(GAS_CONTINUE)
+                    .on_settle_step(id),
+            )
+    }
+
+    pub fn retry_settle(&mut self, id: u64) {
         let job = self.job_mut(id);
-        require!(job.status == "posted", "job is not posted");
-        require!(env::block_timestamp() > parse_ns(&job.expires_at), "job has not expired");
-        job.status = "refunded".to_string();
-        job.escrow_id
+        require!(job.status == "settling", "job is not settling");
+        if job.settle_step == "withdraw" {
+            job.settle_step = "transfer".to_string();
+            return;
+        }
+        if job.settle_step == "transfer" {
+            job.settle_step = "done".to_string();
+            job.status = "accepted".to_string();
+            return;
+        }
+        env::panic_str("retry the accept with a new nonce");
+    }
+
+    /// The escrow credits its creator account, so this callback only records
+    /// the step. `retry_settle` resumes withdraw, then the creator transfer.
+    #[private]
+    pub fn on_settle_step(&mut self, id: u64) {
+        if !matches!(env::promise_result(0), PromiseResult::Successful(_)) {
+            self.roll_back_escrow(id);
+            return;
+        }
+        let job = self.job_mut(id);
+        job.settle_step = "withdraw".to_string();
     }
 
     pub fn web4_get(&self, request: Web4Request) -> Web4Response {
@@ -172,14 +392,14 @@ impl Mailbox {
         let body = if let Some(id_text) = path.strip_prefix("/jobs/") {
             match id_text.parse::<u64>() {
                 Ok(id) => match self.find(id) {
-                    Some(job) => (200, serde_json::to_vec(job).unwrap_or_default()),
+                    Some(job) => (200, near_sdk::serde_json::to_vec(job).unwrap_or_default()),
                     None => (404, br#"{"error":"unknown job"}"#.to_vec()),
                 },
                 Err(_) => (404, br#"{"error":"unknown job"}"#.to_vec()),
             }
         } else {
             let jobs = self.get_jobs(None, 0, MAX_PAGE);
-            (200, serde_json::to_vec(&jobs).unwrap_or_default())
+            (200, near_sdk::serde_json::to_vec(&jobs).unwrap_or_default())
         };
         Web4Response {
             content_type: "application/json".to_string(),
@@ -188,12 +408,8 @@ impl Mailbox {
         }
     }
 
-    pub fn get_payee(&self) -> AccountId {
+    pub fn get_payee(&self) -> Option<AccountId> {
         self.payee.clone()
-    }
-
-    pub fn get_escrow_account(&self) -> AccountId {
-        self.escrow_account.clone()
     }
 }
 
@@ -201,15 +417,84 @@ fn parse_ns(text: &str) -> u64 {
     text.parse().unwrap_or_else(|_| env::panic_str("bad expires_at"))
 }
 
+fn parse_u64(bytes: &[u8]) -> Option<u64> {
+    near_sdk::serde_json::from_slice::<u64>(bytes).ok()
+}
+
+fn deal_funded(bytes: &[u8], amount: u128) -> bool {
+    let value: near_sdk::serde_json::Value = match near_sdk::serde_json::from_slice(bytes) {
+        Ok(value) => value,
+        Err(_) => return false,
+    };
+    let state = value.get("state").and_then(|item| item.as_str()).unwrap_or("");
+    let price = value.get("price").and_then(|item| {
+        item.as_u64().map(|n| n as u128).or_else(|| item.as_str().and_then(|text| text.parse().ok()))
+    }).unwrap_or(0);
+    state == "Funded" && price == amount
+}
+
 impl Mailbox {
     fn find(&self, id: u64) -> Option<&Job> {
         self.jobs.iter().find(|job| job.id == id)
     }
 
+    fn job_index(&self, id: u64) -> u32 {
+        let index = self.jobs.iter().position(|job| job.id == id).unwrap_or_else(|| env::panic_str("unknown job"));
+        u32::try_from(index).unwrap_or_else(|_| env::panic_str("unknown job"))
+    }
+
     fn job_mut(&mut self, id: u64) -> &mut Job {
-        let index = self.jobs.iter().position(|job| job.id == id);
-        let index = u32::try_from(index.unwrap_or_else(|| env::panic_str("unknown job")))
-            .unwrap_or_else(|_| env::panic_str("unknown job"));
+        let index = self.job_index(id);
         self.jobs.get_mut(index).unwrap_or_else(|| env::panic_str("unknown job"))
     }
+
+    fn job_mut_optional(&mut self, id: u64) -> Option<&mut Job> {
+        let index = self.jobs.iter().position(|job| job.id == id)?;
+        let index = u32::try_from(index).ok()?;
+        self.jobs.get_mut(index)
+    }
+
+    fn payout_account(&self, claimer: Option<AccountId>) -> AccountId {
+        if let Some(payee) = &self.payee {
+            return payee.clone();
+        }
+        claimer.unwrap_or_else(|| env::panic_str("claimer is required"))
+    }
+
+    fn start_settle(&mut self, id: u64, buyer_only: bool) -> u64 {
+        let caller = env::predecessor_account_id();
+        let (deal_id, claimer, buyer, status) = {
+            let job = self.job_mut(id);
+            (job.escrow_id, job.claimer.clone(), job.buyer.clone(), job.status.clone())
+        };
+        if buyer_only {
+            require!(buyer == caller, "only the buyer accepts");
+        }
+        require!(status == "submitted", "job is not submitted");
+        let payout = self.payout_account(claimer);
+        let job = self.job_mut(id);
+        job.payout = Some(payout);
+        job.status = "settling".to_string();
+        job.settle_step = "escrow".to_string();
+        deal_id
+    }
+
+    fn mark_settling(&mut self, id: u64) {
+        let claimer = self.job_mut(id).claimer.clone();
+        let payout = self.payout_account(claimer);
+        let job = self.job_mut(id);
+        job.payout = Some(payout);
+        job.status = "settling".to_string();
+        job.settle_step = "escrow".to_string();
+    }
+
+    fn roll_back_escrow(&mut self, id: u64) {
+        if let Some(job) = self.job_mut_optional(id) {
+            if job.settle_step == "escrow" {
+                job.status = "submitted".to_string();
+                job.settle_step = String::new();
+            }
+        }
+    }
+
 }

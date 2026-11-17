@@ -160,6 +160,18 @@ function escrowCall(opts) {
       deposit: '1 yoctoNEAR',
     };
   }
+  if (opts.action === 'release') {
+    if (!opts.dealId) throw new Error('deal is required');
+    if (!opts.signerId) throw new Error('--signer is required');
+    return {
+      signerId: opts.signerId,
+      receiverId: opts.escrowId,
+      method: 'release_after_timeout',
+      args: { deal_id: Number(opts.dealId) },
+      gas: '40 Tgas',
+      deposit: '0 NEAR',
+    };
+  }
   if (opts.action === 'deliver' || opts.action === 'accept' || opts.action === 'refund' || opts.action === 'withdraw') {
     if (opts.action !== 'withdraw' && !opts.dealId) throw new Error('deal is required');
     if ((opts.action === 'accept' || opts.action === 'refund' || opts.action === 'fund') && !opts.signerId) {
