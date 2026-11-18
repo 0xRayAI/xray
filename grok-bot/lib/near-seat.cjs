@@ -283,9 +283,51 @@ function loadCreatedKey(result, opts, accountId) {
   return key;
 }
 
+function cliText(result) {
+  return `${result && result.stdout ? result.stdout : ''}\n${result && result.stderr ? result.stderr : ''}`;
+}
+
+function isNearCliRs(text) {
+  return text.includes('near-cli-rs');
+}
+
+// Homebrew and old tutorials still put the archived JavaScript `near` first.
+// That binary answers `near --version` with `4.0.13` and rejects
+// `account create-account`. Walk PATH until a near-cli-rs binary answers.
+function resolveNearBin(opts = {}) {
+  if (opts.bin) return opts.bin;
+  const spawn = opts.spawn || spawnSync;
+  const env = { ...process.env, ...(opts.env || {}) };
+  const dirs = String(env.PATH || '').split(path.delimiter).filter(Boolean);
+  const seen = new Set();
+  for (const dir of dirs) {
+    const bin = path.join(dir, process.platform === 'win32' ? 'near.cmd' : 'near');
+    if (seen.has(bin)) continue;
+    seen.add(bin);
+    if (!fs.existsSync(bin)) continue;
+    let probed;
+    try {
+      probed = spawn(bin, ['--version'], {
+        encoding: 'utf8',
+        env,
+        stdio: ['ignore', 'pipe', 'pipe'],
+      });
+    } catch {
+      continue;
+    }
+    if (isNearCliRs(cliText(probed))) return bin;
+  }
+  const err = new Error(
+    'near-cli-rs is required. Install near-cli-rs 0.31.1 and put that bin ahead of the archived JavaScript near CLI.',
+  );
+  err.code = 'NEAR_CLI';
+  throw err;
+}
+
 function runNearCli(args, opts = {}) {
   const spawn = opts.spawn || spawnSync;
-  const result = spawn(opts.bin || 'near', args, {
+  const bin = resolveNearBin({ ...opts, spawn });
+  const result = spawn(bin, args, {
     encoding: 'utf8',
     env: { ...process.env, ...(opts.env || {}) },
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -438,6 +480,7 @@ module.exports = {
   RPC_TIMEOUT_MS,
   TESTNET_RPC,
   createAccountArgv,
+  resolveNearBin,
   credentialsHome,
   fileCreateMode,
   functionCallKeyArgv,

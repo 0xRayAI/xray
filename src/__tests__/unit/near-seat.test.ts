@@ -1,4 +1,4 @@
-import { closeSync, mkdirSync, mkdtempSync, openSync, readFileSync, rmSync, statSync, unlinkSync, writeFileSync, writeSync } from 'node:fs';
+import { chmodSync, closeSync, mkdirSync, mkdtempSync, openSync, readFileSync, rmSync, statSync, unlinkSync, writeFileSync, writeSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -17,6 +17,7 @@ const seat = requireCjs(path.join(root, 'grok-bot', 'lib', 'near-seat.cjs')) as 
   rpcTimeoutMs: (opts?: { timeoutMs?: number }) => number;
   readLegacyKey: (file: string, accountId?: string) => KeyFile;
   createAccountArgv: (accountId: string) => string[];
+  resolveNearBin: (opts?: { bin?: string; env?: { PATH?: string } }) => string;
   credentialsHome: (opts: { credentialsHome?: string }) => string;
   legacyKeyPath: (dir: string, network: string, accountId: string) => string;
   fileCreateMode: (umask: number) => number;
@@ -684,6 +685,35 @@ describe('near-seat', () => {
     expect(result.addedKey).toBe(true);
     expect(result.grantArgv).toContain('--function-names');
     expect(result.grantArgv).toContain('ping,pay');
+  });
+
+  it('skips the archived JavaScript near and uses near-cli-rs', () => {
+    const jsDir = scratch();
+    const rsDir = scratch();
+    const jsBin = path.join(jsDir, 'near');
+    const rsBin = path.join(rsDir, 'near');
+    writeFileSync(jsBin, '#!/bin/sh\necho 4.0.13\n');
+    writeFileSync(rsBin, '#!/bin/sh\necho near-cli-rs 0.31.1\n');
+    chmodSync(jsBin, 0o755);
+    chmodSync(rsBin, 0o755);
+    try {
+      expect(seat.resolveNearBin({ env: { PATH: `${jsDir}${path.delimiter}${rsDir}` } })).toBe(rsBin);
+    } finally {
+      rmSync(jsDir, { recursive: true, force: true });
+      rmSync(rsDir, { recursive: true, force: true });
+    }
+  });
+
+  it('names the install when PATH has only the archived JavaScript near', () => {
+    const jsDir = scratch();
+    const jsBin = path.join(jsDir, 'near');
+    writeFileSync(jsBin, '#!/bin/sh\necho 4.0.13\n');
+    chmodSync(jsBin, 0o755);
+    try {
+      expect(() => seat.resolveNearBin({ env: { PATH: jsDir } })).toThrow(/near-cli-rs 0.31.1/);
+    } finally {
+      rmSync(jsDir, { recursive: true, force: true });
+    }
   });
 
   it('builds the faucet create command from the measured flow', () => {
