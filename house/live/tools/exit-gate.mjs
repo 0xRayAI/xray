@@ -73,7 +73,10 @@ function main() {
     try {
       text = readFileSync(file, 'utf8');
     } catch (err) {
-      if (err && err.code === 'ENOENT') continue;
+      if (err && err.code === 'ENOENT') {
+        bad.push(`${file}: missing file`);
+        continue;
+      }
       throw err;
     }
     const trimmed = text.trim();

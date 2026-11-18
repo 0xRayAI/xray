@@ -1,6 +1,15 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { openCardsMissingRaci, unbackedDefects, unclosedAfterMerge } from '../tools/exit-gate.mjs';
+
+test('a missing sole file fails the exit gate', () => {
+  const script = fileURLToPath(new URL('../tools/exit-gate.mjs', import.meta.url));
+  const run = spawnSync(process.execPath, [script, '/tmp/xray-exit-gate-does-not-exist.md'], { encoding: 'utf8' });
+  assert.notEqual(run.status, 0);
+  assert.match(run.stderr, /missing file/);
+});
 
 test('a prose-only bug fails the exit gate', () => {
   const bad = unbackedDefects('- bug: the wake token is never stamped\n');
