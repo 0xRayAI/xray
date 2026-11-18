@@ -4,7 +4,8 @@
  * goggles.enabled false fails the command. A missing key stays on.
  */
 import { createRequire } from "node:module";
-import { existsSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { getConfigDir } from "../../core/config-paths.js";
 
@@ -28,11 +29,9 @@ export function runDoctor(cwd: string, nodeVersion: string = process.version): D
   const issues: string[] = [];
   const fixes: string[] = [];
 
-  const versionParts = nodeVersion.slice(1).split(".");
-  const majorVersion = parseInt(versionParts[0] || "0", 10);
-  if (majorVersion < 18) {
+  if (!nodeMeetsPatchedLts(nodeVersion)) {
     issues.push("Node.js version too old");
-    fixes.push("Upgrade to Node.js 18+");
+    fixes.push("Upgrade to Node.js 24.22.3+");
   } else {
     lines.push(`✅ Node.js version: ${nodeVersion}`);
   }
@@ -43,6 +42,14 @@ export function runDoctor(cwd: string, nodeVersion: string = process.version): D
     fixes.push("Run: npm install xray");
   } else {
     lines.push("✅ xray package installed");
+  }
+
+  const repertoire = repertoireOnDisk(cwd);
+  if (repertoire) {
+    lines.push(`✅ repertoire: @0xray/repertoire@${repertoire}`);
+  } else {
+    issues.push("repertoire missing");
+    fixes.push("Run: npx 0xray wear");
   }
 
   lines.push(suitSeat.wearLine(cwd));
@@ -61,6 +68,18 @@ export function runDoctor(cwd: string, nodeVersion: string = process.version): D
   if (existsSync(join(cwd, ".mcp.json"))) {
     lines.push("ℹ️ Found .mcp.json - may conflict with framework");
     fixes.push("Consider removing .mcp.json or excluding framework servers");
+  }
+
+  const notes = join(cwd, ".xray", "state", "NOTES.md");
+  const gate = [join(cwd, "house", "live", "tools", "exit-gate.mjs"), join(cwd, "node_modules", "0xray", "house", "live", "tools", "exit-gate.mjs")].find((file) => existsSync(file));
+  if (gate && existsSync(notes)) {
+    const ran = spawnSync(process.execPath, [gate, notes], { encoding: "utf8" });
+    if (ran.status !== 0) {
+      issues.push("exit gate: a named defect has no GitHub issue, pull, or comment");
+      fixes.push("Open or comment the GitHub item, then put repo#n on the newest NOTES section");
+    } else {
+      lines.push("✅ exit gate");
+    }
   }
 
   const gogglesOff = suitSeat.gogglesDisabled(cwd);
@@ -92,4 +111,37 @@ export function runDoctor(cwd: string, nodeVersion: string = process.version): D
   }
   lines.push("");
   return { text: `${lines.join("\n")}\n`, exitCode: gogglesOff ? 1 : 0 };
+}
+
+function repertoireOnDisk(cwd: string): string | null {
+  const candidates = [
+    ["node_modules", "@0xray", "repertoire", "package.json"],
+    ["node_modules", "0xray", "vendor", "@0xray", "repertoire", "package.json"],
+    ["vendor", "@0xray", "repertoire", "package.json"],
+  ];
+  for (const parts of candidates) {
+    const file = join(cwd, ...parts);
+    if (!existsSync(file)) continue;
+    try {
+      const parsed: unknown = JSON.parse(readFileSync(file, "utf8"));
+      if (parsed && typeof parsed === "object" && "version" in parsed && typeof parsed.version === "string") {
+        return parsed.version;
+      }
+    } catch {
+      return "?";
+    }
+    return "?";
+  }
+  return null;
+}
+
+/** 11 Nov 2026 patched LTS. 24.22.1 and Node 18/20/22 stay below this floor. */
+function nodeMeetsPatchedLts(nodeVersion: string): boolean {
+  const parts = nodeVersion.replace(/^v/, "").split(".");
+  const major = parseInt(parts[0] || "0", 10);
+  const minor = parseInt(parts[1] || "0", 10);
+  const patch = parseInt(parts[2] || "0", 10);
+  if (major !== 24) return major > 24;
+  if (minor !== 22) return minor > 22;
+  return patch >= 3;
 }

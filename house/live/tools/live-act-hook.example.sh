@@ -4,7 +4,11 @@
 #   on prompt submit -> live-act-hook.example.sh prompt   on stop -> live-act-hook.example.sh stop
 # It sends ids and seat names only: never the prompt text. Failures are ignored so a hook never blocks a turn.
 case "${1:-}" in
-  prompt) live_act received prompt "${LIVE_PROMPT_FROM:-Lead}" >/dev/null 2>&1
+  prompt) stamp="${XRAY_MAIN:-}/house/live/tools/inbox-wake-stamp.sh"
+          if [[ -n "${XRAY_MAIN:-}" && -x "$stamp" ]]; then
+            "$stamp" "${LIVE_SEAT:-${XRAY_SEAT:-arch1}}" >/dev/null 2>&1 || true
+          fi
+          live_act received prompt "${LIVE_PROMPT_FROM:-Lead}" >/dev/null 2>&1
           live_act start turn "${LIVE_TURN_TAG:-turn}" >/dev/null 2>&1 ;;
   stop)   live_act end turn "${LIVE_TURN_TAG:-turn}" >/dev/null 2>&1 ;;
   *)      echo "usage: $0 prompt|stop" >&2; exit 2 ;;

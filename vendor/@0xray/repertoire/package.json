@@ -24,7 +24,7 @@
     "governance"
   ],
   "engines": {
-    "node": ">=18"
+    "node": ">=24.22.3"
   },
   "publishConfig": {
     "access": "public"

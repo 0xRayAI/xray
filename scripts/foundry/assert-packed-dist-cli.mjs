@@ -81,6 +81,12 @@ export function assertDistCliOnDisk(rootDir) {
       `dist/cli/index.js missing on disk at ${cli}. Run npm run build before pack/publish.`,
     );
   }
+  const source = path.join(rootDir, "src", "cli", "index.ts");
+  if (fs.existsSync(source) && fs.statSync(cli).mtimeMs < fs.statSync(source).mtimeMs) {
+    throw new Error(
+      `dist/cli/index.js is older than src/cli/index.ts. Run npm run build before pack/publish.`,
+    );
+  }
 }
 
 export function listPackedPathsDryRun(rootDir) {

@@ -1,6 +1,6 @@
 import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, utimesSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -14,6 +14,7 @@ import { mintAfterWear } from '../../cli/commands/foundry-mint-wear.js';
 import { millPackageDir, resolveHookInstaller } from '../../../scripts/foundry/mill-root.mjs';
 import {
   REQUIRED_PACK_PATHS,
+  assertDistCliOnDisk,
   assertPackedPaths,
   parseNpmPackJson,
 } from '../../../scripts/foundry/assert-packed-dist-cli.mjs';
@@ -65,6 +66,22 @@ describe('foundry mill — packed dist/cli gate', () => {
     expect(parseNpmPackJson(JSON.stringify({ files: REQUIRED_PACK_PATHS }))).toEqual(
       REQUIRED_PACK_PATHS,
     );
+  });
+
+  it('refuses a dist/cli older than src/cli/index.ts', () => {
+    const dir = mkdtempSync(path.join(os.tmpdir(), 'xray-stale-dist-'));
+    try {
+      mkdirSync(path.join(dir, 'dist', 'cli'), { recursive: true });
+      mkdirSync(path.join(dir, 'src', 'cli'), { recursive: true });
+      const cli = path.join(dir, 'dist', 'cli', 'index.js');
+      writeFileSync(cli, 'old\n');
+      writeFileSync(path.join(dir, 'src', 'cli', 'index.ts'), 'new\n');
+      const past = new Date(Date.now() - 60_000);
+      utimesSync(cli, past, past);
+      expect(() => assertDistCliOnDisk(dir)).toThrow(/older than src\/cli\/index\.ts/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 
   it('prepack and mill publish call the packed dist/cli assert', () => {
@@ -1023,6 +1040,37 @@ describe('foundry mill — mint from consumer SSOT', () => {
     }
   });
 
+  it('changelog mill fails when the package section is ahead, missing, or empty', () => {
+    const write = (name: string, version: string, changelog: string) => {
+      const tmp = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-changelog-'));
+      writeFileSync(path.join(tmp, 'package.json'), `${JSON.stringify({ name, version }, null, 2)}\n`);
+      writeFileSync(path.join(tmp, 'CHANGELOG.md'), changelog);
+      return tmp;
+    };
+    const ahead = write('acme-app', '1.2.3', '## [9.9.9] - 2026-01-01\n\n- future\n');
+    const missing = write('acme-app', '1.2.3', '## [0.0.1] - 2026-01-01\n\n- old\n');
+    const empty = write('acme-app', '1.2.3', '## [1.2.3] - 2026-01-01\n\n### Changes\n');
+    const ok = write('acme-app', '1.2.3', '## [Unreleased]\n\n## [1.2.3] - 2026-01-01\n\n- shipped\n');
+    try {
+      const aheadResult = validateReleaseDocs(ahead);
+      expect(aheadResult.ok).toBe(false);
+      expect(aheadResult.errors.join('\n')).toContain('top CHANGELOG entry is [9.9.9]');
+      const missingResult = validateReleaseDocs(missing);
+      expect(missingResult.ok).toBe(false);
+      expect(missingResult.errors.join('\n')).toContain('missing ## [1.2.3] section');
+      const emptyResult = validateReleaseDocs(empty);
+      expect(emptyResult.ok).toBe(false);
+      expect(emptyResult.errors.join('\n')).toContain('## [1.2.3] has no bullets');
+      const okResult = validateReleaseDocs(ok);
+      expect(okResult.ok, okResult.errors.join('\n')).toBe(true);
+    } finally {
+      rmSync(ahead, { recursive: true, force: true });
+      rmSync(missing, { recursive: true, force: true });
+      rmSync(empty, { recursive: true, force: true });
+      rmSync(ok, { recursive: true, force: true });
+    }
+  });
+
   it('validate-release-docs is light unless the milled repo is 0xray with docs-site', () => {
     const tmp = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-light-'));
     try {
@@ -1404,14 +1452,15 @@ describe('foundry mill — inspect organ', () => {
           detail?: string;
           hits?: string[];
         };
-        expect(stained.ok).toBe(false);
-        expect(stained.failed).toContain('machinePlugin');
-        expect(stained.failed).not.toContain('isolated-home');
+        // An unpinned machine plugin this project did not plant is a WARN, not a failure.
+        expect(stained.ok, JSON.stringify(stained.checks, null, 2)).toBe(true);
+        expect(stained.failed).not.toContain('machinePlugin');
+        expect((stained as { warnings?: string[] }).warnings).toEqual(['machinePlugin']);
         expect(stainedHome.ok).toBe(true);
         expect(stainedHome.isolated).toBe(false);
         expect(stainedHome.detail).toBeUndefined();
-        expect(stainedPlugin.ok).toBe(false);
-        expect(stainedPlugin.detail).toMatch(/delete it/);
+        expect(stainedPlugin.ok).toBe(true);
+        expect(stainedPlugin.detail).toMatch(/rm -rf /);
         expect(stainedPlugin.hits).toEqual([path.join(machineWithPlugin, '.grok', 'plugins', '0xray')]);
         const isolatedStained = await inspectSuit(tmp, {
           millRoot: root,
@@ -1425,8 +1474,8 @@ describe('foundry mill — inspect organ', () => {
         };
         expect(isolatedHomeStained.ok).toBe(true);
         expect(isolatedHomeStained.isolated).toBe(true);
-        expect(isolatedStained.ok).toBe(false);
-        expect(isolatedStained.failed).toEqual(['machinePlugin']);
+        expect(isolatedStained.ok).toBe(true);
+        expect(isolatedStained.failed).toEqual([]);
         rmSync(path.join(machineWithPlugin, '.grok', 'plugins', '0xray'), { recursive: true, force: true });
         mkdirSync(path.join(machineWithPlugin, '.grok', 'plugins', '0xray-alt'), { recursive: true });
         const alt = await inspectSuit(tmp, {
@@ -1435,11 +1484,54 @@ describe('foundry mill — inspect organ', () => {
           env: { HOME: machineWithPlugin },
           machineHome: machineWithPlugin,
         });
-        expect(alt.ok).toBe(false);
-        expect(alt.failed).toContain('machinePlugin');
+        expect(alt.ok).toBe(true);
+        expect(alt.failed).not.toContain('machinePlugin');
+        expect((alt as { warnings?: string[] }).warnings).toEqual(['machinePlugin']);
         const altHome = alt.checks.find((c) => c.id === 'isolated-home') as { ok?: boolean; isolated?: boolean };
         expect(altHome.ok).toBe(true);
         expect(altHome.isolated).toBe(false);
+        // A machine plugin is a WARN, including one that pins another root.
+        rmSync(path.join(machineWithPlugin, '.grok', 'plugins', '0xray-alt'), { recursive: true, force: true });
+        const pinned = path.join(machineWithPlugin, '.grok', 'plugins', '0xray');
+        mkdirSync(pinned, { recursive: true });
+        const pin = (rootPin: string) =>
+          writeFileSync(
+            path.join(pinned, '.mcp.json'),
+            JSON.stringify({ mcpServers: { 'xray-enforcer': { env: { XRAY_ROOT: rootPin } } } }),
+          );
+        pin(tmp);
+        const same = await inspectSuit(tmp, { millRoot: root, skipLive: true, env: { HOME: machineWithPlugin }, machineHome: machineWithPlugin });
+        expect(same.ok, JSON.stringify(same.checks, null, 2)).toBe(true);
+        expect((same as { warnings?: string[] }).warnings).toEqual(['machinePlugin']);
+        pin('/home/box/other-seat');
+        const other = await inspectSuit(tmp, { millRoot: root, skipLive: true, env: { HOME: machineWithPlugin }, machineHome: machineWithPlugin });
+        expect(other.ok).toBe(true);
+        expect(other.failed).not.toContain('machinePlugin');
+        expect((other as { warnings?: string[] }).warnings).toEqual(['machinePlugin']);
+        const otherPlugin = other.checks.find((c) => c.id === 'machinePlugin') as { detail?: string };
+        expect(otherPlugin.detail).toMatch(/points at another root .* Remove the machine plugin/);
+        // Launcher paths count too: no XRAY_ROOT pin, but the servers run another checkout.
+        const launcher = (arg: string) =>
+          writeFileSync(
+            path.join(pinned, '.mcp.json'),
+            JSON.stringify({ mcpServers: { repertoire: { command: 'node', args: [arg], env: {} } } }),
+          );
+        launcher('/home/box/other-seat/node_modules/0xray/scripts/node/mcp-launch.cjs');
+        const viaLauncher = await inspectSuit(tmp, { millRoot: root, skipLive: true, env: { HOME: machineWithPlugin }, machineHome: machineWithPlugin });
+        expect(viaLauncher.ok).toBe(true);
+        expect((viaLauncher as { warnings?: string[] }).warnings).toEqual(['machinePlugin']);
+        launcher('/tmp/xray-setup-nogit-abc/node_modules/@0xray/repertoire/dist/mcp/server.js');
+        const viaDeadRoot = await inspectSuit(tmp, { millRoot: root, skipLive: true, env: { HOME: machineWithPlugin }, machineHome: machineWithPlugin });
+        expect(viaDeadRoot.ok).toBe(true);
+        expect((viaDeadRoot as { warnings?: string[] }).warnings).toEqual(['machinePlugin']);
+        launcher(path.join(tmp, 'node_modules', '0xray', 'scripts', 'node', 'mcp-launch.cjs'));
+        const ownLauncher = await inspectSuit(tmp, { millRoot: root, skipLive: true, env: { HOME: machineWithPlugin }, machineHome: machineWithPlugin });
+        expect(ownLauncher.ok, JSON.stringify(ownLauncher.checks, null, 2)).toBe(true);
+        // An isolated HOME never loads the machine plugin, so another root there is only a WARN.
+        launcher('/home/box/other-seat/node_modules/0xray/scripts/node/mcp-launch.cjs');
+        const isolatedOther = await inspectSuit(tmp, { millRoot: root, skipLive: true, env: { HOME: path.join(tmp, '.lastmile-home') }, machineHome: machineWithPlugin });
+        expect(isolatedOther.ok, JSON.stringify(isolatedOther.checks, null, 2)).toBe(true);
+        expect((isolatedOther as { warnings?: string[] }).warnings).toEqual(['machinePlugin']);
       } finally {
         rmSync(machineWithPlugin, { recursive: true, force: true });
       }
@@ -1481,7 +1573,7 @@ describe('foundry mill — inspect organ', () => {
       expect(publicPkgs).toEqual(
         expect.arrayContaining([
           { name: '@0xray/foundry', version: '0.1.7' },
-          { name: '@0xray/review-suit', version: '0.0.1' },
+          { name: '@0xray/review-suit', version: '0.0.1', role: 'consumer' },
         ]),
       );
 
@@ -1515,6 +1607,59 @@ describe('foundry mill — inspect organ', () => {
     } finally {
       rmSync(publicDir, { recursive: true, force: true });
       rmSync(privateDir, { recursive: true, force: true });
+    }
+  });
+
+  it('live-put skips a 404 for an unpublished consumer and still fails a 404 for 0xray', async () => {
+    const { inspectSuit } = await import('../../../scripts/foundry/inspect.mjs');
+    const { mintConsumerSuit } = requireCjs(path.join(root, 'scripts/foundry/mint-suit.cjs')) as {
+      mintConsumerSuit: (pkg: string, target: string, log: (...a: unknown[]) => void) => unknown;
+    };
+    const tmp = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-unpublished-'));
+    const machine = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-machine-'));
+    try {
+      writeFileSync(
+        path.join(tmp, 'package.json'),
+        `${JSON.stringify({ name: 'cold', version: '1.0.0' }, null, 2)}\n`,
+      );
+      mintConsumerSuit(root, tmp, () => undefined);
+      const env = { HOME: path.join(tmp, '.lastmile-home') };
+      const pass = await inspectSuit(tmp, {
+        millRoot: root,
+        skipLive: false,
+        env,
+        machineHome: machine,
+        fetch: async (url: string) =>
+          ({ status: String(url).includes('/cold-') ? 404 : 200 }) as Response,
+      });
+      expect(pass.ok, JSON.stringify(pass.checks, null, 2)).toBe(true);
+      const live = pass.checks.find((c) => c.id === 'live-put') as {
+        packages?: Array<{ name?: string; ok?: boolean; skipped?: boolean; status?: number }>;
+      };
+      const cold = live.packages?.find((pkg) => pkg.name === 'cold');
+      expect(cold?.status).toBe(404);
+      expect(cold?.ok).toBe(true);
+      expect(cold?.skipped).toBe(true);
+      const xray = live.packages?.find((pkg) => pkg.name === '0xray');
+      expect(xray?.ok).toBe(true);
+
+      const red = await inspectSuit(tmp, {
+        millRoot: root,
+        skipLive: false,
+        env,
+        machineHome: machine,
+        fetch: async () => ({ status: 404 }) as Response,
+      });
+      expect(red.ok).toBe(false);
+      expect(red.failed).toContain('live-put');
+      const redLive = red.checks.find((c) => c.id === 'live-put') as {
+        packages?: Array<{ name?: string; ok?: boolean; skipped?: boolean }>;
+      };
+      expect(redLive.packages?.find((pkg) => pkg.name === '0xray')?.ok).toBe(false);
+      expect(redLive.packages?.find((pkg) => pkg.name === 'cold')?.skipped).toBe(true);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+      rmSync(machine, { recursive: true, force: true });
     }
   });
 
@@ -1560,6 +1705,25 @@ describe('foundry mill — inspect organ', () => {
       expect(bare.hooks.bound).toBe(false);
       expect(bare.repertoire.fastened).toBe(false);
       expect(bare.repertoire.vendorSource).toBe(true);
+      expect(bare.repertoire.packedVendor).toBe(false);
+
+      const packedRoot = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-packed-rep-'));
+      try {
+        writeFileSync(path.join(packedRoot, 'package.json'), `${JSON.stringify({ name: 'cold', version: '1.0.0' })}\n`);
+        const packedPkg = path.join(packedRoot, 'node_modules', '0xray', 'vendor', '@0xray', 'repertoire');
+        mkdirSync(packedPkg, { recursive: true });
+        writeFileSync(
+          path.join(packedPkg, 'package.json'),
+          `${JSON.stringify({ name: '@0xray/repertoire', version: '0.2.9' })}\n`,
+        );
+        const packed = probeHarness(packedRoot);
+        expect(packed.repertoire.nodeModules).toBe(false);
+        expect(packed.repertoire.vendorSource).toBe(false);
+        expect(packed.repertoire.packedVendor).toBe(true);
+        expect(packed.repertoire.fastened).toBe(true);
+      } finally {
+        rmSync(packedRoot, { recursive: true, force: true });
+      }
 
       mkdirSync(path.join(tmp, '.cursor'), { recursive: true });
       writeFileSync(
@@ -1659,6 +1823,9 @@ describe('foundry mill — flesh', () => {
       expect(log).toContain('## [1.2.4]');
       expect(log.indexOf('## [Unreleased]')).toBeLessThan(log.indexOf('## [1.2.4]'));
       expect(log.indexOf('## [1.2.4]')).toBeLessThan(log.indexOf('## [1.2.3]'));
+      const unreleasedBody = log.slice(log.indexOf('## [Unreleased]'), log.indexOf('## [1.2.4]'));
+      expect(unreleasedBody).not.toContain('- pending');
+      expect(log.slice(log.indexOf('## [1.2.4]'), log.indexOf('## [1.2.3]'))).toContain('- pending');
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }
@@ -1793,6 +1960,19 @@ describe('foundry mill — CI and hooks', () => {
     const monitor = read('.github/workflows/mill-monitor.yml');
     expect(monitor).toContain('0xRay CI/CD');
     expect(monitor).toContain('ci-monitor.mjs');
+    expect(monitor).toContain("github.event.workflow_run.conclusion != 'cancelled'");
+    expect(monitor).toContain('mill-monitor-${{ github.event.workflow_run.head_sha || github.ref }}');
+    for (const file of [
+      '.github/workflows/enforce-agents-md.yml',
+      '.github/workflows/enforce-version-compliance.yml',
+      '.github/workflows/codeql.yml',
+      '.github/workflows/processor-tests.yml',
+      '.github/workflows/hermes-plugin.yml',
+    ]) {
+      const text = read(file);
+      expect(text).toContain('cancel-in-progress: true');
+      expect(text).toContain('${{ github.ref }}');
+    }
     expect(monitor).toContain('Foundry mill (CI report)');
     expect(existsSync(path.join(root, '.github/workflows/ci-cd-monitor.yml'))).toBe(false);
     expect(read('scripts/node/github-actions-monitor.cjs')).toContain('foundry/ci-monitor.mjs');

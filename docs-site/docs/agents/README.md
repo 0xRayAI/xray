@@ -4,6 +4,8 @@
 
 These are organs. The product is the suit. 0xRay is a three-subsystem autonomous engine. The suit is the wear.
 
+Notes are in [Features since 3.1](../guides/features-since-3.1).
+
 **42 YML surfaces** in `src/opencode/agents/*.yml`. Zero manual registration. Invoke via `@agent-name` in OpenCode.
 
 Consumer projects receive a slimmed **AGENTS.md** (from `AGENTS-consumer.md`) when they run `npx 0xray wear`.

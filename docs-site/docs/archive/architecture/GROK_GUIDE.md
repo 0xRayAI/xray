@@ -18,7 +18,7 @@
 
 ### Prerequisites
 
-- **Node.js 18+**
+- **Node.js 24.22.1+**
 - **npm 9+**
 - Grok CLI, Grok Build, or Cursor with Grok agent skills
 

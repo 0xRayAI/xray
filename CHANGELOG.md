@@ -1,14 +1,419 @@
-# Changelog
-
-All notable changes to this project will be documented in this file.
-
-The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
-
 ## [Unreleased]
 
-- Docs. The house guide and the bifrost plate carry the board rule, the kanban note, and the history note. Board rule. On every owner message run `live-inbox <seat> --prompt --from owner --note "<gist>"`. Ack a handled line with `live-inbox <seat> --ack <id>`, or `live-inbox <seat> --ack all` once every open line is handled. A cloud agent run uses `live-inbox <seat> --turn start --tag "bc-<first8> <track>"` and `live-inbox <seat> --turn end --tag "bc-<first8>"`. `--from owner` is required today. Kanban note. The live page shows a read-only kanban above Activity. Columns are open, review, fix, merge, retest, and done. The deep link is `?card=`. History note. Every activity line is archived to history. The word owner is the owner via LIVE_OWNER or the owner-name. The public board does not serve the history archive or the kanban yet.
+### 🔄 Changes
 
-### 4.1.3 notes
+- Mill is back on the counted board and on the canvas, with the gear glyph. The nodes sit on a 4 by 3 mesh instead of one top row. Mill is not an inbox seat. A GitHub event credited to mill still marks mill active. #1101
+- The session hook orders one inbox monitor inside the CLI. It does not start inbox-watch.sh. A prompt stays quiet when this session's inbox-watch is alive and its parent is not pid 1. Stop blocks one turn per session while that monitor is missing, then the turn ends. The prompt still prints the order. An outside inbox-watch pid is named so the seat can stop it. A second copy of the script exits when that pid file names a live process. The built hook loads the nucleus modules so that order can finish. #1057
+
+- A quiet collector pass publishes the board queue without hashing one giant string per event. A feed file this collector just wrote is not a stall. The image copies `card-owner.mjs`, and the collector copies `card_owner.py`.
+- Packet R assigns the queue. `R: arch1` files the line on arch1 without an `@arch10x` mention, including when arch1 opened it. An already-seen open from the last 48 hours is filed once.
+- The board reader waits 90 seconds for one pass of the live feed. A 20 second cut dropped the publish and froze the queue clock.
+- The public queue row keeps the repo, the number, and the reason.
+- An open ask that names the arch10x login stays on the queue across Chicago days. A comment from a previous Chicago day stays hidden.
+- A watch poll prints the queue head and the other open lines. A turn start inside the open window does not extend it. Open lines are not acked.
+- An open card whose seat line is missing is filed again within 14 days. The seed pass does not replay history. The 48 hour packet R backfill stays.
+- Packet R sets the GitHub assignee when the card has none and R names a fleet bot. A person login is not assigned. A write error does not stop the collector. The assignee write uses its own token. The collector read token stays read-only. A 403, a 404, or any other 4xx except 401 is remembered and is not posted again. A 401 stops assignee writes for this process and does not remember the card. A network miss is tried on the next pass. A pass that spends its ten writes, or a write that never reaches GitHub, walks the open cards again. A dead token latches that walk. A collector that has not started a pass still has that budget, so a poll finishes.
+- A quiet pass writes a clock file and leaves the event document in place. That clock file omits the board. A clock file over 2 MiB still moves the health clock and is not parsed. `card_age` is reported and does not change `ok`.
+- Restoring burst-live calls Railway `deploymentRollback` with the deployment id. `railway redeploy` rebuilds only the latest deployment. `railway down` removes it.
+- A prompt that names a bug and no issue number asks the board to open one issue. A log dump and a line that already names a number do not.
+- A later prompt repeats the inbox monitor start order when that pid is down. It does not poll.
+
+## [4.2.3] - 2026-11-12
+
+### 🔄 Changes
+
+- Inspect counts a Grok hook as bound when the command sits inside the nested hooks list. A worn Grok suit no longer looks unbound.
+- A machine Grok plugin that points at another project is a warning. It does not fail the wear. The project plugin is the one wear planted.
+
+---
+
+## [4.2.2] - 2026-11-11
+
+### 🔄 Changes
+
+- `@0xray/grok-bot@0.1.14` is on npm. `stand-up-fleet` is the one pass for a new fleet. The kit docs name the doctor line, house off, and Node `>=24.22.3`. #1018 #1019 #1020
+- AGENTS.md, AGENTS-consumer.md, and llms.txt name era **4.2** and Node `>=24.22.3`. #1017
+- The 4.2.1 heading holds the notes that shipped in that tag. #1016
+- Ack `open` is the next queue read. A new station nudge acks the older ones. A merged pull's handoff acks with no review link. A new PR head is kept when the author is outside the fleet, and it replaces the older head line. The inbox head reprints until it is acked. A card owner is a seat: `Board-Owner:`, else the assignee, else builder-cloud. A turn that ends with lines from that turn gets one follow-up wake. The station nudge names the unread count. The wake trap peeks the inbox before turn end. #985 #996 #1001 #1002 #1003 #1004
+- Node floor is `>=24.22.3`, the 11 Nov 2026 patched 24 release. Railway images install that binary from nodejs.org over `node:24.22.1-bookworm-slim`. Docker Hub has no `node:24.22.3` tag. Changelog, README, guides, engines, and doctor name that floor. CI workflows stay on `24.22.1`. #1014 #1015
+- A temp machine home is a durable wear. A plate id that is not a skill declines. Lens cards list three skills. A seat-kept station restamps Repertoire only when that row is already there. Push runs without GNU flock. Board and spectrum shots fall back when `/opt/cursor` is not writable. The 4.1.1 mill and inspect bodies are pinned so a sound-seat upgrade can strip them. #1013
+- OP-PROC records the eight 2026-11-09 fleet rules. #918
+- Plate stamps say `0xray 4.2.1`. The notes seed is Point, Open, Learned, Next cut. #1012
+- Doctor warns when a bridge points outside this folder. #1011
+- board-history binds a free port. #1010
+- Wear prints `grok-trust: wrote` and the trust file path. #1000
+- House off is `enabled: false`. The board line is omitted. #1009
+- A packed `node_modules/0xray/vendor/@0xray/repertoire` counts as the organ present. #1005
+- Doctor names the kit version and the project. A missing 0xray prints `0xray not installed`. #998
+- Inspect skips a 404 for the consumer's own unpublished package. A 404 for 0xray or the mill still fails. #997
+- Doctor omits the Board line when house is not enabled. #999
+- Vitest isolates HOME. #995
+- The cold-run docs say what the command printed. #987
+- The start-after test no longer holds the runner. #1006
+- Wear pins a linked checkout at `node_modules/0xray`. A second wear keeps the mill catalog and the Grok plugin servers, including goggles and repertoire. Quick Start says `npm init -y` before install, install the suit before the grok-bot kit, and that the npm 11 allowScripts warning is safe to ignore. `npx 0xray look` and `npx 0xray inspect --skip-live` are on that path.
+- A seat bot comment does not wake another seat. #976 #978
+- `ci_pass` rings only when that sha's checks are green. #961 #967
+- Wake does not clone. It fast-forwards the checkout that is already there. #959 #960
+- `--ack stale` runs only when GitHub closed or merged the card. #962 #968
+- Every wake runs station Full and the wrap-up. The TRACKS path and the room-turn check are on that path. #913 #942 #954
+- Critic owns the backlog sweep. #900
+- Wear repins a worktree `mcp-launch.cjs` onto the installed package. #898
+- The critical and high npm audit findings are cleared. #897
+- The grok-bot kit stamp is 0.1.13. #896
+- A closed beat cuts the next eng beat. #895
+- Goggles stamps the missing sight pairs. #894
+- Look hops to a named part of the plate. #893
+- Look opens the plate drawing. #892
+- The stamp-plate diagram reads left to right: goggles, stamp, lens, look. The kit edges match the piping. #885
+- The House goggles line is Nibbler only. The trailing clause is gone. #874 #882 #883
+
+## [4.2.1] - 2026-11-05
+
+### 🔄 Changes
+
+- Herald is the Dist write plant on foundry 0.1.15. #869 #871 #872
+- Scout is the feed plant on foundry 0.1.14. #870
+- The goggles plane map follows GOGGLES_ROOT. #877 #878
+- House/live CI uses ubuntu-24.04 so Playwright 1.55 can install. #880
+- OP-PROC: goggles is Nibbler only. Eng does not wear it on every turn. #873
+
+- Wear copies bundle.md into the Grok plugin. Session boot reads it. #848
+
+- A green head acks a handoff ci_fail. The collector ci_fail line still clears too. #856
+
+- A ready tells the seat to clear Quiet. A ci_pass on that same sha still rings, and the doorbell says Strict. #852
+
+- A merge or close acks that card's other open lines. The merge handoff stays. #854
+
+- The roster wraps into columns. A narrow page does not scroll sideways. bifrost#42
+
+- A popped ready rings again after critic_fail on that same sha. A pass on that sha keeps it buried. #849
+
+- A failed-verify comment plus a later green head rings critic with one ci_pass for that sha. A pass on that sha does not ring again. #806
+
+- A line stored during a live turn wakes that seat once when the turn ends. A 409 claim drop is replayed. An already-done wake is not. #832
+
+- The newer tip comment on a card is the inbox head. The older tip on that same card is shed. #840
+
+- The Chicago schedule sets fleet mode: weekdays 7:30–15:30 are full, otherwise lights-on. A manual switch holds until the next boundary. The route is arch1, cursor-cloud, grok-cli, or none. Cursor cloud launches only when that route allows it. #566
+
+- Fleet mode is full, lights-on, or dark. lights-on is the default. P1 and a scheduled run wake in every mode. Blaze or blinky sets the mode, and a seat wake does not. #566
+
+- A held card stays on the board and raises no nudge. #566
+
+- Fleet routing sits beside the LENS routing plate. The routing card stays task to agent. #816
+
+- A newer ready or ci_pass on the same pull is the head. The older line of that same kind is shed, including when the card is not a pull. #833
+
+- A ready handoff does not replace a card title with "handoff ready" or point an issue at /pull/. The GitHub title stays. A stuck packet card takes that title from the open event, or from the GitHub issue when the feed has no open event. #829
+
+- A re-tip that is already queued prints added:0 and the target's live head. A new tip still prints the send line. #814
+- A line marked shed is never the live head, including the rank-2 fallback. A ready handoff still leads a same-card tip. #823
+- `live-inbox --ack merged` acks every open line whose GitHub card is already closed or merged, in one pass. The watcher runs it when the head is one of those lines. #826
+- Forge owns the eng wave and beat cut. arch1_launch off disables the Arch1 cloud worker only and does not stop inbox head work. #821 #822
+- A merged turn that names a fixed issue must also say that issue is closed. Otherwise the exit gate fails. #819
+- An unassigned issue wakes arch1 when forge is dark, and forge otherwise. #815
+- A newer merge tip on the same pull is the live head. An older tip on that pull does not stay in front. A ready handoff still leads. #813
+- The exit gate reads the first notes section and accepts `repo#n`. Notes are prepended, so an older unlinked line does not fail the turn. #812
+- A new issue open leads an older parent tip. A passed parent stays shed, so later tips on that card do not take the head. Wear writes one wake token. #809
+- The first head print after a watcher start writes one wake token, so the next poll reprints that head once. Later polls of that token stay quiet. #809
+- A new wake reprints the one seen inbox head once. Later polls of that same wake stay quiet. bifrost#29
+- A green head that is still critic's posts one ci_pass line to critic. That line rings the chat. A pass on that sha does not. #806 #32
+- A seat can pass the live inbox line. The line leaves the queue and the pull or issue stays open. A ready or merge handoff on an issue does not pin that line.
+- The seat read is one live line. That line prints once per wake, and a new wake prints it again until it is acked. Later polls of the same line stay quiet. The rest stay stored. #768
+- A live inbox pid from another session still polls and orders this session's monitor. The pid that belongs to this session is left alone. #798
+- The pack ships `house/live/tools/inbox-watch.sh` and `live-inbox` beside it. The board server stays out of the tarball. #797
+- An empty R head still shows the seat's open line. A ready handoff keeps a comment with no R packet in the backlog. #793
+- A comment on a card whose packet names this seat as R stays on the head and is laddered. Hotfix, then P0, then P1 are read first. #768.
+- The inbox head is an open card whose packet names this seat as R. Priority is hotfix, then P0, then P1 on that packet. The line ladder follows that head. A merge names that card. #768.
+- The board shows Arch1 backlog depth before open now. A card that already has an L3 does not get another while that backlog is open. #731 #768.
+- The next-child line is stamped when it is posted, so a merge older than the route window still reaches the seat. arch1_launch stays off. #772 #768.
+- A merged pull already on the board still posts one ready line for the next open child. A closed number in the parent story is skipped. arch1_launch stays off. #772 #768.
+- A merged pull that names an open parent posts one ready line to that parent's R seat with the next open child. arch1_launch stays off. #772 #768.
+- The next-child doorbell stays in the feed. A cross-link is not the next child. The inbox line id ends in `:door` and the time is the post time. #772 #768 #731.
+- A closed issue is not the doorbell parent. A stored `:door` is replaced when the open parent changes. arch1_launch stays off. #778 #768 #731.
+- When Arch1 already has a backlog, a new non-P0 comment is stored and is not laddered. A P0 or P1 card and a ready handoff still enter the head. #731 #768.
+- PR workflows for AGENTS, version and docs, CodeQL, processor tests, and the Hermes plugin cancel the previous run on the same ref. The mill report skips a cancelled parent run. #766.
+- The inbox head keeps a new comment and a comment on a P0 or P1 card. Older comments and nudges stay stored. The read and the board report Arch1 backlog depth. #768 #731.
+- The inbox read is the queue head: ready handoffs, a hotfix, and P0 or P1. Nudges and station lines stay stored while that head is open. A station nudge is not posted while any line is open. #731.
+- A later packet comment refreshes R, A, and next owner. An open issue that missed `issue_open` still becomes a card on the next pass. #746.
+- The npm pack lists `grok-bot/lib/next-wave.mjs` beside `pulsar-game.mjs`. #749.
+- Critic does not pass a live packet until R and A are filled. A soft follow-up is in the cut, scheduled, or closed with a reopen note. A ready card is held only by Waiting on, start_after, or Held. #732 #733 #731.
+
+- `express-rate-limit` in the lock is 8.7.2. The watchlist row matches. No app flag change. #743.
+- Hotpack is a runbook and a lexicon row. tip, soft FU, strip, rewear, mainstay, Dist GO, and graduate each have a row. #725.
+
+- The infrastructure test reads agents from `src/agents` and suit config from `xray/`. `src/opencode/agents` is the OpenCode wear dir. #397.
+
+- A second cloud launch on a pull that already has a running agent is recorded as a reply on that agent. #377 #380 #401.
+
+- A live card whose current head is already on the seat's handled cursor gets no L1, L2, or L3. #539 #546.
+
+- The grok-bot wave rank lives in the package. It does not import the house tree. #517.
+- The dormant redeploy path refuses `git push origin master` and `git reset --hard`. #516.
+- qs stays at 6.17.1 or newer. `@hono/node-server` is pinned to 2.1.5. #715 #713.
+
+- `/history/transitions?day=` returns that Chicago day, and the latest rows of the day when the page is full. #16 on bifrost.
+- A score reason uses the same level as `getLevelFromScore`. #542.
+- `inference:run --no-verify` skips deploy verify, and `--no-apply` skips apply. #515.
+- An activity line with a seat is credited to that seat, not Github. #530.
+
+- Wear retargets a home Grok hook `args` path off a deleted temp checkout onto the worn package. A suit that already has a foundry inventory keeps those skills and does not gain the catalog on the next wear. #727 #728.
+- GitHub Actions workflows are locked in `.github/workflows/actions.lock`. #714.
+
+- After a compact, the station card says `Full: due` and keeps that line until the seat replaces it. `--prompt` stays step 1. The checklist is OP-PROC station-boot and station-nudge. #720.
+
+- Board stats sit above the mesh. The roster sits at the top of the mesh card and the timeline sits at the bottom of that card.
+- A Grok tool opens the seat turn, then ticks it once a minute, so a long session stays working. A subagent posts kind subagent on spawn and on return. The tag is a short hash. The prompt stays off the wire. A next-owner label that names the seat, such as Arch1 (@arch10x), binds that light to the open card.
+- Wear retargets a home Grok hook onto the package being worn when `run-grok-hook.mjs` is missing or points at another tree. The files are `~/.grok/config.toml`, `~/.grok/hooks`, and the machine plugin `hooks.json`.
+- The spectrum replay plays the last hour. The opening burst and the replay loop use that window.
+- Grok session start runs `inbox-watch.sh` once when `~/.burst/inbox-watch.pid` is not a live process. The printed lines and a start order for that script are the session systemMessage. A live watcher pid is left running and gets no start order. The once-poll does not ack and does not replace that pid. Grok has no inbound webhook.
+- The README hero and the social card are the Bifrost poster. The suit wears the board. The mark stays v4.1.
+- Worn hooks post the owner line on the activity feed as kind prompt, action sent, from owner, with the note. The same wire posts the packet, the card tag, and the turn. The board is https://bifrost.0xray.dev. The key folder is ~/.burst/seat-keys. One seat key is the seat. A 202 from the board counts as posted.
+- The unposted ship thread is tweets/v4.1.5.md. It stays a draft until Dist GO.
+- The OP cycle is digest, then card, then do, then loop, then ship. Digest is disk. Card is the same turn. Do is the implementer. Loop is the two loops. Ship is the publisher after Review. #701.
+- L1 through L3 stay on the packet next owner, else the card owner, or the owing seat. CoS is not woken to reassign. A threshold a runbook does not hard-name is a soft follow-up. #700.
+- A prompt pulse spins only the card named by working_on. A roster row is a fleet seat or a product node, and a seat quiet for 7 days is dormant. Seen is not working, and the mesh paints that seen seat with one dim ring. An avatar keeps that ring outside the image. A GitHub write lights the seat only when that repo#number is an open board card. A board of only closed cards clears working. A finished cloud agent stamps cloud.last_ct, and an empty open set leaves CloudAgents off. An owner comment or push moves a stall card. bifrost #5 #6 #7 #8 #9 #10 #12.
+- Upkeep and reminders are scripts with no model call. A missing prompt, drift, or a dead cron is one card. The local reminder writes station.md. #577.
+- A same-path cluster is one tip and one pull. Lots of small cards stay. R opens the pull. A tips it. A blocker hotfix, a different deploy surface, or a soft follow-up stays a solo tip. #694.
+- The first /healthz beat has a 120s boot window. A steady miss after that beat still exits 1. The server listens on 0.0.0.0 so the supervisor probe reaches it. #661.
+- A missed /healthz makes the supervisor exit 1 so ON_FAILURE replaces the one replica. The replica pid is not SIGKILL'd. #661.
+- An open issue whose author is outside the fleet still gets a card. One backfill fills a number that has no open event. A second pass does not. #576.
+- Status compare uses one canonical id. The display name is paint only. An unknown status stays visible and is marked unknown. #570.
+- Acking a merge handoff requires a review or comment link on that pull. A bare ack leaves the line open. Other kinds ack as today. #554.
+- The inbox watcher writes a new open line to the seat todo and does not ack it. A seen id stays quiet. The seat acks after the work.
+- A queued or still-running required check does not open a ci_fail line. Only a completed failure does. #655.
+- A search that names one other card switches to that card and runs. Two cards stay on the held card. A path on no plane still runs. #662.
+- A test server does not post the station nudge. Railway does, unless STATION_NUDGE=off. #689.
+- The board tick posts one station nudge per seat on the weekday half hour. The plist template stays unloaded. bifrost #11.
+- Reading a plate file holds that card, so a search of its files runs. The code is on #644.
+- Codex 70 denies a write only when that path sits in a stale copy of this repo. A file outside the repo is allowed. A worktree on main is allowed. The code is on #646.
+- A red CI check writes a card when the pull has none, then a `ci_fail` inbox line for the next owner, else the owner. One open line per head. A green head clears it. #648.
+- A cloud-activity stamp reads GNU `stat -c` and BSD `stat -f`, so a fresh launch stamp skips the second post on macOS.
+- The rotation record names the public board host at `house/live/tools/load-wave-seed.mjs:14`. The page host stays `https://bifrost.0xray.dev`.
+- Wear treats a pinned agent body in `shipped-skill-blobs.json` as a shipped catalog copy and removes it on a non-catalog seat. A sound seat drops the mill and inspect files left by 4.1.1 and 4.1.2.
+- A repertoire symlink is relative to the real parent directory, so a seat under `/var` still opens the vendored organ.
+- The source suite reads `src/skills`. `.opencode/skills` is the OpenCode pack line. A missing `dist/cli` skips the CLI tests.
+- Suit boot enables `inbox-watch.sh` in the local TUI. `inbox-watch-ensure` does not start a process.
+- Pin qs to 6.17.0 in the root lock and the docs-site lock. Nested body-parser uses the same pin. #645.
+- Tandem is several tracks at once, on both loops, and no seat waits for a nod. It is the work mode. #683.
+- A card carries raci. A live card missing R or A is amber on its own mark. That mark is not the PACKET.md badge. #684.
+
+### 🐛 Bug Fixes
+
+- A missed health beat exits non-zero. /healthz still answers while the loop is alive. The inbox watcher is not signaled. #661.
+- An open card whose author is outside the fleet stays stored. The from node is GitHub. One backfill fills a missing number and does not run again. #576.
+- A card stored as `in_flight` and a card stored as `In Flight` land in the same column and the same filter. An unknown status is marked, not moved to open. #570.
+- A merge handoff ack without a review or comment link on that pull stays open. The stored ack keeps the link. #554.
+- The inbox watcher writes a new open line to `~/.burst/inbox-todo/<seat>.md` and leaves that line open. A seen id is not printed again. The seat acks after the work.
+- A queued, pending, waiting, or in-progress check is not a ci_fail line. A completed failure still is. #655.
+- A search that names one other card switches to that card and runs. Two cards return the held card. #662.
+- A test bind stays quiet inside the weekday window. The station tick posts when RAILWAY_ENVIRONMENT is set. #689.
+- A board tick posts nudge:station on the weekday half hour. The plist stays unloaded. bifrost #11.
+- A plate file holds its card. Reading `docs-site/docs/plates/<id>.md` keeps that card, and a search of the card's files runs.
+- Codex 70 denies a write in this stale checkout. A path outside this copy is allowed. A worktree is judged on its own HEAD.
+- Wear keeps the station call on the factory pre-compact hook. A same-named user script that does not launch the runner stays in place.
+- A search of a file on the held plane runs. The tool glob counts as that file. A search of another plane still returns the current card.
+- A search of a path on no plane runs. A directory the plane list does not name is that path. A one-token pattern that names no file is not a path, and a search with no path still returns the current card.
+- A search path outside this checkout runs. An absolute path that is not under this copy is on no plane.
+- A terminal command is the same search as a shell command. `rg` in that command returns the current card when the path is on another plane.
+- A path outside this checkout counts inside a terminal command, even when it contains `src/` or `scripts/`. `rg` of that path runs. An absolute path inside this checkout on another plane still returns the current card.
+- The lens-gate plate, the goggles plate, the features guide, and the package face state that same search rule. README, `llms.txt`, AGENTS, and SKILLS say it.
+- A `node_modules` symlink is ignored the same way a `node_modules` directory is.
+- The changelog mill fails when `## [package version]` has no bullets. A top version ahead of package.json still fails. The range rule is OP-PROC `#changelog`.
+- A day archive is read one line at a time, so a file past the string cap still dedups. #663.
+- A quiet collector pass leaves the event document in place and writes a small clock file. The server takes that clock without reading the document again. #667.
+- The live GitHub document keeps the newest events. A file of ~50k events is not parsed into the heap. #669.
+- Boot shrinks that document with a script that does not import the collector. fetch_feed lives under collector/upstream. #671.
+- A settled card is archived once per close. Day files over 8MB are folded to the latest row, then Redis serves /history and /history/cards. The live document says it is the newest window. #673.
+- The History panel follows /history/cards pages, so it lists every card. #675.
+- A settled card keeps its own close time, so a restart does not archive it again. #677.
+- A reboot keeps the volume. Each card is one line in the card book, and event days stay files. Redis refills from both. #679.
+- A packet next owner is an inbox tip when the opener is someone else. The opener's own line still drops. #660.
+- Pin qs to 6.17.0 in the root lock and the docs-site lock, including nested body-parser. #645.
+- A red CI check writes a card when the pull has none, then one `ci_fail` inbox line for that head. A green head clears it. #648.
+- Tandem is several tracks at once, on both loops, and no seat waits for a nod. #683.
+- A card carries raci. A live card missing R or A is amber on its own mark. #684.
+
+---
+
+## [4.2.0] - 2026-11-03
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: spin only the card named by working_on (#791) (bc0a635e4c)
+- fix: show Arch1 backlog and stop extra L3 repeats (#784) (a009005684)
+- fix: a closed issue is not the doorbell parent (#779) (50234bd937)
+- fix: keep the next-child doorbell in the feed (#777) (fde79c60ac)
+- fix: stamp the next-child line when it is posted (#776) (7b9a6bee2e)
+- fix: backfill the next child for a merge already stored (#775) (8ab1062dee)
+- fix: a merged child names the next item on its parent (#774) (14abebc6fd)
+- fix: shed a new non-P0 comment when Arch1 is over WIP (#773) (8f390fc2f3)
+- fix: cancel stacked PR runs on the sibling workflows (#771) (705a5080ed)
+- fix: the wake head includes a new comment (#770) (90a8929475)
+- fix: the inbox read is the queue head (#753) (d27aa6b477)
+- fix: refresh a card packet and keep backfill open (#752) (41f20627ff)
+- fix: pack grok-bot/lib/next-wave.mjs (#750) (07754710cf)
+- fix: pin express-rate-limit 8.7.2 (#744) (310efd4a20)
+- fix: resume the running agent on the same pull (#738) (985881f339)
+- fix: skip the card ladder when the head is handled (#737) (576d996b33)
+- fix: ship the wave rank and refuse a master push (#735) (fad069d976)
+- fix: show today on the transition day filter (#730) (0c7daa05d7)
+- fix: retarget worn hooks and lock Actions (#729) (2ee80e2eaa)
+- fix: keep Full station due after a compact (#726) (b7b34e5a4e)
+
+### 📚 Documentation
+- docs: the remaining wear pages name bundle.md (#860) (71fe932d24)
+- docs: record the unreleased wave (#859) (b6243bec55)
+- docs: name the worn bundle on the install path (#858) (b98db631a3)
+- docs: drop patch pins from the faces (#857) (d20e392fdd)
+- docs: name tip, doorbell, and wake on the fleet-routing plate (#853) (73dafc8f94)
+- docs: an inbox packet stays on the named pull (#847) (45450bcffd)
+- docs: packet for Bifrost fleet mode (#836) (0816e5a56e)
+- docs: land the fleet-routing plate beside LENS routing (#835) (b53f943f69)
+- docs: forge owns the eng wave and beat cut (#825) (60daed8e23)
+- docs: one Unreleased note for the wake reprint (#804) (4ee032a689)
+- docs: restamp fleet ops plates left to right (#789) (c117ed3679)
+- docs: gate a live packet on R and A (#747) (2b24d233f2)
+- docs: name hotpack and the fleet words (#745) (8e0f505428)
+
+### 🧪 Tests
+- test: read agents from src/agents and suit config from xray (#740) (133b6cccb7)
+- test: read agent YML from the source tree (#739) (9ea1fe0705)
+
+---
+
+## [4.1.5] - 2026-10-29
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: put roster and rewind on the mesh card (#722) (c117c86fa)
+- fix: show a Grok subagent as working (#721) (84835d26f)
+- fix: order the inbox monitor when no watcher is running (#718) (e5c93f2a4)
+- fix: retarget home Grok hooks onto the worn package (#717) (65e359661)
+- fix: poll the inbox once on Grok session start (#710) (e73ef88e4)
+- fix: wire chat activity onto the board (#709) (783a545fc)
+- fix: show a seen seat on the mesh (#705) (49c957299)
+- fix: give the first health beat a boot window (bd4d55a02)
+- fix: the live board shows the card in work (#699) (e108cc9e4)
+- fix: upkeep findings are one card (#577) (c099cc419)
+- fix: a missed health beat exits the live process (#661) (6f79f9cb4)
+- fix: an outside author still gets an open card (#576) (8658bda8c)
+- fix: status compare uses one canonical id (#570) (575242605)
+- fix: a merge handoff ack requires a review link (#554) (2666674b9)
+- fix: an open inbox line stays on the seat todo (416c1cb46)
+- fix: a queued check does not open a ci_fail line (#655) (a4d79d468)
+- fix: a search of one other card switches and runs (#662) (81f6238d7)
+- fix: a test port does not post the station nudge (#689) (a0b05ed55)
+- fix: the board posts the station nudge on the half hour (#686) (741693dbf)
+- fix: tandem is the work mode, and a card carries raci (9bfeabb37)
+- fix: a red check writes one ci_fail line per head (#648) (1443db04f)
+- fix: pin qs to 6.17.0 (#645) (5a7e7c6eb)
+- fix: a packet next owner tips that seat (#660) (51ba57414)
+- fix: a release changelog comes from the git range (#659) (c5da44726)
+- fix: a terminal command uses the same lens as bash (#658) (6c6f1bbdb)
+- fix: land the remaining wear fixes in one pass (#657) (a02728050)
+- fix: clean the macOS suite — stamp, shipped agents, repertoire link (#652) (0f35b94ca)
+- fix: a plate file holds its card (#644) (22ee056e9)
+- fix: run the inbox watcher in the local TUI (#656) (f56fc75a1)
+
+### 📚 Documentation
+- docs: map complexity scorers for #538 (#541) (6fcd7b429)
+- docs: add the fleet security and updates watchlist (#562) (e2c917d3a)
+- docs: set the Bifrost suit poster as the hero (#708) (730c7bf2a)
+- docs: write the 4.1.5 notes across the face (c0acb35dd)
+- docs: stamp the OP cycle (#703) (33a7c79c9)
+- docs: the live nudge ladder matches the board (#702) (0274ca536)
+- docs: a same-path cluster is one tip (#694) (3e1795818)
+
+---
+
+## [4.1.4] - 2026-10-26
+
+### 🔄 Changes
+
+- Goggles: one named card fills that card's files. Bifrost, grokbot, and worn-turn are cards. Refs #494 #511.
+- The mill seat is off the roster, the mesh, and the inbox. Forge launches the cloud agent and opens the pull request through its App. Refs #473 #468.
+- Blinky plans the wave, paces burn, handles Lane H and Dist, and onboards seats. An unassigned issue or a P1 wakes forge. CoS is not woken to reassign. Refs #452 #473.
+- A seat sets its own title with seat-label. Planes are core, integration, ecosystem, distribution, and live. `Keys:` is `gh-<seat>`. Refs #482 #531.
+- The wake posts only for real new work. A hotfix merges on green CI. Critic reviews after. Refs #452 #558.
+- Worn Grok hooks send a turn, an issue, a pull, and a packet while Bifrost is live. The only TUI monitor is `inbox-watch.sh`. The default board is https://bifrost.0xray.dev. Refs #564 #567 #605.
+- A printed open inbox id is acked. The seed grace delivers a fresh comment. A noop wake 409 is skipped. Refs #621 #622 #633.
+- The public board serves the kanban and GET /history, /history/cards, and /history/transitions. Refs #485 #486.
+- The README hero shoulder says v4.1. The exo poster and the social card say v4.1.4.
+- The roster chip is the seat name again. The role opens on a click. Status stays on the dot. Refs #635.
+- A weekday poll can post one station nudge per seat. The line says to run station and re-read OP-PROC. The plist template is not loaded. Refs #631.
+- The board header says Refreshed for the page pull. The light says Last activity for the newest GitHub event.
+- house/live tests get 30 minutes and a Playwright browser cache. A cold Chromium download was using the old 15 minute cap. Refs #634.
+- Inbox alias fixtures use a fresh stamp. A line older than 7 days is dropped on save, and the 2026-10-19 stamp had aged out. Refs #637.
+- inbox-watch posts a wake turn after every poll that prints work. An empty poll does not end that turn. The seat posts the turn end when the chat finishes.
+- WAKE step 0 and the HOUSE inbound line post `live-inbox --cloud` beside the turn, with the card tag. Refs #628.
+- A seat logs a cloud agent with `live-inbox --cloud` beside the turn. `xray#n` is stored as `0xRayAI/xray#n`. The cloud agent does not post that line. Refs #628.
+- A Reviewer FIX comment beats as Reviewer FIX. The wire id stays critic_fail.
+- Review verdicts are PASS or FIX only; HOLD and FAIL are retired. Parked is for future scope or a named upstream/downstream blocker; owner waits go under Needs owner with the step they unblock. Target 4.1.4.
+- The burst deploy quickstart names Node 24.22.1. Refs #549.
+- Bifrost's straight git build is 0xRayAI/bifrost at e972d8d45cc962b1064aec76195c428beab65910. Health is /healthz. house/live/POINTER.md names that tip, and this tree stays until burst-live is connected. Refs #573.
+- An open issue or PR stays on `/cards`. The 40-card cap cuts closed rows only, and a quiet open item is not dropped at 14 days. Refs #576.
+- A hidden board keeps the painted card ages until the tab is shown. Refs #576.
+- A Grok prompt or compact hook that omits the script name loads session-start.js. If that hook cannot run, the runner prints no decision, so UserPromptSubmit does not see `allow`.
+- Resolve `fast-uri` to >=3.1.9 in the root and docs-site locks. Refs #616.
+- Resolve docs-site `body-parser` to >=1.20.9. Express stays 4. Refs #617.
+- Pin `@modelcontextprotocol/sdk` at 1.32.2 and set a finite `maxRequestBodySize` on the HTTP MCP transports. Refs #507.
+- Resolve `body-parser` to >=2.4.0. Express stays 5.2.1. Refs #613.
+- A suit that lacks the packet link fails, and so does a pull or cloud run with no card. When Bifrost is on, the only TUI monitor is `$XRAY_MAIN/house/live/tools/inbox-watch.sh <seat>`. Refs #567.
+- The live board keeps answering while a collector pass rewrites the same feed. The event parse leaves the request thread, and an unchanged event set only refreshes the header. The port opens after the first read, so health and the board see that feed.
+- Worn Grok hooks send a turn, an issue tag, a pull tag, and a handoff packet while Bifrost health says the board is live. A quiet board sends nothing. Refs #564 #567.
+- The worn suit and the wake boot step link the packet rule. The card key is the issue or pull. Refs #567.
+- The collector walks every issue and pull once, so a number older than the time cursor still becomes a card. A short walk does not move that cursor. Refs #576.
+- A card nudge is an inbox line for its seat, so the seat webhook fires. Refs #588.
+- An inbox ack closes a merge handoff even when it has no review URL. The URL is stored only when it matches that pull. Refs #595.
+- `inbox-watch` prints ACTION_REQUIRED on every non-empty poll, including a poll whose text matches the previous one. Refs #587.
+- `inbox-watch` auto-acks a line whose GitHub item is closed or merged, and lists held lines once as `held: N`. Open lines still print on every poll. Refs #587.
+- `inbox-watch` names `LIVE_URL` on a failed poll, backs off, and records pid, started, and last_ok. `inbox-watch-ensure` keeps one copy. The wake and pre-compact write one Watcher line. Refs #590.
+- `inbox-watch` prints an open-line census and one short line per type before the JSON, newest first, so a cut poll still shows handoffs and PR comments. A GitHub review is an inbox line on the PR author's seat. Refs #587.
+- Lock `ip-address` at 10.7.4. Refs #574.
+- Move `vitest` and `@vitest/coverage-v8` to 4.1.12. `express` stays 5.2.1 and `jsonwebtoken` stays 9.0.3. Refs #549.
+- Seat wakes use one cursor folder. The rule is the cursor-folder stanza in `grok-bot/OP-PROC.md`. `LIVE_CURSORS` is not required, and a read does not write `<seat>.txt`. The server nudge ladder does not re-wake a line the seat already acked or whose handled key is in that cursor. Watch scripts run `house/live/tools` from the main checkout. Refs #539 #546 #547.
+- Docs. The house guide and the bifrost plate carry the board rule, the kanban note, and the history note. Board rule. On every owner message run `live-inbox <seat> --prompt --from owner --note "<gist>"`. Ack a handled line with `live-inbox <seat> --ack <id>`, or `live-inbox <seat> --ack all` once every open line is handled. A cloud agent run uses `live-inbox <seat> --turn start --tag "bc-<first8> <track>"` beside `live-inbox <seat> --cloud launch --agent <bc-id> --tag <card>` on first start or `--cloud reply` on resume, and `live-inbox <seat> --turn end --tag "bc-<first8>"` beside `live-inbox <seat> --cloud finished --agent <bc-id> --tag <card>` (cancel is `--cloud cancel`). The tag is owner/repo#n or xray#n. The cloud agent does not post that line. `--from owner` is required today. Kanban note. The live page shows a read-only kanban above Activity. Columns are open, review, fix, merge, retest, and done. The deep link is `?card=`. History note. Every activity line is archived to history. The word owner is the owner via LIVE_OWNER or the owner-name. The public board serves the kanban and GET /history, /history/cards, and /history/transitions.
+
+### 🐛 Bug Fixes
+- fix: card an issue or pull the time cursor skipped (#602) (608d8a1ec)
+- fix: show every inbox line type and route a review to the author (#597) (db7039377)
+- fix: deliver a card nudge into the seat inbox (#600) (5ea572f2d)
+- fix: an ack closes a merge handoff without a review URL (#598) (1db0bd12d)
+- fix: keep one inbox watcher and record it on the station page (#596) (69c2fa091)
+- fix: name LIVE_URL when the inbox watch cannot reach Bifrost (#594) (4180aa762)
+- fix: live tests bind port 0 so parallel runs do not collide (#593) (e6cc578cd)
+- fix: inbox-watch acks closed lines and lists held once (9150dfa3b)
+- fix: inbox-watch prints while lines remain (7250d5882)
+
+### 📚 Documentation
+- docs: link the packet rule from the wake (#601) (478e243c7)
+- docs: start burst-live with the entrypoint (#603) (f8c351abb)
+
+### Wake and tripwire
+
+The seat wake lists the open inbox first. An owner message posts `--prompt` before an empty inbox stops the turn, then turn start, even when every line is a repeat. Before any ack, the wake reads the station ticket and `NOTES.md`. A line is acked with `live-inbox <seat> --ack <id>` only when `live-inbox <seat> --repeat` exits 0 against the cursor key `repo#number|sha|kind`. A new head is not acked. A still-waiting line gets one reply and is acked, and it does not stop a newer line. A second run of the same seat gets an empty read, does not ack the first run's lines, and posts no turn start and no turn end. Only that claim's owner token may release it or post its turn end. `live-inbox <seat> --release` drops that token's claims without posting, and the wake trap runs it on any shell exit, not only turn end, so a still-waiting stop does not hide lines while the pid is alive. The per-seat cursor key is `repo#number|sha|kind`. `--repeat` is the cheap handled-record read: a new head is not a repeat, and a plain read does not write the key. An early return runs turn end, and turn end clears the working mark. The wake command exports `LIVE_URL` and `SEAT_KEYS_DIR`, then runs `live-inbox <seat>`. The cursor folder rule is `grok-bot/OP-PROC.md#cursor-folder`. The claim key includes the head sha, so a new head is not the line a per-seat cursor already holds. Head-SHA and review-list checks, a verdict the cloud already wrote, inbox acks, handoffs, and NOTES lines stay local. A webhook wake never launches or resumes a cloud agent. It quick-checks the inbox and exits on a duplicate or a still-waiting delivery, records the event, and hands off to the owner's chat (forge for builds, critic for reviews) with a seat message pointing at the card. Only the owner's persistent chat launches or resumes a cloud agent. The card stores `critic_bc`, the critic cloud id for that PR. On a new head the critic chat resumes that id and launches a new agent only when the card has no `critic_bc` or the resume is refused. One critic agent per PR. (#401)
+
+The tripwire reads the parked and dark roster on each check. `openLines` leaves those seats out, the same way the open queue does. Their lines do not cancel the stall: when they are the only seats with open lines, the stall still wakes the CoS role. A parked or dark seat with a recent owner prompt is unmuted.
+
+### Wave schedule
+
+When `LIVE_URL` is unset, the board is `house/WAVEBOARD.md`. When `LIVE_URL` is set, the board is Bifrost (`GET /cards`). When a real wave's last card is closed or merged, the board raises one plan-next-wave card for the CoS seat naming the next open wave. The window is a Chicago cron stored on the card. A due plan does not hide a stall wake. Weekly burn at 75% keeps the plan quiet and keeps an empty-board wake quiet. A plan card older than 7 days closes as expired and is not raised again for that same wave. Synthetic cards with no GitHub number are closed. `--apply` boards only the current wave and refuses the production board unless `BIFROST_SEED_APPLY=1`. The live image copies `wave-schedule.mjs` and `bifrost-waves.json`. `house init` copies an empty wave list. The server reads `house/bifrost-waves.json`.
+
+---
+
+## [4.1.3] - 2026-10-19
+
+A hidden range ships in the kit. The first seat to land a hit holds the board for the wave the board has up. The initial and the selected seat live in `house/OP-PROC.md`. The hit stays on that machine. It does not post, deploy, or publish.
+
+One flushed batch per pull request head. Follow-ups collapse on the pull request and the head sha. `run_end` and `ci_pass` are the only flushes. A green head queues critic on `run_end` when the checks are already green, and on `ci_pass` when the run has already ended. A collector ci row carries `head_sha` when it has no `sha`, and that sha is the head the slot keeps. A green event seen before `run_end` is not replayed. (#404, #407)
+
+The wake template's export block is the burst-live fleet's defaults. `live-inbox` itself never guesses. Another board exports its own `LIVE_URL` and `SEAT_KEYS_DIR` before that block. `LIVE_CURSORS` is not required. The cursor folder rule is `grok-bot/OP-PROC.md#cursor-folder`. (#408)
+
+That release treated `LIVE_CURSORS` as the cursors directory. A read does not write `<seat>.txt`. Only `--remember` does. The current rule is `grok-bot/OP-PROC.md#cursor-folder`. (#409)
 
 Arch1 owns the version bump, the tag, and the publish.
 
@@ -16,13 +421,12 @@ A suit first worn on 4.1.1 keeps the catalog and a held dev card. On a non-mill 
 
 `require('0xray/package.json')` resolves. Wear links vendored `@0xray/repertoire` itself, so a skipped install script is not required.
 
-### Wake and tripwire
+## [4.1.2] - 2026-10-19
 
-The seat wake lists the open inbox first. An owner message posts `--prompt` before an empty inbox stops the turn, then turn start, even when every line is a repeat. Before any ack, the wake reads the station ticket and `NOTES.md`. A line is acked with `live-inbox <seat> --ack <id>` only when `live-inbox <seat> --repeat` exits 0 against the cursor key `repo#number|sha|kind`. A new head is not acked. A still-waiting line gets one reply and is acked, and it does not stop a newer line. A second run of the same seat gets an empty read, does not ack the first run's lines, and posts no turn start and no turn end. Only that claim's owner token may release it or post its turn end. `live-inbox <seat> --release` drops that token's claims without posting, and the wake trap runs it on any shell exit, not only turn end, so a still-waiting stop does not hide lines while the pid is alive. The per-seat cursor key is `repo#number|sha|kind`. `--repeat` is the cheap handled-record read: a new head is not a repeat, and a plain read does not write the key. An early return runs turn end, and turn end clears the working mark. The wake command exports `LIVE_URL` and a per-seat `LIVE_CURSORS`, then runs `live-inbox <seat>`. The claim key includes the head sha, so a new head is not the line a per-seat cursor already holds. Head-SHA and review-list checks, a verdict the cloud already wrote, inbox acks, handoffs, and NOTES lines stay local. A webhook wake never launches or resumes a cloud agent. It quick-checks the inbox and exits on a duplicate or a still-waiting delivery, records the event, and hands off to the owner's chat (forge for builds, critic for reviews) with a seat message pointing at the card. Only the owner's persistent chat launches or resumes a cloud agent. The card stores `critic_bc`, the critic cloud id for that PR. On a new head the critic chat resumes that id and launches a new agent only when the card has no `critic_bc` or the resume is refused. One critic agent per PR. (#401)
+### 🔄 Changes
 
-The tripwire reads the parked and dark roster on each check. `openLines` leaves those seats out, the same way the open queue does. Their lines do not cancel the stall: when they are the only seats with open lines, the stall still wakes the CoS role. A parked or dark seat with a recent owner prompt is unmuted.
-
-### 4.1.2 notes
+### 🔎 Other Changes
+- fix(suit): follow the fastened plant when the seat is worn (#396) (c82fe7ae9)
 
 Arch1 owns the version bump, the tag, and the publish.
 
@@ -35,27 +439,6 @@ Doctor treats a suit as worn when `.xray/features.json` and the fastened plant's
 Goggles reads the plant, or a plane named in suit config, and fills `Worn:` with that plant and the package version. A held dev card still gets that lens. Wear replaces only a `package` version token on `Fresh:` and leaves a `Plane:` line that is already set. The full ranking stays with the role picker. (#395, #385)
 
 Wear seeds `STATION.md` and `NOTES.md` when they are missing. After that, wear changes only the version token described above and leaves the rest of the station as written. The seat wake reads both on every turn, including Grok wakes that do not run `.cursor` hooks. (#395, #386)
-
-### Wave schedule
-
-When `LIVE_URL` is unset, the board is `house/WAVEBOARD.md`. When `LIVE_URL` is set, the board is Bifrost (`GET /cards`). When a real wave's last card is closed or merged, the board raises one plan-next-wave card for the CoS seat naming the next open wave. The window is a Chicago cron stored on the card. A due plan does not hide a stall wake. Weekly burn at 75% keeps the plan quiet and keeps an empty-board wake quiet. A plan card older than 7 days closes as expired and is not raised again for that same wave. Synthetic cards with no GitHub number are closed. `--apply` boards only the current wave and refuses the production board unless `BIFROST_SEED_APPLY=1`. The live image copies `wave-schedule.mjs` and `bifrost-waves.json`. `house init` copies an empty wave list. The server reads `house/bifrost-waves.json`.
-
-## [4.1.3] - 2026-10-19
-
-A hidden range ships in the kit. The first seat to land a hit holds the board for the wave the board has up. The initial and the selected seat live in `house/OP-PROC.md`. The hit stays on that machine. It does not post, deploy, or publish.
-
-One flushed batch per pull request head. Follow-ups collapse on the pull request and the head sha. `run_end` and `ci_pass` are the only flushes. A green head queues critic on `run_end` when the checks are already green, and on `ci_pass` when the run has already ended. A collector ci row carries `head_sha` when it has no `sha`, and that sha is the head the slot keeps. A green event seen before `run_end` is not replayed. (#404, #407)
-
-The wake template's export block is the burst-live fleet's defaults. `live-inbox` itself never guesses. Another board exports its own `LIVE_URL`, `SEAT_KEYS_DIR`, and `LIVE_CURSORS` before that block. (#408)
-
-`LIVE_CURSORS` defaults to `$HOME/.burst/cursors`. `live-inbox` writes `$LIVE_CURSORS/<seat>.txt`, so the seat name is not also in the default directory. (#409)
-
-## [4.1.2] - 2026-10-19
-
-### 🔄 Changes
-
-### 🔎 Other Changes
-- fix(suit): follow the fastened plant when the seat is worn (#396) (c82fe7ae9)
 
 ---
 
@@ -117,7 +500,7 @@ The board seats see is the collector board. `house/live/feed/live_mesh.py` runs 
 
 ### live-inbox
 
-`house/live/tools/live-inbox` requires `LIVE_URL`, `SEAT_KEYS_DIR`, and `LIVE_CURSORS`. A missing or empty one exits 2 and names it. The tool does not guess. The installed copy is `$HOME/.burst/bin/live-inbox` unless `LIVE_INBOX_BIN` is set. The wake template ships the export line.
+`house/live/tools/live-inbox` requires `LIVE_URL` and `SEAT_KEYS_DIR`. A missing or empty one exits 2 and names it. `LIVE_CURSORS` is not required. The cursor folder rule is `grok-bot/OP-PROC.md#cursor-folder`. The wake runs `$XRAY_MAIN/house/live/tools/live-inbox`.
 
 ### Lexicon
 
@@ -175,6 +558,7 @@ These notes were `[Unreleased]` in the 4.0.42 package. #368 removed them from `m
 - **Feat rebase.** When the mandated work turns into mantra, or the job has split across planes that no longer share one present, stop and answer the original message again from this seat. On `LEAD-CADENCE.md`, the orchestrator skill, and the ship-ready mill gate. Project dest grows the name `feat-rebase` from the stack overlay. Not a new skill.
 
 ### Fixed
+- **Consumer preCompact argv.** Wear of a consumer repoints a stock `.cursor/hooks/<event>.sh` at `node_modules/0xray/dist/integrations/cursor/hooks/<event>.sh`, so the suited workspace node argv is the installed `pre-compact.js`. A factory checkout named `0xray` stays on `src/`, including `{ outerRoots: true }`. Arm A is that consumer git root, not a nested bench inside the factory clone. Not a new skill.
 - **Lesson caps and speech mint.** `LESSON_LINE_CAP` is 20. `RETAINED_LESSON_ID_CAP` is 20 in insertion order. Speech that names no stored signal mints one `proposed` signal tagged `learned`. `LEARNED_SIGNAL_CAP` is 24 and evicts only those mints. Factory signals stay. Not a new skill.
 - **External grade writes the line.** `governExternalProposals` grades the signals a proposal already named, the same way the local cycle does. Needs-revision and a governance error still do not write. The vendored organ puts a missing lesson ledger back when dest still has its lines, so an aged task id does not step the average again. Not a new skill.
 - **A governed proposal teaches.** A route lookup does not write a lesson. When a vote finishes, the cycle grades the signals that proposal's sessions already named. A session that names a stored signal is graded even when that name appears once. Landed approaches and no wrong turn clear the solid band. A wrong turn stays below the cutoff. Earlier rejects of other codify proposals do not pull that grade down. Approve steps those signals up by a tenth. Reject steps them down by a tenth. Needs-revision, an abstain, a governance error, and a proposal whose sessions named nothing do not write. Proposal ids stay on the signal and the sessions not yet graded, so a later cycle does not teach those sessions again. A new session is a new id. Those ids remain after the history window of 50 fills, including with empty cycles. A proposal that carries an empty name list does not fall through to matching its text. A grade that passes appends one line — the task, the decision, and the approaches, solutions, or wrong turn from the sessions that named the law — on that signal and beside the average. The same task does not append again. The route for a law above 0.55 includes the law text and those lines, and Station's lessons section is refreshed from dest. Not a new skill.

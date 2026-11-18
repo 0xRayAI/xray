@@ -4,9 +4,34 @@ Complete reference of capabilities through **0xRay 4.1**. 0xRay is a three-subsy
 
 ## Unreleased
 
-The docs site is https://docs.0xray.dev/. The public board is https://bifrost.0xray.dev. Fleet seats boot through the station skill: Light on an owner message, Full after a summary, a wake, or a gate. Profile planes are core, integration, ecosystem, distribution, and live. See the [house guide](./house.md).
+- **Suit.** Wear copies `bundle.md` into the Grok plugin. Session boot reads it.
+- **Inbox.** A green head acks a handoff `ci_fail`. A popped ready rings again after `critic_fail` on that same sha. A pass keeps it buried. A merge or close acks that card's other open lines. The merge handoff stays.
+- **Wake.** A ready tells the seat to clear Quiet. A `ci_pass` on that same sha still rings, and the doorbell says Strict.
+- **Board.** The roster wraps into columns. A narrow page does not scroll sideways. Fleet mode is full, lights-on, or dark. Weekdays 7:30–15:30 Chicago are full.
+- **Mesh.** Board stats sit above the mesh. The roster sits at the top of the mesh card and the timeline sits at the bottom of that card.
+- **Working.** A Grok tool opens the seat turn, then ticks it once a minute. A subagent posts kind subagent on spawn and on return. The tag is a short hash. The prompt stays off the wire. A next-owner label that names the seat, such as Arch1 (@arch10x), binds that light to the open card.
 
-Goggles keeps four planes: dev, integration, domain, and ecosystem. Each card is one thing. A search inside the current card runs. Any other search returns that card and does not run. Plates now exist for repertoire, dynamo, foundry, the delegation gate, temperament, asides, the inference cycle, Hermes, OpenClaw, OpenCode, the consumer MCP set, and confer. Confer stays off unless it is enabled.
+The docs site is https://docs.0xray.dev/. The public board is https://bifrost.0xray.dev. The cursor folder rule is [Cursor folder](https://github.com/0xRayAI/xray/blob/main/grok-bot/OP-PROC.md#cursor-folder). `LIVE_CURSORS` is not required. A read does not write `<seat>.txt`. The server nudge ladder does not re-wake a line the seat already acked or whose handled key is in that cursor. Watch scripts run `house/live/tools` from the main checkout. Fleet seats boot through the station skill: Light on every turn, Full after a summary, a wake, or a gate. Profile planes are core, integration, ecosystem, distribution, and live. See the [house guide](./house.md).
+
+Goggles keeps four planes: dev, integration, domain, and ecosystem. Each card is one thing. A search inside the current card runs. A search of another plane returns that card and does not run. A path on no plane runs. A path outside this checkout runs, including inside a terminal command. Plates now exist for repertoire, dynamo, foundry, the delegation gate, temperament, asides, the inference cycle, Hermes, OpenClaw, OpenCode, the consumer MCP set, and confer. Confer stays off unless it is enabled.
+
+- **Board.** A prompt pulse spins only the card named by working_on. A roster row is a fleet seat or a product node, and a seat quiet for 7 days is dormant. Seen is not working. A merge or a GitHub write lights the seat. A finished cloud agent stamps cloud.last_ct, and an empty open set leaves CloudAgents off. An owner comment or push moves a stall card.
+- **Tandem.** Tandem is several tracks at once, on both loops, and no seat waits for a nod.
+- **Card.** A card carries raci. A live card missing R or A is amber on its own mark. That mark is not the PACKET.md badge. A same-path cluster is one tip and one pull. A blocker hotfix, a different deploy surface, or a soft follow-up stays a solo tip.
+- **Health.** A missed /healthz makes the supervisor exit 1 so ON_FAILURE replaces the one replica. The replica pid is not SIGKILL'd. The collector is not signaled.
+- **Inbox.** The inbox watcher writes a new open line to the seat todo and does not ack it. The seat acks after the work. Acking a merge handoff requires a review or comment link on that pull. A queued or still-running required check does not open a ci_fail line. Only a completed failure does. One open line per head. A green head clears it. A packet next owner is an inbox tip when the opener is someone else. The opener's own line still drops.
+- **Search.** Reading a plate file holds that card, so a search of its files runs. A search that names one other card switches to that card and runs. Two cards stay on the held card. A path on no plane runs. A path outside this checkout runs, including inside a terminal command.
+- **Writes.** Codex 70 denies a write only when that path sits in a stale copy of this repo. A file outside the repo is allowed. A worktree on main is allowed.
+- **Nudge.** L1 through L3 stay on the packet next owner, else the card owner, or the owing seat. CoS is not woken to reassign. A test server does not post the station nudge. Railway does, unless STATION_NUDGE=off. The plist template stays unloaded.
+- **OP cycle.** Digest, then card, then do, then loop, then ship. Digest is disk. Card is the same turn. Do is the implementer. Loop is the two loops. Ship is the publisher after Review. The stanza is [OP cycle](https://github.com/0xRayAI/xray/blob/main/grok-bot/OP-PROC.md#op-cycle).
+- **Pins.** qs is 6.17.0 in the root lock and the docs-site lock, including nested body-parser. Status compare uses one canonical id. An unknown status stays visible.
+- **Upkeep.** Upkeep and reminders are scripts with no model call. A missing prompt, drift, or a dead cron is one card.
+
+## Missed in the 4.1.4 Dist notes
+
+The 4.1.0 section below still applies. These lines are in the published suit.
+
+One named card fills that card's files. Bifrost, grokbot, and worn-turn are cards. The mill seat is off the roster, the mesh, and the inbox. Forge launches the cloud agent and opens the pull request through its App. Blinky plans the wave, paces burn, handles Lane H and Dist, and onboards. An unassigned issue or a P1 wakes forge. CoS is not woken to reassign. A seat sets its own title. Planes are core, integration, ecosystem, distribution, and live. `Keys:` is `gh-<seat>`. The wake posts for real new work. A hotfix merges on green CI. Critic reviews after. Worn Grok hooks run while Bifrost is live. The only TUI monitor is `inbox-watch.sh`. The default board is https://bifrost.0xray.dev. A printed inbox id is acked. The seed grace delivers a fresh comment. A noop wake 409 is skipped. The public board serves the kanban and `GET /history`, `/history/cards`, and `/history/transitions`.
 
 ## 4.1.0 — Bifrost board, goggles, wake
 
@@ -15,7 +40,7 @@ Bifrost is the collector board. Goggles views one plane. The cards are in `.xray
 - **Board.** `house/live/feed/live_mesh.py` runs the collector and the board every `LIVE_WATCH_S` seconds (default 45). Reviews, merges, pushes, and CI land on the card. CI is not board traffic. `merged_by` is the GitHub merger, filled from `GET /pulls/:n` when the list payload omits it or only has the author. A cloud agent is a board row (`cloud_agents`): `bcId`, owning seat, linked card, and state `running`, `finished`, or `failed`.
 - **Nudge.** `evalNudges` sends a stuck card's L1 to the next owner or the card owner, and L3 back to that L1 seat. An unacked inbox line and a missing handoff stay on that seat for L1, L2, and L3. CoS is not woken to reassign.
 - **Wake.** `grok-bot/templates/house/fleet/WAKE-ROUTINE.md` posts `live-inbox <seat> --turn start` on every turn and `--turn end` on every exit. Compaction is a wake. Notes are appended after every beat. One cloud agent per card. A webhook wake never launches or resumes a cloud agent. It records the event and hands off to the owner's chat (forge for builds, critic for reviews). Only that persistent chat launches or resumes a cloud agent. The card stores `critic_bc` for that pull request, and the critic chat resumes it on a new head.
-- **live-inbox.** `LIVE_URL`, `SEAT_KEYS_DIR`, and `LIVE_CURSORS` are required. A missing or empty one exits 2 and names it. The tool does not guess. Handoff requires `--sha` (7 to 64 hex digits).
+- **live-inbox.** `LIVE_URL` and `SEAT_KEYS_DIR` are required. A missing or empty one exits 2 and names it. `LIVE_CURSORS` is not required. The cursor folder rule is [Cursor folder](https://github.com/0xRayAI/xray/blob/main/grok-bot/OP-PROC.md#cursor-folder). Handoff requires `--sha` (7 to 64 hex digits).
 - **Lexicon.** `grok-bot/LEXICON.md` adds the handoff `--sha` row and the practice **button up**.
 - **Goggles.** A search inside the current card runs. Any other search returns the card and does not run. Opening a file on another card switches to that card. Recall still opens one plate.
 
@@ -52,7 +77,7 @@ Confer votes. Burst runs the swarm.
 - **MCP launch.** Servers start through `scripts/node/mcp-launch.cjs`. They see PATH, HOME, and XRAY_ROOT, plus the names on their keep list. Tokens such as NPM_TOKEN are not inherited. User env values stay in the env block and out of argv.
 - **Postinstall keeps user edits** to AGENTS.md, `.mcp.json`, and `opencode.json`.
 - **House.** `house init` no longer copies EXAMPLE.md. Doctor FAILs while `house/EXAMPLE.md` exists.
-- **Inspect** has a machinePlugin check. It fails when a machine `~/.grok/plugins` directory is named `0xray` or starts with `0xray`.
+- **Inspect** has a machinePlugin check. It WARNs when a machine `~/.grok/plugins` directory is named `0xray` or starts with `0xray`, and fails when Grok would load it and it points at another root (a pinned `XRAY_ROOT` or launcher paths).
 - **Cursor hook.** XRAY_ROOT defaults to the suit directory.
 - **@0xray/grok-bot 0.1.7** records the same house init and doctor change. `house init` copies HOUSE.md, WAVEBOARD.md, and ATTENTION_STATE.md only.
 

@@ -16,6 +16,10 @@ on:
   # Also allow manual triggering via PR label
   workflow_dispatch:
 
+concurrency:
+  group: hermes-plugin-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   plugin-python-tests:
     name: Python Plugin Tests
@@ -25,10 +29,10 @@ jobs:
       contains(github.event.pull_request.labels.*.name, 'needs-hermes') ||
       contains(github.event.pull_request.labels.*.name, 'ci:full')
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.4.0
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v5.6.0
         with:
           python-version: "3.11"
 
@@ -36,9 +40,9 @@ jobs:
         run: pip install pytest
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v4.4.0
         with:
-          node-version: "20.x"
+          node-version: "24.22.1"
           cache: "npm"
 
       - name: Install Node dependencies
@@ -58,12 +62,12 @@ jobs:
       contains(github.event.pull_request.labels.*.name, 'needs-hermes') ||
       contains(github.event.pull_request.labels.*.name, 'ci:full')
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.4.0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v4.4.0
         with:
-          node-version: "20.x"
+          node-version: "24.22.1"
           cache: "npm"
 
       - name: Install Node dependencies
@@ -115,12 +119,12 @@ jobs:
       contains(github.event.pull_request.labels.*.name, 'needs-hermes') ||
       contains(github.event.pull_request.labels.*.name, 'ci:full')
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.4.0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v4.4.0
         with:
-          node-version: "20.x"
+          node-version: "24.22.1"
           cache: "npm"
 
       - name: Install Node dependencies

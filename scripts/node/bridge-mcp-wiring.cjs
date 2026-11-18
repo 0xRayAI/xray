@@ -37,8 +37,6 @@ function resolveRepertoireMcp(targetDir) {
   const selfRoot = targetDir;
   const siblingRoot = path.join(targetDir, "..", "repertoire");
   const candidates = [
-    path.join(targetDir, "node_modules", "@0xray", "repertoire", "dist", "mcp", "server.js"),
-    path.join(targetDir, "vendor", "@0xray", "repertoire", "dist", "mcp", "server.js"),
     path.join(
       targetDir,
       "node_modules",
@@ -50,6 +48,8 @@ function resolveRepertoireMcp(targetDir) {
       "mcp",
       "server.js",
     ),
+    path.join(targetDir, "vendor", "@0xray", "repertoire", "dist", "mcp", "server.js"),
+    path.join(targetDir, "node_modules", "@0xray", "repertoire", "dist", "mcp", "server.js"),
     isRepertoirePackageRoot(selfRoot) ? path.join(selfRoot, "dist", "mcp", "server.js") : null,
     isRepertoirePackageRoot(siblingRoot) ? path.join(siblingRoot, "dist", "mcp", "server.js") : null,
   ];
@@ -88,9 +88,9 @@ function resolveRepertoireProvider(targetDir) {
     "provider",
     "memory-routing-provider.js",
   );
-  if (fs.existsSync(nmProvider)) return nmProvider;
-  if (fs.existsSync(vendorProvider)) return vendorProvider;
   if (fs.existsSync(packedVendorProvider)) return packedVendorProvider;
+  if (fs.existsSync(vendorProvider)) return vendorProvider;
+  if (fs.existsSync(nmProvider)) return nmProvider;
   if (isRepertoirePackageRoot(siblingRoot) && fs.existsSync(siblingProvider)) return siblingProvider;
   return null;
 }
@@ -181,6 +181,26 @@ function gogglesScopedLaunch(targetDir, launcher) {
 function detectConsumerExtraMcpServers(targetDir) {
   const extras = { hermes: {}, opencode: {}, openclaw: {} };
   try {
+    const gogglesMcp = resolveGogglesMcp(targetDir);
+    if (gogglesMcp) {
+      const launch = gogglesScopedLaunch(targetDir, gogglesMcp);
+      extras.hermes.goggles = {
+        command: launch.command,
+        args: launch.args,
+        env: launch.env,
+      };
+      extras.opencode.goggles = {
+        type: "local",
+        command: launch.commandList,
+        enabled: true,
+        environment: launch.env,
+      };
+      extras.openclaw.goggles = {
+        command: launch.command,
+        args: launch.args,
+        env: launch.env,
+      };
+    }
     const repertoireMcp = resolveRepertoireMcp(targetDir);
     if (repertoireMcp) {
       const launch = wrapScopedLaunch(
@@ -199,26 +219,6 @@ function detectConsumerExtraMcpServers(targetDir) {
         environment: launch.env,
       };
       extras.openclaw.repertoire = {
-        command: launch.command,
-        args: launch.args,
-        env: launch.env,
-      };
-    }
-    const gogglesMcp = resolveGogglesMcp(targetDir);
-    if (gogglesMcp) {
-      const launch = gogglesScopedLaunch(targetDir, gogglesMcp);
-      extras.hermes.goggles = {
-        command: launch.command,
-        args: launch.args,
-        env: launch.env,
-      };
-      extras.opencode.goggles = {
-        type: "local",
-        command: launch.commandList,
-        enabled: true,
-        environment: launch.env,
-      };
-      extras.openclaw.goggles = {
         command: launch.command,
         args: launch.args,
         env: launch.env,
@@ -296,9 +296,70 @@ function mcpSubcommand(inner) {
  * A checkout `dist/cli` launch is replaced with the installed package.
  * A legacy `node_modules/xray` launch is replaced only when `node_modules/0xray` exists.
  */
+function installedLauncher(targetDir) {
+  if (!targetDir) return "";
+  const file = path.join(targetDir, "node_modules", "0xray", "scripts", "node", "mcp-launch.cjs");
+  return fs.existsSync(file) ? file : "";
+}
+
+function isOtherCheckoutFile(token, targetDir) {
+  const normalized = normalizeLaunchToken(token);
+  if (!normalized || !path.isAbsolute(normalized) || !targetDir) return false;
+  const resolved = path.resolve(normalized);
+  const home = path.resolve(targetDir);
+  if (resolved === home || resolved.startsWith(`${home}${path.sep}`)) return false;
+  const installed = path.resolve(targetDir, "node_modules", "0xray");
+  if (resolved === installed || resolved.startsWith(`${installed}${path.sep}`)) return false;
+  return (
+    resolved.endsWith(`${path.sep}mcp-launch.cjs`) ||
+    resolved.endsWith(`${path.sep}run-goggles-mcp.mjs`) ||
+    resolved.endsWith(`${path.sep}run-repertoire-mcp.mjs`) ||
+    resolved.includes(`${path.sep}repertoire${path.sep}dist${path.sep}mcp${path.sep}server.js`)
+  );
+}
+
+function hasOtherCheckoutLaunch(server, targetDir) {
+  return commandTokens(server).some((token) => isOtherCheckoutFile(token, targetDir));
+}
+
+function packageScript(targetDir, kind) {
+  if (kind === "goggles") {
+    const file = path.join(targetDir, "node_modules", "0xray", "scripts", "mjs", "run-goggles-mcp.mjs");
+    return fs.existsSync(file) ? file : "";
+  }
+  const packed = path.join(
+    targetDir,
+    "node_modules",
+    "0xray",
+    "vendor",
+    "@0xray",
+    "repertoire",
+    "dist",
+    "mcp",
+    "server.js",
+  );
+  if (fs.existsSync(packed)) return packed;
+  const file = path.join(targetDir, "node_modules", "@0xray", "repertoire", "dist", "mcp", "server.js");
+  return fs.existsSync(file) ? file : "";
+}
+
+function innerFromOtherCheckout(inner, targetDir) {
+  const joined = [inner.command, ...(inner.args || [])].join(" ");
+  if (joined.includes("run-goggles-mcp.mjs")) {
+    const file = packageScript(targetDir, "goggles");
+    if (file) return { command: "node", args: [file] };
+  }
+  if (joined.includes("run-repertoire-mcp.mjs") || joined.includes(`${path.sep}repertoire${path.sep}`)) {
+    const file = packageScript(targetDir, "repertoire");
+    if (file) return { command: "node", args: [file] };
+  }
+  return inner;
+}
+
 function shouldRepinToInstalledCli(inner, targetDir) {
   if (!inner || hasVersionPin(inner)) return false;
   if (isCheckoutDistCliLaunch(inner)) return true;
+  if (hasOtherCheckoutLaunch(inner, targetDir)) return true;
   if (!isLegacyXrayCliLaunch(inner)) return false;
   const cli = localXrayCli(targetDir);
   return Boolean(cli && normalizeLaunchToken(cli).includes("/node_modules/0xray/"));
@@ -341,6 +402,20 @@ let launcherPackageRoot = "";
 /** Wear sets this so a /tmp checkout is not the path written into a real project. */
 function pinLauncherPackageRoot(packageRoot) {
   launcherPackageRoot = packageRoot ? path.resolve(packageRoot) : "";
+}
+
+function launcherPinRoot(packageRoot, targetDir) {
+  const root = packageRoot ? path.resolve(packageRoot) : "";
+  if (!root || !targetDir || isDogfoodXrayPackage(targetDir)) return root;
+  const link = path.join(targetDir, "node_modules", "0xray");
+  const launch = path.join(link, "scripts", "node", "mcp-launch.cjs");
+  try {
+    if (!fs.existsSync(launch)) return root;
+    if (fs.realpathSync(link) !== fs.realpathSync(root)) return root;
+    return link;
+  } catch {
+    return root;
+  }
 }
 
 function mcpLauncherPath() {
@@ -497,6 +572,7 @@ function mergeUserWinsServer(framework, user, targetDir) {
   if (inner && shouldRepinToInstalledCli(inner, targetDir)) {
     const mcpCmd = mcpSubcommand(inner);
     if (mcpCmd) inner = pinnedMcpLaunch(targetDir, mcpCmd);
+    else if (hasOtherCheckoutLaunch(inner, targetDir)) inner = innerFromOtherCheckout(inner, targetDir);
   }
   if (!inner) return framework;
   const mergedEnv = mergeScopedEnv([
@@ -506,7 +582,11 @@ function mergeUserWinsServer(framework, user, targetDir) {
     user.env,
     user.environment,
   ]);
+  const foreign = user && !hasVersionPin(user) && hasOtherCheckoutLaunch(user, targetDir) && installedLauncher(targetDir);
+  const previousRoot = launcherPackageRoot;
+  if (foreign) launcherPackageRoot = path.join(targetDir, "node_modules", "0xray");
   const wrapped = wrapScopedLaunch(inner, mergedEnv);
+  launcherPackageRoot = previousRoot;
   if (usesCommandArray(user) || usesCommandArray(framework)) {
     next.command = wrapped.commandList;
     delete next.args;
@@ -628,6 +708,15 @@ function buildPluginMcpJson(targetDir) {
       env: launch.env,
     };
   }
+  const extras = detectConsumerExtraMcpServers(targetDir).openclaw || {};
+  for (const name of ["goggles", "repertoire"]) {
+    if (!extras[name]) continue;
+    mcpServers[name] = {
+      command: extras[name].command,
+      args: extras[name].args,
+      env: extras[name].env,
+    };
+  }
   return { mcpServers };
 }
 
@@ -654,8 +743,39 @@ function copyHermesFindProjectRootHelper(packageRoot, targetPluginDir) {
   return true;
 }
 
+/**
+ * A project wear or setup writes machine-wide config (~/.grok plugin pins,
+ * ~/.hermes, ~/.openclaw) only on an explicit XRAY_MACHINE_BRIDGES=1.
+ * Those files are shared by every project and seat on the box.
+ */
+function machineBridgesOptedIn(env = process.env) {
+  return /^(1|true|yes)$/i.test(String((env && env.XRAY_MACHINE_BRIDGES) || "").trim());
+}
+
+let machineSkipNoted = false;
+/** One stdout line per process naming what a project wear skipped. */
+function noteMachineBridgesSkipped() {
+  if (machineSkipNoted) return;
+  machineSkipNoted = true;
+  process.stdout.write(
+    "machine-bridges: skipped ~/.grok/plugins/0xray pins, ~/.hermes and ~/.openclaw (project copies written). Set XRAY_MACHINE_BRIDGES=1 to write them.\n",
+  );
+}
+
 function isEphemeralInstallRoot(targetDir) {
   const normalized = String(targetDir || "").replace(/\\/g, "/");
+  // A simulated machine home lives under the temp dir in tests. That home is
+  // the durable wear, not an ephemeral package.
+  let home = "";
+  try {
+    home = String(millSuit.machineHome() || "").replace(/\\/g, "/");
+  } catch {
+    home = "";
+  }
+  if (home) {
+    const prefix = home.endsWith("/") ? home : `${home}/`;
+    if (normalized === home || normalized.startsWith(prefix)) return false;
+  }
   return /\/T\/|\/tmp\/|\/var\/folders\/|\/Temp\//i.test(normalized);
 }
 
@@ -1158,10 +1278,15 @@ function suitMcpBlock(server, launch) {
  */
 function writeProjectSuitMcp(targetDir) {
   const root = path.resolve(targetDir);
-  const names = suitServerNames();
-  const blocks = XRAY_MCP_SERVERS.map((server) =>
-    suitMcpBlock(server, scopedMcpLaunch(root, server.mcpCmd, server.env)),
-  );
+  const extras = detectConsumerExtraMcpServers(root).openclaw || {};
+  const extra = ["goggles", "repertoire"]
+    .filter((name) => extras[name])
+    .map((name) => ({ name, launch: extras[name] }));
+  const names = new Set([...suitServerNames(), ...extra.map((server) => server.name)]);
+  const blocks = [
+    ...XRAY_MCP_SERVERS.map((server) => suitMcpBlock(server, scopedMcpLaunch(root, server.mcpCmd, server.env))),
+    ...extra.map((server) => suitMcpBlock(server, server.launch)),
+  ];
   const grokDir = path.join(root, ".grok");
   fs.mkdirSync(grokDir, { recursive: true });
   const tomlPath = path.join(grokDir, "config.toml");
@@ -1244,8 +1369,11 @@ module.exports = {
   isDefaultMemoryRoutingOff,
   enableMemoryRoutingIfResolves,
   isEphemeralInstallRoot,
+  machineBridgesOptedIn,
+  noteMachineBridgesSkipped,
   isIsolatedHome,
   pinLauncherPackageRoot,
+  launcherPinRoot,
   copyHermesHookRuntimes,
   resolveOpenClawPreToolHookSource,
   resolveOpenClawPluginDir,

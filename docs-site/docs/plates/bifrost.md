@@ -18,7 +18,7 @@ Bifrost is an autonomous AI fleet management system. The public board is https:/
 │   └──────┬───────┘ └──────┬───────┘ └─────────┬─────────┘  │
 │          └────────────────┴───────────────────┘            │
 └─────────────────────────────┬──────────────────────────────┘
-                              v
+                              v                               
 ┌─────────────────────────────┼──────────────────────────────┐
 │ PROCESSING LAYER            v                              │
 │   ┌────────────────────────────────────────────────────┐   │
@@ -27,7 +27,7 @@ Bifrost is an autonomous AI fleet management system. The public board is https:/
 │   │ inbox lines use routing/inbox-roles.json           │   │
 │   └──────────────────────────┬─────────────────────────┘   │
 └──────────────────────────────┼─────────────────────────────┘
-                               v
+                               v                              
 ┌──────────────────────────────┼─────────────────────────────┐
 │ OUTPUT LAYER                 v                             │
 │   ┌──────────────┐ ┌──────────────────┐ ┌───────────────┐  │
@@ -41,7 +41,7 @@ The governor runs inside the server (`house/live/app/server.mjs`). Bifrost is op
 
 A new pull request starts packet-first: a short packet (scope, files, plates and docs, tests, out of scope) gets critic PASS before any code. While a PR's cloud is live, follow-ups collapse into one `batch` string. That string flushes on `run_end` or `ci_pass` only. A green head queues critic on `run_end` when the checks are already green, and on `ci_pass` when the run has already ended. A collector ci row carries `head_sha` when it has no `sha`. A green event seen before `run_end` is not replayed. A required-check failure on `run_end` goes back to the worker. A pending check waits. A buffered PR stays in-beat, so nudge L1 does not fire while events are waiting.
 
-`evalNudges` is the one nudge path. A live card with no beat for `NUDGE_L1_S` (default 3600) sends L1 to the next owner, or else the card owner. L3 repeats to that L1 seat after `NUDGE_L2_S` plus `NUDGE_L3_S`. An unacked inbox line steps L1, L2, and L3 on that same seat, `NUDGE_LINE_S` apart (default 900). A missing handoff nudges the owing seat at L1, again at L2, and again at L3. CoS is not woken to reassign. A seat with no route, and a seat whose wake has gone quiet, holds that nudge on itself.
+`evalNudges` is the one nudge path. A live card with no beat for `NUDGE_L1_S` (default 3600) sends L1 to the next owner, or else the card owner. L3 repeats to that L1 seat after `NUDGE_L2_S` plus `NUDGE_L3_S`. An unacked inbox line steps L1, L2, and L3 on that same seat, `NUDGE_LINE_S` apart (default 900). A line the seat already acked, or whose handled key is already in the [cursor folder](https://github.com/0xRayAI/xray/blob/main/grok-bot/OP-PROC.md#cursor-folder), gets no L1, L2, or L3. A missing handoff nudges the owing seat at L1, again at L2, and again at L3. CoS is not woken to reassign. A seat with no route, and a seat whose wake has gone quiet, holds that nudge on itself.
 
 A cloud agent is its own board row (`cloud_agents`, also copied onto `board.cloud_agents`): `bcId`, owning seat, linked card, `pr`, and state `running`, `finished`, or `failed`. The Cursor webhook and seat activity `kind: cloud_agent` feed that row. The pull URL is the row's `pr`.
 
@@ -51,12 +51,16 @@ Kanban note. The live page shows a read-only kanban above Activity. Columns are 
 
 History note. Every activity line is archived to history. The word owner is the owner via LIVE_OWNER or the owner-name.
 
-Board rule. On every owner message run `live-inbox <seat> --prompt --from owner --note "<gist>"`. Ack a handled line with `live-inbox <seat> --ack <id>`, or `live-inbox <seat> --ack all` once every open line is handled. A cloud agent run uses `live-inbox <seat> --turn start --tag "bc-<first8> <track>"` and `live-inbox <seat> --turn end --tag "bc-<first8>"`. `--from owner` is required today.
+Board rule. On every owner message run `live-inbox <seat> --prompt --from owner --note "<gist>"`. Ack a handled line with `live-inbox <seat> --ack <id>`, or `live-inbox <seat> --ack all` once every open line is handled. A cloud agent run uses `live-inbox <seat> --turn start --tag "bc-<first8> <track>"` beside `live-inbox <seat> --cloud launch --agent <bc-id> --tag <card>` on first start or `--cloud reply` on resume, and `live-inbox <seat> --turn end --tag "bc-<first8>"` beside `live-inbox <seat> --cloud finished --agent <bc-id> --tag <card>` (cancel is `--cloud cancel`). The tag is owner/repo#n or xray#n. The cloud agent does not post that line. `--from owner` is required today.
 
-The public board does not serve the history archive or the kanban yet.
+The public board serves the kanban and GET /history, /history/cards, and /history/transitions.
 
 A packet post creates the card; the chat refuses a missing card id; the cloud agent pushes; the seat App opens the pull request; the server attaches both; the activity line gains no new field.
 
 Code lives under `house/live/` (collector, board, inbox routing, server). `house/live/feed/live_mesh.py` runs the collector and the board. `house/live-mesh/fetch_feed.py` is the upstream feed the deploy assembles. Deploy only via `house/live/app/deploy.sh`. A Railway build straight from git stops in the Dockerfile with `ERROR: collector/ is not assembled`. The plate that belongs here is house.
 
-stamped · 0xray 4.1.0
+The straight git build is 0xRayAI/bifrost at `e972d8d45cc962b1064aec76195c428beab65910`. Health is `/healthz`. `house/live/POINTER.md` names that tip. This tree stays until forge connects burst-live.
+
+`evalNudges` is the nudge path (`house/live/app/server.mjs:1234`, named at `:762`). Tripwire minutes default 30 (`server.mjs:1656`). Cloud agents are board rows (`server.mjs:1491`, copied onto the board at `:1494`). `LIVE_URL` is `house/live/docs/board.md:9`. The seat doctor reads it (`grok-bot/lib/seat-doctor.cjs:661`). `server.mjs` does not.
+
+stamped · 0xray 4.2.1

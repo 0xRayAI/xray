@@ -27,7 +27,7 @@ The chain, end to end:
 
 ## Cursor webhook
 
-Register only when `CURSOR_WEBHOOK_SECRET` is at least 32 characters. The launch sends that secret to Cursor with the webhook URL (`<base>/cursor/webhook`). Cursor signs each delivery. The server rejects a bad or missing `X-Webhook-Signature` with `401` before it writes. A verified delivery that is a new agent status appends `agents.jsonl` and republishes the header, so `applyTrackWorking` can show the seat working while the agent runs.
+Register only when `CURSOR_WEBHOOK_SECRET` is at least 32 characters. The launch sends that secret to Cursor with the webhook URL (`<base>/cursor/webhook`). Cursor signs each delivery. The server rejects a bad or missing `X-Webhook-Signature` with `401` before it writes. A verified delivery that is a new agent status appends `agents.jsonl` and republishes the header. The running agent shows on its own card. It does not mark the launching seat working.
 
 `SEAT_AGENT_MAP` example: `{"bc-forge0001":"forge","bc-nib*":"nibbler"}`.
 
@@ -46,8 +46,8 @@ First match wins, login lowercased:
 
 | Writer | Reads | Sets working when |
 |---|---|---|
-| `applyStoredActivity` | `activity.jsonl` (`POST /activity`, `POST /activity/ingest`, wake/ack) | an open turn, subagent, or watcher. A turn `end` or ack clears `fleet.working` for that seat. A tick does not reopen it. An open turn expires after `LIVE_TURN_OPEN_MIN` (default 20 minutes) |
-| `applyTrackWorking` | inboxes, `acks.json`, `wakes.jsonl`, `agents.jsonl` | a packet is woken and not acked, or a cloud agent is still running. Chip: `working on <title>` |
+| `applyStoredActivity` | `activity.jsonl` (`POST /activity`, `POST /activity/ingest`, wake/ack) | an open seat turn, subagent, or watcher. A turn whose tag starts with `bc-` marks that agent, not the seat and not any other seat. A turn `end` or ack clears `fleet.working` for that seat's own turn. A tick does not reopen it. An open seat turn expires after `LIVE_TURN_OPEN_MIN` (default 20 minutes) |
+| `applyTrackWorking` | inboxes, `acks.json`, `wakes.jsonl`, `agents.jsonl` | a packet is woken and not acked. A running cloud agent stays on its own card. Chip: `working on <title>` |
 | `applyGithubWorking` | feed events whose actor maps to a seat | a PR or issue comment, review, PR opened or pushed, or issue event inside the same window. Chip: `repo#number` |
 
 `POST /activity/ingest` does not set `fleet.working` itself. It appends the same activity lines writer 1 already reads.

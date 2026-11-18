@@ -32,6 +32,11 @@ class Site(unittest.TestCase):
         self.assertEqual(services, ["GitHub"])
         self.assertEqual(nodes, ["Bifrost"])
         self.assertNotIn("burst-live", services + nodes)
+        stamped = live_mesh.stamp_cloud_node(nodes, {"cloud": {"open_agents": [], "active": False}})
+        self.assertEqual(stamped, ["Bifrost", "CloudAgents"])
+        self.assertNotIn("burst-live", live_mesh.stamp_cloud_node(["Bifrost", "burst-live"], {"cloud": {}}))
+        self.assertEqual(live_mesh.stamp_cloud_node(["Bifrost"], {}), ["Bifrost"])
+        self.assertEqual(live_mesh.stamp_cloud_node(["CloudAgents"], {"cloud": {"open_agents": ["bc-1"]}}), ["CloudAgents"])
 
     def test_other_installs_keep_example_defaults(self):
         title, brand, node, dev, app, prod, health = probe("")

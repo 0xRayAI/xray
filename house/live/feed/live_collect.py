@@ -9,8 +9,10 @@ import json, os, re, time, urllib.request, urllib.error, urllib.parse, http.clie
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+import card_owner
 import live_packet
 import live_site
+import next_parent
 
 API = "https://api.github.com"
 REST_FLOOR = int(os.environ.get("LIVE_REST_FLOOR", "1500"))   # leave this much core budget for the fleet
@@ -57,7 +59,8 @@ def ci_result_kind(conclusion, status) -> str | None:
     if word in CI_FAIL:
         return "ci_fail"
     return None
-CRITIC_RE = re.compile(r"^\*\*Reviewer(?:: (PASS|FAIL|HOLD)\b| re-check:\s*(?:\**\s*)?(PASS|FAIL)?\b)")
+# Verdicts are PASS or FIX (4.1.4). FAIL and HOLD are legacy words, still read so old comments parse; both mean FIX.
+CRITIC_RE = re.compile(r"^\*\*Reviewer(?:: (PASS|FIX|FAIL|HOLD)\b| re-check:\s*(?:\**\s*)?(PASS|FIX|FAIL)?\b)")
 MENTION_RE = re.compile(r"(?<![\w`/.])@([A-Za-z0-9](?:[A-Za-z0-9-]{0,38})(?:\[bot\])?)(?![\w-])")
 
 
@@ -68,7 +71,45 @@ def mentions(body: str | None) -> list | None:
     return out or None
 
 
+def phrase_asks(body: str | None) -> list | None:
+    """Role-file phrases found in the body. The body itself is never stored."""
+    text = re.sub(r"```.*?```|`[^`]*`", " ", body or "", flags=re.S).casefold()
+    if not text.strip():
+        return None
+    found = []
+    for needle in _phrase_needles():
+        if needle.casefold() in text and needle not in found:
+            found.append(needle)
+    return found[:10] or None
+
+
+def _phrase_needles() -> list:
+    path = Path(__file__).resolve().parent / "routing" / "inbox-roles.json"
+    try:
+        roles = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    out = []
+    seats = roles.get("extra_seats") if isinstance(roles.get("extra_seats"), dict) else {}
+    for rule in seats.values():
+        if not isinstance(rule, dict):
+            continue
+        for needle in rule.get("needles") or []:
+            text = str(needle or "").strip()
+            if text and not text.startswith("@") and text not in out:
+                out.append(text)
+    return out
+
+
 SHA_RE = re.compile(r"@\s*`?([0-9a-f]{7,40})\b")
+
+
+def commit_sha(value):
+    """The review's own commit, 7 to 40 hex digits. A missing or short value is not a head."""
+    if not isinstance(value, str):
+        return None
+    got = value.strip()
+    return got if re.fullmatch(r"[0-9a-fA-F]{7,40}", got) else None
 NODE = {"builder-app[bot]": "Builder", "reviewer-app[bot]": "Reviewer", "reviewer-app": "Reviewer", "ops-app[bot]": "Operator",
         "lead-alt": "Lead", "lead-login": "Lead", "github-actions[bot]": "CI"}   # a person can have several logins
 # Per-fleet login -> node map, merged over the template defaults: LIVE_NODE_MAP='{"forge0x1[bot]":"forge"}'
@@ -155,6 +196,35 @@ CREDIT_ALIAS = {"ci": "github", "github": "github", "blaze0x1": "Blaze", "blaze"
 LOGIN_KEYS = ("actor", "author", "sender", "triggering_actor", "merged_by", "user")
 
 
+_CI_FROM_SKIP = frozenset({"", "Others", "GitHub", "CI", "Example"})
+
+
+def ci_from_seat(event) -> str | None:
+    """Seat for a CI row's from/who. The actor wins, then the app slug (with and without [bot]).
+
+    An unmapped login (cursor[bot], github-actions) stays None so the row keeps GitHub or CI
+    and is not dropped. #492 only rewrote from=Others."""
+    if not isinstance(event, dict):
+        return None
+    logins: list[str] = []
+    for key in ("actor", "author", "sender", "triggering_actor"):
+        val = event.get(key)
+        if isinstance(val, str) and val.strip():
+            logins.append(val.strip())
+    app = event.get("app")
+    if isinstance(app, str) and app.strip():
+        slug = app.strip()
+        logins.append(slug)
+        if not slug.lower().endswith("[bot]"):
+            logins.append(slug + "[bot]")
+    for login in logins:
+        mapped = node(login)
+        if mapped in _CI_FROM_SKIP or mapped == live_site.SITE["node"]:
+            continue
+        return mapped
+    return None
+
+
 def node(login: str | None) -> str:
     """Mesh node for an actor. Unknown actors (e.g. Tester's new App) are kept as 'Others' + actor=login.
     A git author whose name is a seat (no User login) is that seat, not Others."""
@@ -167,6 +237,12 @@ def node(login: str | None) -> str:
     if low.startswith("git:") and low[4:] in SEAT_GIT_NAMES:   # a GitHub login is never a seat by name
         return low[4:]
     return "Others" if login else "GitHub"
+
+
+def shown_from(login):
+    """An open card is a target. An author outside the fleet is GitHub, so put() keeps the card."""
+    who = node(login) if login else "GitHub"
+    return "GitHub" if who == "Others" else who
 
 
 def gql_login(actor) -> str | None:
@@ -249,17 +325,440 @@ def prompt_stamp(body):
     return found.group(1) if found else ""
 
 
+BC_ID_RE = re.compile(
+    r"\bbc-(?:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|[0-9a-f]{8,12})\b", re.I)
+
+
+def cloud_ids_in(text) -> list[str] | None:
+    """Cloud agent ids in a PR body. The body itself is not stored."""
+    found: list[str] = []
+    seen: set[str] = set()
+    for match in BC_ID_RE.finditer(str(text or "")):
+        cid = match.group(0).lower()
+        if cid in seen:
+            continue
+        seen.add(cid)
+        found.append(cid)
+        if len(found) == 8:
+            break
+    return found or None
+
+
+def assignee_seat(x) -> str:
+    """A seat-mapped assignee. A person login is not a seat."""
+    login = ""
+    who = x.get("assignee") if isinstance(x.get("assignee"), dict) else None
+    if who and isinstance(who.get("login"), str):
+        login = who["login"]
+    if not login:
+        for item in x.get("assignees") or []:
+            if isinstance(item, dict) and isinstance(item.get("login"), str) and item["login"]:
+                login = item["login"]
+                break
+    if not login:
+        return ""
+    mapped = node(login)
+    if mapped and mapped.lower() in card_owner.SEATS:
+        return mapped.lower()
+    if login.lower() in card_owner.SEATS:
+        return login.lower()
+    return ""
+
+
+def assignee_nodes():
+    """Shipped fleet-nodes.json, then the live env map. The env wins on the same login."""
+    path = Path(__file__).with_name("fleet-nodes.json")
+    try:
+        data = json.loads(path.read_text())
+    except (OSError, ValueError):
+        data = {}
+    nodes = {str(k): v for k, v in data.items() if isinstance(v, str) and v} if isinstance(data, dict) else {}
+    nodes.update(NODE)
+    return nodes
+
+
+def assign_rewalk_done(paged, left, miss, auth_dead=False):
+    """The 14-day walk latches after a finished pass that still had budget,
+    or after the assignee token is dead for this process.
+    A cap of 10, or a write that never reached GitHub, leaves the walk open."""
+    if paged != "done" or miss:
+        return False
+    if auth_dead:
+        return True
+    return left > 0
+
+
+def assignee_bot(item, nodes):
+    """Packet R as a fleet bot login when the card is open and unassigned.
+    A person login is never returned. An existing assignee is left alone."""
+    if not isinstance(item, dict) or not isinstance(nodes, dict):
+        return None
+    if str(item.get("state") or "").lower() != "open":
+        return None
+    if isinstance(item.get("assignee"), dict) and item["assignee"].get("login"):
+        return None
+    for row in item.get("assignees") or []:
+        if isinstance(row, dict) and row.get("login"):
+            return None
+    packet = item.get("packet") if isinstance(item.get("packet"), dict) else None
+    if packet is None:
+        packet = live_packet.parse(item.get("body")) or None
+    if not isinstance(packet, dict):
+        return None
+    seat = str(live_packet.raci_roles(packet.get("raci")).get("R") or "").strip().lower()
+    if not seat:
+        return None
+    for login, mapped in nodes.items():
+        if str(mapped).strip().lower() == seat and str(login).endswith("[bot]"):
+            return str(login)
+    return None
+
+
+def load_routing():
+    """The committed routing table. R, A, and overflow come from this file."""
+    path = Path(__file__).resolve().parent / "routing" / "inbox-roles.json"
+    try:
+        data = json.loads(path.read_text())
+    except (OSError, ValueError):
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def _routing_entry(roles, seat):
+    entry = (roles.get("routing") or {}).get(str(seat or "").strip().lower())
+    return entry if isinstance(entry, dict) else {}
+
+
+def plane_of(roles, seat):
+    return str(_routing_entry(roles, seat).get("plane") or "").strip()
+
+
+def primary_of(roles, plane):
+    """The seat that answers for a plane: the planes table, else the one entry marked primary."""
+    block = (roles.get("planes") or {}).get(plane)
+    if isinstance(block, dict) and str(block.get("primary") or "").strip():
+        named = str(block["primary"]).strip().lower()
+        if named in (roles.get("routing") or {}):
+            return named
+    for seat, entry in (roles.get("routing") or {}).items():
+        if isinstance(entry, dict) and str(entry.get("plane") or "") == plane and entry.get("primary") is True:
+            return str(seat).lower()
+    return ""
+
+
+def route_up(roles, seat):
+    entry = _routing_entry(roles, seat)
+    if not entry:
+        return False
+    return entry.get("up", True) is not False
+
+
+def overflow_of(roles, plane):
+    block = (roles.get("planes") or {}).get(plane)
+    if not isinstance(block, dict):
+        return []
+    names = []
+    for seat in block.get("overflow") or []:
+        name = str(seat or "").strip().lower()
+        if name:
+            names.append(name)
+    return names
+
+
+def resolve_seat(roles, name):
+    """A routing seat, or the seat a kit role rule names."""
+    seat = str(name or "").strip().lower()
+    if not seat:
+        return ""
+    routing = roles.get("routing") or {}
+    if seat in routing:
+        return seat
+    rule = (roles.get("seats") or {}).get(seat)
+    if isinstance(rule, dict) and not rule.get("off") and rule.get("seat"):
+        mapped = str(rule["seat"]).strip().lower()
+        if mapped in routing:
+            return mapped
+    return ""
+
+
+def role_holder(roles, item):
+    """The seat that holds the card's role, from a label, a needle, or the role name."""
+    labels = set(_label_names(item))
+    text = " ".join(str(item.get(k) or "") for k in ("title", "body")).lower()
+    for role, rule in (roles.get("seats") or {}).items():
+        if not isinstance(rule, dict) or rule.get("off") or not rule.get("seat"):
+            continue
+        seat = resolve_seat(roles, rule.get("seat"))
+        if not seat:
+            continue
+        for lab in rule.get("labels") or []:
+            if str(lab).lower() in labels:
+                return seat
+        for needle in rule.get("needles") or []:
+            word = str(needle).lower()
+            if word and not word.startswith("@") and word in text:
+                return seat
+        if str(item.get("role") or "").strip().lower() == str(role).lower():
+            return seat
+    named = str(item.get("role") or "").strip().lower()
+    if not named:
+        return ""
+    first = ""
+    for seat, entry in (roles.get("routing") or {}).items():
+        if not isinstance(entry, dict) or str(entry.get("role") or "").lower() != named:
+            continue
+        if entry.get("primary") is True:
+            return str(seat).lower()
+        if not first:
+            first = str(seat).lower()
+    return first
+
+
+def named_owner(roles, item, nodes):
+    board = item.get("board_owner") or card_owner.board_owner_line(item.get("body"))
+    assignee = item.get("assignee_seat") or assignee_seat(item)
+    opener = _opener_seat(item, nodes if isinstance(nodes, dict) else assignee_nodes())
+    for candidate in (board, assignee, opener):
+        seat = resolve_seat(roles, candidate)
+        if seat:
+            return seat
+    who = card_owner.card_owner(board, assignee, opener)
+    if who == "builder-cloud":
+        return ""
+    return resolve_seat(roles, who)
+
+
+def place_r(roles, owner, held):
+    """R stays on the owner until that seat holds two in-progress cards, then the plane's overflow."""
+    if not isinstance(held, dict):
+        held = {}
+    if not owner:
+        return "", "no owner"
+    order = [owner] + overflow_of(roles, plane_of(roles, owner))
+    for seat in order:
+        if not route_up(roles, seat):
+            continue
+        if int(held.get(seat) or 0) < 2:
+            held[seat] = int(held.get(seat) or 0) + 1
+            return seat, ""
+    return "", "at the cap"
+
+
+def in_progress_load(collector):
+    """Open cards on this repo that already name R. One count per number."""
+    counts = {}
+    ev = getattr(collector, "ev", None) or {}
+    repo = str(getattr(collector, "repo", "") or "")
+    seen = set()
+    for event in ev.values():
+        if not isinstance(event, dict) or event.get("kind") not in ("pr_open", "issue_open"):
+            continue
+        if repo and event.get("repo") != repo:
+            continue
+        if str(event.get("pr_state") or "").lower() != "open":
+            continue
+        number = event.get("number")
+        if number in seen:
+            continue
+        seen.add(number)
+        packet = event.get("packet") if isinstance(event.get("packet"), dict) else {}
+        seat = str(live_packet.raci_roles(packet.get("raci")).get("R") or "").strip().lower()
+        if seat:
+            counts[seat] = int(counts.get(seat) or 0) + 1
+    return counts
+
+
+def _label_names(item):
+    names = []
+    for label in item.get("labels") or []:
+        if isinstance(label, dict):
+            name = label.get("name")
+        else:
+            name = label
+        if isinstance(name, str) and name.strip():
+            names.append(name.strip().lower())
+    return names
+
+
+def _opener_seat(item, nodes):
+    user = item.get("user") if isinstance(item.get("user"), dict) else {}
+    login = user.get("login") if isinstance(user, dict) else ""
+    if not isinstance(login, str) or not login.strip():
+        return ""
+    mapped = ""
+    for key, val in (nodes or {}).items():
+        if str(key).lower() == login.lower() and isinstance(val, str):
+            mapped = val
+            break
+    if not mapped:
+        mapped = node(login)
+    low = str(mapped or login).strip().lower()
+    return low if low in card_owner.SEATS else ""
+
+
+def default_raci(item, nodes=None, roles=None, held=None):
+    """R and A for a live card that is missing either. None when the card is skipped or already has both.
+    R is the card owner, else the seat that holds the card's role. A card that already has R keeps it.
+    A is the primary of that plane. A seat that already holds two in-progress cards yields to the plane's overflow.
+    A full plane queues."""
+    if not isinstance(item, dict):
+        return None
+    if item.get("pinned") or item.get("draft"):
+        return None
+    state = str(item.get("state") or item.get("pr_state") or "").lower()
+    if state in ("closed", "parked"):
+        return None
+    if any(name == "parked" or name.startswith("parked") for name in _label_names(item)):
+        return None
+    packet = item.get("packet") if isinstance(item.get("packet"), dict) else None
+    if packet is None:
+        packet = live_packet.parse(item.get("body")) or {}
+    gaps = live_packet.raci_gaps(packet if isinstance(packet, dict) else {}, "live", False)
+    if not gaps:
+        return None
+    table = roles if isinstance(roles, dict) else load_routing()
+    book = held if isinstance(held, dict) else {}
+    if "R" not in gaps:
+        seat = str(live_packet.raci_roles((packet or {}).get("raci")).get("R") or "").strip().lower()
+        answer = primary_of(table, plane_of(table, seat))
+        if not seat or not answer:
+            return None
+        return {"R": seat, "A": answer}
+    owner = named_owner(table, item, nodes) or role_holder(table, item) or builder_seat(table, item)
+    if not owner:
+        return None
+    seat, why = place_r(table, owner, book)
+    if why == "at the cap":
+        answer = primary_of(table, plane_of(table, owner))
+        if not answer:
+            return {"queued": True, "reason": "at the cap"}
+        return {"queued": True, "reason": "at the cap", "A": answer}
+    if not seat:
+        return None
+    answer = primary_of(table, plane_of(table, owner) or plane_of(table, seat))
+    if not answer:
+        book[seat] = max(0, int(book.get(seat) or 1) - 1)
+        return None
+    return {"R": seat, "A": answer}
+
+
+_PLANE_HINTS = ("dist", "core", "ecosystem", "eng")
+
+
+def plane_hint(item):
+    """A plane named by a label or a title prefix. Empty when the card does not say."""
+    labels = set(_label_names(item if isinstance(item, dict) else {}))
+    for name in _PLANE_HINTS:
+        if name in labels:
+            return name
+    title = str((item or {}).get("title") if isinstance(item, dict) else "").strip().lower()
+    for name in _PLANE_HINTS:
+        if title.startswith(name + ":") or title.startswith(name + " "):
+            return name
+    return ""
+
+
+def plane_builder(roles, plane):
+    """A builder on that plane, else the plane primary. Empty when the plane has neither."""
+    chosen = ""
+    for seat, entry in (roles.get("routing") or {}).items():
+        if not isinstance(entry, dict) or str(entry.get("plane") or "") != plane:
+            continue
+        if str(entry.get("role") or "").lower() != "builder":
+            continue
+        if entry.get("primary") is True:
+            return str(seat).lower()
+        if not chosen:
+            chosen = str(seat).lower()
+    if chosen:
+        return chosen
+    return primary_of(roles, plane)
+
+
+def builder_seat(roles, item=None):
+    """The plane named on the card, else eng. Eng is the last resort."""
+    hint = plane_hint(item)
+    if hint:
+        seat = plane_builder(roles, hint)
+        if seat:
+            return seat
+    rule = (roles.get("seats") or {}).get("builder")
+    named = resolve_seat(roles, rule.get("seat")) if isinstance(rule, dict) else ""
+    return plane_builder(roles, "eng") or named
+
+
+def raci_comment(responsible, answer):
+    return f"## Packet\nraci: R={responsible} A={answer}\n"
+
+
+def raci_text(body):
+    """R and A already written on a comment or a packet. Empty when either name is missing."""
+    packet = live_packet.parse(body) or {}
+    roles = live_packet.raci_roles(packet.get("raci") if isinstance(packet, dict) else "")
+    if not (roles.get("R") and roles.get("A")):
+        match = re.search(r"(?im)^[ \t]*raci:[ \t]*(.+)$", str(body or ""))
+        if match:
+            roles = live_packet.raci_roles(match.group(1))
+    if roles.get("R") and roles.get("A"):
+        return f"R={roles['R']} A={roles['A']}"
+    return ""
+
+
+def own_bot(login, roles=None):
+    """A fleet seat's GitHub App login. A person's comment is not one of ours."""
+    name = str(login or "").strip()
+    if not name.lower().endswith("[bot]"):
+        return False
+    table = roles if isinstance(roles, dict) else load_routing()
+    for entry in (table.get("routing") or {}).values():
+        if isinstance(entry, dict) and str(entry.get("login") or "").strip().lower() == name.lower():
+            return True
+    for known in assignee_nodes():
+        if str(known).strip().lower() == name.lower():
+            return True
+    return False
+
+
 def card_fields(x) -> dict:
     """Board card fields from a PR / issue object this pass already fetched: branded title, state, labels and
-    the packet block (sanitized, <= 200 chars a field). The body itself is discarded here, never stored."""
+    the packet block (sanitized, <= 200 chars a field). The body itself is discarded here, never stored.
+    packet_file stays when the body carries a packet or names PACKET.md. The branch file is a separate check."""
+    body = x.get("body")
     fields = {"title": brand(x.get("title") or "")[:120], "pr_state": x.get("state"), "closed_at": x.get("closed_at"),
               "labels": [lb.get("name") for lb in (x.get("labels") or []) if isinstance(lb, dict) and lb.get("name")][:8],
-              "packet": live_packet.parse(x.get("body")) or None,
-              "fixes": closing_numbers(x.get("body"), x.get("number"))}
-    pid = prompt_stamp(x.get("body"))
+              "packet": live_packet.parse(body) or None,
+              "fixes": closing_numbers(body, x.get("number"))}
+    reason = x.get("raci_reason")
+    if isinstance(reason, str) and reason.strip():
+        fields["raci_reason"] = reason.strip()
+    named = card_owner.board_owner_line(body)
+    if named:
+        fields["board_owner"] = named
+    seat = assignee_seat(x)
+    if seat:
+        fields["assignee_seat"] = seat
+    if live_packet.carries(body):
+        fields["packet_file"] = True
+    ids = cloud_ids_in(body)
+    if ids:
+        fields["bc_ids"] = ids
+    pid = prompt_stamp(body)
     if pid:
         fields["prompt"] = pid
     return fields
+
+
+def packet_file_on_ref(client, repo, ref):
+    """True when PACKET.md exists at ref. A 404 is a miss. A rate-limit skip is a miss, not a failure."""
+    if not ref or not repo or not getattr(client, "token", None):
+        return False
+    try:
+        st, data, _, _ = client.rest(f"/repos/{repo}/contents/PACKET.md", {"ref": ref}, essential=False)
+    except urllib.error.HTTPError:
+        return False
+    except (RateLow, urllib.error.URLError, http.client.HTTPException, TimeoutError, OSError, ValueError):
+        return False
+    return st == 200 and isinstance(data, dict)
 
 
 def open_numbers(c, repos, max_pages=20):
@@ -361,9 +860,9 @@ class Client:
         self.gql_points = 0
         self.remaining = self.gql_remaining = None
 
-    def _req(self, url, method="GET", data=None, etag=None):
+    def _req(self, url, method="GET", data=None, etag=None, token=None):
         h = {"Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28",
-             "User-Agent": "live-board-feed", "Authorization": f"Bearer {self.token}"}
+             "User-Agent": "live-board-feed", "Authorization": f"Bearer {token or self.token}"}
         if etag:
             h["If-None-Match"] = etag
         if data is not None:
@@ -398,6 +897,28 @@ class Client:
                 raise AuthExpired("HTTP 401 on REST") from None
             raise
 
+    def write_json(self, path, payload):
+        """POST JSON with the assignee token. No assignee token is a miss, not a read-token write.
+        401, 403, 404, and 422 are statuses. They are not AuthExpired."""
+        auth = getattr(self, "assign_token", "") or ""
+        if not auth:
+            return 0
+        data = json.dumps(payload).encode()
+        url = path if str(path).startswith("http") else API + path
+        self.calls += 1
+        try:
+            with urllib.request.urlopen(self._req(url, "POST", data, token=auth), timeout=40) as r:
+                r.read()
+                return r.status
+        except urllib.error.HTTPError as e:
+            try:
+                e.read()
+            finally:
+                e.close()
+            return e.code
+        except (urllib.error.URLError, http.client.HTTPException, TimeoutError, OSError, ValueError):
+            return 0
+
     def gql(self, query, variables):
         if self.gql_remaining is not None and self.gql_remaining < GQL_FLOOR:
             raise RateLow(f"graphql remaining {self.gql_remaining} < floor {GQL_FLOOR}")
@@ -431,7 +952,7 @@ Q_PRS = """query($owner:String!,$name:String!,$after:String){ rateLimit{cost rem
  repository(owner:$owner,name:$name){ pullRequests(first:10, after:$after, orderBy:{field:CREATED_AT, direction:ASC}){
   totalCount pageInfo{hasNextPage endCursor} nodes{ number
    commits(first:40){ totalCount nodes{ commit{ %s } } }
-   reviews(first:60){ totalCount nodes{ databaseId state submittedAt url author{login __typename} } } } } } }""" % COMMIT_FIELDS
+   reviews(first:60){ totalCount nodes{ databaseId state submittedAt url author{login __typename} commit{ oid } } } } } } }""" % COMMIT_FIELDS
 
 
 class RepoCollector:
@@ -450,11 +971,22 @@ class RepoCollector:
             if not login and isinstance(e.get("author"), str) and e.get("author"):
                 login = e.get("author")
             # A later LIVE_NODE_MAP must relabel events already stored. Incremental polls only rewrite changed items.
-            # "CI" is a fixed node, same as GitHub. CI kinds stay put too: the actor is who
-            # triggered the run, and an unmapped bot must not turn that event into Others.
-            if (login and e.get("from") not in ("GitHub", "Example", "CI", live_site.SITE["node"])
-                    and e.get("kind") not in CI_KINDS):
-                e["from"] = node(login)
+            # "CI" is a fixed node, same as GitHub. An unmapped bot must not turn that into Others.
+            # A CI kind already stored as Others is that rewrite. Put it back on CI while the actor
+            # is unmapped, so this load does not delete it. Once the actor is in the map, reclaim it.
+            if login and e.get("from") not in ("GitHub", "Example", "CI", live_site.SITE["node"]):
+                if e.get("kind") in CI_KINDS:
+                    if e.get("from") == "Others":
+                        mapped = node(login)
+                        e["from"] = "CI" if mapped == "Others" else mapped
+                else:
+                    e["from"] = node(login)
+            # #492 stopped at from=Others. A CI row already stored as GitHub or CI still shows that
+            # node. The actor or the app names the seat (forge0x1[bot] -> forge). cursor[bot] does not.
+            if e.get("kind") in CI_KINDS and e.get("from") in ("GitHub", "Example", "CI", live_site.SITE["node"]):
+                seat = ci_from_seat(e)
+                if seat:
+                    e["from"] = seat
             if e.get("from") == "Others" and CLOUD_AGENT_RE.match(str(e.get("actor") or e.get("author") or "")):
                 e["from"] = "CloudAgents"   # cloud-agent writes stored before the Cloud agents node existed
             # A merge is a fact about the pull. An unmapped merger (cursor[bot] -> Others) must not drop it.
@@ -476,9 +1008,28 @@ class RepoCollector:
         for k, v in (("etags", {}), ("cur", {}), ("prs", {}), ("ci", {}), ("reviewer", {}), ("bf", {}),
                      ("branch_shas", {}), ("tag_time", {}), ("gaps", {})):
             self.st.setdefault(k, v)
+        if self.st.get("assign_gen") != 4:
+            self.st["assign_tried"] = []
+            bf = self.st.get("bf")
+            if isinstance(bf, dict):
+                bf.pop("assign:r", None)
+                bf.pop("assign:issues", None)
+            self.st["assign_gen"] = 4
+        if self.st.get("raci_gen") != 3:
+            bf = self.st.get("bf")
+            if isinstance(bf, dict):
+                bf.pop("raci:open", None)
+            etags = self.st.get("etags")
+            if isinstance(etags, dict):
+                etags.pop("raci-open", None)
+            self.st["raci_tried"] = []
+            self.st["raci_gen"] = 3
         self._sha_who = {}
         self.unreadable = None
         self._denied = None
+        self._assign_left = 10
+        self._assign_miss = False
+        self._assign_auth_dead = False
         for e in self.ev.values():
             self._index_sha(e)
         for e in self.ev.values():   # every stored event gets a credit (never blank), also ones from before the map
@@ -496,6 +1047,10 @@ class RepoCollector:
             return
         if kind == "merged" and frm == "Others":
             frm = "GitHub"   # count the merge; the actor login stays on the event
+        actor = str(extra.get("actor") or "")
+        if (kind in ("pr_comment", "issue_comment", "review_comment") and actor.lower() == "cursor[bot]"
+                and frm == "Others" and extra.get("mentions")):
+            frm = "GitHub"   # keep the @mention; cursor[bot] stays the actor, not a seat
         if not SHOW_UNMAPPED and "Others" in (frm, to):
             self.ev.pop(eid, None)
             return
@@ -511,6 +1066,20 @@ class RepoCollector:
                 e[k] = v
         self._index_sha(e)
         e["credit"] = self.credit_of(e)
+        if kind in CI_KINDS:
+            seat = ci_from_seat(e)
+            if seat:
+                e["from"] = seat
+                if e.get("to") == seat:
+                    e["to"] = "GitHub"
+        if kind in ("pr_open", "issue_open"):
+            prev = self.ev.get(eid)
+            old = prev.get("packet") if isinstance(prev, dict) and isinstance(prev.get("packet"), dict) else {}
+            new = e.get("packet") if isinstance(e.get("packet"), dict) else {}
+            if old.get("raci") and not new.get("raci"):
+                e["packet"] = {**new, "raci": old["raci"]}
+            if isinstance(prev, dict) and prev.get("raci_reason") and not e.get("raci_reason"):
+                e["raci_reason"] = prev["raci_reason"]
         self.ev[eid] = e
 
     def _index_sha(self, e):   # sha -> (commit author login, Seat: trailer) for check / workflow / deploy fallbacks
@@ -718,8 +1287,9 @@ class RepoCollector:
                     self.ci_from_commit_node(cm)
                     self.st["ci"][cm["oid"]]["pr"] = n
                 for r in p["reviews"]["nodes"]:
+                    commit = r.get("commit") if isinstance(r.get("commit"), dict) else {}
                     self.review_event(n, r["databaseId"], r["state"], r.get("submittedAt"), gql_login(r.get("author")),
-                                      r.get("url"))
+                                      r.get("url"), commit.get("oid"))
                 need = p["commits"]["totalCount"] > len(p["commits"]["nodes"]) or \
                     p["reviews"]["totalCount"] > len(p["reviews"]["nodes"])
                 if need:   # page the rest through REST
@@ -742,16 +1312,24 @@ class RepoCollector:
 
     def pr_commit_event(self, n, sha, date, msg, login):
         m = brand((msg or "").splitlines()[0] if msg else "")[:72]
-        self.put(f"{self.repo}#{n}:commit:{sha}", date, node(login), "GitHub", "pr_commit",
+        self.put(f"{self.repo}#{n}:commit:{sha}", date, shown_from(login), "GitHub", "pr_commit",
                  f"{self.short} #{n} push {sha[:7]} · {m}", f"https://github.com/{self.repo}/pull/{n}/commits/{sha}",
                  n, sha=sha, message=m, author=login, seat_trailer=seat_trailer(msg))
 
-    def review_event(self, n, rid, state, t, login, url):
+    def review_event(self, n, rid, state, t, login, url, posted_sha=None):
+        """Store the review on the commit it was posted on. Never the PR's current head."""
         if not t or state == "PENDING":
             return
-        self.put(f"{self.repo}#{n}:review:{rid}", t, node(login), self.pr_node(n), "review",
+        eid = f"{self.repo}#{n}:review:{rid}"
+        sha = commit_sha(posted_sha)
+        if not sha:
+            prev = self.ev.get(eid)
+            sha = commit_sha(prev.get("sha")) if isinstance(prev, dict) else None
+        pr = (self.st.get("prs") or {}).get(str(n), {})
+        pr_author = pr.get("author") if isinstance(pr, dict) else None
+        self.put(eid, t, node(login), self.pr_node(n), "review",
                  f"{login or '?'} {state.lower()} · {self.short} #{n}", url or f"https://github.com/{self.repo}/pull/{n}",
-                 n, state=state, actor=login, sha=(self.st.get("prs") or {}).get(str(n), {}).get("head"))
+                 n, state=state, actor=login, pr_author=pr_author, sha=sha)
 
     # ---------------------------------------------------------------- incremental (REST)
     def pr_merged(self, n):
@@ -821,7 +1399,7 @@ class RepoCollector:
         url = p.get("html_url") or f"https://github.com/{self.repo}/pull/{n}"
         created = p.get("created_at") or p.get("updated_at")
         base = (p.get("base") or {}).get("ref") if isinstance(p.get("base"), dict) else None
-        self.put(eid, created, node(login) if login else "GitHub", "GitHub", "pr_open",
+        self.put(eid, created, shown_from(login), "GitHub", "pr_open",
                  f"{self.short} #{n} opened · {p.get('title') or ''}", url, n,
                  base=base, actor=login or None, sha=head, head_ref=head_ref, author=login or None,
                  draft=p.get("draft"), mentions=mentions(p.get("body")), **card_fields(p))
@@ -856,6 +1434,227 @@ class RepoCollector:
             if login:
                 self._stamp_merger(int(n), login)
 
+    def maybe_assign(self, c, item):
+        """Best-effort assignee write. A read-only token must not stop the feed.
+        A network miss is not remembered, so the next pass can try the same card.
+        403, 404, and any other 4xx except 401 are remembered, so a refusal is not posted again.
+        401 marks the assignee token dead for this process and does not remember the card."""
+        if getattr(self, "_assign_auth_dead", False):
+            return
+        if getattr(self, "_assign_left", 0) <= 0 or not getattr(c, "token", None):
+            return
+        login = assignee_bot(item, assignee_nodes())
+        if not login:
+            return
+        try:
+            number = int(item.get("number"))
+        except (TypeError, ValueError):
+            return
+        tried = self.st.setdefault("assign_tried", [])
+        if not isinstance(tried, list):
+            tried = []
+            self.st["assign_tried"] = tried
+        key = f"{self.repo}#{number}"
+        if key in tried:
+            return
+        try:
+            code = c.write_json(f"/repos/{self.repo}/issues/{number}/assignees", {"assignees": [login]})
+        except AuthExpired:
+            self._assign_auth_dead = True
+            return
+        if code == 401:
+            self._assign_auth_dead = True
+            return
+        if not code or code >= 500:
+            self._assign_miss = True
+            return
+        tried.append(key)
+        if len(tried) > 500:
+            del tried[:-500]
+        self._assign_left -= 1
+
+    def _release_raci(self, seat):
+        if seat and hasattr(self, "_raci_held"):
+            self._raci_held[seat] = max(0, int(self._raci_held.get(seat) or 1) - 1)
+
+    def _raci_note(self, key):
+        counts = getattr(self, "_raci_counts", None)
+        if isinstance(counts, dict):
+            counts[key] = int(counts.get(key) or 0) + 1
+
+    def maybe_fill_raci(self, c, item):
+        """One packet comment when a live card has no R. The same write budget as assignee posts.
+        Parked, pinned, and closed cards are skipped. A later maybe_assign uses the R just written.
+        A client that can only read is left alone, so a poll still records the card."""
+        if getattr(self, "_assign_auth_dead", False):
+            return
+        if getattr(self, "_assign_left", 0) <= 0 or not getattr(c, "token", None):
+            return
+        if not callable(getattr(c, "write_json", None)):
+            return
+        try:
+            number = int(item.get("number"))
+        except (TypeError, ValueError):
+            return
+        tried = self.st.setdefault("raci_tried", [])
+        if not isinstance(tried, list):
+            tried = []
+            self.st["raci_tried"] = tried
+        key = f"{self.repo}#{number}"
+        if key in tried:
+            return
+        if not hasattr(self, "_raci_held"):
+            self._raci_held = in_progress_load(self)
+        spec = default_raci(item, held=self._raci_held)
+        if not spec:
+            return
+        self._raci_note("seen")
+        found = self.posted_raci(c, number)
+        if found is False:
+            self._release_raci(spec.get("R"))
+            return
+        if found:
+            self._release_raci(spec.get("R"))
+            item["packet"] = {"raci": found}
+            item.pop("raci_reason", None)
+            tried.append(key)
+            self._raci_note("adopted")
+            self._remember_raci(item)
+            return
+        if spec.get("queued"):
+            item["raci_reason"] = spec.get("reason") or "at the cap"
+            answer = str(spec.get("A") or "").strip()
+            if answer:
+                item["packet"] = {"raci": f"R=queued A={answer}"}
+            self._raci_note("capped")
+            self._raci_queued = True
+            self._remember_raci(item)
+            return
+        body = raci_comment(spec["R"], spec["A"])
+        try:
+            code = c.write_json(f"/repos/{self.repo}/issues/{number}/comments", {"body": body})
+        except AuthExpired:
+            self._assign_auth_dead = True
+            self._release_raci(spec.get("R"))
+            return
+        if code == 401:
+            self._assign_auth_dead = True
+            self._release_raci(spec.get("R"))
+            return
+        if not code or code >= 500:
+            self._assign_miss = True
+            self._release_raci(spec.get("R"))
+            return
+        tried.append(key)
+        if len(tried) > 500:
+            del tried[:-500]
+        self._assign_left -= 1
+        self._raci_note("wrote")
+        item["packet"] = {"raci": f"R={spec['R']} A={spec['A']}"}
+        prior = item.get("body") if isinstance(item.get("body"), str) else ""
+        item["body"] = f"{prior}\n{body}" if prior else body
+        self._remember_raci(item)
+
+    def posted_raci(self, c, number):
+        """The R A line already on a comment. None when the card has none.
+        False when the comment read failed: the caller must not post."""
+        if not callable(getattr(c, "rest", None)):
+            return None
+        try:
+            rows = self._all(c, f"/repos/{self.repo}/issues/{number}/comments")
+        except (urllib.error.HTTPError, urllib.error.URLError, http.client.HTTPException,
+                TimeoutError, OSError, ValueError, KeyError, TypeError):
+            self._assign_miss = True
+            return False
+        for row in rows or []:
+            if not isinstance(row, dict):
+                continue
+            user = row.get("user") if isinstance(row.get("user"), dict) else {}
+            if not own_bot(user.get("login")):
+                continue
+            text = raci_text(row.get("body"))
+            if text:
+                return text
+        return None
+
+    def _open_eid(self, item):
+        n = int(item["number"])
+        url = str(item.get("html_url") or "")
+        if "pull_request" in item or "/pull/" in url:
+            return f"{self.repo}#{n}:open"
+        return f"{self.repo}!{n}:open"
+
+    def _remember_raci(self, item):
+        """The board reads the stored open event. A comment posted later is not that event."""
+        if not isinstance(item, dict):
+            return
+        packet = item.get("packet") if isinstance(item.get("packet"), dict) else None
+        raci = str(packet.get("raci") or "") if packet else ""
+        reason = item.get("raci_reason") if isinstance(item.get("raci_reason"), str) else ""
+        if not raci and not reason.strip():
+            return
+        try:
+            eid = self._open_eid(item)
+        except (TypeError, ValueError, KeyError):
+            return
+        event = self.ev.get(eid) if isinstance(getattr(self, "ev", None), dict) else None
+        if not isinstance(event, dict):
+            return
+        if raci:
+            current = event.get("packet") if isinstance(event.get("packet"), dict) else {}
+            event["packet"] = {**current, "raci": raci}
+        if reason.strip():
+            event["raci_reason"] = reason.strip()
+
+    def _copy_raci_fields(self, fields, item):
+        packet = item.get("packet") if isinstance(item, dict) and isinstance(item.get("packet"), dict) else None
+        if packet and packet.get("raci"):
+            current = fields.get("packet") if isinstance(fields.get("packet"), dict) else {}
+            fields["packet"] = {**current, "raci": packet["raci"]}
+        reason = item.get("raci_reason") if isinstance(item, dict) else ""
+        if isinstance(reason, str) and reason.strip():
+            fields["raci_reason"] = reason.strip()
+
+    def fill_open_raci(self, c):
+        """One walk of currently open issues and pulls, then a conditional GET.
+        A card at the cap does not keep the list open. The page-1 ETag stays, so the
+        next pass is a 304 and not another download. A quiet card whose own event
+        later moves is filled by the pull and issue polls."""
+        bf = self.st.setdefault("bf", {})
+        if not getattr(c, "token", None) or not callable(getattr(c, "write_json", None)):
+            return
+        if not (getattr(c, "assign_token", "") or ""):
+            return
+        self.st.setdefault("etags", {})
+        params = {"state": "open", "sort": "updated", "direction": "desc"}
+        path = f"/repos/{self.repo}/issues"
+        if bf.get("raci:open"):
+            gen = self.paged(c, path, params, "raci-open", essential=False)
+            next(gen, None)
+            if getattr(self, "_etag_new", None):
+                self.st["etags"]["raci-open"] = self._etag_new
+            return
+        stopped = False
+        for item in self.paged(c, path, params, "raci-open", essential=False):
+            if getattr(self, "_assign_left", 0) <= 0:
+                self._paged_status = "budget"
+                stopped = True
+                break
+            self.maybe_fill_raci(c, item)
+            self.maybe_assign(c, item)
+        if stopped or getattr(self, "_paged_status", None) != "done":
+            return
+        if getattr(self, "_etag_new", None):
+            self.st["etags"]["raci-open"] = self._etag_new
+        if getattr(self, "_assign_auth_dead", False):
+            return
+        if assign_rewalk_done(
+                getattr(self, "_paged_status", None),
+                getattr(self, "_assign_left", 0),
+                getattr(self, "_assign_miss", False),
+                False):
+            bf["raci:open"] = True
+
     def poll_pulls(self, c):
         if not getattr(c, "token", None):
             return
@@ -880,6 +1679,13 @@ class RepoCollector:
             self.st["bf"]["merged:day"] = True
         elif not self.st["bf"].get("merged:day"):
             self.st["bf"]["merged:day"] = True
+        # One-time: pulls updated before bc ids were copied off the body never stored them.
+        # Rewind a week so a cloud row can match the PR footer or the head ref. put() is idempotent.
+        bc_rewalk = not self.st["bf"].get("bc:body")
+        if cur and bc_rewalk:
+            back = (datetime.now(timezone.utc) - timedelta(days=7)).strftime("%Y-%m-%dT%H:%M:%SZ")
+            cur = min(cur, back)
+            self.st["etags"].pop("pulls", None)
         # One-time: merges whose actor maps to Others were dropped by put(). Rewalk the open window.
         # merged:actor is that rewalk's cursor. A short pass (page cap or error) must not set it,
         # or the next pass will not rewind and a merge behind the new pulls cursor is skipped for good.
@@ -888,7 +1694,19 @@ class RepoCollector:
             back = (datetime.now(timezone.utc) - timedelta(hours=36)).strftime("%Y-%m-%dT%H:%M:%SZ")
             cur = min(cur, back)
             self.st["etags"].pop("pulls", None)
-        newest = cur
+        assign_rewalk = not self.st["bf"].get("assign:r")
+        if cur and assign_rewalk:
+            back = (datetime.now(timezone.utc) - timedelta(days=14)).strftime("%Y-%m-%dT%H:%M:%SZ")
+            cur = min(cur, back)
+            self.st["etags"].pop("pulls", None)
+        # Stop walks the whole list. The stored cursor stays until a strictly newer update,
+        # so a same-instant +00:00 stamp does not replace the Z form.
+        walk_from = cur
+        cards_rewalk = not self.st["bf"].get("cards:pulls")
+        if cards_rewalk:
+            cur = None
+            self.st["etags"].pop("pulls", None)
+        newest = walk_from
         # Replay a pull that shares the cursor second. put() is idempotent.
         # Instant compare, not text: <= skips that sibling, and +00:00 / -05:00 sort before Z.
         for p in self.paged(c, f"/repos/{self.repo}/pulls", {"state": "all", "sort": "updated", "direction": "desc"},
@@ -906,10 +1724,17 @@ class RepoCollector:
             self.st["prs"][str(n)] = {"author": login or None, "updated_at": p["updated_at"], "head": head,
                                       "merged_at": p.get("merged_at"), "state": p["state"], "base": p["base"]["ref"]}
             url = p["html_url"]
-            self.put(f"{self.repo}#{n}:open", p["created_at"], node(login) if login else "GitHub", "GitHub", "pr_open",
+            fields = card_fields(p)
+            if str(p.get("state") or "").lower() == "open":
+                self.maybe_fill_raci(c, p)
+                self.maybe_assign(c, p)
+                self._copy_raci_fields(fields, p)
+            if not fields.get("packet_file") and head and packet_file_on_ref(c, self.repo, head):
+                fields["packet_file"] = True
+            self.put(f"{self.repo}#{n}:open", p["created_at"], shown_from(login), "GitHub", "pr_open",
                      f"{self.short} #{n} opened · {p['title']}", url, n, base=p["base"]["ref"], actor=login or None,
                      sha=head, head_ref=head_ref, author=login or None,
-                     draft=p.get("draft"), mentions=mentions(p.get("body")), **card_fields(p))
+                     draft=p.get("draft"), mentions=mentions(p.get("body")), asks=phrase_asks(p.get("body")), **fields)
             if p.get("merged_at"):
                 listed = p.get("merged_by") if isinstance(p.get("merged_by"), dict) else None
                 listed_login = (listed or {}).get("login")
@@ -926,6 +1751,10 @@ class RepoCollector:
                     self.st.setdefault("need_merger", {})[str(n)] = 1
                 self.put(f"{self.repo}#{n}:merged", p["merged_at"], node(merger or login), "GitHub", "merged",
                          f"merged {self.short} #{n} → {p['base']['ref']}", url, n, **extra)
+                self._put_parent_door(c, n, p.get("merged_at"), url, p.get("body"))
+            if not prev_head:
+                opened = self.ev.get(f"{self.repo}#{n}:open") or {}
+                prev_head = opened.get("sha") if isinstance(opened.get("sha"), str) else None
             if prev_head and head and prev_head != head:
                 self.pr_commit_event(n, head, p["updated_at"], p.get("title") or "", login)
                 self.st.setdefault("enrich", {})[str(n)] = True
@@ -938,13 +1767,24 @@ class RepoCollector:
             self.st["etags"]["pulls"] = self._etag_new
         if actor_rewalk and getattr(self, "_paged_status", None) == "done":
             self.st["bf"]["merged:actor"] = True
+        if cards_rewalk and getattr(self, "_paged_status", None) == "done":
+            self.st["bf"]["cards:pulls"] = True
+        if bc_rewalk and getattr(self, "_paged_status", None) == "done":
+            self.st["bf"]["bc:body"] = True
+        if assign_rewalk and assign_rewalk_done(
+                getattr(self, "_paged_status", None),
+                getattr(self, "_assign_left", 0),
+                getattr(self, "_assign_miss", False),
+                getattr(self, "_assign_auth_dead", False)):
+            self.st["bf"]["assign:r"] = True
+        self._backfill_parent_doors(c)
 
     def enrich_prs(self, c, limit=20):
         todo = list(self.st.get("enrich", {}).keys())[:limit]
         for n in todo:
             for r in self._all(c, f"/repos/{self.repo}/pulls/{n}/reviews"):
                 self.review_event(int(n), r["id"], r["state"], r.get("submitted_at"), (r.get("user") or {}).get("login"),
-                                  r.get("html_url"))
+                                  r.get("html_url"), r.get("commit_id"))
             for cm in self._all(c, f"/repos/{self.repo}/pulls/{n}/commits"):
                 d = cm["commit"]["committer"]["date"]
                 self.pr_commit_event(int(n), cm["sha"], d, cm["commit"]["message"], rest_author_login(cm))
@@ -987,6 +1827,101 @@ class RepoCollector:
             "body": iss.get("body"),
             "labels": iss.get("labels"),
         })
+
+    def _issue_brief(self, c, number):
+        try:
+            st, data, _, _ = c.rest(f"/repos/{self.repo}/issues/{number}", None, essential=False)
+        except RateLow:
+            raise
+        except (urllib.error.URLError, http.client.HTTPException, TimeoutError, OSError, ValueError, KeyError):
+            return None
+        if st != 200 or not isinstance(data, dict):
+            return None
+        state = str(data.get("state") or "").lower()
+        if state == "closed" or data.get("merged_at") or str(data.get("pull_request", {}).get("merged_at") or ""):
+            state = "closed" if state == "closed" or data.get("merged_at") else state
+        text = data.get("body") if isinstance(data.get("body"), str) else ""
+        return {"state": "closed" if state == "closed" or data.get("merged_at") else state or "open", "body": text}
+
+    def _parent_door(self, c, body):
+        """One ready line's fields when a merged pull names an open parent. The body is not stored.
+        A child counts only when that issue is still open."""
+        refs = next_parent.ref_numbers(body)[:3]
+        if not refs or not getattr(c, "token", None):
+            return {}
+        briefs = {}
+        def brief(n):
+            if n not in briefs:
+                briefs[n] = self._issue_brief(c, n)
+            return briefs[n]
+        bodies = {}
+        done = set()
+        open_nums = set()
+        for n in refs:
+            info = brief(n)
+            if not info:
+                continue
+            bodies[n] = info["body"]
+            if info["state"] == "closed":
+                done.add(n)
+            else:
+                for cand in next_parent.child_numbers(info["body"])[:8]:
+                    if cand in done or cand == n:
+                        continue
+                    child = brief(cand)
+                    if not child:
+                        continue
+                    if child["state"] == "closed":
+                        done.add(cand)
+                        continue
+                    open_nums.add(cand)
+                    break
+        door = next_parent.parent_door(bodies, done, open_nums)
+        if not door:
+            return {}
+        return {"parent": door["parent"], "next_issue": door["next"], "door_seat": door["seat"]}
+
+    def _put_parent_door(self, c, number, _when, url, body):
+        door = self._parent_door(c, body)
+        if not door:
+            return
+        # Parent is in the id. A closed parent that keeps the same child is a new row,
+        # or the inbox seen-set keeps the old title.
+        eid = f"{self.repo}#{int(number)}:next:{door['parent']}:{door['next_issue']}:door"
+        prefix = f"{self.repo}#{int(number)}:next:"
+        for key in list(self.ev):
+            if str(key).startswith(prefix) and str(key) != eid:
+                self.ev.pop(key, None)
+        current = self.ev.get(eid)
+        if current and current.get("parent") == door["parent"] and current.get("next_issue") == door["next_issue"]:
+            return
+        # Stamp now. A merge time older than the route window is marked seen and never delivered.
+        live = datetime.now(self.CT).isoformat(timespec="seconds")
+        self.put(eid, live, "GitHub", "GitHub", "next_parent",
+                 f"next on #{door['parent']}: #{door['next_issue']}", url, door["next_issue"], **door)
+
+    def _backfill_parent_doors(self, c, limit=5):
+        """Recent merged pulls get one next line.
+        A stored :door is recomputed. door:child does not keep a closed parent."""
+        if not getattr(c, "token", None):
+            return
+        merged = [e for e in self.ev.values() if e.get("kind") == "merged" and e.get("repo") == self.repo and e.get("number")]
+        merged.sort(key=lambda e: str(e.get("t_ct") or ""), reverse=True)
+        seen = 0
+        for e in merged:
+            if seen >= limit:
+                return
+            n = int(e["number"])
+            seen += 1
+            try:
+                st, data, _, _ = c.rest(f"/repos/{self.repo}/pulls/{n}", None, essential=False)
+            except RateLow:
+                raise
+            except (urllib.error.URLError, http.client.HTTPException, TimeoutError, OSError, ValueError, KeyError):
+                continue
+            if st != 200 or not isinstance(data, dict):
+                continue
+            self._put_parent_door(c, n, e.get("t_ct"), data.get("html_url") or e.get("source"), data.get("body"))
 
     def _record_merged_event(self, n, e, actor, url):
         """Store the merged beat from an issue event when pulls have not stored merged_at yet."""
@@ -1116,9 +2051,76 @@ class RepoCollector:
         if self._etag_new:
             self.st["etags"]["ievents"] = self._etag_new
 
+    def _put_open_card(self, item):
+        """Store one fetched issue or pull. The login stays on the actor. from is the fleet node or GitHub."""
+        if not isinstance(item, dict) or item.get("number") is None:
+            return
+        try:
+            n = int(item["number"])
+        except (TypeError, ValueError):
+            return
+        user = item.get("user") if isinstance(item.get("user"), dict) else {}
+        login = user.get("login") or ""
+        is_pr = "pull_request" in item
+        eid = f"{self.repo}#{n}:open" if is_pr else f"{self.repo}!{n}:open"
+        if eid in self.ev:
+            return
+        created = item.get("created_at") or item.get("updated_at")
+        kind = "pull" if is_pr else "issues"
+        url = item.get("html_url") or f"https://github.com/{self.repo}/{kind}/{n}"
+        title = item.get("title") or ""
+        label = (f"{self.short} #{n} opened · {title}" if is_pr
+                 else f"{self.short} issue #{n} opened · {title}")
+        if login and not is_pr:
+            self.st.setdefault("issues", {})[str(n)] = login
+        self.put(eid, created, shown_from(login), "GitHub", "pr_open" if is_pr else "issue_open",
+                 label, url, n, actor=login or None, mentions=mentions(item.get("body")),
+                 asks=phrase_asks(item.get("body")), author=login or None, **card_fields(item))
+
+    def backfill_open_cards(self, c, limit=30):
+        """Each pass fetches open numbers that still have no open event, up to limit. An empty miss list does not latch."""
+        bf = self.st.setdefault("bf", {})
+        bf.pop("cards:missing", None)
+        if not getattr(c, "token", None):
+            return
+        found = open_numbers(c, [self.repo])
+        key = str(self.repo).lower()
+        if key not in found:
+            return
+        missing = [n for n in sorted(found[key])
+                   if f"{self.repo}!{n}:open" not in self.ev and f"{self.repo}#{n}:open" not in self.ev]
+        if not missing:
+            return
+        for n in missing[:limit]:
+            try:
+                st, data, _, _ = c.rest(f"/repos/{self.repo}/issues/{n}", None, essential=False)
+            except RateLow:
+                return
+            except (urllib.error.URLError, http.client.HTTPException, TimeoutError, OSError, ValueError, KeyError):
+                return
+            if st != 200 or not isinstance(data, dict):
+                return
+            self.maybe_fill_raci(c, data)
+            self.maybe_assign(c, data)
+            self._put_open_card(data)
+            if f"{self.repo}!{n}:open" not in self.ev and f"{self.repo}#{n}:open" not in self.ev:
+                return
+
     def poll_issues(self, c):
         cur = self.st["cur"].get("issues")
-        newest = cur
+        # One walk of every issue. The time cursor skips a number that was not updated after it,
+        # and that number never becomes a card. put() is idempotent.
+        stored = cur
+        assign_rewalk = not self.st["bf"].get("assign:issues")
+        if cur and assign_rewalk:
+            back = (datetime.now(timezone.utc) - timedelta(days=14)).strftime("%Y-%m-%dT%H:%M:%SZ")
+            cur = min(cur, back)
+            self.st["etags"].pop("issues", None)
+        cards_rewalk = not self.st["bf"].get("cards:issues")
+        if cards_rewalk:
+            cur = None
+            self.st["etags"].pop("issues", None)
+        newest = stored
         for i in self.paged(c, f"/repos/{self.repo}/issues", {"state": "all", "sort": "updated", "direction": "desc"},
                             "issues", stop=lambda i: gh_before(i.get("updated_at"), cur)):
             if gh_after(i.get("updated_at"), newest):
@@ -1128,12 +2130,24 @@ class RepoCollector:
             n, login = i["number"], (i.get("user") or {}).get("login")
             if login:
                 self.st.setdefault("issues", {})[str(n)] = login
-            self.put(f"{self.repo}!{n}:open", i["created_at"], node(login), "GitHub", "issue_open",
+            self.put(f"{self.repo}!{n}:open", i["created_at"], shown_from(login), "GitHub", "issue_open",
                      f"{self.short} issue #{n} opened · {i['title']}", i["html_url"], n, actor=login,
                      mentions=mentions(i.get("body")), **card_fields(i))
+            if str(i.get("state") or "").lower() == "open":
+                self.maybe_fill_raci(c, i)
+                self.maybe_assign(c, i)
+                self._remember_raci(i)
         self.st["cur"]["issues"] = newest
         if self._etag_new:
             self.st["etags"]["issues"] = self._etag_new
+        if cards_rewalk and getattr(self, "_paged_status", None) == "done":
+            self.st["bf"]["cards:issues"] = True
+        if assign_rewalk and assign_rewalk_done(
+                getattr(self, "_paged_status", None),
+                getattr(self, "_assign_left", 0),
+                getattr(self, "_assign_miss", False),
+                getattr(self, "_assign_auth_dead", False)):
+            self.st["bf"]["assign:issues"] = True
 
     def poll_comments(self, c):
         cur = self.st["cur"].get("comments")
@@ -1142,6 +2156,12 @@ class RepoCollector:
             cur = min(cur, back) if cur else cur
             self.st["etags"].pop("comments", None)       # else page 1 answers 304 and nothing is re-read
             self.st["bf"]["comments:critic3"] = True
+        if not self.st["bf"].get("comments:cursorbot"):   # one-time: re-read comments from the start of today
+            start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+            back = start.strftime("%Y-%m-%dT%H:%M:%SZ")
+            cur = min(cur, back) if cur else cur
+            self.st["etags"].pop("comments", None)
+            self.st["bf"]["comments:cursorbot"] = True
         newest = self.st["cur"].get("comments")
         for cm in self.paged(c, f"/repos/{self.repo}/issues/comments", {"sort": "updated", "direction": "desc"},
                              "comments", stop=lambda x: gh_before(x.get("updated_at"), cur)):
@@ -1154,12 +2174,14 @@ class RepoCollector:
             hold = live_packet.parse_hold(body)
             k = "pr_comment" if is_pr else "issue_comment"
             to = self.pr_node(n) if is_pr else self.issue_node(n)
+            packet = live_packet.parse(body) or None
             self.put(f"{self.repo}{'#' if is_pr else '!'}{n}:comment:{cm['id']}", cm["created_at"], node(login), to, k,
                      f"{login or '?'} comment · {self.short} {'#' if is_pr else 'issue #'}{n}", cm["html_url"], n,
                      actor=login, resolved=True if RESOLVED_RE.search(body) else None,   # flags only
                      parked=True if PARKED_COMMENT_RE.match(body) else None,
                      start_after=comment_start_after(body),
-                     hold=hold, mentions=mentions(body), pr_merged=self.pr_merged(n) if is_pr else None)
+                     hold=hold, mentions=mentions(body), asks=phrase_asks(body), packet=packet,
+                     pr_merged=self.pr_merged(n) if is_pr else None)
             if is_pr:
                 self.st.setdefault("enrich", {})[str(n)] = True   # a comment is a reason to re-read reviews
             if is_pr and login in CRITIC_LOGINS:   # verdict word + SHA only; the body is discarded here
@@ -1178,7 +2200,7 @@ class RepoCollector:
             self.st["etags"]["comments"] = self._etag_new
         for n, v in self.st["reviewer"].items():   # latest verdict per PR, stable id
             word = v["result"] or v["verdict"]
-            kind = {"PASS": "critic_pass", "FAIL": "critic_fail", "HOLD": "critic_hold"}.get(word, "critic_recheck")
+            kind = {"PASS": "critic_pass", "FIX": "critic_fail", "FAIL": "critic_fail", "HOLD": "critic_fail"}.get(word, "critic_recheck")
             shown = (f"re-check {v['result']}" if v["result"] else "re-check") if v["verdict"] == "RE-CHECK" else v["verdict"]
             self.put(f"{self.repo}#{n}:reviewer", v["t"], "Reviewer", self.pr_node(n), kind,
                      f"reviewer {shown} · {self.short} #{n}" + (f" @ {v['sha'][:7]}" if v["sha"] else ""), v["url"], n,
@@ -1292,7 +2314,7 @@ class RepoCollector:
                              r.get("updated_at") or r.get("run_started_at") or r["created_at"], "CI", "GitHub", ck,
                              f"{'CI pass' if ck == 'ci_pass' else 'CI fail'} {brand(r['name'])} · {self.short} #{num}",
                              r["html_url"], int(num), conclusion=r.get("conclusion"), head_sha=r.get("head_sha"),
-                             name=brand(r["name"]))
+                             name=brand(r["name"]), actor=(r.get("actor") or {}).get("login"))
                 if NO_CHECKS and r.get("check_suite_id"):
                     self.suite_from_run(r)
                 recent = r.get("head_sha") and time.time() - datetime.fromisoformat(
@@ -1426,7 +2448,12 @@ class RepoCollector:
     # ---------------------------------------------------------------- one pass
     def run(self, c, deadline):
         self._denied = None
-        steps = [("pulls", self.poll_pulls), ("issues", self.poll_issues), ("issue events", self.poll_issue_events),
+        self._assign_left = 10
+        self._assign_miss = False
+        self._raci_counts = {"seen": 0, "wrote": 0, "adopted": 0, "capped": 0}
+        steps = [("pulls", self.poll_pulls), ("issues", self.poll_issues),
+                 ("open raci", self.fill_open_raci),
+                 ("open cards", self.backfill_open_cards), ("issue events", self.poll_issue_events),
                  ("merger backfill", self.backfill_mergers),
                  ("comments", self.poll_comments), ("review comments", self.poll_review_comments),
                  ("pushes", self.poll_pushes),
@@ -1459,5 +2486,11 @@ class RepoCollector:
                     self.note_denied(e, name)
                     self.log(f"{self.short}: {name} failed ({type(e).__name__}: {str(e)[:80]})")
         self.unreadable = self.repo if self._denied else None
+        counts = getattr(self, "_raci_counts", {}) or {}
+        latched = bool((self.st.get("bf") or {}).get("raci:open"))
+        self.log(
+            f"{self.short}: raci seen={counts.get('seen', 0)} wrote={counts.get('wrote', 0)} "
+            f"adopted={counts.get('adopted', 0)} capped={counts.get('capped', 0)} latched={latched}"
+        )
         self.save()
         return done

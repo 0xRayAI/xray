@@ -1,10 +1,16 @@
 # xray Agents
 
-Quick reference for the 0xRay suit (**4.1**).
+Quick reference for the 0xRay suit (**4.2**).
 
-**4.1** — a suit that survives the context window.
+**4.2** — a suit that survives the context window.
+
+Node >= 24.22.3. That is the patched 24 release from 11 Nov 2026.
 
 Confer votes. Burst runs the swarm.
+
+Goggles views one plane. A search inside that card runs. A search of another plane returns the card. A path outside this checkout runs.
+
+A prompt pulse spins only the card named by working_on. Seen is not working. Tandem is several tracks at once and no seat waits for a nod. A card carries raci, and a live card missing R or A is amber. A missed /healthz replaces the one replica. The OP cycle is digest, card, do, loop, ship (`grok-bot/OP-PROC.md` #op-cycle).
 
 **The suit is the wear.** Three-subsystem autonomous engine (Inference · External Governance · Autonomous Engine) · constitution always on · temperament by host · 4 floors · **Repertoire preferred** (vendored 0.2.9, dest = laws).
 
@@ -12,7 +18,7 @@ Confer votes. Burst runs the swarm.
 
 ## Hot-swap
 
-Before other work, Read `.xray/state/STATION.md`. Compaction and host change are the same cut. Continue the card. Do not restart the job. Grok does not inject the card (OpenCode does) — this Read is the Grok contract. Do not thicken the Grok exo.
+Before other work, Read `.xray/state/STATION.md`. Compaction and host change are the same cut. Continue the card. A packet and its card follow the house packet rule (`grok-bot/OP-PROC.md` #packet). The card key is the issue or pull. Do not hand-post a card. When Bifrost is on, suit boot enables the only TUI monitor in the local TUI: `$XRAY_MAIN/house/live/tools/inbox-watch.sh <seat>`. Do not restart the job. Grok does not inject the card (OpenCode does) — this Read is the Grok contract. Do not thicken the Grok exo.
 
 **Lead cadence:** a peer wearing this file + Station + Repertoire continues without a command stream. Dummy bodies test `SKILLS.md`. Same-sess bodies wear the suit and keep a Station card. Always branch + worktree + PR. Ship when mill-gate D + `foundry gate` PASS (`grok-bot/OP-PROC.md` Decision matrix) — green CI is not ship. npm OTP in a browser, then poll the new version before moving on. Loop until Station is done. Live ticks and moving workstreams — not idle pacers. Same critic (resume only). Disk SSOT: `grok-bot/OP-PROC.md` (team specifics live in `house/`). Playbook: `orchestrator` skill.
 
@@ -53,11 +59,11 @@ Governance deliberation: **code-review**, **security-audit**, **researcher** wit
 3. `.gitignore.default` → `.gitignore` (if absent)
 4. `.xray/` config (`codex.json`, `features.json`, `config.json`) then overlay their plant
 5. `.mcp.json` (7 servers)
-6. Four chat bridges: OpenCode, Grok, Hermes, OpenClaw. Grok last-mile dest is project `.grok/plugins/0xray` (shared HOME does not last-wins clobber machine `~/.grok/plugins/0xray`)
+6. Four chat bridges: OpenCode, Grok, Hermes, OpenClaw. Grok last-mile dest is project `.grok/plugins/0xray` (shared HOME does not last-wins clobber machine `~/.grok/plugins/0xray`). That plugin includes `bundle.md`. Session boot reads it.
 7. Cursor fifth wear: fasten `.cursor/hooks.json` + relative `.cursor/hooks/*.sh`. Rewrite leftover `XRAY_AI_PATH=` one-liners. Not a fifth chat TUI.
 8. Optional git hooks
 
-**Shop plant:** `shop-extract`, `shop-witness`, `shop-pin` (groover-hangar) are first-class with mill plant. Extra shops: `foundry.json` `shopPlant`. Not `"costume": true`. `npx @0xray/foundry inspect --skip-live` is the receipt.
+**Shop plant:** `shop-extract`, `shop-witness`, `shop-pin` (groover-hangar) are first-class with mill plant. Extra shops: `foundry.json` `shopPlant`. Not `"costume": true`. `npx 0xray inspect --skip-live` is the receipt.
 
 **Sound plant:** Dist audio beds are a mill (`@0xray/blip`), not a foundry organ catalog. Alias `"plant": "sound"` + `npx @0xray/foundry sound render` writes a crystal-clear wav (Rippel membrane/metal/mixer, not a sine toy) and a bed receipt. `sound-mixer` (`npx @0xray/foundry sound mix`) lives in the mill and levels every genre × tempo × motif — hats, plate, glue — not just the last bed. CLI shim `foundry sound` remains (0.1.11+). Inspect is mill-exported — not fake code-mill skills on a sound seat.
 
@@ -120,14 +126,7 @@ Governance deliberation: **code-review**, **security-audit**, **researcher** wit
 
 ## Changes since 3.1
 
-| Version | Change |
-|---------|--------|
-| **3.4.1** | `install-bridges.cjs`, 7 MCPs `npx`, release pipeline + docs sync |
-| **3.4.0** | Nucleus exports, governance closure, verify gate |
-| **3.3.1** | Confidence gate, repertoire researcher wiring |
-| **3.3.0** | Memory routing + Repertoire provider |
-| **3.2.0** | AsideContext wired, SelfProposalEngine, pre-tool-use hook |
-| **3.1.1** | 0xRay rename, marketplace, AGENTS/SKILLS consumer seeding |
+Patch notes are in [CHANGELOG.md](CHANGELOG.md). The guide is [Features since 3.1](docs-site/docs/guides/features-since-3.1.md).
 
 **Removed:** `hermes bridge`, `.opencode/xray/` fallback, `advanced-features/`.
 
@@ -239,7 +238,7 @@ Full skill mapping: [SKILLS.md](SKILLS.md).
 
 ## Live board
 
-When `LIVE_URL` is set, the board seats see is the collector board (`house/live/feed/live_mesh.py`). When `LIVE_URL` is unset, the board is hand-kept `house/WAVEBOARD.md`. A cloud agent is a board row (`bcId`, owning seat, linked card, state `running`, `finished`, or `failed`). The seat wake is `grok-bot/templates/house/fleet/WAKE-ROUTINE.md`: `live-inbox <seat> --turn start` on every turn, and `--turn end` on every exit. `live-inbox` requires `LIVE_URL`, `SEAT_KEYS_DIR`, and `LIVE_CURSORS`. A missing or empty one exits 2 and names it. A stuck card sends L1 to the next owner or the card owner, and L3 repeats to that seat. An unacked line and a missing handoff stay on that seat through L3. CoS is not woken to reassign.
+When `LIVE_URL` is set, the board seats see is the collector board (`house/live/feed/live_mesh.py`). When `LIVE_URL` is unset, the board is hand-kept `house/WAVEBOARD.md`. A cloud agent is a board row (`bcId`, owning seat, linked card, state `running`, `finished`, or `failed`). The seat wake is `grok-bot/templates/house/fleet/WAKE-ROUTINE.md`: `live-inbox <seat> --turn start` on every turn, and `--turn end` on every exit. `live-inbox` requires `LIVE_URL` and `SEAT_KEYS_DIR`. A missing or empty one exits 2 and names it. `LIVE_CURSORS` is not required. The cursor folder rule is `grok-bot/OP-PROC.md#cursor-folder`. A stuck card sends L1 to the next owner or the card owner, and L3 repeats to that seat. An unacked line and a missing handoff stay on that seat through L3. CoS is not woken to reassign.
 
 ## Release artifacts
 

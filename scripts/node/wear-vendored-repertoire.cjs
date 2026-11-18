@@ -92,7 +92,7 @@ function wearOne(vendor, dest, log) {
   }
 
   fs.mkdirSync(path.dirname(dest), { recursive: true });
-  const rel = path.relative(path.dirname(dest), vendor);
+  const rel = relativeRepertoireLink(vendor, dest);
   const linkType = process.platform === "win32" ? "junction" : "dir";
   try {
     fs.symlinkSync(rel, dest, linkType);
@@ -126,8 +126,23 @@ function repertoireLinkDest(targetDir) {
   return path.join(targetDir, "node_modules", "@0xray", "repertoire");
 }
 
+function realpathExisting(dir) {
+  const missing = [];
+  let cursor = path.resolve(dir);
+  while (!fs.existsSync(cursor)) {
+    const parent = path.dirname(cursor);
+    if (parent === cursor) break;
+    missing.push(path.basename(cursor));
+    cursor = parent;
+  }
+  let real = fs.realpathSync(cursor);
+  for (let i = missing.length - 1; i >= 0; i -= 1) real = path.join(real, missing[i]);
+  return real;
+}
+
+/** Relative link from the real parent, so a symlink such as /var still resolves. */
 function relativeRepertoireLink(vendor, dest) {
-  return path.relative(path.dirname(dest), vendor);
+  return path.relative(realpathExisting(path.dirname(dest)), fs.realpathSync(vendor));
 }
 
 /**

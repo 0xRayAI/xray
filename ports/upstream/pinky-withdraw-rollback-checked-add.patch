@@ -1,0 +1,112 @@
+diff --git a/contract/src/lib.rs b/contract/src/lib.rs
+index 722c47b..cb16267 100644
+--- a/contract/src/lib.rs
++++ b/contract/src/lib.rs
+@@ -425,14 +425,15 @@ impl Deal {
+     fn credit(&mut self, amount: u128, now: u64, funding_cutoff_ns: u64) {
+         if self.state == DealState::Created && now <= funding_cutoff_ns && amount >= self.amount {
+             self.funded_amount = self.amount;
+-            self.client_payout += amount - self.amount;
++            self.client_payout =
++                checked_u128(self.client_payout, amount - self.amount, "payout overflow");
+             self.state = DealState::Funded;
+             self.funded_at_ns = Some(now);
+             self.delivery_deadline_ns = Some(now.saturating_add(self.delivery_duration_ns));
+         } else {
+             // Underpayment, money after the cutoff, or after funding: the
+             // client can withdraw it at once.
+-            self.client_payout += amount;
++            self.client_payout = checked_u128(self.client_payout, amount, "payout overflow");
+         }
+     }
+ }
+@@ -1625,12 +1626,12 @@ impl Contract {
+             deal.credit(amount, now, deal.pay_by_ns.saturating_add(grace));
+             (deal.state, deal.funded_amount, false)
+         } else if let Some(t) = self.tombstones.get_mut(&deal_id) {
+-            t.client_payout += amount;
++            t.client_payout = checked_u128(t.client_payout, amount, "payout overflow");
+             (t.state, 0, true)
+         } else {
+             return None;
+         };
+-        self.total_liabilities = self.total_liabilities.saturating_add(amount);
++        self.total_liabilities = checked_u128(self.total_liabilities, amount, "liability overflow");
+         self.ledger_seq += 1;
+         event(
+             "deal_funding",
+@@ -1818,6 +1819,10 @@ fn parse_withdraw(payload: &Value, now: u64) -> (AccountId, u128) {
+     (destination, amount)
+ }
+ 
++fn checked_u128(left: u128, right: u128, what: &str) -> u128 {
++    left.checked_add(right).unwrap_or_else(|| env::panic_str(what))
++}
++
+ /// Closes an in-flight withdraw of one side. `false` = stale callback
+ /// (the pending id or amount does not match), nothing changed.
+ fn close_withdraw(side: Side<'_>, amount: u128, withdraw_id: u64, success: bool) -> bool {
+diff --git a/contract/src/tests.rs b/contract/src/tests.rs
+index 9ea40e0..b29a056 100644
+--- a/contract/src/tests.rs
++++ b/contract/src/tests.rs
+@@ -2754,6 +2754,59 @@ fn init_rejects_admin_delay_shorter_than_dispute() {
+     Contract::new(owner(), token(), arbiter(), relayer(), fee_acc(), Some(p));
+ }
+ 
++fn shell_deal() -> Deal {
++    Deal {
++        amount: 10,
++        funded_amount: 10,
++        state: DealState::Funded,
++        creator_pk: [1u8; 32],
++        client_pk: [2u8; 32],
++        fee_bps: 0,
++        fee_amount: 0,
++        delivery_duration_ns: DURATION,
++        delivery_deadline_ns: Some(DEADLINE),
++        review_period_ns: REVIEW,
++        pay_by_ns: T0 + PAY_BY,
++        funded_at_ns: Some(FUNDED_AT),
++        delivered_at_ns: None,
++        deliverable_hash: None,
++        terms_hash: "terms".to_string(),
++        creator_payout: 0,
++        client_payout: 0,
++        creator_pending: 0,
++        client_pending: 0,
++        creator_pending_since_ns: 0,
++        client_pending_since_ns: 0,
++        creator_pending_id: 0,
++        client_pending_id: 0,
++        creator_withdrawn: 0,
++        client_withdrawn: 0,
++        disputed_at_ns: None,
++        dispute_ends_at_ns: None,
++        created_at_ns: T0,
++        ended_at_ns: None,
++        outcome: None,
++        settle_seq: 0,
++    }
++}
++
++#[test]
++#[should_panic(expected = "payout overflow")]
++fn credit_rejects_an_overflowing_client_payout() {
++    let mut deal = shell_deal();
++    deal.client_payout = u128::MAX - 1;
++    deal.credit(2, T0, T0);
++}
++
++#[test]
++#[should_panic(expected = "liability overflow")]
++fn credit_deal_rejects_an_overflowing_liability() {
++    let mut c = setup();
++    c.deals.insert(1, shell_deal());
++    c.total_liabilities = u128::MAX - 5;
++    c.credit_deal(1, 10);
++}
++
+ /// A plain ft_transfer to intents.near would be lost.
+ #[test]
+ #[should_panic(expected = "withdraw: bad destination")]

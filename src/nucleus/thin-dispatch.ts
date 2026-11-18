@@ -86,8 +86,8 @@ export function routeToAgent(
 
 /**
  * Convenience: score first, then route — one call.
- * One of the four plane names: the route is that card's first file, and the agent is not the researcher.
- * A look that names no plane stops. Repertoire may still change the agent when a law matches.
+ * One named card: the route is that card's first file, and the agent is not the researcher.
+ * Two names stay quiet. A look that names no plane stops. Repertoire may still change the agent when a law matches.
  */
 export function scoreAndRoute(
   operation: string,

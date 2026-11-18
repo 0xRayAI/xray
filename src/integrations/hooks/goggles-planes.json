@@ -208,6 +208,15 @@
     "skills": "pre-tool, lens-gate, delegation-gate",
     "plates": ["lens-gate"]
   },
+  "worn-turn": {
+    "plane": "integration",
+    "files": [
+      "src/integrations/cursor/hooks/pre-tool-use.js",
+      "src/integrations/grok/hooks/pre-tool-use.js"
+    ],
+    "skills": "worn-turn, pre-tool, delegation-gate, lens-gate",
+    "plates": ["pre-tool", "delegation-gate", "lens-gate"]
+  },
   "lens-page": {
     "files": ["src/integrations/hooks/goggles-pipeline.mjs"],
     "mark": "export function formatCardPane",
@@ -225,7 +234,12 @@
     "skills": "repertoire, memory-recall, record-map, governance"
   },
   "dynamo": {
-    "file": "docs-site/docs/guides/self-hosting-dynamo.md",
+    "plane": "dev",
+    "files": [
+      "src/integrations/governance/governance-client.ts",
+      "src/integrations/governance/types.ts",
+      "src/integrations/governance/index.ts"
+    ],
     "skills": "dynamo, governance, enforcer, confer"
   },
   "foundry": {
@@ -234,7 +248,10 @@
     "skills": "foundry, npm-publish, suit-wear, package-face, consumer-mcp"
   },
   "delegation-gate": {
-    "file": "src/nucleus/delegation-gate.ts",
+    "files": [
+      "src/nucleus/delegation-gate.ts",
+      "src/integrations/hooks/delegation-gate-runtime.mjs"
+    ],
     "skills": "delegation-gate, temperament, orchestration, routing"
   },
   "temperament": {
@@ -269,5 +286,35 @@
   "confer": {
     "file": "src/nucleus/confer.ts",
     "skills": "confer, governance, code-review, researcher"
-  }
+  },
+  "bifrost": {
+    "plane": "ecosystem",
+    "files": ["house/live/app/server.mjs", "house/live/docs/board.md"],
+    "skills": "bifrost, house, record-map",
+    "plates": ["house"]
+  },
+  "grokbot": {
+    "plane": "ecosystem",
+    "files": ["grok-bot/package.json"],
+    "skills": "grokbot, house, bifrost",
+    "plates": ["bifrost", "house"]
+  },
+  "pipeline": { "plane": "domain", "skills": "pipeline, processor-pipeline, orchestration", "plates": ["component", "artifact"] },
+  "component": { "plane": "domain", "skills": "component, pipeline, artifact", "plates": ["pipeline", "artifact"] },
+  "artifact": { "plane": "domain", "skills": "artifact, pipeline, component", "plates": ["pipeline", "component"] },
+  "watcher": { "plane": "domain", "files": ["house/live/tools/inbox-watch.sh"], "skills": "watcher, hook, board", "plates": ["hook", "board"] },
+  "hook": { "plane": "integration", "skills": "hook, watcher, lens", "plates": ["watcher", "lens"] },
+  "facet": { "plane": "domain", "skills": "facet, feature, lens", "plates": ["feature"] },
+  "feature": { "plane": "domain", "skills": "feature, component, facet", "plates": ["component", "facet"] },
+  "factory": { "plane": "ecosystem", "skills": "factory, mill, plant", "plates": ["mill", "plant"] },
+  "mill": { "plane": "ecosystem", "skills": "mill, factory, plant", "plates": ["factory", "plant", "hangar"] },
+  "hangar": { "plane": "ecosystem", "skills": "hangar, mill, plant", "plates": ["mill"] },
+  "plant": { "plane": "ecosystem", "skills": "plant, mill, factory", "plates": ["mill"] },
+  "seat": { "plane": "ecosystem", "skills": "seat, board, house", "plates": ["board"] },
+  "board": { "plane": "ecosystem", "files": ["house/live/feed/live_board.py"], "skills": "board, seat, bifrost", "plates": ["seat"] },
+  "lens": { "plane": "domain", "skills": "lens, lens-page, stamp-plate", "plates": ["plane", "stamp-plate"] },
+  "plane": { "plane": "domain", "skills": "plane, lens, lens-page", "plates": ["lens"] },
+  "goggles": { "plane": "domain", "skills": "lens-gate, stamp-plate, lens", "plates": ["lens", "plane"] },
+  "fleet": { "plane": "ecosystem", "skills": "fleet, fleet-ops-hub, ai-fleet-ops", "plates": ["fleet-ops-hub", "ai-fleet-ops", "fleet-routing"] },
+  "suit": { "plane": "domain", "skills": "suit-wear, suit-settings, suit-organs", "plates": ["suit-wear", "suit-settings", "suit-organs"] }
 }

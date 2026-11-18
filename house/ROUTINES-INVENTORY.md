@@ -22,7 +22,7 @@ Quiet-when-unchanged still applies to ATTENTION + empty digests.
 SSOT miss: [`MISS-CHAT-WAKE-2026-09-16.md`](../grok-bot/ops/MISS-CHAT-WAKE-2026-09-16.md).
 
 ## QUIET MODE 2026-09-16
-Blaze: ~89% utilization — silent unless capital / FAIL / Blaze poke. Rearm watches when util cools.
+Blaze: ~89% utilization — silent unless capital / Needs Blaze / Blaze poke. Rearm watches when util cools.
 
 - **Monitor Dist reply Blaze commands post** (`monitor-dist-reply-blaze-commands-post`): ARMED — every 15m weekdays 12–20 CT until @0xRayAI replies to https://x.com/Blaze0x1/status/2100276010335731791; quiet until reply or ~90m stall; then self-delete.
 - **Dist grok thread watch**: REARMED 2026-09-16 for that mention (was paused for quiet mode).

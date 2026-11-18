@@ -55,7 +55,7 @@
     'critic_fail', 'critic_pass', 'ci_pass', 'ci_fail', 'issue_open', 'issue_close',
     'deploy', 'deploy_fail', 'health_ok', 'health_fail', 'probe', 'push', 'feed_push']);
   var KIND_WORD = { pr_open: 'open', pr_update: 'fix / update', merged: 'merge', pr_close: 'close',
-    supersede: 'supersede', critic_pass: 'Light PASS', critic_fail: 'Light FAIL',
+    supersede: 'supersede', critic_pass: 'Light PASS', critic_fail: 'Light FIX',
     ci_pass: 'CI pass', ci_fail: 'CI fail', review: 'review', comment: 'comment',
     issue_open: 'issue open', issue_close: 'issue close', fix: 'fix',
     deploy: 'deploy', deploy_fail: 'deploy FAIL', health_ok: '/health ok',
@@ -230,9 +230,28 @@
     return out;
   }
 
+  var CI_KIND = { ci_pass: 1, ci_fail: 1, check_run: 1, check_suite: 1, workflow_run: 1, commit_status: 1 };
+  /* CI who is the credit (forge, Blaze). from stays the GitHub/CI source for the mesh. */
   function whoTag(e) {
+    var credit = e && CI_KIND[e.kind] ? String(e.credit || '') : '';
+    if (credit && !/^(github|ci)$/i.test(credit)) return credit;
     var who = e.kind.indexOf('critic_') === 0 ? 'critic' : e.from;
     return own(WHO_LOG, who) || String(who).replace(/^@/, '').toUpperCase().slice(0, 8);
+  }
+
+  /* One activity row, expanded: the seat, the card, the link, and the full note.
+     The row itself keeps the short label. */
+  function activityDetail(e) {
+    if (!e) return null;
+    if (typeof e.kind !== 'string') e = Object.assign({}, e, { kind: '' });
+    var prompt = promptView(e);
+    var note = prompt && prompt.line ? prompt.line : (typeof e.note === 'string' && e.note.trim() ? e.note.trim() : cleanLabel(e.label || ''));
+    var repo = e.repo ? String(e.repo) : '';
+    var num = e.number == null || e.number === '' ? NaN : Number(e.number);
+    var card = repo && num === num ? repo + '#' + num : '';
+    var href = /^https:\/\//.test(e.source || '') ? e.source : (/^https:\/\//.test(e.url || '') ? e.url : '');
+    if (!href && card) href = 'https://github.com/' + repo + '/' + (/issue/.test(e.kind) ? 'issues' : 'pull') + '/' + num;
+    return { seat: whoTag(e), card: card, href: href, note: note, label: cleanLabel(e.label || e.kind || '') };
   }
 
   function headline(e) {
@@ -416,6 +435,30 @@
     return base + (base.indexOf('?') < 0 ? '?' : '&') + 't=' + Math.floor(nowMs / 1000);
   }
 
+  /* Chip list from the feed. Names come from roster (strings or {name, role}).
+     An empty or missing roster leaves the caller on whatever strip it already drew. */
+  function rosterEntries(feed) {
+    var raw = feed && feed.roster;
+    if (!Array.isArray(raw)) return null;
+    var roles = feed && feed.roster_roles && typeof feed.roster_roles === 'object' ? feed.roster_roles : {};
+    var out = [], seen = {};
+    raw.forEach(function (item) {
+      var name = '', role = '';
+      if (typeof item === 'string') name = item;
+      else if (item && typeof item === 'object') {
+        name = item.name || item.seat || '';
+        role = item.role || '';
+      }
+      name = String(name || '').trim();
+      if (!name || seen[name.toLowerCase()]) return;
+      seen[name.toLowerCase()] = 1;
+      if (!role && roles[name] != null) role = String(roles[name]);
+      else if (!role && roles[name.toLowerCase()] != null) role = String(roles[name.toLowerCase()]);
+      out.push([name, String(role || '')]);
+    });
+    return out.length ? out : null;
+  }
+
   /* One poll. mem carries { etag, apiBlockedUntil } between polls. Resolves to
      { source, feed } (feed null on a 304) or rejects when every source fails. */
   function fetchFeed(fetchFn, nowMs, mem) {
@@ -453,12 +496,13 @@
     resolveNodes: resolveNodes, eventColor: eventColor, cleanLabel: cleanLabel, promptView: promptView, activityLines: activityLines, whoTag: whoTag,
     headline: headline, parseT: parseT, mergeEvents: mergeEvents, countUpTo: countUpTo,
     eventsUpTo: eventsUpTo, pingsAt: pingsAt, hotNodes: hotNodes, applyFeed: applyFeed,
-    bounds: bounds, fmtCt: fmtCt, ago: ago, feedUrl: feedUrl, fetchFeed: fetchFeed,
+    bounds: bounds, fmtCt: fmtCt, ago: ago, feedUrl: feedUrl, fetchFeed: fetchFeed, rosterEntries: rosterEntries,
     own: own, botImage: botImage, badgeLetter: badgeLetter, bob: bob, pulse: pulse, entry: entry,
     ENTRY_MS: ENTRY_MS, PULSE_MS: PULSE_MS, MARK: MARK, markCells: markCells,
     isPlaying: isPlaying, sliderAction: sliderAction, edgeTraffic: edgeTraffic, orbitStep: orbitStep,
     spectrumEnabled: spectrumEnabled, spectrumShows: spectrumShows, spectrumMeter: spectrumMeter,
     spectrumTrail: spectrumTrail, packetCore: packetCore, aspectFit: aspectFit,
+    activityDetail: activityDetail,
     GLYPH: GLYPH, MARK_PATH: MARK_PATH, activeSeats: activeSeats, recentItems: recentItems, BOT_IMAGES: BOT_IMAGES, BLACKOUT_UNTIL: BLACKOUT_UNTIL,
     countdown: countdown, blackoutLine: blackoutLine, clockLine: clockLine, fleetLine: fleetLine, wireGlow: wireGlow
   };

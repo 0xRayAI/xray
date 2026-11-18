@@ -2,6 +2,13 @@
 // at the instant being written. A stamp already on disk is not rewritten.
 export const START_AFTER_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?[+-]\d{2}:\d{2}$/;
 
+/** Chicago calendar day for a ms instant or a parseable stamp. Empty when the instant is not a time. */
+export function chicagoDay(value) {
+  const ms = typeof value === 'number' ? value : Date.parse(value);
+  const stamp = chicagoStamp(ms);
+  return stamp ? stamp.slice(0, 10) : '';
+}
+
 export function chicagoStamp(ms) {
   const d = new Date(ms);
   if (Number.isNaN(d.getTime())) return null;

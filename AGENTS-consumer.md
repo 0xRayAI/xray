@@ -4,9 +4,15 @@
 
 Quick reference for the 0xRay suit worn on **{{CONSUMER_NAME}}**{{CONSUMER_VERSION_PAREN}}.
 
-**4.1** — a suit that survives the context window
+**4.2** — a suit that survives the context window
+
+Node >= 24.22.3. That is the patched 24 release from 11 Nov 2026.
 
 Confer votes. Burst runs the swarm.
+
+Goggles views one plane. A search inside that card runs. A search of another plane returns the card. A path outside this checkout runs.
+
+A prompt pulse spins only the card named by working_on. Seen is not working. Tandem is several tracks at once and no seat waits for a nod. A card carries raci, and a live card missing R or A is amber. A missed /healthz replaces the one replica. The OP cycle is digest, card, do, loop, ship (`OP-PROC` #op-cycle).
 
 0xRay is a three-subsystem autonomous engine (Inference · External Governance · Autonomous Engine). The suit is the wear. Constitution always on. Temperament scales ceremony. Four chat bridges plus Cursor project hooks. **Repertoire is preferred** — vendored 0.2.9 ships **on**. Dest is named laws, not keywords. Station is the wake ticket, not a substitute. Explicit opt-out only: `"enabled": false, "provider": "repertoire"`.
 
@@ -14,23 +20,23 @@ Confer votes. Burst runs the swarm.
 
 ## Hot-swap
 
-Before other work, Read `.xray/state/STATION.md`. Compaction and host change are the same cut. Continue the card. Do not restart the job. Grok does not inject the card (OpenCode does) — this Read is the Grok contract. Do not thicken the Grok exo.
+Before other work, Read `.xray/state/STATION.md`. Compaction and host change are the same cut. Continue the card. Do not restart the job. A packet and its card follow the house packet rule (`OP-PROC` #packet). The card key is the issue or pull. Do not hand-post a card. When Bifrost is on, suit boot enables the only TUI monitor in the local TUI: `$XRAY_MAIN/house/live/tools/inbox-watch.sh <seat>`. Grok does not inject the card (OpenCode does) — this Read is the Grok contract. Do not thicken the Grok exo.
 
 A peer lead continues from this card + Repertoire + the `orchestrator` skill. Dummy tests `SKILLS.md`. Same-sess bodies wear the suit. Branch + worktree + PR. Loop until Station is done. Live work ticks, not idle pacers. Same critic seat (resume only). Ship when mill-gate D + `foundry gate` PASS — green CI is not ship. Spend / credentials stay Ask-first. OTP in a browser, poll the new version before the next cut.
 
 ## Postinstall (automatic)
 
-`npm install 0xray` links vendored `@0xray/repertoire` and prints `npx 0xray wear`. It does not write `AGENTS.md`, `.mcp.json`, or the chat bridges.
+`npm install 0xray` links vendored `@0xray/repertoire`. The postinstall prints `Run npx 0xray wear`. npm may hide that lifecycle line. It does not write `AGENTS.md`, `.mcp.json`, or the chat bridges.
 
 `npx 0xray wear` writes the consumer suit:
 
 - Copies this file → **`AGENTS.md`** in your project root
-- Fastens mill plant (`mill` + `inspect`) then overlays **your** `src/skills` (same name wins). Fasten is **foundry-plant/0**: builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill package declares (blip-inspect, blip-vibe, blip-looker, sound-inspect, sound-mixer live in the mill). `npx @0xray/foundry sound mix` / `sound render` / `blip render` are CLI shims (0.1.11+). `npx @0xray/foundry inspect` runs mill-exported inspect; on a sound seat the last bed receipt; on a blip seat the last 4.44s receipt. Chat is not a receipt. The mill suit also wears every catalog skill and every role file. A blip or sound seat fastens that plant only. A name outside the fastened set still fails inspect. Does **not** write root **`SKILLS.md`**
+- Fastens mill plant (`mill` + `inspect`) then overlays **your** `src/skills` (same name wins). Fasten is **foundry-plant/0**: builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill package declares (blip-inspect, blip-vibe, blip-looker, sound-inspect, sound-mixer live in the mill). `npx @0xray/foundry sound mix` / `sound render` / `blip render` are CLI shims (0.1.11+). `npx 0xray inspect --skip-live` runs mill-exported inspect; on a sound seat the last bed receipt; on a blip seat the last 4.44s receipt. Chat is not a receipt. The mill suit also wears every catalog skill and every role file. A blip or sound seat fastens that plant only. A name outside the fastened set still fails inspect. Does **not** write root **`SKILLS.md`**
 - Factory shop plant (`shop-extract`, `shop-witness`, `shop-pin` from groover-hangar) is first-class with mill plant. Extra shops: `foundry.json` `"shopPlant"`. Not costume.
 - Seeds **`.gitignore`** (from template, if absent)
 - Deploys **`.xray/`** (`codex.json`, `features.json`, `config.json`) then overlays **your** mill SSOT (`xray/codex.json`, `xray/features.json`, `src/skills`, `src/opencode/agents`; remap with `foundry.json`)
 - Writes **`.mcp.json`** with 7 MCPs servers (`npx -y 0xray mcp …`)
-- Installs bridges: **OpenCode**, **Grok**, **Hermes**, **OpenClaw**, plus **Cursor** `.cursor/hooks.json`
+- Installs bridges: **OpenCode**, **Grok**, **Hermes**, **OpenClaw**, plus **Cursor** `.cursor/hooks.json`. The Grok plugin includes `bundle.md`. Session boot reads it.
 
 Optional extras: `npx 0xray setup`
 
@@ -65,7 +71,7 @@ Governance deliberation uses **code-review**, **security-audit** (via enforcer/s
 | `npx 0xray codex check` | Check codex rules |
 | `npx 0xray health` | Framework health check |
 | `npx 0xray mcp <server>` | Start an MCP server (stdio) |
-| `npx @0xray/foundry inspect` | Mill inspect (nested mill). Sound seat: plant + last bed PASS/FAIL. Blip seat: last 4.44s PASS/FAIL. Chat is not a receipt. |
+| `npx 0xray inspect --skip-live` | Mill inspect (nested mill). Sound seat: plant + last bed PASS/FAIL. Blip seat: last 4.44s PASS/FAIL. Chat is not a receipt. |
 | `npx @0xray/foundry sound render` | Factory-sound bed: brief → seed → genre → crystal mill wav → metrics receipt. |
 | `npx @0xray/foundry sound mix` | sound-mixer: level every genre × tempo × motif (hats / plate / glue). |
 | `npx @0xray/foundry blip render` | Factory-blip mill (`@0xray/blip`): brief → seed → still\|motion:<id> → 4.44s mp4 + audio bed. Motions are Rippel v2 VisualConfig at ≥720p. `kapow` is a design opt (two-tier comic stamp). Sparse seed mesh plus field accents are the NFT fingerprints. `still` is the Power Plant ident (plate dissolves, not a frozen poster). Fasten is foundry-plant/0 (`@0xray/foundry@0.1.12`); CLI shims remain (0.1.11+). |
@@ -162,7 +168,7 @@ When the suit is worn, **lead dev mode** is ON via existing config + hooks:
 
 ## Skills
 
-Full catalog in root **`SKILLS.md`**. Wear does not write a consumer-root `SKILLS.md`. **`orchestrator`** skill documents lead-dev mode. Invoke via `@orchestrator` or `xray-skills` MCP (`invoke-skill`, `list-skills`).
+The catalog is `node_modules/0xray/SKILLS.md`. Wear does not copy it to the project root. The `xray-skills` MCP serves it (`invoke-skill`, `list-skills`). **`orchestrator`** skill documents lead-dev mode. Invoke via `@orchestrator`.
 
 ## File Organization
 

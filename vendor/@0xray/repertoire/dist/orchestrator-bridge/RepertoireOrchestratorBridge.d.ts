@@ -7,7 +7,7 @@ export declare class RepertoireOrchestratorBridge {
     constructor(signalsManager: CuratedSignalsManager);
     enhanceAgentCapabilities(baseCapabilities: Map<string, AgentCapability>): Map<string, AgentCapability>;
     buildRoutingContext(operation: string): RepertoireRoutingContext;
-    getConfidenceForTask(task: OrchestrationTask): TaskConfidenceContext;
+    getConfidenceForTask(task: OrchestrationTask, now?: Date): TaskConfidenceContext;
     injectSignalsIntoTasks(tasks: OrchestrationTask[]): OrchestrationTask[];
     buildInheritedContext(tasks: OrchestrationTask[]): RepertoireInheritedContext;
     buildSynthesisContext(projectRoot: string, dueReason?: string | null): SynthesisCollocatedContext;

@@ -18,10 +18,10 @@ This plant **fastens** a music/bed factory. Dist audio beds get a real plant lik
 5. **Receipt** → `.xray/sound-bed-receipt.json` (`PASS` / `FAIL` + numbers).
 
 ```bash
-npx @0xray/foundry mint --skip-live
+npx 0xray wear
 npx @0xray/foundry sound render --brief "night alley rain" --genre ambient
 npx @0xray/foundry sound inspect
-npx @0xray/foundry inspect --skip-live
+npx 0xray inspect --skip-live
 ```
 
 Mint fastens `sound` + `sound-inspect` + `sound-mixer`. It does not dump mill inspect onto a sound-only seat. Chat is not a bed receipt. `sound mix` levels every genre × tempo × motif (hats / plate / glue). Inspect still quotes the last bed.

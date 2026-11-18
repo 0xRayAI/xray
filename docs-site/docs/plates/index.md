@@ -19,15 +19,15 @@ Plates have a type. A domain model plate shows how named parts fit. A state flow
 
 ## Domain model
 
-[Goggles](./goggles.md) · [Suit](./suit.md) · [Kits](./kits.md) · [Host Pack](./host-pack.md) · [Glossary](./glossary.md) · [Grok Bot](./grokbot.md) · [Centrifuge](./centrifuge.md)
+[Goggles](./goggles.md) · [Stamp plate](./stamp-plate.md) · [Suit](./suit.md) · [Kits](./kits.md) · [Host Pack](./host-pack.md) · [Glossary](./glossary.md) · [Grok Bot](./grokbot.md) · [Centrifuge](./centrifuge.md) · [AI Fleet Ops](./ai-fleet-ops.md) · [Fleet Ops Hub](./fleet-ops-hub.md) · [Guides Map](./guides-map.md) · [Foundry architecture](./foundry-architecture.md)
 
 ## State flow
 
-[House](./house.md) · [Bifrost](./bifrost.md) · [Review](./review.md)
+[House](./house.md) · [Bifrost](./bifrost.md) · [Review](./review.md) · [Control Plane](./control-plane.md) · [Spend Governance](./spend-governance.md) · [Stand Up](./stand-up.md)
 
 ## Pipeline
 
-[Routing](./routing.md) · [Governance](./governance.md) · [Boot](./boot.md) · [Orchestration](./orchestration.md) · [Processor](./processor.md) · [Reporting](./reporting.md) · [Memory recall](./memory-recall.md) · [Stamp plate](./stamp-plate.md) · [Ground](./ground.md) · [Synthesis](./synthesis.md)
+[Routing](./routing.md) · [Fleet routing](./fleet-routing.md) · [Governance](./governance.md) · [Boot](./boot.md) · [Orchestration](./orchestration.md) · [Processor](./processor.md) · [Reporting](./reporting.md) · [Memory recall](./memory-recall.md) · [Ground](./ground.md) · [Synthesis](./synthesis.md) · [Fleet](./fleet.md)
 
 The planes are dev, integration, domain, and ecosystem. Each drawing above is a card on one of those planes. A plate id is not a plane.
 
@@ -49,9 +49,9 @@ These eight are the pages the file ref names. Each one is a card. Each card list
 
 ## Fresh line and the gate
 
-[Work fresh](./work-fresh.md) · [Kept line](./kept-line.md) · [Lens gate](./lens-gate.md) · [Pre tool](./pre-tool.md) · [Lens page](./lens-page.md)
+[Work fresh](./work-fresh.md) · [Kept line](./kept-line.md) · [Lens gate](./lens-gate.md) · [Pre tool](./pre-tool.md) · [Worn turn](./worn-turn.md) · [Lens page](./lens-page.md)
 
-These five are the compact path that was opened. Each one is a card. Each card lists one skill.
+These six are the compact path that was opened, plus the hook chain. Each one is a card. Each card lists one skill.
 
 
 ## Spectra
@@ -60,4 +60,10 @@ These five are the compact path that was opened. Each one is a card. Each card l
 
 Each one is a card. One top file. The planes stay dev, integration, domain, and ecosystem.
 
-stamped · 0xray 4.1.0
+## Sight
+
+[Pipeline](./pipeline.md) · [Component](./component.md) · [Artifact](./artifact.md) · [Watcher](./watcher.md) · [Hook](./hook.md) · [Facet](./facet.md) · [Feature](./feature.md) · [Factory](./factory.md) · [Mill](./mill.md) · [Hangar](./hangar.md) · [Plant](./plant.md) · [Seat](./seat.md) · [Board](./board.md) · [Lens](./lens.md) · [Plane](./plane.md)
+
+One noun, one view. The four job names stay slots, not drawings.
+
+stamped · 0xray 4.2.1

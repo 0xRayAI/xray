@@ -5,7 +5,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { chromium } from 'playwright';
+import { launchBoard } from './board-browser.mjs';
 
 const PUB = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app', 'public');
 
@@ -77,7 +77,7 @@ test('desktop wave body keeps a visible card when forty cards sit above a long q
   const base = `http://127.0.0.1:${server.address().port}/index.html`;
   let browser;
   try {
-    browser = await chromium.launch();
+    browser = await launchBoard();
     const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1 });
     await page.goto(base, { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => {

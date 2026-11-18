@@ -71,7 +71,7 @@ if command -v git >/dev/null 2>&1; then
   printf '%s' "$sha" | grep -Eq '^[0-9a-f]{40}$' || sha=
 fi
 fresh_stamp() {
-  mtime=$(stat -c %Y "$1" 2>/dev/null || true)
+  mtime=$(stat -c %Y "$1" 2>/dev/null || stat -f %m "$1" 2>/dev/null || true)
   now=$(date +%s 2>/dev/null || true)
   case "$mtime" in ''|*[!0-9]*) return 1 ;; esac
   case "$now" in ''|*[!0-9]*) return 1 ;; esac

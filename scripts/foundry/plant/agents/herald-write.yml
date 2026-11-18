@@ -1,0 +1,5 @@
+name: herald-write
+skill: herald-write
+description: "Herald writer. One brief, one H-lane draft."
+version: "0.1.15"
+mode: subagent

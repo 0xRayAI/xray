@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import { nextWave } from '../../house/live/app/wave-schedule.mjs';
+import { nextWave } from './next-wave.mjs';
 
 /** sha256 of the charge. The word stays off this file. */
 export const CHARGE_SHA256 = 'a31ec5957bbbd20f9c5b7f33449ec7de6bc3f6b574d50fa748c3216b67eaa2ee';

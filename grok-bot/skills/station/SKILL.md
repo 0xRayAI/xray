@@ -1,25 +1,27 @@
 ---
 name: station
 description: >
-  BOOT: on any owner message, after a summary, or on a wake, run the station
+  BOOT: on any turn, after a summary, or on a wake, run the station
   skill first (suit <path>, seat <seat>).
 ---
 
 # Station
 
-One boot hook. Light on an owner message. Full after a summary, a wake, or a gate.
+One boot hook. Light on every turn. Full after a summary, a wake, or a gate.
 
 ## Light
 
-On any owner message:
+On any turn. A peer message, a routine or webhook wake, a background-task completion, and the seat's own follow-up use the same `live-inbox <seat> --turn start` and `live-inbox <seat> --prompt` as an owner message. `--from` is `owner`, `peer`, `routine`, or `self`. A quiet wake posts `--turn start`. It posts `--prompt` only when it has a gist. The from-label is not a gist. Do not invent a second prompt format.
 
-1. On every owner message, first run `live-inbox <seat> --prompt --from owner --note "<gist>"`; after handling any inbox line (in chat or on a wake), ack it right away with `live-inbox <seat> --ack <id>` (or `--ack all` once everything open is handled); when you launch or resume a cloud agent run `live-inbox <seat> --turn start --tag "bc-<first8> <track>"`; when it finishes or is cancelled run `live-inbox <seat> --turn end --tag "bc-<first8>"`. No exceptions for short turns. The gist is not the message text.
+1. On every owner message, first run `live-inbox <seat> --prompt --from owner --note "<gist>"`; after handling any inbox line (in chat or on a wake), ack it right away with `live-inbox <seat> --ack <id>` (or `--ack all` once everything open is handled); when you launch or resume a cloud agent run `live-inbox <seat> --turn start --tag "bc-<first8> <track>"` and `live-inbox <seat> --cloud launch --agent <bc-id> --tag <card>` (resume uses `--cloud reply`); when it finishes or is cancelled run `live-inbox <seat> --turn end --tag "bc-<first8>"` and `live-inbox <seat> --cloud finished --agent <bc-id> --tag <card>` (cancel uses `--cloud cancel`). The tag is owner/repo#n or xray#n. The cloud agent does not post that line. No exceptions for short turns. A spawn_subagent worker is a cloud agent too. Put that worker's id in --agent, not only a bc- id. The gist is not the message text. A quick follow-up that arrives mid-turn is its own owner message: log that prompt before the reply, before the station read, and before any other step.
 
-Board rule. On every owner message run `live-inbox <seat> --prompt --from owner --note "<gist>"`. Ack a handled line with `live-inbox <seat> --ack <id>`, or `live-inbox <seat> --ack all` once every open line is handled. A cloud agent run uses `live-inbox <seat> --turn start --tag "bc-<first8> <track>"` and `live-inbox <seat> --turn end --tag "bc-<first8>"`. `--from owner` is required today.
+Board rule. On every owner message run `live-inbox <seat> --prompt --from owner --note "<gist>"`. Ack a handled line with `live-inbox <seat> --ack <id>`, or `live-inbox <seat> --ack all` once every open line is handled. A cloud agent run uses `live-inbox <seat> --turn start --tag "bc-<first8> <track>"` beside `live-inbox <seat> --cloud launch --agent <bc-id> --tag <card>` on first start or `--cloud reply` on resume, and `live-inbox <seat> --turn end --tag "bc-<first8>"` beside `live-inbox <seat> --cloud finished --agent <bc-id> --tag <card>` (cancel is `--cloud cancel`). The tag is owner/repo#n or xray#n. The cloud agent does not post that line. `--from owner` is required today. A spawn_subagent worker is a cloud agent too. Put that worker's id in --agent, not only a bc- id.
 
 Kanban note. The live page shows a read-only kanban above Activity. Columns are open, review, fix, merge, retest, and done. The deep link is `?card=`.
 
 History note. Every activity line is archived to history. The word owner is the owner via LIVE_OWNER or the owner-name.
+
+Every turn posts `--turn start`. `--prompt` posts when the turn has a gist. `--from peer` is a peer seat, including one relaying the owner. `--from routine` is a routine or webhook wake. `--from self` is a background-task completion or this seat's own follow-up. `--room`, the 1–240 gist cap, a failed post, `Prompt: <id>`, and the webhook split are [Station boot](https://github.com/0xRayAI/xray/blob/main/grok-bot/OP-PROC.md#station-boot).
 
 2. Read `.xray/state/STATION.md`.
 
@@ -27,20 +29,16 @@ Light does not read the pack.
 
 ## Full
 
-After a summary, a wake, or a gate, also read:
+After a summary, a wake, or a gate, read what [Station boot](https://github.com/0xRayAI/xray/blob/main/grok-bot/OP-PROC.md#station-boot) names for Full. When `LIVE_URL` is set, the board is Bifrost (`GET /cards`).
 
-- the file named by the `OP-PROC:` line in `house/HOUSE.md`
-- the newest two entries in `.xray/state/NOTES.md`
-- `house/fleet/TRACKS.md`
-- open board cards (`house/WAVEBOARD.md` when `LIVE_URL` is unset, `GET /cards` when it is set)
-- the `Skills:` line on `.xray/state/STATION.md`
+After a nudge or a summary, Full before any ack. `--prompt` is step 1 of Light. The checklist is [Station boot](https://github.com/0xRayAI/xray/blob/main/grok-bot/OP-PROC.md#station-boot) and [Station nudge](https://github.com/0xRayAI/xray/blob/main/grok-bot/OP-PROC.md#station-nudge). A compact writes `Full: due` on the station card. Replace it with `Full: OP-PROC read` only after that read, and only then ack.
 
 ## During the work
 
-Each step posts one activity line. Each cloud launch is written to `house/fleet/TRACKS.md` in that same step.
+Each step posts one activity line. Each cloud launch is written to `ops/cloud-memory/TRACKS.md` in the suit in that same step.
 
 ## Way out
 
-Update STATION `Judgement:`, the card metadata (title, url, owner seat, stage, state), TRACKS, and the closing activity line.
+Ask anything new without a card, then update STATION, the card, TRACKS, and the closing line, as [Station boot](https://github.com/0xRayAI/xray/blob/main/grok-bot/OP-PROC.md#station-boot) and [Card](https://github.com/0xRayAI/xray/blob/main/grok-bot/OP-PROC.md#card) say. Before turn end, `house/live/tools/exit-gate.mjs` must pass. A named bug, gap, follow-up, or ask with no `repo#n` or GitHub issue, pull, or comment URL is an incomplete turn. The gate reads the first `##` section. Notes are prepended, so that section is this turn. A packet and its card follow [Packet](https://github.com/0xRayAI/xray/blob/main/grok-bot/OP-PROC.md#packet). The card key is the issue or pull. Do not hand-post a card.
 
-The owner's chat does not launch or resume a cloud agent when the card id is missing. The board posts every pull-request handoff and every review handoff. The coordinator acks only dev lines.
+Backstop: doctor warns when `STATION.md` is older than `NOTES.md`, when its `Working:` time is older than the newest NOTES `##` entry or older than 2h (a turn that skipped station), or when `Skills:` or `Keys:` is missing. It does not flag an incomplete card.

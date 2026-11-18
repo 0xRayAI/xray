@@ -7,8 +7,8 @@ description: >-
 # Draw 0xRay logo
 
 ## Ref (measure / checklist only — do not paste onto plates)
-`00-0xray-stamp-FINAL.png` is the measure target. It is not in this repo.
-Supporting: `0xray-logo-always-on-white.jpg` (light-bg look target), `0xray-logo-mark.png` (mark crop target).
+`FINAL-REFS/logos/00-0xray-stamp-FINAL.png` is the measure target.
+Supporting: `FINAL-REFS/logos/0xray-logo-always-on-white.jpg` (light-bg look target), `FINAL-REFS/logos/0xray-logo-mark.png` (mark crop target).
 
 ## API
 ```python

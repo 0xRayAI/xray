@@ -112,3 +112,86 @@ export function fleetConfigOf(e, dir) {
   if (Object.keys(nodes).length) out.LIVE_NODE_MAP = JSON.stringify({ ...add, ...nodes });
   return out;
 }
+
+// Rails are not fleet seats. A node-map value in this set stays off the roster.
+const RAIL_NODES = new Set(['ci', 'github', 'others', 'cloudagents', 'upstream', 'railway', 'assistant']);
+
+function parseConfig(raw) {
+  const text = String(raw ?? '').trim();
+  if (!text) return null;
+  try {
+    if (text[0] === '{' || text[0] === '[') return JSON.parse(text);
+    return JSON.parse(fs.readFileSync(text, 'utf8'));
+  } catch {
+    return null;
+  }
+}
+
+function stringsOf(list) {
+  if (!Array.isArray(list)) return [];
+  return list.filter(s => typeof s === 'string' && s.trim()).map(s => s.trim());
+}
+
+// Full seat list. A "board" subset is only the counted header, and only when "seats" is empty.
+function namesFromSeatConfig(data) {
+  if (Array.isArray(data)) return stringsOf(data);
+  if (!data || typeof data !== 'object') return [];
+  const seats = stringsOf(data.seats);
+  if (seats.length) return seats;
+  return stringsOf(data.board);
+}
+
+function rolesFrom(data) {
+  const out = {};
+  if (!data || typeof data !== 'object' || Array.isArray(data) || !data.roles || typeof data.roles !== 'object') return out;
+  for (const [k, v] of Object.entries(data.roles)) {
+    if (typeof k === 'string' && k.trim() && typeof v === 'string') out[k.trim()] = v;
+  }
+  return out;
+}
+
+// Roster for the board chips. LIVE_FLEET_SEATS (JSON or a path) and every fleet-roster.json
+// under dirs are unioned. A short board, a three-name strip, or invalid JSON does not drop
+// the other source. When no seat list exists, LIVE_NODE_MAP and fleet-nodes.json supply the names.
+export function configuredRoster(env = {}, dirs = []) {
+  const list = (Array.isArray(dirs) ? dirs : [dirs]).filter(Boolean);
+  const sources = [];
+  const envParsed = parseConfig(env.LIVE_FLEET_SEATS);
+  if (envParsed) sources.push(envParsed);
+  const nodeMaps = [];
+  const envMap = parseConfig(env.LIVE_NODE_MAP);
+  if (envMap && typeof envMap === 'object' && !Array.isArray(envMap)) nodeMaps.push(envMap);
+  for (const dir of list) {
+    const roster = parseConfig(path.join(dir, 'fleet-roster.json'));
+    if (roster) sources.push(roster);
+    const nodes = parseConfig(path.join(dir, 'fleet-nodes.json'));
+    if (nodes && typeof nodes === 'object' && !Array.isArray(nodes)) nodeMaps.push(nodes);
+  }
+  const names = [];
+  const seen = new Set();
+  const add = (s) => {
+    const name = String(s || '').trim();
+    const key = name.toLowerCase();
+    if (!name || seen.has(key) || RAIL_NODES.has(key)) return;
+    seen.add(key);
+    names.push(name);
+  };
+  let fromSeats = false;
+  for (const data of sources) {
+    const got = namesFromSeatConfig(data);
+    if (got.length) fromSeats = true;
+    for (const s of got) add(s);
+  }
+  if (!fromSeats) {
+    const extra = [];
+    for (const map of nodeMaps) {
+      for (const v of Object.values(map)) if (typeof v === 'string' && v.trim()) extra.push(v.trim());
+    }
+    extra.sort((a, b) => a.localeCompare(b));
+    for (const v of extra) add(v);
+  }
+  const roles = {};
+  for (const data of sources) Object.assign(roles, rolesFrom(data));
+  if (envParsed) Object.assign(roles, rolesFrom(envParsed));
+  return { names, roles };
+}

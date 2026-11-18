@@ -1,4 +1,4 @@
-"""Seat inboxes (xray PR #5 port): first pass seeds silently; a real new event lands in the right seat file."""
+"""Seat inboxes (xray PR #5 port): the seed pass delivers the grace window; older history stays silent."""
 import json, os, subprocess, sys, tempfile, time, unittest
 from datetime import datetime
 from pathlib import Path
@@ -70,6 +70,7 @@ class InboxPass(unittest.TestCase):
             box = run / "feed" / "inbox-spool"
             rd = lambda s: [json.loads(x) for x in (box / f"{s}.jsonl").read_text().splitlines()] if (box / f"{s}.jsonl").exists() else []
             self.assertEqual([l["id"] for l in rd("forge")], [cm["id"]])
+            self.assertEqual(rd("forge")[0].get("from"), "blinky")   # xray#976: a seat's comment names its author seat so Bifrost keeps it off the wake path
             self.assertEqual(rd("arch1"), [])
             before = {s: len(rd(s)) for s in ("blinky", "critic", "mill")}
             feed.write_text(json.dumps({"events": [seed, dict(cm, mentions=["forge0x1", "arch10x"])]}))   # edit adds @arch10x
@@ -80,6 +81,25 @@ class InboxPass(unittest.TestCase):
             self.assertEqual(self.run_pass(env, "pass"), "0 0")                     # same edit again: nothing
             feed.write_text(json.dumps({"events": [seed, dict(cm, mentions=["arch10x"])]}))   # a mention removed: nothing
             self.assertEqual(self.run_pass(env, "pass"), "0 0")
+
+    def test_human_comment_line_has_no_from(self):
+        """xray#976: only a comment a seat wrote carries `from`; a person's comment stays a plain wake."""
+        with tempfile.TemporaryDirectory() as d:
+            run = Path(d); (run / "feed").mkdir(); (run / "fleet").mkdir()
+            env = dict(os.environ, MESH_RUN=str(run), LIVE_BOARD="off")
+            R = "example-org/app"
+            feed = run / "feed" / "live-events.json"
+            seed = {"id": f"{R}#1:open", "t_ct": ct(900), "kind": "pr_open", "repo": R, "number": "1", "label": "old", "source": "https://github.com/x"}
+            feed.write_text(json.dumps({"events": [seed]}))
+            self.run_pass(env, "pass")
+            cm = {"id": f"{R}!8:comment:56", "t_ct": ct(60), "kind": "issue_comment", "repo": R, "number": "8", "from": "Others", "actor": "some-human",
+                  "label": "human comment · app issue #8", "source": "https://github.com/x/8", "mentions": ["forge0x1"]}
+            feed.write_text(json.dumps({"events": [seed, cm]}))
+            self.run_pass(env, "pass")
+            box = run / "feed" / "inbox-spool"
+            lines = [json.loads(x) for x in (box / "forge.jsonl").read_text().splitlines()]
+            self.assertEqual([l["id"] for l in lines], [cm["id"]])
+            self.assertNotIn("from", lines[0])
 
     def test_pr_open_mention_and_terminal_op_deploy_wake_forge(self):
         with tempfile.TemporaryDirectory() as d:
@@ -101,11 +121,245 @@ class InboxPass(unittest.TestCase):
             self.run_pass(env, "pass")
             box = run / "feed" / "inbox-spool"
             rd = lambda s: [json.loads(x) for x in (box / f"{s}.jsonl").read_text().splitlines()] if (box / f"{s}.jsonl").exists() else []
-            self.assertTrue(any("9" in str(l.get("number")) or "#9" in str(l.get("id")) for l in rd("forge")))
-            self.assertFalse(rd("mill"))
+            self.assertTrue(any("9" in str(l.get("number")) or "#9" in str(l.get("id")) for l in rd("mill")))
+            self.assertFalse(any("9" in str(l.get("number")) or "#9" in str(l.get("id")) for l in rd("forge")))
             self.assertTrue(any(l.get("id") == "op:rw:abcd1234:SUCCESS" for l in rd("forge")))
             self.assertFalse(any(l.get("id") == "op:rw:abcd1234:BUILDING" for l in rd("forge")))
 
+    def test_seed_delivers_fresh_arch1_mention(self):
+        """Empty route state still delivers a fresh @arch10x comment and handoff (#620).
+
+        The seed pass marks older ids seen and writes no line for them. An issue
+        comment, a PR comment, and a packet inside the grace are delivered once.
+        """
+        with tempfile.TemporaryDirectory() as d:
+            run = Path(d); (run / "feed").mkdir(); (run / "fleet").mkdir()
+            env = dict(os.environ, MESH_RUN=str(run), LIVE_BOARD="off")
+            R = "0xRayAI/xray"
+            old_issue = {"id": f"{R}!608:comment:6402034337", "t_ct": ct(900), "kind": "issue_comment", "repo": R,
+                         "number": 608, "from": "forge0x1[bot]", "label": "forge comment · xray issue #608",
+                         "source": "https://github.com/0xRayAI/xray/issues/608#issuecomment-6402034337", "mentions": ["arch10x"]}
+            old_pr = {"id": f"{R}#614:comment:6413388677", "t_ct": ct(3 * 3600), "kind": "pr_comment", "repo": R,
+                      "number": 614, "from": "critic0x[bot]", "label": "critic comment · xray pull #614",
+                      "source": "https://github.com/0xRayAI/xray/pull/614#issuecomment-6413388677", "mentions": ["arch10x"]}
+            fresh_issue = {"id": f"{R}!620:comment:6413715112", "t_ct": ct(60), "kind": "issue_comment", "repo": R,
+                           "number": 620, "from": "forge0x1[bot]", "label": "forge comment · xray issue #620",
+                           "source": "https://github.com/0xRayAI/xray/issues/620#issuecomment-6413715112", "mentions": ["arch10x"]}
+            fresh_pr = {"id": f"{R}#615:comment:6413389184", "t_ct": ct(30), "kind": "pr_comment", "repo": R,
+                        "number": 615, "from": "forge0x1[bot]", "label": "forge comment · xray pull #615",
+                        "source": "https://github.com/0xRayAI/xray/pull/615#issuecomment-6413389184", "mentions": ["arch10x"]}
+            fresh_handoff = {"id": f"handoff:{R}#549:ready:c6366225661", "t_ct": ct(20), "kind": "packet", "repo": R,
+                             "number": 549, "from": "forge0x1[bot]", "label": "handoff ready",
+                             "source": "https://github.com/0xRayAI/xray/issues/549", "mentions": ["arch10x"]}
+            feed = run / "feed" / "live-events.json"
+            feed.write_text(json.dumps({"events": [old_issue, old_pr, fresh_issue, fresh_pr, fresh_handoff]}))
+            out = self.run_pass(env, "pass").split()
+            self.assertEqual(out[0], "3", out)
+            box = run / "feed" / "inbox-spool"
+            rd = lambda s: [json.loads(x) for x in (box / f"{s}.jsonl").read_text().splitlines()] if (box / f"{s}.jsonl").exists() else []
+            self.assertEqual([l["id"] for l in rd("arch1")], [fresh_issue["id"], fresh_pr["id"], fresh_handoff["id"]])
+            blob = "".join(f.read_text() for f in box.glob("*.jsonl"))
+            self.assertNotIn(old_issue["id"], blob)
+            self.assertNotIn(old_pr["id"], blob)
+            self.assertEqual(self.run_pass(env, "pass"), "0 0")
+
+    def test_packet_next_owner_tips_that_seat(self):
+        """Opener self-lines stay dropped. A different packet next owner is the tip, not unowned."""
+        with tempfile.TemporaryDirectory() as d:
+            run = Path(d); (run / "feed").mkdir(); (run / "fleet").mkdir()
+            env = dict(os.environ, MESH_RUN=str(run), LIVE_BOARD="off")
+            R = "example-org/app"
+            feed = run / "feed" / "live-events.json"
+            seed = {"id": f"{R}#1:open", "t_ct": ct(900), "kind": "pr_open", "repo": R, "number": 1, "label": "old", "source": "https://github.com/x"}
+            feed.write_text(json.dumps({"events": [seed]}))
+            self.assertEqual(self.run_pass(env, "pass"), "0 0")
+            opened = {"id": f"{R}!660:open", "t_ct": ct(20), "kind": "issue_open", "repo": R, "number": 660,
+                      "from": "critic", "actor": "critic0x[bot]", "label": "issue opened", "source": "https://github.com/x/660",
+                      "packet": {"next owner": "Arch1"}}
+            self_open = {"id": f"{R}!661:open", "t_ct": ct(10), "kind": "issue_open", "repo": R, "number": 661,
+                         "from": "critic", "actor": "critic0x[bot]", "label": "self open", "source": "https://github.com/x/661",
+                         "packet": {"next owner": "Critic"}}
+            feed.write_text(json.dumps({"events": [seed, opened, self_open]}))
+            self.run_pass(env, "pass")
+            box = run / "feed" / "inbox-spool"
+            rd = lambda s: [json.loads(x) for x in (box / f"{s}.jsonl").read_text().splitlines()] if (box / f"{s}.jsonl").exists() else []
+            arch = [l for l in rd("arch1") if l["id"] == opened["id"]]
+            self.assertEqual([l["reason"] for l in arch], ["packet next owner"])
+            self.assertFalse(any(l["id"] == opened["id"] for l in rd("blinky")))
+            self.assertFalse(any(l["id"] == opened["id"] for l in rd("critic")))
+            self.assertFalse(any(l["id"] == self_open["id"] for l in rd("critic")))
+            self.assertFalse(any(l["id"] == self_open["id"] for l in rd("arch1")))
+
+    def test_packet_r_assigns_arch1_without_a_mention(self):
+        """R: arch1 is the queue assignment. No @arch10x mention. The opener's own R line stays.
+        A pull still tips critic. An open with no R still falls through to blinky."""
+        with tempfile.TemporaryDirectory() as d:
+            run = Path(d); (run / "feed").mkdir(); (run / "fleet").mkdir()
+            env = dict(os.environ, MESH_RUN=str(run), LIVE_BOARD="off")
+            repo = "0xRayAI/xray"
+            feed = run / "feed" / "live-events.json"
+            seed = {"id": f"{repo}#1:open", "t_ct": ct(900), "kind": "pr_open", "repo": repo, "number": 1, "label": "old", "source": "https://github.com/x"}
+            feed.write_text(json.dumps({"events": [seed]}))
+            self.assertEqual(self.run_pass(env, "pass"), "0 0")
+            raci = "R=arch1 A=Blaze"
+            issue = {"id": f"{repo}!1031:open", "t_ct": ct(40), "kind": "issue_open", "repo": repo, "number": 1031,
+                     "from": "critic", "actor": "critic0x[bot]", "label": "xray issue #1031 opened",
+                     "source": "https://github.com/0xRayAI/xray/issues/1031", "packet": {"raci": raci}}
+            own = {"id": f"{repo}!1033:open", "t_ct": ct(30), "kind": "issue_open", "repo": repo, "number": 1033,
+                   "from": "arch1", "actor": "arch10x[bot]", "author": "arch10x[bot]",
+                   "label": "xray issue #1033 opened", "source": "https://github.com/0xRayAI/xray/issues/1033",
+                   "packet": {"raci": raci}}
+            pull = {"id": f"{repo}#1030:open", "t_ct": ct(20), "kind": "pr_open", "repo": repo, "number": 1030,
+                    "from": "arch1", "actor": "arch10x[bot]", "author": "arch10x[bot]",
+                    "label": "xray #1030 opened", "source": "https://github.com/0xRayAI/xray/pull/1030",
+                    "packet": {"raci": raci, "next owner": "critic"}}
+            stray = {"id": f"{repo}!9:open", "t_ct": ct(10), "kind": "issue_open", "repo": repo, "number": 9,
+                     "from": "GitHub", "actor": "someone", "label": "unowned issue", "source": "https://github.com/x/9"}
+            feed.write_text(json.dumps({"events": [seed, issue, own, pull, stray]}))
+            self.run_pass(env, "pass")
+            box = run / "feed" / "inbox-spool"
+            rd = lambda s: [json.loads(x) for x in (box / f"{s}.jsonl").read_text().splitlines()] if (box / f"{s}.jsonl").exists() else []
+            arch_ids = [l["id"] for l in rd("arch1") if l["reason"] == "packet R"]
+            self.assertEqual(sorted(arch_ids), sorted([issue["id"], own["id"], pull["id"]]))
+            self.assertFalse(any(l["id"] in (issue["id"], own["id"]) for l in rd("blinky")))
+            self.assertTrue(any(l["id"].startswith(f"pr:{repo}#1030@") for l in rd("critic")))
+            self.assertTrue(any(l["id"] == stray["id"] for l in rd("blinky")))
+            self.assertFalse(any(l["id"] == stray["id"] for l in rd("arch1")))
+            self.assertEqual(self.run_pass(env, "pass"), "0 0")
+            again = [l["id"] for l in rd("arch1") if l["reason"] == "packet R"]
+            self.assertEqual(sorted(again), sorted([issue["id"], own["id"], pull["id"]]))
+            self.assertFalse(any(":r:" in l["id"] for l in rd("arch1")))
+
+    def test_seen_packet_r_is_filed_once(self):
+        """An open already marked seen is filed once on its R seat. A second pass is quiet.
+        A missing review line inside 14 days is filed once. An open older than 14 days stays where it was."""
+        with tempfile.TemporaryDirectory() as d:
+            run = Path(d); (run / "feed").mkdir(); (run / "fleet").mkdir()
+            env = dict(os.environ, MESH_RUN=str(run), LIVE_BOARD="off")
+            repo = "0xRayAI/xray"
+            feed = run / "feed" / "live-events.json"
+            seed = {"id": f"{repo}#1:open", "t_ct": ct(900), "kind": "pr_open", "repo": repo, "number": 1, "label": "old", "source": "https://github.com/x"}
+            feed.write_text(json.dumps({"events": [seed]}))
+            self.assertEqual(self.run_pass(env, "pass"), "0 0")
+            raci = "R=arch1 A=Blaze"
+            issue = {"id": f"{repo}!1031:open", "t_ct": ct(40), "kind": "issue_open", "repo": repo, "number": 1031,
+                     "from": "critic", "actor": "critic0x[bot]", "label": "xray issue #1031 opened",
+                     "source": "https://github.com/0xRayAI/xray/issues/1031", "packet": {"raci": raci}}
+            own = {"id": f"{repo}!1033:open", "t_ct": ct(30), "kind": "issue_open", "repo": repo, "number": 1033,
+                   "from": "arch1", "actor": "arch10x[bot]", "label": "xray issue #1033 opened",
+                   "source": "https://github.com/0xRayAI/xray/issues/1033", "packet": {"raci": raci}}
+            pull = {"id": f"{repo}#1030:open", "t_ct": ct(20), "kind": "pr_open", "repo": repo, "number": 1030,
+                    "from": "arch1", "actor": "arch10x[bot]", "label": "xray #1030 opened",
+                    "source": "https://github.com/0xRayAI/xray/pull/1030", "packet": {"raci": raci}}
+            ancient = {"id": f"{repo}!8:open", "t_ct": ct(15 * 24 * 3600), "kind": "issue_open", "repo": repo, "number": 8,
+                       "from": "critic", "actor": "critic0x[bot]", "label": "old open",
+                       "source": "https://github.com/x/8", "packet": {"raci": raci}}
+            feed.write_text(json.dumps({"events": [seed, issue, own, pull, ancient]}))
+            state_path = run / "feed" / "inbox-state.json"
+            st = json.loads(state_path.read_text())
+            for ev in (issue, own, pull, ancient):
+                st["seen"][ev["id"]] = 1
+                st.setdefault("sig", {})[ev["id"]] = ev["kind"]
+            state_path.write_text(json.dumps(st))
+            self.run_pass(env, "pass")
+            box = run / "feed" / "inbox-spool"
+            rd = lambda s: [json.loads(x) for x in (box / f"{s}.jsonl").read_text().splitlines()] if (box / f"{s}.jsonl").exists() else []
+            filed = [l for l in rd("arch1") if l["reason"] == "packet R"]
+            self.assertEqual(sorted(l["id"] for l in filed), sorted([
+                f"{issue['id']}:r:arch1", f"{own['id']}:r:arch1", f"{pull['id']}:r:arch1"]))
+            self.assertEqual([l["type"] for l in filed if l["number"] == 1031], ["issue_open"])
+            self.assertEqual(len([l for l in rd("critic") if l["id"].startswith(f"pr:{repo}#1030@")]), 1)
+            self.assertEqual(len([l for l in rd("blinky") if l.get("number") == 1030]), 1)
+            self.assertFalse(any(l.get("number") in (1031, 1033, 8) for l in rd("blinky")))
+            self.assertFalse(any(l.get("number") == 8 for l in rd("arch1")))
+            self.assertEqual(self.run_pass(env, "pass"), "0 0")
+            self.assertEqual(len([l for l in rd("arch1") if l["reason"] == "packet R"]), 3)
+            self.assertEqual(len([l for l in rd("critic") if l["id"].startswith(f"pr:{repo}#1030@")]), 1)
+
+    def test_missing_seat_line_on_a_seen_open_is_filed_once(self):
+        """Blinky already has the open. Arch1 does not. One later pass files arch1 once and leaves blinky alone."""
+        with tempfile.TemporaryDirectory() as d:
+            run = Path(d); (run / "feed").mkdir(); (run / "fleet").mkdir()
+            env = dict(os.environ, MESH_RUN=str(run), LIVE_BOARD="off")
+            repo = "0xRayAI/xray"
+            feed = run / "feed" / "live-events.json"
+            seed = {"id": f"{repo}#1:open", "t_ct": ct(900), "kind": "pr_open", "repo": repo, "number": 1, "label": "old", "source": "https://github.com/x"}
+            feed.write_text(json.dumps({"events": [seed]}))
+            self.assertEqual(self.run_pass(env, "pass"), "0 0")
+            raci = "R=arch1 A=Blaze"
+            fresh = {"id": f"{repo}!1040:open", "t_ct": ct(30), "kind": "issue_open", "repo": repo, "number": 1040,
+                     "from": "blinky", "actor": "someone", "label": "seen open", "source": "https://github.com/x/1040",
+                     "packet": {"raci": raci}}
+            older = {"id": f"{repo}!1044:open", "t_ct": ct(49 * 3600), "kind": "issue_open", "repo": repo, "number": 1044,
+                     "from": "blinky", "actor": "someone", "label": "older open", "source": "https://github.com/x/1044",
+                     "packet": {"raci": raci}}
+            feed.write_text(json.dumps({"events": [seed, fresh, older]}))
+            state_path = run / "feed" / "inbox-state.json"
+            st = json.loads(state_path.read_text())
+            for ev in (fresh, older):
+                st["seen"][ev["id"]] = 1
+                st.setdefault("sig", {})[ev["id"]] = ev["kind"]
+            state_path.write_text(json.dumps(st))
+            box = run / "feed" / "inbox-spool"
+            box.mkdir()
+            blinky_line = {"id": fresh["id"], "t_ct": fresh["t_ct"], "seat": "blinky", "type": "issue_open",
+                           "repo": repo, "number": 1040, "title": "seen open", "url": fresh["source"], "reason": "unowned"}
+            older_line = dict(blinky_line, id=older["id"], t_ct=older["t_ct"], number=1044, title="older open", url=older["source"])
+            (box / "blinky.jsonl").write_text(json.dumps(blinky_line) + "\n" + json.dumps(older_line) + "\n")
+            self.run_pass(env, "pass")
+            rd = lambda s: [json.loads(x) for x in (box / f"{s}.jsonl").read_text().splitlines()] if (box / f"{s}.jsonl").exists() else []
+            arch = [l for l in rd("arch1") if l["reason"] == "packet R"]
+            self.assertEqual(sorted(l["id"] for l in arch), sorted([f"{fresh['id']}:r:arch1", older["id"]]))
+            self.assertEqual(len(rd("blinky")), 2)
+            self.assertFalse(any(l["id"].startswith("pr:") for l in rd("critic")))
+            self.assertEqual(self.run_pass(env, "pass"), "0 0")
+            self.assertEqual(len(rd("arch1")), 2)
+            self.assertEqual(len(rd("blinky")), 2)
+
+
+    def test_ci_fail_is_one_line_per_head(self):
+        """A red suite opens one ci_fail line. A second event on that sha does not."""
+        with tempfile.TemporaryDirectory() as d:
+            run = Path(d); (run / "feed").mkdir(); (run / "fleet").mkdir()
+            env = dict(os.environ, MESH_RUN=str(run), LIVE_BOARD="off")
+            R = "example-org/app"
+            sha = "a" * 40
+            feed = run / "feed" / "live-events.json"
+            seed = {"id": f"{R}#1:open", "t_ct": ct(900), "kind": "pr_open", "repo": R, "number": 1,
+                    "label": "old", "source": "https://github.com/x"}
+            feed.write_text(json.dumps({"events": [seed]}))
+            self.assertEqual(self.run_pass(env, "pass"), "0 0")
+            opened = {"id": f"{R}#2:open", "t_ct": ct(40), "kind": "pr_open", "repo": R, "number": 2,
+                      "from": "critic", "actor": "critic0x[bot]", "label": "pr opened",
+                      "source": "https://github.com/example-org/app/pull/2",
+                      "packet": {"next owner": "Arch1"}}
+            pushed = {"id": f"{R}#2:commit:{sha[:12]}", "t_ct": ct(30), "kind": "pr_commit", "repo": R,
+                      "number": 2, "sha": sha, "from": "critic", "label": "push"}
+            suite = {"id": f"{R}:suite:9", "t_ct": ct(20), "kind": "check_suite", "repo": R, "sha": sha,
+                     "app": "github-actions", "conclusion": "failure", "status": "completed", "label": "suite failure"}
+            build = {"id": f"{R}:checkrun:1", "t_ct": ct(18), "kind": "check_run", "repo": R, "sha": sha,
+                     "name": "Build", "conclusion": "failure", "label": "Build failure"}
+            quality = {"id": f"{R}:checkrun:2", "t_ct": ct(17), "kind": "check_run", "repo": R, "sha": sha,
+                       "name": "Quality Checks", "conclusion": "failure", "label": "Quality Checks failure"}
+            feed.write_text(json.dumps({"events": [seed, opened, pushed, suite, build, quality]}))
+            self.run_pass(env, "pass")
+            box = run / "feed" / "inbox-spool"
+            rd = lambda s: [json.loads(x) for x in (box / f"{s}.jsonl").read_text().splitlines()] if (box / f"{s}.jsonl").exists() else []
+            red = [l for l in rd("arch1") if l["type"] == "ci_fail"]
+            self.assertEqual(len(red), 1)
+            self.assertEqual(red[0]["id"], f"ci_fail:{R}#2:{sha}")
+            self.assertEqual(red[0]["sha"], sha)
+            self.assertEqual(red[0]["url"], "https://github.com/example-org/app/pull/2")
+            self.assertIn("Build", red[0]["title"])
+            self.assertIn("Quality Checks", red[0]["title"])
+            self.assertFalse(any(l["type"] == "ci_fail" for l in rd("critic")))
+            self.assertFalse(any(l["type"] == "ci_fail" for l in rd("blinky")))
+            again = {"id": f"{R}:checkrun:3", "t_ct": ct(5), "kind": "check_run", "repo": R, "sha": sha,
+                     "name": "Build", "conclusion": "failure", "label": "Build failure again"}
+            feed.write_text(json.dumps({"events": [seed, opened, pushed, suite, build, quality, again]}))
+            self.run_pass(env, "pass")
+            red = [l for l in rd("arch1") if l["type"] == "ci_fail"]
+            self.assertEqual(len(red), 1)
 
 if __name__ == "__main__":
     unittest.main()

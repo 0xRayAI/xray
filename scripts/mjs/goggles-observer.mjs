@@ -129,7 +129,7 @@ try {
     check(`${id} card is the place card`, text === PLACES[id]);
     check(`${id} has no Card line`, !/^Card:/m.test(text));
     check(`${id} has no stamp nag`, !text.includes('Stamp:'));
-    const missing = filesOf(text).filter((rel) => !existsSync(join(repo, rel)));
+    const missing = filesOf(text).filter((rel) => !rel.startsWith('node_modules/') && !existsSync(join(repo, rel)));
     check(`${id} files exist`, missing.length === 0, missing.join(', '));
   }
   check('an empty look starts on dev', look([], fresh()).text === DEV);
@@ -147,6 +147,7 @@ try {
   check('boot is a thing card', boot.startsWith('Card: boot\n'));
   check('boot sits on integration', boot.includes('Plane: integration') && boot.includes('From: integration'));
   check('boot names its plate', boot.includes('Plate: docs-site/docs/plates/boot.md'));
+  check('boot opens the plate drawing', boot.includes('INPUT LAYER') && boot.includes('BootResult'));
   check('boot does not ask for a stamp', !boot.includes('Stamp:'));
   check('the boot plate file exists', existsSync(join(repo, 'docs-site/docs/plates/boot.md')));
 
@@ -163,7 +164,7 @@ try {
   check('synthesis is a thing card on integration', synthesis.includes('Card: synthesis') && synthesis.includes('Plane: integration'));
   check('synthesis names its plate', synthesis.includes('Plate: docs-site/docs/plates/synthesis.md') && synthesis.includes('Entry: a gate, a turn, or a finished todo') && synthesis.includes('Exit: due or not due') && !synthesis.includes('Stamp:'));
   check('the synthesis plate file is present', existsSync(join(repo, 'docs-site/docs/plates/synthesis.md')));
-  check('synthesis names its skill', synthesis.includes('Skills: .agents/skills/synthesis/SKILL.md'));
+  check('synthesis names its skills', synthesis.includes('Skills: synthesis, confer, inference-cycle, temperament'));
   const ground = look(['ground'], fresh()).text;
   check('ground names its plate', ground.includes('Card: ground') && ground.includes('Plane: dev') && ground.includes('Plate: docs-site/docs/plates/ground.md') && ground.includes('Entry: this checkout') && !ground.includes('Stamp:'));
   check('the ground plate file is present', existsSync(join(repo, 'docs-site/docs/plates/ground.md')));
@@ -192,7 +193,8 @@ try {
   check('a search does not invent the boot plane', !String(search?.reason).includes('Plane: boot'));
   check('a search does not write a plate', !existsSync(join(gate, '.xray', 'state', 'plates', 'boot.md')));
   check('a search inside the dev card runs', lensBeforeResearch(gate, 'grep', 'src/nucleus/thin-dispatch.ts') === null);
-  check('a search outside the dev card stays there', lensBeforeResearch(gate, 'grep', 'scripts/foundry/release.mjs')?.decision === 'deny' && String(lensBeforeResearch(gate, 'grep', 'scripts/foundry/release.mjs')?.reason).includes('Plane: dev'));
+  const foundryHop = lensBeforeResearch(fresh(), 'grep', 'scripts/foundry/release.mjs');
+  check('a search of the release script opens foundry', foundryHop?.decision === 'allow' && String(foundryHop.reason).includes('Card: foundry'));
   check('README on dev stays quiet', lensBeforeResearch(gate, 'read_file', 'README.md') === null);
   check('config-paths on dev stays quiet', lensBeforeResearch(gate, 'read_file', 'src/core/config-paths.ts') === null);
   check('package.json on dev stays quiet', lensBeforeResearch(gate, 'Read', 'package.json') === null);

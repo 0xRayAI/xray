@@ -14,6 +14,32 @@ def ct(ago):
     return datetime.fromtimestamp(time.time() - ago, CT).isoformat(timespec="seconds")
 
 
+class CardOwner(unittest.TestCase):
+    def card(self, **kw):
+        import live_board
+        ev = {"id": "acme/app#9:open", "t_ct": ct(30), "kind": "issue_open", "repo": "acme/app", "number": 9,
+              "from": "Blaze", "source": "https://github.com/acme/app/issues/9", "title": "wave", "pr_state": "open"}
+        ev.update(kw)
+        rows = [c for c in live_board.model([ev])["cards"] if c.get("number") == 9]
+        self.assertEqual(len(rows), 1)
+        return rows[0]
+
+    def test_a_person_is_not_the_owner(self):
+        self.assertEqual(self.card()["owner"], "builder-cloud")
+
+    def test_board_owner_line_wins(self):
+        self.assertEqual(self.card(board_owner="critic")["owner"], "critic")
+
+    def test_a_seat_assignee_wins_over_the_person(self):
+        self.assertEqual(self.card(assignee_seat="forge")["owner"], "forge")
+
+    def test_a_cloud_agent_stays_with_the_operator(self):
+        self.assertEqual(self.card(**{"from": "CloudAgents"})["owner"], "operator")
+
+    def test_a_seat_opener_keeps_the_card(self):
+        self.assertEqual(self.card(**{"from": "Builder"})["owner"], "Builder")
+
+
 class Packet(unittest.TestCase):
     def test_block_and_single_line(self):
         import live_packet as p
@@ -35,6 +61,20 @@ class Packet(unittest.TestCase):
         self.assertIn("error and aborted", fields["acceptance"])
         self.assertIn("WORKING_CLOUD_S", fields["evidence"])
         self.assertEqual(p.parse("[docs](https://notion.so/x) text\n## Packet\n- Goal: [d](https://notion.so/y) z"), {"goal": "d z"})
+
+    def test_raci_line_and_letters_keep_next_owner(self):
+        import live_packet as p
+        fields = p.parse("## Packet\n- goal: ship\n- next owner: critic\n- raci: R=forge A=arch1\n")
+        self.assertEqual(fields["next owner"], "critic")
+        self.assertEqual(fields["raci"], "R=forge A=arch1")
+        self.assertEqual(p.raci_gaps(fields, "live"), [])
+        got = p.parse("## Packet\n- goal: ship\n- R: forge\n- A: arch1\n- C: critic\n- I: CoS\n")
+        self.assertEqual(got["raci"], "R=forge A=arch1 C=critic I=CoS")
+        self.assertEqual(p.raci_gaps({"goal": "ship"}, "live"), ["R", "A"])
+        self.assertEqual(p.raci_gaps({"goal": "ship"}, "closed"), [])
+        self.assertEqual(p.raci_gaps({}, "live", True), [])
+        self.assertEqual(p.parse("Packet: goal: ship | raci: R=forge A=arch1 | next owner: critic"),
+                         {"goal": "ship", "raci": "R=forge A=arch1", "next owner": "critic"})
 
     def test_pr_packet_subsections_keep_scope_acceptance_and_next_owner(self):
         """PR 477's ## Packet ends at ### Scope unless subsections stay inside the block."""
@@ -181,13 +221,47 @@ class Model(unittest.TestCase):
         self.assertIn("comment after close", [b["what"] for b in cards[43]["beats"]])
         self.assertEqual({cards[42]["state"], cards[43]["state"]}, {"closed"})
 
+    def test_raci_missing_is_not_the_brief_badge(self):
+        evs = [
+            self.ev(70, "pr_open", 30, title="needs who", packet={"goal": "g", "next owner": "critic"}),
+            self.ev(71, "pr_open", 30, title="has who", packet={"goal": "g", "raci": "R=forge A=arch1", "next owner": "critic"}),
+            self.ev(72, "pr_open", 4000, title="closed who"),
+            self.ev(72, "merged", 3900),
+        ]
+        cards = {c["number"]: c for c in self.w.model(evs)["cards"] if c.get("repo") == R}
+        self.assertEqual(cards[70]["raci_missing"], ["R", "A"])
+        self.assertTrue(cards[70]["packet_ok"])
+        self.assertEqual(cards[70]["missing"], [])
+        self.assertEqual(cards[70]["packet"]["next owner"], "critic")
+        self.assertEqual(cards[71]["raci_missing"], [])
+        self.assertEqual(cards[71]["packet"]["raci"], "R=forge A=arch1")
+        self.assertEqual(cards[72]["state"], "closed")
+        self.assertEqual(cards[72]["raci_missing"], [])
+
+    def test_a_later_packet_comment_seats_arch1(self):
+        evs = [
+            self.ev(80, "issue_open", 100, title="tip", pr_state="open", **{"from": "forge"}),
+            self.ev(80, "issue_comment", 40, **{"from": "forge", "packet": {
+                "goal": "seat the card", "raci": "R=Arch1 A=Blaze", "next owner": "Arch1",
+            }}),
+        ]
+        card = next(c for c in self.w.model(evs)["cards"] if c.get("number") == 80 and c.get("repo") == R)
+        self.assertEqual(card["packet"]["next owner"], "Arch1")
+        self.assertEqual(card["packet"]["raci"], "R=Arch1 A=Blaze")
+        self.assertEqual(card["raci_missing"], [])
+        self.assertTrue(card["packet_ok"])
+        self.assertEqual(card["missing"], [])
+        self.assertEqual(card["owner"], "arch1")
+
     def test_cards_stages_packets_stall_md(self):
         sha = "abcdef1234567"
         evs = [self.ev(1, "pr_open", 5000, title="fix a", packet={"goal": "g", "acceptance": "tests", "next owner": "Reviewer"}),
                self.ev(1, "pr_commit", 4000, sha=sha),
                {"id": "cr1", "t_ct": ct(3900), "kind": "check_run", "repo": R, "sha": sha, "conclusion": "failure", "source": "https://github.com/ci/1"},
-               self.ev(2, "pr_open", 600, title="fix b"),                                       # no packet
-               self.ev(2, "critic_pass", 300),
+               self.ev(2, "pr_open", 600, title="fix b"),                                       # ordinary PR: no brief
+               self.ev(2, "pr_commit", 400, sha="ccccccc"),
+               self.ev(9, "pr_open", 500, title="Packet: missing file"),                      # packet PR, no PACKET.md
+               self.ev(2, "critic_pass", 300, sha="ccccccc"),
                {"id": "w1", "t_ct": ct(100), "kind": "watcher", "repo": R, "number": 2, "start_ct": ct(100), "end_ct": ct(100)},
                self.ev(3, "pr_open", 9000, title="done one"), self.ev(3, "merged", 8000, merge_sha="f00ba12"),
                self.ev(3, "lab_retest_pass", 7000), self.ev(3, "pr_commit", 6000, sha="1111111")]   # after close: ignored
@@ -197,8 +271,10 @@ class Model(unittest.TestCase):
         self.assertEqual((a["stage"], a["state"], a["packet_ok"]), ("fix", "live", True))
         self.assertTrue(a["stall"])                                                              # 65 min, no beat
         self.assertEqual(a["packet"]["evidence"], "https://github.com/ci/1")                    # from the latest beat
-        self.assertEqual((b["stage"], b["packet_ok"], b["missing"], b["packet"]["next owner"]), ("merge", False, ["acceptance"], "Builder"))   # PASS + green CI: Builder merges
-        self.assertEqual([x["what"] for x in b["beats"]], ["opened", "Reviewer PASS"])            # idle watcher: no beat
+        self.assertEqual((b["stage"], b["packet_ok"], b["missing"], b["packet"]["next owner"]), ("merge", True, [], "Builder"))   # PASS + green CI: Builder merges; a plain PR needs no brief
+        bare = c[f"{R}#9".lower()]
+        self.assertEqual((bare["packet_ok"], bare["missing"]), (False, ["PACKET.md"]))
+        self.assertEqual([x["what"] for x in b["beats"]], ["opened", "pushed", "Reviewer PASS"])  # idle watcher: no beat
         self.assertFalse(b["stall"])
         self.assertEqual((d["stage"], d["state"]), ("done", "closed"))
         self.assertEqual([x["what"] for x in d["beats"]], ["opened", "merged", "retest PASS"])  # stops when closed
@@ -210,6 +286,24 @@ class Model(unittest.TestCase):
         self.assertTrue(self.w.write_md(m, force=True)); self.assertFalse(self.w.write_md(m))  # once a minute
         md = (self.root / "BOARD.md").read_text()
         self.assertIn("## Pinned", md); self.assertIn("STALL 60m+", md); self.assertIn("no packet", md)
+
+    def test_live_cards_need_a_brief_only_on_a_packet_pr(self):
+        shape = json.loads((HERE / "fixtures" / "brief-cards.json").read_text())
+        evs = [self.ev(498, "issue_open", 60, title=shape["issues"][0]["title"], pr_state="open"),
+               self.ev(388, "pr_open", 60, title=shape["plain_pr"]["title"]),
+               self.ev(700, "pr_open", 60, title=shape["packet_pr_open"]["title"]),
+               self.ev(495, "pr_open", 60, title=shape["packet_pr_done"]["title"], packet=shape["packet_pr_done"]["packet"]),
+               self.ev(485, "pr_open", 60, title=shape["packet_card"]["title"])]
+        cards = {c["number"]: c for c in self.w.model(evs)["cards"] if c.get("repo") == R}
+        self.assertTrue(cards[498]["packet_ok"])
+        self.assertEqual(cards[498]["kind"], "issue")
+        self.assertTrue(cards[388]["packet_ok"])
+        self.assertTrue(cards[485]["packet_ok"])
+        self.assertFalse(cards[700]["packet_ok"])
+        self.assertEqual(cards[700]["missing"], ["PACKET.md"])
+        # A filled acceptance does not clear the badge. PACKET.md does.
+        self.assertFalse(cards[495]["packet_ok"])
+        self.assertEqual(cards[495]["missing"], ["PACKET.md"])
 
     def test_prompt_stamp_is_the_first_beat_once(self):
         prompt = {"id": "ada.9", "t_ct": ct(120), "kind": "prompt", "from": "Ada", "note": "fixed summary"}
@@ -341,16 +435,51 @@ class Model(unittest.TestCase):
         crit = dict(self.ev(40, "critic_pass", 6000), sha="425dc03")
         c = self.card([op, push, ci, crit], 40)
         self.assertEqual((c["stage"], c["nudge_to"], c["packet"]["next owner"]), ("merge", "builder", "Builder"))
-        self.assertEqual(c["reviewer"]["at_head"], True); self.assertEqual(c["head"], "425dc03")
+        self.assertEqual(c["reviewer"]["at_head"], True); self.assertEqual(c["reviewer"]["stale"], False); self.assertEqual(c["head"], "425dc03")
         cb = [b for b in c["beats"] if b.get("kind") == "reviewer verdict"][0]
         self.assertEqual((cb["what"], cb["sha"]), ("Reviewer PASS", "425dc03"))
         newer = dict(self.ev(40, "pr_commit", 5000), sha="bbbbbbb1")             # pushed after the PASS: not at head
         c = self.card([op, push, ci, crit, newer], 40)
-        self.assertFalse(c["reviewer"]["at_head"]); self.assertEqual(c["nudge_to"], "builder")   # never Tester before merge
-        self.assertNotEqual(c["packet"]["next owner"], "Builder")
+        self.assertFalse(c["reviewer"]["at_head"]); self.assertTrue(c["reviewer"]["stale"])
+        self.assertEqual(c["nudge_to"], "critic")   # a new head names critic again; never Tester before merge
+        self.assertEqual(c.get("nudge_via"), "new head")
+        self.assertEqual(c["packet"]["next owner"], "critic")
         c = self.card([op, push, ci, crit, self.ev(40, "merged", 4000)], 40)    # merge closes; a later retest needs a new issue
         self.assertEqual((c["stage"], c["state"]), ("done", "closed"))
         self.assertNotIn("nudge_to", c)
+
+    def test_a_verdict_stays_on_its_sha_and_a_new_head_is_not_a_merge(self):
+        posted = "302086e" + "a" * 33
+        op = self.ev(556, "pr_open", 9000, title="board")
+        old = self.ev(556, "pr_commit", 8000, sha="302086e")
+        ci = self.ev(556, "ci_pass", 7000, conclusion="success", sha="302086e")
+        verdict = dict(self.ev(556, "review", 6000), state="APPROVED", sha=posted)
+        c = self.card([op, old, ci, verdict], 556)
+        self.assertEqual((c["reviewer"]["sha"], c["reviewer"]["at_head"], c["reviewer"]["stale"]), ("302086e", True, False))
+        self.assertEqual(c["nudge_via"], "merge (Reviewer PASS at head)")
+        moved = self.ev(556, "pr_commit", 1000, sha="0e96754")
+        c = self.card([op, old, ci, verdict, moved], 556)
+        self.assertEqual(c["head"], "0e96754")
+        self.assertEqual((c["reviewer"]["sha"], c["reviewer"]["at_head"], c["reviewer"]["stale"]), ("302086e", False, True))
+        self.assertNotEqual(c.get("nudge_via"), "merge (Reviewer PASS at head)")
+        self.assertNotEqual(c["packet"].get("next owner"), "Builder")
+        self.assertEqual(c["stage"], "review")
+        bare = self.card([
+            self.ev(557, "pr_open", 9000, title="no sha"),
+            self.ev(557, "pr_commit", 8000, sha="aaaaaaa"),
+            self.ev(557, "ci_pass", 7500, conclusion="success"),
+            dict(self.ev(557, "review", 7000), state="APPROVED"),
+        ], 557)
+        self.assertFalse(bare["reviewer"]["at_head"])
+        self.assertTrue(bare["reviewer"]["stale"])
+        self.assertNotEqual(bare.get("nudge_via"), "merge (Reviewer PASS at head)")
+        short = self.card([
+            self.ev(558, "pr_open", 9000, title="short"),
+            self.ev(558, "pr_commit", 8000, sha="302086e"),
+            dict(self.ev(558, "review", 7000), state="APPROVED", sha="302086"),
+        ], 558)
+        self.assertFalse(short["reviewer"]["at_head"])
+        self.assertTrue(short["reviewer"]["stale"])
 
     def test_git_author_named_mill_is_not_a_seat(self):
         import live_collect as uc
@@ -439,9 +568,145 @@ class Model(unittest.TestCase):
         finally:
             os.environ.pop("NO_NUDGE_REPOS", None)
 
-    def test_closed_drops_after_24h(self):
-        evs = [self.ev(5, "pr_open", 200000, title="old"), self.ev(5, "merged", 190000), self.ev(5, "lab_retest_pass", 180000)]
-        self.assertEqual([c for c in self.w.model(evs)["cards"] if not c.get("pinned")], [])
+    def test_display_keeps_24h_and_settled_keeps_the_merge(self):
+        recent = self.w.model([
+            self.ev(5, "pr_open", 6 * 3600, title="today"), self.ev(5, "merged", 5 * 3600),
+        ])
+        shown = [c for c in recent["cards"] if not c.get("pinned")]
+        self.assertEqual([(c["state"], c["stage"], c["verb"]) for c in shown], [("closed", "done", "merged")])
+        self.assertEqual(recent["settled"], [])
+        old = self.w.model([
+            self.ev(6, "pr_open", 3 * 86400, title="yesterday"), self.ev(6, "merged", 2 * 86400),
+        ])
+        self.assertEqual([c for c in old["cards"] if not c.get("pinned")], [])
+        self.assertEqual(len(old["settled"]), 1)
+        row = old["settled"][0]
+        self.assertEqual((row["state"], row["stage"], row["verb"], row["number"]), ("closed", "done", "merged", 6))
+        self.assertEqual(self.w.CLOSED_KEEP_S, 86400)
+
+    def test_closed_slots_come_before_parked(self):
+        evs = [self.ev(n, "issue_open", 3600, title=f"live {n}", pr_state="open") for n in range(1, 31)]
+        evs += [self.ev(n, "issue_open", 3 * 86400, title=f"parked {n}", pr_state="open", labels=["parked"]) for n in range(31, 51)]
+        evs += [self.ev(80, "pr_open", 7200, title="just merged"), self.ev(80, "merged", 1800)]
+        body = [c for c in self.w.model(evs)["cards"] if not c.get("pinned")]
+        self.assertEqual(sum(1 for c in body if c["state"] == "live"), 30)
+        self.assertEqual(sum(1 for c in body if c["state"] == "parked"), 20)
+        hit = next(c for c in body if c["number"] == 80)
+        self.assertEqual((hit["state"], hit["stage"], hit["verb"]), ("closed", "done", "merged"))
+        parked_at = min(i for i, c in enumerate(body) if c["state"] == "parked")
+        self.assertLess(body.index(hit), parked_at)
+
+    def test_open_rows_stay_when_the_closed_page_is_full(self):
+        evs = [self.ev(n, "issue_open", 600, title=f"open {n}", pr_state="open") for n in range(1, 46)]
+        evs += [self.ev(90, "pr_open", 5000, title="kept"), self.ev(90, "merged", 1000)]
+        m = self.w.model(evs)
+        nums = {c["number"] for c in m["cards"] if not c.get("pinned")}
+        self.assertTrue(set(range(1, 46)) <= nums)
+        self.assertIn(90, nums)
+
+    def test_cap_cut_still_settles_the_merge(self):
+        evs = [self.ev(1, "issue_open", 600, title="open", pr_state="open")]
+        for n in range(2, 2 + self.w.MAX_CARDS + 1):
+            evs += [self.ev(n, "pr_open", 5000, title=f"m{n}"), self.ev(n, "merged", 1000)]
+        m = self.w.model(evs)
+        body = [c for c in m["cards"] if not c.get("pinned")]
+        self.assertIn(1, {c["number"] for c in body})
+        self.assertEqual(sum(1 for c in body if c["state"] == "closed"), self.w.MAX_CARDS)
+        overflow = [c for c in m["settled"] if c["state"] == "closed"]
+        self.assertEqual(len(overflow), 1)
+        self.assertEqual((overflow[0]["stage"], overflow[0]["verb"]), ("done", "merged"))
+
+    def test_transitions_are_kept_when_the_cap_and_the_14_day_filter_drop_the_card(self):
+        merge = self.ev(90, "merged", 1000)
+        evs = [self.ev(n, "issue_open", 600, title=f"open {n}", pr_state="open") for n in range(1, 46)]
+        evs += [self.ev(90, "pr_open", 5000, title="capped"), merge]
+        evs.append(self.ev(900, "issue_open", 20 * 86400, title="stale", pr_state="open"))
+        m = self.w.model(evs)
+        self.assertIn(90, {c["number"] for c in m["cards"]})
+        stale = next(c for c in m["cards"] if c["number"] == 900)
+        self.assertEqual(stale["state"], "parked")
+        self.assertNotIn(900, {c["number"] for c in m["settled"]})
+        merged = [t for t in m["transitions"] if t["card"].endswith("#90") and t["transition"] == "merged"]
+        self.assertEqual(len(merged), 1)
+        self.assertEqual(merged[0]["source_id"], merge["id"])
+        self.assertEqual((merged[0]["to_state"], merged[0]["to_stage"]), ("closed", "done"))
+        self.assertNotIn("body", merged[0])
+        opened = [t for t in m["transitions"] if t["card"].endswith("#900") and t["transition"] == "opened"]
+        self.assertEqual(len(opened), 1)
+
+    def test_reconcile_closes_a_merged_packet_card(self):
+        wave = {"cards": [
+            {"key": f"{R}#485", "kind": "packet", "born": "packet", "state": "live", "repo": R, "number": 485, "stage": "open"},
+            {"key": f"{R}#1", "kind": "issue", "state": "live", "repo": R, "number": 1},
+        ]}
+        n = self.w.reconcile(wave, {R.lower(): {1}})
+        self.assertEqual(n, 1)
+        self.assertEqual((wave["cards"][0]["state"], wave["cards"][0]["stage"]), ("closed", "done"))
+        self.assertEqual(wave["cards"][1]["state"], "live")
+
+    def test_full_live_board_keeps_recently_merged_cards(self):
+        """A full open board used to rank closed last and slice them off. Recent merges take a slot before parked."""
+        live = json.loads((HERE / "fixtures" / "live-cards.json").read_text())
+        spec = json.loads((HERE / "fixtures" / "closed-column.json").read_text())
+        self.assertEqual(live["source"], "https://bifrost.0xray.dev/cards")
+        self.assertGreaterEqual(sum(1 for c in live["cards"] if c.get("kind") in ("issue", "pr")), self.w.MAX_CARDS)
+        evs, opened, parked = [], set(), 0
+        for card in live["cards"]:
+            if card.get("kind") not in ("issue", "pr") or card.get("repo") != "0xRayAI/xray":
+                continue
+            n = int(card["number"])
+            opened.add(n)
+            kind = "issue_open" if card["kind"] == "issue" else "pr_open"
+            row = {
+                "id": f"live:{card['key']}:{kind}", "t_ct": ct(7200), "kind": kind, "repo": card["repo"],
+                "number": n, "title": card["title"], "from": "forge", "pr_state": "open",
+                "source": card.get("url") or f"https://github.com/{card['repo']}/pull/{n}",
+            }
+            if card["kind"] == "issue" and parked < 15:
+                row["labels"] = ["parked"]
+                parked += 1
+            evs.append(row)
+        for n in range(901, 907):
+            evs.append({
+                "id": f"0xRayAI/xray#{n}:issue_open", "t_ct": ct(3600), "kind": "issue_open",
+                "repo": "0xRayAI/xray", "number": n, "title": f"open filler {n}", "from": "forge",
+                "pr_state": "open", "source": f"https://github.com/0xRayAI/xray/issues/{n}",
+            })
+        for row in spec["merged"]:
+            repo, n = row["repo"], int(row["number"])
+            if n not in opened:
+                evs.append({
+                    "id": f"{repo}#{n}:pr_open", "t_ct": ct(row["opened_ago_s"]), "kind": "pr_open",
+                    "repo": repo, "number": n, "title": row["title"], "from": row.get("from") or "forge",
+                    "pr_state": "open", "source": row.get("url") or f"https://github.com/{repo}/pull/{n}",
+                })
+            evs.append({
+                "id": f"{repo}#{n}:merged", "t_ct": ct(row["merged_ago_s"]), "kind": "merged",
+                "repo": repo, "number": n, "from": row.get("from") or "forge",
+                "source": f"https://github.com/{repo}/pull/{n}",
+            })
+        modeled = self.w.model(evs)
+        cards = modeled["cards"]
+        self.assertEqual(sum(1 for c in cards if c.get("pinned")), 1)
+        body = [c for c in cards if not c.get("pinned")]
+        self.assertGreaterEqual(len(body), self.w.MAX_CARDS)
+        self.assertTrue(set(range(901, 907)) <= {c["number"] for c in body})
+        self.assertTrue(any(c["state"] == "live" for c in body))
+        self.assertTrue(any(c["state"] == "parked" for c in body))
+        by_num = {c["number"]: c for c in body}
+        settled = {c["number"]: c for c in modeled["settled"]}
+        for row in spec["merged"]:
+            n = int(row["number"])
+            if row["merged_ago_s"] > self.w.CLOSED_KEEP_S:
+                self.assertNotIn(n, by_num)
+                self.assertIn(n, settled)
+                self.assertEqual((settled[n]["state"], settled[n]["stage"], settled[n]["verb"]), ("closed", "done", "merged"))
+                continue
+            self.assertIn(n, by_num)
+            self.assertEqual(by_num[n]["repo"], "0xRayAI/xray")
+            self.assertEqual((by_num[n]["state"], by_num[n]["stage"], by_num[n]["verb"]), ("closed", "done", "merged"))
+            self.assertNotIn(n, settled)
+        self.assertEqual(self.w.CLOSED_KEEP_S, 86400)
 
     def test_review_approved_or_changes_requested_is_a_reviewer_beat(self):
         ok = self.card([self.ev(60, "pr_open", 4000, title="r"), self.ev(60, "review", 3000, state="APPROVED"),
@@ -451,8 +716,19 @@ class Model(unittest.TestCase):
         self.assertEqual([b["what"] for b in ok["beats"] if b["what"].startswith("Reviewer")], ["Reviewer PASS"])
         bad = self.card([self.ev(61, "pr_open", 4000, title="r"), self.ev(61, "review", 3000, state="CHANGES_REQUESTED")], 61)
         self.assertEqual(bad["stage"], "fix")
-        self.assertIn("Reviewer FAIL", [b["what"] for b in bad["beats"]])
+        self.assertIn("Reviewer FIX", [b["what"] for b in bad["beats"]])
         self.assertIsNone(self.w.beat_of({"kind": "review", "state": "COMMENTED"}))
+
+    def test_fix_comment_beats_as_reviewer_fix(self):
+        self.assertEqual(self.w.beat_of({"kind": "critic_fail", "verdict": "FIX"}), "Reviewer FIX")
+        self.assertEqual(self.w.beat_of({"kind": "critic_fail", "verdict": "FAIL"}), "Reviewer FIX")
+        self.assertEqual(self.w.beat_of({"kind": "critic_fail", "verdict": "HOLD"}), "Reviewer FIX")
+        self.assertEqual(self.w.beat_of({"kind": "critic_fail"}), "Reviewer FIX")
+        self.assertEqual(self.w.beat_of({"kind": "critic_fail", "verdict": "RE-CHECK", "recheck_result": "FIX"}), "Reviewer FIX")
+        self.assertEqual(self.w.beat_of({"kind": "critic_pass", "verdict": "PASS"}), "Reviewer PASS")
+        c = self.card([self.ev(63, "pr_open", 4000, title="fix"), self.ev(63, "critic_fail", 3000, verdict="FIX")], 63)
+        self.assertEqual(c["stage"], "fix")
+        self.assertIn("Reviewer FIX", [b["what"] for b in c["beats"]])
 
     def test_a_push_stays_on_the_card_and_merged_by_is_the_merger(self):
         self.assertEqual(self.w.beat_of({"kind": "pr_commit"}), "pushed")
@@ -488,6 +764,23 @@ class Model(unittest.TestCase):
         self.assertIn("comment", [b["what"] for b in fleet["beats"]])
         stranger = self.card(base + [dict(self.ev(64, "pr_comment", 1000), **{"from": "Others"})], 64)
         self.assertNotIn("comment", [b["what"] for b in stranger["beats"]])
+
+    def test_mapped_actor_moves_a_stall_card_a_stranger_does_not(self):
+        opened = self.ev(90, "issue_open", 3 * 3600, title="stall", pr_state="open", **{"from": "arch1"})
+        quiet = self.card([opened], 90)
+        self.assertEqual(quiet["owner"], "arch1")
+        self.assertTrue(quiet["stall"])
+        moved = self.card([opened, dict(self.ev(90, "issue_comment", 30), **{"from": "GitHub", "actor": "arch10x[bot]"})], 90)
+        self.assertFalse(moved["stall"])
+        self.assertIn("owner comment", [b["what"] for b in moved["beats"]])
+        pushed = self.card([opened, dict(self.ev(90, "pr_commit", 20, sha="abc1234"), **{"from": "GitHub", "actor": "arch10x[bot]"})], 90)
+        self.assertFalse(pushed["stall"])
+        self.assertIn("pushed", [b["what"] for b in pushed["beats"]])
+        review = self.card([opened, dict(self.ev(90, "review_comment", 25), **{"from": "GitHub", "actor": "arch10x[bot]"})], 90)
+        self.assertIn("owner comment", [b["what"] for b in review["beats"]])
+        stranger = self.card([opened, dict(self.ev(90, "issue_comment", 30), **{"from": "GitHub", "actor": "stranger"})], 90)
+        self.assertTrue(stranger["stall"])
+        self.assertEqual([b["what"] for b in stranger["beats"]], ["opened"])
 
     def test_pr_ready_opens_and_pr_draft_parks_immediately(self):
         ready = self.card([self.ev(65, "pr_open", 8000, title="d", draft=True), self.ev(65, "pr_draft", 7000),
@@ -528,6 +821,14 @@ class CollectorCapture(unittest.TestCase):
         self.assertEqual(stamped["prompt"], "ada.9")
         self.assertNotIn("body", stamped)
         self.assertNotIn("secret", json.dumps(stamped))
+        linked = uc.card_fields({
+            "title": "t", "state": "open",
+            "body": "see https://cursor.com/agents/bc-22f1b70d-a78d-5505-8ee0-9714f6ca1e99\nsecret prose",
+        })
+        self.assertEqual(linked["bc_ids"], ["bc-22f1b70d-a78d-5505-8ee0-9714f6ca1e99"])
+        self.assertEqual(uc.cloud_ids_in("bc-f35e4c51 bc-f0dc0299"), ["bc-f35e4c51", "bc-f0dc0299"])
+        self.assertNotIn("secret", json.dumps(linked))
+        self.assertNotIn("cursor.com", json.dumps(linked))
 
 
 class ShipBeats(unittest.TestCase):
@@ -631,6 +932,85 @@ class Stats(unittest.TestCase):
             os.environ.pop("HOUSE", None)
             house.cleanup()
             Path(named.name).unlink(missing_ok=True)
+
+
+class BriefExempt(unittest.TestCase):
+    """The badge is a packet PR whose PACKET.md is missing. Ordinary PRs and issues stay clear."""
+
+    def ev(self, n, kind, ago, **kw):
+        if kind == "pr_open":
+            kw.setdefault("pr_state", "open")
+        return {"id": f"{R}#{n}:{kind}:{ago}", "t_ct": ct(ago), "kind": kind, "repo": R, "number": n,
+                "from": "Builder", "source": f"https://github.com/{R}/pull/{n}", **kw}
+
+    def card(self, evs, number):
+        import live_board
+        cards = {c["number"]: c for c in live_board.model(evs)["cards"] if c.get("repo") == R}
+        return cards[number]
+
+    def test_an_issue_never_needs_a_brief(self):
+        card = self.card([self.ev(41, "issue_open", 60, title="follow-up", pr_state="open")], 41)
+        self.assertEqual(card["kind"], "issue")
+        self.assertTrue(card["packet_ok"])
+        self.assertEqual(card["missing"], [])
+
+    def test_a_release_pr_is_exempt(self):
+        card = self.card([self.ev(490, "pr_open", 60, title="release(grok-bot): 0.1.11")], 490)
+        self.assertTrue(card["packet_ok"])
+        self.assertEqual(card["missing"], [])
+
+    def test_a_body_or_branch_packet_passes_without_acceptance(self):
+        import live_packet
+        body = "Investigation, scope, and the test list are in `PACKET.md`."
+        self.assertTrue(live_packet.carries(body))
+        self.assertEqual(live_packet.parse(body), {})
+        card = self.card([self.ev(493, "pr_open", 60, title="fix(reflection)", packet_file=True)], 493)
+        self.assertTrue(card["packet_ok"])
+        self.assertTrue(card["packet_file"])
+
+    def test_docs_388_and_hotfix_500_do_not_need_a_brief(self):
+        """#388 is docs with no PACKET.md. #500's branch has root PACKET.md and is not a packet PR."""
+        docs = self.card([self.ev(388, "pr_open", 60, title="docs: seek map, cheap-first definition, skills as the first seek")], 388)
+        self.assertTrue(docs["packet_ok"])
+        self.assertEqual(docs["missing"], [])
+        hotfix = self.card([self.ev(500, "pr_open", 60, title="fix(live): brief only packet PRs and credit CI seats", packet_file=True)], 500)
+        self.assertTrue(hotfix["packet_ok"])
+        self.assertTrue(hotfix["packet_file"])
+        plain = self.card([self.ev(501, "pr_open", 60, title="fix(live): keep merged cards on the board for 7 days")], 501)
+        self.assertTrue(plain["packet_ok"])
+        missing = self.card([self.ev(495, "pr_open", 60, title="Packet: owner sign-in card under the Bifrost mesh")], 495)
+        self.assertFalse(missing["packet_ok"])
+        self.assertEqual(missing["missing"], ["PACKET.md"])
+        carried = self.card([self.ev(495, "pr_open", 60, title="Packet: owner sign-in card under the Bifrost mesh", packet_file=True)], 495)
+        self.assertTrue(carried["packet_ok"])
+        self.assertEqual(carried["missing"], [])
+
+    def test_a_packet_card_is_exempt(self):
+        import live_board
+        self.assertTrue(live_board.brief_exempt({
+            "key": "0xrayai/xray#485", "kind": "packet", "born": "packet", "title": "handoff critic_fail", "packet": {},
+        }))
+
+    def test_card_fields_marks_packet_md_and_a_branch_file(self):
+        import urllib.error
+        import live_collect
+        fields = live_collect.card_fields({"title": "fix", "state": "open", "body": "See PACKET.md on the branch.", "number": 493})
+        self.assertTrue(fields["packet_file"])
+        self.assertIsNone(fields["packet"])
+
+        class Ok:
+            token = "x"
+            def rest(self, path, params=None, etag=None, essential=False):
+                return 200, {"name": "PACKET.md"}, None, None
+
+        class Missing:
+            token = "x"
+            def rest(self, path, params=None, etag=None, essential=False):
+                raise urllib.error.HTTPError(path, 404, "missing", None, None)
+
+        self.assertTrue(live_collect.packet_file_on_ref(Ok(), "acme/app", "abc"))
+        self.assertFalse(live_collect.packet_file_on_ref(Missing(), "acme/app", "abc"))
+        self.assertFalse(live_collect.packet_file_on_ref(Ok(), "acme/app", ""))
 
 
 class BeatSentence(unittest.TestCase):

@@ -88,6 +88,17 @@ class FlowTest(unittest.TestCase):
         for x in e[1:]:
             self.assertEqual((x["from"], x["to"], x["hops"]), ("GitHub", "GitHub", ["GitHub"]))   # GitHub-only pulse
 
+    def test_hop_pass_keeps_the_parent_door(self):
+        """A next_parent row is posted as GitHub. The writer fallback must not mark it Others."""
+        e = {"id": "0xRayAI/xray#776:next:731:door", "kind": "next_parent", "from": "GitHub", "to": "GitHub",
+             "repo": self.R, "src_file": "github-api", "label": "next on #768: #731",
+             "parent": 768, "next_issue": 731, "door_seat": "arch1"}
+        self.f.apply([e])
+        self.f.apply([e])
+        self.assertEqual(e["from"], "GitHub")
+        self.assertNotIn("Others", (e["from"], e["to"]))
+        self.assertNotIn("Others", e["hops"])
+
     def test_hop_pass_keeps_a_stored_merge_actor(self):
         """GitHub on a stored merge is the unmapped merger. The hop pass must not demote it to Others."""
         e = {"id": "example-org/app#407:merged", "kind": "merged", "from": "GitHub", "to": "GitHub",
@@ -684,6 +695,49 @@ class FleetSeatsConfig(unittest.TestCase):
                 ev = {"src_file": "github-api", "from": "forge", "t_ct": datetime.fromtimestamp(now - 60, CT).isoformat()}
                 fs = live_fleet.Fleet(Path(d) / "state.json", CT).fleet_state([ev], now=now)
             self.assertEqual((fs["active"], fs["total"]), (1, 2))
+        finally:
+            live_fleet.SEATS, live_fleet.BOARD, live_fleet.BOARD_SEATS = saved
+
+    def test_board_seat_activity_counts_without_an_inbox(self):
+        """Mill is on the board and not in SEATS. A cloud activity line still marks mill active."""
+        saved = live_fleet.SEATS, live_fleet.BOARD, live_fleet.BOARD_SEATS
+        live_fleet.SEATS, live_fleet.BOARD, live_fleet.BOARD_SEATS = ["forge"], {}, ["forge", "mill"]
+        try:
+            with tempfile.TemporaryDirectory() as d:
+                root = Path(d)
+                (root / "fleet").mkdir()
+                (root / "feed").mkdir()
+                live_fleet.WS = root
+                now = time.time()
+                iso = datetime.fromtimestamp(now - 60, CT).replace(microsecond=0).isoformat()
+                (root / "fleet" / "remote-activity.jsonl").write_text(
+                    json.dumps({
+                        "t_ct": iso, "seat": "mill", "kind": "cloud_agent", "action": "finished",
+                        "agent": "bc-mill", "tag": "xray#1111",
+                    }) + "\n"
+                )
+                fleet = live_fleet.Fleet(root / "feed" / "fleet-state.json", CT)
+                fleet.scan()
+                fs = fleet.fleet_state([], now)
+            self.assertTrue(fs["seats"]["mill"]["active"])
+            self.assertEqual(fs["seats"]["mill"]["via"], "activity")
+            self.assertFalse(fs["seats"]["forge"]["active"])
+        finally:
+            live_fleet.SEATS, live_fleet.BOARD, live_fleet.BOARD_SEATS = saved
+
+    def test_board_seat_credit_counts_without_an_inbox(self):
+        """Mill is counted on the board and is not an inbox seat. Seat: mill still marks mill active."""
+        saved = live_fleet.SEATS, live_fleet.BOARD, live_fleet.BOARD_SEATS
+        live_fleet.SEATS, live_fleet.BOARD, live_fleet.BOARD_SEATS = ["forge"], {}, ["forge", "mill"]
+        try:
+            with tempfile.TemporaryDirectory() as d:
+                now = time.time()
+                ev = {"src_file": "github-api", "from": "forge", "actor": "forge0x1[bot]", "credit": "mill",
+                      "t_ct": datetime.fromtimestamp(now - 60, CT).isoformat()}
+                fs = live_fleet.Fleet(Path(d) / "state.json", CT).fleet_state([ev], now=now)
+            self.assertTrue(fs["seats"]["mill"]["active"])
+            self.assertFalse(fs["seats"]["forge"]["active"])
+            self.assertEqual(fs["seats"]["mill"]["via"], "github")
         finally:
             live_fleet.SEATS, live_fleet.BOARD, live_fleet.BOARD_SEATS = saved
 

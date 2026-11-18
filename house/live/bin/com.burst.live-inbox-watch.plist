@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<!-- Template: copy to ~/Library/LaunchAgents/, replace USERNAME, then launchctl load it. Runs the watcher loop (60s) for arch1. -->
+<!-- Template: copy to ~/Library/LaunchAgents/, replace USERNAME and the checkout path, then launchctl load it. Runs the watcher loop (60s) for arch1. The script is the checkout's house/live/bin/live-inbox-watch, which runs house/live/tools/live-inbox. -->
 <plist version="1.0">
 <dict>
   <key>Label</key><string>com.burst.live-inbox-watch</string>
   <key>ProgramArguments</key>
   <array>
-    <string>/Users/USERNAME/.burst/bin/live-inbox-watch</string>
+    <string>/Users/USERNAME/xray/house/live/bin/live-inbox-watch</string>
     <string>arch1</string>
     <string>60</string>
   </array>
@@ -14,7 +14,7 @@
   <dict>
     <key>LIVE_URL</key><string>https://bifrost.0xray.dev</string>
     <key>SEAT_KEYS_DIR</key><string>/Users/USERNAME/.burst/seat-keys</string>
-    <key>LIVE_CURSORS</key><string>/Users/USERNAME/.burst/cursors</string>
+    <key>XRAY_MAIN</key><string>/Users/USERNAME/xray</string>
     <key>PATH</key><string>/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin</string>
   </dict>
   <key>RunAtLoad</key><true/>

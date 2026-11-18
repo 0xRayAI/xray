@@ -15,6 +15,9 @@ const ago = s => new Date(Date.now() - s * 1000).toISOString();
 const line = (id, number) => ({ id, t_ct: ago(3600), seat: 'forge', type: 'pr_comment', repo: R, number, title: 't', url: `https://github.com/${R}/pull/${number}`, reason: 'ask' });
 fs.mkdirSync(path.join(DATA, 'live', 'inbox'), { recursive: true });
 fs.writeFileSync(path.join(DATA, 'live', 'inbox', 'forge.jsonl'), [line('merged-1', 283), line('closed-1', 284), line('open-1', 285)].map(l => JSON.stringify(l)).join('\n') + '\n');
+fs.writeFileSync(path.join(DATA, 'live', 'cards.json'), JSON.stringify({ cards: [283, 284, 285].map(number => ({
+  key: `${R}#${number}`, repo: R, number, title: 'open', state: 'live', stage: 'open', kind: 'pr', packet: { raci: 'R=forge A=Blaze' },
+})) }));
 fs.mkdirSync(path.join(DATA, 'feed'), { recursive: true });
 fs.writeFileSync(path.join(DATA, 'feed', 'github-events.json'), JSON.stringify({ generated_at: ago(0), events: [
   { id: `${R}#283:merged`, t_ct: ago(1800), kind: 'merged', repo: R, number: 283, label: 'merged #283' },
@@ -23,7 +26,7 @@ fs.writeFileSync(path.join(DATA, 'feed', 'github-events.json'), JSON.stringify({
 fs.writeFileSync(path.join(ROUTE, 'inbox-roles.json'), JSON.stringify({ seats: { coord: { seat: 'critic' } }, extra_seats: { forge: { needles: ['@forge'] } } }));
 fs.writeFileSync(path.join(ROUTE, 'roster.json'), JSON.stringify({ seats: ['forge', 'critic'] }));
 let logs = '';
-const srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], { env: { PORT: '0', PATH: process.env.PATH, LIVE_PUBLIC: '1', SERVER_ROUTING: 'off',
+const srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], { env: { PORT: '0', PATH: process.env.PATH, LIVE_PUBLIC: '1', SERVER_ROUTING: 'off', FLEET_MODE: 'full',
   SESSION_SECRET: crypto.randomBytes(32).toString('hex'), INGEST_SECRET: crypto.randomBytes(32).toString('hex'), MESH_DATA_DIR: DATA,
   SEAT_WEBHOOKS: JSON.stringify({ forge: { url: `${W}/forge` }, critic: { url: `${W}/critic` } }), WAKE_KEY_FORGE: 'k', WAKE_KEY_CRITIC: 'k',
   WAKE_RETRY_MS: '10', WAKE_STAGGER_MS: '0', WAKE_DEBOUNCE_S: '0', NUDGE_LINE_S: '1', BIFROST_TICK_S: '0.2', BIFROST_TRIPWIRE_MINUTES: '60',

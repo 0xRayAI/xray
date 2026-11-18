@@ -52,9 +52,58 @@ sys.path.insert(0, %r)
 import live_mesh as lm
 out = root/"feed"/"github-events.json"
 ev = [{"id": f"e{i}", "t_ct": "2026-10-13T09:00:00-05:00", "kind": "pr_open"} for i in range(5)]
-n1 = lm._write({"events": ev}, out); n2 = lm._write({"events": ev}, out)
-ev[0] = dict(ev[0], label="changed"); n3 = lm._write({"events": ev}, out)
-print(json.dumps([n1, n2, n3, (root/"feed"/"live-events.jsonl").exists()]))
+n1 = lm._write({"events": ev, "generated_at": "t1"}, out)
+raw = out.read_bytes()
+board = {"cards": [{"key": "k", "title": "t" * 40} for _ in range(30)]}
+n2 = lm._write({"events": ev, "generated_at": "t2", "board": board}, out)
+kept = out.read_bytes() == raw
+beat_path = root/"feed"/"github-events.beat.json"
+beat = json.loads(beat_path.read_text())
+ev[0] = dict(ev[0], label="changed"); n3 = lm._write({"events": ev, "generated_at": "t3"}, out)
+print(json.dumps([n1, n2, n3, (root/"feed"/"live-events.jsonl").exists(), kept, beat.get("generated_at"), "board" not in beat, beat_path.stat().st_size < 2 * 1024 * 1024]))
+'''
+
+
+CAP = r'''
+import sys, os, json, tempfile; from pathlib import Path
+root = Path(tempfile.mkdtemp()); (root/"feed").mkdir()
+os.environ.update(LIVE_MODE="github", GH_TOKEN="x", MESH_RUN=str(root), LIVE_FEED_CAP="2")
+sys.path.insert(0, %r)
+import live_mesh as lm
+out = root/"feed"/"github-events.json"
+events = [
+    {"id": "a", "t_ct": "2026-10-13T09:00:00-05:00", "kind": "pr_open"},
+    {"id": "b", "t_ct": "2026-10-13T10:00:00-05:00", "kind": "pr_open"},
+    {"id": "c", "t_ct": "2026-10-13T11:00:00-05:00", "kind": "pr_open"},
+    {"id": "d", "t_ct": "2026-10-13T12:00:00-05:00", "kind": "pr_open"},
+]
+feed = {"events": events, "generated_at": "t1", "board": {"cards": [{"key": "keep"}]}}
+n1 = lm._write(dict(feed), out)
+doc = json.loads(out.read_text())
+raw = out.read_bytes()
+n2 = lm._write(dict(feed), out)
+held = out.read_bytes() == raw
+events[3] = dict(events[3], label="x")
+feed["events"] = events
+feed["generated_at"] = "t2"
+n3 = lm._write(dict(feed), out)
+doc3 = json.loads(out.read_text())
+fat = root/"feed"/"fat.json"
+fat.write_text(json.dumps({"events": events, "board": {"cards": [{"key": "keep"}]}}))
+dropped = lm.cap_file(fat)
+capped = json.loads(fat.read_text())
+print(json.dumps({
+    "n": [n1, n2, n3],
+    "ids": [e["id"] for e in doc["events"]],
+    "count": doc["event_count"],
+    "board": doc["board"]["cards"][0]["key"],
+    "quiet": n2 == 0 and held,
+    "ids3": [e["id"] for e in doc3["events"]],
+    "label": doc3["events"][-1].get("label"),
+    "dropped": dropped,
+    "capped": [e["id"] for e in capped["events"]],
+    "capped_board": capped["board"]["cards"][0]["key"],
+}))
 '''
 
 
@@ -63,7 +112,22 @@ class GithubModeDedupe(unittest.TestCase):
         """burst-live logged 26440 (26440 new) every pass: github mode never persisted the seen hashes."""
         r = subprocess.run([sys.executable, "-B", "-c", DEDUPE % FEED], capture_output=True, text=True, timeout=60)
         self.assertEqual(r.returncode, 0, r.stderr)
-        self.assertEqual(json.loads(r.stdout.strip().splitlines()[-1]), [5, 0, 1, False])
+        self.assertEqual(json.loads(r.stdout.strip().splitlines()[-1]), [5, 0, 1, False, True, "t2", True, True])
+
+    def test_github_document_keeps_the_newest_events(self):
+        r = subprocess.run([sys.executable, "-B", "-c", CAP % FEED], capture_output=True, text=True, timeout=60)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        got = json.loads(r.stdout.strip().splitlines()[-1])
+        self.assertEqual(got["n"], [2, 0, 1])
+        self.assertEqual(got["ids"], ["c", "d"])
+        self.assertEqual(got["count"], 2)
+        self.assertEqual(got["board"], "keep")
+        self.assertTrue(got["quiet"])
+        self.assertEqual(got["ids3"], ["c", "d"])
+        self.assertEqual(got["label"], "x")
+        self.assertEqual(got["dropped"], 2)
+        self.assertEqual(got["capped"], ["c", "d"])
+        self.assertEqual(got["capped_board"], "keep")
 
 
 STEP = r'''

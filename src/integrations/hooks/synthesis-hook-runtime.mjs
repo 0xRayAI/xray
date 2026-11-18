@@ -5,7 +5,7 @@
 import { createRequire } from 'node:module';
 import { existsSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -30,7 +30,7 @@ function resolvePackageRoot() {
   return resolve(__dirname, '../../..');
 }
 
-function loadSynthesis() {
+async function loadSynthesis() {
   const root = resolvePackageRoot();
   const candidates = [
     join(__dirname, '../../nucleus/synthesis.js'),
@@ -39,12 +39,17 @@ function loadSynthesis() {
   ];
   const found = candidates.find((p) => existsSync(p));
   if (!found) return null;
-  return createRequire(import.meta.url)(found);
+  try {
+    return await import(pathToFileURL(found).href);
+  } catch {
+    return null;
+  }
 }
+
+const synthesis = await loadSynthesis();
 
 export function recordSynthesisTurnSlice(projectRoot, sessionId) {
   if (!sessionId) return null;
-  const mod = loadSynthesis();
-  if (!mod?.recordExecutionSlice) return null;
-  return mod.recordExecutionSlice('turn', { projectRoot, sessionId });
+  if (!synthesis?.recordExecutionSlice) return null;
+  return synthesis.recordExecutionSlice('turn', { projectRoot, sessionId });
 }

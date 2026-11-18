@@ -1,5 +1,76 @@
 # Changelog
 
+## Unreleased
+
+- `stand-up-fleet` shows the NEAR path: foundry, pay, cap, escrow, the Grok Bot one-click, and the CLI. The stop before pay is gone. Republish of the 0xRay Fleet Setup marketplace template waits for a publish GO. #1146
+- The wake routine template's flags hint now uses `npx --no-install grok-bot live-inbox --help`, so it runs the installed `@0xray/grok-bot` instead of fetching the unpublished unscoped `grok-bot` (#1172).
+
+## [0.1.18] - 2026-11-15
+
+HOUSE.md holds house values only (#1066).
+
+- The house template keeps the six `(example)` value lines and drops the restated process rules: verdicts, review plate, merge gate, watcher duties, stall sweep, live mesh, station boot, station nudge, the owner-chat line and the live-inbox steps. Its `## Cadence` section now holds only values (watcher owners, stall thresholds, watcher files, merge target, cloud cap, wake routine) and links OP-PROC and CADENCE. `house init --migrate` appends that shorter block.
+- The process rules that were only in the template moved, in the same wording, to a new `## Seat loop` section in `CADENCE.md`. Station boot, the station nudge, the owner-chat line, the board rule and the kanban and history notes were already in OP-PROC.
+- OP-PROC Review: the green gates sentence now says it covers every tier, Strict included.
+- README and llms.txt link the cadence defaults at `CADENCE.md#seat-loop` instead of the missing `docs/opproc-cadence.md`.
+- Every `npx @0xray/grok-bot` line in the kit docs pins `@0.1.18`.
+
+## [0.1.17] - 2026-11-15
+
+Fixes from the 0.1.16 cold test.
+
+- The suit proof is `npx 0xray validate` (`✅ plant: mill + inspect fastened`). `0xray inspect` is not in 0xray 4.2.1, which npm installs on Node below 24.22.3. README, AGENTS, llms, the fasten and stand-up-fleet skills, and doctor's Next line now name `validate`. #1068
+- The shipped `templates/house/fleet/WAKE-ROUTINE.md` is generic: no default board (`LIVE_URL` and `SEAT_KEYS_DIR` are required and the wake stops when either is unset), no fleet seat names or paths, and no xray checkout. It runs `npx --no-install grok-bot live-inbox` and `grok-bot exit-gate`. The 0xRay fleet's own routine moved to `house/fleet/WAKE-ROUTINE.md`. #1055
+- `grok-bot live-inbox <seat> ...` and `grok-bot exit-gate <NOTES.md>` ship in the kit. prepack copies `house/live/tools/live-inbox` (as `lib/live-inbox.py`, needs `python3`) and `exit-gate.mjs` into `lib/`. The docs say how to run them. #1071
+- Every `npx @0xray/grok-bot` line in the kit docs pins `@0.1.17`.
+
+## [0.1.16] - 2026-11-15
+
+- OP-PROC: a seat has at most two tasks in progress and all work is on the board (Two at a time). A seat makes only few-line edits on its own computer, and a new cloud agent needs Blaze's GO (Compute). #1063 #1062
+
+## [0.1.15] - 2026-11-15
+
+Fixes from the 0xRay Fleet Setup v7 cold test.
+
+- `grok-bot bifrost init [--check]` ships seat-route setup in the kit. It runs `house/live/tools/bifrost-init` (packed as `lib/bifrost-init.py`, needs `python3`) against `./collector` (a bifrost clone; `BIFROST_FEED` overrides). `--check` fails when there is no routing file. #1050
+- `stand-up-fleet` gives a fresh install a full own-board path: clone the public bifrost repo, reset its fleet files, `grok-bot bifrost init`, then `railway up` into a NEW project and service the owner names. It never offers a shared or public board. #1047 #1046
+- `house/live/app/deploy.sh` requires `LIVE_RAILWAY_PROJECT` and `LIVE_RAILWAY_SERVICE` (no `burst-live` default) and refuses a deploy dir linked to another project before copying. `seat_keys.sh publish` requires `LIVE_RAILWAY_SERVICE`. #1047
+- Every `npx @0xray/grok-bot` line in the kit docs pins `@0.1.15`. #1049
+- Doctor passes a house-only folder (`Plant: PASS — house only`) and leaves pay, hangar, Clearing, and Groover out of its Next list there. #1051
+- Kit engines are `node >=24`. The `0xray` package keeps the `>=24.22.3` floor. #1052
+- `house init` seeds `fleet/activity.jsonl` with one `house-init` line, so a new house has no empty-log warning. #1053
+- The wake trap peeks the inbox before turn end. The open head reprints until it is acked.
+
+## [0.1.14] - 2026-11-11
+
+- `stand-up-fleet` is the one pass for a new fleet: house, routes, then one suit per seat. It links the board deploy page and stops before pay and hangar shops.
+- Node floor is `>=24.22.3`, the 11 Nov 2026 patched 24 release. README, AGENTS, and llms name that floor. #1015
+- Doctor first line is `@0xray/grok-bot@<version> doctor — 0xray@<version> — seat plant check`. A missing 0xray prints `0xray not installed`. The folder line is `Project:`. #998
+- House off is `enabled: false` and the detail `house is not enabled here`. The Board line is omitted. #999 #1009
+- A bridge that points outside this folder prints `Bridges: WARN`. The same folder prints `Bridges: ok`. #1011
+- A packed `node_modules/0xray/vendor/@0xray/repertoire` counts as present. #1005
+- OP-PROC records the eight 2026-11-09 fleet rules. #918
+- Every wake runs station Full and the wrap-up. #913 #942 #954
+- Critic owns the backlog sweep. #900
+- A seat bot comment does not wake another seat. #976 #978
+- Wake does not clone. It fast-forwards the checkout that is already there. #959 #960
+- A closed beat cuts the next eng beat. #895
+
+## [0.1.13] - 2026-11-03
+
+- The owner-message board rule names the cloud tags on the same lines as turn start and turn end. The tag is owner/repo#n or xray#n. `--from owner` stays required. The cloud agent does not post that line.
+- Board rule. On every owner message run `live-inbox <seat> --prompt --from owner --note "<gist>"`. Ack a handled line with `live-inbox <seat> --ack <id>`, or `live-inbox <seat> --ack all` once every open line is handled. A cloud agent run uses `live-inbox <seat> --turn start --tag "bc-<first8> <track>"` beside `live-inbox <seat> --cloud launch --agent <bc-id> --tag <card>` on first start or `--cloud reply` on resume, and `live-inbox <seat> --turn end --tag "bc-<first8>"` beside `live-inbox <seat> --cloud finished --agent <bc-id> --tag <card>` (cancel is `--cloud cancel`). The tag is owner/repo#n or xray#n. The cloud agent does not post that line. `--from owner` is required today.
+- The pack ships `lib/next-wave.mjs` beside `lib/pulsar-game.mjs`. #749
+- The hotpack runbook names tip, soft follow-up, strip, rewear, mainstay, Dist GO, and graduate. #725
+- The wave rank lives in this package. It does not import the house tree. A dormant redeploy refuses `git push origin master` and `git reset --hard`. #517 #516
+- Goggles in OP-PROC is Nibbler only. The trailing clause is gone. #873 #874 #882 #883
+
+## [0.1.12] - 2026-10-23
+
+- Published Node floor is `>=24.22.1`.
+
+- The cursor folder rule is `OP-PROC.md#cursor-folder`. `LIVE_CURSORS` is not required. A read does not write `<seat>.txt`. Watch scripts run `house/live/tools` from the main checkout.
+
 ## 0.1.11 — 2026-10-20
 
 - Seats post owner prompts to the board (#484). Board rule. On every owner message run `live-inbox <seat> --prompt --from owner --note "<gist>"`. Ack a handled line with `live-inbox <seat> --ack <id>`, or `live-inbox <seat> --ack all` once every open line is handled. A cloud agent run uses `live-inbox <seat> --turn start --tag "bc-<first8> <track>"` and `live-inbox <seat> --turn end --tag "bc-<first8>"`. `--from owner` is required today.
@@ -8,7 +79,7 @@
 - A board card for every packet and every cloud agent (#477). A packet post creates the card. The id is `repo#number`, or `packet:<line id>` until a pull request attaches. A cloud agent does not run without that card id. The cloud agent pushes its branch. The seat App opens the pull request. The server attaches both.
 - Cards group by status by default, with a by-seat toggle (#457). Default groups are waiting, in review, on hold, parked, and done. By agent restores one group per seat. The choice is kept across a reload.
 - Board docs sweep, with migration steps (#487). The seat files share one owner-prompt line. Adoption and migration from 0.1.10 live in `templates/house/STATION-BOOT.md`. `house init` does not overwrite a house file the fleet already has.
-- A real owner-chat source is not in this release. The public board does not serve the history archive or the kanban yet.
+- A real owner-chat source is not in this release. The public board serves the kanban and GET /history, /history/cards, and /history/transitions.
 - Station boot. Each seat's profile title is `You are <seat>, <role> on the <plane> plane. Run the station skill first (suit <suit path>).` The description opens with the BOOT line. Planes are core, integration, ecosystem, distribution, and live.
 - Skills `station`, `seat-label`, and `seat-github-key`. `seat-label` runs in that seat's own chat (`UpdateProfile` title only, then `profile.json`). `~/bin/gh-<seat>` mints a fresh App token every call and never prints the token or the PEM.
 - `HOUSE.md` carries `name:` and `OP-PROC:`. The station line template adds `Plane:`, `Skills:`, and `Keys:`. `house/fleet/TRACKS.md` is written when a cloud launches.
@@ -28,7 +99,7 @@
 
 - Since the version bump, before the publish: the kit hides a one-wave range game in `lib/pulsar-game.mjs` (#417).
 - Bifrost: one batch flushes per pull-request head (#404), a wave schedule template with a 75% empty-board quiet and a hand-kept board (#400), and wake routing by @-mention only (#303, #311).
-- Seat wake: turn start and end on every exit (#355), the card goes to the owner's chat and the stall stays (#399), `LIVE_CURSORS` is the cursors directory (#409), and the template env defaults are named as one fleet's (#408). New `templates/house/fleet/WAKE-ROUTINE.md`.
+- Seat wake: turn start and end on every exit (#355), the card goes to the owner's chat and the stall stays (#399), and the template env defaults are named as one fleet's (#408). That release named `LIVE_CURSORS` as the cursors directory (#409). It is not required now. The cursor folder rule is `OP-PROC.md#cursor-folder`. New `templates/house/fleet/WAKE-ROUTINE.md`.
 - Live board: cloud agents show as board rows (#367), card dates, `merged_by` from the GitHub merger, push beats and inbox wake (#362, #366), and a seat can ack merged and dropped inbox lines (#375).
 - `grok-bot doctor` follows the fastened plant when the seat is worn (#396).
 - Pack docs (OP-PROC, LEXICON, runbooks, skills): the hotfix bypass rule (#331, #333), deploy stages stamped in order (#354, #356), and the memory packet, duplicate-agent guard and no local builds (#378). Drawing skills and `ops/` packets stay in the repo and do not ship in the kit.

@@ -6,12 +6,19 @@ the collector pass already writes (live_collect.card_fields: title, state, label
 
 CARD   = one GitHub issue or PR (repo#number): title, url, owner seat, stage (open > review > fix > merge > retest >
          done), state (live | held | parked | closed). A merge, an issue close, or a PR close sets state closed
-         and stage done. A failed retest after merge needs a new issue. Closed cards drop off 24 h after closing.
+         and stage done. A failed retest after merge needs a new issue. The board shows a closed card for 24 hours.
+         The 40-card cap cuts closed rows only. An open issue or PR stays on the board, including a quiet one.
+         A closed row the cap cuts is returned on settled. The 24h drop does not delete it.
 HOLD   = the owner posts a comment whose first line is 'Held: <reason>' (optional until:), or the issue / PR
          carries a label in GITHUB_HOLD_LABEL (default on-hold). A Parked: comment still parks and wins over a hold.
          Repos in NO_NUDGE_REPOS (unset means none) stay visible and are never stalled or nudged.
-PACKET = goal, constraints, path, acceptance, evidence, next owner, escalate. Missing acceptance or next owner ->
-         amber 'no packet'. Evidence fills from the latest beat (CI url, Reviewer verdict url, merge sha, retest tick).
+PACKET = goal, constraints, path, acceptance, evidence, next owner, escalate, raci.
+         raci names who does the work and who answers. A live card missing R or A sets
+         raci_missing. That amber mark is not the PACKET.md badge. The 'needs a brief'
+         badge is only a packet PR (title starts with Packet, or a packet: alias)
+         whose PACKET.md is missing. Issues, packet cards, release PRs, and ordinary PRs stay
+         packet_ok. A body that carries a packet, or PACKET.md on the branch, sets packet_file.
+         Evidence fills from the latest beat.
 BEAT   = one real event: PR opened/pushed, Reviewer verdict, CI result, merge, reopen, merge-queue.md tick, Lead message, blocker.
          A watcher run whose start and end fall in the same second is never a beat.
 STALL  = a live card with no beat for 60 min (red on the page; one line to fleet/inbox/coord.jsonl per stalled beat).
@@ -21,6 +28,8 @@ from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+import card_owner
+import ci_inbox
 import live_packet
 
 CT = ZoneInfo("America/Chicago")
@@ -32,14 +41,34 @@ MD = Path(os.environ.get("LIVE_BOARD", HOUSE / "BOARD.md"))
 STATIC = Path(os.environ.get("LIVE_BOARD_STATIC", HOUSE / "watchers" / "board-static.md"))
 STAGES = ("open", "review", "fix", "merge", "retest", "done")
 STALL_S = 60 * 60
-CLOSED_KEEP_S = 24 * 3600
+CLOSED_KEEP_S = 86400   # display only. A closed card older than this leaves /cards and stays on settled.
 PR_PARK_S = 72 * 3600   # a live PR with no beat for 72 h parks
 MD_EVERY_S = 60
 MAX_CARDS = 40
 # parked: a parked/blocked/waiting label, a draft PR quiet for 7 days, or an issue quiet for 24 h (backlog, no stall).
 # The hold label (default on-hold) is a hold, not a park.
 PARKED = re.compile(r"\b(parked|blocked|waiting|icebox)\b", re.I)
+RELEASE_TITLE = re.compile(r"^release\b", re.I)
 _last_md = [0.0]
+
+
+def brief_exempt(card, packet=None):
+    """The badge is only a packet PR whose PACKET.md is missing.
+
+    A packet PR has a title that starts with Packet, or a packet: alias. packet_file
+    (the body carries a packet or names PACKET.md, or the branch file exists) clears it.
+    Issues, packet cards, release titles, and ordinary PRs such as docs #388 and hotfix
+    #500 do not show the badge. Acceptance and next owner are not the badge.
+    """
+    if not isinstance(card, dict) or card.get("pinned"):
+        return True
+    kind = str(card.get("kind") or "")
+    title = str(card.get("title") or "").strip()
+    alias = str(card.get("alias") or "").lower()
+    packet_pr = kind == "pr" and (bool(re.match(r"(?i)^packet\b", title)) or alias.startswith("packet:"))
+    if not packet_pr:
+        return True
+    return bool(card.get("packet_file"))
 
 
 def _t(e):
@@ -88,6 +117,12 @@ def prepend_owner_prompt(card, event, prompts, used):
     card["_beats"].append(beat)
 
 
+def head_key(value):
+    """Seven hex digits. A shorter or empty value is not a head, so it cannot match another."""
+    got = re.sub(r"[^0-9a-f]", "", str(value or "").lower())[:7]
+    return got if len(got) == 7 else ""
+
+
 def beat_of(e):
     """-> short beat word, or None. Only real events that move a card."""
     k = str(e.get("kind") or "")
@@ -104,12 +139,17 @@ def beat_of(e):
         if st == "APPROVED":
             return "Reviewer PASS"
         if st == "CHANGES_REQUESTED":
-            return "Reviewer FAIL"
+            return "Reviewer FIX"
     if k in ("pr_commit", "pr_force_push", "pr_update"):
         return "pushed"
     if k.startswith("critic_"):
-        v = e.get("recheck_result") or k.split("_", 1)[1].upper()
-        return f"Reviewer {str(v).upper()}"
+        # critic_fail stays the wire id. The beat is Reviewer FIX, including a legacy FAIL or HOLD comment.
+        result = str(e.get("recheck_result") or "").upper()
+        if result:
+            return f"Reviewer {result}"
+        if k == "critic_fail":
+            return "Reviewer FIX"
+        return f"Reviewer {k.split('_', 1)[1].upper()}"
     if k in ("check_run", "workflow_run", "ci_pass", "ci_fail") and (e.get("conclusion") or k.startswith("ci_")):
         return "CI " + (e.get("conclusion") or k[3:])
     if k == "merged":
@@ -202,6 +242,37 @@ def _claim_owners(cards, evs, sha_num):
             _apply_owner(cards, f"{repo}#{n}", seat)
 
 
+def _packet_of(e):
+    pk = e.get("packet") if isinstance(e.get("packet"), dict) else {}
+    return {f: live_packet.clean(v) for f, v in pk.items() if f in live_packet.FIELDS and v}
+
+
+def _next_owner_seat(value):
+    raw = str(value or "").strip().lower()
+    if not raw:
+        return None
+    token = re.sub(r"[^a-z0-9]", "", raw.split()[0])
+    return token if token in _CLAIM else None
+
+
+def _refresh_packets(cards, evs, sha_num):
+    """Later packet fields win. A next owner that is arch1, critic, mill, or blinky takes a forge-opened card."""
+    for e in evs:
+        pk = _packet_of(e)
+        if not pk:
+            continue
+        key = _key(e, sha_num)
+        c = cards.get(key) if key else None
+        if not c:
+            continue
+        c["packet"].update(pk)
+        if e.get("packet_file"):
+            c["packet_file"] = True
+        seat = _next_owner_seat(c["packet"].get("next owner"))
+        if seat:
+            _apply_owner(cards, key, seat)
+
+
 _FLEET_FROM = None
 
 
@@ -243,6 +314,35 @@ def fleet_from(name):
         names -= {"ci", "github", "others", ""}
         _FLEET_FROM = names
     return str(name or "").strip().lower() in _FLEET_FROM
+
+
+_LOGIN_SEAT = None
+
+
+def _login_seat(login):
+    """fleet-nodes.json login to seat. A missing file is an empty map."""
+    global _LOGIN_SEAT
+    if _LOGIN_SEAT is None:
+        try:
+            raw = json.loads((Path(__file__).resolve().parent / "fleet-nodes.json").read_text())
+            _LOGIN_SEAT = {str(k).lower(): str(v).lower() for k, v in raw.items() if isinstance(v, str)}
+        except (OSError, ValueError):
+            _LOGIN_SEAT = {}
+    return _LOGIN_SEAT.get(str(login or "").strip().lower(), "")
+
+
+def event_seat(e):
+    """Seat for a beat when from is GitHub or Others and the actor maps to a fleet seat."""
+    for key in ("from", "credit", "actor", "author", "merged_by"):
+        raw = str((e or {}).get(key) or "").strip()
+        if not raw:
+            continue
+        if fleet_from(raw):
+            return raw.lower()
+        mapped = _login_seat(raw)
+        if mapped and fleet_from(mapped):
+            return mapped.lower()
+    return ""
 
 
 def _key(e, sha_num):
@@ -602,6 +702,115 @@ def _merge_attached(cards, attached, now):
     return order
 
 
+def _actor(event, card):
+    event = event if isinstance(event, dict) else {}
+    credit = event.get("credit")
+    seat = credit if isinstance(credit, str) and credit else event.get("from") or (card.get("owner") if isinstance(card, dict) else "") or ""
+    login = ""
+    for cand in (event.get("actor"), event.get("author"), event.get("merged_by")):
+        if isinstance(cand, str) and cand.strip():
+            login = cand.strip()
+            break
+        if isinstance(cand, dict) and isinstance(cand.get("login"), str) and cand.get("login").strip():
+            login = cand["login"].strip()
+            break
+    bc = ""
+    bags = [event.get("bc"), event.get("bcId"), event.get("bc_id")]
+    actor = event.get("actor")
+    if isinstance(actor, dict):
+        bags.append(actor.get("bc"))
+    for cand in bags:
+        if isinstance(cand, str) and cand.lower().startswith("bc-"):
+            bc = cand
+            break
+    return {"seat": str(seat)[:80], "login": str(login)[:80], "bc": str(bc)[:80]}
+
+
+def _card_transitions(card, beats, by_id, merged, explicit_close, close_id):
+    """One row per verb, before the closed-row cap. A merge keeps its own source id."""
+    rows = []
+    stage = "open" if card.get("kind") == "issue" else "review"
+    state = "live"
+    was_held = False
+
+    def emit(verb, to_state, to_stage, beat, source=None):
+        nonlocal stage, state, was_held
+        sid = source or str((beat or {}).get("id") or "")
+        if not sid:
+            return
+        ev = by_id.get(sid) or {}
+        t = 0
+        if beat and beat.get("t"):
+            t = beat["t"] / 1000
+        elif ev:
+            t = _t(ev)
+        if not t:
+            return
+        title = str(card.get("title") or ev.get("title") or "")[:200]
+        rows.append({
+            "card": str(card.get("key") or "").lower(),
+            "transition": verb,
+            "from_state": state,
+            "to_state": to_state,
+            "from_stage": stage,
+            "to_stage": to_stage,
+            "actor": _actor(ev, card),
+            "t_ct": datetime.fromtimestamp(t, CT).isoformat(timespec="seconds"),
+            "source_id": sid[:200],
+            "packet": title,
+        })
+        state, stage = to_state, to_stage
+
+    for b in beats:
+        what = b.get("what") or ""
+        if what == "opened":
+            emit("opened", "live", "review" if card.get("kind") == "pr" else stage, b)
+            was_held = False
+        elif what == "reopened":
+            emit("reopened", "live", "review" if card.get("kind") == "pr" else "open", b)
+            was_held = False
+        elif what == "parked":
+            emit("parked", "parked", stage, b)
+        elif what == "held":
+            emit("held", "held", stage, b)
+            was_held = True
+        elif what == "merged":
+            if was_held:
+                emit("released", "live", stage, b)
+                was_held = False
+            emit("merged", "closed", "done", b)
+        elif what in ("Reviewer FIX", "Reviewer FAIL", "Reviewer HOLD") or what in ("CI failure", "CI timed_out"):
+            if stage != "fix":
+                emit("stage", "closed" if state == "closed" else "live", "fix", b)
+        elif what.startswith("Reviewer PASS") and state != "closed" and stage != "merge":
+            emit("stage", state, "merge", b)
+        elif was_held:
+            emit("released", "live" if state != "closed" else state, stage, b)
+            was_held = False
+    if explicit_close and not merged and not any(r["transition"] == "closed" for r in rows):
+        emit("closed", "closed", "done", None, source=close_id or f"close:{card.get('key')}")
+    return rows
+
+
+def _queued_cap(card, pk):
+    """A card at the cap is queued. R is not a seat, A is the plane primary, and it is not missing."""
+    if str(card.get("raci_reason") or "") != "at the cap":
+        return
+    roles = live_packet.raci_roles(pk.get("raci"))
+    if roles.get("R") and roles.get("A"):
+        return
+    import live_collect
+    table = live_collect.load_routing()
+    owner = str(card.get("owner") or "").strip().lower()
+    plane = live_collect.plane_of(table, owner)
+    answer = live_collect.primary_of(table, plane)
+    if not answer:
+        seat = live_collect.builder_seat(table)
+        answer = live_collect.primary_of(table, live_collect.plane_of(table, seat))
+    if answer:
+        pk["raci"] = f"R=queued A={answer}"
+
+
 def model(extra_events=None, now=None, prompts=None, held=None):
     now = now or time.time()
     evs = _events(extra_events)
@@ -619,13 +828,26 @@ def model(extra_events=None, now=None, prompts=None, held=None):
         pk = e.get("packet") if isinstance(e.get("packet"), dict) else {}
         pk = {f: live_packet.clean(v) for f, v in pk.items() if f in live_packet.FIELDS and v}
         title = e.get("title") or re.sub(r"^.*?opened · ", "", str(e.get("label") or ""))
+        opener = str(e.get("from") or "")
+        owner = card_owner.card_owner(
+            e.get("board_owner"), e.get("assignee_seat"), opener,
+            cloud=opener.lower() == "cloudagents",
+            operator=opener.lower() == "operator",
+        )
         cards[k] = {"key": k, "kind": "pr" if e["kind"] == "pr_open" else "issue", "repo": e["repo"],
                     "number": int(e["number"]), "title": live_packet.clean(title)[:120],
-                    "url": live_packet.clean(e.get("source") or ""), "owner": str(e.get("from") or "-")[:24],
+                    "url": live_packet.clean(e.get("source") or ""), "owner": owner[:24],
                     "labels": [live_packet.clean(x)[:30] for x in (e.get("labels") or [])][:6],
-                    "packet": pk, "_closed": e.get("pr_state") == "closed", "_closed_t": _t({"t_ct": e.get("closed_at")}) if e.get("closed_at") else 0,
+                    "packet": pk, "packet_file": bool(e.get("packet_file")),
+                    "_closed": e.get("pr_state") == "closed", "_closed_t": _t({"t_ct": e.get("closed_at")}) if e.get("closed_at") else 0,
                     "_draft": bool(e.get("draft")), "_beats": [], "_stop": False, "_known": "pr_state" in e}
+        reason = str(e.get("raci_reason") or "").strip()
+        if reason:
+            cards[k]["raci_reason"] = reason
+    for row in ci_inbox.missing_cards(evs, cards):
+        cards[row["key"]] = row
     _claim_owners(cards, evs, sha_num)             # mill (trailer, credit, or git name) takes a card forge opened
+    _refresh_packets(cards, evs, sha_num)          # a later body or packet comment replaces empty R/A and next owner
     used_prompts = set()
     prompt_rows = list(prompts or [])
     merged_keys = {_key(e, sha_num) for e in evs if e.get("kind") == "merged"}
@@ -652,6 +874,8 @@ def model(extra_events=None, now=None, prompts=None, held=None):
             c["_draft_park"] = False
         if kind in ("issue_close", "pr_close"):
             c["_closed"], c["_closed_t"] = True, _t(e)
+            if e.get("id") is not None:
+                c["_close_id"] = str(e["id"])
         w = beat_of(e)
         is_comment = e.get("kind") in ("pr_comment", "issue_comment", "pr_review", "review_comment")
         if is_comment and e.get("parked"):                 # Coord rule: a 'Parked:' comment parks the card (no nudges)
@@ -681,8 +905,18 @@ def model(extra_events=None, now=None, prompts=None, held=None):
                         c["_resolved"] = "owner says resolved"
                 else:
                     w = "comment"
+        if not w and kind in ("pr_comment", "issue_comment", "pr_review", "review_comment") and not (c["_closed"] or c.get("_merged_t")):
+            seat = event_seat(e)
+            owner = str(c.get("owner") or "")
+            if seat and (seat == owner.lower() or fleet_from(seat)):
+                if seat == owner.lower():
+                    w = "owner: resolved" if e.get("resolved") else "owner comment"
+                    if e.get("resolved"):
+                        c["_resolved"] = "owner says resolved"
+                else:
+                    w = "comment"
         if not w and is_comment and (c["_closed"] or c.get("_merged_t")):
-            # a comment on a merged or closed card is a beat: the card stays on the board (24 h from the comment)
+            # a comment on a merged or closed card is a beat: the card stays on the board (24h from the comment)
             w = "comment after merge" if c.get("_merged_t") else "comment after close"
         if w and c.get("_merged_t") and not w.startswith(("retest", "owner", "comment")):
             continue                                       # after the merge only merge-queue.md ticks move the card
@@ -705,7 +939,12 @@ def model(extra_events=None, now=None, prompts=None, held=None):
             mb = e.get("merged_by")
             if isinstance(mb, str) and mb.strip():
                 c["merged_by"] = mb.strip()[:80]
-    out = []
+    out, settled, transitions = [], [], []
+    by_id = {}
+    for e in evs:
+        eid = e.get("id")
+        if eid is not None:
+            by_id[str(eid)] = e
     for c in cards.values():
         beats = c.pop("_beats")
         merged = any(b["what"] == "merged" for b in beats)
@@ -717,7 +956,7 @@ def model(extra_events=None, now=None, prompts=None, held=None):
             w = b["what"]
             if w in ("opened", "pushed"):
                 stage = "review" if c["kind"] == "pr" else stage
-            elif w in ("Reviewer FAIL", "Reviewer HOLD") or w in ("CI failure", "CI timed_out"):
+            elif w in ("Reviewer FIX", "Reviewer FAIL", "Reviewer HOLD") or w in ("CI failure", "CI timed_out"):
                 stage = "fix"
             elif w.startswith("Reviewer PASS") or (w == "CI success" and stage == "merge"):
                 stage = "merge" if stage != "fix" or w.startswith("Reviewer PASS") else stage
@@ -742,8 +981,7 @@ def model(extra_events=None, now=None, prompts=None, held=None):
             closed_t = closed_t or (last["t"] / 1000 if last else now)
         if closed and last and last["what"].startswith(("comment", "owner")):
             closed_t = max(closed_t or 0, last["t"] / 1000)   # a late comment keeps the closed card visible
-        if closed and closed_t and now - closed_t > CLOSED_KEEP_S:
-            continue                                       # closed cards drop off after 24 h
+        display_drop = bool(closed and closed_t and now - closed_t > CLOSED_KEEP_S)
         quiet = bool(last) and now - last["t"] / 1000 > 86400
         pr_quiet = c["kind"] == "pr" and bool(last) and now - last["t"] / 1000 > PR_PARK_S
         parked = (not closed) and (c.pop("_parked_c", False) or c.pop("_draft_park", False) or pr_quiet or (c["kind"] == "issue" and quiet) or any(PARKED.search(x) for x in c["labels"]) or (c.pop("_draft") and (not last or now - last["t"] / 1000 > 7 * 86400)))
@@ -763,7 +1001,6 @@ def model(extra_events=None, now=None, prompts=None, held=None):
             ev = next((b["_ev"] for b in reversed(beats) if b["_ev"]), "")
             if ev:
                 pk["evidence"] = ev
-        missing = [f for f in ("acceptance", "next owner") if not pk.get(f)]
         last_t = last["t"] / 1000 if last else 0
         stall = state == "live" and bool(last_t) and now - last_t > STALL_S
         heads = [b["sha"] for b in beats if b["what"] == "pushed" and b.get("sha")]
@@ -771,11 +1008,11 @@ def model(extra_events=None, now=None, prompts=None, held=None):
         crit = next((b for b in reversed(beats) if b.get("kind") == "reviewer verdict"), None)
         cis = [b["what"] for b in beats if b["what"].startswith("CI ")]
         ci_ok = not cis or cis[-1] in ("CI success", "CI skipped", "CI neutral")
-        at_head = bool(crit) and (not head or not crit.get("sha") or head.startswith(crit["sha"]) or crit["sha"].startswith(head))
+        at_head = bool(crit) and head_key(head) != "" and head_key(head) == head_key(crit.get("sha"))
         if head:
             c["head"] = head
         if crit:
-            c["reviewer"] = {"verdict": crit["what"].split()[1] if len(crit["what"].split()) > 1 else "", "sha": crit.get("sha"), "t": crit["t"], "at_head": at_head}
+            c["reviewer"] = {"verdict": crit["what"].split()[1] if len(crit["what"].split()) > 1 else "", "sha": crit.get("sha"), "t": crit["t"], "at_head": at_head, "stale": not at_head}
         if stage == "retest" and state == "live":
             c["nudge_to"] = "tester"                        # Tester owns the retest: merged cards nudge the lab tester
             c["nudge_via"] = "retest owner"
@@ -784,6 +1021,14 @@ def model(extra_events=None, now=None, prompts=None, held=None):
             stage = "merge"                                # PASS at the current head + green CI: Builder merges
             c["nudge_to"], c["nudge_via"] = "builder", "merge (Reviewer PASS at head)"
             pk["next owner"] = "Builder"
+        elif not merged and state == "live" and crit and crit["what"].startswith("Reviewer FIX") and at_head:
+            author = str(c.get("owner") or "").strip()
+            if author and author not in ("-", "GitHub", "github"):
+                pk["next owner"] = author
+                c["nudge_to"], c["nudge_via"] = author.lower(), "fix (Reviewer FIX at head)"
+        elif not merged and state == "live" and crit and head and not at_head:
+            pk["next owner"] = "critic"
+            c["nudge_to"], c["nudge_via"] = "critic", "new head"
         elif not merged and re.search(r"tester", str(pk.get("next owner") or ""), re.I):
             c["nudge_to"], c["nudge_via"] = "builder", "unmerged (Tester only retests after merge)"
         hold = c.pop("_hold", None)
@@ -801,33 +1046,53 @@ def model(extra_events=None, now=None, prompts=None, held=None):
         if live_packet.repo_no_nudge(c.get("repo")):
             c.pop("nudge_to", None); c.pop("nudge_via", None)
             stall = False
-        missing = [f for f in ("acceptance", "next owner") if not pk.get(f)]
+        missing = [] if brief_exempt(c, pk) else ["PACKET.md"]
+        _queued_cap(c, pk)
+        raci_missing = live_packet.raci_gaps(pk, state, c.get("pinned"))
         if resolved:
             c["resolved"] = resolved
         shown = _keep_push(beats, 5)
+        if closed:
+            c["verb"] = "merged" if merged else "closed"
         c.update(stage=stage, state=state, packet=pk, packet_ok=not missing, missing=missing,
+                 raci_missing=raci_missing,
                  beats=[{k: v for k, v in b.items() if not k.startswith("_")} for b in shown],
                  last_beat_t=int(last_t * 1000), stall=stall, closed_t=int(closed_t * 1000) if closed else 0)
-        out.append(c)
-    # only cards with recent life make the board: live/parked with a beat in 14 days, or closed in the last 24 h
-    out = [c for c in out if c["state"] == "closed" or (c["last_beat_t"] and now - c["last_beat_t"] / 1000 < 14 * 86400)]
-    rank = {"live": 0, "held": 0, "parked": 1, "closed": 2}
+        close_id = str(c.pop("_close_id", "") or "")
+        transitions.extend(_card_transitions(c, beats, by_id, merged, explicit_close, close_id))
+        if display_drop:
+            settled.append(c)                              # off the board; /history still gets this final state
+        else:
+            out.append(c)
+    # Open issue and PR cards stay, including ones quiet longer than 14 days.
+    # The page cap cuts closed rows only. Live and held stay ahead of closed, then parked.
+    rank = {"live": 0, "held": 0, "closed": 1, "parked": 2}
     out.sort(key=lambda c: (rank[c["state"]], STAGES.index(c["stage"]), -c["last_beat_t"]))
-    cards = pinned() + out[:MAX_CARDS]
+    visible, closed_kept = [], 0
+    for c in out:
+        if c.get("state") == "closed" and closed_kept >= MAX_CARDS:
+            settled.append(c)
+            continue
+        if c.get("state") == "closed":
+            closed_kept += 1
+        visible.append(c)
+    cards = pinned() + visible
     if held:
         cards = _merge_attached(cards, attach_held(held, evs), now)
     return {"updated_ct": datetime.fromtimestamp(now, CT).isoformat(timespec="seconds"),
-            "stages": list(STAGES), "stats": stats(evs, now, prompt_rows), "cards": cards}
+            "stages": list(STAGES), "stats": stats(evs, now, prompt_rows), "cards": cards, "settled": settled,
+            "transitions": transitions}
 
 
 def reconcile(wave, open_now, now=None):
-    """Close every non-closed issue/PR card whose item GitHub reports closed or missing. Returns how many closed."""
+    """Close every non-closed issue, PR, or packet-born card whose item GitHub reports closed or missing."""
     if not open_now or not isinstance(wave, dict) or not isinstance(wave.get("cards"), list):
         return 0
     now = now or time.time()
     n = 0
     for c in wave["cards"]:
-        if c.get("pinned") or c.get("state") == "closed" or c.get("kind") not in ("issue", "pr"):
+        born_packet = c.get("born") == "packet" or str(c.get("key") or "").lower().startswith("packet:") or str(c.get("alias") or "").lower().startswith("packet:")
+        if c.get("pinned") or c.get("state") == "closed" or (c.get("kind") not in ("issue", "pr") and not born_packet):
             continue
         key = str(c.get("key") or "")
         if "#" not in key:
@@ -1057,7 +1322,7 @@ def write_md(m, now=None, force=False):
         L.append("")
     closed = [c for c in m["cards"] if c["state"] == "closed"]
     if closed:
-        L += ["## Closed (last 24 h)", ""] + [f"- {c['repo'].split('/')[-1]} #{c['number']} {c['title']}" for c in closed] + [""]
+        L += ["## Closed (last 24 hours)", ""] + [f"- {c['repo'].split('/')[-1]} #{c['number']} {c['title']}" for c in closed] + [""]
     try:
         MD.parent.mkdir(parents=True, exist_ok=True)
         tmp = MD.with_suffix(f".md.{os.getpid()}.tmp")

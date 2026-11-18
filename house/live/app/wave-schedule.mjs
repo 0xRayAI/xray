@@ -14,11 +14,53 @@ export const PLAN_EXPIRE_MS = 7 * 24 * 60 * 60 * 1000;
 
 const WEEKDAY = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
 
+/** The badge is only a packet PR whose PACKET.md is missing. Ordinary PRs pass. */
+export function briefOk(card) {
+  if (!card || typeof card !== 'object' || card.pinned) return true;
+  const kind = String(card.kind || '');
+  const title = String(card.title || '').trim();
+  const alias = String(card.alias || '').toLowerCase();
+  const packetPr = kind === 'pr' && (/^packet\b/i.test(title) || alias.startsWith('packet:'));
+  if (!packetPr) return true;
+  return !!card.packet_file;
+}
+
+/** packet_ok follows briefOk. A packet PR with no PACKET.md is false. Everything else is true. */
+export function applyBrief(card) {
+  if (!card || typeof card !== 'object') return card;
+  if (!briefOk(card)) {
+    if (card.packet_ok === false && Array.isArray(card.missing) && card.missing.includes('PACKET.md')) return card;
+    return { ...card, packet_ok: false, missing: ['PACKET.md'] };
+  }
+  if (card.packet_ok === true && (!Array.isArray(card.missing) || card.missing.length === 0)) return card;
+  return { ...card, packet_ok: true, missing: [] };
+}
+
 export function cardKey(card) {
   if (!card || typeof card !== 'object') return '';
   if (typeof card.key === 'string' && card.key) return card.key.toLowerCase();
   if (card.repo && card.number != null && card.number !== '') return `${String(card.repo).toLowerCase()}#${card.number}`;
   return '';
+}
+
+/** Pulls and cloud runs that do not name a card already on the board. */
+export function missingCardRuns(runs, cards) {
+  const keys = new Set((Array.isArray(cards) ? cards : []).map(cardKey).filter(Boolean));
+  const gaps = [];
+  for (const run of Array.isArray(runs) ? runs : []) {
+    if (!run || typeof run !== 'object') continue;
+    const kind = String(run.kind || (run.bcId ? 'cloud' : ''));
+    if (kind === 'pr_open' || kind === 'pull') {
+      const key = cardKey({ repo: run.repo, number: run.number });
+      if (!key || !keys.has(key)) gaps.push({ kind: 'pull', key });
+      continue;
+    }
+    if (kind === 'cloud' || run.bcId) {
+      const named = String(run.card || '').trim().toLowerCase();
+      if (!named || !keys.has(named)) gaps.push({ kind: 'cloud', key: named });
+    }
+  }
+  return gaps;
 }
 
 export function isPlanCard(card) {
@@ -491,6 +533,98 @@ function eventTouches(card, event, list) {
   return false;
 }
 
+const HANDOFF_LABEL = /^handoff(?:\s+\S+)?$/i;
+
+/** A handoff line is named for its kind. That label is not a GitHub title. */
+export function handoffLabel(title) {
+  return HANDOFF_LABEL.test(String(title || '').trim());
+}
+
+/** Card face copied off an inbox line. A handoff label and its pull URL are not stored. */
+export function packetCardFace(line) {
+  const title = String(line && line.title || '').trim();
+  if (handoffLabel(title)) return { title: '', url: '' };
+  return {
+    title: title.slice(0, 120),
+    url: String(line && line.url || '').slice(0, 300),
+  };
+}
+
+function openedTitle(event) {
+  const title = String(event && event.title || '').trim();
+  if (title && !handoffLabel(title)) return title.slice(0, 120);
+  const label = String(event && event.label || '').replace(/^.*?opened · /, '').trim();
+  if (label && !handoffLabel(label)) return label.slice(0, 120);
+  return '';
+}
+
+function openEvent(events, card) {
+  const repo = String(card && card.repo || '').toLowerCase();
+  const number = Number(card && card.number);
+  if (!repo || !Number.isInteger(number) || number < 1) return null;
+  let hit = null;
+  for (const event of Array.isArray(events) ? events : []) {
+    if (!event || typeof event !== 'object') continue;
+    const kind = String(event.kind || '');
+    if (kind !== 'issue_open' && kind !== 'pr_open') continue;
+    if (String(event.repo || '').toLowerCase() !== repo) continue;
+    if (Number(event.number) !== number) continue;
+    if (!openedTitle(event)) continue;
+    hit = event;
+  }
+  return hit;
+}
+
+function faceUrl(event, card) {
+  const src = typeof event.source === 'string' ? event.source : (typeof event.url === 'string' ? event.url : '');
+  const kind = String(event.kind || '');
+  if (kind === 'issue_open' && src.includes('/issues/')) return src.slice(0, 300);
+  if (kind === 'pr_open' && src.includes('/pull/')) return src.slice(0, 300);
+  const repo = String((card && card.repo) || event.repo || '');
+  const number = Number(card && card.number);
+  if (kind === 'issue_open') return `https://github.com/${repo}/issues/${number}`;
+  if (kind === 'pr_open') return `https://github.com/${repo}/pull/${number}`;
+  return src.slice(0, 300);
+}
+
+/**
+ * A ready handoff must not leave "handoff ready" or a pull URL on an issue card.
+ * The GitHub open event supplies the title and the URL. A card that already has
+ * a real title is left as it is.
+ */
+export function restoreHandoffFace(cards, events) {
+  const list = Array.isArray(cards) ? cards : [];
+  return list.map((card) => {
+    if (!card || typeof card !== 'object') return card;
+    const title = String(card.title || '').trim();
+    const blankPacket = card.born === 'packet' && !title;
+    if (!handoffLabel(title) && !blankPacket) return card;
+    const hit = openEvent(events, card);
+    if (!hit) return card;
+    const nextTitle = openedTitle(hit);
+    const nextUrl = faceUrl(hit, card);
+    const kind = hit.kind === 'issue_open' ? 'issue' : 'pr';
+    if (nextTitle === title && nextUrl === String(card.url || '') && card.kind === kind) return card;
+    return { ...card, title: nextTitle, url: nextUrl || card.url, kind };
+  });
+}
+
+/** Title and URL from a GitHub issue API body. A pull_request object means a pull. */
+export function faceFromGithubIssue(body, card) {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return null;
+  const title = String(body.title || '').trim();
+  if (!title || handoffLabel(title)) return null;
+  const pull = !!(body.pull_request && typeof body.pull_request === 'object');
+  const repo = String((card && card.repo) || '');
+  const number = Number(card && card.number);
+  const fallback = repo && Number.isInteger(number) && number > 0
+    ? `https://github.com/${repo}/${pull ? 'pull' : 'issues'}/${number}`
+    : '';
+  const url = String(body.html_url || fallback);
+  if (!url) return null;
+  return { title: title.slice(0, 120), url: url.slice(0, 300), kind: pull ? 'pr' : 'issue' };
+}
+
 /** Rewrite a holding card onto the PR that pr_open and pr_commit share. */
 export function attachPacketCards(cards, events) {
   const list = (Array.isArray(cards) ? cards : []).filter((card) => card && typeof card === 'object').map((card) => ({ ...card }));
@@ -531,14 +665,21 @@ export function attachPacketCards(cards, events) {
   return list.filter((card) => !gone.has(card));
 }
 
-/** Keep a plan card, a packet-born card, and loaded wave cards the collector does not send. Earlier cards win on key. */
-export function retainSeedCards(collector, prior, seedCards) {
+function packetSettled(card, closed) {
+  if (card.state === 'closed' || card.stage === 'done') return true;
+  return typeof closed === 'function' && closed(card);
+}
+
+/** Keep a plan card, a packet-born card, and loaded wave cards the collector does not send. Earlier cards win on key.
+ * A packet-born card whose item is already closed or merged is not kept. */
+export function retainSeedCards(collector, prior, seedCards, closed) {
   const base = Array.isArray(collector) ? collector.slice() : [];
   const have = new Set(base.map(cardKey).filter(Boolean));
   const extras = [...(Array.isArray(prior) ? prior : []), ...(Array.isArray(seedCards) ? seedCards : [])];
   for (const card of extras) {
     const key = cardKey(card);
     if (!key || have.has(key)) continue;
+    if (isPacketBorn(card) && packetSettled(card, closed)) continue;
     if (!isPlanCard(card) && !card.wave && card.kind !== 'wave' && card.kind !== 'plan' && !isPacketBorn(card)) continue;
     base.push(card);
     have.add(key);
@@ -565,7 +706,7 @@ export function scheduleWaves(incoming, seed, opts = {}) {
   const expireMs = opts.expireMs > 0 ? opts.expireMs : PLAN_EXPIRE_MS;
   const quiet = burnQuiet(opts.weeklyBurn);
   const list = oneWave(
-    retainSeedCards(incoming, opts.prior, []).filter((card) => {
+    retainSeedCards(incoming, opts.prior, [], opts.closed).filter((card) => {
       if (!isPlanCard(card) || !cardClosed(card)) return true;
       return card.flag === 'expired';
     }),

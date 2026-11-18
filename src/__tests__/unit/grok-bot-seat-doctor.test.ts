@@ -148,6 +148,23 @@ describe('grok-bot seat doctor — diagnose', () => {
     }
   });
 
+  it('does not read a wallet outside the seat folder', () => {
+    const seat = scratch();
+    const box = scratch();
+    try {
+      writeSeat(seat);
+      mkdirSync(path.join(box, '.ows'));
+      const report = diagnoseSeat({ cwd: seat, env: { HOME: box } });
+      expect(report.ows.present).toBe(false);
+      expect(report.ows.path).toBe(path.join(seat, '.ows'));
+      expect(formatDoctor(report)).toMatch(/OWS pay: miss/);
+      expect(formatDoctor(report)).not.toContain(box);
+    } finally {
+      rmSync(seat, { recursive: true, force: true });
+      rmSync(box, { recursive: true, force: true });
+    }
+  });
+
   it('fails a seat without mill+inspect and still prints hangar/Clearing next steps', () => {
     const dir = scratch();
     try {
@@ -187,6 +204,22 @@ describe('grok-bot seat doctor — diagnose', () => {
     }
   });
 
+  it('counts the packed vendor repertoire when the top-level symlink is missing', () => {
+    const dir = scratch();
+    try {
+      writeSeat(dir);
+      const pkg = path.join(dir, 'node_modules', '0xray', 'vendor', '@0xray', 'repertoire', 'package.json');
+      mkdirSync(path.dirname(pkg), { recursive: true });
+      writeFileSync(pkg, `${JSON.stringify({ name: '@0xray/repertoire', version: '0.2.9' })}\n`);
+      const report = diagnoseSeat({ cwd: dir, home: dir });
+      expect(report.repertoire.status).toBe('on');
+      expect(report.repertoire.version).toBe('0.2.9');
+      expect(formatDoctor(report)).toMatch(/Repertoire: on — @0xray\/repertoire@0\.2\.9/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   it('passes from foundry-inventory millPlant even without skill files', () => {
     const dir = scratch();
     try {
@@ -221,7 +254,8 @@ describe('grok-bot seat doctor — diagnose', () => {
       const text = formatDoctor(report);
       expect(text).toMatch(/Plant: FAIL/);
       expect(text).toContain('missing node_modules/0xray/package.json');
-      expect(report.next).toContain('npm i 0xray && npx @0xray/foundry inspect --skip-live');
+      expect(report.next).toContain('npm i 0xray && npx 0xray validate');
+      expect(report.next.join('\n')).not.toContain('@0xray/foundry');
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
@@ -380,6 +414,12 @@ describe('grok-bot seat doctor — CLI', () => {
       expect(report.house.detail).toBe('house is not enabled here');
       expect(report.ok).toBe(true);
       expect(formatDoctor(report)).toMatch(/House: WARN — house is not enabled here/);
+      expect(formatDoctor(report)).not.toMatch(/^Board:/m);
+      expect(report.house.enabled).toBe(false);
+      report.house.detail = 'house folder was renamed';
+      expect(formatDoctor(report)).not.toMatch(/^Board:/m);
+      report.house.enabled = true;
+      expect(formatDoctor(report)).toMatch(/^Board:/m);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
@@ -469,7 +509,34 @@ describe('grok-bot seat doctor — CLI', () => {
       expect(report.house.status).toBe('pass');
       expect(report.ok).toBe(true);
       expect(formatDoctor(report)).toMatch(/House: PASS — .+\/house\/HOUSE\.md \(via walk-up\)/);
-      expect(formatDoctor(report)).toMatch(/Seat: anvil-seat@1\.0\.0/);
+      expect(formatDoctor(report)).toMatch(/Project: anvil-seat@1\.0\.0/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('names the kit and the worn suit, and labels the folder as the project', () => {
+    const dir = scratch();
+    try {
+      writeSeat(dir, 'cold');
+      installXrayPkg(dir);
+      const text = formatDoctor(diagnoseSeat({ cwd: dir, home: dir }));
+      const kit = JSON.parse(readFileSync(path.join(root, 'grok-bot', 'package.json'), 'utf8')) as { version: string };
+      expect(text.split('\n')[0]).toBe(`@0xray/grok-bot@${kit.version} doctor — 0xray@4.0.36 — seat plant check`);
+      expect(text).toContain('Project: cold@1.0.0');
+      expect(text).not.toContain('Seat: cold@1.0.0');
+
+      const bare = scratch();
+      try {
+        writeSeat(bare, 'cold');
+        const missing = formatDoctor(diagnoseSeat({ cwd: bare, home: bare }));
+        expect(missing.split('\n')[0]).toBe(
+          `@0xray/grok-bot@${kit.version} doctor — 0xray not installed — seat plant check`,
+        );
+        expect(missing).toContain('Project: cold@1.0.0');
+      } finally {
+        rmSync(bare, { recursive: true, force: true });
+      }
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
@@ -658,6 +725,33 @@ describe('grok-bot seat doctor — CLI', () => {
     });
     expect(code).toBe(2);
     expect(chunks.join('')).toMatch(/unknown flag/);
+  });
+});
+
+describe('grok-bot bifrost init (#1050)', () => {
+  it('writes collector/routing in the working folder, then --check passes', () => {
+    const dir = scratch();
+    try {
+      const env = { BIFROST_GITHUB_API: 'http://127.0.0.1:9' };
+      const empty = runBin(['bifrost', 'init', '--check', '--no-resolve'], dir, env);
+      expect(empty.status).toBe(1);
+      expect(empty.stderr).toMatch(/no routing file/);
+      const init = runBin(['bifrost', 'init', '--seats', 'lead,builder', '--yes'], dir, env);
+      expect(init.status, init.stderr).toBe(0);
+      const roles = JSON.parse(readFileSync(path.join(dir, 'collector', 'routing', 'inbox-roles.json'), 'utf8'));
+      expect(Object.keys(roles.extra_seats).sort()).toEqual(['builder', 'lead']);
+      const check = runBin(['bifrost', 'init', '--check', '--seats', 'lead,builder', '--no-resolve'], dir, env);
+      expect(check.status, check.stderr).toBe(0);
+      expect(check.stdout).toMatch(/routing OK for 2 seat/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('prints usage for an unknown bifrost subcommand', () => {
+    const r = runBin(['bifrost'], tmpdir());
+    expect(r.status).toBe(2);
+    expect(r.stderr).toMatch(/grok-bot bifrost init/);
   });
 });
 
@@ -965,6 +1059,69 @@ describe('grok-bot seat doctor — station boot warnings', () => {
     }
   });
 
+  it('warns when STATION Working: lags the newest NOTES entry or is older than 2h', () => {
+    const dir = scratch();
+    try {
+      plant(dir);
+      const state = path.join(dir, '.xray', 'state');
+      mkdirSync(state, { recursive: true });
+      const ct = (ms: number) =>
+        new Intl.DateTimeFormat('sv-SE', {
+          timeZone: 'America/Chicago',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+        }).format(new Date(ms));
+      const now = Date.now();
+      const station = path.join(state, 'STATION.md');
+      const notes = path.join(state, 'NOTES.md');
+      writeFileSync(notes, `## ${ct(now - 60_000)} CT — room turn\n`);
+      writeFileSync(station, `Working: ${ct(now - 3 * 3600_000)} CT — old\nSkills: station\nKeys: gh-forge\n`);
+      const stale = diagnoseSeat({ cwd: dir, home: dir, env: {} }).house.warnings ?? [];
+      expect(stale).toContain('STATION.md Working: is older than the newest NOTES entry; run the station way-out');
+      expect(stale).toContain('STATION.md Working: is older than 2h; a turn skipped station');
+      writeFileSync(station, `Working: ${ct(now - 30_000)} CT — fresh\nSkills: station\nKeys: gh-forge\n`);
+      const fresh = diagnoseSeat({ cwd: dir, home: dir, env: {} }).house.warnings ?? [];
+      expect(fresh.filter((w) => w.includes('Working:'))).toEqual([]);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('warns when a bridge XRAY_ROOT points outside this folder', () => {
+    const dir = scratch();
+    const home = scratch();
+    try {
+      writeFileSync(path.join(dir, 'package.json'), `${JSON.stringify({ name: 'cold', version: '1.0.0' })}\n`);
+      const local = path.join(dir, '.mcp.json');
+      writeFileSync(
+        local,
+        `${JSON.stringify({ mcpServers: { goggles: { env: { XRAY_ROOT: dir } } } })}\n`,
+      );
+      expect(formatDoctor(diagnoseSeat({ cwd: dir, home }))).toContain('Bridges: ok');
+
+      const other = scratch();
+      try {
+        const machine = path.join(home, '.grok', 'plugins', '0xray', '.mcp.json');
+        mkdirSync(path.dirname(machine), { recursive: true });
+        writeFileSync(
+          machine,
+          `${JSON.stringify({ mcpServers: { goggles: { env: { XRAY_ROOT: other } } } })}\n`,
+        );
+        const text = formatDoctor(diagnoseSeat({ cwd: dir, home }));
+        expect(text).toContain('Bridges: WARN — points outside this folder');
+        expect(text).toContain(other);
+      } finally {
+        rmSync(other, { recursive: true, force: true });
+      }
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+      rmSync(home, { recursive: true, force: true });
+    }
+  });
+
   it('stays quiet when the profile hook and the station lines are present', () => {
     const dir = scratch();
     try {
@@ -1004,6 +1161,32 @@ describe('grok-bot seat doctor — station boot warnings', () => {
       expect(formatDoctor(report)).toMatch(/House: WARN — HOUSE.md has no name: under ## Owner/);
     } finally {
       rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('shipped grok-bot docs name a runnable inspect command', () => {
+  it('no shipped doc or doctor line tells a user to run npx @0xray/foundry inspect|mint', () => {
+    // Neither pack ships @0xray/foundry, so npx would pull a different registry build.
+    const files = [
+      'grok-bot/README.md',
+      'grok-bot/AGENTS.md',
+      'grok-bot/llms.txt',
+      'grok-bot/lib/seat-doctor.cjs',
+      'grok-bot/skills/fasten-suit-per-agent/SKILL.md',
+      'grok-bot/skills/fasten-suit-and-hangar/SKILL.md',
+      'llms.txt',
+      'AGENTS.md',
+      'AGENTS-consumer.md',
+      'scripts/foundry/README.md',
+    ];
+    const plantDir = path.join(root, 'scripts/foundry/plant/skills');
+    for (const name of readdirSync(plantDir)) {
+      const rel = path.join('scripts/foundry/plant/skills', name, 'SKILL.md');
+      if (existsSync(path.join(root, rel))) files.push(rel);
+    }
+    for (const rel of files) {
+      expect(readFileSync(path.join(root, rel), 'utf8'), rel).not.toMatch(/npx @0xray\/foundry (inspect|mint)/);
     }
   });
 });

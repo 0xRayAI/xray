@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <circle cx="12" cy="12" r="11" fill="palette:rivet"/>
+  <circle cx="12" cy="12" r="7.5" fill="palette:metalEdge"/>
+  <circle cx="12" cy="12" r="3" fill="palette:rivetHole"/>
+  <circle cx="9.2" cy="9.2" r="1.5" fill="palette:ink"/>
+</svg>

@@ -17,15 +17,15 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  NODE_VERSION: "20"
+  NODE_VERSION: "24.22.1"
 
 jobs:
   quality:
     name: Quality Checks
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v4.4.0
+      - uses: actions/setup-node@v4.4.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -39,8 +39,8 @@ jobs:
     name: Foundry mill
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v4.4.0
+      - uses: actions/setup-node@v4.4.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -53,14 +53,14 @@ jobs:
         # Includes inspect shop-plant allowlist (factory shops + shopPlant, not costume:true)
         # plus llms.txt / mill-law docs + pack-tmp-suit-proof contract.
         # plus two-seat Grok wear (project dest, no last-wins machine plugin clobber).
-        run: npx vitest run src/__tests__/unit/foundry-mill.test.ts src/__tests__/unit/foundry-mill-plant-protocol.test.ts src/__tests__/unit/foundry-sound-plant.test.ts src/__tests__/unit/wear-shipped-skill-blobs.test.ts src/__tests__/unit/foundry-sound-mixer.test.ts src/__tests__/unit/foundry-sound-inventory.test.ts src/__tests__/unit/foundry-blip-plant.test.ts src/__tests__/unit/foundry-blip-vibe.test.ts src/__tests__/unit/foundry-blip-looker.test.ts src/__tests__/unit/release-pipeline.test.ts src/__tests__/unit/grok-multi-seat-wear.test.ts src/__tests__/unit/host-vs-mill-score.test.ts
+        run: npx vitest run src/__tests__/unit/foundry-mill.test.ts src/__tests__/unit/foundry-mill-plant-protocol.test.ts src/__tests__/unit/foundry-scout-plant.test.ts src/__tests__/unit/foundry-sound-plant.test.ts src/__tests__/unit/wear-shipped-skill-blobs.test.ts src/__tests__/unit/foundry-sound-mixer.test.ts src/__tests__/unit/foundry-sound-inventory.test.ts src/__tests__/unit/foundry-blip-plant.test.ts src/__tests__/unit/foundry-blip-vibe.test.ts src/__tests__/unit/foundry-blip-looker.test.ts src/__tests__/unit/release-pipeline.test.ts src/__tests__/unit/grok-multi-seat-wear.test.ts src/__tests__/unit/host-vs-mill-score.test.ts
 
   build:
     name: Build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v4.4.0
+      - uses: actions/setup-node@v4.4.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -74,10 +74,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: quality
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.4.0
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4.4.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -85,7 +85,22 @@ jobs:
       - run: npm run build
       - name: grok-bot pack
         run: node scripts/check-grok-bot-pack.mjs
+      - name: Read clearing pin
+        id: clearing-pin
+        run: node --input-type=module -e "import { CLEARING_SETTLE_SHA } from './grok-bot/templates/foundry/self-settle.mjs'; process.stdout.write('sha=' + CLEARING_SETTLE_SHA + '\n')" >> "$GITHUB_OUTPUT"
+      - name: Checkout pinned clearing
+        uses: actions/checkout@v4.4.0
+        with:
+          repository: 0xRayAI/clearing
+          ref: ${{ steps.clearing-pin.outputs.sha }}
+          path: clearing-pin
+          persist-credentials: false
+      - name: Build pinned clearing
+        working-directory: clearing-pin
+        run: npm ci && npx tsc --pretty false
       - name: Curated unit suites
+        env:
+          CLEARING_ROOT: ${{ github.workspace }}/clearing-pin
         run: npm run test:comprehensive
       - name: Confer verify
         run: npm run verify:confer
@@ -95,8 +110,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v4.4.0
+      - uses: actions/setup-node@v4.4.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -111,8 +126,8 @@ jobs:
     name: Data check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v4.4.0
+      - uses: actions/setup-node@v4.4.0
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Block checked-in run data
@@ -124,8 +139,8 @@ jobs:
     name: Docs Build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v4.4.0
+      - uses: actions/setup-node@v4.4.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -135,18 +150,24 @@ jobs:
 
   house-live:
     name: house/live tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v4.4.0
+      - uses: actions/setup-node@v4.4.0
         with:
           node-version: ${{ env.NODE_VERSION }}
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5.6.0
         with:
           python-version: "3.12"
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4.3.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
       - name: Install Playwright chromium
         # Same package install as Quality Checks (npm ci --ignore-scripts). That does not download a browser.
+        # The browser cache is the warm path. A cold download still fits in the 30 minute job.
         run: npm ci --ignore-scripts && npx playwright install --with-deps chromium
       - name: house/live tests
         env:

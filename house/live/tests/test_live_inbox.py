@@ -1,5 +1,5 @@
 """live-inbox --handoff posts one packet and prints one 1:1 line. The same PR and head keep one id."""
-import json, os, shutil, subprocess, threading, unittest
+import json, os, shutil, subprocess, threading, time, unittest
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -75,6 +75,25 @@ class HandoffCommand(unittest.TestCase):
         self.assertEqual(posted["id"], "handoff:0xrayai/xray#22:ready:abc1234")
         self.assertEqual(posted["sha"], "abc1234")
 
+    def test_station_posts_one_nudge(self):
+        Inbox.posts = []
+        r = self.run_handoff("--station")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertNotIn("seat-key-forge", r.stdout + r.stderr)
+        self.assertEqual(len(Inbox.posts), 1)
+        line = Inbox.posts[0]["body"]["lines"][0]
+        self.assertEqual(line["type"], "nudge")
+        self.assertEqual(line["kind"], "station")
+        self.assertEqual(line["from"], "forge")
+        self.assertEqual(line["seat"], "forge")
+        self.assertEqual(line["number"], 0)
+        self.assertEqual(line["reason"], "Run station and re-read OP-PROC")
+        self.assertRegex(line["id"], r"^nudge:station:forge:\d{4}-\d{2}-\d{2}T\d{2}$")
+        before = len(Inbox.posts)
+        mixed = self.run_handoff("--station", "--handoff", "critic", "--pr", "0xRayAI/xray#1", "--kind", "ready", "--sha", "abc1234")
+        self.assertNotEqual(mixed.returncode, 0)
+        self.assertEqual(len(Inbox.posts), before)
+
     def test_cloud_turn_posts_kind_turn_only(self):
         agent = "bc-531f2033-90e0-595f-87de-8dfe576ec69c"
         env = {**self.env, "CURSOR_AGENT": "1", "CURSOR_CONVERSATION_ID": agent}
@@ -121,6 +140,164 @@ class HandoffCommand(unittest.TestCase):
         r = self.run_handoff("--handoff", "critic", "--pr", "0xRayAI/xray#1", "--kind", "room")
         self.assertNotEqual(r.returncode, 0)
         self.assertEqual(Inbox.posts, [])
+
+    def test_ack_review_is_sent_with_the_id(self):
+        url = "https://github.com/0xRayAI/xray/pull/80#pullrequestreview-554"
+        r = self.run_handoff("--ack", "handoff:0xrayai/xray#80:merge:abc1234", "--review", url)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(Inbox.posts[-1]["path"], "/inbox/forge/ack")
+        self.assertEqual(Inbox.posts[-1]["body"]["id"], "handoff:0xrayai/xray#80:merge:abc1234")
+        self.assertEqual(Inbox.posts[-1]["body"]["review"], url)
+        refused = self.run_handoff("--review", url)
+        self.assertNotEqual(refused.returncode, 0)
+        self.assertEqual(len(Inbox.posts), 1)
+        both = self.run_handoff("--ack", "all", "--review", url)
+        self.assertNotEqual(both.returncode, 0)
+        self.assertEqual(len(Inbox.posts), 1)
+
+    def test_handoff_timeout_still_prints_the_wake(self):
+        class Hang(BaseHTTPRequestHandler):
+            def log_message(self, fmt, *args):
+                return
+
+            def do_POST(self):
+                n = int(self.headers.get("Content-Length") or 0)
+                self.rfile.read(n)
+                time.sleep(30)
+
+        hang = ThreadingHTTPServer(("127.0.0.1", 0), Hang)
+        thread = threading.Thread(target=hang.serve_forever, daemon=True)
+        thread.start()
+        try:
+            env = {**self.env, "LIVE_URL": f"http://127.0.0.1:{hang.server_address[1]}", "LIVE_INBOX_TIMEOUT": "0.3"}
+            r = subprocess.run(
+                [str(TOOL), "forge", "--handoff", "critic", "--pr", "0xRayAI/xray#551", "--kind", "merge", "--sha", "abc1234"],
+                env=env, capture_output=True, text=True, timeout=5,
+            )
+            self.assertEqual(r.returncode, 0, r.stderr)
+            self.assertIn("SendToAgent critic: handoff merge 0xRayAI/xray#551 @abc1234 ", r.stdout)
+            self.assertIn("server unreachable", r.stderr)
+        finally:
+            hang.shutdown()
+            hang.server_close()
+
+    def test_handoff_refused_prints_no_wake(self):
+        env = {**self.env, "LIVE_URL": "http://127.0.0.1:1", "LIVE_INBOX_TIMEOUT": "0.3"}
+        r = subprocess.run(
+            [str(TOOL), "forge", "--handoff", "critic", "--pr", "0xRayAI/xray#551", "--kind", "merge", "--sha", "abc1234"],
+            env=env, capture_output=True, text=True, timeout=5,
+        )
+        self.assertNotEqual(r.returncode, 0)
+        self.assertNotIn("SendToAgent", r.stdout)
+        self.assertIn("server unreachable", r.stderr)
+
+    def test_retip_says_already_queued_and_shows_the_head(self):
+        class Retip(Inbox):
+            def do_POST(self):
+                n = int(self.headers.get("Content-Length") or 0)
+                self.rfile.read(n)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(b'{"ok":true,"added":0,"rejected":[]}')
+
+            def do_GET(self):
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                body = json.dumps({"lines": [{"id": "handoff:0xrayai/xray#811:merge:baa5ae29", "sha": "baa5ae29"}]}).encode()
+                self.wfile.write(body)
+
+        self.httpd.shutdown()
+        self.httpd.server_close()
+        httpd = ThreadingHTTPServer(("127.0.0.1", 0), Retip)
+        thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+        thread.start()
+        try:
+            env = {**self.env, "LIVE_URL": f"http://127.0.0.1:{httpd.server_address[1]}"}
+            r = subprocess.run(
+                [str(TOOL), "forge", "--handoff", "critic", "--pr", "0xRayAI/xray#811", "--kind", "merge", "--sha", "baa5ae29"],
+                env=env, capture_output=True, text=True, timeout=5,
+            )
+            self.assertEqual(r.returncode, 0, r.stderr)
+            self.assertIn("already queued (added:0)", r.stdout)
+            self.assertIn("head handoff:0xrayai/xray#811:merge:baa5ae29 @baa5ae2", r.stdout)
+            self.assertNotIn("SendToAgent", r.stdout)
+        finally:
+            httpd.shutdown()
+            httpd.server_close()
+
+
+
+    def test_cloud_posts_cloud_agent_and_rebinds_xray_tag(self):
+        agent = "bc-043681df"
+        full = "bc-531f2033-90e0-595f-87de-8dfe576ec69c"
+        Inbox.posts = []
+        short = self.run_handoff("--cloud", "reply", "--agent", agent, "--tag", "xray#628")
+        self.assertEqual(short.returncode, 0, short.stderr)
+        self.assertNotIn("seat-key-forge", short.stdout + short.stderr)
+        self.assertEqual(Inbox.posts[0]["path"], "/activity")
+        self.assertEqual(Inbox.posts[0]["auth"], "Bearer seat-key-forge")
+        body = Inbox.posts[0]["body"]
+        self.assertEqual(body["kind"], "cloud_agent")
+        self.assertEqual(body["action"], "reply")
+        self.assertEqual(body["agent"], agent)
+        self.assertEqual(body["tag"], "0xRayAI/xray#628")
+        self.assertNotIn("seat", body)
+        self.assertRegex(body["t_ct"], r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$")
+        kept = self.run_handoff("--cloud", "launch", "--agent", agent, "--tag", "0xRayAI/xray#0627")
+        self.assertEqual(kept.returncode, 0, kept.stderr)
+        self.assertEqual(Inbox.posts[-1]["body"]["tag"], "0xRayAI/xray#627")
+        self.assertEqual(Inbox.posts[-1]["body"]["action"], "launch")
+        other = self.run_handoff("--cloud", "cancel", "--agent", agent, "--tag", "0xRayAI/bifrost#12")
+        self.assertEqual(other.returncode, 0, other.stderr)
+        self.assertEqual(Inbox.posts[-1]["body"]["tag"], "0xRayAI/bifrost#12")
+        self.assertEqual(Inbox.posts[-1]["body"]["action"], "cancel")
+        bare = self.run_handoff("--cloud", "finished", "--agent", full)
+        self.assertEqual(bare.returncode, 0, bare.stderr)
+        self.assertEqual(set(Inbox.posts[-1]["body"]), {"kind", "action", "agent", "t_ct"})
+        self.assertEqual(Inbox.posts[-1]["body"]["action"], "finished")
+        self.assertEqual(Inbox.posts[-1]["body"]["agent"], full)
+
+    def test_cloud_refuses_a_bad_tag_agent_or_turn_mix(self):
+        before = len(Inbox.posts)
+        refused = [
+            ["--cloud", "reply", "--tag", "xray#628"],
+            ["--cloud", "nope", "--agent", "bc-043681df"],
+            ["--cloud", "reply", "--agent", "x", "--tag", "xray#1"],
+            ["--cloud", "reply", "--agent", "bc-043681df", "--tag", "bifrost#3"],
+            ["--cloud", "reply", "--agent", "bc-043681df", "--tag", "xray#0"],
+            ["--cloud", "reply", "--agent", "bc-043681df", "--turn", "start"],
+            ["--cloud", "reply", "--agent", "bc-043681df", "--tag", "xray#628", "--turn", "start"],
+        ]
+        for args in refused:
+            got = self.run_handoff(*args)
+            self.assertNotEqual(got.returncode, 0, args)
+            self.assertEqual(len(Inbox.posts), before, args)
+
+    def test_cloud_posts_while_another_turn_owns_the_claim(self):
+        cur = Path(self.env["LIVE_CURSORS"])
+        cur.mkdir(parents=True, exist_ok=True)
+        sleeper = subprocess.Popen(["sleep", "30"])
+        try:
+            (cur / "forge.claims.json").write_text(json.dumps({
+                "0xrayai/xray#1|abc1234|ready": {"pid": sleeper.pid, "token": "other-wake", "at": 1, "id": "line"},
+            }))
+            Inbox.posts = []
+            blocked = self.run_handoff("--turn", "start", "--tag", "bc-043681df track")
+            self.assertEqual(blocked.returncode, 0, blocked.stderr)
+            self.assertEqual(blocked.stdout, "")
+            self.assertEqual(Inbox.posts, [])
+            posted = self.run_handoff("--cloud", "reply", "--agent", "bc-043681df", "--tag", "xray#628")
+            self.assertEqual(posted.returncode, 0, posted.stderr)
+            self.assertEqual(len(Inbox.posts), 1)
+            self.assertEqual(Inbox.posts[0]["body"]["kind"], "cloud_agent")
+            self.assertEqual(Inbox.posts[0]["body"]["tag"], "0xRayAI/xray#628")
+            saved = json.loads((cur / "forge.claims.json").read_text())
+            self.assertEqual(saved["0xrayai/xray#1|abc1234|ready"]["token"], "other-wake")
+        finally:
+            sleeper.kill()
+            sleeper.wait(timeout=5)
 
 
 if __name__ == "__main__":

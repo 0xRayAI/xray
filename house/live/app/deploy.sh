@@ -1,11 +1,17 @@
 #!/usr/bin/env bash
 # Deploy app/ to one Railway service. The only supported deploy: a Railway build straight from git has no
 # assembled collector/ and the Dockerfile refuses it (#292).
-# LIVE_RAILWAY_PROJECT (default burst-live), LIVE_RAILWAY_SERVICE (default burst-live),
+# A crashed upload stays. Do not run `railway down`. That removes the live deployment.
+# `railway redeploy` rebuilds the latest deployment and ignores an id.
+# Restore a previous SUCCESS with house/live/app/rollback.sh <deployment-id>.
+# LIVE_RAILWAY_PROJECT and LIVE_RAILWAY_SERVICE are required, with no default, so a new fleet can never land on
+# another fleet's board (#1047). Ours: LIVE_RAILWAY_PROJECT=burst-live LIVE_RAILWAY_SERVICE=burst-live.
 # MESH_APP_DEPLOY_DIR (default /srv/live/deploy). LIVE_PUBLIC_OVERLAY, when set, is a directory
 # copied onto public/ after the kit files (live-config.js, avatars). Secret files in the deploy dir stay.
 set -euo pipefail
-PROJECT="${LIVE_RAILWAY_PROJECT:-burst-live}"; SERVICE="${LIVE_RAILWAY_SERVICE:-burst-live}"
+PROJECT="${LIVE_RAILWAY_PROJECT:-}"; SERVICE="${LIVE_RAILWAY_SERVICE:-}"
+[ -n "$PROJECT" ] && [ -n "$SERVICE" ] || {
+  echo "set LIVE_RAILWAY_PROJECT and LIVE_RAILWAY_SERVICE to this fleet's own Railway project and service (no default)" >&2; exit 1; }
 APP="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 DST="${MESH_APP_DEPLOY_DIR:-/srv/live/deploy}"
 ENVN="${LIVE_RAILWAY_ENVIRONMENT:-production}"
@@ -13,8 +19,10 @@ if [ ! -d "$DST" ]; then   # fresh machine: create and link the deploy dir inste
   mkdir -p "$DST" && (cd "$DST" && railway link --project "$PROJECT" --service "$SERVICE" --environment "$ENVN" >/dev/null) \
     || { echo "deploy dir $DST missing and railway link failed (log in with the railway CLI first)" >&2; exit 1; }
 fi
+# Refuse before copying anything into a deploy dir that is linked to some other project.
+st="$(cd "$DST" && railway status 2>/dev/null || true)"; grep -q "$PROJECT" <<<"$st" || { echo "deploy dir is not linked to $PROJECT; refusing" >&2; exit 1; }
 [ "$(cd "$DST" && pwd -P)" = "$APP" ] || {
-  cp "$APP"/server.mjs "$APP"/presence.mjs "$APP"/source.mjs "$APP"/archive.mjs "$APP"/origin.mjs "$APP"/routes.mjs "$APP"/governor.mjs "$APP"/arch1-launch.mjs "$APP"/worktrack.mjs "$APP"/handoff.mjs "$APP"/wave-schedule.mjs "$APP"/bifrost-waves.json "$APP"/chicago-stamp.mjs "$APP"/pr-batch.mjs "$APP"/wake-gate.mjs "$APP"/package.json "$APP"/railway.json "$APP"/.railwayignore "$APP"/Dockerfile "$DST"/
+  cp "$APP"/server.mjs "$APP"/health-exit.mjs "$APP"/feed-read-worker.mjs "$APP"/presence.mjs "$APP"/source.mjs "$APP"/archive.mjs "$APP"/card-owner.mjs "$APP"/ci-credit.mjs "$APP"/resp.mjs "$APP"/history-store.mjs "$APP"/compact-cards.mjs "$APP"/origin.mjs "$APP"/routes.mjs "$APP"/governor.mjs "$APP"/arch1-launch.mjs "$APP"/worktrack.mjs "$APP"/handoff.mjs "$APP"/wave-schedule.mjs "$APP"/fleet-mode.mjs "$APP"/bifrost-waves.json "$APP"/chicago-stamp.mjs "$APP"/pr-batch.mjs "$APP"/ci-clear.mjs "$APP"/wake-gate.mjs "$APP"/wake-filter.mjs "$APP"/station-tick.mjs "$APP"/inbox-queue.mjs "$APP"/chat-doorbell.mjs "$APP"/defect-issue.mjs "$APP"/package.json "$APP"/railway.json "$APP"/.railwayignore "$APP"/Dockerfile "$APP"/docker-entrypoint.sh "$DST"/
   rm -rf "$DST/public.new"; cp -r "$APP/public" "$DST/public.new"; rm -rf "$DST/public"; mv "$DST/public.new" "$DST/public"
   # our install's committed page overlay (seats, nodes, avatars, favicon); another install has no house/live/site/
   if [ -d "$APP/../site/public" ]; then cp -a "$APP/../site/public"/. "$DST/public/"; fi
@@ -53,6 +61,5 @@ else
   : > "$DST/owner-name"
 fi
 cd "$DST"
-st="$(railway status 2>/dev/null || true)"; grep -q "$PROJECT" <<<"$st" || { echo "deploy dir is not linked to $PROJECT; refusing" >&2; exit 1; }
 railway up --service "$SERVICE" --detach
 echo "check: railway deployment list --service $SERVICE   (expect SUCCESS)"

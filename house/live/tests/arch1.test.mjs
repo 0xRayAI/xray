@@ -11,7 +11,7 @@ const INGEST = crypto.randomBytes(32).toString('hex'), H = k => crypto.createHas
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-arch1-')); let srv, logs = '';
 before(async () => {
   srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], { env: { PORT: '0', MESH_PASSWORD: 'x'+crypto.randomBytes(4).toString('hex'), PATH: process.env.PATH,
-    SESSION_SECRET: crypto.randomBytes(32).toString('hex'), INGEST_SECRET: INGEST, MESH_DATA_DIR: DATA, COLLECTOR: 'off', GITHUB_API_URL: 'http://127.0.0.1:1',
+    SESSION_SECRET: crypto.randomBytes(32).toString('hex'), INGEST_SECRET: INGEST, MESH_DATA_DIR: DATA, COLLECTOR: 'off', FLEET_MODE: 'full', GITHUB_API_URL: 'http://127.0.0.1:1',
     SEAT_KEYS: JSON.stringify({ arch1: H(K), critic: H(C) }) }, stdio: ['ignore', 'pipe', 'pipe'] });
   srv.stdout.on('data', d => logs += d); srv.stderr.on('data', d => logs += d);
   PORT = await listenPort(srv); BASE = `http://127.0.0.1:${PORT}`;   // #304: port 0, read the assigned port
@@ -30,4 +30,19 @@ test('arch1 inbox: own key reads, wrong/other/no key refused, key never logged',
   assert.equal((await fetch(BASE + '/inbox/arch1', { headers: A(C) })).status, 403);
   await new Promise(r => setTimeout(r, 200));
   assert.ok(!logs.includes(K) && !logs.includes(H(K)), 'key leaked to server log');
+});
+
+test('a stalled card owned by Arch1 lands in the arch1 inbox as a nudge', async () => {
+  const now = Date.now(), R = 'example-org/x', q = now - 61 * 60000;
+  const card = { key: R + '#588', kind: 'pr', repo: R, number: 588, title: 'nudge me', url: 'https://github.com/' + R + '/pull/588', owner: 'Arch1', stage: 'fix', state: 'live',
+    packet: { 'next owner': 'Arch1' }, packet_ok: true, missing: [], beats: [{ t: q, what: 'pushed', url: '', id: 'b588' }], last_beat_t: q, stall: true };
+  const posted = await fetch(BASE + '/ingest', { method: 'POST', body: JSON.stringify({ title: 't', event_count: 0, generated_at: new Date().toISOString(), events: [], board: { updated_ct: 'x', cards: [card] } }),
+    headers: { ...A(INGEST), 'Content-Type': 'application/json' } });
+  assert.equal(posted.status, 200);
+  const mine = (await (await fetch(BASE + '/inbox/arch1', { headers: A(K) })).json()).lines.filter(l => l.type === 'nudge');
+  assert.equal(mine.length, 1);
+  assert.equal(mine[0].number, 588);
+  assert.match(mine[0].reason, /^nudge L1/);
+  const critic = (await (await fetch(BASE + '/inbox/critic', { headers: A(C) })).json()).lines.filter(l => l.type === 'nudge' && l.number === 588);
+  assert.equal(critic.length, 0);
 });

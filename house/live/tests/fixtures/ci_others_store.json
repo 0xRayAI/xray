@@ -1,0 +1,35 @@
+{
+  "events": {
+    "acme/app:run:drop": {
+      "id": "acme/app:run:drop",
+      "t_ct": "2026-10-20T08:00:00-05:00",
+      "from": "Others",
+      "to": "GitHub",
+      "kind": "workflow_run",
+      "direction": "internal",
+      "label": "run ci · main · success",
+      "source": "https://github.com/acme/app/actions/runs/453",
+      "src_file": "github-api",
+      "repo": "acme/app",
+      "actor": "cursor[bot]",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    "acme/app:run:reclaim": {
+      "id": "acme/app:run:reclaim",
+      "t_ct": "2026-10-20T08:05:00-05:00",
+      "from": "Others",
+      "to": "GitHub",
+      "kind": "workflow_run",
+      "direction": "internal",
+      "label": "run ci · main · failure",
+      "source": "https://github.com/acme/app/actions/runs/459",
+      "src_file": "github-api",
+      "repo": "acme/app",
+      "actor": "reclaim-bot[bot]",
+      "status": "completed",
+      "conclusion": "failure"
+    }
+  },
+  "state": {}
+}

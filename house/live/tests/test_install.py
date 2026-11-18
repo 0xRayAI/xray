@@ -68,6 +68,45 @@ class SeatKeys(unittest.TestCase):
             self.assertNotIn("live-mesh", text)
 
 
+class NoBurstLiveDefault(unittest.TestCase):
+    """#1047: a new fleet must name its own Railway project and service; nothing defaults to burst-live."""
+    def test_deploy_refuses_without_project_and_service(self):
+        with tempfile.TemporaryDirectory() as d:
+            log = Path(d) / "railway.log"
+            env = dict(os.environ, PATH=str(_railway(log)) + os.pathsep + os.environ.get("PATH", ""),
+                       RAILWAY_LOG=str(log), MESH_APP_DEPLOY_DIR=str(Path(d) / "deploy"))
+            for k in ("LIVE_RAILWAY_PROJECT", "LIVE_RAILWAY_SERVICE"):
+                env.pop(k, None)
+            proc = subprocess.run(["bash", str(DEPLOY)], env=env, capture_output=True, text=True)
+            self.assertEqual(proc.returncode, 1)
+            self.assertIn("LIVE_RAILWAY_PROJECT and LIVE_RAILWAY_SERVICE", proc.stderr)
+            self.assertFalse(log.exists())
+            self.assertFalse((Path(d) / "deploy").exists())
+
+    def test_deploy_refuses_a_dir_linked_to_another_project_before_copying(self):
+        with tempfile.TemporaryDirectory() as d:
+            dst = Path(d) / "deploy"; dst.mkdir(); log = Path(d) / "railway.log"
+            env = dict(os.environ, PATH=str(_railway(log)) + os.pathsep + os.environ.get("PATH", ""), RAILWAY_LOG=str(log),
+                       MESH_APP_DEPLOY_DIR=str(dst), LIVE_RAILWAY_PROJECT="new-fleet", LIVE_RAILWAY_SERVICE="new-fleet")
+            proc = subprocess.run(["bash", str(DEPLOY)], env=env, capture_output=True, text=True)
+            self.assertEqual(proc.returncode, 1)
+            self.assertIn("not linked to new-fleet", proc.stderr)
+            self.assertEqual(list(dst.iterdir()), [])
+            self.assertNotIn("up ", log.read_text())
+
+    def test_seat_keys_publish_needs_a_service(self):
+        with tempfile.TemporaryDirectory() as d:
+            keys = Path(d) / "keys"; keys.mkdir(); (keys / "alpha.key").write_text("k")
+            log = Path(d) / "railway.log"
+            env = dict(os.environ, PATH=str(_railway(log)) + os.pathsep + os.environ.get("PATH", ""), RAILWAY_LOG=str(log),
+                       SEAT_KEYS_DIR=str(keys), SEAT_KEYS_SEATS="alpha", MESH_APP_DEPLOY_DIR=d)
+            env.pop("LIVE_RAILWAY_SERVICE", None)
+            proc = subprocess.run(["bash", str(SEAT_KEYS), "publish"], env=env, capture_output=True, text=True)
+            self.assertEqual(proc.returncode, 1)
+            self.assertIn("LIVE_RAILWAY_SERVICE", proc.stderr)
+            self.assertFalse(log.exists())
+
+
 class DeployOverlay(unittest.TestCase):
     def test_overlay_and_railway_ts_land_in_the_deploy_dir(self):
         lock = APP / "package-lock.json"
@@ -97,7 +136,7 @@ class DeployOverlay(unittest.TestCase):
                 self.assertEqual((dst / "public" / "avatars" / "mark.png").read_bytes(), b"png")
                 ts = (dst / ".railway" / "railway.ts").read_text()
                 self.assertIn('healthcheck: "/healthz"', ts)
-                self.assertIn('start: "node server.mjs"', ts)
+                self.assertIn('start: "/app/docker-entrypoint.sh"', ts)
                 self.assertIn("--service my-live", log.read_text())
         finally:
             if created:

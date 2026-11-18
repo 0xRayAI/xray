@@ -5,7 +5,13 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { chromium } from 'playwright';
+import { launchBoard } from './board-browser.mjs';
+import { configuredRoster } from '../app/presence.mjs';
+
+const FEED = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'feed');
+const ROSTER = configuredRoster({
+  LIVE_FLEET_SEATS: JSON.stringify({ seats: ['seat-from-env', 'forge', 'critic', 'blinky'] }),
+}, [FEED]);
 
 const PUB = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app', 'public');
 const OPEN = ['mesh', 'stats', 'roster', 'cards', 'activity'];
@@ -20,6 +26,8 @@ function serve() {
     queue: [],
     track: { items: [] },
     cloud_agents: [],
+    roster: ROSTER.names,
+    roster_roles: ROSTER.roles,
     board: { updated_ct: new Date().toISOString(), cards: [], stats: { open_total: 0 } },
   });
   return new Promise((resolve) => {
@@ -57,7 +65,7 @@ test('mesh, stats, roster, cards, and activity start open in both themes', async
   const base = `http://127.0.0.1:${server.address().port}/index.html`;
   let browser;
   try {
-    browser = await chromium.launch();
+    browser = await launchBoard();
     for (const width of [1280, 390]) {
       for (const theme of ['dark', 'light']) {
         const page = await browser.newPage({ viewport: { width, height: width === 390 ? 844 : 800 } });
@@ -134,6 +142,24 @@ test('mesh, stats, roster, cards, and activity start open in both themes', async
           assert.ok(cards.min >= 220, JSON.stringify(cards));
           assert.ok(cards.height > 256, JSON.stringify(cards));
           assert.equal(cards.wave, '720px');
+          const band = await page.evaluate(() => {
+            const meshEl = document.getElementById('meshPanel');
+            const ping = document.getElementById('agentPing');
+            const kanbanEl = document.getElementById('kanban');
+            const mesh = meshEl.getBoundingClientRect();
+            const kanban = kanbanEl.getBoundingClientRect();
+            const following = Node.DOCUMENT_POSITION_FOLLOWING;
+            return {
+              gap: kanban.top - mesh.bottom,
+              hidden: ping.hidden,
+              between: (meshEl.compareDocumentPosition(ping) & following) !== 0
+                && (ping.compareDocumentPosition(kanbanEl) & following) !== 0,
+            };
+          });
+          assert.equal(band.hidden, true);
+          assert.equal(band.between, true);
+          assert.ok(band.gap <= 24, JSON.stringify(band));
+          assert.ok(band.gap >= 0, JSON.stringify(band));
         }
         await page.close();
       }
@@ -181,12 +207,12 @@ test('mesh, stats, roster, cards, and activity start open in both themes', async
   }
 });
 
-test('roster chips show the role on load and leave status to the dot', async () => {
+test('roster chips follow the configured seats and the theme toggle is the rightmost header control', async () => {
   const server = await serve();
   const base = `http://127.0.0.1:${server.address().port}/index.html`;
   let browser;
   try {
-    browser = await chromium.launch();
+    browser = await launchBoard();
     const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
     await page.addInitScript(() => {
       localStorage.removeItem('bifrost-folds');
@@ -197,7 +223,7 @@ test('roster chips show the role on load and leave status to the dot', async () 
       path: path.join(path.dirname(PUB), '..', 'site', 'public', 'site-config.js'),
     }));
     await page.goto(base, { waitUntil: 'domcontentloaded' });
-    await page.waitForFunction(() => document.querySelectorAll('#seatGrid .seat').length === 3);
+    await page.waitForFunction((n) => document.querySelectorAll('#seatGrid .seat').length === n, ROSTER.names.length);
     const before = await page.evaluate(() => {
       const panel = document.getElementById('seats').getBoundingClientRect().width;
       const grid = document.getElementById('seatGrid').getBoundingClientRect().width;
@@ -219,22 +245,51 @@ test('roster chips show the role on load and leave status to the dot', async () 
       };
     });
     assert.equal(before.rosterOpen, true);
+    assert.ok(before.seats.length > 3, JSON.stringify(before.seats));
     assert.ok(before.nodes.includes('CloudAgents'));
-    assert.deepEqual(before.seats.map((seat) => seat.name), ['BLINKY', 'CRITIC', 'FORGE']);
-    assert.deepEqual(before.seats.map((seat) => seat.role), ['chief of staff', 'reviewer', 'eng primary']);
-    assert.ok(before.seats.every((seat) => seat.tag === 'DIV'));
-    assert.ok(before.seats.every((seat) => Math.abs(seat.y - before.seats[0].y) < 2), JSON.stringify(before.seats));
-    assert.ok(before.seats.every((seat) => seat.w > 80 && seat.w < before.panel / 2), JSON.stringify(before));
+    assert.deepEqual(before.seats.map((seat) => seat.name), ROSTER.names.map((name) => name.toUpperCase()));
+    assert.ok(before.seats.every((seat) => seat.role === ''), JSON.stringify(before.seats));
+    assert.ok(before.seats.some((seat) => seat.name === 'SEAT-FROM-ENV'));
+    assert.ok(before.seats.every((seat) => seat.tag === 'BUTTON'));
+    const firstRow = before.seats.filter((seat) => Math.abs(seat.y - before.seats[0].y) < 2);
+    assert.ok(firstRow.length >= 3, JSON.stringify(before.seats));
+    assert.ok(before.seats.every((seat) => seat.w > 28 && seat.w < 260 && seat.w < before.panel / 2), JSON.stringify(before));
     for (const seat of before.seats) assert.doesNotMatch(seat.text, /\b(ACTIVE|WORKING|IDLE|LIVE)\b/);
     const blinky = page.locator('#seatGrid .seat', { hasText: 'BLINKY' });
     await blinky.click();
     const after = await blinky.evaluate((el) => ({
       tag: el.tagName,
+      expanded: el.getAttribute('aria-expanded'),
       role: (el.querySelector('.role') || {}).textContent || '',
     }));
-    assert.equal(after.tag, 'DIV');
+    assert.equal(after.tag, 'BUTTON');
+    assert.equal(after.expanded, 'true');
     assert.equal(after.role, 'chief of staff');
+    await blinky.click();
+    const shut = await blinky.evaluate((el) => ({
+      expanded: el.getAttribute('aria-expanded'),
+      role: (el.querySelector('.role') || {}).textContent || '',
+    }));
+    assert.equal(shut.expanded, 'false');
+    assert.equal(shut.role, '');
     assert.equal(await page.locator('#seats').evaluate((el) => el.classList.contains('collapsed')), false);
+    const toggle = await page.evaluate(() => {
+      const button = document.getElementById('themeToggle');
+      const header = document.querySelector('header');
+      const rows = [...header.querySelectorAll('.title > *')].filter((el) => getComputedStyle(el).display !== 'none');
+      const controls = [...header.querySelectorAll('button, a, input, select')];
+      const box = button.getBoundingClientRect();
+      const maxRow = Math.max(...rows.map((el) => el.getBoundingClientRect().right));
+      const maxControl = Math.max(...controls.map((el) => el.getBoundingClientRect().right));
+      return {
+        last: rows[rows.length - 1] === button,
+        rightOfRow: box.right >= maxRow - 1,
+        rightOfControls: box.right >= maxControl - 1,
+      };
+    });
+    assert.equal(toggle.last, true);
+    assert.equal(toggle.rightOfRow, true);
+    assert.equal(toggle.rightOfControls, true);
   } finally {
     if (browser) await browser.close();
     await new Promise((resolve) => server.close(resolve));
@@ -246,7 +301,7 @@ test('see all history sits in the recent header and replaces the side pane', asy
   const base = `http://127.0.0.1:${server.address().port}/index.html`;
   let browser;
   try {
-    browser = await chromium.launch();
+    browser = await launchBoard();
     const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
     await page.goto(base, { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('#cardHistAll');
@@ -288,7 +343,14 @@ test('see all history sits in the recent header and replaces the side pane', asy
       return { hist: wave.classList.contains('hist-open'), shown };
     });
     assert.equal(closed.hist, false);
-    assert.ok(closed.shown.includes('statsFold') && closed.shown.includes('cardsFold') && closed.shown.includes('cardRecent'));
+    assert.ok(closed.shown.includes('cardsFold') && closed.shown.includes('cardRecent'));
+    assert.equal(closed.shown.includes('statsFold'), false);
+    const statsAbove = await page.evaluate(() => {
+      const stats = document.getElementById('statsFold').getBoundingClientRect();
+      const mesh = document.getElementById('meshPanel').getBoundingClientRect();
+      return mesh.top - stats.bottom;
+    });
+    assert.ok(statsAbove >= -1 && statsAbove < 24, String(statsAbove));
     assert.equal(await page.locator('#waveHistBack').evaluate((el) => getComputedStyle(el).display), 'none');
   } finally {
     if (browser) await browser.close();

@@ -1,18 +1,30 @@
 # Fleet setup: mapping seats
 
-Every file a new fleet edits to map its seats. Each section shows **ours** (Bifrost, 8 seats) beside the **kit default** a fresh install gets. Paths are under `house/live/`. Secrets never go in any of these files.
+Every file a new fleet edits to map its seats. Each section shows **ours** (Bifrost, 9 seats) beside the **kit default** a fresh install gets. Paths are under `house/live/`. Secrets never go in any of these files.
 
-Seats (ours): blinky, critic, forge, herald, magnet, nibbler, sound, arch1 (`feed/fleet-roster.json`).
+Seats (ours): blinky, critic, forge, near, herald, magnet, nibbler, sound, arch1 (`feed/fleet-roster.json`).
+
+## Upgrade from 4.1.3
+
+Other fleets upgrade the kit, then map seats. This install's seat files stay edited in place.
+
+- Node is 24.22.3. `engines.node` is `>=24.22.3`. Railway installs that binary from nodejs.org over `node:24.22.1-bookworm-slim`.
+- Seats. Copy the roster and the role map for the new fleet. Here, `feed/fleet-roster.json` lists the seats and `feed/routing/inbox-roles.json` is edited in place. A fresh install keeps the kit defaults in `feed/routing/inbox.py`.
+- Wake. `inbox-watch` posts `live-inbox <seat> --turn start --tag wake` after a poll that prints work. The seat posts `live-inbox <seat> --turn end` when the chat finishes. A cloud run posts `live-inbox <seat> --cloud` beside that turn. The cloud agent does not post the line.
+- Board rule. The stanza below is the owner prompt, the ack, and the cloud tags.
+- Cursor folder. One folder per seat wake. The rule is `grok-bot/OP-PROC.md#cursor-folder`. `LIVE_CURSORS` is not required.
+- Reviews are PASS or FIX only.
+- Bifrost pointer. If `house/live/POINTER.md` is in the tree, it names the bifrost git tip and `/healthz`. `house/live` stays in this repo until burst-live is connected.
 
 ## Board rule
 
-A new fleet reads these before the seat map. Board rule. On every owner message run `live-inbox <seat> --prompt --from owner --note "<gist>"`. Ack a handled line with `live-inbox <seat> --ack <id>`, or `live-inbox <seat> --ack all` once every open line is handled. A cloud agent run uses `live-inbox <seat> --turn start --tag "bc-<first8> <track>"` and `live-inbox <seat> --turn end --tag "bc-<first8>"`. `--from owner` is required today.
+A new fleet reads these before the seat map. Board rule. On every owner message run `live-inbox <seat> --prompt --from owner --note "<gist>"`. Ack a handled line with `live-inbox <seat> --ack <id>`, or `live-inbox <seat> --ack all` once every open line is handled. A cloud agent run uses `live-inbox <seat> --turn start --tag "bc-<first8> <track>"` beside `live-inbox <seat> --cloud launch --agent <bc-id> --tag <card>` on first start or `--cloud reply` on resume, and `live-inbox <seat> --turn end --tag "bc-<first8>"` beside `live-inbox <seat> --cloud finished --agent <bc-id> --tag <card>` (cancel is `--cloud cancel`). The tag is owner/repo#n or xray#n. The cloud agent does not post that line. `--from owner` is required today.
 
 Kanban note. The live page shows a read-only kanban above Activity. Columns are open, review, fix, merge, retest, and done. The deep link is `?card=`.
 
 History note. Every activity line is archived to history. The word owner is the owner via LIVE_OWNER or the owner-name.
 
-The public board does not serve the history archive or the kanban yet.
+The public board serves the kanban and GET /history, /history/cards, and /history/transitions.
 
 ## inbox-roles.json
 
@@ -25,8 +37,8 @@ The public board does not serve the history archive or the kanban yet.
 | `mirror_seat` | `forge` | `builder` (`MIRROR_SEAT` in inbox.py) |
 | `watcher_seats` | `[]` (Arch1's `inbox-watch.sh` is an approved exception, run on Arch1's box, not a watcher seat here) | `[]` |
 | `seats` roles | reviewer, builder, tester, operator, coord, each with `"seat"` or `"off"` | `{}` |
-| `mentions` (`aliases`) | handle -> seat for our 8 (`Arch1` -> `arch1`, ...); @-mentions come from the collector's `mentions[]`, handles only | none |
-| `fallback` | `{"seat": "blinky"}`: lines to seats outside our 8 are dropped and the event goes to blinky (Arch1's lines are never copied) | none |
+| `mentions` (`aliases`) | handle -> seat for our 9 (`Arch1` -> `arch1`, ...); @-mentions come from the collector's `mentions[]`, handles only | none |
+| `fallback` | `{"seat": "blinky"}`: lines to seats outside our 9 are dropped and the event goes to blinky (Arch1's lines are never copied) | none |
 | `pr_heads`, `comment_watch` | critic + blinky per PR head; every comment -> blinky (+ PR author's seat) | none |
 
 ## routing/inbox.py kit defaults
@@ -37,11 +49,11 @@ The public board does not serve the history archive or the kanban yet.
 
 `feed/fleet-nodes.json` maps a GitHub login to the seat credited for its events (ours: `forge0x1[bot]` -> forge, `critic0x[bot]` -> critic, `htafolla` / `Blaze0x1` -> Blaze, `github-actions[bot]` -> CI, ...). A commit's `Seat:` trailer credits that seat even when the author login is shared.
 
-Precedence (`feed/live_collect.py`): `LIVE_NODE_MAP` env (JSON, set from this file) merges **over** the template `NODE` defaults; logins in neither are dropped, not published as Others. Kit default: no file, template `NODE` only. A later `LIVE_NODE_MAP` relabels stored events. A commit with no GitHub User whose git author name is a seat name (`SEAT_GIT_NAMES`) credits that seat; a GitHub login that merely equals a seat name (e.g. `arch1`, `blinky`) is a stranger and stays Others.
+Precedence (`feed/live_collect.py`): `LIVE_NODE_MAP` env (JSON, set from this file) merges **over** the template `NODE` defaults; logins in neither are dropped, not published as Others. Kit default: no file, template `NODE` only. A later `LIVE_NODE_MAP` relabels stored events. A CI-kind row stored as `Others` is not deleted: it returns to `CI` until that actor is in the map, then it takes the mapped node. `from` `CI` itself is not rewritten. A commit with no GitHub User whose git author name is a seat name (`SEAT_GIT_NAMES`) credits that seat; a GitHub login that merely equals a seat name (e.g. `arch1`, `blinky`) is a stranger and stays Others.
 
 ## fleet-roster.json
 
-`feed/fleet-roster.json`: `seats` (who gets an inbox / key; the 8 above, including parked and Arch1) and `board` (the counted strip: blinky, critic, forge). `outside` is Arch1. `parked` (herald, magnet, nibbler, sound) is not drawn. Kit default: no roster; the server uses `LIVE_FLEET_SEATS`, else the nodes in `LIVE_NODE_MAP` (`feed/live_fleet.py`).
+`feed/fleet-roster.json`: `seats` (who gets an inbox / key; the 9 above, including parked and Arch1) and `board` (the counted strip: blinky, critic, forge, near, nibbler, mill). Mill is drawn and counted. Mill is not an inbox seat, and a mill mention still lands on forge. A GitHub event credited to mill still marks mill active. `outside` is Arch1. `parked` (herald, magnet, sound) is not drawn. Kit default: no roster; the server uses `LIVE_FLEET_SEATS`, else the nodes in `LIVE_NODE_MAP` (`feed/live_fleet.py`).
 
 ## site.json
 
@@ -114,4 +126,4 @@ Checks:
 
 ### Inbox watcher
 
-`tools/inbox-watch.sh` polls Arch1's inbox and never acks; install steps in [inbox.md](inbox.md). A non-empty read is the work: the Grok turn that sees the lines handles them, posts the receipt, then acks. The host monitor is what delivers those lines into the Grok session. The launchd log is not a wake. It is an approved exception to the no-local-watchers rule, not the only one. Hooks above are a separate install: see [Suit and hooks](#suit-and-hooks).
+`tools/inbox-watch.sh` polls Arch1's inbox and never acks; install steps in [inbox.md](inbox.md). A non-empty read is the work: the Grok turn that sees the lines handles them, posts the receipt, then acks. Suit boot runs that script in the local TUI. A log file outside the TUI is not a wake. It is an approved exception to the no-local-watchers rule, not the only one. Hooks above are a separate install: see [Suit and hooks](#suit-and-hooks).

@@ -21,20 +21,41 @@ STATE=${PUSH_STATE:-$BASE/feed/push-acked.json}   # server cursor + per-id conte
 ACT_STATE=${ACT_STATE:-$BASE/feed/activity-pulled.json}   # activity pull position (server epoch + seq)
 ACT_OUT=${ACT_OUT:-$BASE/fleet/remote-activity.jsonl}     # pulled off-box activity -> live_fleet.scan_activity
 # only a pinned release (release.sh) may push the live feed or write live state; dev/test runs from the repo never do
+canon() { python3 -c 'import os,sys; print(os.path.realpath(sys.argv[1]))' "$1"; }
 case "$CODE" in
   "${LIVE_HOME:-/srv/live}"/releases/*/feed) ;;
   *) for f in "$FEED" "$STATE" "$ACT_STATE" "$ACT_OUT" "$PUSH_LOG"; do
-       case "$(readlink -m "$f")" in "${LIVE_HOME:-/srv/live}"/run/*)
+       case "$(canon "$f")" in "${LIVE_HOME:-/srv/live}"/run/*)
          echo "refusing to push the live feed from a dev checkout ($CODE); use release.sh" >&2; exit 1 ;; esac
      done ;;
 esac
 mkdir -p "$(dirname "$PUSH_LOG")"
 
-log() { printf '%s %s\n' "$(date -Iseconds)" "$1" >> "$PUSH_LOG"; }
+log() { printf '%s %s\n' "$(date -Iseconds 2>/dev/null || date '+%Y-%m-%dT%H:%M:%S%z')" "$1" >> "$PUSH_LOG"; }
+file_bytes() {
+  if stat -c %s "$1" >/dev/null 2>&1; then stat -c %s "$1"
+  else stat -f %z "$1"
+  fi
+}
 
-# single instance
+# single instance. flock(1) on Linux. A python holder on a host that has no flock binary.
 exec 9>"$PUSH_LOG.lock"
-flock -n 9 || { log "already running, exiting"; exit 1; }
+if command -v flock >/dev/null 2>&1; then
+  flock -n 9 || { log "already running, exiting"; exit 1; }
+else
+  python3 -B "$CODE/push_lock.py" "$PUSH_LOG.lock" &
+  LOCK_PID=$!
+  ready=0
+  for _ in 1 2 3 4 5 6 7 8 9 10; do
+    if ! kill -0 "$LOCK_PID" 2>/dev/null; then break; fi
+    if grep -q '^held$' "$PUSH_LOG.lock" 2>/dev/null; then ready=1; break; fi
+    sleep 0.05
+  done
+  if [ "$ready" != 1 ]; then log "already running, exiting"; exit 1; fi
+  cleanup_lock() { kill "$LOCK_PID" 2>/dev/null || true; wait "$LOCK_PID" 2>/dev/null || true; }
+  trap cleanup_lock EXIT
+  trap 'cleanup_lock; exit 143' INT TERM
+fi
 
 read_env() {  # parse KEY=VALUE without sourcing
   MESH_URL=$(sed -n 's/^MESH_URL=//p' "$PUSH_ENV" | tail -n1 | tr -d '\r"'"'"' ')
@@ -44,7 +65,7 @@ read_env() {  # parse KEY=VALUE without sourcing
 
 post() {  # post FILE PATH -> sets code, gz; response body in $out
   gzip -6 -n -c "$1" > "$1.gz" || { code=000; return; }
-  gz=$(stat -c %s "$1.gz")
+  gz=$(file_bytes "$1.gz")
   # gzip body (Content-Encoding: gzip); secret goes to curl via a stdin config, not argv, so it never shows in ps
   code=$(printf 'header = "Authorization: Bearer %s"\n' "$INGEST_SECRET" |
     curl -sS -o "$out" -w '%{http_code}' --config - --max-time 60 9>&- \
@@ -68,7 +89,7 @@ push_once() {  # delta when the server acknowledged our last push; full resync o
     [ -n "$mode" ] || { rm -f "$tmp"*; rm -f "$out"; log "skip: payload failed"; return; }
     path=/ingest; [ "${mode%% *}" = delta ] && path=/ingest/delta
     post "$tmp.body" "$path"
-    raw=$(stat -c %s "$tmp.body")
+    raw=$(file_bytes "$tmp.body")
     resp=$(head -c 200 "$out" | tr -d '\n' | sed -E 's/[^A-Za-z0-9:,{}" _.-]//g')
     log "push $code mode=${mode// /:} raw=${raw}B gz=${gz}B resp=${resp}"
     if [ "$code" = 200 ]; then python3 -B "$CODE/push_payload.py" commit "$STATE" "$tmp.body" "$out" >/dev/null 9>&- || rm -f "$STATE"; break; fi
@@ -134,7 +155,11 @@ inbox_cycle() {  # seat inboxes (port of xray PR #5): pull the server's events s
   rm -f "$out" "$out.lines"
 }
 
-sig() { stat -c '%Y.%s.%i' "$FEED" 2>/dev/null; }   # live-events.json is replaced atomically: new inode per write
+sig() {  # live-events.json is replaced atomically: new inode per write
+  if stat -c '%Y.%s.%i' "$FEED" >/dev/null 2>&1; then stat -c '%Y.%s.%i' "$FEED" 2>/dev/null
+  else stat -f '%m.%z.%i' "$FEED" 2>/dev/null
+  fi
+}
 last="" ; last_push=0
 while :; do
   cur=$(sig)

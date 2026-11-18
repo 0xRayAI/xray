@@ -1,0 +1,50 @@
+{
+  "source": "collector-shaped merges absent from house/live/tests/fixtures/live-cards.json",
+  "merged": [
+    {
+      "number": 493,
+      "title": "fix(reflection): write automatic reflections into the seat feedback folder",
+      "repo": "0xRayAI/xray",
+      "from": "forge",
+      "url": "https://github.com/0xRayAI/xray/pull/493",
+      "opened_ago_s": 259200,
+      "merged_ago_s": 172800
+    },
+    {
+      "number": 494,
+      "title": "fix: make npm test green for the seven main failures",
+      "repo": "0xRayAI/xray",
+      "from": "forge",
+      "url": "https://github.com/0xRayAI/xray/pull/494",
+      "opened_ago_s": 86400,
+      "merged_ago_s": 21600
+    },
+    {
+      "number": 496,
+      "title": "fix(live): roster, cards, links, and the mesh column",
+      "repo": "0xRayAI/xray",
+      "from": "forge",
+      "url": "https://github.com/0xRayAI/xray/pull/496",
+      "opened_ago_s": 90000,
+      "merged_ago_s": 14400
+    },
+    {
+      "number": 499,
+      "title": "fix(live): turn state, briefs, and wave card detail",
+      "repo": "0xRayAI/xray",
+      "from": "forge",
+      "url": "https://github.com/0xRayAI/xray/pull/499",
+      "opened_ago_s": 72000,
+      "merged_ago_s": 3600
+    },
+    {
+      "number": 470,
+      "title": "merged outside the seven day window",
+      "repo": "0xRayAI/xray",
+      "from": "forge",
+      "url": "https://github.com/0xRayAI/xray/pull/470",
+      "opened_ago_s": 777600,
+      "merged_ago_s": 694800
+    }
+  ]
+}

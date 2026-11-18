@@ -37,7 +37,7 @@ def seat_of(name):
     for cand in (v, v.rsplit(":", 1)[-1].strip(), re.sub(r"\s*\(.*?\)\s*", " ", v).strip()):
         if cand in PROMPT_SEATS:
             return PROMPT_SEATS[cand]
-        for s in SEATS:
+        for s in activity_names():
             if cand == s.lower():
                 return s
     return None
@@ -54,8 +54,9 @@ WORKING_LOCAL_S = 60 * 60    # spinner: box-local fleet/activity.jsonl start wit
 LOCAL_TAG_RE = re.compile(r"[^A-Za-z0-9 ._:@#+/-]")
 # Lab work in progress (Tester, QA = QaOne + QaTwo + QA): a seat is working while files under its lab trees
 # changed in the last WORKING_FILES_S, or processes running inside those trees burned >= WORK_CPU_BUSY_S of CPU in a
-# pass (test runners write nothing for minutes), held WORKING_CPU_HOLD_S. mtimes, /proc cwd and CPU ticks only:
-# no file is opened, no command line or environment read, no path stored.
+# pass (test runners write nothing for minutes), held WORKING_CPU_HOLD_S. mtimes plus cwd and CPU ticks only
+# (/proc, or ps cputime and lsof cwd where /proc is absent): no file is opened, no command line or
+# environment read, no path stored.
 WORKING_FILES_S = 150
 WORKING_CPU_HOLD_S = 120
 WORK_CPU_BUSY_S = 1.0
@@ -135,6 +136,19 @@ def load_seat_config(raw=None):
 
 
 SEATS, BOARD, BOARD_SEATS = load_seat_config()   # file owners, fold, counted header seats
+
+
+def activity_names():
+    """Inbox seats, then any counted board seat that is not an inbox seat."""
+    names = list(SEATS)
+    have = set(names)
+    for board_seat in BOARD_SEATS:
+        if board_seat not in have:
+            names.append(board_seat)
+            have.add(board_seat)
+    return names
+
+
 SEAT_OF = {"tester": "Tester", "qa-one": "QaOne", "qa-two": "QaTwo"}
 SEV_RE = re.compile(r"(?i)severity\W{0,8}(S[0-4])\b")
 STATUS_RE = re.compile(r"(?im)^\W{0,4}status\W{0,6}(OPEN|FIXED|REOPENED|PARTLY|WITHDRAWN|PASS|FAIL|CLOSED|WONTFIX|DUPLICATE)\b")
@@ -204,6 +218,86 @@ def _cloud_pr(value):
     if not push_payload.PR_URL.fullmatch(text):
         return None
     return text
+
+
+def _cputime_seconds(text):
+    raw = str(text or "").strip()
+    if not raw:
+        return 0.0
+    days = 0
+    if "-" in raw:
+        day, raw = raw.split("-", 1)
+        days = int(day)
+    bits = raw.split(":")
+    sec = float(bits[-1])
+    minutes = int(bits[-2]) if len(bits) > 1 else 0
+    hours = int(bits[-3]) if len(bits) > 2 else 0
+    return days * 86400 + hours * 3600 + minutes * 60 + sec
+
+
+def _lab_cpu(roots, tck):
+    """(pid, seat, ticks) for a process whose cwd is inside a lab tree.
+
+    Linux reads /proc. A host without /proc uses ps cputime and lsof cwd.
+    Ticks stay clock ticks so the caller keeps one delta.
+    """
+    if not roots:
+        return []
+    if os.path.isdir("/proc"):
+        rows = []
+        for pid in os.listdir("/proc"):
+            if not pid.isdigit():
+                continue
+            try:
+                cwd = os.readlink(f"/proc/{pid}/cwd") + os.sep
+                seat = next((seat_ for root, seat_ in roots if cwd.startswith(root)), None)
+                if not seat:
+                    continue
+                with open(f"/proc/{pid}/stat") as fh:
+                    fields = fh.read().rsplit(")", 1)[1].split()
+                ticks = int(fields[11]) + int(fields[12])
+            except (OSError, ValueError, IndexError):
+                continue
+            rows.append((pid, seat, ticks))
+        return rows
+    cwd_of = {}
+    try:
+        listed = subprocess.check_output(
+            ["lsof", "-n", "-P", "-d", "cwd", "-Fn"], text=True, stderr=subprocess.DEVNULL,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return []
+    pid = ""
+    for line in listed.splitlines():
+        if line.startswith("p") and line[1:].isdigit():
+            pid = line[1:]
+        elif pid and line.startswith("n"):
+            try:
+                path = os.path.realpath(line[1:])
+            except OSError:
+                continue
+            if not path.endswith(os.sep):
+                path += os.sep
+            seat = next((seat_ for root, seat_ in roots if path.startswith(root)), None)
+            if seat:
+                cwd_of[pid] = seat
+    if not cwd_of:
+        return []
+    try:
+        ps = subprocess.check_output(["ps", "-ax", "-o", "pid=,cputime="], text=True, stderr=subprocess.DEVNULL)
+    except (OSError, subprocess.SubprocessError):
+        return []
+    rows = []
+    for line in ps.splitlines():
+        parts = line.split()
+        if len(parts) < 2 or parts[0] not in cwd_of:
+            continue
+        try:
+            ticks = int(_cputime_seconds(parts[1]) * tck)
+        except ValueError:
+            continue
+        rows.append((parts[0], cwd_of[parts[0]], ticks))
+    return rows
 
 
 class Fleet:
@@ -843,7 +937,7 @@ class Fleet:
                 if not isinstance(d, dict):
                     continue
                 seat, kind, action, t = seat_of(d.get("seat")), d.get("kind"), d.get("action"), _ts(d.get("t_ct"))
-                if seat not in SEATS or not isinstance(kind, str) or t is None or t > now + 300:
+                if seat not in set(activity_names()) or not isinstance(kind, str) or t is None or t > now + 300:
                     continue
                 lst = A.setdefault("seat_t", {})   # any valid line counts against the missing_activity flag
                 lst[seat] = max(lst.get(seat, 0), t)
@@ -900,7 +994,8 @@ class Fleet:
             raw_seat = d.get("seat")
             if kind == "cloud_agent":
                 named = raw_seat if isinstance(raw_seat, str) else ""
-                seat = named if named in SEATS or named in CLOUD_SEATS else seat_of(named)
+                known = set(activity_names()) | set(CLOUD_SEATS)
+                seat = named if named in known else seat_of(named)
                 if not seat:
                     continue
             elif raw_seat not in ACT_SEATS:
@@ -995,20 +1090,8 @@ class Fleet:
                 self._touch(seat, newest)
         # 2) CPU used by processes whose cwd is inside a lab tree since the last pass
         roots = [(os.path.realpath(r) + os.sep, seat) for r, seat in trees]
-        tck, cpu, seat_cpu = os.sysconf("SC_CLK_TCK"), {}, {}
-        for pid in os.listdir("/proc") if roots and os.path.isdir("/proc") else []:
-            if not pid.isdigit():
-                continue
-            try:
-                cwd = os.readlink(f"/proc/{pid}/cwd") + os.sep
-                seat = next((s_ for r, s_ in roots if cwd.startswith(r)), None)
-                if not seat:
-                    continue
-                with open(f"/proc/{pid}/stat") as fh:
-                    f = fh.read().rsplit(")", 1)[1].split()
-                ticks, start = int(f[11]) + int(f[12]), int(f[19]) / tck   # utime + stime; start since boot
-            except (OSError, ValueError, IndexError):
-                continue
+        tck, cpu, seat_cpu = os.sysconf("SC_CLK_TCK") or 100, {}, {}
+        for pid, seat, ticks in _lab_cpu(roots, tck):
             cpu[pid] = ticks
             prev = self._cpu.get(pid)
             if prev is None and not self._cpu:
@@ -1058,7 +1141,7 @@ class Fleet:
             t = _ts(e.get("t_ct"))
             if t:
                 last[b] = max(last.get(b, 0), t)
-        for s in SEATS:
+        for s in activity_names():
             b = BOARD.get(s, s)
             for t in (self.seat_mtime.get(s, 0), self.prompts.get("seat_t", {}).get(s, 0),
                       self.cloud.get("by_t", {}).get(s, 0), self.activity.get("seat_t", {}).get(s, 0)):
@@ -1234,17 +1317,19 @@ class Fleet:
     def fleet_state(self, feed_events, now=None):
         """Seat active = owned file, GitHub, or a message the seat sent, in the last 15 min. Working = spinner only."""
         now = now or time.time()
+        names = activity_names()
+        counted = set(names)
         gh_last = {}
         for e in feed_events:
-            who = e.get("credit") if e.get("credit") in SEATS else e.get("from")   # same credit as the feed (Seat: trailer > login)
-            if e.get("src_file") == "github-api" and who in SEATS:
+            who = e.get("credit") if e.get("credit") in counted else e.get("from")   # same credit as the feed (Seat: trailer > login)
+            if e.get("src_file") == "github-api" and who in counted:
                 try:
                     t = datetime.fromisoformat(e["t_ct"]).timestamp()
                 except (KeyError, ValueError):
                     continue
                 gh_last[who] = max(gh_last.get(who, 0), t)
         last_by = {}
-        for s in SEATS:   # fold file owners into board seats: a board seat is active if any member is
+        for s in names:   # inbox seats plus a board seat that has no inbox (mill)
             b = BOARD.get(s, s)
             for src, t in (("files", self.seat_mtime.get(s, 0)), ("github", gh_last.get(s, 0)),
                            ("message", self.prompts.get("seat_t", {}).get(s, 0)),

@@ -129,6 +129,7 @@ test('a set falsy spectrum flag is off, including 0', () => {
 test('the board manual names a falsy spectrum flag and no spectrum plate', () => {
   const manual = fs.readFileSync(path.join(ROOT, 'docs', 'board.md'), 'utf8');
   assert.match(manual, /A set falsy `LiveMesh\.SPECTRUM` \(`0`, `''`, `null`, `false`\) turns the stream off, and a missing flag leaves it on\./);
+  assert.match(manual, /The opening burst and the replay loop play the last hour\./);
   assert.match(manual, /Plates read: none \(no spectrum plate\)/);
 });
 

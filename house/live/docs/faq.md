@@ -1,12 +1,12 @@
 # Deploy FAQ
 
-Generic install mismatches. No project ids, no secret values. The agreed host setup is [DEPLOY.md](../../burst/DEPLOY.md): start `node server.mjs`, health check `GET /healthz`, root directory is the assembled deploy dir, collector probes come only from `COLLECTOR_HEALTH_URLS`.
+Generic install mismatches. No project ids, no secret values. The agreed host setup is [DEPLOY.md](../../burst/DEPLOY.md): start `/app/docker-entrypoint.sh`, health check `GET /healthz`, root directory is the assembled deploy dir, collector probes come only from `COLLECTOR_HEALTH_URLS`.
 
 ### The service starts the wrong program
 
 - **Symptom:** The process is `python3 house/live-mesh/fetch_feed.py`, or the page is a static `docs-site` directory.
 - **Cause:** An old setup section named that command, `BURST_REPOS`, and `BURST_HEALTH_URL`.
-- **Fix:** Follow DEPLOY. Start `node server.mjs`. Set `COLLECTOR_REPOS` and `COLLECTOR_HEALTH_URLS`.
+- **Fix:** Follow DEPLOY. Start `/app/docker-entrypoint.sh`. Set `COLLECTOR_REPOS` and `COLLECTOR_HEALTH_URLS`.
 
 ### Deploy from the repo root runs a different server
 
@@ -29,7 +29,7 @@ Generic install mismatches. No project ids, no secret values. The agreed host se
 ### `railway up` targets the wrong project or service
 
 - **Symptom:** The deploy lands on `burst-live` / `burst-live` (our names), or the script says the deploy dir is not linked.
-- **Cause:** Those names are the defaults. The overrides were not in the deploy guide.
+- **Cause:** Older `deploy.sh` defaulted to those names. Since #1047 both are required and the script refuses without them.
 - **Fix:** Set `LIVE_RAILWAY_PROJECT`, `LIVE_RAILWAY_SERVICE`, and `MESH_APP_DEPLOY_DIR` to your own names before `deploy.sh`. `seat_keys.sh publish` uses the same service and deploy dir.
 
 ### A deploy wipes the fleet's page
@@ -48,7 +48,7 @@ Generic install mismatches. No project ids, no secret values. The agreed host se
 
 - **Symptom:** New events use the new seat. Events already in the store stay `Others`.
 - **Cause:** Incremental polls relabel an item only when that item changes.
-- **Fix:** On load, set `from` from `node(actor)` or `node(author)` again. Do not delete the store. `from` values `GitHub` and the product node stay as they are.
+- **Fix:** On load, set `from` from `node(actor)` or `node(author)` again. Do not delete the store. `from` values `GitHub`, `CI`, and the product node stay as they are. A CI-kind row already stored as `Others` goes back to `CI` while that actor is unmapped, so the load does not delete it. Once that actor is in `LIVE_NODE_MAP`, the same load sets `from` to that node.
 
 ### Unmapped logins publish their name and title
 
@@ -102,4 +102,4 @@ Generic install mismatches. No project ids, no secret values. The agreed host se
 
 - **Symptom:** Every deploy warns that `railway.json` is deprecated.
 - **Cause:** Config as Code stops being read on 2026-12-01. DEPLOY still needs a start command and `/healthz` until then.
-- **Fix:** `house/live/app/.railway/railway.ts` is the replacement (`node server.mjs`, health check `/healthz`, one replica). Plan and apply it before 2026-12-01, after `railway.json` is no longer the service config. Rename the service and project in that file to yours. Put no secrets in it.
+- **Fix:** `house/live/app/.railway/railway.ts` is the replacement (`/app/docker-entrypoint.sh`, health check `/healthz`, one replica). Plan and apply it before 2026-12-01, after `railway.json` is no longer the service config. Rename the service and project in that file to yours. Put no secrets in it.

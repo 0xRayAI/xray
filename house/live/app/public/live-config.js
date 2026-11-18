@@ -6,7 +6,7 @@
   var FEED = (window.LIVE_FEED_URL || 'live-events.json');
   L.SOURCES.splice(0, L.SOURCES.length, { name: 'feed', api: true, url: FEED }, { name: 'feed', url: FEED });
   // Poll every 10 s: the pusher uploads right after each feed write, and an unchanged feed is a 304 with an empty body
-  // (If-None-Match against this server's ETag), so the page's 'Updated' age stays under ~75 s.
+  // (If-None-Match against this server's ETag), so the page's 'Refreshed' age stays under ~75 s.
   L.POLL_MS = 10000;
   // Delta polls: the full feed once (first load, or after the server reports a reset), then ?since=<cursor> returns
   // only events new or changed since then plus the header fields (304 when nothing changed). applyFeed already
@@ -15,11 +15,18 @@
   L.fetchFeed = function (fetchFn, nowMs, mem) {
     function full() {
       return fetchFn(FEED, { cache: 'no-store' }).then(function (res) {
+        // A show-poll drops the cursor once. A server that still answers 304 is an unchanged feed, not an error.
+        if (res.status === 304) return { source: 'feed', feed: null };
         if (!res.ok) throw new Error('feed HTTP ' + res.status);
-        return res.json();
-      }).then(function (f) { mem.cursor = (f && f.cursor) || null; return { source: 'feed', feed: f }; });
+        return res.json().then(function (f) {
+          mem.cursor = (f && f.cursor) || null;
+          return { source: 'feed', feed: f };
+        });
+      });
     }
-    if (!mem.cursor) return full();
+    var unconditional = !mem.cursor || mem.force;
+    if (mem.force) mem.force = 0;
+    if (unconditional) return full();
     var url = FEED + (FEED.indexOf('?') < 0 ? '?' : '&') + 'since=' + encodeURIComponent(mem.cursor);
     return fetchFn(url, { cache: 'no-store' }).then(function (res) {
       if (res.status === 304) return { source: 'feed', feed: null };
@@ -81,7 +88,7 @@
   L.botImage = function (key) { return L.AVATAR[key] ? 'avatars/' + L.AVATAR[key] + '.png' : null; };
   var W = { lab_bug: 'lab bug', lab_bug_update: 'lab bug', lab_issue: 'lab issue', lab_run: 'lab test run',
     lab_calls: 'lab calls', board_card: 'board card', board_status: 'board', lab_retest_pass: 'lab retest PASS', lab_retest_fail: 'lab retest FAIL', critic_pass: 'reviewer PASS',
-    critic_fail: 'reviewer FAIL', critic_hold: 'reviewer HOLD', critic_recheck: 'reviewer re-check', pr_commit: 'PR push',
+    critic_fail: 'reviewer FIX', critic_hold: 'reviewer FIX (legacy HOLD)', critic_recheck: 'reviewer re-check', pr_commit: 'PR push',
     review: 'review', pr_comment: 'PR comment', issue_comment: 'issue comment', review_comment: 'review comment',
     commit: 'commit', check_run: 'check run', check_suite: 'check suite', workflow_run: 'workflow run',
     commit_status: 'status', deploy_pending: 'deploy pending', tag: 'tag', release: 'release' };
@@ -148,17 +155,62 @@
   L.SITE_FOOT = '';   // footer line; the kit shows none (a fleet overlay sets its own)
   // Lens label box: centred on the node, shifted so it never runs off the canvas edge.
   L.labelX = function (x, w, width) { return Math.min(Math.max(x, w / 2 + 2), width - w / 2 - 2); };
+  function beatCarriesCard(b) {
+    return !!(b && (b.what || b.state || b.stage || b.owner || b.next_owner || b.nextOwner || b['next owner']));
+  }
+  // Replay folds beats at or before t. A beat's what moves stage and state. Owner and next owner
+  // come from the latest beat that names them. Live fields stay when no beat carries them.
+  L.cardAsOf = function (card, beats) {
+    var kind = card && card.kind === 'issue' ? 'issue' : 'pr';
+    var stage = kind === 'issue' ? 'open' : 'review';
+    var state = 'live';
+    var owner = '';
+    var nextOwner = '';
+    (beats || []).forEach(function (b) {
+      var what = String(b.what || '');
+      if (what === 'parked') state = 'parked';
+      else if (what === 'held') state = 'held';
+      else if (what === 'merged' || what === 'closed') { state = 'closed'; stage = 'done'; }
+      else if (what === 'opened' || what === 'reopened') {
+        state = 'live';
+        stage = kind === 'pr' ? 'review' : (what === 'reopened' ? 'open' : stage);
+      } else if (what === 'pushed') stage = kind === 'pr' ? 'review' : stage;
+      else if (what === 'Reviewer FIX' || what === 'Reviewer FAIL' || what === 'Reviewer HOLD' || what === 'CI failure' || what === 'CI timed_out') stage = 'fix';
+      else if (what.indexOf('Reviewer PASS') === 0) stage = 'merge';
+      else if (what === 'retest PASS' || what === 'retest FAIL') stage = 'done';
+      if (b.state) state = String(b.state);
+      if (b.stage) stage = String(b.stage);
+      if (b.owner) owner = String(b.owner);
+      var nxt = b.next_owner || b.nextOwner || b['next owner'];
+      if (nxt) nextOwner = String(nxt);
+    });
+    var packet = Object.assign({}, (card && card.packet) || {});
+    if (nextOwner) packet['next owner'] = nextOwner;
+    else if (!packet['next owner'] && card && card.next_owner) packet['next owner'] = card.next_owner;
+    return {
+      state: state,
+      stage: stage,
+      owner: owner || (card && card.owner) || '',
+      packet: packet
+    };
+  };
   // Board as of a timeline point (rewound / replay): only cards that existed then (first beat at or before t), with
-  // beats up to t. Live (t == null) = every card. Pinned cards always show.
+  // beats up to t. State, stage, owner, and next owner come from those beats. Live (t == null) = every card.
+  // Pinned cards always show.
   L.boardAt = function (cards, t) {
     if (t == null) return cards;
     var out = [];
     (cards || []).forEach(function (c) {
-      if (c.pinned) { out.push(c); return; }
-      var bs = (c.beats || []).filter(function (b) { return b.t <= t; });
-      var first = (c.beats || []).length ? c.beats[0].t : c.last_beat_t;
-      if (first != null && first > t) return;
-      out.push(bs.length === (c.beats || []).length ? c : Object.assign({}, c, { beats: bs, last_beat_t: bs.length ? bs[bs.length - 1].t : c.last_beat_t }));
+      var all = c.beats || [];
+      var bs = all.filter(function (b) { return b.t <= t; });
+      var first = all.length ? all[0].t : c.last_beat_t;
+      if (!c.pinned && first != null && first > t) return;
+      var trimmed = bs.length === all.length ? c : Object.assign({}, c, {
+        beats: bs,
+        last_beat_t: bs.length ? bs[bs.length - 1].t : c.last_beat_t
+      });
+      if (!bs.some(beatCarriesCard)) { out.push(trimmed); return; }
+      out.push(Object.assign({}, trimmed, L.cardAsOf(c, bs)));
     });
     return out;
   };
@@ -179,12 +231,108 @@
   };
   // ONE derived seat state, used by the header chip text, its dot and the canvas node alike:
   //   working (in-flight spinner) > live (a ping on the board right now) > active (fleet, last 15 min) > idle
+  // lit is working only. seen is a recent ping or a 15-minute beat, and it is not the working sheen.
   L.seatState = function (working, live, active) {
     return working ? 'working' : live ? 'live' : active ? 'active' : 'idle';
   };
   var SEAT_WORD = { working: 'WORKING', live: 'LIVE', active: 'ACTIVE', idle: 'IDLE' };
   L.seatView = function (st) {   // everything the chip and the node show, from that one state
-    return { word: SEAT_WORD[st] || 'IDLE', lit: st !== 'idle', blink: st === 'working', nodeWorking: st === 'working' };
+    return {
+      word: SEAT_WORD[st] || 'IDLE',
+      lit: st === 'working',
+      blink: st === 'working',
+      nodeWorking: st === 'working',
+      seen: st === 'live' || st === 'active'
+    };
+  };
+  // A seat quiet this long is dormant. Seven days is the named count for that class.
+  L.DORMANT_MS = 7 * 24 * 60 * 60 * 1000;
+  L.seatDormant = function (lastCt, now) {
+    var t = typeof lastCt === 'number' ? lastCt : Date.parse(lastCt || '');
+    if (!(t > 0)) return false;
+    return (now || Date.now()) - t >= L.DORMANT_MS;
+  };
+  L.workOnKey = function (raw) {
+    var m = /([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+)#(\d+)/.exec(String(raw || '').trim());
+    return m ? m[1].toLowerCase() + '#' + m[2] : '';
+  };
+  L.cardWorkKey = function (c) {
+    if (!c) return '';
+    if (c.repo != null && c.number != null && String(c.repo)) return L.workOnKey(String(c.repo) + '#' + c.number);
+    return L.workOnKey(c.key);
+  };
+  L.seatWorkOn = function (fleet, seat) {
+    if (!fleet || !seat) return '';
+    var names = [seat, String(seat).toLowerCase()];
+    if (seat === 'blinky' || seat === 'Coord' || String(seat).toLowerCase() === 'blinky') names.push('blinky', 'Coord');
+    var working = fleet.working || {};
+    var seats = fleet.seats || {};
+    var mark = '';
+    for (var i = 0; i < names.length; i++) {
+      var row = working[names[i]];
+      if (row && row.working_on) { mark = row.working_on; break; }
+    }
+    if (!mark) {
+      for (var j = 0; j < names.length; j++) {
+        var src = seats[names[j]];
+        if (src && src.working_on) { mark = src.working_on; break; }
+      }
+    }
+    return L.workOnKey(mark);
+  };
+  // True when some seat's working_on names this card. The card's next owner
+  // can be a different seat. A prompt pulse with no working_on names nothing.
+  L.cardNamedByWork = function (fleet, want) {
+    if (!want || !fleet) return false;
+    var seen = {};
+    var bags = [fleet.working, fleet.seats];
+    for (var b = 0; b < bags.length; b++) {
+      var obj = bags[b];
+      if (!obj) continue;
+      for (var name in obj) {
+        if (!Object.prototype.hasOwnProperty.call(obj, name) || seen[name]) continue;
+        seen[name] = 1;
+        if (L.seatWorkOn(fleet, name) === want) return true;
+      }
+    }
+    return false;
+  };
+  // A running cloud row bound to this card. Finished and stale rows do not spin it.
+  L.cardCloudBound = function (c, clouds) {
+    var want = L.cardWorkKey(c);
+    var key = String(c && c.key || '').toLowerCase();
+    if (!want && !key) return false;
+    var list = clouds || [];
+    for (var i = 0; i < list.length; i++) {
+      var a = list[i];
+      if (!a || a.state !== 'running') continue;
+      var card = String(a.card || '');
+      if (want && L.workOnKey(card) === want) return true;
+      if (key && card.toLowerCase() === key) return true;
+    }
+    return false;
+  };
+  L.cardInWork = function (c, fleet, clouds) {
+    if (L.cardCloudBound(c, clouds)) return true;
+    var want = L.cardWorkKey(c);
+    if (!want) return false;
+    return L.cardNamedByWork(fleet, want);
+  };
+  L.rosterKept = function (rows, feed) {
+    var fleet = feed && feed.fleet;
+    var seats = fleet && fleet.seats;
+    if (!seats || typeof seats !== 'object') return rows || [];
+    var keys = {};
+    Object.keys(seats).forEach(function (k) { keys[String(k).toLowerCase()] = 1; });
+    var products = {};
+    var nodes = feed.product_nodes;
+    if (Array.isArray(nodes)) nodes.forEach(function (n) { if (typeof n === 'string' && n) products[n.toLowerCase()] = 1; });
+    return (rows || []).filter(function (a) {
+      var low = String((a && a[0]) || '').toLowerCase();
+      if (!low) return false;
+      if (products[low]) return true;
+      return !!keys[low];
+    });
   };
   function freshClock(ms) {
     var m = Math.max(1, Math.round(ms / 60000));
@@ -204,24 +352,59 @@
     if (cardsBehind && cardAge >= 3600000) return { tone: 'red', line: 'Cards last changed ' + freshClock(cardAge) + ' ago' };
     if (dataAge >= 3 * 3600000) return { tone: 'red', line: 'No new GitHub activity in ' + freshClock(dataAge) };
     if (cardsBehind) return { tone: 'amber', line: 'Cards last changed ' + freshClock(cardAge) + ' ago' };
-    if (dataAge < 60000) return { tone: 'green', line: 'Updated just now' };
-    if (dataAge < 30 * 60000) return { tone: 'green', line: 'Updated ' + freshClock(dataAge) + ' ago' };
-    return { tone: 'amber', line: 'Updated ' + freshClock(dataAge) + ' ago' };
+    if (dataAge < 60000) return { tone: 'green', line: 'Last activity just now' };
+    if (dataAge < 30 * 60000) return { tone: 'green', line: 'Last activity ' + freshClock(dataAge) + ' ago' };
+    return { tone: 'amber', line: 'Last activity ' + freshClock(dataAge) + ' ago' };
+  };
+  // A held card (Held: comment, GITHUB_HOLD_LABEL, or Jira JIRA_HOLD_STATUS) displays as Parked with its named blocker.
+  L.parkedLabel = function (c) {
+    var why = c && c.hold && String(c.hold.reason || '').trim();
+    return why ? 'Parked behind ' + why : 'Parked';
+  };
+  // One id for every compare. Lowercase, and a run of separators becomes one underscore.
+  // The painted word is statusName. An id outside the six columns stays visible and is flagged.
+  L.statusId = function (raw) {
+    return String(raw == null ? '' : raw).trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+  };
+  L.statusName = function (raw) {
+    var id = L.statusId(raw);
+    if (!id) return '';
+    return id.split('_').filter(Boolean).map(function (word) {
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    }).join(' ');
+  };
+  L.KNOWN_STATES = ['live', 'parked', 'held', 'closed', 'waiting'];
+  L.KANBAN_STAGES = ['open', 'review', 'fix', 'merge', 'retest', 'done'];
+  L.statusFlagged = function (raw) {
+    var id = L.statusId(raw);
+    if (!id) return false;
+    if (L.KANBAN_STAGES.indexOf(id) >= 0) return false;
+    if (L.KNOWN_STATES.indexOf(id) >= 0) return false;
+    return true;
   };
   L.cardBucket = function (c) {
     if (!c) return 'waiting';
-    if (c.state === 'parked') return 'parked';
-    if (c.state === 'closed' || c.stage === 'done') return 'done';
-    if (c.state === 'held') return 'held';
-    if (c.stage === 'review') return 'review';
+    var state = L.statusId(c.state);
+    var stage = L.statusId(c.stage);
+    if (state === 'parked') return 'parked';
+    if (state === 'closed' || stage === 'done') return 'done';
+    if (state === 'held') return 'held';
+    if (stage === 'review') return 'review';
     return 'waiting';
   };
-  L.KANBAN_STAGES = ['open', 'review', 'fix', 'merge', 'retest', 'done'];
+  L.cardsForStatus = function (cards, filter) {
+    var id = L.statusId(filter);
+    if (!id) return [];
+    return (cards || []).filter(function (c) {
+      return !!c && (L.statusId(c.stage) === id || L.statusId(c.state) === id);
+    });
+  };
   L.kanbanColumn = function (c) {
     if (!c) return 'open';
-    if (c.state === 'closed' || c.stage === 'done') return 'done';
-    var stage = String(c.stage || 'open');
-    return L.KANBAN_STAGES.indexOf(stage) >= 0 ? stage : 'open';
+    var state = L.statusId(c.state);
+    var stage = L.statusId(c.stage) || 'open';
+    if (state === 'closed' || stage === 'done') return 'done';
+    return stage;
   };
   L.cardGithubUrl = function (c) {
     if (!c) return '';

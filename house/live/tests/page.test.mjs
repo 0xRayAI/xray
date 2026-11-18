@@ -10,7 +10,7 @@ const inline = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[
 
 test('inline scripts compile', () => { for (const s of inline) assert.doesNotThrow(() => new Function(s)); });
 test('Replay: live on first load, ends into live, indicator', () => {
-  assert.match(html, /REPLAY_MS = 6500, REPLAY_WINDOW_MS = 5 \* 60 \* 1000, REPLAY_MIN_EVENTS = 20/);
+  assert.match(html, /REPLAY_MS = 6500, REPLAY_WINDOW_MS = 60 \* 60 \* 1000, REPLAY_MIN_EVENTS = 20/);
   assert.match(html, /if \(first && !reduced && startReplay\(\)\) fresh = \[\];/);
   assert.match(html, /\(replay && state\.t >= replay\.end\)\) goLive\(\);/);
   assert.match(html, /function goLive\(\) \{ endReplay\(\);/);
@@ -128,14 +128,22 @@ test('wave header says building with no stamp and empty when the board has zero 
 
 
 
-test('working: canvas label keeps the rolling sheen; header chip blinks its EXISTING dot in the seat color', () => {
+test('hot ring stays a one-time flash; the working sheen rolls the roster name while lit', () => {
   assert.match(html, /function fleetWorking\(k\)/);
-  assert.match(html, /seat-color sheen sweeping/);                       // canvas, under the node icon
-  assert.match(html, /s\.dot\.classList\.toggle\('blink', on\)/);
-  assert.match(html, /if \(spinning\) s\.dot\.style\.background = rgb\(c\)/);
-  assert.match(html, /\.seat \.dot\.blink \{ animation: live-blink/);
-  assert.match(html, /prefers-reduced-motion: reduce\) \{ \.seat \.dot\.blink \{ animation: none/);
-  assert.doesNotMatch(html, /s\.spin/);                                  // no extra element in the chip
+  assert.doesNotMatch(html, /seat-color sheen sweeping/);
+  assert.doesNotMatch(html, /fillText\(wtxt/);
+  assert.doesNotMatch(html, /s\.dot\.classList\.toggle\('blink'/);
+  assert.doesNotMatch(html, /classList\.toggle\('working'/);
+  assert.doesNotMatch(html, /\.seat \.dot\.blink/);
+  assert.doesNotMatch(html, /live-blink/);
+  assert.doesNotMatch(html, /hotRing/);
+  assert.match(html, /var rr = r \+ k \* 5; ctx\.strokeStyle = rgb\(c, 1 \/ \(k \+ 1\)\);/);
+  assert.match(html, /Live duration 2 times FLASH_MS, 5200ms/);
+  assert.match(html, /animation: nm-roll 1\.2s linear infinite/);
+  assert.match(html, /@keyframes nm-roll \{ from \{ background-position: 100% 0; \} to \{ background-position: 0% 0; \} \}/);
+  assert.match(html, /prefers-reduced-motion: reduce\) \{\s*\.seat\.live:not\(\.silent\) \.nm \{ animation: none; background-image: none; color: rgb\(var\(--nm\)\); \}/);
+  assert.match(html, /s\.el\.classList\.toggle\('live', on\)/);
+  assert.doesNotMatch(html, /s\.spin/);
   assert.doesNotMatch(html, /\.seat \.spin/);
   assert.doesNotMatch(html, /\u2699/);
 });
@@ -143,26 +151,91 @@ test('one seat state: header text, dot and node label all come from L.seatView(s
   const L = { SOURCES: [], AGENTS: [], SEAT_NAMES: [], SATS: {}, COLOR: {}, LABEL: {}, SUB: {}, GLYPH: {}, SQUARE: {},
     EDGES: [], BOT_IMAGES: [], KIND_WORD: {}, applyFeed: (st, feed) => ({ state: { events: feed.events } }) };
   new Function('window', 'location', fs.readFileSync(path.join(APP, 'public', 'live-config.js'), 'utf8'))({ LiveMesh: L }, { search: '' });
-  const want = { working: ['WORKING', true, true, true], live: ['LIVE', true, false, false], active: ['ACTIVE', true, false, false], idle: ['IDLE', false, false, false] };
+  const want = {
+    working: ['WORKING', true, true, true, false],
+    live: ['LIVE', false, false, false, true],
+    active: ['ACTIVE', false, false, false, true],
+    idle: ['IDLE', false, false, false, false],
+  };
   for (const working of [false, true]) for (const live of [false, true]) for (const active of [false, true]) {
     const st = L.seatState(working, live, active);
     assert.equal(st, working ? 'working' : live ? 'live' : active ? 'active' : 'idle');
-    const v = L.seatView(st), [word, lit, blink, nodeWorking] = want[st];
-    assert.deepEqual([v.word, v.lit, v.blink, v.nodeWorking], [word, lit, blink, nodeWorking], `${working}/${live}/${active}`);
+    const v = L.seatView(st), [word, lit, blink, nodeWorking, seen] = want[st];
+    assert.deepEqual([v.word, v.lit, v.blink, v.nodeWorking, !!v.seen], [word, lit, blink, nodeWorking, seen], `${working}/${live}/${active}`);
     assert.equal(v.blink, v.nodeWorking);                       // dot blinks <=> node shows 'working'
-    assert.equal(v.word === 'IDLE', !v.lit);                    // header word idle <=> node unlit
+    assert.equal(v.lit, st === 'working');                      // the sheen is working, not a recent ping
   }
+  assert.match(html, /s\.el\.classList\.toggle\('seen', !!v\.seen\)/);
+  assert.match(html, /seats active · ' \+ workingN \+ ' working/);
   // the page derives chip text, dot and node from that one state (no other source of truth left)
   assert.match(html, /function seatState\(k, hot\) \{ return L\.seatState\(fleetWorking\(k\), !!\(hot && hot\[k\]\), fleetActive\(k\)\); \}/);
   assert.match(html, /v = L\.seatView\(seatState\(a\[0\], hot\)\), on = v\.lit;/);
   assert.doesNotMatch(html, /s\.st/);
-  assert.match(html, /var spinning = v\.blink;/);
-  assert.match(html, /el\.querySelector\('\.role'\)\.textContent = String\(a\[1\] \|\| ''\)/);
-  assert.doesNotMatch(html, /createElement\('button'\)[\s\S]{0,80}className = 'seat'/);
+  assert.doesNotMatch(html, /var spinning = v\.blink;/);
+  assert.match(html, /var roleText = String\(a\[1\] \|\| ''\)/);
+  assert.match(html, /role\.textContent = roleText/);
+  assert.match(html, /createElement\('button'\)/);
+  assert.match(html, /el\.className = 'seat'/);
+  assert.doesNotMatch(html, /seat-copy/);
   assert.match(html, /var nv = L\.seatView\(seatState\(key, hot\)\); nodeView\[key\] = nv;/);
-  assert.match(html, /drawNode\(key, nv\.lit, fs, pul, nv\.nodeWorking, nowWall\);/);
+  assert.match(html, /drawNode\(key, nv\.lit, fs, pul, nv\.nodeWorking, nowWall, !!nv\.seen\);/);
+  assert.match(html, /var seenNow = !!seen && !isHot;/);
+  assert.match(html, /else if \(seenNow && !hasImg\)/);
+  assert.match(html, /else if \(seenNow\) \{ ctx\.strokeStyle = rgb\(c, 0\.35\); ctx\.lineWidth = 1\.5; ctx\.beginPath\(\); ctx\.arc\(x, y, ar \+ 4, 0, 7\); ctx\.stroke\(\); \}/);
+  assert.match(html, /var names = fleetNames\(k\);/);
   assert.doesNotMatch(html, /hot\[a\[0\]\] \? 'LIVE'/);         // the old split derivation is gone
   assert.doesNotMatch(html, /fleetWorking\(key\), nowWall/);
+});
+
+test('a spinner is only the card in working_on, and a 7-day seat is dormant', () => {
+  const L = { SOURCES: [], AGENTS: [], SEAT_NAMES: [], SATS: {}, COLOR: {}, LABEL: {}, SUB: {}, GLYPH: {}, SQUARE: {},
+    EDGES: [], BOT_IMAGES: [], KIND_WORD: {}, applyFeed: (st, feed) => ({ state: { events: feed.events } }) };
+  new Function('window', 'location', fs.readFileSync(path.join(APP, 'public', 'live-config.js'), 'utf8'))({ LiveMesh: L }, { search: '' });
+  assert.equal(L.DORMANT_MS, 7 * 24 * 60 * 60 * 1000);
+  const now = Date.parse('2026-10-28T12:00:00Z');
+  assert.equal(L.seatDormant('2026-10-20T12:00:00Z', now), true);
+  assert.equal(L.seatDormant('2026-10-22T12:00:00Z', now), false);
+  assert.equal(L.seatDormant('', now), false);
+  const fleet = {
+    working: { arch1: { via: 'prompt', since_ct: '2026-10-28T11:00:00Z' } },
+    seats: {
+      arch1: { working: true, working_on: '0xRayAI/xray#5' },
+      critic: { working: true, working_on: '0xRayAI/xray#6' },
+      magnet: { working: false, last_ct: '2026-10-01T12:00:00Z' },
+    },
+  };
+  assert.equal(L.cardInWork({ repo: '0xRayAI/xray', number: 5, _seat: 'arch1' }, fleet), true);
+  assert.equal(L.cardInWork({ repo: '0xRayAI/xray', number: 9, _seat: 'arch1' }, fleet), false);
+  fleet.working.arch1.working_on = '0xRayAI/xray#6';
+  assert.equal(L.cardInWork({ repo: '0xRayAI/xray', number: 5, _seat: 'arch1' }, fleet), false);
+  assert.equal(L.cardInWork({ repo: '0xRayAI/xray', number: 6, _seat: 'arch1' }, fleet), true);
+  delete fleet.working.arch1.working_on;
+  delete fleet.seats.arch1.working_on;
+  assert.equal(L.cardInWork({ repo: '0xRayAI/xray', number: 5, _seat: 'arch1' }, fleet), false);
+  // Prompt pulse lights the seat. It does not spin every live card that seat owns.
+  const prompt = {
+    working: { forge: { via: 'prompt', since_ct: '2026-10-31T21:03:01.000-05:00' } },
+    seats: { forge: { working: true, working_via: 'prompt' } },
+  };
+  assert.equal(L.cardInWork({ repo: '0xRayAI/xray', number: 751, key: '0xrayai/xray#751', _seat: 'forge' }, prompt), false);
+  assert.equal(L.cardInWork({ repo: '0xRayAI/xray', number: 763, key: '0xrayai/xray#763', _seat: 'forge' }, prompt), false);
+  // working_on names the card even when next owner is a different seat.
+  prompt.working.forge.working_on = '0xRayAI/xray#755';
+  prompt.seats.forge.working_on = '0xRayAI/xray#755';
+  assert.equal(L.cardInWork({ repo: '0xRayAI/xray', number: 755, key: '0xrayai/xray#755', _seat: 'Arch1' }, prompt), true);
+  assert.equal(L.cardInWork({ repo: '0xRayAI/xray', number: 751, key: '0xrayai/xray#751', _seat: 'forge' }, prompt), false);
+  assert.equal(L.cardInWork({ repo: '0xRayAI/bifrost', number: 3, key: '0xrayai/bifrost#3', _seat: 'forge' }, prompt), false);
+  const running = [{ state: 'running', card: '0xRayAI/xray#751', bcId: 'bc-running' }];
+  assert.equal(L.cardInWork({ repo: '0xRayAI/xray', number: 751, key: '0xrayai/xray#751', _seat: 'forge' }, prompt, running), true);
+  assert.equal(L.cardInWork({ repo: '0xRayAI/xray', number: 763, key: '0xrayai/xray#763', _seat: 'forge' }, prompt, running), false);
+  assert.equal(L.cardInWork({ repo: '0xRayAI/xray', number: 751, _seat: 'forge' }, prompt, [{ state: 'finished', card: '0xRayAI/xray#751' }]), false);
+  const rows = [['sound', ''], ['arch1', ''], ['CloudAgents', ''], ['magnet', '']];
+  const kept = L.rosterKept(rows, { fleet, product_nodes: ['CloudAgents'] });
+  assert.deepEqual(kept.map(a => a[0]), ['arch1', 'CloudAgents', 'magnet']);
+  assert.deepEqual(L.rosterKept(rows, {}), rows);
+  assert.match(html, /L\.cardInWork\(Object\.assign\(\{\}, c, \{ _seat: cardSeat\(c\) \}\), window\.LIVE_FLEET, wb\.cloudAgents\)/);
+  assert.match(html, /statusId\(c\.state\) === 'parked' \|\| statusId\(c\.state\) === 'held' \|\| statusId\(c\.stage\) === 'done'\) return false/);
+  assert.match(html, /L\.rosterKept\) rosterRows = L\.rosterKept\(rosterRows, r\.feed\)/);
 });
 
 test('near-real-time poll: config sets 10 s, page polls on L.POLL_MS after the overlay loads', async () => {
@@ -215,7 +288,8 @@ test('delta polls: full once, then ?since=cursor; new ids play once; 304 = no fe
   assert.equal(mem.cursor, 'F.1');
 });
 test('ambient Replay loop: dimmed overlay every 10 s, visual only, toggle + ?replay=0 + reduced motion', () => {
-  assert.match(html, /AMBIENT_EVERY_MS = 10000, AMBIENT_MS = 5000, AMBIENT_WINDOW_MS = 5 \* 60 \* 1000, AMBIENT_ALPHA = 0\.4;/);
+  assert.match(html, /AMBIENT_EVERY_MS = 10000, AMBIENT_MS = 5000, AMBIENT_WINDOW_MS = 60 \* 60 \* 1000, AMBIENT_ALPHA = 0\.4;/);
+  assert.match(html, /replay the last hour dimmed/);
   assert.match(html, /var ambientOn = !reduced && !\/\[\?&\]replay=0\(&\|\$\)\/\.test\(location\.search\);/);
   assert.match(html, /<input id="ambient" type="checkbox" checked>/);
   assert.match(html, /if \(!ambientOn \|\| !state\.live \|\| replay \|\| document\.hidden\)/);
@@ -259,12 +333,12 @@ test('pre-alpha naming: page is 🌈 Live board, Spectrum pill, panel 🌊 Board
 });
 test('board stats strip: 24h counts + open now from feed.board.stats, textContent only', () => {
   assert.match(html, /<div class="wave-stats" id="waveStats"/);
-  for (const k of ['issues_opened_24h', 'issues_closed_24h', 'prs_opened_24h', 'prs_merged_24h', 'prs_closed_unmerged_24h', 'owner_prompts_24h', 'owner_prompts_24h_ids', 'owner_prompts_24h_bytes', 'open_total']) assert.match(html, new RegExp('S\\.' + k));
+  for (const k of ['issues_opened_24h', 'issues_closed_24h', 'prs_opened_24h', 'prs_merged_24h', 'prs_closed_unmerged_24h', 'owner_prompts_24h', 'owner_prompts_24h_ids', 'owner_prompts_24h_bytes', 'open_total', 'arch1_backlog']) assert.match(html, new RegExp('S\\.' + k));
   assert.match(html, /'owner prompts'/);
   assert.match(html, /wb\.stats = r\.feed\.board\.stats \|\| null/);
 });
 test('silent seat: amber "silent 2h" on node and chip from fleet.seats[name].silent, never while working', () => {
-  assert.match(html, /return !!\(f && f\.seats && f\.seats\[name\] && f\.seats\[name\]\.silent\);/);
+  assert.match(html, /if \(row && row\.silent\) return true;/);
   assert.match(html, /var silentNow = !spinning && fleetSilent\(key\);/);
   assert.match(html, /ctx\.fillText\('silent 2h', x, top\)/);
   assert.match(html, /var sil = !v\.blink && fleetSilent\(a\[0\]\);/);
@@ -281,13 +355,20 @@ function loadCfg(withSite) {
   if (withSite) new Function('window', fs.readFileSync(path.join(APP, '..', 'site', 'public', 'site-config.js'), 'utf8'))({ LiveMesh: L });
   return L;
 }
-test('our overlay: strip is blinky, critic, forge; Arch1 is outside; parked seats are not drawn', () => {
+test('our overlay does not install a fixed roster strip; the canvas still draws its nodes', () => {
   const L = loadCfg(true);
-  const strip = ['blinky', 'critic', 'forge'];
-  assert.deepEqual(L.SEAT_NAMES, strip); assert.deepEqual(L.AGENTS.map(a => a[0]), strip);
-  for (const s of strip) assert.ok(s in L.SATS, s);
+  assert.deepEqual(L.SEAT_NAMES, []);
+  assert.deepEqual(L.AGENTS, []);
+  for (const s of ['blinky', 'critic', 'forge', 'near', 'nibbler', 'mill']) assert.ok(s in L.SATS, s);
+  assert.equal(L.SUB.near, 'near eco scout');
+  assert.equal(L.SUB.mill, 'code mill');
+  assert.equal(L.botImage('near'), 'avatars/near.png');
+  assert.equal(L.GLYPH.nibbler, '🪱');
+  assert.equal(L.GLYPH.mill, '⚙️');
+  const meshY = new Set(['blinky', 'critic', 'forge', 'near', 'nibbler', 'mill', 'arch1'].map((s) => L.SATS[s][1]));
+  assert.ok(meshY.size >= 3, 'seats spread down the canvas');
   assert.equal(L.SUB.arch1, 'outside party'); assert.equal(L.LABEL.arch1, 'Arch1'); assert.ok('arch1' in L.SATS);
-  for (const parked of ['herald', 'magnet', 'nibbler', 'sound']) assert.ok(!(parked in L.SATS), parked);
+  for (const parked of ['herald', 'magnet', 'sound']) assert.ok(!(parked in L.SATS), parked);
   for (const k of ['Lead', 'X', 'Builder', 'Reviewer', 'Operator', 'Tester', 'QA']) assert.ok(!(k in L.SATS), k);
   assert.ok(!JSON.stringify([L.LABEL, L.SUB]).includes('Example'));
   for (const k of ['mymuse.house', 'burst-live', 'Bifrost']) assert.ok(!(k in L.SATS) && !(k in L.LABEL), k);  // the board is not a node
@@ -298,12 +379,13 @@ test('our overlay: strip is blinky, critic, forge; Arch1 is outside; parked seat
   const ev = L.applyFeed({}, { events: [{ id: 1, t_ct: '2026-10-13T10:00:00-05:00', from: 'Blaze', to: 'GitHub' },
     { id: 2, t_ct: '2026-10-13T10:01:00-05:00', from: 'Others', to: 'Bifrost' }, { id: 3, t_ct: '2026-10-13T10:02:00-05:00', from: 'forge', to: 'GitHub' },
     { id: 4, t_ct: '2026-10-13T10:03:00-05:00', kind: 'seat_turn', from: 'forge', to: 'Bifrost', hops: ['forge', 'Bifrost'] },
-    { id: 5, t_ct: '2026-10-13T10:04:00-05:00', kind: 'op_deploy', from: 'Operator', to: 'Bifrost', hops: ['Operator', 'Railway', 'Bifrost'] }] }).state.events;
-  assert.deepEqual(ev.map(e => [e.from, e.to]), [['Blaze', 'GitHub'], ['forge', 'GitHub'], ['forge', 'forge'], ['GitHub', 'Railway']]);
+    { id: 5, t_ct: '2026-10-13T10:04:00-05:00', kind: 'op_deploy', from: 'Operator', to: 'Bifrost', hops: ['Operator', 'Railway', 'Bifrost'] },
+    { id: 6, t_ct: '2026-10-13T10:05:00-05:00', kind: 'merged', from: 'forge', to: 'Bifrost', repo: '0xRayAI/xray', number: 485, label: 'merged #485' }] }).state.events;
+  assert.deepEqual(ev.map(e => [e.from, e.to, e.kind || '']), [['Blaze', 'GitHub', ''], ['forge', 'GitHub', ''], ['forge', 'forge', 'seat_turn'], ['GitHub', 'Railway', 'op_deploy'], ['forge', 'GitHub', 'merged']]);
   assert.ok(!ev[2].hops || ev[2].hops.length < 2);   // one hop is a self-pulse; the kit draws a ring
   assert.deepEqual(ev[3].hops, ['GitHub', 'Railway']);
   assert.ok('Blaze' in L.SATS); assert.equal(L.LABEL.Blaze, 'Blaze');
-  assert.deepEqual(L.SATS.CloudAgents, [150, 330]);
+  assert.deepEqual(L.SATS.CloudAgents, [350, 330]);
   assert.equal(L.LABEL.CloudAgents, 'Cloud agents');
   assert.equal(L.SUB.CloudAgents, 'cursor agents');
   assert.deepEqual(L.COLOR.CloudAgents, [130, 190, 255]);
@@ -313,6 +395,23 @@ test('our overlay: strip is blinky, critic, forge; Arch1 is outside; parked seat
   assert.equal(L.botImage('arch1'), 'avatars/arch1.png');
   for (const x of Object.values(L.SATS)) assert.ok(x[0] >= 80 && x[0] <= 840, String(x));
   assert.match(L.SITE_FOOT, /Bifrost/);
+});
+test('rosterEntries reads the feed roster and its roles, and ignores a missing list', () => {
+  const live = fs.readFileSync(path.join(APP, 'public', 'live.js'), 'utf8');
+  const g = {};
+  new Function('globalThis', live)(g);
+  const entries = g.LiveMesh.rosterEntries({
+    roster: ['alpha', 'beta', 'alpha', { name: 'gamma', role: 'gate' }],
+    roster_roles: { beta: 'voice' },
+  });
+  assert.deepEqual(entries, [['alpha', ''], ['beta', 'voice'], ['gamma', 'gate']]);
+  assert.equal(g.LiveMesh.rosterEntries({ seats: ['alpha', 'beta', 'gamma', 'delta'] }), null);
+  assert.equal(g.LiveMesh.rosterEntries({}), null);
+  assert.match(html, /L\.rosterEntries\(r\.feed\)/);
+  assert.match(html, /margin-left: auto/);
+  assert.match(html, /id="themeToggle"/);
+  const title = html.slice(html.indexOf('<div class="title">'), html.indexOf('</div>', html.indexOf('<div class="title">')));
+  assert.ok(title.indexOf('id="pill"') < title.indexOf('id="themeToggle"'));
 });
 test('kit without overlay: template roles kept, no avatars mapped (no 404s), empty footer', () => {
   const L = loadCfg(false);
@@ -347,6 +446,37 @@ test('board: review cards also wait on the review seat; grouping by seat; board 
   assert.deepEqual(L.boardAt(cards, 200).map(c => [c.key, c.beats.length]), [['a', 1], ['b', 1]]);
   assert.equal(L.boardAt(cards, null), cards);
   assert.match(html, /var cards = L\.boardAt\(wb\.allCards \|\| wb\.cards, asOf\);/);
+});
+test('replay boardAt moves a card across columns from the beats at t', () => {
+  const L = loadCfg(true);
+  const card = {
+    key: 'xray#1100', kind: 'pr', owner: 'forge', stage: 'done', state: 'closed',
+    packet: { 'next owner': 'forge' },
+    beats: [
+      { t: 100, what: 'opened', owner: 'arch1' },
+      { t: 200, what: 'Reviewer PASS', owner: 'critic', next_owner: 'forge' },
+      { t: 300, what: 'merged', owner: 'forge' },
+    ],
+  };
+  const atOpen = L.boardAt([card], 150)[0];
+  assert.equal(atOpen.state, 'live');
+  assert.equal(atOpen.stage, 'review');
+  assert.equal(atOpen.owner, 'arch1');
+  assert.equal(L.cardBucket(atOpen), 'review');
+  const atPass = L.boardAt([card], 250)[0];
+  assert.equal(atPass.stage, 'merge');
+  assert.equal(atPass.state, 'live');
+  assert.equal(atPass.owner, 'critic');
+  assert.equal(atPass.packet['next owner'], 'forge');
+  assert.equal(L.cardBucket(atPass), 'waiting');
+  const atMerge = L.boardAt([card], 300)[0];
+  assert.equal(atMerge.state, 'closed');
+  assert.equal(atMerge.stage, 'done');
+  assert.equal(atMerge.owner, 'forge');
+  assert.equal(L.cardBucket(atMerge), 'done');
+  assert.equal(card.state, 'closed');
+  assert.equal(card.stage, 'done');
+  assert.equal(card.owner, 'forge');
 });
 test('packets: longer flight, halo + path so a hop is visible seat to seat', () => {
   assert.match(html, /var FLASH_MS = 2600/);
@@ -393,7 +523,7 @@ test('resume at the live edge rewinds before frame, so frame does not goLive()',
   function el(id) {
     const listeners = {};
     const node = {
-      id, style: {}, dataset: {}, textContent: '', innerHTML: '', hidden: false, checked: false, disabled: false,
+      id, style: { setProperty(k, v) { this[k] = v; } }, dataset: {}, textContent: '', innerHTML: '', hidden: false, checked: false, disabled: false,
       value: '600', title: '', clientWidth: 920, width: 920, height: 400,
       classList: { toggle() {}, add() {}, remove() {}, contains() { return false; } },
       appendChild(c) { return c; },
@@ -511,6 +641,59 @@ test('wave count tiles title the 24h ids, capped at 20', () => {
   assert.equal(idTitle([]), '');
 });
 
+test('CI who is the credit and the mesh source stays GitHub', async () => {
+  const vm = await import('node:vm');
+  const pub = path.join(APP, 'public');
+  const ctx = { window: {}, console, URLSearchParams, location: { search: '', hash: '', href: 'http://x/' }, document: { addEventListener() {} } };
+  ctx.globalThis = ctx; ctx.window = ctx;
+  vm.createContext(ctx);
+  vm.runInContext(fs.readFileSync(path.join(pub, 'live.js'), 'utf8'), ctx);
+  vm.runInContext(fs.readFileSync(path.join(pub, 'live-config.js'), 'utf8'), ctx);
+  const L = ctx.LiveMesh;
+  const row = (id, credit) => ({ id, t_ct: '2026-10-20T12:00:00-05:00', kind: 'workflow_run', from: 'CI', to: 'GitHub', credit, label: 'run ' + id });
+  const fed = L.applyFeed({ events: [], live: true, t: 0 }, { events: [row('forge-row', 'forge'), row('blaze-row', 'Blaze'), row('gh-row', 'github')] }).state.events;
+  const by = Object.fromEntries(fed.map(e => [e.credit, e]));
+  assert.equal(by.forge.from, 'GitHub');
+  assert.equal(by.forge.credit, 'forge');
+  assert.equal(L.whoTag(by.forge), 'forge');
+  assert.equal(by.Blaze.from, 'GitHub');
+  assert.equal(L.whoTag(by.Blaze), 'Blaze');
+  assert.equal(by.github.from, 'GitHub');
+  assert.equal(L.whoTag(by.github), 'GITHUB');
+  assert.equal(L.whoTag({ kind: 'pr_open', from: 'forge', credit: 'forge' }), 'FORGE');
+});
+
+test('tab show clears the conditional poll once and a 304 on that fetch is an empty feed', async () => {
+  assert.match(html, /function armShow\(\)/);
+  assert.match(html, /function finishShow\(\)/);
+  assert.match(html, /function onShown\(\)/);
+  assert.match(html, /visibilitychange[\s\S]{0,80}onShown\(\)/);
+  assert.match(html, /pageshow', function \(ev\)/);
+  assert.match(html, /if \(firstShow && !ev\.persisted\) return;/);
+  assert.match(html, /setInterval\(poll, L\.POLL_MS\)/);
+  assert.doesNotMatch(html, /location\.reload\(/);
+  const vm = await import('node:vm');
+  const pub = path.join(APP, 'public');
+  const ctx = { console, URLSearchParams, location: { search: '', hash: '', href: 'http://x/' }, document: { addEventListener() {} },
+    LIVE_FEED_URL: '/live-events.json' };
+  ctx.globalThis = ctx; ctx.window = ctx;
+  vm.createContext(ctx);
+  vm.runInContext(fs.readFileSync(path.join(pub, 'live.js'), 'utf8'), ctx);
+  vm.runInContext(fs.readFileSync(path.join(pub, 'live-config.js'), 'utf8'), ctx);
+  const urls = [];
+  const fake = (url) => { urls.push(url); return Promise.resolve({ status: 304, ok: false, json: () => Promise.resolve(null) }); };
+  const mem = { cursor: 'E.9', etag: '"abc"', force: 1 };
+  const r = await ctx.LiveMesh.fetchFeed(fake, Date.now(), mem);
+  assert.equal(r.feed, null);
+  assert.equal(urls[0], '/live-events.json');
+  assert.equal(mem.force, 0);
+  assert.equal(mem.cursor, 'E.9');
+  urls.length = 0;
+  const again = await ctx.LiveMesh.fetchFeed(fake, Date.now(), mem);
+  assert.equal(again.feed, null);
+  assert.equal(urls[0], '/live-events.json?since=E.9');
+});
+
 test('kit live-config carries no install brand (no Example / example.com); product names come from the feed header', () => {
   for (const f of [path.join(APP, 'public', 'live-config.js'), path.join(APP, '..', 'feed', 'live-config.js')]) {
     assert.doesNotMatch(fs.readFileSync(f, 'utf8'), /Example|example\.com/, f);
@@ -518,4 +701,12 @@ test('kit live-config carries no install brand (no Example / example.com); produ
   const L = loadCfg(false);
   const out = L.applyFeed({}, { product_nodes: ['burst-live'], events: [{ id: 1, t_ct: '2026-10-13T10:00:00-05:00', from: 'Railway', to: 'burst-live' }] }).state.events;
   assert.equal(out[0].to, 'mymuse.house');
+});
+test('a held card displays as Parked with its named blocker; inputs still read as held', () => {
+  const L = loadCfg(true);
+  assert.equal(L.cardBucket({ state: 'held' }), 'held');
+  assert.equal(L.parkedLabel({ state: 'held', hold: { reason: 'org/repo#123' } }), 'Parked behind org/repo#123');
+  assert.equal(L.parkedLabel({ state: 'held' }), 'Parked');
+  assert.match(html, /wbadge held', L\.parkedLabel\(c\)/);
+  assert.doesNotMatch(html, /'On hold'/);
 });

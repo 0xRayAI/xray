@@ -1,29 +1,40 @@
 // Display aspect must match the bitmap even when a host stylesheet forces #mesh { height: 300px }.
 // Kit example names only: blinky, forge, critic.
-import { chromium } from 'playwright';
+import { launchBoard } from './board-browser.mjs';
 import http from 'node:http';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const PUB = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app', 'public');
-const OUT = process.env.SPECTRUM_OUT || '/opt/cursor/artifacts/spectrum';
+const OUT = (() => {
+  const preferred = process.env.SPECTRUM_OUT || '/opt/cursor/artifacts/spectrum';
+  try {
+    fs.mkdirSync(preferred, { recursive: true });
+    return preferred;
+  } catch {
+    const fallback = path.join(os.tmpdir(), 'spectrum-artifacts');
+    fs.mkdirSync(fallback, { recursive: true });
+    return fallback;
+  }
+})();
 const SKEW = '#mesh { height: 300px }';
 
 function feed() {
   const now = Date.now();
   const seats = ['blinky', 'forge', 'critic'];
-  const events = [];
-  for (let i = 0; i < 10; i++) {
-    events.push({
-      id: 'e' + i,
-      t_ct: new Date(now - (290 - i * 28) * 1000).toISOString(),
-      kind: 'comment',
-      from: i % 2 ? 'critic' : 'blinky',
-      to: i % 2 ? 'forge' : 'critic',
-      label: 'handoff ' + seats[i % 3]
-    });
-  }
+  // The opening burst fits one hour into 6.5s. At the light-plate sample (~1.2s)
+  // the flight window is about 59 to 49 minutes ago, so those ages must be present.
+  const ages = [3300, 3240, 3180, 3000, 2400, 1800, 900, 290, 150, 40];
+  const events = ages.map((age, i) => ({
+    id: 'e' + i,
+    t_ct: new Date(now - age * 1000).toISOString(),
+    kind: 'comment',
+    from: i % 2 ? 'critic' : 'blinky',
+    to: i % 2 ? 'forge' : 'critic',
+    label: 'handoff ' + seats[i % 3]
+  }));
   return { generated_at: new Date(now).toISOString(), events };
 }
 
@@ -86,7 +97,7 @@ const results = [];
 fs.mkdirSync(OUT, { recursive: true });
 const server = await serve();
 const base = 'http://127.0.0.1:' + server.address().port;
-const browser = await chromium.launch();
+const browser = await launchBoard();
 try {
   const cases = [
     ['dark', 1440, 900],

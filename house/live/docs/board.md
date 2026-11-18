@@ -1,10 +1,12 @@
 # Board
 
-A card is one GitHub issue or pull request. A beat is a real event on it. A packet is the structured fields (goal, constraints, path, acceptance, evidence, next owner, escalate).
+A card is one GitHub issue or pull request. Card owner = `Board-Owner:` line, else seat assignee, else the default builder seat. Never a person. An author outside the fleet still gets that card: the from node is GitHub and the actor keeps the login. Each collector pass fetches open numbers that still have no open event. A finished pass does not latch, so a later issue still becomes a card. A packet on a later comment refreshes the card. `bifrost-check` board-cards is the missing-card check. A beat is a real event on it. A packet is the structured fields (goal, constraints, path, acceptance, evidence, next owner, escalate, raci). raci names who does the work and who answers. A live card missing R or A is amber on its own mark. That mark is not the PACKET.md badge.
 
 The live page shows the same cards in a kanban above the activity list. A column is the card's stage (`open`, `review`, `fix`, `merge`, `retest`, `done`). A closed card sits in `done`. A click opens the timeline. The GitHub link is on the card face.
 
-Kanban note. The live page shows a read-only kanban above Activity. Columns are open, review, fix, merge, retest, and done. The deep link is `?card=`. The public board does not serve the history archive or the kanban yet.
+Compare uses one canonical id. The id is lowercase, and a run of separators becomes one underscore, so `In Flight` and `in_flight` are the same id. `Review` and `review` are the same id. The display name is paint only. An id outside those six columns stays on the board in its own column and is marked unknown. It is not moved to `open`.
+
+Kanban note. The live page shows a read-only kanban above Activity. Columns are open, review, fix, merge, retest, and done. The deep link is `?card=`. The column header (stage and count) stays put while the cards under it scroll. The board scrolls sideways, and the headers stay lined up with the columns. The page header stays at the top of the page. Board stats sit above the mesh. The roster sits at the top of the mesh card and the timeline sits at the bottom of that card. The public board serves the kanban and GET /history, /history/cards, and /history/transitions.
 
 When `LIVE_URL` is set, the board seats see is the collector board (`GET /cards`). When `LIVE_URL` is unset, the board is hand-kept `house/WAVEBOARD.md`. `feed/live_mesh.py` runs `feed/live_collect.py` and `feed/live_board.py` every 45 seconds (`LIVE_WATCH_S`, default 45). An empty box board does not replace those cards.
 
@@ -16,7 +18,7 @@ When `LIVE_URL` is set, the board seats see is the collector board (`GET /cards`
 | `Prompt: <id>` on the new issue or PR | Beat `owner prompt`, then `opened`. The first beat uses the prompt's time and the stored note. A second card that repeats the id does not take it. |
 | `pr_draft` | The card parks at once. |
 | `review` `APPROVED`, or `critic_pass` | Beat `Reviewer PASS`. |
-| `review` `CHANGES_REQUESTED`, or `critic_fail` | Beat `Reviewer FAIL`. Stage moves to fix. |
+| `review` `CHANGES_REQUESTED`, or `critic_fail` | Beat `Reviewer FIX` (legacy `critic_fail` reads as FIX). Stage moves to fix. |
 | `pr_commit`, `pr_force_push`, `pr_update` | Beat `pushed`. A head change emits `pr_commit`. The newest push stays on the card when later beats fill the window. A new head after a FAIL is a new review. A new head after red CI closes the `ci_fail` handoff. |
 | `ci_pass`, `ci_fail` | CI stays on the card for that PR number. It is not board traffic. |
 | `merged` | Beat `merged`. The card field `merged_by` is the merger, never the author. The author's seat gets an info line. |
@@ -34,7 +36,7 @@ Stage order is `open` > `review` > `fix` > `merge` > `retest` > `done`. State is
 
 A missed handoff is a separate ladder. L1 goes to the owing seat. L2 goes to that same seat. L3 repeats to that seat. CoS is not woken to reassign.
 
-An unacked inbox line uses `NUDGE_LINE_S` (default 900) between L1, L2, and L3, all to that seat. A line on a closed or merged item stays on a plain inbox read and is not nudged.
+An unacked inbox line uses `NUDGE_LINE_S` (default 900) between L1, L2, and L3, all to that seat. A line the seat already acked, or whose handled key is already in the [cursor folder](../../../grok-bot/OP-PROC.md#cursor-folder), gets no L1, L2, or L3. A line on a closed or merged item stays on a plain inbox read and is not nudged.
 
 ## Close
 
@@ -42,7 +44,7 @@ A merge, an issue close, or a pull request close sets the card to done and close
 
 The owner's own comment that the work is resolved also closes the card. A comment from someone else does not.
 
-Every PR comment, review comment and issue comment routes to the comment-watch seat and to the PR or issue author's seat, open, closed or merged. A comment on a merged or closed card is a beat (`comment after merge` / `comment after close`) and keeps the card on the board for 24 h from that comment. A PR or issue whose author is outside the fleet no longer drops its comments.
+Every PR comment, review comment and issue comment routes to the comment-watch seat and to the PR or issue author's seat, open, closed or merged. A comment on a merged or closed card is a beat (`comment after merge` / `comment after close`) and keeps the card on the board for 24 hours from that comment. Inside that window a closed card takes a display slot before any parked card. The 40-card cap can still leave it off `/cards`. That drop does not prune `/history` or `/history/cards`: the final row is archived with `verb` `merged` when the closing event is a merge. `tools/backfill-history.mjs` rebuilds rows the archive never received. It reads GitHub issues and pull requests for `0xRayAI/xray` and the other repos the board tracks, keeps labels and linked `bc-` agents, and skips an event or card the archive already has. The default is a dry-run. `--write` appends. A PR or issue whose author is outside the fleet no longer drops its comments.
 
 ## Holds
 
@@ -52,7 +54,7 @@ A card is held when any of these is true:
 - the issue or pull request has a label in `GITHUB_HOLD_LABEL` (default `on-hold`)
 - a Jira item's status matches `JIRA_HOLD_STATUS` (default `On Hold`), compared without case
 
-A held card stays visible, is not a stall, and gets no level 1, 2, or 3 nudge. If it stays held with no beat past `HELD_MAX_S` (default 72 hours), the owner gets one nudge.
+A held card stays visible, is not a stall, and raises no nudge. The board shows the fleet mode (`full`, `lights-on`, or `dark`), the route (`arch1`, `cursor-cloud`, `grok-cli`, or `none`), and who set them. `lights-on` is the default. Sunday through Friday 7:30–15:30 America/Chicago are `full` (Saturday is off); every other minute is `lights-on`. A manual switch holds until the next boundary. P1 and a scheduled run wake in every mode. Blaze or blinky sets the mode. A seat wake does not. Cursor cloud launches only when the route is `cursor-cloud`, or when the board cannot be read and the card is P1.
 
 A `Parked:` comment still parks the card and wins over a hold.
 
@@ -75,7 +77,7 @@ The command is stored on the server and wins over the comment while that store e
 
 ## Layout
 
-The page groups cards that a seat is working on, then pinned cards, then the rest by status (waiting, in review, on hold, parked, done). The Cards control “By agent” switches that list to one group per seat, with status under the seat. Issues whose title names a pull request in the same repo fold under that pull request. A run of more than three loose issues collapses to one line.
+The page groups cards that a seat is working on, then pinned cards, then the rest by status (waiting, in review, on hold, parked, done). A status header (name and count) sticks to the top of the card list. The Cards control “By agent” switches that list to one group per seat, with status under the seat. Issues whose title names a pull request in the same repo fold under that pull request. A run of more than three loose issues collapses to one line.
 
 ## Ghost cards
 
@@ -88,12 +90,12 @@ Turns and owner messages are posted by the seat, with its own key, to `POST /act
 | What | Where | Line |
 |---|---|---|
 | Turn start / end, background task start / end (desktop runs too), watcher start / stop | `POST /activity` | `{"t_ct","seat","kind":"turn"\|"subagent"\|"watcher","action":"start"\|"end","tag"?}` |
-| Owner → seat message, a 1:1 or a room (a pulse) | Board rule. On every owner message run `live-inbox <seat> --prompt --from owner --note "<gist>"`. Ack a handled line with `live-inbox <seat> --ack <id>`, or `live-inbox <seat> --ack all` once every open line is handled. A cloud agent run uses `live-inbox <seat> --turn start --tag "bc-<first8> <track>"` and `live-inbox <seat> --turn end --tag "bc-<first8>"`. `--from owner` is required today. Add `--room <name>` in a room. | `{"t_ct","seat","kind":"prompt","action":"sent","from","to","room"?,"note"?}`. `note` is one line, at most 240 characters. Keys named body, text, or message are refused. The rendered sender is the word owner via `LIVE_OWNER` or the owner-name. The seat stays working for 10 minutes. |
+| Owner → seat message, a 1:1 or a room (a pulse) | Board rule. On every owner message run `live-inbox <seat> --prompt --from owner --note "<gist>"`. Ack a handled line with `live-inbox <seat> --ack <id>`, or `live-inbox <seat> --ack all` once every open line is handled. A cloud agent run uses `live-inbox <seat> --turn start --tag "bc-<first8> <track>"` beside `live-inbox <seat> --cloud launch --agent <bc-id> --tag <card>` on first start or `--cloud reply` on resume, and `live-inbox <seat> --turn end --tag "bc-<first8>"` beside `live-inbox <seat> --cloud finished --agent <bc-id> --tag <card>` (cancel is `--cloud cancel`). The tag is owner/repo#n or xray#n. The cloud agent does not post that line. `--from owner` is required today. Add `--room <name>` in a room. | `{"t_ct","seat","kind":"prompt","action":"sent","from","to","room"?,"note"?}`. `note` is one line, at most 240 characters. Keys named body, text, or message are refused. The rendered sender is the word owner via `LIVE_OWNER` or the owner-name. The seat stays working for 10 minutes. |
 | Cloud agent launch / finish | `fleet/cloud-agents.jsonl` | `{"t_ct","by","action":"launch"\|"reply"\|"finished"\|"cancel","agent","pr"}` |
 
-Seats post those turn and prompt lines with their seat key. A seat counts as active and working while a prompt pulse from the last 10 minutes is open, while it has an open turn or task, or while one of its cloud agents is still running. Pulses never become inbox lines or wakes (see [inbox.md](inbox.md), routing guardrails).
+Seats post those turn and prompt lines with their seat key. A worn Grok tool opens the seat turn, then ticks it once a minute. A Grok subagent posts kind subagent when it starts and when it returns. The tag is a short hash, and the prompt stays off that line. A next-owner label that names the seat, such as Arch1 (@arch10x), is that seat. A seat counts as active and working while a prompt pulse from the last 10 minutes is open, or while its own turn or task is open. A cloud turn (`live-inbox <seat> --turn start --tag "bc-<first8> <track>"` until `--turn end --tag "bc-<first8>"`) does not mark that seat, and it does not mark any other seat. The `bc-` id is working on its own card and on the cloud-agent node until that end. Pulses never become inbox lines or wakes (see [inbox.md](inbox.md), routing guardrails).
 
-Activity details (#281): a prompt line keeps its sender as `actor` (off-box seats send `from` on `prompt received`). A cloud agent credits the seat that launched it. That seat stays active while the agent's latest line is `launch` or `reply` and that line is newer than six hours. `finished` / `cancel` ends it at once. A line with no update for more than six hours is `stale` and the seat goes idle. A GitHub event that names the `bc-…` id refreshes the clock. It does not idle the seat while the agent is still inside that six-hour window. `live-inbox <seat> --turn start` posts `kind: turn` only, including inside a cloud agent. Cloud launch and finish come from the cloud-agent hooks. `live_act` in `paste-block.sh` and `builder-cloud-setup.sh` emits turns, prompts and cloud agents; `tools/live-act-hook.example.sh` wires turn start/end and prompts into an agent hook. Rate limits are the platform's job. Full spec: [`house/burst/ACTIVITY.md`](../../burst/ACTIVITY.md) and [`activity.schema.json`](../../burst/activity.schema.json).
+Activity details (#281): a prompt line keeps its sender as `actor` (off-box seats send `from` on `prompt received`). A cloud agent is working on its own id. A `launch` or `reply` newer than six hours keeps that agent on its card and on the cloud-agent node. It does not mark the seat that launched it, and it does not mark any other seat. `finished` / `cancel` takes the agent off the open set at once. A line with no update for more than six hours is `stale` and leaves the open set. A GitHub event that names the `bc-…` id can refresh that agent's clock. `live-inbox <seat> --turn start` posts `kind: turn` only. A tag that starts with `bc-` is that agent's turn, not the seat's. A seat turn has no `bc-` tag. Cloud launch and finish come from the cloud-agent hooks. `live_act` in `paste-block.sh` and `builder-cloud-setup.sh` emits turns, prompts and cloud agents; `tools/live-act-hook.example.sh` wires turn start/end and prompts into an agent hook. Rate limits are the platform's job. Full spec: [`house/burst/ACTIVITY.md`](../../burst/ACTIVITY.md) and [`activity.schema.json`](../../burst/activity.schema.json).
 
 ## Cloud agents on the board
 
@@ -125,7 +127,7 @@ Vocabulary: **cards** are the work items (one per PR or issue). **Beats** are re
 - Board grouping: each card sits under its seat (next owner, else owner). A card in review also shows as waiting under the review seat (`L.REVIEW_SEAT`; ours is critic), so the reviewer's group shows its queue, not only its done cards.
 - Rewound or replaying, the Board shows the cards as of the timeline point (cards whose first beat is at or before it, beats up to it). Cards carry their last few beats only, so very old points are approximate.
 - Packets fly for 2.6 s with a halo and a fading path, so each hop is visible seat to seat. The status pill says REPLAY during a replay pass. The Spectrum pill is the playback chip.
-- Spectrum is on by default while a replay runs (manual playback, the opening burst, and the replay loop). The title row shows a 14-bar hue meter and a Spectrum pill. Replayed packets stay on the curved lane and draw a 12-stop rainbow trail with a white core on a dark plate. A light plate uses a dark core and a higher trail alpha so the trail stays readable. `app/public/live-config.js` sets `LiveMesh.SPECTRUM` (default true). A set falsy `LiveMesh.SPECTRUM` (`0`, `''`, `null`, `false`) turns the stream off, and a missing flag leaves it on. `?spectrum=0` turns the meter, the pill, and the rainbow trail off. `?replay=0` still turns only the replay loop off. The mesh canvas is letterboxed with one scale, so a host rule such as `#mesh { height: 300px }` does not stretch the bitmap. Reduced motion turns the meter and the trail animation off. Plates read: none (no spectrum plate).
+- Spectrum is on by default while a replay runs (manual playback, the opening burst, and the replay loop). The opening burst and the replay loop play the last hour. The title row shows a 14-bar hue meter and a Spectrum pill. Replayed packets stay on the curved lane and draw a 12-stop rainbow trail with a white core on a dark plate. A light plate uses a dark core and a higher trail alpha so the trail stays readable. `app/public/live-config.js` sets `LiveMesh.SPECTRUM` (default true). A set falsy `LiveMesh.SPECTRUM` (`0`, `''`, `null`, `false`) turns the stream off, and a missing flag leaves it on. `?spectrum=0` turns the meter, the pill, and the rainbow trail off. `?replay=0` still turns only the replay loop off. The mesh canvas is letterboxed with one scale, so a host rule such as `#mesh { height: 300px }` does not stretch the bitmap. Reduced motion turns the meter and the trail animation off. Plates read: none (no spectrum plate).
 - Lens labels are kept inside the canvas. The kit maps no avatars (it ships none); a fleet overlay maps the images it ships, the rest use the drawn badge.
 
 ## Seat credit
@@ -147,7 +149,7 @@ Our pictures live in `house/live/site/public/avatars/` (copied over the kit page
 
 | Node | File | Source |
 |---|---|---|
-| blinky, critic, forge, herald | `<seat>.png` | the repo's `docs-site/static/live/bots/` |
+| blinky, critic, forge, herald, near | `<seat>.png` | the repo's `docs-site/static/live/bots/` |
 | arch1 | `arch1.png` | `docs-site/static/live/bots/minime0x.png` (image reused; the `minime0x[bot]` login runs workflows and credits `github`, not arch1) |
 | Blaze | `blaze.png` | his X profile picture (@Blaze0x1) |
 
@@ -157,8 +159,8 @@ Every other seat (magnet, nibbler, sound) shows the drawn letter badge; there is
 
 Three writers set `fleet.working` and the seat's working light. They stack. A later writer fills `working_on` only when it is still empty. The full chain, including `CURSOR_WEBHOOK_SECRET`, is [work-tracking.md](work-tracking.md).
 
-1. `applyStoredActivity` reads `activity.jsonl`. Lines arrive from `POST /activity` (the seat's own key: `live-inbox --turn` and `live-inbox --prompt`) and from the server's own wake/ack lines. An open turn, subagent, or watcher is working. A prompt pulse (`kind: prompt`) keeps that seat working for 10 minutes, and the board credits the sender (`from: blaze` is **Blaze**). A turn expires after `LIVE_TURN_OPEN_MIN` (default 20 minutes, `TURN_OPEN_MS`) when the ack never arrives. An `end` or an ack closes the turn at once. A prompt still inside its 10 minutes stays. The turn end still clears after `TURN_OPEN_MS`. The drop clears a mark at or before the end. A mark newer than the end stays only while it is inside `TURN_OPEN_MS`, then it expires. A mark with no time stays. A running cloud agent the seat launched stays active after the turn ends. Newer GitHub marks expire at 20 minutes. A later tick does not open the turn again. An open turn older than that window drops the seat, and still spares a running cloud agent and a fresh prompt pulse.
-2. `applyTrackWorking` reads the work track. A packet that is woken and not yet acked, or a cloud agent that is still running, sets the seat working. The chip text is `working_on` (`working on <title>` for a packet). A Cursor status webhook appends `agents.jsonl` only after `CURSOR_WEBHOOK_SECRET` verifies `POST /cursor/webhook`.
+1. `applyStoredActivity` reads `activity.jsonl`. Lines arrive from `POST /activity` (the seat's own key: `live-inbox --turn` and `live-inbox --prompt`) and from the server's own wake/ack lines. An open turn, subagent, or watcher is working when the turn tag does not start with a `bc-` id. A tag `bc-<id>` or `bc-<id> <track>` is that agent's turn: the agent card and the cloud-agent node show working, and no seat does. A prompt pulse (`kind: prompt`) keeps that seat working for 10 minutes, and the board credits the sender (`from: blaze` is **Blaze**). A seat turn expires after `LIVE_TURN_OPEN_MIN` (default 20 minutes, `TURN_OPEN_MS`) when the ack never arrives. An `end` or an ack closes that seat turn at once. A prompt still inside its 10 minutes stays. The turn end still clears after `TURN_OPEN_MS`. The drop clears a mark at or before the end. A mark newer than the end stays only while it is inside `TURN_OPEN_MS`, then it expires. A mark with no time stays. A cloud turn end does not clear the seat's own turn. Newer GitHub marks expire at 20 minutes. A later tick does not open the turn again. An open seat turn older than that window drops the seat. A fresh prompt pulse stays.
+2. `applyTrackWorking` reads the work track. A packet that is woken and not yet acked sets the seat working. A running cloud agent does not. The chip text is `working_on` (`working on <title>` for a packet). A Cursor status webhook appends `agents.jsonl` only after `CURSOR_WEBHOOK_SECRET` verifies `POST /cursor/webhook`. The row stays on the agent card.
 3. `applyGithubWorking` reads GitHub events already in the feed. A PR or issue comment, a review, a PR opened or pushed, or an issue event whose actor login maps to a seat marks that seat working for the same `TURN_OPEN_MS` window. `working_on` is `repo#number`. Logins come from `feed/routing/inbox-roles.json` (`routing.<seat>.login`), `feed/fleet-nodes.json` and `LIVE_NODE_MAP`, `LIVE_GH_SEATS` (the App's `bot` login), and `SEAT_GIT_NAMES` only as `git:<seat>` (a commit with no GitHub user). A cloud agent with no seat login maps through `SEAT_AGENT_MAP` (exact id or `id*` prefix) or a `bc-` id in the branch, ref, or comment. `critic0x[bot]` is critic. `forge0x1[bot]` is forge. A close or a merge of the PR or issue named in `working_on` clears that chip on the seat and in `fleet.working`. The seat can stay working. `fleet.cloud.active` is true only while `open_agents` is non-empty; a recent GitHub cloud clock alone does not keep it active.
 
 The board page has a Work panel (`header.track`) grouped by lane. Packet phases are `sent`, `delivered`, `woken`, `acked`. Past `NUDGE_L1_S` with no ack, the packet is `overdue`. A blocker (`type` / `kind` / `flag` `needs_human`, or `to` = `WORK_HUMAN_TO`) sits in the `WORK_HUMAN_LANE` lane until it is acked or the card closes. `SEAT_DISPLAY_NAMES` (JSON seat id to label) renames lanes and the chip lookup. The page reads that map from `fleet.seat_display`. It does not hardcode a seat's display name.
@@ -172,8 +174,7 @@ The board page has a Work panel (`header.track`) grouped by lane. Packet phases 
 A seat shows ACTIVE when, within the fleet window (`LIVE_WINDOW_MIN`, default 15), one of these happened:
 
 - a GitHub event by one of its logins (via the credit map above);
-- an owned box file changed or an activity line (turn, task, watcher) was logged (see Seat activity above);
-- a cloud agent it launched is still running (`launch` or `reply`, no later `finished` or `cancel`, last update inside six hours);
+- an owned box file changed or an activity line (its own turn, task, or watcher) was logged (see Seat activity above);
 - a wake to its webhook landed (2xx);
 - it read its inbox (`live-inbox <seat>`);
 - it acked a line (`live-inbox <seat> --ack <id>`, `--ack stale --apply`, `--upto <id>`, or `--ack all`).
@@ -200,4 +201,12 @@ A webhook fires for the seat that has to act. The line's `seat` wins, then a han
 
 History note. Every activity line is archived to history. The word owner is the owner via LIVE_OWNER or the owner-name.
 
-`GET /history` lists archive days. `GET /history?date=YYYY-MM-DD` returns that day's events. `GET /history/cards` returns the latest version of each card. Card versions are append-only (`key` + stage + state + the card's own update time). A row with no key is not stored. The open queue is a view of unacked inbox lines. Filtering it does not delete the inbox file. Lines older than the live window stay in the daily archive.
+`GET /history` lists archive days. `GET /history?date=YYYY-MM-DD` returns that day's events. `GET /history/cards` returns the latest transition for each card (`state`, `since`, `limit`, `cursor`). `GET /history/transitions` lists the append-only log (`card`, `transition`, `since`, `until`, `limit`, `cursor`). `GET /history/export?date=YYYY-MM-DD` is NDJSON for that Chicago day. `limit` defaults to 200 and stops at 1000. The cursor is the last id returned; the next page starts after it. A bad date is 400. `GET /archive` stays behind the archive key.
+
+A transition is written before the closed-row cap. An open issue or PR is not dropped for being quiet. The id is `card|transition|source_id`. The same source event appends once. A reopen is a new source id. Verbs are `opened`, `stage`, `parked`, `held`, `released`, `merged`, `closed`, and `reopened`. `merged` wins when the source kind is `merged`. The record holds the card id, the verb, from/to state and stage, `actor.seat`, `actor.login`, `actor.bc`, `t_ct` with a Chicago offset, the source event id, and a packet snapshot of at most 200 characters. It does not store a message body. Day folders use the Chicago date, so 19:30 CT stays on that Chicago day.
+
+Nothing in the log is deleted. Boot rebuilds `card -> latest` from the log when `transition-index.json` is missing. The event seen-set still loads only the newest warm days. Card versions in `cards.jsonl` stay append-only (`key` + stage + state + the card's own update time). A row with no key is not stored.
+
+The durable path is `$MESH_DATA_DIR/archive` on the Railway volume. Events are about 1.9 MB a day. Transitions are smaller. A finished month may be copied to `archive/segments/YYYY-MM/*.jsonl.gz`; a segment has to replay equal to the daily files. This does not delete the daily files. A volume snapshot or an off-box copy is the spare. A volume wipe is the loss. Count and duration are the inference fields (stage cycle time, rounds before merge, seat load per Chicago day, nudge to the next transition, cloud duration per card through `actor.bc`). There is no dollar field.
+
+The open queue is a view of unacked inbox lines. Filtering it does not delete the inbox file. Lines older than the live window stay in the daily archive.

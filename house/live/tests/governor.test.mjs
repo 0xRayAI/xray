@@ -18,13 +18,16 @@ const old = new Date(Date.now() - 3600e3).toISOString();
 fs.mkdirSync(path.join(DATA, 'live', 'inbox'), { recursive: true });
 fs.writeFileSync(path.join(DATA, 'live', 'inbox', 'forge.jsonl'),
   JSON.stringify({ id: 'stale-1', t_ct: old, seat: 'forge', type: 'pr_comment', repo: 'example-org/x', number: 7, title: 't', url: 'https://github.com/example-org/x/pull/7', reason: 'merge ask' }) + '\n');
+fs.writeFileSync(path.join(DATA, 'live', 'cards.json'), JSON.stringify({ cards: [
+  { key: 'example-org/x#7', repo: 'example-org/x', number: 7, title: 'open', state: 'live', stage: 'open', kind: 'pr', packet: { raci: 'R=forge A=Blaze' } },
+] }));
 const ROUTE = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-gov-route-'));
 fs.writeFileSync(path.join(ROUTE, 'inbox-roles.json'), JSON.stringify({ extra_seats: { forge: { needles: ['@forge'] } } }));
 fs.writeFileSync(path.join(ROUTE, 'roster.json'), JSON.stringify({ seats: ['forge', 'mill'] }));
 const FKEY = 'fk-' + crypto.randomBytes(8).toString('hex');
 let PORT = 0, BASE = '';
 let logs = '';
-const srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], { env: { PORT: '0', PATH: process.env.PATH, COLLECTOR: 'off', LIVE_PUBLIC: '1',
+const srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], { env: { PORT: '0', PATH: process.env.PATH, COLLECTOR: 'off', LIVE_PUBLIC: '1', FLEET_MODE: 'full',
   SESSION_SECRET: crypto.randomBytes(32).toString('hex'), INGEST_SECRET: crypto.randomBytes(32).toString('hex'), MESH_DATA_DIR: DATA,
   SEAT_WEBHOOKS: JSON.stringify({ forge: { url: `${W}/forge` }, critic: { url: `${W}/critic` } }), WAKE_KEY_FORGE: 'wk', WAKE_KEY_CRITIC: 'wk',
   SEAT_KEYS: JSON.stringify({ forge: crypto.createHash('sha256').update(FKEY).digest('hex') }),

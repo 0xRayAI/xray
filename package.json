@@ -1,6 +1,6 @@
 {
   "name": "0xray",
-  "version": "4.1.3",
+  "version": "4.2.3",
   "description": "Three-subsystem autonomous engine. The suit powers the agent you already run: memory, judgement, payments, and the wake.",
   "readme": "README.md",
   "license": "MIT",
@@ -37,6 +37,9 @@
     "self-improving-agents"
   ],
   "type": "module",
+  "engines": {
+    "node": ">=24.22.3"
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -69,11 +72,12 @@
     "version:bump": "node scripts/foundry/reconcile-version.mjs",
     "version": "node scripts/foundry/version-manager.mjs",
     "prebuild": "rm -rf dist tsconfig.tsbuildinfo tsconfig.*.tsbuildinfo",
-    "build": "tsc && chmod +x dist/cli/index.js && mkdir -p dist/public dist/scripts && cp -r public/* dist/public/ && cp scripts/hooks/pre-command dist/scripts/ && cp scripts/hooks/pre-command.mjs dist/scripts/ && cp README.md AGENTS.md SKILLS.md CHANGELOG.md LICENSE .gitignore.default dist/ && find src -name '*.mjs' ! -path '*/__tests__/*' | while read f; do tgt=\"dist/${f#src/}\"; mkdir -p \"$(dirname $tgt)\"; cp \"$f\" \"$tgt\"; done && for dir in skills integrations mcps; do find src/$dir -type f ! -name '*.ts' ! -path '*/.pytest_cache/*' | while read f; do tgt=\"dist/${f#src/}\"; mkdir -p \"$(dirname $tgt)\"; cp \"$f\" \"$tgt\"; done; done && mkdir -p dist/plugin && (find dist/plugin -name '*codex-injection*.js' -exec cp {} dist/plugin/xray-codex-injection.js \\; 2>/dev/null || true) && cp -r src/opencode/ .opencode/ && mkdir -p .opencode/skills && cp -R src/skills/. .opencode/skills/ && mkdir -p .xray && for f in codex.json features.json features.schema.json config.json; do cp xray/$f .xray/$f 2>/dev/null || true; done",
+    "build": "tsc && chmod +x dist/cli/index.js && mkdir -p dist/public dist/scripts && cp -r public/* dist/public/ && cp scripts/hooks/pre-command dist/scripts/ && cp scripts/hooks/pre-command.mjs dist/scripts/ && cp README.md AGENTS.md SKILLS.md CHANGELOG.md LICENSE .gitignore.default dist/ && find src -name '*.mjs' ! -path '*/__tests__/*' | while read f; do tgt=\"dist/${f#src/}\"; mkdir -p \"$(dirname $tgt)\"; cp \"$f\" \"$tgt\"; done && for dir in skills integrations mcps; do find src/$dir -type f ! -name '*.ts' ! -path '*/.pytest_cache/*' | while read f; do tgt=\"dist/${f#src/}\"; mkdir -p \"$(dirname $tgt)\"; cp \"$f\" \"$tgt\"; done; done && mkdir -p dist/plugin && (find dist/plugin -name '*codex-injection*.js' -exec cp {} dist/plugin/xray-codex-injection.js \\; 2>/dev/null || true) && node scripts/node/materialize-opencode-mirror.cjs && npm run build:opencode-skills && mkdir -p .xray && for f in codex.json features.json features.schema.json config.json; do cp xray/$f .xray/$f 2>/dev/null || true; done",
+    "build:opencode-skills": "mkdir -p .opencode/skills && cp -R src/skills/. .opencode/skills/",
     "build:all": "npm run build",
     "ci-install": "npm ci",
     "clean": "rm -rf dist tsconfig.tsbuildinfo tsconfig.*.tsbuildinfo",
-    "test": "vitest run",
+    "test": "node scripts/node/materialize-opencode-mirror.cjs && vitest run",
     "test:batch": "npm test",
     "test:unit": "npm test -- src/__tests__/unit/config-loader.test.ts src/__tests__/unit/state-manager.test.ts src/__tests__/unit/state-manager-persistence.test.ts src/__tests__/unit/context-loader.test.ts src/__tests__/unit/pattern-analyzer.test.ts src/__tests__/unit/complexity-calibrator.test.ts",
     "test:core-framework": "npm test -- src/__tests__/unit/v2-deletion-protection.test.ts src/__tests__/unit/confer.test.ts src/__tests__/unit/local-confer.test.ts src/__tests__/unit/synthesis-consult-receipt.test.ts src/__tests__/unit/governance-nollm-merge.test.ts",
@@ -83,9 +87,9 @@
     "test:code-analysis": "npm test -- src/__tests__/unit/codebase-context-analyzer.test.ts src/__tests__/unit/dependency-graph-builder.test.ts src/__tests__/unit/rule-enforcer.test.ts src/__tests__/unit/codex-parser.test.ts src/__tests__/unit/codex-injector.test.ts",
     "test:processors": "npm test -- src/__tests__/unit/processor-activation.test.ts src/__tests__/unit/typescript-compilation-processor.test.ts",
     "test:miscellaneous": "npm test -- src/__tests__/unit/blocked-test.test.ts",
-    "test:grok-bot": "npm test -- src/__tests__/unit/grok-bot-seat-doctor.test.ts src/__tests__/unit/grok-bot-house-migrate.test.ts src/__tests__/unit/grok-bot-house-template.test.ts src/__tests__/unit/grok-bot-op-proc-map.test.ts src/__tests__/unit/lead-cadence.test.ts src/__tests__/unit/grok-bot-auto-review-policy.test.ts src/__tests__/unit/owner-prompt-interim.test.ts",
+    "test:grok-bot": "npm test -- src/__tests__/unit/grok-bot-seat-doctor.test.ts src/__tests__/unit/grok-bot-house-migrate.test.ts src/__tests__/unit/grok-bot-house-template.test.ts src/__tests__/unit/grok-bot-op-proc-map.test.ts src/__tests__/unit/lead-cadence.test.ts src/__tests__/unit/grok-bot-auto-review-policy.test.ts src/__tests__/unit/owner-prompt-interim.test.ts src/__tests__/unit/grok-bot-kit-tools.test.ts src/__tests__/unit/near-mailbox.test.ts src/__tests__/unit/near-1click.test.ts",
     "test:quick": "npm test -- src/__tests__/integration/boot-orchestrator.integration.test.ts src/__tests__/unit/config-loader.test.ts src/__tests__/unit/state-manager.test.ts",
-    "test:comprehensive": "npm run typecheck && npm run test:unit && npm run test:core-framework && npm run test:security && npm run test:performance && npm run test:session-management && npm run test:code-analysis && npm run test:processors && npm run test:miscellaneous && npm test -- src/__tests__/unit/llm-governance-provider.test.ts src/__tests__/unit/mcp-server-smoke.test.ts src/__tests__/unit/cursor-hooks.test.ts src/__tests__/unit/host-vs-mill-score.test.ts src/__tests__/unit/wear-pack-file-list.test.ts && npm run test:grok-bot",
+    "test:comprehensive": "npm run typecheck && npm run test:unit && npm run test:core-framework && npm run test:security && npm run test:performance && npm run test:session-management && npm run test:code-analysis && npm run test:processors && npm run test:miscellaneous && npm test -- src/__tests__/unit/llm-governance-provider.test.ts src/__tests__/unit/mcp-server-smoke.test.ts src/__tests__/unit/cursor-hooks.test.ts src/__tests__/unit/host-vs-mill-score.test.ts src/__tests__/unit/wear-pack-file-list.test.ts src/__tests__/unit/foundry-self-settle.test.ts && npm run test:grok-bot",
     "test:integration-all": "npm test -- src/__tests__/integration/",
     "test:performance-all": "npm test -- src/__tests__/performance/ src/__tests__/unit/performance-system.test.ts src/__tests__/unit/benchmark.test.ts src/__tests__/unit/analytics.test.ts",
     "test:agents-all": "echo 'Legacy agents test entry retired'",
@@ -218,20 +222,27 @@
     "LICENSE",
     "grok-bot/bin/grok-bot.js",
     "grok-bot/lib/pulsar-game.mjs",
+    "grok-bot/lib/next-wave.mjs",
     "grok-bot/ops/arcade/RANGE.md",
     "house/live/app/wave-schedule.mjs",
+    "house/live/tools/inbox-watch.sh",
+    "house/live/tools/inbox-wake-stamp.sh",
+    "house/live/tools/exit-gate.mjs",
+    "house/live/tools/live-inbox",
     "vendor/@0xray/repertoire/",
     "!vendor/**/*.map"
   ],
   "dependencies": {
     "@0xray/blip": "^0.1.2",
-    "@modelcontextprotocol/sdk": "^1.0.4",
+    "@modelcontextprotocol/sdk": "1.32.2",
     "commander": "^11.1.0",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
     "ws": "^8.16.0"
   },
   "devDependencies": {
+    "@elemaudio/core": "^4.0.1",
+    "@elemaudio/offline-renderer": "^4.0.3",
     "@eslint/js": "^9.39.2",
     "@playwright/test": "^1.55.0",
     "@types/express": "^5.0.0",
@@ -240,10 +251,16 @@
     "@types/ws": "^8.5.13",
     "@typescript-eslint/eslint-plugin": "^8.18.0",
     "@typescript-eslint/parser": "^8.18.0",
-    "@vitest/coverage-v8": "^4.1.8",
+    "@vitest/coverage-v8": "^4.1.12",
     "eslint": "^9.17.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.2",
-    "vitest": "^4.1.8"
+    "vitest": "^4.1.12"
+  },
+  "overrides": {
+    "body-parser": "^2.4.0",
+    "fast-uri": "^3.1.9",
+    "qs": ">=6.17.1",
+    "@hono/node-server": "2.1.5"
   }
 }

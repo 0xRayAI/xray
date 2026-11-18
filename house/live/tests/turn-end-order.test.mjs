@@ -161,7 +161,7 @@ test('a fresh mark newer than the end stays working', async () => {
   }
 });
 
-test('a cloud agent survives a turn end', async () => {
+test('a cloud mark with no running agent does not keep the seat after the turn end', async () => {
   const data = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-end-cloud-'));
   const now = Date.now();
   const cloudAt = now - 30 * 60 * 1000;
@@ -176,11 +176,12 @@ test('a cloud agent survives a turn end', async () => {
   });
   const srv = start(data);
   try {
-    const fleet = await fleetOf(srv, live => live.fleet.seats.forge && live.fleet.working && live.fleet.working.forge);
+    const fleet = await fleetOf(srv, live => live.event_count > 0 && live.fleet.seats.forge);
     assert.ok(fleet, srv.logs());
-    assert.equal(fleet.working.forge.via, 'cloud');
-    assert.equal(Date.parse(fleet.working.forge.since_ct), cloudAt);
-    assert.equal(fleet.seats.forge.working, true);
+    assert.equal(fleet.working.forge, undefined, JSON.stringify(fleet.working));
+    assert.equal(fleet.seats.forge.working, false);
+    assert.equal(fleet.working.critic, undefined);
+    assert.notEqual(fleet.cloud && fleet.cloud.working, true);
   } finally {
     await stop(srv.child);
     fs.rmSync(data, { recursive: true, force: true });

@@ -1,4 +1,4 @@
-"""tools/inbox-watch.sh: FAIL once per distinct error, ACTION_REQUIRED on new lines, one turn start and one turn end."""
+"""tools/inbox-watch.sh: FAIL once per distinct error, write an open id to the seat todo, auto-ack closed items, held lines once."""
 import os, subprocess, tempfile, unittest
 from pathlib import Path
 
@@ -10,6 +10,10 @@ class InboxWatch(unittest.TestCase):
     def test_syntax_and_exec(self):
         subprocess.run(["bash", "-n", str(W)], check=True)
         self.assertTrue(os.access(W, os.X_OK))
+        text = W.read_text()
+        self.assertIn("house/live/tools/live-inbox", text)
+        self.assertIn("XRAY_MAIN", text)
+        self.assertNotIn("command -v live-inbox", text)
 
     def _run(self, body, args, env_extra):
         with tempfile.TemporaryDirectory() as d:
@@ -27,18 +31,44 @@ class InboxWatch(unittest.TestCase):
             r = subprocess.run(["bash", str(W), *args], env=env, capture_output=True, text=True)
             return r, log.read_text() if log.exists() else ""
 
+    def _hooks(self, d, gh_body, card_body="printf 'live\\n'"):
+        gh = Path(d) / "gh"
+        card = Path(d) / "card"
+        gh.write_text("#!/usr/bin/env bash\n" + gh_body + "\n")
+        card.write_text("#!/usr/bin/env bash\n" + card_body + "\n")
+        gh.chmod(0o755)
+        card.chmod(0o755)
+        return {"INBOX_WATCH_GH": str(gh), "INBOX_WATCH_CARD": str(card)}
+
     def test_defaults_and_empty_poll_is_quiet(self):
         r, calls = self._run("exit 0", [], {"INBOX_WATCH_ONCE": "1"})
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertEqual(r.stdout, "")
         self.assertIn("arch1", calls.splitlines()[0])
+        self.assertIn("--watch", calls.splitlines()[0])
         self.assertIn("URL=https://bifrost.0xray.dev", calls)
         self.assertIn("/.burst/seat-keys", calls)
         self.assertIn("/.burst/cursors", calls)
         self.assertNotIn("--ack", calls)
         self.assertNotIn("--turn", calls)
 
-    def test_new_lines_turn_start_then_end(self):
+    def test_success_writes_watch_state(self):
+        with tempfile.TemporaryDirectory() as d:
+            state = str(Path(d) / "inbox-watch.state")
+            pid_path = str(Path(d) / "inbox-watch.pid")
+            r, _calls = self._run("exit 0", [], {"INBOX_WATCH_ONCE": "1", "INBOX_WATCH_STATE": state, "INBOX_WATCH_PID": pid_path})
+            self.assertEqual(r.returncode, 0, r.stderr)
+            text = Path(state).read_text()
+            self.assertIn("pid=", text)
+            self.assertIn("started=", text)
+            self.assertIn("last_ok=", text)
+            self.assertIn("live_url=https://bifrost.0xray.dev", text)
+            self.assertIn("script=house/live/tools/inbox-watch.sh", text)
+            pid_text = Path(pid_path).read_text().strip()
+            self.assertTrue(pid_text.isdigit())
+            self.assertIn("pid=%s\n" % pid_text, text)
+
+    def test_new_lines_keep_the_turn_open(self):
         body = r"""
 if [[ "$*" == *"--turn"* ]]; then exit 0; fi
 count="$(dirname "$0")/n"
@@ -51,10 +81,12 @@ exit 0
 """
         r, calls = self._run(body, ["arch1"], {"INBOX_WATCH_MAX": "3"})
         self.assertEqual(r.returncode, 0, r.stderr)
-        self.assertEqual(r.stdout.count("ACTION_REQUIRED"), 1)
-        self.assertIn("line-a", r.stdout)
-        self.assertEqual(calls.count("--turn start --tag wake"), 1)
-        self.assertEqual(calls.count("--turn end"), 1)
+        self.assertEqual(r.stdout.count("ACTION_REQUIRED"), 2)
+        self.assertEqual(r.stdout.count("unfinished:1"), 2)
+        self.assertEqual(r.stdout.count("open 1: raw=1"), 2)
+        self.assertEqual(r.stdout.count("line-a"), 2)
+        self.assertEqual(calls.count("--turn start --tag wake"), 2)
+        self.assertNotIn("--turn end", calls)
         self.assertNotIn("--ack", calls)
         self.assertNotIn("seat-key", r.stdout + r.stderr)
 
@@ -72,9 +104,240 @@ exit 1
 """
         r, _calls = self._run(body, ["mill"], {"INBOX_WATCH_MAX": "3"})
         self.assertEqual(r.stdout.count("FAIL"), 2)
+        self.assertIn("LIVE_URL=https://bifrost.0xray.dev", r.stdout)
+        self.assertIn("expected=https://bifrost.0xray.dev", r.stdout)
         self.assertIn("boom", r.stdout)
         self.assertIn("other", r.stdout)
         self.assertNotIn("ACTION_REQUIRED", r.stdout)
+
+    def test_closed_line_is_auto_acked(self):
+        line = '{"id":"closed-1","repo":"0xRayAI/xray","number":531,"title":"done"}'
+        body = """
+if [[ "$*" == *"--turn"* || "$*" == *"--ack"* ]]; then exit 0; fi
+echo '%s'
+exit 0
+""" % line
+        with tempfile.TemporaryDirectory() as d:
+            hooks = self._hooks(d, "printf 'closed\\t\\t\\n'")
+            r, calls = self._run(body, ["arch1"], dict({"INBOX_WATCH_MAX": "2"}, **hooks))
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(r.stdout.count("auto-ack closed-1"), 2)
+        self.assertNotIn("ACTION_REQUIRED", r.stdout)
+        self.assertNotIn(line, r.stdout)
+        self.assertEqual(calls.count("--ack closed-1"), 2)
+        self.assertNotIn("--turn", calls)
+        self.assertNotIn("seat-key", r.stdout + r.stderr)
+
+    def test_held_label_once_and_open_line_is_todo(self):
+        open_line = '{"id":"open-1","repo":"0xRayAI/xray","number":549,"title":"open"}'
+        held_line = '{"id":"held-1","repo":"0xRayAI/xray","number":570,"title":"held"}'
+        body = """
+if [[ "$2" == "--turn" ]]; then exit 0; fi
+if [[ "$2" == "--ack" ]]; then echo "$3" >> "$(dirname "$0")/acked"; exit 0; fi
+d="$(dirname "$0")"
+n=0
+[[ -f "$d/n" ]] && n=$(cat "$d/n")
+n=$((n + 1))
+echo "$n" > "$d/n"
+if [[ "$n" -le 2 ]]; then
+  if [[ ! -f "$d/acked" ]] || ! grep -qx 'open-1' "$d/acked"; then
+    echo '%s'
+  fi
+  echo '%s'
+fi
+exit 0
+""" % (open_line, held_line)
+        gh = """
+case "$2" in
+  549) printf 'open\\t\\tbug\\n' ;;
+  570) printf 'open\\t\\tOn-Hold\\n' ;;
+  *) exit 1 ;;
+esac
+"""
+        with tempfile.TemporaryDirectory() as d:
+            hooks = self._hooks(d, gh)
+            r, calls = self._run(body, ["arch1"], dict({"INBOX_WATCH_MAX": "3", "INBOX_TODO_DIR": str(Path(d) / "todo")}, **hooks))
+            todo = (Path(d) / "todo" / "arch1.md").read_text()
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(r.stdout.count("ACTION_REQUIRED"), 2)
+        self.assertEqual(r.stdout.count("unfinished:1"), 2)
+        self.assertNotIn("pop ", r.stdout)
+        self.assertEqual(r.stdout.count("line 0xRayAI/xray#549 open-1 open"), 2)
+        self.assertNotIn(open_line, r.stdout)
+        self.assertEqual(r.stdout.count("held: 1"), 1)
+        self.assertNotIn(held_line, r.stdout)
+        self.assertNotIn("auto-ack", r.stdout)
+        self.assertNotIn("--ack open-1", calls)
+        self.assertNotIn("--ack held-1", calls)
+        self.assertNotIn("--ack all", calls)
+        self.assertEqual(todo.count("id=open-1"), 1)
+        self.assertNotIn("held-1", todo)
+        self.assertEqual(calls.count("--turn start --tag wake"), 2)
+        self.assertNotIn("--turn end", calls)
+
+    def test_held_card_listed_once(self):
+        held_line = '{"id":"held-card","repo":"0xRayAI/xray","number":416,"title":"card"}'
+        body = """
+if [[ "$*" == *"--turn"* || "$*" == *"--ack"* ]]; then exit 0; fi
+count="$(dirname "$0")/n"
+n=0
+[[ -f "$count" ]] && n=$(cat "$count")
+n=$((n + 1))
+echo "$n" > "$count"
+if [[ "$n" -le 2 ]]; then echo '%s'; fi
+exit 0
+""" % held_line
+        with tempfile.TemporaryDirectory() as d:
+            hooks = self._hooks(d, "printf 'open\\t\\tbug\\n'", "printf 'held\\n'")
+            r, calls = self._run(body, ["arch1"], dict({"INBOX_WATCH_MAX": "3"}, **hooks))
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(r.stdout.count("held: 1"), 1)
+        self.assertNotIn("ACTION_REQUIRED", r.stdout)
+        self.assertNotIn(held_line, r.stdout)
+        self.assertNotIn("--ack", calls)
+        self.assertEqual(calls.count("--turn start --tag wake"), 1)
+        self.assertNotIn("--turn end", calls)
+
+    def test_gh_failure_delivers_to_the_todo(self):
+        line = '{"id":"unknown-1","repo":"0xRayAI/xray","number":588,"title":"unknown"}'
+        body = """
+if [[ "$*" == *"--turn"* || "$*" == *"--ack"* ]]; then exit 0; fi
+echo '%s'
+exit 0
+""" % line
+        with tempfile.TemporaryDirectory() as d:
+            hooks = self._hooks(d, "echo boom >&2; exit 1")
+            r, calls = self._run(body, ["arch1"], dict({"INBOX_WATCH_MAX": "1", "INBOX_TODO_DIR": str(Path(d) / "todo")}, **hooks))
+            todo = (Path(d) / "todo" / "arch1.md").read_text()
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(r.stdout.count("ACTION_REQUIRED"), 1)
+        self.assertIn("unfinished:1", r.stdout)
+        self.assertIn("unknown-1", r.stdout)
+        self.assertNotIn(line, r.stdout)
+        self.assertNotIn("auto-ack", r.stdout)
+        self.assertNotIn("pop ", r.stdout)
+        self.assertNotIn("--ack", calls)
+        self.assertNotIn("--ack all", calls)
+        self.assertEqual(todo.count("id=unknown-1"), 1)
+
+    def test_ack_failure_reprints_the_line(self):
+        line = '{"id":"closed-2","repo":"0xRayAI/xray","number":532,"title":"merged"}'
+        body = """
+if [[ "$*" == *"--ack"* ]]; then exit 1; fi
+if [[ "$*" == *"--turn"* ]]; then exit 0; fi
+echo '%s'
+exit 0
+""" % line
+        with tempfile.TemporaryDirectory() as d:
+            hooks = self._hooks(d, "printf 'merged\\tmerged\\t\\n'")
+            r, calls = self._run(body, ["arch1"], dict({"INBOX_WATCH_MAX": "1"}, **hooks))
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertNotIn("auto-ack", r.stdout)
+        self.assertIn("ACTION_REQUIRED", r.stdout)
+        self.assertIn("unfinished:1", r.stdout)
+        self.assertIn("closed-2", r.stdout)
+        self.assertNotIn(line, r.stdout)
+        self.assertIn("--ack closed-2", calls)
+
+    def test_delivered_open_line_is_todo_and_a_new_id_prints(self):
+        """A later id is a new line. The head reprints on every poll. A seen line that is not the head stays quiet."""
+        first = '{"id":"open-2","repo":"0xRayAI/xray","number":608,"title":"still open","type":"issue_comment"}'
+        second = '{"id":"open-3","repo":"0xRayAI/xray","number":608,"title":"newer","type":"issue_comment"}'
+        body = """
+if [[ "$2" == "--turn" ]]; then exit 0; fi
+if [[ "$2" == "--ack" ]]; then echo "$3" >> "$(dirname "$0")/acked"; exit 0; fi
+d="$(dirname "$0")"
+n=0
+[[ -f "$d/n" ]] && n=$(cat "$d/n")
+n=$((n + 1))
+echo "$n" > "$d/n"
+acked() { [[ -f "$d/acked" ]] && grep -qx "$1" "$d/acked"; }
+if [[ "$n" -eq 1 ]]; then echo '%s'; fi
+if [[ "$n" -eq 2 ]]; then
+  acked open-2 || echo '%s'
+  echo '%s'
+fi
+if [[ "$n" -ge 3 ]]; then
+  acked open-2 || echo '%s'
+  acked open-3 || echo '%s'
+fi
+exit 0
+""" % (first, first, second, first, second)
+        with tempfile.TemporaryDirectory() as d:
+            hooks = self._hooks(d, "printf 'open\\t\\tbug\\n'")
+            r, calls = self._run(body, ["arch1"], dict({"INBOX_WATCH_MAX": "3", "INBOX_TODO_DIR": str(Path(d) / "todo")}, **hooks))
+            todo = (Path(d) / "todo" / "arch1.md").read_text()
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(r.stdout.count("ACTION_REQUIRED"), 3)
+        self.assertEqual(r.stdout.count("unfinished:1"), 2)
+        self.assertEqual(r.stdout.count("unfinished:2"), 1)
+        self.assertNotIn("pop ", r.stdout)
+        self.assertEqual(r.stdout.count("still open"), 3)
+        self.assertEqual(r.stdout.count("newer"), 1)
+        self.assertNotIn(first, r.stdout)
+        self.assertNotIn(second, r.stdout)
+        self.assertNotIn("--ack", calls)
+        self.assertNotIn("--ack all", calls)
+        self.assertEqual(todo.count("id=open-2"), 1)
+        self.assertEqual(todo.count("id=open-3"), 1)
+        self.assertEqual(calls.count("--turn start --tag wake"), 3)
+        self.assertNotIn("--turn end", calls)
+
+    def test_a_seen_head_reprints_until_ack(self):
+        """A seen head is printed on every poll until the seat acks it."""
+        line = '{"id":"open-9","repo":"0xRayAI/xray","number":12,"title":"fleet","type":"packet"}'
+        body = """
+if [[ "$*" == *"--turn"* || "$*" == *"--ack"* ]]; then exit 0; fi
+echo '%s'
+exit 0
+""" % line
+        with tempfile.TemporaryDirectory() as d:
+            todo = Path(d) / "todo"
+            todo.mkdir()
+            (todo / "arch1.seen").write_text("open-9\n")
+            hooks = self._hooks(d, "printf 'open\\t\\tbug\\n'")
+            r, _calls = self._run(body, ["arch1"], dict({"INBOX_WATCH_MAX": "3", "INBOX_TODO_DIR": str(todo)}, **hooks))
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(r.stdout.count("ACTION_REQUIRED"), 3)
+        self.assertEqual(r.stdout.count("fleet"), 3)
+
+    def test_a_new_wake_does_not_silence_the_head(self):
+        """A wake token does not stop the head from reprinting on the later polls."""
+        line = '{"id":"open-9","repo":"0xRayAI/xray","number":12,"title":"fleet","type":"packet"}'
+        body = """
+if [[ "$*" == *"--turn"* || "$*" == *"--ack"* ]]; then exit 0; fi
+echo '%s'
+if [[ ! -f "$HOME/.burst/inbox-wake/arch1" ]]; then
+  mkdir -p "$HOME/.burst/inbox-wake"
+  printf 'wake-2\\n' > "$HOME/.burst/inbox-wake/arch1"
+fi
+exit 0
+""" % line
+        with tempfile.TemporaryDirectory() as d:
+            todo = Path(d) / "todo"
+            todo.mkdir()
+            (todo / "arch1.seen").write_text("open-9\n")
+            hooks = self._hooks(d, "printf 'open\\t\\tbug\\n'")
+            r, _calls = self._run(body, ["arch1"], dict({"INBOX_WATCH_MAX": "3", "INBOX_TODO_DIR": str(todo)}, **hooks))
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(r.stdout.count("ACTION_REQUIRED"), 3)
+        self.assertEqual(r.stdout.count("fleet"), 3)
+
+    def test_poison_id_all_is_not_acked(self):
+        line = '{"id":"all","repo":"0xRayAI/xray","number":608,"title":"poison"}'
+        body = """
+if [[ "$*" == *"--turn"* || "$*" == *"--ack"* ]]; then exit 0; fi
+echo '%s'
+exit 0
+""" % line
+        with tempfile.TemporaryDirectory() as d:
+            hooks = self._hooks(d, "printf 'open\\t\\tbug\\n'")
+            r, calls = self._run(body, ["arch1"], dict({"INBOX_WATCH_MAX": "1"}, **hooks))
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(r.stdout.count("ACTION_REQUIRED"), 1)
+        self.assertIn("poison", r.stdout)
+        self.assertNotIn("pop ", r.stdout)
+        self.assertNotIn("--ack", calls)
 
 
 if __name__ == "__main__":

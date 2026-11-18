@@ -1,0 +1,5 @@
+name: herald-inspect
+skill: herald-inspect
+description: "Herald write inspect. Last draft receipt, fail-closed."
+version: "0.1.15"
+mode: subagent

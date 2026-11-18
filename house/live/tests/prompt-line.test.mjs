@@ -40,6 +40,28 @@ test('prompt events read as Blaze → seat, truncated, with the full note kept',
   assert.equal(L.promptView({ kind: 'seat_turn', from: 'forge', label: 'forge turn start' }), null);
 });
 
+test('an activity row keeps the seat, the card, the link, and the full note', () => {
+  const L = mesh();
+  const note = 'the full handoff note that the row hides until it is opened';
+  const row = L.activityDetail({
+    kind: 'comment', from: 'forge', to: 'GitHub', label: 'short label', note,
+    repo: 'example/app', number: 3, source: 'https://github.com/example/app/pull/3',
+  });
+  assert.equal(row.seat, 'FORGE');
+  assert.equal(row.card, 'example/app#3');
+  assert.equal(row.href, 'https://github.com/example/app/pull/3');
+  assert.equal(row.note, note);
+  assert.equal(row.label, 'short label');
+  const issue = L.activityDetail({ kind: 'issue_open', from: 'blinky', repo: 'example/app', number: 1, label: 'opened' });
+  assert.equal(issue.href, 'https://github.com/example/app/issues/1');
+  const ci = L.activityDetail({ kind: 'workflow_run', from: 'CI', credit: 'Blaze', label: 'run lint', repo: 'example/app', number: 9 });
+  assert.equal(ci.seat, 'Blaze');
+  assert.equal(ci.href, 'https://github.com/example/app/pull/9');
+  const said = L.activityDetail({ kind: 'seat_prompt', from: 'Blaze', to: 'forge', note: 'hello board' });
+  assert.equal(said.note, 'Blaze → forge: hello board');
+  assert.equal(said.card, '');
+});
+
 test('an owner prompt stays one activity line when newer seat turns fill the window', () => {
   const L = mesh();
   const events = [{ id: 'p1', kind: 'seat_prompt', from: 'Blaze', to: 'forge', note: 'hello', t_ct: '2026-10-20T16:19:00Z', _t: 1 }];

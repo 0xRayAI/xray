@@ -1,5 +1,7 @@
 # SKILLS.md — @0xray/grok-bot
 
+A new fleet runs [stand-up-fleet](skills/stand-up-fleet/SKILL.md) once. That pass is the house, the board routes, then one suit per seat. The NEAR path there is foundry, pay, cap, escrow, the Grok Bot one-click, and the CLI.
+
 Primary scripts for agents. Run in order for **each** key agent.
 
 | Skill | When to use |
@@ -10,15 +12,23 @@ Primary scripts for agents. Run in order for **each** key agent.
 | [plant-hangar-shops](skills/plant-hangar-shops/SKILL.md) | Plant hangar shops and verify a paid call |
 | [seat-label](skills/seat-label/SKILL.md) | This seat sets its own profile title. Run it in that seat’s chat |
 
+## NEAR path
+
+| Skill | When |
+|-------|------|
+| [near-seat](skills/near-seat/SKILL.md) | NEAR testnet account. The full-access key stays sealed |
+| [foundry-create](skills/foundry-create/SKILL.md) | Create the foundry. This runs near-seat |
+| [near-mill](skills/near-mill/SKILL.md) | Pay, cap, escrow, the listing check, and `near-status`. Same steps as the Grok Bot one-click and the CLI |
+
 ## Fleet / OS skills (reference)
 | Skill | When |
 |-------|------|
 | [ship-ready-mill-gate](skills/ship-ready-mill-gate/SKILL.md) | Strict ship checklist. Reviewer proof card is a short note |
 | [codex-fleet-constitution](skills/codex-fleet-constitution/SKILL.md) | Token discipline / fit-for-purpose |
 | [survive-compact](skills/survive-compact/SKILL.md) | After long wakes / before coding — re-read disk; chat may lose early turns |
-| [board-prompt](skills/board-prompt/SKILL.md) | On any inbound message, post the turn before other work, and one owner prompt |
+| [board-prompt](skills/board-prompt/SKILL.md) | Pointer to station. Not a second boot |
 | [setup-house](skills/setup-house/SKILL.md) | No `house/` folder yet — `grok-bot house init` copies `templates/house/` and refuses to overwrite |
-| [station](skills/station/SKILL.md) | Boot hook. Light on an owner message. Full after a summary, a wake, or a gate |
+| [station](skills/station/SKILL.md) | Boot hook. Light on every turn. Full after a summary, a wake, or a gate |
 | [seat-github-key](skills/seat-github-key/SKILL.md) | `~/bin/gh-<seat>` mints a fresh App token every call. Never plain `gh` |
 | [fasten-suit-and-hangar](skills/fasten-suit-and-hangar/SKILL.md) | Legacy combined fasten (prefer per-agent skill above) |
 

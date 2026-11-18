@@ -1143,6 +1143,9 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
   const workingLine = formatWorkingLine(working);
   const workingBit = workingLine ? workingLine : "working: (none)";
   const stationLine = `${swapBit}. ${intentBit}. ${planBit}. ${gitBit}. ${repertoireResume}. ${workingBit}`;
+  const fullLine = isCompactHook(extra)
+    ? "Full: due. OP-PROC#station-boot #station-nudge. --prompt is step 1. Ack only after that read."
+    : null;
   return {
     lastHost: prevHost,
     hotSwap,
@@ -1154,6 +1157,7 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
     stationLine,
     cascadeLine,
     ...(notesLine ? { notesLine } : {}),
+    ...(fullLine ? { fullLine } : {}),
     ...compactHold,
     arrivedHook: extra && extra.hookEvent ? String(extra.hookEvent) : "",
   };
@@ -1178,6 +1182,7 @@ const STOCK_STATION_PREFIXES = [
   "keys:",
   "judgement:",
   "payments:",
+  "full:",
 ];
 
 /** Stock design map. Exact lines so a later heat does not preserve a second copy. */
@@ -1320,6 +1325,24 @@ function latestNotesLine(existingMd) {
   return lines.length ? lines[lines.length - 1] : "";
 }
 
+function latestFullLine(existingMd) {
+  const lines = String(existingMd || "").split(/\r?\n/).map((line) => line.trim()).filter((line) => /^Full:/.test(line));
+  return lines.length ? lines[lines.length - 1] : "";
+}
+
+function withOneFullLine(stockMd, existingMd) {
+  const stock = String(stockMd || "");
+  if (/^Full:/m.test(stock)) return stock;
+  const full = latestFullLine(existingMd);
+  if (!full) return stock;
+  const rows = stock.split(/\r?\n/);
+  const notesAt = rows.findIndex((row) => row.startsWith("Notes:"));
+  const planeAt = rows.findIndex((row) => row.startsWith("Plane:"));
+  const at = notesAt >= 0 ? notesAt + 1 : planeAt >= 0 ? planeAt : rows.length;
+  rows.splice(at, 0, full);
+  return rows.join("\n");
+}
+
 function withOneNotesLine(stockMd, existingMd) {
   const stock = String(stockMd || "");
   if (/^Notes:/m.test(stock)) return stock;
@@ -1368,14 +1391,14 @@ function withFleetPlane(stockMd, existingMd) {
 }
 
 function mergeStationMarkdown(stockMd, existingMd) {
-  const stockWithFresh = withFleetPlane(
+  const stockWithFresh = withOneFullLine(withFleetPlane(
     withOneLabeledLine(
       withOneLabeledLine(withOneNotesLine(withOneFreshLine(stockMd, existingMd), existingMd), existingMd, "Skills:"),
       existingMd,
       "Keys:",
     ),
     existingMd,
-  );
+  ), existingMd);
   const preserved = extractPreservedStationLines(existingMd);
   if (!preserved.length) return stockWithFresh;
   const stock = stockWithFresh;
@@ -1421,6 +1444,7 @@ function formatStationMarkdown(fields) {
   lines.push(`Judgement: ${fields.judgement || "start"}`);
   lines.push(`Payments: ${fields.payments === "on" ? "on" : "off"}`);
   if (fields.notesLine) lines.push(fields.notesLine);
+  if (fields.fullLine) lines.push(fields.fullLine);
   lines.push("");
   lines.push(...DESIGN_MAP_LINES);
   lines.push("");

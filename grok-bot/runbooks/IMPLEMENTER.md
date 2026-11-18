@@ -1,16 +1,17 @@
 # Implementer runbook (one wave)
 
 Written for the cloud agent forge launches. Forge pushes. Nothing here lives only in a seat's memory.
-Rules it serves: pack [OP-PROC](../OP-PROC.md) (**Two loops**, **Routing**, Branch + PR always, Seat identity).
+Rules it serves: pack [OP-PROC](../OP-PROC.md) (**Two loops**, **Routing**, Branch + PR always, Seat identity, [Bundle](../OP-PROC.md#bundle)).
 
 ## 0. Station
-- Wear the latest 0xray suit (re-wear via forge if behind). On wake read `.xray/state/STATION.md` (the ticket the station module writes; never hand-edit it), then `.xray/state/NOTES.md`, and resume. Write NOTES.md before a compact (the PreCompact hook only stamps its pickup line); never commit it. Neither file holds secrets: never keys, tokens or PEM text, only where a secret lives (its env var name).
+- On a wake, follow [Station boot](../OP-PROC.md#station-boot). GitHub calls use [seat-github-key](../skills/seat-github-key/SKILL.md).
 
 ## 0b. Read the plates first
 - Before coding, read the stamped 0xray plates (`docs-site/docs/plates/*.md`) for the area you touch, and list them in the PR body's `Plates read:` field (PR template: `.github/pull_request_template.md` in the repo).
 
 ## 1. One branch per wave
 - One wave = one branch = one PR. Code, docs, plates and nits for the wave all fold into it; no side PRs.
+- Same-path work follows [Bundle](../OP-PROC.md#bundle). R opens the pull. A tips it. This line does not restate the rule.
 - Branch from fresh `origin/main` in its own worktree: `git fetch origin && git worktree add ../<seat>-lapN -b <seat>/<topic>-lapN origin/main`.
 - Every item on the wave points at its GitHub issue or PR comment. Work with no GitHub record is not work.
 

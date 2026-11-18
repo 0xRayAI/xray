@@ -21,13 +21,25 @@ function localImports(file, seen = new Set()) {
   return seen;
 }
 
+test('Dockerfile pins the patched Node 24 LTS', () => {
+  const docker = fs.readFileSync(path.join(APP, 'Dockerfile'), 'utf8');
+  const pkg = JSON.parse(fs.readFileSync(path.join(APP, 'package.json'), 'utf8'));
+  assert.match(docker, /^FROM node:24\.22\.1-bookworm-slim\s*$/m);
+  assert.match(docker, /nodejs\.org\/dist\/v24\.22\.3\//);
+  assert.match(docker, /node -v \| grep -qx v24\.22\.3/);
+  assert.equal(pkg.engines.node, '>=24.22.3');
+});
+
 test('Dockerfile COPY names every local module server.mjs imports', () => {
   const docker = fs.readFileSync(path.join(APP, 'Dockerfile'), 'utf8');
   const copy = docker.split('\n').filter(line => /^\s*COPY\s/.test(line)).join('\n');
   const imported = [...localImports(path.join(APP, 'server.mjs'))];
   assert.ok(imported.length >= 2, 'server imports local modules');
+  const deploy = fs.readFileSync(path.join(APP, 'deploy.sh'), 'utf8');
   for (const file of imported) {
     const base = path.basename(file);
-    assert.match(copy, new RegExp(`\\b${base.replace('.', '\\.')}\\b`), base);
+    const named = new RegExp(`\\b${base.replace('.', '\\.')}\\b`);
+    assert.match(copy, named, base);
+    assert.match(deploy, named, 'deploy.sh ' + base);
   }
 });

@@ -3,12 +3,23 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { chromium } from 'playwright';
+import { launchBoard } from './board-browser.mjs';
 
 const PUB = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app', 'public');
-const ART = '/opt/cursor/artifacts';
+const ART = (() => {
+  const preferred = '/opt/cursor/artifacts';
+  try {
+    fs.mkdirSync(preferred, { recursive: true });
+    return preferred;
+  } catch {
+    const fallback = path.join(os.tmpdir(), 'board-group-artifacts');
+    fs.mkdirSync(fallback, { recursive: true });
+    return fallback;
+  }
+})();
 
 function feed() {
   const now = Date.now();
@@ -83,7 +94,7 @@ test('status grouping is the default and the toggle switches to by-agent', async
   const base = `http://127.0.0.1:${server.address().port}/index.html`;
   let browser;
   try {
-    browser = await chromium.launch();
+    browser = await launchBoard();
     const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
     await page.addInitScript(() => {
       if (sessionStorage.getItem('card-group-cleared')) return;
@@ -93,8 +104,18 @@ test('status grouping is the default and the toggle switches to by-agent', async
     await page.goto(base, { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => document.querySelector('#waveBody .wcard'));
     if (await page.evaluate(() => document.querySelector('[data-fold="cards"]').classList.contains('collapsed'))) {
-      await page.click('[data-fold="cards"] > .fold-head');
+      await page.click('[data-fold="cards"] .fold-head');
     }
+    const place = await page.evaluate(() => {
+      const btn = document.getElementById('cardGroup');
+      const bar = btn.closest('.fold-bar');
+      const b = btn.getBoundingClientRect();
+      const p = bar.getBoundingClientRect();
+      return { bw: b.width, pw: p.width, right: b.right, pright: p.right, inHeader: bar.contains(btn) };
+    });
+    assert.equal(place.inHeader, true);
+    assert.ok(place.bw < place.pw / 2, JSON.stringify(place));
+    assert.ok(place.right >= place.pright - 2, JSON.stringify(place));
     const status = await page.evaluate(sections);
     assert.equal(status.mode, 'status');
     assert.equal(status.pressed, 'false');
@@ -131,7 +152,7 @@ test('status grouping is the default and the toggle switches to by-agent', async
     assert.equal(await page.evaluate(() => localStorage.getItem('bifrost-card-group')), 'agent');
 
     if (await page.evaluate(() => document.querySelector('[data-fold="cards"]').classList.contains('collapsed'))) {
-      await page.click('[data-fold="cards"] > .fold-head');
+      await page.click('[data-fold="cards"] .fold-head');
     }
     await page.click('#cardGroup');
     await page.waitForFunction(() => document.getElementById('waveBody').dataset.group === 'status');

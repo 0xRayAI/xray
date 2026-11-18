@@ -35,14 +35,16 @@ Ops nouns — clocks, tickets, roles, decks. Not products.
 |------|-------------|
 | **beat** | One real event on a card: pull request opened or pushed, review verdict, merge, merge-queue tick, owner message, blocker, or a finished deploy (deploy, deploy_fail). CI stays on the card and is not board traffic. A watcher run whose start and end fall in the same second is not a beat |
 | **wave** | Stretch of beats toward one outcome (ship, dist week, proof) |
+| **eng wave** | The engineering wave and its beat cut. Forge owns it. Blinky does not cut an eng beat. Distinct from a generic wave |
 | **board** | `house/WAVEBOARD.md` when `LIVE_URL` is unset. Bifrost (https://bifrost.0xray.dev) when `LIVE_URL` is set. GitHub cards grouped by stage, plus one cloud-agent row per `bcId` (owning seat, linked card, state `running` / `finished` / `failed`, last update). burst-live is the Bifrost board, never a node on it |
-| **card** | One GitHub issue or pull request (`repo#number`): title, url, owner seat, stage (`open` > `review` > `fix` > `merge` > `retest` > `done`), state (`live`, `parked`, or `closed`). A packet post creates it, a cloud agent does not run without its id, the cloud agent pushes, the seat App opens the pull request, and the server attaches both |
+| **card** | One GitHub issue or pull request (`repo#number`): title, url, owner seat, stage (`open` > `review` > `fix` > `merge` > `retest` > `done`), state (`live`, `held`, `parked`, or `closed`). A packet post creates it, a cloud agent does not run without its id, the cloud agent pushes, the seat App opens the pull request, and the server attaches both |
+| **OP cycle** | digest · card · do · loop · ship, in that order. The stanza is [OP cycle](OP-PROC.md#op-cycle) |
 | **seat** | Named bot role (CoS, forge, critic, herald, magnet…) |
-| **station boot** | Light on an owner message: `live-inbox <seat> --prompt`, then `.xray/state/STATION.md`. Full after a summary, a wake, or a gate also reads the `OP-PROC:` file, the newest two NOTES entries, TRACKS, open cards, and `Skills:` |
+| **station boot** | Light on every turn: `live-inbox <seat> --turn start` and `live-inbox <seat> --prompt --from <owner\|peer\|routine\|self>`, then `.xray/state/STATION.md`. A peer message, a routine or webhook wake, a background-task completion, and the seat's own follow-up use that same path. Full after a summary, a wake, or a gate also reads the `OP-PROC:` file, the newest two NOTES entries, TRACKS, open cards, and `Skills:` |
 | **station** | "The station card is the one-line ticket at .xray/state/STATION.md." "The station module writes this card." Intent (≤240 chars) and the next cut; heat stamps `Cascade:` and `Sleeve:`. Never hand-edited; read after a compact, and on every wake. "The long body belongs in notes." No secrets, only env var names. (plates: `docs-site/docs/plates/station-card.md`, guide `docs-site/docs/guides/station-vs-repertoire.md`) |
 | **notes** | "Notes are the body the station card cannot hold." `.xray/state/NOTES.md` is the working page: the seat writes the body after every beat, with evidence; there is no pre-compact signal. A compaction is a wake: read station, then notes. Where a PreCompact hook exists, `stampNotesPickup` "updates only that line and leaves the body alone." "Do not commit this file." No secrets, only env var names. (plate: `docs-site/docs/plates/notes-page.md`) |
 | **receipt** | Proof a card closed (critic PASS, `npm view`, Dist URL). Chat LGTM ≠ receipt |
-| **cloud** | Deep-work agent (`bc-…`) shown on the board: owning seat, linked card or PR, state `running`, `finished`, or `failed`, and last update. Fed by the Cursor webhook and seat activity `kind: cloud_agent`. One per card, resumed; wears the suit first. Seats never build, test or deploy from their own computer, hotfixes included. All code and tests run in a cloud agent; the seat only merges and posts verdicts |
+| **cloud** | Deep-work agent (`bc-…`) shown on the board: owning seat, linked card or PR, state `running`, `finished`, or `failed`, and last update. Fed by the Cursor webhook and seat activity `kind: cloud_agent`. One per card, resumed; wears the suit first. Blaze's 09:35 CT ruling, 2026-10-21: "A small hotfix of a few lines can be deployed directly by forge once tests are green; anything bigger is deployed by a cloud agent." Seats never build or test from their own computer. All code and tests run in a cloud agent. |
 | **dist** | public distribution **lane** (@0xRayAI) — a workstream, not a product SKU |
 | **group / room** | Shared chat bus (ops / eng / dist). Not Station, not memory |
 | **capital** | Blaze-only gate: spend, credentials, destructive |
@@ -84,6 +86,12 @@ How we act — not a product, not a ticket type.
 | packet ≠ ack | seven fields on a card ≠ a reflexive chime |
 | EXECUTE ≠ draft | armed ship ≠ proposed copy |
 | EXECUTE ≠ packet | armed Dist/action ≠ the handoff object |
+| tip ≠ packet | asking for the work ≠ the handoff object |
+| tip ≠ EXECUTE | asking for the work ≠ armed Dist |
+| tip ≠ Dist | asking for the work ≠ a public post |
+| hotpack ≠ kit | a short-lived pack from a tip ≠ a product kit |
+| hotpack ≠ suit | the interim pack ≠ the worn suit |
+| soft FU ≠ FIX | a later linked issue ≠ a review that blocks the pull |
 
 Locked 2026-09-14 with Blaze — categorized.
 
@@ -110,9 +118,10 @@ Locked 2026-09-14 with Blaze — categorized.
 ## Lexicon add (2026-10-05 — inter-bot)
 | Term | Bucket | Plain |
 |------|--------|-------|
-| **packet** | Workstream | A card's seven fields: goal, constraints, path, acceptance, evidence, next owner, escalate. From a `## Packet` block or one line. Missing acceptance or next owner makes the card amber (`no packet`). Evidence fills from the latest beat. |
+| **packet** | Workstream | A card's fields: goal, constraints, path, acceptance, gates, evidence, next owner, escalate, raci. From a `## Packet` block or one line. `raci` names who does the work (R) and who answers (A). A live card missing R or A is amber on its own mark. The `needs a brief` badge is a packet PR whose PACKET.md is missing. Evidence fills from the latest beat. Cap 200 characters. |
 | **EXECUTE** | Practices | Armed Dist/action order with exact copy + gates; herald/seat ships only on EXECUTE (not draft/FYI). Distinct from a packet (the packet may *carry* an EXECUTE). |
 | **handoff** | Workstream | The channel or file that *carries* a packet (`ops/handoffs/…` or a seat message). The packet is the content; the handoff is the pipe. |
+| **inbox watcher** | Workstream | One inbox-watch.sh per seat, run in the local TUI. Suit boot enables that monitor. inbox-watch-station.sh writes the one Watcher line on the station card. |
 
 ## Lexicon add (2026-10-14 — work track)
 
@@ -133,8 +142,8 @@ Don't confuse: watcher ≠ Dist; workstream ≠ product; workstream ≠ planes.
 ## Lexicon add (2026-10-09 — waveboard)
 | Term | Bucket | Plain |
 |------|--------|-------|
-| **card** | Workstream | One GitHub issue or pull request (`repo#number`). Title, url, owner seat, stage (`open` > `review` > `fix` > `merge` > `retest` > `done`), state (`live`, `parked`, or `closed`). |
-| **packet** | Workstream | That card's seven fields. Cap 200 characters. Allowlisted links. Amber `no packet` badge when acceptance or next owner is missing. |
+| **card** | Workstream | One GitHub issue or pull request (`repo#number`). Title, url, owner seat, stage (`open` > `review` > `fix` > `merge` > `retest` > `done`), state (`live`, `held`, `parked`, or `closed`). |
+| **packet** | Workstream | That card's fields, including raci. Cap 200 characters. Allowlisted links. A live card missing R or A is amber on its own mark. The `needs a brief` badge is a packet PR whose PACKET.md is missing. |
 | **beat** | Workstream | One real event: opened or pushed, review verdict, merge, merge-queue tick, owner message, blocker, or a finished deploy (deploy, deploy_fail). CI stays on the card and is not board traffic. A watcher whose start and end fall in the same second is never a beat. |
 | **deploy stages** | Workstream | The board's phases for one Railway deploy: BUILDING, DEPLOYING, then a terminal status. Stamps are in order (BUILDING <= DEPLOYING <= terminal). Only SUCCESS backfills missed phases; FAILED, SKIPPED and CRASHED show only what was seen. |
 
@@ -143,17 +152,19 @@ Don't confuse: watcher ≠ Dist; workstream ≠ product; workstream ≠ planes.
 |------|--------|-------|
 | **Bifrost** | Workstream | The fleet's live board and router (burst-live). burst-live is the board, never a node on it. Turns every issue, PR and comment into a card and an inbox line, then wakes the seat. |
 | **tripwire** | Workstream | Fires when nothing has moved for a window: a stalled board wakes each seat that has open work, with a deadline. An empty board wakes blinky (`seats.coord`) to pull the next issue, unless weekly burn is at or above 75% (`BIFROST_WEEKLY_BURN` of `0.75` or `75`), which keeps that empty-board wake quiet and wakes no seat. Below 75% the empty board still wakes blinky. `POST /clock` stays on that seat. At most once per window. A due plan card does not replace that stall wake. A closed real wave raises one plan next wave card for the coordinator; the tripwire flags that card when nothing is carded in the Chicago cron window. Weekly burn at 75% keeps that plan card quiet. |
-| **nudge** | Workstream | A live card with no beat: L1 goes to the next owner, or else the card owner. L3 repeats to that seat. CoS is not woken to reassign. An unacked inbox line steps L1, L2, and L3 on that same seat. A missing handoff stays on the owing seat through L3. A stranger's `Start after:` comment is ignored. A time more than 30 days out is ignored. `merged_by` is the merger, never the author. |
+| **nudge** | Workstream | A live card with no beat: L1 goes to the next owner, or else the card owner. L3 repeats to that seat. CoS is not woken to reassign. An unacked inbox line steps L1, L2, and L3 on that same seat. A line the seat already acked, or whose handled key is already in the cursor folder (`OP-PROC.md#cursor-folder`), gets no L1, L2, or L3. A missing handoff stays on the owing seat through L3. A stranger's `Start after:` comment is ignored. A time more than 30 days out is ignored. `merged_by` is the merger, never the author. |
+| **station nudge** | Workstream | One weekday inbox line per seat. The id is `nudge:station:<seat>:<hour>` and the sentence is run station and re-read OP-PROC. The board tick posts it on the half hour, weekdays 7:30 through 17:30 America/Chicago. The plist template is not loaded. Boot on every turn stays the rule. The poll is only the reminder after a summary. A memory note is not that re-read. |
 | **routing** | Workstream | Which seat gets which line. The routing map lists each seat once with its real GitHub login and nicknames; served read-only at `/routing`. Look a login up there before any @-mention. |
 | **two loops** | Workstream | Outer loop: GitHub issues, PRs and @-comments (the record). Inner loop: seat DMs, each pointing at one of them (the wake). |
 | **volley** | Workstream | Packet ping-pong between seats inside a wave: ask, answer, fix, re-check. |
-| **tandem** | Workstream | The governor: seats moving together across both loops. Without it Bifrost stalls. |
+| **tandem** | Workstream | Several tracks move at once, on both loops, and no seat waits for a nod. The card names who does the work and who answers. |
 
 ## Lexicon add (2026-10-14 — OP-PROC terms)
 Every bolded term in the pack OP-PROC and runbooks is defined here (`bifrost check --only lexicon`).
 | Term | Bucket | Plain |
 |------|--------|-------|
 | **ack** | Workstream | The receipt a seat sends after it handles an inbox line (`live-inbox <seat> --ack <id>`). `--ack stale` lists lines with a close or merge event, or a closed or done card, and does not ack until `--apply`. A missing card stays, and so does an old handoff on a live card. `--upto <id>` acks the stored prefix through that id, including live lines. `--ack all` acks every open line. Plain seat-key call, never an approval card. |
+| **cursor folder** | Workstream | The handled-key file for a seat. A read does not write it. Only `--remember` does. The rule is [Cursor folder](OP-PROC.md#cursor-folder). |
 | **coordinator** | Workstream | The CoS role (blinky): plans the next wave at each close, paces burn, friend-tests Lane H and writes Dist packets, and onboards seats. Bifrost keeps the board. |
 | **coordinator never** | Workstream | What the coordinator never does: deploy, publish, change production, launch cloud agents, post in public, spend, merge. |
 | **done** | Workstream | A live receipt (URL, registry view, Release URL, or reviewer PASS). Green CI alone is not done. |
@@ -161,7 +172,7 @@ Every bolded term in the pack OP-PROC and runbooks is defined here (`bifrost che
 | **room post** | Workstream | A message in a group room. Seats may not ack there (they might or might not), so the receipt cannot be relied on. A room post is never a handoff and never a wake, even when it names the next seat, and even from the CoS role. |
 | **implementer** | Workstream | The cloud agent forge launches. It writes the code and pushes the branch. Forge opens the PR through its App and merges. |
 | **publisher** | Workstream | The ship seat: keeps continuity and gates, merges and deploys after review (ours: forge). |
-| **reviewer** | Workstream | Writes PASS or FAIL, never merges; runs `bifrost check` after deploy (ours: critic). |
+| **reviewer** | Workstream | Writes PASS or FIX (never HOLD/FAIL), never merges; runs `bifrost check` after deploy (ours: critic). |
 | **review** | Workstream | The reviewer's pass tier: Light / Normal / Strict, chosen by scope. |
 | **specialists** | Workstream | Optional seats for public posts, listings and audio. |
 | **human owner** | Workstream | The person who owns money, credentials, deletes, publishing and taste. |
@@ -171,7 +182,7 @@ Every bolded term in the pack OP-PROC and runbooks is defined here (`bifrost che
 | **new seat before any ship work** | Workstream | The hire gate: role description, fastened suit with inspect receipt, orientation, ack, then the first card. |
 | **runbooks** | Workstream | Each seat's how-to in the pack (`grok-bot/runbooks/`), not in a seat's memory. |
 | **names** | Workstream | Docs and plates carry current seat, login and tool names; `bifrost check` greps for stale ones. |
-| **floor** | Workstream | Gates A and C on every merge. A docs-only change does not wait on CI. B and D are set per PR by scope. |
+| **floor** | Workstream | Gates A and C on every merge. Doc-only updates: see [Review](OP-PROC.md#review). B and D are set per PR by scope. |
 | **gate b runs on the owner's machine** | Workstream | Gate B (packed tarball + per-environment checklist) runs locally on the human owner's machine, never in the cloud. |
 | **disk, not chat** | Workstream | After a compact, and on every wake, read the station, then the board, then memory, and resume the same role. |
 | **you first** | Workstream | The human's direct message beats bot pings; an open inbox line is the job, not a ping. |
@@ -182,9 +193,9 @@ Every bolded term in the pack OP-PROC and runbooks is defined here (`bifrost che
 | **allowed** | Workstream | In `house/`: actions a seat may take without asking. |
 | **ask first** | Workstream | In `house/`: actions that need the human owner's yes first. |
 | **all three** | Workstream | New cloud agent only when every one of the three conditions holds: the context agent has 2+ jobs queued, the job touches different files, and it can be briefed from docs alone. |
-| **hotfix**, **hotfix bypass** | Workstream | The hotfix bypass. A broken production change ships right away on its own PR with a regression test that fails without the fix and passes with it. Forge writes the fix and tests in a cloud agent, merges, and the cloud agent deploys once: no CI wait, no critic review before merge, no rollback. Then critic does one live pass on production. If that pass fails, the next fix is another hotfix. The usual review process follows afterward. [Steps](runbooks/SHIP.md#hotfix). |
+| **hotfix**, **hotfix bypass** | Workstream | The hotfix bypass. Blaze's owner ruling, 2026-10-21 08:37 CT, is the authority: "hotfix: merge and deploy on green, critic reviews after." No merge before CI is green. A broken production change ships on its own PR with a regression test that fails without the fix and passes with it. Forge writes the fix and tests in a cloud agent, merges as forge0x1 when CI is green. Fix forward, no rollback. Blaze's 09:35 CT ruling, 2026-10-21: "A small hotfix of a few lines can be deployed directly by forge once tests are green; anything bigger is deployed by a cloud agent." A failed critic pass is another hotfix. Blaze's 09:35 CT ruling, 2026-10-21: board (Bifrost) fixes are a hotfix class. [Steps](runbooks/SHIP.md#hotfix). |
 | **two hats** | Workstream | Every seat does the work and makes it repeatable: it writes the rule into the lexicon, OP-PROC or a runbook. A rule that only exists in chat counts as missing. |
-| **boil-up** | Workstream | A periodic correlate-and-sync pass over OP-PROC (a rules engine for bots): similar, compounding rules merge into one broader rule. CoS triggers it every few waves or past 70 of 75 lines. |
+| **boil-up** | Workstream | A periodic correlate-and-sync pass over OP-PROC (a rules engine for bots): similar, compounding rules merge into one broader rule. CoS triggers it every few waves or past 120 of 125 lines. |
 | **activity key** | Workstream | The per-seat `SEAT_KEYS` hash on `POST /activity`. The seat posts only as itself. A cross-seat `seat` is `403` seat mismatch. |
 | **button up** | Practices | When weekly burn hits the hold line, every seat stops new work, runs no local builds, tests, or deploys on its own computer, pauses its Bifrost inbox wake until the reset, leaves only cloud agents for anything essential, and reports and acks in the room. |
 
@@ -201,12 +212,68 @@ Every bolded term in the pack OP-PROC and runbooks is defined here (`bifrost che
 ## Lexicon add (2026-10-19 — cloud routing)
 | Term | Bucket | Plain |
 |------|--------|-------|
-| **green sign-off** | Workstream | The cloud agent's bar before it reports or hands off. Tests written, the suite run, the head pushed, and every required GitHub check green on that head. A docs-only push does not wait on CI. The required job is `npm run test:comprehensive`. A full suite may ignore only the seven #397 names: `postinstall-config-e2e` (two), `infrastructure`, `agent-capabilities-routing`, `governance-service`, `install-bridges-config`, `lookup-cache`. Any other new failure blocks. The report is the head sha, the test results, and the CI list. It does not replace **done**. |
-| **forward-motion** | Workstream | Critic FAILs only for wrong live behavior, for security, spend, or on-chain risk, or for a plate or OP-PROC line that would send a seat the wrong way. Anything else is APPROVE plus a linked follow-up issue for the author. A bug fix ships when it fixes the bug and breaks nothing. A feature's rule is written before merge. After round 2, only an original blocker can FAIL. A docs-only PR does not wait on CI. |
+| **green sign-off** | Workstream | The cloud agent's bar before it reports or hands off. Tests written, the suite run, the head pushed, and every required GitHub check green on that head. Doc-only updates: see [Review](OP-PROC.md#review). The required job is `npm run test:comprehensive`. A full suite may ignore only the seven #397 names: `postinstall-config-e2e` (two), `infrastructure`, `agent-capabilities-routing`, `governance-service`, `install-bridges-config`, `lookup-cache`. Any other new failure blocks. The report is the head sha, the test results, and the CI list. It does not replace **done**. |
+| **forward-motion** | Workstream | Critic issues a must-fix FIX only for wrong live behavior, for security, spend, or on-chain risk, or for a plate or OP-PROC line that would send a seat the wrong way. Anything else is APPROVE plus a linked follow-up issue for the author. A bug fix ships when it fixes the bug and breaks nothing. A feature's rule is written before merge. After round 2, only an original blocker can be a FIX. A second FIX of that blocker goes under Needs Blaze with the step it unblocks. Doc-only updates: see [Review](OP-PROC.md#review). |
 | **packet-first** | Workstream | A new PR starts as a short packet in the issue or PR body: scope, files, plates and docs touched, tests, and out of scope. Critic PASS on that packet comes before any code. The cloud agent codes against it. Code review checks the diff against it. |
 | **batch** | Workstream | One inbox string for a PR head. Critic review, CI, and handoffs for that head collapse into it. Bifrost writes it on `run_end` or `ci_pass`. The ask stays in `title`. |
-| **cloud batch** | Workstream | One worker cloud per PR, then that PR's critic cloud, never two live at once. Wake runs do not launch or resume a cloud. Events for a live run buffer per PR and collapse on PR plus head sha. Bifrost flushes one `batch` line on `run_end` or `ci_pass` only. A green head queues critic on `run_end` when the checks are already green, and on `ci_pass` when the run has already ended. A green event seen before `run_end` is not replayed. A red head on `run_end` goes back to the worker. A pending check waits. A buffered PR counts as in-beat, so nudge L1 does not fire. A flush waits when the day is over pace or weekly burn is at 75% or more, except a hotfix. A second critic FAIL goes to Blaze. On close, record the rounds and why. |
+| **cloud batch** | Workstream | One worker cloud per PR, then that PR's critic cloud, never two live at once. Wake runs do not launch or resume a cloud. Events for a live run buffer per PR and collapse on PR plus head sha. Bifrost flushes one `batch` line on `run_end` or `ci_pass` only. A green head queues critic on `run_end` when the checks are already green, and on `ci_pass` when the run has already ended. A green event seen before `run_end` is not replayed. A red head on `run_end` goes back to the worker. A pending check waits. A buffered PR counts as in-beat, so nudge L1 does not fire. A flush waits when the day is over pace or weekly burn is at 75% or more, except a hotfix. A second critic FIX goes under Needs Blaze. On close, record the rounds and why. |
 
 ## Lexicon add (2026-10-19 — pulsar)
 
 | **pulsar** | Workstream | The one-wave board hold. The first seat to hit holds the open cards for the wave the board has up. The hold ends when the board closes that wave. It does not post, deploy, publish, or spend. |
+
+## Lexicon add (2026-10-28 — bundle)
+| Term | Bucket | Plain |
+|------|--------|-------|
+| **soft follow-up** | Workstream | An approve that opens a later issue. It is in the cut, names Waiting on or start_after, or is closed with a reopen note. It is not a silent second pile. |
+| **backup queue** | Workstream | Hold a ready card only when it says Waiting on, start_after, or Held. An open review on another pull is not that hold. Resume when the field clears. |
+| **bundle** | Workstream | Lots of small cards stay. A same-path cluster is one pull with a Closes list, and critic Strict is once. R opens the bundled pull. A does not open it. A blocker hotfix, a different deploy surface, an unrelated acceptance, or a soft FU stays a solo card. An open solo card stays solo unless the same path is widened on purpose. There is no retro pass. **tip** has its own row. |
+
+## Lexicon add (2026-10-30 — hotpack)
+
+| Term | Bucket | Plain |
+|------|--------|-------|
+| **tip** | Workstream | A seat asks the implementer to open or advance the work named on the card. Not a Dist post. Not a packet. Not EXECUTE. |
+| **soft FU** | Workstream | APPROVE now and open a linked issue for later. Wording, docs, and nits. Never a FIX that blocks the pull. |
+| **hotpack** | Workstream | A short-lived pack cut from a main tip that just merged. The fleet wears it, then graduates to npm. Not a kit, a suit, a bundle, or a packet. Steps: [HOTPACK](runbooks/HOTPACK.md). |
+| **strip** | Workstream | An ordered wear and doctor pass across seats. One seat at a time. Example order: blinky, forge, critic, herald. |
+| **rewear** | Workstream | Wear an already-suited fleet onto a new package cut. Also called FLEET-REWEAR. |
+| **mainstay** | Workstream | The seat stays in the chat and delegates. It does not do the deep work itself. |
+| **Dist GO** | Workstream | Blaze's go for a public Dist. Without it, Dist stays HOLD. |
+| **graduate** | Workstream | The fleet leaves the hotpack when the npm cut ships. |
+
+## Lexicon add (2026-11-04 — goggles)
+
+| Term | Bucket | Plain |
+|------|--------|-------|
+| **goggles** | Workstream | Nibbler's scout lenses: how Nibbler sees. Only Nibbler wears them every turn. Forge and critic stay eng (mill, inspect, Strict) and do not wear goggles each wake or turn. Suit-tree hygiene (`npm install`, `npx 0xray wear`) is not wearing goggles. Not `plant:scout`. Rule: [OP-PROC](OP-PROC.md#goggles). |
+
+## Lexicon add (2026-11-08 — sweep)
+
+| Term | Bucket | Plain |
+|------|--------|-------|
+| **sweep** | Workstream | Critic owns the backlog sweep. Every open issue and pull has a status and a next owner. Done means closed, with a reason. Fourteen days with no beat is a proposed close to Blaze. A squash keeps `Closes #`. Overnight triage files findings and does not merge. Rule: [OP-PROC](OP-PROC.md#sweep). |
+
+## Lexicon add (2026-11-09 — fleet rules)
+
+| Term | Bucket | Plain |
+|------|--------|-------|
+| **no-context tests** | Workstream | A fit receipt counts only from a newly created bot that has never seen a pack (one per pack), or a fresh cloud with no seat checkout. Rule: [OP-PROC](OP-PROC.md#no-context-tests). |
+| **pack test** | Workstream | Pack the head, install the tarballs on a dummy, keep the logs, open an issue for every miss. No hand fixes. Rule: [OP-PROC](OP-PROC.md#pack-test). |
+| **check everything in** | Workstream | Every file the fleet depends on lives in git. Secrets, PEMs, `.env`, `node_modules`, and live logs stay out. A box-only file fails a receipt. Rule: [OP-PROC](OP-PROC.md#check-everything-in). |
+| **golden rule** | Workstream | Open an issue the same turn a bug or gap is found. Do not leave it for the next guy. Rule: [OP-PROC](OP-PROC.md#golden-rule). |
+| **turn and summary memory** | Workstream | Write NOTES.md and LENS.md at turn end; read them on wake and after a summary. Wire a pre-compaction hook when one ships. Rule: [OP-PROC](OP-PROC.md#turn-summary-memory). |
+| **one fresh bot per pack** | Workstream | A bot that has already worn or seen an earlier pack is not a newb; only one cold bot runs per pack on a computer. Rule: [OP-PROC](OP-PROC.md#one-fresh-bot-per-pack). |
+| **Grok CLI fit is Arch1's call** | Workstream | A Grok CLI fit row counts only from an Arch1 empty-folder pack session; forge and critic can't mark it WORKS. Rule: [OP-PROC](OP-PROC.md#grok-cli-fit-arch1). |
+| **every beat lives on the board** | Workstream | Forge owns the wave and beat lifecycle; every beat gets a board card; mill or doctor flags a beat with no card. Rule: [OP-PROC](OP-PROC.md#every-beat-on-board). |
+| **HOLD needs an owner** | Workstream | A HOLD counts only with an open issue link, an @-mention of the one next owner, and the next step in one line; App tokens can't set assignees. Rule: [OP-PROC](OP-PROC.md#hold-needs-owner). |
+| **no duplicate issue** | Workstream | Never open a second issue for a problem that already has an open one; comment on that one. Work the open PR (see house One PR per lap and Card). Rule: [OP-PROC](OP-PROC.md#no-duplicate-issue). |
+| **Two at a time** | Workstream | A seat has at most two tasks in progress; other work goes to a subordinate or onto the board as a parked card, and all work has a card. Rule: [OP-PROC](OP-PROC.md#two-at-a-time). |
+| **Compute** | Workstream | A seat may make a few-line edit or a quick check on its own computer; anything bigger is a follow-up to a cloud agent already in context, and a new cloud agent needs Blaze's GO. Rule: [OP-PROC](OP-PROC.md#compute). |
+| **gate** | Workstream | A merge gate. The green gates are CI green plus the reviewer's PASS at the PR's tier (Strict for ship, live, security or identity). When both are green the publisher merges; no separate owner OK is needed (Blaze, 2026-11-15). Rule: [OP-PROC](OP-PROC.md#review). |
+
+## Lexicon add (2026-11-17 — hand walk)
+
+| Term | Bucket | Plain |
+|------|--------|-------|
+| **hand walk** | Practice | The agent walks the test by hand, running it directly in the browser or CLI. It fixes what breaks and keeps walking until the test passes, recording each step as it goes. Then it updates the test scripts from those steps and runs them again for a pass receipt. |

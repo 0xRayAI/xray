@@ -2,6 +2,49 @@
 
 **Audience**: Plugin authors, bridge maintainers (Hermes, OpenClaw, Grok Build, OpenCode), and projects that consume `0xray` directly.
 
+## Missed in the 4.1.4 Dist notes
+
+The 4.1.3 → 4.1.4 steps below still apply. These lines are in the published suit.
+
+1. Goggles. One named card fills that card's files. Bifrost, grokbot, and worn-turn are cards.
+2. Seats. The mill seat is off the roster, the mesh, and the inbox. Forge launches the cloud agent and opens the pull request through its App. Blinky plans the wave, paces burn, handles Lane H and Dist, and onboards. An unassigned issue or a P1 wakes forge. CoS is not woken to reassign.
+3. Station. A seat sets its own title. Planes are core, integration, ecosystem, distribution, and live. `Keys:` is `gh-<seat>`.
+4. Wake and hotfix. The wake posts for real new work. A hotfix merges on green CI. Critic reviews after.
+5. Suit. Worn Grok hooks run while Bifrost is live. The only TUI monitor is `inbox-watch.sh`. The default board is https://bifrost.0xray.dev.
+6. Inbox. A printed open id is acked. The seed grace delivers a fresh comment. A noop wake 409 is skipped.
+7. Board. The public board serves the kanban and `GET /history`, `/history/cards`, and `/history/transitions`.
+
+## Unreleased
+
+These steps are on main and are not stamped yet.
+
+1. Board. A prompt pulse spins only the card named by working_on. Seen is not working. A roster row is a fleet seat or a product node. A seat quiet for 7 days is dormant. A merge or a GitHub write lights the seat.
+2. Tandem. Several tracks run at once, on both loops, and no seat waits for a nod.
+3. Card. A card carries raci. A live card missing R or A is amber on its own mark. A same-path cluster is one tip and one pull.
+4. Health. A missed /healthz makes the supervisor exit 1 so the one replica is replaced. The replica pid is not SIGKILL'd. The collector is not signaled.
+5. Inbox. The watcher writes a new open line to the seat todo and does not ack it. The seat acks after the work. A merge handoff ack needs a review or comment link. A queued check is not a ci_fail line. One open line per head. A green head clears it.
+6. Search. A plate file holds its card. One other card in a search switches to that card. Two cards stay. A path on no plane runs. A path outside this checkout runs.
+7. Writes. Codex 70 denies a write only in a stale copy of this repo. A worktree on main is allowed.
+8. Nudge. L1 through L3 stay on the next owner, the card owner, or the owing seat. CoS is not woken to reassign. A test server does not post the station nudge. Railway does, unless STATION_NUDGE=off.
+9. OP cycle. Digest, then card, then do, then loop, then ship. The stanza is OP-PROC #op-cycle.
+10. Pins. qs is 6.17.0 in the root lock and the docs-site lock, including nested body-parser. Status compare uses one canonical id.
+11. Suit. Wear copies `bundle.md` into the Grok plugin. Session boot reads it.
+12. Inbox. A green head acks a handoff `ci_fail`. A popped ready rings again after `critic_fail` on that sha. A merge or close acks the card's other open lines. The merge handoff stays.
+13. Wake. A ready tells the seat to clear Quiet. A `ci_pass` on that same sha still rings, and the doorbell says Strict.
+14. Board. The roster wraps into columns. Fleet mode is full, lights-on, or dark. Weekdays 7:30–15:30 Chicago are full.
+
+## 4.1.3 → 4.1.4
+
+A fleet on 4.1.3 follows this path. The v3 consumer steps below stay as they are.
+
+1. Install and wear. `npm install 0xray`, then `npx 0xray wear`. The version is the one in `package.json`.
+2. Node is 24.22.3. `engines.node` is `>=24.22.3`. A bare "Node 24" is not the pin. The 11 Nov 2026 release is the floor. Railway installs that binary from nodejs.org until Docker Hub publishes `node:24.22.3`.
+3. Board. When `LIVE_URL` is set, the board is the collector. The board rule is in `house/live/docs/fleet-setup.md`. On every owner message run `live-inbox <seat> --prompt --from owner --note "<gist>"`.
+4. Inbox watch. When Bifrost is on, the only TUI monitor is `$XRAY_MAIN/house/live/tools/inbox-watch.sh <seat>`. After a poll that prints work it posts `live-inbox <seat> --turn start --tag wake`. An empty poll does not end the turn. The seat posts `live-inbox <seat> --turn end` when the chat finishes.
+5. Cloud. A cloud run posts `live-inbox <seat> --cloud` beside the turn. The tag is `owner/repo#n` or `xray#n`. The cloud agent does not post that line. Turn start uses `--tag "bc-<first8> <track>"`. Turn end uses `--tag "bc-<first8>"`.
+6. Cursor folder. Seat wakes use one cursor folder. The rule is the cursor-folder stanza in `grok-bot/OP-PROC.md`. `LIVE_CURSORS` is not required.
+7. Reviews are PASS or FIX only. HOLD and FAIL are retired.
+
 ## Temperament on upgrade (v4.0)
 
 Existing `.xray/features.json` **without** `suit_temperament` stays **guided** (full spawn-plan deny). Postinstall merge will not silently frontier a Grok consumer. New installs copy shipped `profile: "auto"` (Grok → frontier, Hermes/OpenCode → guided). See [Suit temperament](./v3-temperament.md).
@@ -21,7 +64,7 @@ Wear writes the consumer suit, including when npm did not run the install script
 | 2 | `.gitignore.default` → `.gitignore` (if absent) |
 | 3 | Deploy `.xray/` (`codex.json`, `features.json`, `config.json`) |
 | 4 | Write project `.mcp.json` with **7 MCP servers** |
-| 5 | Install **4 chat bridges**: OpenCode, Grok, Hermes, OpenClaw, plus **Cursor** `.cursor/hooks.json` |
+| 5 | Install **4 chat bridges**: OpenCode, Grok, Hermes, OpenClaw, plus **Cursor** `.cursor/hooks.json`. The Grok plugin includes `bundle.md`. Session boot reads it. |
 | 6 | Fasten mill plant (`mill` + `inspect`). Fasten is foundry-plant/0. `"plant": "@0xray/blip"` (aliases blip/sound) fastens whatever that mill declares. Nested mill `@0xray/foundry@0.1.12`. The mill suit also wears every catalog skill and every role file. A blip or sound seat fastens that plant only. |
 | 7 | Optional git pre-commit hook. Factory hangar shops coexist via `shopPlant` |
 

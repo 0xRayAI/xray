@@ -126,7 +126,7 @@ export interface MemoryRoutingProvider {
     operation: string,
     complexityScore: number,
   ): MemoryThinDispatchResult;
-  getTaskConfidence?(task: MemoryOrchestrationTask): MemoryTaskConfidence;
+  getTaskConfidence?(task: MemoryOrchestrationTask, now?: Date): MemoryTaskConfidence;
   ingestFeedback?(entry: OrchestratorFeedbackEntry): void;
   buildSynthesisContext?(opts: {
     projectRoot: string;

@@ -8,9 +8,11 @@ sidebar_label: Overview
 
 0xRay is a three-subsystem autonomous engine. The suit is the wear. Constitution always on. Temperament by host. Four floors. Repertoire for the laws. Station is the wake ticket.
 
-![0xRay — A Power Suit for AI Agents. survive compaction. build foundries. monitor the swarm.](/img/readme-hero.jpg)
+![0xRay Bifrost. The suit wears the board. One card, one seat. Inbox wakes. Rules stay on.](/img/readme-hero.jpg)
 
 Confer votes. Burst runs the swarm.
+
+Notes are in [Features since 3.1](./guides/features-since-3.1).
 
 The host you already run wears the suit: Grok, OpenCode, Hermes, OpenClaw, or Cursor. Memory, judgement, and payments come on with it. When the window closes, the next session wakes with the job, the page, and the laws. A foundry is built from mills and hangars.
 
@@ -25,6 +27,7 @@ npm install 0xray
 - [Integrations](./guides/integrations) — Grok, OpenCode, Hermes, OpenClaw
 - [Grok floor](./architecture/GROK_GUIDE) — Read the station card; do not thicken the exo
 - [Consumer migration](./guides/consumer-migration) — upgrade from 3.x
+- [From Agent Builder](./guides/migrate-from-openai-agent-builder) — Agent Builder and the prompts API shut down November 30; Evals is read-only
 
 ## 4.0
 

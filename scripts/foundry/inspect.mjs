@@ -91,16 +91,18 @@ export function parseInspectArgs(argv = process.argv.slice(2)) {
   return out;
 }
 
+function commandBound(entry) {
+  if (!entry || typeof entry !== "object") return false;
+  if (typeof entry.command === "string" && entry.command.trim()) return true;
+  return Array.isArray(entry.hooks) && entry.hooks.some(commandBound);
+}
+
 function hooksFileBound(file) {
   if (!fs.existsSync(file)) return false;
   const json = readJson(file);
   const hooks = json?.hooks;
   if (!hooks || typeof hooks !== "object") return false;
-  return Object.values(hooks).some(
-    (list) =>
-      Array.isArray(list) &&
-      list.some((entry) => typeof entry?.command === "string" && entry.command.trim()),
-  );
+  return Object.values(hooks).some((list) => Array.isArray(list) && list.some(commandBound));
 }
 
 export function classifyHarnessProfile({ hooksBound, repertoireFastened, stationPresent }) {
@@ -123,8 +125,11 @@ export function probeHarness(root) {
     nodeModules: fs.existsSync(path.join(root, "node_modules", "@0xray", "repertoire")),
     state: fs.existsSync(path.join(root, ".xray", "state", "repertoire")),
     vendorSource: fs.existsSync(path.join(root, "vendor", "@0xray", "repertoire")),
+    packedVendor: fs.existsSync(
+      path.join(root, "node_modules", "0xray", "vendor", "@0xray", "repertoire"),
+    ),
   };
-  repertoire.fastened = Boolean(repertoire.nodeModules || repertoire.state);
+  repertoire.fastened = Boolean(repertoire.nodeModules || repertoire.state || repertoire.packedVendor);
 
   const features =
     readJson(path.join(root, ".xray", "features.json")) ||
@@ -353,6 +358,69 @@ function checkReceipt(root, millRoot) {
   };
 }
 
+function checkScoutFeed(root) {
+  const inventory = readJson(path.join(root, ".xray", "foundry-inventory.json"));
+  const kinds = inventory ? mint.inventoryPlantKinds(inventory) : mint.loadFactoryPlantKinds(root);
+  if (!kinds.includes("scout")) return null;
+  const scout = require("./scout-feed.cjs");
+  const receipt = scout.readReceipt(root);
+  if (!receipt) {
+    return {
+      id: "scout-feed",
+      ok: true,
+      skipped: true,
+      status: "NONE",
+      plant: kinds,
+      detail: 'no scout receipt yet — npx @0xray/foundry scout look --brief "..." --plane dev --body "..."',
+    };
+  }
+  const live = scout.inspectFeed(root);
+  const status = live.status === "PASS" ? "PASS" : "FAIL";
+  return {
+    id: "scout-feed",
+    ok: status === "PASS",
+    status,
+    failClosed: true,
+    plant: kinds,
+    plane: live.receipt?.plane || receipt.plane || null,
+    topic: live.receipt?.topic || receipt.topic || null,
+    paths: live.receipt?.paths || receipt.paths || [],
+    digest: live.receipt?.digest || receipt.digest || null,
+    detail: status === "PASS" ? null : live.reason || receipt.reason || "scout receipt FAIL",
+  };
+}
+
+function checkHeraldWrite(root) {
+  const inventory = readJson(path.join(root, ".xray", "foundry-inventory.json"));
+  const kinds = inventory ? mint.inventoryPlantKinds(inventory) : mint.loadFactoryPlantKinds(root);
+  if (!kinds.includes("herald")) return null;
+  const herald = require("./herald-write.cjs");
+  const receipt = herald.readReceipt(root);
+  if (!receipt) {
+    return {
+      id: "herald-write",
+      ok: true,
+      skipped: true,
+      status: "NONE",
+      plant: kinds,
+      detail: 'no herald receipt yet — npx @0xray/foundry herald draft --brief "..." --lane H --friend-hear "..." --body "..."',
+    };
+  }
+  const live = herald.inspectWrite(root);
+  const status = live.status === "PASS" ? "PASS" : "FAIL";
+  return {
+    id: "herald-write",
+    ok: status === "PASS",
+    status,
+    failClosed: true,
+    plant: kinds,
+    lane: live.receipt?.lane || null,
+    draft: live.receipt?.draft || null,
+    dist: "HOLD",
+    detail: status === "PASS" ? null : live.reason || "herald receipt FAIL",
+  };
+}
+
 function checkSoundBed(root) {
   const inventory = readJson(path.join(root, ".xray", "foundry-inventory.json"));
   const kinds = inventory ? mint.inventoryPlantKinds(inventory) : mint.loadFactoryPlantKinds(root);
@@ -476,7 +544,15 @@ export async function checkLivePut(packages, fetchFn = fetch) {
       });
       continue;
     }
-    results.push({ name: pkg.name, version: pkg.version, url, status, ok: status === 200 });
+    const unpublishedConsumer = pkg.role === "consumer" && status === 404;
+    results.push({
+      name: pkg.name,
+      version: pkg.version,
+      url,
+      status,
+      ok: status === 200 || unpublishedConsumer,
+      ...(unpublishedConsumer ? { skipped: true, detail: "unpublished consumer package" } : {}),
+    });
   }
   return results;
 }
@@ -504,6 +580,7 @@ export function packagesToProbe(root) {
     pkgs.push({
       name: inventory.consumer.name,
       version: inventory.consumer.version,
+      role: "consumer",
     });
   }
   const seen = new Set();
@@ -562,27 +639,72 @@ export function machineXrayPluginPaths(machine = mint.machineHome()) {
     .map((name) => path.join(pluginsDir, name));
 }
 
+/** Absolute path args that name a checkout: `<root>/node_modules/...` or `<root>/scripts/node/mcp-launch.cjs`. */
+function launcherRoots(server) {
+  const roots = [];
+  for (const arg of Array.isArray(server?.args) ? server.args : []) {
+    if (typeof arg !== "string" || !path.isAbsolute(arg)) continue;
+    const norm = arg.replace(/\\/g, "/");
+    const nm = norm.indexOf("/node_modules/");
+    if (nm > 0) roots.push(path.resolve(norm.slice(0, nm)));
+    else if (norm.endsWith("/scripts/node/mcp-launch.cjs")) {
+      roots.push(path.resolve(norm.slice(0, -"/scripts/node/mcp-launch.cjs".length)));
+    }
+  }
+  return roots;
+}
+
+/** Roots a machine plugin points at: pinned XRAY_ROOT values and launcher checkouts. */
+function pluginRoots(pluginDir) {
+  try {
+    const mcp = JSON.parse(fs.readFileSync(path.join(pluginDir, ".mcp.json"), "utf8"));
+    return Object.values(mcp.mcpServers || {}).flatMap((server) => {
+      const pin = server?.env?.XRAY_ROOT;
+      const pinned = typeof pin === "string" && pin !== "" ? [path.resolve(pin)] : [];
+      return pinned.concat(launcherRoots(server));
+    });
+  } catch {
+    return [];
+  }
+}
+
 /**
- * `isolated` stays HOME != machine home. This check is whether a machine-level
- * 0xray Grok plugin exists. Overall inspect ok is false when this check fails.
+ * `isolated` stays HOME != machine home. A machine-level 0xray Grok plugin this
+ * project did not plant is a WARN, including when it points at another root.
+ * Wear plants the project plugin and does not rewrite the machine plugin, so
+ * that leftover must not fail the receipt.
  */
-export function checkMachinePlugin(machine = mint.machineHome()) {
+export function checkMachinePlugin(machine = mint.machineHome(), root = null, env = process.env) {
   const machinePlugin = machineGrokPluginDir(machine);
   const hits = machineXrayPluginPaths(machine);
-  if (hits.length > 0) {
+  if (hits.length === 0) {
+    return { id: "machinePlugin", ok: true, machinePlugin, hits: [] };
+  }
+  const remedy = `rm -rf ${hits.join(" ")}`;
+  const here = root ? path.resolve(root) : null;
+  const loaded = !isIsolatedHome(env, machine);
+  const conflicts =
+    here && loaded
+      ? hits.filter((hit) => pluginRoots(hit).some((other) => other !== here))
+      : [];
+  if (conflicts.length > 0) {
     return {
       id: "machinePlugin",
-      ok: false,
+      ok: true,
+      warn: true,
       machinePlugin,
       hits,
-      detail: `machine-level ${hits.join(", ")} exists — delete it`,
+      conflicts,
+      detail: `machine-level ${conflicts.join(", ")} points at another root than ${here} (XRAY_ROOT or launcher paths). The project plugin is the one this wear planted. Remove the machine plugin if it should not load: ${remedy}`,
     };
   }
   return {
     id: "machinePlugin",
     ok: true,
+    warn: true,
     machinePlugin,
-    hits: [],
+    hits,
+    detail: `machine-level ${hits.join(", ")} exists and does not point at another root. Remove it if the project plugin is not the one loading: ${remedy}`,
   };
 }
 
@@ -604,6 +726,10 @@ export async function inspectSuit(root, opts = {}) {
   if (soundBed) checks.push(soundBed);
   const blip = checkBlip(root);
   if (blip) checks.push(blip);
+  const scoutFeed = checkScoutFeed(root);
+  if (scoutFeed) checks.push(scoutFeed);
+  const heraldWrite = checkHeraldWrite(root);
+  if (heraldWrite) checks.push(heraldWrite);
   checks.push(checkCi(root));
 
   if (skipLive) {
@@ -628,7 +754,7 @@ export async function inspectSuit(root, opts = {}) {
   }
 
   checks.push(checkIsolatedHome(root, env, machineHome));
-  checks.push(checkMachinePlugin(machineHome));
+  checks.push(checkMachinePlugin(machineHome, root, env));
   checks.push(checkHarness(root, requireHarness));
 
   const failed = checks.filter((c) => c.ok === false);
@@ -637,6 +763,7 @@ export async function inspectSuit(root, opts = {}) {
   const report = {
     ok: failed.length === 0,
     failed: failed.map((c) => c.id),
+    warnings: checks.filter((c) => c.warn === true).map((c) => c.id),
     checks,
     dna: receipt.dna || null,
     pack: "0xray-suit",

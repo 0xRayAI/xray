@@ -112,7 +112,7 @@ export interface MemoryRoutingProvider {
     buildInheritedContext(tasks: MemoryOrchestrationTask[]): MemoryInheritedContext;
     selectAgent(capabilities: Map<string, MemoryAgentCapability>, requiredCapabilities: string[], complexity: number, operation: string): string | null;
     resolveThinDispatch(baseAgent: string, operation: string, complexityScore: number): MemoryThinDispatchResult;
-    getTaskConfidence?(task: MemoryOrchestrationTask): MemoryTaskConfidence;
+    getTaskConfidence?(task: MemoryOrchestrationTask, now?: Date): MemoryTaskConfidence;
     ingestFeedback?(entry: OrchestratorFeedbackEntry): void;
     buildSynthesisContext?(opts: {
         projectRoot: string;

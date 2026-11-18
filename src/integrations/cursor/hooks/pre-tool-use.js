@@ -111,7 +111,7 @@ async function main() {
       if (extraBlock) finish(gateRoot, 'deny', extraBlock, null, toolName);
     }
 
-    const spoken = [content, cmd, toolInput.pattern, toolInput.query, ...(paths || [])].filter(Boolean).join('\n');
+    const spoken = [content, cmd, toolInput.pattern, toolInput.query, toolInput.glob, ...(paths || [])].filter(Boolean).join('\n');
     const lensStop = lensDecision(gateRoot, toolName, spoken);
     if (lensStop?.decision === 'deny') {
       finish(gateRoot, 'deny', lensStop.reason, null, toolName, { gate: lensStop.gate });

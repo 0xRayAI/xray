@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""live-inbox <seat> [--peek] | live-inbox <seat> --ack <id|all|stale> [--apply] | live-inbox <seat> --pop <id|all> | live-inbox <seat> --upto <id> | live-inbox <seat> --turn start|end [--tag <tag>] | live-inbox <seat> --prompt [--from <name>] [--room <name>] [--note <line>]
+"""live-inbox <seat> [--peek] [--watch] | live-inbox <seat> --ack <id|all|stale> [--apply] [--review <url>] | live-inbox <seat> --pop <id|all> | live-inbox <seat> --upto <id> | live-inbox <seat> --turn start|end [--tag <tag>] | live-inbox <seat> --prompt [--from <name>] [--room <name>] [--note <line>] [--at <ISO>]
 live-inbox <seat> --handoff <to> --pr <owner/repo#n> --kind <ready|critic_fail|live_pass|merge|ci_fail> --sha <head>
 live-inbox <seat> --card <owner/repo#n> --start-after <ISO>
 
@@ -7,49 +7,342 @@ Read: OPEN lines from the Bifrost server inbox for <seat>, one JSON object per l
 seat acked. A closed or merged card does not hide an unacked line. For reviewer, a Reviewer verdict at the card's head does.
 A read claims each open line for this wake. The owner token is WAKE_RUN, or this process when WAKE_RUN is unset.
 The claim key is the pull request, the head sha, and the kind. A second run whose lines are already claimed prints
-nothing and exits 0. Only the owner token may release that claim or post its turn end. A losing run's --turn start
+nothing and exits 0. A nudge line and a comment a seat wrote stay claimed, each by its own line id, for LIVE_INBOX_TOMB_S
+(default 3600) after that wake ends, so a later wake does not answer the same one again. Another comment on the same
+issue is another id and still reads. Only the owner token may release that claim or post its turn end. A losing run's --turn start
 and its --turn end post nothing and leave the claim file unchanged. `--release` drops this token's claims and posts
 nothing. The wake trap posts `--turn end` and then runs `--release` on any shell exit, so a crash still closes the turn.
+Before that post, WAKE-ROUTINE step 7 asks "anything new without a card?" and files each new item as a card (`From:`, `Waiting on:`, `Owner:`). This command posts the turn line. It does not open the card.
 A read never acks. The ack is the receipt (the pop) and a seat sends it after it handles the line, with
---ack or --pop <id> (one line) or --ack all / --pop all (everything open). --ack stale lists lines with a close or merge
-event, or a closed or done card, and does not ack them. A missing card stays. --ack stale --apply acks the ids just listed.
+--ack or --pop <id> (one line) or --ack all / --pop all (everything open). A kind=merge handoff on an open pull is rejected unless
+--review is a review or comment URL on that pull, and the acked line stores the link. A merged or closed pull acks with no review link and stores the pull URL. Other kinds ack as today.
+--ack stale lists lines with a close or merge event on GitHub, and does not ack them. A done or closed board card while the pull is open is not stale. A missing card stays. --ack stale --apply acks the ids just listed, including a merge handoff whose pull is already closed.
+--ack merged asks GitHub once per card and acks every open line whose issue or pull is CLOSED or MERGED, including a merge handoff. An open card stays. An open merge handoff stays until it has a review link.
 --upto <id> acks the stored prefix through that id. A plain read still shows a merged card until one of those receipts.
 --peek means the same as a plain read.
-The per-seat cursor `$LIVE_CURSORS/<seat>.txt` stores handled keys `repo#number|sha|kind`. A read does not write it.
+The cursor folder rule is grok-bot/OP-PROC.md#cursor-folder.
 `--remember --pr <owner/repo#n> --sha <head> --kind <kind>` adds that key. `--repeat` with the same flags exits 0
 when the key is already there and exits 1 for a new head. The claim is not this record.
 --turn start|end posts {kind:turn, action, t_ct, tag?} to POST /activity.
+--turn start without tag wake writes one token at $HOME/.burst/inbox-wake/<seat>. The watcher reprints the one head once for that token. Tag wake does not write it.
 A turn inside a cloud agent posts that same kind:turn line and does not post cloud_agent launch.
+--cloud launch|reply|finished|cancel --agent <agent-id> [--tag <owner/repo#n|xray#n>] posts {kind:cloud_agent, action, agent, t_ct, tag?} to POST /activity. The seat is the bearer. The body has no seat. xray#n is stored as 0xRayAI/xray#n so the board rebinds that card. Run it beside --turn, as its own command. It does not take the turn claim. The cloud agent does not post this line.
 --prompt posts {t_ct, seat, kind:prompt, action:sent, from, to:seat, room?, note?} to POST /activity. from defaults to the name: line under ## Owner in HOUSE.md. A missing name: warns and uses owner.
+--prompt --at <ISO-8601 with offset> stamps t_ct with the owner message's real time (America/Chicago, seconds) for a late or backfilled prompt. A time with no offset, a bad time, or a future time exits 2. With --at, a prompt line already on /history for the same from and seat within 2s of --at is not posted again (so a re-run is safe but two real messages seconds apart both post): it prints {ok:true, skipped:dup, id}. Without --at, t_ct is now.
 --note is one quoted line, at most 240 characters of letters, digits, spaces, and ._:@#+/?'",;!()-. It is the only prose the board stores. Keys named body, text, or message are refused.
 t_ct is America/Chicago with its offset. Both posts use the seat key. The key is never printed. There is no local file.
 Handoff: POST one packet to /inbox for <to> and print the one-line 1:1 message the seat sends. The same pull request,
 kind and head post the same line id. --sha is required and is a head of 7 to 64 hex digits. A room post is not this command.
+--station posts one nudge into this seat's inbox. The id is nudge:station:<seat>:<Chicago hour>. The sentence is Run station and re-read OP-PROC. The type is nudge, so it is not a packet.
 Date: POST /cards/start-after. --start-after is an ISO time with a numeric offset (Chicago, -05:00 or -06:00). The card
 stays parked until that time, then the server wakes the owning seat. A GitHub comment whose first line is
 `Start after: <ISO>` sets the same field; the command wins while it is stored.
-Env (required, never guessed): LIVE_URL, SEAT_KEYS_DIR (key <seat>.key, never printed), LIVE_CURSORS (cursor <seat>.txt).
-A missing or empty one exits 2 and names it. WAKE-ROUTINE.md ships the export line with the defaults."""
-import fcntl, json, os, re, sys, time, urllib.error, urllib.parse, urllib.request
+Env: LIVE_URL and SEAT_KEYS_DIR (key <seat>.key, never printed) are required. A missing or empty one exits 2 and names it.
+LIVE_CURSORS is not required. The cursor folder rule is grok-bot/OP-PROC.md#cursor-folder."""
+import fcntl, json, os, re, subprocess, sys, time, urllib.error, urllib.parse, urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
-MISSING = [k for k in ("LIVE_URL", "SEAT_KEYS_DIR", "LIVE_CURSORS") if not os.environ.get(k, "").strip()]
+MISSING = [k for k in ("LIVE_URL", "SEAT_KEYS_DIR") if not os.environ.get(k, "").strip()]
 if MISSING:
     print("live-inbox: missing env " + ", ".join(MISSING) + " (run the export line in WAKE-ROUTINE.md first)", file=sys.stderr)
     sys.exit(2)
 URL = os.environ["LIVE_URL"].rstrip("/")
 KEYS = Path(os.environ["SEAT_KEYS_DIR"]).expanduser()
-CUR = Path(os.environ["LIVE_CURSORS"]).expanduser()
+# One folder. These three are the ones seats have written. The tool does not pick among them.
+# LIVE_CURSOR_ROOT is empty in production. A test sets it to a temp dir so the two absolute
+# folders land under that dir. $HOME/.burst/cursors moves with HOME.
+
+
+
+AT_DEDUPE_SECONDS = 2  # --at skips a same-seat, same-from prompt this close; WAKE-ROUTINE step 0 says the same
+
+def norm_dir(path):
+    return Path(path).expanduser().resolve()
+
+
+def fixed_cursors():
+    return Path.home() / ".burst" / "cursors"
+
+
+def legacy_cursor_dirs():
+    """`/home/box/burst-run/cursors` and `/workspace/.cursors`, unless LIVE_CURSOR_ROOT prefixes both."""
+    root = os.environ.get("LIVE_CURSOR_ROOT", "").strip()
+    if not root:
+        return (Path("/home/box/burst-run/cursors"), Path("/workspace/.cursors"))
+    base = Path(root)
+    return (base / "home/box/burst-run/cursors", base / "workspace/.cursors")
+
+
+def known_cursor_dirs():
+    box, work = legacy_cursor_dirs()
+    return (box, fixed_cursors(), work)
+
+
+def resolve_cursor_dir():
+    """The cursor directory. Unset LIVE_CURSORS is the fixed folder. No search of the other two."""
+    fixed = fixed_cursors()
+    raw = os.environ.get("LIVE_CURSORS", "").strip()
+    if not raw:
+        return fixed
+    chosen = Path(raw).expanduser()
+    got = norm_dir(chosen)
+    if got == norm_dir(fixed):
+        return fixed
+    for other in legacy_cursor_dirs():
+        if got == norm_dir(other):
+            print(f"live-inbox: LIVE_CURSORS={chosen} is not the cursor folder; the folder is {fixed}", file=sys.stderr)
+            sys.exit(2)
+    return chosen
+
+
+def refuse_split_cursors(seat):
+    """Exit 2 when this seat's cursor file is in more than one of the three known folders."""
+    found = []
+    seen = set()
+    for folder in known_cursor_dirs():
+        path = folder.expanduser() / f"{seat}.txt"
+        if not path.is_file():
+            continue
+        key = str(norm_dir(path))
+        if key in seen:
+            continue
+        seen.add(key)
+        found.append(str(path))
+    if len(found) > 1:
+        print("live-inbox: " + seat + " cursor file is in more than one folder: " + ", ".join(found), file=sys.stderr)
+        sys.exit(2)
+
+
+SEAT_TXT = re.compile(r"^([a-z0-9-]{2,16})\.txt$")
+SIDECARS = (".claims.json", ".lock")
+
+
+def migrated_path(path):
+    return Path(str(path) + ".migrated")
+
+
+def prefer_fixed(path):
+    return 1 if str(norm_dir(path.parent)) == str(norm_dir(fixed_cursors())) else 0
+
+
+def each_known_file(name):
+    """Existing files of this name in the three folders, one per resolved path."""
+    found = []
+    seen = set()
+    for folder in known_cursor_dirs():
+        path = folder / name
+        if not path.is_file():
+            continue
+        key = str(norm_dir(path))
+        if key in seen:
+            continue
+        seen.add(key)
+        found.append(path)
+    return found
+
+
+def union_keys(entries):
+    """Unique handled keys. The copy from the newest file is the one kept."""
+    ordered = {}
+    ranked = []
+    for path, mtime in entries:
+        ranked.append((mtime, prefer_fixed(path), path))
+    for _mtime, _rank, path in sorted(ranked):
+        for line in path.read_text(encoding="utf-8").splitlines():
+            key = line.strip()
+            if not key:
+                continue
+            if key in ordered:
+                del ordered[key]
+            ordered[key] = key
+    return list(ordered)
+
+
+def newest_sidecar(seat, suffix):
+    best = None
+    for path in each_known_file(f"{seat}{suffix}"):
+        cand = (path.stat().st_mtime_ns, prefer_fixed(path), path)
+        if best is None or cand[:2] >= best[:2]:
+            best = cand
+    return best[2] if best else None
+
+
+def copy_aside(path):
+    """Copy path to *.migrated when that backup is absent. Never clobber an existing backup."""
+    if not path.is_file():
+        return
+    dest = migrated_path(path)
+    if dest.exists():
+        return
+    data = path.read_bytes()
+    tmp = Path(str(dest) + ".tmp")
+    tmp.write_bytes(data)
+    os.replace(tmp, dest)
+
+
+def retire_live(path):
+    """Move a live file aside. An existing *.migrated stays. Matching bytes drop the duplicate."""
+    if not path.is_file():
+        return
+    dest = migrated_path(path)
+    if not dest.exists():
+        path.rename(dest)
+        return
+    try:
+        same = path.read_bytes() == dest.read_bytes()
+    except OSError:
+        same = False
+    if same:
+        path.unlink()
+        return
+    n = 1
+    while True:
+        alt = Path(str(path) + f".migrated.{n}")
+        if not alt.exists():
+            path.rename(alt)
+            return
+        n += 1
+
+
+def write_atomic(path, data):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(path.name + ".tmp")
+    tmp.write_bytes(data)
+    os.replace(tmp, path)
+
+
+def seat_names():
+    """Seat ids that have a live cursor file or a *.txt.migrated backup in a known folder."""
+    found = set()
+    for folder in known_cursor_dirs():
+        if not folder.is_dir():
+            continue
+        try:
+            names = list(folder.iterdir())
+        except OSError as err:
+            print(f"live-inbox: cannot read {folder}: {err}", file=sys.stderr)
+            sys.exit(2)
+        for path in names:
+            if not path.is_file():
+                continue
+            name = path.name
+            seat = ""
+            if name.endswith(".txt.migrated"):
+                seat = name[: -len(".txt.migrated")]
+            else:
+                match = SEAT_TXT.fullmatch(name)
+                seat = match.group(1) if match else ""
+            if seat and SEAT_TXT.fullmatch(seat + ".txt"):
+                found.add(seat)
+    return found
+
+
+def needs_migrate(seat):
+    """True for a live split, a missing fixed file whose keys sit in *.migrated, or a leftover live file beside a backup."""
+    live = each_known_file(f"{seat}.txt")
+    migrated = each_known_file(f"{seat}.txt.migrated")
+    fixed = fixed_cursors() / f"{seat}.txt"
+    if len(live) >= 2:
+        return True
+    if migrated and not fixed.is_file():
+        return True
+    fixed_dir = str(norm_dir(fixed_cursors()))
+    return bool(migrated and any(str(norm_dir(path.parent)) != fixed_dir for path in live))
+
+
+def key_sources(seat):
+    """Live <seat>.txt plus <seat>.txt.migrated, so a crash cannot leave keys only in the backup."""
+    rows = []
+    seen = set()
+    for name in (f"{seat}.txt", f"{seat}.txt.migrated"):
+        for path in each_known_file(name):
+            key = str(norm_dir(path))
+            if key in seen:
+                continue
+            seen.add(key)
+            rows.append((path, path.stat().st_mtime_ns))
+    return rows
+
+
+def migrate_cursors():
+    """Union split seat files into the fixed folder. Write the merged file first, then rename old files."""
+    plans = []
+    for seat in sorted(seat for seat in seat_names() if needs_migrate(seat)):
+        claims = newest_sidecar(seat, ".claims.json")
+        lock = newest_sidecar(seat, ".lock")
+        plans.append({
+            "seat": seat,
+            "lines": union_keys(key_sources(seat)),
+            "live_txt": each_known_file(f"{seat}.txt"),
+            "claims_path": claims,
+            "claims": claims.read_bytes() if claims is not None else None,
+            "lock_path": lock,
+            "lock": lock.read_bytes() if lock is not None else None,
+            "live_claims": each_known_file(f"{seat}.claims.json"),
+            "live_locks": each_known_file(f"{seat}.lock"),
+        })
+    fixed = fixed_cursors()
+    if plans:
+        fixed.mkdir(parents=True, exist_ok=True)
+    for plan in plans:
+        seat = plan["seat"]
+        out = fixed / f"{seat}.txt"
+        if out.is_file():
+            copy_aside(out)
+        lines = plan["lines"]
+        write_atomic(out, (("\n".join(lines) + "\n") if lines else "").encode())
+        if plan["claims"] is not None:
+            dest = fixed / f"{seat}.claims.json"
+            if dest.is_file():
+                copy_aside(dest)
+            write_atomic(dest, plan["claims"])
+        if plan["lock"] is not None:
+            dest = fixed / f"{seat}.lock"
+            if dest.is_file():
+                copy_aside(dest)
+            write_atomic(dest, plan["lock"])
+        for path in plan["live_txt"]:
+            if str(norm_dir(path)) == str(norm_dir(out)):
+                continue
+            retire_live(path)
+        claims_dest = fixed / f"{seat}.claims.json"
+        for path in plan["live_claims"]:
+            if str(norm_dir(path)) == str(norm_dir(claims_dest)):
+                continue
+            retire_live(path)
+        lock_dest = fixed / f"{seat}.lock"
+        for path in plan["live_locks"]:
+            if str(norm_dir(path)) == str(norm_dir(lock_dest)):
+                continue
+            retire_live(path)
+        print(f"migrated {seat} {len(lines)} keys")
+
+
+CUR = resolve_cursor_dir()
 KINDS = ("ready", "critic_fail", "live_pass", "merge", "ci_fail")
-USAGE = ("usage: live-inbox <seat> [--peek] | live-inbox <seat> --ack <id|all|stale> [--apply] | live-inbox <seat> --pop <id|all> | "
+USAGE = ("usage: live-inbox <seat> [--peek] [--watch] | live-inbox <seat> --ack <id|all|stale> [--apply] | live-inbox <seat> --pop <id|all> | "
          "live-inbox <seat> --upto <id> | live-inbox <seat> --release | "
          "live-inbox <seat> --remember|--repeat --pr <owner/repo#n> --sha <head> --kind <kind> | "
-         "live-inbox <seat> --turn start|end [--tag <tag>] | live-inbox <seat> --prompt [--from <name>] [--room <name>] [--note <line>] | "
+         "live-inbox <seat> --turn start|end [--tag <tag>] | "
+         "live-inbox <seat> --cloud launch|reply|finished|cancel --agent <agent-id> [--tag <owner/repo#n|xray#n>] | "
+         "live-inbox <seat> --prompt [--from <name>] [--room <name>] [--note <line>] [--at <ISO>] | "
+         "live-inbox <seat> --station | "
          "live-inbox <seat> --handoff <to> --pr <owner/repo#n> --kind <" + "|".join(KINDS) + "> --sha <head> | "
-         "live-inbox <seat> --card <owner/repo#n> --start-after <ISO>")
+         "live-inbox <seat> --card <owner/repo#n> --start-after <ISO> | "
+         "live-inbox --migrate-cursors")
 TAG = re.compile(r"[A-Za-z0-9 ._:@#+/-]{1,40}")
+CLOUD_ACTIONS = ("launch", "reply", "finished", "cancel")
+AGENT_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{2,40}$")
+# Same owner/repo shape as house/live/app/worktrack.mjs CARD_REF.
+GH_OWNER = r"(?![A-Za-z0-9-]{40})[A-Za-z0-9](?:-[A-Za-z0-9]|[A-Za-z0-9]){0,38}"
+GH_REPO = r"(?![A-Za-z0-9._-]{101})[A-Za-z0-9_](?:[A-Za-z0-9._-]*[A-Za-z0-9_])?"
+CARD_REF = re.compile(rf"^{GH_OWNER}/{GH_REPO}#\d{{1,8}}$")
+SHORT_XRAY = re.compile(r"^xray#(\d{1,8})$")
 argv = sys.argv[1:]
+if argv == ["--migrate-cursors"]:
+    migrate_cursors()
+    sys.exit(0)
 
 
 def take(flag):
@@ -67,6 +360,7 @@ apply = "--apply" in argv
 if apply:
     argv.remove("--apply")
 upto = take("--upto")
+pass_id = take("--pass")
 ack = None
 ack_flag = None
 for flag in ("--ack", "--pop"):
@@ -78,6 +372,9 @@ for flag in ("--ack", "--pop"):
         ack = argv[i + 1]
         del argv[i:i + 2]
         break
+station = "--station" in argv
+if station:
+    argv.remove("--station")
 handoff_to = take("--handoff")
 pr_raw = take("--pr")
 kind = take("--kind")
@@ -85,10 +382,14 @@ sha = take("--sha")
 card_raw = take("--card")
 start_after = take("--start-after")
 turn = take("--turn")
+cloud = take("--cloud")
+agent = take("--agent")
 tag = take("--tag")
 frm = take("--from")
 room = take("--room")
 note = take("--note")
+at_raw = take("--at")
+review = take("--review")
 prompt = "--prompt" in argv
 if prompt:
     argv.remove("--prompt")
@@ -104,24 +405,33 @@ if repeat:
 remember = "--remember" in argv
 if remember:
     argv.remove("--remember")
+watch = "--watch" in argv
+if watch:
+    argv.remove("--watch")
 handled_lookup = repeat or remember
 if any(a.startswith("--") for a in argv):
     sys.exit(USAGE)
 args = [a for a in argv if not a.startswith("--")]
 if len(args) != 1 or not re.fullmatch(r"[a-z0-9-]{2,16}", args[0]):
     sys.exit(USAGE)
-if tag is not None and turn is None:
+if tag is not None and turn is None and cloud is None:
+    sys.exit(USAGE)
+if agent is not None and cloud is None:
     sys.exit(USAGE)
 busy = ack is not None or upto is not None or prompt or handoff_to is not None or card_raw is not None or start_after is not None or release or handled_lookup
 if apply and ack != "stale":
     sys.exit(USAGE)
 if upto is not None and ack is not None:
     sys.exit(USAGE)
-if turn is not None and (busy or turn not in ("start", "end")):
+if turn is not None and (busy or turn not in ("start", "end") or cloud is not None):
+    sys.exit(USAGE)
+if cloud is not None and (busy or peek or cloud not in CLOUD_ACTIONS):
     sys.exit(USAGE)
 if prompt and (ack is not None or handoff_to is not None or card_raw is not None or release or handled_lookup):
     sys.exit(USAGE)
-if (frm is not None or room is not None or note is not None) and not prompt:
+if (frm is not None or room is not None or note is not None or at_raw is not None) and not prompt:
+    sys.exit(USAGE)
+if review is not None and (ack_flag != "--ack" or not ack or ack in ("all", "stale")):
     sys.exit(USAGE)
 
 
@@ -162,6 +472,8 @@ if prompt and frm is None:
     frm = owner_from_house()
 if tag is not None and not TAG.fullmatch(tag):
     sys.exit("tag must be a short plain id")
+if cloud is not None and (agent is None or not AGENT_ID.fullmatch(agent)):
+    sys.exit("agent id required")
 if frm is not None and not TAG.fullmatch(frm):
     sys.exit("from must be a short plain id")
 if room is not None and not TAG.fullmatch(room):
@@ -169,6 +481,8 @@ if room is not None and not TAG.fullmatch(room):
 if note is not None and not re.fullmatch(r"""[A-Za-z0-9 ._:@#+/?'",;!()-]{1,240}""", note):
     sys.exit("note must be a short plain line")
 if peek and busy:
+    sys.exit(USAGE)
+if station and (busy or turn is not None or cloud is not None or peek):
     sys.exit(USAGE)
 if sha is not None and handoff_to is None and not handled_lookup:
     sys.exit(USAGE)
@@ -181,9 +495,9 @@ if card_raw is not None:
     if not cm:
         sys.exit(USAGE)
     repo, number = cm.group(1), int(cm.group(2))
-if handled_lookup and (handoff_to is not None or ack is not None or turn is not None or prompt or release or card_raw is not None or upto is not None):
+if handled_lookup and (handoff_to is not None or ack is not None or turn is not None or cloud is not None or prompt or release or card_raw is not None or upto is not None):
     sys.exit(USAGE)
-if not handled_lookup and ((handoff_to is None) != (pr_raw is None or kind is None) or (ack is not None and handoff_to is not None)):
+if not handled_lookup and not station and ((handoff_to is None) != (pr_raw is None or kind is None) or (ack is not None and handoff_to is not None)):
     sys.exit(USAGE)
 if handoff_to is not None:
     if not re.fullmatch(r"[a-z0-9-]{2,16}", handoff_to) or kind not in KINDS:
@@ -207,14 +521,35 @@ seat = args[0]
 kf = KEYS / f"{seat}.key"
 if not kf.is_file():
     sys.exit(f"no key for seat {seat!r} (builder reads with its builder-app token on its own Mac)")
+refuse_split_cursors(seat)
 H = {"Authorization": "Bearer " + kf.read_text().strip()}
 
 
-def call(method, path, body=None, exit_on_error=True):
+def inbox_timeout():
+    raw = os.environ.get("LIVE_INBOX_TIMEOUT", "").strip()
+    if not raw:
+        return 20
+    try:
+        n = float(raw)
+    except ValueError:
+        return 20
+    return n if n > 0 else 20
+
+
+def is_timeout(err):
+    if isinstance(err, TimeoutError):
+        return True
+    reason = getattr(err, "reason", None)
+    if isinstance(reason, TimeoutError):
+        return True
+    return "timed out" in str(reason or err).lower()
+
+
+def call(method, path, body=None, exit_on_error=True, tolerate_timeout=False):
     req = urllib.request.Request(URL + path, data=json.dumps(body).encode() if body is not None else None, method=method,
                                  headers={**H, **({"Content-Type": "application/json"} if body is not None else {})})
     try:
-        with urllib.request.urlopen(req, timeout=20) as r:
+        with urllib.request.urlopen(req, timeout=inbox_timeout()) as r:
             return json.loads(r.read().decode())
     except urllib.error.HTTPError as e:
         msg = f"live-inbox: HTTP {e.code} {e.read().decode()[:200]}"
@@ -223,13 +558,57 @@ def call(method, path, body=None, exit_on_error=True):
         return {"ok": False, "error": msg}
     except (urllib.error.URLError, TimeoutError) as e:
         msg = f"live-inbox: server unreachable ({e})"
+        if tolerate_timeout and is_timeout(e):
+            return {"ok": False, "timeout": True, "error": msg}
         if exit_on_error:
             sys.exit(msg)
         return {"ok": False, "error": msg}
 
 
+def merge_handoff(line):
+    if not isinstance(line, dict):
+        return False
+    if str(line.get("kind") or "").lower() != "merge":
+        return False
+    return str(line.get("type") or "").lower() == "packet" or ":merge:" in str(line.get("id") or "")
+
+
 def ct_now():
     return datetime.now(ZoneInfo("America/Chicago")).isoformat(timespec="seconds")
+
+
+def ct_at(raw):
+    """An ISO-8601 time with an offset, not in the future, as America/Chicago. Anything else exits 2."""
+    try:
+        got = datetime.fromisoformat(raw.strip().replace("Z", "+00:00"))
+    except ValueError:
+        got = None
+    if got is None or got.tzinfo is None:
+        print("live-inbox: --at needs an ISO-8601 time with an offset, e.g. 2026-11-09T09:24:00-06:00", file=sys.stderr)
+        sys.exit(2)
+    if got.timestamp() > datetime.now().timestamp() + 5:
+        print("live-inbox: --at is in the future", file=sys.stderr)
+        sys.exit(2)
+    return got.astimezone(ZoneInfo("America/Chicago")).isoformat(timespec="seconds")
+
+
+def prompt_dup(seat, frm, t_ct):
+    """The id of a prompt line on /history for this from and seat within 2s of t_ct, or None."""
+    at = datetime.fromisoformat(t_ct)
+    got = call("GET", f"/history?date={at.date().isoformat()}", exit_on_error=False)
+    events = got.get("events") if isinstance(got, dict) else None
+    for e in events if isinstance(events, list) else []:
+        if not isinstance(e, dict) or e.get("kind") not in ("prompt", "seat_prompt"):
+            continue
+        if frm not in ("owner", e.get("from")) or e.get("to") != seat:
+            continue
+        try:
+            seen = datetime.fromisoformat(str(e.get("t_ct")))
+        except ValueError:
+            continue
+        if abs((seen - at).total_seconds()) <= AT_DEDUPE_SECONDS:
+            return e.get("id") or True
+    return None
 
 
 def owner_token():
@@ -277,6 +656,38 @@ def packet_key(line):
     return f"id:{ident}" if ident else ""
 
 
+COMMENT_TYPES = ("pr_comment", "issue_comment", "review_comment", "comment")
+TOMB_SECONDS = int(os.environ.get("LIVE_INBOX_TOMB_S") or 3600)
+
+
+def soft_key(line):
+    """A claim that outlives its wake for TOMB_SECONDS: a nudge line, and a comment a seat wrote, each by its own line id.
+    A second wake, even one that starts after the first ended, does not answer the same line again. Another comment on
+    the same issue is another id and still reads. Wake suppression is the gate's repo#n + sha key, not this claim.
+    A human comment is a plain claim."""
+    kind = str(line.get("type") or line.get("kind") or "").strip().lower()
+    ident = str(line.get("id") or "").strip()
+    if not ident:
+        return ""
+    if kind == "nudge":
+        return f"id:{ident}"
+    if kind in COMMENT_TYPES and str(line.get("from") or "").strip():
+        return f"id:{ident}"
+    return ""
+
+
+def settle(claims, token, now=None):
+    """Claims after this token ends its wake: its plain claims go, its soft claims stay as tombstones."""
+    now = time.time() if now is None else now
+    out = {}
+    for key, rec in claims.items():
+        if not owned_by(rec, token):
+            out[key] = rec
+        elif rec.get("soft"):
+            out[key] = {"tomb": True, "soft": True, "token": token, "pid": 0, "at": now, "until": now + TOMB_SECONDS, "id": rec.get("id")}
+    return out
+
+
 def claim_paths(seat):
     CUR.mkdir(parents=True, exist_ok=True)
     return CUR / f"{seat}.lock", CUR / f"{seat}.claims.json"
@@ -303,7 +714,9 @@ def write_claims(seat, claims):
 
 def live_claims(seat):
     """Claims whose owner pid is still alive. Caller holds the seat lock. Does not write."""
-    return {key: rec for key, rec in load_claims(seat).items() if pid_alive(rec.get("pid"))}
+    now = time.time()
+    return {key: rec for key, rec in load_claims(seat).items()
+            if pid_alive(rec.get("pid")) or (rec.get("tomb") and float(rec.get("until") or 0) > now)}
 
 
 def locked(seat):
@@ -323,12 +736,13 @@ def claim_open(seat, lines):
         now = time.time()
         mine = []
         for line in lines:
-            key = packet_key(line)
+            soft = soft_key(line)
+            key = soft or packet_key(line)
             rec = claims.get(key) if key else None
             if rec and not owned_by(rec, token):
                 continue
             if key:
-                claims[key] = {"pid": pid, "token": token, "at": now, "id": line.get("id")}
+                claims[key] = {"pid": pid, "token": token, "at": now, "id": line.get("id"), **({"soft": True} if soft else {})}
             mine.append(line)
         write_claims(seat, claims)
         return mine
@@ -363,9 +777,28 @@ def release_own(seat):
     try:
         claims = load_claims(seat)
         token = owner_token()
-        write_claims(seat, {key: rec for key, rec in claims.items() if not owned_by(rec, token)})
+        write_claims(seat, settle(claims, token))
     finally:
         handle.close()
+
+
+
+def cloud_card_tag(raw):
+    """owner/repo#n stays. xray#n is stored as 0xRayAI/xray#n. The number is canonical."""
+    if CARD_REF.fullmatch(raw):
+        owner_repo, num = raw.rsplit("#", 1)
+        number = int(num)
+    else:
+        short = SHORT_XRAY.fullmatch(raw)
+        if not short:
+            sys.exit("tag must be owner/repo#n or xray#n")
+        owner_repo, number = "0xRayAI/xray", int(short.group(1))
+    if number < 1:
+        sys.exit("tag must be owner/repo#n or xray#n")
+    expanded = f"{owner_repo}#{number}"
+    if len(expanded) > 40 or not TAG.fullmatch(expanded) or not CARD_REF.fullmatch(expanded):
+        sys.exit("tag must be a short plain id")
+    return expanded
 
 
 def turn_gate(seat, action):
@@ -384,7 +817,7 @@ def turn_gate(seat, action):
         if others and not mine:
             return False
         if action == "end":
-            write_claims(seat, {key: rec for key, rec in claims.items() if not owned_by(rec, token)})
+            write_claims(seat, settle(claims, token))
         return True
     finally:
         handle.close()
@@ -394,6 +827,19 @@ if card_raw is not None:
     call("POST", "/cards/start-after", {"repo": repo, "number": number, "start_after": start_after})
     print(f"start after {start_after} {repo}#{number}")
     sys.exit(0)
+if station:
+    local = datetime.now(ZoneInfo("America/Chicago"))
+    hour = local.strftime("%Y-%m-%dT%H")
+    sentence = "Run station and re-read OP-PROC"
+    line_id = f"nudge:station:{seat}:{hour}"
+    line = {"id": line_id, "t_ct": datetime.now(timezone.utc).isoformat(),
+            "seat": seat, "from": seat, "to": seat, "type": "nudge", "kind": "station",
+            "repo": "", "number": 0, "title": sentence, "url": "", "reason": sentence}
+    posted = call("POST", "/inbox", {"lines": [line]}, tolerate_timeout=True)
+    if isinstance(posted, dict) and posted.get("timeout"):
+        print(posted.get("error") or "live-inbox: server unreachable", file=sys.stderr)
+    print(f"station {seat} {line_id}")
+    sys.exit(0)
 if handoff_to is not None:
     head = sha.lower()
     line_id = f"handoff:{repo.lower()}#{number}:{kind}:{head}"
@@ -401,8 +847,20 @@ if handoff_to is not None:
     line = {"id": line_id, "t_ct": datetime.now(timezone.utc).isoformat(),
             "seat": handoff_to, "from": seat, "to": handoff_to, "type": "packet", "kind": kind,
             "repo": repo, "number": number, "sha": head, "title": f"handoff {kind}", "url": url, "reason": f"handoff {kind}"}
-    call("POST", "/inbox", {"lines": [line]})
-    print(f"SendToAgent {handoff_to}: handoff {kind} {repo}#{number} @{head[:7]} {url}")
+    posted = call("POST", "/inbox", {"lines": [line]}, tolerate_timeout=True)
+    if isinstance(posted, dict) and posted.get("timeout"):
+        print(posted.get("error") or "live-inbox: server unreachable", file=sys.stderr)
+    added = posted.get("added") if isinstance(posted, dict) else None
+    short = head[:7]
+    if added == 0:
+        print(f"already queued (added:0) {repo}#{number} {kind} @{short}")
+    else:
+        print(f"SendToAgent {handoff_to}: handoff {kind} {repo}#{number} @{short} {url}")
+    peeked = call("GET", f"/inbox/{handoff_to}?queue=1", exit_on_error=False)
+    lines = peeked.get("lines") if isinstance(peeked, dict) else None
+    top = lines[0] if isinstance(lines, list) and lines else None
+    if isinstance(top, dict) and top.get("id"):
+        print(f"head {top.get('id')} @{str(top.get('sha') or '')[:7]}")
     sys.exit(0)
 if release:
     release_own(seat)
@@ -416,7 +874,13 @@ if repeat or remember:
     print("repeat" if key in cursor_keys(seat) else "new")
     sys.exit(0 if key in cursor_keys(seat) else 1)
 if prompt:
-    body = {"t_ct": ct_now(), "seat": seat, "kind": "prompt", "action": "sent", "from": frm, "to": seat}
+    t_ct = ct_at(at_raw) if at_raw is not None else ct_now()
+    if at_raw is not None:
+        dup = prompt_dup(seat, frm, t_ct)
+        if dup is not None:
+            print(json.dumps({"ok": True, "skipped": "dup", "id": dup}))
+            sys.exit(0)
+    body = {"t_ct": t_ct, "seat": seat, "kind": "prompt", "action": "sent", "from": frm, "to": seat}
     if room is not None:
         body["room"] = room
     if note is not None:
@@ -429,16 +893,82 @@ if prompt:
             receipt["id"] = posted["id"]
     print(json.dumps(receipt))
     sys.exit(0)
+if cloud is not None:
+    # Seat from the bearer. No seat field. A foreign turn claim does not swallow this post.
+    body = {"kind": "cloud_agent", "action": cloud, "agent": agent, "t_ct": ct_now()}
+    if tag is not None:
+        body["tag"] = cloud_card_tag(tag)
+    print(json.dumps(call("POST", "/activity", body)))
+    sys.exit(0)
+def note_external_wake(seat_name):
+    """A seat turn is a new wake. The watcher's own tag wake is not."""
+    if tag == "wake" or turn != "start":
+        return
+    root = os.environ.get("INBOX_WAKE_DIR") or str(Path.home() / ".burst" / "inbox-wake")
+    dest_dir = Path(root)
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    dest = dest_dir / seat_name
+    dest.write_text(str(time.time_ns()) + "\n")
+    try:
+        os.chmod(dest, 0o600)
+    except OSError:
+        return
+
+
+def load_cloud_line():
+    """Feed copy, else the file beside this script, else the installed kit. A missing module does not raise."""
+    import importlib.util
+    here = Path(__file__).resolve().parent
+    ordered = [here.parent / "feed" / "cloud_line.py", here / "cloud_line.py"]
+    roots = []
+    for start in (Path.cwd(), here):
+        roots.append(start)
+        roots.extend(start.parents)
+    seen_root = set()
+    for root in roots:
+        key = str(root)
+        if key in seen_root:
+            continue
+        seen_root.add(key)
+        ordered.append(root / "node_modules" / "@0xray" / "grok-bot" / "lib" / "cloud_line.py")
+    seen = set()
+    for path in ordered:
+        key = str(path)
+        if key in seen or not path.is_file():
+            seen.add(key)
+            continue
+        seen.add(key)
+        spec = importlib.util.spec_from_file_location("cloud_line", path)
+        if spec is None or spec.loader is None:
+            continue
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        return mod
+    return None
+
+
 if turn is not None:
+    # Turn end posts the activity line only. WAKE-ROUTINE step 7 asks
+    # "anything new without a card?" and files each card (From, Waiting on, Owner)
+    # before this post. A crash still reaches the trap without that question.
     # A wake that lost the lines does not start a turn and does not end the winner's claim.
-    # kind: turn only. Cloud launch and finish stay on the cloud-agent hooks.
+    # kind: turn. A turn end whose tag names bc- also posts cloud_agent finished.
     if not turn_gate(seat, turn):
         sys.exit(0)
+    note_external_wake(seat)
     body = {"kind": "turn", "action": turn, "t_ct": ct_now()}
     if tag is not None:
         body["tag"] = tag
-    print(json.dumps(call("POST", "/activity", body)))
+    posted = call("POST", "/activity", body)
+    cloud_line = load_cloud_line()
+    extra = cloud_line.cloud_body(turn, tag, body["t_ct"]) if cloud_line is not None else None
+    if extra:
+        call("POST", "/activity", extra)
+    print(json.dumps(posted))
     sys.exit(0)
+if pass_id is not None:
+    print(json.dumps({"ok": False, "error": "the board has no pass route"}))
+    sys.exit(1)
 if upto is not None:
     print(json.dumps(call("POST", f"/inbox/{seat}/ack", {"upto": upto})))
     sys.exit(0)
@@ -474,10 +1004,88 @@ if ack == "stale":
         receipt["error"] = failed
     print(json.dumps(receipt))
     sys.exit(0 if failed is None else 1)
+
+def card_closed(repo, number, cache):
+    key = (str(repo), str(number))
+    if key in cache:
+        return cache[key]
+    closed = False
+    for kind in ("issue", "pr"):
+        probe = subprocess.run(
+            ["gh", kind, "view", str(number), "--repo", str(repo), "--json", "state"],
+            capture_output=True, text=True,
+        )
+        if probe.returncode != 0:
+            continue
+        try:
+            state = str(json.loads(probe.stdout).get("state") or "").upper()
+        except json.JSONDecodeError:
+            continue
+        if state in ("CLOSED", "MERGED"):
+            closed = True
+            break
+    cache[key] = closed
+    return closed
+
+if ack == "merged":
+    if ack_flag != "--ack":
+        sys.exit(USAGE)
+    lines = []
+    for query in (f"/inbox/{seat}?queue=1", f"/inbox/{seat}?backlog=1"):
+        got = call("GET", query, exit_on_error=False)
+        if isinstance(got, dict):
+            lines.extend(got.get("lines") or [])
+    cache = {}
+    acked = 0
+    acked_ids = []
+    open_n = None
+    failed = None
+    seen = set()
+    for line in lines:
+        line_id = line.get("id") if isinstance(line, dict) else None
+        repo = line.get("repo") if isinstance(line, dict) else None
+        number = line.get("number") if isinstance(line, dict) else None
+        if not isinstance(line_id, str) or line_id in seen:
+            continue
+        if not repo or number is None or not card_closed(repo, number, cache):
+            continue
+        seen.add(line_id)
+        result = call("POST", f"/inbox/{seat}/ack", {"id": line_id}, exit_on_error=False)
+        if result.get("error"):
+            if merge_handoff(line) and "review link" in str(result.get("error")):
+                continue
+            failed = result["error"]
+            break
+        acked += int(result.get("acked") or 0)
+        acked_ids.append(line_id)
+        if "open" in result:
+            open_n = result.get("open")
+    receipt = {"ok": failed is None, "acked": acked, "ids": acked_ids}
+    if open_n is not None:
+        receipt["open"] = open_n
+    if failed:
+        receipt["error"] = failed
+    print(json.dumps(receipt))
+    sys.exit(0 if failed is None else 1)
 if ack is not None:
-    r = call("POST", f"/inbox/{seat}/ack", {"all": True} if ack == "all" else {"id": ack})
+    body = {"all": True} if ack == "all" else {"id": ack}
+    if review is not None:
+        body["review"] = review
+    r = call("POST", f"/inbox/{seat}/ack", body)
     print(json.dumps(r))
     sys.exit(0)
-lines = claim_open(seat, call("GET", f"/inbox/{seat}").get("lines") or [])
+lines = claim_open(seat, call("GET", f"/inbox/{seat}?queue=1").get("lines") or [])
+if watch:
+    have = {l.get("id") for l in lines if isinstance(l, dict)}
+    got = call("GET", f"/inbox/{seat}", exit_on_error=False)
+    rest = got.get("lines") if isinstance(got, dict) else []
+    for line in rest or []:
+        if not isinstance(line, dict):
+            continue
+        ident = line.get("id")
+        if ident in have:
+            continue
+        have.add(ident)
+        lines.append(line)
 for l in lines:
     print(json.dumps(l, ensure_ascii=False))

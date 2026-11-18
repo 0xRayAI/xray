@@ -291,6 +291,7 @@ export function resolveGrokHookEvent(event = {}, argv = process.argv, env = proc
     .replace(/[-_\s]/g, '');
   if (named === 'precompact') return 'pre_compact';
   if (named === 'postcompact') return 'post_compact';
+  if (named === 'stop') return 'stop';
   if (named === 'sessionstart') return 'session_start';
   if (
     (event && (event.prompt != null || event.userMessage != null || event.user_prompt != null)) ||
@@ -299,6 +300,23 @@ export function resolveGrokHookEvent(event = {}, argv = process.argv, env = proc
     return 'user_prompt_submit';
   }
   return 'session_start';
+}
+
+export function readWornBundle(root) {
+  const candidates = [
+    path.join(root, '.grok', 'plugins', '0xray', 'bundle.md'),
+    path.join(root, 'src', 'integrations', 'grok', 'plugin', '0xray', 'bundle.md'),
+  ];
+  for (const file of candidates) {
+    try {
+      if (!fs.existsSync(file)) continue;
+      const text = fs.readFileSync(file, 'utf8').trim();
+      if (text) return text.slice(0, 2000);
+    } catch {
+      /* the next path may still hold the rule */
+    }
+  }
+  return '';
 }
 
 export function buildSessionBootPayload(root, source = '0xray/grok-session-start', extra = {}) {
@@ -316,6 +334,7 @@ export function buildSessionBootPayload(root, source = '0xray/grok-session-start
   const heat = applyStationHeat(root, extra.host || 'grok', extra, existing);
   const compactHold = retainCompactFields(existing, extra);
   const shown = planeCard(root);
+  const bundle = readWornBundle(root);
   return {
     lead_dev_mode: features.lead_dev_mode,
     no_new_surface: features.no_new_surface,
@@ -351,6 +370,7 @@ export function buildSessionBootPayload(root, source = '0xray/grok-session-start
     timestamp: new Date().toISOString(),
     plane: shown.plane,
     card: shown.card,
+    ...(bundle ? { bundle } : {}),
   };
 }
 

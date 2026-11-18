@@ -12,7 +12,9 @@ os.environ.setdefault("MESH_RUN", tempfile.mkdtemp())
 import inbox_pass  # noqa: E402  (patches routing/inbox.py: our seats, kit role -> seat)
 inbox = inbox_pass.inbox
 
-OURS = set(json.loads((FEED / "fleet-roster.json").read_text())["seats"])
+_ROSTER = json.loads((FEED / "fleet-roster.json").read_text())
+OURS = set(_ROSTER["seats"])
+BOARD = set(_ROSTER.get("board") or [])
 ROLES = json.loads((FEED / "routing" / "inbox-roles.json").read_text())
 KIT_ROLES = {"reviewer", "builder", "tester", "operator", "coord"}
 R = "0xRayAI/xray"
@@ -31,7 +33,7 @@ def deliver(events, roles=ROLES):
 
 class EverySeatIsOurs(unittest.TestCase):
     def test_roster_is_our_nine(self):
-        self.assertEqual(OURS, {"blinky", "critic", "forge", "arch1", "herald", "magnet", "nibbler", "sound"})
+        self.assertEqual(OURS, {"blinky", "critic", "forge", "mill", "near", "arch1", "herald", "magnet", "nibbler", "sound"})
 
     def test_every_seat_reference(self):
         refs = [("mirror_seat", ROLES["mirror_seat"]), ("fallback.seat", ROLES["fallback"]["seat"])]
@@ -46,7 +48,7 @@ class EverySeatIsOurs(unittest.TestCase):
         for role, rule in ROLES["seats"].items():
             if not rule.get("off"):
                 refs.append(("seats." + role + ".seat", rule.get("seat")))
-        bad = [(where, s) for where, s in refs if s not in OURS]
+        bad = [(where, s) for where, s in refs if s not in OURS and s not in BOARD]
         self.assertEqual(bad, [], "seat references outside our seats")
 
     def test_server_and_key_defaults_name_no_sample_seat(self):
@@ -71,6 +73,14 @@ class RealEventsLand(unittest.TestCase):
     def test_deploy_and_ci_fail_to_forge(self):
         got = deliver([ev("deploy_fail", 0), ev("ci_fail", 280, sha="abc")])
         self.assertEqual(len(got.get("forge", [])), 2); self.assertTrue(set(got) <= OURS, got.keys())
+
+    def test_review_lands_on_the_pr_author(self):
+        got = deliver([ev("review", 596, pr_author="arch10x[bot]", actor="critic0x[bot]", state="CHANGES_REQUESTED")])
+        self.assertIn("arch1", got)
+        self.assertEqual(got["arch1"][0]["type"], "review")
+        self.assertEqual(got["arch1"][0]["number"], 596)
+        self.assertEqual(got["arch1"][0]["reason"], "review on your PR")
+        self.assertNotIn("critic", got)
 
     def test_unknown_seat_falls_back_to_blinky(self):
         roles = {"extra_seats": {"ghost": {"kinds": ["review_requested"], "reason": "x"}}, "fallback": {"seat": "blinky", "from": ["arch1"]}}

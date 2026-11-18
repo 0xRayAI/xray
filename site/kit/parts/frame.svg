@@ -1,0 +1,7 @@
+<!-- Geometry from plates/kit/frame.svg on cursor/v5-plates-restamp-72d4 @ ab36db743. Colors locked to kit.json. That branch is not edited. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <rect x="0" y="0" width="200" height="200" fill="#242628"/>
+  <rect x="8" y="8" width="184" height="184" fill="none" stroke="#5c6066" stroke-width="16"/>
+  <rect x="26" y="26" width="148" height="148" fill="none" stroke="#164e58" stroke-width="5"/>
+  <rect x="32" y="32" width="136" height="136" fill="none" stroke="#5ad6de" stroke-width="2"/>
+</svg>

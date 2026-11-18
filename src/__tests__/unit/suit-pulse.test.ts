@@ -104,6 +104,22 @@ describe('suit pulse', () => {
     }
   });
 
+  it('reads the packed vendor version when the top-level symlink is missing', () => {
+    const root = mkdtempSync(join(tmpdir(), 'xray-pulse-packed-'));
+    try {
+      writeJson(join(root, 'node_modules', '0xray', 'vendor', '@0xray', 'repertoire', 'package.json'), {
+        name: '@0xray/repertoire',
+        version: '0.2.9',
+      });
+      const pulse = readSuitPulse(root, { now: NOW });
+      expect(pulse.repertoire).toBe('0.2.9');
+      expect(pulse.line).toContain('repertoire 0.2.9');
+      expect(pulse.line).not.toContain('repertoire missing');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it('reads the worn CLI from the hook file, not the plant package', () => {
     const root = mkdtempSync(join(tmpdir(), 'xray-pulse-hook-'));
     const worn = mkdtempSync(join(tmpdir(), 'xray-pulse-cli-'));

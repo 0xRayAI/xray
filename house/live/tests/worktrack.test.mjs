@@ -195,7 +195,10 @@ test('bad signature is rejected; replays and out-of-order deliveries do not dupl
     assert.equal(card[0].pr, pr);
     assert.equal(card[0].working, true);
     const live = await (await fetch(ctx.base + '/live-events.json', { headers: { Cookie: cookie } })).json();
-    assert.equal(live.fleet.seats.critic.working, true);
+    assert.notEqual(live.fleet.seats.critic && live.fleet.seats.critic.working, true);
+    assert.equal(live.fleet.working.critic, undefined);
+    assert.equal(live.fleet.cloud.working, true);
+    assert.equal((live.fleet.cloud.open_agents || []).includes('bc-critic0001'), true);
 
     await post('bc-critic0001', { id: 'bc-critic0001', status: 'FINISHED', metadata: { seat: 'critic' }, target: { prUrl: pr }, summary: 'review the diff' }, 'cr-5');
     view = await trackOf(ctx.base, cookie);
@@ -244,7 +247,7 @@ test('packets move sent to acked for sender and recipient; blockers sit in the h
     WAKE_DEBOUNCE_S: '0',
     WAKE_COALESCE_MS: '20',
     WAKE_RETRY_MS: '20',
-    NUDGE_L1_S: '30',
+    NUDGE_L1_S: '30', FLEET_MODE: 'full',
   });
   try {
     const cookie = await login(ctx.base, pw);
@@ -347,7 +350,7 @@ test('a wake fired before restart is still working on the packet after boot', as
   const common = {
     MESH_PASSWORD: pw, SESSION_SECRET: session, INGEST_SECRET: ingest,
     SEAT_KEYS: JSON.stringify({ critic: sha(criticKey) }),
-    NUDGE_L1_S: '3600',
+    NUDGE_L1_S: '3600', FLEET_MODE: 'full',
   };
   const first = await boot(data, {
     ...common,

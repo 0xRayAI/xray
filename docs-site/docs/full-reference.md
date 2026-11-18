@@ -1,10 +1,12 @@
 # 0xRay — reference
 
 **4.1** — a suit that survives the context window
-Bifrost is the live board. Goggles views one plane. A search runs inside that card.
+Bifrost is the live board. Goggles views one plane. A search inside that card runs. A search of another plane returns the card. A path outside this checkout runs.
 
 
 Exo, not catalog. Constitution always on. Temperament by host. Four floors. Repertoire organ on.
+
+Notes are in [Features since 3.1](./guides/features-since-3.1).
 
 CLI, bridges, seven MCP servers, Codex. Product thesis: [4.0 vision](./architecture/v4-vision.md). Wear: [getting started](./guides/getting-started.md).
 
@@ -28,7 +30,7 @@ npx 0xray skill:install
 npx 0xray --help
 ```
 
-**Requirements:** Node.js 18+, npm 9+, macOS or Linux.
+**Requirements:** Node.js 24.22.3+, npm 9+, macOS or Linux.
 
 ---
 

@@ -6,7 +6,7 @@
   var FEED = (window.LIVE_FEED_URL || 'live-events.json');
   L.SOURCES.splice(0, L.SOURCES.length, { name: 'feed', api: true, url: FEED }, { name: 'feed', url: FEED });
   // Poll every 10 s: the pusher uploads right after each feed write, and an unchanged feed is a 304 with an empty body
-  // (If-None-Match against this server's ETag), so the page's 'Updated' age stays under ~75 s.
+  // (If-None-Match against this server's ETag), so the page's 'Refreshed' age stays under ~75 s.
   L.POLL_MS = 10000;
   // Delta polls: the full feed once (first load, or after the server reports a reset), then ?since=<cursor> returns
   // only events new or changed since then plus the header fields (304 when nothing changed). applyFeed already
@@ -76,7 +76,7 @@
   L.botImage = function (key) { return AVATAR[key] ? 'avatars/' + AVATAR[key] + '.png' : null; };
   var W = { lab_bug: 'lab bug', lab_bug_update: 'lab bug', lab_issue: 'lab issue', lab_run: 'lab test run',
     lab_calls: 'lab calls', board_card: 'board card', board_status: 'board', lab_retest_pass: 'lab retest PASS', lab_retest_fail: 'lab retest FAIL', critic_pass: 'reviewer PASS',
-    critic_fail: 'reviewer FAIL', critic_hold: 'reviewer HOLD', critic_recheck: 'reviewer re-check', pr_commit: 'PR push',
+    critic_fail: 'reviewer FIX', critic_hold: 'reviewer FIX (legacy HOLD)', critic_recheck: 'reviewer re-check', pr_commit: 'PR push',
     review: 'review', pr_comment: 'PR comment', issue_comment: 'issue comment', review_comment: 'review comment',
     commit: 'commit', check_run: 'check run', check_suite: 'check suite', workflow_run: 'workflow run',
     commit_status: 'status', deploy_pending: 'deploy pending', tag: 'tag', release: 'release' };
@@ -140,11 +140,18 @@
   L.blackoutLine = function () { return ''; };
   // ONE derived seat state, used by the header chip text, its dot and the canvas node alike:
   //   working (in-flight spinner) > live (a ping on the board right now) > active (fleet, last 15 min) > idle
+  // lit is working only. seen is a recent ping or a 15-minute beat, and it is not the working sheen.
   L.seatState = function (working, live, active) {
     return working ? 'working' : live ? 'live' : active ? 'active' : 'idle';
   };
   var SEAT_WORD = { working: 'WORKING', live: 'LIVE', active: 'ACTIVE', idle: 'IDLE' };
   L.seatView = function (st) {   // everything the chip and the node show, from that one state
-    return { word: SEAT_WORD[st] || 'IDLE', lit: st !== 'idle', blink: st === 'working', nodeWorking: st === 'working' };
+    return {
+      word: SEAT_WORD[st] || 'IDLE',
+      lit: st === 'working',
+      blink: st === 'working',
+      nodeWorking: st === 'working',
+      seen: st === 'live' || st === 'active'
+    };
   };
 })(window.LiveMesh);

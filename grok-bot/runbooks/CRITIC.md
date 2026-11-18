@@ -6,22 +6,26 @@ The output goes on the PR as the live-pass comment.
 
 | Rule | What it proves | OP-PROC |
 |---|---|---|
-| routing | every seat routed; every route @-mentions the seat's real GitHub login (`fleet-nodes.json`), no nickname-only route | **Routing** |
-| deliver-sim | an issue and an @-comment naming each seat route to that seat (the kit's router) | **Two loops** |
-| edit-sim | a comment edited to add an @-mention routes exactly one line to the newly mentioned seat | **Two loops** |
-| edit (live) | a real comment edited to add the seat's @-mention lands as one `…:edit:<handle>` line | **Two loops** |
-| deliver (live) | a real issue and @-comment per seat, posted on `--repo`, land in that seat's inbox on `--target` | **Two loops** |
-| nodes | every `fleet-nodes.json` bot login resolves on GitHub (users API); a 404 fails | **Routing** |
-| resolve (live) | every routing-map login resolves on GitHub, as `--target`'s `GET /routing` reports | **Routing** |
-| board-page (live) | the board page and `/healthz` answer 200, no server error | **Card** |
-| board-cards (live) | every open issue/PR on `--repo` is exactly one card: none missing, none duplicated | **Card** |
-| board-owner (live) | every open card's owner is a seat in the routing map | **Card** |
-| addressed (live) | the test posts reach no seat they weren't addressed to (comment-watch / PR-head / issue_open watch seats excepted) | **Two loops** |
-| ack (live) | one delivered line acks with the seat key, non-interactively; the running seat confirms no approval card | **Ack** |
-| tripwire | a stalled board, and an empty board below 75% weekly burn, each start the timed run once per window; `BIFROST_WEEKLY_BURN=0.75` keeps the empty-board wake quiet (`governor.mjs`) | **Tripwire** |
-| nudge | a stuck line nudges its owner L1 -> L3. The coordinator is not woken to reassign | **Nudge** |
-| lexicon | every bolded term in the pack OP-PROC and runbooks has a row in `grok-bot/LEXICON.md` | OP-PROC line 3 |
-| names | docs and plates hold none of the stale phrases in `tools/bifrost-stale.json` | **Names** |
+| routing | every seat routed; every route @-mentions the seat's real GitHub login (`fleet-nodes.json`), no nickname-only route | [**Routing**](../OP-PROC.md#routing) |
+| deliver-sim | an issue and an @-comment naming each seat route to that seat (the kit's router) | [**Two loops**](../OP-PROC.md#two-loops) |
+| edit-sim | a comment edited to add an @-mention routes exactly one line to the newly mentioned seat | [**Two loops**](../OP-PROC.md#two-loops) |
+| edit (live) | a real comment edited to add the seat's @-mention lands as one `…:edit:<handle>` line | [**Two loops**](../OP-PROC.md#two-loops) |
+| deliver (live) | a real issue and @-comment per seat, posted on `--repo`, land in that seat's inbox on `--target` | [**Two loops**](../OP-PROC.md#two-loops) |
+| nodes | every `fleet-nodes.json` bot login resolves on GitHub (users API); a 404 fails | [**Routing**](../OP-PROC.md#routing) |
+| resolve (live) | every routing-map login resolves on GitHub, as `--target`'s `GET /routing` reports | [**Routing**](../OP-PROC.md#routing) |
+| board-page (live) | the board page and `/healthz` answer 200, no server error | [**Card**](../OP-PROC.md#card) |
+| board-cards (live) | every open issue/PR on `--repo` is exactly one card: none missing, none duplicated | [**Card**](../OP-PROC.md#card) |
+| board-owner (live) | every open card's owner is a seat in the routing map | [**Card**](../OP-PROC.md#card) |
+| addressed (live) | the test posts reach no seat they weren't addressed to (comment-watch / PR-head / issue_open watch seats excepted) | [**Two loops**](../OP-PROC.md#two-loops) |
+| ack (live) | one delivered line acks with the seat key, non-interactively; the running seat confirms no approval card | [**Ack**](../OP-PROC.md#ack) |
+| tripwire | a stalled board, and an empty board below 75% weekly burn, each start the timed run once per window; `BIFROST_WEEKLY_BURN=0.75` keeps the empty-board wake quiet (`governor.mjs`) | [**Tripwire**](../OP-PROC.md#tripwire) |
+| nudge | a stuck line nudges its owner L1 -> L3. The coordinator is not woken to reassign | [**Nudge**](../OP-PROC.md#nudge) |
+| lexicon | every bolded term in the pack OP-PROC and runbooks has a row in `grok-bot/LEXICON.md` | [OP-PROC](../OP-PROC.md) |
+| names | docs and plates hold none of the stale phrases in `tools/bifrost-stale.json` | [**Names**](../OP-PROC.md#names) |
+
+A live card is not packet OK until `raci` names R and A. The amber mark is not a pass. See [Packet](../OP-PROC.md#packet).
+
+A packet that claims a hold for another review lane is not OK unless the card says Waiting on, start_after, or Held.
 
 ## Run
 ```
@@ -37,14 +41,14 @@ house/live/tools/bifrost-check --repo <org>/<sandbox> --target https://<bifrost-
 - A board-cards / board-owner FAIL marked *known* is today's per-agent board layout; it clears with the next-wave card restructure.
 
 ## Review steps
-0. Wear the latest 0xray suit (re-wear via forge if behind). On wake read `.xray/state/STATION.md` (the ticket the station module writes; never hand-edit it), then `.xray/state/NOTES.md`, and resume. Write NOTES.md before a compact (the PreCompact hook only stamps its pickup line); never commit it. Neither file holds secrets: never keys, tokens or PEM text, only where a secret lives (its env var name). A STATION.md or NOTES.md holding a key, token or PEM text is a FAIL.
-1. Before passing any routing-map change, look up every login through the GitHub users API (`curl https://api.github.com/users/<login>`). A 404 is a FAIL; #303 once passed with three fake logins.
+0. Wear the latest 0xray suit (re-wear via forge if behind). On wake read `.xray/state/STATION.md` (the ticket the station module writes; never hand-edit it), then `.xray/state/NOTES.md`, and resume. Write NOTES.md before a compact (the PreCompact hook only stamps its pickup line); never commit it. Neither file holds secrets: never keys, tokens or PEM text, only where a secret lives (its env var name). A STATION.md or NOTES.md holding a key, token or PEM text is a FIX.
+1. Before passing any routing-map change, look up every login through the GitHub users API (`curl https://api.github.com/users/<login>`). A 404 is a FIX; #303 once passed with three fake logins.
 2. The live pass needs a real issue and PR created on GitHub that land in the right seat's inbox. Test wakes alone don't count.
 3. When a PR adds a rule that overlaps an existing one, name the pair in the review (it feeds the next **boil-up**).
 4. Read the PR body's `Plates read:` field and note any gap (a plate for the touched area that is not listed) in the review. Not a gate: an empty field alone never fails a PR, there is no CI check, and critic blocks only if the diff contradicts a stamped plate.
 5. `bifrost check` waits one collector poll before editing (`--edit-delay`, default poll + 5 s = 50 s), so call an edit line missing only after that poll.
-6. **Forward-motion.** FAIL only for wrong live behavior, for security, spend, or on-chain risk, or for a plate or OP-PROC line that would send a seat the wrong way. Anything else is APPROVE plus a linked issue for the author. After round 2, only an original blocker can FAIL. A docs-only PR does not wait on CI; check that the words match the code.
+6. **Forward-motion.** FIX (each must-fix item with its owner) only for wrong live behavior, for security, spend, or on-chain risk, or for a plate or OP-PROC line that would send a seat the wrong way. Anything else is APPROVE plus a linked issue for the author. After round 2, only an original blocker can be a FIX. A second FIX of that blocker goes under Needs Blaze with the step it unblocks. Doc-only updates: see [Review](../OP-PROC.md#review). Check that the words match the code. A numeric, cosmetic, or word-count threshold that a runbook does not hard-name is within reason: a soft follow-up (APPROVE plus a linked future or a bundle), never FIX or REQUEST_CHANGES.
 
-A FAIL goes back on the wave with its OP-PROC line.
+A FIX goes back on the wave with its OP-PROC line.
 
 **Two hats:** a review rule the critic applies (or a check it runs by hand) is written into this runbook, OP-PROC or the lexicon, and becomes a `bifrost check` rule when it can; a chat-only rule counts as missing.

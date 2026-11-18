@@ -18,7 +18,9 @@ class Verdicts(unittest.TestCase):
     def test_prefixes(self):
         self.assertEqual(self.m("**Reviewer: PASS: ready for lab test** @ af8c8d0"), ("PASS", None))
         self.assertEqual(self.m("**Reviewer: FAIL (P0/P1)** @ b599aab"), ("FAIL", None))
-        self.assertEqual(self.m("**Reviewer: HOLD** @ 1234567"), ("HOLD", None))
+        self.assertEqual(self.m("**Reviewer: HOLD** @ 1234567"), ("HOLD", None))   # legacy, still read
+        self.assertEqual(self.m("**Reviewer: FIX: two must-fix items, forge** @ 1234567"), ("FIX", None))
+        self.assertEqual(self.m("**Reviewer re-check: FIX** @ d07d2c2"), (None, "FIX"))
         self.assertEqual(self.m("**Reviewer re-check: PASS, ready** @ d07d2c2"), (None, "PASS"))
         self.assertEqual(self.m("**Reviewer re-check:** pending @ abcdef1"), (None, None))
 
@@ -170,6 +172,95 @@ class StoredCiUnmappedActor(unittest.TestCase):
             self.assertTrue(any("drop stored" in line and eid in line for line in logs))
             col.save()
             self.assertNotIn(eid, json.loads(path.read_text())["events"])
+
+
+class StoredCiOthersReclaim(unittest.TestCase):
+    """Fixture: CI rows already stored as Others. Unmapped must not be dropped; a mapped actor is reclaimed."""
+
+    def _load(self, env):
+        fixture = HERE / "fixtures" / "ci_others_store.json"
+        code = (
+            "import json,sys,tempfile; from pathlib import Path; sys.path.insert(0,%r); import live_collect as c\n"
+            "raw=json.loads(Path(%r).read_text()); d=Path(tempfile.mkdtemp()); p=d/'app.json'; p.write_text(json.dumps(raw))\n"
+            "logs=[]; rc=c.RepoCollector('acme/app', d, type('FF',(),{'CT':None})(), logs.append); rc.save()\n"
+            "saved=json.loads(p.read_text())['events']\n"
+            "print(json.dumps({'ids':sorted(rc.ev),'drop':(rc.ev.get('acme/app:run:drop') or {}).get('from'),"
+            "'reclaim':(rc.ev.get('acme/app:run:reclaim') or {}).get('from'),"
+            "'saved_drop':(saved.get('acme/app:run:drop') or {}).get('from'),"
+            "'saved_reclaim':(saved.get('acme/app:run:reclaim') or {}).get('from'),"
+            "'drops':[x for x in logs if 'drop stored' in x]}))"
+        ) % (str(FEED_DIR), str(fixture))
+        out = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        return json.loads(out.stdout)
+
+    def test_fixture_drop_and_reclaim(self):
+        base = dict(os.environ)
+        base.pop("LIVE_NODE_MAP", None)
+        base.pop("LIVE_SHOW_UNMAPPED", None)
+        dropped = self._load(base)
+        self.assertEqual(dropped["ids"], ["acme/app:run:drop", "acme/app:run:reclaim"])
+        self.assertEqual(dropped["drop"], "CI")
+        self.assertEqual(dropped["reclaim"], "CI")
+        self.assertEqual(dropped["saved_drop"], "CI")
+        self.assertEqual(dropped["saved_reclaim"], "CI")
+        self.assertEqual(dropped["drops"], [])
+
+        mapped = dict(base, LIVE_NODE_MAP='{"reclaim-bot[bot]":"forge"}')
+        got = self._load(mapped)
+        self.assertEqual(got["ids"], ["acme/app:run:drop", "acme/app:run:reclaim"])
+        self.assertEqual(got["drop"], "CI")
+        self.assertEqual(got["saved_drop"], "CI")
+        self.assertEqual(got["reclaim"], "forge")
+        self.assertEqual(got["saved_reclaim"], "forge")
+        self.assertEqual(got["drops"], [])
+
+
+class StoredCiSeatCredit(unittest.TestCase):
+    """Live 2026-10-20 rows: from is GitHub even when the actor is forge0x1[bot] or the app maps."""
+
+    def _ff(self):
+        from zoneinfo import ZoneInfo
+        return type("FF", (), {"CT": ZoneInfo("America/Chicago")})()
+
+    def test_fixture_rewrites_github_and_ci_from_actor_or_app(self):
+        self.enterContext(mock.patch.object(uc, "SHOW_UNMAPPED", False))
+        removed = uc.NODE_LC.pop("cursor[bot]", None)
+        self.addCleanup(lambda: removed is not None and uc.NODE_LC.__setitem__("cursor[bot]", removed))
+        self.enterContext(mock.patch.dict(uc.NODE_LC, {"forge0x1[bot]": "forge", "htafolla": "Blaze", "github-actions[bot]": "CI"}, clear=False))
+        raw = json.loads((HERE / "fixtures" / "ci_github_store.json").read_text())
+        with tempfile.TemporaryDirectory() as d:
+            store = Path(d)
+            (store / "xray.json").write_text(json.dumps(raw))
+            col = uc.RepoCollector("0xRayAI/xray", store, self._ff(), lambda *_a: None)
+            got = {eid.split(":")[-1]: col.ev[eid]["from"] for eid in raw["events"]}
+            self.assertEqual(got["forge"], "forge")
+            self.assertEqual(got["cursor"], "GitHub")
+            self.assertEqual(got["blaze"], "Blaze")
+            self.assertEqual(got["actions"], "GitHub")
+            self.assertEqual(got["app"], "forge")
+            col.put("0xRayAI/xray:run:new", "2026-10-20T16:00:00Z", "CI", "GitHub", "workflow_run", "run ci",
+                    "https://github.com/0xRayAI/xray/actions/runs/9", None, actor="forge0x1[bot]")
+            col.put("0xRayAI/xray:run:bugbot", "2026-10-20T16:01:00Z", "CI", "GitHub", "workflow_run", "run ci",
+                    "https://github.com/0xRayAI/xray/actions/runs/10", None, actor="cursor[bot]")
+            self.assertEqual(col.ev["0xRayAI/xray:run:new"]["from"], "forge")
+            self.assertEqual(col.ev["0xRayAI/xray:run:bugbot"]["from"], "CI")
+            self.assertIn("0xRayAI/xray:run:bugbot", col.ev)
+
+    def test_flow_uses_the_actor_seat(self):
+        import live_flow
+        self.enterContext(mock.patch.dict(uc.NODE_LC, {"forge0x1[bot]": "forge"}, clear=False))
+        removed = uc.NODE_LC.pop("cursor[bot]", None)
+        self.addCleanup(lambda: removed is not None and uc.NODE_LC.__setitem__("cursor[bot]", removed))
+        flow = live_flow.Flow({}, lambda login: uc.node(login))
+        forge = {"id": "run:f", "kind": "workflow_run", "from": "GitHub", "to": "GitHub", "repo": "0xRayAI/xray",
+                 "actor": "forge0x1[bot]", "label": "run"}
+        bugbot = {"id": "run:c", "kind": "workflow_run", "from": "GitHub", "to": "GitHub", "repo": "0xRayAI/xray",
+                  "actor": "cursor[bot]", "label": "run"}
+        flow.apply([forge, bugbot])
+        self.assertEqual(forge["from"], "forge")
+        self.assertEqual(forge["hops"][0], "forge")
+        self.assertEqual(bugbot["from"], "GitHub")
 
 
 class SeatTrailer(unittest.TestCase):
@@ -602,6 +693,110 @@ class Mentions(unittest.TestCase):
         self.assertIsNone(lc.mentions(None))
 
 
+class CursorBotMentions(unittest.TestCase):
+    """cursor[bot] is unmapped (Others). A comment that @-mentions a seat is kept; a bare one is not."""
+
+    def setUp(self):
+        self.enterContext(mock.patch.object(uc, "SHOW_UNMAPPED", False))
+        removed = uc.NODE_LC.pop("cursor[bot]", None)
+        self.addCleanup(lambda: removed is not None and uc.NODE_LC.__setitem__("cursor[bot]", removed))
+        self.assertEqual(uc.node("cursor[bot]"), "Others")
+
+    def _put(self, col, eid, kind, body, number=508):
+        from datetime import timezone
+        t = datetime.now(timezone.utc).replace(microsecond=0).strftime("%Y-%m-%dT%H:%M:%SZ")
+        col.put(eid, t, uc.node("cursor[bot]"), "Blaze", kind,
+                f"cursor[bot] comment · xray #{number}",
+                f"https://github.com/0xRayAI/xray/pull/{number}#issuecomment-1",
+                number, actor="cursor[bot]", mentions=uc.mentions(body))
+
+    def test_mention_reaches_arch1_inbox(self):
+        col = _collector("0xRayAI/xray")
+        self.addCleanup(col._tmp.cleanup)
+        eid = "0xRayAI/xray#508:comment:6318087435"
+        self._put(col, eid, "pr_comment", "@arch10x Arch1, please review the stems")
+        ev = col.ev[eid]
+        self.assertEqual(ev["from"], "GitHub")
+        self.assertEqual(ev["actor"], "cursor[bot]")
+        self.assertEqual(ev["mentions"], ["arch10x"])
+        for kind in ("issue_comment", "review_comment"):
+            key = f"0xRayAI/xray#508:{kind}"
+            self._put(col, key, kind, "@arch10x again")
+            self.assertEqual(col.ev[key]["from"], "GitHub")
+            self.assertEqual(col.ev[key]["actor"], "cursor[bot]")
+        with tempfile.TemporaryDirectory() as d:
+            run = Path(d)
+            (run / "feed").mkdir()
+            (run / "fleet").mkdir()
+            env = dict(os.environ, MESH_RUN=str(run), LIVE_BOARD="off")
+            feed = run / "feed" / "live-events.json"
+            seed = {"id": "0xRayAI/xray#1:open", "t_ct": "2020-01-01T00:00:00-06:00", "kind": "pr_open",
+                    "repo": "0xRayAI/xray", "number": 1, "label": "old"}
+            feed.write_text(json.dumps({"events": [seed]}))
+            go = lambda: subprocess.run([sys.executable, "-B", str(FEED_DIR / "inbox_pass.py"), "pass"],
+                                        env=env, capture_output=True, text=True, check=True).stdout.strip()
+            self.assertEqual(go(), "0 0")
+            feed.write_text(json.dumps({"events": [seed, ev]}))
+            self.assertNotEqual(go().split()[0], "0")
+            box = run / "feed" / "inbox-spool" / "arch1.jsonl"
+            lines = [json.loads(x) for x in box.read_text().splitlines()]
+            self.assertIn(eid, [line["id"] for line in lines])
+
+    def test_comment_without_mention_is_dropped(self):
+        col = _collector("0xRayAI/xray")
+        self.addCleanup(col._tmp.cleanup)
+        for kind in ("pr_comment", "issue_comment", "review_comment"):
+            eid = f"0xRayAI/xray#508:{kind}:silent"
+            self._put(col, eid, kind, "please look, no handle")
+            self.assertNotIn(eid, col.ev, kind)
+
+    def test_comments_rewind_once_across_today(self):
+        from datetime import timedelta, timezone
+        col = _collector("0xRayAI/xray")
+        self.addCleanup(col._tmp.cleanup)
+        col.st["bf"]["comments:critic3"] = True
+        start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+        comment_at = (start + timedelta(minutes=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        later = (start + timedelta(hours=23)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        col.st["cur"]["comments"] = later
+        col.st["etags"]["comments"] = "W/old"
+        cm = {"id": 6318087435, "issue_url": "https://api.github.com/repos/0xRayAI/xray/issues/508",
+              "html_url": "https://github.com/0xRayAI/xray/pull/508#issuecomment-6318087435",
+              "user": {"login": "cursor[bot]"}, "body": "@arch10x Arch1, please review",
+              "created_at": comment_at, "updated_at": comment_at}
+
+        class C:
+            def __init__(self):
+                self.etag = "missing"
+            def rest(self, path, params=None, etag=None, essential=True):
+                self.etag = etag
+                return 200, [cm], "W/new", None
+
+        client = C()
+        col.poll_comments(client)
+        eid = "0xRayAI/xray#508:comment:6318087435"
+        self.assertIsNone(client.etag)
+        self.assertTrue(col.st["bf"].get("comments:cursorbot"))
+        self.assertEqual(col.ev[eid]["actor"], "cursor[bot]")
+        self.assertEqual(col.ev[eid]["from"], "GitHub")
+        self.assertEqual(col.ev[eid]["mentions"], ["arch10x"])
+        col.st["etags"]["comments"] = "W/keep"
+        col.st["cur"]["comments"] = later
+        cm2 = dict(cm, id=2)
+
+        class C2:
+            def __init__(self):
+                self.etag = "missing"
+            def rest(self, path, params=None, etag=None, essential=True):
+                self.etag = etag
+                return 200, [cm2], "W/keep", None
+
+        again = C2()
+        col.poll_comments(again)
+        self.assertEqual(again.etag, "W/keep")
+        self.assertNotIn("0xRayAI/xray#508:comment:2", col.ev)
+
+
 
 class SeatNameNotLogin(unittest.TestCase):
     """B1 (#326): a GitHub login that equals a seat name is a stranger; only a no-User git name maps to the seat."""
@@ -633,6 +828,57 @@ def _collector(repo="acme/app"):
 
 class CardLifecycle(unittest.TestCase):
     """Each case fails if its collector fix is reverted."""
+
+    def test_an_unmapped_push_is_kept(self):
+        self.enterContext(mock.patch.object(uc, "SHOW_UNMAPPED", False))
+        self.assertEqual(uc.node("someone"), "Others")
+        col = _collector("example-org/app")
+        col.pr_commit_event(416, "d9bcc0ae" + "ab" * 16, "2026-11-10T18:06:00Z", "fix the head", "someone")
+        stored = col.ev["example-org/app#416:commit:" + "d9bcc0ae" + "ab" * 16]
+        self.assertEqual(stored["kind"], "pr_commit")
+        self.assertEqual(stored["from"], "GitHub")
+        self.assertNotEqual(stored["from"], "Others")
+
+    def test_review_keeps_the_commit_it_was_posted_on(self):
+        col = _collector("0xRayAI/xray")
+        col.st.setdefault("prs", {})["556"] = {"head": "0e96754" + "b" * 33, "author": "forge0x1[bot]"}
+        posted = "302086e" + "a" * 33
+        url = "https://github.com/0xRayAI/xray/pull/556#pullrequestreview-1"
+        with mock.patch.dict(uc.NODE_LC, {"critic0x[bot]": "critic", "forge0x1[bot]": "forge"}):
+            col.review_event(556, 1, "APPROVED", "2026-10-21T21:00:00Z", "critic0x[bot]", url, posted)
+            ev = col.ev["0xRayAI/xray#556:review:1"]
+            self.assertEqual(ev["sha"], posted)
+            self.assertNotEqual(ev["sha"], col.st["prs"]["556"]["head"])
+            col.st["prs"]["556"]["head"] = "0e96754" + "c" * 33
+            col.review_event(556, 1, "APPROVED", "2026-10-21T21:00:00Z", "critic0x[bot]", url, posted)
+            self.assertEqual(col.ev["0xRayAI/xray#556:review:1"]["sha"], posted)
+            col.review_event(556, 1, "APPROVED", "2026-10-21T21:00:00Z", "critic0x[bot]", url)
+            self.assertEqual(col.ev["0xRayAI/xray#556:review:1"]["sha"], posted)
+            fresh = _collector("0xRayAI/xray")
+            fresh.st.setdefault("prs", {})["556"] = {"head": "0e96754" + "d" * 33, "author": "forge0x1[bot]"}
+            fresh.review_event(556, 2, "APPROVED", "2026-10-21T21:00:00Z", "critic0x[bot]", url)
+            self.assertNotIn("sha", fresh.ev["0xRayAI/xray#556:review:2"])
+
+    def test_enrich_reads_the_review_commit_id(self):
+        col = _collector("0xRayAI/xray")
+        col.st.setdefault("prs", {})["556"] = {"head": "0e96754" + "d" * 33, "author": "forge0x1[bot]"}
+        col.st["enrich"] = {"556": True}
+        posted = "302086e" + "e" * 33
+        review = {"id": 7, "state": "APPROVED", "submitted_at": "2026-10-21T21:00:00Z",
+                  "user": {"login": "critic0x[bot]"},
+                  "html_url": "https://github.com/0xRayAI/xray/pull/556#pullrequestreview-7",
+                  "commit_id": posted}
+
+        class C:
+            def rest(self, path, params=None):
+                if str(path).endswith("/reviews"):
+                    return 200, [review], None, None
+                return 200, [], None, None
+
+        with mock.patch.dict(uc.NODE_LC, {"critic0x[bot]": "critic", "forge0x1[bot]": "forge"}):
+            col.enrich_prs(C(), limit=5)
+        self.assertEqual(col.ev["0xRayAI/xray#556:review:7"]["sha"], posted)
+        self.assertNotEqual(col.ev["0xRayAI/xray#556:review:7"]["sha"], col.st["prs"]["556"]["head"])
 
     def test_critic_logins_come_from_the_critic_seat(self):
         self.assertIn("critic0x[bot]", uc.CRITIC_LOGINS)
@@ -1152,3 +1398,151 @@ class CardLifecycle(unittest.TestCase):
             col.poll_comments(C())
         ev = next(e for e in col.ev.values() if e.get("kind") == "pr_comment")
         self.assertEqual(ev.get("start_after"), "2026-10-18T08:00-05:00")
+
+
+class CardRewalk(unittest.TestCase):
+    def test_old_issue_and_pull_are_cards(self):
+        from zoneinfo import ZoneInfo
+        ff = type("FF", (), {"CT": ZoneInfo("America/Chicago")})
+        old_issue = {"number": 561, "title": "old issue", "state": "closed", "created_at": "2026-09-01T00:00:00Z",
+                     "updated_at": "2026-09-02T00:00:00Z", "html_url": "https://github.com/acme/app/issues/561",
+                     "user": {"login": "forge0x1[bot]"}, "body": "", "labels": [], "closed_at": "2026-09-03T00:00:00Z"}
+        old_pull = {"number": 562, "title": "old pull", "state": "closed", "created_at": "2026-09-01T00:00:00Z",
+                    "updated_at": "2026-09-02T00:00:00Z", "html_url": "https://github.com/acme/app/pull/562",
+                    "user": {"login": "forge0x1[bot]"}, "body": "", "labels": [], "draft": False,
+                    "head": {"sha": "a" * 40, "ref": "old"}, "base": {"ref": "main"}, "merged_at": None, "closed_at": "2026-09-03T00:00:00Z"}
+
+        class Rows:
+            token = "t"
+            def __init__(self, rows):
+                self.rows = rows
+            def rest(self, path, params=None, etag=None, essential=True):
+                return 200, self.rows, "e1", None
+
+        with tempfile.TemporaryDirectory() as d:
+            col = uc.RepoCollector("acme/app", Path(d), ff, lambda *a: None)
+            col.st["cur"]["issues"] = "2026-10-20T00:00:00Z"
+            col.st["cur"]["pulls"] = "2026-10-20T00:00:00Z"
+            with mock.patch.dict(uc.NODE_LC, {"forge0x1[bot]": "forge"}):
+                col.poll_issues(Rows([old_issue]))
+                col.poll_pulls(Rows([old_pull]))
+            self.assertIn("acme/app!561:open", col.ev)
+            self.assertIn("acme/app#562:open", col.ev)
+            self.assertEqual(col.ev["acme/app!561:open"]["kind"], "issue_open")
+            self.assertEqual(col.ev["acme/app#562:open"]["kind"], "pr_open")
+            self.assertTrue(col.st["bf"].get("cards:issues"))
+            self.assertTrue(col.st["bf"].get("cards:pulls"))
+            self.assertEqual(len([e for e in col.ev if e.endswith(":open")]), 2)
+
+
+class OpenCards(unittest.TestCase):
+    """An author outside the fleet is still a card. The backfill runs once."""
+
+    def _client(self, rows, one=None):
+        class C:
+            token = "t"
+            def __init__(self):
+                self.gets = []
+            def rest(self, path, params=None, etag=None, essential=True):
+                self.gets.append(str(path))
+                if str(path).endswith("/issues/162"):
+                    return 200, one, None, None
+                return 200, rows, None, None
+        return C()
+
+    def test_outside_author_keeps_the_open_card(self):
+        col = _collector("acme/app")
+        issue = {"number": 162, "title": "outside", "state": "open", "created_at": "2026-09-30T00:00:00Z",
+                 "updated_at": "2026-09-30T00:00:00Z", "html_url": "https://github.com/acme/app/issues/162",
+                 "user": {"login": "USMailAI"}, "body": "", "labels": []}
+
+        class Rows:
+            token = "t"
+            def rest(self, path, params=None, etag=None, essential=True):
+                return 200, [issue], "e1", None
+
+        with mock.patch.dict(uc.NODE_LC, {"forge0x1[bot]": "forge"}):
+            col.poll_issues(Rows())
+        ev = col.ev["acme/app!162:open"]
+        self.assertEqual(ev["kind"], "issue_open")
+        self.assertEqual(ev["from"], "GitHub")
+        self.assertEqual(ev["actor"], "USMailAI")
+        self.assertEqual(ev["pr_state"], "open")
+        self.assertNotEqual(ev["from"], "Others")
+
+    def test_backfill_fetches_only_a_missing_number_and_once(self):
+        col = _collector("acme/app")
+        col.ev["acme/app!7:open"] = {"id": "acme/app!7:open", "kind": "issue_open", "from": "forge"}
+        one = {"number": 162, "title": "missing", "state": "open", "created_at": "2026-09-30T00:00:00Z",
+               "html_url": "https://github.com/acme/app/issues/162", "user": {"login": "USMailAI"},
+               "body": "", "labels": []}
+        client = self._client([{"number": 7}, {"number": 162}], one)
+        with mock.patch.dict(uc.NODE_LC, {"forge0x1[bot]": "forge"}):
+            col.backfill_open_cards(client)
+        self.assertEqual(col.ev["acme/app!162:open"]["from"], "GitHub")
+        self.assertEqual(col.ev["acme/app!162:open"]["pr_state"], "open")
+        self.assertTrue(any(path.endswith("/issues/162") for path in client.gets))
+        self.assertFalse(any(path.endswith("/issues/7") for path in client.gets))
+        self.assertFalse(col.st["bf"].get("cards:missing"))
+        before = len(client.gets)
+        col.backfill_open_cards(client)
+        again = client.gets[before:]
+        self.assertTrue(again)
+        self.assertFalse(any(path.endswith("/issues/162") for path in again))
+        self.assertFalse(any(path.endswith("/issues/7") for path in again))
+
+    def test_rate_low_does_not_set_the_missing_flag(self):
+        col = _collector("acme/app")
+
+        class C:
+            token = "t"
+            def rest(self, path, params=None, etag=None, essential=True):
+                if str(path).endswith("/issues/9"):
+                    raise uc.RateLow("low")
+                return 200, [{"number": 9}], None, None
+
+        col.backfill_open_cards(C())
+        self.assertFalse(col.st["bf"].get("cards:missing"))
+        self.assertNotIn("acme/app!9:open", col.ev)
+
+    def test_backfill_fetches_a_number_that_opens_later(self):
+        col = _collector("acme/app")
+        col.st["bf"]["cards:missing"] = True
+        one = {"number": 200, "title": "later", "state": "open", "created_at": "2026-10-30T00:00:00Z",
+               "html_url": "https://github.com/acme/app/issues/200", "user": {"login": "forge0x1[bot]"},
+               "body": "", "labels": []}
+
+        class C:
+            token = "t"
+            def __init__(self):
+                self.gets = []
+            def rest(self, path, params=None, etag=None, essential=True):
+                self.gets.append(str(path))
+                if str(path).endswith("/issues/200"):
+                    return 200, one, None, None
+                return 200, [{"number": 200}], None, None
+
+        with mock.patch.dict(uc.NODE_LC, {"forge0x1[bot]": "forge"}):
+            col.backfill_open_cards(C())
+        self.assertIn("acme/app!200:open", col.ev)
+        self.assertFalse(col.st["bf"].get("cards:missing"))
+
+    def test_packet_comment_stores_fields_not_the_body(self):
+        col = _collector()
+        body = "secret prose\n## Packet\n- goal: seat it\n- next owner: Arch1\n- raci: R=Arch1 A=Blaze\n"
+        cm = {"id": 11, "created_at": "2026-10-30T12:00:00Z", "updated_at": "2026-10-30T12:00:00Z",
+              "html_url": "https://github.com/acme/app/issues/9#issuecomment-11",
+              "issue_url": "https://api.github.com/repos/acme/app/issues/9",
+              "user": {"login": "forge0x1[bot]"}, "body": body}
+
+        class C:
+            def rest(self, path, params=None, etag=None, essential=True):
+                return 200, [cm], "etag", None
+
+        col.st["bf"]["comments:critic3"] = True
+        col.st.setdefault("issues", {})["9"] = "forge0x1[bot]"
+        with mock.patch.dict(uc.NODE_LC, {"forge0x1[bot]": "forge"}):
+            col.poll_comments(C())
+        ev = next(e for e in col.ev.values() if e.get("kind") == "issue_comment")
+        self.assertEqual(ev.get("packet"), {"goal": "seat it", "next owner": "Arch1", "raci": "R=Arch1 A=Blaze"})
+        self.assertNotIn("secret", json.dumps(ev))

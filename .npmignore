@@ -16,3 +16,4 @@ backups/
 tmp/
 .opencode/xray/
 .xray/
+.xray/state/repertoire/feedback/

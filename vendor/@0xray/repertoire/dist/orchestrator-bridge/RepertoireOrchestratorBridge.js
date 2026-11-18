@@ -16,8 +16,8 @@ export class RepertoireOrchestratorBridge {
     buildRoutingContext(operation) {
         return this.injector.buildRoutingContext(operation);
     }
-    getConfidenceForTask(task) {
-        return getConfidenceForTask(task, this.signalsManager);
+    getConfidenceForTask(task, now) {
+        return getConfidenceForTask(task, this.signalsManager, now);
     }
     injectSignalsIntoTasks(tasks) {
         return this.injector.matchSignalsForTasks(tasks);

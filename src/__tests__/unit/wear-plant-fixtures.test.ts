@@ -70,8 +70,8 @@ describe('wear fixtures for mill, sound, and git', () => {
       expect(wore[0].stderr).toContain('hooks skipped because this folder is not a git checkout');
       expect(wore[1].stderr).toContain('hooks skipped because this folder is not a git checkout');
       expect(wore[2].stderr).toBe('');
-      expect(existsSync(path.join(mill, '.cursor', 'hooks.json'))).toBe(false);
-      expect(existsSync(path.join(sound, '.cursor', 'hooks.json'))).toBe(false);
+      expect(existsSync(path.join(mill, '.cursor', 'hooks.json'))).toBe(true);
+      expect(existsSync(path.join(sound, '.cursor', 'hooks.json'))).toBe(true);
       expect(existsSync(path.join(git, '.cursor', 'hooks.json'))).toBe(true);
 
       const soundSkills = skillNames(sound, '.grok/plugins/0xray/skills');
@@ -171,6 +171,6 @@ describe('wear fixtures for mill, sound, and git', () => {
     expect(text).toContain('Grok Bot wakes never run `.cursor` hooks, so this step is the boot hook.');
     expect(text).toContain('if it\'s still stale, append one line to NOTES.md and go on.');
     expect(text).not.toContain('#395');
-    expect(text).toContain('An empty read with nothing owed is a quiet wake: skip steps 3 to 6 and go straight to step 7.');
+    expect(text).toContain('Steps 1, 5, 6 and 7 run as on every wake');
   });
 });

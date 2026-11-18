@@ -49,6 +49,11 @@ describe('vendor source maps stay out of the npm pack', () => {
     expect(listed).toContain('vendor/@0xray/repertoire/dist/index.d.ts');
     expect(listed).not.toContain('vendor/@0xray/repertoire/dist/index.js.map');
     expect(listed).not.toContain('vendor/@0xray/repertoire/dist/index.d.ts.map');
+    expect(listed).toContain('grok-bot/lib/next-wave.mjs');
     expect(listed).toContain('scripts/mjs/run-grok-hook.mjs');
+    expect(listed).toContain('house/live/tools/inbox-watch.sh');
+    expect(listed).toContain('house/live/tools/inbox-wake-stamp.sh');
+    expect(listed).toContain('house/live/tools/live-inbox');
+    expect(listed).not.toContain('house/live/app/server.mjs');
   }, 120000);
 });

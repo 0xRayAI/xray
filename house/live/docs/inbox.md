@@ -1,9 +1,11 @@
 # Inbox
 
+Upkeep findings are one card or one inbox line. The watcher check is [Inbox watcher](../../../grok-bot/OP-PROC.md#inbox-watcher). The scripts do not ack and do not print keys.
+
 ## Who fixes stopped work
 
 - **Bifrost owns the board.** `seats.coord` stays blinky. blinky plans the next wave. Bifrost routes the inbox and keeps wave timing.
-- **Nudge.** One path: `evalNudges` in `app/server.mjs`. A live card with no beat sends L1 to the next owner, or else the card owner. L3 repeats to that seat. CoS is not woken to reassign. An unacked inbox line steps L1, L2, and L3 on that same seat. A missed handoff is a separate ladder: the card is flagged `handoff missing`, and the owing seat is nudged L1, then L2, then L3. A room post does not clear it.
+- **Nudge.** One path: `evalNudges` in `app/server.mjs`. A live card with no beat sends L1 to the next owner, or else the card owner. L3 repeats to that seat. CoS is not woken to reassign. An unacked inbox line steps L1, L2, and L3 on that same seat. A line the seat already acked, or whose handled key is already in the [cursor folder](../../../grok-bot/OP-PROC.md#cursor-folder), gets no L1, L2, or L3. A missed handoff is a separate ladder: the card is flagged `handoff missing`, and the owing seat is nudged L1, then L2, then L3. A room post does not clear it.
 - **Tripwire (the whole board stops moving).** On a stalled board, the timed run wakes every seat with open work, each with a deadline. On an empty board, it wakes blinky (`seats.coord`) to pull the next work, unless weekly burn is at or above 75% (`BIFROST_WEEKLY_BURN` of `0.75` or `75`): that empty-board wake stays quiet and no seat is woken. Below 75% the empty board still wakes blinky. `POST /clock` stays on that seat. Once per window.
 
 `POST /inbox` and `POST /inbox/builder` take `{lines, replace?}`. Each line is checked before anything is cleared. `replace: true` on the builder route clears that seat only after a line validates. A batch that stores nothing returns 400 and names the rejected refs (`id`, or `#` plus the index when the line has no id). A bad line in a mixed batch is skipped; the good lines are stored.
@@ -31,7 +33,7 @@ A read never acks. A non-empty read is the work: handle the line, post the recei
 
 A card date is `live-inbox <seat> --card <owner/repo#n> --start-after <ISO>`. The ISO time carries a numeric offset (`-05:00` or `-06:00` for Chicago). The same date is a GitHub comment whose first line is `Start after: <ISO>`, and that comment counts only from the card owner or a fleet seat. A stranger's comment is ignored. A time more than 30 days out is ignored, on the comment and on `POST /cards/start-after`. The command wins while it is stored. Until that time the card stays parked (no nudge, no tripwire, no empty-board pull). At that time the server wakes the owning seat through the normal inbox wake. The date is on disk, so a restart still honors it.
 
-`tools/live-inbox <seat>` prints open lines and advances the local cursor to the newest line seen. It does not ack. `--peek` means the same as a plain read. `--ack <id>` is the receipt for one handled line. `--ack stale` lists lines with a close or merge event, or a closed or done card, and does not ack until `--apply`, which posts each listed id. A missing card stays, and so does an old handoff whose card is still live. `--upto <id>` acks the stored prefix through that id, including live lines. `--ack all` acks every open line. `--pop <id|all>` is the same receipt as `--ack` for one id or all. A handoff is `live-inbox <seat> --handoff <to> --pr <owner/repo#n> --kind <ready|critic_fail|live_pass|merge|ci_fail> --sha <head>`. It posts one inbox packet and prints the 1:1 line. `--sha` is required and is a head of 7 to 64 hex digits. A plain `GET /inbox/<seat>` returns every unacked line, including a line whose card is closed or merged. An ack hides it. `?all=1` is the history. `LIVE_URL`, `SEAT_KEYS_DIR` and `LIVE_CURSORS` are required: `live-inbox` never guesses, and a missing one exits 2 and names it. Run the export line in `grok-bot/templates/house/fleet/WAKE-ROUTINE.md` first; it puts the installed copy (`~/.burst/bin`, or `LIVE_INBOX_BIN`) on `PATH` and sets the defaults, which are burst-live's; another board sets its own first. Set those only to override.
+`tools/live-inbox <seat>` prints open lines. A read does not write the cursor and does not ack. `--peek` means the same as a plain read. `--ack <id>` is the receipt for one handled line. `--ack stale` lists lines with a close or merge event on GitHub, and does not ack until `--apply`, which posts each listed id. A done or closed board card while the pull or issue is still open is not stale. A missing card stays, and so does an old handoff whose card is still live. `--upto <id>` acks the stored prefix through that id, including live lines. `--ack all` acks every open line. `--pop <id|all>` is the same receipt as `--ack` for one id or all. A handoff is `live-inbox <seat> --handoff <to> --pr <owner/repo#n> --kind <ready|critic_fail|live_pass|merge|ci_fail> --sha <head>`. It posts one inbox packet and prints the 1:1 line. `--sha` is required and is a head of 7 to 64 hex digits. A plain `GET /inbox/<seat>` returns every unacked line, including a line whose card is closed or merged. An ack hides it. `?all=1` is the history. `LIVE_URL` and `SEAT_KEYS_DIR` are required. `LIVE_CURSORS` is not required. A missing `LIVE_URL` or `SEAT_KEYS_DIR` exits 2 and names it. The cursor folder rule is [Cursor folder](../../../grok-bot/OP-PROC.md#cursor-folder). Run `$XRAY_MAIN/house/live/tools/live-inbox`. The export line in `grok-bot/templates/house/fleet/WAKE-ROUTINE.md` sets `LIVE_URL` and `SEAT_KEYS_DIR`. Another board sets its own first.
 
 ## Seat wake URLs and webhooks
 
@@ -45,7 +47,7 @@ Grok Bot seats **do** use webhooks. This reverses the earlier reading of #265 (l
 
 - Each seat creates a webhook-triggered inbox wake routine from the pack template [`grok-bot/templates/house/fleet/WAKE-ROUTINE.md`](../../../grok-bot/templates/house/fleet/WAKE-ROUTINE.md). The routine reads the seat's inbox, handles open lines, and acks them (see [Ack route](#ack-route)).
 - Standard wake, every seat: [`WAKE-ROUTINE.md`](../../../grok-bot/templates/house/fleet/WAKE-ROUTINE.md) — on an owner message, `--prompt` is checked before an empty inbox stops the turn, then turn start. Before any ack the wake reads the station, then `live-inbox <seat> --repeat --pr <owner/repo#n> --sha <head> --kind <kind>`. That cheap read checks the per-seat cursor key `repo#number|sha|kind`. A new head is not a repeat. `--remember` writes the key after the line is handled. A still-waiting line is acked and does not stop a newer line. A still-waiting stop runs `live-inbox <seat> --release`, and the shell trap runs that release on any exit, not only turn end. An early return runs turn end. A second run posts no turn start and no turn end. Only that claim's owner token may release it or post its turn end. A webhook wake never launches or resumes a cloud agent. It quick-checks the inbox and exits on a duplicate or a still-waiting delivery, records the event, and hands off to the owner's chat (forge for builds, critic for reviews) with a seat message pointing at the card. Only the owner's persistent chat launches or resumes a cloud agent. The card stores `critic_bc` for that PR. On a new head the critic chat resumes `critic_bc` and launches a new agent only when the card has no `critic_bc` or that resume is refused.
-- Seat activity does not use the box pusher. `house/live/feed/push_to_host.sh` and its watchdog are retired for seat activity: `live-inbox --prompt` and `live-inbox --turn` post to `/activity` with the seat's own key. The board does not need the box to be live, and a silent box is not an error.
+- Seat activity does not use the box pusher. `house/live/feed/push_to_host.sh` and its watchdog are retired for seat activity: `live-inbox --prompt`, `live-inbox --turn`, and `live-inbox --cloud` post to `/activity` with the seat's own key. The board does not need the box to be live, and a silent box is not an error.
 - burst-live's `SEAT_WEBHOOKS` points at those routines, one entry per seat, and each key lives in its own variable: `WAKE_KEY_<SEAT>` (for example `WAKE_KEY_MILL`), or the variable named by `key_env`.
 - When a bot creates its wake routine, it sends the owner the webhook URL, key and header links in the owner's 1:1 chat, so the owner can copy and paste them into the server config. Bots can't read those values themselves. The URL, key and header never go in a room (group chat), a repo, a PR or a log.
 - Blinky's (CoS) scheduled sweep is only a backstop: it catches wakes that were dropped and packets the server writes on its own.
@@ -59,9 +61,9 @@ Until then blinky's fallback line and sweep cover them (arch1 has no webhook by 
 
 D12 (seats never woken by an inbox packet) is closed under this path.
 
-**Server routing.** After each collector pass the server runs `feed/inbox_pass.py` (the box pusher's rules, `feed/routing/inbox-roles.json`) on the collector's events, stores the new lines in the seat inboxes and fires the seat's webhook. Seen and sent ids live on the volume (`$MESH_DATA_DIR/route/`), so an event is routed once, also across restarts; the first pass on an empty volume seeds silently. `SERVER_ROUTING=off` turns it off. The box pusher is no longer needed for collector events; if it runs too, its lines carry the same ids and are not stored twice.
+**Server routing.** After each collector pass the server runs `feed/inbox_pass.py` (the box pusher's rules, `feed/routing/inbox-roles.json`) on the collector's events, stores the new lines in the seat inboxes and fires the seat's webhook. Seen and sent ids live on the volume (`$MESH_DATA_DIR/route/`), so an event is routed once, also across restarts. The first pass on an empty volume marks history seen and delivers only events inside the seed grace (10 minutes before that pass). Older history is not delivered. `SERVER_ROUTING=off` turns it off. The box pusher is no longer needed for collector events; if it runs too, its lines carry the same ids and are not stored twice.
 
-**Route table (our 8 seats).** Every route in `feed/routing/inbox-roles.json` lands on one of our 8 seats (`feed/fleet-roster.json`: blinky, critic, forge, arch1, herald, magnet, nibbler, sound); `tests/test_routing_ours.py` fails on any other name. The mill seat is gone. `@mill`, an implement ask, a rebase ask, a dev ask, and `mill wave` land on forge.
+**Route table (our seats).** Every route in `feed/routing/inbox-roles.json` lands on one of our seats (`feed/fleet-roster.json`: blinky, critic, forge, mill, near, arch1, herald, magnet, nibbler, sound); `tests/test_routing_ours.py` fails on any other name. `@mill` lands on mill. An implement ask, a rebase ask, a dev ask, and `mill wave` land on forge.
 
 | Event | Seat(s) | Rule |
 |---|---|---|
@@ -71,11 +73,12 @@ D12 (seats never woken by an inbox packet) is closed under this path.
 | Review requested; Light / Strict / re-Light ask | critic | `extra_seats.critic` |
 | Deploy / deploy fail / Railway hold, CI failure (`ci_fail`), lab or Railway asks | forge | `seats.operator.seat` + `extra_seats.forge.kinds` |
 | Merge to develop, main or bifrost/main; PR ready to merge | forge | `seats.tester.seat`, `extra_seats.forge`, `seats.builder.seat` |
-| Implement / rebase / dev ask, `mill wave`, `@mill` | forge | `extra_seats.forge.needles` |
+| Implement / rebase / dev ask, `mill wave` | forge | `extra_seats.forge.needles` |
+| `@mill` | mill | `extra_seats.mill.needles` |
 | needs-decision / lead label or ask | blinky | `seats.coord.seat` |
-| `@seat` mention (`@forge`, `@critic`, `@blinky`, `@herald`, `@nibbler`, `@sound`, `@magnet`) | that seat | `extra_seats.<seat>.needles` |
+| `@seat` mention (`@forge`, `@critic`, `@blinky`, `@herald`, `@nibbler`, `@sound`, `@magnet`, `@near`) | that seat | `extra_seats.<seat>.needles` |
 | `@arch10x` (the only handle; `@arch1` is a different GitHub user and never routes): Arch1 is outside the fleet, reached only by this explicit mention; bare deep-review / Gate B words never route to him and nothing is copied to blinky | arch1 | `extra_seats.arch1.needles` |
-| Anything actionable routed to a seat outside our 8, or to no seat | blinky | `fallback` |
+| Anything actionable routed to a seat outside our 9, or to no seat | blinky | `fallback` |
 
 An order or yes in a comment must @-mention the next seat, because the inbox reads only a comment's label and @handles, never its body; the words "may merge" are not a merge ask.
 
@@ -83,12 +86,13 @@ An order or yes in a comment must @-mention the next seat, because the inbox rea
 
 **Routing guardrails (#275).** Each has a test in `tests/test_fleet_seats.py` (`Guardrails275`):
 
-1. **Coordinator fallback.** If an actionable event has no owner seat, only seats outside our 8 (unknown, sample, unkeyed; those lines are dropped), or only `arch1` (no webhook), blinky also gets a line. The seated turn that reads it drains it that turn. The seat and the list come from `fallback` in `inbox-roles.json`. Blinky does not assign the dev work.
+1. **Coordinator fallback.** If an actionable event has no owner seat, only seats outside our 9 (unknown, sample, unkeyed; those lines are dropped), or only `arch1` (no webhook), blinky also gets a line. The seated turn that reads it drains it that turn. The seat and the list come from `fallback` in `inbox-roles.json`. Blinky does not assign the dev work.
 2. **Actionable kinds only.** The fallback covers new PRs and issues, reviews, review requests, comments, @-mentions, nudges and packets. An unowned push or CI status never creates a line. The existing `pr_heads` route still sends critic and blinky one line per new PR head, because that line is critic's re-Light ask.
 3. **No self-wakes.** A seat's own action never lands in its own inbox. The actor is matched by board alias, by bot login in `feed/fleet-nodes.json`, or by `SEAT_BOTS` (env, `{"seat": "login"}` or `{"seat": ["login", ...]}`). The exception is the merge and close info line: that line is still stored for the author's seat when that seat did the merge or the close.
 4. **No double wakes.** `SEAT_WATCHERS` (env, `{"seat": {"repos": ["owner/repo" | "*"], "kinds": ["pr_comment" | "*"]}}`) lists the repos and kinds a seat already watches itself. The server skips those for that seat.
 5. **Idempotent.** Each event id is routed once, also across restarts (see above).
 6. **Pulses never route.** Prompt pulses (owner to seat, seat to seat) and turn, task (`subagent`), watcher and cloud-agent lines never become inbox lines or wakes. They show on the board only. The watcher log is not a wake either, so a seat cannot wait for one.
+7. **Seat comments never wake a seat (xray#976).** A routed comment line (`pr_comment`, `issue_comment`, `review_comment`, `comment`) carries `from`, the seat that wrote it, only when a seat bot wrote it. The wake gate stores such a line and does not wake anyone for it, unless it carries a real change: a new head `sha` the seat was not woken for, or a `kind` of `ready`, `critic_fail`, `live_pass`, `merge`, `ci_fail`, `ci_pass`, `review`, or `verdict`. The repeat key of a seat comment is repo#n plus the head sha, or `nosha`, never the comment id. A person's comment (no `from`) wakes as before. A seat listed under `outside` in `fleet-roster.json` (arch1; add more with `LIVE_OUTSIDE_SEATS`) is outside the fleet: a seat comment to it still wakes it, a comment it wrote counts as a person's, and it never counts toward or waits on the breaker. The filter drops only a comment whose author and woken seat are both fleet seats. More than 3 fleet-seat comments on one repo#n inside a rolling hour trip a breaker: wakes for the fleet seats on that repo#n are paused for an hour (hotfix, `needs_human`, and the clock run still go; a person's comment clears the pause) and one `needs_human` line to the coordinator flags Blaze. Skips show in `/wake-stats` as `seat_comment`, `repeat_sha`, or `breaker`. `live-inbox` also keeps a nudge line and a seat comment claimed, by that exact line id, for `LIVE_INBOX_TOMB_S` (default 3600) after the wake that read it ends, so a second wake does not answer the same one again. Another comment on the same issue is a different id and still reads. Wake suppression comes from the gate's repo#n + sha key, not from the inbox tool.
 
 ### Configure
 
@@ -111,6 +115,10 @@ Invalid JSON logs `wake: SEAT_WEBHOOKS is not json` and disables all wakes. A ba
 ### When a wake fires
 
 Every inbox line newly stored for a configured seat queues a wake: lines from `POST /inbox` / `POST /inbox/builder` (duplicates by `id` are not new), the server-side mirror of Builder lines into `builder-cloud`, and nudges copied to `builder-cloud`. Acks and reads never fire one.
+
+### Chat doorbell
+
+A critic `ready` or `ci_pass` head rings the critic chat as well as the inbox webhook. `SEAT_CHAT_DOORBELL` is JSON of the same shape as `SEAT_WEBHOOKS`, keyed by seat. The POST is a seat message (`kind: seat_message`) that names the card, the head, and `resume critic_bc`. That POST is the wake of the persistent chat. It is not a cloud follow-up: a URL whose path is an agent resume is refused and not sent. NOTES and board activity do not ring the chat. A missing critic entry logs `doorbell: critic no_chat` and the chat stays idle. The inbox webhook still never launches or resumes a cloud.
 
 ### Request
 
@@ -139,11 +147,11 @@ Any 2xx is success. The response body is ignored.
 
 `GET /healthz` (no auth) has `wakes`: `{seat: "ok" | "fail" | "no_key" | "idle"}` for each configured seat. `idle` means a key is set but nothing has been sent since the server started. It shows no URL or key. To verify, POST one ack-only packet per seat, check that each seat shows `ok`, and check that each ack comes back.
 
-`/healthz` also has liveness ages in seconds, `null` if never: `box_age` (last box status push), `collector_age` (collector feed file mtime), `card_age` (last board card change), and `data_age` (newest GitHub event `t_ct`, not the collector write). `board` is `building` (no board yet), `empty` (a board with zero cards), or `live`. `origin` is the pinned public origin, or null. `ok` is false when `feed_quiet` is true (the collector feed file is older than `COLLECTOR_STALE_S`, default 180, and the collector is watched) or when `cards_behind` is true (a card-worthy event, never CI or `pr_commit`, is newer than the board or the card clock by more than `CARD_BEHIND_S`, default 180). `data_age` and `box_age` are reported (`box_informational: true`) and do not change `ok`. HTTP is 503 when `ok` is false, otherwise 200. A quiet night with old GitHub events stays up. `arch1_launch.enabled` is false unless `ARCH1_LAUNCH_ENABLED=1`.
+`/healthz` also has liveness ages in seconds, `null` if never: `box_age` (last box status push), `collector_age` (the event file or the quiet beat, whichever the reader accepted), `card_age` (last board card change), and `data_age` (newest GitHub event `t_ct`, not the collector write). `board` is `building` (no board yet), `empty` (a board with zero cards), or `live`. `origin` is the pinned public origin, or null. `ok` is false when `feed_quiet` is true (that accepted clock is older than `COLLECTOR_STALE_S`, default 180, and the collector is watched) or when `cards_behind` is true (a card-worthy event, never CI or `pr_commit`, is newer than the board or the card clock by more than `CARD_BEHIND_S`, default 180). A quiet pass writes `github-events.beat.json` and leaves `github-events.json` in place. The beat omits the board. A beat over 2 MiB still moves the clock and is not parsed. `data_age`, `card_age`, and `box_age` are reported (`box_informational: true`) and do not change `ok`. HTTP is 503 when `ok` is false, otherwise 200. A quiet night with old GitHub events stays up. `arch1_launch.enabled` is false unless `ARCH1_LAUNCH_ENABLED=1`. `live-inbox --pass` is refused. The board has no pass route.
 
 ### No webhook set (fallback)
 
-A seat not in `SEAT_WEBHOOKS` gets no POST. It learns of work from the one-line `SendToAgent`, from blinky's sweep, or by reading its inbox (`GET /inbox/<seat>`, then ack). The seated turn must drain what it just read: a non-empty read is the work, not a reason to wait.
+A seat not in `SEAT_WEBHOOKS` gets no POST. It learns of work from the one-line `SendToAgent`, from blinky's sweep, or by reading its inbox (`live-inbox` uses `GET /inbox/<seat>?queue=1`, then ack). That read is the queue head: ready handoffs, then cards whose packet names this seat as R, hotfix first, then P0 or P1 on that packet, then the other cards for that seat. Older comments, nudges, and station lines stay stored and `?backlog=1` lists them. The response names `head` and `backlog`. arch1_launch off disables the Arch1 cloud worker only. It does not stop inbox head work. arch1_launch off means this read is the doorbell. `sent:0` counts cloud launches, not this read. When the backlog is already open, a new arch1 comment is stored with `shed` and is not laddered unless its card packet names arch1 as R. Hotfix, then P0, then P1 on that packet are read first. A station nudge is not posted while any line is open. Close or merge still acks. A read does not pop. The seated turn works that head. A non-empty head is the work.
 
 ### Ack route
 
@@ -151,9 +159,9 @@ Reading never acks, but a non-empty read is the work. Seats read with `live-inbo
 
 ### Key folder on our box
 
-`LIVE_URL`, `SEAT_KEYS_DIR` and `LIVE_CURSORS` are required: `live-inbox` never guesses, and a missing one exits 2 and names it. Run the export line in `grok-bot/templates/house/fleet/WAKE-ROUTINE.md` first; it puts the installed copy (`~/.burst/bin`, or `LIVE_INBOX_BIN`) on `PATH` and sets the defaults, which are burst-live's; another board sets its own first. On our box the seats keep keys and read positions under `/home/box/burst-run` and set `SEAT_KEYS_DIR` and `LIVE_CURSORS` there before the export line. Never put a key's value in a routine, room or repo.
+`LIVE_URL` and `SEAT_KEYS_DIR` are required. A missing or empty one exits 2 and names it. `LIVE_CURSORS` is not required. The cursor folder rule is [Cursor folder](../../../grok-bot/OP-PROC.md#cursor-folder). Run the export line in `grok-bot/templates/house/fleet/WAKE-ROUTINE.md` first. Another board may export its own `LIVE_URL` and `SEAT_KEYS_DIR` on the line before the block. Never put a key's value in a routine, room or repo.
 
-**Tool path.** Use the installed copy (`~/.burst/bin/live-inbox`, or `$LIVE_INBOX_BIN/live-inbox`; on the forge box `/home/box/burst-run/bin/live-inbox`), refreshed from main, never a copy under `/tmp` (it does not survive a restart). The WAKE-ROUTINE export line puts it on `PATH` and sets `SEAT_KEYS_DIR`, `LIVE_CURSORS` and `LIVE_URL`. A wake only counts once the routine reads and acks with no approval card.
+**Tool path.** Run `$XRAY_MAIN/house/live/tools/live-inbox` from the main checkout. Do not run a copied binary. A wake only counts once the routine reads and acks with no approval card.
 
 ### Reading the inbox after a wake
 
@@ -213,39 +221,41 @@ Receipt: `200` with `added: 1`, then `wake: <seat> ok` in the server log, then t
 - Pending wakes live in memory only; a restart drops them (the inbox lines persist).
 - Once the 3 attempts fail, the batch is not retried later. A newer line starts a fresh batch.
 
+## Station nudge
+
+Boot on every turn stays the rule. This poll is only the reminder after a summary. A memory note is not that re-read.
+
+`live-inbox <seat> --station` posts one line, `nudge:station:<seat>:<Chicago hour>`, with the sentence `Run station and re-read OP-PROC`. The line type is `nudge` and the kind is `station`. It is not a packet. `house/live/bin/station-nudge` posts that line for forge, critic, and blinky, and for arch1 when that id is in `inbox-roles.json`. It runs on weekdays from 7:30 to 18:00 America/Chicago. A failed post is logged without the key and retried on the next tick. The board tick posts that line on the half hour, Sunday through Friday (Saturday off), 7:30 through 17:30 America/Chicago. `house/live/bin/com.burst.station-nudge.plist` is a template and is not loaded. The served board returns 403 for this line until that build has the same gate.
+
 ## Arch1 / CLI seats (Grok CLI)
 
 Arch1 runs in Grok CLI on Blaze's Mac. Grok CLI has no webhook receiver, so `SEAT_WEBHOOKS` has no URL for arch1 and the seat **polls** its inbox instead. Arch1 is a known inbox seat on the server (`SEAT_IDS` in `app/server.mjs`, `feed/seat_keys.sh` defaults, `feed/routing/inbox-roles.json`). Arch1 is outside the fleet: only an explicit @arch10x (or @arch1) mention routes to him, and his lines are never copied to blinky.
 
-**Getting woken (host monitor, every ~60s).** The Mac has no public URL, so a webhook would need a tunnel; we use no tunnel and no webhook. Arch1 polls locally, and the Grok session hears a line only when the host's internal monitor is running the script. A launchd job is not that path.
+**Getting woken (host monitor, every ~60s).** The Mac has no public URL, so a webhook would need a tunnel; we use no tunnel and no webhook. Arch1 polls locally. Suit boot runs the watcher in the local TUI, and that TUI hears a line. Grok session start orders the CLI monitor tool to run that script. The hook does not start the script. A pid outside this CLI is named so the seat can stop it. A CLI monitor that is already up gets no order. A Grok hook of type `http` calls out. It is not a receiver.
 
-Arch1's watcher is `tools/inbox-watch.sh` (default seat `arch1`, every 60 seconds). It runs `live-inbox <seat>`. A failed poll prints `FAIL` once per distinct error. New inbox output prints `ACTION_REQUIRED` and the lines. The first time work appears it posts `live-inbox <seat> --turn start --tag wake`. When a later poll is empty it posts `live-inbox <seat> --turn end` once. It never acks and never prints the key. `live-inbox arch1` reads and never acks (`--peek` is the same), so repeated polls are harmless; ack only after the receipt (below). The script never starts the work. The Grok turn that sees the printed line does. Defaults, set only to override: `LIVE_URL` = `https://bifrost.0xray.dev`, `SEAT_KEYS_DIR` = `~/.burst/seat-keys`, `LIVE_CURSORS` = `~/.burst/cursors`.
+Arch1's watcher is `tools/inbox-watch.sh` (default seat `arch1`, every 60 seconds). It runs `live-inbox <seat>` from the main checkout. A failed poll prints `FAIL` once per distinct error, with `LIVE_URL` and the expected value `https://bifrost.0xray.dev`. A failed poll backs off up to 180 seconds and keeps polling. A successful poll writes `pid`, `started`, `last_ok`, and `live_url` to `~/.burst/inbox-watch.state` and the pid to `~/.burst/inbox-watch.pid`. Suit boot enables that monitor in the local TUI. `inbox-watch-ensure.sh` does not start a process. `inbox-watch-station.sh` writes the `Watcher:` line on the station page. A JSON line whose GitHub item is closed or merged is acked, and the watch prints `auto-ack` plus that line id. A held line (a hold label, or a card whose state is held) is listed once as `held: N` until that set changes. The hold label is `GITHUB_HOLD_LABEL`, default `on-hold`. A poll with an open line which is not held, and which is not already on the seat todo, prints `ACTION_REQUIRED`, then `unfinished:N` (N = the new open count), then `open N:` with a count per type and one short line per record, newest first. Each new id is appended to `~/.burst/inbox-todo/<seat>.md` and recorded in `<seat>.seen`. The watcher does not ack that id. The seat acks after the work, and the server then hides the line. A seen id is not printed again. A raw line with no id still reprints. A held line is not popped and is not written to the todo. It does not print the JSON and it never uses `--ack all`. A failed read is tried once more before `FAIL`. `LIVE_INBOX_TIMEOUT` defaults to 60 seconds. A cut display still shows handoffs, PR comments, and reviews. Every poll that prints work posts `live-inbox <seat> --turn start --tag wake` after the todo write. An empty poll does not end the turn. The seat posts `live-inbox <seat> --turn end` when the chat finishes that work. A failed gh lookup still delivers the line onto the todo and does not ack it. A failed ack of a closed item does not print `auto-ack`, and that line stays open for the next poll. It never prints the key. `live-inbox arch1` reads and never acks (`--peek` is the same). The watcher does not ack an open line. The script writes the todo and never starts the work. The Grok turn that sees the printed line does the work, then acks. Defaults, set only to override: `LIVE_URL` = `https://bifrost.0xray.dev`, `SEAT_KEYS_DIR` = `~/.burst/seat-keys`. `LIVE_CURSORS` is not required. The cursor folder rule is [Cursor folder](../../../grok-bot/OP-PROC.md#cursor-folder).
 
-Install from main:
+Run it from the main checkout. Set `XRAY_MAIN` to that checkout:
 
 ```
-curl -fsSL -o ~/.burst/bin/live-inbox https://raw.githubusercontent.com/0xRayAI/xray/main/house/live/tools/live-inbox
-curl -fsSL -o ~/.burst/bin/inbox-watch.sh https://raw.githubusercontent.com/0xRayAI/xray/main/house/live/tools/inbox-watch.sh
-chmod +x ~/.burst/bin/live-inbox ~/.burst/bin/inbox-watch.sh
+"$XRAY_MAIN/house/live/tools/inbox-watch.sh" arch1
 ```
-
-Run: `~/.burst/bin/inbox-watch.sh arch1`
 
 **Install on Blaze's Mac.**
-1. `mkdir -p ~/.burst/{bin,seat-keys,cursors} && chmod 700 ~/.burst/seat-keys`
-2. Copy `house/live/tools/live-inbox` and `house/live/tools/inbox-watch.sh` from the repo into `~/.burst/bin/`, then `chmod +x ~/.burst/bin/live-inbox ~/.burst/bin/inbox-watch.sh`.
-3. Set the variables (required; `live-inbox` exits 2 and names any missing one): run the export line in `grok-bot/templates/house/fleet/WAKE-ROUTINE.md`.
+1. `mkdir -p ~/.burst/seat-keys && chmod 700 ~/.burst/seat-keys`, and keep a checkout of main.
+2. Set `XRAY_MAIN` to that checkout. The watcher is `$XRAY_MAIN/house/live/tools/inbox-watch.sh`. It runs `$XRAY_MAIN/house/live/tools/live-inbox`. Do not copy either file into `~/.burst/bin`.
+3. Set `LIVE_URL` and `SEAT_KEYS_DIR` (required; `live-inbox` exits 2 and names a missing one): run the export line in `grok-bot/templates/house/fleet/WAKE-ROUTINE.md`.
 4. Place `arch1.key` in `~/.burst/seat-keys/` (delivered only through Blaze's 1:1), then `chmod 600 ~/.burst/seat-keys/arch1.key`.
 5. Check `python3 --version` (live-inbox needs Python 3).
-6. Run it once by hand: `INBOX_WATCH_ONCE=1 ~/.burst/bin/inbox-watch.sh arch1`. No output means an empty inbox; `FAIL` means the poll failed (a missing `SEAT_KEYS` entry returns 401).
-7. Run `~/.burst/bin/inbox-watch.sh arch1` as the host's internal monitor, not as a launchd job. Each stdout line is a session event. An empty inbox prints nothing. Tool-call hooks (the suit) are a separate install: [fleet-setup.md, Suit and hooks](fleet-setup.md#suit-and-hooks).
+6. Run it once by hand: `INBOX_WATCH_ONCE=1 "$XRAY_MAIN/house/live/tools/inbox-watch.sh" arch1`. No output means an empty inbox (or only a held set already listed, or only ids already on the seat todo). A delivered open line prints `ACTION_REQUIRED` + `unfinished:N` once and appends the id to `~/.burst/inbox-todo/<seat>.md`. It does not ack. A second run with no new line prints nothing. `FAIL` means the poll failed (a missing `SEAT_KEYS` entry returns 401).
+7. Run `"$XRAY_MAIN/house/live/tools/inbox-watch.sh" arch1` in the local TUI. Suit boot enables that monitor. Each stdout line is a session event. An empty inbox prints nothing. Tool-call hooks (the suit) are a separate install: [fleet-setup.md, Suit and hooks](fleet-setup.md#suit-and-hooks).
 
 **Exception to the no-local-watchers rule.** This poll is an approved exception, approved by Blaze on 2026-10-13 at 11:52 CT. The approval covers Arch1's inbox poll on Blaze's Mac.
 
-**Variables (names only; required, set by the WAKE-ROUTINE export line).**
+**Variables (names only).** `LIVE_URL` and `SEAT_KEYS_DIR` are required and are set by the WAKE-ROUTINE export line. `LIVE_CURSORS` is not required. The cursor folder rule is [Cursor folder](../../../grok-bot/OP-PROC.md#cursor-folder).
 - `LIVE_URL=https://bifrost.0xray.dev`
 - `SEAT_KEYS_DIR=~/.burst/seat-keys`
-- `LIVE_CURSORS=~/.burst/cursors`
+- `XRAY_MAIN` is the main checkout. The watcher runs `house/live/tools` from there.
 
 The key file is `arch1.key` in `SEAT_KEYS_DIR` (dir 700, file 600). Blaze delivers it only through his 1:1, never in a chat room, a repo or a routine. The server checks it against the `arch1` entry in the `SEAT_KEYS` Railway variable (sha256 of the key); if that entry is missing, every read returns 401 and the fix needs Blaze's GO for the variable change.
 

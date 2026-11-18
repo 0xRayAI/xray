@@ -1,7 +1,7 @@
 {
   "name": "@0xray/grok-bot",
-  "version": "0.1.11",
-  "description": "Complete setup path for Grok Bot agents on 0xRay: per-agent suits, Groover identity, OWS pay, hangar shops. Seat doctor/ready proves mill+inspect and prints hangar/Clearing next steps.",
+  "version": "0.1.18",
+  "description": "Complete setup path for Grok Bot agents on 0xRay: per-agent suits, Groover identity, OWS pay, hangar shops, and the NEAR path (foundry, pay, cap, escrow). Seat doctor/ready proves mill+inspect and prints hangar/Clearing next steps.",
   "license": "MIT",
   "bin": {
     "grok-bot": "bin/grok-bot.js"
@@ -20,6 +20,10 @@
     "skills/setup-ows-pay",
     "skills/plant-hangar-shops",
     "skills/setup-house",
+    "skills/near-seat",
+    "skills/near-mill",
+    "skills/foundry-create",
+    "skills/stand-up-fleet",
     "skills/station",
     "skills/seat-label",
     "skills/seat-github-key",
@@ -35,7 +39,9 @@
     "CHANGELOG.md"
   ],
   "scripts": {
-    "start": "node bin/grok-bot.js"
+    "start": "node bin/grok-bot.js",
+    "prepack": "cp ../house/live/tools/bifrost-init lib/bifrost-init.py && cp ../house/live/tools/live-inbox lib/live-inbox.py && cp ../house/live/tools/exit-gate.mjs lib/exit-gate.mjs && cp ../house/live/tools/packet-body.mjs lib/packet-body.mjs && cp ../house/live/feed/cloud_line.py lib/cloud_line.py",
+    "postpack": "rm -f lib/bifrost-init.py lib/live-inbox.py lib/exit-gate.mjs lib/packet-body.mjs lib/cloud_line.py"
   },
   "keywords": [
     "grok-bot",
@@ -53,6 +59,6 @@
     "directory": "grok-bot"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=24"
   }
 }

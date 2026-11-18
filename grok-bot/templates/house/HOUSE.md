@@ -2,6 +2,8 @@
 
 OP-PROC: grok-bot/OP-PROC.md
 
+[OP-PROC](https://github.com/0xRayAI/xray/blob/main/grok-bot/OP-PROC.md) holds the process rules (terms in [LEXICON](https://github.com/0xRayAI/xray/blob/main/grok-bot/LEXICON.md)). This file holds only this house's values: names, handles, repos, URLs, and exceptions.
+
 ## Owner
 (example) Ada — the human who decides money, credentials, deletes, and taste.
 
@@ -23,20 +25,13 @@ name: Ada
 (example) Open cards: house/WAVEBOARD.md when LIVE_URL is unset. Bifrost cards (GET /cards) when LIVE_URL is set. What needs the owner now: house/ATTENTION_STATE.md. The ranked waves live in bifrost-waves.json. See WAVE-SCHEDULE.md.
 
 ## Cadence
-Optional. Delete this section if your house has no code loop. Defaults from [opproc-cadence.md](https://github.com/0xRayAI/xray/blob/main/docs/opproc-cadence.md); rename the roles to your seats.
-- Bots never burn or ack. Build work runs on cloud agents and the coder. Seats route, review and retest, and post results on the PR or issue.
-- Review plate: one pass, one fix, one re-check, then park for the owner. Only P0/P1 (S1/S2 with a repro) can FAIL. Nits are notes or cards.
-- The coder merges to the integration branch only when the reviewer's PASS SHA equals the PR head and CI is green. Main and production need the owner.
-- Each seat uses its own GitHub App. The reviewer owns the PR watcher (first review, single re-check after a FAIL, re-look after a PASS or HOLD, deduped by PR + SHA) and gates new issues on issue opened, with a 15-minute sweep as fallback. The lab tester owns the merge watcher: queue line in `house/watchers/merge-queue.md`, lean retest, PASS closes the issue with the merge SHA, FAIL keeps it open with one line to the env operator. The coordinator plans the next wave, paces burn, friend-tests public copy, and onboards seats. It does not assign dev work. The stall sweep stays a backstop.
-- Stall sweep, hourly, 24/7 (defaults): no verdict after 30m; unticked queue line or PASS unmerged after 60m; open P0/P1 with no PR after 2h; parked PR to the owner. One nudge per item per day. A stuck item that belongs to an outside builder (no seat to message) is flagged for the owner instead. Lesson: a business-hours-only sweep stranded retests overnight.
-- Issue-sweep cursor: `house/watchers/issue-sweep-last.txt`, one UTC ISO-8601 time of the last sweep, rewritten after each sweep.
-- Live mesh (requires 0xRayAI/xray#248): `fleet/activity.jsonl` start/end lines `{t_ct, seat, kind, action, tag}` for every subagent or executor run (`subagent`), turn (`turn`) and watcher run (`watcher`), shown as working until the matching end, 60-minute cap. Box file lines must carry `seat` (seat id, or a display name in the seats config `aliases`). On `POST /activity`, `seat` is optional and must match the app token, or the post is refused; use seat ids there. Board rule. On every owner message run `live-inbox <seat> --prompt --from owner --note "<gist>"`. Ack a handled line with `live-inbox <seat> --ack <id>`, or `live-inbox <seat> --ack all` once every open line is handled. A cloud agent run uses `live-inbox <seat> --turn start --tag "bc-<first8> <track>"` and `live-inbox <seat> --turn end --tag "bc-<first8>"`. `--from owner` is required today. A room message from the owner still adds `--room <name>`. That posts `{t_ct, seat, kind: "prompt", action: "sent", from, to, room?}` to `/activity` (never text) and keeps `seat` working for 10 minutes. A pulse still inside those 10 minutes survives a turn end. `fleet.missing_activity` on the feed lists seats that pulsed in the last 60 minutes with no activity line. Cloud agents go in `fleet/cloud-agents.jsonl`: `{t_ct, seat, kind: "cloud_agent", action: "launch|reply|finished|cancel", agent, tag}`.
-- Kanban note. The live page shows a read-only kanban above Activity. Columns are open, review, fix, merge, retest, and done. The deep link is `?card=`.
-- History note. Every activity line is archived to history. The word owner is the owner via LIVE_OWNER or the owner-name.
-- Wake on Grok: nothing injects the station card, so the Bifrost inbox wake is the suit's hook; the wake routine ([fleet/WAKE-ROUTINE.md](fleet/WAKE-ROUTINE.md)) reads STATION.md then NOTES.md first and updates NOTES.md last. No separate hook or watcher.
-- On any inbound message, the seat runs the board-prompt skill first. It links `grok-bot/OP-PROC.md` and the house overlay as the rules for the turn. An owner message posts one `live-inbox <seat> --prompt --from owner --note "<gist>"`. After handling any inbox line, ack it with `live-inbox <seat> --ack <id>` or `--ack all`. When you launch or resume a cloud agent, post `live-inbox <seat> --turn start --tag "bc-<first8> <track>"`; when it finishes or is cancelled, post `live-inbox <seat> --turn end --tag "bc-<first8>"`. The gist is not the message text. A prompt that spawns an issue or PR is that card's first beat.
-- A real owner-chat source is future work. This is the line: On every owner message, first run `live-inbox <seat> --prompt --from owner --note "<gist>"`; after handling any inbox line (in chat or on a wake), ack it right away with `live-inbox <seat> --ack <id>` (or `--ack all` once everything open is handled); when you launch or resume a cloud agent run `live-inbox <seat> --turn start --tag "bc-<first8> <track>"`; when it finishes or is cancelled run `live-inbox <seat> --turn end --tag "bc-<first8>"`. No exceptions for short turns.
-- Deep burn: one cloud agent per repo area with fixed file ownership, at most 4 at once, in waves.
+Optional. Delete this section if your house has no code loop. The process rules (verdicts, review plate, merge gate, watchers, stall sweep, live mesh) are in [CADENCE](https://github.com/0xRayAI/xray/blob/main/grok-bot/CADENCE.md#seat-loop); station boot, the station nudge and the owner-message steps are in [OP-PROC](https://github.com/0xRayAI/xray/blob/main/grok-bot/OP-PROC.md#station-boot). This section holds only this house's values. Rename the roles to your seats.
+- Watcher owners: PR watcher, issue gate and issue sweep = reviewer. Merge watcher = lab tester. Stall sweep = name the seat that runs it.
+- Stall thresholds: hourly, 24/7. No verdict after 30m; unticked queue line or PASS unmerged after 60m; open P0/P1 with no PR after 2h.
+- Watcher files: `house/watchers/merge-queue.md`, `house/watchers/issue-sweep-last.txt`, `house/watchers/review-sent.log`, `house/watchers/stall-sweep.log`.
+- Merge target: the integration branch. Main and production need the owner.
+- Cloud cap: one cloud agent per repo area with fixed file ownership, at most 4 at once, in waves.
+- Wake routine: [fleet/WAKE-ROUTINE.md](fleet/WAKE-ROUTINE.md).
 
 ## Roster
 Optional. Role, seat name, and agent id: [ROLE-MAP.md](ROLE-MAP.md). Leave it blank until you have ids.

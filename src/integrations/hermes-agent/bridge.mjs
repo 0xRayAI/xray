@@ -460,6 +460,15 @@ async function handleSessionStart(input, projectRoot, logDir) {
     /* dist may be absent during dev */
   }
 
+  try {
+    const { maybeRunReflectionStub } = await import('../hooks/pipeline-hook-runtime.mjs');
+    if (typeof maybeRunReflectionStub === 'function') {
+      maybeRunReflectionStub(projectRoot);
+    }
+  } catch {
+    /* reflection stays observational and never blocks session start */
+  }
+
   logToActivity(logDir, `session-start: session=${sessionId} source=bridge`);
   return { ok: true, sessionId, planArchive };
 }

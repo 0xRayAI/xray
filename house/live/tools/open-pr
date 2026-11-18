@@ -3,7 +3,7 @@
 // Never reads SEAT_KEYS, the Bifrost activity key, or GITHUB_TOKEN. Never prints a key, token, or PEM.
 // With no App token, exits non-zero and prints a handoff (branch + body) for forge.
 
-const USAGE = 'usage: open-pr --repo <owner/name> --head <branch> [--base <branch>] --title <title> (--body <text> | --body-file <path>)\n';
+const USAGE = 'usage: open-pr --repo <owner/name> --head <branch> [--base <branch>] --title <title> (--body <text> | --body-file <path>) [--seat <seat>] [--a <seat>]\n';
 
 function take(argv, flag) {
   const i = argv.indexOf(flag);
@@ -22,6 +22,8 @@ function parseArgs(argv) {
   const title = take(args, '--title');
   const body = take(args, '--body');
   const bodyFile = take(args, '--body-file');
+  const seat = take(args, '--seat');
+  const answer = take(args, '--a');
   if (args.length > 0) return { error: USAGE };
   if (!repo || !head || !title || (body === null && bodyFile === null) || (body !== null && bodyFile !== null)) {
     return { error: USAGE };
@@ -31,7 +33,7 @@ function parseArgs(argv) {
   const baseRef = base === null ? 'main' : base;
   if (!/^[A-Za-z0-9][A-Za-z0-9._/-]{0,199}$/.test(baseRef)) return { error: USAGE };
   if (!title.trim() || title.length > 256 || /[\r\n]/.test(title)) return { error: USAGE };
-  return { spec: { repo, head, base: baseRef, title, body, bodyFile } };
+  return { spec: { repo, head, base: baseRef, title, body, bodyFile, seat: seat || 'forge', answer: answer || 'forge' } };
 }
 
 function handoff(spec, fs) {
@@ -137,6 +139,7 @@ async function main() {
     process.exit(2);
   }
   const spec = parsed.spec;
+  const { ensurePacket } = await import('./packet-body.mjs');
   if (spec.bodyFile !== null) {
     try {
       spec.body = fs.readFileSync(spec.bodyFile, 'utf8');
@@ -145,6 +148,7 @@ async function main() {
       process.exit(1);
     }
   }
+  spec.body = ensurePacket(spec.body, { r: spec.seat, a: spec.answer });
   const api = apiBase();
   const material = appMaterial();
   const repoName = spec.repo.split('/')[1];

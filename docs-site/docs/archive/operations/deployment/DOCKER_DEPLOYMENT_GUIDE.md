@@ -59,7 +59,7 @@ Production Kubernetes Deployment
 #### Dockerfile
 
 ```dockerfile
-FROM node:18-alpine AS base
+FROM node:24.22.1-alpine AS base
 
 # Install system dependencies
 RUN apk add --no-cache \
@@ -243,7 +243,7 @@ services:
 #### Dockerfile.mcp
 
 ```dockerfile
-FROM node:18-alpine
+FROM node:24.22.1-alpine
 
 # Install system dependencies
 RUN apk add --no-cache git python3 make g++

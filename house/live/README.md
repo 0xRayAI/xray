@@ -46,7 +46,7 @@ Data (feed JSON, store, logs, pids, preview `www/`) lives in `$MESH_RUN` (defaul
 
 Both repos, full history then incremental, any author: PR open/edit/ready/draft/close/reopen/merge (base + merge SHA),
 head pushes, labels, assignees, review requests; reviews (state + author); reviewer verdicts (latest per PR:
-PASS/FAIL/HOLD/re-check + SHA); comment and review-comment **metadata only**; issue open/close (state_reason)/reopen/
+PASS/FIX/re-check + SHA; legacy FAIL/HOLD records read as FIX); comment and review-comment **metadata only**; issue open/close (state_reason)/reopen/
 labels/assignees/milestones; commits on `develop` and `main` (SHA, first line ≤72 chars, author login, time); tags,
 releases; check suites/runs, commit statuses (Railway statuses = `deploy*`), workflow runs; lab retests; `/health`
 status changes (HTTP code + time only).
@@ -83,7 +83,7 @@ Work tracking (per-seat activity keys, packet phases, the Cursor webhook): [`doc
 ## Deploy
 
 ```bash
-app/deploy.sh                                      # copies app/ + assembles collector/, railway up --service burst-live --detach
+LIVE_RAILWAY_PROJECT=burst-live LIVE_RAILWAY_SERVICE=burst-live app/deploy.sh   # ours; both names are required (#1047)
 railway deployment list --service burst-live       # expect SUCCESS
 ```
 

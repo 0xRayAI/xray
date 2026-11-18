@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { spawnSync } from 'child_process';
 import { copyFileSync, cpSync, existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
-import { resolveGrokHook } from '../../../scripts/mjs/run-grok-hook.mjs';
+import { grokHookEventFromArgv, resolveGrokHook, selectGrokHookName } from '../../../scripts/mjs/run-grok-hook.mjs';
 import { homedir, tmpdir } from 'os';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -15,6 +15,7 @@ const {
   grokHookShellCommand,
   settlePackageRoot,
   scrubEphemeralMachineGrokPins,
+  retargetHomeGrokHooks,
   isEphemeralInstallRoot,
   isIsolatedHome,
   installAllBridges,
@@ -81,7 +82,10 @@ describe('Grok hooks.json command strings', () => {
         ),
       );
       mkdirSync(path.join(packageRoot, 'dist/integrations/grok/hooks'), { recursive: true });
-      patchGrokHooks(pluginDir, packageRoot, tmp, () => {}, 'test');
+      const home = path.join(tmp, 'home');
+      mkdirSync(path.join(home, '.burst', 'seat-keys'), { recursive: true });
+      writeFileSync(path.join(home, '.burst', 'seat-keys', 'arch1.key'), 'not-a-real-key\n');
+      patchGrokHooks(pluginDir, packageRoot, tmp, () => {}, 'test', { home });
       const patched = JSON.parse(readFileSync(path.join(pluginDir, 'hooks', 'hooks.json'), 'utf8'));
       const commands = collectHookCommands(patched);
       for (const hook of commands) {
@@ -89,6 +93,10 @@ describe('Grok hooks.json command strings', () => {
         expect(String(hook.command)).toContain(`XRAY_AI_PATH=${JSON.stringify(packageRoot)}`);
         expect(String(hook.command)).toContain('node ');
         expect(hook.timeout).toBe(30);
+        const env = hook.env as Record<string, string>;
+        expect(env.LIVE_URL).toBe('https://bifrost.0xray.dev');
+        expect(env.SEAT_KEYS_DIR).toBe(path.join(home, '.burst', 'seat-keys'));
+        expect(env.XRAY_SEAT).toBe('arch1');
       }
     } finally {
       rmSync(tmp, { recursive: true, force: true });
@@ -290,6 +298,130 @@ describe('Grok hooks.json command strings', () => {
     }
   });
 
+  it('retargets a node args hook off a deleted temp checkout', () => {
+    const home = mkdtempSync(path.join(homedir(), 'xray-home-args-'));
+    const durable = path.join(home, 'worn');
+    const dead = path.join('/private/tmp', `pos51-${Date.now()}`);
+    const hookRel = path.join('dist', 'integrations', 'grok', 'hooks', 'pre-tool-use.js');
+    try {
+      mkdirSync(path.join(home, '.grok', 'plugins', '0xray', 'hooks'), { recursive: true });
+      mkdirSync(path.dirname(path.join(durable, hookRel)), { recursive: true });
+      mkdirSync(path.join(durable, 'scripts', 'mjs'), { recursive: true });
+      writeFileSync(path.join(durable, 'scripts', 'mjs', 'run-grok-hook.mjs'), '#!/usr/bin/env node\n');
+      writeFileSync(path.join(durable, hookRel), '#!/usr/bin/env node\n');
+      const plugin = path.join(home, '.grok', 'plugins', '0xray');
+      writeFileSync(
+        path.join(plugin, 'hooks', 'hooks.json'),
+        `${JSON.stringify({
+          hooks: {
+            PreToolUse: [{
+              hooks: [{
+                type: 'command',
+                command: 'node',
+                args: [path.join(dead, hookRel)],
+                env: { XRAY_AI_PATH: durable },
+              }],
+            }],
+          },
+        }, null, 2)}\n`,
+      );
+      expect(scrubEphemeralMachineGrokPins(home, durable)).toBe(1);
+      const hook = JSON.parse(readFileSync(path.join(plugin, 'hooks', 'hooks.json'), 'utf8')).hooks
+        .PreToolUse[0].hooks[0] as { args: string[] };
+      expect(hook.args[0]).toBe(path.join(durable, hookRel));
+      expect(hook.args[0]).not.toContain(dead);
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+    }
+  });
+
+  it('retargets home Grok hooks off a missing or foreign runner', () => {
+    const home = mkdtempSync(path.join(homedir(), 'xray-home-hook-'));
+    const durable = path.join(home, 'worn');
+    const foreign = path.join(home, 'other-tree');
+    const dead = path.join(home, 'gone-tree');
+    const runner = path.join(durable, 'scripts', 'mjs', 'run-grok-hook.mjs');
+    try {
+      mkdirSync(path.join(home, '.grok'), { recursive: true });
+      mkdirSync(path.dirname(runner), { recursive: true });
+      writeFileSync(runner, '#!/usr/bin/env node\n');
+      mkdirSync(path.join(foreign, 'scripts', 'mjs'), { recursive: true });
+      writeFileSync(path.join(foreign, 'scripts', 'mjs', 'run-grok-hook.mjs'), '#!/usr/bin/env node\n');
+      const deadCmd =
+        'LIVE_URL=https://bifrost.0xray.dev XRAY_AI_PATH=' +
+        dead +
+        ' node ' +
+        path.join(dead, 'scripts', 'mjs', 'run-grok-hook.mjs') +
+        ' pre-tool-use.js';
+      const foreignCmd = `XRAY_AI_PATH=${JSON.stringify(foreign)} node ${JSON.stringify(
+        path.join(foreign, 'scripts', 'mjs', 'run-grok-hook.mjs'),
+      )} session-start.js --hook-event=pre_compact`;
+      writeFileSync(
+        path.join(home, '.grok', 'config.toml'),
+        [
+          '[models]',
+          'default = "grok-4.7"',
+          '',
+          '[[hooks.PreToolUse]]',
+          '',
+          '[[hooks.PreToolUse.hooks]]',
+          'type = "command"',
+          `command = ${JSON.stringify(deadCmd)}`,
+          'timeout = 30',
+          '',
+          '[[hooks.PostToolUse]]',
+          '',
+          '[[hooks.PostToolUse.hooks]]',
+          'type = "command"',
+          'command = "echo leave-this"',
+          '',
+        ].join('\n'),
+      );
+      mkdirSync(path.join(home, '.grok', 'hooks'), { recursive: true });
+      writeFileSync(
+        path.join(home, '.grok', 'hooks', '0xray.json'),
+        `${JSON.stringify({
+          hooks: {
+            PreCompact: [{ hooks: [{ type: 'command', command: foreignCmd, env: { XRAY_AI_PATH: foreign, XRAY_ROOT: '/home/box/project' } }] }],
+          },
+        })}\n`,
+      );
+      mkdirSync(path.join(home, '.grok', 'plugins', '0xray', 'hooks'), { recursive: true });
+      writeFileSync(
+        path.join(home, '.grok', 'plugins', '0xray', 'hooks', 'hooks.json'),
+        `${JSON.stringify({
+          hooks: {
+            PostToolUse: [{ hooks: [{ type: 'command', command: deadCmd, env: { XRAY_AI_PATH: dead, KEEP: 'yes' } }] }],
+          },
+        })}\n`,
+      );
+      expect(retargetHomeGrokHooks(home, durable)).toBe(3);
+      const toml = readFileSync(path.join(home, '.grok', 'config.toml'), 'utf8');
+      expect(toml).toContain(runner);
+      expect(toml).toContain(`XRAY_AI_PATH=${durable}`);
+      expect(toml).toContain('LIVE_URL=https://bifrost.0xray.dev');
+      expect(toml).toContain('pre-tool-use.js');
+      expect(toml).toContain('command = "echo leave-this"');
+      expect(toml).toContain('default = "grok-4.7"');
+      expect(toml).not.toContain(dead);
+      const discovered = JSON.parse(readFileSync(path.join(home, '.grok', 'hooks', '0xray.json'), 'utf8')).hooks
+        .PreCompact[0].hooks[0] as { command: string; env: Record<string, string> };
+      expect(discovered.command).toContain(runner);
+      expect(discovered.command).toContain('--hook-event=pre_compact');
+      expect(discovered.command).not.toContain(foreign);
+      expect(discovered.env.XRAY_AI_PATH).toBe(durable);
+      expect(discovered.env.XRAY_ROOT).toBe('/home/box/project');
+      const plugin = JSON.parse(readFileSync(path.join(home, '.grok', 'plugins', '0xray', 'hooks', 'hooks.json'), 'utf8'))
+        .hooks.PostToolUse[0].hooks[0] as { command: string; env: Record<string, string> };
+      expect(plugin.command).toContain(runner);
+      expect(plugin.env.XRAY_AI_PATH).toBe(durable);
+      expect(plugin.env.KEEP).toBe('yes');
+      expect(retargetHomeGrokHooks(home, durable)).toBe(0);
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+    }
+  });
+
   it('resolveGrokHook uses src when dist is gone', () => {
     const root = mkdtempSync(path.join(tmpdir(), 'xray-hook-resolve-'));
     const srcHook = path.join(root, 'src', 'integrations', 'grok', 'hooks', 'pre-tool-use.js');
@@ -332,6 +464,65 @@ describe('Grok hooks.json command strings', () => {
       const broken = spawnSync(process.execPath, [launcher, 'pre-tool-use.js'], { encoding: 'utf8' });
       expect(broken.status).toBe(0);
       expect(broken.stdout.trim()).toBe('{"decision":"allow"}');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('a prompt or compact hook with no script name does not print decision allow', () => {
+    expect(selectGrokHookName(['node', 'run-grok-hook.mjs', '--hook-event=user_prompt_submit'])).toBe(
+      'session-start.js',
+    );
+    expect(grokHookEventFromArgv(['node', 'run-grok-hook.mjs', '--hook-event=pre_compact'])).toBe('pre_compact');
+    expect(selectGrokHookName(['node', 'run-grok-hook.mjs', 'pre-tool-use.js'])).toBe('pre-tool-use.js');
+
+    const root = mkdtempSync(path.join(tmpdir(), 'xray-hook-prompt-'));
+    const launcherDir = path.join(root, 'scripts', 'mjs');
+    const srcHook = path.join(root, 'src', 'integrations', 'grok', 'hooks', 'session-start.js');
+    const launcher = path.join(launcherDir, 'run-grok-hook.mjs');
+    try {
+      mkdirSync(launcherDir, { recursive: true });
+      copyFileSync(path.join(packageRoot, 'scripts', 'mjs', 'run-grok-hook.mjs'), launcher);
+
+      for (const event of ['user_prompt_submit', 'pre_compact', 'post_compact']) {
+        const missing = spawnSync(process.execPath, [launcher, `--hook-event=${event}`], { encoding: 'utf8' });
+        expect(missing.status).toBe(0);
+        expect(missing.stdout.trim()).toBe('{}');
+        expect(missing.stdout).not.toContain('allow');
+      }
+
+      const wrong = spawnSync(process.execPath, [launcher, 'gone.js', '--hook-event=user_prompt_submit'], {
+        encoding: 'utf8',
+      });
+      expect(wrong.status).toBe(0);
+      expect(wrong.stdout.trim()).toBe('{}');
+
+      mkdirSync(path.dirname(srcHook), { recursive: true });
+      writeFileSync(
+        srcHook,
+        'const flag = process.argv.find((arg) => String(arg).startsWith("--hook-event="));\n' +
+          'process.stdout.write(JSON.stringify({ flag: flag || "" }) + "\\n");\n' +
+          'process.exit(0);\n',
+      );
+      const loaded = spawnSync(process.execPath, [launcher, '--hook-event=user_prompt_submit'], {
+        encoding: 'utf8',
+      });
+      expect(loaded.status).toBe(0);
+      expect(loaded.stdout.trim()).toBe('{"flag":"--hook-event=user_prompt_submit"}');
+
+      const named = spawnSync(process.execPath, [launcher, 'session-start.js', '--hook-event=pre_compact'], {
+        encoding: 'utf8',
+      });
+      expect(named.status).toBe(0);
+      expect(named.stdout.trim()).toBe('{"flag":"--hook-event=pre_compact"}');
+
+      writeFileSync(srcHook, 'throw new Error("boom");\n');
+      const thrown = spawnSync(process.execPath, [launcher, '--hook-event=user_prompt_submit'], {
+        encoding: 'utf8',
+      });
+      expect(thrown.status).toBe(0);
+      expect(thrown.stdout.trim()).toBe('{}');
+      expect(thrown.stdout).not.toContain('allow');
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

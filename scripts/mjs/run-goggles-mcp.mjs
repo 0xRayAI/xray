@@ -4,7 +4,7 @@
  * Resolves the organ server from this file, not from the caller's cwd.
  */
 import { spawn } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -19,9 +19,23 @@ if (!server) {
   process.exit(1);
 }
 
+function namedConsumer(dir) {
+  try {
+    const pkg = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8'));
+    return Boolean(pkg && typeof pkg.name === 'string' && pkg.name.trim() && pkg.name !== '0xray');
+  } catch {
+    return false;
+  }
+}
+
+const cwd = resolve(process.cwd());
 const env = { ...process.env };
-if (!env.GOGGLES_ROOT || env.GOGGLES_ROOT === '.') {
-  env.GOGGLES_ROOT = resolve(process.cwd());
+// A named consumer overrides GOGGLES_ROOT on purpose, including a root the user exported.
+if (namedConsumer(cwd)) {
+  env.GOGGLES_ROOT = cwd;
+  delete env.GOGGLES_PLANES_PATH;
+} else if (!env.GOGGLES_ROOT || env.GOGGLES_ROOT === '.') {
+  env.GOGGLES_ROOT = cwd;
 }
 
 const child = spawn(process.execPath, [server], {

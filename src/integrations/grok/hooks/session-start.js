@@ -16,6 +16,8 @@ import {
   writeSessionBoot,
 } from './grok-hook-utils.js';
 import { appendHookActivity } from './grok-hook-activity.js';
+import { bootPosts, notifyBifrost } from '../../hooks/bifrost-send.mjs';
+import { inboxStartOrder, inboxStopDecision, pollInboxOnce } from '../../hooks/inbox-boot.mjs';
 import { recordSynthesisTurnSlice } from '../../hooks/synthesis-hook-runtime.mjs';
 import { archiveStaleLeadDevPlan } from '../../hooks/plan-hook-runtime.mjs';
 import {
@@ -74,6 +76,19 @@ async function matchStationSignals(root, intent) {
 
 const COMPACT_EVENTS = new Set(['pre_compact', 'post_compact']);
 
+async function postBoot(eventRoot, event, hookEvent) {
+  try {
+    if (hookEvent === 'pre_compact') {
+      await notifyBifrost({ root: eventRoot, phase: 'end', env: process.env });
+    }
+    for (const post of bootPosts(event, hookEvent)) {
+      await notifyBifrost({ root: eventRoot, env: process.env, ...post });
+    }
+  } catch {
+    /* a quiet board must not stop the hook */
+  }
+}
+
 async function ingestStationFeedback(root, sessionId, hookEvent, matchedSignals) {
   if (!COMPACT_EVENTS.has(hookEvent) || !matchedSignals.length) return;
   try {
@@ -97,13 +112,52 @@ async function ingestStationFeedback(root, sessionId, hookEvent, matchedSignals)
 async function main() {
   const root = workspaceRoot();
   let HOOK_EVENT = 'session_start';
+  let inboxMessage = '';
   try {
     const event = await readStdinJson();
     HOOK_EVENT = resolveGrokHookEvent(event);
     const eventRoot = normalizeWorkspaceRoot(event.workspaceRoot || event.cwd || root);
     const sessionId = resolveSessionId(event);
+    if (HOOK_EVENT === 'stop') {
+      await postBoot(eventRoot, event, HOOK_EVENT);
+      let decision = null;
+      try {
+        decision = inboxStopDecision({
+          env: process.env,
+          sessionId: sessionId || '',
+          backgroundTasks: event.backgroundTasks,
+          stopHookActive: event.stopHookActive === true || event.stop_hook_active === true,
+        });
+      } catch {
+        decision = null;
+      }
+      if (decision) process.stdout.write(`${JSON.stringify(decision)}\n`);
+      process.exit(0);
+    }
+    try {
+      if (HOOK_EVENT === 'session_start') {
+        inboxMessage = await pollInboxOnce({
+          root: eventRoot,
+          env: process.env,
+          sessionId: sessionId || '',
+          backgroundTasks: event.backgroundTasks,
+        });
+      } else if (HOOK_EVENT === 'user_prompt_submit') {
+        inboxMessage = inboxStartOrder({
+          env: process.env,
+          sessionId: sessionId || '',
+          backgroundTasks: event.backgroundTasks,
+        });
+      }
+    } catch {
+      inboxMessage = '';
+    }
     if (HOOK_EVENT === 'user_prompt_submit' && sessionId) {
-      recordSynthesisTurnSlice(eventRoot, sessionId);
+      try {
+        recordSynthesisTurnSlice(eventRoot, sessionId);
+      } catch {
+        /* a synthesis load must not skip the inbox start */
+      }
     }
     if (clearPendingDelegationsForSessionChange(sessionId, eventRoot)) {
       appendHookActivity(eventRoot, 'grok-session-start', 'stale-pending-cleared', 'info', {
@@ -166,6 +220,8 @@ async function main() {
       hotSwap: payload.hotSwap || null,
     });
 
+    await postBoot(eventRoot, event, HOOK_EVENT);
+
     try {
       scheduleAutonomousReportingMarker(eventRoot);
       if (HOOK_EVENT === 'pre_compact' || HOOK_EVENT === 'post_compact') {
@@ -179,13 +235,15 @@ async function main() {
       /* non-blocking pipeline facets */
     }
 
-    if (!compact) process.stdout.write(`${JSON.stringify(payload)}\n`);
+    const out = inboxMessage ? { ...payload, systemMessage: inboxMessage } : payload;
+    if (!compact) process.stdout.write(`${JSON.stringify(out)}\n`);
     process.exit(0);
   } catch (err) {
     appendHookActivity(root, 'grok-session-start', 'session-boot-error', 'error', {
       error: err.message,
       hookEvent: HOOK_EVENT,
     });
+    if (inboxMessage) process.stdout.write(`${JSON.stringify({ systemMessage: inboxMessage })}\n`);
     process.exit(0);
   }
 }

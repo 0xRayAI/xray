@@ -42,7 +42,7 @@ The skill posts those lines. It does not launch a cloud, open a card, or paste t
 
 The prompt command already posts `{t_ct, seat, kind:prompt, action:sent, from, to:seat, room?, note?}` to `POST /activity` (`house/live/tools/live-inbox` lines 24 and 393–399). `to` is the seat. The seat on the stored row comes from the seat key. `--room` stays available and is not required.
 
-A failed post (missing env, 401, 429, no network) is said in one line and the seat still answers. `live-inbox` already exits 2 and names a missing `LIVE_URL`, `SEAT_KEYS_DIR`, or `LIVE_CURSORS`. The skill does not retry and does not invent a local file. A failed turn post follows the same rule: say it in one line, do the work, and still run turn end on the way out.
+A failed post (missing env, 401, 429, no network) is said in one line and the seat still answers. `live-inbox` already exits 2 and names a missing `LIVE_URL` or `SEAT_KEYS_DIR`. `LIVE_CURSORS` is not required. The cursor folder rule is `grok-bot/OP-PROC.md#cursor-folder`. The skill does not retry and does not invent a local file. A failed turn post follows the same rule: say it in one line, do the work, and still run turn end on the way out.
 
 When that prompt is what causes the seat to open a GitHub issue or pull request, the prompt becomes that card’s first beat:
 

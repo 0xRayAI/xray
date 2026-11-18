@@ -12,7 +12,16 @@ const BUILTIN_MILL = { skills: ["mill", "inspect"], agents: ["mill.yml", "inspec
 const PACKAGE_ALIASES = {
   blip: "@0xray/blip",
   sound: "@0xray/blip",
+  // Scout feed mill ships in this foundry package's plant/. Goggles stays the suit HUD.
+  scout: "@0xray/foundry",
+  // Herald Dist write plant (H-lane write/brand). Not eng mill, not scout, not Dist send.
+  herald: "@0xray/foundry",
+  write: "@0xray/foundry",
+  brand: "@0xray/foundry",
 };
+
+// Alias tokens that land on another plant id in the same package.
+const PLANT_ID_ALIASES = { write: "herald", brand: "herald" };
 
 function plantError(message, code) {
   const err = new Error(message);
@@ -138,10 +147,11 @@ function parsePlantToken(raw) {
     return { builtin: true, kind: "mill", plantId: "mill", packageName: null, alias: false };
   }
   if (PACKAGE_ALIASES[token]) {
+    const id = PLANT_ID_ALIASES[token] || token;
     return {
       builtin: false,
-      kind: token,
-      plantId: token,
+      kind: id,
+      plantId: id,
       packageName: PACKAGE_ALIASES[token],
       alias: true,
     };
@@ -214,8 +224,18 @@ function tryRequireResolve(fromDir, packageName) {
   }
 }
 
+function foundrySelfRoot() {
+  return readPkgName(__dirname) === "@0xray/foundry" ? __dirname : null;
+}
+
 function resolvePackageRoot(packageName, dirs) {
   if (!isPackageName(packageName)) return null;
+  // This file ships inside @0xray/foundry. Goggles skills sit beside it.
+  // Prefer that root over a stale node_modules copy of the same package.
+  if (packageName === "@0xray/foundry") {
+    const self = foundrySelfRoot();
+    if (self) return self;
+  }
   if (typeof dirs === "string") {
     dirs = { targetDir: dirs, millPackageRoot: dirs, cwd: process.cwd() };
   }

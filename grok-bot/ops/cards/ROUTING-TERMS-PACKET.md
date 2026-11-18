@@ -45,7 +45,7 @@ Today the work is scored in more than one place, and the fleet clock is a third 
 
 - `scoreComplexity` in `src/nucleus/thin-dispatch.ts` calls `ComplexityAnalyzer` (`src/delegation/complexity-analyzer.ts`, thresholds from `src/delegation/complexity-core.ts`) and `routeToAgent` turns the level into an agent.
 - `analyze-complexity` on the orchestrator goes through `ComplexityHandler` into `ExecutionPlanner.analyzeTaskComplexity`, which blends `estimatedComplexity` and does not call `ComplexityAnalyzer`.
-- The stall clock is the Bifrost governor (`house/live/app/governor.mjs`): tripwire when nothing moves, nudge L1/L2/L3 when a live card has no beat, tandem as the governor. Drawn on `docs-site/docs/plates/bifrost.md`.
+- The stall clock is the Bifrost governor (`house/live/app/governor.mjs`): tripwire when nothing moves, nudge L1/L2/L3 when a live card has no beat. Tandem is several tracks at once, on both loops, and no seat waits for a nod. Drawn on `docs-site/docs/plates/bifrost.md`.
 
 The amalgamation makes these one system. The escalator is the scale the score climbs. Each published cutoff is a threshold on that scale. The rung switch names who works that cutoff. The oscillator is the settings layer that can move a rung, and that can change pace, quiet, and wait. The stall clock is the time side of the same system: how long a rung sits still before nudge and tripwire fire. Ponder is the pass after the work that writes one reflection. Seek places work on a rung, still chooses a skill, and does not size the work. The multiplicity sweep is the attention pass: it walks planes so a cold card is either given one step or marked parked.
 

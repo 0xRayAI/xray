@@ -1,0 +1,7 @@
+<!-- Geometry from plates/kit/rivet.svg on cursor/v5-plates-restamp-72d4 @ ab36db743. Colors locked to kit.json. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <circle cx="12" cy="12" r="11" fill="#babec2"/>
+  <circle cx="12" cy="12" r="7.5" fill="#5c6066"/>
+  <circle cx="12" cy="12" r="3" fill="#1c1e20"/>
+  <circle cx="9.2" cy="9.2" r="1.5" fill="#eceeec"/>
+</svg>

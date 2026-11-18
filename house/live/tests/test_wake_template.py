@@ -5,7 +5,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-TEMPLATE = Path(os.environ.get("WAKE_TEMPLATE") or Path(__file__).resolve().parents[3] / "grok-bot" / "templates" / "house" / "fleet" / "WAKE-ROUTINE.md")
+TEMPLATE = Path(os.environ.get("WAKE_TEMPLATE") or Path(__file__).resolve().parents[3] / "house" / "fleet" / "WAKE-ROUTINE.md")  # 0xRay fleet routine (xray#1055)
 TOOL = Path(__file__).resolve().parents[1] / "tools" / "live-inbox"
 CT = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$")
 
@@ -19,6 +19,27 @@ class WakeTemplate(unittest.TestCase):
         self.text = TEMPLATE.read_text()
         self.steps = steps(self.text)
         self.assertGreaterEqual(len(self.steps), 6, TEMPLATE)
+
+
+    def test_boot_links_the_packet_rule(self):
+        boot = [s for s in self.steps if s.startswith("Boot read")]
+        self.assertEqual(len(boot), 1)
+        self.assertIn("OP-PROC.md#packet", boot[0])
+        self.assertIn("Do not hand-post a card", boot[0])
+        root = Path(__file__).resolve().parents[3]
+        watcher = "$XRAY_MAIN/house/live/tools/inbox-watch.sh"
+        for rel in ("AGENTS.md", "AGENTS-consumer.md"):
+            text = (root / rel).read_text()
+            self.assertIn("#packet", text, rel)
+            self.assertIn("issue or pull", text, rel)
+            self.assertIn("Do not hand-post a card", text, rel)
+            self.assertIn(watcher, text, rel)
+        lens = (root / ".agents" / "skills" / "boot" / "SKILL.md").read_text()
+        self.assertIn(watcher, lens)
+        self.assertIn("only TUI monitor", lens)
+        station = (root / "grok-bot" / "skills" / "station" / "SKILL.md").read_text()
+        self.assertIn("#packet", station)
+        self.assertIn("Do not hand-post a card", station)
 
     def test_station_step_reads_station_then_notes(self):
         hit = [s for s in self.steps if "STATION.md" in s]
@@ -40,7 +61,16 @@ class WakeTemplate(unittest.TestCase):
         self.assertRegex(self.steps[0], r"live-inbox <seat> --prompt")
         self.assertNotIn("--from blaze", self.steps[0])
         self.assertNotIn("--from blaze", self.text)
-        self.assertIn("trap 'live-inbox <seat> --turn end --tag wake; live-inbox <seat> --release' EXIT", self.text)
+        self.assertIn('trap \'"$INBOX" <seat> --peek || true; "$INBOX" <seat> --turn end --tag wake; "$INBOX" <seat> --release\' EXIT', self.text)
+        self.assertIn(': "${XRAY_MAIN:?set XRAY_MAIN to the main checkout}"', self.text)
+        self.assertIn('INBOX="$XRAY_MAIN/house/live/tools/live-inbox"', self.text)
+        bash = re.search(r"```bash\n(.*?)```", self.text, re.S)
+        self.assertIsNotNone(bash)
+        block = bash.group(1)
+        self.assertNotIn("LIVE_INBOX_BIN", block)
+        self.assertNotIn("export PATH", block)
+        self.assertIn('"$INBOX" --migrate-cursors', block)
+        self.assertIn("does not run a copied binary", self.text)
         self.assertLess(self.steps[0].index("--prompt"), self.steps[0].index("--turn start"))
         self.assertRegex(self.steps[0], r"live-inbox <seat> --turn start --tag wake")
         self.assertIn("--room", self.steps[0])
@@ -69,6 +99,8 @@ class WakeTemplate(unittest.TestCase):
         self.assertIn("forge for builds", cloud)
         self.assertIn("critic for reviews", cloud)
         self.assertIn("seat message pointing at the card", cloud)
+        self.assertIn("chat doorbell", cloud.lower())
+        self.assertIn("not a cloud resume", cloud.lower())
         self.assertIn("persistent chat", cloud)
         self.assertIn("launches or resumes a cloud agent", cloud)
         self.assertNotIn("build_bc", self.text)
@@ -87,7 +119,7 @@ class WakeTemplate(unittest.TestCase):
     def test_cos_seat_does_not_post_a_handoff(self):
         handoff = self.steps[3]
         self.assertIn(
-            "The CoS seat does not post a handoff. The CoS seat only acks a dev line and sends no message about it.",
+            "The CoS seat does not post a handoff. The CoS seat only acks a dev line, in the step 0 `--repeat` order, and sends no message about it.",
             handoff,
         )
         self.assertIn("live-inbox <seat> --handoff", handoff)
@@ -110,6 +142,15 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(out)
 
+    def do_GET(self):
+        self.server.gets.append(self.path)
+        out = json.dumps({"events": getattr(self.server, "history", [])}).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(out)))
+        self.end_headers()
+        self.wfile.write(out)
+
     def log_message(self, fmt, *args):
         return
 
@@ -118,6 +159,7 @@ class TurnFlag(unittest.TestCase):
     def setUp(self):
         self.srv = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
         self.srv.hits = []
+        self.srv.gets = []
         self.thread = threading.Thread(target=self.srv.serve_forever, daemon=True)
         self.thread.start()
         self.tmp = tempfile.TemporaryDirectory()
@@ -224,6 +266,32 @@ class TurnFlag(unittest.TestCase):
         self.assertEqual(len(self.srv.hits), before)
         self.assertNotIn("blaze", (broken.stdout + broken.stderr).lower())
 
+    def test_prompt_at_stamps_the_real_time_in_chicago(self):
+        proc = self.run_turn("--prompt", "--room", "eng", "--at", "2026-11-09T15:24:07Z")
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertEqual(self.srv.gets, ["/history?date=2026-11-09"])
+        self.assertEqual(self.srv.hits[0]["body"]["t_ct"], "2026-11-09T09:24:07-06:00")
+        self.assertEqual(self.srv.hits[0]["body"]["room"], "eng")
+        self.assert_secret_hidden(proc)
+
+    def test_prompt_at_refuses_a_bad_or_future_time(self):
+        for bad in ("yesterday", "2026-11-09T09:24:00", "2999-01-01T00:00:00-06:00"):
+            proc = self.run_turn("--prompt", "--at", bad)
+            self.assertEqual(proc.returncode, 2, bad)
+            self.assertIn("--at", proc.stderr)
+        self.assertEqual(self.srv.hits, [])
+
+    def test_prompt_at_skips_a_line_already_on_the_board(self):
+        self.srv.history = [{"id": "act:x.1", "kind": "seat_prompt", "from": "Ada", "to": "forge",
+                             "t_ct": "2026-11-09T09:24:01-06:00"}]
+        dup = self.run_turn("--prompt", "--at", "2026-11-09T09:24:00-06:00")
+        self.assertEqual(dup.returncode, 0, dup.stderr)
+        self.assertEqual(json.loads(dup.stdout), {"ok": True, "skipped": "dup", "id": "act:x.1"})
+        self.assertEqual(self.srv.hits, [])
+        far = self.run_turn("--prompt", "--at", "2026-11-09T09:24:15-06:00")  # a second real message 14s later still posts
+        self.assertEqual(far.returncode, 0, far.stderr)
+        self.assertEqual(len(self.srv.hits), 1)
+
     def test_prompt_from_override(self):
         proc = self.run_turn("--prompt", "--from", "mill")
         self.assertEqual(proc.returncode, 0, proc.stderr)
@@ -276,3 +344,44 @@ class TurnFlag(unittest.TestCase):
 if __name__ == "__main__":
     unittest.main()
 
+
+
+class AtDedupeLockstep(unittest.TestCase):
+    def test_step0_window_matches_tool_constant(self):
+        m = re.search(r"^AT_DEDUPE_SECONDS = (\d+)", TOOL.read_text(), re.M)
+        self.assertIsNotNone(m, "live-inbox has no AT_DEDUPE_SECONDS")
+        step0 = [s for s in steps(TEMPLATE.read_text()) if "--at" in s]
+        self.assertTrue(step0)
+        self.assertIn(f"within {m.group(1)}s", step0[0])
+
+    def test_step7_guards_missing_reflection_package(self):
+        text = TEMPLATE.read_text()
+        self.assertIn('if [ -f "$R" ]', text)
+        self.assertIn("exit gate FAIL", text)
+
+
+class NoCloneOnWake(unittest.TestCase):
+    def test_wake_fast_forwards_and_never_clones(self):
+        text = TEMPLATE.read_text()
+        block = text.split("```bash", 1)[1].split("```", 1)[0]
+        self.assertIn('fetch -q origin main', block)
+        self.assertIn('merge -q --ff-only origin/main', block)
+        self.assertNotIn("git clone", text)
+        self.assertNotIn("worktree add", text)
+        self.assertIn("never clones the repo", text)
+
+
+    def test_wake_stops_when_checkout_is_not_main(self):
+        text = TEMPLATE.read_text()
+        block = text.split("```bash", 1)[1].split("```", 1)[0]
+        self.assertNotIn("using it as is", text)
+        self.assertIn('rev-parse HEAD)" = "$(git -C "$XRAY_MAIN" rev-parse origin/main)"', block)
+        self.assertIn("not at origin/main (xray#959); stop", block)
+        self.assertIn("exit 3", block)
+        self.assertEqual(block.count("XRAY_MAIN:?"), 1)
+        guard = block.split("INBOX=", 1)[0]
+        with tempfile.TemporaryDirectory() as d:
+            subprocess.run(["git", "init", "-q", d], check=True)
+            r = subprocess.run(["bash", "-c", guard], env={**os.environ, "XRAY_MAIN": d}, capture_output=True, text=True)
+            self.assertEqual(r.returncode, 3, r.stderr)
+            self.assertIn("not at origin/main (xray#959); stop", r.stderr)

@@ -16,12 +16,19 @@
  *   node scripts/node/auto-reflection-generator.cjs --trigger manual --title "My Topic"
  * 
  * Environment:
- *   REFLECTIONS_DIR - Override reflections directory (default: docs/reflections)
+ *   REFLECTIONS_DIR - Override the seat directory
+ *     (default: .xray/state/repertoire/feedback)
  */
 
-import { existsSync, mkdirSync, writeFileSync, readFileSync, statSync, readdirSync } from "fs";
-import { join, dirname } from "path";
+import { existsSync, mkdirSync, writeFileSync, readFileSync } from "fs";
+import { join, isAbsolute } from "path";
 import { execSync } from "child_process";
+import {
+  SEAT_REFLECTION_DIR,
+  DEFAULT_COMMIT_THRESHOLD,
+  commitsSinceLastReflection,
+  currentHead,
+} from "./reflection-due.mjs";
 
 const ARG_TYPES = ["ci-failure", "test-failure", "deployment", "manual", "commit-threshold", "context-warning"];
 const STORY_TYPES = ["reflection", "saga", "journey"];
@@ -35,7 +42,7 @@ function parseArgs() {
     version: null,
     commitCount: null,
     storyType: "reflection",
-    outputDir: process.env.REFLECTIONS_DIR || "docs/reflections",
+    outputDir: process.env.REFLECTIONS_DIR || SEAT_REFLECTION_DIR,
     force: false,
   };
   
@@ -160,88 +167,21 @@ function loadConfig() {
   };
 }
 
-function checkAutoReflectionNeeded(config) {
+function checkAutoReflectionNeeded(config, reflectionsDir) {
   const mode = config?.mode || "minimal";
-  const thresholds = config?.thresholds?.[mode] || { commit_threshold: 25, days_threshold: 14 };
-  
-  const reflectionsDir = process.env.REFLECTIONS_DIR || "docs/reflections";
-  
-  try {
-    if (!existsSync(reflectionsDir)) {
-      return { needed: true, reason: "no reflections directory", mode, thresholds };
-    }
-    
-    const files = readdirSync(reflectionsDir).filter(f => f.endsWith(".md"));
-    if (files.length === 0) {
-      return { needed: true, reason: "no reflections exist", mode, thresholds };
-    }
-    
-    // Find most recent reflection
-    let mostRecent = null;
-    let mostRecentTime = 0;
-    
-    for (const file of files) {
-      const filePath = join(reflectionsDir, file);
-      const stat = statSync(filePath);
-      if (stat.mtime.getTime() > mostRecentTime) {
-        mostRecentTime = stat.mtime.getTime();
-        mostRecent = filePath;
-      }
-    }
-    
-    if (!mostRecent) {
-      return { needed: true, reason: "no reflections found", mode, thresholds };
-    }
-    
-    const daysSince = Math.floor((Date.now() - mostRecentTime) / (1000 * 60 * 60 * 24));
-    const commitCount = parseInt(getCommitCountSinceLastReflection(reflectionsDir), 10);
-    
-    const commitNeeded = commitCount > thresholds.commit_threshold;
-    const timeNeeded = daysSince > thresholds.days_threshold;
-    
-    return {
-      needed: commitNeeded || timeNeeded,
-      reason: commitNeeded ? `commits (${commitCount} > ${thresholds.commit_threshold})` : 
-               timeNeeded ? `time (${daysSince} > ${thresholds.days_threshold} days)` : "ok",
-      mode,
-      thresholds,
-      commitsSince: commitCount,
-      daysSince,
-    };
-  } catch (e) {
-    return { needed: false, error: e.message, mode, thresholds };
-  }
-}
-
-function getCommitCountSinceLastReflection(reflectionsDir) {
-  try {
-    const files = readdirSync(reflectionsDir).filter(f => f.endsWith(".md"));
-    if (files.length === 0) {
-      return execSync("git rev-list --count HEAD", { encoding: "utf-8" }).trim();
-    }
-    
-    let mostRecent = null;
-    let mostRecentTime = 0;
-    
-    for (const file of files) {
-      const filePath = join(reflectionsDir, file);
-      const stat = statSync(filePath);
-      if (stat.mtime.getTime() > mostRecentTime) {
-        mostRecentTime = stat.mtime.getTime();
-        mostRecent = filePath;
-      }
-    }
-    
-    if (!mostRecent) {
-      return execSync("git rev-list --count HEAD", { encoding: "utf-8" }).trim();
-    }
-    
-    const refDate = new Date(mostRecentTime).toISOString();
-    const result = execSync(`git rev-list --count --since="${refDate}" HEAD`, { encoding: "utf-8" });
-    return result.trim();
-  } catch {
-    return "0";
-  }
+  const thresholds = config?.thresholds?.[mode] || { commit_threshold: DEFAULT_COMMIT_THRESHOLD };
+  const dir = reflectionsDir || SEAT_REFLECTION_DIR;
+  const abs = isAbsolute(dir) ? dir : join(process.cwd(), dir);
+  const limit = thresholds.commit_threshold ?? DEFAULT_COMMIT_THRESHOLD;
+  const commitsSince = commitsSinceLastReflection(process.cwd(), abs);
+  const needed = commitsSince >= limit;
+  return {
+    needed,
+    reason: needed ? `commits (${commitsSince} >= ${limit})` : "ok",
+    mode,
+    thresholds,
+    commitsSince,
+  };
 }
 
 function generateFilename(trigger, title, recentCommits = []) {
@@ -360,12 +300,13 @@ function generateReflectionStub(options, check = null) {
   };
   
   const content = templates[trigger] || templates.manual;
-  const storyTypeLocation = storyType === "saga" ? "docs/reflections/deep/" : options.outputDir;
+  const storyTypeLocation = options.outputDir;
   
   const stub = `---
 story_type: ${storyType}
 title: "${content.executiveSummary.split(".")[0]}"
 date: ${date}
+head: ${options.head || ""}
 slug: ${slug}
 emotional_arc: "challenge → discovery → resolution"
 codex_terms: ["reflection", "learning", "documentation"]
@@ -442,6 +383,7 @@ async function main() {
   console.log("");
   
   const options = parseArgs();
+  options.head = currentHead(process.cwd());
   validateArgs(options);
   
   // Load config and check if auto-reflection is needed
@@ -452,7 +394,7 @@ async function main() {
   
   // For commit-threshold trigger, check if it's actually needed
   if (options.trigger === "commit-threshold" && !options.force) {
-    const check = checkAutoReflectionNeeded(config);
+    const check = checkAutoReflectionNeeded(config, options.outputDir);
     console.log(`📊 Status: ${check.needed ? "NEEDED" : "not needed"} (${check.reason})`);
     console.log(`📊 Thresholds: ${check.thresholds?.commit_threshold || 25} commits, ${check.thresholds?.days_threshold || 14} days`);
     
@@ -469,7 +411,7 @@ async function main() {
   
   let check = null;
   if (options.trigger === "commit-threshold") {
-    check = checkAutoReflectionNeeded(config);
+    check = checkAutoReflectionNeeded(config, options.outputDir);
   }
   
   console.log(`📝 Trigger: ${options.trigger}`);
@@ -484,13 +426,12 @@ async function main() {
   console.log("Next steps:");
   console.log(`1. Open: ${outputPath}`);
   console.log("2. Fill in the details");
-  console.log(`3. Validate: ./scripts/node/reflection-validate.sh docs/reflections/${filename}`);
+  console.log(`3. Validate: ./scripts/node/reflection-validate.sh ${outputPath}`);
   console.log("4. Commit when ready");
   console.log("");
   
   if (check) {
     console.log(`📊 Commits since last reflection: ${check.commitsSince}`);
-    console.log(`📊 Days since last reflection: ${check.daysSince}`);
   }
 }
 

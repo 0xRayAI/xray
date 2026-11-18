@@ -1,0 +1,105 @@
+#!/usr/bin/env python3
+"""Weekday station reminder.
+
+Posts one inbox nudge per seat. The plist template is not loaded by this file.
+STATION_NOW is for tests. The template does not set it.
+"""
+import json
+import os
+import subprocess
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+from zoneinfo import ZoneInfo
+
+CORE = ("forge", "critic", "blinky")
+CHICAGO = ZoneInfo("America/Chicago")
+
+
+def window_open(when):
+    local = when.astimezone(CHICAGO)
+    if local.weekday() >= 5:
+        return False
+    minutes = local.hour * 60 + local.minute
+    return (7 * 60 + 30) <= minutes < (18 * 60)
+
+
+def target_seats(roles):
+    routing = roles.get("routing") if isinstance(roles, dict) else None
+    if not isinstance(routing, dict):
+        return list(CORE)
+    seats = [seat for seat in CORE if seat in routing]
+    if "arch1" in routing:
+        seats.append("arch1")
+    return seats
+
+
+def roles_file(env):
+    routed = env.get("BIFROST_ROUTING_DIR", "").strip()
+    if routed:
+        return Path(routed) / "inbox-roles.json"
+    main = env.get("XRAY_MAIN", "").strip()
+    if main:
+        return Path(main) / "house" / "live" / "feed" / "routing" / "inbox-roles.json"
+    return Path(__file__).resolve().parents[1] / "feed" / "routing" / "inbox-roles.json"
+
+
+def load_roles(path):
+    try:
+        return json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+
+
+def parse_now(env):
+    raw = env.get("STATION_NOW", "").strip()
+    if not raw:
+        return datetime.now(timezone.utc)
+    moment = datetime.fromisoformat(raw)
+    if moment.tzinfo is None:
+        return moment.replace(tzinfo=CHICAGO)
+    return moment
+
+
+def inbox_bin(env):
+    override = env.get("LIVE_INBOX", "").strip()
+    if override:
+        return override
+    main = env.get("XRAY_MAIN", "").strip()
+    if main:
+        return str(Path(main) / "house" / "live" / "tools" / "live-inbox")
+    return str(Path(__file__).resolve().parents[1] / "tools" / "live-inbox")
+
+
+def main(argv, env=None, runner=None):
+    env = os.environ if env is None else env
+    if any(arg != "--dry-run" for arg in argv):
+        print("usage: station-nudge [--dry-run]", file=sys.stderr)
+        return 2
+    when = parse_now(env)
+    seats = target_seats(load_roles(roles_file(env)))
+    if not window_open(when):
+        print("quiet")
+        return 0
+    if "--dry-run" in argv:
+        print("open " + " ".join(seats))
+        return 0
+    run = runner or subprocess.run
+    failed = False
+    for seat in seats:
+        result = run([inbox_bin(env), seat, "--station"], env=env, capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"station nudge: {seat} post failed", file=sys.stderr)
+            failed = True
+            continue
+        lines = [line for line in (result.stdout or "").splitlines() if line.strip()]
+        shown = lines[-1] if lines else ""
+        if shown.startswith(f"station {seat} nudge:station:{seat}:"):
+            print(shown)
+        else:
+            print(f"station nudge: {seat} posted")
+    return 1 if failed else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

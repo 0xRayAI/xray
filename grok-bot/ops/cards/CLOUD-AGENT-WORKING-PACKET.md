@@ -23,7 +23,7 @@ Working is a `cloud_agent` line on `POST /activity`, then the board. It does not
 
 The follow-up adds one fail-open command hook, `.cursor/hooks/cloud-activity.sh`. It posts when `cursor_cloud_id()` would return an id, and otherwise exits 0 with `{}`.
 
-Identity, copied from `cursor_cloud_id()` (`live-inbox` lines 338–343, pattern line 53). Do not shell out to `live-inbox`. That tool exits 2 when `LIVE_CURSORS` or `SEAT_KEYS_DIR` is missing, uses a 20s timeout, and can print a server error.
+Identity, copied from `cursor_cloud_id()` (`live-inbox` lines 338–343, pattern line 53). Do not shell out to `live-inbox`. That tool exits 2 when `SEAT_KEYS_DIR` is missing, uses a 20s timeout, and can print a server error. `LIVE_CURSORS` is not required. The cursor folder rule is `grok-bot/OP-PROC.md#cursor-folder`.
 
 - `CURSOR_AGENT` is `1`, `true`, or `yes`.
 - `CURSOR_CONVERSATION_ID` fullmatches `bc-[A-Za-z0-9_-]{2,40}`.

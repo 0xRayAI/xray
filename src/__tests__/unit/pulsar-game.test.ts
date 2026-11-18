@@ -26,6 +26,7 @@ describe('pulsar range', () => {
     expect(src).not.toContain('govern_with_solar');
     expect(src).not.toContain('http://');
     expect(src).not.toContain('https://');
+    expect(src).not.toContain('house/live');
     expect(game.CHARGE_SHA256).toMatch(/^[a-f0-9]{64}$/);
     expect(game.chargeDigest('')).not.toBe(game.CHARGE_SHA256);
     expect(game.chargeDigest('pulsar')).not.toBe(game.CHARGE_SHA256);

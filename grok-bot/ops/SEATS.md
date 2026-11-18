@@ -75,7 +75,7 @@ Skip Light/Normal, including ops/docs mirrors. No card on CLOSED/MERGED/LIVE re-
 ```
 critic ✶
 Level: Strict-when-asked
-Verdict: PASS | FAIL | HOLD
+Verdict: PASS | FIX (a FIX names each must-fix item and its owner)
 What I checked:
 What CI did not prove:
 Collision / leftover:

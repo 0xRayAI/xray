@@ -7,6 +7,7 @@ import {
   mkdirSync,
   mkdtempSync,
   readdirSync,
+  readFileSync,
   readlinkSync,
   rmSync,
   writeFileSync,
@@ -17,7 +18,7 @@ import { fileURLToPath } from 'node:url';
 
 const repoRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 
-/** Cursor hook files 4.0.28 wrote into the project. Wear outside git skips these. */
+/** Cursor hook files written into the project, including a folder that is not a git checkout. */
 const CURSOR_HOOK_FILES = [
   '.cursor/hooks.json',
   '.cursor/hooks/after-file-edit.sh',
@@ -133,9 +134,44 @@ function installAndSetup(dir: string, spec: string, git: boolean, home: string):
   return listProject(dir);
 }
 
+function assertMcpPathsAfterBareInstall(dir: string, home: string): void {
+  const env = {
+    ...process.env,
+    HOME: home,
+    USERPROFILE: home,
+    FOUNDRY_MACHINE_HOME: home,
+    npm_config_cache: path.join(home, '.npm'),
+    npm_config_fund: 'false',
+    npm_config_audit: 'false',
+    npm_config_update_notifier: 'false',
+  };
+  execFileSync('npm', ['install', '--ignore-scripts', '--no-fund', '--no-audit'], {
+    cwd: dir,
+    env,
+    stdio: 'pipe',
+  });
+  const mcp = JSON.parse(readFileSync(path.join(dir, '.mcp.json'), 'utf8')) as {
+    mcpServers?: Record<string, { args?: string[] }>;
+  };
+  const servers = mcp.mcpServers || {};
+  for (const spec of Object.values(servers)) {
+    for (const arg of spec.args || []) {
+      if (!arg.includes('/') && !arg.includes('\\')) continue;
+      const abs = path.isAbsolute(arg) ? arg : path.join(dir, arg);
+      expect(existsSync(abs), arg).toBe(true);
+    }
+  }
+  const station = readFileSync(path.join(dir, '.xray', 'state', 'STATION.md'), 'utf8');
+  expect(station).toMatch(/^Repertoire: on/m);
+  const repertoire = servers.repertoire?.args || [];
+  const server = repertoire.find((arg) => arg.includes('node_modules/0xray/vendor/'));
+  expect(server, repertoire.join(' ')).toBeTruthy();
+  expect(existsSync(server || '')).toBe(true);
+}
+
 describe('packed tarball file list against 0xray@4.0.28', () => {
   it(
-    'matches 4.0.28 outside git except the role-skill mirror and the cursor hooks, and inside git except that mirror',
+    'matches 4.0.28 outside git except the role-skill mirror, and inside git except that mirror',
     { timeout: 240000, retry: 0 },
     () => {
       const work = mkdtempSync(path.join(tmpdir(), 'xray-pack-gate-'));
@@ -183,8 +219,11 @@ describe('packed tarball file list against 0xray@4.0.28', () => {
         // files are the mill suit. Hooks and init.sh stay off unless costume is on.
         // Wear seeds the station ticket and the notes page on every suit.
         const seededPages = ['.xray/state/NOTES.md', '.xray/state/STATION.md'];
-        expect(plainExtra).toEqual(['.grok/config.toml', ...seededPages, ...plainAgents].sort());
-        expect(plainMissing).toEqual([...CURSOR_HOOK_FILES].sort());
+        const wornBundle = '.grok/plugins/0xray/bundle.md';
+        expect(plainExtra).toEqual(
+          ['.cursor/mcp.json', '.grok/config.toml', wornBundle, ...seededPages, ...GIT_HOOK_SNAPSHOT, ...plainAgents].sort(),
+        );
+        expect(plainMissing).toEqual([]);
 
         const gitAgents = roleAgentFiles(packedGit).filter((rel) => !oldGit.includes(rel));
         const expectedGit = [
@@ -192,7 +231,9 @@ describe('packed tarball file list against 0xray@4.0.28', () => {
             ...oldGit,
             ...CURSOR_HOOK_FILES,
             ...GIT_HOOK_SNAPSHOT,
+            '.cursor/mcp.json',
             '.grok/config.toml',
+            '.grok/plugins/0xray/bundle.md',
             ...seededPages,
             ...gitAgents,
           ]),
@@ -200,6 +241,7 @@ describe('packed tarball file list against 0xray@4.0.28', () => {
           .filter(keep)
           .sort();
         expect(packedGit.filter(keep)).toEqual(expectedGit);
+        assertMcpPathsAfterBareInstall(path.join(work, 'new-plain'), path.join(work, 'new-plain-home'));
       } finally {
         rmSync(work, { recursive: true, force: true });
       }

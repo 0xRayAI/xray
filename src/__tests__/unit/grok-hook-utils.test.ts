@@ -352,6 +352,10 @@ describe('grok-hook-utils', () => {
           HOME: home,
           USERPROFILE: home,
           FOUNDRY_MACHINE_HOME: machine,
+          XRAY_SEAT: '',
+          SEAT_KEYS_DIR: path.join(home, 'keys'),
+          XRAY_AI_PATH: home,
+          LIVE_URL: 'http://127.0.0.1:9',
         },
       });
       expect(ran.status).toBe(0);

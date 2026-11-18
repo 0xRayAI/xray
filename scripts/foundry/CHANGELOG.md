@@ -2,7 +2,23 @@
 
 ## [Unreleased]
 
-Shim `sound-voice.cjs` → `@0xray/blip/sound-voice`. Depend on published `@0xray/blip@^0.1.2`. Foundry stamp stays 0.1.12. Do not vendor mill drawers.
+Node floor is `>=24.22.3`, the 11 Nov 2026 patched 24 release. The 0.1.13 note below records the older floor.
+
+## [0.1.15] - 2026-11-04
+
+Herald plant (`herald` + `herald-inspect` + `herald-write`), aliases `write` / `brand`. `foundry.json` `{ "plant": "herald", "costume": false }` fastens the H-lane Dist write mill and turns mill off (seat pin documented; not worn yet). `npx @0xray/foundry herald draft` writes `.xray/herald/draft.md` and `.xray/herald-write-receipt.json`; missing brief, non-H lane, missing friend-hear, empty body, or missing draft fail closed. Receipt is always `dist: HOLD`, `sent: false`. `herald inspect` quotes the last receipt. No network. Not the eng mill. Not scout. Not Dist packaging.
+
+Fix (#871): `scout look` no longer swallows the next flag when a flag has no value. Plant agent YAML stamps 0.1.15.
+
+## [0.1.14] - 2026-11-04
+
+Scout plant (`scout` + `scout-inspect` + `scout-look`). `foundry.json` `{ "plant": "scout", "costume": false }` fastens the feed mill and turns mill off. `npx @0xray/foundry scout look` writes `.xray/scout/digest.md` and `.xray/scout-feed-receipt.json` (PASS/FAIL + plane, topic, paths). `scout inspect` quotes the last receipt. Missing plane, empty body, and a missing digest fail closed. Goggles stays the suit HUD and is not a plant id. Not the eng mill catalog. Not Dist beds. Not a `@0xray/blip` organ. Plant agent YAML stamps 0.1.14.
+
+## [0.1.13] - 2026-10-23
+
+Published Node floor is `>=24.22.1`. Registry 0.1.12 said `>=18`.
+
+Shim `sound-voice.cjs` → `@0xray/blip/sound-voice`. Depend on published `@0xray/blip@^0.1.2`. Foundry stamp is 0.1.13. Do not vendor mill drawers.
 
 Inspect `--go` emits a shop-style forge GO receipt (harness profile: bare / suited / partial). Observational by default: Cursor/Grok `hooks.json` bound, Repertoire fastened (`node_modules` or `.xray/state/repertoire`), Station present. `--require-harness=` gates dual-cloud A/B. Vendor Repertoire source and `memory_routing` declaration are not fasten. Not an 8th MCP. Not PPE. Not 5.0.
 

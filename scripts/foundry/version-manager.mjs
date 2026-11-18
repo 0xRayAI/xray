@@ -248,17 +248,28 @@ function changelogHasVersion(newVersion) {
   return new RegExp(`^## \\[${newVersion.replace(/\./g, '\\.')}\\]`, 'm').test(changelog);
 }
 
+function liftUnreleasedNotes(changelog) {
+  const re = /^(## \[Unreleased\][^\n]*\n)([\s\S]*?)(?=\n## \[)/m;
+  const match = changelog.match(re);
+  if (!match) return { changelog, notes: '' };
+  const notes = match[2].trim();
+  if (!notes) return { changelog, notes: '' };
+  return { changelog: changelog.replace(re, `${match[1]}\n`), notes };
+}
+
 function updateChangelog(newVersion, changeDescription) {
   const changelogPath = path.join(rootDir, 'CHANGELOG.md');
-  const newEntry = getChangelogEntry(newVersion, changeDescription);
+  let changelog = fs.existsSync(changelogPath) ? fs.readFileSync(changelogPath, 'utf-8') : '';
+  const lifted = liftUnreleasedNotes(changelog);
+  changelog = lifted.changelog;
+  const description = changeDescription || lifted.notes;
+  const newEntry = getChangelogEntry(newVersion, description);
 
   if (!fs.existsSync(changelogPath)) {
     fs.writeFileSync(changelogPath, `# Changelog\n\n${newEntry}`);
     process.stdout.write('Created CHANGELOG.md\n');
     return;
   }
-
-  let changelog = fs.readFileSync(changelogPath, 'utf-8');
 
   if (changelogHasVersion(newVersion)) {
     console.log(`ℹ️  CHANGELOG.md already has [${newVersion}] — skipping duplicate entry`);

@@ -7,14 +7,14 @@ sidebar_label: Set up a house
 
 The operating page is the same for every team. Yours is `house/HOUSE.md`: owner, seats, public voice, allowed repos, ask first, and the board. Those six headings win over the general page. Start at the [operating procedure](https://github.com/0xRayAI/xray/blob/main/grok-bot/OP-PROC.md), follow the [setup-house](https://github.com/0xRayAI/xray/blob/main/grok-bot/skills/setup-house/SKILL.md) skill, and keep the [house plate](../plates/house.md) as the stamp.
 
-These steps match `grok-bot/lib/seat-doctor.cjs`. The kit version on npm is 0.1.10 until the owner GO for 0.2.0. Docs for this suit are https://docs.0xray.dev/. The public board is https://bifrost.0xray.dev.
+These steps match `grok-bot/lib/seat-doctor.cjs`. The commands pin @0xray/grok-bot@0.1.18. Docs for this suit are https://docs.0xray.dev/. Each fleet runs its own Bifrost board (skill `stand-up-fleet`); https://bifrost.0xray.dev is the 0xRay fleet's own.
 
 ## Copy the template
 
 From the project root:
 
 ```bash
-npx @0xray/grok-bot house init
+npx @0xray/grok-bot@0.1.18 house init
 ```
 
 That copies every file in `templates/house/` into `./house` except `EXAMPLE.md`.
@@ -44,7 +44,7 @@ refusing to overwrite existing house files: <project>/house/ATTENTION_STATE.md, 
 Teams that still keep the board at `ops/WAVEBOARD.md` run:
 
 ```bash
-npx @0xray/grok-bot house init --migrate
+npx @0xray/grok-bot@0.1.18 house init --migrate
 ```
 
 That moves `ops/WAVEBOARD.md` to `house/WAVEBOARD.md` and copies each missing template, including `ATTENTION_STATE.md` and an empty `bifrost-waves.json`. A house file you already changed stays as it is. When both boards exist and `house/WAVEBOARD.md` is not the untouched template, the command exits 1 and writes nothing:
@@ -105,7 +105,7 @@ Show the owner the filled `HOUSE.md`. Nothing in Allowed counts until they appro
 ## Run doctor until the house check passes
 
 ```bash
-npx @0xray/grok-bot doctor
+npx @0xray/grok-bot@0.1.18 doctor
 ```
 
 `ready` is the same command.
@@ -153,4 +153,4 @@ Existing fleets follow [the migration](https://github.com/0xRayAI/xray/blob/main
 
 ## Every wake
 
-Read `.xray/state/STATION.md` first. Light on an owner message follows the board rule, then that card. Board rule. On every owner message run `live-inbox <seat> --prompt --from owner --note "<gist>"`. Ack a handled line with `live-inbox <seat> --ack <id>`, or `live-inbox <seat> --ack all` once every open line is handled. A cloud agent run uses `live-inbox <seat> --turn start --tag "bc-<first8> <track>"` and `live-inbox <seat> --turn end --tag "bc-<first8>"`. `--from owner` is required today. Kanban note. The live page shows a read-only kanban above Activity. Columns are open, review, fix, merge, retest, and done. The deep link is `?card=`. History note. Every activity line is archived to history. The word owner is the owner via LIVE_OWNER or the owner-name. The public board does not serve the history archive or the kanban yet. Full after a summary, a wake, or a gate also reads the `OP-PROC:` file, the newest two NOTES entries, `house/fleet/TRACKS.md`, open cards, and `Skills:`. When `LIVE_URL` is unset, read `house/WAVEBOARD.md` and `house/ATTENTION_STATE.md`. When `LIVE_URL` is set, read Bifrost cards (`GET /cards`) and `house/ATTENTION_STATE.md`. If a house file is missing, use the same name under `templates/house/`. The setup-house skill tells every seat to read `house/` on its next wake. One card, one owner. For the six headings, `HOUSE.md` is the copy that wins.
+Read `.xray/state/STATION.md` first. Light on every turn follows the board rule, then that card. A peer message, a routine or webhook wake, a background-task completion, and the seat's own follow-up use the same `--prompt` and `--turn start`, with `--from` `peer`, `routine`, or `self`. Board rule. On every owner message run `live-inbox <seat> --prompt --from owner --note "<gist>"`. Ack a handled line with `live-inbox <seat> --ack <id>`, or `live-inbox <seat> --ack all` once every open line is handled. A cloud agent run uses `live-inbox <seat> --turn start --tag "bc-<first8> <track>"` beside `live-inbox <seat> --cloud launch --agent <bc-id> --tag <card>` on first start or `--cloud reply` on resume, and `live-inbox <seat> --turn end --tag "bc-<first8>"` beside `live-inbox <seat> --cloud finished --agent <bc-id> --tag <card>` (cancel is `--cloud cancel`). The tag is owner/repo#n or xray#n. The cloud agent does not post that line. `--from owner` is required today. Kanban note. The live page shows a read-only kanban above Activity. Columns are open, review, fix, merge, retest, and done. The deep link is `?card=`. History note. Every activity line is archived to history. The word owner is the owner via LIVE_OWNER or the owner-name. The public board serves the kanban and GET /history, /history/cards, and /history/transitions. Full after a summary, a wake, or a gate also reads the `OP-PROC:` file, the newest two NOTES entries, `ops/cloud-memory/TRACKS.md` in the suit, open cards, and `Skills:`. When `LIVE_URL` is unset, read `house/WAVEBOARD.md` and `house/ATTENTION_STATE.md`. When `LIVE_URL` is set, read Bifrost cards (`GET /cards`) and `house/ATTENTION_STATE.md`. If a house file is missing, use the same name under `templates/house/`. The setup-house skill tells every seat to read `house/` on its next wake. One card, one owner. For the six headings, `HOUSE.md` is the copy that wins.

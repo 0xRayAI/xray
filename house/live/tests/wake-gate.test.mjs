@@ -10,13 +10,23 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { listenPort } from './free-port.mjs';
 import {
-  ROLLING_HOUR_MS, wakeConfig, createWakeState, classifyBatch, gateLine, noteSent, releaseDue,
-  publicStats, fullStats, isP1Issue, hasSha,
+  ROLLING_HOUR_MS, wakeConfig, createWakeState, classifyBatch, gateLine, noteSent, releaseDue, defaultIssueSeat,
+  publicStats, fullStats, isP1Issue, hasSha, startTurn, restoreWakeBook,
 } from '../app/wake-gate.mjs';
 
 const cfg = wakeConfig({ WAKE_KIND_COOLDOWN_S: '900', WAKE_MAX_PER_HOUR: '6', LIVE_TURN_OPEN_MIN: '20', WAKE_BATCH_S: '0' });
 const T0 = 1_700_000_000_000;
 const line = (over) => ({ id: over.id || 'l', type: over.type || 'pr_commit', repo: over.repo || 'acme/one', number: over.number ?? 1, title: 't', url: 'https://github.com/acme/one', reason: over.reason || 'ask', ...over });
+
+test('a start inside the open window keeps the original timestamp', () => {
+  const state = createWakeState();
+  assert.equal(startTurn(state, 'arch1', T0, cfg.turnOpenMs), T0);
+  assert.equal(startTurn(state, 'arch1', T0 + 60_000, cfg.turnOpenMs), T0);
+  assert.equal(state.turnOpen.get('arch1'), T0);
+  const later = T0 + cfg.turnOpenMs;
+  assert.equal(startTurn(state, 'arch1', later, cfg.turnOpenMs), later);
+  assert.equal(state.turnOpen.get('arch1'), later);
+});
 
 test('BIFROST_WAKES off, 0, false, and no pause every wake', () => {
   for (const v of ['off', '0', 'false', 'no', 'OFF']) assert.equal(wakeConfig({ BIFROST_WAKES: v }).paused, true, v);
@@ -57,6 +67,14 @@ test('handoff to, card owner, unassigned, ack, turn, and own post', () => {
   assert.equal(classifyBatch([line({ id: 'o', seat: 'forge', from: 'forge', type: 'pr_comment', reason: 'mine' })]).skips[0].reason, 'own_post');
 });
 
+test('unassigned issue_open wakes arch1 when forge is dark', () => {
+  const dark = classifyBatch([line({ id: 'iss-dark', seat: 'blinky', type: 'issue_open', reason: 'opened' })], { defaultSeat: 'arch1' });
+  assert.deepEqual(dark.wakes.map(w => w.seat), ['arch1']);
+  assert.equal(defaultIssueSeat({ FORGE_DARK: '1' }), 'arch1');
+  assert.equal(defaultIssueSeat({ LIVE_MODE: 'arch1-only' }), 'arch1');
+  assert.equal(defaultIssueSeat({}), 'forge');
+});
+
 test('unassigned issue_open wakes forge and blinky is only the extra copy', () => {
   const out = classifyBatch([line({ id: 'iss-1', seat: 'blinky', type: 'issue_open', reason: 'opened' })]);
   assert.deepEqual(out.wakes.map(w => w.seat), ['forge']);
@@ -87,6 +105,14 @@ test('a pr_comment stored for blinky and the author wakes the author, and a ment
   ]);
   assert.deepEqual(out.wakes.map(w => w.seat).sort(), ['forge', 'mill']);
   assert.equal(out.skips.filter(s => s.seat === 'blinky' && s.reason === 'fanout').length, 1);
+  const named = classifyBatch([
+    line({ id: 'c3', seat: 'blinky', type: 'pr_comment', reason: 'please @blinky', mentions: ['blinky'] }),
+    line({ id: 'c3', seat: 'forge', type: 'pr_comment', reason: 'comment on your PR' }),
+  ]);
+  assert.ok(named.wakes.some(w => w.seat === 'blinky'));
+  assert.ok(named.wakes.some(w => w.seat === 'forge'));
+  const prompt = classifyBatch([line({ id: 'bp', seat: 'blinky', type: 'prompt', kind: 'seat_prompt', reason: 'owner prompt' })]);
+  assert.deepEqual(prompt.wakes.map(w => w.seat), ['blinky']);
   const plain = classifyBatch([
     line({ id: 'c2', seat: 'blinky', type: 'pr_comment', reason: 'comment watch' }),
     line({ id: 'c2', seat: 'herald', type: 'pr_comment', reason: 'note' }),
@@ -104,8 +130,38 @@ test('a missing sha is not a shared sha; the same key with no sha is a cooldown'
   const other = gateLine({ seat: 'forge', line: line({ id: 'i2', type: 'issue_open', number: 9 }) }, st, T0 + 1000, cfg);
   assert.equal(other.op, 'send');
   const again = gateLine({ seat: 'forge', line: line({ id: 'i3', type: 'issue_open', number: 4 }) }, st, T0 + 1000, cfg);
-  assert.equal(again.reason, 'cooldown');
+  assert.equal(again.reason, 'already_woke');
   assert.notEqual(again.reason, 'repeat_sha');
+});
+
+test('the same issue_open wakes once, and a reopen or a new sha still wakes', () => {
+  const st = createWakeState();
+  const open = line({ id: 'open-1', type: 'issue_open', repo: 'acme/one', number: 50, sha: '' });
+  assert.equal(gateLine({ seat: 'forge', line: open }, st, T0, cfg).op, 'send');
+  noteSent(st, 'forge', [open], T0);
+  for (let i = 0; i < 5; i++) {
+    const again = gateLine({ seat: 'forge', line: line({ id: 'open-' + (i + 2), type: 'issue_open', repo: 'acme/one', number: 50, sha: '' }) }, st, T0 + (i + 2) * 1000 + 901000, cfg);
+    assert.equal(again.reason, 'already_woke');
+  }
+  const otherSeat = gateLine({ seat: 'mill', line: line({ id: 'open-mill', type: 'issue_open', repo: 'acme/one', number: 50, sha: '' }) }, st, T0 + 2000, cfg);
+  assert.equal(otherSeat.op, 'send');
+  const comment = gateLine({ seat: 'forge', line: line({ id: 'cmt', type: 'issue_comment', repo: 'acme/one', number: 50, sha: '' }) }, st, T0 + 3000, cfg);
+  assert.equal(comment.op, 'send');
+  const reopened = gateLine({ seat: 'forge', line: line({ id: 're', type: 'issue_reopen', repo: 'acme/one', number: 50, sha: '' }) }, st, T0 + 4000, cfg);
+  assert.equal(reopened.op, 'send');
+  const head = line({ id: 'sha-1', type: 'ci_fail', repo: 'acme/one', number: 50, sha: 'abc123' });
+  assert.equal(gateLine({ seat: 'forge', line: head }, st, T0 + 5000, cfg).op, 'send');
+  noteSent(st, 'forge', [head], T0 + 5000);
+  assert.equal(gateLine({ seat: 'forge', line: line({ id: 'sha-1b', type: 'ci_fail', repo: 'acme/one', number: 50, sha: 'abc123' }) }, st, T0 + 6000, cfg).reason, 'already_woke');
+  const newer = gateLine({ seat: 'forge', line: line({ id: 'sha-2', type: 'ci_fail', repo: 'acme/one', number: 50, sha: 'def456' }) }, st, T0 + 7000, cfg);
+  assert.notEqual(newer.reason, 'already_woke');
+  assert.ok(newer.op === 'send' || newer.op === 'queue');
+
+  const fresh = createWakeState();
+  restoreWakeBook(fresh, [{
+    ok: true, seat: 'forge', repo: 'acme/one', number: 50, kind: 'issue_open', t_ct: new Date(T0 - 86_400_000).toISOString(),
+  }], [], T0, 1000);
+  assert.equal(gateLine({ seat: 'forge', line: line({ id: 'open-restored', type: 'issue_open', repo: 'acme/one', number: 50, sha: '' }) }, fresh, T0, cfg).reason, 'already_woke');
 });
 
 test('two readys on different PRs inside 900s both send; the same sha is repeat_sha', () => {
@@ -116,7 +172,9 @@ test('two readys on different PRs inside 900s both send; the same sha is repeat_
   const b = gateLine({ seat: 'forge', line: line({ id: 'r2', type: 'ready', number: 2, sha: 'bbb' }) }, st, T0 + 1000, cfg);
   assert.equal(b.op, 'send');
   const same = gateLine({ seat: 'forge', line: line({ id: 'r3', type: 'ready', number: 1, sha: 'aaa' }) }, st, T0 + 1000, cfg);
-  assert.equal(same.reason, 'repeat_sha');
+  assert.equal(same.reason, 'already_woke');
+  const green = gateLine({ seat: 'forge', line: line({ id: 'g1', type: 'ci_pass', number: 1, sha: 'aaa' }) }, st, T0 + 1000, cfg);
+  assert.equal(green.op, 'send');
   const inside = gateLine({ seat: 'forge', line: line({ id: 'r4', type: 'ready', number: 1, sha: 'ccc' }) }, st, T0 + 899999, cfg);
   assert.equal(inside.op, 'queue');
   const edge = createWakeState();
@@ -236,17 +294,19 @@ const row = (over) => ({
   ...(over.labels ? { labels: over.labels } : {}), ...(over.flag ? { flag: over.flag } : {}), ...(over.sha ? { sha: over.sha } : {}),
 });
 
-test('server: unassigned issue and a P1 label wake only forge; health has no skip id', async () => {
+test('server: an unassigned issue and a P1 label stay on the board and do not wake forge', async () => {
   const bad = await post([row({ id: 'bad-label', seat: 'forge', type: 'issue_open', number: 1, reason: 'bad', labels: ['has space'] })]);
   assert.equal(bad.status, 400);
   assert.match(bad.body.error || '', /labels must be a list of short names/);
   const issueId = 'issue-open-unassigned-zz9';
   assert.equal((await post([row({ id: issueId, seat: 'blinky', type: 'issue_open', number: 11, reason: 'opened' })])).status, 200);
-  assert.ok(await until(() => got.some(g => g.path === '/forge' && g.body.inbox_id === issueId)), logs);
+  assert.ok(await until(() => logs.includes('wake: skip forge filter ' + issueId)), logs);
+  assert.equal(got.some(g => g.path === '/forge' && g.body.inbox_id === issueId), false);
   assert.equal(got.some(g => g.path === '/blinky' && g.body.inbox_id === issueId), false);
   const p1 = 'issue-p1-zz9';
   assert.equal((await post([row({ id: p1, seat: 'blinky', type: 'issue_labeled', number: 12, reason: 'labeled', labels: ['P1'] })])).status, 200);
-  assert.ok(await until(() => got.some(g => g.path === '/forge' && g.body.inbox_id === p1)), logs);
+  assert.ok(await until(() => logs.includes('wake: skip forge filter ' + p1)), logs);
+  assert.equal(got.some(g => g.path === '/forge' && g.body.inbox_id === p1), false);
   assert.equal(got.some(g => g.path === '/blinky' && g.body.inbox_id === p1), false);
   const health = await (await fetch(BASE + '/healthz')).json();
   assert.equal(JSON.stringify(health).includes(issueId), false);
@@ -265,27 +325,29 @@ test('server: a pr_comment wakes the author and the mention, not blinky', async 
     row({ id, seat: 'herald', type: 'pr_comment', number: 21, reason: 'mention @herald' }),
   ];
   assert.equal((await post(lines)).status, 200);
-  assert.ok(await until(() => got.some(g => g.path === '/forge' && g.body.inbox_id === id) && got.some(g => g.path === '/herald' && g.body.inbox_id === id)), logs);
+  assert.ok(await until(() => got.some(g => g.path === '/herald' && g.body.inbox_id === id)), logs);
+  assert.equal(got.some(g => g.path === '/forge' && g.body.inbox_id === id), false);
+  assert.match(logs, new RegExp('wake: skip forge filter ' + id));
   assert.equal(got.some(g => g.path === '/blinky' && g.body.inbox_id === id), false);
 });
 
 test('server: three lines batch into one POST; a missing sha is cooldown; a hotfix still posts', async () => {
   const before = got.filter(g => g.path === '/forge').length;
-  const batch = [1, 2, 3].map(n => row({ id: 'batch-' + n, seat: 'forge', type: 'ready', number: 40 + n, reason: 'ready ' + n }));
+  const batch = [1, 2, 3].map(n => row({ id: 'batch-' + n, seat: 'forge', type: 'ready', number: 40 + n, reason: '@forge ready ' + n }));
   assert.equal((await post(batch)).status, 200);
   assert.ok(await until(() => got.filter(g => g.path === '/forge').length > before), logs);
   const hit = got.filter(g => g.path === '/forge').at(-1);
   assert.equal(hit.body.lines.length, 3);
   assert.deepEqual(hit.body.ids, ['batch-1', 'batch-2', 'batch-3']);
   const first = got.length;
-  assert.equal((await post([row({ id: 'nosha-1', seat: 'forge', type: 'issue_open', number: 50, reason: 'one' })])).status, 200);
+  assert.equal((await post([row({ id: 'nosha-1', seat: 'forge', type: 'issue_open', number: 50, reason: '@forge one' })])).status, 200);
   assert.ok(await until(() => got.length > first), logs);
   const mid = got.length;
-  assert.equal((await post([row({ id: 'nosha-2', seat: 'forge', type: 'issue_open', number: 50, reason: 'two' })])).status, 200);
+  assert.equal((await post([row({ id: 'nosha-2', seat: 'forge', type: 'issue_open', number: 50, reason: '@forge two' })])).status, 200);
   await new Promise(r => setTimeout(r, 200));
   assert.equal(got.length, mid);
-  assert.match(logs, /wake: skip forge cooldown nosha-2/);
+  assert.match(logs, /wake: skip forge already_woke nosha-2/);
   assert.equal(logs.includes('repeat_sha nosha-2'), false);
-  assert.equal((await post([row({ id: 'nosha-3', seat: 'forge', type: 'issue_open', number: 50, reason: 'hot', flag: 'hotfix' })])).status, 200);
+  assert.equal((await post([row({ id: 'nosha-3', seat: 'forge', type: 'issue_open', number: 50, reason: '@forge hot', flag: 'hotfix' })])).status, 200);
   assert.ok(await until(() => got.some(g => g.body.inbox_id === 'nosha-3')), logs);
 });

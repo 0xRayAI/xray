@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 
 const BOARD_RULE =
-  'Board rule. On every owner message run `live-inbox <seat> --prompt --from owner --note "<gist>"`. Ack a handled line with `live-inbox <seat> --ack <id>`, or `live-inbox <seat> --ack all` once every open line is handled. A cloud agent run uses `live-inbox <seat> --turn start --tag "bc-<first8> <track>"` and `live-inbox <seat> --turn end --tag "bc-<first8>"`. `--from owner` is required today.';
+  'Board rule. On every owner message run `live-inbox <seat> --prompt --from owner --note "<gist>"`. Ack a handled line with `live-inbox <seat> --ack <id>`, or `live-inbox <seat> --ack all` once every open line is handled. A cloud agent run uses `live-inbox <seat> --turn start --tag "bc-<first8> <track>"` beside `live-inbox <seat> --cloud launch --agent <bc-id> --tag <card>` on first start or `--cloud reply` on resume, and `live-inbox <seat> --turn end --tag "bc-<first8>"` beside `live-inbox <seat> --cloud finished --agent <bc-id> --tag <card>` (cancel is `--cloud cancel`). The tag is owner/repo#n or xray#n. The cloud agent does not post that line. `--from owner` is required today.';
 const KANBAN_NOTE =
   'Kanban note. The live page shows a read-only kanban above Activity. Columns are open, review, fix, merge, retest, and done. The deep link is `?card=`.';
 const HISTORY_NOTE =
@@ -31,7 +31,6 @@ const BANNED = [
 const SENTENCE_PATHS = [
   'grok-bot/skills/setup-house/SKILL.md',
   'grok-bot/README.md',
-  'grok-bot/templates/house/HOUSE.md',
   'grok-bot/templates/house/STATION-BOOT.md',
   'grok-bot/templates/house/BOARD-PROMPT.md',
   'grok-bot/skills/board-prompt/SKILL.md',
@@ -49,6 +48,7 @@ const SENTENCE_PATHS = [
 
 const ALL_PATHS = [
   ...SENTENCE_PATHS,
+  'grok-bot/templates/house/HOUSE.md',
   'house/live/app/BOARD-DATA-MAP.md',
   'grok-bot/ops/packets/PACKET-KANBAN.md',
 ];
@@ -87,31 +87,30 @@ describe('board docs sweep', () => {
     expect(step3).not.toContain(TRACK_FINISH);
   });
 
-  it('slices the HOUSE live-mesh bullet to the one finish tag', () => {
-    const line = read('grok-bot/templates/house/HOUSE.md')
+  it('keeps the live mesh in CADENCE and out of the HOUSE template (#1066)', () => {
+    const house = read('grok-bot/templates/house/HOUSE.md');
+    expect(house).not.toContain('live-inbox');
+    expect(house).not.toContain('Live mesh');
+    expect(house).toContain('https://github.com/0xRayAI/xray/blob/main/grok-bot/OP-PROC.md');
+    const line = read('grok-bot/CADENCE.md')
       .split('\n')
       .find((row) => row.includes('Live mesh')) ?? '';
-    for (const phrase of COMMANDS) {
-      expect(line).toContain(phrase);
-    }
-    expect(line).not.toMatch(/live-inbox <seat> --prompt(?! --from owner)/);
-    expect(line).not.toContain(TRACK_FINISH);
+    expect(line).toContain('`fleet/activity.jsonl`');
+    expect(line).toContain('`fleet/cloud-agents.jsonl`');
     expect(line).toContain('--room <name>');
+    expect(line).not.toContain(TRACK_FINISH);
+    expect(read('grok-bot/OP-PROC.md')).toContain(BOARD_RULE);
   });
 
-  it('requires a gist in the board-prompt note and keeps step 5 as the cloud finish', () => {
+  it('points board-prompt at station and keeps the board rule', () => {
     const skill = read('grok-bot/skills/board-prompt/SKILL.md');
-    const note = skill.split('## Note')[1]?.split('## When a post fails')[0] ?? '';
-    expect(note).toContain('`--note "<gist>"`');
-    expect(note).not.toContain('omitting `--note` is the usual post');
-
-    const step5 = lineStarting(skill, '5. ');
-    expect(step5).toContain(`live-inbox <seat> ${TURN_END}`);
-    expect(step5).not.toContain(TRACK_FINISH);
-    expect(step5).not.toContain('--prompt');
-    expect(step5).not.toContain('--ack');
-    expect(step5).not.toContain('every exit');
-    expect(skill).toContain('still run turn end on the way out');
+    expect(skill).toContain('../station/SKILL.md');
+    expect(skill).toContain('../../OP-PROC.md#station-boot');
+    expect(skill).toContain(BOARD_RULE);
+    expect(skill).not.toContain('omitting `--note` is the usual post');
+    expect(skill).not.toContain('## Note');
+    expect(lineStarting(skill, '5. ')).toBe('');
+    expect(read('grok-bot/OP-PROC.md')).toContain('still run turn end on the way out');
   });
 
   it('slices the owner-message row, the kanban fold, and the old drag line', () => {

@@ -1,7 +1,7 @@
 # Docusaurus build artifacts
 docs-site/build/
 docs-site/.docusaurus/
-docs-site/node_modules/
+docs-site/node_modules
 
 # Generated runtime files
 .ci-reports/
@@ -13,6 +13,7 @@ logs/framework/routing-outcomes.json
 *.tgz
 
 # Runtime state
+.cursors/
 .strray/
 .opencode/.strrayrc.json
 xray/inference/
@@ -31,11 +32,15 @@ rerun_*/
 0xray-*.tgz
 *.tmp
 
+# Test-only temp projects (machine-bridges-optin)
+.xray-machine-bridges-test-*
+
 # Machine-local Grok wear (absolute paths from `0xray grok install`). Template: src/integrations/grok/plugin/0xray
 .grok/
 
 # Station card is a projection of session-boot.json — disk contract, not git
 .xray/state/STATION.md
+.xray/state/bifrost-send.json
 .xray/state/goggles-views.json
 .xray/state/goggles-plane.json
 .xray/state/session-boot.json
@@ -53,6 +58,7 @@ rerun_*/
 .xray/state/WATCHER.md
 .xray/state/WATCHER-HEARTBEAT.md
 .xray/state/CLEANSE-LIST.md
+.xray/state/seats/
 
 # Plane cards stay in git.
 !.xray/state/LENS.md
@@ -106,7 +112,7 @@ rerun_*/
 .opencode/commands/tree
 
 # Dependencies
-node_modules/
+node_modules
 
 # Build artifacts
 dist/
@@ -145,3 +151,9 @@ house/live/**/__pycache__/
 # house/live/app/collector is assembled by assemble-collector.sh; only its README is committed (#292)
 house/live/app/collector/*
 !house/live/app/collector/README.md
+
+# packed copy of house/live/tools/bifrost-init (grok-bot prepack, #1050)
+grok-bot/lib/bifrost-init.py
+# packed copies of house/live/tools/live-inbox and exit-gate.mjs (grok-bot prepack, xray#1071)
+grok-bot/lib/live-inbox.py
+grok-bot/lib/exit-gate.mjs

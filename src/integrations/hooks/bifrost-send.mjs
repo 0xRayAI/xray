@@ -1,0 +1,477 @@
+/**
+ * Worn-hook sends while Bifrost is active.
+ * The suit wire is chat activity, the packet, the card tag, the turn, and the subagent.
+ * Chat activity is one activity-feed prompt: kind prompt, action sent, from owner|peer|routine|self, note the line.
+ * A tool opens the seat turn, then ticks it once a minute. A subagent posts kind subagent
+ * on spawn and on return. The tag is a short hash. The prompt stays off the wire.
+ * The board defaults to https://bifrost.0xray.dev and ~/.burst/seat-keys.
+ * One seat key is the seat. A shell may still set LIVE_URL, XRAY_SEAT, or SEAT_KEYS_DIR.
+ * A quiet board sends nothing. Tool output and the key stay off the wire.
+ */
+import { createHash } from 'node:crypto';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+
+const SUIT_BOARD = 'https://bifrost.0xray.dev';
+
+const TAG = /^[A-Za-z0-9 ._:@#+/\-]{1,80}$/;
+const SEAT = /^[a-z0-9-]{2,16}$/;
+const STAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$/;
+const HANDOFF_ID = /^handoff:[a-z0-9_.-]+\/[a-z0-9_.-]+#[1-9]\d{0,6}:(ready|critic_fail|live_pass|merge|ci_fail):[0-9a-f]{7,64}$/;
+const KINDS = new Set(['ready', 'critic_fail', 'live_pass', 'merge', 'ci_fail']);
+
+export function ctStamp(date = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Chicago',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hourCycle: 'h23',
+    timeZoneName: 'longOffset',
+  }).formatToParts(date);
+  const get = (type) => parts.find((part) => part.type === type)?.value || '';
+  let hour = get('hour');
+  if (hour === '24') hour = '00';
+  const match = /^([+-])(\d{1,2})(?::?(\d{2}))?$/.exec(get('timeZoneName').replace(/^GMT/, ''));
+  if (!match) return '';
+  const stamp = `${get('year')}-${get('month')}-${get('day')}T${hour}:${get('minute')}:${get('second')}${match[1]}${match[2].padStart(2, '0')}:${(match[3] || '00').padStart(2, '0')}`;
+  return STAMP.test(stamp) ? stamp : '';
+}
+
+export function boardOrigin(raw) {
+  if (typeof raw !== 'string' || !raw.trim()) return '';
+  let url;
+  try {
+    url = new URL(raw.trim());
+  } catch {
+    return '';
+  }
+  if (url.username || url.password) return '';
+  if (url.protocol !== 'https:' && url.protocol !== 'http:') return '';
+  return url.origin;
+}
+
+function tagFor(kind, owner, repo, number) {
+  if (owner === '.' || owner === '..' || repo === '.' || repo === '..') return '';
+  const tag = `${kind}:${owner}/${repo}#${number}`;
+  return TAG.test(tag) ? tag : '';
+}
+
+export function refsFromText(text) {
+  const src = String(text || '').slice(0, 8000);
+  const prs = [];
+  const issues = [];
+  const seen = new Set();
+  const pullRe = /https:\/\/github\.com\/([A-Za-z0-9][A-Za-z0-9._-]{0,38})\/([A-Za-z0-9_][A-Za-z0-9._-]{0,99})\/pull\/([1-9]\d{0,6})\b/g;
+  const issueRe = /https:\/\/github\.com\/([A-Za-z0-9][A-Za-z0-9._-]{0,38})\/([A-Za-z0-9_][A-Za-z0-9._-]{0,99})\/issues\/([1-9]\d{0,6})\b/g;
+  const hashRe = /(?:^|[\s(])([A-Za-z0-9][A-Za-z0-9._-]{0,38})\/([A-Za-z0-9_][A-Za-z0-9._-]{0,99})#([1-9]\d{0,6})\b/g;
+  const add = (list, kind, owner, repo, number) => {
+    const tag = tagFor(kind, owner, repo, number);
+    if (!tag || seen.has(tag)) return;
+    seen.add(tag);
+    list.push({ tag, owner, repo, number: Number(number) });
+  };
+  for (const match of src.matchAll(pullRe)) add(prs, 'pr', match[1], match[2], match[3]);
+  for (const match of src.matchAll(issueRe)) add(issues, 'issue', match[1], match[2], match[3]);
+  for (const match of src.matchAll(hashRe)) {
+    if (seen.has(tagFor('pr', match[1], match[2], match[3]))) continue;
+    add(issues, 'issue', match[1], match[2], match[3]);
+  }
+  return { issues: issues.slice(0, 4), prs: prs.slice(0, 4) };
+}
+
+const DEFECT_NAMED = /[A-Za-z0-9][A-Za-z0-9._-]{0,38}\/[A-Za-z0-9_][A-Za-z0-9._-]{0,99}#\d+/;
+const DEFECT_HASH = /(?:^|[\s(])#\d{2,}\b/;
+const DEFECT_WORD = /\b(bug|defect)\b/i;
+
+/** One defect with no issue number. A log dump and a named number are not a draft. */
+export function defectDraft(text) {
+  const src = String(text || '').replace(/\r/g, '');
+  if (src.length < 20 || src.length > 1500) return null;
+  const lines = src.split('\n').map((line) => line.trim()).filter(Boolean);
+  if (!lines.length || lines.length > 8) return null;
+  if (!DEFECT_WORD.test(src)) return null;
+  if (DEFECT_NAMED.test(src) || DEFECT_HASH.test(src)) return null;
+  const title = lines[0].slice(0, 100);
+  const norm = title.toLowerCase().replace(/\s+/g, ' ').trim();
+  if (!norm) return null;
+  return { title, body: src.slice(0, 1500), mark: `defect:${norm}` };
+}
+
+export function handoffFromText(text, fromSeat, now = new Date()) {
+  const src = String(text || '').slice(0, 8000);
+  if (!src.includes('--handoff') || !SEAT.test(fromSeat)) return null;
+  const to = /--handoff\s+([a-z0-9-]{2,16})\b/.exec(src);
+  const pr = /--pr\s+([A-Za-z0-9][A-Za-z0-9._-]{0,38}\/[A-Za-z0-9_][A-Za-z0-9._-]{0,99})#([1-9]\d{0,6})\b/.exec(src);
+  const kind = /--kind\s+(ready|critic_fail|live_pass|merge|ci_fail)\b/.exec(src);
+  const sha = /--sha\s+([0-9a-fA-F]{7,64})\b/.exec(src);
+  if (!to || !pr || !kind || !sha || !KINDS.has(kind[1])) return null;
+  const repo = pr[1];
+  const number = Number(pr[2]);
+  const head = sha[1].toLowerCase();
+  const id = `handoff:${repo.toLowerCase()}#${number}:${kind[1]}:${head}`;
+  if (!HANDOFF_ID.test(id)) return null;
+  return {
+    id,
+    t_ct: now.toISOString(),
+    seat: to[1],
+    from: fromSeat,
+    to: to[1],
+    type: 'packet',
+    kind: kind[1],
+    repo,
+    number,
+    sha: head,
+    title: `handoff ${kind[1]}`,
+    url: `https://github.com/${repo}/pull/${number}`,
+    reason: `handoff ${kind[1]}`,
+  };
+}
+
+const NOTE_DROP = /[^A-Za-z0-9 ._:@#+/?'",;!()-]/g;
+
+export function promptNote(text) {
+  const flat = String(text || '')
+    .replace(NOTE_DROP, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 240)
+    .trim();
+  return flat;
+}
+
+const OWNER_KEYS = ['prompt', 'userPrompt', 'user_prompt', 'userMessage', 'message'];
+
+export function ownerLine(event) {
+  if (!event || typeof event !== 'object') return '';
+  for (const key of OWNER_KEYS) {
+    if (typeof event[key] === 'string' && event[key].trim()) return event[key];
+  }
+  return '';
+}
+
+const BOOT_FROM = new Set(['owner', 'peer', 'routine', 'self']);
+
+function namedFrom(value) {
+  const raw = String(value || '').trim().toLowerCase();
+  return BOOT_FROM.has(raw) ? raw : '';
+}
+
+function backgroundDone(event) {
+  const tasks = event && event.backgroundTasks;
+  if (!Array.isArray(tasks)) return false;
+  return tasks.some((task) => {
+    if (!task || typeof task !== 'object') return false;
+    if (task.completed === true) return true;
+    const status = String(task.status || task.state || '').toLowerCase();
+    return status === 'completed' || status === 'complete' || status === 'finished' || status === 'done';
+  });
+}
+
+/** owner, peer, routine, or self. Empty when this event is not a station boot. */
+export function bootTrigger(event, hookEvent) {
+  const body = event && typeof event === 'object' ? event : {};
+  const named = namedFrom(body.from)
+    || namedFrom(body.source)
+    || namedFrom(body.trigger)
+    || namedFrom(body.sender);
+  if (named) return named;
+  const hook = String(hookEvent || '');
+  if (hook === 'user_prompt_submit') {
+    if (body.peer === true || body.relay === true) return 'peer';
+    if (body.self === true || body.followUp === true || body.follow_up === true) return 'self';
+    if (!ownerLine(body) && backgroundDone(body)) return 'self';
+    return 'owner';
+  }
+  if (hook === 'session_start') {
+    if (body.wake === true || body.routine === true || body.webhook === true) return 'routine';
+    if (ownerLine(body)) return 'owner';
+    return 'routine';
+  }
+  if (hook === 'stop' && backgroundDone(body)) return 'self';
+  return '';
+}
+
+/** Turn start, then a prompt only when the event has a message. The from-label is not a gist. */
+export function bootPosts(event, hookEvent) {
+  const from = bootTrigger(event, hookEvent);
+  if (!from) return [];
+  const text = ownerLine(event);
+  const posts = [{ phase: 'start' }];
+  if (text) posts.push({ phase: 'prompt', from, text });
+  return posts;
+}
+
+export function subagentMark(toolName, toolInput) {
+  const input = toolInput && typeof toolInput === 'object' ? toolInput : {};
+  const basis = [
+    String(toolName || ''),
+    String(input.description || ''),
+    String(input.subagent_type || input.agent || ''),
+    String(input.prompt || '').slice(0, 240),
+  ].join('\n');
+  return `sub${createHash('sha256').update(basis).digest('hex').slice(0, 12)}`;
+}
+
+function cleanTag(raw) {
+  const tag = String(raw || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 40);
+  if (!/^[A-Za-z0-9][A-Za-z0-9_-]{2,39}$/.test(tag)) return '';
+  if (/body|text|message/i.test(tag)) return '';
+  return tag;
+}
+
+export function hookText(event) {
+  if (!event || typeof event !== 'object') return '';
+  const bits = [];
+  for (const key of ['prompt', 'userPrompt', 'message']) {
+    if (typeof event[key] === 'string') bits.push(event[key]);
+  }
+  const input = event.toolInput;
+  if (input && typeof input === 'object' && typeof input.command === 'string') bits.push(input.command);
+  const out = event.toolOutput ?? event.toolResult ?? event.result ?? event.output;
+  if (typeof out === 'string') bits.push(out);
+  return bits.join('\n').slice(0, 8000);
+}
+
+function blankState() {
+  return { liveUntil: 0, live: false, turn: '', tags: {} };
+}
+
+function statePath(root) {
+  return path.join(root, '.xray', 'state', 'bifrost-send.json');
+}
+
+function loadState(root) {
+  try {
+    const raw = JSON.parse(fs.readFileSync(statePath(root), 'utf8'));
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return blankState();
+    return {
+      liveUntil: Number(raw.liveUntil) || 0,
+      live: raw.live === true,
+      turn: raw.turn === 'start' ? 'start' : '',
+      tags: raw.tags && typeof raw.tags === 'object' && !Array.isArray(raw.tags) ? raw.tags : {},
+    };
+  } catch {
+    return blankState();
+  }
+}
+
+function saveState(root, state) {
+  const file = statePath(root);
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  const tmp = `${file}.tmp`;
+  fs.writeFileSync(tmp, JSON.stringify(state));
+  fs.renameSync(tmp, file);
+}
+
+function suitHome(env, home) {
+  if (typeof home === 'string' && home.trim()) return home.trim();
+  if (typeof env.HOME === 'string' && env.HOME.trim()) return env.HOME.trim();
+  return os.homedir();
+}
+
+function soleSeat(dir) {
+  let names;
+  try {
+    names = fs.readdirSync(dir);
+  } catch {
+    return '';
+  }
+  const seats = names
+    .filter((name) => name.endsWith('.key'))
+    .map((name) => name.slice(0, -4))
+    .filter((seat) => SEAT.test(seat));
+  return seats.length === 1 ? seats[0] : '';
+}
+
+function configOf(env, home) {
+  const origin = boardOrigin(env.LIVE_URL) || boardOrigin(SUIT_BOARD);
+  const keys = (typeof env.SEAT_KEYS_DIR === 'string' && env.SEAT_KEYS_DIR.trim())
+    || path.join(suitHome(env, home), '.burst', 'seat-keys');
+  let seat = typeof env.XRAY_SEAT === 'string' ? env.XRAY_SEAT.trim() : '';
+  if (!SEAT.test(seat)) seat = soleSeat(keys);
+  if (!origin || !SEAT.test(seat) || !keys) return null;
+  return { origin, seat, keys };
+}
+
+export function suitConfig(env = {}, home) {
+  return configOf(env, home);
+}
+
+function readKey(dir, seat) {
+  const root = path.resolve(dir);
+  const file = path.resolve(root, `${seat}.key`);
+  if (path.dirname(file) !== root) return '';
+  try {
+    const text = fs.readFileSync(file, 'utf8').trim();
+    if (!text || text.length > 4096 || /[\r\n]/.test(text)) return '';
+    return text;
+  } catch {
+    return '';
+  }
+}
+
+function activityLine(action, tag, now, kind = 'turn') {
+  const t_ct = ctStamp(now);
+  if (!t_ct) return null;
+  const body = { t_ct, kind, action };
+  if (tag) body.tag = tag;
+  return body;
+}
+
+function promptFrom(raw) {
+  return namedFrom(raw) || 'owner';
+}
+
+function promptLine(seat, note, now, from) {
+  const t_ct = ctStamp(now);
+  if (!t_ct || !SEAT.test(seat) || !note) return null;
+  return { t_ct, seat, kind: 'prompt', action: 'sent', from: promptFrom(from), to: seat, note };
+}
+
+async function boardLive(origin, fetchImpl, timeoutMs) {
+  const ac = new AbortController();
+  const timer = setTimeout(() => ac.abort(), timeoutMs);
+  try {
+    const res = await fetchImpl(`${origin}/healthz`, { method: 'GET', signal: ac.signal });
+    if (!res || res.status !== 200) return false;
+    const body = await res.json();
+    return !!(body && body.ok === true && body.board === 'live');
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function postJson(url, key, body, fetchImpl, timeoutMs) {
+  const ac = new AbortController();
+  const timer = setTimeout(() => ac.abort(), timeoutMs);
+  try {
+    const res = await fetchImpl(url, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${key}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify(body),
+      signal: ac.signal,
+    });
+    if (!res || (res.status !== 200 && res.status !== 202)) return null;
+    let parsed = null;
+    try {
+      if (typeof res.json === 'function') parsed = await res.json();
+    } catch {
+      parsed = null;
+    }
+    return { ok: true, body: parsed };
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+export async function notifyBifrost(opts = {}) {
+  const env = opts.env || {};
+  const root = opts.root || process.cwd();
+  const fetchImpl = opts.fetchImpl || globalThis.fetch;
+  const now = opts.now instanceof Date ? opts.now : new Date();
+  const sent = [];
+  const cfg = configOf(env, opts.home);
+  if (!cfg) return { sent, reason: 'off' };
+  const key = readKey(cfg.keys, cfg.seat);
+  if (!key) return { sent, reason: 'off' };
+  const state = loadState(root);
+  const nowMs = now.getTime();
+  let live = state.liveUntil > nowMs && state.live === true;
+  if (!(state.liveUntil > nowMs)) {
+    live = await boardLive(cfg.origin, fetchImpl, opts.timeoutMs || 1500);
+    state.live = live;
+    state.liveUntil = nowMs + 30000;
+    try { saveState(root, state); } catch { /* the check still stands */ }
+  }
+  if (!live) return { sent, reason: 'quiet' };
+
+  const posts = [];
+  if (opts.phase === 'start' && state.turn !== 'start') {
+    const line = activityLine('start', '', now);
+    if (line) posts.push({ path: '/activity', body: line, mark: 'turn' });
+  } else if (opts.phase === 'end' && state.turn === 'start') {
+    const line = activityLine('end', '', now);
+    if (line) posts.push({ path: '/activity', body: line, mark: 'end' });
+  } else if (opts.phase === 'subagent') {
+    const action = opts.action === 'end' ? 'end' : 'start';
+    const tag = cleanTag(opts.tag);
+    const mark = tag ? `subagent:${tag}:${action}` : '';
+    if (tag && !(state.tags[mark] > nowMs)) {
+      const line = activityLine(action, tag, now, 'subagent');
+      if (line) posts.push({ path: '/activity', body: line, mark, ttl: 60 * 1000 });
+    }
+  } else if (opts.phase === 'prompt' || opts.phase === 'work') {
+    if (opts.phase === 'work') {
+      if (state.turn !== 'start') {
+        const line = activityLine('start', '', now);
+        if (line) posts.push({ path: '/activity', body: line, mark: 'turn' });
+      } else if (!(state.tags['turn:tick'] > nowMs)) {
+        const line = activityLine('tick', '', now);
+        if (line) posts.push({ path: '/activity', body: line, mark: 'turn:tick', ttl: 60 * 1000 });
+      }
+    }
+    if (opts.phase === 'prompt') {
+      const note = promptNote(opts.text);
+      const mark = note ? `prompt:${note}` : '';
+      if (note && !(state.tags[mark] > nowMs)) {
+        const line = promptLine(cfg.seat, note, now, opts.from);
+        if (line) posts.push({ path: '/activity', body: line, mark, ttl: 60 * 1000 });
+      }
+    }
+    const refs = refsFromText(opts.text);
+    for (const ref of [...refs.issues, ...refs.prs]) {
+      if (state.tags[ref.tag] > nowMs) continue;
+      const line = activityLine('start', ref.tag, now);
+      if (line) posts.push({ path: '/activity', body: line, mark: ref.tag });
+    }
+    const packet = handoffFromText(opts.text, cfg.seat, now);
+    if (packet && !(state.tags[packet.id] > nowMs)) {
+      posts.push({ path: '/inbox', body: { lines: [packet] }, mark: packet.id });
+    }
+    if (opts.phase === 'prompt') {
+      const draft = defectDraft(opts.text);
+      if (draft && !(state.tags[draft.mark] > nowMs)) {
+        posts.push({ path: '/defect', body: { text: opts.text }, mark: draft.mark, ttl: 7 * 24 * 60 * 60 * 1000, defect: true });
+      }
+    }
+  }
+
+  for (const post of posts) {
+    const posted = await postJson(`${cfg.origin}${post.path}`, key, post.body, fetchImpl, opts.timeoutMs || 2000);
+    if (!posted) continue;
+    if (post.defect) {
+      const opened = posted.body;
+      if (!opened || opened.ok !== true) {
+        if (opened && typeof opened.reason === 'string' && opened.reason.startsWith('github-')) {
+          state.tags[post.mark] = nowMs + 60 * 60 * 1000;
+        }
+        continue;
+      }
+      sent.push('defect');
+      state.tags[post.mark] = nowMs + (post.ttl || 60 * 60 * 1000);
+      continue;
+    }
+    if (post.path === '/inbox') sent.push('packet');
+    else if (post.body.kind === 'prompt') sent.push('prompt');
+    else if (post.body.kind === 'subagent') sent.push(`subagent:${post.body.action}`);
+    else if (post.body.tag) sent.push(post.body.tag);
+    else sent.push(post.body.action);
+    if (post.mark === 'turn') state.turn = 'start';
+    else if (post.mark === 'end') state.turn = '';
+    else state.tags[post.mark] = nowMs + (post.ttl || 60 * 60 * 1000);
+  }
+  try { saveState(root, state); } catch { /* the post already landed */ }
+  return { sent, reason: 'live' };
+}

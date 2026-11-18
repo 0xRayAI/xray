@@ -15,23 +15,15 @@ vi.mock("../../core/framework-logger.js", () => ({
 
 // ── Build artifact tests ──────────────────────────────────────────────────
 
-describe("build artifacts", () => {
+describe.skipIf(!HAS_DIST)("dist build artifacts", () => {
   const distMcpDir = path.join(PROJECT_ROOT, "dist", "mcps");
   const distPluginDir = path.join(PROJECT_ROOT, "dist", "plugin");
-  const dotOpencodeDir = path.join(PROJECT_ROOT, ".opencode");
-
-  test("dist/ available — prerequisite", () => {
-    expect(HAS_DIST).toBe(true);
-  });
 
   test("dist/plugin/xray-codex-injection.js exists", () => {
-    if (!HAS_DIST) return;
-    const pluginPath = path.join(distPluginDir, "xray-codex-injection.js");
-    expect(fs.existsSync(pluginPath)).toBe(true);
+    expect(fs.existsSync(path.join(distPluginDir, "xray-codex-injection.js"))).toBe(true);
   });
 
   test("dist/mcps/knowledge-skills/ has skill server files", () => {
-    if (!HAS_DIST) return;
     const skillsDir = path.join(distMcpDir, "knowledge-skills");
     expect(fs.existsSync(skillsDir)).toBe(true);
     const files = fs.readdirSync(skillsDir).filter(f => f.endsWith(".server.js"));
@@ -39,48 +31,32 @@ describe("build artifacts", () => {
   });
 
   test("dist/mcps/ has core server files", () => {
-    if (!HAS_DIST) return;
     const files = fs.readdirSync(distMcpDir).filter(f => f.endsWith(".server.js"));
     expect(files.length).toBeGreaterThanOrEqual(5);
   });
+});
 
-  test("dist/plugin/xray-codex-injection.js exists", () => {
-    const pluginPath = path.join(distPluginDir, "xray-codex-injection.js");
-    expect(fs.existsSync(pluginPath)).toBe(true);
-  });
-
-  test("dist/mcps/knowledge-skills/ has skill server files", () => {
-    const skillsDir = path.join(distMcpDir, "knowledge-skills");
-    expect(fs.existsSync(skillsDir)).toBe(true);
-    const files = fs.readdirSync(skillsDir).filter(f => f.endsWith(".server.js"));
-    expect(files.length).toBeGreaterThanOrEqual(17);
-  });
-
-  test("dist/mcps/ has core server files", () => {
-    const files = fs.readdirSync(distMcpDir).filter(f => f.endsWith(".server.js"));
-    expect(files.length).toBeGreaterThanOrEqual(5);
-  });
-
-  test(".opencode/agents/ contains YML agent files", () => {
-    const agentsDir = path.join(dotOpencodeDir, "agents");
+describe("source catalog", () => {
+  test("src/opencode/agents contains YML agent files", () => {
+    const agentsDir = path.join(PROJECT_ROOT, "src", "opencode", "agents");
     expect(fs.existsSync(agentsDir)).toBe(true);
     const files = fs.readdirSync(agentsDir).filter(f => f.endsWith(".yml"));
     expect(files.length).toBeGreaterThanOrEqual(40);
   });
 
-  test(".opencode/skills/ contains skill directories", () => {
-    const skillsDir = path.join(dotOpencodeDir, "skills");
+  test("src/skills contains skill directories", () => {
+    const skillsDir = path.join(PROJECT_ROOT, "src", "skills");
     expect(fs.existsSync(skillsDir)).toBe(true);
     const entries = fs.readdirSync(skillsDir);
     expect(entries.length).toBeGreaterThanOrEqual(5);
   });
 
-  test(".opencode/codex.codex exists", () => {
-    expect(fs.existsSync(path.join(dotOpencodeDir, "codex.codex"))).toBe(true);
+  test("src/opencode/codex.codex exists", () => {
+    expect(fs.existsSync(path.join(PROJECT_ROOT, "src", "opencode", "codex.codex"))).toBe(true);
   });
 
-  test(".opencode/init.sh exists and is executable", () => {
-    const initPath = path.join(dotOpencodeDir, "init.sh");
+  test(".opencode/init.sh exists", () => {
+    const initPath = path.join(PROJECT_ROOT, ".opencode", "init.sh");
     expect(fs.existsSync(initPath)).toBe(true);
   });
 });

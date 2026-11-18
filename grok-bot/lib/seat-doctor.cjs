@@ -39,6 +39,14 @@ function packageIdentity(cwd) {
   };
 }
 
+function kitIdentity() {
+  const pkg = readJson(path.join(__dirname, '..', 'package.json'));
+  return {
+    name: typeof pkg?.name === 'string' && pkg.name ? pkg.name : '@0xray/grok-bot',
+    version: typeof pkg?.version === 'string' ? pkg.version : null,
+  };
+}
+
 function findSkill(cwd, name) {
   for (const rel of SKILL_DIRS) {
     const file = path.join(cwd, ...rel, name, 'SKILL.md');
@@ -164,16 +172,25 @@ function deadHookPaths(cwd) {
   return dead;
 }
 
+function repertoirePackage(cwd) {
+  const candidates = [
+    path.join(cwd, 'node_modules', '@0xray', 'repertoire', 'package.json'),
+    path.join(cwd, 'node_modules', '0xray', 'vendor', '@0xray', 'repertoire', 'package.json'),
+    path.join(cwd, 'vendor', '@0xray', 'repertoire', 'package.json'),
+  ];
+  return candidates.find((file) => fs.existsSync(file)) || null;
+}
+
 function probeRepertoire(cwd) {
-  const pkgPath = path.join(cwd, 'node_modules', '@0xray', 'repertoire', 'package.json');
-  if (!fs.existsSync(pkgPath)) {
+  const pkgPath = repertoirePackage(cwd);
+  if (!pkgPath) {
     return {
       status: 'miss',
-      detail: 'node_modules/@0xray/repertoire not found (optional — honest miss)',
+      detail: 'repertoire package not found (optional — honest miss)',
     };
   }
   const pkg = readJson(pkgPath) || {};
-  const signalsFile = path.join(cwd, 'node_modules', '@0xray', 'repertoire', 'data', 'curated_signals.json');
+  const signalsFile = path.join(path.dirname(pkgPath), 'data', 'curated_signals.json');
   const signalsJson = readJson(signalsFile);
   const signals = Array.isArray(signalsJson?.signals) ? signalsJson.signals.length : null;
   return {
@@ -182,6 +199,54 @@ function probeRepertoire(cwd) {
     version: typeof pkg.version === 'string' ? pkg.version : null,
     signals,
   };
+}
+
+function probeFoundry(cwd) {
+  const file = path.join(cwd, '.xray', 'state', 'foundry.json');
+  const data = readJson(file);
+  if (!data || typeof data.id !== 'string' || data.id.length === 0) {
+    return { present: false, id: null, receiver: null, file: null };
+  }
+  const receiver = typeof data.receiver === 'string' && data.receiver.length > 0 ? data.receiver : null;
+  const listingId = typeof data.listingId === 'string' && data.listingId.length > 0 ? data.listingId : null;
+  return { present: true, id: data.id, receiver, listingId, file };
+}
+
+function probeRail(cwd) {
+  const file = path.join(cwd, '.xray', 'state', 'near-rail.json');
+  const data = readJson(file);
+  if (!data || typeof data !== 'object') return { pay: {}, cap: {}, escrow: {} };
+  return {
+    pay: data.pay && typeof data.pay === 'object' ? data.pay : {},
+    cap: data.cap && typeof data.cap === 'object' ? data.cap : {},
+    escrow: data.escrow && typeof data.escrow === 'object' ? data.escrow : {},
+  };
+}
+
+function railRow(label, row) {
+  if (!row || typeof row.account !== 'string' || !row.account) return `${label}: pending`;
+  if (typeof row.contract !== 'string' || !row.contract) return `${label}: pending`;
+  if (typeof row.lastTx !== 'string' || !row.lastTx) return `${label}: pending`;
+  return `${label}: ${row.account} contract ${row.contract} tx ${row.lastTx}`;
+}
+
+function probeNear(cwd) {
+  const seats = path.join(cwd, '.xray', 'state', 'seats');
+  if (!fs.existsSync(seats)) return { present: false, accountId: null, file: null };
+  let names = [];
+  try {
+    names = fs.readdirSync(seats);
+  } catch {
+    return { present: false, accountId: null, file: null };
+  }
+  for (const name of names) {
+    const file = path.join(seats, name, 'near', 'account.json');
+    const data = readJson(file);
+    if (data && typeof data.account_id === 'string' && data.account_id.length > 0) {
+      return { present: true, accountId: data.account_id, file };
+    }
+  }
+  return { present: false, accountId: null, file: null };
 }
 
 function probeOws(home) {
@@ -409,7 +474,47 @@ function ownerNameWarning(text) {
   return 'HOUSE.md has no name: under ## Owner';
 }
 
-function stationBootWarnings(cwd, env) {
+const CT_STAMP = /(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})/;
+
+function chicagoMs(stamp) {
+  const m = CT_STAMP.exec(stamp || '');
+  if (!m) return null;
+  const wall = Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]);
+  const parts = {};
+  for (const p of new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Chicago',
+    hourCycle: 'h23',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).formatToParts(new Date(wall))) {
+    parts[p.type] = p.value;
+  }
+  const seen = Date.UTC(+parts.year, +parts.month - 1, +parts.day, +parts.hour, +parts.minute);
+  return wall + (wall - seen);
+}
+
+function workingWarnings(card, notesFile, now) {
+  const working = /^Working:\s*(\d{4}-\d{2}-\d{2} \d{2}:\d{2})/m.exec(card);
+  if (!working) return [];
+  const warnings = [];
+  let newest = '';
+  if (fs.existsSync(notesFile)) {
+    for (const m of fs.readFileSync(notesFile, 'utf8').matchAll(/^##\s+(\d{4}-\d{2}-\d{2} \d{2}:\d{2})/gm)) {
+      if (m[1] > newest) newest = m[1];
+    }
+  }
+  if (newest > working[1]) warnings.push('STATION.md Working: is older than the newest NOTES entry; run the station way-out');
+  const at = chicagoMs(working[1]);
+  if (at !== null && now - at > STALE_LOG_MS) {
+    warnings.push('STATION.md Working: is older than 2h; a turn skipped station');
+  }
+  return warnings;
+}
+
+function stationBootWarnings(cwd, env, now = Date.now()) {
   const warnings = [];
   const profile = readProfile(cwd, env);
   if (profile) {
@@ -431,7 +536,7 @@ function stationBootWarnings(cwd, env) {
   const card = fs.readFileSync(station, 'utf8');
   if (!/^Skills:/m.test(card)) warnings.push('STATION.md has no Skills: line');
   if (!/^Keys:/m.test(card)) warnings.push('STATION.md has no Keys: line');
-  return warnings;
+  return warnings.concat(workingWarnings(card, notes, now));
 }
 
 function cadenceWarnings(houseFile, text, cwd, env, now) {
@@ -453,6 +558,20 @@ function cadenceWarnings(houseFile, text, cwd, env, now) {
   return warnings;
 }
 
+const HOUSE_NOT_ENABLED = 'house is not enabled here';
+
+function houseOffReport(extra) {
+  return {
+    status: 'warn',
+    file: null,
+    via: null,
+    enabled: false,
+    detail: HOUSE_NOT_ENABLED,
+    warnings: [],
+    ...extra,
+  };
+}
+
 function inspectHouseFile(file, via, ctx = {}) {
   const cwd = ctx.cwd || path.dirname(file);
   const env = ctx.env || {};
@@ -461,15 +580,9 @@ function inspectHouseFile(file, via, ctx = {}) {
   try {
     text = fs.readFileSync(file, 'utf8');
   } catch {
-    return {
-      status: 'warn',
-      file: null,
-      via: null,
-      detail: 'house is not enabled here',
-      warnings: [],
-    };
+    return houseOffReport();
   }
-  const warnings = cadenceWarnings(file, text, cwd, env, now).concat(stationBootWarnings(cwd, env));
+  const warnings = cadenceWarnings(file, text, cwd, env, now).concat(stationBootWarnings(cwd, env, now));
   const ownerName = ownerNameWarning(text);
   if (ownerName) warnings.push(ownerName);
   const exampleSibling = path.join(path.dirname(file), 'EXAMPLE.md');
@@ -479,6 +592,7 @@ function inspectHouseFile(file, via, ctx = {}) {
       status: 'fail',
       file,
       via,
+      enabled: true,
       detail: 'house/EXAMPLE.md exists — delete it',
       scope,
       warnings,
@@ -490,13 +604,14 @@ function inspectHouseFile(file, via, ctx = {}) {
       status: 'fail',
       file,
       via,
+      enabled: true,
       detail: 'HOUSE.md still has unfilled example lines',
       unfilled: unfilled.length,
       scope,
       warnings,
     };
   }
-  return { status: 'pass', file, via, detail: file, scope, warnings };
+  return { status: 'pass', file, via, enabled: true, detail: file, scope, warnings };
 }
 
 function probeHouse(cwd, env) {
@@ -504,26 +619,13 @@ function probeHouse(cwd, env) {
   if (raw) {
     const file = fileFromHouseEnv(raw);
     if (!file) {
-      return {
-        status: 'warn',
-        file: null,
-        via: null,
-        detail: 'house is not enabled here',
-        missing: path.resolve(raw),
-        warnings: [],
-      };
+      return houseOffReport({ missing: path.resolve(raw) });
     }
     return inspectHouseFile(file, 'GROK_BOT_HOUSE', { cwd, env });
   }
   const walked = walkForHouse(cwd);
   if (!walked) {
-    return {
-      status: 'warn',
-      file: null,
-      via: null,
-      detail: 'house is not enabled here',
-      warnings: [],
-    };
+    return houseOffReport();
   }
   return inspectHouseFile(walked, 'walk-up', { cwd, env });
 }
@@ -615,6 +717,22 @@ function startedFolderPhrase(copied, destDir, folder) {
   return `started ${rels.join(', ')}`;
 }
 
+// ISO-8601 with the box's numeric offset (activity.schema.json t_ct).
+function localStamp(ms) {
+  const d = new Date(ms);
+  const pad = (n) => String(Math.abs(n)).padStart(2, '0');
+  const off = -d.getTimezoneOffset();
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+    + `${off < 0 ? '-' : '+'}${pad(Math.trunc(off / 60))}:${pad(off % 60)}`;
+}
+
+// A new house starts its activity log with one line, so doctor has a JSON line to read (#1053).
+function seedActivity(file, now) {
+  if (!isFile(file) || fs.readFileSync(file, 'utf8').trim() !== '') return;
+  const line = { t_ct: localStamp(typeof now === 'number' ? now : Date.now()), seat: 'house', kind: 'watcher', action: 'start', tag: 'house-init' };
+  fs.writeFileSync(file, `${JSON.stringify(line)}\n`);
+}
+
 function legacyBoardPath(seatRoot) {
   return path.join(seatRoot, 'ops', 'WAVEBOARD.md');
 }
@@ -647,6 +765,7 @@ function initHouse(opts = {}) {
     const result = copyMissingHouseFile(srcDir, destDir, name);
     if (result.copied) files.push(result.dest);
   }
+  seedActivity(path.join(destDir, 'fleet', 'activity.jsonl'), opts.now);
   return {
     ok: true,
     code: 0,
@@ -724,6 +843,11 @@ function migrateHouse({ seatRoot, srcDir, destDir, names }) {
 
 function nextSteps(report) {
   const steps = [];
+  if (report.plant.houseOnly) {
+    // Before seats are suited the fleet stops short of pay, hangar shops, and Groover (#1051).
+    steps.push('Seats: each seat fastens mill+inspect in its own chat (fasten-suit-per-agent); run doctor there');
+    return steps;
+  }
   if (report.goggles && report.goggles.status === 'off') {
     if (report.goggles.detail === 'goggles organ missing') {
       steps.push('Restore the goggles organ. The suit keeps the lens.');
@@ -731,14 +855,14 @@ function nextSteps(report) {
       steps.push('Turn goggles on. The suit keeps the lens.');
     }
   }
-  const installStep = 'npm i 0xray && npx @0xray/foundry inspect --skip-live';
+  const installStep = 'npm i 0xray && npx 0xray validate';
   if (!report.plant.installed) steps.push(installStep);
   const millReady = report.plant.mill && report.plant.inspect;
   if (!millReady) {
-    steps.push('Fasten mill+inspect: npm i 0xray && npx @0xray/foundry mint --skip-live');
-    steps.push('Prove plant: npx @0xray/foundry inspect --skip-live (expect mill + inspect, costume false)');
+    steps.push('Fasten mill+inspect: npm i 0xray && npx 0xray wear');
+    steps.push('Prove plant: npx 0xray validate (expect plant: mill + inspect fastened)');
   } else if (report.plant.ok) {
-    steps.push('Prove again later: npx @0xray/foundry inspect --skip-live');
+    steps.push('Prove again later: npx 0xray validate');
   } else if (report.plant.deadHooks.length > 0) {
     for (const dead of report.plant.deadHooks) {
       steps.push(`Repair dead hook ${dead.file}: ${dead.path} is missing`);
@@ -755,7 +879,7 @@ function nextSteps(report) {
       'Signer is ZigZag (approved=true). Hosted /sign may be 410. Product MCP name is clearing — never xray-clearing. Do not mill-plant Clearing into this 0xRay suit.',
     );
     if (!report.ows.present) {
-      steps.push('OWS missing: create/fund a local Open Wallet under ~/.ows, then retry a 402 shop');
+      steps.push(`OWS missing: create a wallet at ${report.ows.path}, then retry a 402 shop`);
     }
   }
   steps.push(
@@ -787,10 +911,60 @@ function probeGoggles(cwd, inventoryPresent) {
   return { status: 'on', detail: 'goggles on' };
 }
 
+function bridgeFiles(cwd, home) {
+  return [
+    path.join(cwd, '.mcp.json'),
+    path.join(cwd, '.grok', 'plugins', '0xray', '.mcp.json'),
+    path.join(cwd, '.cursor', 'mcp.json'),
+    path.join(home, '.grok', 'plugins', '0xray', '.mcp.json'),
+    path.join(home, '.hermes', 'plugins', 'xray-hermes', '.mcp.json'),
+  ];
+}
+
+function pinnedRoots(data) {
+  const servers = data && data.mcpServers;
+  if (!servers || typeof servers !== 'object') return [];
+  const roots = [];
+  for (const server of Object.values(servers)) {
+    const pin = server && server.env && server.env.XRAY_ROOT;
+    if (typeof pin === 'string' && pin.trim()) roots.push(path.resolve(pin));
+  }
+  return roots;
+}
+
+function probeBridges(cwd, home) {
+  const here = path.resolve(cwd);
+  const hits = [];
+  for (const file of bridgeFiles(cwd, home)) {
+    const data = readJson(file);
+    if (!data) continue;
+    for (const root of pinnedRoots(data)) {
+      if (root !== here) hits.push({ file, root });
+    }
+  }
+  if (hits.length === 0) return { status: 'ok', hits: [] };
+  return {
+    status: 'warn',
+    hits,
+    detail: hits.map((hit) => `${hit.file} -> ${hit.root}`).join('; '),
+  };
+}
+
+function owsRoot(cwd, env, explicit) {
+  if (explicit) return explicit;
+  const named = String((env && env.OWS_HOME) || '').trim();
+  if (named) return named;
+  return cwd;
+}
+
 function diagnoseSeat(opts = {}) {
   const cwd = path.resolve(opts.cwd || process.cwd());
+  const env = opts.env || process.env;
   const home = opts.home || os.homedir();
+  const walletHome = owsRoot(cwd, env, opts.home);
   const seat = packageIdentity(cwd);
+  const kit = kitIdentity();
+  const xray = packageIdentity(path.join(cwd, 'node_modules', '0xray'));
   const millFile = findSkill(cwd, 'mill');
   const inspectFile = findSkill(cwd, 'inspect');
   const inventory = loadInventory(cwd);
@@ -802,14 +976,19 @@ function diagnoseSeat(opts = {}) {
   const inventoryPresent = Boolean(inventory);
   const goggles = probeGoggles(cwd, inventoryPresent);
   const plantOk = Boolean(seat) && mill && inspect && installed && deadHooks.length === 0 && goggles.status !== 'off';
-  const env = opts.env || process.env;
   const house = probeHouse(cwd, env);
+  const bridges = probeBridges(cwd, home);
+  // A house folder with no seat in it yet (no package.json, no 0xray, no suit) is the fleet stage, not a failed seat.
+  const houseOnly = house.enabled === true && !seat && !installed && !inventoryPresent && !mill && !inspect;
   const report = {
-    ok: plantOk && house.status !== 'fail',
+    ok: (plantOk || houseOnly) && house.status !== 'fail',
     cwd,
     seat,
+    kit,
+    xray,
     plant: {
       ok: plantOk,
+      houseOnly,
       installed,
       deadHooks,
       mill,
@@ -823,8 +1002,12 @@ function diagnoseSeat(opts = {}) {
     },
     goggles,
     repertoire: probeRepertoire(cwd),
-    ows: probeOws(home),
+    ows: probeOws(walletHome),
+    near: probeNear(cwd),
+    foundry: probeFoundry(cwd),
+    rail: probeRail(cwd),
     house,
+    bridges,
     board: boardSurface(env),
     urls: PLANT_URLS,
     next: [],
@@ -835,6 +1018,7 @@ function diagnoseSeat(opts = {}) {
 
 function plantLine(report) {
   if (report.plant.ok) return 'Plant: PASS — mill+inspect fastened';
+  if (report.plant.houseOnly) return 'Plant: PASS — house only; no seat suited here yet';
   const parts = [];
   if (!report.plant.mill || !report.plant.inspect) parts.push('mill+inspect not fastened');
   if (!report.plant.installed) parts.push('missing node_modules/0xray/package.json');
@@ -846,19 +1030,16 @@ function plantLine(report) {
   return `Plant: FAIL — ${parts.join('; ')}`;
 }
 
-function formatDoctor(report) {
-  const lines = [];
-  lines.push('@0xray/grok-bot doctor — seat plant check');
-  lines.push('');
-  if (!report.seat) {
-    lines.push(`Seat: not a project (no package.json) @ ${report.cwd}`);
-  } else {
-    const label = [report.seat.name, report.seat.version].filter(Boolean).join('@') || 'unnamed';
-    lines.push(`Seat: ${label}`);
-    lines.push(`Root: ${report.cwd}`);
-  }
-  lines.push('');
-  lines.push(plantLine(report));
+function doctorBanner(report) {
+  const kit = report.kit || {};
+  const kitName = kit.name || '@0xray/grok-bot';
+  const kitLabel = kit.version ? `${kitName}@${kit.version}` : kitName;
+  const xray = report.xray;
+  const xrayLabel = xray && xray.name && xray.version ? `${xray.name}@${xray.version}` : '0xray not installed';
+  return `${kitLabel} doctor — ${xrayLabel} — seat plant check`;
+}
+
+function pushPlantDetail(lines, report) {
   lines.push(`  mill: ${report.plant.mill ? 'yes' : 'miss'}${report.plant.millFile ? ` (${report.plant.millFile})` : ''}`);
   lines.push(
     `  inspect: ${report.plant.inspect ? 'yes' : 'miss'}${report.plant.inspectFile ? ` (${report.plant.inspectFile})` : ''}`,
@@ -869,6 +1050,46 @@ function formatDoctor(report) {
     lines.push('  inventory: miss (.xray/foundry-inventory.json)');
   }
   lines.push(`  costume: ${report.plant.costume ? 'true (do not dump 45 skills)' : 'false'}`);
+}
+
+function nearStatusFromReport(report) {
+  const account = report.near && report.near.present && report.near.accountId ? report.near.accountId : 'pending';
+  const foundryId = report.foundry && report.foundry.present && report.foundry.id ? report.foundry.id : 'pending';
+  const listing = report.foundry && report.foundry.listingId ? report.foundry.listingId : 'pending';
+  const rail = report.rail || {};
+  return [
+    `NEAR account: ${account}`,
+    `Foundry: ${foundryId}`,
+    `Listing: ${listing}`,
+    railRow('Pay', rail.pay),
+    railRow('Cap', rail.cap),
+    railRow('Escrow', rail.escrow),
+    '',
+  ].join('\n');
+}
+
+function nearStatusBlock(cwd) {
+  return nearStatusFromReport({
+    near: probeNear(cwd),
+    foundry: probeFoundry(cwd),
+    rail: probeRail(cwd),
+  });
+}
+
+function formatDoctor(report) {
+  const lines = [];
+  lines.push(doctorBanner(report));
+  lines.push('');
+  if (!report.seat) {
+    lines.push(`Project: not a project (no package.json) @ ${report.cwd}`);
+  } else {
+    const label = [report.seat.name, report.seat.version].filter(Boolean).join('@') || 'unnamed';
+    lines.push(`Project: ${label}`);
+    lines.push(`Root: ${report.cwd}`);
+  }
+  lines.push('');
+  lines.push(plantLine(report));
+  if (!report.plant.houseOnly) pushPlantDetail(lines, report);
   if (report.goggles && report.goggles.status === 'on') lines.push('Goggles: on');
   else if (report.goggles && report.goggles.status === 'off') lines.push(`Goggles: FAIL — ${report.goggles.detail}`);
   lines.push('');
@@ -880,7 +1101,14 @@ function formatDoctor(report) {
   } else {
     lines.push(`Repertoire: miss — ${report.repertoire.detail}`);
   }
-  if (walletStepsOff(report)) {
+  if (report.bridges && report.bridges.status === 'warn') {
+    lines.push(`Bridges: WARN — points outside this folder: ${report.bridges.detail}`);
+  } else if (report.bridges) {
+    lines.push('Bridges: ok');
+  }
+  if (report.plant.houseOnly) {
+    lines.push('OWS pay: not checked — house only (pay is opt-in, per seat)');
+  } else if (walletStepsOff(report)) {
     lines.push('OWS pay: skipped — house Scope wallet off');
   } else {
     lines.push(
@@ -888,6 +1116,24 @@ function formatDoctor(report) {
         ? `OWS pay: yes — ${report.ows.path}`
         : `OWS pay: miss — ${report.ows.path} (hangar shops return 402 until paid)`,
     );
+  }
+  if (report.near) {
+    lines.push(
+      report.near.present
+        ? `NEAR: ${report.near.accountId} (testnet)`
+        : 'NEAR: miss — near-seat has not recorded an account',
+    );
+  }
+  if (report.foundry) {
+    lines.push(
+      report.foundry.present
+        ? `Foundry: ${report.foundry.id} — receiver ${report.foundry.receiver || 'miss'}`
+        : 'Foundry: miss — create has not recorded a foundry',
+    );
+    if (report.foundry.present && report.foundry.listingId) {
+      lines.push(`Hangar: ${report.foundry.listingId}`);
+    }
+    lines.push(nearStatusFromReport(report).trimEnd());
   }
   if (report.house) {
     let label = 'WARN';
@@ -907,7 +1153,8 @@ function formatDoctor(report) {
       }
     }
   }
-  if (report.board && report.board.read) lines.push(`Board: ${report.board.read}`);
+  const houseOff = !report.house || report.house.enabled !== true;
+  if (!houseOff && report.board && report.board.read) lines.push(`Board: ${report.board.read}`);
   lines.push('');
   lines.push('Next');
   report.next.forEach((step, i) => {
@@ -985,6 +1232,19 @@ Commands:
   house init       Copy templates/house into ./house, including watchers/ and fleet/. Refuses if a target file exists. Writes a file only when it is missing
   house init --migrate
                    Move ops/WAVEBOARD.md to house/WAVEBOARD.md when that old board is a file. That file is the board when LIVE_URL is unset. Bifrost (GET /cards) is the board only when LIVE_URL is set. Start ATTENTION_STATE.md from the template when it is missing. Append the template ## Cadence block when HOUSE.md has none. Start missing watchers/ and fleet/ files. Never overwrite a ledger or any other house file you already changed. Refuse when both boards exist and the house board is not the untouched template
+  live-inbox <seat> ...
+                   The board inbox tool (packed as lib/live-inbox.py): --prompt, --ack, --handoff, --turn. Needs python3, LIVE_URL and SEAT_KEYS_DIR
+  exit-gate <NOTES.md>
+                   The wake's step 7 gate: a named bug or ask with no repo#n fails the turn
+  bifrost init     Write the board's seat routes (collector/routing/inbox-roles.json in a bifrost clone; BIFROST_FEED overrides). --check validates and writes nothing. Needs python3
+  near-status          Print NEAR account, foundry id, listing id, and Pay, Cap, Escrow. Absent is pending
+  near-pay             Testnet USDC ft_transfer. Payee and amount come from the quote. A replay returns the stored result
+  near-cap             Init the spend vault, set_allow, set_deny, or add the pay,ping agent key. Owner calls use the cold key
+  near-escrow          Escrow on its own account: init, open, fund, deliver, accept, refund
+  foundry-create --id <id> --seat <seat> --account <account>
+                   Record the foundry and its NEAR receiver. The same id and receiver keeps the record. --force replaces a different one
+  hangar-list --agent-id <id> --url <https-shop>
+                   Read .xray/state/foundry.json and check GET /v1/listings. A stored listing id skips the call. Pin payment is not signed here.
   (default)        Point at AGENTS.md / SKILLS.md / llms.txt
 
 Flags:
@@ -1043,13 +1303,42 @@ function runDoctorCli(argv, io = {}) {
   return report.ok ? 0 : 1;
 }
 
+function runNearStatusCli(argv, io = {}) {
+  const stdout = io.stdout || process.stdout;
+  const stderr = io.stderr || process.stderr;
+  let cwd = io.cwd || process.cwd();
+  for (let i = 0; i < argv.length; i += 1) {
+    const arg = argv[i];
+    if (arg === '--help' || arg === '-h') {
+      stdout.write('grok-bot near-status [--cwd <dir>]\n');
+      return 0;
+    }
+    if (arg === '--cwd') {
+      const value = argv[i + 1];
+      if (!value || value.startsWith('-')) {
+        stderr.write('--cwd needs a path\n');
+        return 2;
+      }
+      cwd = value;
+      i += 1;
+      continue;
+    }
+    stderr.write(`unknown argument ${arg}\n`);
+    return 2;
+  }
+  stdout.write(nearStatusBlock(cwd));
+  return 0;
+}
+
 module.exports = {
   PLANT_URLS,
   boardSurface,
   diagnoseSeat,
   formatDoctor,
   initHouse,
+  nearStatusBlock,
   parseDoctorArgs,
+  runNearStatusCli,
   runDoctorCli,
   usageText,
 };

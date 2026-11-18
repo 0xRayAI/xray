@@ -4,7 +4,12 @@
  * Loaded by Grok session-start / post-tool-use (rewire only, no new MCP surface).
  */
 import { createRequire } from 'node:module';
-import { execSync, spawnSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
+import {
+  commitsSinceLastReflection,
+  reflectionIsDue,
+  seatReflectionDir,
+} from '../../../scripts/node/reflection-due.mjs';
 import { existsSync, mkdirSync, readFileSync, writeFileSync, appendFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -55,16 +60,6 @@ function appendActivity(projectRoot, action, level, data = {}) {
   appendFileSync(join(logDir, 'activity.log'), `${line}\n`);
 }
 
-function gitCommitCount(projectRoot) {
-  try {
-    const out = execSync('git rev-list --count HEAD', { cwd: projectRoot, encoding: 'utf8' }).trim();
-    const n = parseInt(out, 10);
-    return Number.isFinite(n) ? n : 0;
-  } catch {
-    return 0;
-  }
-}
-
 /** P1.1 — reflection stub when synthesis.reflection triggers fire */
 export function maybeRunReflectionStub(projectRoot) {
   const features = loadFeatures(projectRoot);
@@ -73,11 +68,12 @@ export function maybeRunReflectionStub(projectRoot) {
 
   const threshold = reflection.thresholds?.[reflection.mode ?? 'minimal'];
   const commitTrigger = reflection.triggers?.commit_threshold;
-  const commits = gitCommitCount(projectRoot);
-  const commitLimit = commitTrigger?.threshold ?? threshold?.commit_threshold ?? 25;
-
   if (!commitTrigger?.enabled && !threshold?.auto_generate) return null;
-  if (commits > 0 && commits % commitLimit !== 0) return null;
+
+  const commitLimit = commitTrigger?.threshold ?? threshold?.commit_threshold ?? 25;
+  const dir = seatReflectionDir(projectRoot);
+  if (!reflectionIsDue(projectRoot, dir, commitLimit)) return null;
+  const commits = commitsSinceLastReflection(projectRoot, dir);
 
   const pkgRoot = resolvePackageRoot();
   const generator = join(pkgRoot, 'scripts', 'node', 'auto-reflection-generator.mjs');
@@ -85,7 +81,16 @@ export function maybeRunReflectionStub(projectRoot) {
 
   const result = spawnSync(
     process.execPath,
-    [generator, '--trigger', 'commit-threshold', '--title', `Pipeline checkpoint (${commits} commits)`],
+    [
+      generator,
+      '--trigger',
+      'commit-threshold',
+      '--title',
+      `Pipeline checkpoint (${commits} commits)`,
+      '--output-dir',
+      dir,
+      '--force',
+    ],
     { cwd: projectRoot, encoding: 'utf8', timeout: 15000 },
   );
 

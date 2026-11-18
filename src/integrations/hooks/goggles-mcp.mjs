@@ -21,7 +21,7 @@ const LOOK_SCHEMA = {
   properties: {
     plane: {
       type: 'string',
-      description: 'A plane, or the card for one thing. Omit it to read the current card.',
+      description: 'A plane, a card, or a part of the current plate. Omit it to read the current card.',
     },
   },
 };
@@ -29,7 +29,7 @@ const LOOK_SCHEMA = {
 export const TOOLS = [
   {
     name: 'look',
-    description: 'The card for this plane, or for one thing on it. Entry and Exit, and the other rows, are in LENS.md. A missing plate names the stamp-plate skill.',
+    description: 'The card for this plane, or for one thing on it. The plates row names the neighbor cards. A part of the current plate hops to that card. Entry and Exit, and the other rows, are in LENS.md. A missing plate names the stamp-plate skill.',
     inputSchema: LOOK_SCHEMA,
   },
   {
@@ -85,7 +85,8 @@ function checkArgs(args) {
   }
   if (args.plane == null) return null;
   if (typeof args.plane !== 'string') return deny('invalid_args', 'plane must be a string.');
-  if (typeof bundled.isCardName !== 'function' || !bundled.isCardName(args.plane)) return deny('invalid_args', 'Name one plane.');
+  const name = args.plane.trim();
+  if (!name || /[\\/\n]/.test(name)) return deny('invalid_args', 'Name one plane.');
   return null;
 }
 
@@ -105,6 +106,7 @@ function publicCard(view) {
     teardown: view.teardown || '',
     worn: view.worn || '',
     card: view.card || view.plane || '',
+    plates: Array.isArray(view.plates) ? view.plates : [],
     stamp: view.stamp || '',
     notes,
   };
@@ -121,9 +123,9 @@ export async function answerLook(raw, root) {
   if (!api) return deny('invalid_args', 'Goggles organ not found.');
   const here = projectRoot(root);
   const argv = args.plane == null ? [] : [args.plane];
+  const cards = api.lookCards(argv, here);
   const text = api.look(argv, here).text;
   if (text === 'Name one plane.') return deny('name_one', 'Name one plane.');
-  const cards = api.lookCards(argv, here);
   if (!Array.isArray(cards) || !cards.length) return deny('name_one', 'Name one plane.');
   const shown = cards.map(publicCard);
   if (shown.length === 1 && shown[0]) {

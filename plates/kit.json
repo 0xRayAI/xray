@@ -1,0 +1,143 @@
+{
+  "palette": {
+    "default": "cyan",
+    "cyan": [90, 214, 222],
+    "cyanDim": [22, 78, 88],
+    "ink": [236, 238, 236],
+    "muted": [168, 178, 188],
+    "shadow": [12, 14, 16],
+    "metal": [36, 38, 40],
+    "metalRaised": [58, 60, 64],
+    "metalCard": [64, 68, 74],
+    "metalEdge": [92, 96, 102],
+    "floor": [24, 30, 34],
+    "rivet": [186, 190, 194],
+    "rivetHole": [28, 30, 32],
+    "red": [235, 52, 52],
+    "orange": [245, 140, 30],
+    "yellow": [245, 220, 40],
+    "green": [60, 200, 90],
+    "blue": [50, 140, 245],
+    "violet": [150, 70, 230],
+    "redDim": [89, 19, 19],
+    "orangeDim": [93, 53, 11],
+    "yellowDim": [93, 83, 15],
+    "greenDim": [22, 76, 34],
+    "blueDim": [19, 53, 93],
+    "violetDim": [57, 26, 87],
+    "rainbow": [
+      [235, 52, 52],
+      [245, 140, 30],
+      [245, 220, 40],
+      [60, 200, 90],
+      [50, 140, 245],
+      [150, 70, 230]
+    ]
+  },
+  "rainbowTitles": ["BIFROST"],
+  "line": {
+    "railWidth": 16,
+    "railGlow": 28,
+    "glowFactor": 0.38,
+    "arrowhead": {
+      "shape": "triangle",
+      "length": 22,
+      "halfWidth": 18,
+      "glowHalfWidth": 28
+    }
+  },
+  "layout": {
+    "width": 1280,
+    "wellLeft": 56,
+    "wellRight": 1224,
+    "innerInset": 36,
+    "belowHeader": 22,
+    "bandPad": 8,
+    "labelBlock": 28,
+    "arrowGap": 64,
+    "cardGap": 20,
+    "singleMax": 920,
+    "rowGap": 72,
+    "bandEnd": 10,
+    "noteSize": 18,
+    "noteLine": 24,
+    "footGap": 12,
+    "arrowInset": 4,
+    "labelX": 16,
+    "labelY": 18,
+    "backInset": 18,
+    "backOut": 28,
+    "alignSlack": 20,
+    "busSplit": 10
+  },
+  "iconMatch": [
+    { "kind": "github", "when": ["github"] },
+    { "kind": "board", "when": ["board", "kanban"] },
+    { "kind": "deploy", "when": ["deploy", "railway", "healthz"] },
+    { "kind": "seat", "when": ["seat", "inbox"] },
+    { "kind": "route", "when": ["route", "dispatch"] },
+    { "kind": "gate", "when": ["gate"] },
+    { "kind": "memory", "when": ["memory", "station", "repertoire", "recall"] },
+    { "kind": "score", "when": ["score", "threshold", "heat", "metric"] },
+    { "kind": "log", "when": ["log"] },
+    { "kind": "file", "when": ["file", ".md", "json", "path", ".xray", "write"] },
+    { "kind": "agent", "when": ["agent"] },
+    { "kind": "context", "when": ["context"] },
+    { "kind": "lens", "when": ["lens", "goggle", "visor"] },
+    { "kind": "note", "when": ["note", "stamp"] },
+    { "kind": "mark", "when": [] }
+  ],
+  "parts": {
+    "frame": { "svg": "frame.svg", "sizes": { "slice": 40 } },
+    "rivet": { "svg": "rivet.svg", "sizes": { "diameter": 16, "inset": 10 } },
+    "header": { "svg": "header.svg", "sizes": { "slice": 16, "top": 56, "side": 64, "minHeight": 124, "after": 16 } },
+    "logoSlot": { "svg": "logo-slot.svg", "sizes": { "x": 18, "y": 16, "mark": 188 } },
+    "title": { "svg": "title-slot.svg", "sizes": { "x": 220, "pad": 16, "reserve": 280 } },
+    "subtitle": { "svg": "subtitle-slot.svg", "sizes": { "gap": 18 } },
+    "accentRail": { "svg": "accent-rail.svg", "sizes": { "height": 12, "gap": 14, "inset": 24 } },
+    "layerLabel": { "svg": "layer-label.svg", "sizes": { "width": 8, "height": 18, "x": 8, "textX": 22, "y": 4 } },
+    "card": {
+      "svg": "card.svg",
+      "sizes": {
+        "slice": 20,
+        "padX": 18,
+        "padY": 16,
+        "padRight": 16,
+        "titleMin": 34,
+        "titleLead": 4,
+        "detailGap": 8,
+        "detailLead": 7,
+        "minHeight": 112,
+        "blockPad": 18
+      }
+    },
+    "numberTile": { "svg": "number-tile.svg", "sizes": { "size": 36, "advance": 46 } },
+    "icon": {
+      "sizes": { "size": 26, "advance": 36 },
+      "files": {
+        "agent": "agent.svg",
+        "file": "file.svg",
+        "score": "score.svg",
+        "github": "github.svg",
+        "board": "board.svg",
+        "seat": "seat.svg",
+        "deploy": "deploy.svg",
+        "context": "context.svg",
+        "lens": "lens.svg",
+        "route": "route.svg",
+        "gate": "gate.svg",
+        "memory": "memory.svg",
+        "log": "log.svg",
+        "note": "note.svg",
+        "mark": "mark.svg"
+      }
+    },
+    "rail": { "svg": "rail.svg", "sizes": { "width": 16, "glow": 28 } },
+    "junction": { "svg": "junction.svg", "sizes": { "size": 16 } },
+    "arrowhead": {
+      "svg": "arrowhead.svg",
+      "sizes": { "length": 22, "halfWidth": 18, "glowHalfWidth": 28 }
+    },
+    "footer": { "svg": "footer.svg", "sizes": { "slice": 16, "side": 72, "raise": 92, "bottom": 36, "block": 114 } }
+  }
+}

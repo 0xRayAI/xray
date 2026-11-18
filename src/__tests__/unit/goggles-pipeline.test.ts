@@ -12,6 +12,7 @@ import {
   handCard,
   look,
   growPlane,
+  isXrayCheckout,
   lensBeforeResearch,
   liveDrift,
   lookCards,
@@ -122,7 +123,7 @@ describe('goggles plate', () => {
       expect(search?.reason).not.toContain('Plane: boot');
       expect(existsSync(join(root, '.xray', 'state', 'plates', 'boot.md'))).toBe(false);
       expect(lensBeforeResearch(root, 'grep', 'src/nucleus/thin-dispatch.ts')).toBeNull();
-      const outsideDev = lensBeforeResearch(root, 'grep', 'scripts/foundry/release.mjs');
+      const outsideDev = lensBeforeResearch(root, 'grep', 'scripts/foundry/release.mjs\nhouse/live/app/server.mjs');
       expect(outsideDev?.decision).toBe('deny');
       expect(outsideDev?.reason).toContain('Plane: dev');
       expect(lensBeforeResearch(root, 'read_file', 'README.md')).toBeNull();
@@ -184,6 +185,153 @@ describe('goggles plate', () => {
       expect(home?.reason).toContain('Plane: dev');
       expect(home?.reason).toContain('Entry:');
       expect(lensBeforeResearch(root, 'grep', 'back home')?.reason).toContain('Plane: dev');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('a terminal command is the same search as bash', () => {
+    const root = mkdtempSync(join(tmpdir(), 'goggles-terminal-'));
+    try {
+      const held = lensBeforeResearch(root, 'read_file', 'docs-site/docs/plates/glossary.md');
+      expect(held?.reason).toContain('Plane: domain');
+      expect(lensBeforeResearch(root, 'run_terminal_command', 'git status -sb')).toBeNull();
+      expect(lensBeforeResearch(root, 'run_terminal_command', 'npm test')).toBeNull();
+      const off = lensBeforeResearch(root, 'run_terminal_command', 'rg -n function src/nucleus/thin-dispatch.ts scripts/foundry/release.mjs');
+      expect(off?.decision).toBe('deny');
+      expect(off?.reason).toContain('Plane: domain');
+      const bash = lensBeforeResearch(root, 'bash', 'rg -n function src/nucleus/thin-dispatch.ts scripts/foundry/release.mjs');
+      expect(bash?.decision).toBe('deny');
+      expect(bash?.reason).toContain('Plane: domain');
+      expect(lensBeforeResearch(root, 'run_terminal_command', 'rg -n kind /tmp/outside-wear/watch_pr.py')).toBeNull();
+      expect(lensBeforeResearch(root, 'run_terminal_command', 'rg -n kind /tmp/outside-wear/scripts/foundry')).toBeNull();
+      expect(lensBeforeResearch(root, 'bash', 'rg -n kind /tmp/outside-wear/src/cli/index.js')).toBeNull();
+      expect(lensBeforeResearch(root, 'run_terminal_command', "rg -n kind '/tmp/outside-wear/grok-bot/OP-PROC.md'")).toBeNull();
+      expect(lensBeforeResearch(root, 'run_terminal_command', 'rg -n kind /tmp/outside-wear/node_modules/@0xray/repertoire/package.json')).toBeNull();
+      const inside = lensBeforeResearch(root, 'run_terminal_command', `rg -n kind ${root}/src/nucleus/thin-dispatch.ts ${root}/scripts/foundry/release.mjs`);
+      expect(inside?.decision).toBe('deny');
+      expect(inside?.reason).toContain('Plane: domain');
+      const tokenAndOff = lensBeforeResearch(
+        root,
+        'run_terminal_command',
+        'rg -n kind /tmp/outside-wear/scripts/foundry src/nucleus/thin-dispatch.ts scripts/foundry/release.mjs',
+      );
+      expect(tokenAndOff?.decision).toBe('deny');
+      expect(tokenAndOff?.reason).toContain('Plane: domain');
+      const both = lensBeforeResearch(
+        root,
+        'run_terminal_command',
+        'rg -n kind /tmp/outside-wear/watch_pr.py src/nucleus/thin-dispatch.ts scripts/foundry/release.mjs',
+      );
+      expect(both?.decision).toBe('deny');
+      expect(both?.reason).toContain('Plane: domain');
+      expect(lensBeforeResearch(root, 'run_terminal_command', '/usr/bin/rg -n kind')?.reason).toContain('Plane: domain');
+      const open = lensBeforeResearch(root, 'run_terminal_command', 'python3 -c "print(1)" src/core/config-paths.ts');
+      expect(open?.decision).toBe('allow');
+      expect(open?.reason).toContain('Plane: dev');
+      expect(lensBeforeResearch(root, 'run_terminal_command', 'rg -n path src/core/config-paths.ts')).toBeNull();
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('a search of a file on the held plane runs', () => {
+    const root = mkdtempSync(join(tmpdir(), 'goggles-same-plane-'));
+    try {
+      expect(thingOfPath('scripts/node/install-bridges.cjs')).toBe('suit-wear');
+      expect(lensBeforeResearch(root, 'grep', 'scripts/node/install-bridges.cjs')).toBeNull();
+      expect(lensBeforeResearch(root, 'grep', 'scripts/mjs/run-grok-hook.mjs')).toBeNull();
+      const hold = JSON.parse(readFileSync(join(root, '.xray', 'state', 'goggles-plane.json'), 'utf8'));
+      expect(hold).toEqual({ plane: 'dev', card: 'dev' });
+      const other = lensBeforeResearch(root, 'grep', 'scripts/foundry/release.mjs\nhouse/live/app/server.mjs');
+      expect(other?.decision).toBe('deny');
+      expect(other?.reason).toContain('Plane: dev');
+      expect(lensBeforeResearch(root, 'grep', 'package.json\n/tmp/wear-station')).toBeNull();
+      const hop = lensBeforeResearch(root, 'read_file', 'src/nucleus/thin-dispatch.ts');
+      expect(hop?.reason).toContain('Card: routing');
+      const off = lensBeforeResearch(root, 'grep', 'scripts/node/install-bridges.cjs\nscripts/foundry/release.mjs');
+      expect(off?.decision).toBe('deny');
+      expect(off?.reason).toContain('Card: routing');
+      expect(lensBeforeResearch(root, 'grep', 'scripts/mjs/run-grok-hook.mjs')).toBeNull();
+      const stayed = JSON.parse(readFileSync(join(root, '.xray', 'state', 'goggles-plane.json'), 'utf8'));
+      expect(stayed.card).toBe('routing');
+      expect(lensBeforeResearch(root, 'grep', 'still searching')?.decision).toBe('deny');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('a search of a path on no plane runs', () => {
+    const root = mkdtempSync(join(tmpdir(), 'goggles-no-plane-'));
+    try {
+      const domain = lensBeforeResearch(root, 'read_file', 'docs-site/docs/plates/glossary.md');
+      expect(domain?.decision).toBe('allow');
+      expect(domain?.reason).toContain('Plane: domain');
+      expect(lensBeforeResearch(root, 'grep', 'house/live/tools/open-pr')).toBeNull();
+      expect(lensBeforeResearch(root, 'grep', `${root}/house/burst/seat-app.mjs`)).toBeNull();
+      const spoken = [
+        'installations/167022506/access_tokens',
+        '*.{mjs,js,sh,py,md}',
+        `${root}/house`,
+      ].join('\n');
+      expect(lensBeforeResearch(root, 'grep', spoken)).toBeNull();
+      const other = lensBeforeResearch(root, 'grep', 'scripts/foundry/release.mjs\nhouse/live/app/server.mjs');
+      expect(other?.decision).toBe('deny');
+      expect(other?.reason).toContain('Plane: domain');
+      expect(lensBeforeResearch(root, 'grep', 'still searching')?.decision).toBe('deny');
+      expect(lensBeforeResearch(root, 'grep', 'access_tokens')?.decision).toBe('deny');
+      expect(lensBeforeResearch(root, 'grep', 'searchPaths')?.decision).toBe('deny');
+      expect(lensBeforeResearch(root, 'grep', `access_tokens\n${root}/house`)).toBeNull();
+      expect(lensBeforeResearch(root, 'grep', 'def |print\n/tmp/outside-wear/watch_pr.py')).toBeNull();
+      expect(lensBeforeResearch(root, 'grep', 'searchPaths\n/tmp/outside-wear/watch_pr.py')).toBeNull();
+      expect(lensBeforeResearch(root, 'grep', '/tmp/outside-wear/scripts/foundry')).toBeNull();
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('a grep of one other card switches and two cards stay on the held card', () => {
+    const root = mkdtempSync(join(tmpdir(), 'goggles-one-card-'));
+    try {
+      const domain = lensBeforeResearch(root, 'read_file', 'docs-site/docs/plates/glossary.md');
+      expect(domain?.decision).toBe('allow');
+      expect(domain?.reason).toContain('Plane: domain');
+      const before = JSON.parse(readFileSync(join(root, '.xray', 'state', 'goggles-plane.json'), 'utf8'));
+      const hop = lensBeforeResearch(root, 'grep', 'house/live/app/server.mjs');
+      expect(hop?.decision).toBe('allow');
+      expect(hop?.reason).toContain('Card: bifrost');
+      const held = JSON.parse(readFileSync(join(root, '.xray', 'state', 'goggles-plane.json'), 'utf8'));
+      expect(held.card).toBe('bifrost');
+      const back = lensBeforeResearch(root, 'read_file', 'docs-site/docs/plates/glossary.md');
+      expect(back?.reason).toContain('Plane: domain');
+      const two = lensBeforeResearch(root, 'grep', 'house/live/app/server.mjs\nsrc/nucleus/thin-dispatch.ts');
+      expect(two?.decision).toBe('deny');
+      expect(two?.reason).toContain('Plane: domain');
+      const stayed = JSON.parse(readFileSync(join(root, '.xray', 'state', 'goggles-plane.json'), 'utf8'));
+      expect(stayed).toEqual(before);
+      expect(lensBeforeResearch(root, 'grep', 'house/live/tools/open-pr')).toBeNull();
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('a plate file holds its card', () => {
+    const root = mkdtempSync(join(tmpdir(), 'goggles-plate-card-'));
+    try {
+      expect(thingOfPath('docs-site/docs/plates/foundry.md')).toBe('foundry');
+      expect(thingOfPath('docs-site/docs/plates/memory-recall.md')).toBe('memory-recall');
+      expect(thingOfPath('docs-site/docs/plates/index.md')).toBe('');
+      expect(thingOfPath('docs-site/docs/plates/glossary.md')).toBe('');
+      const opened = lensBeforeResearch(root, 'read_file', 'docs-site/docs/plates/foundry.md');
+      expect(opened?.decision).toBe('allow');
+      expect(opened?.reason).toContain('Card: foundry');
+      expect(opened?.reason).toContain('Plane: ecosystem');
+      expect(lensBeforeResearch(root, 'grep', 'scripts/foundry/release.mjs')).toBeNull();
+      expect(lensBeforeResearch(root, 'grep', '/tmp/xray-worktrees/publish-414/scripts/foundry')).toBeNull();
+      const glossary = lensBeforeResearch(root, 'read_file', 'docs-site/docs/plates/glossary.md');
+      expect(glossary?.decision).toBe('allow');
+      expect(glossary?.reason).toContain('Plane: domain');
+      expect(glossary?.reason).not.toMatch(/^Card:/m);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -658,6 +806,48 @@ describe('goggles plate', () => {
     }
   });
 
+
+  it('consumer GOGGLES_ROOT places the checkout on dev without grok-bot or docs-site', () => {
+    const root = mkdtempSync(join(tmpdir(), 'goggles-consumer-root-'));
+    try {
+      writeFileSync(join(root, 'package.json'), `${JSON.stringify({ name: 'postalocity-ai', version: '0.0.1' })}\n`);
+      writeFileSync(join(root, 'README.md'), 'consumer\n');
+      mkdirSync(join(root, 'app'), { recursive: true });
+      writeFileSync(join(root, 'app', 'Mail.php'), '<?php\n');
+      expect(isXrayCheckout(root)).toBe(false);
+      const card = look(['dev'], root).text;
+      expect(card).toContain('Plane: dev');
+      expect(card).toContain('Entry: package.json and the project root.');
+      expect(card).toContain('Files: .');
+      expect(card).not.toContain('grok-bot');
+      expect(card).not.toContain('docs-site');
+      holdPlane(root, 'dev');
+      expect(lensBeforeResearch(root, 'grep', 'app/Mail.php')).toBeNull();
+      expect(lensBeforeResearch(root, 'bash', `git grep -n Mail ${root}/app/Mail.php`)).toBeNull();
+      expect(lensBeforeResearch(root, 'run_terminal_command', `git grep -n pattern ${root}/app`)).toBeNull();
+      expect(lensBeforeResearch(root, 'bash', `git grep -n pattern ${root}`)).toBeNull();
+      const bare = lensBeforeResearch(root, 'grep', 'still searching');
+      expect(bare?.decision).toBe('deny');
+      expect(bare?.reason).toContain('Plane: dev');
+      expect(bare?.reason).toContain('Files: .');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('xray checkout keeps the builtin dev plane paths', () => {
+    const root = mkdtempSync(join(tmpdir(), 'goggles-xray-root-'));
+    try {
+      writeFileSync(join(root, 'package.json'), `${JSON.stringify({ name: '0xray', version: '4.2.0' })}\n`);
+      mkdirSync(join(root, 'grok-bot'), { recursive: true });
+      writeFileSync(join(root, 'grok-bot', 'OP-PROC.md'), '# op\n');
+      expect(isXrayCheckout(root)).toBe(true);
+      expect(look(['dev'], root).text).toBe(DEV_CARD);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it('does not treat an installed package alone as a mill lens', () => {
     const root = mkdtempSync(join(tmpdir(), 'goggles-install-only-'));
     try {
@@ -667,6 +857,32 @@ describe('goggles plate', () => {
       expect(card).toContain('Plane: dev');
       expect(card).toContain('Skills: orchestrator, researcher, project-analysis, git-workflow, tech-writer');
       expect(card).not.toContain('Worn: mill');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('opens the as-is v4 cards on the planes the drawings name', () => {
+    const root = mkdtempSync(join(tmpdir(), 'goggles-v4-plates-'));
+    try {
+      const worn = look(['worn-turn'], root).text;
+      expect(worn).toContain('Card: worn-turn');
+      expect(worn).toContain('Plane: integration');
+      expect(worn).toContain('docs-site/docs/plates/worn-turn.md');
+      expect(worn).not.toContain('Stamp:');
+      const bifrost = look(['bifrost'], root).text;
+      expect(bifrost).toContain('Card: bifrost');
+      expect(bifrost).toContain('Plane: ecosystem');
+      expect(bifrost).toContain('docs-site/docs/plates/bifrost.md');
+      const grokbot = look(['grokbot'], root).text;
+      expect(grokbot).toContain('Card: grokbot');
+      expect(grokbot).toContain('Plane: ecosystem');
+      expect(look(['dynamo'], root).text).toContain('Plane: dev');
+      expect(thingOfPath('src/integrations/cursor/hooks/pre-tool-use.js')).toBe('worn-turn');
+      expect(thingOfPath('src/integrations/grok/hooks/pre-tool-use.js')).toBe('pre-tool');
+      expect(thingOfPath('src/integrations/hooks/delegation-gate-runtime.mjs')).toBe('delegation-gate');
+      expect(thingOfPath('src/integrations/governance/governance-client.ts')).toBe('dynamo');
+      expect(thingOfPath('house/live/app/server.mjs')).toBe('bifrost');
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
