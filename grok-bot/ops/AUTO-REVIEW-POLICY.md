@@ -25,7 +25,7 @@ Paste as **Ask first** rules:
 Paste as **Allow automatically** rules:
 
 1. Use `npm view` / `npm` read commands and `curl` to check npm registry status (no publish)
-2. Run `git push` for `0xRayAI/xray`, `htafolla/blips`, `htafolla/clearing`, `htafolla/groover`, `0xRayAI/0xray-moltbook` when forge owns the ship track
+2. Run `git push` for `0xRayAI/xray`, `htafolla/blips`, `0xRayAI/clearing`, `htafolla/groover`, `0xRayAI/0xray-moltbook` when forge owns the ship track
 3. Download SSOT archives from `gist.githubusercontent.com` into the workspace when requested
 4. Post or reply on X as `@0xRayAI` when Dist execute path is active (house Dist exception)
 5. Create public gists for **non-secret** auxiliary files / tarballs only (no tokens)
