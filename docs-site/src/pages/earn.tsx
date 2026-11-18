@@ -38,6 +38,9 @@ export default function EarnPage() {
           Paste one prompt into Grok Bot. It creates a NEAR testnet account and a foundry, then prints both ids. Listing stays pending. This page does not send a transaction and does not spend real money.
         </p>
         <p>
+          Current NEAR docs, and the old links to skip, are on the <a href="/near/reference">NEAR reference</a>.
+        </p>
+        <p>
           <button type="button" onClick={() => { void handOff(); }} style={{ fontSize: '1.05rem', padding: '0.75rem 1.1rem' }}>
             {copied ? 'Prompt copied. Paste it into Grok Bot.' : 'Copy the Grok Bot prompt'}
           </button>

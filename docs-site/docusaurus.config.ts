@@ -81,6 +81,11 @@ const config: Config = {
           position: 'left',
         },
         {
+          to: '/near/reference',
+          label: 'NEAR',
+          position: 'left',
+        },
+        {
           href: 'https://github.com/0xRayAI/xray',
           label: 'GitHub',
           position: 'right',

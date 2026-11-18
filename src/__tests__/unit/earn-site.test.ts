@@ -82,6 +82,8 @@ describe('earn site', () => {
     expect(page).not.toContain('seat id');
     expect(page).not.toMatch(/any chain/i);
     expect(page).toContain('/earn/one-click.txt');
+    expect(page).toContain('href="/near/reference"');
+    expect(page).toContain('NEAR reference');
     for (const text of [prompt, page]) {
       expect(text).not.toMatch(/\bplanes\b/i);
       expect(text).not.toMatch(/\bdials?\b/i);
