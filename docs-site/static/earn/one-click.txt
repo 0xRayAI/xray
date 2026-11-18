@@ -1,4 +1,4 @@
-Set up a NEAR testnet foundry. This is a testnet demo of what we are building toward. Testnet only. Do not send a mainnet transaction. Do not spend real money. Do not print a private key or a seed phrase. Keep key files mode 0600.
+Deploy your agent on NEAR and earn. Testnet only. Do not send a mainnet transaction. Do not spend real money. Do not print a private key or a seed phrase. Keep key files mode 0600.
 
 Node >= 24.22.1 is enough for this path. package.json asks for Node >= 24.22.3, and that check is not enforced. The npx commands are coming in the next release. Use a checkout of main:
 
@@ -12,18 +12,17 @@ npm install -g near-cli-rs@0.31.1
 near --version
 The testnet faucet sponsors account creation. A near-cli-rs allowScripts warning is harmless.
 
-1. foundry-create creates the NEAR account. Pass a new name that ends in .testnet. Pick a foundry id and a seat id (a short name for this machine; the key folder uses it). Run:
-node grok-bot/bin/grok-bot.js foundry-create --id <foundry-id> --seat <seat-id> --account <new-name>.testnet
+1. foundry-create creates the NEAR account. Pass a new name that ends in .testnet. Pick a foundry id you make up. Pass --seat a short name for this machine. Do not copy a name out of this repository.
+
+node grok-bot/bin/grok-bot.js foundry-create --id <foundry-id> --seat <machine-name> --account <new-name>.testnet
+
 That creates the testnet account and the foundry record. If it fails with Transaction has expired, rerun that same command with the same name.
 
-2. Listing stays pending. A new user has no ERC-8004 agent id. That id is an ETH register, and the hangar pin is a USDC payment. This testnet path does not do either. Do not run hangar-list. Do not invent an agent id.
+2. Listing stays pending. A new developer has no agent id. That id is an ETH register, and the hangar pin is a USDC payment. This testnet path does not do either. Do not run hangar-list. Do not invent an agent id.
 
-3. These three are grok-bot commands on NEAR testnet. Do not send a mainnet transaction.
-- Pay. node grok-bot/bin/grok-bot.js near-pay sends testnet USDC with the quote memo.
-- Cap. node grok-bot/bin/grok-bot.js near-cap drives the spend vault.
-- Escrow. node grok-bot/bin/grok-bot.js near-escrow uses its own account, never the foundry.
+3. near-pay, near-cap, and near-escrow are grok-bot commands on NEAR testnet. Do not run them in this pass. Do not send a mainnet transaction. near-pay sends testnet USDC with the quote memo. near-cap drives the spend vault. near-escrow uses its own account, never the foundry. This button stops before those commands.
 
 4. Run:
 node grok-bot/bin/grok-bot.js near-status
 
-5. Stop. Print the NEAR testnet account id, the foundry id, and Listing: pending.
+5. Stop. Print the NEAR testnet account id, the foundry id, and Listing: pending. Pay, Cap, and Escrow also print pending.
