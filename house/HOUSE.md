@@ -23,7 +23,7 @@ name: owner
 Git push when forge owns the ship track:
 - `0xRayAI/xray`
 - `htafolla/blips`
-- `htafolla/clearing`
+- `0xRayAI/clearing`
 - `htafolla/groover`
 - `0xRayAI/0xray-moltbook`
 
