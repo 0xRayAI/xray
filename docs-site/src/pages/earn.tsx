@@ -39,6 +39,9 @@ export default function EarnPage() {
         <p>
           NEAR testnet USDC is the demo money. Base x402 is planned. It has no receipt yet. This page does not send a transaction and does not spend real money.
         </p>
+        <p>
+          Current NEAR docs, and the old links to skip, are on the <a href="/near/reference">NEAR reference</a>.
+        </p>
         <ol>
           {LOOP.map((line) => (
             <li key={line}>{line}</li>
