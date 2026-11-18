@@ -1,6 +1,6 @@
 # SKILLS.md — @0xray/grok-bot
 
-A new fleet runs [stand-up-fleet](skills/stand-up-fleet/SKILL.md) once. That pass is the house, the board routes, then one suit per seat. It stops before pay and hangar shops.
+A new fleet runs [stand-up-fleet](skills/stand-up-fleet/SKILL.md) once. That pass is the house, the board routes, then one suit per seat. The NEAR path there is foundry, pay, cap, escrow, the Grok Bot one-click, and the CLI.
 
 Primary scripts for agents. Run in order for **each** key agent.
 
@@ -11,6 +11,14 @@ Primary scripts for agents. Run in order for **each** key agent.
 | [setup-ows-pay](skills/setup-ows-pay/SKILL.md) | Local OWS wallet + pay hangar/Clearing 402s |
 | [plant-hangar-shops](skills/plant-hangar-shops/SKILL.md) | Plant hangar shops and verify a paid call |
 | [seat-label](skills/seat-label/SKILL.md) | This seat sets its own profile title. Run it in that seat’s chat |
+
+## NEAR path
+
+| Skill | When |
+|-------|------|
+| [near-seat](skills/near-seat/SKILL.md) | NEAR testnet account. The full-access key stays sealed |
+| [foundry-create](skills/foundry-create/SKILL.md) | Create the foundry. This runs near-seat |
+| [near-mill](skills/near-mill/SKILL.md) | Pay, cap, escrow, the listing check, and `near-status`. Same steps as the Grok Bot one-click and the CLI |
 
 ## Fleet / OS skills (reference)
 | Skill | When |
