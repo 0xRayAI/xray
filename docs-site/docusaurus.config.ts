@@ -91,7 +91,7 @@ const config: Config = {
           position: 'right',
         },
         {
-          href: 'https://npmjs.com/package/0xray',
+          href: 'https://www.npmjs.com/package/0xray',
           label: 'npm',
           position: 'right',
         },
@@ -111,7 +111,7 @@ const config: Config = {
           title: 'Community',
           items: [
             { label: 'GitHub', href: 'https://github.com/0xRayAI/xray' },
-            { label: 'npm', href: 'https://npmjs.com/package/0xray' },
+            { label: 'npm', href: 'https://www.npmjs.com/package/0xray' },
           ],
         },
       ],
