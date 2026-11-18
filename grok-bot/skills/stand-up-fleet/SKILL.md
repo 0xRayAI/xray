@@ -86,11 +86,11 @@ Owner prompts, acks, and cloud tags stay on those two pages. Do not restate them
 
 This is the path the 0xRay Fleet Setup listing shows. Testnet only. Do not send a mainnet transaction. Do not print a private key or a seed phrase. Do not spend real money. Do not post in public.
 
-The Grok Bot one-click and the CLI both run near-seat, then the foundry, then pay, cap, and escrow. The listing step is on the CLI when the owner already has an agent id. Otherwise `near-status` prints `Listing: pending`. That print is the NEAR account, the foundry id, the listing id, and Pay, Cap, and Escrow.
+The Grok Bot one-click and the CLI run near-seat, then the foundry, then `near-status`. Pay, cap, and escrow are the later commands in near-mill. That one-click does not run them and does not pass amounts. The listing step is on the CLI when the owner already has an agent id. Otherwise `near-status` prints `Listing: pending`. That print is the NEAR account, the foundry id, the listing id, and Pay, Cap, and Escrow.
 
 ### Grok Bot one-click
 
-The prompt is [one-click.txt](https://github.com/0xRayAI/xray/blob/main/docs-site/static/earn/one-click.txt). The page is https://docs.0xray.dev/earn and the same text is at https://docs.0xray.dev/earn/one-click.txt. Paste it into Grok Bot. It checks out main and runs foundry, pay, cap, and escrow. A new user has no agent id, so the listing stays `pending`. Do not invent an agent id. Do not run `hangar-list` on that one-click.
+The prompt is [one-click.txt](https://github.com/0xRayAI/xray/blob/main/docs-site/static/earn/one-click.txt). The page is https://docs.0xray.dev/earn and the same text is at https://docs.0xray.dev/earn/one-click.txt. Paste it into Grok Bot. It checks out main, runs `foundry-create`, then `near-status`. It names pay, cap, and escrow and does not run them. A new user has no agent id, so the listing stays `pending`. Do not invent an agent id. Do not run `hangar-list` on that one-click. Pass `--seat` a short name for this machine. Do not copy a name out of this repository.
 
 ### CLI
 
