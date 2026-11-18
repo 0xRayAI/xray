@@ -291,6 +291,17 @@ function isNearCliRs(text) {
   return text.includes('near-cli-rs');
 }
 
+// A version probe that never exits must not block the PATH walk.
+const PROBE_TIMEOUT_MS = 15000;
+// Account create and the function-call key wait on the faucet and RPC.
+const CLI_TIMEOUT_MS = 180000;
+
+function boundedTimeout(value, fallback) {
+  const n = Number(value);
+  if (Number.isFinite(n) && n > 0) return n;
+  return fallback;
+}
+
 // Homebrew and old tutorials still put the archived JavaScript `near` first.
 // That binary answers `near --version` with `4.0.13` and rejects
 // `account create-account`. Walk PATH until a near-cli-rs binary answers.
@@ -310,11 +321,13 @@ function resolveNearBin(opts = {}) {
       probed = spawn(bin, ['--version'], {
         encoding: 'utf8',
         env,
+        timeout: boundedTimeout(opts.probeTimeoutMs, PROBE_TIMEOUT_MS),
         stdio: ['ignore', 'pipe', 'pipe'],
       });
     } catch {
       continue;
     }
+    if (!probed || probed.status !== 0) continue;
     if (isNearCliRs(cliText(probed))) return bin;
   }
   const err = new Error(
@@ -330,6 +343,7 @@ function runNearCli(args, opts = {}) {
   const result = spawn(bin, args, {
     encoding: 'utf8',
     env: { ...process.env, ...(opts.env || {}) },
+    timeout: boundedTimeout(opts.timeoutMs, CLI_TIMEOUT_MS),
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   return {
@@ -481,6 +495,7 @@ module.exports = {
   TESTNET_RPC,
   createAccountArgv,
   resolveNearBin,
+  runNearCli,
   credentialsHome,
   fileCreateMode,
   functionCallKeyArgv,

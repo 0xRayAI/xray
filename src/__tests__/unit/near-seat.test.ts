@@ -17,7 +17,8 @@ const seat = requireCjs(path.join(root, 'grok-bot', 'lib', 'near-seat.cjs')) as 
   rpcTimeoutMs: (opts?: { timeoutMs?: number }) => number;
   readLegacyKey: (file: string, accountId?: string) => KeyFile;
   createAccountArgv: (accountId: string) => string[];
-  resolveNearBin: (opts?: { bin?: string; env?: { PATH?: string } }) => string;
+  resolveNearBin: (opts?: { bin?: string; env?: { PATH?: string }; probeTimeoutMs?: number }) => string;
+  runNearCli: (args: string[], opts?: { bin?: string; timeoutMs?: number }) => { status: number | null };
   credentialsHome: (opts: { credentialsHome?: string }) => string;
   legacyKeyPath: (dir: string, network: string, accountId: string) => string;
   fileCreateMode: (umask: number) => number;
@@ -701,6 +702,43 @@ describe('near-seat', () => {
     } finally {
       rmSync(jsDir, { recursive: true, force: true });
       rmSync(rsDir, { recursive: true, force: true });
+    }
+  });
+
+  it('skips a near that does not exit and uses the next near-cli-rs', () => {
+    const hangDir = scratch();
+    const rsDir = scratch();
+    const hangBin = path.join(hangDir, 'near');
+    const rsBin = path.join(rsDir, 'near');
+    writeFileSync(hangBin, '#!/bin/sh\nsleep 30\n');
+    writeFileSync(rsBin, '#!/bin/sh\necho near-cli-rs 0.31.1\n');
+    chmodSync(hangBin, 0o755);
+    chmodSync(rsBin, 0o755);
+    const started = Date.now();
+    try {
+      expect(seat.resolveNearBin({
+        env: { PATH: `${hangDir}${path.delimiter}${rsDir}` },
+        probeTimeoutMs: 200,
+      })).toBe(rsBin);
+      expect(Date.now() - started).toBeLessThan(5000);
+    } finally {
+      rmSync(hangDir, { recursive: true, force: true });
+      rmSync(rsDir, { recursive: true, force: true });
+    }
+  });
+
+  it('stops a near command that does not exit', () => {
+    const dir = scratch();
+    const bin = path.join(dir, 'near');
+    writeFileSync(bin, '#!/bin/sh\nsleep 30\n');
+    chmodSync(bin, 0o755);
+    const started = Date.now();
+    try {
+      const result = seat.runNearCli(['--version'], { bin, timeoutMs: 200 });
+      expect(result.status).not.toBe(0);
+      expect(Date.now() - started).toBeLessThan(5000);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
     }
   });
 
