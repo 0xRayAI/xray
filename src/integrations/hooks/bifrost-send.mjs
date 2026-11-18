@@ -132,7 +132,7 @@ export function handoffFromText(text, fromSeat, now = new Date()) {
   };
 }
 
-const NOTE_DROP = /[^A-Za-z0-9 ._:@#+/?'",;!()-]/g;
+const NOTE_DROP = /[^A-Za-z0-9 ._:@#+/?'",;!()>-]/g;
 
 export function promptNote(text) {
   const flat = String(text || '')

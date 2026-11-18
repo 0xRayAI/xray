@@ -35,7 +35,7 @@
     "note": {
       "type": "string",
       "maxLength": 240,
-      "pattern": "^[A-Za-z0-9 ._:@#+/?'\",;!()\\-]{1,240}$",
+      "pattern": "^[A-Za-z0-9 ._:@#+/?'\",;!()>\\-]{1,240}$",
       "description": "prompt only: the line the board shows after the seat name. At most 240 characters."
     },
     "agent": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{2,40}$" },

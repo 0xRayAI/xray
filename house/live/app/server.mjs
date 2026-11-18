@@ -3354,7 +3354,7 @@ const ACT_KINDS = { prompt: ['received', 'sent'], turn: ['start', 'end', 'tick']
 const ACT_FIELDS = new Set(['t_ct', 'kind', 'action', 'to', 'from', 'agent', 'tag', 'seat', 'room', 'pr', 'note']);   // seat: optional, must match the token; from: prompt sender (#281); room: optional short name; pr: optional https GitHub pull URL; note: prompt line only
 const ACT_BANNED = /body|text|message/i;          // no free-text key, and no free text inside any value except note
 const ACT_VALUE = /^[A-Za-z0-9 ._:@#+\/-]{1,80}$/;
-const ACT_NOTE = /^[A-Za-z0-9 ._:@#+\/?',;!()\-]{1,240}$/;   // the one capped line a prompt may carry. Keys named body, text, or message stay refused.
+const ACT_NOTE = /^[A-Za-z0-9 ._:@#+\/?',;!()>\-]{1,240}$/;   // the one capped line a prompt may carry. Keys named body, text, or message stay refused.
 const ACT_AGENT = /^[A-Za-z0-9][A-Za-z0-9_-]{2,40}$/;
 const ACT_RATE = 60, ACT_RATE_MS = 60000, ACT_KEEP = 5000, ACT_MAX_BODY = 1024;
 const ACT_EPOCH = crypto.randomBytes(6).toString('base64url');

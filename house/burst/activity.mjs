@@ -22,7 +22,7 @@ const GH_REPO = '(?![A-Za-z0-9._-]{101})[A-Za-z0-9_](?:[A-Za-z0-9._-]*[A-Za-z0-9
 const PR_URL = new RegExp('^https://github\\.com/' + GH_OWNER + '/' + GH_REPO + '/pull/\\d{1,8}$');
 const ACT_BANNED = /body|text|message/i;
 const ACT_VALUE = /^[A-Za-z0-9 ._:@#+\/-]{1,80}$/;
-const ACT_NOTE = /^[A-Za-z0-9 ._:@#+\/?',;!()\-]{1,240}$/;
+const ACT_NOTE = /^[A-Za-z0-9 ._:@#+\/?',;!()>\-]{1,240}$/;
 const ACT_AGENT = /^[A-Za-z0-9][A-Za-z0-9_-]{2,40}$/;
 const ACT_SEAT = /^[A-Za-z0-9][A-Za-z0-9_-]{1,40}$/;
 
