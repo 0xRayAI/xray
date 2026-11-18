@@ -16,7 +16,9 @@ const click = requireCjs(path.join(root, 'grok-bot/lib/near-1click.cjs')) as {
   buildQuoteRequest: (opts: Record<string, unknown>) => QuoteBody;
   getQuote: (opts: Record<string, unknown>) => Promise<{ quote?: { amountIn?: string; depositAddress?: string } }>;
   getStatus: (depositAddress: string, opts?: Record<string, unknown>) => Promise<{ status: string }>;
+  initLedger: (file: string) => string;
   redact: (text: string) => string;
+  runNear1clickCli: (argv: string[], io?: { stdout?: { write: (chunk: string) => void }; stderr?: { write: (chunk: string) => void } }) => number;
 };
 
 type QuoteBody = {
@@ -48,6 +50,7 @@ function liveSetup() {
   const dir = mkdtempSync(path.join(tmpdir(), 'oneclick-'));
   dirs.push(dir);
   const ledger = path.join(dir, 'ledger.json');
+  click.initLedger(ledger);
   process.env.ONECLICK_LIVE = '1';
   process.env.ONECLICK_LEDGER = ledger;
   process.env.ONECLICK_RECIPIENT = LIVE_RECIPIENT;
@@ -250,6 +253,51 @@ describe('near 1click quote', () => {
       fetch: live.fetch,
     })).rejects.toThrow('amount is over the 1 USDC total');
     expect(live.calls).toHaveLength(0);
+  });
+
+  it('refuses a live quote when the ledger file is missing or incomplete', async () => {
+    const missing = liveSetup();
+    rmSync(missing);
+    const noFile = mockFetch(200, { quote: { amountIn: '500000', depositAddress: '0xabc' } });
+    await expect(click.getQuote({
+      dry: false,
+      amount: '500000',
+      deadline: soon(),
+      fetch: noFile.fetch,
+    })).rejects.toThrow('spend ledger is missing');
+    expect(noFile.calls).toHaveLength(0);
+
+    const broken = liveSetup();
+    writeFileSync(broken, `${JSON.stringify({ reserved: '0', closed: false, quotes: [] })}\n`);
+    const bad = mockFetch(200, { quote: { amountIn: '500000', depositAddress: '0xabc' } });
+    await expect(click.getQuote({
+      dry: false,
+      amount: '500000',
+      deadline: soon(),
+      fetch: bad.fetch,
+    })).rejects.toThrow('spend ledger is corrupt');
+    expect(bad.calls).toHaveLength(0);
+  });
+
+  it('creates a ledger once and refuses to overwrite it', () => {
+    const dir = mkdtempSync(path.join(tmpdir(), 'oneclick-'));
+    dirs.push(dir);
+    const file = path.join(dir, 'ledger.json');
+    click.initLedger(file);
+    const first = readFileSync(file, 'utf8');
+    expect(JSON.parse(first).spent).toBe('0');
+    expect(JSON.parse(first).closed).toBe(false);
+    expect(() => click.initLedger(file)).toThrow('spend ledger already exists');
+    expect(readFileSync(file, 'utf8')).toBe(first);
+    const stdout: string[] = [];
+    const stderr: string[] = [];
+    const io = {
+      stdout: { write: (chunk: string) => { stdout.push(chunk); } },
+      stderr: { write: (chunk: string) => { stderr.push(chunk); } },
+    };
+    expect(click.runNear1clickCli(['init', '--ledger', file], io)).toBe(1);
+    expect(stderr.join('')).toContain('spend ledger already exists');
+    expect(readFileSync(file, 'utf8')).toBe(first);
   });
 
   it('releases the reservation when the live post fails', async () => {

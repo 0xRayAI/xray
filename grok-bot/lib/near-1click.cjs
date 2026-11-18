@@ -201,6 +201,8 @@ function quoteHeaders() {
   return headers;
 }
 
+const LEDGER_USAGE = 'grok-bot near-1click init --ledger <file>';
+
 function emptyLedger() {
   return { spent: '0', reserved: '0', closed: false, quotes: [] };
 }
@@ -211,15 +213,51 @@ function ledgerFile() {
   return file;
 }
 
+function digitField(value) {
+  return typeof value === 'string' && /^[0-9]+$/.test(value);
+}
+
 function readLedger(file) {
-  if (!fs.existsSync(file)) return emptyLedger();
-  const parsed = JSON.parse(fs.readFileSync(file, 'utf8'));
+  if (!fs.existsSync(file)) throw new Error('spend ledger is missing');
+  let parsed;
+  try {
+    parsed = JSON.parse(fs.readFileSync(file, 'utf8'));
+  } catch {
+    throw new Error('spend ledger is corrupt');
+  }
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('spend ledger is corrupt');
+  if (!Object.prototype.hasOwnProperty.call(parsed, 'spent')
+    || !Object.prototype.hasOwnProperty.call(parsed, 'reserved')
+    || !Object.prototype.hasOwnProperty.call(parsed, 'closed')
+    || !Object.prototype.hasOwnProperty.call(parsed, 'quotes')) {
+    throw new Error('spend ledger is corrupt');
+  }
+  if (!digitField(parsed.spent) || !digitField(parsed.reserved)) throw new Error('spend ledger is corrupt');
+  if (typeof parsed.closed !== 'boolean' || !Array.isArray(parsed.quotes)) throw new Error('spend ledger is corrupt');
   return {
-    spent: String(parsed.spent || '0'),
-    reserved: String(parsed.reserved || '0'),
-    closed: parsed.closed === true,
-    quotes: Array.isArray(parsed.quotes) ? parsed.quotes : [],
+    spent: parsed.spent,
+    reserved: parsed.reserved,
+    closed: parsed.closed,
+    quotes: parsed.quotes,
   };
+}
+
+function initLedger(file) {
+  if (!file || typeof file !== 'string') throw new Error('spend ledger is required');
+  const body = `${JSON.stringify(emptyLedger())}\n`;
+  let fd;
+  try {
+    fd = fs.openSync(file, 'wx', 0o600);
+  } catch (err) {
+    if (err && err.code === 'EEXIST') throw new Error('spend ledger already exists');
+    throw err;
+  }
+  try {
+    fs.writeSync(fd, body);
+  } finally {
+    fs.closeSync(fd);
+  }
+  return file;
 }
 
 function writeLedger(file, ledger) {
@@ -280,12 +318,20 @@ function reserveSpend(amount) {
     },
     commit(amountIn, correlationId) {
       if (!state.open) throw new Error('spend reservation is closed');
-      let accepted = false;
+      let reason = '';
       mutateLedger(file, (ledger) => {
         const reserved = BigInt(ledger.reserved);
+        const spent = BigInt(ledger.spent);
+        const next = spent + BigInt(amountIn);
         ledger.reserved = String(reserved >= amount ? reserved - amount : 0n);
-        const next = BigInt(ledger.spent) + BigInt(amountIn);
-        if (next > CAP) return;
+        if (ledger.closed) {
+          reason = 'live quote already used';
+          return;
+        }
+        if (next > CAP) {
+          reason = 'amount is over the 1 USDC total';
+          return;
+        }
         ledger.spent = String(next);
         ledger.closed = true;
         ledger.quotes.push({
@@ -293,10 +339,9 @@ function reserveSpend(amount) {
           amount: String(amount),
           amountIn: String(amountIn),
         });
-        accepted = true;
       });
       state.open = false;
-      if (!accepted) throw new Error('amount is over the 1 USDC total');
+      if (reason) throw new Error(reason);
     },
   };
 }
@@ -348,6 +393,27 @@ async function getQuote(opts = {}) {
   }
 }
 
+function runNear1clickCli(argv, io = {}) {
+  const stdout = io.stdout || process.stdout;
+  const stderr = io.stderr || process.stderr;
+  if (!argv || argv[0] === '--help' || argv[0] === '-h') {
+    stdout.write(`${LEDGER_USAGE}\n`);
+    return argv && argv[0] ? 0 : 2;
+  }
+  if (argv[0] !== 'init' || argv[1] !== '--ledger' || !argv[2] || argv[3]) {
+    stderr.write(`${LEDGER_USAGE}\n`);
+    return 2;
+  }
+  try {
+    initLedger(argv[2]);
+  } catch (err) {
+    stderr.write(`${redact(err instanceof Error ? err.message : String(err))}\n`);
+    return 1;
+  }
+  stdout.write('ledger created\n');
+  return 0;
+}
+
 async function getStatus(depositAddress, opts = {}) {
   if (!depositAddress || typeof depositAddress !== 'string') throw new Error('deposit address is required');
   const url = new URL(STATUS_URL);
@@ -372,6 +438,8 @@ module.exports = {
   buildQuoteRequest,
   getQuote,
   getStatus,
+  initLedger,
   keccak256,
   redact,
+  runNear1clickCli,
 };

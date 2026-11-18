@@ -71,7 +71,7 @@ A live quote (`dry: false`) needs all of these in the environment, with no defau
 - `ONECLICK_LIVE=1`
 - `ONECLICK_RECIPIENT`, the foundry NEAR account. The client refuses a name that starts with `placeholder` or contains `placeholder`. An `opts.recipient` that differs is refused.
 - `ONECLICK_REFUND_TO`, a Base address we control. All-lowercase is accepted. Mixed case must be a valid EIP-55 checksum. The client refuses the OpenAPI sample `0x2527D02599Ba641c19FEa793cD0F167589a0f10D` in any case, and the zero address. An `opts.refundTo` that differs is refused.
-- `ONECLICK_LEDGER`, a JSON file outside git. The client reserves the request amount in that file before the POST. `reserved + spent + amount` must stay at or under `1000000`. After a successful quote it records the correlation id and `amountIn`, marks the ledger closed, and will not send another live quote until someone resets that file by hand. A failed POST releases the reservation. The client does not reset the ledger.
+- `ONECLICK_LEDGER`, a JSON file outside git. The file must already exist. A missing file, or a file missing `spent`, `reserved`, `closed`, or `quotes`, is refused. It is not a fresh budget. Create it with `grok-bot near-1click init --ledger <file>`. That init is the owner reset: it creates the file only when it is absent, and it will not overwrite an existing file. To reset a closed ledger, delete the file and run init again. The client reserves the request amount before the POST. `reserved + spent + amount` must stay at or under `1000000`. Before it records a quote, it reads the ledger again under the same lock and checks that it is still open and that the total still fits. After a successful quote it records the correlation id and `amountIn` and marks the ledger closed. A failed POST releases the reservation.
 
 Live deadline checks use `Date.now()`. `opts.now` is ignored in live mode.
 
@@ -84,11 +84,11 @@ The `amountIn` cap check runs after the POST. 1Click has already minted the quot
 Max cost is 1 USDC total. Stop if the quoted `amountIn` is above 1000000.
 
 1. Critic Strict approves this review.
-2. Put the foundry NEAR account in `ONECLICK_RECIPIENT` and a Base address we control in `ONECLICK_REFUND_TO`. Put `ONECLICK_LEDGER` outside git.
+2. Put the foundry NEAR account in `ONECLICK_RECIPIENT` and a Base address we control in `ONECLICK_REFUND_TO`. Outside git, run `grok-bot near-1click init --ledger <file>` and point `ONECLICK_LEDGER` at that file. Init will not replace a file that is already there.
 3. Set `ONECLICK_LIVE=1` only in the environment. Set `INTENTS_CHECKOUT_JWT` only if we want the partner fee. Do not write any of these values into git.
 4. Run another dry quote for `500000` out. Dry mode can still take addresses from the call. Live mode will not.
 5. If `amountIn` is above 1000000, stop.
-6. One live quote (`dry: false`). The ledger reserves the amount first. If the POST fails, the reservation is released. If `amountIn` is above 1000000, the client throws and does not hand back the deposit address. Send nothing. A second live quote is refused until the ledger file is reset by hand.
+6. One live quote (`dry: false`). The ledger reserves the amount first. If the POST fails, the reservation is released. If `amountIn` is above 1000000, the client throws and does not hand back the deposit address. Send nothing. A second live quote is refused. The owner reset is to delete the ledger file and run `grok-bot near-1click init --ledger <file>` again. Deleting the file without init does not open a new budget.
 7. One Base USDC transfer of `amountIn` to that deposit address, before the quote deadline. Not more than 1000000 units, and not more than the ledger still allows. No second transfer.
 8. Poll status until `SUCCESS`, `REFUNDED`, or `FAILED`. On a refund, the USDC returns to the Base address. Do not send more.
 
