@@ -1,4 +1,6 @@
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -34,6 +36,28 @@ const NOW = Date.parse('2026-11-18T00:00:00.000Z');
 const DEADLINE = '2026-11-18T00:30:00.000Z';
 const REFUND = '0x2527D02599Ba641c19FEa793cD0F167589a0f10D';
 const RECIPIENT = 'placeholder.near';
+const LIVE_REFUND = '0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed';
+const LIVE_RECIPIENT = 'foundry.near';
+const dirs: string[] = [];
+
+function soon() {
+  return new Date(Date.now() + (30 * 60 * 1000)).toISOString();
+}
+
+function liveSetup() {
+  const dir = mkdtempSync(path.join(tmpdir(), 'oneclick-'));
+  dirs.push(dir);
+  const ledger = path.join(dir, 'ledger.json');
+  process.env.ONECLICK_LIVE = '1';
+  process.env.ONECLICK_LEDGER = ledger;
+  process.env.ONECLICK_RECIPIENT = LIVE_RECIPIENT;
+  process.env.ONECLICK_REFUND_TO = LIVE_REFUND;
+  return ledger;
+}
+
+function readLedger(file: string) {
+  return JSON.parse(readFileSync(file, 'utf8')) as { spent: string; reserved: string; closed: boolean; quotes: Array<{ correlationId: string; amountIn: string }> };
+}
 
 function good(extra: Record<string, unknown> = {}) {
   return {
@@ -61,7 +85,14 @@ function mockFetch(status: number, body: unknown) {
 
 afterEach(() => {
   delete process.env.ONECLICK_LIVE;
+  delete process.env.ONECLICK_LEDGER;
+  delete process.env.ONECLICK_RECIPIENT;
+  delete process.env.ONECLICK_REFUND_TO;
   delete process.env.INTENTS_CHECKOUT_JWT;
+  while (dirs.length > 0) {
+    const dir = dirs.pop();
+    if (dir) rmSync(dir, { recursive: true, force: true });
+  }
 });
 
 describe('near 1click quote', () => {
@@ -85,6 +116,13 @@ describe('near 1click quote', () => {
     expect(() => click.buildQuoteRequest(good({ deadline: '2026-11-20T00:00:00.000Z' }))).toThrow('deadline is too far');
     expect(() => click.buildQuoteRequest(good({ amount: '1000001' }))).toThrow('amount is over the 1 USDC cap');
     expect(() => click.buildQuoteRequest(good({ amount: '0.5' }))).toThrow('amount must be an integer');
+    expect(() => click.buildQuoteRequest(good({
+      refundTo: '0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed',
+    }))).not.toThrow();
+    expect(() => click.buildQuoteRequest(good({ refundTo: LIVE_REFUND }))).not.toThrow();
+    expect(() => click.buildQuoteRequest(good({
+      refundTo: '0x5AAeb6053F3E94C9b9A09f33669435E7Ef1BeAed',
+    }))).toThrow('refund address must be a Base address');
   });
 
   it('sends a dry quote by default and refuses a live quote', async () => {
@@ -97,15 +135,137 @@ describe('near 1click quote', () => {
     await expect(click.getQuote({ ...good(), dry: false, fetch: live.fetch })).rejects.toThrow('live quote is off');
     expect(live.calls).toHaveLength(0);
 
-    process.env.ONECLICK_LIVE = '1';
-    await expect(click.getQuote({ ...good({ amount: '1000001' }), dry: false, fetch: live.fetch })).rejects.toThrow('amount is over the 1 USDC cap');
+    liveSetup();
+    await expect(click.getQuote({
+      dry: false,
+      amount: '1000001',
+      deadline: soon(),
+      fetch: live.fetch,
+    })).rejects.toThrow('amount is over the 1 USDC cap');
     expect(live.calls).toHaveLength(0);
   });
 
-  it('drops a live quote whose input is over the cap', async () => {
+  it('refuses a live quote that uses the placeholder fixtures', async () => {
+    const live = mockFetch(200, { quote: { amountIn: '510000', depositAddress: '0xabc' } });
+    await expect(click.getQuote({ ...good(), dry: false, deadline: soon(), fetch: live.fetch })).rejects.toThrow('live quote is off');
     process.env.ONECLICK_LIVE = '1';
-    const live = mockFetch(200, { quote: { amountIn: '1000001', depositAddress: '0x1111111111111111111111111111111111111111' } });
-    await expect(click.getQuote({ ...good(), dry: false, fetch: live.fetch })).rejects.toThrow('quoted input is over the 1 USDC cap');
+    await expect(click.getQuote({ ...good(), dry: false, deadline: soon(), fetch: live.fetch })).rejects.toThrow('live addresses are required');
+    liveSetup();
+    await expect(click.getQuote({
+      ...good(),
+      dry: false,
+      deadline: soon(),
+      fetch: live.fetch,
+    })).rejects.toThrow('does not match');
+    process.env.ONECLICK_REFUND_TO = '0x0000000000000000000000000000000000000000';
+    await expect(click.getQuote({
+      dry: false,
+      amount: '500000',
+      deadline: soon(),
+      fetch: live.fetch,
+    })).rejects.toThrow('refund address is not allowed');
+    process.env.ONECLICK_RECIPIENT = RECIPIENT;
+    process.env.ONECLICK_REFUND_TO = REFUND;
+    await expect(click.getQuote({
+      dry: false,
+      amount: '500000',
+      deadline: soon(),
+      fetch: live.fetch,
+    })).rejects.toThrow(/placeholder|not allowed/);
+    await expect(click.getQuote({
+      dry: false,
+      amount: '500000',
+      deadline: soon(),
+      recipient: RECIPIENT,
+      refundTo: REFUND,
+      fetch: live.fetch,
+    })).rejects.toThrow(/placeholder|not allowed|does not match/);
+    expect(live.calls).toHaveLength(0);
+  });
+
+  it('drops a live quote whose input is over the cap after the post', async () => {
+    const ledger = liveSetup();
+    const deposit = '0x1111111111111111111111111111111111111111';
+    const live = mockFetch(200, { quote: { amountIn: '1000001', depositAddress: deposit } });
+    await expect(click.getQuote({
+      dry: false,
+      amount: '500000',
+      deadline: soon(),
+      fetch: live.fetch,
+    })).rejects.toThrow('quoted input is over the 1 USDC cap');
+    expect(live.calls).toHaveLength(1);
+    const row = readLedger(ledger);
+    expect(row.reserved).toBe('0');
+    expect(row.closed).toBe(false);
+    try {
+      await click.getQuote({ dry: false, amount: '500000', deadline: soon(), fetch: live.fetch });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      expect(message).not.toContain(deposit);
+    }
+  });
+
+  it('reserves the 1 USDC total and refuses a second live quote', async () => {
+    const ledger = liveSetup();
+    const logs: string[] = [];
+    const original = console.log;
+    console.log = (...args: unknown[]) => { logs.push(args.map(String).join(' ')); };
+    const first = mockFetch(200, { correlationId: 'corr-1', quote: { amountIn: '510000', depositAddress: '0xabc' } });
+    try {
+      await click.getQuote({
+        dry: false,
+        amount: '500000',
+        deadline: soon(),
+        now: Date.now() + (48 * 60 * 60 * 1000),
+        fetch: first.fetch,
+      });
+    } finally {
+      console.log = original;
+    }
+    expect(logs).toEqual([]);
+    expect(first.calls).toHaveLength(1);
+    const booked = readLedger(ledger);
+    expect(booked.closed).toBe(true);
+    expect(booked.spent).toBe('510000');
+    expect(booked.quotes[0].correlationId).toBe('corr-1');
+    expect(booked.quotes[0].amountIn).toBe('510000');
+    const second = mockFetch(200, { quote: { amountIn: '1000', depositAddress: '0xdef' } });
+    await expect(click.getQuote({
+      dry: false,
+      amount: '1000',
+      deadline: soon(),
+      fetch: second.fetch,
+    })).rejects.toThrow('live quote already used');
+    expect(second.calls).toHaveLength(0);
+  });
+
+  it('refuses a live quote that would pass the 1 USDC total', async () => {
+    const ledger = liveSetup();
+    writeFileSync(ledger, `${JSON.stringify({ spent: '600000', reserved: '0', closed: false, quotes: [] })}\n`);
+    const live = mockFetch(200, { quote: { amountIn: '500000', depositAddress: '0xabc' } });
+    await expect(click.getQuote({
+      dry: false,
+      amount: '500000',
+      deadline: soon(),
+      fetch: live.fetch,
+    })).rejects.toThrow('amount is over the 1 USDC total');
+    expect(live.calls).toHaveLength(0);
+  });
+
+  it('releases the reservation when the live post fails', async () => {
+    const ledger = liveSetup();
+    const live = mockFetch(500, { message: 'upstream down' });
+    await expect(click.getQuote({
+      dry: false,
+      amount: '500000',
+      deadline: soon(),
+      fetch: live.fetch,
+    })).rejects.toThrow('upstream down');
+    const row = readLedger(ledger);
+    expect(row.reserved).toBe('0');
+    expect(row.spent).toBe('0');
+    expect(row.closed).toBe(false);
+    expect(live.calls).toHaveLength(1);
   });
 
   it('reads status without sending a body', async () => {

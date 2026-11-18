@@ -1,6 +1,6 @@
 # 1Click spend review
 
-This step made no deposit and no mainnet transaction. One read-only dry quote was sent. A later live deposit needs critic Strict on this review first. The spend cap is 1 USDC, which is 1000000 units at 6 decimals. 1Click has no testnet.
+This step made no deposit and no mainnet transaction. One read-only dry quote was sent. A later live deposit needs critic Strict on this review first. The spend cap is 1 USDC total, 1000000 units at 6 decimals, across every live quote in the ledger. 1Click has no testnet.
 
 `placeholder.near` is not the foundry. `0x2527D02599Ba641c19FEa793cD0F167589a0f10D` is the sample address from the OpenAPI example. It is not a wallet this repo controls. Both are placeholders for the dry call only.
 
@@ -34,12 +34,12 @@ That sandbox asks 1Click for a dry quote. This client does the same. It does not
 | swapType | EXACT_OUTPUT. `amount` is the USDC we want on NEAR |
 | originAsset | `nep141:base-0x833589fcd6edb6e08f4c7c32d4f71b54bda02913.omft.near` (Base USDC, 6 decimals) |
 | destinationAsset | `nep141:17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1` (NEAR USDC, 6 decimals) |
-| amount | `500000` for the dry call (0.5 USDC out). The client rejects anything above `1000000` |
+| amount | `500000` for the dry call (0.5 USDC out). One call cannot ask for more than `1000000`, and the ledger keeps the total at or under `1000000` |
 | depositType | ORIGIN_CHAIN. The deposit, when a live quote exists, is a Base address, not an Intents balance |
 | depositMode | SIMPLE |
-| recipient | a NEAR account. This dry call used `placeholder.near` |
+| recipient | a NEAR account. This dry call used `placeholder.near`. A live quote ignores that field and reads `ONECLICK_RECIPIENT` only |
 | recipientType | DESTINATION_CHAIN, so the USDC is withdrawn to that NEAR account |
-| refundTo | a Base address we control. This dry call used the OpenAPI sample, which we do not control |
+| refundTo | a Base address we control, all-lowercase or EIP-55 checksum. This dry call used the OpenAPI sample, which we do not control. A live quote ignores that field and reads `ONECLICK_REFUND_TO` only |
 | refundType | ORIGIN_CHAIN. The client rejects INTENTS and CONFIDENTIAL_INTENTS |
 | deadline | an ISO time from 2 minutes to 24 hours ahead. This dry call used 30 minutes |
 | slippageTolerance | 100 basis points (1%). The client rejects a higher setting |
@@ -64,17 +64,32 @@ A JWT is not required for a dry quote. If we have one, the env name is `INTENTS_
 
 Status is `GET https://1click.chaindefuser.com/v0/status?depositAddress=<address>` and, when the quote included one, `depositMemo`. Poll until `SUCCESS`, `REFUNDED`, or `FAILED`. Other states are `PENDING_DEPOSIT`, `KNOWN_DEPOSIT_TX`, `INCOMPLETE_DEPOSIT`, and `PROCESSING`. There is nothing to poll until a live quote returns a deposit address.
 
+## Live gate
+
+A live quote (`dry: false`) needs all of these in the environment, with no defaults:
+
+- `ONECLICK_LIVE=1`
+- `ONECLICK_RECIPIENT`, the foundry NEAR account. The client refuses a name that starts with `placeholder` or contains `placeholder`. An `opts.recipient` that differs is refused.
+- `ONECLICK_REFUND_TO`, a Base address we control. All-lowercase is accepted. Mixed case must be a valid EIP-55 checksum. The client refuses the OpenAPI sample `0x2527D02599Ba641c19FEa793cD0F167589a0f10D` in any case, and the zero address. An `opts.refundTo` that differs is refused.
+- `ONECLICK_LEDGER`, a JSON file outside git. The client reserves the request amount in that file before the POST. `reserved + spent + amount` must stay at or under `1000000`. After a successful quote it records the correlation id and `amountIn`, marks the ledger closed, and will not send another live quote until someone resets that file by hand. A failed POST releases the reservation. The client does not reset the ledger.
+
+Live deadline checks use `Date.now()`. `opts.now` is ignored in live mode.
+
+The `amountIn` cap check runs after the POST. 1Click has already minted the quote. If `amountIn` is over `1000000`, the client throws and does not return the deposit address. Do not look for that address anywhere else, and do not send funds.
+
+`redact` covers error text only. Success bodies are not logged.
+
 ## One live test, not done here
 
 Max cost is 1 USDC total. Stop if the quoted `amountIn` is above 1000000.
 
 1. Critic Strict approves this review.
-2. Name the foundry NEAR account and a Base address we control. Replace both placeholders.
-3. Set `ONECLICK_LIVE=1` only in the environment. Set `INTENTS_CHECKOUT_JWT` only if we want the partner fee. Do not write either value into git.
-4. Run another dry quote for `500000` out, with those real addresses.
+2. Put the foundry NEAR account in `ONECLICK_RECIPIENT` and a Base address we control in `ONECLICK_REFUND_TO`. Put `ONECLICK_LEDGER` outside git.
+3. Set `ONECLICK_LIVE=1` only in the environment. Set `INTENTS_CHECKOUT_JWT` only if we want the partner fee. Do not write any of these values into git.
+4. Run another dry quote for `500000` out. Dry mode can still take addresses from the call. Live mode will not.
 5. If `amountIn` is above 1000000, stop.
-6. One live quote (`dry: false`). If its `amountIn` is above 1000000, the client throws and does not hand back a deposit. Send nothing.
-7. One Base USDC transfer of `amountIn` to that deposit address, before the quote deadline. Not more than 1000000 units. No second transfer.
+6. One live quote (`dry: false`). The ledger reserves the amount first. If the POST fails, the reservation is released. If `amountIn` is above 1000000, the client throws and does not hand back the deposit address. Send nothing. A second live quote is refused until the ledger file is reset by hand.
+7. One Base USDC transfer of `amountIn` to that deposit address, before the quote deadline. Not more than 1000000 units, and not more than the ledger still allows. No second transfer.
 8. Poll status until `SUCCESS`, `REFUNDED`, or `FAILED`. On a refund, the USDC returns to the Base address. Do not send more.
 
 This dry quote's `amountIn` was 509290, about 0.51 USDC, which is under the cap. That is not permission to deposit.
@@ -96,7 +111,7 @@ No JWT was set. `ONECLICK_LIVE` was not set. `depositAddress` was omitted.
 | quote deadline | omitted, as documented for `dry: true` |
 | correlationId | 342640ea-1929-48ce-abad-b1ca2a3f2599 |
 
-The gap from `minAmountIn` to `amountIn` is the 1% slippage buffer. Anything between them can complete. Anything under `minAmountIn` is refunded to the Base address by the request deadline. The request deadline on this call was `2026-11-18T00:58:30.738Z`.
+The gap from `minAmountIn` to `amountIn` is about the 1% slippage buffer, not an exact 1%. 1% of `509290` is `504197`, and the quote's `minAmountIn` is `504239`. Anything under `minAmountIn` is refunded to the Base address by the request deadline. The request deadline on this call was `2026-11-18T00:58:30.738Z`.
 
 The response included a 1Click quote signature. It is omitted here because the value uses `ed25519:` encoding. It is not a key this repo holds.
 
