@@ -229,7 +229,10 @@ describe('bifrost send', () => {
     ]);
     expect(bootPosts({}, 'session_start')).toEqual([
       { phase: 'start' },
-      { phase: 'prompt', from: 'routine', text: 'routine' },
+    ]);
+    expect(bootPosts({ wake: true, prompt: 'inbox sweep' }, 'session_start')).toEqual([
+      { phase: 'start' },
+      { phase: 'prompt', from: 'routine', text: 'inbox sweep' },
     ]);
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bifrost-send-'));
     const keys = fs.mkdtempSync(path.join(os.tmpdir(), 'bifrost-keys-'));

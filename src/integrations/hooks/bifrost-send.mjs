@@ -196,14 +196,14 @@ export function bootTrigger(event, hookEvent) {
   return '';
 }
 
-/** Turn start, then the same prompt line live-inbox --prompt posts. No second format. */
+/** Turn start, then a prompt only when the event has a message. The from-label is not a gist. */
 export function bootPosts(event, hookEvent) {
   const from = bootTrigger(event, hookEvent);
   if (!from) return [];
-  return [
-    { phase: 'start' },
-    { phase: 'prompt', from, text: ownerLine(event) || from },
-  ];
+  const text = ownerLine(event);
+  const posts = [{ phase: 'start' }];
+  if (text) posts.push({ phase: 'prompt', from, text });
+  return posts;
 }
 
 export function subagentMark(toolName, toolInput) {

@@ -11,7 +11,7 @@ One boot hook. Light on every turn. Full after a summary, a wake, or a gate.
 
 ## Light
 
-On any turn. A peer message, a routine or webhook wake, a background-task completion, and the seat's own follow-up use the same `live-inbox <seat> --turn start` and `live-inbox <seat> --prompt` as an owner message. `--from` is `owner`, `peer`, `routine`, or `self`. A quiet wake still posts both lines. Do not invent a second prompt format.
+On any turn. A peer message, a routine or webhook wake, a background-task completion, and the seat's own follow-up use the same `live-inbox <seat> --turn start` and `live-inbox <seat> --prompt` as an owner message. `--from` is `owner`, `peer`, `routine`, or `self`. A quiet wake posts `--turn start`. It posts `--prompt` only when it has a gist. The from-label is not a gist. Do not invent a second prompt format.
 
 1. On every owner message, first run `live-inbox <seat> --prompt --from owner --note "<gist>"`; after handling any inbox line (in chat or on a wake), ack it right away with `live-inbox <seat> --ack <id>` (or `--ack all` once everything open is handled); when you launch or resume a cloud agent run `live-inbox <seat> --turn start --tag "bc-<first8> <track>"` and `live-inbox <seat> --cloud launch --agent <bc-id> --tag <card>` (resume uses `--cloud reply`); when it finishes or is cancelled run `live-inbox <seat> --turn end --tag "bc-<first8>"` and `live-inbox <seat> --cloud finished --agent <bc-id> --tag <card>` (cancel uses `--cloud cancel`). The tag is owner/repo#n or xray#n. The cloud agent does not post that line. No exceptions for short turns. A spawn_subagent worker is a cloud agent too. Put that worker's id in --agent, not only a bc- id. The gist is not the message text. A quick follow-up that arrives mid-turn is its own owner message: log that prompt before the reply, before the station read, and before any other step.
 
@@ -21,7 +21,7 @@ Kanban note. The live page shows a read-only kanban above Activity. Columns are 
 
 History note. Every activity line is archived to history. The word owner is the owner via LIVE_OWNER or the owner-name.
 
-Every turn posts `--prompt` and `--turn start`. `--from peer` is a peer seat, including one relaying the owner. `--from routine` is a routine or webhook wake. `--from self` is a background-task completion or this seat's own follow-up. `--room`, the 1–240 gist cap, a failed post, `Prompt: <id>`, and the webhook split are [Station boot](https://github.com/0xRayAI/xray/blob/main/grok-bot/OP-PROC.md#station-boot).
+Every turn posts `--turn start`. `--prompt` posts when the turn has a gist. `--from peer` is a peer seat, including one relaying the owner. `--from routine` is a routine or webhook wake. `--from self` is a background-task completion or this seat's own follow-up. `--room`, the 1–240 gist cap, a failed post, `Prompt: <id>`, and the webhook split are [Station boot](https://github.com/0xRayAI/xray/blob/main/grok-bot/OP-PROC.md#station-boot).
 
 2. Read `.xray/state/STATION.md`.
 
