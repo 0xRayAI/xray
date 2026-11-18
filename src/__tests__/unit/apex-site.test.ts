@@ -22,6 +22,8 @@ describe('apex site', () => {
     const page = readSite('index.html');
     expect(page).toContain('npm i -g 0xray');
     expect(page).toContain('https://docs.0xray.dev');
+    expect(page).toContain('https://docs.0xray.dev/earn');
+    expect(page).toContain('https://docs.0xray.dev/near/reference');
     expect(page).toContain('https://github.com/0xRayAI/xray');
     expect(page).toContain('https://www.npmjs.com/package/0xray');
     expect(page).toContain('https://bifrost.0xray.dev');
