@@ -1,7 +1,7 @@
 /**
  * Worn-hook sends while Bifrost is active.
  * The suit wire is chat activity, the packet, the card tag, the turn, and the subagent.
- * Chat activity is one activity-feed prompt: kind prompt, action sent, from owner, note the line.
+ * Chat activity is one activity-feed prompt: kind prompt, action sent, from owner|peer|routine|self, note the line.
  * A tool opens the seat turn, then ticks it once a minute. A subagent posts kind subagent
  * on spawn and on return. The tag is a short hash. The prompt stays off the wire.
  * The board defaults to https://bifrost.0xray.dev and ~/.burst/seat-keys.
@@ -154,6 +154,58 @@ export function ownerLine(event) {
   return '';
 }
 
+const BOOT_FROM = new Set(['owner', 'peer', 'routine', 'self']);
+
+function namedFrom(value) {
+  const raw = String(value || '').trim().toLowerCase();
+  return BOOT_FROM.has(raw) ? raw : '';
+}
+
+function backgroundDone(event) {
+  const tasks = event && event.backgroundTasks;
+  if (!Array.isArray(tasks)) return false;
+  return tasks.some((task) => {
+    if (!task || typeof task !== 'object') return false;
+    if (task.completed === true) return true;
+    const status = String(task.status || task.state || '').toLowerCase();
+    return status === 'completed' || status === 'complete' || status === 'finished' || status === 'done';
+  });
+}
+
+/** owner, peer, routine, or self. Empty when this event is not a station boot. */
+export function bootTrigger(event, hookEvent) {
+  const body = event && typeof event === 'object' ? event : {};
+  const named = namedFrom(body.from)
+    || namedFrom(body.source)
+    || namedFrom(body.trigger)
+    || namedFrom(body.sender);
+  if (named) return named;
+  const hook = String(hookEvent || '');
+  if (hook === 'user_prompt_submit') {
+    if (body.peer === true || body.relay === true) return 'peer';
+    if (body.self === true || body.followUp === true || body.follow_up === true) return 'self';
+    if (!ownerLine(body) && backgroundDone(body)) return 'self';
+    return 'owner';
+  }
+  if (hook === 'session_start') {
+    if (body.wake === true || body.routine === true || body.webhook === true) return 'routine';
+    if (ownerLine(body)) return 'owner';
+    return 'routine';
+  }
+  if (hook === 'stop' && backgroundDone(body)) return 'self';
+  return '';
+}
+
+/** Turn start, then the same prompt line live-inbox --prompt posts. No second format. */
+export function bootPosts(event, hookEvent) {
+  const from = bootTrigger(event, hookEvent);
+  if (!from) return [];
+  return [
+    { phase: 'start' },
+    { phase: 'prompt', from, text: ownerLine(event) || from },
+  ];
+}
+
 export function subagentMark(toolName, toolInput) {
   const input = toolInput && typeof toolInput === 'object' ? toolInput : {};
   const basis = [
@@ -271,10 +323,14 @@ function activityLine(action, tag, now, kind = 'turn') {
   return body;
 }
 
-function promptLine(seat, note, now) {
+function promptFrom(raw) {
+  return namedFrom(raw) || 'owner';
+}
+
+function promptLine(seat, note, now, from) {
   const t_ct = ctStamp(now);
   if (!t_ct || !SEAT.test(seat) || !note) return null;
-  return { t_ct, seat, kind: 'prompt', action: 'sent', from: 'owner', to: seat, note };
+  return { t_ct, seat, kind: 'prompt', action: 'sent', from: promptFrom(from), to: seat, note };
 }
 
 async function boardLive(origin, fetchImpl, timeoutMs) {
@@ -370,7 +426,7 @@ export async function notifyBifrost(opts = {}) {
       const note = promptNote(opts.text);
       const mark = note ? `prompt:${note}` : '';
       if (note && !(state.tags[mark] > nowMs)) {
-        const line = promptLine(cfg.seat, note, now);
+        const line = promptLine(cfg.seat, note, now, opts.from);
         if (line) posts.push({ path: '/activity', body: line, mark, ttl: 60 * 1000 });
       }
     }

@@ -3,6 +3,8 @@ import * as os from 'os';
 import * as path from 'path';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
+  bootPosts,
+  bootTrigger,
   ctStamp,
   handoffFromText,
   notifyBifrost,
@@ -209,6 +211,50 @@ describe('bifrost send', () => {
     expect(bodies).not.toContain('hunter2');
     expect(bodies).not.toContain(KEY);
     expect(JSON.parse(calls[calls.length - 1].body)).toMatchObject({ kind: 'turn', action: 'start' });
+  });
+
+  it('posts a turn start and a prompt when the turn is not from the owner', async () => {
+    expect(bootTrigger({ prompt: 'ship it' }, 'user_prompt_submit')).toBe('owner');
+    expect(bootTrigger({ from: 'peer', prompt: 'critic says merge' }, 'user_prompt_submit')).toBe('peer');
+    expect(bootTrigger({ peer: true, prompt: 'relay' }, 'user_prompt_submit')).toBe('peer');
+    expect(bootTrigger({}, 'session_start')).toBe('routine');
+    expect(bootTrigger({ wake: true }, 'session_start')).toBe('routine');
+    expect(bootTrigger({ backgroundTasks: [{ status: 'completed' }] }, 'stop')).toBe('self');
+    expect(bootTrigger({ follow_up: true, prompt: 'continue the batch' }, 'user_prompt_submit')).toBe('self');
+    expect(bootTrigger({ prompt: 'compact' }, 'pre_compact')).toBe('');
+    const posts = bootPosts({ from: 'peer', prompt: 'critic says merge' }, 'user_prompt_submit');
+    expect(posts).toEqual([
+      { phase: 'start' },
+      { phase: 'prompt', from: 'peer', text: 'critic says merge' },
+    ]);
+    expect(bootPosts({}, 'session_start')).toEqual([
+      { phase: 'start' },
+      { phase: 'prompt', from: 'routine', text: 'routine' },
+    ]);
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bifrost-send-'));
+    const keys = fs.mkdtempSync(path.join(os.tmpdir(), 'bifrost-keys-'));
+    dirs.push(root, keys);
+    fs.writeFileSync(path.join(keys, 'arch1.key'), `${KEY}\n`, { mode: 0o600 });
+    const env = { LIVE_URL: 'https://bifrost.example/board', XRAY_SEAT: 'arch1', SEAT_KEYS_DIR: keys };
+    const now = new Date('2026-10-24T18:00:00Z');
+    const calls: Array<{ url: string; body: string; auth: string }> = [];
+    const fetchImpl = liveFetch(calls);
+    const sent: string[] = [];
+    for (const post of posts) {
+      const result = await notifyBifrost({ root, env, fetchImpl, now, ...post });
+      sent.push(...result.sent);
+    }
+    expect(sent).toEqual(['start', 'prompt']);
+    expect(JSON.parse(calls[0].body)).toMatchObject({ kind: 'turn', action: 'start' });
+    expect(JSON.parse(calls[1].body)).toMatchObject({
+      kind: 'prompt',
+      action: 'sent',
+      from: 'peer',
+      to: 'arch1',
+      seat: 'arch1',
+      note: 'critic says merge',
+      t_ct: '2026-10-24T13:00:00-05:00',
+    });
   });
 
   it('posts a subagent start and end on the same tag and keeps the prompt off the wire', async () => {

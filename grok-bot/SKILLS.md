@@ -20,7 +20,7 @@ Primary scripts for agents. Run in order for **each** key agent.
 | [survive-compact](skills/survive-compact/SKILL.md) | After long wakes / before coding — re-read disk; chat may lose early turns |
 | [board-prompt](skills/board-prompt/SKILL.md) | Pointer to station. Not a second boot |
 | [setup-house](skills/setup-house/SKILL.md) | No `house/` folder yet — `grok-bot house init` copies `templates/house/` and refuses to overwrite |
-| [station](skills/station/SKILL.md) | Boot hook. Light on an owner message. Full after a summary, a wake, or a gate |
+| [station](skills/station/SKILL.md) | Boot hook. Light on every turn. Full after a summary, a wake, or a gate |
 | [seat-github-key](skills/seat-github-key/SKILL.md) | `~/bin/gh-<seat>` mints a fresh App token every call. Never plain `gh` |
 | [fasten-suit-and-hangar](skills/fasten-suit-and-hangar/SKILL.md) | Legacy combined fasten (prefer per-agent skill above) |
 

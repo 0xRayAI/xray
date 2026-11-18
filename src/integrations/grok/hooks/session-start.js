@@ -16,7 +16,7 @@ import {
   writeSessionBoot,
 } from './grok-hook-utils.js';
 import { appendHookActivity } from './grok-hook-activity.js';
-import { notifyBifrost, ownerLine } from '../../hooks/bifrost-send.mjs';
+import { bootPosts, notifyBifrost } from '../../hooks/bifrost-send.mjs';
 import { inboxStartOrder, inboxStopDecision, pollInboxOnce } from '../../hooks/inbox-boot.mjs';
 import { recordSynthesisTurnSlice } from '../../hooks/synthesis-hook-runtime.mjs';
 import { archiveStaleLeadDevPlan } from '../../hooks/plan-hook-runtime.mjs';
@@ -76,6 +76,19 @@ async function matchStationSignals(root, intent) {
 
 const COMPACT_EVENTS = new Set(['pre_compact', 'post_compact']);
 
+async function postBoot(eventRoot, event, hookEvent) {
+  try {
+    if (hookEvent === 'pre_compact') {
+      await notifyBifrost({ root: eventRoot, phase: 'end', env: process.env });
+    }
+    for (const post of bootPosts(event, hookEvent)) {
+      await notifyBifrost({ root: eventRoot, env: process.env, ...post });
+    }
+  } catch {
+    /* a quiet board must not stop the hook */
+  }
+}
+
 async function ingestStationFeedback(root, sessionId, hookEvent, matchedSignals) {
   if (!COMPACT_EVENTS.has(hookEvent) || !matchedSignals.length) return;
   try {
@@ -106,6 +119,7 @@ async function main() {
     const eventRoot = normalizeWorkspaceRoot(event.workspaceRoot || event.cwd || root);
     const sessionId = resolveSessionId(event);
     if (HOOK_EVENT === 'stop') {
+      await postBoot(eventRoot, event, HOOK_EVENT);
       let decision = null;
       try {
         decision = inboxStopDecision({
@@ -206,25 +220,7 @@ async function main() {
       hotSwap: payload.hotSwap || null,
     });
 
-    try {
-      const phase = HOOK_EVENT === 'pre_compact'
-        ? 'end'
-        : HOOK_EVENT === 'session_start'
-          ? 'start'
-          : HOOK_EVENT === 'user_prompt_submit'
-            ? 'prompt'
-            : '';
-      if (phase) {
-        await notifyBifrost({
-          root: eventRoot,
-          phase,
-          text: phase === 'prompt' ? ownerLine(event) : '',
-          env: process.env,
-        });
-      }
-    } catch {
-      /* a quiet board must not stop the hook */
-    }
+    await postBoot(eventRoot, event, HOOK_EVENT);
 
     try {
       scheduleAutonomousReportingMarker(eventRoot);
