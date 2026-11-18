@@ -73,7 +73,7 @@ Leave these alone:
 
 One new bullet in `grok-bot/OP-PROC.md`, after **Disk, not chat**:
 
-**Station boot.** On any owner message, run station at Light depth: post `live-inbox <seat> --prompt`, then read `.xray/state/STATION.md`. After a summary, a wake, or a gate, run Full depth as well: the file named on the HOUSE.md `OP-PROC:` line, the newest two NOTES entries, TRACKS, open board cards, and the STATION `Skills:` line. Light does not read the pack. During the work, each step posts one activity line, and a cloud launch is written to TRACKS in that same step. On the way out, update STATION judgement, the card, TRACKS, and the closing activity line. A new seat runs `seat-label` itself: `UpdateProfile` with `title` only, then `profile.json`. A seat without a GitHub App hands the branch and the PR body to a seat that has one. A token and a PEM stay unprinted.
+**Station boot.** On any owner message, run station at Light depth: post `live-inbox <seat> --prompt`, then read `.xray/state/STATION.md`. After a summary, a wake, or a gate, run Full depth as well: the file named on the HOUSE.md `OP-PROC:` line, the newest two NOTES entries, TRACKS, open board cards, and the STATION `Skills:` line. Light reads HOUSE.md and the OP-PROC file named on its OP-PROC: line. Light does not read the rest of the pack. During the work, each step posts one activity line, and a cloud launch is written to TRACKS in that same step. On the way out, update STATION judgement, the card, TRACKS, and the closing activity line. A new seat runs `seat-label` itself: `UpdateProfile` with `title` only, then `profile.json`. A seat without a GitHub App hands the branch and the PR body to a seat that has one. A token and a PEM stay unprinted.
 
 ## Adoption
 

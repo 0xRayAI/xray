@@ -25,7 +25,7 @@ Every turn posts `--turn start`. `--prompt` posts when the turn has a gist. `--f
 
 2. Read `.xray/state/STATION.md`.
 
-Light does not read the pack.
+Light reads HOUSE.md and the OP-PROC file named on its OP-PROC: line.
 
 ## Full
 
@@ -35,10 +35,10 @@ After a nudge or a summary, Full before any ack. `--prompt` is step 1 of Light. 
 
 ## During the work
 
-Each step posts one activity line. Each cloud launch is written to `ops/cloud-memory/TRACKS.md` in the suit in that same step.
+Each step posts one activity line. Each cloud launch is written to `ops/cloud-memory/TRACKS.md` in the suit in that same step. One TRACKS path is `ops/cloud-memory/TRACKS.md` in the suit. A cloud agent never receives a seat key. The launching seat posts the milestones.
 
 ## Way out
 
-Ask anything new without a card, then update STATION, the card, TRACKS, and the closing line, as [Station boot](https://github.com/0xRayAI/xray/blob/main/grok-bot/OP-PROC.md#station-boot) and [Card](https://github.com/0xRayAI/xray/blob/main/grok-bot/OP-PROC.md#card) say. Before turn end, `house/live/tools/exit-gate.mjs` must pass. A named bug, gap, follow-up, or ask with no `repo#n` or GitHub issue, pull, or comment URL is an incomplete turn. The gate reads the first `##` section. Notes are prepended, so that section is this turn. A packet and its card follow [Packet](https://github.com/0xRayAI/xray/blob/main/grok-bot/OP-PROC.md#packet). The card key is the issue or pull. Do not hand-post a card.
+Ask anything new without a card, then update STATION, the card, TRACKS, and the closing line, as [Station boot](https://github.com/0xRayAI/xray/blob/main/grok-bot/OP-PROC.md#station-boot) and [Card](https://github.com/0xRayAI/xray/blob/main/grok-bot/OP-PROC.md#card) say. Before turn end, `house/live/tools/exit-gate.mjs` must pass. A named bug, gap, follow-up, or ask with no `repo#n` or GitHub issue, pull, or comment URL is an incomplete turn. The gate reads the first `##` section. Notes are prepended, so that section is this turn. A packet and its card follow [Packet](https://github.com/0xRayAI/xray/blob/main/grok-bot/OP-PROC.md#packet). The card key is the issue or pull. Do not hand-post a card. Before a ship, cite `npx @0xray/foundry inspect --skip-live` with `ok: true`. If `exit-gate.mjs` is not installed, that gap is xray#1083 and this pull does not change the gate.
 
 Backstop: doctor warns when `STATION.md` is older than `NOTES.md`, when its `Working:` time is older than the newest NOTES `##` entry or older than 2h (a turn that skipped station), or when `Skills:` or `Keys:` is missing. It does not flag an incomplete card.
