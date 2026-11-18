@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- `stand-up-fleet` shows the NEAR path: foundry, pay, cap, escrow, the Grok Bot one-click, and the CLI. The stop before pay is gone. Republish of the 0xRay Fleet Setup marketplace template waits for a publish GO. #1146
 - The wake routine template's flags hint now uses `npx --no-install grok-bot live-inbox --help`, so it runs the installed `@0xray/grok-bot` instead of fetching the unpublished unscoped `grok-bot` (#1172).
 
 ## [0.1.18] - 2026-11-15

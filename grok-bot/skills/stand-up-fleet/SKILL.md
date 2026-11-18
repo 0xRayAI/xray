@@ -2,12 +2,13 @@
 name: stand-up-fleet
 description: >-
   use this once when a fleet has no house, no board routes, and no worn
-  0xray suits. One pass for the fleet. Stops before pay and hangar shops.
+  0xray suits. One pass for the fleet, then the NEAR path: foundry, pay,
+  cap, escrow, the Grok Bot one-click, and the CLI.
 ---
 
 # Stand up a fleet
 
-Run this once for the fleet. Then stop. Do not register a Groover identity, do not set up OWS pay, and do not plant hangar shops unless the owner asked for those in this turn.
+Run this once for the fleet. Sections 1-5 stand the fleet up. Section 6 is the NEAR path. Do not register a Groover identity, do not set up Open Wallet pay, and do not plant hangar shops unless the owner asked for those in this turn.
 
 Each fleet runs its own Bifrost board on Railway, in a new Railway project and service the owner names. Its `LIVE_URL` is that service's Railway URL. Never point a new fleet at another fleet's board, and never offer a shared or public board as a choice.
 
@@ -81,6 +82,34 @@ The wake commands are [WAKE-ROUTINE](https://github.com/0xRayAI/xray/blob/main/g
 
 Owner prompts, acks, and cloud tags stay on those two pages. Do not restate them here.
 
-## Stop
+## 6. NEAR path
 
-Pay is [setup-ows-pay](https://github.com/0xRayAI/xray/blob/main/grok-bot/skills/setup-ows-pay/SKILL.md). Hangar shops are [plant-hangar-shops](https://github.com/0xRayAI/xray/blob/main/grok-bot/skills/plant-hangar-shops/SKILL.md). Open those only when the owner asked. A `wallet off` line means do not open them.
+This is the path the 0xRay Fleet Setup listing shows. Testnet only. Do not send a mainnet transaction. Do not print a private key or a seed phrase. Do not spend real money. Do not post in public.
+
+The Grok Bot one-click and the CLI run near-seat, then the foundry, then `near-status`. Pay, cap, and escrow are the later commands in near-mill. That one-click does not run them and does not pass amounts. The listing step is on the CLI when the owner already has an agent id. Otherwise `near-status` prints `Listing: pending`. That print is the NEAR account, the foundry id, the listing id, and Pay, Cap, and Escrow.
+
+### Grok Bot one-click
+
+The prompt is [one-click.txt](https://github.com/0xRayAI/xray/blob/main/docs-site/static/earn/one-click.txt). The page is https://docs.0xray.dev/earn and the same text is at https://docs.0xray.dev/earn/one-click.txt. Paste it into Grok Bot. It checks out main, runs `foundry-create`, then `near-status`. It names pay, cap, and escrow and does not run them. A new user has no agent id, so the listing stays `pending`. Do not invent an agent id. Do not run `hangar-list` on that one-click. Pass `--seat` a short name for this machine. Do not copy a name out of this repository.
+
+### CLI
+
+Grok CLI, Cursor, Claude Code, and Codex use a checkout of main. The `npx` forms of these commands ship in the next kit publish. This pass does not publish.
+
+```bash
+git clone https://github.com/0xRayAI/xray
+cd xray
+npm install
+node grok-bot/bin/grok-bot.js foundry-create --id <foundry-id> --seat <seat-id> --account <new-name>.testnet
+node grok-bot/bin/grok-bot.js near-status
+```
+
+`foundry-create` runs near-seat, then records the foundry. Pay, cap, and escrow are the commands in [near-mill](https://github.com/0xRayAI/xray/blob/main/grok-bot/skills/near-mill/SKILL.md):
+
+- Pay: `node grok-bot/bin/grok-bot.js near-pay`
+- Cap: `node grok-bot/bin/grok-bot.js near-cap`
+- Escrow: `node grok-bot/bin/grok-bot.js near-escrow` uses its own account, never the foundry.
+
+Listing is `node grok-bot/bin/grok-bot.js hangar-list --agent-id <id> --url <https-shop>` only when the owner already has an agent id. That id is an ETH register, and the pin is a USDC payment. This path does not do either. With no agent id, `near-status` prints `Listing: pending`.
+
+Open Wallet pay is [setup-ows-pay](https://github.com/0xRayAI/xray/blob/main/grok-bot/skills/setup-ows-pay/SKILL.md). Hangar shops are [plant-hangar-shops](https://github.com/0xRayAI/xray/blob/main/grok-bot/skills/plant-hangar-shops/SKILL.md). Open those only when the owner asked. A `wallet off` line means do not open them.
