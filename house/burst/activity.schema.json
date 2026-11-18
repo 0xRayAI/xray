@@ -44,7 +44,7 @@
     "note": {
       "type": "string",
       "maxLength": 240,
-      "pattern": "^[A-Za-z0-9 ._:@#+/?'\",;!()\\-]{1,240}$",
+      "pattern": "^[A-Za-z0-9 ._:@#+/?'\",;!()>\\-]{1,240}$",
       "description": "prompt only: the one line the board shows, at most 240 characters. Keys named body, text, or message stay refused."
     },
     "agent": {

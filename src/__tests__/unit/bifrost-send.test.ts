@@ -159,6 +159,8 @@ describe('bifrost send', () => {
 
   it('posts the owner line on the activity feed and keeps tool text off it', async () => {
     expect(promptNote('ship it 🎉 now\nplease')).toBe('ship it now please');
+    expect(promptNote('ship it -> main')).toBe('ship it -> main');
+    expect(promptNote('ship it < main')).toBe('ship it main');
     expect(ownerLine({ user_prompt: 'the board accepts activity feed' })).toBe('the board accepts activity feed');
     expect(ownerLine({ prompt: 'kept', user_prompt: 'other' })).toBe('kept');
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bifrost-send-'));
