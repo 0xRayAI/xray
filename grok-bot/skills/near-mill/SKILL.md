@@ -26,9 +26,11 @@ Grok CLI, Cursor, Claude Code, and Codex run these commands. Grok Bot runs the s
    Drives the spend vault. `init` sets `per_tx_cap`. `allow` and `deny` set the lists. `add-agent-key` adds a function-call key limited to `pay,ping`. Owner calls sign with the sealed cold key.
 5. `grok-bot near-escrow init|open|fund|deliver|accept|refund`
    The escrow account is its own account, never the foundry. `fund` locks testnet USDC. `accept` and `refund` then `withdraw`, which is the transfer that pays the foundry or the payer. `accept` needs `--signer` and `--payout-key`.
-6. `grok-bot near-mailbox post|claim|submit|accept|refund|release|jobs`
+6. `grok-bot near-1click init --ledger <file>`
+   Creates the 1 USDC spend ledger only when that file is absent. That init is the owner reset. It does not overwrite an existing file. A live quote refuses a missing or incomplete ledger. No deposit.
+7. `grok-bot near-mailbox post|claim|submit|accept|refund|release|jobs`
    A foundry with no public website can still take a paid job. The buyer funds a Clearing escrow deal with testnet USDC, then binds that deal and the brief to the mailbox. A plain `ft_transfer_call` to the mailbox is refunded in full and does not post a job. The mailbox stores the job only when the deal buyer, the USDC token, the foundry key, and the price all match, and that deal is not already a job. One worker can claim the job, and only that worker can turn in the result. If the worker does not turn it in before the claim deadline, the buyer is refunded. The payee is chosen when the mailbox is created. If no payee is set, the worker who claimed the job is paid. A mailbox can name `clearing-treasury-0xray.testnet` when that is the intended payee. Accept calls the escrow. `retry_settle` reads the escrow and marks the job accepted only when the deal is released and the foundry's escrow balance is zero. Accepted means the escrow released the funds and the foundry withdrew. It does not prove the payee was paid. That transfer is a client step. A read-only page of the jobs is at `https://<mailbox account>.testnet.page`. Testnet only.
-7. `grok-bot near-status`
+8. `grok-bot near-status`
    Prints NEAR account, foundry id, listing id, and Pay, Cap, and Escrow. An absent value is `pending`.
 
 `grok-bot doctor` prints that same block, the NEAR account when near-seat has recorded one, and the Groover register, mint, and pin step. The Open Wallet path is unchanged.

@@ -53,6 +53,9 @@ if (args[0] === 'range') {
       process.stderr.write(`${message}\n`);
       process.exitCode = 1;
     });
+} else if (args[0] === 'near-1click') {
+  const { runNear1clickCli } = require('../lib/near-1click.cjs');
+  process.exitCode = runNear1clickCli(args.slice(1));
 } else if (args[0] === 'near-mailbox') {
   const { runNearMailboxCli } = require('../lib/near-mailbox.cjs');
   runNearMailboxCli(args.slice(1))
