@@ -29,6 +29,8 @@ describe('near reference site', () => {
     expect(research).toContain('tx_status');
     expect(research).toContain('EXPERIMENTAL_tx_status');
     expect(navbar).toContain("to: '/near/reference'");
+    expect(navbar).toContain('https://www.npmjs.com/package/0xray');
+    expect(navbar).not.toContain('https://npmjs.com/package/0xray');
     for (const text of [reference, research]) {
       expect(text).not.toMatch(banned);
       expect(text).not.toMatch(secret);
