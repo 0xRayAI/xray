@@ -325,7 +325,7 @@ USAGE = ("usage: live-inbox <seat> [--peek] [--watch] | live-inbox <seat> --ack 
          "live-inbox <seat> --upto <id> | live-inbox <seat> --release | "
          "live-inbox <seat> --remember|--repeat --pr <owner/repo#n> --sha <head> --kind <kind> | "
          "live-inbox <seat> --turn start|end [--tag <tag>] | "
-         "live-inbox <seat> --cloud launch|reply|finished|cancel --agent <bc-id> [--tag <owner/repo#n|xray#n>] | "
+         "live-inbox <seat> --cloud launch|reply|finished|cancel --agent <agent-id> [--tag <owner/repo#n|xray#n>] | "
          "live-inbox <seat> --prompt [--from <name>] [--room <name>] [--note <line>] [--at <ISO>] | "
          "live-inbox <seat> --station | "
          "live-inbox <seat> --handoff <to> --pr <owner/repo#n> --kind <" + "|".join(KINDS) + "> --sha <head> | "
