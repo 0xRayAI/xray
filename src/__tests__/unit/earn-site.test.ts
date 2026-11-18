@@ -37,7 +37,9 @@ describe('earn site', () => {
     expect(prompt.indexOf('npm config set prefix ~/.npm-global')).toBeLessThan(prompt.indexOf(nearCliInstall));
     expect(prompt).toContain('foundry-create creates the NEAR account');
     expect(prompt).toContain('Pass a new name');
-    expect(prompt).toContain('node grok-bot/bin/grok-bot.js foundry-create --id <foundry-id> --seat <seat-id> --account <new-name>.testnet');
+    expect(prompt).toContain('node grok-bot/bin/grok-bot.js foundry-create --id <foundry-id> --seat <machine-name> --account <new-name>.testnet');
+    expect(prompt).not.toContain('seat-id');
+    expect(prompt).not.toContain('seat id');
     expect(prompt).toContain('node grok-bot/bin/grok-bot.js near-status');
     expect(prompt).toContain('Listing: pending');
     expect(prompt).toContain('The npx commands are coming in the next release.');
@@ -74,7 +76,10 @@ describe('earn site', () => {
     expect(page).toContain('grok-bot near-escrow');
     expect(page).not.toContain('No grok-bot command yet');
     expect(page).toContain('Base x402 is planned');
-    expect(page).toContain('A NEAR testnet demo');
+    expect(page).toContain('Deploy your agent on NEAR and earn');
+    expect(page).not.toContain('A NEAR testnet demo');
+    expect(page).not.toContain('seat-id');
+    expect(page).not.toContain('seat id');
     expect(page).not.toMatch(/any chain/i);
     expect(page).toContain('/earn/one-click.txt');
     for (const text of [prompt, page]) {
@@ -82,6 +87,9 @@ describe('earn site', () => {
       expect(text).not.toMatch(/\bdials?\b/i);
       expect(text).not.toMatch(/\bDist\b/);
       expect(text).not.toMatch(/\blaunch(ed|ing)?\b/i);
+      expect(text).not.toMatch(/\b(mill|forge|critic|arch1|pinky|allowance)\b/i);
+      expect(text).not.toContain('near-mill');
+      expect(text).not.toContain('near-seat');
     }
   });
 });
