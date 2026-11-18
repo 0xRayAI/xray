@@ -18,4 +18,4 @@ NEAR identity for one seat. The Groover register / mint / pin stays. The Open Wa
 
 ## Do not
 
-Print the private key or the seed phrase. Delete the full-access key on chain. Replace the Groover pin. Replace the Open Wallet.
+Print the private key or the seed phrase. Delete the full-access key on chain. Replace the Groover pin. Replace the Open Wallet. Deploy on mainnet. This skill creates a testnet account. Official security pages: https://docs.0xray.dev/near/reference.

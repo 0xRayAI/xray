@@ -1,15 +1,51 @@
 ---
 title: NEAR research notes
-description: Gotchas from a NEAR testnet build, and a cited read of 21 hackathon repos. No code copied. Checked 2026-11-18.
+description: Gotchas from a NEAR testnet build, security sources outside the official docs, and a cited read of 21 hackathon repos. No code copied. Checked 2026-11-18.
 ---
 
 # NEAR research notes
 
-This is the long note behind the [NEAR reference](/near/reference). The reference is the list of current docs. This page is the research: four gotchas, and what a read of 21 public hackathon repos was worth against core NEAR.
+This is the long note behind the [NEAR reference](/near/reference). The reference is the list of current docs. This page is the research: four gotchas, security sources that are not official NEAR docs, and what a read of 21 public hackathon repos was worth against core NEAR.
 
 Checked 18 Nov 2026. The file in the [0xRay repo](https://github.com/0xRayAI/xray) is `docs-site/src/pages/near/research.md`.
 
 Nothing here is a secret. No keys, no tokens, no wallet files, and no private account ids. No code from the hackathon repos is copied. Cite the commit if you read further. Then go back to the official docs before you build.
+
+## Security sources
+
+The official checklist and the pages it links are on the [NEAR reference](/near/reference). Everything in this section was opened on 18 Nov 2026. It is not a docs.near.org page.
+
+### NEAR org skills
+
+The [agent skills repo](https://github.com/near/agent-skills) is a NEAR GitHub repo. It is already named on the reference. Two files in it:
+
+- [near-contract-audit](https://github.com/near/agent-skills/blob/main/skills/near-contract-audit/SKILL.md) runs an automated check, then a manual review, then a report. The quick reference includes non-private callbacks, reentrancy, unsaved changes, one-yocto checks, and storage collision.
+- [near-smart-contracts](https://github.com/near/agent-skills/blob/main/skills/near-smart-contracts/SKILL.md) is a Rust contract guide. Its text includes access control, reentrancy, overflow checks, private callbacks, and deposits.
+
+The opened README documents `npx skills add near/agent-skills --skill near-smart-contracts`. The audit skill file is in the repo. That same README list does not name it.
+
+### Course
+
+[NEAR SC Security Course](https://www.youtube.com/playlist?list=PL7Gwuo_MOL740lhKTvouCJvk4sAyuqZqT) is a free 12-lecture playlist by Timur Güvenkaya, founder of Guvenkaya. Slides and code are in [timurguvenkaya/near-sc-security-course](https://github.com/timurguvenkaya/near-sc-security-course). The lectures cover Rust security fundamentals, then NEAR access control, denial of service, race conditions, and logical issues.
+
+### Scanners
+
+| Tool | What the opened page says | Link |
+| --- | --- | --- |
+| nearsc | Deterministic scanner. Rules NS001–NS013. An MCP server. An embedded knowledge base of audit precedents. Output as text, JSON, SARIF, and HTML. The skill path is Recon, Scan, Verify, Report. | [vinibarbosabr/nearsc-auditor](https://github.com/vinibarbosabr/nearsc-auditor) |
+| Rustle | Automatic static analyzer for NEAR Rust contracts. Detectors include unhandled promise, non-private callback, reentrancy, and unsafe math. | [blocksecteam/rustle](https://github.com/blocksecteam/rustle) |
+| Scavene | LLM and retrieval-augmented auditor. It uses a knowledge base of NEAR vulnerabilities and best practices. | [ahnafalfariza/scavene](https://github.com/ahnafalfariza/scavene) |
+| RustDefend | Multi-chain static scanner for Solana, CosmWasm, NEAR, and ink!, with NEAR-specific detectors. | [AdvancedBlockchainSecurity/RustDefend](https://github.com/AdvancedBlockchainSecurity/RustDefend) |
+
+### Articles
+
+- [How to audit a NEAR Smart Contract as a Solana Auditor](https://zuhaibmd.medium.com/how-to-audit-a-near-smart-contract-as-a-solana-auditor-74b313e3a87c), by Zuhaib Mohammed of Slot Zero Security. Receipts, asynchronous calls, callbacks, predecessor versus signer, and the full life of an operation across receipts, state, failures, and callbacks.
+- [Rust Smart Contract Audit: Solana, Move, Bugs, Tools, Cost](https://blockchainappmaker.com/blog/rust-smart-contract-audit/). The page also discusses NEAR callbacks, predecessor versus signer, one-yocto deposits, and debiting before transfers.
+
+### Audit lists
+
+- [NEARBuilders/audits](https://github.com/NEARBuilders/audits). The README is a table of public audits across the NEAR ecosystem. Reports linked from that table were not opened.
+- [Guvenkaya/public-reports](https://github.com/Guvenkaya/public-reports). The README table names 16 NEAR Rust smart-contract reports, and those files are in the repo. The PDF bodies were not opened.
 
 ## Gotchas
 

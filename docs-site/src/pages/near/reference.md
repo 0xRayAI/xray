@@ -7,7 +7,7 @@ description: Current official NEAR sources for builders, plus the old links to s
 
 Official NEAR docs move, and a lot of older pages are archived. This page lists sources that were current on 18 Nov 2026. Each row is an official page, a NEAR GitHub repo, or a spec those docs point at.
 
-Versions were read from the npm registry and crates.io on that date. GitHub links were opened the same day. The [research note](/near/research) is the longer write-up: gotchas, and a read of 21 hackathon repos. No code from those repos is copied here. The [testnet demo](/earn) is a separate page and does not spend money.
+Versions were read from the npm registry and crates.io on that date. GitHub links were opened the same day. The [research note](/near/research) is the longer write-up: gotchas, security sources that are not official NEAR docs, and a read of 21 hackathon repos. No code from those repos is copied here. The [testnet demo](/earn) is a separate page and does not spend money.
 
 Start with the [docs index](https://docs.near.org/llms.txt) if you want every current page, not just this short list.
 
@@ -88,6 +88,23 @@ Circle USDC on NEAR testnet, confirmed with `ft_metadata` the same day: contract
 | [SocialDB](https://docs.near.org/primitives/social) | Profiles, posts, and follows. The BOS widget framework on this page is deprecated. | 2026-11-18 | Current for the graph. Not for BOS. |
 | [Tools for AI agents](https://docs.near.org/getting-started/tools-for-ai) | CLI, docs index, and the docs search endpoint. [Agent skills repo](https://github.com/near/agent-skills) has no license. Read it. Do not copy it into your project. | 2026-11-18 | Current |
 | [Web3 quickstart](https://docs.near.org/web3-apps/quickstart) | A normal frontend. npm `create-near-app` 10.0.0. | 2026-11-18 | Current |
+
+## Security
+
+Official pages. Checked 2026-11-18. A checklist does not replace an independent audit. Courses, scanners, and articles are on the [research note](/near/research).
+
+| Source | What it covers | Checked | Status |
+| --- | --- | --- | --- |
+| [Security checklist](https://docs.near.org/smart-contracts/security/checklist) | Access control, storage, funds, cross-contract calls, economic design, testing, and operations. | 2026-11-18 | Current |
+| [Best practices](https://docs.near.org/smart-contracts/anatomy/best-practices) | Release builds set `overflow-checks = true`. Validate with `require!` before taking action. | 2026-11-18 | Current |
+| [One yoctoNEAR](https://docs.near.org/smart-contracts/security/one_yocto) | A sensitive method needs a deposit-capable access key. Also listed under accounts. | 2026-11-18 | Current |
+| [Duplicate token IDs](https://docs.near.org/smart-contracts/security/duplicate-inputs) | Reject repeated IDs in a caller-controlled list before paying out. | 2026-11-18 | Current |
+| [Storage cost attacks](https://docs.near.org/smart-contracts/security/storage) | Charge for state growth so a caller cannot lock the contract balance. | 2026-11-18 | Current |
+| [Callbacks can fail](https://docs.near.org/smart-contracts/security/cross-contract-calls/callback-failures) | A failed callback must leave the contract in a safe state. | 2026-11-18 | Current |
+| [Private callbacks](https://docs.near.org/smart-contracts/security/cross-contract-calls/callbacks) | Mark a callback `#[private]` so only the contract can call it. | 2026-11-18 | Current |
+| [Balance deduction](https://docs.near.org/smart-contracts/security/cross-contract-calls/reentrancy) | Deduct a balance before a cross-contract transfer. Credit a deposit only after success. | 2026-11-18 | Current |
+| [Front-running](https://docs.near.org/smart-contracts/security/frontrunning) | Observers can copy or reorder pending actions. The page covers commit-reveal. | 2026-11-18 | Current |
+| [Sybil attacks](https://docs.near.org/smart-contracts/security/sybil) | One account is not one person. | 2026-11-18 | Current |
 
 ## Do not use
 
