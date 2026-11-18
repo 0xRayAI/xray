@@ -18,10 +18,34 @@ function links(text: string): string[] {
 describe('near reference site', () => {
   it('keeps the public pages plain and points earn at the reference', () => {
     expect(reference).toContain('# NEAR reference');
+    expect(reference).toContain('## Security');
     expect(reference).toContain('## Do not use');
     expect(reference).toContain('/near/research');
     expect(reference).toContain('/earn');
+    expect(reference).toContain('https://docs.near.org/smart-contracts/security/checklist');
+    expect(reference).toContain('https://docs.near.org/smart-contracts/anatomy/best-practices');
+    expect(reference).toContain('https://docs.near.org/smart-contracts/security/storage');
+    expect(reference).toContain('https://docs.near.org/smart-contracts/security/cross-contract-calls/callbacks');
+    expect(reference).not.toContain('youtube.com');
+    expect(reference).not.toContain('nearsc-auditor');
     expect(research).toContain('# NEAR research notes');
+    expect(research).toContain('## Security sources');
+    expect(research).toContain('https://www.youtube.com/playlist?list=PL7Gwuo_MOL740lhKTvouCJvk4sAyuqZqT');
+    expect(research).toContain('https://github.com/timurguvenkaya/near-sc-security-course');
+    expect(research).toContain('https://github.com/near/agent-skills/blob/main/skills/near-contract-audit/SKILL.md');
+    expect(research).toContain('https://github.com/near/agent-skills/blob/main/skills/near-smart-contracts/SKILL.md');
+    expect(research).toContain('npx skills add near/agent-skills --skill near-smart-contracts');
+    expect(research).not.toContain('npx skills add https://github.com/near/agent-skills');
+    expect(research).toContain('https://github.com/vinibarbosabr/nearsc-auditor');
+    expect(research).toContain('https://github.com/blocksecteam/rustle');
+    expect(research).toContain('https://github.com/ahnafalfariza/scavene');
+    expect(research).toContain('https://github.com/AdvancedBlockchainSecurity/RustDefend');
+    expect(research).toContain('https://zuhaibmd.medium.com/how-to-audit-a-near-smart-contract-as-a-solana-auditor-74b313e3a87c');
+    expect(research).toContain('https://blockchainappmaker.com/blog/rust-smart-contract-audit/');
+    expect(research).toContain('https://github.com/NEARBuilders/audits');
+    expect(research).toContain('https://github.com/Guvenkaya/public-reports');
+    expect(research).not.toContain('first dedicated');
+    expect(research).not.toContain('storage bloating');
     expect(research).toContain('/near/reference');
     expect(research).toContain('Sender and receiver should be different');
     expect(research).toContain('File::create');

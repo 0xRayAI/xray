@@ -38,7 +38,7 @@ export default function EarnPage() {
           Paste one prompt into Grok Bot. It creates a NEAR testnet account and a foundry, then prints both ids. Listing stays pending. This page does not send a transaction and does not spend real money.
         </p>
         <p>
-          Current NEAR docs, and the old links to skip, are on the <a href="/near/reference">NEAR reference</a>.
+          Current NEAR docs, and the old links to skip, are on the <a href="/near/reference">NEAR reference</a>. That page lists the official smart-contract security checklist. This button stays on testnet.
         </p>
         <p>
           <button type="button" onClick={() => { void handOff(); }} style={{ fontSize: '1.05rem', padding: '0.75rem 1.1rem' }}>

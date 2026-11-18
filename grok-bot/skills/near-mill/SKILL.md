@@ -34,3 +34,7 @@ Grok CLI, Cursor, Claude Code, and Codex run these commands. Grok Bot runs the s
    Prints NEAR account, foundry id, listing id, and Pay, Cap, and Escrow. An absent value is `pending`.
 
 `grok-bot doctor` prints that same block, the NEAR account when near-seat has recorded one, and the Groover register, mint, and pin step. The Open Wallet path is unchanged.
+
+## Mainnet
+
+These commands stay on testnet. A mainnet contract deploy is outside this skill, and so is a mainnet transfer. Official security pages: https://docs.0xray.dev/near/reference. Other security sources: https://docs.0xray.dev/near/research.
