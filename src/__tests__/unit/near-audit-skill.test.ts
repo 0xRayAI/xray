@@ -14,7 +14,7 @@ describe('near-audit skill', () => {
     expect(skill).toContain('predecessor_account_id');
     expect(skill).toContain('Do not move the debit into the callback.');
     expect(skill).toContain('One in-flight withdraw on the whole contract is a valid fix.');
-    expect(skill).toContain('Do not copy a training table of NS ids.');
+    expect(skill).toContain('Do not invent an NS id.');
     expect(skill).toContain('Do not write an exploit scenario, a proof-of-concept, or an attack transaction.');
     expect(skill).toContain('Do not deploy. Do not transfer. Do not print a key, seed, or mnemonic.');
     expect(skill).toContain('https://docs.near.org/smart-contracts/security/checklist');
