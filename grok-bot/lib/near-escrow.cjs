@@ -146,6 +146,9 @@ function escrowCall(opts) {
   if (opts.action === 'fund') {
     if (!opts.dealId) throw new Error('deal is required');
     if (!/^[0-9]+$/.test(opts.price || '')) throw new Error('price is required');
+    if (!opts.signerId) throw new Error('--signer is required');
+    const key = readKeyFile(opts.keyFile);
+    const message = escrowMessage(opts.escrowId, opts.dealId, 'fund', nonce, opts.signerId);
     return {
       signerId: opts.signerId,
       receiverId: USDC,
@@ -154,9 +157,13 @@ function escrowCall(opts) {
         receiver_id: opts.escrowId,
         amount: opts.price,
         memo: 'near-escrow',
-        msg: JSON.stringify({ deal_id: Number(opts.dealId) }),
+        msg: JSON.stringify({
+          deal_id: Number(opts.dealId),
+          nonce,
+          signature: signHex(key.private_key, message),
+        }),
       },
-      gas: '80 Tgas',
+      gas: '120 Tgas',
       deposit: '1 yoctoNEAR',
     };
   }
