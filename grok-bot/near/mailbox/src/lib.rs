@@ -1,6 +1,7 @@
 //! One foundry's job mailbox on NEAR testnet.
 //! A job is posted only by `bind_job`, after the buyer has funded the Clearing escrow.
 //! `ft_on_transfer` refunds the full amount and does not move tokens.
+//! The buyer refunds on the escrow. `refund_expired` records that refund here.
 
 use near_sdk::json_types::{Base64VecU8, U128};
 use near_sdk::store::Vector;
@@ -69,7 +70,6 @@ pub struct Mailbox {
 trait EscrowOps {
     fn accept(&mut self, deal_id: u64, nonce: String, signature: String);
     fn release_after_timeout(&mut self, deal_id: u64);
-    fn refund_late(&mut self, deal_id: u64);
     fn withdraw(&mut self);
     fn get_deal(&self, deal_id: u64) -> near_sdk::serde_json::Value;
     fn get_token_id(&self) -> AccountId;
@@ -125,6 +125,7 @@ impl Mailbox {
         amount: U128,
         msg: String,
     ) -> PromiseOrValue<U128> {
+        require!(env::predecessor_account_id() == self.token_id, "only the token");
         let _keep = (sender_id, msg);
         PromiseOrValue::Value(amount)
     }
@@ -150,6 +151,7 @@ impl Mailbox {
     pub fn claim_job(&mut self, id: u64) {
         let window = self.submit_window_ns;
         let caller = env::predecessor_account_id();
+        require!(caller == self.foundry_id, "only the foundry claims");
         let job = self.job_mut(id);
         require!(job.status == "posted", "job is not posted");
         let now = env::block_timestamp();
@@ -170,41 +172,44 @@ impl Mailbox {
         job.status = "submitted".to_string();
     }
 
+    /// Record a refund the buyer already took on the escrow.
+    /// The escrow accepts `refund_late` only from the client account, so this
+    /// contract cannot take that call for them.
     pub fn refund_expired(&mut self, id: u64) -> Promise {
-        let deal_id = {
+        let (deal_id, status) = {
             let job = self.job_mut(id);
-            let now = env::block_timestamp();
-            if job.status == "posted" {
-                require!(now > parse_ns(&job.expires_at), "job has not expired");
-            } else if job.status == "claimed" {
-                require!(now > parse_ns(&job.claim_deadline), "claim deadline has not passed");
-            } else {
-                env::panic_str("job is not refundable");
-            }
-            job.status = "refunded".to_string();
-            job.escrow_id
+            (job.escrow_id, job.status.clone())
         };
+        require!(
+            status == "posted" || status == "claimed" || status == "submitted",
+            "job is not refundable"
+        );
         ext_escrow::ext(self.escrow_account.clone())
-            .with_static_gas(GAS_ESCROW)
-            .refund_late(deal_id)
+            .with_static_gas(Gas::from_tgas(15))
+            .get_deal(deal_id)
             .then(
                 Self::ext(env::current_account_id())
-                    .with_static_gas(GAS_CONTINUE)
-                    .on_refund(id),
+                    .with_static_gas(Gas::from_tgas(20))
+                    .on_refund_seen(id),
             )
     }
 
     #[private]
-    pub fn on_refund(&mut self, id: u64) {
-        if !matches!(env::promise_result(0), PromiseResult::Successful(_)) {
-            if let Some(job) = self.job_mut_optional(id) {
-                if job.claimer.is_some() {
-                    job.status = "claimed".to_string();
-                } else {
-                    job.status = "posted".to_string();
-                }
-            }
-        }
+    pub fn on_refund_seen(&mut self, id: u64) {
+        let state = match env::promise_result(0) {
+            PromiseResult::Successful(bytes) => near_sdk::serde_json::from_slice::<near_sdk::serde_json::Value>(&bytes)
+                .ok()
+                .and_then(|value| value.get("state").and_then(|item| item.as_str()).map(|text| text.to_string()))
+                .unwrap_or_default(),
+            _ => env::panic_str("escrow deal was not read"),
+        };
+        require!(state == "Refunded", "escrow has not refunded this deal");
+        let job = self.job_mut(id);
+        require!(
+            job.status == "posted" || job.status == "claimed" || job.status == "submitted",
+            "job is not refundable"
+        );
+        job.status = "refunded".to_string();
     }
 
     /// Buyer accepts. The mailbox calls the escrow, withdraws, then pays the payee.

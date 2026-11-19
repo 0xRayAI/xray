@@ -6,6 +6,7 @@ const { USDC, readKeyFile, rememberRow, signHex, submit, viewFunction } = requir
 // The USDC price is locked in the Clearing escrow. The payee is chosen at init.
 // When no payee is set, the claimer is paid.
 // A plain transfer to the mailbox is refunded. Posting is bind_job.
+// The buyer calls refund_late on the escrow. refund_expired records that refund.
 // Accepted means the escrow released the deal and the foundry withdrew.
 // It does not prove the payee was paid. That transfer is a client step.
 
@@ -173,6 +174,7 @@ function recordFundedJob(state, input) {
 
 function claimJob(state, input) {
   const job = jobById(state, input.id);
+  if (input.claimer !== state.foundry) throw new Error('only the foundry claims');
   if (job.status !== 'posted') throw new Error('job is not posted');
   if (BigInt(input.now) > BigInt(job.expires_at)) throw new Error('job has expired');
   job.status = 'claimed';
@@ -194,14 +196,10 @@ function submitResult(state, input) {
 
 function refundExpired(state, input) {
   const job = jobById(state, input.id);
-  const now = BigInt(input.now);
-  if (job.status === 'posted') {
-    if (now <= BigInt(job.expires_at)) throw new Error('job has not expired');
-  } else if (job.status === 'claimed') {
-    if (now <= BigInt(job.claim_deadline)) throw new Error('claim deadline has not passed');
-  } else {
+  if (job.status !== 'posted' && job.status !== 'claimed' && job.status !== 'submitted') {
     throw new Error('job is not refundable');
   }
+  if (input.escrowState !== 'Refunded') throw new Error('escrow has not refunded this deal');
   job.status = 'refunded';
   return { job, buyer: job.buyer, escrowId: job.escrow_id };
 }
@@ -299,11 +297,27 @@ function openMaterial(opts) {
   return { payload, nonce, signature: signHex(key.private_key, message) };
 }
 
+function fundMaterial(opts) {
+  if (opts.fundNonce && opts.fundSignature) {
+    return { nonce: opts.fundNonce, signature: opts.fundSignature };
+  }
+  if (!opts.keyFile || !opts.buyerId || !opts.escrowId || !opts.escrowDealId) {
+    throw new Error('fund signature is required');
+  }
+  const raw = `${Date.now().toString(36)}${process.pid}n${Math.floor(Math.random() * 1e6).toString(36)}`;
+  const nonce = raw.replace(/[^a-z0-9]/gi, '').slice(0, 32);
+  if (nonce.length < 16) throw new Error('nonce must be 16 to 64 letters or digits');
+  const key = readKeyFile(opts.keyFile);
+  const message = escrowMessage(opts.escrowId, Number(opts.escrowDealId), 'fund', nonce, opts.buyerId);
+  return { nonce, signature: signHex(key.private_key, message) };
+}
+
 function postPlan(opts) {
   if (!opts.brief) throw new Error('brief is required');
   if (!opts.price || opts.price === '0') throw new Error('price is required');
   if (!opts.mailboxId || !String(opts.mailboxId).endsWith('.testnet')) throw new Error('mailbox is testnet only');
   if (!opts.escrowId || !opts.escrowDealId) throw new Error('escrow id is required');
+  if (!opts.fundNonce || !opts.fundSignature) throw new Error('fund signature is required');
   return [{
     signerId: opts.buyerId,
     receiverId: USDC,
@@ -312,7 +326,11 @@ function postPlan(opts) {
       receiver_id: opts.escrowId,
       amount: opts.price,
       memo: 'near-mailbox',
-      msg: JSON.stringify({ deal_id: Number(opts.escrowDealId) }),
+      msg: JSON.stringify({
+        deal_id: Number(opts.escrowDealId),
+        nonce: opts.fundNonce,
+        signature: opts.fundSignature,
+      }),
     },
     gas: '120 Tgas',
     deposit: '1 yoctoNEAR',
@@ -348,7 +366,8 @@ async function runNearMailbox(opts = {}) {
     return { jobs: jobs || [], account: opts.mailboxId };
   }
   if (opts.action === 'post') {
-    const plan = postPlan(opts);
+    const funded = fundMaterial(opts);
+    const plan = postPlan({ ...opts, fundNonce: funded.nonce, fundSignature: funded.signature });
     let last = null;
     for (const action of plan) {
       last = await submit(action, opts);
@@ -376,7 +395,7 @@ async function runNearMailbox(opts = {}) {
     receiverId: opts.mailboxId,
     method: call.method,
     args: call.args,
-    gas: opts.action === 'accept' || opts.action === 'release' || opts.action === 'retry' ? '250 Tgas' : '50 Tgas',
+    gas: opts.action === 'accept' || opts.action === 'release' || opts.action === 'retry' ? '250 Tgas' : opts.action === 'refund' ? '80 Tgas' : '50 Tgas',
     deposit: '0 NEAR',
   }, opts);
   rememberRow(opts.dest, 'mailbox', {
@@ -454,6 +473,7 @@ module.exports = {
   openMaterial,
   parseNearMailboxArgs,
   payoutAccount,
+  fundMaterial,
   postPlan,
   recordFundedJob,
   rejectPlainTransfer,
