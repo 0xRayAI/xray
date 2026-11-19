@@ -248,7 +248,24 @@ describe('near rail commands', () => {
       });
       expect(funded.method).toBe('ft_transfer_call');
       expect(calls[1].params.receiverId).toBe(tx.USDC);
-      expect(calls[1].params.args.msg).toBe('{"deal_id":1}');
+      const fundMsg = JSON.parse(String(calls[1].params.args.msg)) as {
+        deal_id: number;
+        nonce: string;
+        signature: string;
+      };
+      expect(fundMsg.deal_id).toBe(1);
+      expect(/^[a-z0-9]{16,64}$/i.test(fundMsg.nonce)).toBe(true);
+      expect(/^[0-9a-f]{128}$/.test(fundMsg.signature)).toBe(true);
+      const fundMessage = escrow.escrowMessage('escrow.testnet', 1, 'fund', fundMsg.nonce, 'buyer.testnet');
+      const fundPub = crypto.createPublicKey({
+        key: Buffer.concat([
+          Buffer.from('302a300506032b6570032100', 'hex'),
+          Buffer.from(client.publicHex, 'hex'),
+        ]),
+        format: 'der',
+        type: 'spki',
+      });
+      expect(crypto.verify(null, Buffer.from(fundMessage), fundPub, Buffer.from(fundMsg.signature, 'hex'))).toBe(true);
       await escrow.runNearEscrow({
         dest,
         action: 'deliver',
