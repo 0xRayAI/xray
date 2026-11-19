@@ -19,10 +19,10 @@ const box = requireCjs(path.join(root, 'grok-bot/lib/near-mailbox.cjs')) as {
   retrySettle: (state: Mailbox, id: number) => { step: string; payee: string };
   getJobs: (state: Mailbox, query?: { status?: string }) => Job[];
   payoutAccount: (state: Mailbox, job: Job) => string | null;
-  postPlan: (opts: { brief: string; price: string; mailboxId: string; escrowId: string; escrowDealId: string; buyerId: string }) => Array<{ method: string; receiverId: string; args: { receiver_id?: string; amount?: string; deal_id?: number; brief?: string } }>;
+  postPlan: (opts: { brief: string; price: string; mailboxId: string; escrowId: string; escrowDealId: string; buyerId: string; fundNonce: string; fundSignature: string }) => Array<{ method: string; receiverId: string; args: { receiver_id?: string; amount?: string; msg?: string; deal_id?: number; brief?: string } }>;
   recordFundedJob: (state: Mailbox, input: Record<string, unknown>) => Job;
   rejectPlainTransfer: (state: Mailbox, amount: string) => { refund: string; jobs: number; deals: number };
-  refundExpired: (state: Mailbox, input: { id: number; now: bigint }) => { job: Job; buyer: string };
+  refundExpired: (state: Mailbox, input: { id: number; now: bigint; escrowState?: string }) => { job: Job; buyer: string };
   releaseCall: (opts: { escrowId: string; creatorId: string; signerId: string; escrowDealId: string }) => { method: string; args: { deal_id: number } };
   releaseTimeout: (state: Mailbox, input: { id: number; now: bigint }) => { payee: string; method: string };
   submitResult: (state: Mailbox, input: { id: number; claimer: string; result: string; now: bigint }) => Job;
@@ -91,15 +91,15 @@ describe('foundry job mailbox', () => {
   it('pays the claimer when no payee is set, and the configured payee when one is', () => {
     const open = funded();
     expect(open.state.payee).toBeNull();
-    box.claimJob(open.state, { id: 1, claimer: WORKER, now: NOW + 5n });
-    box.submitResult(open.state, { id: 1, claimer: WORKER, result: 'page is up', now: NOW + 10n });
+    box.claimJob(open.state, { id: 1, claimer: FOUNDRY, now: NOW + 5n });
+    box.submitResult(open.state, { id: 1, claimer: FOUNDRY, result: 'page is up', now: NOW + 10n });
     const settled = box.beginSettle(open.state, { id: 1, buyer: BUYER });
-    expect(settled.payee).toBe(WORKER);
-    expect(box.payoutAccount(open.state, settled.job)).toBe(WORKER);
+    expect(settled.payee).toBe(FOUNDRY);
+    expect(box.payoutAccount(open.state, settled.job)).toBe(FOUNDRY);
 
     const named = funded(TREASURY);
-    box.claimJob(named.state, { id: 1, claimer: WORKER, now: NOW + 5n });
-    box.submitResult(named.state, { id: 1, claimer: WORKER, result: 'page is up', now: NOW + 10n });
+    box.claimJob(named.state, { id: 1, claimer: FOUNDRY, now: NOW + 5n });
+    box.submitResult(named.state, { id: 1, claimer: FOUNDRY, result: 'page is up', now: NOW + 10n });
     expect(box.beginSettle(named.state, { id: 1, buyer: BUYER }).payee).toBe(TREASURY);
   });
 
@@ -149,7 +149,13 @@ describe('foundry job mailbox', () => {
       escrowId: ESCROW,
       escrowDealId: '7',
       buyerId: BUYER,
+      fundNonce: 'nonce1234567890ab',
+      fundSignature: 'aa',
     });
+    const msg = JSON.parse(String(plan[0].args.msg));
+    expect(msg.deal_id).toBe(7);
+    expect(msg.nonce).toBe('nonce1234567890ab');
+    expect(msg.signature).toBe('aa');
     expect(plan[0].method).toBe('ft_transfer_call');
     expect(plan[0].args.receiver_id).toBe(ESCROW);
     expect(plan[1].method).toBe('bind_job');
@@ -182,31 +188,30 @@ describe('foundry job mailbox', () => {
 
   it('rejects a second claim and a submit from someone else', () => {
     const { state } = funded();
-    box.claimJob(state, { id: 1, claimer: WORKER, now: NOW + 10n });
-    expect(() => box.claimJob(state, { id: 1, claimer: OTHER, now: NOW + 11n })).toThrow('job is not posted');
+    expect(() => box.claimJob(state, { id: 1, claimer: OTHER, now: NOW + 10n })).toThrow('only the foundry claims');
+    box.claimJob(state, { id: 1, claimer: FOUNDRY, now: NOW + 10n });
+    expect(() => box.claimJob(state, { id: 1, claimer: OTHER, now: NOW + 11n })).toThrow('only the foundry claims');
     expect(() => box.submitResult(state, { id: 1, claimer: OTHER, result: 'done', now: NOW + 12n })).toThrow('only the claimer submits');
   });
 
-  it('refunds the buyer when a posted job expires or a claim is not submitted', () => {
+  it('records a refund only after the escrow has refunded the deal', () => {
     const posted = funded();
-    expect(() => box.refundExpired(posted.state, { id: 1, now: NOW + 50n })).toThrow('job has not expired');
-    const refunded = box.refundExpired(posted.state, { id: 1, now: NOW + 101n });
+    expect(() => box.refundExpired(posted.state, { id: 1, now: NOW + 101n, escrowState: 'Funded' })).toThrow('escrow has not refunded this deal');
+    const refunded = box.refundExpired(posted.state, { id: 1, now: NOW + 101n, escrowState: 'Refunded' });
     expect(refunded.job.status).toBe('refunded');
     expect(refunded.buyer).toBe(BUYER);
 
     const claimed = funded();
-    box.claimJob(claimed.state, { id: 1, claimer: WORKER, now: NOW + 5n });
-    const deadline = BigInt(claimed.state.jobs[0].claim_deadline || '0');
-    expect(() => box.refundExpired(claimed.state, { id: 1, now: deadline })).toThrow('claim deadline has not passed');
-    const late = box.refundExpired(claimed.state, { id: 1, now: deadline + 1n });
+    box.claimJob(claimed.state, { id: 1, claimer: FOUNDRY, now: NOW + 5n });
+    const late = box.refundExpired(claimed.state, { id: 1, now: NOW + 1n, escrowState: 'Refunded' });
     expect(late.job.status).toBe('refunded');
     expect(late.buyer).toBe(BUYER);
   });
 
   it('uses the escrow release_after_timeout method', () => {
     const { state } = funded(TREASURY);
-    box.claimJob(state, { id: 1, claimer: WORKER, now: NOW + 5n });
-    box.submitResult(state, { id: 1, claimer: WORKER, result: 'page is up', now: NOW + 20n });
+    box.claimJob(state, { id: 1, claimer: FOUNDRY, now: NOW + 5n });
+    box.submitResult(state, { id: 1, claimer: FOUNDRY, result: 'page is up', now: NOW + 20n });
     const released = box.releaseTimeout(state, { id: 1, now: NOW + 101n });
     expect(released.method).toBe('release_after_timeout');
     expect(released.payee).toBe(TREASURY);
@@ -229,8 +234,8 @@ describe('foundry job mailbox', () => {
 
   it('rolls an escrow failure back and resumes withdraw or transfer', () => {
     const { state } = funded();
-    box.claimJob(state, { id: 1, claimer: WORKER, now: NOW + 5n });
-    box.submitResult(state, { id: 1, claimer: WORKER, result: 'page is up', now: NOW + 10n });
+    box.claimJob(state, { id: 1, claimer: FOUNDRY, now: NOW + 5n });
+    box.submitResult(state, { id: 1, claimer: FOUNDRY, result: 'page is up', now: NOW + 10n });
     box.beginSettle(state, { id: 1, buyer: BUYER });
     expect(box.failSettle(state, 1).status).toBe('submitted');
     box.beginSettle(state, { id: 1, buyer: BUYER });
@@ -256,6 +261,10 @@ describe('foundry job mailbox', () => {
     expect(rust).toContain('get_creator_pk');
     expect(rust).toContain('on_retry_checked');
     expect(rust).toContain('release_after_timeout');
+    expect(rust).toContain('only the foundry claims');
+    expect(rust).toContain('escrow has not refunded this deal');
+    expect(rust).toContain('only the token');
+    expect(rust).not.toContain('.refund_late(');
     expect(rust).not.toContain('fn post_job');
     expect(bin).toContain("args[0] === 'near-mailbox'");
     const mainnet = box.createMailbox({ escrowAccount: 'escrow.near', network: 'mainnet' });

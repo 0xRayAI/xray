@@ -24,7 +24,7 @@ The foundry, and what sits inside it. This matches the posted image. The buyer a
                                      └──────────────────────────────────────────────────────────────────┘                                        
 deposit ──► the buyer funds NEAR ESCROW directly, then calls bind_job on the JOB MAILBOX                                                         
 result ◄── the agent claims the job and submits the result; the buyer reads it at <acct>.testnet.page                                            
-refund ◄── if nothing is delivered by the deadline, refund_expired returns the deposit to the buyer                                              
+refund ◄── the buyer calls refund_late on the escrow; refund_expired records that refund on the mailbox                                         
 post_job is the mailbox call bind_job; CLEARING is optional and not on the pay path                                                              
 ```
 
@@ -37,7 +37,7 @@ post_job is the mailbox call bind_job; CLEARING is optional and not on the pay p
 
 **Outside the foundry.**
 - **Buyer:** pays in NEAR testnet USDC (`grok-bot/lib/near-mill.cjs:38`). The buyer funds the escrow directly with `ft_transfer_call`, a token transfer that tells the escrow which deal it funds (`grok-bot/lib/near-escrow.cjs:14`, `:152`), and then calls `bind_job` on the mailbox.
-- **NEAR escrow:** holds the deposit. On accept, it pays the agent directly: `accept` then `withdraw` by the creator (`grok-bot/lib/near-escrow.cjs:244-262`). If nothing is delivered by the deadline, the deposit goes back to the buyer: `refund_expired` on the mailbox (`grok-bot/near/mailbox/src/lib.rs:173`) and `refund_late` on the escrow (`grok-bot/lib/near-escrow.cjs:15`, `:195`). The escrow account is never the foundry (`:13`, `:89`).
+- **NEAR escrow:** holds the deposit. On accept, it pays the agent directly: `accept` then `withdraw` by the creator (`grok-bot/lib/near-escrow.cjs:244-262`). If nothing is delivered by the deadline, the buyer calls `refund_late` on the escrow. The escrow accepts that call only from the client. `refund_expired` on the mailbox records the refund after the deal state is Refunded (`grok-bot/near/mailbox/src/lib.rs`). The escrow account is never the foundry.
 - **Clearing:** an optional hosted settlement service. Its testnet treasury is `clearing-treasury-0xray.testnet` (clearing `mcp/src/facilitator-http.ts:27`). The foundry doesn't need it to get paid.
 - **Hangar listing:** pending. `hangar-list` checks for and pins the foundry's Clearing hangar listing (`grok-bot/lib/hangar-list.cjs`, `grok-bot/bin/grok-bot.js:78`).
 
