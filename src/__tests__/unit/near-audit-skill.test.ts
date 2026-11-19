@@ -20,5 +20,7 @@ describe('near-audit skill', () => {
     expect(skill).not.toMatch(/\bplanes\b/i);
     expect(skill).not.toMatch(/dial/i);
     expect(index).toContain('skills/near-audit/SKILL.md');
+    const pack = readFileSync(path.join(root, 'grok-bot/package.json'), 'utf8');
+    expect(pack).toContain('"skills/near-audit"');
   });
 });
