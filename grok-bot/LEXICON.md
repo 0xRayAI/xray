@@ -294,4 +294,4 @@ Every bolded term in the pack OP-PROC and runbooks is defined here (`bifrost che
 
 | Term | Bucket | Plain |
 |------|--------|-------|
-| **summit** | Workstream | A wave that is completed, fully deployed, and the board is updated. |
+| **summit** | Workstream | When a wave is completed, fully deployed, and the board is updated. |
