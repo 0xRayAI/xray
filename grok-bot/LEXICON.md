@@ -289,3 +289,9 @@ Every bolded term in the pack OP-PROC and runbooks is defined here (`bifrost che
 | Term | Bucket | Plain |
 |------|--------|-------|
 | **solid** | Practices | Bug free, well architected, pattern-driven code. The shape is solid and it is ready to ship. |
+
+## Lexicon add (2026-11-20 — summit)
+
+| Term | Bucket | Plain |
+|------|--------|-------|
+| **summit** | Workstream | A wave that is completed, fully deployed, and the board is updated. |
