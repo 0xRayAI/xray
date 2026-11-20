@@ -282,6 +282,4 @@ Every bolded term in the pack OP-PROC and runbooks is defined here (`bifrost che
 
 | Term | Bucket | Plain |
 |------|--------|-------|
-| **shape** | Workstream | The fields a record must have, and the key order when a check pins it. A wake post, an activity line, a reminder, and a routing row each have one. A routing row needs a role and a plane. A plane needs one primary. |
-
-Shape is the structure. A packet is the card's fields. A card is the issue or pull.
+| **shape** | Practices | How a module, a subsystem, or a whole system looks. The question is what the shape of it is. |
