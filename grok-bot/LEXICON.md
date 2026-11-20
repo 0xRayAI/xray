@@ -283,3 +283,9 @@ Every bolded term in the pack OP-PROC and runbooks is defined here (`bifrost che
 | Term | Bucket | Plain |
 |------|--------|-------|
 | **shape** | Practices | How a module, a subsystem, or a whole system looks. The question is what the shape of it is. |
+
+## Lexicon add (2026-11-20 — solid)
+
+| Term | Bucket | Plain |
+|------|--------|-------|
+| **solid** | Practices | A product a person can deploy, use to do real work, and earn. |
