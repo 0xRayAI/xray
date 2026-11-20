@@ -295,3 +295,11 @@ Every bolded term in the pack OP-PROC and runbooks is defined here (`bifrost che
 | Term | Bucket | Plain |
 |------|--------|-------|
 | **summit** | Workstream | When a wave is completed, fully deployed, and the board is updated. |
+
+## Lexicon add (2026-11-20 — glance)
+
+| Term | Bucket | Plain |
+|------|--------|-------|
+| **glance** | Workstream | A quick scope check with a one-line answer in chat. |
+| **look** | Workstream | A proper read of the diff, maybe one targeted test run, and a short comment on the PR. |
+| **strict** | Workstream | The full review. |
