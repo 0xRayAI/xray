@@ -277,3 +277,9 @@ Every bolded term in the pack OP-PROC and runbooks is defined here (`bifrost che
 | Term | Bucket | Plain |
 |------|--------|-------|
 | **hand walk** | Practice | The agent walks the test by hand, running it directly in the browser or CLI. It fixes what breaks and keeps walking until the test passes, recording each step as it goes. Then it updates the test scripts from those steps and runs them again for a pass receipt. |
+
+## Lexicon add (2026-11-20 — shape)
+
+| Term | Bucket | Plain |
+|------|--------|-------|
+| **shape** | Practices | How a module, a subsystem, or a whole system looks. The question is what the shape of it is. |
