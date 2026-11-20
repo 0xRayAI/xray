@@ -288,4 +288,4 @@ Every bolded term in the pack OP-PROC and runbooks is defined here (`bifrost che
 
 | Term | Bucket | Plain |
 |------|--------|-------|
-| **solid** | Practices | A product a person can deploy, use to do real work, and earn. |
+| **solid** | Practices | Bug free, well architected, pattern-driven code. The shape is solid and it is ready to ship. |
