@@ -58,7 +58,7 @@ How we act — not a product, not a ticket type.
 | Term | Plain gloss |
 |------|-------------|
 | **plant** | Fasten a suit / hangar / shops **onto** a project (verb). Also “the plant” = mill floor (noun) |
-| **foundry / gate** | Ship check before tag / publish (`foundry gate`) |
+| **foundry / gate** | Ordered ship stops (`foundry gate`). A failed check stops the run |
 | **friend-test** | Plain-English bar before Dist or public docs ship |
 | **dogfood** | Cold-prove on ourselves before we claim it |
 | **organ** | Optional module inside the suit/plant (mill, inspect, repertoire…). Not the whole 0xRay OS. Fasten to use; don’t call it live from heat alone |
@@ -270,7 +270,7 @@ Every bolded term in the pack OP-PROC and runbooks is defined here (`bifrost che
 | **no duplicate issue** | Workstream | Never open a second issue for a problem that already has an open one; comment on that one. Work the open PR (see house One PR per lap and Card). Rule: [OP-PROC](OP-PROC.md#no-duplicate-issue). |
 | **Two at a time** | Workstream | A seat has at most two tasks in progress; other work goes to a subordinate or onto the board as a parked card, and all work has a card. Rule: [OP-PROC](OP-PROC.md#two-at-a-time). |
 | **Compute** | Workstream | A seat may make a few-line edit or a quick check on its own computer; anything bigger is a follow-up to a cloud agent already in context, and a new cloud agent needs Blaze's GO. Rule: [OP-PROC](OP-PROC.md#compute). |
-| **gate** | Workstream | A merge gate. The green gates are CI green plus the reviewer's PASS at the PR's tier (Strict for ship, live, security or identity). When both are green the publisher merges; no separate owner OK is needed (Blaze, 2026-11-15). Rule: [OP-PROC](OP-PROC.md#review). |
+| **gate** | Workstream | Stops or checks an agent must pass to continue (Blaze, 2026-11-20). The release script is the shape. The checks run in order. A failed check stops the run. Gate C cannot be skipped. Gate D is its own stop after publish: the registry lists the version, the annotated tag points at HEAD, and the GitHub Release exists. A Grok pre-tool hook is a gate. A deny stops the tool. The merge gate is CI green plus the reviewer's PASS at the PR's tier (Strict for ship, live, security, or identity). When both are green the publisher merges (Blaze, 2026-11-15). Rule: [OP-PROC](OP-PROC.md#review). |
 
 ## Lexicon add (2026-11-17 — hand walk)
 
