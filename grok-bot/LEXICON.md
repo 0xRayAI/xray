@@ -277,3 +277,11 @@ Every bolded term in the pack OP-PROC and runbooks is defined here (`bifrost che
 | Term | Bucket | Plain |
 |------|--------|-------|
 | **hand walk** | Practice | The agent walks the test by hand, running it directly in the browser or CLI. It fixes what breaks and keeps walking until the test passes, recording each step as it goes. Then it updates the test scripts from those steps and runs them again for a pass receipt. |
+
+## Lexicon add (2026-11-20 — shape)
+
+| Term | Bucket | Plain |
+|------|--------|-------|
+| **shape** | Workstream | The fields a record must have, and the key order when a check pins it. A wake post, an activity line, a reminder, and a routing row each have one. A routing row needs a role and a plane. A plane needs one primary. |
+
+Shape is the structure. A packet is the card's fields. A card is the issue or pull.
