@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- The wake exit gate takes `--git`. A dirty tree, an unpushed commit, or a branch with no upstream fails the turn. Suit files under `.xray` stay out of that count. The kit copies `work-freshness.mjs` beside `exit-gate.mjs` so the check runs from the packed tool.
 - `stand-up-fleet` shows the NEAR path: foundry, pay, cap, escrow, the Grok Bot one-click, and the CLI. The stop before pay is gone. Republish of the 0xRay Fleet Setup marketplace template waits for a publish GO. #1146
 - The wake routine template's flags hint now uses `npx --no-install grok-bot live-inbox --help`, so it runs the installed `@0xray/grok-bot` instead of fetching the unpublished unscoped `grok-bot` (#1172).
 

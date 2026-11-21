@@ -221,6 +221,90 @@ export function staleWriteReason(projectRoot, paths) {
   return '';
 }
 
+function porcelainPaths(text) {
+  return String(text || '')
+    .split('\n')
+    .map((line) => line.trimEnd())
+    .filter(Boolean)
+    .map((line) => {
+      const body = line.length > 3 ? line.slice(3) : line;
+      const parts = body.split(' -> ');
+      return (parts[1] || parts[0] || '').trim().replace(/^"|"$/g, '');
+    });
+}
+
+function isSuitState(file) {
+  const norm = String(file).replace(/\\/g, '/');
+  return norm === '.xray' || norm.startsWith('.xray/') || norm.includes('/.xray/');
+}
+
+function countRange(root, range) {
+  try {
+    return Number(run('git', ['rev-list', '--count', range], root, 4000)) || 0;
+  } catch {
+    return 0;
+  }
+}
+
+/**
+ * Residue that blocks leaving this checkout.
+ * Suit files under .xray are written on the way out and do not count.
+ * A clean checkout that is only behind main waits for the next edit.
+ * A stash is named so it can be compared. It is not dropped.
+ */
+export function localResidue(projectRoot) {
+  const top = gitTop(projectRoot);
+  if (!top) return '';
+  const root = resolve(top);
+  let branch = '';
+  try {
+    branch = run('git', ['rev-parse', '--abbrev-ref', 'HEAD'], root, 4000);
+  } catch {
+    return '';
+  }
+  let dirty = [];
+  try {
+    dirty = porcelainPaths(run('git', ['status', '--porcelain'], root, 4000))
+      .filter((file) => file && !isSuitState(file));
+  } catch {
+    return 'Clean tree: git status could not be read.';
+  }
+  let upstream = '';
+  try {
+    upstream = run('git', ['rev-parse', '--abbrev-ref', '--symbolic-full-name', '@{u}'], root, 4000);
+  } catch {
+    upstream = '';
+  }
+  const aheadUpstream = upstream ? countRange(root, '@{u}..HEAD') : 0;
+  const aheadMain = countRange(root, 'origin/main..HEAD');
+  const onMain = branch === 'main' || branch === 'master';
+  const parts = [];
+  if (dirty.length) {
+    const noun = dirty.length === 1 ? 'path' : 'paths';
+    parts.push(`dirty tree (${dirty.length} ${noun})`);
+  }
+  if (branch === 'HEAD') parts.push('detached HEAD');
+  else if (!onMain && !upstream) parts.push(`branch ${branch} has no upstream`);
+  if (aheadUpstream > 0) {
+    const noun = aheadUpstream === 1 ? 'commit' : 'commits';
+    parts.push(`${aheadUpstream} unpushed ${noun}`);
+  }
+  if (onMain && aheadMain > 0) {
+    const noun = aheadMain === 1 ? 'commit' : 'commits';
+    parts.push(`${aheadMain} local ${noun} on ${branch}`);
+  }
+  if (!parts.length) return '';
+  let stashCount = 0;
+  try {
+    const list = run('git', ['stash', 'list'], root, 4000);
+    stashCount = list ? list.split('\n').filter(Boolean).length : 0;
+  } catch {
+    stashCount = 0;
+  }
+  const stash = stashCount > 0 ? ` ${stashCount} set aside, compare before drop.` : '';
+  return `Clean tree: ${parts.join('; ')}. Push the branch and leave this checkout clean.${stash} A clean checkout that is only behind main waits for the next edit.`;
+}
+
 export function refreshFreshness(projectRoot) {
   const top = gitTop(projectRoot);
   if (top && resolve(top) === resolve(projectRoot)) {

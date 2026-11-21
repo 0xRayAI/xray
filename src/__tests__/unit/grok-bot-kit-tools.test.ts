@@ -68,6 +68,7 @@ describe('grok-bot live-inbox and exit-gate ship in the kit (xray#1071)', () => 
       expect(tgz).toBeTruthy();
       const listing = spawnSync('tar', ['-tzf', path.join(dir, tgz as string)], { encoding: 'utf8' });
       expect(listing.stdout).toContain('package/lib/packet-body.mjs');
+      expect(listing.stdout).toContain('package/lib/work-freshness.mjs');
       expect(listing.stdout).toContain('package/lib/cloud_line.py');
       spawnSync('tar', ['-xzf', path.join(dir, tgz as string), '-C', dir], { encoding: 'utf8' });
       const notes = path.join(dir, 'notes.md');

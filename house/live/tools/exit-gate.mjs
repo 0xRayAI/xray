@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // A named bug, gap, follow-up, or ask without a GitHub issue, pull, or comment URL fails the turn.
-import { readFileSync } from 'node:fs';
-import { pathToFileURL } from 'node:url';
+import { existsSync, readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { openCardsMissingRaci } from './packet-body.mjs';
 
 const REF = /[A-Za-z0-9_.-]+#\d+|https:\/\/github\.com\/\S+\/(?:issues|pull|pulls)\/\d+/;
@@ -61,10 +62,49 @@ export function unbackedDefects(text) {
   return bad;
 }
 
-function main() {
-  const files = process.argv.slice(2);
+function parseArgs(argv) {
+  const files = [];
+  let gitDir = '';
+  for (let i = 0; i < argv.length; i += 1) {
+    const arg = argv[i];
+    if (arg === '--git') {
+      const next = argv[i + 1];
+      if (next && !next.startsWith('-')) {
+        gitDir = next;
+        i += 1;
+      } else {
+        gitDir = process.cwd();
+      }
+      continue;
+    }
+    files.push(arg);
+  }
+  return { files, gitDir };
+}
+
+async function cleanTreeReason(dir) {
+  const here = dirname(fileURLToPath(import.meta.url));
+  const candidates = [
+    join(here, '../../../src/nucleus/work-freshness.mjs'),
+    join(here, '../../../dist/nucleus/work-freshness.mjs'),
+    join(here, 'work-freshness.mjs'),
+  ];
+  for (const file of candidates) {
+    if (!existsSync(file)) continue;
+    try {
+      const mod = await import(pathToFileURL(file).href);
+      if (typeof mod.localResidue === 'function') return mod.localResidue(dir);
+    } catch {
+      /* the next copy may load */
+    }
+  }
+  return null;
+}
+
+async function main() {
+  const { files, gitDir } = parseArgs(process.argv.slice(2));
   if (!files.length) {
-    process.stderr.write('usage: exit-gate.mjs <file>...\n');
+    process.stderr.write('usage: exit-gate.mjs [--git [dir]] <file>...\n');
     process.exit(2);
   }
   const bad = [];
@@ -95,9 +135,19 @@ function main() {
     for (const line of unbackedDefects(text)) bad.push(`${file}: ${line}`);
     for (const ref of unclosedAfterMerge(text)) bad.push(`${file}: merged turn left ${ref} open`);
   }
+  if (gitDir) {
+    const reason = await cleanTreeReason(gitDir);
+    if (reason === null) bad.push('clean-tree gate missing');
+    else if (reason) bad.push(reason);
+  }
   if (!bad.length) process.exit(0);
   process.stderr.write(bad.join('\n') + '\n');
   process.exit(1);
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main();
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((err) => {
+    process.stderr.write(`${err && err.message ? err.message : err}\n`);
+    process.exit(1);
+  });
+}

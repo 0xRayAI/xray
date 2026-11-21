@@ -11,7 +11,7 @@ A chat turn uses station. A webhook wake uses [WAKE-ROUTINE](../../templates/hou
 
 Board rule. On every owner message run `live-inbox <seat> --prompt --from owner --note "<gist>"`. Ack a handled line with `live-inbox <seat> --ack <id>`, or `live-inbox <seat> --ack all` once every open line is handled. A cloud agent run uses `live-inbox <seat> --turn start --tag "bc-<first8> <track>"` beside `live-inbox <seat> --cloud launch --agent <bc-id> --tag <card>` on first start or `--cloud reply` on resume, and `live-inbox <seat> --turn end --tag "bc-<first8>"` beside `live-inbox <seat> --cloud finished --agent <bc-id> --tag <card>` (cancel is `--cloud cancel`). The tag is owner/repo#n or xray#n. The cloud agent does not post that line. `--from owner` is required today.
 
-`live-inbox` ships in this kit: run it as `npx --no-install grok-bot live-inbox <seat> ...` from the project where `@0xray/grok-bot` is installed (needs python3, plus `LIVE_URL` set to your own board and `SEAT_KEYS_DIR`). No xray checkout is needed. The wake's exit gate is `npx --no-install grok-bot exit-gate .xray/state/NOTES.md`.
+`live-inbox` ships in this kit: run it as `npx --no-install grok-bot live-inbox <seat> ...` from the project where `@0xray/grok-bot` is installed (needs python3, plus `LIVE_URL` set to your own board and `SEAT_KEYS_DIR`). No xray checkout is needed. The wake's exit gate is `npx --no-install grok-bot exit-gate .xray/state/NOTES.md --git`.
 
 Kanban note. The live page shows a read-only kanban above Activity. Columns are open, review, fix, merge, retest, and done. The deep link is `?card=`.
 
