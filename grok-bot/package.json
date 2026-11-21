@@ -42,8 +42,8 @@
   ],
   "scripts": {
     "start": "node bin/grok-bot.js",
-    "prepack": "cp ../house/live/tools/bifrost-init lib/bifrost-init.py && cp ../house/live/tools/live-inbox lib/live-inbox.py && cp ../house/live/tools/exit-gate.mjs lib/exit-gate.mjs && cp ../house/live/tools/packet-body.mjs lib/packet-body.mjs && cp ../house/live/feed/cloud_line.py lib/cloud_line.py",
-    "postpack": "rm -f lib/bifrost-init.py lib/live-inbox.py lib/exit-gate.mjs lib/packet-body.mjs lib/cloud_line.py"
+    "prepack": "cp ../house/live/tools/bifrost-init lib/bifrost-init.py && cp ../house/live/tools/live-inbox lib/live-inbox.py && cp ../house/live/tools/exit-gate.mjs lib/exit-gate.mjs && cp ../house/live/tools/packet-body.mjs lib/packet-body.mjs && cp ../src/nucleus/work-freshness.mjs lib/work-freshness.mjs && cp ../house/live/feed/cloud_line.py lib/cloud_line.py",
+    "postpack": "rm -f lib/bifrost-init.py lib/live-inbox.py lib/exit-gate.mjs lib/packet-body.mjs lib/work-freshness.mjs lib/cloud_line.py"
   },
   "keywords": [
     "grok-bot",

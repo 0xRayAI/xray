@@ -4,7 +4,7 @@ import { mkdtempSync, rmSync, writeFileSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { evaluateConstitutionGate } from '../../nucleus/delegation-gate.js';
-import { compareVersions, decideFreshness, describeFreshness, freshnessNeedsRefresh } from '../../nucleus/work-freshness.mjs';
+import { compareVersions, decideFreshness, describeFreshness, freshnessNeedsRefresh, localResidue } from '../../nucleus/work-freshness.mjs';
 
 describe('Codex 70 freshness', () => {
   it('orders versions', () => {
@@ -151,6 +151,134 @@ describe('Codex 70 write scope', () => {
 
       const mixed = evaluateConstitutionGate('search_replace', { file_path: outside, paths: [join(factory, 'package.json')], new_string: 'x' }, ctx);
       expect(mixed.allow).toBe(false);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('clean tree and pattern gates', () => {
+  it('allows a clean checkout that is only behind main', () => {
+    const root = mkdtempSync(join(tmpdir(), 'xray-clean-behind-'));
+    const remote = join(root, 'remote.git');
+    const factory = join(root, 'factory');
+    try {
+      git(root, ['init', '--bare', remote]);
+      git(root, ['init', '-b', 'main', factory]);
+      writeFileSync(join(factory, 'package.json'), '{}\n');
+      git(factory, ['add', 'package.json']);
+      git(factory, ['commit', '-m', 'init']);
+      git(factory, ['remote', 'add', 'origin', remote]);
+      git(factory, ['push', '-u', 'origin', 'main']);
+      git(factory, ['commit', '--allow-empty', '-m', 'ahead']);
+      git(factory, ['push', 'origin', 'main']);
+      git(factory, ['reset', '--hard', 'HEAD~1']);
+      expect(localResidue(factory)).toBe('');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('flags a dirty source path and ignores suit state', () => {
+    const root = mkdtempSync(join(tmpdir(), 'xray-clean-dirty-'));
+    const repo = join(root, 'repo');
+    try {
+      git(root, ['init', '-b', 'main', repo]);
+      writeFileSync(join(repo, 'keep.ts'), 'export const keep = 1;\n');
+      git(repo, ['add', 'keep.ts']);
+      git(repo, ['commit', '-m', 'init']);
+      mkdirSync(join(repo, '.xray', 'state'), { recursive: true });
+      writeFileSync(join(repo, '.xray', 'state', 'NOTES.md'), 'notes\n');
+      expect(localResidue(repo)).toBe('');
+      writeFileSync(join(repo, 'keep.ts'), 'export const keep = 2;\n');
+      expect(localResidue(repo)).toMatch(/dirty tree \(1 path\)/);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('flags a branch with no upstream and an unpushed commit', () => {
+    const root = mkdtempSync(join(tmpdir(), 'xray-clean-branch-'));
+    const remote = join(root, 'remote.git');
+    const repo = join(root, 'repo');
+    try {
+      git(root, ['init', '--bare', remote]);
+      git(root, ['init', '-b', 'main', repo]);
+      writeFileSync(join(repo, 'keep.ts'), 'export const keep = 1;\n');
+      git(repo, ['add', 'keep.ts']);
+      git(repo, ['commit', '-m', 'init']);
+      git(repo, ['remote', 'add', 'origin', remote]);
+      git(repo, ['push', '-u', 'origin', 'main']);
+      git(repo, ['checkout', '-b', 'feature/one']);
+      expect(localResidue(repo)).toMatch(/branch feature\/one has no upstream/);
+      writeFileSync(join(repo, 'keep.ts'), 'export const keep = 2;\n');
+      git(repo, ['add', 'keep.ts']);
+      git(repo, ['commit', '-m', 'local']);
+      git(repo, ['push', '-u', 'origin', 'feature/one']);
+      expect(localResidue(repo)).toBe('');
+      writeFileSync(join(repo, 'keep.ts'), 'export const keep = 3;\n');
+      git(repo, ['add', 'keep.ts']);
+      git(repo, ['commit', '-m', 'again']);
+      expect(localResidue(repo)).toMatch(/1 unpushed commit/);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('names a stash and still passes a clean tree', () => {
+    const root = mkdtempSync(join(tmpdir(), 'xray-clean-stash-'));
+    const repo = join(root, 'repo');
+    try {
+      git(root, ['init', '-b', 'main', repo]);
+      writeFileSync(join(repo, 'keep.ts'), 'export const keep = 1;\n');
+      git(repo, ['add', 'keep.ts']);
+      git(repo, ['commit', '-m', 'init']);
+      writeFileSync(join(repo, 'keep.ts'), 'export const keep = 2;\n');
+      git(repo, ['stash', 'push', '-m', 'later']);
+      expect(localResidue(repo)).toBe('');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('denies a one-off file and allows a call beside the pattern', () => {
+    const root = mkdtempSync(join(tmpdir(), 'xray-pattern-'));
+    const repo = join(root, 'repo');
+    const features = { lead_dev_mode: false, auto_chain_delegations: false, no_new_surface: false };
+    const ctx = { projectRoot: repo, sessionId: null, features, host: 'grok' as const };
+    try {
+      git(root, ['init', '-b', 'main', repo]);
+      mkdirSync(join(repo, 'src', 'models'), { recursive: true });
+      writeFileSync(join(repo, 'src', 'models', 'user.ts'), 'export const user = 1;\n');
+      git(repo, ['add', 'src']);
+      git(repo, ['commit', '-m', 'init']);
+      const oneOff = evaluateConstitutionGate('search_replace', {
+        file_path: join(repo, 'src', 'one-off', 'helper.ts'),
+        new_string: 'export function helper() { return 1; }\n',
+      }, ctx);
+      expect(oneOff.allow).toBe(false);
+      if (!oneOff.allow) expect(oneOff.gate).toBe('pattern');
+      const beside = evaluateConstitutionGate('search_replace', {
+        file_path: join(repo, 'src', 'models', 'order.ts'),
+        new_string: 'export const order = 1;\n',
+      }, ctx);
+      expect(beside.allow).toBe(true);
+      const testFile = evaluateConstitutionGate('search_replace', {
+        file_path: join(repo, 'src', 'one-off', 'helper.test.ts'),
+        new_string: 'export const t = 1;\n',
+      }, ctx);
+      expect(testFile.allow).toBe(true);
+      const edit = evaluateConstitutionGate('search_replace', {
+        file_path: join(repo, 'src', 'models', 'user.ts'),
+        new_string: 'export const user = 2;\n',
+      }, ctx);
+      expect(edit.allow).toBe(true);
+      const outside = join(root, 'note.ts');
+      const memory = evaluateConstitutionGate('search_replace', {
+        file_path: outside,
+        new_string: 'export const n = 1;\n',
+      }, ctx);
+      expect(memory.allow).toBe(true);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

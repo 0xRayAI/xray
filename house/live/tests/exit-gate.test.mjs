@@ -1,6 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { openCardsMissingRaci, unbackedDefects, unclosedAfterMerge } from '../tools/exit-gate.mjs';
 
@@ -87,6 +90,46 @@ test('an open card without raci is flagged; a closed card is quiet', () => {
     ],
   };
   assert.deepEqual(openCardsMissingRaci(cards), ['xray#1104']);
+});
+
+function git(cwd, args) {
+  execFileSync('git', args, {
+    cwd,
+    stdio: 'ignore',
+    env: {
+      ...process.env,
+      GIT_AUTHOR_NAME: 'test',
+      GIT_AUTHOR_EMAIL: 'test@example.com',
+      GIT_COMMITTER_NAME: 'test',
+      GIT_COMMITTER_EMAIL: 'test@example.com',
+    },
+  });
+}
+
+test('--git fails a dirty checkout and a notes-only run stays on the file', () => {
+  const root = mkdtempSync(join(tmpdir(), 'xray-exit-git-'));
+  const repo = join(root, 'repo');
+  const notes = join(root, 'NOTES.md');
+  const script = fileURLToPath(new URL('../tools/exit-gate.mjs', import.meta.url));
+  try {
+    git(root, ['init', '-b', 'main', repo]);
+    writeFileSync(join(repo, 'keep.ts'), 'export const keep = 1;\n');
+    git(repo, ['add', 'keep.ts']);
+    git(repo, ['commit', '-m', 'init']);
+    writeFileSync(notes, '## turn\n- shipped org/app#12\n');
+    mkdirSync(join(repo, '.xray', 'state'), { recursive: true });
+    writeFileSync(join(repo, '.xray', 'state', 'NOTES.md'), 'seat\n');
+    const suitOnly = spawnSync(process.execPath, [script, notes, '--git', repo], { encoding: 'utf8' });
+    assert.equal(suitOnly.status, 0);
+    writeFileSync(join(repo, 'keep.ts'), 'export const keep = 2;\n');
+    const dirty = spawnSync(process.execPath, [script, notes, '--git', repo], { encoding: 'utf8' });
+    assert.equal(dirty.status, 1);
+    assert.match(dirty.stderr, /Clean tree: dirty tree/);
+    const notesOnly = spawnSync(process.execPath, [script, notes], { encoding: 'utf8', cwd: repo });
+    assert.equal(notesOnly.status, 0);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
 });
 
 test('a still-waiting wake that cites the existing issue URL passes without a new comment (xray#976)', () => {

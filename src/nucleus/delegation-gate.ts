@@ -1,7 +1,7 @@
 /**
  * Multi-host delegation gate SSOT — pending-delegations + spawn todo enforcement.
  * Grok / Hermes / OpenCode adapters call evaluatePreToolGate via delegation-gate-runtime.
- * Constitution (11/29/69/70 + destructive shell) lives here. Grok may still extra-block Codex 2/7.
+ * Constitution (pattern gate + 11/29/69/70 + destructive shell) lives here. Grok may still extra-block Codex 2/7.
  */
 
 import * as fs from 'fs';
@@ -38,7 +38,7 @@ import {
   tryRecordSynthesisConsultReceipt,
 } from './synthesis-consult-receipt.js';
 import { resolveSpawnPlan, hasValidSpawnPlanContext } from './spawn-plan-resolution.js';
-import { staleWriteReason } from './work-freshness.mjs';
+import { copyRootForWrite, staleWriteReason } from './work-freshness.mjs';
 import {
   isUserAsidesEnabled,
   isUserAsideTodoId,
@@ -632,7 +632,47 @@ function collectWritePaths(toolInput: ToolGateInput): string[] {
   return paths;
 }
 
-/** Codex 11 / 29 / 69 / 70 + destructive shell — always on, all hosts that call this SSOT. */
+const IMPL_EXT = /\.(?:tsx|ts|jsx|js|mjs|cjs)$/i;
+const PATTERN_DENY =
+  'Pattern gate: a call uses the pattern already in the tree, the same way a controller calls a model. This file starts a one-off directory. Name the pattern in the packet and add the call beside it.';
+
+function isTestSource(file: string): boolean {
+  const norm = file.replace(/\\/g, '/');
+  return /(?:^|\/)(?:__tests__|tests)\//.test(norm) || /\.(?:test|spec)\.[^.]+$/.test(norm);
+}
+
+function isImplementationSource(file: string): boolean {
+  const base = file.replace(/\\/g, '/').split('/').pop() ?? file;
+  if (base.endsWith('.d.ts')) return false;
+  return IMPL_EXT.test(base) && !isTestSource(base);
+}
+
+function hasPatternSibling(abs: string): boolean {
+  let names: string[] = [];
+  try {
+    names = fs.readdirSync(path.dirname(abs));
+  } catch {
+    return false;
+  }
+  const base = path.basename(abs);
+  return names.some((name) => name !== base && isImplementationSource(name));
+}
+
+/** Empty when the write extends a directory that already holds the pattern. */
+export function patternWriteReason(projectRoot: string, paths: string[]): string {
+  for (const file of paths) {
+    if (!file || !copyRootForWrite(file, projectRoot)) continue;
+    const abs = path.isAbsolute(file) ? path.resolve(file) : path.resolve(projectRoot, file);
+    if (fs.existsSync(abs)) continue;
+    const norm = abs.replace(/\\/g, '/');
+    if (isTestSource(norm) || !isImplementationSource(norm)) continue;
+    if (hasPatternSibling(abs)) continue;
+    return PATTERN_DENY;
+  }
+  return '';
+}
+
+/** Codex 11 / 29 / 69 / 70 + pattern gate + destructive shell — always on, all hosts that call this SSOT. */
 export function evaluateConstitutionGate(
   toolName: string,
   toolInput: ToolGateInput,
@@ -649,6 +689,14 @@ export function evaluateConstitutionGate(
         allow: false,
         reason,
         gate: 'codex-70',
+      };
+    }
+    const pattern = patternWriteReason(ctx.projectRoot, paths);
+    if (pattern) {
+      return {
+        allow: false,
+        reason: pattern,
+        gate: 'pattern',
       };
     }
   }
