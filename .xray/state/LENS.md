@@ -734,11 +734,11 @@ Worn:
 Card: bifrost-wake-paths
 Plane: domain
 From: dev
-Digest: What arrives at Bifrost, and whether a seat is woken, the line is only stored, or HITL holds it for a human.
+Digest: What arrives at Bifrost, and whether a seat is woken, the line is only stored, HITL holds it for a human, or the doorbell rings.
 Plate: docs-site/docs/plates/bifrost-wake-paths.md
 Plates: bifrost
-Entry: GitHub / board post / clock tick / cursor
-Exit: SEAT WOKEN, STORED, or HITL
+Entry: New head / handoff / board post / clock tick / cursor
+Exit: SEAT WOKEN, STORED, HITL, or DOORBELL
 Files: docs-site/docs/plates/bifrost-wake-paths.md, .agents/skills/bifrost-wake-paths/SKILL.md
 Skills: bifrost-wake-paths, bifrost
 Setup:
