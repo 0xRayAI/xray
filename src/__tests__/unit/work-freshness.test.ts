@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { mkdtempSync, rmSync, writeFileSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { evaluateConstitutionGate, evaluatePreToolGate, rememberCiteRead } from '../../nucleus/delegation-gate.js';
+import { evaluateConstitutionGate, evaluatePreToolGate, rememberCiteRead, shellWritePaths } from '../../nucleus/delegation-gate.js';
 import { compareVersions, decideFreshness, describeFreshness, freshnessNeedsRefresh, localResidue } from '../../nucleus/work-freshness.mjs';
 
 describe('Codex 70 freshness', () => {
@@ -317,6 +317,13 @@ describe('clean tree and pattern gates', () => {
       }, ctx);
       expect(shell.allow).toBe(false);
       if (!shell.allow) expect(shell.gate).toBe('pattern');
+      expect(shellWritePaths('echo x >&2')).toEqual([]);
+      expect(shellWritePaths('echo x 2>&1')).toEqual([]);
+      expect(shellWritePaths('x >| notes.md')).toEqual(['notes.md']);
+      const stderr = evaluateConstitutionGate('run_terminal_command', {
+        command: 'echo x >&2',
+      }, ctx);
+      expect(stderr.allow).toBe(true);
       writeFileSync(join(repo, 'PACKET.md'), 'pattern: controller calls a model\n');
       const prose = evaluateConstitutionGate('search_replace', {
         file_path: join(repo, 'src', 'billing', 'invoice.ts'),
@@ -442,6 +449,18 @@ describe('clean tree and pattern gates', () => {
         new_string: 'export const invoice = 1;\n',
       }, ctx);
       expect(openedDir.allow).toBe(true);
+      const rootFile = evaluateConstitutionGate('search_replace', {
+        file_path: join(repo, 'out.log'),
+        new_string: 'x\n',
+      }, ctx);
+      expect(rootFile.allow).toBe(false);
+      if (!rootFile.allow) expect(rootFile.gate).toBe('cite');
+      rememberCiteRead(repo, null, [join(repo, 'PACKET.md')]);
+      const rootRead = evaluateConstitutionGate('search_replace', {
+        file_path: join(repo, 'out.log'),
+        new_string: 'x\n',
+      }, ctx);
+      expect(rootRead.allow).toBe(true);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

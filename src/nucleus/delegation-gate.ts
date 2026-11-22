@@ -700,13 +700,17 @@ export function packetNamesPattern(dir: string, absFile: string): boolean {
   }
 }
 
-/** Files a shell command would create or replace. /dev/null is not a source write. */
+function isFdTarget(file: string): boolean {
+  return file === '|' || file === '&-' || /^&\d+$/.test(file);
+}
+
+/** Files a shell command would create or replace. /dev/null and a file-descriptor redirect are not source writes. */
 export function shellWritePaths(command: string): string[] {
   const paths: string[] = [];
-  const redir = /(?:^|[\s;|&])>{1,2}[ \t]*(?:"([^"]+)"|'([^']+)'|(\S+))/g;
+  const redir = /(?:^|[\s;|])(?<!\d)>{1,2}\|?[ \t]*(?:"([^"]+)"|'([^']+)'|(\S+))/g;
   for (const match of command.matchAll(redir)) {
     const file = (match[1] || match[2] || match[3] || '').trim();
-    if (!file || file === '-' || file.startsWith('/dev/')) continue;
+    if (!file || file === '-' || file.startsWith('/dev/') || isFdTarget(file)) continue;
     paths.push(file);
   }
   const copy = /(?:^|[\s;|&])(?:cp|mv)[ \t]+\S+[ \t]+(?:"([^"]+)"|'([^']+)'|(\S+))[ \t]*$/.exec(
@@ -822,7 +826,6 @@ function reachedFile(rel: string, reads: Set<string>): boolean {
 function reachedPattern(rel: string, reads: Set<string>): boolean {
   if (reachedFile(rel, reads)) return true;
   const parent = citeParent(rel);
-  if (!parent) return false;
   for (const read of reads) {
     if (citeParent(read) === parent) return true;
   }
