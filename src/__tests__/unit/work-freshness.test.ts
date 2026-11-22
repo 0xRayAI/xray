@@ -253,13 +253,17 @@ describe('clean tree and pattern gates', () => {
       git(repo, ['add', 'keep.ts']);
       git(repo, ['commit', '-m', 'init']);
       mkdirSync(bin);
-      const realGit = execFileSync('which', ['git'], { encoding: 'utf8' }).trim();
       writeFileSync(
         join(bin, 'git'),
-        `#!/bin/sh\nif [ "$1" = rev-parse ] && [ "$3" = HEAD ]; then exit 1; fi\nexec ${JSON.stringify(realGit)} "$@"\n`,
+        '#!/bin/sh\nif [ "$1" = rev-parse ] && [ "$2" = --show-toplevel ]; then pwd; exit 0; fi\nif [ "$1" = rev-parse ] && [ "$3" = HEAD ]; then exit 1; fi\nPATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"\nexport PATH\nexec git "$@"\n',
       );
       execFileSync('chmod', ['+x', join(bin, 'git')]);
       process.env.PATH = `${bin}:${prev}`;
+      execFileSync('git', ['rev-parse', '--show-toplevel'], {
+        cwd: repo,
+        encoding: 'utf8',
+        timeout: 15000,
+      });
       expect(localResidue(repo)).toMatch(/git HEAD could not be read/);
     } finally {
       process.env.PATH = prev;
@@ -294,7 +298,14 @@ describe('clean tree and pattern gates', () => {
         file_path: join(repo, 'src', 'one-off', 'helper.test.ts'),
         new_string: 'export const t = 1;\n',
       }, ctx);
-      expect(testFile.allow).toBe(true);
+      expect(testFile.allow).toBe(false);
+      if (!testFile.allow) expect(testFile.gate).toBe('cite');
+      rememberCiteRead(repo, null, [join(repo, 'src', 'one-off', 'helper.test.ts')]);
+      const testRead = evaluateConstitutionGate('search_replace', {
+        file_path: join(repo, 'src', 'one-off', 'helper.test.ts'),
+        new_string: 'export const t = 1;\n',
+      }, ctx);
+      expect(testRead.allow).toBe(true);
       const lone = evaluateConstitutionGate('search_replace', {
         file_path: join(repo, 'src', 'models', 'user.ts'),
         new_string: 'export const user = 2;\n',
@@ -307,11 +318,36 @@ describe('clean tree and pattern gates', () => {
       expect(shell.allow).toBe(false);
       if (!shell.allow) expect(shell.gate).toBe('pattern');
       writeFileSync(join(repo, 'PACKET.md'), 'pattern: controller calls a model\n');
+      const prose = evaluateConstitutionGate('search_replace', {
+        file_path: join(repo, 'src', 'billing', 'invoice.ts'),
+        new_string: 'export const invoice = 1;\n',
+      }, ctx);
+      expect(prose.allow).toBe(false);
+      if (!prose.allow) expect(prose.gate).toBe('pattern');
+      writeFileSync(join(repo, 'PACKET.md'), 'pattern: src/billing\n');
       const named = evaluateConstitutionGate('search_replace', {
         file_path: join(repo, 'src', 'billing', 'invoice.ts'),
         new_string: 'export const invoice = 1;\n',
       }, ctx);
-      expect(named.allow).toBe(true);
+      expect(named.allow).toBe(false);
+      if (!named.allow) expect(named.gate).toBe('cite');
+      rememberCiteRead(repo, null, [join(repo, 'PACKET.md')]);
+      const namedRead = evaluateConstitutionGate('search_replace', {
+        file_path: join(repo, 'src', 'billing', 'invoice.ts'),
+        new_string: 'export const invoice = 1;\n',
+      }, ctx);
+      expect(namedRead.allow).toBe(true);
+      const other = evaluateConstitutionGate('search_replace', {
+        file_path: join(repo, 'src', 'payroll', 'slip.ts'),
+        new_string: 'export const slip = 1;\n',
+      }, ctx);
+      expect(other.allow).toBe(false);
+      if (!other.allow) expect(other.gate).toBe('pattern');
+      const shellNamed = evaluateConstitutionGate('run_terminal_command', {
+        command: `printf 'x\\n' > ${join(repo, 'src', 'one-off', 'helper.ts')}`,
+      }, ctx);
+      expect(shellNamed.allow).toBe(false);
+      if (!shellNamed.allow) expect(shellNamed.gate).toBe('pattern');
       mkdirSync(join(repo, 'src', 'orders'), { recursive: true });
       writeFileSync(join(repo, 'src', 'orders', 'order.test.ts'), 'export const t = 1;\n');
       rememberCiteRead(repo, null, [join(repo, 'src', 'orders', 'order.test.ts')]);
@@ -324,7 +360,14 @@ describe('clean tree and pattern gates', () => {
         file_path: join(repo, 'src', 'models', 'user.ts'),
         new_string: 'export const user = 2;\n',
       }, ctx);
-      expect(edit.allow).toBe(true);
+      expect(edit.allow).toBe(false);
+      if (!edit.allow) expect(edit.gate).toBe('pattern');
+      writeFileSync(join(repo, 'PACKET.md'), 'pattern: src/billing\npattern: src/models\n');
+      const editNamed = evaluateConstitutionGate('search_replace', {
+        file_path: join(repo, 'src', 'models', 'user.ts'),
+        new_string: 'export const user = 2;\n',
+      }, ctx);
+      expect(editNamed.allow).toBe(true);
       const outside = join(root, 'note.ts');
       const memory = evaluateConstitutionGate('search_replace', {
         file_path: outside,
@@ -353,7 +396,7 @@ describe('clean tree and pattern gates', () => {
       }, ctx);
       expect(unread.allow).toBe(false);
       if (!unread.allow) expect(unread.gate).toBe('pattern');
-      writeFileSync(join(repo, 'PACKET.md'), 'pattern: controller calls a model\n');
+      writeFileSync(join(repo, 'PACKET.md'), 'pattern: src/models\n');
       const named = evaluateConstitutionGate('search_replace', {
         file_path: join(repo, 'src', 'models', 'user.ts'),
         new_string: 'export const user = 2;\n',
@@ -386,6 +429,19 @@ describe('clean tree and pattern gates', () => {
         new_string: 'export const order = 1;\n',
       }, ctx);
       expect(beside.allow).toBe(true);
+      writeFileSync(join(repo, 'PACKET.md'), 'pattern: src/billing\npattern: src/models\n');
+      const fresh = evaluateConstitutionGate('search_replace', {
+        file_path: join(repo, 'src', 'billing', 'invoice.ts'),
+        new_string: 'export const invoice = 1;\n',
+      }, ctx);
+      expect(fresh.allow).toBe(false);
+      if (!fresh.allow) expect(fresh.gate).toBe('cite');
+      rememberCiteRead(repo, null, [join(repo, 'src', 'models')]);
+      const openedDir = evaluateConstitutionGate('search_replace', {
+        file_path: join(repo, 'src', 'billing', 'invoice.ts'),
+        new_string: 'export const invoice = 1;\n',
+      }, ctx);
+      expect(openedDir.allow).toBe(true);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

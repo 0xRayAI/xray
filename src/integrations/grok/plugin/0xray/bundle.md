@@ -6,4 +6,4 @@ Escalator: in a wave, one pull at a time means one Railway deploy and one CI wai
 
 The suit reads this file from the worn plugin. It does not restate the rule in a skill or in AGENTS.
 
-Cite the source. Name the file you used, or the research you used. A dev or review message is background. Read the code before you change it or review it.
+Cite the source. Name the file you used, or the research you used. A dev or review message is background. Read the code before you change it or review it. A new directory does not skip that read.

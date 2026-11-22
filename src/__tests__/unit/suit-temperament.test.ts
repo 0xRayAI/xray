@@ -258,6 +258,7 @@ describe('delegation-gate temperament', () => {
       { projectRoot: tmp, sessionId: 's', features, host: 'grok' },
     );
     expect(rewrite.allow).toBe(true);
+    rememberCiteRead(tmp, 's', ['src/skills/brand-new/SKILL.md']);
     const create = evaluatePreToolGate(
       'search_replace',
       { path: 'src/skills/brand-new/SKILL.md', new_string: '# new\n' },
@@ -317,6 +318,7 @@ describe('delegation-gate temperament', () => {
     );
     const features = loadDelegationGateFeatures(tmp, 'grok');
     expect(features.no_new_surface).toBe(true);
+    rememberCiteRead(tmp, 's', ['src/skills/brand-new/SKILL.md']);
     const create = evaluatePreToolGate(
       'write',
       { path: 'src/skills/brand-new/SKILL.md', contents: '# new\n' },
@@ -335,6 +337,7 @@ describe('delegation-gate temperament', () => {
       }),
     );
     const features = loadDelegationGateFeatures(tmp, 'grok');
+    rememberCiteRead(tmp, 's', ['src/skills/brand-new/SKILL.md']);
     const create = evaluatePreToolGate(
       'write',
       { paths: ['src/skills/brand-new/SKILL.md'], contents: '# new\n' },

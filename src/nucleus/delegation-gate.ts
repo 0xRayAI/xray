@@ -634,8 +634,8 @@ function collectWritePaths(toolInput: ToolGateInput): string[] {
 
 const IMPL_EXT = /\.(?:tsx|ts|jsx|js|mjs|cjs)$/i;
 const PATTERN_DENY =
-  'Pattern gate: a call uses the pattern already in the tree, the same way a controller calls a model. This file has no sibling in its directory. Name the pattern in PACKET.md or add the call beside a sibling.';
-const PATTERN_FIELD = /(?:^|\n)[ \t]*pattern[ \t]*:[ \t]*(\S[^\n]*)/i;
+  'Pattern gate: a call uses the pattern already in the tree, the same way a controller calls a model. This file has no sibling in its directory. Name this directory or file as pattern: in PACKET.md, or add the call beside a sibling.';
+const PATTERN_FIELD = /(?:^|\n)[ \t]*pattern[ \t]*:[ \t]*(\S[^\n]*)/gi;
 
 function isTestSource(file: string): boolean {
   const norm = file.replace(/\\/g, '/');
@@ -664,12 +664,37 @@ function hasPatternSibling(abs: string): boolean {
   return names.some((name) => name !== base && isCodeSibling(name));
 }
 
-/** True when PACKET.md in this checkout names the pattern that unlocks a new module. */
-export function packetNamesPattern(dir: string): boolean {
+function patternTokens(value: string): string[] {
+  return value
+    .split(/[\s,;]+/)
+    .map((token) => token.replace(/^['"`]+|['"`]+$/g, '').replace(/\\/g, '/').replace(/^\.?\//, '').replace(/\/+$/, ''))
+    .filter((token) => token.length > 0 && token !== '.');
+}
+
+/** True when one pattern: value names this file or its directory. */
+function patternNamesModule(value: string, absFile: string, copyRoot: string): boolean {
+  let rel = path.relative(path.resolve(copyRoot), path.resolve(absFile)).replace(/\\/g, '/');
+  if (!rel || rel === '.' || rel.startsWith('../') || rel === '..') return false;
+  if (rel.startsWith('./')) rel = rel.slice(2);
+  const parent = path.posix.dirname(rel);
+  const base = path.posix.basename(rel);
+  const parentName = parent === '.' ? '' : path.posix.basename(parent);
+  return patternTokens(value).some((token) => {
+    if (token === rel || token === base) return true;
+    if (parent !== '.' && (token === parent || token === parentName)) return true;
+    return token.includes('/') && rel.startsWith(`${token}/`);
+  });
+}
+
+/** True when PACKET.md names this file or its directory, not every module. */
+export function packetNamesPattern(dir: string, absFile: string): boolean {
   try {
     const text = fs.readFileSync(path.join(dir, 'PACKET.md'), 'utf8');
-    const match = text.match(PATTERN_FIELD);
-    return Boolean(match && match[1].trim());
+    for (const match of text.matchAll(PATTERN_FIELD)) {
+      const named = match[1]?.trim();
+      if (named && patternNamesModule(named, absFile, dir)) return true;
+    }
+    return false;
   } catch {
     return false;
   }
@@ -804,6 +829,45 @@ function reachedPattern(rel: string, reads: Set<string>): boolean {
   return false;
 }
 
+function nearestCitedDir(projectRoot: string, abs: string): string {
+  let cursor = path.dirname(path.resolve(abs));
+  while (!fs.existsSync(cursor)) {
+    const parent = path.dirname(cursor);
+    if (parent === cursor) return '';
+    cursor = parent;
+  }
+  return citeRel(projectRoot, cursor);
+}
+
+function readNamesPacket(projectRoot: string, abs: string, reads: Set<string>): boolean {
+  let sawPacket = false;
+  for (const read of reads) {
+    if (read === 'PACKET.md' || read.endsWith('/PACKET.md')) {
+      sawPacket = true;
+      break;
+    }
+  }
+  if (!sawPacket) return false;
+  const root = copyRootForWrite(abs, projectRoot);
+  if (root && packetNamesPattern(root, abs)) return true;
+  const project = path.resolve(projectRoot);
+  if (!root || path.resolve(root) !== project) return packetNamesPattern(project, abs);
+  return false;
+}
+
+/** A missing parent still needs a read of the nearest directory, a sibling, or the packet line. */
+function reachedNewModule(projectRoot: string, rel: string, abs: string, reads: Set<string>): boolean {
+  if (reachedPattern(rel, reads)) return true;
+  const nearest = nearestCitedDir(projectRoot, abs);
+  if (nearest) {
+    if (reads.has(nearest)) return true;
+    for (const read of reads) {
+      if (citeParent(read) === nearest) return true;
+    }
+  }
+  return readNamesPacket(projectRoot, abs, reads);
+}
+
 /** Empty when this session has opened the file, or the pattern a new file extends. */
 export function citeWriteReason(
   projectRoot: string,
@@ -820,13 +884,16 @@ export function citeWriteReason(
       continue;
     }
     const parentAbs = path.dirname(abs);
-    if (!fs.existsSync(parentAbs)) continue;
+    if (!fs.existsSync(parentAbs)) {
+      if (!reachedNewModule(projectRoot, rel, abs, reads)) return CITE_PATTERN;
+      continue;
+    }
     if (!reachedPattern(rel, reads)) return CITE_PATTERN;
   }
   return '';
 }
 
-/** Empty when the file sits beside code, or PACKET.md names the pattern. */
+/** Empty when the file sits beside code, or PACKET.md names this directory or file. */
 export function patternWriteReason(projectRoot: string, paths: string[]): string {
   for (const file of paths) {
     if (!file || !copyRootForWrite(file, projectRoot)) continue;
@@ -835,7 +902,8 @@ export function patternWriteReason(projectRoot: string, paths: string[]): string
     if (isTestSource(norm) || !isImplementationSource(norm)) continue;
     if (hasPatternSibling(abs)) continue;
     const root = copyRootForWrite(file, projectRoot);
-    if ((root && packetNamesPattern(root)) || packetNamesPattern(projectRoot)) continue;
+    if (root && packetNamesPattern(root, abs)) continue;
+    if (packetNamesPattern(projectRoot, abs)) continue;
     return PATTERN_DENY;
   }
   return '';
