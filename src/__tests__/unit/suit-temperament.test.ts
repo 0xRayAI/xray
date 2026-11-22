@@ -17,6 +17,7 @@ import {
   evaluatePreToolGate,
   evaluateSpawnPlanGate,
   loadDelegationGateFeatures,
+  rememberCiteRead,
 } from '../../nucleus/delegation-gate.js';
 import { savePersistedLeadDevPlan } from '../../nucleus/lead-dev-plan-persistence.js';
 
@@ -131,6 +132,9 @@ describe('delegation-gate temperament', () => {
       }),
     );
     const features = loadDelegationGateFeatures(tmp, 'grok');
+    fs.mkdirSync(path.join(tmp, 'src'), { recursive: true });
+    fs.writeFileSync(path.join(tmp, 'src', 'foo.ts'), 'export const x = 1;\n');
+    rememberCiteRead(tmp, 's', ['src/foo.ts']);
     const result = evaluatePreToolGate(
       'search_replace',
       { path: 'src/foo.ts', new_string: 'x' },
@@ -149,6 +153,9 @@ describe('delegation-gate temperament', () => {
       }),
     );
     const features = loadDelegationGateFeatures(tmp, 'grok');
+    fs.mkdirSync(path.join(tmp, 'src'), { recursive: true });
+    fs.writeFileSync(path.join(tmp, 'src', 'foo.ts'), 'export const x = 1;\n');
+    rememberCiteRead(tmp, 's', ['src/foo.ts']);
     const result = evaluatePreToolGate(
       'search_replace',
       { path: 'src/foo.ts', new_string: 'x' },
@@ -242,6 +249,7 @@ describe('delegation-gate temperament', () => {
     fs.mkdirSync(path.dirname(existing), { recursive: true });
     fs.writeFileSync(existing, '# orchestrator\n');
     const features = loadDelegationGateFeatures(tmp, 'grok');
+    rememberCiteRead(tmp, 's', ['src/skills/orchestrator/SKILL.md']);
     const rewrite = evaluatePreToolGate(
       'search_replace',
       { path: 'src/skills/orchestrator/SKILL.md', new_string: '# rewire\n' },
@@ -284,6 +292,9 @@ describe('delegation-gate temperament', () => {
       }),
     );
     const features = loadDelegationGateFeatures(tmp, 'hermes');
+    fs.mkdirSync(path.join(tmp, 'src'), { recursive: true });
+    fs.writeFileSync(path.join(tmp, 'src', 'foo.ts'), 'export const x = 1;\n');
+    rememberCiteRead(tmp, 's', ['src/foo.ts']);
     const result = evaluatePreToolGate(
       'write_file',
       { path: 'src/foo.ts', content: 'const x: any = 1' },
@@ -323,7 +334,7 @@ describe('delegation-gate temperament', () => {
     const features = loadDelegationGateFeatures(tmp, 'grok');
     const create = evaluatePreToolGate(
       'write',
-      { paths: ['src/mcps/brand-new.server.ts'], contents: 'export {}\n' },
+      { paths: ['src/skills/brand-new/SKILL.md'], contents: '# new\n' },
       { projectRoot: tmp, sessionId: 's', features, host: 'grok' },
     );
     expect(create.allow).toBe(false);

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { mkdtempSync, rmSync, writeFileSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { evaluateConstitutionGate } from '../../nucleus/delegation-gate.js';
+import { evaluateConstitutionGate, evaluatePreToolGate, rememberCiteRead } from '../../nucleus/delegation-gate.js';
 import { compareVersions, decideFreshness, describeFreshness, freshnessNeedsRefresh, localResidue } from '../../nucleus/work-freshness.mjs';
 
 describe('Codex 70 freshness', () => {
@@ -140,6 +140,7 @@ describe('Codex 70 write scope', () => {
       const named = evaluateConstitutionGate('search_replace', { target_file: outside, new_string: 'note' }, ctx);
       expect(named.allow).toBe(true);
 
+      rememberCiteRead(factory, null, [join(current, 'package.json')]);
       const live = evaluateConstitutionGate('search_replace', { file_path: join(current, 'package.json'), new_string: '{}' }, ctx);
       expect(live.allow).toBe(true);
 
@@ -258,6 +259,7 @@ describe('clean tree and pattern gates', () => {
       }, ctx);
       expect(oneOff.allow).toBe(false);
       if (!oneOff.allow) expect(oneOff.gate).toBe('pattern');
+      rememberCiteRead(repo, null, [join(repo, 'src', 'models', 'user.ts')]);
       const beside = evaluateConstitutionGate('search_replace', {
         file_path: join(repo, 'src', 'models', 'order.ts'),
         new_string: 'export const order = 1;\n',
@@ -279,6 +281,54 @@ describe('clean tree and pattern gates', () => {
         new_string: 'export const n = 1;\n',
       }, ctx);
       expect(memory.allow).toBe(true);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('stops an unread edit and allows it after the file is read', () => {
+    const root = mkdtempSync(join(tmpdir(), 'xray-cite-'));
+    const repo = join(root, 'repo');
+    const features = { lead_dev_mode: false, auto_chain_delegations: false, no_new_surface: false };
+    const ctx = { projectRoot: repo, sessionId: null, features, host: 'grok' as const };
+    try {
+      git(root, ['init', '-b', 'main', repo]);
+      mkdirSync(join(repo, 'src', 'models'), { recursive: true });
+      writeFileSync(join(repo, 'src', 'models', 'user.ts'), 'export const user = 1;\n');
+      git(repo, ['add', 'src']);
+      git(repo, ['commit', '-m', 'init']);
+      const unread = evaluateConstitutionGate('search_replace', {
+        file_path: join(repo, 'src', 'models', 'user.ts'),
+        new_string: 'export const user = 2;\n',
+      }, ctx);
+      expect(unread.allow).toBe(false);
+      if (!unread.allow) expect(unread.gate).toBe('cite');
+      const unreadNew = evaluateConstitutionGate('search_replace', {
+        file_path: join(repo, 'src', 'models', 'order.ts'),
+        new_string: 'export const order = 1;\n',
+      }, ctx);
+      expect(unreadNew.allow).toBe(false);
+      if (!unreadNew.allow) expect(unreadNew.gate).toBe('cite');
+      mkdirSync(join(repo, '.xray', 'state'), { recursive: true });
+      const notes = evaluateConstitutionGate('search_replace', {
+        file_path: join(repo, '.xray', 'state', 'NOTES.md'),
+        new_string: 'notes\n',
+      }, ctx);
+      expect(notes.allow).toBe(true);
+      const opened = evaluatePreToolGate('read_file', {
+        target_file: join(repo, 'src', 'models', 'user.ts'),
+      }, ctx);
+      expect(opened.allow).toBe(true);
+      const edit = evaluatePreToolGate('search_replace', {
+        file_path: join(repo, 'src', 'models', 'user.ts'),
+        new_string: 'export const user = 2;\n',
+      }, ctx);
+      expect(edit.allow).toBe(true);
+      const beside = evaluatePreToolGate('search_replace', {
+        file_path: join(repo, 'src', 'models', 'order.ts'),
+        new_string: 'export const order = 1;\n',
+      }, ctx);
+      expect(beside.allow).toBe(true);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

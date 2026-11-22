@@ -1,7 +1,7 @@
 /**
  * Multi-host delegation gate SSOT — pending-delegations + spawn todo enforcement.
  * Grok / Hermes / OpenCode adapters call evaluatePreToolGate via delegation-gate-runtime.
- * Constitution (pattern gate + 11/29/69/70 + destructive shell) lives here. Grok may still extra-block Codex 2/7.
+ * Constitution (cite + pattern gate + 11/29/69/70 + destructive shell) lives here. Grok may still extra-block Codex 2/7.
  */
 
 import * as fs from 'fs';
@@ -658,6 +658,138 @@ function hasPatternSibling(abs: string): boolean {
   return names.some((name) => name !== base && isImplementationSource(name));
 }
 
+const CITE_FILE =
+  'Cite the source: this message is background. Read this file and name it before the edit continues.';
+const CITE_PATTERN =
+  'Cite the source: this message is background. Read the pattern this file extends and name it before the edit continues.';
+const CITE_MAX_READS = 80;
+const CITE_MAX_SESSIONS = 8;
+
+function citeLogFile(projectRoot: string): string {
+  return path.join(projectRoot, '.xray', 'state', 'cite-reads.json');
+}
+
+function citeSessionKey(sessionId: string | null): string {
+  const raw = String(sessionId || 'none').replace(/[^a-zA-Z0-9._:-]/g, '').slice(0, 80);
+  return raw || 'none';
+}
+
+function citeParent(rel: string): string {
+  const i = rel.lastIndexOf('/');
+  return i === -1 ? '' : rel.slice(0, i);
+}
+
+function canonicalPath(file: string): string {
+  const abs = path.resolve(file);
+  const missing: string[] = [];
+  let cursor = abs;
+  while (!fs.existsSync(cursor)) {
+    const parent = path.dirname(cursor);
+    if (parent === cursor) break;
+    missing.push(path.basename(cursor));
+    cursor = parent;
+  }
+  let base = cursor;
+  try {
+    base = fs.realpathSync(cursor);
+  } catch {
+    base = path.resolve(cursor);
+  }
+  return missing.length ? path.join(base, ...missing.reverse()) : base;
+}
+
+/** Repo-relative path, or empty when the path is suit state or outside this checkout. */
+export function citeRel(projectRoot: string, file: string): string {
+  if (!file) return '';
+  const root = copyRootForWrite(file, projectRoot);
+  if (!root) return '';
+  const abs = path.isAbsolute(file) ? path.resolve(file) : path.resolve(projectRoot, file);
+  let rel = path.relative(canonicalPath(root), canonicalPath(abs)).replace(/\\/g, '/');
+  if (!rel || rel === '.' || rel.startsWith('../') || rel === '..') return '';
+  if (rel.startsWith('./')) rel = rel.slice(2);
+  if (rel === '.xray' || rel.startsWith('.xray/')) return '';
+  return rel;
+}
+
+function loadCiteMap(projectRoot: string): Record<string, string[]> {
+  try {
+    const parsed = JSON.parse(fs.readFileSync(citeLogFile(projectRoot), 'utf8')) as unknown;
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+    return parsed as Record<string, string[]>;
+  } catch {
+    return {};
+  }
+}
+
+/** Remember files this session opened. A missed write must not block the read. */
+export function rememberCiteRead(
+  projectRoot: string,
+  sessionId: string | null,
+  files: readonly string[],
+): void {
+  const added = files.map((file) => citeRel(projectRoot, file)).filter(Boolean);
+  if (!added.length) return;
+  const key = citeSessionKey(sessionId);
+  const map = loadCiteMap(projectRoot);
+  const prior = Array.isArray(map[key]) ? map[key] : [];
+  const next = [...new Set([...prior, ...added])].slice(-CITE_MAX_READS);
+  map[key] = next;
+  const keys = Object.keys(map);
+  if (keys.length > CITE_MAX_SESSIONS) {
+    for (const old of keys) {
+      if (old === key) continue;
+      delete map[old];
+      if (Object.keys(map).length <= CITE_MAX_SESSIONS) break;
+    }
+  }
+  const dest = citeLogFile(projectRoot);
+  fs.mkdirSync(path.dirname(dest), { recursive: true });
+  fs.writeFileSync(dest, JSON.stringify(map));
+}
+
+function loadCiteReads(projectRoot: string, sessionId: string | null): Set<string> {
+  const list = loadCiteMap(projectRoot)[citeSessionKey(sessionId)];
+  return new Set(Array.isArray(list) ? list.filter((item) => typeof item === 'string') : []);
+}
+
+function reachedFile(rel: string, reads: Set<string>): boolean {
+  if (reads.has(rel)) return true;
+  const parent = citeParent(rel);
+  return Boolean(parent && reads.has(parent));
+}
+
+function reachedPattern(rel: string, reads: Set<string>): boolean {
+  if (reachedFile(rel, reads)) return true;
+  const parent = citeParent(rel);
+  if (!parent) return false;
+  for (const read of reads) {
+    if (citeParent(read) === parent) return true;
+  }
+  return false;
+}
+
+/** Empty when this session has opened the file, or the pattern a new file extends. */
+export function citeWriteReason(
+  projectRoot: string,
+  sessionId: string | null,
+  paths: readonly string[],
+): string {
+  const reads = loadCiteReads(projectRoot, sessionId);
+  for (const file of paths) {
+    const rel = citeRel(projectRoot, file);
+    if (!rel) continue;
+    const abs = path.isAbsolute(file) ? path.resolve(file) : path.resolve(projectRoot, file);
+    if (fs.existsSync(abs)) {
+      if (!reachedFile(rel, reads)) return CITE_FILE;
+      continue;
+    }
+    const parentAbs = path.dirname(abs);
+    if (!fs.existsSync(parentAbs)) continue;
+    if (!reachedPattern(rel, reads)) return CITE_PATTERN;
+  }
+  return '';
+}
+
 /** Empty when the write extends a directory that already holds the pattern. */
 export function patternWriteReason(projectRoot: string, paths: string[]): string {
   for (const file of paths) {
@@ -672,7 +804,7 @@ export function patternWriteReason(projectRoot: string, paths: string[]): string
   return '';
 }
 
-/** Codex 11 / 29 / 69 / 70 + pattern gate + destructive shell — always on, all hosts that call this SSOT. */
+/** Cite + pattern + Codex 11 / 29 / 69 / 70 + destructive shell — always on, all hosts that call this SSOT. */
 export function evaluateConstitutionGate(
   toolName: string,
   toolInput: ToolGateInput,
@@ -697,6 +829,14 @@ export function evaluateConstitutionGate(
         allow: false,
         reason: pattern,
         gate: 'pattern',
+      };
+    }
+    const cite = citeWriteReason(ctx.projectRoot, ctx.sessionId, paths);
+    if (cite) {
+      return {
+        allow: false,
+        reason: cite,
+        gate: 'cite',
       };
     }
   }
@@ -758,6 +898,14 @@ export function evaluatePreToolGate(
     });
   } catch {
     /* station heat is best-effort — constitution still runs */
+  }
+
+  if (isReadOnlyTool(toolName)) {
+    try {
+      rememberCiteRead(ctx.projectRoot, ctx.sessionId, collectWritePaths(toolInput));
+    } catch {
+      /* a missed read log must not block the read */
+    }
   }
 
   const constitution = evaluateConstitutionGate(toolName, toolInput, ctx);

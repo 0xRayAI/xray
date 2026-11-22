@@ -39,6 +39,13 @@ describe('OpenClaw host PreToolUse', () => {
   });
 
   it('constitution denies Codex 11 writes', () => {
+    fs.mkdirSync(path.join(tmp, 'src'), { recursive: true });
+    fs.writeFileSync(path.join(tmp, 'src', 'foo.ts'), 'export const x = 1;\n');
+    evaluateOpenClawHostPreTool(
+      'read_file',
+      { path: 'src/foo.ts' },
+      { projectRoot: tmp, sessionId: 'oc-1' },
+    );
     const result = evaluateOpenClawHostPreTool(
       'write',
       { path: 'src/foo.ts', content: 'const x: any = 1' },
