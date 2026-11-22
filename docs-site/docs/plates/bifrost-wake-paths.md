@@ -21,29 +21,29 @@ The ASCII below is the same character grid the PNG was drawn from.
  ┆                        │ BIFROST                                                        │                                
  ┆                        │                                                                │                                
  ┆  ┌───────────────┐head │  ┌──────────────────┐offer┌──────────────────┐      allow      │    ┌──────────────┐            
- ┆  │    NEW HEAD   │─●───├─►│      INBOX       │────►│   WAKE FILTER    │──●──────────────┤───►│  SEAT WOKEN  │┄┄┐         
- ┆  │               │ │   │  │                  │     │                  │  │              │    │              │  ┆         
- ┆  │    head sha   │ │   │  │   store lines    │     │  allow or drop   │  │─return       │    │              │  ┆         
- ┆  └───────────────┘ │   │  └──┬───────────────┘     └──────────────────┘  │ filtered     │    └──────────────┘  ┆         
- ┆                    │   │     │                ┐────────▲         ▲       │              │                      ┆         
- ┆                    │   │     │─never settles  │nudge             ┌─────┐ │              │                      ┆         
- ┆                    │   │     ▼                │                    timed │              │                      ┆         
- ┆  ┌───────────────┐packet  ┌──────────────────┐once ┌──────────────────┐│ │drop          │    ┌──────────────┐  ┆ doorbell
- └┄┄│    HANDOFF    │─●   │  │   NUDGE L1-L3    │────►│   STALL-FIRED    ││ ───────────────────►│    STORED    │  ┆         
+ ┆  │    NEW HEAD   │─●───├─►│      INBOX       │────►│   WAKE FILTER    │─────────────────┤─●─►│  SEAT WOKEN  │┄┄┐         
+ ┆  │               │ │   │  │                  │     │                  │            drop │ │  │              │  ┆         
+ ┆  │    head sha   │ │   │  │   store lines    │     │  allow or drop   │                 │ │  │              │  ┆         
+ ┆  └───────────────┘ │   │  └──┬───────────────┘     └──────────────────┘                 │ │  └──────────┴───┘  ┆         
+ ┆                    │   │     │                ┐────────▲         ▲                      │ │─return      ┆ack   ┆         
+ ┆                    │   │     │─never settles  │nudge             ┌─────┐timed           │ │ filtered    ┆      ┆         
+ ┆            packet  │   │     ▼                │                ▼┄┄┄┄┄┄┄┼ack clears┄┄┄┄┄┄┤┄┼┄┄┄┄┄┄┄┄┄┄┄┄┄┘      ┆         
+ ┆  ┌───────────────┐ │   │  ┌──────────────────┐once ┌──────────────────┐│                │ │  ┌──────────────┐  ┆ doorbell
+ └┄┄│    HANDOFF    │─●   │  │   NUDGE L1-L3    │────►│   STALL-FIRED    ││                │ └─►│    STORED    │  ┆         
     │               │ │   │  │                  │     │                  ││                │    │              │  ┆         
     │     packet    │ │   │  │     in place     │     │    card keys     ││       └────────┤───►│              │  ┆         
     └───────────────┘ │   │  └──────────────────┘     └──────────────────┘│       │        │    └──────────────┘  ┆         
-                      │   │             └─once──────────────────▲     ▲┄ack clears┄┄┄┄┄┄┐  │ └┄┄┄┄┄┄┄┄┄┄▲         ┆         
-                      │   │             │                                 │       │     ┆  │ ┆                    ┆         
-                      │   │             │        └────────────────────────┘       │     ┆  │ ┆                    ┆         
-    ┌───────────────┐post │  ┌──────────┬───────┐│    ┌──────────────────┐        │     ┆  │ ┆  ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐  ┆         
-    │   BOARD POST  │─┐   │  │     TRIPWIRE     │┐    │       HITL       │────────┐     ┆  │ ┆  ┆   DOORBELL   ┆◄┄┘         
-    │               │   └─├─►│                  │     │                  │ to:human     ┆  │ ┆  ┆              ┆            
-    │               │   │ │  │    timed run     │     │     to:human     │              ┆  │ ┆  ┆ ready/green  ┆            
-    └───────────────┘   │ │  └──────────────────┘     └──────────────────┘              ┆  │ ┆  └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘            
-                        │ │                                                             ┆  │ ┆                              
-                        │ └─────────────────────────────────────────────────────────────┴──┘ ┆                              
-                        │                                                               ┘┄┄┄ ┆                              
+                      │   │             └─once──────────────────▲         │       │        │ └┄┄┄┄┄┄┄┄┄┄▲         ┆         
+                      │   │             │                                 │       │        │ ┆                    ┆         
+              post    │   │             │         └───────────────────────┘       │        │ ┆                    ┆         
+    ┌───────────────┐ │   │  ┌──────────────────┐ │   ┌──────────────────┐        │        │ ┆  ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐  ┆         
+    │   BOARD POST  │─┐   │  │     TRIPWIRE     │─┘   │       HITL       │────────┐        │ ┆  ┆   DOORBELL   ┆◄┄┘         
+    │               │   └─├─►│                  │     │                  │ to:human        │ ┆  ┆              ┆            
+    │               │   │ │  │    timed run     │     │     to:human     │                 │ ┆  ┆ ready/green  ┆            
+    └───────────────┘   │ │  └──────────────────┘     └──────────────────┘                 │ ┆  └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘            
+                        │ │                                                                │ ┆                              
+                        │ └────────────────────────────────────────────────────────────────┘ ┆                              
+                        │                                                                    ┆                              
           tick          │                                                                    ┆                              
     ┌───────────────┐   │                                                                    ┆                              
     │   CLOCK TICK  │───┘                                                                    ┆                              
@@ -80,7 +80,7 @@ The ASCII below is the same character grid the PNG was drawn from.
 
 - **once** — first stall or line-nudge on a card writes the stall-fired set (`applyLineNudge` `governor.mjs:219-221`; `planStallWakes` `:236`). The same word is used on both edges; there is no "mark".
 - **head** / **packet** / **post** — NEW HEAD, HANDOFF and BOARD POST meet at junction dots on one line; one arrow lands on INBOX.
-- **ack clears** — dashed return tees the frame floor and points up into STALL-FIRED. `ackLines` calls `clearStallFired` (`server.mjs:1003`, `governor.mjs:196`). `releaseClosedStallKeys` (`server.mjs:2533`) drops the same keys when the card is closed or the line is settled, on each `governorRun` (`:2546`).
+- **ack clears** — starts at SEAT WOKEN (live-inbox `--ack`) and ends in the arrow into STALL-FIRED. `ackLines` calls `clearStallFired` (`server.mjs:1003`, `governor.mjs:196`). `releaseClosedStallKeys` (`server.mjs:2533`) drops the same keys when the card is closed or the line is settled, on each `governorRun` (`:2546`).
 - **nudge** / **timed** — NUDGE L1-L3 and TRIPWIRE both run `noteWake` into WAKE FILTER (distinct arrows into the filter), then **allow** to SEAT WOKEN.
 - **to:human** — HITL → STORED with its own arrowhead, no bot wake.
 - **no wake** — CURSOR → STORED with its own arrowhead.
