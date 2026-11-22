@@ -731,6 +731,20 @@ Setup:
 Teardown:
 Worn:
 
+Card: bifrost-wake-paths
+Plane: domain
+From: dev
+Digest: What arrives at Bifrost, and whether a seat is woken, the line is only stored, or HITL holds it for a human.
+Plate: docs-site/docs/plates/bifrost-wake-paths.md
+Plates: bifrost
+Entry: GitHub / board post / clock tick / cursor
+Exit: SEAT WOKEN, STORED, or HITL
+Files: docs-site/docs/plates/bifrost-wake-paths.md, .agents/skills/bifrost-wake-paths/SKILL.md
+Skills: bifrost-wake-paths, bifrost
+Setup:
+Teardown:
+Worn:
+
 Card: grokbot
 Plane: ecosystem
 From: ecosystem

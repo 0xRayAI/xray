@@ -19,7 +19,7 @@ Plates have a type. A domain model plate shows how named parts fit. A state flow
 
 ## Domain model
 
-[Goggles](./goggles.md) · [Stamp plate](./stamp-plate.md) · [Suit](./suit.md) · [Kits](./kits.md) · [Host Pack](./host-pack.md) · [Glossary](./glossary.md) · [Grok Bot](./grokbot.md) · [Centrifuge](./centrifuge.md) · [AI Fleet Ops](./ai-fleet-ops.md) · [Fleet Ops Hub](./fleet-ops-hub.md) · [Guides Map](./guides-map.md) · [Foundry architecture](./foundry-architecture.md)
+[Goggles](./goggles.md) · [Stamp plate](./stamp-plate.md) · [Suit](./suit.md) · [Kits](./kits.md) · [Host Pack](./host-pack.md) · [Glossary](./glossary.md) · [Grok Bot](./grokbot.md) · [Centrifuge](./centrifuge.md) · [AI Fleet Ops](./ai-fleet-ops.md) · [Fleet Ops Hub](./fleet-ops-hub.md) · [Guides Map](./guides-map.md) · [Foundry architecture](./foundry-architecture.md) · [Bifrost wake paths](./bifrost-wake-paths.md)
 
 ## State flow
 

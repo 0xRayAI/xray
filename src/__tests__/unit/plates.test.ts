@@ -31,6 +31,7 @@ describe('pipeline plates', () => {
       'stamp-plate',
       'house',
       'bifrost',
+      'bifrost-wake-paths',
       'review',
       'goggles',
       'suit',
@@ -280,6 +281,7 @@ describe('pipeline plates', () => {
     expect(recallPlate('confer plate')?.id).toBe('confer');
     expect(recallPlate('worn turn plate')?.id).toBe('worn-turn');
     expect(recallPlate('bifrost plate')?.id).toBe('bifrost');
+    expect(recallPlate('bifrost wake paths plate')?.id).toBe('bifrost-wake-paths');
     expect(recallPlate('grokbot plate')?.id).toBe('grokbot');
     expect(recallPlate('repertoire')).toBeNull();
     expect(recallPlate('dynamo')).toBeNull();
@@ -542,7 +544,7 @@ function readKit(): PlateKit {
 }
 
 const NO_LENS_CARD = new Set(['review', 'goggles', 'suit', 'kits', 'host-pack', 'glossary']);
-const ASCII_FIRST = new Set(['pipeline', 'component', 'artifact', 'watcher', 'hook', 'facet', 'feature', 'factory', 'mill', 'hangar', 'plant', 'seat', 'board', 'lens', 'plane', 'foundry-architecture']);
+const ASCII_FIRST = new Set(['pipeline', 'component', 'artifact', 'watcher', 'hook', 'facet', 'feature', 'factory', 'mill', 'hangar', 'plant', 'seat', 'board', 'lens', 'plane', 'foundry-architecture', 'bifrost-wake-paths']);
 const LEFT_SIDE = new Set(['│', '├', '┼']);
 const RIGHT_EDGE = new Set(['│', '┐', '┘', '┤', '┼']);
 
