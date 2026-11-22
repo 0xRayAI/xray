@@ -82,13 +82,13 @@ How we act — not a product, not a ticket type.
 | heat ≠ fastened | Station “Repertoire: on” ≠ live `node_modules` organ |
 | wear ≠ plant (verb) | wear = run suited; plant = fasten the suit/organs onto a project |
 | wear ≠ costume | files on disk without live hooks/inspect = theater |
-| chime ≠ reflexive ack | needed interrupt / soft override — not Cadence HARD refuse-all |
+| chime ≠ reflexive ack | speaking up off the line ≠ a receipt — house refuses a reflexive chime |
 | packet ≠ ack | seven fields on a card ≠ a reflexive chime |
 | EXECUTE ≠ draft | armed ship ≠ proposed copy |
 | EXECUTE ≠ packet | armed Dist/action ≠ the handoff object |
-| tip ≠ packet | asking for the work ≠ the handoff object |
-| tip ≠ EXECUTE | asking for the work ≠ armed Dist |
-| tip ≠ Dist | asking for the work ≠ a public post |
+| tip ≠ head | retired comms word ≠ a git sha |
+| tip ≠ packet | retired comms word ≠ the handoff object |
+| tip ≠ role | doing another seat's work is a role miss |
 | hotpack ≠ kit | a short-lived pack from a tip ≠ a product kit |
 | hotpack ≠ suit | the interim pack ≠ the worn suit |
 | soft FU ≠ FIX | a later linked issue ≠ a review that blocks the pull |
@@ -113,7 +113,7 @@ Locked 2026-09-14 with Blaze — categorized.
 ## Lexicon add (2026-10-05 — chime)
 | Term | Bucket | Plain |
 |------|--------|-------|
-| **chime** | Practices | Needed interrupt that **supersedes** a gentle redirect (soft override). Use when the soft redirect isn't enough. Not a reflexive ack / ping — those stay refused under Cadence HARD. |
+| **chime** | Practices | A seat speaking up when it is not the one on the line. Stay quiet unless directly involved. The old soft-override / needed-interrupt sense is retired. House refuses a reflexive ack, ping, or chime when nothing changed. Rule: [Board words](OP-PROC.md#board-words). |
 
 ## Lexicon add (2026-10-05 — inter-bot)
 | Term | Bucket | Plain |
@@ -227,13 +227,16 @@ Every bolded term in the pack OP-PROC and runbooks is defined here (`bifrost che
 |------|--------|-------|
 | **soft follow-up** | Workstream | An approve that opens a later issue. It is in the cut, names Waiting on or start_after, or is closed with a reopen note. It is not a silent second pile. |
 | **backup queue** | Workstream | Hold a ready card only when it says Waiting on, start_after, or Held. An open review on another pull is not that hold. Resume when the field clears. |
-| **bundle** | Workstream | Lots of small cards stay. A same-path cluster is one pull with a Closes list, and critic Strict is once. R opens the bundled pull. A does not open it. A blocker hotfix, a different deploy surface, an unrelated acceptance, or a soft FU stays a solo card. An open solo card stays solo unless the same path is widened on purpose. There is no retro pass. **tip** has its own row. |
+| **bundle** | Workstream | Lots of small cards stay. A same-path cluster is one pull with a Closes list, and critic Strict is once. R opens the bundled pull. A does not open it. A blocker hotfix, a different deploy surface, an unrelated acceptance, or a soft FU stays a solo card. An open solo card stays solo unless the same path is widened on purpose. There is no retro pass. Tip is retired; a git sha is a head. See [Board words](OP-PROC.md#board-words). |
 
 ## Lexicon add (2026-10-30 — hotpack)
 
 | Term | Bucket | Plain |
 |------|--------|-------|
-| **tip** | Workstream | A seat asks the implementer to open or advance the work named on the card. Not a Dist post. Not a packet. Not EXECUTE. |
+| **tip** | Workstream | Retired. Do not use. Doing another seat's work is a role miss. A git sha is a head. "Don't tip critic" means do not do critic's work, and do not wake or hand off to critic. Rule: [Board words](OP-PROC.md#board-words). |
+| **board words** | Workstream | The comms ops: wake, nudge, handoff, ack, and chime. Tip is retired. A git sha is a head. Rule: [Board words](OP-PROC.md#board-words). |
+| **wake** | Workstream | Starts a seat's turn: the Bifrost webhook, or the 1:1 a handoff also sends. Rule: [Board words](OP-PROC.md#board-words). |
+| **head** | Workstream | The commit sha at the end of a PR, and the live inbox item for that card (queue head). Not tip. Rule: [Board words](OP-PROC.md#board-words). |
 | **soft FU** | Workstream | APPROVE now and open a linked issue for later. Wording, docs, and nits. Never a FIX that blocks the pull. |
 | **hotpack** | Workstream | A short-lived pack cut from a main tip that just merged. The fleet wears it, then graduates to npm. Not a kit, a suit, a bundle, or a packet. Steps: [HOTPACK](runbooks/HOTPACK.md). |
 | **strip** | Workstream | An ordered wear and doctor pass across seats. One seat at a time. Example order: blinky, forge, critic, herald. |
