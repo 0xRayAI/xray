@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- The pattern stop reads `pattern:` in `PACKET.md`, counts a test file as a sibling, and sees a shell redirect. The leave check stops when this git checkout's HEAD cannot be read.
 - Cite the source. Name the file you used, or the research you used. A dev or review message is background. An edit stops until this session has read that file, or the code a new file extends.
 - The wake exit gate takes `--git`. A dirty tree, an unpushed commit, or a branch with no upstream fails the turn. Suit files under `.xray` stay out of that count. The kit copies `work-freshness.mjs` beside `exit-gate.mjs` so the check runs from the packed tool.
 - `stand-up-fleet` shows the NEAR path: foundry, pay, cap, escrow, the Grok Bot one-click, and the CLI. The stop before pay is gone. Republish of the 0xRay Fleet Setup marketplace template waits for a publish GO. #1146

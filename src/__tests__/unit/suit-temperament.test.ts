@@ -134,6 +134,7 @@ describe('delegation-gate temperament', () => {
     const features = loadDelegationGateFeatures(tmp, 'grok');
     fs.mkdirSync(path.join(tmp, 'src'), { recursive: true });
     fs.writeFileSync(path.join(tmp, 'src', 'foo.ts'), 'export const x = 1;\n');
+    fs.writeFileSync(path.join(tmp, 'src', 'foo.test.ts'), 'export const t = 1;\n');
     rememberCiteRead(tmp, 's', ['src/foo.ts']);
     const result = evaluatePreToolGate(
       'search_replace',
@@ -155,6 +156,7 @@ describe('delegation-gate temperament', () => {
     const features = loadDelegationGateFeatures(tmp, 'grok');
     fs.mkdirSync(path.join(tmp, 'src'), { recursive: true });
     fs.writeFileSync(path.join(tmp, 'src', 'foo.ts'), 'export const x = 1;\n');
+    fs.writeFileSync(path.join(tmp, 'src', 'foo.test.ts'), 'export const t = 1;\n');
     rememberCiteRead(tmp, 's', ['src/foo.ts']);
     const result = evaluatePreToolGate(
       'search_replace',
@@ -294,6 +296,7 @@ describe('delegation-gate temperament', () => {
     const features = loadDelegationGateFeatures(tmp, 'hermes');
     fs.mkdirSync(path.join(tmp, 'src'), { recursive: true });
     fs.writeFileSync(path.join(tmp, 'src', 'foo.ts'), 'export const x = 1;\n');
+    fs.writeFileSync(path.join(tmp, 'src', 'foo.test.ts'), 'export const t = 1;\n');
     rememberCiteRead(tmp, 's', ['src/foo.ts']);
     const result = evaluatePreToolGate(
       'write_file',

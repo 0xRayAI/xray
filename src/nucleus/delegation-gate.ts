@@ -634,7 +634,8 @@ function collectWritePaths(toolInput: ToolGateInput): string[] {
 
 const IMPL_EXT = /\.(?:tsx|ts|jsx|js|mjs|cjs)$/i;
 const PATTERN_DENY =
-  'Pattern gate: a call uses the pattern already in the tree, the same way a controller calls a model. This file starts a one-off directory. Name the pattern in the packet and add the call beside it.';
+  'Pattern gate: a call uses the pattern already in the tree, the same way a controller calls a model. This file has no sibling in its directory. Name the pattern in PACKET.md or add the call beside a sibling.';
+const PATTERN_FIELD = /(?:^|\n)[ \t]*pattern[ \t]*:[ \t]*(\S[^\n]*)/i;
 
 function isTestSource(file: string): boolean {
   const norm = file.replace(/\\/g, '/');
@@ -647,6 +648,11 @@ function isImplementationSource(file: string): boolean {
   return IMPL_EXT.test(base) && !isTestSource(base);
 }
 
+function isCodeSibling(name: string): boolean {
+  if (name.endsWith('.d.ts')) return false;
+  return IMPL_EXT.test(name);
+}
+
 function hasPatternSibling(abs: string): boolean {
   let names: string[] = [];
   try {
@@ -655,7 +661,37 @@ function hasPatternSibling(abs: string): boolean {
     return false;
   }
   const base = path.basename(abs);
-  return names.some((name) => name !== base && isImplementationSource(name));
+  return names.some((name) => name !== base && isCodeSibling(name));
+}
+
+/** True when PACKET.md in this checkout names the pattern that unlocks a new module. */
+export function packetNamesPattern(dir: string): boolean {
+  try {
+    const text = fs.readFileSync(path.join(dir, 'PACKET.md'), 'utf8');
+    const match = text.match(PATTERN_FIELD);
+    return Boolean(match && match[1].trim());
+  } catch {
+    return false;
+  }
+}
+
+/** Files a shell command would create or replace. /dev/null is not a source write. */
+export function shellWritePaths(command: string): string[] {
+  const paths: string[] = [];
+  const redir = /(?:^|[\s;|&])>{1,2}[ \t]*(?:"([^"]+)"|'([^']+)'|(\S+))/g;
+  for (const match of command.matchAll(redir)) {
+    const file = (match[1] || match[2] || match[3] || '').trim();
+    if (!file || file === '-' || file.startsWith('/dev/')) continue;
+    paths.push(file);
+  }
+  const copy = /(?:^|[\s;|&])(?:cp|mv)[ \t]+\S+[ \t]+(?:"([^"]+)"|'([^']+)'|(\S+))[ \t]*$/.exec(
+    command.trim(),
+  );
+  if (copy) {
+    const file = (copy[1] || copy[2] || copy[3] || '').trim();
+    if (file && IMPL_EXT.test(file) && !paths.includes(file)) paths.push(file);
+  }
+  return paths;
 }
 
 const CITE_FILE =
@@ -790,15 +826,16 @@ export function citeWriteReason(
   return '';
 }
 
-/** Empty when the write extends a directory that already holds the pattern. */
+/** Empty when the file sits beside code, or PACKET.md names the pattern. */
 export function patternWriteReason(projectRoot: string, paths: string[]): string {
   for (const file of paths) {
     if (!file || !copyRootForWrite(file, projectRoot)) continue;
     const abs = path.isAbsolute(file) ? path.resolve(file) : path.resolve(projectRoot, file);
-    if (fs.existsSync(abs)) continue;
     const norm = abs.replace(/\\/g, '/');
     if (isTestSource(norm) || !isImplementationSource(norm)) continue;
     if (hasPatternSibling(abs)) continue;
+    const root = copyRootForWrite(file, projectRoot);
+    if ((root && packetNamesPattern(root)) || packetNamesPattern(projectRoot)) continue;
     return PATTERN_DENY;
   }
   return '';
@@ -811,8 +848,9 @@ export function evaluateConstitutionGate(
   ctx: PreToolGateContext,
 ): PreToolGateResult {
   const content = collectWriteContent(toolInput);
-  const paths = collectWritePaths(toolInput);
-  const writing = isWriteTool(toolName, ctx.host ?? 'generic');
+  const shellPaths = isShellTool(toolName) ? shellWritePaths(String(toolInput.command ?? '')) : [];
+  const paths = [...collectWritePaths(toolInput), ...shellPaths];
+  const writing = isWriteTool(toolName, ctx.host ?? 'generic') || shellPaths.length > 0;
 
   if (writing) {
     const reason = staleWriteReason(ctx.projectRoot, paths);

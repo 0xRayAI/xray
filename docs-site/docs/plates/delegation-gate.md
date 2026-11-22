@@ -43,7 +43,7 @@ The pre-tool gate for every host. The loader is `src/integrations/hooks/delegati
 └──────────────────────────────────────────────────────────────┘
 ```
 
-A new implementation file whose directory has no implementation sibling is the pattern gate. The tool does not continue. An edit of a file this session has not read is cite the source. The tool does not continue.
+A new implementation file whose directory has no code sibling is the pattern gate. A test file counts. `pattern:` in `PACKET.md` lets that module continue. A shell redirect is the same stop. The tool does not continue. An edit of a file this session has not read is cite the source. The tool does not continue.
 
 `evaluateConstitutionGate` (`src/nucleus/delegation-gate.ts:636-696`) denies a write that touches a stale checkout (Codex 70, `:646-652`), a one-off implementation file (pattern gate), an unread file in this checkout (cite the source), a new surface (Codex 69, `:656-667`), an unrestricted type or a suppression comment (Codex 11, `:671-677`), a direct dynamic-code call (Codex 29, `:679-685`), and a destructive shell (`:688-693`). `evaluatePreToolGate` (`:699-738`) runs station heat, then constitution, then synthesis and pending delegations unless ceremony is lite (`:718-734`), then the spawn plan (`:736`). A path outside this copy is allowed. A worktree is judged on its own HEAD. A spawn with no plan follows the host temperament.
 

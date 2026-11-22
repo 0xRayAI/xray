@@ -242,6 +242,31 @@ describe('clean tree and pattern gates', () => {
     }
   });
 
+  it('stops the turn when git HEAD cannot be read', () => {
+    const root = mkdtempSync(join(tmpdir(), 'xray-head-'));
+    const repo = join(root, 'repo');
+    const bin = join(root, 'bin');
+    const prev = process.env.PATH;
+    try {
+      git(root, ['init', '-b', 'main', repo]);
+      writeFileSync(join(repo, 'keep.ts'), 'export const keep = 1;\n');
+      git(repo, ['add', 'keep.ts']);
+      git(repo, ['commit', '-m', 'init']);
+      mkdirSync(bin);
+      const realGit = execFileSync('which', ['git'], { encoding: 'utf8' }).trim();
+      writeFileSync(
+        join(bin, 'git'),
+        `#!/bin/sh\nif [ "$1" = rev-parse ] && [ "$3" = HEAD ]; then exit 1; fi\nexec ${JSON.stringify(realGit)} "$@"\n`,
+      );
+      execFileSync('chmod', ['+x', join(bin, 'git')]);
+      process.env.PATH = `${bin}:${prev}`;
+      expect(localResidue(repo)).toMatch(/git HEAD could not be read/);
+    } finally {
+      process.env.PATH = prev;
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it('denies a one-off file and allows a call beside the pattern', () => {
     const root = mkdtempSync(join(tmpdir(), 'xray-pattern-'));
     const repo = join(root, 'repo');
@@ -270,6 +295,31 @@ describe('clean tree and pattern gates', () => {
         new_string: 'export const t = 1;\n',
       }, ctx);
       expect(testFile.allow).toBe(true);
+      const lone = evaluateConstitutionGate('search_replace', {
+        file_path: join(repo, 'src', 'models', 'user.ts'),
+        new_string: 'export const user = 2;\n',
+      }, ctx);
+      expect(lone.allow).toBe(false);
+      if (!lone.allow) expect(lone.gate).toBe('pattern');
+      const shell = evaluateConstitutionGate('run_terminal_command', {
+        command: `printf 'x\\n' > ${join(repo, 'src', 'one-off', 'helper.ts')}`,
+      }, ctx);
+      expect(shell.allow).toBe(false);
+      if (!shell.allow) expect(shell.gate).toBe('pattern');
+      writeFileSync(join(repo, 'PACKET.md'), 'pattern: controller calls a model\n');
+      const named = evaluateConstitutionGate('search_replace', {
+        file_path: join(repo, 'src', 'billing', 'invoice.ts'),
+        new_string: 'export const invoice = 1;\n',
+      }, ctx);
+      expect(named.allow).toBe(true);
+      mkdirSync(join(repo, 'src', 'orders'), { recursive: true });
+      writeFileSync(join(repo, 'src', 'orders', 'order.test.ts'), 'export const t = 1;\n');
+      rememberCiteRead(repo, null, [join(repo, 'src', 'orders', 'order.test.ts')]);
+      const besideTest = evaluateConstitutionGate('search_replace', {
+        file_path: join(repo, 'src', 'orders', 'order.ts'),
+        new_string: 'export const order = 1;\n',
+      }, ctx);
+      expect(besideTest.allow).toBe(true);
       const edit = evaluateConstitutionGate('search_replace', {
         file_path: join(repo, 'src', 'models', 'user.ts'),
         new_string: 'export const user = 2;\n',
@@ -302,7 +352,14 @@ describe('clean tree and pattern gates', () => {
         new_string: 'export const user = 2;\n',
       }, ctx);
       expect(unread.allow).toBe(false);
-      if (!unread.allow) expect(unread.gate).toBe('cite');
+      if (!unread.allow) expect(unread.gate).toBe('pattern');
+      writeFileSync(join(repo, 'PACKET.md'), 'pattern: controller calls a model\n');
+      const named = evaluateConstitutionGate('search_replace', {
+        file_path: join(repo, 'src', 'models', 'user.ts'),
+        new_string: 'export const user = 2;\n',
+      }, ctx);
+      expect(named.allow).toBe(false);
+      if (!named.allow) expect(named.gate).toBe('cite');
       const unreadNew = evaluateConstitutionGate('search_replace', {
         file_path: join(repo, 'src', 'models', 'order.ts'),
         new_string: 'export const order = 1;\n',

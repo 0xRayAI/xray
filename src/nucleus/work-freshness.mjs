@@ -260,7 +260,7 @@ export function localResidue(projectRoot) {
   try {
     branch = run('git', ['rev-parse', '--abbrev-ref', 'HEAD'], root, 4000);
   } catch {
-    return '';
+    return 'Clean tree: git HEAD could not be read.';
   }
   let dirty = [];
   try {

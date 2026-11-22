@@ -138,7 +138,11 @@ async function main() {
           decision = { decision: 'block', reason: `${prior}${residue}` };
         }
       } catch {
-        /* a git miss must not hide the inbox decision */
+        const prior = decision && decision.reason ? `${decision.reason}\n` : '';
+        decision = {
+          decision: 'block',
+          reason: `${prior}Clean tree: the leave check could not be read.`,
+        };
       }
       if (decision) process.stdout.write(`${JSON.stringify(decision)}\n`);
       process.exit(0);
