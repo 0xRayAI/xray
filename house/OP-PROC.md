@@ -7,7 +7,7 @@ OP-PROC is **layered**: pack base (`grok-bot/OP-PROC.md`) then this house file (
 ## 1. Compute is the scarcest resource
 
 - A wake must be worth the cost. Plan once. Read only what the job needs. Send one short reply.
-- Quiet when nothing changed. No reflexive ack, ping, or chime.
+- Quiet when nothing changed. No reflexive ack, ping, or chime. Chime means speaking up when you are not the seat on the line; stay quiet unless you are directly involved. See [Board words](../grok-bot/OP-PROC.md#board-words).
 - Each seat watches its own empty replies and keeps its own notes. CoS does not police chimes.
 - Bifrost routes the inbox. CoS does not assign dev work. A seat stamps **Done**, **Verify**, and **Next** only when the state changed. No stamp and no ping when nothing moved.
 - Message one owner. Do not fan out. Do not post to a room if that would wake every member for no reason.
