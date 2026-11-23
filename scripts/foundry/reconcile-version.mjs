@@ -88,6 +88,20 @@ function maxVersion(...versions) {
   return versions.reduce((best, cur) => (compare(cur, best) > 0 ? cur : best));
 }
 
+/**
+ * The exo package bumps from the higher of its npm version and its git tag.
+ * A companion package in this repo does not. `git describe` here returns the
+ * exo tag (v4.2.3), and a patch of that tag is not this package's next version.
+ * @param {string} npmVersion
+ * @param {string | null} tagVersion
+ * @param {boolean} exoRepo
+ * @returns {string}
+ */
+export function bumpBaseline(npmVersion, tagVersion, exoRepo) {
+  if (!exoRepo) return npmVersion;
+  return maxVersion(npmVersion, tagVersion || "0.0.0");
+}
+
 function fail(msg) {
   console.error(`❌ ${msg}`);
   process.exit(1);
@@ -112,8 +126,9 @@ function main() {
   const local = readLocalVersion();
   const npm = readPublishedVersion();
   const tag = readLatestTag();
+  const exo = isXrayExoRepo(rootDir);
 
-  const baseline = maxVersion(npm, tag || "0.0.0");
+  const baseline = bumpBaseline(npm, tag, exo);
   const target = bumpType ? bumpVersion(baseline, bumpType) : local;
 
   if (printTarget && bumpType) {
@@ -178,7 +193,7 @@ function main() {
     );
   }
 
-  if (tag && compare(local, tag) < 0) {
+  if (exo && tag && compare(local, tag) < 0) {
     fail(`package.json (${local}) is behind latest tag v${tag}`);
   }
 

@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest';
 import { FOUNDRY_EXO_CANNOT_SHIP, executeReleaseWorkflow } from '../../enforcement/enforcer-tools.js';
 import { VersionComplianceProcessor } from '../../processors/implementations/version-compliance-processor.js';
 import { eraFromVersion, buildDocsHeader } from '../../../scripts/foundry/version-manager.mjs';
-import { publishedVersionCheckError } from '../../../scripts/foundry/reconcile-version.mjs';
+import { bumpBaseline, publishedVersionCheckError } from '../../../scripts/foundry/reconcile-version.mjs';
 import { validateReleaseDocs } from '../../../scripts/foundry/validate-release-docs.mjs';
 import { mintAfterWear } from '../../cli/commands/foundry-mint-wear.js';
 import { millPackageDir, resolveHookInstaller } from '../../../scripts/foundry/mill-root.mjs';
@@ -236,6 +236,12 @@ describe('foundry mill — docs verify, do not rewrite', () => {
     expect(publishedVersionCheckError('4.0.24', '4.0.25')).toBe(
       'package.json (4.0.24) must be >= npm (4.0.25). The bump is npx @0xray/foundry release patch --i-mean-it. That command publishes. A docs fix does not. Stop.',
     );
+  });
+
+  it('a companion package bumps from its own npm version, not the exo tag', () => {
+    expect(bumpBaseline('0.1.18', '4.2.3', false)).toBe('0.1.18');
+    expect(bumpBaseline('4.2.3', '4.2.3', true)).toBe('4.2.3');
+    expect(bumpBaseline('4.2.3', null, true)).toBe('4.2.3');
   });
 
   it('kernel files use era, not a three-part patch stamp on the header line', () => {

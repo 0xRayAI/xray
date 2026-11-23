@@ -18,7 +18,7 @@ Primary scripts for agents. Run in order for **each** key agent.
 |-------|------|
 | [near-seat](skills/near-seat/SKILL.md) | NEAR testnet account. The full-access key stays sealed |
 | [foundry-create](skills/foundry-create/SKILL.md) | Create the foundry. This runs near-seat |
-| [near-mill](skills/near-mill/SKILL.md) | Pay, cap, escrow, the listing check, and `near-status`. Same steps as the Grok Bot one-click and the CLI |
+| [near-mill](skills/near-mill/SKILL.md) | Pay, cap, escrow, the listing check, `near-1click`, `near-mailbox`, and `near-status`. The one-click runs `foundry-create` and `near-status` only |
 | [ai-agent-on-near](skills/ai-agent-on-near/SKILL.md) | Create an AI agent on NEAR testnet from a signed note. Copy `templates/near-agent/` beside the house template |
 | [near-audit](skills/near-audit/SKILL.md) | Review a NEAR Rust contract before a deploy. Links the official checklist and the extra checks |
 
