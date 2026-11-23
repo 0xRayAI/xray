@@ -1,7 +1,5 @@
 ## [Unreleased]
 
-- Inspect accepts a machine Grok plugin that serves this project or names no project. It warns when that plugin points at a different project. `FOUNDRY_MACHINE_PLUGIN=ignore` skips the check. `FOUNDRY_MACHINE_PLUGIN=strict` fails it. #1247
-
 ## [4.2.4] - 2026-11-23
 
 ### 🔄 Changes
@@ -10,6 +8,7 @@
 
 This package. The board server is not in it.
 
+- Inspect accepts a machine Grok plugin that serves this project or names no project. It warns when that plugin points at a different project. `FOUNDRY_MACHINE_PLUGIN=ignore` skips the check. `FOUNDRY_MACHINE_PLUGIN=strict` fails it. #1247
 - The delegation gate cites the source before an implementation edit. The edit waits until this session has read that file. A new file whose directory already has code names the pattern in `PACKET.md`. A test file is not that gate. A shell redirect that writes a source file is the same gate. #1233
 - `bundle.md` carries that cite line. Session boot reads it.
 - Wear plants a Grok Stop hook. The command is `session-start.js --hook-event=stop`. The hook orders one inbox monitor and does not start `inbox-watch.sh`. A prompt stays quiet when this session's watch is alive and its parent is not pid 1. The first stop blocks one turn while that monitor is missing, then the turn ends. A second stop in the same session ends the turn. The prompt still prints the order. An outside inbox-watch pid is named so the seat can stop it. A second copy of the script exits when the pid file names a live process. The built hook loads the nucleus modules so that order can finish. A later prompt repeats the order when that pid is down. It does not poll. #1057 #1059
