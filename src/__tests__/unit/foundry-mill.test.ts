@@ -1458,16 +1458,24 @@ describe('foundry mill — inspect organ', () => {
           detail?: string;
           hits?: string[];
         };
-        // An unpinned machine plugin this project did not plant is a WARN, not a failure.
+        // An install that names no project serves the local foundry. It passes.
         expect(stained.ok, JSON.stringify(stained.checks, null, 2)).toBe(true);
         expect(stained.failed).not.toContain('machinePlugin');
-        expect((stained as { warnings?: string[] }).warnings).toEqual(['machinePlugin']);
+        expect((stained as { warnings?: string[] }).warnings).toEqual([]);
         expect(stainedHome.ok).toBe(true);
         expect(stainedHome.isolated).toBe(false);
         expect(stainedHome.detail).toBeUndefined();
         expect(stainedPlugin.ok).toBe(true);
-        expect(stainedPlugin.detail).toMatch(/rm -rf /);
+        expect(stainedPlugin.detail).toBeUndefined();
         expect(stainedPlugin.hits).toEqual([path.join(machineWithPlugin, '.grok', 'plugins', '0xray')]);
+        const strictEmpty = await inspectSuit(tmp, {
+          millRoot: root,
+          skipLive: true,
+          env: { HOME: machineWithPlugin, FOUNDRY_MACHINE_PLUGIN: 'strict' },
+          machineHome: machineWithPlugin,
+        });
+        expect(strictEmpty.ok).toBe(false);
+        expect(strictEmpty.failed).toContain('machinePlugin');
         const isolatedStained = await inspectSuit(tmp, {
           millRoot: root,
           skipLive: true,
@@ -1492,11 +1500,10 @@ describe('foundry mill — inspect organ', () => {
         });
         expect(alt.ok).toBe(true);
         expect(alt.failed).not.toContain('machinePlugin');
-        expect((alt as { warnings?: string[] }).warnings).toEqual(['machinePlugin']);
+        expect((alt as { warnings?: string[] }).warnings).toEqual([]);
         const altHome = alt.checks.find((c) => c.id === 'isolated-home') as { ok?: boolean; isolated?: boolean };
         expect(altHome.ok).toBe(true);
         expect(altHome.isolated).toBe(false);
-        // A machine plugin is a WARN, including one that pins another root.
         rmSync(path.join(machineWithPlugin, '.grok', 'plugins', '0xray-alt'), { recursive: true, force: true });
         const pinned = path.join(machineWithPlugin, '.grok', 'plugins', '0xray');
         mkdirSync(pinned, { recursive: true });
@@ -1508,14 +1515,15 @@ describe('foundry mill — inspect organ', () => {
         pin(tmp);
         const same = await inspectSuit(tmp, { millRoot: root, skipLive: true, env: { HOME: machineWithPlugin }, machineHome: machineWithPlugin });
         expect(same.ok, JSON.stringify(same.checks, null, 2)).toBe(true);
-        expect((same as { warnings?: string[] }).warnings).toEqual(['machinePlugin']);
+        expect((same as { warnings?: string[] }).warnings).toEqual([]);
         pin('/home/box/other-seat');
         const other = await inspectSuit(tmp, { millRoot: root, skipLive: true, env: { HOME: machineWithPlugin }, machineHome: machineWithPlugin });
         expect(other.ok).toBe(true);
         expect(other.failed).not.toContain('machinePlugin');
         expect((other as { warnings?: string[] }).warnings).toEqual(['machinePlugin']);
         const otherPlugin = other.checks.find((c) => c.id === 'machinePlugin') as { detail?: string };
-        expect(otherPlugin.detail).toMatch(/points at another root .* Remove the machine plugin/);
+        expect(otherPlugin.detail).toMatch(/points at another project/);
+        expect(otherPlugin.detail).not.toMatch(/rm -rf/);
         // Launcher paths count too: no XRAY_ROOT pin, but the servers run another checkout.
         const launcher = (arg: string) =>
           writeFileSync(
@@ -1533,11 +1541,21 @@ describe('foundry mill — inspect organ', () => {
         launcher(path.join(tmp, 'node_modules', '0xray', 'scripts', 'node', 'mcp-launch.cjs'));
         const ownLauncher = await inspectSuit(tmp, { millRoot: root, skipLive: true, env: { HOME: machineWithPlugin }, machineHome: machineWithPlugin });
         expect(ownLauncher.ok, JSON.stringify(ownLauncher.checks, null, 2)).toBe(true);
-        // An isolated HOME never loads the machine plugin, so another root there is only a WARN.
+        expect((ownLauncher as { warnings?: string[] }).warnings).toEqual([]);
+        // An isolated HOME still warns when the machine plugin points at another project.
         launcher('/home/box/other-seat/node_modules/0xray/scripts/node/mcp-launch.cjs');
         const isolatedOther = await inspectSuit(tmp, { millRoot: root, skipLive: true, env: { HOME: path.join(tmp, '.lastmile-home') }, machineHome: machineWithPlugin });
         expect(isolatedOther.ok, JSON.stringify(isolatedOther.checks, null, 2)).toBe(true);
         expect((isolatedOther as { warnings?: string[] }).warnings).toEqual(['machinePlugin']);
+        const ignored = await inspectSuit(tmp, {
+          millRoot: root,
+          skipLive: true,
+          env: { HOME: machineWithPlugin, FOUNDRY_MACHINE_PLUGIN: 'ignore' },
+          machineHome: machineWithPlugin,
+        });
+        expect(ignored.ok).toBe(true);
+        expect(ignored.failed).not.toContain('machinePlugin');
+        expect((ignored as { warnings?: string[] }).warnings).not.toContain('machinePlugin');
       } finally {
         rmSync(machineWithPlugin, { recursive: true, force: true });
       }

@@ -668,43 +668,62 @@ function pluginRoots(pluginDir) {
   }
 }
 
+/** `ignore` skips the check. `strict` fails when a machine 0xray plugin dir exists. */
+export function machinePluginMode(env = process.env) {
+  const raw = String(env?.FOUNDRY_MACHINE_PLUGIN || "").trim().toLowerCase();
+  if (raw === "ignore" || raw === "strict") return raw;
+  return "adapt";
+}
+
 /**
- * `isolated` stays HOME != machine home. A machine-level 0xray Grok plugin this
- * project did not plant is a WARN, including when it points at another root.
- * Wear plants the project plugin and does not rewrite the machine plugin, so
- * that leftover must not fail the receipt.
+ * Where one machine plugin serves. No pin and no launcher checkout is `none`.
+ * Every root equal to this project is `here`. Any other root is `other`.
+ */
+function pluginServes(pluginDir, here) {
+  const roots = pluginRoots(pluginDir);
+  if (roots.length === 0) return "none";
+  if (!here) return "other";
+  const foreign = roots.some((other) => path.resolve(other) !== here);
+  return foreign ? "other" : "here";
+}
+
+/**
+ * Adapter for a machine Grok plugin. An install that serves this project, or
+ * names no project, is the local foundry and passes. An install that points at
+ * a different project warns. Wear does not rewrite the machine plugin.
  */
 export function checkMachinePlugin(machine = mint.machineHome(), root = null, env = process.env) {
   const machinePlugin = machineGrokPluginDir(machine);
+  const mode = machinePluginMode(env);
   const hits = machineXrayPluginPaths(machine);
-  if (hits.length === 0) {
-    return { id: "machinePlugin", ok: true, machinePlugin, hits: [] };
+  if (mode === "ignore" || hits.length === 0) {
+    return { id: "machinePlugin", ok: true, machinePlugin, hits, mode };
   }
-  const remedy = `rm -rf ${hits.join(" ")}`;
   const here = root ? path.resolve(root) : null;
-  const loaded = !isIsolatedHome(env, machine);
-  const conflicts =
-    here && loaded
-      ? hits.filter((hit) => pluginRoots(hit).some((other) => other !== here))
-      : [];
-  if (conflicts.length > 0) {
+  const foreign = hits.filter((hit) => pluginServes(hit, here) === "other");
+  if (mode === "strict") {
     return {
       id: "machinePlugin",
-      ok: true,
-      warn: true,
+      ok: false,
       machinePlugin,
       hits,
-      conflicts,
-      detail: `machine-level ${conflicts.join(", ")} points at another root than ${here} (XRAY_ROOT or launcher paths). The project plugin is the one this wear planted. Remove the machine plugin if it should not load: ${remedy}`,
+      mode,
+      detail: `machine-level ${hits.join(", ")} is present. FOUNDRY_MACHINE_PLUGIN=strict fails this check.`,
     };
   }
+  if (foreign.length === 0) {
+    return { id: "machinePlugin", ok: true, machinePlugin, hits, mode };
+  }
+  const project = here || "this project";
   return {
     id: "machinePlugin",
     ok: true,
     warn: true,
     machinePlugin,
     hits,
-    detail: `machine-level ${hits.join(", ")} exists and does not point at another root. Remove it if the project plugin is not the one loading: ${remedy}`,
+    conflicts: foreign,
+    mode,
+    detail: `machine-level ${foreign.join(", ")} points at another project than ${project} (XRAY_ROOT or launcher paths).`,
   };
 }
 
