@@ -12,7 +12,7 @@ This package. The board server is not in it.
 - Session start posts station boot on a peer turn, a routine turn, and a self turn. A quiet board does not stop the hook. A subagent posts on spawn and on return. The prompt stays off the wire. A prompt that names a bug and no issue number asks the board to open one issue. A log dump and a line that already names a number do not. #1206 #1209
 - The plates in this package add bifrost wake paths and foundry architecture.
 - A companion package bumps from its own npm version. The exo tag is not that package's baseline.
-- The hero shoulder says v4. The docs hero, the readme hero, the site poster, and the homepage cutout use that mark. A patch number does not go on the shoulder.
+- The hero shoulder says v4. The readme uses the suit poster. The docs pages keep the board poster. The homepage cutout uses the same mark. A patch number does not go on the shoulder.
 
 ### Board
 
