@@ -43,6 +43,10 @@ function fail(n, d = '') {
 
 const tmp = mkdtempSync(join(tmpdir(), 'xray-gate-core-'));
 seedDelegationGateFixture(tmp);
+// Constitution runs before the pending gate. A new file with no sibling
+// stops on pattern, and an unread directory stops on cite.
+mkdirSync(join(tmp, 'src'), { recursive: true });
+writeFileSync(join(tmp, 'src', 'kept.ts'), 'export const kept = true;\n');
 
 const ctx = () => ({
   projectRoot: tmp,
@@ -52,6 +56,7 @@ const ctx = () => ({
 });
 
 try {
+  evaluatePreToolGate(READ_TOOL, { path: 'src/kept.ts' }, ctx());
   const deny = evaluatePreToolGate(
     WRITE_TOOL,
     host === 'opencode'
