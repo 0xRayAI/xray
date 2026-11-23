@@ -75,7 +75,9 @@ Docs: [guides/autonomy-command](docs-site/docs/guides/autonomy-command.md) · Sk
 
 ## What's New Since 3.1
 
-Patch notes are in [CHANGELOG.md](CHANGELOG.md).
+Patch notes are in [CHANGELOG.md](CHANGELOG.md). The guide is [Features since 3.1](docs-site/docs/guides/features-since-3.1.md).
+
+The delegation gate cites the file before an implementation edit, and it cites the pattern when the file extends one. `exit-gate --git` is the leave check. Wear plants a Grok Stop hook that orders one inbox monitor. The board server is not in this package. `live-inbox`, `exit-gate.mjs`, and `inbox-watch.sh` are.
 
 ## Three-Subsystem Architecture
 

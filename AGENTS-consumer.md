@@ -36,7 +36,7 @@ A peer lead continues from this card + Repertoire + the `orchestrator` skill. Du
 - Seeds **`.gitignore`** (from template, if absent)
 - Deploys **`.xray/`** (`codex.json`, `features.json`, `config.json`) then overlays **your** mill SSOT (`xray/codex.json`, `xray/features.json`, `src/skills`, `src/opencode/agents`; remap with `foundry.json`)
 - Writes **`.mcp.json`** with 7 MCPs servers (`npx -y 0xray mcp …`)
-- Installs bridges: **OpenCode**, **Grok**, **Hermes**, **OpenClaw**, plus **Cursor** `.cursor/hooks.json`. The Grok plugin includes `bundle.md`. Session boot reads it.
+- Installs bridges: **OpenCode**, **Grok**, **Hermes**, **OpenClaw**, plus **Cursor** `.cursor/hooks.json`. The Grok plugin includes `bundle.md`. Session boot reads it. Wear plants a Grok Stop hook (`session-start.js --hook-event=stop`). The delegation gate cites the source file before an implementation edit.
 
 Optional extras: `npx 0xray setup`
 
