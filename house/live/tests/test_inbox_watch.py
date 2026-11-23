@@ -68,6 +68,46 @@ class InboxWatch(unittest.TestCase):
             self.assertTrue(pid_text.isdigit())
             self.assertIn("pid=%s\n" % pid_text, text)
 
+    def test_boot_stamps_session_before_the_poll(self):
+        with tempfile.TemporaryDirectory() as d:
+            state = str(Path(d) / "inbox-watch.state")
+            pid_path = str(Path(d) / "inbox-watch.pid")
+            session = "01a1eedb-d4f0-7570-af79-856b4abb60e1"
+            body = (
+                'if grep -q "^session=%s$" "$INBOX_WATCH_STATE"; then echo SEEN; fi\n'
+                "exit 0\n" % session
+            )
+            r, _calls = self._run(
+                body,
+                ["arch1"],
+                {
+                    "INBOX_WATCH_ONCE": "1",
+                    "INBOX_WATCH_STATE": state,
+                    "INBOX_WATCH_PID": pid_path,
+                    "INBOX_WATCH_SESSION": session,
+                },
+            )
+            self.assertEqual(r.returncode, 0, r.stderr)
+            self.assertIn("SEEN", r.stdout)
+            self.assertIn("session=%s\n" % session, Path(state).read_text())
+
+    def test_bad_session_is_not_stamped(self):
+        with tempfile.TemporaryDirectory() as d:
+            state = str(Path(d) / "inbox-watch.state")
+            pid_path = str(Path(d) / "inbox-watch.pid")
+            r, _calls = self._run(
+                "exit 0\n",
+                ["arch1"],
+                {
+                    "INBOX_WATCH_ONCE": "1",
+                    "INBOX_WATCH_STATE": state,
+                    "INBOX_WATCH_PID": pid_path,
+                    "INBOX_WATCH_SESSION": "not a session",
+                },
+            )
+            self.assertEqual(r.returncode, 0, r.stderr)
+            self.assertNotIn("session=", Path(state).read_text())
+
     def test_new_lines_keep_the_turn_open(self):
         body = r"""
 if [[ "$*" == *"--turn"* ]]; then exit 0; fi
