@@ -31,6 +31,7 @@ describe('pipeline plates', () => {
       'stamp-plate',
       'house',
       'bifrost',
+      'bifrost-wake-paths',
       'review',
       'goggles',
       'suit',
@@ -280,6 +281,7 @@ describe('pipeline plates', () => {
     expect(recallPlate('confer plate')?.id).toBe('confer');
     expect(recallPlate('worn turn plate')?.id).toBe('worn-turn');
     expect(recallPlate('bifrost plate')?.id).toBe('bifrost');
+    expect(recallPlate('bifrost wake paths plate')?.id).toBe('bifrost-wake-paths');
     expect(recallPlate('grokbot plate')?.id).toBe('grokbot');
     expect(recallPlate('repertoire')).toBeNull();
     expect(recallPlate('dynamo')).toBeNull();
@@ -357,6 +359,10 @@ describe('pipeline plates', () => {
         expect(existsSync(png), id).toBe(false);
         continue;
       }
+      if (DRAWN_PNG.has(id)) {
+        expect(existsSync(png), id).toBe(true);
+        continue;
+      }
       const embedded = JSON.parse(pngText(readFileSync(png), 'xray-plate-flow') ?? 'null') as ReturnType<typeof parsePlateFlow>;
       const flow = parsePlateFlow(lines);
       expect(embedded, id).toEqual(flow);
@@ -416,7 +422,7 @@ describe('pipeline plates', () => {
     expect(bold.has(codePoint('≤'))).toBe(true);
     const missing: string[] = [];
     for (const id of PLATE_IDS) {
-      if (NO_LENS_CARD.has(id) || ASCII_FIRST.has(id)) continue;
+      if (NO_LENS_CARD.has(id) || ASCII_FIRST.has(id) || DRAWN_PNG.has(id)) continue;
       const md = readFileSync(join(process.cwd(), 'docs-site/docs/plates', `${id}.md`), 'utf8');
       const frontmatter = /^---\n([\s\S]*?)\n---/.exec(md)?.[1] ?? '';
       const title = (/^title:\s*(.+)\s*$/m.exec(frontmatter)?.[1] ?? id).toUpperCase();
@@ -543,6 +549,7 @@ function readKit(): PlateKit {
 
 const NO_LENS_CARD = new Set(['review', 'goggles', 'suit', 'kits', 'host-pack', 'glossary']);
 const ASCII_FIRST = new Set(['pipeline', 'component', 'artifact', 'watcher', 'hook', 'facet', 'feature', 'factory', 'mill', 'hangar', 'plant', 'seat', 'board', 'lens', 'plane', 'foundry-architecture']);
+const DRAWN_PNG = new Set(['bifrost-wake-paths']);
 const LEFT_SIDE = new Set(['│', '├', '┼']);
 const RIGHT_EDGE = new Set(['│', '┐', '┘', '┤', '┼']);
 

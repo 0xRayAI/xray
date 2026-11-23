@@ -64,6 +64,7 @@ const sidebars: SidebarsConfig = {
         'plates/stamp-plate',
         'plates/house',
         'plates/bifrost',
+        'plates/bifrost-wake-paths',
         'plates/review',
         'plates/goggles',
         'plates/suit',

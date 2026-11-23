@@ -17,6 +17,7 @@ export const PLATE_IDS = [
   'stamp-plate',
   'house',
   'bifrost',
+  'bifrost-wake-paths',
   'review',
   'goggles',
   'suit',

@@ -17,6 +17,7 @@ const PLATE_IDS = Object.freeze([
   "stamp-plate",
   "house",
   "bifrost",
+  "bifrost-wake-paths",
   "review",
   "goggles",
   "suit",
@@ -142,7 +143,11 @@ const CUES = {
   ],
   bifrost: [
     [/bifrost plate/i, 6],
-    [/plates\/bifrost/i, 6],
+    [/plates\/bifrost(?!-wake-paths)/i, 6],
+  ],
+  "bifrost-wake-paths": [
+    [/bifrost wake paths/i, 6],
+    [/plates\/bifrost-wake-paths/i, 6],
   ],
   review: [
     [/review plate/i, 6],
