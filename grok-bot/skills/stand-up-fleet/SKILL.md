@@ -19,13 +19,13 @@ Every `npx` line pins the kit version. An unpinned `npx @0xray/grok-bot` can run
 Follow [setup-house](https://github.com/0xRayAI/xray/blob/main/grok-bot/skills/setup-house/SKILL.md).
 
 ```bash
-npx --yes @0xray/grok-bot@0.1.18 house init
+npx --yes @0xray/grok-bot@0.1.19 house init
 ```
 
 Fill `house/HOUSE.md` from what the owner has already said. Ask only for what is missing, one question at a time. Show the filled file. Nothing in Allowed counts until the owner approves it. Paste the same Ask first and Allow lines into `house/AUTO-REVIEW.md`.
 
 ```bash
-npx --yes @0xray/grok-bot@0.1.18 doctor
+npx --yes @0xray/grok-bot@0.1.19 doctor
 ```
 
 Doctor must pass before the next step. In a house-only folder (no seat suited yet) it passes with `Plant: PASS — house only`. A line that is exactly `wallet off` skips Open Wallet, Clearing, and hangar pay. That skip stays in force below.
@@ -43,8 +43,8 @@ printf '{}\n' > collector/fleet-nodes.json                    # login -> seat; f
 printf '{"seats": ["<seat>", "<seat>"]}\n' > collector/fleet-roster.json
 printf '{"public": false, "name": "<fleet> Bifrost"}\n' > collector/site.json
 : > owner-name
-npx --yes @0xray/grok-bot@0.1.18 bifrost init --seats <seat>,<seat> --logins <seat>=<login>,<seat>=<login> --yes
-npx --yes @0xray/grok-bot@0.1.18 bifrost init --check --seats <seat>,<seat>
+npx --yes @0xray/grok-bot@0.1.19 bifrost init --seats <seat>,<seat> --logins <seat>=<login>,<seat>=<login> --yes
+npx --yes @0xray/grok-bot@0.1.19 bifrost init --check --seats <seat>,<seat>
 ```
 
 `bifrost init` writes `collector/routing/inbox-roles.json` and `collector/routing/seat-webhooks.json` (placeholders and env names only). `--check` fails a missing route, a nickname-only route, and a login GitHub does not know. It needs `python3`. Look a login up at the board's `GET /routing` before an @-mention.
@@ -94,7 +94,12 @@ The prompt is [one-click.txt](https://github.com/0xRayAI/xray/blob/main/docs-sit
 
 ### CLI
 
-Grok CLI, Cursor, Claude Code, and Codex use a checkout of main. The `npx` forms of these commands ship in the next kit publish. This pass does not publish.
+Grok CLI, Cursor, Claude Code, and Codex run the installed kit. A checkout of main runs the same commands from the files in that checkout. Testnet only.
+
+```bash
+npx --yes @0xray/grok-bot@0.1.19 foundry-create --id <foundry-id> --seat <seat-id> --account <new-name>.testnet
+npx --yes @0xray/grok-bot@0.1.19 near-status
+```
 
 ```bash
 git clone https://github.com/0xRayAI/xray
@@ -104,12 +109,12 @@ node grok-bot/bin/grok-bot.js foundry-create --id <foundry-id> --seat <seat-id> 
 node grok-bot/bin/grok-bot.js near-status
 ```
 
-`foundry-create` runs near-seat, then records the foundry. Pay, cap, and escrow are the commands in [near-mill](https://github.com/0xRayAI/xray/blob/main/grok-bot/skills/near-mill/SKILL.md):
+`foundry-create` runs near-seat, then records the foundry. Pay, cap, and escrow are the commands in [near-mill](https://github.com/0xRayAI/xray/blob/main/grok-bot/skills/near-mill/SKILL.md). The one-click does not run them.
 
-- Pay: `node grok-bot/bin/grok-bot.js near-pay`
-- Cap: `node grok-bot/bin/grok-bot.js near-cap`
-- Escrow: `node grok-bot/bin/grok-bot.js near-escrow` uses its own account, never the foundry.
+- Pay: `npx --yes @0xray/grok-bot@0.1.19 near-pay`
+- Cap: `npx --yes @0xray/grok-bot@0.1.19 near-cap`
+- Escrow: `npx --yes @0xray/grok-bot@0.1.19 near-escrow` uses its own account, never the foundry.
 
-Listing is `node grok-bot/bin/grok-bot.js hangar-list --agent-id <id> --url <https-shop>` only when the owner already has an agent id. That id is an ETH register, and the pin is a USDC payment. This path does not do either. With no agent id, `near-status` prints `Listing: pending`.
+Listing is `npx --yes @0xray/grok-bot@0.1.19 hangar-list --agent-id <id> --url <https-shop>` only when the owner already has an agent id. That id is an ETH register, and the pin is a USDC payment. This path does not do either. With no agent id, `near-status` prints `Listing: pending`.
 
 Open Wallet pay is [setup-ows-pay](https://github.com/0xRayAI/xray/blob/main/grok-bot/skills/setup-ows-pay/SKILL.md). Hangar shops are [plant-hangar-shops](https://github.com/0xRayAI/xray/blob/main/grok-bot/skills/plant-hangar-shops/SKILL.md). Open those only when the owner asked. A `wallet off` line means do not open them.

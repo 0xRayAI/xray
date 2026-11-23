@@ -4,7 +4,7 @@
 
 This kit runs on Node >= 24. The `0xray` package needs Node >= 24.22.3, the patched 24 release from 11 Nov 2026.
 
-You are setting up **Grok Bot agents** on the 0xRay factory OS. A new fleet runs `stand-up-fleet` once before this per-agent path. That skill does the house, the board routes, and one suit per seat. It does not start a Bifrost server. The NEAR path in that skill is foundry, pay, cap, escrow, the Grok Bot one-click, and the CLI.
+You are setting up **Grok Bot agents** on the 0xRay factory OS. A new fleet runs `stand-up-fleet` once before this per-agent path. That skill does the house, the board routes, and one suit per seat. It does not start a Bifrost server. The NEAR path in that skill is foundry, pay, cap, escrow, the Grok Bot one-click, and the CLI. The kit commands are `foundry-create`, `near-status`, `near-pay`, `near-cap`, `near-escrow`, `near-1click`, `near-mailbox`, and `hangar-list`. They stay on NEAR testnet. The one-click runs `foundry-create` and `near-status` only.
 ## Goal
 For **each key agent** (coordinator, implementer, reviewer, publisher, …):
 
@@ -16,7 +16,7 @@ For **each key agent** (coordinator, implementer, reviewer, publisher, …):
 Do **not** share one suit across all agents on a machine if you can avoid it. Multiplicity is the point.
 
 ## Prove this seat
-From the agent project root: `npx @0xray/grok-bot@0.1.18 doctor` (alias `ready`). The first line is `@0xray/grok-bot@<version> doctor — 0xray@<version> — seat plant check`. A missing 0xray prints `0xray not installed`. The folder line is `Project:`. PASS means mill + inspect are fastened. House lookup uses `GROK_BOT_HOUSE` when set, otherwise a walk-up for `house/HOUSE.md`. It warns when that file is missing and fails when example lines are still unfilled. House off is `enabled: false` with the detail `house is not enabled here`, and the Board line is omitted. A bridge that points outside this folder is `Bridges: WARN`. A packed `node_modules/0xray/vendor/@0xray/repertoire` counts as present. The same printout lists hangar (`npx groover-hangar`) and Clearing next steps (402, `~/.ows`, ZigZag), unless HOUSE.md has a line that is exactly `wallet off`. Do not mill-plant Clearing into 0xRay.
+From the agent project root: `npx @0xray/grok-bot@0.1.19 doctor` (alias `ready`). The first line is `@0xray/grok-bot@<version> doctor — 0xray@<version> — seat plant check`. A missing 0xray prints `0xray not installed`. The folder line is `Project:`. PASS means mill + inspect are fastened. House lookup uses `GROK_BOT_HOUSE` when set, otherwise a walk-up for `house/HOUSE.md`. It warns when that file is missing and fails when example lines are still unfilled. House off is `enabled: false` with the detail `house is not enabled here`, and the Board line is omitted. A bridge that points outside this folder is `Bridges: WARN`. A packed `node_modules/0xray/vendor/@0xray/repertoire` counts as present. The same printout lists hangar (`npx groover-hangar`) and Clearing next steps (402, `~/.ows`, ZigZag), unless HOUSE.md has a line that is exactly `wallet off`. Do not mill-plant Clearing into 0xRay.
 
 `live-inbox` ships in this kit: run it as `npx --no-install grok-bot live-inbox <seat> ...` from the project where `@0xray/grok-bot` is installed (needs python3, plus `LIVE_URL` set to your own board and `SEAT_KEYS_DIR`). No xray checkout is needed. The wake's exit gate is `npx --no-install grok-bot exit-gate .xray/state/NOTES.md --git`.
 

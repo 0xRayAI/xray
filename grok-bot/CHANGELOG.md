@@ -2,12 +2,14 @@
 
 ## Unreleased
 
-- The inbox watcher writes `session=` from `INBOX_WATCH_SESSION` when the process starts. A prompt hears that copy when the parent command carries the same session, before the state line exists.
-- A `pattern:` line in `PACKET.md` names that directory or file. It does not unlock every module. A test file counts as a sibling, and a shell redirect into a file is the same stop. A file-descriptor redirect is not a source write. The leave check stops when this git checkout's HEAD cannot be read.
-- Cite the source. Name the file you used, or the research you used. A dev or review message is background. An edit stops until this session has read that file, or the code a new file extends. A new directory does not skip that read.
+- `foundry-create`, `near-status`, `near-pay`, `near-cap`, `near-escrow`, `near-1click`, `near-mailbox`, and `hangar-list` ship in this kit. They stay on NEAR testnet. `foundry-create` creates the testnet account, seals the full-access key at mode 0600, and writes the foundry record. `near-status` prints the account, the foundry id, the listing, and Pay, Cap, and Escrow. An absent value is `pending`.
+- The Grok Bot one-click runs `foundry-create` and `near-status`. It names pay, cap, and escrow and does not run them. It does not pass amounts, and it does not list a shop.
+- Skills in the pack for that path: `near-seat`, `foundry-create`, `near-mill`, `ai-agent-on-near`, and `near-audit`.
+- `stand-up-fleet` shows that path. The stop before pay is gone. Republish of the 0xRay Fleet Setup marketplace template waits for a separate publish. #1146
 - The wake exit gate takes `--git`. A dirty tree, an unpushed commit, or a branch with no upstream fails the turn. Suit files under `.xray` stay out of that count. The kit copies `work-freshness.mjs` beside `exit-gate.mjs` so the check runs from the packed tool.
-- `stand-up-fleet` shows the NEAR path: foundry, pay, cap, escrow, the Grok Bot one-click, and the CLI. The stop before pay is gone. Republish of the 0xRay Fleet Setup marketplace template waits for a publish GO. #1146
-- The wake routine template's flags hint now uses `npx --no-install grok-bot live-inbox --help`, so it runs the installed `@0xray/grok-bot` instead of fetching the unpublished unscoped `grok-bot` (#1172).
+- The wake routine template's flags hint uses `npx --no-install grok-bot live-inbox --help`, so it runs the installed kit. #1172
+- The packed operating procedure records the inbox session stamp, the pattern line, the cite rule, and the leave check. The watcher program stays in the suit checkout, not in this package.
+- Every `npx @0xray/grok-bot` line in the kit docs pins `@0.1.19`.
 
 ## [0.1.18] - 2026-11-15
 
