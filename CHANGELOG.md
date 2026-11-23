@@ -1,5 +1,6 @@
 ## [Unreleased]
 
+- Inspect accepts a machine Grok plugin that serves this project or names no project. It warns when that plugin points at a different project. `FOUNDRY_MACHINE_PLUGIN=ignore` skips the check. `FOUNDRY_MACHINE_PLUGIN=strict` fails it. #1247
 
 ## [4.2.4] - 2026-11-23
 

@@ -146,7 +146,7 @@ describe('Grok multi-seat wear — project dest, no last-wins machine clobber', 
       expect(isolatedA.isolated).toBe(false);
       expect(isolatedA.detail).toBeUndefined();
       expect(pluginA.ok).toBe(true);
-      expect(pluginA.detail).toMatch(/points at another root/);
+      expect(pluginA.detail).toMatch(/points at another project/);
       expect(isolatedA.dest).toBe(path.join(seatA, '.grok', 'plugins', '0xray'));
       expect(isolatedA.dest).toBe(resolveGrokPluginDests(seatA, env, machine)[0]);
       expect(isolatedA.machinePlugin).toBe(machinePlugin);
