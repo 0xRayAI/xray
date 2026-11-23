@@ -252,8 +252,16 @@ if [[ -f "$state_file" ]]; then
   prev_ok="$(awk -F= '$1=="last_ok"{print substr($0, index($0, "=")+1); exit}' "$state_file")"
   wake_seen="$(awk -F= '$1=="wake"{print substr($0, index($0, "=")+1); exit}' "$state_file")"
 fi
-printf 'pid=%s\nstarted=%s\nlast_ok=%s\nlive_url=%s\nscript=house/live/tools/inbox-watch.sh\nwake=%s\n' "$$" "$started" "$prev_ok" "$LIVE_URL" "$wake_seen" > "$state_file"
-printf '%s\n' "$$" > "$pid_file"
+stamp_watch_state() {
+  local ok="$1"
+  mkdir -p "$(dirname "$state_file")" "$(dirname "$pid_file")"
+  printf 'pid=%s\nstarted=%s\nlast_ok=%s\nlive_url=%s\nscript=house/live/tools/inbox-watch.sh\nwake=%s\n' "$$" "$started" "$ok" "$LIVE_URL" "$wake_seen" > "$state_file"
+  if [[ "${INBOX_WATCH_SESSION:-}" =~ ^[A-Za-z0-9._:-]{1,80}$ ]]; then
+    printf 'session=%s\n' "$INBOX_WATCH_SESSION" >> "$state_file"
+  fi
+  printf '%s\n' "$$" > "$pid_file"
+}
+stamp_watch_state "$prev_ok"
 while true; do
   wake_file="$wake_dir/$seat"
   wake_now=""
@@ -300,16 +308,10 @@ while true; do
     fail_sleep="$interval"
     state_file="${INBOX_WATCH_STATE:-$HOME/.burst/inbox-watch.state}"
     pid_file="${INBOX_WATCH_PID:-$HOME/.burst/inbox-watch.pid}"
-    mkdir -p "$(dirname "$state_file")" "$(dirname "$pid_file")"
-    session_line=""
-    if [[ "${INBOX_WATCH_SESSION:-}" =~ ^[A-Za-z0-9._:-]{1,80}$ ]]; then
-      session_line="$(printf 'session=%s\n' "$INBOX_WATCH_SESSION")"
-    fi
     if [[ -n "$wake_now" ]]; then
       wake_seen="$wake_now"
     fi
-    printf 'pid=%s\nstarted=%s\nlast_ok=%s\nlive_url=%s\nscript=house/live/tools/inbox-watch.sh\nwake=%s\n%s' "$$" "$started" "$(date +%Y-%m-%dT%H:%M:%S%z)" "$LIVE_URL" "$wake_seen" "$session_line" > "$state_file"
-    printf '%s\n' "$$" > "$pid_file"
+    stamp_watch_state "$(date +%Y-%m-%dT%H:%M:%S%z)"
     showed=0
     if [[ -n "$out" ]]; then
       dir="$(mktemp -d)" || exit 1

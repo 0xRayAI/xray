@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- The inbox watcher writes `session=` from `INBOX_WATCH_SESSION` when the process starts. A prompt hears that copy when the parent command carries the same session, before the state line exists.
 - A `pattern:` line in `PACKET.md` names that directory or file. It does not unlock every module. A test file counts as a sibling, and a shell redirect into a file is the same stop. A file-descriptor redirect is not a source write. The leave check stops when this git checkout's HEAD cannot be read.
 - Cite the source. Name the file you used, or the research you used. A dev or review message is background. An edit stops until this session has read that file, or the code a new file extends. A new directory does not skip that read.
 - The wake exit gate takes `--git`. A dirty tree, an unpushed commit, or a branch with no upstream fails the turn. Suit files under `.xray` stay out of that count. The kit copies `work-freshness.mjs` beside `exit-gate.mjs` so the check runs from the packed tool.

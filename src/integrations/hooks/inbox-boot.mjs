@@ -124,22 +124,41 @@ export function watchProcess(pid) {
   }
 }
 
+/** The parent command carries this session. A longer id does not match. */
+function commandHasSession(command, sessionId) {
+  const text = String(command || '');
+  const id = String(sessionId || '');
+  if (!text || !id) return false;
+  const needles = [`INBOX_WATCH_SESSION=${shQuote(id)}`, `INBOX_WATCH_SESSION=${id}`];
+  return needles.some((needle) => {
+    const at = text.indexOf(needle);
+    if (at < 0) return false;
+    const next = text.charAt(at + needle.length);
+    return next === '' || !/[A-Za-z0-9._:-]/.test(next);
+  });
+}
+
 /**
  * True when this session's inbox-watch is already heard.
- * A prompt does not receive the monitor list. The pid file, the session
- * line, and a parent other than pid 1 are the proof. Pid 1 is detached.
+ * A prompt does not receive the monitor list. The proof is a live
+ * inbox-watch.sh whose parent is not pid 1, plus this session on the
+ * state line or on that parent's command. Pid 1 is detached.
  */
 export function inboxMonitorHeard(opts, pidFile, stateFile) {
   if (sessionHasInboxMonitor(opts.backgroundTasks)) return true;
   const env = opts.env || {};
   const sessionId = String(opts.sessionId || env.GROK_SESSION_ID || '').trim();
-  if (!sessionId || watcherSession(stateFile) !== sessionId) return false;
+  if (!sessionId) return false;
   const pid = watcherAlive(pidFile) ? watcherPid(pidFile) : 0;
   if (!pid) return false;
-  const looked = typeof opts.inspectProcess === 'function' ? opts.inspectProcess(pid) : watchProcess(pid);
+  const inspect = typeof opts.inspectProcess === 'function' ? opts.inspectProcess : watchProcess;
+  const looked = inspect(pid);
   const parent = Number(looked && looked.parent) || 0;
   const command = String((looked && looked.command) || '');
-  return parent > 1 && command.includes('inbox-watch.sh');
+  if (!(parent > 1 && command.includes('inbox-watch.sh'))) return false;
+  if (watcherSession(stateFile) === sessionId) return true;
+  const parentLook = inspect(parent);
+  return commandHasSession(parentLook && parentLook.command, sessionId);
 }
 
 /** The seat calls the monitor tool. The hook does not spawn. */
