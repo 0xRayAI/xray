@@ -2,9 +2,15 @@
 
 ## [Unreleased]
 
-Inspect reads a machine `~/.grok/plugins` install through an adapter. An install that serves this project, or names no project, passes. An install that points at a different project warns. `FOUNDRY_MACHINE_PLUGIN=ignore` skips the check. `FOUNDRY_MACHINE_PLUGIN=strict` fails when a `0xray` plugin directory is present. #1247
 
-Node floor is `>=24.22.3`, the 11 Nov 2026 patched 24 release. The 0.1.13 note below records the older floor.
+## [0.1.16] - 2026-11-23
+
+### 🔄 Changes
+
+- Inspect reads a machine `~/.grok/plugins` install through an adapter. An install that serves this project, or names no project, passes. An install that points at a different project warns. `FOUNDRY_MACHINE_PLUGIN=ignore` skips the check. `FOUNDRY_MACHINE_PLUGIN=strict` fails when a `0xray` plugin directory is present. #1247
+- Node floor is `>=24.22.3`, the 11 Nov 2026 patched 24 release. The 0.1.13 note below records the older floor.
+
+---
 
 ## [0.1.15] - 2026-11-04
 
