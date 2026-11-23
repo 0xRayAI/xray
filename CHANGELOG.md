@@ -1,5 +1,10 @@
 ## [Unreleased]
 
+
+## [4.2.4] - 2026-11-23
+
+### 🔄 Changes
+
 ### Suit
 
 This package. The board server is not in it.
@@ -29,6 +34,8 @@ The board server deploys from `house/live/app/deploy.sh`. These notes are that d
 - Packet R sets the GitHub assignee when the card has none and R names a fleet bot. A person login is not assigned. A write error does not stop the collector. The assignee write uses its own token. The collector read token stays read-only. A 403, a 404, or any other 4xx except 401 is remembered and is not posted again. A 401 stops assignee writes for this process and does not remember the card. A network miss is tried on the next pass. A pass that spends its ten writes, or a write that never reaches GitHub, walks the open cards again. A dead token latches that walk. A collector that has not started a pass still has that budget, so a poll finishes.
 - A quiet pass writes a clock file and leaves the event document in place. That clock file omits the board. A clock file over 2 MiB still moves the health clock and is not parsed. `card_age` is reported and does not change `ok`.
 - Restoring burst-live calls Railway `deploymentRollback` with the deployment id. `railway redeploy` rebuilds only the latest deployment. `railway down` removes it.
+
+---
 
 ## [4.2.3] - 2026-11-12
 
