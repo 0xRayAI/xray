@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## [Unreleased]
 
 - `foundry-create`, `near-status`, `near-pay`, `near-cap`, `near-escrow`, `near-1click`, `near-mailbox`, and `hangar-list` ship in this kit. They stay on NEAR testnet. `foundry-create` creates the testnet account, seals the full-access key at mode 0600, and writes the foundry record. `near-status` prints the account, the foundry id, the listing, and Pay, Cap, and Escrow. An absent value is `pending`.
 - The Grok Bot one-click runs `foundry-create` and `near-status`. It names pay, cap, and escrow and does not run them. It does not pass amounts, and it does not list a shop.
@@ -10,23 +10,6 @@
 - The wake routine template's flags hint uses `npx --no-install grok-bot live-inbox --help`, so it runs the installed kit. #1172
 - The packed operating procedure records the inbox session stamp, the pattern line, the cite rule, and the leave check. The watcher program stays in the suit checkout, not in this package.
 - Every `npx @0xray/grok-bot` line in the kit docs pins `@0.1.19`.
-
-## [4.2.4] - 2026-11-23
-
-### 🔄 Changes
-
-### 🐛 Bug Fixes
-- fix: post station boot on peer, routine, and self turns (#1209) (339c4d335)
-- fix: start the inbox watch when no pid is live (#1059) (01a557ec5)
-
-### 📚 Documentation
-- docs: name 0xRayAI/clearing on the push allow-list (dac90f0e9)
-- docs: link earn and the NEAR reference from the site copy (612aa6ca3)
-- docs: point the npm nav link at www.npmjs.com (#1212) (ceaeeec6f)
-- docs: add the public NEAR reference (#1210) (7febf496d)
-- docs: move from OpenAI Agent Builder (#1130) (b3fce9292)
-
----
 
 ## [0.1.18] - 2026-11-15
 
