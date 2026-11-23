@@ -32,6 +32,10 @@ These steps are on main and are not stamped yet.
 12. Inbox. A green head acks a handoff `ci_fail`. A popped ready rings again after `critic_fail` on that sha. A merge or close acks the card's other open lines. The merge handoff stays.
 13. Wake. A ready tells the seat to clear Quiet. A `ci_pass` on that same sha still rings, and the doorbell says Strict.
 14. Board. The roster wraps into columns. Fleet mode is full, lights-on, or dark. Weekdays 7:30–15:30 Chicago are full.
+15. Cite. An implementation edit waits until this session has read the file. A new file beside other code names the pattern in `PACKET.md`. A test file is not that gate.
+16. Leave. The Stop hook and `exit-gate --git` fail a dirty tree, a branch with no upstream, or an unpushed commit. A missing notes file fails the exit gate. Suit files under `.xray` do not count.
+17. Stop. Wear plants a Grok Stop hook. The first stop orders the inbox monitor. A second stop in that session ends the turn. The watcher writes `session=` when `INBOX_WATCH_SESSION` is set.
+18. Package. The board server is not in the npm package. `live-inbox`, `exit-gate.mjs`, and `inbox-watch.sh` are.
 
 ## 4.1.3 → 4.1.4
 

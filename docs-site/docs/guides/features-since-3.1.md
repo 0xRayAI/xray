@@ -1,10 +1,15 @@
 # Features Since 3.1
 
-Complete reference of capabilities through **0xRay 4.1**. 0xRay is a three-subsystem autonomous engine. The suit is the wear. Patch notes live here; kernel headers stay era `4.1`. 3.x development tags (3.1–3.5.x) remain below as history.
+Complete reference of capabilities through **0xRay 4.2**. 0xRay is a three-subsystem autonomous engine. The suit is the wear. Patch notes live here; kernel headers stay era `4.2`. 3.x development tags (3.1–3.5.x) remain below as history.
 
 ## Unreleased
 
-- **Suit.** Wear copies `bundle.md` into the Grok plugin. Session boot reads it.
+These notes are on main and are not stamped yet. The board server deploys on its own. The npm package ships the suit, `live-inbox`, `exit-gate.mjs`, and `inbox-watch.sh`.
+
+- **Cite.** An implementation edit waits until this session has read the file. A new file beside other code names the pattern in `PACKET.md`. A test file is not that gate. A shell redirect that writes a source file is the same gate.
+- **Leave.** The Stop hook and `exit-gate --git` fail a dirty tree, a detached HEAD, a branch with no upstream, or an unpushed commit. Suit files under `.xray` do not count. A stash is named and is not dropped. A missing notes file fails the exit gate.
+- **Stop.** Wear plants a Grok Stop hook (`session-start.js --hook-event=stop`). The first stop orders one inbox monitor and does not start the script. A second stop in that session ends the turn. The watcher writes `session=` when `INBOX_WATCH_SESSION` is set.
+- **Suit.** Wear copies `bundle.md` into the Grok plugin. Session boot reads it. The file carries the cite line.
 - **Inbox.** A green head acks a handoff `ci_fail`. A popped ready rings again after `critic_fail` on that same sha. A pass keeps it buried. A merge or close acks that card's other open lines. The merge handoff stays.
 - **Wake.** A ready tells the seat to clear Quiet. A `ci_pass` on that same sha still rings, and the doorbell says Strict.
 - **Board.** The roster wraps into columns. A narrow page does not scroll sideways. Fleet mode is full, lights-on, or dark. Weekdays 7:30–15:30 Chicago are full.
@@ -13,7 +18,7 @@ Complete reference of capabilities through **0xRay 4.1**. 0xRay is a three-subsy
 
 The docs site is https://docs.0xray.dev/. The public board is https://bifrost.0xray.dev. The cursor folder rule is [Cursor folder](https://github.com/0xRayAI/xray/blob/main/grok-bot/OP-PROC.md#cursor-folder). `LIVE_CURSORS` is not required. A read does not write `<seat>.txt`. The server nudge ladder does not re-wake a line the seat already acked or whose handled key is in that cursor. Watch scripts run `house/live/tools` from the main checkout. Fleet seats boot through the station skill: Light on every turn, Full after a summary, a wake, or a gate. Profile planes are core, integration, ecosystem, distribution, and live. See the [house guide](./house.md).
 
-Goggles keeps four planes: dev, integration, domain, and ecosystem. Each card is one thing. A search inside the current card runs. A search of another plane returns that card and does not run. A path on no plane runs. A path outside this checkout runs, including inside a terminal command. Plates now exist for repertoire, dynamo, foundry, the delegation gate, temperament, asides, the inference cycle, Hermes, OpenClaw, OpenCode, the consumer MCP set, and confer. Confer stays off unless it is enabled.
+Goggles keeps four planes: dev, integration, domain, and ecosystem. Each card is one thing. A search inside the current card runs. A search of another plane returns that card and does not run. A path on no plane runs. A path outside this checkout runs, including inside a terminal command. Plates now exist for repertoire, dynamo, foundry, foundry architecture, bifrost wake paths, the delegation gate, temperament, asides, the inference cycle, Hermes, OpenClaw, OpenCode, the consumer MCP set, and confer. Confer stays off unless it is enabled.
 
 - **Board.** A prompt pulse spins only the card named by working_on. A roster row is a fleet seat or a product node, and a seat quiet for 7 days is dormant. Seen is not working. A merge or a GitHub write lights the seat. A finished cloud agent stamps cloud.last_ct, and an empty open set leaves CloudAgents off. An owner comment or push moves a stall card.
 - **Tandem.** Tandem is several tracks at once, on both loops, and no seat waits for a nod.

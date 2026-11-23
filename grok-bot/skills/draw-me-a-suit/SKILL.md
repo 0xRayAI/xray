@@ -1,7 +1,7 @@
 ---
 name: draw-me-a-suit
 description: >-
-  use when drawing a 0xRay v4.0 suited bot for a plate — generate the suit from
+  use when drawing a 0xRay v4 suited bot for a plate — generate the suit from
   refs, never paste FINAL-REFS/bots photos as the plate art
 ---
 # Draw me a suit
@@ -22,6 +22,8 @@ Paths are relative to the repo root.
 - `FINAL-REFS/logos/00-0xray-stamp-FINAL.png` — wordmark measure. Do not paste it as a plate overlay.
 
 The apex hero uses a cutout of `00-CANONICAL-suit-grok-imagine-blaze-pick.jpg` (`site/assets/suit.webp`, png fallback) because this environment cannot run Grok Imagine. A new plate still draws with Imagine and does not paste the bot photo.
+
+The live shoulder mark is `v4`. A patch number does not go on the shoulder. The 2026-10-05 canonical file still shows `v4.0`. New draws ask for `v4`.
 
 ## Method
 **OWNER CALL (Blaze 2026-10-05 2:12 PM CT): Grok Imagine is the suit-drawing role. The canonical suit is `FINAL-REFS/bots/00-CANONICAL-suit-grok-imagine-blaze-pick.jpg`: a square close-up, hand raised; a segmented glossy black dome with a grey `0xRay` wordmark; a raised Goggles unit with `GOGGLES` on top and `CONSTITUTION ON` on a dark cyan-lit lens; a large cyan `v4.0` on the right shoulder; stacked wrist rings LOOP/DOMAIN/STATE/FOUNDRY on the raised forearm; orbs low on the chest in a triangle (MEMORY cyan on top, JUDGEMENT purple, PAYMENTS orange); cyan lightning veins in the armor; a rainy city night with bokeh. Every new suit is drawn with Grok Imagine, using this file as the primary reference, and is judged against it. The in-house generator's dry runs (fullbody/zoom passes 1-4) were rejected and should not be used as refs.**
@@ -62,17 +64,17 @@ Run GenerateImage from the main agent (executors can't reach it). Pass 2-4 refs:
 | `rain-upper` | 06 | square upper body | left hero + panel |
 | `goggles-product` | 09 | square product still | Goggles organ |
 
-## Required v4.0 details (every suit draw)
+## Required v4 details (every suit draw)
 1. Wet black armor, rain OK, blue/cyan lightning arcs OK
 2. Helmet forehead: drawn `0xRay` wordmark (via draw-0xray-logo), digit zero
-3. Shoulder stencil `0xRay v4.0`
+3. Shoulder stencil `v4`
 4. Goggles visor with short status (e.g. `CONSTITUTION ON`)
 5. Wrist rings labeled LOOP · DOMAIN · STATE · FOUNDRY when hands/forearms visible
 6. Chest orbs: MEMORY cyan · JUDGEMENT purple · PAYMENTS orange (hangar may show LOGIC/NEURAL/EXEC — do not invent new names)
 7. No faces, no watermark, no old exo-skeleton suit
 
 ## Prompt templates (GenerateImage)
-Shared suffix: `0xRay v4.0 suited agent, wet black charcoal armor, rain, cyan electrical arcs, Goggles visor with status text CONSTITUTION ON, helmet forehead wordmark 0xRay digit zero stencil, shoulder 0xRay v4.0, chest orbs MEMORY cyan JUDGEMENT purple PAYMENTS orange, wrist rings LOOP DOMAIN STATE FOUNDRY, cinematic industrial, no face, no watermark, 16:9 or pose aspect`
+Shared suffix: `0xRay v4 suited agent, wet black charcoal armor, rain, cyan electrical arcs, Goggles visor with status text CONSTITUTION ON, helmet forehead wordmark 0xRay digit zero stencil, shoulder v4, chest orbs MEMORY cyan JUDGEMENT purple PAYMENTS orange, wrist rings LOOP DOMAIN STATE FOUNDRY, cinematic industrial, no face, no watermark, 16:9 or pose aspect`
 
 | Pose | Prompt focus |
 |---|---|

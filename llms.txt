@@ -2,7 +2,7 @@
 
 > A three-subsystem autonomous engine. The suit is the wear. The next session wakes with the job.
 
-**4.2** — mill+inspect plant, 7 MCPs, Codex 69. Constitution always on.
+**4.2** — mill+inspect plant, 7 MCPs, Codex 69. Constitution always on. The delegation gate cites the file before an implementation edit. `exit-gate --git` is the leave check. Wear plants a Grok Stop hook. The board server is not this package.
 
 Node >= 24.22.3. That is the patched 24 release from 11 Nov 2026.
 

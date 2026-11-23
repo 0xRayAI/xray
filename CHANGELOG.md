@@ -1,10 +1,24 @@
 ## [Unreleased]
 
-### 🔄 Changes
+### Suit
+
+This package. The board server is not in it.
+
+- The delegation gate cites the source before an implementation edit. The edit waits until this session has read that file. A new file whose directory already has code names the pattern in `PACKET.md`. A test file is not that gate. A shell redirect that writes a source file is the same gate. #1233
+- `bundle.md` carries that cite line. Session boot reads it.
+- Wear plants a Grok Stop hook. The command is `session-start.js --hook-event=stop`. The hook orders one inbox monitor and does not start `inbox-watch.sh`. A prompt stays quiet when this session's watch is alive and its parent is not pid 1. The first stop blocks one turn while that monitor is missing, then the turn ends. A second stop in the same session ends the turn. The prompt still prints the order. An outside inbox-watch pid is named so the seat can stop it. A second copy of the script exits when the pid file names a live process. The built hook loads the nucleus modules so that order can finish. A later prompt repeats the order when that pid is down. It does not poll. #1057 #1059
+- The Stop hook runs the leave check. A dirty tree, a detached HEAD, a branch with no upstream, or an unpushed commit blocks the stop. Suit files under `.xray` do not count. A stash is named and is not dropped. A clean checkout that is only behind main waits for the next edit. `exit-gate --git` uses the same check. A missing notes file fails the exit gate on its own.
+- The watcher writes `session=` when `INBOX_WATCH_SESSION` is set. #1237
+- Session start posts station boot on a peer turn, a routine turn, and a self turn. A quiet board does not stop the hook. A subagent posts on spawn and on return. The prompt stays off the wire. A prompt that names a bug and no issue number asks the board to open one issue. A log dump and a line that already names a number do not. #1206 #1209
+- The plates in this package add bifrost wake paths and foundry architecture.
+- A companion package bumps from its own npm version. The exo tag is not that package's baseline.
+- The hero shoulder says v4. The readme uses the suit poster. The docs pages keep the board poster. The homepage cutout uses the same mark. A patch number does not go on the shoulder.
+
+### Board
+
+The board server deploys from `house/live/app/deploy.sh`. These notes are that deploy. They are not files in the npm package.
 
 - Mill is back on the counted board and on the canvas, with the gear glyph. The nodes sit on a 4 by 3 mesh instead of one top row. Mill is not an inbox seat. A GitHub event credited to mill still marks mill active. #1101
-- The session hook orders one inbox monitor inside the CLI. It does not start inbox-watch.sh. A prompt stays quiet when this session's inbox-watch is alive and its parent is not pid 1. Stop blocks one turn per session while that monitor is missing, then the turn ends. The prompt still prints the order. An outside inbox-watch pid is named so the seat can stop it. A second copy of the script exits when that pid file names a live process. The built hook loads the nucleus modules so that order can finish. #1057
-
 - A quiet collector pass publishes the board queue without hashing one giant string per event. A feed file this collector just wrote is not a stall. The image copies `card-owner.mjs`, and the collector copies `card_owner.py`.
 - Packet R assigns the queue. `R: arch1` files the line on arch1 without an `@arch10x` mention, including when arch1 opened it. An already-seen open from the last 48 hours is filed once.
 - The board reader waits 90 seconds for one pass of the live feed. A 20 second cut dropped the publish and froze the queue clock.
@@ -15,8 +29,6 @@
 - Packet R sets the GitHub assignee when the card has none and R names a fleet bot. A person login is not assigned. A write error does not stop the collector. The assignee write uses its own token. The collector read token stays read-only. A 403, a 404, or any other 4xx except 401 is remembered and is not posted again. A 401 stops assignee writes for this process and does not remember the card. A network miss is tried on the next pass. A pass that spends its ten writes, or a write that never reaches GitHub, walks the open cards again. A dead token latches that walk. A collector that has not started a pass still has that budget, so a poll finishes.
 - A quiet pass writes a clock file and leaves the event document in place. That clock file omits the board. A clock file over 2 MiB still moves the health clock and is not parsed. `card_age` is reported and does not change `ok`.
 - Restoring burst-live calls Railway `deploymentRollback` with the deployment id. `railway redeploy` rebuilds only the latest deployment. `railway down` removes it.
-- A prompt that names a bug and no issue number asks the board to open one issue. A log dump and a line that already names a number do not.
-- A later prompt repeats the inbox monitor start order when that pid is down. It does not poll.
 
 ## [4.2.3] - 2026-11-12
 

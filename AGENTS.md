@@ -12,13 +12,13 @@ Goggles views one plane. A search inside that card runs. A search of another pla
 
 A prompt pulse spins only the card named by working_on. Seen is not working. Tandem is several tracks at once and no seat waits for a nod. A card carries raci, and a live card missing R or A is amber. A missed /healthz replaces the one replica. The OP cycle is digest, card, do, loop, ship (`grok-bot/OP-PROC.md` #op-cycle).
 
-**The suit is the wear.** Three-subsystem autonomous engine (Inference · External Governance · Autonomous Engine) · constitution always on · temperament by host · 4 floors · **Repertoire preferred** (vendored 0.2.9, dest = laws).
+**The suit is the wear.** Three-subsystem autonomous engine (Inference · External Governance · Autonomous Engine) · constitution always on (cite, pattern, Codex 11/29/69/70) · temperament by host · 4 floors · **Repertoire preferred** (vendored 0.2.9, dest = laws).
 
 **Temperament:** ceremony (analyze-complexity before spawn, confer) is **guided** by default so free-model OpenCode/Hermes stay in check. Frontier hosts (Grok 4.6 class) with `suit_temperament.profile: auto` **warn** on spawn-without-plan; Codex 11/29/69 still **deny**. Missing `suit_temperament` stays guided. See `docs-site/docs/architecture/v3-from-v2.md`.
 
 ## Hot-swap
 
-Before other work, Read `.xray/state/STATION.md`. Compaction and host change are the same cut. Continue the card. A packet and its card follow the house packet rule (`grok-bot/OP-PROC.md` #packet). The card key is the issue or pull. Do not hand-post a card. When Bifrost is on, suit boot enables the only TUI monitor in the local TUI: `$XRAY_MAIN/house/live/tools/inbox-watch.sh <seat>`. Do not restart the job. Grok does not inject the card (OpenCode does) — this Read is the Grok contract. Do not thicken the Grok exo.
+Before other work, Read `.xray/state/STATION.md`. Compaction and host change are the same cut. Continue the card. A packet and its card follow the house packet rule (`grok-bot/OP-PROC.md` #packet). The card key is the issue or pull. Do not hand-post a card. When Bifrost is on, suit boot enables the only TUI monitor in the local TUI: `$XRAY_MAIN/house/live/tools/inbox-watch.sh <seat>`. A second copy exits when the pid file names a live process. The watcher writes `session=` when `INBOX_WATCH_SESSION` is set. Do not restart the job. Grok does not inject the card (OpenCode does) — this Read is the Grok contract. Do not thicken the Grok exo.
 
 **Lead cadence:** a peer wearing this file + Station + Repertoire continues without a command stream. Dummy bodies test `SKILLS.md`. Same-sess bodies wear the suit and keep a Station card. Always branch + worktree + PR. Ship when mill-gate D + `foundry gate` PASS (`grok-bot/OP-PROC.md` Decision matrix) — green CI is not ship. npm OTP in a browser, then poll the new version before moving on. Loop until Station is done. Live ticks and moving workstreams — not idle pacers. Same critic (resume only). Disk SSOT: `grok-bot/OP-PROC.md` (team specifics live in `house/`). Playbook: `orchestrator` skill.
 
@@ -59,7 +59,7 @@ Governance deliberation: **code-review**, **security-audit**, **researcher** wit
 3. `.gitignore.default` → `.gitignore` (if absent)
 4. `.xray/` config (`codex.json`, `features.json`, `config.json`) then overlay their plant
 5. `.mcp.json` (7 servers)
-6. Four chat bridges: OpenCode, Grok, Hermes, OpenClaw. Grok last-mile dest is project `.grok/plugins/0xray` (shared HOME does not last-wins clobber machine `~/.grok/plugins/0xray`). That plugin includes `bundle.md`. Session boot reads it.
+6. Four chat bridges: OpenCode, Grok, Hermes, OpenClaw. Grok last-mile dest is project `.grok/plugins/0xray` (shared HOME does not last-wins clobber machine `~/.grok/plugins/0xray`). That plugin includes `bundle.md`. Session boot reads it. Wear plants a Grok Stop hook (`session-start.js --hook-event=stop`). The first stop orders one inbox monitor. A second stop in that session ends the turn. The Stop hook runs the leave check.
 7. Cursor fifth wear: fasten `.cursor/hooks.json` + relative `.cursor/hooks/*.sh`. Rewrite leftover `XRAY_AI_PATH=` one-liners. Not a fifth chat TUI.
 8. Optional git hooks
 
