@@ -42,6 +42,7 @@ async function installNearMill(opts = {}) {
   fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, { mode: 0o644 });
   const seated = await runSeat({
     accountId: opts.accountId,
+    seatId: opts.seatId,
     seatHome,
     runners: opts.runners,
     viewAccount: opts.viewAccount,

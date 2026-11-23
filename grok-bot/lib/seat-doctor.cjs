@@ -1069,11 +1069,16 @@ function nearStatusFromReport(report) {
 }
 
 function nearStatusBlock(cwd) {
-  return nearStatusFromReport({
+  const report = {
     near: probeNear(cwd),
     foundry: probeFoundry(cwd),
     rail: probeRail(cwd),
-  });
+  };
+  const head = nearStatusFromReport(report);
+  const { applyLivePending, formatNearSummary, loadNearSummary } = require('./near-summary.cjs');
+  const stored = loadNearSummary(cwd);
+  if (!stored) return `${head}Receipt: pending\n`;
+  return `${head}${formatNearSummary(applyLivePending(stored, report))}`;
 }
 
 function formatDoctor(report) {
@@ -1133,7 +1138,7 @@ function formatDoctor(report) {
     if (report.foundry.present && report.foundry.listingId) {
       lines.push(`Hangar: ${report.foundry.listingId}`);
     }
-    lines.push(nearStatusFromReport(report).trimEnd());
+    lines.push((report.cwd ? nearStatusBlock(report.cwd) : nearStatusFromReport(report)).trimEnd());
   }
   if (report.house) {
     let label = 'WARN';
@@ -1237,7 +1242,7 @@ Commands:
   exit-gate <NOTES.md>
                    The wake's step 7 gate: a named bug or ask with no repo#n fails the turn
   bifrost init     Write the board's seat routes (collector/routing/inbox-roles.json in a bifrost clone; BIFROST_FEED overrides). --check validates and writes nothing. Needs python3
-  near-status          Print NEAR account, foundry id, listing id, and Pay, Cap, Escrow. Absent is pending
+  near-status          Print the NEAR account, foundry id, listing, Pay, Cap, and Escrow. Then the owner summary (transactions, amounts, keys, verified, pending). Absent is pending. Never prints a private key or a seed phrase
   near-pay             Testnet USDC ft_transfer. Payee and amount come from the quote. A replay returns the stored result
   near-cap             Init the spend vault, set_allow, set_deny, or add the pay,ping agent key. Owner calls use the cold key
   near-escrow          Escrow on its own account: init, open, fund, deliver, accept, refund

@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { randomBytes } = require('node:crypto');
 const { installNearMill } = require('./near-mill.cjs');
+const { formatNearSummary, loadNearSummary, writeNearSummary } = require('./near-summary.cjs');
 
 // mintAfterWear only re-applies the mill plant overlay
 // (src/cli/commands/foundry-mint-wear.ts). This command records the foundry the
@@ -53,6 +54,36 @@ function emitFoundry(opts, record) {
   if (opts.stdout && typeof opts.stdout.write === 'function') opts.stdout.write(`${line}\n`);
 }
 
+function emitSummary(opts, summary) {
+  const text = formatNearSummary(summary);
+  if (typeof opts.log === 'function') opts.log(text.trimEnd());
+  if (opts.stdout && typeof opts.stdout.write === 'function') opts.stdout.write(text.endsWith('\n') ? text : `${text}\n`);
+}
+
+function withFoundry(summary, foundryId, seatId) {
+  const base = summary && typeof summary === 'object' ? summary : {
+    version: 1,
+    network: 'testnet',
+    accountId: '',
+    seat: seatId,
+    transactions: [],
+    keys: [],
+    verified: [],
+    credentials: { files: 0, dirs: 0 },
+  };
+  return {
+    ...base,
+    foundryId,
+    seat: base.seat || seatId,
+    pending: {
+      listing: 'pending',
+      pay: 'pending',
+      cap: 'pending',
+      escrow: 'pending',
+    },
+  };
+}
+
 function writeFoundryRecord(destFile, body) {
   const dir = path.dirname(destFile);
   fs.mkdirSync(dir, { recursive: true });
@@ -98,15 +129,20 @@ async function createFoundry(opts = {}) {
   const existing = readFoundryFile(foundryPath);
   if (existing.kind === 'record' && sameFoundry(existing.data, foundryId, opts.accountId)) {
     emitFoundry(opts, existing.data);
+    const keptSummary = loadNearSummary(opts.dest);
+    if (keptSummary) emitSummary(opts, withFoundry(keptSummary, foundryId, opts.seatId));
     return keptResult(opts, foundryId, foundryPath, existing.data);
   }
   if (existing.kind !== 'absent' && !opts.force) throw replaceError(existing);
   const installed = await installNearMill(opts);
   const receiver = installed.seated && installed.seated.accountId;
   if (typeof receiver !== 'string' || receiver.length === 0) throw new Error('NEAR receiver missing');
+  const summary = withFoundry(installed.seated && installed.seated.summary, foundryId, opts.seatId);
+  if (installed.seatHome) writeNearSummary(installed.seatHome, summary, []);
   const again = readFoundryFile(foundryPath);
   if (again.kind === 'record' && sameFoundry(again.data, foundryId, receiver) && !opts.force) {
     emitFoundry(opts, again.data);
+    emitSummary(opts, summary);
     return keptResult(opts, foundryId, foundryPath, again.data);
   }
   if (again.kind !== 'absent' && !sameFoundry(again.data || {}, foundryId, receiver) && !opts.force) {
@@ -129,6 +165,7 @@ async function createFoundry(opts = {}) {
   };
   writeFoundryRecord(foundryPath, `${JSON.stringify(record, null, 2)}\n`);
   emitFoundry(opts, record);
+  emitSummary(opts, summary);
   return {
     dest: installed.dest,
     seatHome: installed.seatHome,
@@ -137,6 +174,7 @@ async function createFoundry(opts = {}) {
     receiver,
     foundryPath,
     record,
+    summary,
     npmPublish: false,
     kept: false,
   };

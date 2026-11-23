@@ -35,7 +35,7 @@ export default function EarnPage() {
         <p style={{ letterSpacing: '0.04em', textTransform: 'uppercase', fontSize: '0.8rem' }}>NEAR testnet</p>
         <h1>Deploy your agent on NEAR and earn</h1>
         <p>
-          Paste one prompt into Grok Bot. It creates a NEAR testnet account and a foundry, then prints both ids. Listing stays pending. This page does not send a transaction and does not spend real money.
+          Paste one prompt into Grok Bot. It creates a NEAR testnet account and a foundry, then prints both ids and the owner summary. It does not print a private key. Listing stays pending. This page does not send a transaction and does not spend real money.
         </p>
         <p>
           Current NEAR docs, and the old links to skip, are on the <a href="/near/reference">NEAR reference</a>. That page lists the official smart-contract security checklist. This button stays on testnet.

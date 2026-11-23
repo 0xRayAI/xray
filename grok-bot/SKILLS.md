@@ -1,6 +1,6 @@
 # SKILLS.md — @0xray/grok-bot
 
-A new fleet runs [stand-up-fleet](skills/stand-up-fleet/SKILL.md) once. That pass is the house, the board routes, then one suit per seat. The NEAR path there is foundry, pay, cap, escrow, the Grok Bot one-click, and the CLI.
+A new fleet runs [stand-up-fleet](skills/stand-up-fleet/SKILL.md) once. That pass is the house, the board routes, then one suit per seat. The kit names are `stand-up-fleet` and `setup-house`. Marketplace names `fleet-stand-up` and `fleet-getting-started` are not in this package. The NEAR path there is foundry, pay, cap, escrow, the Grok Bot one-click, and the CLI.
 
 Primary scripts for agents. Run in order for **each** key agent.
 

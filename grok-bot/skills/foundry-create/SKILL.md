@@ -19,6 +19,8 @@ The record is `.xray/state/foundry.json`:
 
 `grok-bot doctor` prints `Foundry: <id> — receiver <account>`.
 
+The command also prints an owner summary and writes `.xray/state/seats/<seat>/near/summary.json` at mode `0600`. The summary names the account, the foundry, the seat, each transaction id with a testnet explorer link, the `view_account` balance, the function-call key allowance, gas and fees when the CLI printed them, keys by permission, what was verified, and Listing, Pay, Cap, and Escrow as pending. `near-status` prints that file. No private key and no seed phrase. Every file under `~/.near-credentials` is mode `0600` and every directory there is mode `0700`.
+
 `mintAfterWear` stays the mill plant overlay. This step does not call it.
 
 ## Do not
