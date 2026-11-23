@@ -21,7 +21,7 @@ npx @0xray/grok-bot@0.1.18
 npx @0xray/grok-bot@0.1.18 doctor    # first line names the kit and 0xray; prove mill+inspect; house off omits Board; a foreign bridge is WARN
 npx @0xray/grok-bot@0.1.18 ready     # alias
 npx --no-install grok-bot live-inbox <seat> --prompt --from owner --note "<gist>"   # board tool; needs python3, LIVE_URL, SEAT_KEYS_DIR
-npx --no-install grok-bot exit-gate .xray/state/NOTES.md   # wake step 7 gate
+npx --no-install grok-bot exit-gate .xray/state/NOTES.md --git   # wake step 7 gate
 ```
 
 ## Live product URLs (plant)

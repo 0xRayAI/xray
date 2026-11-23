@@ -10,5 +10,5 @@ The file is `src/nucleus/delegation-gate.ts`. The loader is `src/integrations/ho
 
 1. Read this lens. The skill is this file.
 2. `evaluatePreToolGate` runs station heat, then constitution, then synthesis and pending unless ceremony is lite, then the spawn plan.
-3. `evaluateConstitutionGate` is Codex 70, 69, 11, 29, and a destructive shell.
+3. `evaluateConstitutionGate` is Codex 70, the pattern gate, cite the source, Codex 69, 11, 29, and a destructive shell.
 4. A spawn with no plan follows the host temperament.

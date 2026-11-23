@@ -1,7 +1,7 @@
 /**
  * Multi-host delegation gate SSOT — pending-delegations + spawn todo enforcement.
  * Grok / Hermes / OpenCode adapters call evaluatePreToolGate via delegation-gate-runtime.
- * Constitution (11/29/69/70 + destructive shell) lives here. Grok may still extra-block Codex 2/7.
+ * Constitution (cite + pattern gate + 11/29/69/70 + destructive shell) lives here. Grok may still extra-block Codex 2/7.
  */
 
 import * as fs from 'fs';
@@ -38,7 +38,7 @@ import {
   tryRecordSynthesisConsultReceipt,
 } from './synthesis-consult-receipt.js';
 import { resolveSpawnPlan, hasValidSpawnPlanContext } from './spawn-plan-resolution.js';
-import { staleWriteReason } from './work-freshness.mjs';
+import { copyRootForWrite, staleWriteReason } from './work-freshness.mjs';
 import {
   isUserAsidesEnabled,
   isUserAsideTodoId,
@@ -632,15 +632,296 @@ function collectWritePaths(toolInput: ToolGateInput): string[] {
   return paths;
 }
 
-/** Codex 11 / 29 / 69 / 70 + destructive shell — always on, all hosts that call this SSOT. */
+const IMPL_EXT = /\.(?:tsx|ts|jsx|js|mjs|cjs)$/i;
+const PATTERN_DENY =
+  'Pattern gate: a call uses the pattern already in the tree, the same way a controller calls a model. This file has no sibling in its directory. Name this directory or file as pattern: in PACKET.md, or add the call beside a sibling.';
+const PATTERN_FIELD = /(?:^|\n)[ \t]*pattern[ \t]*:[ \t]*(\S[^\n]*)/gi;
+
+function isTestSource(file: string): boolean {
+  const norm = file.replace(/\\/g, '/');
+  return /(?:^|\/)(?:__tests__|tests)\//.test(norm) || /\.(?:test|spec)\.[^.]+$/.test(norm);
+}
+
+function isImplementationSource(file: string): boolean {
+  const base = file.replace(/\\/g, '/').split('/').pop() ?? file;
+  if (base.endsWith('.d.ts')) return false;
+  return IMPL_EXT.test(base) && !isTestSource(base);
+}
+
+function isCodeSibling(name: string): boolean {
+  if (name.endsWith('.d.ts')) return false;
+  return IMPL_EXT.test(name);
+}
+
+function hasPatternSibling(abs: string): boolean {
+  let names: string[] = [];
+  try {
+    names = fs.readdirSync(path.dirname(abs));
+  } catch {
+    return false;
+  }
+  const base = path.basename(abs);
+  return names.some((name) => name !== base && isCodeSibling(name));
+}
+
+function patternTokens(value: string): string[] {
+  return value
+    .split(/[\s,;]+/)
+    .map((token) => token.replace(/^['"`]+|['"`]+$/g, '').replace(/\\/g, '/').replace(/^\.?\//, '').replace(/\/+$/, ''))
+    .filter((token) => token.length > 0 && token !== '.');
+}
+
+/** True when one pattern: value names this file or its directory. */
+function patternNamesModule(value: string, absFile: string, copyRoot: string): boolean {
+  let rel = path.relative(path.resolve(copyRoot), path.resolve(absFile)).replace(/\\/g, '/');
+  if (!rel || rel === '.' || rel.startsWith('../') || rel === '..') return false;
+  if (rel.startsWith('./')) rel = rel.slice(2);
+  const parent = path.posix.dirname(rel);
+  const base = path.posix.basename(rel);
+  const parentName = parent === '.' ? '' : path.posix.basename(parent);
+  return patternTokens(value).some((token) => {
+    if (token === rel || token === base) return true;
+    if (parent !== '.' && (token === parent || token === parentName)) return true;
+    return token.includes('/') && rel.startsWith(`${token}/`);
+  });
+}
+
+/** True when PACKET.md names this file or its directory, not every module. */
+export function packetNamesPattern(dir: string, absFile: string): boolean {
+  try {
+    const text = fs.readFileSync(path.join(dir, 'PACKET.md'), 'utf8');
+    for (const match of text.matchAll(PATTERN_FIELD)) {
+      const named = match[1]?.trim();
+      if (named && patternNamesModule(named, absFile, dir)) return true;
+    }
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+function isFdTarget(file: string): boolean {
+  return file === '|' || file === '&-' || /^&\d+$/.test(file);
+}
+
+/** Files a shell command would create or replace. /dev/null and a file-descriptor redirect are not source writes. */
+export function shellWritePaths(command: string): string[] {
+  const paths: string[] = [];
+  const redir = /(?:^|[\s;|])(?<!\d)>{1,2}\|?[ \t]*(?:"([^"]+)"|'([^']+)'|(\S+))/g;
+  for (const match of command.matchAll(redir)) {
+    const file = (match[1] || match[2] || match[3] || '').trim();
+    if (!file || file === '-' || file.startsWith('/dev/') || isFdTarget(file)) continue;
+    paths.push(file);
+  }
+  const copy = /(?:^|[\s;|&])(?:cp|mv)[ \t]+\S+[ \t]+(?:"([^"]+)"|'([^']+)'|(\S+))[ \t]*$/.exec(
+    command.trim(),
+  );
+  if (copy) {
+    const file = (copy[1] || copy[2] || copy[3] || '').trim();
+    if (file && IMPL_EXT.test(file) && !paths.includes(file)) paths.push(file);
+  }
+  return paths;
+}
+
+const CITE_FILE =
+  'Cite the source: this message is background. Read this file and name it before the edit continues.';
+const CITE_PATTERN =
+  'Cite the source: this message is background. Read the pattern this file extends and name it before the edit continues.';
+const CITE_MAX_READS = 80;
+const CITE_MAX_SESSIONS = 8;
+
+function citeLogFile(projectRoot: string): string {
+  return path.join(projectRoot, '.xray', 'state', 'cite-reads.json');
+}
+
+function citeSessionKey(sessionId: string | null): string {
+  const raw = String(sessionId || 'none').replace(/[^a-zA-Z0-9._:-]/g, '').slice(0, 80);
+  return raw || 'none';
+}
+
+function citeParent(rel: string): string {
+  const i = rel.lastIndexOf('/');
+  return i === -1 ? '' : rel.slice(0, i);
+}
+
+function canonicalPath(file: string): string {
+  const abs = path.resolve(file);
+  const missing: string[] = [];
+  let cursor = abs;
+  while (!fs.existsSync(cursor)) {
+    const parent = path.dirname(cursor);
+    if (parent === cursor) break;
+    missing.push(path.basename(cursor));
+    cursor = parent;
+  }
+  let base = cursor;
+  try {
+    base = fs.realpathSync(cursor);
+  } catch {
+    base = path.resolve(cursor);
+  }
+  return missing.length ? path.join(base, ...missing.reverse()) : base;
+}
+
+/** Repo-relative path, or empty when the path is suit state or outside this checkout. */
+export function citeRel(projectRoot: string, file: string): string {
+  if (!file) return '';
+  const root = copyRootForWrite(file, projectRoot);
+  if (!root) return '';
+  const abs = path.isAbsolute(file) ? path.resolve(file) : path.resolve(projectRoot, file);
+  let rel = path.relative(canonicalPath(root), canonicalPath(abs)).replace(/\\/g, '/');
+  if (!rel || rel === '.' || rel.startsWith('../') || rel === '..') return '';
+  if (rel.startsWith('./')) rel = rel.slice(2);
+  if (rel === '.xray' || rel.startsWith('.xray/')) return '';
+  return rel;
+}
+
+function loadCiteMap(projectRoot: string): Record<string, string[]> {
+  try {
+    const parsed = JSON.parse(fs.readFileSync(citeLogFile(projectRoot), 'utf8')) as unknown;
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+    return parsed as Record<string, string[]>;
+  } catch {
+    return {};
+  }
+}
+
+/** Remember files this session opened. A missed write must not block the read. */
+export function rememberCiteRead(
+  projectRoot: string,
+  sessionId: string | null,
+  files: readonly string[],
+): void {
+  const added = files.map((file) => citeRel(projectRoot, file)).filter(Boolean);
+  if (!added.length) return;
+  const key = citeSessionKey(sessionId);
+  const map = loadCiteMap(projectRoot);
+  const prior = Array.isArray(map[key]) ? map[key] : [];
+  const next = [...new Set([...prior, ...added])].slice(-CITE_MAX_READS);
+  map[key] = next;
+  const keys = Object.keys(map);
+  if (keys.length > CITE_MAX_SESSIONS) {
+    for (const old of keys) {
+      if (old === key) continue;
+      delete map[old];
+      if (Object.keys(map).length <= CITE_MAX_SESSIONS) break;
+    }
+  }
+  const dest = citeLogFile(projectRoot);
+  fs.mkdirSync(path.dirname(dest), { recursive: true });
+  fs.writeFileSync(dest, JSON.stringify(map));
+}
+
+function loadCiteReads(projectRoot: string, sessionId: string | null): Set<string> {
+  const list = loadCiteMap(projectRoot)[citeSessionKey(sessionId)];
+  return new Set(Array.isArray(list) ? list.filter((item) => typeof item === 'string') : []);
+}
+
+function reachedFile(rel: string, reads: Set<string>): boolean {
+  if (reads.has(rel)) return true;
+  const parent = citeParent(rel);
+  return Boolean(parent && reads.has(parent));
+}
+
+function reachedPattern(rel: string, reads: Set<string>): boolean {
+  if (reachedFile(rel, reads)) return true;
+  const parent = citeParent(rel);
+  for (const read of reads) {
+    if (citeParent(read) === parent) return true;
+  }
+  return false;
+}
+
+function nearestCitedDir(projectRoot: string, abs: string): string {
+  let cursor = path.dirname(path.resolve(abs));
+  while (!fs.existsSync(cursor)) {
+    const parent = path.dirname(cursor);
+    if (parent === cursor) return '';
+    cursor = parent;
+  }
+  return citeRel(projectRoot, cursor);
+}
+
+function readNamesPacket(projectRoot: string, abs: string, reads: Set<string>): boolean {
+  let sawPacket = false;
+  for (const read of reads) {
+    if (read === 'PACKET.md' || read.endsWith('/PACKET.md')) {
+      sawPacket = true;
+      break;
+    }
+  }
+  if (!sawPacket) return false;
+  const root = copyRootForWrite(abs, projectRoot);
+  if (root && packetNamesPattern(root, abs)) return true;
+  const project = path.resolve(projectRoot);
+  if (!root || path.resolve(root) !== project) return packetNamesPattern(project, abs);
+  return false;
+}
+
+/** A missing parent still needs a read of the nearest directory, a sibling, or the packet line. */
+function reachedNewModule(projectRoot: string, rel: string, abs: string, reads: Set<string>): boolean {
+  if (reachedPattern(rel, reads)) return true;
+  const nearest = nearestCitedDir(projectRoot, abs);
+  if (nearest) {
+    if (reads.has(nearest)) return true;
+    for (const read of reads) {
+      if (citeParent(read) === nearest) return true;
+    }
+  }
+  return readNamesPacket(projectRoot, abs, reads);
+}
+
+/** Empty when this session has opened the file, or the pattern a new file extends. */
+export function citeWriteReason(
+  projectRoot: string,
+  sessionId: string | null,
+  paths: readonly string[],
+): string {
+  const reads = loadCiteReads(projectRoot, sessionId);
+  for (const file of paths) {
+    const rel = citeRel(projectRoot, file);
+    if (!rel) continue;
+    const abs = path.isAbsolute(file) ? path.resolve(file) : path.resolve(projectRoot, file);
+    if (fs.existsSync(abs)) {
+      if (!reachedFile(rel, reads)) return CITE_FILE;
+      continue;
+    }
+    const parentAbs = path.dirname(abs);
+    if (!fs.existsSync(parentAbs)) {
+      if (!reachedNewModule(projectRoot, rel, abs, reads)) return CITE_PATTERN;
+      continue;
+    }
+    if (!reachedPattern(rel, reads)) return CITE_PATTERN;
+  }
+  return '';
+}
+
+/** Empty when the file sits beside code, or PACKET.md names this directory or file. */
+export function patternWriteReason(projectRoot: string, paths: string[]): string {
+  for (const file of paths) {
+    if (!file || !copyRootForWrite(file, projectRoot)) continue;
+    const abs = path.isAbsolute(file) ? path.resolve(file) : path.resolve(projectRoot, file);
+    const norm = abs.replace(/\\/g, '/');
+    if (isTestSource(norm) || !isImplementationSource(norm)) continue;
+    if (hasPatternSibling(abs)) continue;
+    const root = copyRootForWrite(file, projectRoot);
+    if (root && packetNamesPattern(root, abs)) continue;
+    if (packetNamesPattern(projectRoot, abs)) continue;
+    return PATTERN_DENY;
+  }
+  return '';
+}
+
+/** Cite + pattern + Codex 11 / 29 / 69 / 70 + destructive shell — always on, all hosts that call this SSOT. */
 export function evaluateConstitutionGate(
   toolName: string,
   toolInput: ToolGateInput,
   ctx: PreToolGateContext,
 ): PreToolGateResult {
   const content = collectWriteContent(toolInput);
-  const paths = collectWritePaths(toolInput);
-  const writing = isWriteTool(toolName, ctx.host ?? 'generic');
+  const shellPaths = isShellTool(toolName) ? shellWritePaths(String(toolInput.command ?? '')) : [];
+  const paths = [...collectWritePaths(toolInput), ...shellPaths];
+  const writing = isWriteTool(toolName, ctx.host ?? 'generic') || shellPaths.length > 0;
 
   if (writing) {
     const reason = staleWriteReason(ctx.projectRoot, paths);
@@ -649,6 +930,22 @@ export function evaluateConstitutionGate(
         allow: false,
         reason,
         gate: 'codex-70',
+      };
+    }
+    const pattern = patternWriteReason(ctx.projectRoot, paths);
+    if (pattern) {
+      return {
+        allow: false,
+        reason: pattern,
+        gate: 'pattern',
+      };
+    }
+    const cite = citeWriteReason(ctx.projectRoot, ctx.sessionId, paths);
+    if (cite) {
+      return {
+        allow: false,
+        reason: cite,
+        gate: 'cite',
       };
     }
   }
@@ -710,6 +1007,14 @@ export function evaluatePreToolGate(
     });
   } catch {
     /* station heat is best-effort — constitution still runs */
+  }
+
+  if (isReadOnlyTool(toolName)) {
+    try {
+      rememberCiteRead(ctx.projectRoot, ctx.sessionId, collectWritePaths(toolInput));
+    } catch {
+      /* a missed read log must not block the read */
+    }
   }
 
   const constitution = evaluateConstitutionGate(toolName, toolInput, ctx);

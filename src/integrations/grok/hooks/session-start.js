@@ -26,7 +26,7 @@ import {
   runInferenceImprovementLight,
 } from '../../hooks/pipeline-hook-runtime.mjs';
 import { maintainLens } from '../../hooks/goggles-pipeline.mjs';
-import { freshnessNeedsRefresh, readSavedFreshness, refreshFreshness } from '../../../nucleus/work-freshness.mjs';
+import { freshnessNeedsRefresh, localResidue, readSavedFreshness, refreshFreshness } from '../../../nucleus/work-freshness.mjs';
 
 function extractIntent(event) {
   return event.prompt || event.userMessage || event.user_prompt || event.compactContext || null;
@@ -130,6 +130,19 @@ async function main() {
         });
       } catch {
         decision = null;
+      }
+      try {
+        const residue = localResidue(eventRoot);
+        if (residue) {
+          const prior = decision && decision.reason ? `${decision.reason}\n` : '';
+          decision = { decision: 'block', reason: `${prior}${residue}` };
+        }
+      } catch {
+        const prior = decision && decision.reason ? `${decision.reason}\n` : '';
+        decision = {
+          decision: 'block',
+          reason: `${prior}Clean tree: the leave check could not be read.`,
+        };
       }
       if (decision) process.stdout.write(`${JSON.stringify(decision)}\n`);
       process.exit(0);

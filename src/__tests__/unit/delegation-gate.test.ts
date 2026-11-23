@@ -8,6 +8,7 @@ import {
   evaluatePostToolSpawn,
   evaluatePreToolGate,
   evaluateSynthesisGate,
+  rememberCiteRead,
   getActivePendingDelegations,
   satisfyDelegationsFromToolInput,
 } from '../../nucleus/delegation-gate.js';
@@ -90,6 +91,10 @@ describe('delegation-gate SSOT', () => {
   });
 
   it('hermes write_file maps via evaluatePreToolGate host', () => {
+    fs.mkdirSync(path.join(tmp, 'src'), { recursive: true });
+    fs.writeFileSync(path.join(tmp, 'src', 'foo.ts'), 'export const x = 1;\n');
+    fs.writeFileSync(path.join(tmp, 'src', 'foo.test.ts'), 'export const t = 1;\n');
+    rememberCiteRead(tmp, sessionId, ['src/foo.ts']);
     const result = evaluatePreToolGate(
       'write_file',
       { path: 'src/foo.ts', content: 'x' },

@@ -1,6 +1,6 @@
 'use strict';
 // `grok-bot live-inbox <seat> ...` and `grok-bot exit-gate <NOTES.md>`: the board tools a seat runs, shipped in the
-// npm kit (xray#1071). prepack copies live-inbox, exit-gate.mjs, packet-body.mjs, and cloud_line.py into lib/;
+// npm kit (xray#1071). prepack copies live-inbox, exit-gate.mjs, packet-body.mjs, work-freshness.mjs, and cloud_line.py into lib/;
 // a repo checkout falls back to house/live/tools. Same args, env and exit codes as the repo tools.
 const fs = require('node:fs');
 const path = require('node:path');
