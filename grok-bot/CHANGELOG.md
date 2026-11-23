@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+
+## [0.1.19] - 2026-11-23
+
+### 🔄 Changes
+
 - `foundry-create`, `near-status`, `near-pay`, `near-cap`, `near-escrow`, `near-1click`, `near-mailbox`, and `hangar-list` ship in this kit. They stay on NEAR testnet. `foundry-create` creates the testnet account, seals the full-access key at mode 0600, and writes the foundry record. `near-status` prints the account, the foundry id, the listing, and Pay, Cap, and Escrow. An absent value is `pending`.
 - The Grok Bot one-click runs `foundry-create` and `near-status`. It names pay, cap, and escrow and does not run them. It does not pass amounts, and it does not list a shop.
 - Skills in the pack for that path: `near-seat`, `foundry-create`, `near-mill`, `ai-agent-on-near`, and `near-audit`.
@@ -10,6 +15,8 @@
 - The wake routine template's flags hint uses `npx --no-install grok-bot live-inbox --help`, so it runs the installed kit. #1172
 - The packed operating procedure records the inbox session stamp, the pattern line, the cite rule, and the leave check. The watcher program stays in the suit checkout, not in this package.
 - Every `npx @0xray/grok-bot` line in the kit docs pins `@0.1.19`.
+
+---
 
 ## [0.1.18] - 2026-11-15
 
