@@ -21,7 +21,7 @@ Board: `house/WAVEBOARD.md` when `LIVE_URL` is unset, and Bifrost cards (`GET /c
 `live-inbox` ships in this kit: run it as `npx --no-install grok-bot live-inbox <seat> ...` from the project where `@0xray/grok-bot` is installed (needs python3, plus `LIVE_URL` set to your own board and `SEAT_KEYS_DIR`). No xray checkout is needed. The wake's exit gate is `npx --no-install grok-bot exit-gate .xray/state/NOTES.md --git`.
 Complete setup path for **Grok Bot agents** on the 0xRay mill.
 
-Agents: read `llms.txt` → `AGENTS.md` → the catalog at `node_modules/0xray/SKILLS.md` (**one suit per key agent**).  
+Agents: read `llms.txt` → `AGENTS.md` → the catalog at `node_modules/0xray/SKILLS.md` (**one suit per key agent**). 
 Humans: same files.
 
 ## Install
@@ -49,7 +49,7 @@ From an agent project root:
 
 ```bash
 npx @0xray/grok-bot@0.1.19 doctor
-npx @0xray/grok-bot@0.1.19 ready          # same command
+npx @0xray/grok-bot@0.1.19 ready # same command
 npx @0xray/grok-bot@0.1.19 doctor --json
 ```
 
@@ -82,15 +82,15 @@ npx @0xray/grok-bot@0.1.19 hangar-list --agent-id <id> --url <https-shop>
 `near-escrow` uses its own account, never the foundry account. `hangar-list` checks a listing only when the owner already has an agent id. It does not pay. The steps and the stop rules are in [`skills/near-mill/SKILL.md`](skills/near-mill/SKILL.md). A new account starts at [`skills/foundry-create/SKILL.md`](skills/foundry-create/SKILL.md) or [`skills/ai-agent-on-near/SKILL.md`](skills/ai-agent-on-near/SKILL.md).
 
 ## Path (per agent)
-1. **Suit** — mill + inspect (`fasten-suit-per-agent`)  
-2. **Identity** — Groover register → mint → pin (`groover-factory-parity`) when needed  
-3. **Pay** — OWS wallet + Base USDC (`setup-ows-pay`)  
+1. **Suit** — mill + inspect (`fasten-suit-per-agent`) 
+2. **Identity** — Groover register → mint → pin (`groover-factory-parity`) when needed 
+3. **Pay** — OWS wallet + Base USDC (`setup-ows-pay`) 
 4. **Hangar** — plant shops (`plant-hangar-shops`)
-5. **Label** — `seat-label` in that seat’s own chat (`UpdateProfile` title only)  
+5. **Label** — `seat-label` in that seat’s own chat (`UpdateProfile` title only) 
 
 ## Plant pins (monitor / adjust)
 - `0xray` (current npm) · mill nested in the tarball (prove with `npx 0xray validate`)
-- Live URLs in `llms.txt`  
+- Live URLs in `llms.txt` 
 
 This package orchestrates. It does not vendor the whole OS.
 

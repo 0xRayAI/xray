@@ -11,6 +11,23 @@
 - The packed operating procedure records the inbox session stamp, the pattern line, the cite rule, and the leave check. The watcher program stays in the suit checkout, not in this package.
 - Every `npx @0xray/grok-bot` line in the kit docs pins `@0.1.19`.
 
+## [4.2.4] - 2026-11-23
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: post station boot on peer, routine, and self turns (#1209) (339c4d335)
+- fix: start the inbox watch when no pid is live (#1059) (01a557ec5)
+
+### 📚 Documentation
+- docs: name 0xRayAI/clearing on the push allow-list (dac90f0e9)
+- docs: link earn and the NEAR reference from the site copy (612aa6ca3)
+- docs: point the npm nav link at www.npmjs.com (#1212) (ceaeeec6f)
+- docs: add the public NEAR reference (#1210) (7febf496d)
+- docs: move from OpenAI Agent Builder (#1130) (b3fce9292)
+
+---
+
 ## [0.1.18] - 2026-11-15
 
 HOUSE.md holds house values only (#1066).
