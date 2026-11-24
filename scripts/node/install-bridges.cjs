@@ -18,6 +18,7 @@ const {
   processHome,
   resolveGrokPluginDests,
   wouldClobberMachineGrok,
+  preflightCostumeDump,
 } = require("../foundry/mint-suit.cjs");
 const { wearVendoredRepertoire } = require("./wear-vendored-repertoire.cjs");
 const {
@@ -498,13 +499,17 @@ function soleSeatKey(dir) {
   return seats.length === 1 ? seats[0] : "";
 }
 
-function suitHookEnv(env, home) {
+function suitHookEnv(env, home, kept) {
   const next = { ...(env || {}) };
-  if (!next.LIVE_URL) next.LIVE_URL = SUIT_BOARD;
-  if (!next.SEAT_KEYS_DIR) next.SEAT_KEYS_DIR = path.join(home, ".burst", "seat-keys");
+  const prior = kept && typeof kept === "object" ? kept : {};
+  if (!next.LIVE_URL) next.LIVE_URL = prior.LIVE_URL || SUIT_BOARD;
+  if (!next.SEAT_KEYS_DIR) next.SEAT_KEYS_DIR = prior.SEAT_KEYS_DIR || path.join(home, ".burst", "seat-keys");
   if (!next.XRAY_SEAT) {
-    const seat = soleSeatKey(next.SEAT_KEYS_DIR);
-    if (seat) next.XRAY_SEAT = seat;
+    if (prior.XRAY_SEAT) next.XRAY_SEAT = prior.XRAY_SEAT;
+    else {
+      const seat = soleSeatKey(next.SEAT_KEYS_DIR);
+      if (seat) next.XRAY_SEAT = seat;
+    }
   }
   return next;
 }
@@ -523,6 +528,7 @@ function patchGrokHookEntry(hook, packageRoot, targetDir, scriptName, extraArgs,
       XRAY_AI_PATH: packageRoot,
     },
     home,
+    opts && opts.keptHookEnv,
   );
 }
 
@@ -1003,6 +1009,56 @@ function retargetHomeGrokHooks(machine, durablePackageRoot) {
   return changed;
 }
 
+function keptGrokHookEnv(hooks) {
+  const kept = {};
+  const visit = (node) => {
+    if (!node || typeof node !== "object") return;
+    if (Array.isArray(node)) {
+      for (const item of node) visit(item);
+      return;
+    }
+    const env = node.env;
+    if (env && typeof env === "object" && !Array.isArray(env)) {
+      if (!kept.LIVE_URL && typeof env.LIVE_URL === "string" && env.LIVE_URL) kept.LIVE_URL = env.LIVE_URL;
+      if (!kept.XRAY_SEAT && typeof env.XRAY_SEAT === "string" && env.XRAY_SEAT) kept.XRAY_SEAT = env.XRAY_SEAT;
+      if (!kept.SEAT_KEYS_DIR && typeof env.SEAT_KEYS_DIR === "string" && env.SEAT_KEYS_DIR) {
+        kept.SEAT_KEYS_DIR = env.SEAT_KEYS_DIR;
+      }
+    }
+    for (const value of Object.values(node)) {
+      if (value && typeof value === "object") visit(value);
+    }
+  };
+  visit(hooks);
+  return kept;
+}
+
+/** Refresh an existing discovered hook file from the package template. Keep LIVE_URL, XRAY_SEAT, and SEAT_KEYS_DIR. Do not create the file. */
+function refreshKeptMachineGrokHooks(targetDir, packageRoot, log) {
+  const discovered = path.join(targetDir, ".grok", "hooks", "0xray.json");
+  if (!fs.existsSync(discovered)) return false;
+  const sourceDir = findGrokPluginSource(packageRoot);
+  if (!sourceDir) return false;
+  const templatePath = path.join(sourceDir, "hooks", "hooks.json");
+  if (!fs.existsSync(templatePath)) return false;
+  let prior;
+  let template;
+  try {
+    prior = JSON.parse(fs.readFileSync(discovered, "utf8"));
+    template = JSON.parse(fs.readFileSync(templatePath, "utf8"));
+  } catch {
+    return false;
+  }
+  const body = patchedGrokHooksBody(template, packageRoot, targetDir, {
+    keptHookEnv: keptGrokHookEnv(prior),
+  });
+  writeFileIfChanged(discovered, body);
+  log("grok-bridge", "kept machine hook env; refreshed .grok/hooks/0xray.json", "info", {
+    dest: discovered,
+  });
+  return true;
+}
+
 function installGrokBridge(targetDir, packageRoot, log, opts) {
   const sourceDir = findGrokPluginSource(packageRoot);
   if (!sourceDir) {
@@ -1036,6 +1092,7 @@ function installGrokBridge(targetDir, packageRoot, log, opts) {
         dest,
         machinePlugin: path.join(machine, ".grok", "plugins", "0xray"),
       });
+      refreshKeptMachineGrokHooks(targetDir, packageRoot, log);
       continue;
     }
     const rel = dest.startsWith(machine) ? dest.replace(machine, "~") : path.relative(targetDir, dest);
@@ -2445,6 +2502,7 @@ function installConsumerProjectFiles(packageRoot, targetDir, log) {
   if (!isConsumerInstall(packageRoot, targetDir) || !packageShipsConsumerSuit(packageRoot)) {
     return false;
   }
+  preflightCostumeDump(packageRoot, targetDir);
   const { deployManagedAgents } = require("./postinstall.cjs");
   const { applyConsumerGitignore } = require("./consumer-gitignore.cjs");
   const { mintConsumerSuit } = require("../foundry/mint-suit.cjs");

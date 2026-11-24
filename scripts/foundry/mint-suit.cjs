@@ -165,7 +165,7 @@ function suitCatalogApplies(targetDir, millPlant, packageRoot) {
 function wearCatalog(packageRoot, targetDir) {
   const source = catalogSkillDir(packageRoot);
   if (source) {
-    for (const dir of listProjectSkillDirs(targetDir)) {
+    for (const dir of writableProjectSkillDirs(targetDir)) {
       for (const name of catalogSkillNames(packageRoot)) {
         const src = path.join(source, name, "SKILL.md");
         const dest = path.join(dir, name, "SKILL.md");
@@ -312,7 +312,7 @@ function copyPlantFiles(plant, spec, targetDir) {
   const agentsSrc = spec.agentsDir || (plant ? path.join(plant, "agents") : null);
   const skills = spec.skills || [];
   const agents = spec.agents || [];
-  const skillDirs = listProjectSkillDirs(targetDir);
+  const skillDirs = writableProjectSkillDirs(targetDir);
   const agentsDest = path.join(targetDir, ".opencode", "agents");
   if (skillsSrc) {
     for (const dir of skillDirs) {
@@ -341,8 +341,8 @@ function copyPlantFiles(plant, spec, targetDir) {
   return { skills, agents };
 }
 
-/** Fasten requested plants. Mill files come from this foundry plant/. Mill-package organs come from that package. */
-function fastenMillPlant(millPackageRoot, targetDir, log) {
+/** Read the plant a fasten would write. Does not copy files. */
+function readMillPlant(millPackageRoot, targetDir) {
   const extra = loadFoundryExtra(targetDir);
   const seats = millPlantProtocol.resolvePlantSeats(targetDir, millPackageRoot, extra);
   const kinds = millPlantProtocol.plantKindsFromSeats(seats);
@@ -359,12 +359,31 @@ function fastenMillPlant(millPackageRoot, targetDir, log) {
     ? { skills: [...blipSeat.skills], agents: [...blipSeat.agents] }
     : emptyPlantFiles();
   const plants = {};
-  const fastenedSkills = [];
-  const fastenedAgents = [];
   for (const seat of seats) {
     if (!seat.builtin) {
       plants[seat.kind] = { skills: [...seat.skills], agents: [...seat.agents] };
     }
+  }
+  const millPkgSeat = seats.find((seat) => seat.packageName);
+  return {
+    skills: mill.skills,
+    agents: mill.agents,
+    kinds,
+    sound,
+    blip,
+    plants,
+    seats,
+    millPackage: millPkgSeat ? millPkgSeat.packageName : null,
+    millProtocol: millPkgSeat ? millPkgSeat.protocol || millPlantProtocol.PROTOCOL : null,
+  };
+}
+
+/** Fasten requested plants. Mill files come from this foundry plant/. Mill-package organs come from that package. */
+function fastenMillPlant(millPackageRoot, targetDir, log) {
+  const plant = readMillPlant(millPackageRoot, targetDir);
+  const fastenedSkills = [];
+  const fastenedAgents = [];
+  for (const seat of plant.seats) {
     const copied = copyPlantFiles(
       seat.packageRoot,
       {
@@ -382,25 +401,14 @@ function fastenMillPlant(millPackageRoot, targetDir, log) {
       if (!fastenedAgents.includes(file)) fastenedAgents.push(file);
     }
   }
-  const millPkgSeat = seats.find((seat) => seat.packageName);
   if (log && (fastenedSkills.length > 0 || fastenedAgents.length > 0)) {
     log("foundry-mint", "Fastened factory plant", "info", {
-      plant: kinds,
+      plant: plant.kinds,
       skills: fastenedSkills.length,
       agents: fastenedAgents.length,
     });
   }
-  return {
-    skills: mill.skills,
-    agents: mill.agents,
-    kinds,
-    sound,
-    blip,
-    plants,
-    seats,
-    millPackage: millPkgSeat ? millPkgSeat.packageName : null,
-    millProtocol: millPkgSeat ? millPkgSeat.protocol || millPlantProtocol.PROTOCOL : null,
-  };
+  return plant;
 }
 
 function isDirectory(p) {
@@ -451,12 +459,21 @@ function projectGrokPluginDir(targetDir) {
   return path.join(targetDir, ".grok", "plugins", "0xray");
 }
 
+/**
+ * True when dest is the machine Grok plugin, including a project root that is $HOME.
+ * XRAY_MACHINE_BRIDGES does not bypass this. `env` stays in the signature for callers.
+ */
 function wouldClobberMachineGrok(dest, env, machine) {
   if (!dest) return false;
+  void env;
   const realMachine = machine || machineHome();
-  if (!isIsolatedHome(env, realMachine)) return false;
+  let target;
+  try {
+    target = path.resolve(dest);
+  } catch {
+    return false;
+  }
   const real = path.resolve(machineGrokPluginDir(realMachine));
-  const target = path.resolve(dest);
   return target === real || target.startsWith(`${real}${path.sep}`);
 }
 
@@ -489,6 +506,13 @@ function listProjectSkillDirs(targetDir) {
     path.join(targetDir, ".hermes", "plugins", "xray-hermes", "skills"),
     path.join(targetDir, ".openclaw", "skills"),
   ];
+}
+
+/** Skill dirs wear may write. A dir inside the machine Grok plugin is not one of them. */
+function writableProjectSkillDirs(targetDir) {
+  return listProjectSkillDirs(targetDir).filter(
+    (dir) => !wouldClobberMachineGrok(dir, process.env, machineHome()),
+  );
 }
 
 function overlayJsonFacet(src, dest) {
@@ -830,7 +854,7 @@ function refreshShippedSkillBodies(targetDir, packageRoot) {
   for (const name of wornSkillNames(targetDir)) {
     const packaged = packagedSkillPath(packageRoot, name);
     if (!packaged) continue;
-    for (const dir of listProjectSkillDirs(targetDir)) {
+    for (const dir of writableProjectSkillDirs(targetDir)) {
       const file = path.join(dir, name, "SKILL.md");
       if (!fs.existsSync(file) || sameBytes(file, packaged)) continue;
       if (!wornSkillIsShippedMirror(name, file, packaged)) continue;
@@ -898,20 +922,65 @@ function stripPackagedCatalog(targetDir, millPlant, packageRoot) {
   }
 }
 
+function costumeDumpError(extraSkills, extraAgents) {
+  const listed = [...extraSkills, ...extraAgents].join(", ");
+  const err = new Error(
+    `foundry-inspect: costume dump without foundry.json "costume": true (${listed})`,
+  );
+  err.code = "FOUNDRY_COSTUME_DUMP";
+  err.extraSkills = extraSkills;
+  err.extraAgents = extraAgents;
+  return err;
+}
+
 function assertNoCostumeDump(targetDir, millPlant, tree) {
   if (wantsCostume(targetDir)) {
     return { ok: true, extraSkills: [], extraAgents: [] };
   }
   const extras = costumeDumpExtras(targetDir, millPlant, tree);
   if (extras.extraSkills.length > 0 || extras.extraAgents.length > 0) {
-    const listed = [...extras.extraSkills, ...extras.extraAgents].join(", ");
-    const err = new Error(
-      `foundry-inspect: costume dump without foundry.json "costume": true (${listed})`,
-    );
-    err.code = "FOUNDRY_COSTUME_DUMP";
-    err.extraSkills = extras.extraSkills;
-    err.extraAgents = extras.extraAgents;
-    throw err;
+    throw costumeDumpError(extras.extraSkills, extras.extraAgents);
+  }
+  return { ok: true, extraSkills: [], extraAgents: [] };
+}
+
+/**
+ * Read-only costume check. Runs before wear writes.
+ * A worn file that strip would delete is not an extra. A seat's own text is.
+ */
+function preflightCostumeDump(millPackageRoot, targetDir) {
+  if (wantsCostume(targetDir) || isDogfood(millPackageRoot, targetDir)) {
+    return { ok: true, extraSkills: [], extraAgents: [] };
+  }
+  const params = loadFoundryParams(targetDir);
+  const millPlant = readMillPlant(millPackageRoot, targetDir);
+  const tree = {
+    skills: listConsumerSkillNames(targetDir, params.skills),
+    agents: listConsumerAgentFiles(targetDir, params.agents),
+    millPackageRoot,
+    plantKinds: millPlant.kinds,
+    soundPlantSkills: millPlant.sound.skills,
+    soundPlantAgents: millPlant.sound.agents,
+    blipPlantSkills: millPlant.blip.skills,
+    blipPlantAgents: millPlant.blip.agents,
+    plants: millPlant.plants,
+  };
+  const extras = costumeDumpExtras(targetDir, millPlant, tree);
+  const extraSkills = extras.extraSkills.filter((name) => {
+    const packaged = packagedSkillPath(millPackageRoot, name);
+    const worn = listProjectSkillDirs(targetDir)
+      .map((dir) => path.join(dir, name, "SKILL.md"))
+      .filter((file) => fs.existsSync(file));
+    return worn.some((file) => !wornSkillIsShippedMirror(name, file, packaged));
+  });
+  const agentsDir = path.join(targetDir, ".opencode", "agents");
+  const extraAgents = extras.extraAgents.filter((file) => {
+    const worn = path.join(agentsDir, file);
+    if (!fs.existsSync(worn)) return false;
+    return !wornAgentIsShippedMirror(file, worn, packagedAgentPath(millPackageRoot, file));
+  });
+  if (extraSkills.length > 0 || extraAgents.length > 0) {
+    throw costumeDumpError(extraSkills, extraAgents);
   }
   return { ok: true, extraSkills: [], extraAgents: [] };
 }
@@ -924,7 +993,7 @@ function overlayConsumerTree(targetDir, log, params) {
   const agents = listConsumerAgentFiles(targetDir, agentsRel);
   const skillsSrc = resolveInside(targetDir, skillsRel);
   const agentsSrc = resolveInside(targetDir, agentsRel);
-  const skillDirs = listProjectSkillDirs(targetDir);
+  const skillDirs = writableProjectSkillDirs(targetDir);
   const agentsDest = path.join(targetDir, ".opencode", "agents");
 
   for (const dir of skillDirs) {
@@ -1074,6 +1143,7 @@ function mintConsumerSuit(millPackageRoot, targetDir, log) {
   if (isDogfood(millPackageRoot, targetDir)) {
     return { suit: "dogfood", skipped: true };
   }
+  preflightCostumeDump(millPackageRoot, targetDir);
   const params = loadFoundryParams(targetDir);
   const inventoryPath = path.join(targetDir, ".xray", "foundry-inventory.json");
   const hadInventory = fs.existsSync(inventoryPath);
@@ -1176,6 +1246,7 @@ module.exports = {
   wornAgentFiles,
   costumeDumpExtras,
   assertNoCostumeDump,
+  preflightCostumeDump,
   wornSkillIsShippedMirror,
   staleShippedSkillBodies,
   machineHome,

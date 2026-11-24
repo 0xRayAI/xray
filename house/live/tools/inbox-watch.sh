@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Poll live-inbox <seat> (default arch1) every 60s.
 # The session hook orders one CLI monitor. Do not launchd a copy. A detached copy is not heard.
-# FAIL once per distinct error. The line names LIVE_URL and the expected URL, then backs off.
+# FAIL once per distinct error. The line names LIVE_URL and the error, then backs off.
 # A JSON line whose GitHub item is closed or merged is acked and logged as auto-ack.
 # A held line (hold label, or a card whose state is held) prints once as "held: N" and is not popped.
 # The poll is live-inbox <seat> --watch: the queue head, then every other open line.
@@ -292,7 +292,7 @@ while true; do
   fi
   if [[ "$code" -ne 0 ]]; then
     if [[ "$err" != "$last_err" ]]; then
-      printf 'FAIL\nLIVE_URL=%s expected=https://bifrost.0xray.dev\n%s\n' "$LIVE_URL" "$err"
+      printf 'FAIL\nLIVE_URL=%s\n%s\n' "$LIVE_URL" "$err"
       last_err="$err"
       fail_sleep="$interval"
     fi
