@@ -5,7 +5,7 @@
 ## Start
 This kit runs on Node >= 24. The `0xray` package needs Node >= 24.22.3, the patched 24 release from 11 Nov 2026.
 
-0. A new fleet runs `skills/stand-up-fleet/SKILL.md` once: house, routes, then one suit per seat. It does not start the Bifrost server. The NEAR path is foundry, pay, cap, escrow, the Grok Bot one-click, and the CLI. The kit commands are `foundry-create`, `near-status`, `near-pay`, `near-cap`, `near-escrow`, `near-1click`, `near-mailbox`, and `hangar-list`. They stay on NEAR testnet. The one-click runs `foundry-create` and `near-status` only. Open Wallet pay and hangar shops still wait until the owner asks.
+0. A new fleet runs `skills/stand-up-fleet/SKILL.md` once: house, routes, then one suit per seat. It does not start the Bifrost server. The NEAR path is foundry, pay, cap, escrow, the Grok Bot one-click, and the CLI. The kit commands are `foundry-create`, `near-status`, `near-pay`, `near-cap`, `near-escrow`, `near-mailbox`, and `hangar-list`. They stay on NEAR testnet. `near-1click` is ledger init plus a capped mainnet quote helper. The command only runs `init --ledger` and does not spend. The one-click runs `foundry-create` and `near-status` only. Open Wallet pay and hangar shops still wait until the owner asks.
 1. Read `OP-PROC.md` first (the one-page operating procedure).
 2. Board: `house/WAVEBOARD.md` and `house/ATTENTION_STATE.md` when `LIVE_URL` is unset. Bifrost cards (`GET /cards`) and `house/ATTENTION_STATE.md` when `LIVE_URL` is set. If a file is missing, use the same name under `templates/house/`.
 3. Read `AGENTS.md` (order of operations + multiplicity).

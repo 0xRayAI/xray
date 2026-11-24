@@ -2,12 +2,13 @@
 
 ## [Unreleased]
 
+- Docs no longer call `near-1click` testnet. The command is ledger init and does not spend. The helper asks for a Base USDC to NEAR USDC quote on mainnet, capped at 1 USDC, and does not send the transfer. #1241
 
 ## [0.1.19] - 2026-11-23
 
 ### 🔄 Changes
 
-- `foundry-create`, `near-status`, `near-pay`, `near-cap`, `near-escrow`, `near-1click`, `near-mailbox`, and `hangar-list` ship in this kit. They stay on NEAR testnet. `foundry-create` creates the testnet account, seals the full-access key at mode 0600, and writes the foundry record. `near-status` prints the account, the foundry id, the listing, and Pay, Cap, and Escrow. An absent value is `pending`.
+- `foundry-create`, `near-status`, `near-pay`, `near-cap`, `near-escrow`, `near-mailbox`, and `hangar-list` ship in this kit. They stay on NEAR testnet. `near-1click` ships too. Its command only runs `init --ledger` and does not spend. The helper asks for a Base USDC to NEAR USDC quote on mainnet, capped at 1 USDC, and does not send the transfer. `foundry-create` creates the testnet account, seals the full-access key at mode 0600, and writes the foundry record. `near-status` prints the account, the foundry id, the listing, and Pay, Cap, and Escrow. An absent value is `pending`.
 - The Grok Bot one-click runs `foundry-create` and `near-status`. It names pay, cap, and escrow and does not run them. It does not pass amounts, and it does not list a shop.
 - Skills in the pack for that path: `near-seat`, `foundry-create`, `near-mill`, `ai-agent-on-near`, and `near-audit`.
 - `stand-up-fleet` shows that path. The stop before pay is gone. Republish of the 0xRay Fleet Setup marketplace template waits for a separate publish. #1146

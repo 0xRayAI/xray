@@ -4,7 +4,7 @@
 
 This kit runs on Node >= 24. The `0xray` package needs Node >= 24.22.3, the patched 24 release from 11 Nov 2026.
 
-You are setting up **Grok Bot agents** on the 0xRay factory OS. A new fleet runs `stand-up-fleet` once before this per-agent path. That skill does the house, the board routes, and one suit per seat. It does not start a Bifrost server. The NEAR path in that skill is foundry, pay, cap, escrow, the Grok Bot one-click, and the CLI. The kit commands are `foundry-create`, `near-status`, `near-pay`, `near-cap`, `near-escrow`, `near-1click`, `near-mailbox`, and `hangar-list`. They stay on NEAR testnet. The one-click runs `foundry-create` and `near-status` only.
+You are setting up **Grok Bot agents** on the 0xRay factory OS. A new fleet runs `stand-up-fleet` once before this per-agent path. That skill does the house, the board routes, and one suit per seat. It does not start a Bifrost server. The NEAR path in that skill is foundry, pay, cap, escrow, the Grok Bot one-click, and the CLI. The kit commands are `foundry-create`, `near-status`, `near-pay`, `near-cap`, `near-escrow`, `near-mailbox`, and `hangar-list`. They stay on NEAR testnet. `near-1click` is ledger init plus a capped mainnet quote helper. The command only runs `init --ledger` and does not spend. The one-click runs `foundry-create` and `near-status` only.
 ## Goal
 For **each key agent** (coordinator, implementer, reviewer, publisher, …):
 

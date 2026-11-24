@@ -326,6 +326,18 @@ describe('near 1click quote', () => {
     await expect(click.getStatus('', { fetch: status.fetch })).rejects.toThrow('deposit address is required');
   });
 
+  it('the kit docs do not call near-1click testnet', () => {
+    const files = ['README.md', 'AGENTS.md', 'llms.txt', 'CHANGELOG.md'];
+    for (const name of files) {
+      const text = readFileSync(path.join(root, 'grok-bot', name), 'utf8');
+      expect(text).not.toMatch(/near-1click`, `near-mailbox`, and `hangar-list`\. They stay on NEAR testnet/);
+      expect(text).toMatch(/near-1click` is ledger init plus a capped mainnet quote helper|`near-1click` ships too/);
+      expect(text).toMatch(/init --ledger/);
+      expect(text).toMatch(/does not spend/);
+      expect(text).toMatch(/mainnet/);
+    }
+  });
+
   it('strips a jwt from an error', async () => {
     process.env.INTENTS_CHECKOUT_JWT = 'eyJhbGciOiJub25lIn0.eyJzdWIiOiJ4In0.sig';
     const failed = mockFetch(400, { message: `bad ${process.env.INTENTS_CHECKOUT_JWT}` });
