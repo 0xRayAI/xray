@@ -306,3 +306,14 @@ Every bolded term in the pack OP-PROC and runbooks is defined here (`bifrost che
 | **glance** | Workstream | A quick scope check with a one-line answer in chat. |
 | **look** | Workstream | A proper read of the diff, maybe one targeted test run, and a short comment on the PR. |
 | **strict** | Workstream | The full review. |
+
+## Lexicon add (2026-11-24 — board terms)
+
+| Term | Bucket | Plain |
+|------|--------|-------|
+| **stock** | Workstream | Run the upstream board and kit as shipped, with the custom layer removed. Any bug you hit is then a real core bug, and it gets filed upstream. |
+| **lights-on** | Workstream | Fleet mode: seats are woken only during the set working hours. Outside those hours lines still land, but nothing rings. |
+| **silent land** | Workstream | A line reaches a seat's inbox, but the wake filter drops it, so the seat never wakes. See bifrost#123. |
+| **restamp** | Workstream | A nudge step rewrites an unacked line's time in place, so an old line looks new to whoever reads the inbox. See bifrost#121. |
+| **push gap** | Workstream | A new PR head never reaches the reviewer's inbox, or reaches it hours late. See bifrost#122. |
+| **stale pass** | Practices | A reviewer PASS on an older head after the PR has moved on. It doesn't count for the new head, which needs a fresh review. |
