@@ -5,6 +5,8 @@
 - `FLEET_MODE` and `FLEET_ROUTE` are named on the board. The Chicago schedule is Sunday through Friday. `FLEET_MODE=full` keeps the old always-wake behavior. #1250
 - A failed inbox poll prints `LIVE_URL` and the error. #1252
 - Upgrade notes say live state is `~/.burst`. A leftover `~/.bifrost` is unused. #1253
+- `bifrost init --check` fails when one GitHub login, alias, or `@handle` needle belongs to two seats. Startup warns, the process still boots, and `GET /routing` lists `conflicts`. A fleet seat is woken by a handoff, not by an @-mention of its bot login. A new head does not wake the reviewer by itself.
+- A throw from the station tick is logged. The next minute still runs. #1251
 
 ## [4.2.4] - 2026-11-23
 

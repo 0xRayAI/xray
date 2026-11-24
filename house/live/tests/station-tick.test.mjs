@@ -68,6 +68,7 @@ test('the server tick is the board path and the station gate does not deliver a 
   assert.match(src, /flag === 'off'/);
   assert.match(src, /RAILWAY_ENVIRONMENT/);
   assert.match(src, /function stationTick\(now = new Date\(\)\)/);
+  assert.match(src, /station nudge throw/);
   const gate = src.slice(src.indexOf('const ownStation'), src.indexOf('if (parsed && parsed.replace === true)'));
   assert.equal(gate.includes('deliverNudge'), false);
 });
