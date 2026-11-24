@@ -57,9 +57,9 @@ npx @0xray/grok-bot@0.1.19 doctor --json
 
 House lookup: `GROK_BOT_HOUSE` (the house directory or its `HOUSE.md`) wins. If that variable is unset, doctor walks up from the working directory for `house/HOUSE.md`. A set path that is missing warns and does not walk. No house file warns. Unfilled example lines fail. `house init` copies templates that still contain `(example)` lines, so the next doctor fails until those lines are replaced. Doctor warns, and does not fail, when `house/fleet/activity.jsonl` has no JSON line, and when `.xray/state/STATION.md` has no `Skills:` line or no `Keys:` line. When `## Cadence` is present, doctor also warns (and does not fail) if `review-sent.log` or `stall-sweep.log` is missing or older than 2 hours, if the activity log's last line is not JSON with `t_ct`, `kind`, `action`, and `seat`, or if the suit `.xray/codex.json` term count or `lastUpdated` differs from `node_modules/0xray`. When `watchers/` exists and Cadence is missing, doctor hints `grok-bot house init --migrate`.
 
-## NEAR path (testnet)
+## NEAR path
 
-These commands ship in this package. They stay on NEAR testnet. They do not send a mainnet transfer. Do not print a private key or a seed phrase.
+These commands ship in this package. `foundry-create`, `near-status`, `near-pay`, `near-cap`, `near-escrow`, `near-mailbox`, and `hangar-list` stay on NEAR testnet. They do not send a mainnet transfer. Do not print a private key or a seed phrase. `near-1click` is ledger init plus a capped mainnet quote helper. The command only runs `init --ledger` and does not spend. The helper asks for a quote from Base USDC to NEAR USDC on mainnet, capped at 1 USDC. It does not send that transfer.
 
 ```bash
 npx @0xray/grok-bot@0.1.19 foundry-create --id <id> --seat <seat> --account <new-name>.testnet
