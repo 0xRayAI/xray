@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+- `bifrost init --check` fails when one GitHub login, alias, or `@handle` needle belongs to two seats. Startup warns, the process still boots, and `GET /routing` lists `conflicts`. A fleet seat is woken by a handoff, not by an @-mention of its bot login. A new head does not wake the reviewer by itself.
+
 ## [4.2.4] - 2026-11-23
 
 ### 🔄 Changes
