@@ -249,7 +249,7 @@ test('the board face keeps the contract in both themes', async () => {
     assert.equal(face.logMax, '256px');
     assert.equal(face.logOverflow, 'auto');
     assert.match(face.recent, /merged/);
-    assert.match(face.recent, /CT/);
+    assert.match(face.recent, /Central/);
     assert.match(face.recent, /forge/);
     assert.doesNotMatch(face.track, /blinky/);
     assert.match(face.track, /forge · working · real task/);
@@ -477,7 +477,7 @@ test('an activity row expands to the full note and collapses again', async () =>
     await row.screenshot({ path: path.join(ART, 'activity-row-open.png') });
     const meta = await row.locator('.log-meta').textContent();
     assert.match(meta, /FORGE/);
-    assert.match(meta, /CT/);
+    assert.match(meta, /Central/);
     const card = row.locator('a.log-card');
     assert.equal(await card.textContent(), 'example/app#3');
     assert.equal(await card.getAttribute('href'), 'https://github.com/example/app/pull/3');
