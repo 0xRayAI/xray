@@ -77,4 +77,7 @@
   L.setAvatars({ blinky: 'blinky', critic: 'critic', forge: 'forge', near: 'near', arch1: 'arch1', Blaze: 'blaze' });
   L.GLYPH = Object.assign(L.GLYPH || {}, { nibbler: '🪱', mill: '⚙️' });
   L.SITE_FOOT = 'Bifrost · built in public';
+  if (typeof L.setBrand === 'function') L.setBrand({ byline: '🌈 bifrost by 0xray' });
+  // A file in public/ replaces the 0xRay wordmark. Pass it with the credit:
+  // L.setBrand({ logo: 'fleet-logo.png', alt: 'Fleet name', byline: '🌈 bifrost by 0xray' });
 })(window.LiveMesh);

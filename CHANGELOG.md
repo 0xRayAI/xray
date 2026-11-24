@@ -1,5 +1,6 @@
 ## [Unreleased]
 
+- The live board says what the picture means. The clock says Central time. A fleet image can replace the 0xRay mark. The header credit is small: bifrost by 0xray.
 - Wear at a project root that is the machine home does not copy the machine Grok plugin. A costume dump throws before any wear write. An existing Grok hook file keeps `LIVE_URL` and `XRAY_SEAT`. #1249
 - A delivered webhook wake does not mark the seat present. A read, an ack, or the seat's own turn still does. #114
 - `FLEET_MODE` and `FLEET_ROUTE` are named on the board. The Chicago schedule is Sunday through Friday. `FLEET_MODE=full` keeps the old always-wake behavior. #1250
