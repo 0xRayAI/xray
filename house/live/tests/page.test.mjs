@@ -138,7 +138,6 @@ test('hot ring stays a one-time flash; the working sheen rolls the roster name w
   assert.doesNotMatch(html, /live-blink/);
   assert.doesNotMatch(html, /hotRing/);
   assert.match(html, /var rr = r \+ k \* 5; ctx\.strokeStyle = rgb\(c, 1 \/ \(k \+ 1\)\);/);
-  assert.match(html, /The rings last about 5 seconds/);
   assert.match(html, /var FLASH_MS = 2600/);
   assert.match(html, /animation: nm-roll 1\.2s linear infinite/);
   assert.match(html, /@keyframes nm-roll \{ from \{ background-position: 100% 0; \} to \{ background-position: 0% 0; \} \}/);
