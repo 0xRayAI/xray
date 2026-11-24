@@ -15,4 +15,6 @@ description: >
 4. The wrapper prints neither the token nor the PEM. Those words stay out of stdout, stderr, and the board.
 5. A seat with no App does not mint. It hands the branch and the PR body to a seat that has one.
 
+Create the App first. The owner page is [Create the GitHub App(s)](../stand-up-fleet/github-app-setup.md). Do not print the token or the PEM.
+
 `Keys:` on `.xray/state/STATION.md` is the wrapper name `gh-<seat>`, never a secret.

@@ -25,4 +25,4 @@ That creates the testnet account and the foundry record. If it fails with Transa
 4. Run:
 node grok-bot/bin/grok-bot.js near-status
 
-5. Stop. Print the NEAR testnet account id, the foundry id, and Listing: pending. Pay, Cap, and Escrow also print pending.
+5. Stop. Print the NEAR testnet account id, the foundry id, and Listing: pending. Pay, Cap, and Escrow also print pending. Also print the owner summary from near-status (transaction ids, explorer links, amounts, keys by permission, what is pending). Never print a private key or a seed phrase.

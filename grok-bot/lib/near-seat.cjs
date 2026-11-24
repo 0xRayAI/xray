@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
+const { buildNearSummary, writeNearSummary } = require('./near-summary.cjs');
 
 // Rust `File::create` opens with mode 0o666 and the process umask.
 // near-cli-rs saves the key that way (`File::create` in
@@ -74,6 +75,45 @@ function credentialsHome(opts = {}) {
 
 function legacyKeyPath(credentialsDir, network, accountId) {
   return path.join(credentialsDir, network, `${accountId}.json`);
+}
+
+// near-cli-rs File::create lands at 0644 under umask 022, and a function-call
+// key can write a sibling of the account JSON. Seal the whole credentials
+// tree: 0700 directories, 0600 files. Do not follow a symlink out of the tree.
+// Refuse the process home and the filesystem root.
+function sealCredentialsTree(root) {
+  if (typeof root !== 'string' || root.trim() === '') return { files: 0, dirs: 0 };
+  const resolved = path.resolve(root);
+  const home = path.resolve(os.homedir());
+  if (resolved === path.parse(resolved).root || resolved === home) {
+    const error = new Error('refusing to seal a home or root directory');
+    error.code = 'SEAL_ROOT';
+    throw error;
+  }
+  if (!fs.existsSync(resolved)) return { files: 0, dirs: 0 };
+  const counts = { files: 0, dirs: 0 };
+  const walk = (dir) => {
+    const st = fs.lstatSync(dir);
+    if (st.isSymbolicLink()) return;
+    if (!st.isDirectory()) return;
+    fs.chmodSync(dir, 0o700);
+    counts.dirs += 1;
+    for (const name of fs.readdirSync(dir)) {
+      const full = path.join(dir, name);
+      const child = fs.lstatSync(full);
+      if (child.isSymbolicLink()) continue;
+      if (child.isDirectory()) {
+        walk(full);
+        continue;
+      }
+      if (child.isFile()) {
+        fs.chmodSync(full, SEALED_MODE);
+        counts.files += 1;
+      }
+    }
+  };
+  walk(resolved);
+  return counts;
 }
 
 function namedAccountId(accountId) {
@@ -401,12 +441,23 @@ async function accountAlreadyThere(opts) {
   return key;
 }
 
+function cliBlob(result) {
+  return `${result && result.stdout ? result.stdout : ''}\n${result && result.stderr ? result.stderr : ''}`;
+}
+
 async function prepareNearSeat(opts) {
   if (!opts || !opts.accountId) throw new Error('accountId is required');
   if (!opts.seatHome) throw new Error('seatHome is required');
   const secrets = [];
   const runners = opts.runners || {};
   const prev = process.umask(SEAT_UMASK);
+  let balanceYocto = null;
+  let createdThisRun = false;
+  let createText = '';
+  let grantText = '';
+  const noteBalance = (account) => {
+    if (account && account.amount != null) balanceYocto = String(account.amount);
+  };
   try {
     let kept = await accountAlreadyThere(opts);
     let key = kept;
@@ -419,7 +470,9 @@ async function prepareNearSeat(opts) {
       } catch (err) {
         created = { status: 1, stdout: '', stderr: err instanceof Error ? err.message : String(err) };
       }
+      createText = cliBlob(created);
       if (created && created.status === 0) {
+        createdThisRun = true;
         key = loadCreatedKey(created, opts, opts.accountId);
         rememberSecrets(secrets, key);
       } else if (accountExistsMessage(created)) {
@@ -433,8 +486,10 @@ async function prepareNearSeat(opts) {
       if (created && created.stdout) emit(opts, secrets, created.stdout);
       if (created && created.stderr) emit(opts, secrets, created.stderr);
       if (created && created.status === 0) {
-        if (typeof opts.viewAccount === 'function') await opts.viewAccount(opts.accountId, opts);
-        else await viewAccount(opts.accountId, opts);
+        const seen = typeof opts.viewAccount === 'function'
+          ? await opts.viewAccount(opts.accountId, opts)
+          : await viewAccount(opts.accountId, opts);
+        noteBalance(seen);
       } else if (!key) {
         if (accountExistsMessage(created)) {
           const seen = await viewExistingAccount(opts);
@@ -444,6 +499,16 @@ async function prepareNearSeat(opts) {
       }
     }
     rememberSecrets(secrets, key);
+    if (kept && balanceYocto == null) {
+      try {
+        const seen = typeof opts.viewAccount === 'function'
+          ? await opts.viewAccount(opts.accountId, opts)
+          : await viewAccount(opts.accountId, opts);
+        noteBalance(seen);
+      } catch {
+        // accountAlreadyThere already required a successful view
+      }
+    }
     if (kept) {
       emit(opts, secrets, `near-seat: account ${opts.accountId} already exists`);
       const legacy = legacyKeyPath(credentialsHome(opts), 'testnet', opts.accountId);
@@ -463,15 +528,49 @@ async function prepareNearSeat(opts) {
     const methods = opts.methodNames || 'ping';
     const grantArgv = functionCallKeyArgv(opts.accountId, contractId, methods);
     const listed = await listAccessKeys(opts.accountId, opts);
+    const finish = (extra) => {
+      let credentials = { files: 0, dirs: 0 };
+      try {
+        credentials = sealCredentialsTree(credentialsHome(opts));
+      } catch (err) {
+        const code = err && err.code ? err.code : 'error';
+        emit(opts, secrets, `near-seat: credentials seal failed (${code})`);
+      }
+      const verified = [];
+      if (balanceYocto != null) verified.push('view_account returned a balance');
+      verified.push(extra.addedKey ? 'function-call key command exited 0' : 'function-call key was not added this run');
+      if (credentials.dirs > 0) verified.push('credentials tree sealed (0600 files, 0700 directories)');
+      const allowanceAt = extra.grantArgv ? extra.grantArgv.indexOf('--allowance') : -1;
+      const allowance = extra.addedKey && allowanceAt >= 0 ? extra.grantArgv[allowanceAt + 1] : null;
+      const summary = buildNearSummary({
+        secrets,
+        accountId: opts.accountId,
+        seat: typeof opts.seatId === 'string' && opts.seatId ? opts.seatId : path.basename(opts.seatHome),
+        createText,
+        grantText,
+        balanceYocto,
+        createdThisRun,
+        addedKey: extra.addedKey,
+        allowance,
+        contractId,
+        methodNames: methods,
+        accessKeys: listed && listed.keys,
+        verified,
+        credentials,
+      });
+      const summaryPath = writeNearSummary(opts.seatHome, summary, secrets);
+      return { ...extra, summary, summaryPath, credentials };
+    };
     if (hasFunctionCallKey(listed, contractId, methods)) {
       emit(opts, secrets, 'near-seat: function-call key already present');
       emit(opts, secrets, `near-seat: account ${opts.accountId}`);
       emit(opts, secrets, `near-seat: full-access key sealed ${coldPath}`);
-      return { accountId: opts.accountId, coldPath, publicPath, mode, grantArgv: null, addedKey: false };
+      return finish({ accountId: opts.accountId, coldPath, publicPath, mode, grantArgv: null, addedKey: false });
     }
     const granted = typeof runners.addFunctionCallKey === 'function'
       ? await runners.addFunctionCallKey(grantArgv)
       : runNearCli(grantArgv, opts);
+    grantText = cliBlob(granted);
     rememberSecrets(secrets, granted && granted.key);
     if (granted && granted.stdout) emit(opts, secrets, granted.stdout);
     if (granted && granted.stderr) emit(opts, secrets, granted.stderr);
@@ -479,9 +578,15 @@ async function prepareNearSeat(opts) {
     emit(opts, secrets, `near-seat: account ${opts.accountId}`);
     emit(opts, secrets, `near-seat: full-access key sealed ${coldPath}`);
     emit(opts, secrets, 'near-seat: function-call key granted');
-    return { accountId: opts.accountId, coldPath, publicPath, mode, grantArgv, addedKey: true };
+    return finish({ accountId: opts.accountId, coldPath, publicPath, mode, grantArgv, addedKey: true });
   } finally {
     process.umask(prev);
+    try {
+      sealCredentialsTree(credentialsHome(opts));
+    } catch (err) {
+      const code = err && err.code ? err.code : 'error';
+      emit(opts, secrets, `near-seat: credentials seal failed (${code})`);
+    }
   }
 }
 
@@ -497,6 +602,7 @@ module.exports = {
   resolveNearBin,
   runNearCli,
   credentialsHome,
+  sealCredentialsTree,
   fileCreateMode,
   functionCallKeyArgv,
   legacyKeyPath,

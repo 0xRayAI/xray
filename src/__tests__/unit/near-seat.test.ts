@@ -37,7 +37,14 @@ const seat = requireCjs(path.join(root, 'grok-bot', 'lib', 'near-seat.cjs')) as 
       createAccount: (argv: string[]) => Promise<{ stdout: string; stderr: string; key: KeyFile }>;
       addFunctionCallKey: (argv: string[]) => Promise<{ stdout: string; key?: KeyFile }>;
     };
-  }) => Promise<{ mode: number; coldPath: string; grantArgv: string[] | null; addedKey: boolean }>;
+  }) => Promise<{
+    mode: number;
+    coldPath: string;
+    grantArgv: string[] | null;
+    addedKey: boolean;
+    summaryPath: string;
+    credentials: { files: number; dirs: number };
+  }>;
   viewAccount: (accountId: string, opts: {
     attempts?: number;
     delayMs?: number;
@@ -329,7 +336,14 @@ describe('near-seat', () => {
       account_id: accountId,
       public_key: 'ed25519:public-only',
       private_key: SECRET,
-    })}\n`);
+    })}\n`, { mode: 0o644 });
+    const siblingDir = path.join(creds, 'testnet', 'extra');
+    mkdirSync(siblingDir, { recursive: true, mode: 0o755 });
+    const sibling = path.join(siblingDir, 'other.json');
+    writeFileSync(sibling, '{"note":"sibling key file"}\n', { mode: 0o644 });
+    chmodSync(creds, 0o755);
+    chmodSync(path.dirname(keyFile), 0o755);
+    chmodSync(siblingDir, 0o755);
     try {
       const result = await seat.prepareNearSeat({
         accountId,
@@ -351,6 +365,13 @@ describe('near-seat', () => {
       expect(readFileSync(result.coldPath, 'utf8')).toContain(SECRET);
       expect(`${logs.join('\n')}${stdout.join('')}`).not.toContain(SECRET);
       expect(statSync(keyFile).mode & 0o777).toBe(0o600);
+      expect(statSync(sibling).mode & 0o777).toBe(0o600);
+      expect(statSync(siblingDir).mode & 0o777).toBe(0o700);
+      expect(statSync(creds).mode & 0o777).toBe(0o700);
+      expect(result.credentials.files).toBeGreaterThanOrEqual(2);
+      const summary = JSON.parse(readFileSync(result.summaryPath, 'utf8')) as { keys: unknown };
+      expect(JSON.stringify(summary)).not.toContain(SECRET);
+      expect(JSON.stringify(summary)).not.toContain('private_key');
     } finally {
       rmSync(home, { recursive: true, force: true });
       rmSync(creds, { recursive: true, force: true });

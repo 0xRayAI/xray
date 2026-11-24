@@ -17,6 +17,10 @@ const doctor = requireCjs(path.join(root, 'grok-bot', 'lib', 'seat-doctor.cjs'))
 const filled = `NEAR account: millfc1ca97ca3.testnet
 Foundry: ada-foundry
 Listing: ada
+Pay: pending
+Cap: pending
+Escrow: pending
+Receipt: pending
 `;
 
 function project(): string {
@@ -61,6 +65,10 @@ describe('cli path', () => {
         "NEAR account: millfc1ca97ca3.testnet
         Foundry: ada-foundry
         Listing: ada
+        Pay: pending
+        Cap: pending
+        Escrow: pending
+        Receipt: pending
         "
       `);
       const bin = path.join(root, 'grok-bot', 'bin', 'grok-bot.js');
@@ -83,6 +91,10 @@ describe('cli path', () => {
       expect(doctor.nearStatusBlock(empty)).toBe(`NEAR account: pending
 Foundry: pending
 Listing: pending
+Pay: pending
+Cap: pending
+Escrow: pending
+Receipt: pending
 `);
       const skill = readFileSync(path.join(root, 'grok-bot', 'skills', 'near-mill', 'SKILL.md'), 'utf8');
       expect(skill).toContain('grok-bot foundry-create --id <id> --seat <seat> --account <account>');

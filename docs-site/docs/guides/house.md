@@ -7,14 +7,14 @@ sidebar_label: Set up a house
 
 The operating page is the same for every team. Yours is `house/HOUSE.md`: owner, seats, public voice, allowed repos, ask first, and the board. Those six headings win over the general page. Start at the [operating procedure](https://github.com/0xRayAI/xray/blob/main/grok-bot/OP-PROC.md), follow the [setup-house](https://github.com/0xRayAI/xray/blob/main/grok-bot/skills/setup-house/SKILL.md) skill, and keep the [house plate](../plates/house.md) as the stamp.
 
-These steps match `grok-bot/lib/seat-doctor.cjs`. The commands pin @0xray/grok-bot@0.1.19. Docs for this suit are https://docs.0xray.dev/. Each fleet runs its own Bifrost board (skill `stand-up-fleet`); https://bifrost.0xray.dev is the 0xRay fleet's own.
+These steps match `grok-bot/lib/seat-doctor.cjs`. The commands pin @0xray/grok-bot@0.1.20. Docs for this suit are https://docs.0xray.dev/. Each fleet runs its own Bifrost board (skill `stand-up-fleet`); https://bifrost.0xray.dev is the 0xRay fleet's own.
 
 ## Copy the template
 
 From the project root:
 
 ```bash
-npx @0xray/grok-bot@0.1.19 house init
+npx @0xray/grok-bot@0.1.20 house init
 ```
 
 That copies every file in `templates/house/` into `./house` except `EXAMPLE.md`.
@@ -44,7 +44,7 @@ refusing to overwrite existing house files: <project>/house/ATTENTION_STATE.md, 
 Teams that still keep the board at `ops/WAVEBOARD.md` run:
 
 ```bash
-npx @0xray/grok-bot@0.1.19 house init --migrate
+npx @0xray/grok-bot@0.1.20 house init --migrate
 ```
 
 That moves `ops/WAVEBOARD.md` to `house/WAVEBOARD.md` and copies each missing template, including `ATTENTION_STATE.md` and an empty `bifrost-waves.json`. A house file you already changed stays as it is. When both boards exist and `house/WAVEBOARD.md` is not the untouched template, the command exits 1 and writes nothing:
@@ -59,7 +59,11 @@ An untouched template board is the same bytes as `templates/house/WAVEBOARD.md`.
 
 `HOUSE.md` ships with one line under each heading that starts with `(example)`. Doctor treats a line as unfilled when it starts with `(example)`, after optional whitespace and an optional `-` or `*`. A mention of `(example)` later in the line does not count as unfilled.
 
-Replace those six lines. This is one filled house:
+Replace those six lines before the first doctor run. If the owner has not named a value, offer these and wait for a yes: Public voice `none`; Allowed `None yet. Repos are named when the owner picks them.`; Ask first `package publish, production deploy, payments, secrets, and deletes`; Board `the team's Bifrost board once live, and house/WAVEBOARD.md until then.` Owner and Seats have no default.
+
+`house init` does not copy `EXAMPLE.md`. That file stays in `templates/house/` as an illustration. Doctor still fails if someone copies it to `house/EXAMPLE.md`. There is no "delete EXAMPLE.md after init" step, because init does not create it.
+
+This is one filled house:
 
 ```markdown
 # House
@@ -105,7 +109,7 @@ Show the owner the filled `HOUSE.md`. Nothing in Allowed counts until they appro
 ## Run doctor until the house check passes
 
 ```bash
-npx @0xray/grok-bot@0.1.19 doctor
+npx @0xray/grok-bot@0.1.20 doctor
 ```
 
 `ready` is the same command.

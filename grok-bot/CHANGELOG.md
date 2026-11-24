@@ -4,6 +4,21 @@
 
 - Docs no longer call `near-1click` testnet. The command is ledger init and does not spend. The helper asks for a Base USDC to NEAR USDC quote on mainnet, capped at 1 USDC, and does not send the transfer. #1241
 
+## [0.1.20] - 2026-11-23
+
+Not published. The release script was not run.
+
+### 🔄 Changes
+
+- `stand-up-fleet` and `setup-house` are the kit names. Marketplace names `fleet-stand-up` and `fleet-getting-started` are not files in this package. #1245
+- Owner page [github-app-setup.md](skills/stand-up-fleet/github-app-setup.md) is linked from `stand-up-fleet` and `seat-github-key`. Lines the source does not settle stay marked unconfirmed. No PEM, token, or seat key is printed. #1245
+- House setup asks for the six `(example)` lines, or offers the safe defaults, before the first doctor run. `house init` does not copy `EXAMPLE.md`. Doctor still fails if `house/EXAMPLE.md` is present. #1245
+- Before `railway init`, show `railway whoami` and `railway project list`, and wait for the owner. Set `LIVE_SEAT_IDS`, `LIVE_OWNER`, and `STATION_NUDGE` explicitly. `MESH_PASSWORD` is owner-set and is never written into chat, a tool command, a log, or a file. #1245
+- Create the seat bots before the per-seat suit steps. #1245
+- `foundry-create` / `near-seat` seal every file under `~/.near-credentials` at mode 0600 and every directory there at mode 0700. #1245
+- `foundry-create` and `near-status` print an owner NEAR summary (account, foundry, seat, transaction ids with explorer links, amounts, keys by permission, verified, pending) and store it at `.xray/state/seats/<seat>/near/summary.json` mode 0600. No private key and no seed phrase. #1245
+- Every `npx @0xray/grok-bot` line in the kit docs pins `@0.1.20`.
+
 ## [0.1.19] - 2026-11-23
 
 ### 🔄 Changes
