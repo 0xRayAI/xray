@@ -7,7 +7,7 @@ import { spawn } from 'node:child_process';
 import http from 'node:http'; import crypto from 'node:crypto'; import path from 'node:path'; import fs from 'node:fs'; import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 const APP = process.env.MESH_APP_DIR || path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app');
-const { routingMap, createLoginResolver, auditLogins } = await import(path.join(APP, 'routes.mjs'));
+const { routingMap, routingConflicts, createLoginResolver, auditLogins } = await import(path.join(APP, 'routes.mjs'));
 const res = (status, headers = {}) => ({ status, headers: { get: k => headers[k.toLowerCase()] ?? null } });
 
 test('resolver: ok / missing, cached, no token = unverified', async () => {
@@ -31,6 +31,21 @@ test('resolver: rate limit pauses every lookup until reset and keeps the cache',
   assert.equal(r.calls, 2);
   t += 61e3;
   await r.resolve('b'); assert.equal(r.calls, 3);    // after reset it asks again
+});
+
+test('one login or @handle claimed by two seats names both, in map order', () => {
+  const rows = routingConflicts({
+    routing: {
+      cloud: { login: 'app[bot]', aliases: ['Cloud'] },
+      builder: { login: 'App', aliases: ['builder'] },
+    },
+    extra_seats: {
+      cloud: { needles: ['@app'] },
+      builder: { needles: ['@app'] },
+    },
+  });
+  assert.deepEqual(rows, [{ handle: 'app', seats: ['cloud', 'builder'] }]);
+  assert.deepEqual(routingConflicts({ routing: { forge: { login: 'forge0x[bot]', aliases: ['forge'] } } }), []);
 });
 
 test('audit: refused, unverified and no-login seats', async () => {

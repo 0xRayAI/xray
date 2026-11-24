@@ -92,6 +92,12 @@ describe('Grok multi-seat wear — project dest, no last-wins machine clobber', 
     expect(
       wouldClobberMachineGrok(path.join(isolated, '.grok', 'plugins', '0xray'), { HOME: isolated }, machine),
     ).toBe(false);
+    expect(
+      wouldClobberMachineGrok(path.join(machine, '.grok', 'plugins', '0xray'), { HOME: machine }, machine),
+    ).toBe(true);
+    expect(
+      wouldClobberMachineGrok(path.join(project, '.grok', 'plugins', '0xray'), { HOME: machine }, machine),
+    ).toBe(false);
   });
 
   it('two seats mint + grok last-mile without last-wins clobber of machine plugin', async () => {

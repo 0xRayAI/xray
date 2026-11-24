@@ -1,5 +1,13 @@
 ## [Unreleased]
 
+- Wear at a project root that is the machine home does not copy the machine Grok plugin. A costume dump throws before any wear write. An existing Grok hook file keeps `LIVE_URL` and `XRAY_SEAT`. #1249
+- A delivered webhook wake does not mark the seat present. A read, an ack, or the seat's own turn still does. #114
+- `FLEET_MODE` and `FLEET_ROUTE` are named on the board. The Chicago schedule is Sunday through Friday. `FLEET_MODE=full` keeps the old always-wake behavior. #1250
+- A failed inbox poll prints `LIVE_URL` and the error. #1252
+- Upgrade notes say live state is `~/.burst`. A leftover `~/.bifrost` is unused. #1253
+- `bifrost init --check` fails when one GitHub login, alias, or `@handle` needle belongs to two seats. Startup warns, the process still boots, and `GET /routing` lists `conflicts`. A fleet seat is woken by a handoff, not by an @-mention of its bot login. A new head does not wake the reviewer by itself.
+- A throw from the station tick is logged. The next minute still runs. #1251
+
 ## [4.2.4] - 2026-11-23
 
 ### 🔄 Changes
@@ -114,7 +122,7 @@ The board server deploys from `house/live/app/deploy.sh`. These notes are that d
 
 - The newer tip comment on a card is the inbox head. The older tip on that same card is shed. #840
 
-- The Chicago schedule sets fleet mode: weekdays 7:30–15:30 are full, otherwise lights-on. A manual switch holds until the next boundary. The route is arch1, cursor-cloud, grok-cli, or none. Cursor cloud launches only when that route allows it. #566
+- The Chicago schedule sets fleet mode: Sunday through Friday 7:30–15:30 are full, otherwise lights-on. Saturday is off. A manual switch holds until the next boundary. The route is arch1, cursor-cloud, grok-cli, or none. Cursor cloud launches only when that route allows it. #566
 
 - Fleet mode is full, lights-on, or dark. lights-on is the default. P1 and a scheduled run wake in every mode. Blaze or blinky sets the mode, and a seat wake does not. #566
 

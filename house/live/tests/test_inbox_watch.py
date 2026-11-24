@@ -145,10 +145,23 @@ exit 1
         r, _calls = self._run(body, ["mill"], {"INBOX_WATCH_MAX": "3"})
         self.assertEqual(r.stdout.count("FAIL"), 2)
         self.assertIn("LIVE_URL=https://bifrost.0xray.dev", r.stdout)
-        self.assertIn("expected=https://bifrost.0xray.dev", r.stdout)
+        self.assertNotIn("expected=", r.stdout)
         self.assertIn("boom", r.stdout)
         self.assertIn("other", r.stdout)
         self.assertNotIn("ACTION_REQUIRED", r.stdout)
+
+    def test_fail_names_the_url_in_use(self):
+        body = r"""
+if [[ "$*" == *"--turn"* ]]; then exit 0; fi
+echo 'nope' >&2
+exit 1
+"""
+        r, _calls = self._run(body, ["mill"], {"INBOX_WATCH_MAX": "1", "LIVE_URL": "https://board.example"})
+        self.assertIn("FAIL", r.stdout)
+        self.assertIn("LIVE_URL=https://board.example", r.stdout)
+        self.assertIn("nope", r.stdout)
+        self.assertNotIn("expected=", r.stdout)
+        self.assertNotIn("bifrost.0xray.dev", r.stdout)
 
     def test_closed_line_is_auto_acked(self):
         line = '{"id":"closed-1","repo":"0xRayAI/xray","number":531,"title":"done"}'

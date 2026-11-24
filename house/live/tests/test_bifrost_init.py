@@ -99,6 +99,26 @@ if __name__ == "__main__":
     unittest.main()
 
 
+class ClaimConflicts(unittest.TestCase):
+    def test_check_fails_when_one_login_belongs_to_two_seats(self):
+        with tempfile.TemporaryDirectory() as d:
+            roles = {
+                "extra_seats": {
+                    "builder": {"needles": ["@builder", "@app"]},
+                    "cloud": {"needles": ["@cloud", "@app"]},
+                },
+                "routing": {
+                    "builder": {"login": "app[bot]", "aliases": ["Builder"], "role": "builder", "plane": "build", "primary": True},
+                    "cloud": {"login": "App", "aliases": ["cloud"], "role": "cloud", "plane": "build"},
+                },
+                "planes": {"build": {"primary": "builder"}},
+            }
+            (Path(d) / "inbox-roles.json").write_text(json.dumps(roles))
+            r = run("--check", "--no-resolve", "--seats", "builder,cloud", "--routing-dir", d)
+            self.assertEqual(r.returncode, 1, r.stdout)
+            self.assertIn("one login or alias claimed by two seats", r.stderr)
+            self.assertIn("app (builder, cloud)", r.stderr)
+
 class MentionAudit(unittest.TestCase):
     """Every route's mention matches the seat's real GitHub login (fleet-nodes.json), not only its nickname."""
     def _fleet(self, d, needles):

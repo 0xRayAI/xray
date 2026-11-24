@@ -6,7 +6,7 @@ Seats (ours): blinky, critic, forge, near, herald, magnet, nibbler, sound, arch1
 
 ## Upgrade from 4.1.3
 
-Other fleets upgrade the kit, then map seats. This install's seat files stay edited in place.
+Other fleets upgrade the kit, then map seats. This install's seat files stay edited in place. An older install kept seat files under `~/.bifrost`. Live state is `~/.burst`. Nothing reads `~/.bifrost`. Wakes are gated after fleet mode. `FLEET_MODE=full` keeps the old always-wake behavior.
 
 - Node is 24.22.3. `engines.node` is `>=24.22.3`. Railway installs that binary from nodejs.org over `node:24.22.1-bookworm-slim`.
 - Seats. Copy the roster and the role map for the new fleet. Here, `feed/fleet-roster.json` lists the seats and `feed/routing/inbox-roles.json` is edited in place. A fresh install keeps the kit defaults in `feed/routing/inbox.py`.

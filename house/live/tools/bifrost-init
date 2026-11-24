@@ -9,7 +9,7 @@ Railway variable (and WAKE_KEY_<SEAT>) on the host yourself.
 
   bifrost-init                                  interactive
   bifrost-init --seats forge,critic,mill --yes  non-interactive
-  bifrost-init --check [--seats a,b]            validate only (seats default: fleet-roster.json, else extra_seats)
+  bifrost-init --check [--seats a,b]            validate only (seats default: fleet-roster.json, else extra_seats). Fails when one login, alias, or @handle belongs to two seats.
   bifrost-init --check --table                  also print the mention audit: seat, mention, login, OK
 
 Mention audit: a seat with a GitHub login in feed/fleet-nodes.json (login -> seat) must have an @<login> needle on its
@@ -211,6 +211,43 @@ def routing_shape_errors(roles: dict) -> list[str]:
     return bad
 
 
+def claim_key(value) -> str:
+    """Login, alias, or @handle, compared with no case and no [bot] suffix."""
+    text = str(value or "").strip()
+    if text.startswith("@"):
+        text = text[1:]
+    text = re.sub(r"\[bot\]$", "", text, flags=re.I)
+    return text.casefold()
+
+
+def routing_claim_conflicts(roles: dict) -> list[str]:
+    """One login, alias, or @handle needle claimed by two seats. Map order is who wins today."""
+    owners: dict[str, list[str]] = {}
+
+    def add(key: str, seat: str) -> None:
+        if not key:
+            return
+        seats = owners.setdefault(key, [])
+        if seat not in seats:
+            seats.append(seat)
+
+    for seat, entry in (roles.get("routing") or {}).items():
+        if not isinstance(entry, dict):
+            continue
+        who = str(seat)
+        add(claim_key(entry.get("login")), who)
+        for alias in entry.get("aliases") or []:
+            add(claim_key(alias), who)
+    for seat, rule in (roles.get("extra_seats") or {}).items():
+        if not isinstance(rule, dict):
+            continue
+        for needle in rule.get("needles") or []:
+            text = str(needle)
+            if text.startswith("@"):
+                add(claim_key(text), str(seat))
+    return [f"{key} ({', '.join(seats)})" for key, seats in owners.items() if len(seats) > 1]
+
+
 def unknown_targets(roles: dict, seats) -> list[str]:
     """Rules pointing at a seat that is not in the fleet (a line nobody reads)."""
     return sorted(set(role_targets(roles)) - set(seats))
@@ -324,13 +361,16 @@ def main(argv=None) -> int:
         shape = routing_shape_errors(roles) if (roles.get("routing") or {}) else []
         if shape:
             print("bifrost init: FAIL, routing table: " + "; ".join(shape), file=sys.stderr)
+        claims = routing_claim_conflicts(roles)
+        if claims:
+            print("bifrost init: FAIL, one login or alias claimed by two seats: " + "; ".join(claims), file=sys.stderr)
         if a.table:
             targets = role_targets(roles)
             print("seat | mention | login | api | OK")
             for s, m, l, ok in rows:
                 api = resolved.get(s, ("", "-" if not a.no_resolve else "skipped"))[1]
                 print(f"{s} | {m} | {l} | {api} | {'OK' if ok and api != 'missing' else 'FAIL'}  ({', '.join(sorted(targets.get(s, ())))})")
-        if miss or ghost or nick or outside or gone or shape:
+        if miss or ghost or nick or outside or gone or shape or claims:
             return 1
         print(f"bifrost init: routing OK for {len(seats)} seat(s)")
         return 0
