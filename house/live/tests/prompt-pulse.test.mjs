@@ -167,7 +167,7 @@ test('LIVE_OWNER names the sender and the prompt tile when the image has no HOUS
     assert.deepEqual(stats.owner_prompts_24h_ids, [body.id]);
     const line = { id: body.id, seq: 1, seat: 'forge', t_ct, kind: 'prompt', action: 'sent', to: 'forge', from: 'ada', note: 'fixed summary' };
     assert.equal(stats.owner_prompts_24h_bytes, archivedLineBytes('activity', line));
-    assert.notEqual(stats.owner_prompts_24h_bytes, Buffer.byteLength(JSON.stringify(line) + '\n'));
+    assert.equal(stats.owner_prompts_24h_bytes, Buffer.byteLength(JSON.stringify(line) + '\n'));   // #1263: the archive keeps the note
   } finally {
     await stop(srv.child);
     fs.rmSync(data, { recursive: true, force: true });

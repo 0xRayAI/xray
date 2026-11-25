@@ -3458,6 +3458,21 @@ function ownerPromptStats(now = Date.now()) {
   for (const line of rows) bytes += archivedLineBytes('activity', line);
   return { owner_prompts_24h: rows.length, owner_prompts_24h_ids: rows.map(l => l.id), owner_prompts_24h_bytes: bytes };
 }
+// A note or tag that names owner/repo#n (or a bare repo#n that matches one card repo) links the line to that card.
+const CARD_REF = /(?:^|[^A-Za-z0-9_.\/-])(?:([A-Za-z0-9][A-Za-z0-9-]{0,38})\/)?([A-Za-z0-9_.-]{1,100})#(\d{1,7})(?![0-9])/;
+function activityCardRef(text, repos) {
+  const m = CARD_REF.exec(String(text || ''));
+  if (!m) return null;
+  const number = Number(m[3]);
+  if (m[1]) return { repo: `${m[1]}/${m[2]}`, number };
+  const want = m[2].toLowerCase();
+  const hits = [...new Set((repos || []).map(r => String(r || '')).filter(r => r.split('/').pop().toLowerCase() === want))];
+  if (hits.length === 1) return { repo: hits[0], number };
+  return !hits.length && want === 'xray' ? { repo: '0xRayAI/xray', number } : null;   // the kit's own repo, as live-inbox --tag stores it
+}
+function activityCardRepos() {
+  try { return bfCards.map(c => c && c.repo).filter(Boolean); } catch { return []; }
+}
 function activityEvent(line, opts) {
   const prompt = line.kind === 'prompt';
   const from = prompt ? promptSender(line) : line.seat;
@@ -3467,6 +3482,8 @@ function activityEvent(line, opts) {
   const label = prompt ? `${from} → ${to}${note ? ': ' + note : ''}` : `${line.seat} ${line.kind} ${line.action}${extra}`;
   const ev = { id: `act:${line.id}`, t_ct: ctOffset(line.t_ct), from, to, kind: `seat_${line.kind}`, direction: 'internal',
     label, src_file: 'activity', repo: null };
+  const ref = activityCardRef(note, activityCardRepos()) || activityCardRef(line.tag, activityCardRepos());
+  if (ref) { ev.repo = ref.repo; ev.number = ref.number; }
   if (note) ev.note = note;
   if (prompt && line.room) ev.room = line.room;
   if (opts && opts.moves === false) ev.moves = false;
@@ -3935,7 +3952,10 @@ async function handle(req, res) {
     return json(req, res, 200, { date, kind, lines: readArchive(date, kind).lines });
   }
   if ((p === '/history' || p === '/history/cards' || p === '/history/transitions' || p === '/history/export') && m === 'GET') {
-    if (!validSession(req)) return json(req, res, 401, { error: 'unauthorized' });
+    if (!validSession(req)) {   // a valid seat token reads history the same way it reads /cards
+      let who; try { who = await seatOf(req); } catch { return json(req, res, 503, { error: 'could not verify token, retry' }, { 'Retry-After': '30' }); }
+      if (!who) return json(req, res, 401, { error: 'unauthorized' });
+    }
     const q = {
       state: url.searchParams.get('state') || '',
       card: url.searchParams.get('card') || '',

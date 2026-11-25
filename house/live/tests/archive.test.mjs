@@ -41,9 +41,9 @@ test('project strips body; truncated last line is skipped; a bad calendar date i
   assert.equal(validArchiveDate('2026-1-01'), false);
   assert.equal(validArchiveDate('2026-10-13'), true);
   const activity = { id: 'e.1', seq: 1, seat: 'forge', t_ct: '2026-10-20T10:00:00-05:00', kind: 'prompt', action: 'sent', from: 'Ada', to: 'forge', note: 'fixed summary', room: 'ops' };
-  assert.equal(project('activity', activity).note, undefined);
+  assert.equal(project('activity', activity).note, 'fixed summary');   // #1263: the archive keeps the note
   assert.equal(archivedLineBytes('activity', activity), Buffer.byteLength(JSON.stringify(project('activity', activity)) + '\n'));
-  assert.notEqual(archivedLineBytes('activity', activity), Buffer.byteLength(JSON.stringify(activity) + '\n'));
+  assert.equal(project('activity', activity).room, 'ops');
   fs.rmSync(data, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 });
 });
 

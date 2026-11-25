@@ -151,6 +151,27 @@
     });
   }
 
+  /* A feed name as a drawn node: a node itself, else through NODE_KEY (a fleet config's feed-name map),
+     matched case-insensitively. "owner" and the owner's name (OWNER_NAME) draw as the owner node:
+     NODE_KEY.owner, else NODE_KEY.Lead, else Lead. Anything else is returned unchanged. */
+  function drawnNode(v) {
+    if (v == null || v === '') return v;
+    var name = String(v);
+    if (own(SATS, name)) return name;
+    var api = root.LiveMesh || {};
+    var nk = api.NODE_KEY && typeof api.NODE_KEY === 'object' ? api.NODE_KEY : {};
+    var low = name.toLowerCase();
+    var ownerName = String(api.OWNER_NAME || '').toLowerCase();
+    if (low === 'owner' || (ownerName && low === ownerName)) {
+      var lead = own(nk, 'owner') ? nk.owner : (own(nk, 'Lead') ? nk.Lead : 'Lead');
+      if (own(SATS, lead)) return lead;
+    }
+    if (own(nk, name) && own(SATS, nk[name])) return nk[name];
+    for (var s in SATS) if (own(SATS, s) && s.toLowerCase() === low) return s;
+    for (var k in nk) if (own(nk, k) && k.toLowerCase() === low && own(SATS, nk[k])) return nk[k];
+    return name;
+  }
+
   /* Same mapping as render_mesh.resolve_nodes: which two nodes a ping travels between. */
   function resolveNodes(e) {
     var kind = LEGACY_KIND[e.kind] || e.kind;
@@ -159,8 +180,8 @@
     if (kind === 'x_out_reply' || kind === 'x_out_root' || kind === 'x_like') return ['herald', 'X'];
     if (kind === 'deploy' || kind === 'deploy_fail') return ['GitHub', 'mymuse.house'];
     if (kind === 'health_ok' || kind === 'health_fail' || kind === 'probe') return ['mymuse.house', 'blinky'];
-    var src = own(ALIAS, e.from) ? 'GitHub' : e.from;
-    var dst = own(ALIAS, e.to) ? 'GitHub' : e.to;
+    var src = own(ALIAS, e.from) ? 'GitHub' : drawnNode(e.from);
+    var dst = own(ALIAS, e.to) ? 'GitHub' : drawnNode(e.to);
     if (!own(SATS, src)) src = own(GIT_KINDS, kind) ? 'GitHub' : 'X';
     if (!own(SATS, dst)) dst = 'GitHub';
     if (kind === 'critic_fail' || kind === 'critic_pass') {
@@ -526,7 +547,7 @@
   root.LiveMesh = {
     SOURCES: SOURCES, POLL_MS: POLL_MS, PING_MS: PING_MS, AGENTS: AGENTS, SEAT_NAMES: SEAT_NAMES, COLOR: COLOR,
     LABEL: LABEL, SUB: SUB, SQUARE: SQUARE, HUB: HUB, SATS: SATS, EDGES: EDGES, KIND_WORD: KIND_WORD,
-    resolveNodes: resolveNodes, eventColor: eventColor, cleanLabel: cleanLabel, promptView: promptView, activityLines: activityLines, whoTag: whoTag,
+    resolveNodes: resolveNodes, drawnNode: drawnNode, eventColor: eventColor, cleanLabel: cleanLabel, promptView: promptView, activityLines: activityLines, whoTag: whoTag,
     headline: headline, parseT: parseT, mergeEvents: mergeEvents, countUpTo: countUpTo,
     eventsUpTo: eventsUpTo, pingsAt: pingsAt, hotNodes: hotNodes, applyFeed: applyFeed,
     bounds: bounds, fmtCt: fmtCt, ago: ago, feedUrl: feedUrl, fetchFeed: fetchFeed, rosterEntries: rosterEntries,
