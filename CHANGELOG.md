@@ -1,5 +1,6 @@
 ## [Unreleased]
 
+- `live-inbox --prompt` takes `--to <seat>`. The post still comes from the posting seat. `to` defaults to that seat. A backfilled prompt dedupes on the receiver. xray#1263
 - `@0xray/grok-bot` kit text for a fresh fleet stand-up (GitHub App guide, house defaults, Railway account check, seat bots, NEAR summary, credential modes). The package is bumped to `0.1.20` in this repo and is not published. #1245
 - The live board says what the picture means. The clock says Central time. A fleet image can replace the 0xRay mark. The header credit is small: bifrost by 0xray.
 - Wear at a project root that is the machine home does not copy the machine Grok plugin. A costume dump throws before any wear write. An existing Grok hook file keeps `LIVE_URL` and `XRAY_SEAT`. #1249

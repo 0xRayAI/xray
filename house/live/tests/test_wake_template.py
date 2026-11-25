@@ -299,6 +299,35 @@ class TurnFlag(unittest.TestCase):
         self.assertEqual(far.returncode, 0, far.stderr)
         self.assertEqual(len(self.srv.hits), 1)
 
+    def test_prompt_to_names_the_receiver(self):
+        proc = self.run_turn("--prompt", "--to", "critic", "--note", "field report")
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        hit = self.srv.hits[0]
+        self.assertEqual(hit["body"]["seat"], "forge")
+        self.assertEqual(hit["body"]["to"], "critic")
+        self.assertEqual(hit["body"]["from"], "Ada")
+        self.assertEqual(hit["body"]["note"], "field report")
+        bare = self.run_turn("--to", "critic")
+        self.assertNotEqual(bare.returncode, 0)
+        bad = self.run_turn("--prompt", "--to", "Critic")
+        self.assertNotEqual(bad.returncode, 0)
+        self.assertEqual(len(self.srv.hits), 1)
+
+    def test_prompt_at_dedupes_on_the_receiver(self):
+        self.srv.history = [{"id": "act:own.1", "kind": "prompt", "from": "Ada", "to": "forge",
+                             "t_ct": "2026-11-09T09:24:01-06:00"}]
+        other = self.run_turn("--prompt", "--to", "critic", "--at", "2026-11-09T09:24:00-06:00")
+        self.assertEqual(other.returncode, 0, other.stderr)
+        self.assertEqual(len(self.srv.hits), 1)
+        self.assertEqual(self.srv.hits[0]["body"]["to"], "critic")
+        self.srv.hits.clear()
+        self.srv.history.append({"id": "act:x.2", "kind": "prompt", "from": "Ada", "to": "critic",
+                                 "t_ct": "2026-11-09T09:24:01-06:00"})
+        dup = self.run_turn("--prompt", "--to", "critic", "--at", "2026-11-09T09:24:00-06:00")
+        self.assertEqual(dup.returncode, 0, dup.stderr)
+        self.assertEqual(json.loads(dup.stdout), {"ok": True, "skipped": "dup", "id": "act:x.2"})
+        self.assertEqual(self.srv.hits, [])
+
     def test_prompt_from_override(self):
         proc = self.run_turn("--prompt", "--from", "mill")
         self.assertEqual(proc.returncode, 0, proc.stderr)
